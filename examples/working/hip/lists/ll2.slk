@@ -21,8 +21,8 @@ pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
 //checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(L1)=L2. 
 //checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(rev(L1))=L1. 
 //checkentail L2=(v:int):::L1 & L3 = app(L1,[|v|]) |- rev(L2)=L3. // fail this is not valid as rev(L2) = rev(L1)::v and L3 = L1::v
-//checkentail L2=(v:int):::L1 & L3 = app(rev(L1),[|v|]) |- rev(L2)=L3. // this is valid
-checkentail L1 = app(L2,L3) & L4 = rev(L1) |- L4 = app(rev(L3),rev(L2)). // fail fixed
+checkentail L2=(v:int):::L1 & L3 = app(rev(L1),[|v|]) |- rev(L2)=L3. // this is valid
+//checkentail L1 = app(L2,L3) & L4 = rev(L1) |- L4 = app(rev(L3),rev(L2)). // fail fixed
 //checkentail L1=[|1,2,3|] & L2 =v:::L1 |- 1 inlist L2 . 
 //checkentail L1=[|1,2,3|] & L2 =v:::L1 |- v inlist L2 . 
 //checkentail L1=[|1,2,3|] & L2 =v:::L1 & v = 4 |- 4 inlist L2. 

@@ -78,7 +78,8 @@ let rec smt_of_typ t =
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
-		| Void | (BagT _) | (TVar _) -> 	illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+		| Void | (BagT _)  -> 	illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+        | (TVar _) -> "Int"
         	| List t -> (match t with
 				| (TVar _) -> "(Seq Int)"
 				| _ -> "(Seq " ^ (smt_of_typ t) ^ ")"	)
@@ -479,7 +480,10 @@ let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
     (*asankhs: adding seq axioms, will later change it look up info before adding - done *)
     (*Sequence Axioms*)
 let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file   
-let seq_axioms  = string_of_file (seq_axioms_filename) 
+let seq_axioms_sat_filename = "sat_" ^ seq_axioms_file
+let seq_axioms  = string_of_file (seq_axioms_filename)
+let seq_sat_axioms =  string_of_file (seq_axioms_sat_filename)
+let is_sat_check = ref false
 (* let sat_timeout = ref 2.0
 let imply_timeout = ref 15.0 *)
 let z3_sat_timeout_limit = 2.0
@@ -582,18 +586,20 @@ let generate_app_axioms func seq = "(assert "^ (func [CP.mkVar seq no_pos]) ^ ")
  
 let rec add_seq_axioms fvars seqs kfvars = (match fvars with 
     | [] -> ""
-    | f::fs -> 
-          "(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend((CP.mkVar f no_pos)::[],no_pos),(CP.mkVar f no_pos),no_pos),None)) ^")\n" ^
-          "(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend(CP.ListReverse((CP.mkVar f no_pos),no_pos)::[],no_pos),
-          CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n" ^
-          (*"(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend([(CP.mkVar f no_pos)],no_pos),(CP.mkVar f no_pos),no_pos),None)) ^")\n" ^*) 
-          (*handle axiom for append nil Seq directly*)
-          "(assert (= (append nil " ^ smt_of_spec_var f ^ ") " ^ smt_of_spec_var f  ^"))\n" ^ 
-          "(assert (= (append nil (rev " ^ smt_of_spec_var f ^ ")) (rev " ^ smt_of_spec_var f  ^")))\n" ^ 
-          "(assert "^(smt_of_b_formula(CP.Eq(CP.ListLength(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),
-          CP.ListLength((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n"^
-          "(assert "^(smt_of_b_formula(CP.Eq(CP.ListReverse(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),(CP.mkVar f no_pos),no_pos),None))^")\n"^ 
-          String.concat "\n" (List.map (fun x -> (match x , f with  
+    | f::fs -> (match f with
+               | CP.SpecVar(List t, _, _) ->  
+               "(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend((CP.mkVar f no_pos)::[],no_pos),(CP.mkVar f no_pos),no_pos),None)) ^")\n" ^
+               "(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend(CP.ListReverse((CP.mkVar f no_pos),no_pos)::[],no_pos),
+               CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n" ^
+               (*"(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend([(CP.mkVar f no_pos)],no_pos),(CP.mkVar f no_pos),no_pos),None)) ^")\n" ^*) 
+               (*handle axiom for append nil Seq directly*)
+               "(assert (= (append nil " ^ smt_of_spec_var f ^ ") " ^ smt_of_spec_var f  ^"))\n" ^ 
+               "(assert (= (append nil (rev " ^ smt_of_spec_var f ^ ")) (rev " ^ smt_of_spec_var f  ^")))\n" ^ 
+               "(assert "^(smt_of_b_formula(CP.Eq(CP.ListLength(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),
+               CP.ListLength((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n"^
+               "(assert "^(smt_of_b_formula(CP.Eq(CP.ListReverse(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),
+               (CP.mkVar f no_pos),no_pos),None))^")\n"^ 
+               String.concat "\n" (List.map (fun x -> (match x , f with  
                                   | CP.ListCons(e1, e2, l), CP.SpecVar(List t, _, _) ->    
                                       let f1 = ((CP.Eq((CP.mkVar f l),(CP.ListCons(e1, e2, l)), l)), None) in
                                       let f2 = ((CP.Eq((CP.ListLength((CP.mkVar f l),l)),   
@@ -616,7 +622,10 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                       then  "(assert " ^   (smt_of_b_formula appf1) ^")\n"^ 
                                             "(assert " ^   (smt_of_b_formula revappf1) ^")\n"^
                                             "(assert " ^ (smt_of_b_formula lenappf)^")\n"^
-                                             String.concat "" (List.map (generate_app_axioms mapappf1) kfvars) ^
+                                             String.concat "" (List.map (generate_app_axioms mapappf1) 
+                                                 (List.filter (fun c -> match c with 
+                                                   | CP.SpecVar(List t,_,_) -> true
+                                                   | _ -> false) kfvars)) ^
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^ " "^ (smt_of_b_formula revf) ^ "))\n" ^
                                             "(assert (=> " ^ (smt_of_b_formula f1)  ^" "^ (smt_of_b_formula f2) ^ "))"   
                                       else "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1,None)) None l)) ^")\n"^  
@@ -645,7 +654,10 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                       then  "(assert " ^  (smt_of_b_formula appf1) ^ ")\n"^ 
                                             "(assert " ^  (smt_of_b_formula revappf1) ^ ")\n"^
                                             "(assert " ^  (smt_of_b_formula lenappf) ^ ")\n"^
-                                             String.concat "" (List.map (generate_app_axioms mapappf1) kfvars) ^
+                                            String.concat "" (List.map (generate_app_axioms mapappf1) 
+                                                 (List.filter (fun c -> match c with 
+                                                   | CP.SpecVar(List t,_,_) -> true
+                                                   | _ -> false) kfvars)) ^
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula revf) ^ "))\n" ^
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula f2) ^ "))"
                                       else "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1, None)) None l)) ^")\n" ^ 
@@ -656,7 +668,8 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                            "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) 
                                                (CP.BForm(f2,None)) None l) None l)) ^ ")" 
                                   | _,_ -> ""))
-                            seqs) ^ "\n" ^ (add_seq_axioms fs seqs kfvars) )
+                            seqs)
+               | _ -> "") ^ "\n" ^ (add_seq_axioms fs seqs kfvars) )
     
 
 let rec generate_seqs seqs acc = match seqs with
@@ -669,9 +682,9 @@ let rec generate_seqs seqs acc = match seqs with
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
-    let if_seq_axioms = if info.contains_list then seq_axioms else "(define-sort Seq (T) (List T))\n" in 
+    let if_seq_axioms = if info.contains_list then (if !is_sat_check then seq_sat_axioms else seq_axioms) else "(define-sort Seq (T) (List T))\n" in 
     let seqs = generate_seqs info.sequences info.sequences in
-    let init_seq_axioms = if info.contains_list then add_seq_axioms fvars seqs fvars else "" in 
+    let init_seq_axioms = if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars else "" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in
@@ -697,7 +710,7 @@ let to_smt_v2 ante conseq logic fvars info =
 				rel_decls ^
 			";Axioms assertions\n" ^ 
 				axiom_asserts ^
-            "; Initialization of Seq Axioms\n" ^
+            ";Initialization of Seq Axioms\n" ^
                 init_seq_axioms ^
 			";Antecedent\n" ^ 
 				ante_str ^ 
@@ -932,6 +945,7 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
 	with | _ -> (false, true)
   else (false, true) in
   if (should_run_smt) then
+    let _ = is_sat_check := false in
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
 	let output = run "is_imply" prover input timeout in
@@ -989,6 +1003,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+    let _ = is_sat_check := true in
 	let input = to_smt f None prover in
     (*let _ = print_endline ("smt_is_sat : " ^ input) in*)
 	let output = run "is_unsat" prover input timeout in
