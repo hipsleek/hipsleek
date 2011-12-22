@@ -3,7 +3,7 @@ data node {
   node next;
 }
 
-node tl2(ref node x)
+node tl2(node x)
  infer [x] 
  requires true
  ensures true; 
