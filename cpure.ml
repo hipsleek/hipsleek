@@ -6440,3 +6440,7 @@ let rec add_ann_constraints vrs f =
           let rf = add_ann_constraints r f in
           mkAnd c12  rf no_pos
     | [] -> f
+
+let add_ann_constraints vrs f =
+  let p1 = !print_formula in
+  Gen.Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f

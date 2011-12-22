@@ -1341,7 +1341,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* in *)
 
   let vrs = Cpure.fv ante in
+  let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
+  let imm_vrs = CP.remove_dups_svl imm_vrs in
+  (* add invariant constraint @M<:v<:@L for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
   (* let _ = print_endline("new ante  = " ^ (Cprinter.string_of_pure_formula ante) ) in *)
   (* let _ = print_endline (Cprinter.string_of_typed_spec_var_list vrs) in *)
