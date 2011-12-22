@@ -1,0 +1,36 @@
+data cell {
+  int val;
+}.
+
+//(1)
+//from ex1.ss
+checkentail  y::cell<j+1> & re=z 
+             and x::cell<i+1> & thread=z
+             |- y::cell<j+1> & re=z 
+                and x::cell<i+1> & thread=z.
+print residue.
+//valid
+
+//(2)
+//from ex1.ss
+checkentail y::cell<j+1> & id=z 
+            and x::cell<i+1> & thread=z
+            |- (exists v: id=v 
+                and x'::cell<i+1> & thread=v).
+print residue. //valid, expecting y::cell<j+1> & id=z
+
+// (3)
+//several threads + existential
+checkentail y::cell<j+1> & id=id1
+            and x::cell<i+1> & thread=id1
+            and z::cell<k+1> & thread=id2
+            |- (exists v: id=v 
+                and x'::cell<i+1> & thread=v).
+print residue.
+// how to pickup the right thread
+
+checkentail y::cell<j+1> & id=id1
+            and x::cell<i+1> & thread=id1
+            and z::cell<k+1> & thread=id2
+            |- y::cell<v>.
+print residue.

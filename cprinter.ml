@@ -1116,7 +1116,8 @@ let rec pr_numbered_list_formula (e:list_formula) (count:int) =
             pr_numbered_list_formula xs (count+1);
         end
 
-let pr_es_trace (trace:string list) : unit = 
+let pr_es_trace (trace:string list) : unit =
+  if (trace==[]) then fmt_string "empty" else
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
