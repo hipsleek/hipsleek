@@ -12,10 +12,16 @@ Entail  (3): Valid.
 <1>EXISTS(flted_7_98: b::ll<flted_7_98>@M[Orig] & flted_7_98+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
+infer_heap_nodes
+infer var: [n]
+new infer var: [inf_ann_107,inf_n_108,n]
 Entail  (4): Valid. 
 <1>true & y=null & n=0 & {FLOW,(17,18)=__norm}
 inferred pure: [n=0]
 
+infer_heap_nodes
+infer var: [n]
+new infer var: [inf_ann_118,inf_n_119,n]
 Entail  (5): Valid. 
 <1>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [n!=1]

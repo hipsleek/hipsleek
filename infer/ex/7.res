@@ -40,24 +40,30 @@ inferred pure: [6<=p]
 
 Entail  (13): Fail.(may) cause:(failure_code=213)  6<m & 8<=p |-  z<m;  6<m & 8<=p |-  m<p (may-bug).
 
-Entail  (14): Fail.(may) cause:(failure_code=213)  n!=0 & (1<=inf_n_95 | inf_n_95<=(0 - 1)) & (q=null & inf_n_95=0 | q!=null & 
-1<=inf_n_95) |-  inf_n_95=n (may-bug).
+infer_heap_nodes
+infer var: [q]
+new infer var: [inf_ann_95,inf_n_96,q]
+Entail  (14): Fail.(may) cause:(failure_code=213)  n!=0 & (1<=inf_n_96 | inf_n_96<=(0 - 1)) & (q=null & inf_n_96=0 | q!=null & 
+1<=inf_n_96) |-  inf_n_96=n (may-bug).
 
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_109,inf_n_110,x]
 Entail  (15): Valid. 
-<1>true & n<0 & inf_n_108<=(0 - 1) & {FLOW,(17,18)=__norm}
-inferred heap: [x::ll<inf_n_108>@M[Orig][LHSCase]]
-inferred pure: [inf_n_108<=(0 - 1)]
+<1>true & n<0 & inf_ann_109<=0 & inf_n_110<=(0 - 1) & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_110>@inf_ann_109[Orig][LHSCase]]
+inferred pure: [inf_ann_109<=0; inf_n_110<=(0 - 1)]
 
 Entail  (16): Valid. 
-<1>EXISTS(flted_7_130: b::ll<flted_7_130>@M[Orig] & flted_7_130+1=n & {FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_132: b::ll<flted_7_132>@M[Orig] & flted_7_132+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [x!=null]
 
 Entail  (17): Valid. 
-<1>EXISTS(flted_7_149: b::ll<flted_7_149>@M[Orig] & flted_7_149+1=n & {FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_151: b::ll<flted_7_151>@M[Orig] & flted_7_151+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (18): Valid. 
-<1>EXISTS(flted_7_168: b::ll<flted_7_168>@M[Orig] & flted_7_168+1=n & {FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_170: b::ll<flted_7_170>@M[Orig] & flted_7_170+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0 | x!=null]
 
-Stop Omega... 322 invocations 
+Stop Omega... 350 invocations 

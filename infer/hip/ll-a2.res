@@ -21,6 +21,6 @@ Procedure append2$node~node SUCCESS
 Stop Omega... 107 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.6 second(s)
-	Time spent in main process: 0.57 second(s)
+Total verification time: 0.59 second(s)
+	Time spent in main process: 0.56 second(s)
 	Time spent in child processes: 0.03 second(s)

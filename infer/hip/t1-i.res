@@ -42,12 +42,13 @@ NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
 Checking procedure foo2a$int... 
-procedure call:t1-i.ss:74: 2: 
+Procedure Call:t1-i.ss:74: 2: 
 Verification Context:(Line:65,Col:10)
 Proving precondition in method bnd$int for spec:
  EBase true & 0<=i' & {FLOW,(20,21)=__norm}
          EAssume 16::
-           true & true & {FLOW,(20,21)=__norm} has failed 
+           true & true & {FLOW,(20,21)=__norm}
+Current States: [ true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & {FLOW,(20,21)=__norm}] has failed 
 
 OLD SPECS:  EInfer @post []
    EBase true & true & {FLOW,(20,21)=__norm}
@@ -60,6 +61,6 @@ Procedure foo2a$int result FAIL-1
 Stop Omega... 98 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.29 second(s)
-	Time spent in main process: 0.27 second(s)
+Total verification time: 0.28 second(s)
+	Time spent in main process: 0.26 second(s)
 	Time spent in child processes: 0.02 second(s)
