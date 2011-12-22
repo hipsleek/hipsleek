@@ -5,4 +5,4 @@ infer var: [n]
 new infer var: [inf_ann_29,inf_n_30,n]
 Entail  (1): Fail.(may) cause:(failure_code=15.3)  true |-  y!=null (may-bug).
 
-Stop Omega... 18 invocations 
+Stop Omega... 16 invocations 

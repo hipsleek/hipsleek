@@ -18,7 +18,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[v; n](ex)x::llf<v,n>@M[Orig][LHSCase] & n!
            v=res & v_530=res & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd$node SUCCESS
-Stop Omega... 65 invocations 
+Stop Omega... 63 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.23 second(s)

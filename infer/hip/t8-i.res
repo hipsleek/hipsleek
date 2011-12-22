@@ -32,7 +32,7 @@ NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
            true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1b$int SUCCESS
-Stop Omega... 71 invocations 
+Stop Omega... 63 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.22 second(s)

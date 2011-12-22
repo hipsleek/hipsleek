@@ -56,7 +56,7 @@ NEW SPECS:  EAssume 2::ref [x]
    true & true & {FLOW,(20,21)=__norm}
 
 Procedure hdtl$node result FAIL-1
-Stop Omega... 107 invocations 
+Stop Omega... 87 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.25 second(s)

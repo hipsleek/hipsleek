@@ -111,9 +111,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
            true & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 164 invocations 
+Stop Omega... 142 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.39 second(s)
-	Time spent in main process: 0.36 second(s)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.37 second(s)
 	Time spent in child processes: 0.03 second(s)

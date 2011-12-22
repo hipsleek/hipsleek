@@ -18,9 +18,9 @@ NEW SPECS:  EBase x::node<inf_val_14_498,inf_next_14_499>@inf_ann_497[Orig] &
            x=x' & res=inf_val_14_498 & inf_ann_497<=2 & {FLOW,(20,21)=__norm}
 
 Procedure hd0$node SUCCESS
-Stop Omega... 55 invocations 
+Stop Omega... 50 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.18 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 0.18 second(s)
+	Time spent in main process: 0.17 second(s)
+	Time spent in child processes: 0.01 second(s)

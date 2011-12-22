@@ -39,9 +39,9 @@ Current States: [ x::node<inf_Anon_528,inf_b_529>@inf_ann_527[Orig] * inf_b_529:
 
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 81 invocations 
+Stop Omega... 70 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.27 second(s)
-	Time spent in main process: 0.25 second(s)
+Total verification time: 0.25 second(s)
+	Time spent in main process: 0.23 second(s)
 	Time spent in child processes: 0.02 second(s)
