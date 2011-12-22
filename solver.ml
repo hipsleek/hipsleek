@@ -9280,10 +9280,10 @@ let rec simplify_post post_fml post_vars prog = match post_fml with
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
-    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify post_vars p None no_pos) in
+    let p = Inf.tp_simplify (CP.mkExists_with_simpl_debug Inf.tp_simplify post_vars p None no_pos) in
     let h,rm_vars = simplify_heap h p prog in
     let rm_vars = CP.diff_svl rm_vars (h_fv h) in
-    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify rm_vars p None no_pos) in
+    let p = Inf.tp_simplify (CP.mkExists_with_simpl_debug Inf.tp_simplify rm_vars p None no_pos) in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
     post_fml
 

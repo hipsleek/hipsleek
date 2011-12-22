@@ -340,18 +340,28 @@ let filter_var f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
-let simplify_helper f = match f with
-  | BForm ((Neq _,_),_) -> f
-  | Not _ -> f
+(* TODO : this simplify could be improved *)
+let to_dnf f = 
+  let new_f = trans_dnf f in
+  let disjs = list_of_disjs new_f in
+  let disjs = List.filter (fun d -> TP.is_sat d "0" false) disjs in
+  List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+
+let tp_simplify f = match !TP.tp with
+  | TP.Mona | TP.MonaH -> if TP.is_bag_constraint f then to_dnf f else Omega.simplify f
   | _ -> Omega.simplify f
 
-(* TODO : this simplify could be improved *)
-let simplify f vars = Omega.simplify (filter_var (Omega.simplify f) vars)
+let simplify f vars = tp_simplify (filter_var (tp_simplify f) vars)
 let simplify_contra f vars = filter_var f vars
 
 let simplify f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+
+let simplify_helper f = match f with
+  | BForm ((Neq _,_),_) -> f
+  | Not _ -> f
+  | _ -> tp_simplify f
 
 let infer_lhs_contra lhs_xpure ivars =
   (* if ivars==[] then None *)
@@ -366,7 +376,12 @@ let infer_lhs_contra lhs_xpure ivars =
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let f = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var f None no_pos) in
+        let f = simplify_helper (CP.mkExists_with_simpl_debug tp_simplify exists_var f None no_pos) in
+        let f =
+          let new_vars = remove_dups_svl (diff_svl (fv f) ivars) in
+          if new_vars=[] then f
+          else TP.simplify (mkExists new_vars f None no_pos)
+        in
         if CP.isConstTrue f then None
         else Some (Redlog.negate_formula f)
 
@@ -449,13 +464,14 @@ let rec simplify_disjs pf lhs rhs =
       let args = CP.fv new_fml in
       let iv = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      CP.mkExists_with_simpl_debug Omega.simplify quan_var new_fml None no_pos
+      CP.mkExists_with_simpl_debug tp_simplify quan_var new_fml None no_pos
     else CP.mkFalse no_pos
   in 
   match pf with
   | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs rhs
   | And _ -> helper pf lhs rhs
   | Or (f1,f2,l,p) -> Or (simplify_disjs f1 lhs rhs, simplify_disjs f2 lhs rhs, l, p)
+(*  | Forall (vars, f, l, p) -> Forall (vars, tp_simplify f, l, p)*)
   | _ -> pf
 
 let infer_pure_m estate lhs_xpure rhs_xpure pos =
@@ -472,46 +488,70 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
 (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
 (*      if CP.isConstTrue new_p then None                         *)
 (*      else                                                      *)
-        let args = CP.fv fml in
-        let quan_var = CP.diff_svl args iv in
-(*        let new_p = CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos in*)
-        let new_p = Omega.simplify (CP.mkForall quan_var 
-          (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
-        let new_p = Omega.simplify (simplify_disjs new_p lhs_xpure rhs_xpure) in
-        let args = CP.fv new_p in
-        let new_p =
-          if CP.intersect args iv == [] then
-            let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
-            let new_p = simplify new_p iv in
+      let args = CP.fv fml in
+      let quan_var = CP.diff_svl args iv in
+      let new_p = 
+        begin
+        match !TP.tp with
+        | TP.Mona | TP.MonaH ->
+          if (TP.is_bag_constraint fml) then
+            let new_p = simplify fml iv in
             let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
             let args = CP.fv new_p in
             let quan_var = CP.diff_svl args iv in
-            Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos)
+            tp_simplify (CP.mkExists_with_simpl_debug tp_simplify quan_var new_p None pos)
           else
-            simplify new_p iv
-        in
-        if CP.isConstTrue new_p || CP.isConstFalse new_p then None
+            let new_p = tp_simplify (CP.mkForall quan_var 
+              (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+            let new_p = tp_simplify (simplify_disjs new_p lhs_xpure rhs_xpure) in
+            new_p
+        | _ ->
+          let new_p = tp_simplify (CP.mkForall quan_var 
+            (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+          let new_p = tp_simplify (simplify_disjs new_p lhs_xpure rhs_xpure) in
+          new_p
+        end
+      in
+(*      print_endline ("PURE1: " ^ Cprinter.string_of_pure_formula new_p);*)
+(*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula new_p);*)
+      let args = CP.fv new_p in
+      let new_p =
+        if CP.intersect args iv == [] then
+          let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
+          let new_p = simplify new_p iv in
+          let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+          let args = CP.fv new_p in
+          let quan_var = CP.diff_svl args iv in
+          tp_simplify (CP.mkExists_with_simpl_debug tp_simplify quan_var new_p None pos)
         else
-          let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
-          let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
-          let new_p_conjs = CP.list_of_conjs new_p in
-          let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
-            (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-          (* Thai: Should check if the precondition overlaps with the orig ante *)
-          (* And simplify the pure in the residue *)
-          let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
+          simplify new_p iv
+      in
+      if CP.isConstTrue new_p || CP.isConstFalse new_p then None
+      else
+        let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
+        let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
+        let new_p_conjs = CP.list_of_conjs new_p in
+        let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
+          (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
+        let new_p = 
+          let new_vars = remove_dups_svl (diff_svl (fv new_p) iv) in
+          if new_vars=[] then new_p
+          else TP.simplify (mkExists new_vars new_p None pos)
+        in
+        let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
+(*                print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula new_p);*)
 (*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *)
 (*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*)
-          let args = CP.fv new_p in 
-          let new_iv = CP.diff_svl iv args in
-          let new_estate =
-            {estate with 
-                es_formula = new_es_formula;
-                (* es_infer_pure = estate.es_infer_pure@[new_p]; *)
-                es_infer_vars = new_iv
-            }
-          in
-          Some (new_estate,new_p)
+        let args = CP.fv new_p in 
+        let new_iv = CP.diff_svl iv args in
+        let new_estate =
+          {estate with 
+              es_formula = new_es_formula;
+              (* es_infer_pure = estate.es_infer_pure@[new_p]; *)
+              es_infer_vars = new_iv
+          }
+        in
+        Some (new_estate,new_p)
     else
       let check_sat = TP.is_sat lhs_xpure "0" false in
       if not(check_sat) then None
@@ -519,8 +559,13 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let lhs_simplified = simplify lhs_xpure iv in
         let args = CP.fv lhs_simplified in 
         let exists_var = CP.diff_svl args iv in
-        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos) in
+        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl_debug tp_simplify exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
+        let new_p =
+          let new_vars = remove_dups_svl (diff_svl (fv new_p) iv) in
+          if new_vars=[] then new_p
+          else TP.simplify (mkExists new_vars new_p None pos)
+        in
         if CP.isConstFalse new_p then None
         else
 (*          let args = CP.fv new_p in *)
