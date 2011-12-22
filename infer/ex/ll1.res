@@ -1,24 +1,35 @@
 Starting Reduce... 
 Starting Omega...oc
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_43,inf_v_44,inf_q_45,x]
 Entail  (1): Valid. 
-<1>true & v=inf_43 & q=inf_44 & {FLOW,(17,18)=__norm}
-inferred heap: [x::node<inf_43,inf_44>@M[Orig]]
+<1>true & v=inf_v_44 & q=inf_q_45 & inf_ann_43<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::node<inf_v_44,inf_q_45>@inf_ann_43[Orig]]
+inferred pure: [inf_ann_43<=0]
 
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_49,inf_n_50,x]
 Entail  (2): Valid. 
-<1>true & n=inf_48 & {FLOW,(17,18)=__norm}
-inferred heap: [x::ll<inf_48>@M[Orig][LHSCase]]
+<1>true & n=inf_n_50 & inf_ann_49<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_50>@inf_ann_49[Orig][LHSCase]]
+inferred pure: [inf_ann_49<=0]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_67,inf_flted_7_68,p]
 Entail  (3): Valid. 
-<1>true & Anon_59=1 & q_60=p & inf_flted_7_65+1=n & {FLOW,(17,18)=__norm}
-inferred heap: [q_60::ll<inf_flted_7_65>@M[Orig]]
-inferred pure: [q_60=p]
+<1>true & Anon_61=1 & q_62=p & inf_ann_67<=0 & inf_flted_7_68+1=n & {FLOW,(17,18)=__norm}
+inferred heap: [q_62::ll<inf_flted_7_68>@inf_ann_67[Orig]]
+inferred pure: [inf_ann_67<=0; q_62=p]
 
 Entail  (4): Valid. 
-<1>EXISTS(flted_7_87: p::ll<flted_7_87>@M[Orig] & flted_7_87+1=n & {FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_90: p::ll<flted_7_90>@M[Orig] & flted_7_90+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (5): Valid. 
-<1>EXISTS(q_112,flted_7_110: q_112::ll<flted_7_110>@M[Orig] & flted_7_110+1=n & n=1 & {FLOW,(17,18)=__norm})
+<1>EXISTS(q_115,flted_7_113: q_115::ll<flted_7_113>@M[Orig] & flted_7_113+1=n & n=1 & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0; n=1]
 
 Entail  (6): Valid. 
@@ -30,62 +41,83 @@ Entail  (7): Valid.
 inferred pure: [n!=0]
 
 Entail  (8): Valid. 
-<1>EXISTS(q_177,flted_7_175: q_177::ll<flted_7_175>@M[Orig] & flted_7_175+1=n & 0<n & n=1 & {FLOW,(17,18)=__norm})
+<1>EXISTS(q_180,flted_7_178: q_180::ll<flted_7_178>@M[Orig] & flted_7_178+1=n & 0<n & n=1 & {FLOW,(17,18)=__norm})
 inferred pure: [n=1]
 
 Entail  (9): Valid. 
-<1>EXISTS(q_206,flted_7_204: q_206::ll<flted_7_204>@M[Orig] & flted_7_204+1=n & n<=1 & {FLOW,(17,18)=__norm})
+<1>EXISTS(q_209,flted_7_207: q_209::ll<flted_7_207>@M[Orig] & flted_7_207+1=n & n<=1 & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (10): Valid. 
 <1>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [n!=0]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_262,inf_flted_7_263,p]
 Entail  (11): Valid. 
-<1>true & Anon_247=1 & Anon_253=3 & q_248=x2 & q_254=p & inf_flted_7_259+1+1=n & {FLOW,(17,18)=__norm}
-inferred heap: [q_254::ll<inf_flted_7_259>@M[Orig]]
-inferred pure: [q_254=p]
+<1>true & Anon_250=1 & Anon_256=3 & q_251=x2 & q_257=p & inf_ann_262<=0 & inf_flted_7_263+1+1=n & {FLOW,(17,18)=__norm}
+inferred heap: [q_257::ll<inf_flted_7_263>@inf_ann_262[Orig]]
+inferred pure: [inf_ann_262<=0; q_257=p]
 
 Entail  (12): Valid. 
-<1>EXISTS(flted_7_283,flted_7_297: p::ll<flted_7_297>@M[Orig] & flted_7_297+1=flted_7_283 & flted_7_283+1=n & {FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_287,flted_7_301: p::ll<flted_7_301>@M[Orig] & flted_7_301+1=flted_7_287 & flted_7_287+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=1; n!=0]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_334,inf_flted_7_335,p]
 Entail  (13): Valid. 
-<1>true & Anon_318=1 & Anon_324=3 & q_319=x2 & q_325=p & inf_flted_7_330+1+1=n & inf_flted_7_330=2 & {FLOW,(17,18)=__norm}
-inferred heap: [q_325::ll<inf_flted_7_330>@M[Orig]]
-inferred pure: [q_325=p; inf_flted_7_330=2]
+<1>true & Anon_322=1 & Anon_328=3 & q_323=x2 & q_329=p & inf_ann_334<=0 & inf_flted_7_335+1+1=n & inf_flted_7_335=2 & {FLOW,(17,18)=__norm}
+inferred heap: [q_329::ll<inf_flted_7_335>@inf_ann_334[Orig]]
+inferred pure: [inf_ann_334<=0; q_329=p; inf_flted_7_335=2]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_355,inf_b_356,inf_q_357,p]
 Entail  (14): Valid. 
-<1>true & a=1 & x2=p & b=inf_350 & q=inf_351 & inf_351=null & {FLOW,(17,18)=__norm}
-inferred heap: [x2::node<inf_350,inf_351>@M[Orig]]
-inferred pure: [x2=p; inf_351=null]
+<1>true & a=1 & x2=p & b=inf_b_356 & q=inf_q_357 & inf_ann_355<=0 & inf_q_357=null & {FLOW,(17,18)=__norm}
+inferred heap: [x2::node<inf_b_356,inf_q_357>@inf_ann_355[Orig]]
+inferred pure: [inf_ann_355<=0; x2=p; inf_q_357=null]
 
-Entail  (15): Fail.(must) cause:(failure_code=213)  flted_53_368=1 |-  flted_53_368=2 (must-bug).
-<1>EXISTS(flted_53_368: true & flted_53_368=1 & x2=p & b=inf_371 & q=inf_372 & {FLOW,(1,2)=__Error})
-inferred heap: [x2::node<inf_371,inf_372>@M[Orig]]
-inferred pure: [x2=p]
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_377,inf_b_378,inf_q_379,p]
+Entail  (15): Fail.(must) cause:(failure_code=213)  flted_53_374=1 |-  flted_53_374=2 (must-bug).
+<1>EXISTS(flted_53_374: true & flted_53_374=1 & x2=p & b=inf_b_378 & q=inf_q_379 & inf_ann_377<=0 & {FLOW,(1,2)=__Error})
+inferred heap: [x2::node<inf_b_378,inf_q_379>@inf_ann_377[Orig]]
+inferred pure: [inf_ann_377<=0; x2=p]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_405,inf_flted_56_406,inf_q_407,p]
 Entail  (16): Valid. 
-<1>EXISTS(flted_56_394: true & flted_56_394=1 & x2=p & q=inf_399 & inf_flted_56_398=3 & inf_399=null & {FLOW,(17,18)=__norm})
-inferred heap: [x2::node<inf_flted_56_398,inf_399>@M[Orig]]
-inferred pure: [x2=p; inf_flted_56_398=3 & inf_399=null]
+<1>EXISTS(flted_56_401: true & flted_56_401=1 & x2=p & q=inf_q_407 & inf_ann_405<=0 & inf_flted_56_406=3 & inf_q_407=null & {FLOW,(17,18)=__norm})
+inferred heap: [x2::node<inf_flted_56_406,inf_q_407>@inf_ann_405[Orig]]
+inferred pure: [inf_ann_405<=0; x2=p; inf_flted_56_406=3 & inf_q_407=null]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_433,inf_m_434,p]
 Entail  (17): Valid. 
-<1>EXISTS(flted_59_422: true & flted_59_422=1 & x2=p & m=inf_425 & 4<=inf_425 & {FLOW,(17,18)=__norm})
-inferred heap: [x2::ll<inf_425>@M[Orig][LHSCase]]
-inferred pure: [x2=p; 4<=inf_425]
+<1>EXISTS(flted_59_430: true & flted_59_430=1 & x2=p & m=inf_m_434 & inf_ann_433<=0 & 4<=inf_m_434 & {FLOW,(17,18)=__norm})
+inferred heap: [x2::ll<inf_m_434>@inf_ann_433[Orig][LHSCase]]
+inferred pure: [inf_ann_433<=0; x2=p; 4<=inf_m_434]
 
+infer_heap_nodes
+infer var: [p]
+new infer var: [inf_ann_463,inf_flted_7_464,p]
 Entail  (18): Valid. 
-<1>EXISTS(flted_62_445: true & flted_62_445=1 & x2=r & Anon_448=a & q_449=p & inf_flted_7_454+1=m & 3<=inf_flted_7_454 & {FLOW,(17,18)=__norm})
-inferred heap: [q_449::ll<inf_flted_7_454>@M[Orig]]
-inferred pure: [q_449=p; 3<=inf_flted_7_454]
+<1>EXISTS(flted_62_454: true & flted_62_454=1 & x2=r & Anon_457=a & q_458=p & inf_ann_463<=0 & inf_flted_7_464+1=m & 3<=inf_flted_7_464 & {FLOW,(17,18)=__norm})
+inferred heap: [q_458::ll<inf_flted_7_464>@inf_ann_463[Orig]]
+inferred pure: [inf_ann_463<=0; q_458=p; 3<=inf_flted_7_464]
 
 Entail  (19): Valid. 
 <1>true & m=n & 4<=n & {FLOW,(17,18)=__norm}
 inferred pure: [4<=n]
 
 Entail  (20): Valid. 
-<1>EXISTS(q_491,flted_7_489: q_491::ll<flted_7_489>@M[Orig] & flted_7_489+1=n & n=1 & {FLOW,(17,18)=__norm})
+<1>EXISTS(q_501,flted_7_499: q_501::ll<flted_7_499>@M[Orig] & flted_7_499+1=n & n=1 & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0; n=1]
 
 Entail  (21): Valid. 
@@ -119,9 +151,12 @@ Entail  (28): Valid.
 <1>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [x=null]
 
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_566,inf_Anon_567,inf_flted_95_568,x]
 Entail  (29): Valid. 
-<1>true & Anon_27=inf_Anon_556 & inf_flted_95_557=null & {FLOW,(17,18)=__norm}
-inferred heap: [x::node<inf_Anon_556,inf_flted_95_557>@M[Orig]]
-inferred pure: [inf_flted_95_557=null]
+<1>true & Anon_27=inf_Anon_567 & inf_ann_566<=0 & inf_flted_95_568=null & {FLOW,(17,18)=__norm}
+inferred heap: [x::node<inf_Anon_567,inf_flted_95_568>@inf_ann_566[Orig]]
+inferred pure: [inf_ann_566<=0; inf_flted_95_568=null]
 
-Stop Omega... 459 invocations 
+Stop Omega... 620 invocations 
