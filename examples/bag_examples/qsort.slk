@@ -11,6 +11,9 @@ pred ll1<S> == self =  null & S={}
 infer [S] x::ll1<S> |- x!=null.
 print residue.
 
+infer [S] x::ll1<S> |- x::node<a,b>.
+print residue.
+
 //checkentail x::ll1<S> & S!={} |- x::node<a,b>.
 //print residue.
 
