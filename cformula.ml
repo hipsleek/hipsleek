@@ -238,6 +238,8 @@ let fv_ann (a:ann) = match a with
   | ConstAnn _ -> []
   | PolyAnn v -> [v]
 
+let mkPolyAnn v = PolyAnn v
+
 let empty_ext_variance_formula =
 	{
 		formula_var_label = None;
@@ -2179,6 +2181,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_pruning_conditions = pcond;
 							h_formula_view_pos = pos} as g) -> 
 		ViewNode { g with 
+							h_formula_view_imm = subs_imm_par sst imm;  
 							h_formula_view_node = CP.subst_var_par sst x; 
 							h_formula_view_perm = map_opt (CP.subst_var_par sst) perm;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
@@ -2200,7 +2203,7 @@ and h_subst sst (f : h_formula) =
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
-							h_formula_data_imm = imm;  
+							h_formula_data_imm = subs_imm_par sst imm;  
 							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
@@ -2236,6 +2239,15 @@ and subst_one_by_one_h sst (f : h_formula) =
 and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
   | [] -> f
+
+and apply_one_imm (fr,t) a = match a with
+  | ConstAnn _ -> a
+  | PolyAnn sv ->  PolyAnn (if CP.eq_spec_var sv fr then t else sv)
+
+
+and subs_imm_par sst a = match a with
+  | ConstAnn _ -> a
+  | PolyAnn sv ->  PolyAnn (CP.subst_var_par sst sv)
 
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
 
@@ -2310,6 +2322,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         ViewNode {g with h_formula_view_node = subst_var s x; 
 		(* h_formula_view_name = c;  *)
         h_formula_view_perm = subst_var_perm s perm;  (*LDK*)
+        h_formula_view_imm = apply_one_imm s imm;  
 		h_formula_view_arguments = List.map (subst_var s) svs;
 	   (*  h_formula_view_modes = modes; *)
 	   (*  h_formula_view_coercible = coble; *)
@@ -2337,8 +2350,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
         h_formula_data_derv = dr;
-    	h_formula_data_imm = imm;  
     	h_formula_data_perm = subst_var_perm s perm; (*LDK*)
+        h_formula_data_imm = apply_one_imm s imm;  
 	    h_formula_data_origins = orgs;
 	    h_formula_data_original = original;
 		h_formula_data_arguments = List.map (subst_var s) svs;
@@ -3055,6 +3068,15 @@ and list_failesc_context = failesc_context list
     (* conjunct of contexts *)
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
+
+let context_of_branch_ctx_list ls = 
+  let rec helper ls = match ls with
+    | [] -> report_error no_pos "Current Successful context should not be empty []"
+    | [(_,c)] -> c
+    | (_,c)::ts -> OCtx (c,helper ts) 
+  in helper ls
+ 
+let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_list_context = ref(fun (c:list_context) -> "printer not initialized")

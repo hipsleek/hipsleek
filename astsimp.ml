@@ -5741,13 +5741,18 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_arguments = ies; (* arguments *)
                 IF.h_formula_heap_perm = perm;
                 IF.h_formula_heap_name = c; (* data/pred name *)
+                IF.h_formula_heap_imm = ann; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
           let ft = cperm_typ () in
+          let gather_type_info_ann c stab = match c with
+            | IF.ConstAnn _ -> ()
+            | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
           let gather_type_info_perm p stab = match p with
             | None -> ()
             | Some e -> gather_type_info_exp e stab ft; () in
           let _ = gather_type_info_perm perm stab in
+          let _ = gather_type_info_ann ann stab in
 		  (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
 		  (* An Hoa : Deal with the generic pointer! *)
 		  if (c = Parser.generic_pointer_type_name) then 

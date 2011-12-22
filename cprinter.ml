@@ -1572,6 +1572,11 @@ let pr_failesc_context ((l1,l2,l3): failesc_context) =
   pr_successful_states l3;
   fmt_close_box ()
 
+let pr_failesc_context_short ((l1,l2,l3): failesc_context) =
+  fmt_open_vbox 0;
+  pr_successful_states l3;
+  fmt_close_box ()
+
 let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   pr_vwrap_naive_nocut "Failed States:"
@@ -1582,6 +1587,13 @@ let pr_partial_context ((l1,l2): partial_context) =
     	  pr_vwrap "State:" pr_context fs)) l2;
   fmt_close_box ()
 
+
+let pr_partial_context_short ((l1,l2): partial_context) =
+  fmt_open_vbox 0;
+  pr_vwrap_naive "Successful States:"
+      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+    	  pr_vwrap "State:" pr_context_short fs)) l2;
+  fmt_close_box ()
 
 (* let pr_partial_context ((l1,l2): partial_context) = *)
 (*   fmt_open_vbox 0; *)
@@ -1597,8 +1609,9 @@ let pr_partial_context ((l1,l2): partial_context) =
 
 let string_of_partial_context (ctx:partial_context): string =  poly_string_of_pr pr_partial_context ctx
 
-let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : unit =  poly_printer_of_pr fmt pr_partial_context ctx 
+let string_of_partial_context_short (ctx:partial_context): string =  poly_string_of_pr pr_partial_context_short ctx
 
+let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : unit =  poly_printer_of_pr fmt pr_partial_context ctx 
 
 let string_of_failesc_context (ctx:failesc_context): string =  poly_string_of_pr pr_failesc_context ctx
 
@@ -1609,14 +1622,30 @@ let pr_list_failesc_context (lc : list_failesc_context) =
    fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
    fmt_cut (); pr_list_none pr_failesc_context lc
 
+let pr_list_failesc_context_short (lc : list_failesc_context) =
+   (* fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc)); *)
+   fmt_cut (); pr_list_none pr_failesc_context_short lc
+
 let pr_list_partial_context (lc : list_partial_context) =
     (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
    fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
    fmt_cut (); pr_list_none pr_partial_context lc
 
+let pr_list_partial_context_short (lc : list_partial_context) =
+    (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
+   (* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *)
+   fmt_cut (); pr_list_none pr_partial_context_short lc
+
+let pr_list_partial_context_short (lc : list_partial_context) =
+    (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
+   (* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *)
+   fmt_cut (); pr_list_none pr_partial_context_short lc
+
 let string_of_list_partial_context (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context lc
 
 let string_of_list_failesc_context (lc: list_failesc_context) =  poly_string_of_pr pr_list_failesc_context lc
+
+let string_of_list_failesc_context_short (lc: list_failesc_context) =  poly_string_of_pr pr_list_failesc_context_short lc
 
 let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context) : unit =
   poly_printer_of_pr fmt pr_list_partial_context ctx 

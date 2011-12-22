@@ -183,6 +183,10 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 (* let linking_exp_list = ref (Hashtbl.create 100) *)
 (* let _ = let zero = P.IConst (0, no_pos) *)
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
+
+let apply_one_imm (fr,t) a = match a with
+  | ConstAnn _ -> a
+  | PolyAnn (sv, pos) -> PolyAnn ((if P.eq_var sv fr then t else sv), pos)
   
 let rec string_of_spec_var_list l = match l with 
   | []               -> ""
@@ -437,6 +441,12 @@ let extract_var_from_id (id,p) =
 		(var,p)
 ;;
 
+
+let fv_imm ann = match ann with
+  | ConstAnn _ -> []
+  | PolyAnn (id,_) -> [id]
+;;
+
 let rec h_fv (f:h_formula):(ident*primed) list = match f with   
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
@@ -453,14 +463,18 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
              quantified id so that we need to extract the 
              real information inside *)
               h_formula_heap_perm = perm; (*LDK*)
+              h_formula_heap_imm = imm; 
               h_formula_heap_arguments = b} ->
      let perm_vars = fv_iperm perm in
-     Gen.BList.remove_dups_eq (=) (perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
+     let imm_vars =  fv_imm imm in
+     Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
+              h_formula_heap2_imm = imm; 
 		h_formula_heap2_arguments = b}-> 
      let perm_vars =  fv_iperm perm in
-      Gen.BList.remove_dups_eq (=)  (perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+     let imm_vars =  fv_imm imm in
+      Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;
@@ -728,6 +742,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_pseudo_data = ps_data;
 	h_formula_heap_label = l;
 	h_formula_heap_pos = pos}) -> 
+      let imm = apply_one_imm s imm in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm s f)
         | None -> None
@@ -754,6 +769,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_pseudo_data = ps_data;
 		h_formula_heap2_label = l;
 		h_formula_heap2_pos= pos}) -> 
+      let imm = apply_one_imm s imm in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm s f)
         | None -> None

@@ -6148,15 +6148,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	   the remaining part, we need to update l_h and r_h with 
 	   the remaining of the l_node and r_node after matching 
 	   (respectively. *)
-    let (r,op) = subtype_ann_gen l_ann r_ann in
+    let es_impl_vars = estate.es_gen_impl_vars in
+    let (r,ann_lhs,ann_rhs) = subtype_ann_gen es_impl_vars l_ann r_ann in
     if r==false 
     then 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
       CF.mk_failure_must "911 : mismatched annotation" Globals.sl_error)), NoAlias)
     else 
-      let rhs = (match op with 
-        | None -> rhs
-        | Some bf -> Cformula.add_pure_formula_to_formula bf rhs) in
+      (* let rhs = (match op_rhs with  *)
+      (*   | None -> rhs *)
+      (*   | Some bf -> Cformula.add_pure_formula_to_formula bf rhs) in *)
       let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
       let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
 	  (* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)
@@ -6232,9 +6233,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 ivar belongs to ivars
                 (ivar,impl_var) belongs to ivar_subs_to_conseq
               *)
-              let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars estate.es_gen_impl_vars pos in
+              let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars es_impl_vars pos in
               let subtract = Gen.BList.difference_eq CP.eq_spec_var in
-              let new_impl_vars = subtract estate.es_gen_impl_vars impl_tvars in
+              let new_impl_vars = subtract es_impl_vars impl_tvars in
               let new_exist_vars = estate.es_evars(* @ivars *) in
               let new_expl_vars = estate.es_gen_expl_vars@impl_tvars in
               let new_ivars = subtract estate.es_ivars ivars in
@@ -6249,6 +6250,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
               let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
                 get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
+              (* adding annotation constraints matched *)
+              let to_rhs = (match ann_rhs with
+                | None -> to_rhs
+                | Some bf -> CP.mkAnd bf to_rhs no_pos) in
+              let to_lhs = (match ann_lhs with
+                | None -> to_lhs
+                | Some bf -> CP.mkAnd bf to_lhs no_pos) in
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
               (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)

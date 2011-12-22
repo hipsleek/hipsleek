@@ -465,10 +465,9 @@ and subtype_ann (imm1 : ann) (imm2 : ann) : bool =
 
 (* bool denotes possible subyping *)
 and subtype_ann_x (imm1 : ann) (imm2 : ann) : bool =
-  let (r,op) = subtype_ann_gen imm1 imm2 in r
+  let (r,op) = subtype_ann_pair imm1 imm2 in r
   
-and subtype_ann_gen (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) =
-  let (f,op) = 
+and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
    match imm1 with
     | PolyAnn v1 ->
           (match imm2 with
@@ -481,9 +480,21 @@ and subtype_ann_gen (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) =
             | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
              | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
           ) 
-  in match op with
-    | None -> (f,None)
-    | Some (l,r) -> (f, Some (CP.BForm((CP.SubAnn(l,r,no_pos),None),None)) )
+
+and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
+  let (f,op) = subtype_ann_pair imm1 imm2 in
+  match op with
+    | None -> (f,None,None)
+    | Some (l,r) -> 
+          let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+          let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          begin
+            match r with
+              | CP.Var(v,_) -> 
+                  if CP.mem v impl_vars then (f,Some lhs,None)
+                  else (f,None,Some c)
+              | _ -> (f,None,Some c)
+          end
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =

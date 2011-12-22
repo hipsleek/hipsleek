@@ -174,21 +174,24 @@ let to_unprimed_view_root aset h =
 
 (* get exactly one root of h_formula *)
 let get_args_h_formula aset (h:h_formula) =
+  let av = CP.fresh_spec_var_ann () in
   match h with
     | DataNode h -> 
           let h = to_unprimed_data_root aset h in
           let root = h.h_formula_data_node in
           let arg = h.h_formula_data_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-         Some (root, arg,new_arg, 
-         DataNode {h with h_formula_data_arguments=new_arg;})
+         Some (root, arg,new_arg, av,
+         DataNode {h with h_formula_data_arguments=new_arg;
+             h_formula_data_imm = mkPolyAnn av})
     | ViewNode h -> 
           let h = to_unprimed_view_root aset h in
           let root = h.h_formula_view_node in
           let arg = h.h_formula_view_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-          Some (root, arg,new_arg,
-          ViewNode {h with h_formula_view_arguments=new_arg;} )
+          Some (root, arg,new_arg, av,
+          ViewNode {h with h_formula_view_arguments=new_arg; 
+              h_formula_view_imm = mkPolyAnn av} )
     | _ -> None
 
 (*
@@ -199,7 +202,7 @@ type: Cformula.h_formula ->
 *)
 let get_args_h_formula aset (h:h_formula) =
   let pr1 = !print_h_formula in
-  let pr2 = pr_option (pr_quad !print_sv !print_svl !print_svl pr1) in
+  let pr2 = pr_option (pr_penta !print_sv !print_svl !print_svl !print_sv pr1) in
   Gen.Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
@@ -250,18 +253,18 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     let rhs_aset = build_var_aset rhs_als in*)
     let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
       | None -> false,[],[],HTrue,iv,[],[]
-      | Some (r,args,arg2,h) -> 
+      | Some (r,args,arg2,av,h) -> 
             let alias = CP.EMapSV.find_equiv_all r lhs_aset in
             (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
             (*let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)*)
             (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
-            let new_iv = arg2@iv in
+            let new_iv = av::arg2@iv in
             let alias = if List.mem r iv then [] else alias in
             (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
     (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
-    (* let _ = print_endline ("infer_heap_nodes") in *)
-    (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
-    (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
+    let _ = print_endline ("infer_heap_nodes") in
+    let _ = print_endline ("infer var: "^(!print_svl iv)) in
+    let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in
     (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
     (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
     (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)

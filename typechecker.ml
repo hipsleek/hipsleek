@@ -796,6 +796,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*print_string (str_debug_variance ^ "\n");*) 
                   
                   (* TODO: call the entailment checking function in solver.ml *)
+                  let successful_ctx = List.map CF.succ_context_of_failesc_context sctx in
+                  let ctx_print = "\nCurrent States: " ^ (pr_list Cprinter.string_of_context_short successful_ctx)  in
                   let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_pprint (to_print^"\n") pos;
@@ -809,7 +811,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
                   
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
-                    Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                    let to_print = to_print^ctx_print in
+                    Debug.print_info "Procedure Call" (to_print^" has failed \n") pos 
+                 else () ;
                   rs in
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
