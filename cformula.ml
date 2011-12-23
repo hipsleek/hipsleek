@@ -238,6 +238,12 @@ let fv_ann (a:ann) = match a with
   | ConstAnn _ -> []
   | PolyAnn v -> [v]
 
+let mkConstAnn i = match i with 
+  | 0 -> ConstAnn Mutable
+  | 1 -> ConstAnn Imm
+  | 2 -> ConstAnn Lend
+  | _ -> report_error no_pos "Const Ann is greater than 2"  
+
 let mkPolyAnn v = PolyAnn v
 
 let empty_ext_variance_formula =
@@ -6879,4 +6885,97 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
           let c = b.formula_inf_continuation in
           let r = merge_ext_pre c pre in
           EInfer {b with formula_inf_continuation = r}
+
+let rec simp_ann heap pures = match heap with
+  | Star {h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos} ->
+    let (h1,ps1) = simp_ann h1 pures in
+    let (h2,ps2) = simp_ann h2 ps1 in
+    (mkStarH h1 h2 pos,ps2)
+  | Conj {h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos} ->
+    let h1,ps1 = simp_ann h1 pures in
+    let h2,ps2 = simp_ann h2 ps1 in
+    (mkConjH h1 h2 pos,ps2)
+  | Phase {h_formula_phase_rd = h1;
+    h_formula_phase_rw = h2;
+    h_formula_phase_pos = pos} ->
+    let h1,ps1 = simp_ann h1 pures in
+    let h2,ps2 = simp_ann h2 ps1 in
+    (mkPhaseH h1 h2 pos,ps2)
+  | DataNode data ->
+    let imm = data.h_formula_data_imm in
+    let ann_var = fv_ann imm in
+    if ann_var = [] then (heap,pures)
+    else
+      let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
+      begin
+        match p with
+        | [] -> (heap,pures)
+        | [hd] -> 
+          let is = CP.getAnn hd in
+          if is = [] then (heap,pures)
+          else (DataNode {data with h_formula_data_imm = mkConstAnn (List.hd is)},res)
+        | _ -> (heap,pures)
+      end
+  | ViewNode view ->
+    let imm = view.h_formula_view_imm in
+    let ann_var = fv_ann imm in
+    if ann_var = [] then (heap,pures)
+    else
+      let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
+      begin
+        match p with
+        | [] -> (heap,pures)
+        | [hd] ->
+          let is = CP.getAnn hd in
+          if is = [] then (heap,pures)
+          else
+            (ViewNode {view with h_formula_view_imm = mkConstAnn (List.hd is)},res)
+        | _ -> (heap,pures)
+      end
+  | _ -> (heap,pures)
+          
+
+let rec simplify_fml_ann fml = match fml with
+  | Or {formula_or_f1 = f1;
+    formula_or_f2 = f2;
+    formula_or_pos = pos} ->
+    mkOr (simplify_fml_ann f1) (simplify_fml_ann f2) pos
+  | Base b -> 
+    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure)) in
+    let (h,ps) = simp_ann b.formula_base_heap sub_ann in
+    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
+    Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
+  | Exists e ->
+    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix e.formula_exists_pure)) in
+    let (h,ps) = simp_ann e.formula_exists_heap sub_ann in
+    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
+    Exists {e with formula_exists_qvars = (CP.fv p) @ (h_fv h);
+    formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p}
+    
+let rec simplify_ann (sp:struc_formula) : struc_formula =
+  List.map simplify_ext_ann sp
+
+and simplify_ext_ann (sp:ext_formula): ext_formula =
+  match sp with
+    | ECase b -> 
+      let r = List.map (fun (p,s)->(p,simplify_ann s)) b.formula_case_branches in
+      ECase {b with formula_case_branches = r}
+    | EBase b -> 
+      let base = simplify_fml_ann b.formula_ext_base in
+      let r = simplify_ann b.formula_ext_continuation in
+      EBase {b with formula_ext_base = base; formula_ext_continuation = r}
+    | EAssume(svl,f,fl) ->
+      let new_f = simplify_fml_ann f in
+      let new_svl = fv new_f in
+      let new_f = remove_lend new_f in
+      EAssume(new_svl,new_f,fl)
+    | EVariance b -> 
+      let r = simplify_ann b.formula_var_continuation in
+      EVariance {b with formula_var_continuation = r}
+    | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
+
 

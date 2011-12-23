@@ -562,6 +562,16 @@ and isConstBFalse (p:b_formula) =
     | BConst (false, pos) -> true
     | _ -> false
 
+and isSubAnn (p:formula) =
+  match p with
+  | BForm ((Lte (Var (_,_), IConst(_,_), _),_),_) -> true
+  | _ -> false
+
+and getAnn (p:formula) =
+  match p with
+  | BForm ((Lte (Var (_,_), IConst(i,_), _),_),_) -> [i]
+  | _ -> []
+
 and is_null (e : exp) : bool =
   match e with
     | Null _ -> true
