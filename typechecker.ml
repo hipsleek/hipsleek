@@ -488,7 +488,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
-
             (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
 	        let _ = proving_loc#set pos in
 	        let field_types, vs = List.split lvars in
@@ -503,6 +502,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          if !Globals.large_bind then
 	            CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
 	          else ctx in
+            (* let _ = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
+            (* let _ = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
             let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
 	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
@@ -796,6 +797,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*print_string (str_debug_variance ^ "\n");*) 
                   
                   (* TODO: call the entailment checking function in solver.ml *)
+                  (* let _ = print_endline ("WN 1:"^Cprinter.string_of_list_failesc_context sctx) in *)
                   let successful_ctx = List.map CF.succ_context_of_failesc_context sctx in
                   let ctx_print = "\nCurrent States: " ^ (pr_list Cprinter.string_of_context_short successful_ctx)  in
                   let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
@@ -818,9 +820,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
-                  let pr2 = Cprinter.summary_list_failesc_context in
+                  let pr2 = Cprinter.string_of_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
-                  Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+                  Gen.Debug.no_2 "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
 				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin
@@ -926,6 +928,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.pop_esc_level_list ctx5 pid
 	    | _ -> 
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
+	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
+      let pr = Cprinter.string_of_list_failesc_context in
+      Gen.Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
 	(* An Hoa : Simplify the context before checking *)

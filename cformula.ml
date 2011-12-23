@@ -3075,14 +3075,7 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
-let context_of_branch_ctx_list ls = 
-  let rec helper ls = match ls with
-    | [] -> report_error no_pos "Current Successful context should not be empty []"
-    | [(_,c)] -> c
-    | (_,c)::ts -> OCtx (c,helper ts) 
-  in helper ls
- 
-let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
+
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
@@ -3099,6 +3092,21 @@ let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
+
+let context_of_branch_ctx_list ls = 
+  let rec helper ls = match ls with
+    | [] -> report_error no_pos "Current Successful context should not be empty []"
+    | [(_,c)] -> c
+    | (_,c)::ts -> OCtx (c,helper ts) 
+  in helper ls
+ 
+let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
+
+let succ_context_of_failesc_context ((_,_,sl) as x) =
+  let pr = !print_failesc_context in
+  let pr2 = !print_context_short in
+  Gen.Debug.no_1 "succ_context_of_failesc_context" pr pr2
+      succ_context_of_failesc_context x
 
 let es_fv (es:entail_state) : CP.spec_var list =
   (fv es.es_formula)@(h_fv es.es_heap)
@@ -3638,9 +3646,9 @@ let isAnyFalseCtx (ctx:context) : bool = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
 
-let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with
-  | _,Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false
+(* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
+(*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
+(*   | _ -> false *)
 
 let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
@@ -3664,6 +3672,41 @@ let rec allFalseCtx ctx = match ctx with
 	| Ctx es -> isAnyFalseCtx ctx
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
 
+let isFalseBranchCtxL (ss:branch_ctx list) = 
+   (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
+
+let remove_dupl_false (sl:branch_ctx list) = 
+  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
+  if nl==[] then 
+    if (sl==[]) then []
+    else [List.hd(sl)]
+  else nl
+
+let remove_dupl_false (sl:branch_ctx list) = 
+  let pr n = string_of_int(List.length n) in
+  Gen.Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
+
+let remove_dupl_false_context_list (sl:context list) = 
+  let nl = (List.filter (fun oc -> not (isAnyFalseCtx oc) ) sl) in
+  if nl==[] then 
+    if (sl==[]) then []
+    else [List.hd(sl)]
+  else nl
+
+let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
+
+let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
+
+
+let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
+  let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
+  if ns==[] then [List.hd fs_list]
+  else ns
+ 
+let remove_dupl_false_fe_list (fs_list:list_failesc_context) = 
+  let ns = List.filter (fun (fl,_,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
+  if ns==[] then [List.hd fs_list]
+  else ns
 
 let es_simplify (e1:entail_state):entail_state = 
   let hfv0 = h_fv e1.es_heap in
@@ -3793,8 +3836,10 @@ let list_context_simplify (l : list_context) : list_context = match l with
   | FailCtx _-> l
   | SuccCtx sc -> SuccCtx (List.map context_simplify sc)
 
-let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context = 
-  let cs = List.filter (fun x -> not(isAnyFalseBranchCtx x)) cs in
+let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context =
+  (* need to leave at least one false behind *)
+  (* let cs = List.filter (fun x -> not(isAnyFalseBranchCtx x)) cs in *)
+  let cs = remove_dupl_false cs in
   let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
   (l,a,newcs)
 
@@ -4306,34 +4351,6 @@ let remove_dupl_conj_estate (estate:entail_state) : entail_state =
   let mix_f1 = remove_dupl_conj_eq_mix_formula mix_f in
   {estate with es_pure=mix_f1,rest}
 
-let remove_dupl_false (sl:branch_ctx list) = 
-  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
-  if nl==[] then 
-    if (sl==[]) then []
-    else [List.hd(sl)]
-  else nl
-
-let isFalseBranchCtxL (ss:branch_ctx list) = 
-   (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
-
-let remove_dupl_false (sl:branch_ctx list) = 
-  let pr n = string_of_int(List.length n) in
-  Gen.Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
-
-let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
-
-let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
-
-
-let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
-  let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
-  if ns==[] then [List.hd fs_list]
-  else ns
- 
-let remove_dupl_false_fe_list (fs_list:list_failesc_context) = 
-  let ns = List.filter (fun (fl,_,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
-  if ns==[] then [List.hd fs_list]
-  else ns
 
   
 

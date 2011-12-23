@@ -1274,8 +1274,11 @@ let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_) -> s
 
 let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)(* ^" "^(summary_list_path_trace l2) *)^")"
 
-let summary_failesc_context (l1,l2,l3) =  
-	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
+let summary_failesc_context (l1,l2,l3) =
+  let len_l2 = List.fold_left (fun  n (_,l) -> n+(List.length l)) 0 l2 
+    (* compute number of escaped state for all blocks *)
+  in 
+	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (len_l2) ^", "^ string_of_int (List.length l3) 
 	^" "^(summary_list_path_trace l3)
     ^")"
 
@@ -1562,13 +1565,7 @@ let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 let pr_failesc_context ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
   pr_failed_states l1;
-  (* pr_vwrap_naive_nocut "Failed States:" *)
-  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
-  (*   	  pr_vwrap "State:" pr_fail_type fs)) l1; *)
   pr_esc_stack l2;
-  (* pr_vwrap_naive "Successful States:" *)
-  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
-  (*   	  pr_vwrap "State:" pr_context fs)) l3; *)
   pr_successful_states l3;
   fmt_close_box ()
 

@@ -1711,6 +1711,12 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
   transform_list_partial_context (fct,(fun c->c)) ctx 
 
 and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
+  let pr1 = Cprinter.string_of_list_failesc_context in
+  let pr2 = CP.string_of_spec_var in
+  Gen.Debug.no_2 "unfold_failesc_context" pr1 pr2 pr1
+      (fun _ _ -> unfold_failesc_context_x prog ctx v already_unsat pos) ctx v
+
+and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
   let fct es = 
     (* this came from unfolding for bind mostly *)
     let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
@@ -2828,7 +2834,17 @@ and filter_set (cl : list_context) : list_context =
     | SuccCtx l -> if Gen.is_empty l then cl else SuccCtx [(List.hd l)]
 	    (* setup the labeling in conseq and the fail context in cl *)
 
-and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
+and heap_entail_failesc_prefix_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
+      (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
+	  (f: prog_decl->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
+	  ) : (list_failesc_context * proof) =
+  let pr = to_string in
+  let pr2 = Cprinter.string_of_list_failesc_context in
+  Gen.Debug.no_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
+      (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl conseq pos pid (rename_f,to_string,f))
+	  cl conseq
+
+and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
 	  (f: prog_decl->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
 	  ) : (list_failesc_context * proof) =
@@ -3073,7 +3089,9 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
   ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
     if isAnyFalseCtx ctx then
       (*set context as bot*)
-      let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in
+      (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
+      (* why change to false_flow_int? *)
+      let bot_ctx = ctx in
       (* check this first so that false => false is true (with false residual) *)
       ((SuccCtx [bot_ctx]), UnsatAnte)
     else(* if isConstFalse conseq then
@@ -3235,8 +3253,9 @@ and heap_entail_conjunct_lhs_struc_x
 					  (* let ctx = CF.transform_context ( *)
 					  (*           fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) ctx in *)
 			              (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
-                  (* remove away false context *)
-                  let rs = List.filter (fun (c1,_,_) -> not(isAnyFalseCtx c1)) rs in
+                  (* remove away false context : need to keep at least one? *)
+                  let rs2 = List.filter (fun (c1,_,_) -> not(isAnyFalseCtx c1)) rs in
+                  let rs = if rs2==[] then [List.hd rs] else rs2 in
                   let res = List.map (fun (ctx,p,rhs) ->
                       let ctx = prune_ctx prog ctx in
                       let (r,prf) = inner_entailer 9 ctx rhs in
@@ -9171,7 +9190,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
   ^"\n") pos; 
-  let res,prf = heap_entail_failesc_prefix_init prog is_folding  has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
+  let res,prf = heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
   (CF.list_failesc_context_simplify res,prf)
 
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
@@ -9222,9 +9241,17 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     let cl_after_prune = prune_ctx_failesc_list prog cl in
     let conseq = prune_preds prog false conseq in
     Gen.Profiling.pop_time "entail_prune";
-    let (lfc,prf) = heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
+    let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
+
+let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
+      (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) =
+  let pr2 = Cprinter.string_of_formula in
+  let pr1 = Cprinter.string_of_list_failesc_context in
+  Gen.Debug.no_2 "heap_entail_list_failesc_context_init" 
+      pr1 pr2 (fun (r,_)->pr1 r)
+      (fun _ _ -> heap_entail_list_failesc_context_init prog is_folding cl conseq pos pid) cl conseq
 
 let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
