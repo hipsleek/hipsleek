@@ -69,9 +69,7 @@ int f_3 (int n)
 	if (n==0)
 		return 0;
 	else {
-		int z = 2;
-		int y = 1-(n-z);
-		return f_3(y);
+		return f_3(2*(n-2));
 	}
 }
 

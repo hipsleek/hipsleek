@@ -5381,7 +5381,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _
-	| RelForm _ -> pf
+		| RelForm _ -> pf
   in (npf, il)
 
 (***********************************
@@ -6454,46 +6454,5 @@ let rec add_ann_constraints vrs f =
           mkAnd c12  rf no_pos
     | [] -> f
 
-(* To normalize a formula with respect to a variable *)
-(* x + y + z < 1 -> x < 1 - y - z *)
-let rec normalize_by_var_formula (v: spec_var) (f: formula) =
-	if not (List.mem v (fv f)) then f
-	else
-		match f with
-			| BForm (bf, l) -> BForm (normalize_by_var_b_formula v bf, l)
-			| _ -> f
-	
-and normalize_by_var_b_formula (v: spec_var) (bf: b_formula) =
-	let (pf, il) = bf in
-	let n_pf = match pf with
-	  | Lt (e1, e2, pos) -> 
-				if (List.mem v (afv e1)) then
-					let m_e1, sign_v = split_exp_by_var v true e1 in
-					let exp_v = mkVar v no_pos in
-					if sign_v then mkLt exp_v (mkSubtract e2 m_e1 no_pos) pos 
-					else mkLt (mkSubtract m_e1 e2 no_pos) exp_v pos
-				else
-					let m_e2, sign_v = split_exp_by_var v true e2 in
-					let exp_v = mkVar v no_pos in
-					if sign_v then mkLt (mkSubtract e1 m_e2 no_pos) exp_v pos 
-					else mkLt exp_v (mkSubtract m_e2 e1 no_pos) pos
-	in (n_pf, il)
-					
-and split_exp_by_var (v: spec_var) (sign_v: bool) (e: exp) =
-	match e with
-		| Var (x, pos) -> ((if x=v then IConst (0, pos) else e), sign_v)
-		| Add (e1, e2, pos) ->
-				if (List.mem v (afv e1)) then
-					let n_e1, n_sign_v = split_exp_by_var v sign_v e1 in
-					(mkAdd n_e1 e2 pos, n_sign_v)
-				else
-					let n_e2, n_sign_v = split_exp_by_var v sign_v e2 in
-					(mkAdd e1 n_e2 pos, n_sign_v)					
-		| Subtract (e1, e2, pos) ->
-				if (List.mem v (afv e1)) then
-					let n_e1, n_sign_v = split_exp_by_var v sign_v e1 in
-					(mkSubtract n_e1 e2 pos, n_sign_v)
-				else
-					let n_e2, n_sign_v = split_exp_by_var v (not sign_v) e2 in
-					(mkSubtract e1 n_e2 pos, n_sign_v)	
-		| _ -> (e, sign_v)
+
+
