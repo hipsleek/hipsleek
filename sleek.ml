@@ -240,6 +240,7 @@ let main () =
 let _ =
    wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
