@@ -583,8 +583,16 @@ let logic_for_formulas f1 f2 =
 	| false, false -> UFNIA
 
 let generate_app_axioms func seq = "(assert "^ (func [CP.mkVar seq no_pos]) ^ ")\n" 
- 
-let rec add_seq_axioms fvars seqs kfvars = (match fvars with 
+
+let generate_rev_app_axioms f1 f2  = let lf1 = CP.mkVar f1 no_pos in
+                                     let lf2 = CP.mkVar f2 no_pos in 
+                                     "(assert "^(smt_of_b_formula (CP.Eq(CP.ListReverse(CP.ListAppend(lf1::[lf2],no_pos),no_pos),
+                                     CP.ListAppend(((CP.ListReverse(lf2,no_pos))::[(CP.ListReverse(lf1,no_pos))]),no_pos),no_pos),None))^")\n" ^
+                                     "(assert "^(smt_of_b_formula (CP.Eq(CP.ListAppend(lf1::[lf2],no_pos),
+                                     CP.ListCons((CP.ListHead(lf1,no_pos)),CP.ListAppend(
+                                         ((CP.ListTail(lf1,no_pos))::[lf2]),no_pos),no_pos),no_pos),None))^")\n" 
+   
+let rec add_seq_axioms fvars seqs kfvars kseqs = (match fvars with 
     | [] -> ""
     | f::fs -> (match f with
                | CP.SpecVar(List t, _, _) ->  
@@ -599,38 +607,57 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                CP.ListLength((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n"^
                "(assert "^(smt_of_b_formula(CP.Eq(CP.ListReverse(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),
                (CP.mkVar f no_pos),no_pos),None))^")\n"^ 
+               String.concat "" (List.map (generate_rev_app_axioms f) 
+                                                 (List.filter (fun c -> match c with 
+                                                   | CP.SpecVar(List t,_,_) -> true
+                                                   | _ -> false) kfvars)) ^
                String.concat "\n" (List.map (fun x -> (match x , f with  
                                   | CP.ListCons(e1, e2, l), CP.SpecVar(List t, _, _) ->    
                                       let f1 = ((CP.Eq((CP.mkVar f l),(CP.ListCons(e1, e2, l)), l)), None) in
                                       let f2 = ((CP.Eq((CP.ListLength((CP.mkVar f l),l)),   
                                                (CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l)),l)), None ) in
+                                      let lenf = (CP.Eq(CP.ListLength(x,l),CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l),l),None) in
                                       let revf = (CP.Eq((CP.ListReverse((CP.mkVar f l),l)),   
                                                (CP.ListAppend(CP.ListReverse(e2,l)::[CP.List([e1],l)],l)),l),None) in
                                       let expvars = CP.fv (CP.BForm(f1,None)) in
                                       let (_,evars) = List.partition (fun c -> List.mem c kfvars) expvars in
                                       let appf1 = ((CP.Eq(CP.ListAppend(CP.ListCons(e1,e2,l)::[(CP.mkVar f no_pos)], no_pos),
                                       CP.ListCons(e1,CP.ListAppend(e2::[(CP.mkVar f no_pos)],l),no_pos),l)),None) in
+                                      (*let appf2 = ((CP.Eq(CP.ListAppend((CP.mkVar f no_pos)::[CP.ListCons(e1,e2,l)],l),
+                                      CP.ListAppend((CP.mkVar f no_pos)::e1::[e2],l),l)),None) in*)
                                       let lenappf = (CP.Eq(CP.ListLength(CP.ListCons(e1,CP.ListAppend(e2::[(CP.mkVar f no_pos)],l),no_pos),l),
-                                             CP.Add(CP.Add((CP.ListLength((CP.mkVar f l),l)),CP.ListLength(e2,l),l),(CP.mkIConst 1 l),l),
+                                             CP.Add(CP.Add((CP.ListLength((CP.mkVar f l),l)),CP.ListLength(e2,l),l),(CP.mkIConst 1 l),l), 
                                              l),None) in
                                       let revappf1 = ((CP.Eq(CP.ListReverse(CP.ListAppend(CP.ListCons(e1,e2,l)::[(CP.mkVar f l)],l),l),
                                       CP.ListAppend(CP.ListReverse((CP.mkVar f l),l)::[CP.ListReverse(CP.ListCons(e1,e2,l),l)],l),no_pos)),None) in
                                       let mapappf1 = fun c -> "(= " ^ (smt_of_exp (CP.ListAppend(CP.ListCons(e1,e2,l)::(CP.mkVar f l)::c,l))) ^ 
                                       " (append " ^ (smt_of_exp (CP.ListCons(e1,e2,l)))  ^ (smt_of_exp (CP.ListAppend((CP.mkVar f no_pos)::c,l))) 
                                           ^ "))" in
+                                      let mapappf2 = fun c -> "(assert" ^ (smt_of_b_formula (CP.Eq(CP.ListAppend(x::[c],l),
+                                      CP.ListCons(e1,CP.ListAppend(e2::[c],l),l),l),None))^")\n" in
+                                      let revappf2 = fun c -> "(assert" ^ (smt_of_b_formula (CP.Eq(CP.ListAppend(CP.ListReverse(c,l)::[x],l),
+                                      CP.ListAppend(CP.ListReverse(CP.ListCons(e1,c,l),l)::[e2],l),l),None))^ ")\n" in
+                                      let apprevf = ((CP.Eq(CP.ListAppend(CP.ListReverse((CP.mkVar f l),l)::[x],l),
+                                      CP.ListAppend(CP.ListReverse(CP.ListCons(e1,(CP.mkVar f l),l),l)::[e2],l),l)),None) in
                                       if evars == []  
-                                      then  "(assert " ^   (smt_of_b_formula appf1) ^")\n"^ 
+                                      then  "(assert " ^   (smt_of_b_formula appf1) ^")\n"^  
+                                            "(assert " ^   (smt_of_b_formula lenf) ^")\n"^ 
                                             "(assert " ^   (smt_of_b_formula revappf1) ^")\n"^
                                             "(assert " ^ (smt_of_b_formula lenappf)^")\n"^
+                                            "(assert " ^ (smt_of_b_formula apprevf)^")\n"^
                                              String.concat "" (List.map (generate_app_axioms mapappf1) 
                                                  (List.filter (fun c -> match c with 
                                                    | CP.SpecVar(List t,_,_) -> true
                                                    | _ -> false) kfvars)) ^
+                                            String.concat "" (List.map mapappf2 kseqs) ^
+                                            String.concat "" (List.map revappf2 kseqs) ^
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^ " "^ (smt_of_b_formula revf) ^ "))\n" ^
-                                            "(assert (=> " ^ (smt_of_b_formula f1)  ^" "^ (smt_of_b_formula f2) ^ "))"   
+                                            "(assert (=> " ^ (smt_of_b_formula f1)  ^" "^ (smt_of_b_formula f2) ^ "))"    
                                       else "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1,None)) None l)) ^")\n"^  
+                                           "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(lenf,None)) None l)) ^")\n"^  
                                            "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(revappf1,None)) None l)) ^")\n"^  
                                            "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(lenappf,None)) None l)) ^")\n"^
+                                           "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(apprevf,None)) None l)) ^")\n"^
                                            "(assert "^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) 
                                                (CP.BForm(revf,None)) None l) None l)) ^ ")\n" ^ 
                                            "(assert "^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None)))
@@ -639,11 +666,14 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                       let f1 =  ((CP.Eq((CP.mkVar f l),CP.List(elist, l), l)), None) in
                                       let f2 = ((CP.Eq((CP.ListLength((CP.mkVar f l),l)), 
                                           (CP.mkIConst (List.length elist) l),l)), None ) in
+                                      let lenf = ((CP.Eq(CP.ListLength(x,l),(CP.mkIConst (List.length elist) l),l)), None) in
                                       let revf = (CP.Eq((CP.ListReverse((CP.mkVar f l),l)),CP.List(List.rev elist, l),l),None) in
                                       let expvars = CP.fv (CP.BForm(f1,None)) in
                                       let (_,evars) = List.partition (fun c -> List.mem c kfvars) expvars in
                                       let appf1 = (CP.Eq(CP.ListAppend(CP.List(elist,l)::[(CP.mkVar f no_pos)], no_pos),
                                       CP.List(elist@[CP.ListAppend([(CP.mkVar f no_pos)],l)], no_pos),l),None) in
+                                      (*let appf2 = (CP.Eq(CP.ListAppend((CP.mkVar f no_pos)::[CP.List(elist,l)],l),
+                                      CP.ListAppend((CP.mkVar f no_pos)::elist,l),l),None) in*)
                                       let lenappf = (CP.Eq(CP.ListLength(CP.List(elist@[CP.ListAppend([(CP.mkVar f no_pos)],l)], no_pos),l),
                                            CP.Add((CP.ListLength((CP.mkVar f l),l)),CP.mkIConst (List.length elist) l,l),l),None) in
                                       let revappf1 = (CP.Eq(CP.ListReverse(CP.ListAppend(CP.List(elist,l)::[(CP.mkVar f l)], l),l),
@@ -652,6 +682,7 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                       " (append " ^ (smt_of_exp (CP.List(elist,l))) ^ (smt_of_exp (CP.ListAppend((CP.mkVar f no_pos)::c,l))) ^ "))" in
                                       if evars == [] 
                                       then  "(assert " ^  (smt_of_b_formula appf1) ^ ")\n"^ 
+                                            "(assert " ^  (smt_of_b_formula lenf) ^ ")\n"^ 
                                             "(assert " ^  (smt_of_b_formula revappf1) ^ ")\n"^
                                             "(assert " ^  (smt_of_b_formula lenappf) ^ ")\n"^
                                             String.concat "" (List.map (generate_app_axioms mapappf1) 
@@ -661,6 +692,7 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula revf) ^ "))\n" ^
                                             "(assert (=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula f2) ^ "))"
                                       else "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1, None)) None l)) ^")\n" ^ 
+                                           "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(lenf, None)) None l)) ^")\n" ^
                                            "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(revappf1, None)) None l)) ^")\n" ^ 
                                            "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(lenappf, None)) None l)) ^")\n" ^ 
                                            "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) 
@@ -669,7 +701,7 @@ let rec add_seq_axioms fvars seqs kfvars = (match fvars with
                                                (CP.BForm(f2,None)) None l) None l)) ^ ")" 
                                   | _,_ -> ""))
                             seqs)
-               | _ -> "") ^ "\n" ^ (add_seq_axioms fs seqs kfvars) )
+               | _ -> "") ^ "\n" ^ (add_seq_axioms fs seqs kfvars kseqs) )
     
 
 let rec generate_seqs seqs acc = match seqs with
@@ -684,7 +716,7 @@ let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
     let if_seq_axioms = if info.contains_list then (if !is_sat_check then seq_sat_axioms else seq_axioms) else "(define-sort Seq (T) (List T))\n" in 
     let seqs = generate_seqs info.sequences info.sequences in
-    let init_seq_axioms = if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars else "" in 
+    let init_seq_axioms = if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars seqs else "" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in
@@ -945,7 +977,7 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
 	with | _ -> (false, true)
   else (false, true) in
   if (should_run_smt) then
-    let _ = is_sat_check := false in
+    let _ = is_sat_check := true in
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
 	let output = run "is_imply" prover input timeout in
