@@ -1060,6 +1060,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
                     let (new_spec,_,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                    let new_spec = CF.simplify_ann new_spec in
                     if (pre_ctr # get> 0) 
                     then
                       begin
