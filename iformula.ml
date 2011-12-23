@@ -563,16 +563,31 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 							) in
 						List.concat (List.map helper f)
 
+and heap_fv_one_formula (f:one_formula):(ident*primed) list = 
+  (h_fv f.formula_heap)
+
+(*TO CHECK: how about formula_and*)
 and heap_fv (f:formula):(ident*primed) list = match f with
-	| Base b-> h_fv b.formula_base_heap
-	| Exists b-> Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) ( h_fv b.formula_exists_heap)) b.formula_exists_qvars 
+	| Base b-> 
+        let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
+        let hvars = h_fv b.formula_base_heap in
+        Gen.BList.remove_dups_eq (=) hvars@avars
+	| Exists b-> 
+        let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
+        let hvars = h_fv b.formula_exists_heap in
+        Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
 	
-	
+(*TO CHECK: how about formula_and*)	
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
-	| Base b-> h_fv b.formula_base_heap
+	| Base b-> 
+        let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
+        let hvars = h_fv b.formula_base_heap in
+        Gen.BList.remove_dups_eq (=) hvars@avars
 	| Exists b-> 
-		Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) b.formula_exists_qvars
+        let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
+        let hvars = h_fv b.formula_exists_heap in
+		Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars
 	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
 and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
@@ -637,13 +652,20 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
   let prl, pcl = List.split vl in
 	(Gen.BList.remove_dups_eq (=) (List.concat prl), Gen.BList.remove_dups_eq (=) (List.concat pcl))
  
+and all_fv_one_formula (f:one_formula):(ident*primed) list = 
+  Gen.BList.remove_dups_eq (=) 
+	  (List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv f.formula_heap)@(Ipure.fv f.formula_pure))
+				 f.formula_branches )
 
 and all_fv (f:formula):(ident*primed) list = match f with
-	| Base b-> Gen.BList.remove_dups_eq (=) 
-			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
+	| Base b->
+        let avars= List.concat (List.map all_fv_one_formula b.formula_base_and) in
+              Gen.BList.remove_dups_eq (=) 
+			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure)@avars)
 							b.formula_base_branches )
 	| Exists b-> 
-		let r = List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure))
+        let avars= List.concat (List.map all_fv_one_formula b.formula_exists_and) in
+		let r = List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure)@avars)
 							b.formula_exists_branches in
 		Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) r) b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))

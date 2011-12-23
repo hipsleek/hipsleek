@@ -2,16 +2,17 @@ data cell {
   int val;
 }.
 
+/*
 //(1)
 //from ex1.ss
 checkentail  y::cell<j+1> & re=z 
-             and x::cell<i+1> & thread=z & z=z1
-             |- y::cell<j+1> & re=z 
-                and p::cell<i+1> & thread=z.
+             and x::cell<i+1> & thread=z
+             |- y::cell<j+1> & re=z
+                and p::cell<i+1> & thread=z & z=z1.
 print residue.
 //valid
 
-/*
+
 //(2)
 //from ex1.ss
 checkentail y::cell<j+1> & id=z 
@@ -36,3 +37,10 @@ checkentail y::cell<j+1> & id=id1
 print residue.
 
 */
+
+
+checkentail  y::cell<j> & re=z 
+             and x::cell<i> & thread=z
+             |- y::cell<j> & re=z
+                and p::cell<k> & thread=z & z=z1.
+print residue.

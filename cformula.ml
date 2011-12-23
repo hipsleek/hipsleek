@@ -1089,7 +1089,8 @@ and is_simple_formula (f:formula) =
     | DataNode _ -> true
     | ViewNode _ -> true
     | _ -> false
-    
+
+(*TO CHECK: formula_*_and *)
 and fv_simple_formula (f:formula) = 
   let h, _, _, _, _,_ = split_components f in
   match h with
