@@ -181,17 +181,25 @@ let get_args_h_formula aset (h:h_formula) =
           let root = h.h_formula_data_node in
           let arg = h.h_formula_data_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-         Some (root, arg,new_arg, av,
-         DataNode {h with h_formula_data_arguments=new_arg;
-             h_formula_data_imm = mkPolyAnn av})
+          if (!Globals.allow_imm) then
+            Some (root, arg,new_arg, [av],
+            DataNode {h with h_formula_data_arguments=new_arg;
+              h_formula_data_imm = mkPolyAnn av})
+          else
+            Some (root, arg,new_arg, [],
+            DataNode {h with h_formula_data_arguments=new_arg})
     | ViewNode h -> 
           let h = to_unprimed_view_root aset h in
           let root = h.h_formula_view_node in
           let arg = h.h_formula_view_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-          Some (root, arg,new_arg, av,
-          ViewNode {h with h_formula_view_arguments=new_arg; 
+          if (!Globals.allow_imm) then
+            Some (root, arg,new_arg, [av],
+            ViewNode {h with h_formula_view_arguments=new_arg; 
               h_formula_view_imm = mkPolyAnn av} )
+          else
+            Some (root, arg,new_arg, [],
+            ViewNode {h with h_formula_view_arguments=new_arg})
     | _ -> None
 
 (*
@@ -258,7 +266,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
             (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
             (*let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)*)
             (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
-            let new_iv = av::arg2@iv in
+            let new_iv = av@arg2@iv in
             let alias = if List.mem r iv then [] else alias in
             (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
     (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)

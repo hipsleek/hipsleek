@@ -20,6 +20,7 @@ int hd(node x)
 }
 
 // Fail
+// Success when dis-imm
 int hdtl(ref node x)
  infer [x] 
  requires true
