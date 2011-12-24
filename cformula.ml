@@ -7013,10 +7013,12 @@ let rec simplify_fml_ann fml = match fml with
     let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
     Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
   | Exists e ->
-    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix e.formula_exists_pure)) in
+    let exists_p = MCP.pure_of_mix e.formula_exists_pure in
+    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs exists_p) in
     let (h,ps) = simp_ann e.formula_exists_heap sub_ann in
     let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
-    Exists {e with formula_exists_qvars = (CP.fv p) @ (h_fv h);
+    let rm_vars = CP.diff_svl (CP.fv exists_p) (CP.fv p) in
+    Exists {e with formula_exists_qvars = CP.diff_svl e.formula_exists_qvars rm_vars;
     formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p}
     
 let rec simplify_ann (sp:struc_formula) : struc_formula =
@@ -7033,9 +7035,8 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
       EBase {b with formula_ext_base = base; formula_ext_continuation = r}
     | EAssume(svl,f,fl) ->
       let new_f = simplify_fml_ann f in
-      let new_svl = fv new_f in
       let new_f = remove_lend new_f in
-      EAssume(new_svl,new_f,fl)
+      EAssume(svl,new_f,fl)
     | EVariance b -> 
       let r = simplify_ann b.formula_var_continuation in
       EVariance {b with formula_var_continuation = r}
