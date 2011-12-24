@@ -69,7 +69,9 @@ and p_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
   | ListPerm of (exp * exp * loc)
-  | RelForm of (ident * (exp list) * loc)            (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
+  | RelForm of (ident * (exp list) * loc)
+  (* | RelForm of (SpecVar * (exp list) * loc)             *)
+  (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
 and exp =
@@ -477,7 +479,8 @@ and bfv (bf : b_formula) =
           let fv2 = afv a2 in
           fv1 @ fv2
     | RelForm (r, args, _) ->
-		  remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+          let vid = SpecVar(RelT,r,Unprimed) in
+		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =

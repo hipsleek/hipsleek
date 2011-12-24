@@ -1294,6 +1294,13 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
 
+let pr_lhs_rhs (lhs,rhs) = 
+  fmt_open_box 1;
+  pr_pure_formula lhs;
+  fmt_string "-->";
+  pr_pure_formula rhs;
+  fmt_close()
+
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
@@ -1328,10 +1335,12 @@ let pr_estate (es : entail_state) =
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs; 
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
+
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es

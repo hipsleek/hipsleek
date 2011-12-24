@@ -2393,6 +2393,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
+              es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
@@ -6021,6 +6022,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars = estate.es_infer_vars;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
+        es_infer_rel = estate.es_infer_rel;
 		es_var_ctx_lhs = estate.es_var_ctx_lhs;
 		es_var_ctx_rhs = estate.es_var_ctx_rhs;
 		es_var_subst = estate.es_var_subst
@@ -6161,6 +6163,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_pure = estate.es_infer_pure;
+                 es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
 		         es_var_measures = estate.es_var_measures;
@@ -6856,36 +6859,36 @@ and combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
   Gen.Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
 
-and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
-  (* TODO : should we use estate as the base to perform modifications,
-     instead of starting from empty_es! *)
-  let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 
-	  es_formula = estate.es_formula;
-	  es_heap = estate.es_heap;
-	  es_evars = estate.es_evars;
-	  es_gen_expl_vars = estate.es_gen_expl_vars; 
-	  es_gen_impl_vars = estate.es_gen_impl_vars; 
-	  es_ante_evars = estate.es_ante_evars;
-	  es_pure = estate.es_pure;
-	  es_unsat_flag  = false;
-	  es_success_pts = estate.es_success_pts;
-	  es_residue_pts = estate.es_residue_pts;
-	  es_id  = estate.es_id;
-	  es_rhs_eqset  = estate.es_rhs_eqset; (* needed by --imm *)
-	  es_orig_ante  = estate.es_orig_ante;
-	  es_orig_conseq = estate.es_orig_conseq;
-	  es_prior_steps = estate.es_prior_steps;
-      es_path_label = estate.es_path_label;
-      es_infer_vars = estate.es_infer_vars;
-      es_infer_heap = estate.es_infer_heap;
-      es_infer_pure = estate.es_infer_pure;
-	  es_var_measures = estate.es_var_measures;
-	  es_var_label = estate.es_var_label;
-	  es_var_ctx_lhs = estate.es_var_ctx_lhs;
-	  es_var_ctx_rhs = estate.es_var_ctx_rhs;
-	  es_var_subst = estate.es_var_subst;
-	  es_trace = estate.es_trace} in
-  do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
+(* and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos = *)
+(*   (\* TODO : should we use estate as the base to perform modifications, *)
+(*      instead of starting from empty_es! *\) *)
+(*   let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with  *)
+(* 	  es_formula = estate.es_formula; *)
+(* 	  es_heap = estate.es_heap; *)
+(* 	  es_evars = estate.es_evars; *)
+(* 	  es_gen_expl_vars = estate.es_gen_expl_vars;  *)
+(* 	  es_gen_impl_vars = estate.es_gen_impl_vars;  *)
+(* 	  es_ante_evars = estate.es_ante_evars; *)
+(* 	  es_pure = estate.es_pure; *)
+(* 	  es_unsat_flag  = false; *)
+(* 	  es_success_pts = estate.es_success_pts; *)
+(* 	  es_residue_pts = estate.es_residue_pts; *)
+(* 	  es_id  = estate.es_id; *)
+(* 	  es_rhs_eqset  = estate.es_rhs_eqset; (\* needed by --imm *\) *)
+(* 	  es_orig_ante  = estate.es_orig_ante; *)
+(* 	  es_orig_conseq = estate.es_orig_conseq; *)
+(* 	  es_prior_steps = estate.es_prior_steps; *)
+(*       es_path_label = estate.es_path_label; *)
+(*       es_infer_vars = estate.es_infer_vars; *)
+(*       es_infer_heap = estate.es_infer_heap; *)
+(*       es_infer_pure = estate.es_infer_pure; *)
+(* 	  es_var_measures = estate.es_var_measures; *)
+(* 	  es_var_label = estate.es_var_label; *)
+(* 	  es_var_ctx_lhs = estate.es_var_ctx_lhs; *)
+(* 	  es_var_ctx_rhs = estate.es_var_ctx_rhs; *)
+(* 	  es_var_subst = estate.es_var_subst; *)
+(* 	  es_trace = estate.es_trace} in *)
+(*   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos *)
       
 and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let fold_ctx = Ctx { estate with

@@ -2990,12 +2990,17 @@ type entail_state = {
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
   es_infer_post : bool; 
-  es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
+  (*input vars where inference expected*)
+  es_infer_vars : CP.spec_var list; 
   es_infer_label: formula; 
-(*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
-(*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
-  es_infer_heap : h_formula list; (* output : pre heap inferred *)
-  es_infer_pure : CP.formula list; (* output : pre pure inferred *)
+  (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
+  (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
+  (* output : pre heap inferred *)
+  es_infer_heap : h_formula list; 
+  (* output : pre pure inferred *)
+  es_infer_pure : CP.formula list; 
+  (* output : post inferred relation lhs --> rhs *)
+  es_infer_rel : (CP.formula * CP.formula) list; 
   (* es_infer_pures : CP.formula list; *)
   es_infer_invs : CP.formula list (* WN : what is this? *)
 
@@ -3165,6 +3170,7 @@ let empty_es flowt pos =
   es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
+  es_infer_rel = []; 
   es_infer_invs = [];
 }
 
@@ -3961,6 +3967,7 @@ let false_ctx_with_orig_ante es f flowt pos =
         es_infer_vars = es.es_infer_vars;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
+        es_infer_rel = es.es_infer_rel;
     })
 
 let false_es flowt pos = 
@@ -6027,6 +6034,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
+    es_infer_rel = es.es_infer_rel;
 (*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
@@ -7005,7 +7013,7 @@ and simp_ann heap pures =
   let pr1 = !print_h_formula in
   let pr2 = pr_list !print_pure_f in
   let pr3 = pr_pair pr1 pr2 in
-  Gen.Debug.ho_2 "simp_ann" pr1 pr2 pr3
+  Gen.Debug.no_2 "simp_ann" pr1 pr2 pr3
     (fun _ _ -> simp_ann_x heap pures) heap pures
      
 let rec simplify_fml_ann fml = match fml with

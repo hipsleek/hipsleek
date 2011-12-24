@@ -60,6 +60,8 @@ type typ =
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
+  | RelT (* relation type *)
+
 
 (*
   Data types for code gen
@@ -174,6 +176,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
+  | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -194,6 +197,7 @@ let rec string_of_typ_alpha = function
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
+  | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)

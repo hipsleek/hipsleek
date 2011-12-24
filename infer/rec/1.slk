@@ -1,0 +1,20 @@
+data node {
+  int val;
+  node next;
+}
+
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
+
+relation R(int res, int n).
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,R] x::ll<n>@L & x=null & res=0 |- R(res,n).
+
+relation F(int res, int n).
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,F] x::ll<n>@L & x=null & res=0 |- F(res,n).
+
+relation A(int n, int m, int z).
+//  ==> A(n,m,z) <- n=1 & z =1+m
+infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
