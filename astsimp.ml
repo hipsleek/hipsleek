@@ -5991,10 +5991,23 @@ and print_stab (stab : spec_var_table) =
 and case_normalize_pure_formula hp b f = f
 
 (*moved the liniarization to case_normalize_renamed_formula*)
-and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula):
+and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula): IF.formula* ((ident*primed)list) * ((ident*primed)list) =
+  let pr = (pr_list (fun (i,p) -> i)) in
+  let pr_out (f,h,expl) = 
+    ("\n ### f = " ^ (Iprinter.string_of_formula f)
+     ^"\n ### h = " ^ (pr h)
+     ^"\n ### expl = " ^ (pr expl)) 
+  in 
+  Gen.Debug.ho_3 "case_normalize_renamed_formula" 
+      pr pr Iprinter.string_of_formula pr_out
+      (fun _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) avail_vars posib_expl f
+
+(*moved the liniarization to case_normalize_renamed_formula*)
+and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula):
       IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
+  let pr = (pr_list (fun (i,p) -> i)) in
   let rec match_exp (used_names : (ident*primed) list) (hargs : (IP.exp * branch_label) list) pos :
         (((ident*primed) list) * ((ident*primed) list) * ((ident*primed) list) * (IP.formula * (branch_label * IP.formula) list)) = 
     match hargs with
@@ -6153,17 +6166,20 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
         (fun _ _ -> linearize_heap used_names f) used_names f  in
   let rec normalize_base heap cp fl new_br a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("normalize_base: heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
-    let func (f:IF.one_formula) =
+    let heap = Immutable.normalize_h_formula heap false in 
+    let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
+    (****processsing formula_*_and***********)
+    let func evars (f:IF.one_formula) =
       (*Note: f.formula_thread should appear in f.formula_pure*)
       normalize_base f.IF.formula_heap 
           f.IF.formula_pure
           top_flow
           f.IF.formula_branches
           []
-          []
+          evars
           f.IF.formula_pos
     in
-    let tmp_a = List.map func a in
+    let tmp_a = List.map (func h_evars) a in
     let rec split3 ls = match ls with
       | [] -> [],[],[]
       | (x1,x2,x3)::xs -> 
@@ -6171,27 +6187,36 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
           (x1::ls1,x2::ls2,x3::ls3)
     in
     let new_a, used_vars_a,to_expl_a = split3 tmp_a in
-    let rec func2 (fs: (IF.formula * IF.one_formula) list) =
+    let rec func2 (fs: (IF.formula * IF.one_formula) list) : ((IF.one_formula list) * ((ident*primed)list)) =
       match fs with
-        | [] -> []
+        | [] -> [],[]
         | (f1,f2):: xs ->
-            let rs = func2 xs in
+            let rs,evars2 = func2 xs in
+            let evars1,_ = IF.split_quantifiers f1 in
             let f = IF.one_formula_of_formula f1 in
             let f1 = {f with IF.formula_thread = f2.IF.formula_thread} in
-            f1::rs
+            (f1::rs,evars1@evars2)
     in
     let tmp = List.combine new_a a in
-    let new_a = func2 tmp in
+    let new_a, evars_a = func2 tmp in
+    (* let evars_a = List.concat evars_a in *)
     let used_vars_a = List.concat used_vars_a in
     let to_expl_a = List.concat to_expl_a in
-    let heap = Immutable.normalize_h_formula heap false in 
-    let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
+    let _ = print_endline ("case_normalize_renamed_formula: normalize_base"
+                           ^ "\n ### used_vars_a = " ^ (pr used_vars_a)
+                           ^ "\n ### to_expl_a = " ^ (pr to_expl_a)) in
+    (****************************************)
+    let _ = print_endline ("case_normalize_renamed_formula: normalize_base : after linearize"
+                           ^ "\n ### heap (old) = " ^ (Iprinter.string_of_h_formula heap)
+                           ^ "\n ### heap (new) = " ^ (Iprinter.string_of_h_formula new_h)
+                           ^ "\n ### nu = " ^ (pr nu)
+                           ^ "\n ### h_evars = " ^ (pr h_evars)) in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
     let nu = nu@used_vars_a in
-    let posib_expl = posib_expl@to_expl_a in
+    let posib_expl = Gen.BList.remove_dups_eq (=) (posib_expl@to_expl_a) in
     let tmp_evars, to_expl =
-      (let init_evars = (h_evars@evs) in
+      (let init_evars = Gen.BList.remove_dups_eq (=) (evars_a@h_evars@evs) in
       let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
       let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
       (to_evars,to_expl))in
@@ -6276,7 +6301,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 
   (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
   let nf = IF.rename_bound_var_struc_formula nf in
-  (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in *)
+  let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in
   (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:IF.struc_formula) strad_vs :IF.struc_formula* ((ident*primed)list) = 
     let rec helper1 (f:IF.ext_formula):IF.ext_formula * ((ident*primed)list) = match f with
@@ -6304,7 +6329,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
               Error.error_text = "the late instantiation variables collide with the used vars"}
             else true in
             let onb = convert_anonym_to_exist b.IF.formula_ext_base in
-            let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
+            let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in
             let all_expl = Gen.BList.remove_dups_eq (=) (new_expl @ init_expl) in
             let new_strad_vs = Gen.BList.difference_eq (=) strad_vs new_expl in   
             let all_vars = Gen.BList.remove_dups_eq (=) (h@all_expl) in          
