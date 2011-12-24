@@ -694,7 +694,9 @@ disjunctive_constr:
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b [] (get_pos_camlp4 _loc 1)
+               F.formula_base_branches = b;
+               F.formula_base_and = a
+                }) -> F.mkExists ocl h p fl b a (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]

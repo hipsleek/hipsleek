@@ -186,7 +186,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
+
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 
 (*move to ipure.ml*)
@@ -983,9 +985,9 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	List.map helper f
 
 
-and float_out_exps_from_heap (f:formula ):formula = float_out_exps_from_heap_x f
-(* let pr = Iprinter.string_of_formula in *)
-(* Gen.Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
+and float_out_exps_from_heap (f:formula ):formula = (* float_out_exps_from_heap_x f *)
+let pr = !print_formula in
+Gen.Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f
 
 and float_out_exps_from_heap_x (f:formula ):formula = 
 	
@@ -1087,9 +1089,9 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 	  else 
 	    let r1,r2 = List.hd rl in
 	    let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)-> ((c1::a1),(Ipure.mkAnd a2 c2 b.formula_exists_pos)) ) ([r1],r2) (List.tl rl) in
-      let tmp = List.map helper_one_formula b.formula_exists_and in
-      let avars,afs = List.split tmp in
-      let avars = List.concat avars in
+        let tmp = List.map helper_one_formula b.formula_exists_and in
+        let avars,afs = List.split tmp in
+        let avars = List.concat avars in
 	      Exists ({
 			formula_exists_qvars = avars@r1@b.formula_exists_qvars;
 			formula_exists_heap = rh;

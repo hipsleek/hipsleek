@@ -383,8 +383,8 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
                  IF.formula_exists_qvars = append_no_duplicates tmp1 q0;
                })
         else (* make sure that the var is not already there *) f0
-  
-let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
+
+let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
   (* position-based arguments. If a parameter does not appear in args,     *)
   (* then it is instantiated to a fresh name.                              *)
@@ -448,7 +448,13 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 			    IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
             }
           in h
-  
+
+let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
+  Gen.Debug.no_1 "node2_to_node"
+      (fun f -> Iprinter.string_of_h_formula (IF.HeapNode2 f) )
+      (fun f -> Iprinter.string_of_h_formula (IF.HeapNode f))
+      (fun _ -> node2_to_node_x prog h0) h0
+
 (* convert HeapNode2 to HeapNode *)
 let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   match h0 with
@@ -5998,7 +6004,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
      ^"\n ### h = " ^ (pr h)
      ^"\n ### expl = " ^ (pr expl)) 
   in 
-  Gen.Debug.ho_3 "case_normalize_renamed_formula" 
+  Gen.Debug.no_3 "case_normalize_renamed_formula" 
       pr pr Iprinter.string_of_formula pr_out
       (fun _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) avail_vars posib_expl f
 
@@ -6202,15 +6208,15 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (* let evars_a = List.concat evars_a in *)
     let used_vars_a = List.concat used_vars_a in
     let to_expl_a = List.concat to_expl_a in
-    let _ = print_endline ("case_normalize_renamed_formula: normalize_base"
-                           ^ "\n ### used_vars_a = " ^ (pr used_vars_a)
-                           ^ "\n ### to_expl_a = " ^ (pr to_expl_a)) in
     (****************************************)
-    let _ = print_endline ("case_normalize_renamed_formula: normalize_base : after linearize"
-                           ^ "\n ### heap (old) = " ^ (Iprinter.string_of_h_formula heap)
-                           ^ "\n ### heap (new) = " ^ (Iprinter.string_of_h_formula new_h)
-                           ^ "\n ### nu = " ^ (pr nu)
-                           ^ "\n ### h_evars = " ^ (pr h_evars)) in
+    (* let _ = print_endline ("case_normalize_renamed_formula: normalize_base" *)
+    (*                        ^ "\n ### used_vars_a = " ^ (pr used_vars_a) *)
+    (*                        ^ "\n ### to_expl_a = " ^ (pr to_expl_a)) in *)
+    (* let _ = print_endline ("case_normalize_renamed_formula: normalize_base : after linearize" *)
+    (*                        ^ "\n ### heap (old) = " ^ (Iprinter.string_of_h_formula heap) *)
+    (*                        ^ "\n ### heap (new) = " ^ (Iprinter.string_of_h_formula new_h) *)
+    (*                        ^ "\n ### nu = " ^ (pr nu) *)
+    (*                        ^ "\n ### h_evars = " ^ (pr h_evars)) in *)
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
     let nu = nu@used_vars_a in
@@ -6292,7 +6298,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
-  let nf = IF.float_out_thread_struc_formula f in
+  let nf = IF.float_out_thread_struc_formula nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 1 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
   let nf = IF.float_out_exps_from_heap_struc nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 2 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
@@ -6301,7 +6307,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 
   (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
   let nf = IF.rename_bound_var_struc_formula nf in
-  let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in
+  (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:IF.struc_formula) strad_vs :IF.struc_formula* ((ident*primed)list) = 
     let rec helper1 (f:IF.ext_formula):IF.ext_formula * ((ident*primed)list) = match f with

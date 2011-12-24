@@ -1,55 +1,26 @@
+/*
+
+IMPORTANT ISSUES:
+- Renaming in astsimpl
+- Finding implilit inst variables in RHS
+become AMBIGUOUS because of multiple formulas in main and threads
+*/
+
 data cell {
   int val;
 }.
 
-/*
-//(1)
-//from ex1.ss
-checkentail  y::cell<j+1> & re=z 
-             and x::cell<i+1> & thread=z
-             |- y::cell<j+1> & re=z
-                and p::cell<i+1> & thread=z & z=z1.
-print residue.
-//valid
-
-
-//(2)
-//from ex1.ss
-checkentail y::cell<j+1> & id=z 
-            and x::cell<i+1> & thread=z
-            |- (exists v: id=v 
-                and x'::cell<i+1> & thread=v).
-print residue. //valid, expecting y::cell<j+1> & id=z
-
-// (3)
-//several threads + existential
-checkentail y::cell<j+1> & id=id1
-            and x::cell<i+1> & thread=id1
-            and z::cell<k+1> & thread=id2
-            |- (exists v: id=v 
-                and x'::cell<i+1> & thread=v).
-print residue.
-// how to pickup the right thread
 checkentail y::cell<j+1> & id=id1
             and x::cell<i+1> & thread=id1
             and z::cell<k+1> & thread=id2
             |- y::cell<v>.
 print residue.
 
-*/
-
-/*
-checkentail  y::cell<j> & z=z1
-             and x::cell<i> & thread=z1
-             and t::cell<k1> & thread=z2 
-             |- y::cell<j> & true
-                and x::cell<k> & thread=z1.
+//(1)
+//from ex1.ss
+checkentail  y::cell<j+1> & re=z 
+             and x::cell<i+1> & thread=z
+             |- y::cell<j+1> & re=z
+                and x::cell<i+1> & thread=z.
 print residue.
-*/
-
-checkentail  x::cell<i> & true
-             and y::cell<j> & thread=id1
-             and z::cell<k1> & thread=id2
-             |- x::cell<i> & true
-                and y::cell<j> & thread=id1.
-print residue.
+//valid

@@ -4976,9 +4976,14 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
               | [] -> (Some ((to_ante,to_conseq),estate), (SuccCtx []))
               | x::xs ->
                   let f1,f2 = x in
-                  let new_p = add_mix_formula_to_mix_formula to_ante f1.formula_pure in
-                  let new_f1 = {f1 with formula_pure = new_p} in
-                  let pure1, ctx1 = process_thread_one_match estate (new_f1,f2) in
+                  let new_p1 = add_mix_formula_to_mix_formula to_ante f1.formula_pure in
+                  (*TO DO: remove_dupl_conj*)
+                  let new_p1 = remove_dupl_conj_eq_mix_formula new_p1 in
+                  let new_f1 = {f1 with formula_pure = new_p1} in
+                  let new_p2 = add_mix_formula_to_mix_formula to_conseq f2.formula_pure in
+                  let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in
+                  let new_f2 = {f2 with formula_pure = new_p2} in
+                  let pure1, ctx1 = process_thread_one_match estate (new_f1,new_f2) in
                   (match pure1 with
                     | None -> (None,ctx1)
                     | Some (p1,es1) ->
