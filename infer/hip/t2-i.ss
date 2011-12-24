@@ -58,6 +58,7 @@ int hd3(node x)
   return x.val;
 }
 
+// infer_vars = [] -> still got new post?
 int hd4(node x)
  infer [] 
  requires x::ll<n>

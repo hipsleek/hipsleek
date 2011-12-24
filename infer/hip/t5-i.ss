@@ -19,6 +19,7 @@ int hd(node x)
   return x.val;
 }
 
+// Fail
 int hdtl(ref node x)
  infer [x] 
  requires true

@@ -6976,7 +6976,7 @@ let rec simp_ann heap pures = match heap with
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (heap,pures)
+        | [] -> (DataNode {data with h_formula_data_imm = mkConstAnn 2},res)
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
@@ -6991,7 +6991,7 @@ let rec simp_ann heap pures = match heap with
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (heap,pures)
+        | [] -> (ViewNode {view with h_formula_view_imm = mkConstAnn 2},res)
         | [hd] ->
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
