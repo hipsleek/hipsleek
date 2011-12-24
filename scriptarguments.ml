@@ -300,4 +300,10 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
 ;;
 
+let check_option_consistency () =
+  if !Globals.allow_imm && Perm.allow_perm() then
+    begin
+    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at same time"
+    end
+
 Astsimp.inter := !inter;;

@@ -19,6 +19,23 @@ print residue.
 
 
 /*
+x=z & x!=z & q_27=z
+\/ x!=z & x::node<..>
+
+case {
+  x=z -> 
+  x!=z -> 
+}
+
+requires x=z ...
+ensures
+requires x!=z  ..
+ensures
+
+
+x!=z & ...
+
+
 Currently obtained:
  Entail  (1): Valid. 
  <1>

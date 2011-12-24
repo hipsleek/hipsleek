@@ -2975,6 +2975,7 @@ type entail_state = {
   es_crt_holes : (h_formula * int) list;
   es_hole_stk : ((h_formula * int) list) list;
   es_aux_xpure_1 : MCP.mix_formula;
+  es_imm_last_phase : bool;
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
@@ -3151,6 +3152,7 @@ let empty_es flowt pos =
   es_crt_holes = [];
   es_hole_stk = [];
   es_aux_xpure_1 = MCP.mkMTrue pos;
+  es_imm_last_phase = true;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
    es_imm_pure_stk = [];
@@ -6425,18 +6427,62 @@ and add_origs_to_node_struc (v:string) (e : struc_formula) origs =
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
 
-and add_to_aux_conseq lctx to_aux_conseq pos =
-  match lctx with
+let disable_imm_last_phase_ctx ctx =
+   transform_context
+    (fun es ->
+  		Ctx{es with es_imm_last_phase = false}
+      ) ctx
+
+and enable_imm_last_phase_ctx ctx =
+   transform_context
+    (fun es ->
+  		Ctx{es with es_imm_last_phase = true}
+      ) ctx
+
+let add_to_aux_conseq_estate es to_aux_conseq pos =
+  { es with es_aux_conseq = (*match es.es_aux_conseq with
+    | None -> Some to_aux_conseq
+    | Some f -> Some*) (CP.mkAnd  (*f*) es.es_aux_conseq to_aux_conseq pos)
+  }
+
+let add_to_aux_conseq lctx to_aux_conseq pos =
+  (match lctx with
     | FailCtx _ -> lctx
     | SuccCtx cl ->
       let new_cl = List.map (fun c ->
       (transform_context
     	(fun es ->
-    		Ctx{es with
-    		    (* add to the aux conseq *)
-    		    es_aux_conseq = CP.mkAnd es.es_aux_conseq to_aux_conseq pos;
-    		})) c) cl
-      in SuccCtx(new_cl)
+    		Ctx  (add_to_aux_conseq_estate es to_aux_conseq pos)
+      ) c)) cl
+      in SuccCtx(new_cl))
+
+
+(* and add_to_aux_conseq lctx to_aux_conseq pos = *)
+(*   match lctx with *)
+(*     | FailCtx _ -> lctx *)
+(*     | SuccCtx cl -> *)
+(*       let new_cl = List.map (fun c -> *)
+(*       (transform_context *)
+(*     	(fun es -> *)
+(*     		Ctx{es with *)
+(*     		    (\* add to the aux conseq *\) *)
+(*     		    es_aux_conseq = CP.mkAnd es.es_aux_conseq to_aux_conseq pos; *)
+(*     		})) c) cl *)
+(*       in SuccCtx(new_cl) *)
+
+let enable_imm_last_phase lctx =
+  (match lctx with
+    | FailCtx _ -> lctx
+    | SuccCtx cl ->
+      let new_cl = List.map (fun c -> enable_imm_last_phase_ctx c) cl
+      in SuccCtx(new_cl))
+
+and disable_imm_last_phase lctx =
+  (match lctx with
+    | FailCtx _ -> lctx
+    | SuccCtx cl ->
+      let new_cl = List.map (fun c -> disable_imm_last_phase_ctx c) cl
+      in SuccCtx(new_cl))
 
 and add_to_subst lctx r_subst l_subst =
   match lctx with

@@ -2393,6 +2393,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
+      	      es_imm_last_phase = fold_es.es_imm_last_phase;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
 	      Debug.devel_pprint ("process_fold_result: new_ctx after folding: "
@@ -3906,31 +3907,98 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 
 
 (*LDK: 25/08/2011, also instatiate ivars*)
+(* and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = *)
+(*   let pr1 = Cprinter.string_of_list_context in *)
+(*   let pr2 = Cprinter.string_of_mix_formula in *)
+(*   Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1  *)
+(*       move_expl_inst_ctx_list_x ctx f *)
+
+(* (\*TO CHECK: *\) *)
+(* and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context =  *)
+(*   let fct es =  *)
+(* 	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars@es.es_ivars in *)
+(*     let f = MCP.find_rel_constraints f l_inst in *)
+(*     let nf =  *)
+(*       let f2 = if (es.es_evars = []) then f else  *)
+(* 		(\*let wrapp_l = Gen.BList.difference_eq CP.eq_spec_var es.es_evars l_inst in*\) *)
+(* 		(elim_exists_mix_formula(\*_debug*\) es.es_evars f no_pos) in *)
+(* 	  (\* let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in *\) *)
+(*       CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in *)
+(*     (\*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*\) *)
+(*     Ctx {es with *)
+(*         (\* why isn't es_gen_expl_vars updated? *\) *)
+(* 	    es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
+(* 	    es_ante_evars = es.es_ante_evars @ es.es_evars; *)
+(* 	    es_formula = nf; *)
+(* 	    es_unsat_flag = false; } in *)
+(*   transform_list_context (fct,(fun c->c)) ctx *)
+
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
-  let pr1 = Cprinter.string_of_list_context in
+  let pr1 = Cprinter.string_of_list_context_short in
   let pr2 = Cprinter.string_of_mix_formula in
   Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
       move_expl_inst_ctx_list_x ctx f
 
 (*TO CHECK: *)
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
-  let fct es = 
-	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars@es.es_ivars in
-    let f = MCP.find_rel_constraints f l_inst in
+  match ctx with
+    | FailCtx _ -> ctx
+    | SuccCtx cl ->
+      let cl1 = 
+      List.map (fun c ->
+	(transform_context
+	   (fun es -> Ctx(move_expl_inst_estate es f)
+	   ) c)) cl 
+      in SuccCtx(cl1)
+
+  (*   Ctx {es with *)
+  (*       (\* why isn't es_gen_expl_vars updated? *\) *)
+  (* 	    es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
+  (* 	    es_ante_evars = es.es_ante_evars @ es.es_evars; *)
+  (* 	    es_formula = nf; *)
+  (* 	    es_unsat_flag = false; } in *)
+  (* transform_list_context (move_expl_inst_estate,(fun c->c)) ctx *)
+
+and get_expl_inst es (f : MCP.mix_formula) = 
+  let l_inst = es.es_gen_expl_vars(*@es.es_gen_impl_vars@es.es_ivars*) in
+  let f = MCP.find_rel_constraints f l_inst in
+  let to_elim_vars = es.es_gen_impl_vars@es.es_evars in
+  if (to_elim_vars = []) then f 
+  else (elim_exists_mix_formula to_elim_vars f no_pos) 
+
+and move_expl_inst_estate es (f : MCP.mix_formula) = 
     let nf = 
-      let f2 = if (es.es_evars = []) then f else 
-		(*let wrapp_l = Gen.BList.difference_eq CP.eq_spec_var es.es_evars l_inst in*)
-		(elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
-	  (* let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in *)
+      let f2 = get_expl_inst es f in
+      (* if (to_elim_vars = []) then f else  *)
+	  (* (elim_exists_mix_formula to_elim_vars f no_pos) in *)
+      (* let _ = print_endline("cris: expl inst = " ^ (Cprinter.string_of_mix_formula f2)) in *)
       CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
-    (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
-    Ctx {es with
-        (* why isn't es_gen_expl_vars updated? *)
-	    es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars;
-	    es_ante_evars = es.es_ante_evars @ es.es_evars;
-	    es_formula = nf;
-	    es_unsat_flag = false; } in
-  transform_list_context (fct,(fun c->c)) ctx
+      {es with
+            (* why isn't es_gen_expl_vars updated? *)
+      (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
+      es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars (*es.es_evars*);
+      es_formula = nf;
+      es_unsat_flag = false; } 
+
+and move_impl_inst_estate es (f:MCP.mix_formula) = 
+    let l_inst = es.es_gen_impl_vars@es.es_ivars in
+    let f = MCP.find_rel_constraints f l_inst in
+    let to_elim_vars = es.es_gen_expl_vars@es.es_evars in  
+    let nf = 
+      let f2 = if ( to_elim_vars = []) then f else 
+	  (elim_exists_mix_formula to_elim_vars f no_pos) in
+      (* let _ = print_endline("cris: impl inst = " ^ (Cprinter.string_of_mix_formula f2)) in *)
+      (* let _ = print_endline("cris: f = " ^ (Cprinter.string_of_mix_formula f)) in *)
+      CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
+      {es with
+            (* why isn't es_gen_expl_vars updated? *)
+      es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
+      es_ante_evars = es.es_ante_evars @ to_elim_vars;
+      es_formula = nf;
+      es_unsat_flag = false; } 
+    
+
+
 
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
 and obtain_subst l =
@@ -4154,7 +4222,9 @@ and heap_entail_split_rhs_phases_x
                   new_conseq (consume_heap new_conseq) pos
 	      else
 	        let res_ctx, res_prf = 
-	          (	    
+          (	    
+    		    (* this is not the last phase of the entailment *)
+	              let ctx_00 = disable_imm_last_phase_ctx ctx_00 in
 	              (* entail the read phase heap *)
 	              let (after_rd_ctx, after_rd_prf) = heap_entail_rhs_read_phase prog is_folding  ctx_00 h1 h2 h3 func pos in
 	              (* entail the write phase heap *)
@@ -4164,6 +4234,8 @@ and heap_entail_split_rhs_phases_x
 	          )
 	        in 
 	        (* entail the pure part *)
+		(* this is the last phase of the entailment *)
+		let res_ctx = enable_imm_last_phase res_ctx in
 	        match res_ctx with
 	          | SuccCtx (cl) ->
 	                (* let _ = print_string("************************************************************************\n") in *)
@@ -4294,7 +4366,9 @@ and heap_n_pure_entail_x
   (* let _  = print_string("*************************************************\n") in *)
   (* let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
   (* let _  = print_string("*************************************************\n") in *)
+  let ctx0 = disable_imm_last_phase_ctx ctx0 in
   let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
+  let entail_h_ctx = enable_imm_last_phase entail_h_ctx in
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
@@ -5028,7 +5102,32 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   (*this move_expl_inst call can occur at the end of folding and also 
                                     at the end of entailments of stages possibly leading to duplications of instantiations
                                     moving it would require the rhs pure to be moved as well...*)                          
-				                  let new_ctx = move_expl_inst_ctx_list ctx p2 in
+
+				                  (* let new_ctx = move_expl_inst_ctx_list ctx p2 in *)
+  				                  let new_ctx =
+    						    (* let _ = print_endline ("Cris: ctx = " ^ (Cprinter.string_of_list_context ctx) ^ "\n") in *)
+						    (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
+						      (match ctx with
+						  	| FailCtx _ -> ctx
+						  	| SuccCtx cl ->
+						  	  let new_cl =
+						  	    List.map (fun c ->
+						  	      (transform_context
+    						  		 (fun es ->
+						  		   (* explicit inst *)
+						  		   let l_inst = get_expl_inst es p2 in
+						  		   let es = move_impl_inst_estate es p2 in
+						  		    Ctx ( if (es.es_imm_last_phase) then
+						  		      	move_expl_inst_estate es p2
+						  		      else
+						  			add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
+						  		 ) c)) cl
+						  	  in SuccCtx(new_cl))
+
+						    
+						  in
+
+
 				                  (new_ctx, proof)
 				                end
 			                  | _ -> begin 
