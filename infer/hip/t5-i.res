@@ -19,44 +19,52 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null 
 Procedure hd$node SUCCESS
 Checking procedure tl$node... infer_heap_nodes
 infer var: [x]
-new infer var: [inf_ann_561,inf_val_36_562,inf_next_36_563,x]
+new infer var: [inf_ann_561,inf_val_38_562,inf_next_38_563,x]
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 4::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_36_562,inf_next_36_563>@inf_ann_561[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_38_562,inf_next_38_563>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           x::node<inf_val_36_562,inf_next_36_563>@inf_ann_561[Orig] &
-           res=inf_next_36_563 & {FLOW,(20,21)=__norm}
+           true & res=inf_next_38_563 & {FLOW,(20,21)=__norm}
 
 Procedure tl$node SUCCESS
 Checking procedure hdtl$node... infer_heap_nodes
 infer var: [x]
-new infer var: [inf_ann_574,inf_inf_val_36_575,inf_inf_next_36_576,x]
-
-Procedure Call:t5-i.ss:27: 6: 
-Verification Context:(Line:25,Col:9)
-Proving precondition in method tl$node for spec:
- EBase x'::node<inf_val_36_562,inf_next_36_563>@inf_ann_561[Orig] & true &
-       {FLOW,(20,21)=__norm}
-         EAssume 4::
-           x'::node<inf_val_36_562,inf_next_36_563>@inf_ann_561[Orig] &
-           res=inf_next_36_563 & {FLOW,(20,21)=__norm}
-Current States: [ true & x'=x & {FLOW,(20,21)=__norm}
- es_infer_vars: [x]] has failed 
-
+new infer var: [inf_ann_576,inf_inf_val_38_577,inf_inf_next_38_578,x]
+infer_heap_nodes
+infer var: [inf_ann_576,inf_inf_val_38_577,inf_inf_next_38_578,x]
+new infer var: [inf_ann_583,inf_n_584,inf_ann_576,inf_inf_val_38_577,inf_inf_next_38_578,x]
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 2::ref [x]
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EAssume 2::ref [x]
-   true & true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase x::node<inf_inf_val_38_577,inf_inf_next_38_578>@L[Orig] * 
+       inf_inf_next_38_578::ll<inf_n_584>@L[Orig][LHSCase] &
+       inf_inf_next_38_578!=null & {FLOW,(20,21)=__norm}
+         EAssume 2::ref [x]
+           x'::node<Anon_535,q_536>@M[Orig] * 
+           q_536::ll<flted_7_534>@M[Orig] & inf_ann_583<=0 & res=Anon_535 & 
+           inf_inf_next_38_578=x' & flted_7_534=inf_n_584 - 1 & x!=null & 
+           x'!=null & 0<=inf_n_584 & 0<=inf_n_584 & {FLOW,(20,21)=__norm}
 
-Procedure hdtl$node result FAIL-1
-Stop Omega... 104 invocations 
+Procedure Call:t5-i.ss:30: 9: 
+Verification Context:(Line:0,Col:0)
+Proving precondition in method hd$node for spec:
+ EBase exists (Expl)(Impl)[n](ex)x'::ll<n>@M[Orig][LHSCase] & x'!=null &
+       {FLOW,(20,21)=__norm}
+         EAssume 1::
+           x'::node<Anon_535,q_536>@M[Orig] * 
+           q_536::ll<flted_7_534>@M[Orig] & n=flted_7_534+1 & res=Anon_535 & 
+           0<=n & {FLOW,(20,21)=__norm}
+Current States: [ x::node<inf_inf_val_38_577,inf_inf_next_38_578>@L[Orig] * inf_inf_next_38_578::ll<inf_n_584>@L[Orig][LHSCase] & inf_inf_next_38_578!=null & inf_val_38_587=inf_inf_val_38_577 & inf_next_38_563=inf_inf_next_38_578 & x'=inf_next_38_563 & {FLOW,(20,21)=__norm}] has failed 
+
+
+Procedure hdtl$node SUCCESS
+Stop Omega... 142 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 0.964059 second(s)
+	Time spent in main process: 0.740046 second(s)
+	Time spent in child processes: 0.224013 second(s)

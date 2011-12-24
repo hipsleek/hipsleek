@@ -15,13 +15,12 @@ OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 1::ref [x]
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_20_543,inf_next_20_544>@inf_ann_542[Orig] * 
-       inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@inf_ann_549[Orig] &
-       true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase x::node<inf_val_20_543,inf_next_20_544>@L[Orig] * 
+       inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@L[Orig] & true &
+       {FLOW,(20,21)=__norm}
          EAssume 1::ref [x]
-           x::node<inf_val_20_543,inf_next_20_544>@inf_ann_542[Orig] * 
-           inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@inf_ann_549[Orig] &
-           inf_next_20_544=x' & res=inf_val_21_550 & {FLOW,(20,21)=__norm}
+           true & inf_next_20_544=x' & res=inf_val_21_550 &
+           {FLOW,(20,21)=__norm}
 
 Procedure hd0$node SUCCESS
 Checking procedure hd1$node... infer_heap_nodes
@@ -31,11 +30,10 @@ OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 3::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_33_565,inf_next_33_566>@inf_ann_564[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_33_565,inf_next_33_566>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 3::
-           x::node<inf_val_33_565,inf_next_33_566>@inf_ann_564[Orig] &
-           res=inf_val_33_565 & {FLOW,(20,21)=__norm}
+           true & res=inf_val_33_565 & {FLOW,(20,21)=__norm}
 
 Procedure hd1$node SUCCESS
 Checking procedure hd2$node... OLD SPECS:  EInfer [x]
@@ -63,10 +61,10 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & n!=0 &
 
 Procedure hd3$node SUCCESS
 Checking procedure hd4$node... 
-( ) :t2-i.ss:70: 9: bind: node  x'::node<val_70_501',next_70_502'>@L[Orig] cannot be derived from context
+( ) :t2-i.ss:71: 9: bind: node  x'::node<val_71_501',next_71_502'>@L[Orig] cannot be derived from context
 
 
-(Cause of Bind Failure):t2-i.ss:70: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
+(Cause of Bind Failure):t2-i.ss:71: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
 Failed States:
 [
  Label: 
@@ -95,9 +93,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
            true & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 125 invocations 
+Stop Omega... 122 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.36 second(s)
-	Time spent in main process: 0.34 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 1.080065 second(s)
+	Time spent in main process: 0.932057 second(s)
+	Time spent in child processes: 0.148008 second(s)
