@@ -6949,7 +6949,7 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
           let r = merge_ext_pre c pre in
           EInfer {b with formula_inf_continuation = r}
 
-let rec simp_ann heap pures = match heap with
+let rec simp_ann_x heap pures = match heap with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} ->
@@ -7000,8 +7000,14 @@ let rec simp_ann heap pures = match heap with
         | _ -> (heap,pures)
       end
   | _ -> (heap,pures)
-          
-
+     
+and simp_ann heap pures =
+  let pr1 = !print_h_formula in
+  let pr2 = pr_list !print_pure_f in
+  let pr3 = pr_pair pr1 pr2 in
+  Gen.Debug.ho_2 "simp_ann" pr1 pr2 pr3
+    (fun _ _ -> simp_ann_x heap pures) heap pures
+     
 let rec simplify_fml_ann fml = match fml with
   | Or {formula_or_f1 = f1;
     formula_or_f2 = f2;
