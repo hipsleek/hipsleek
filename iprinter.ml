@@ -329,7 +329,7 @@ let string_of_one_formula (f:F.one_formula) =
     ^ "*" ^ "(" ^ sp ^ ")" )
 
 let rec string_of_one_formula_list (f:F.one_formula list) =
-  String.concat "\nand" (List.map string_of_one_formula f)
+  String.concat "\n AND" (List.map string_of_one_formula f)
 
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
@@ -338,7 +338,7 @@ let rec string_of_formula = function
 				  F.formula_base_flow = fl;
 				  F.formula_base_and = a;
 				  F.formula_base_pos = l}) ->
-      let sa = if a == [] then "" else "\nand " in
+      let sa = if a == [] then "" else "\nAND " in
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
 	  if hf = F.HTrue then 
@@ -364,7 +364,7 @@ let rec string_of_formula = function
 					F.formula_exists_flow = fl;
 					F.formula_exists_and = a;
 					F.formula_exists_pure = pf}) ->
-      let sa = if a==[] then "" else "\nand " in
+      let sa = if a==[] then "" else "\nAND " in
       let sa = sa ^ string_of_one_formula_list a in
       let rs=
 	  "(EX " ^ (string_of_var_list qvars) ^ " . "

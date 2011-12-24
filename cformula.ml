@@ -833,6 +833,13 @@ and add_formula_and (a: one_formula list) (f:formula) : formula =
     | Base b -> Base { b with formula_base_and = a@b.formula_base_and}
     | Exists e -> Exists {e with formula_exists_and = a@e.formula_exists_and}
 
+and replace_formula_and (a: one_formula list) (f:formula) : formula =
+  match f with
+    | Or o -> mkOr (add_formula_and a o.formula_or_f1) (add_formula_and a o.formula_or_f2) o.formula_or_pos
+    | Base b -> Base { b with formula_base_and = a}
+    | Exists e -> Exists {e with formula_exists_and = a}
+
+
 and formula_of_one_formula (f : one_formula) : formula =
   Base {formula_base_heap = f.formula_heap;
         formula_base_pure = f.formula_pure;
@@ -4016,6 +4023,20 @@ let mkFailContext msg estate conseq pid pos = {
 }   
 let mkFailCtx_in (ft:fail_type) = FailCtx ft
 
+(*simple concurrency*)
+let mkFailCtx_simple msg estate conseq pos = 
+  let fail_ctx = {
+	  fc_message = msg;
+	  fc_current_lhs  = estate;
+	  fc_prior_steps = estate.es_prior_steps;
+	  fc_orig_conseq  = struc_formula_of_formula conseq pos;
+	  fc_current_conseq = formula_of_heap HFalse pos;
+	  fc_failure_pts = [];} 
+  in
+  let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
+  (*temporary no failure explaining*)
+  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex))
+
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
@@ -6975,5 +6996,4 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
           let c = b.formula_inf_continuation in
           let r = merge_ext_pre c pre in
           EInfer {b with formula_inf_continuation = r}
-
 

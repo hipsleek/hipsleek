@@ -1016,20 +1016,24 @@ let string_of_one_formula f = poly_string_of_pr  pr_one_formula f
 let pr_one_formula_wrap e = (wrap_box ("H",1) pr_one_formula) e
 
 let rec pr_one_formula_list (ls:one_formula list) =
-  let pr_conj ls = 
-    if (List.length ls == 1) then pr_one_formula (List.hd ls)
-   else pr_list_op_vbox "AND" pr_one_formula_wrap ls 
-  in fmt_cut(); pr_conj ls
+  if (ls==[]) then fmt_string ("[]")
+  else
+  (* let pr_conj ls = *)
+  (*   if (List.length ls == 1) then pr_one_formula (List.hd ls) *)
+  (*   else pr_list_op_vbox "AND" pr_one_formula_wrap ls *)
+  (* in fmt_cut(); pr_conj ls *)
   
+    fmt_cut();pr_list_op_none "AND\n" pr_one_formula_wrap ls
 
+    (* pr_list_op_vbox "AND " pr_one_formula_wrap ls *)
    (* pr_seq_vbox "" (wrap_box ("H",1) pr_conj) ls *)
   (* match ls with *)
   (*   | [] -> () *)
   (*   | f::fs -> *)
-  (*       pr_one_formula f; *)
+  (*       pr_one_formula_wrap f; *)
   (*       if (fs==[]) then () *)
-  (*       else  *)
-  (*         fmt_string ("\nand "); pr_one_formula_list fs *)
+  (*       else *)
+  (*         fmt_string ("\nAND "); pr_one_formula_list fs *)
 
 let string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
 
@@ -1049,7 +1053,7 @@ let rec pr_formula_base e =
          (*; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
           else
-            fmt_string (" AND "); pr_one_formula_list a
+            fmt_string ("\nAND "); pr_one_formula_list a
 
 
 let rec pr_formula e =
@@ -1088,7 +1092,7 @@ let rec pr_formula e =
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
           else
-            fmt_string ("and "); pr_one_formula_list a
+            fmt_string ("\nAND "); pr_one_formula_list a
 
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e

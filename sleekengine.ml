@@ -452,6 +452,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
@@ -485,6 +486,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^"\n\n") no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+  let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
