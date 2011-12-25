@@ -448,20 +448,22 @@ let infer_lhs_contra_estate e f pos =
 (*               } in *)
 (*             Some new_estate *)
 
-let rec simplify_disjs pf lhs rhs = 
-  let helper fml lhs_p rhs_p = 
-    let new_fml = CP.mkAnd (CP.mkAnd fml lhs_p no_pos) rhs_p no_pos in
-    if Omega.is_sat new_fml "0" then 
-      let args = CP.fv new_fml in
-      let iv = CP.fv fml in
-      let quan_var = CP.diff_svl args iv in
-      CP.mkExists_with_simpl_debug Omega.simplify quan_var new_fml None no_pos
-    else CP.mkFalse no_pos
-  in 
+let helper fml lhs_rhs_p = 
+  let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
+  if Omega.is_sat new_fml "0" then
+    let args = CP.fv new_fml in
+    let iv = CP.fv fml in
+    let quan_var = CP.diff_svl args iv in
+    CP.mkExists_with_simpl_debug Omega.simplify quan_var new_fml None no_pos
+  else CP.mkFalse no_pos
+
+let rec simplify_disjs pf lhs_rhs =
   match pf with
-  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs rhs
-  | And _ -> helper pf lhs rhs
-  | Or (f1,f2,l,p) -> Or (simplify_disjs f1 lhs rhs, simplify_disjs f2 lhs rhs, l, p)
+  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs
+  | And _ -> helper pf lhs_rhs
+  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs) (simplify_disjs f2 lhs_rhs) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
   | _ -> pf
 
 let infer_pure_m estate lhs_xpure rhs_xpure pos =
@@ -483,7 +485,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
 (*        let new_p = CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos in*)
         let new_p = Omega.simplify (CP.mkForall quan_var 
           (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
-        let new_p = Omega.simplify (simplify_disjs new_p lhs_xpure rhs_xpure) in
+        let new_p = Omega.simplify (simplify_disjs new_p (CP.mkAnd lhs_xpure rhs_xpure no_pos)) in
         let args = CP.fv new_p in
         let new_p =
           if CP.intersect args iv == [] then
@@ -547,14 +549,24 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
       Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option (pr_pair pr2 !print_pure_f)) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
-let infer_empty_rhs estate lhs_p rhs_p pos =
-  estate
+let rec simplify_fml pf =
+  let helper fml =
+    if Omega.is_sat fml "0" then remove_dup_constraints fml
+    else CP.mkFalse no_pos
+  in
+  match pf with
+  | BForm _ -> if CP.isConstFalse pf then pf else helper pf
+  | And _ -> helper pf
+  | Or (f1,f2,l,p) -> mkOr (simplify_fml f1) (simplify_fml f2) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_fml f,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_fml f,l,p)
+  | _ -> pf
 
 (* a good simplifier is needed here *)
 let lhs_simplifier xpure_lhs_h1 lhs_p =
     let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
     let lhs_p = MCP.pure_of_mix lhs_p in
-    let lhs = (* good simplier needed *) mkAnd lhs_h lhs_p no_pos in
+    let lhs = simplify_fml (trans_dnf(mkAnd lhs_h lhs_p no_pos)) in
     lhs
 
 (* to filter relevant LHS term for selected relation rel *)
@@ -610,6 +622,9 @@ RHS pure R(rs,n) & x=null
      (n=0 rs=0 --> R(rs,n)) to add to es_infer_rel 
 *)
 
+
+let infer_empty_rhs estate lhs_p rhs_p pos =
+  estate
 
 (* let infer_empty_rhs_old estate lhs_p rhs_p pos = *)
 (*   if no_infer estate then estate *)
