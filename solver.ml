@@ -5827,9 +5827,9 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
             if !enable_incremental_proving then Some !TP.incremMethodsO
             else None in
           CP.imply_disj
-              (TP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)
-              (TP.split_disjunctions a1) (* list with xpure1 antecedent disjunctions *)
-              (TP.split_conjunctions c) (* list with consequent conjunctions *)
+              (CP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)
+              (CP.split_disjunctions a1) (* list with xpure1 antecedent disjunctions *)
+              (CP.split_conjunctions c) (* list with consequent conjunctions *)
               TP.imply         (* imply method to be used for implication proving *)
               increm_funct
               imp_no
@@ -5862,9 +5862,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           begin
             (*print_endline "imply_mix_formula first: second";*)
 	        CP.imply_conj_orig 
-                (TP.split_disjunctions a0) 
-                (TP.split_disjunctions a1) 
-                (TP.split_conjunctions c) 
+                (CP.split_disjunctions a0) 
+                (CP.split_disjunctions a1) 
+                (CP.split_conjunctions c) 
 	            TP.imply 
 	            imp_no
           end

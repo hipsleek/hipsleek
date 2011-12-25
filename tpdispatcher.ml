@@ -695,8 +695,6 @@ let is_mix_list_constraint f = match f with
   | MCP.MemoF f -> is_memo_list_constraint f
   | MCP.OnePF f -> is_list_constraint f  
   
-let elim_exists_flag = ref true
-let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
@@ -706,16 +704,6 @@ let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Gen.Debug.no_1 "elim_exists" pr pr elim_exists f
   
-let assumption_filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
-  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
-  if !filtering_flag (*&& (not !allow_pred_spec)*) then
-    (CP.filter_ante ante conseq, conseq)
-	(* let fvar = CP.fv conseq in *)
-	(* let new_ante = CP.filter_var ante fvar in *)
-	(*   (new_ante, conseq) *)
-  else
-    (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
-	(ante, conseq)
 
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -786,12 +774,8 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
   if !do_slicing && !multi_provers then
 	assumption_filter_slicing ante cons
   else
-	assumption_filter ante cons
+	CP.assumption_filter ante cons
 
-let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
-  let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)
-	assumption_filter ante cons
 	  
 (* rename variables for better caching of formulas *)
 let simplify_var_name (e: CP.formula) : CP.formula =
@@ -1298,15 +1282,6 @@ let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
 		res
 *)
 
-let rec split_conjunctions = function
-  | CP.And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
-  | z -> [z]
-;;
-
-let rec split_disjunctions = function
-  | CP.Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
-  | z -> [z]
-;;
 
 let called_prover = ref ""
 

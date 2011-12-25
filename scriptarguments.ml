@@ -67,9 +67,9 @@ let common_arguments = [
 	"Disallow anonymous variables in the precondition to be existential");
 	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
 	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
-	("-noee", Arg.Clear Tpdispatcher.elim_exists_flag,
+	("-noee", Arg.Clear Globals.elim_exists_flag,
 	"No eleminate existential quantifiers before calling TP.");
-	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
+	("-nofilter", Arg.Clear Globals.filtering_flag,
 	"No assumption filtering.");
 	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");

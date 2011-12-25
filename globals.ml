@@ -361,6 +361,10 @@ let enable_norm_simp = ref false
 
 let print_version_flag = ref false
 
+let elim_exists_flag = ref true
+
+let filtering_flag = ref true
+
 let n_xpure = ref 1
 
 let check_coercions = ref false

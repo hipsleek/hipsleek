@@ -355,6 +355,7 @@ let print_formula = ref (fun (c:formula) -> "cpure printer has not been initiali
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
+let print_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
 
 let do_with_check msg prv_call (pe : formula) : 'a option =
   try
@@ -6501,3 +6502,42 @@ let is_rel_in_vars (vl:spec_var list) (f:formula)
       = match (get_rel_id f) with
         | Some n -> if mem n vl then true else false
         | _ -> false
+
+let rec split_conjunctions = function
+  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | z -> [z]
+;;
+
+let rec split_disjunctions = function
+  | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
+  | z -> [z]
+;;
+
+let join_disjunctions xs = 
+  let rec helper xs r = match xs with
+    | [] -> r
+    | x::xs -> mkOr x (helper xs r) None no_pos in
+  match xs with
+    | [] -> mkTrue no_pos
+    | x::xs -> helper xs x
+;;
+
+let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
+  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
+  if !filtering_flag (*&& (not !allow_pred_spec)*) then
+    let ante_ls = split_disjunctions ante in
+    let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
+    let ante = join_disjunctions ante_ls in
+     (* let _ = print_endline ("Splitted Disj:"^(pr_list !print_formula ante_ls)) in *)
+    (ante, conseq)
+	(* let fvar = CP.fv conseq in *)
+	(* let new_ante = CP.filter_var ante fvar in *)
+	(*   (new_ante, conseq) *)
+  else
+    (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
+	(ante, conseq)
+
+let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
+  let pr = !print_formula in
+  Gen.Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)
+	assumption_filter ante cons

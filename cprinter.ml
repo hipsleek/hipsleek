@@ -1106,12 +1106,13 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let pr_lhs_rhs (lhs,rhs) = 
-  fmt_open_box 1;
-  pr_pure_formula lhs;
-  fmt_string "-->";
-  pr_pure_formula rhs;
-  fmt_close()
+let pr_lhs_rhs ((lhs,rhs) as rel) = 
+  fmt_string (CP.print_lhs_rhs rel)
+  (* fmt_open_box 1; *)
+  (* pr_pure_formula lhs; *)
+  (* fmt_string "-->"; *)
+  (* pr_pure_formula rhs; *)
+  (* fmt_close() *)
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with

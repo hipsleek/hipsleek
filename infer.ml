@@ -572,7 +572,7 @@ let lhs_simplifier xpure_lhs_h1 lhs_p =
 (* to filter relevant LHS term for selected relation rel *)
 (* requires simplify and should preserve relation and != *)
 let rel_filter_assumption lhs rel =
-  let lhs = (* good filter assumption *) lhs in
+  let (lhs,rel) = CP.assumption_filter lhs rel in
   (lhs,rel)
 
 let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br =
@@ -601,7 +601,7 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
         let _ = print_endline ("RHS pure:"^(!CP.print_formula rhs_p)) in
         let _ = print_endline ("RHS pure list:"^(pr_list !CP.print_formula rhs_ls)) in
         let _ = print_endline ("RHS rel list:"^(pr_list !CP.print_formula rel_rhs)) in
-        let _ = print_endline ("Rel Inferred:"^(pr_list (pr_pair !CP.print_formula !CP.print_formula) inf_rel_ls)) in
+        let _ = print_endline ("Rel Inferred:"^(pr_list print_lhs_rhs inf_rel_ls)) in
         let _ = print_endline ("Residue RHS:"^(!CP.print_formula rhs_p_2)) 
         in ()
       end;
