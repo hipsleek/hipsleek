@@ -31,7 +31,6 @@ let is_self_spec_var sv = match sv with
 let is_res_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = res_name
 
-
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
@@ -2342,11 +2341,17 @@ and split_disjuncts (f0 : formula): formula list = match f0 with
 	List.fold_left helper (mkTrue pos) fs
 *)
         
-and disj_of_list (disj_list : formula list) pos : formula = 
-  match disj_list with
+and disj_of_list (xs : formula list) pos : formula = 
+  let rec helper xs r = match xs with
+    | [] -> r
+    | x::xs -> mkOr x (helper xs r) None pos in
+  match xs with
     | [] -> mkTrue pos
-    | h :: [] -> h
-    | h :: rest -> mkOr h (disj_of_list rest pos) None pos
+    | x::xs -> helper xs x
+  (* match disj_list with *)
+  (*   | [] -> mkTrue pos *)
+  (*   | h :: [] -> h *)
+  (*   | h :: rest -> mkOr h (disj_of_list rest pos) None pos *)
           (* 16.04.09 *)
 
 and find_bound v f0 =
@@ -5755,9 +5760,6 @@ let rec filter_complex_inv f = match f with
 	  | ListPerm _
 	  | RelForm _ -> f
 	  | _ -> mkTrue no_pos
-	  
-	  
-	  
 
 let mkNot_norm f lbl1 pos0 :formula= match f with
   | BForm (bf,lbl) ->
@@ -6466,7 +6468,7 @@ let add_ann_constraints vrs f =
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
-      infer_state_rel : (formula * formula) Gen.stack_noinit (* output *)
+      infer_state_rel : (formula * formula) Gen.stack (* output *)
   }
 
 let create_infer_state vs =
@@ -6474,7 +6476,7 @@ let create_infer_state vs =
   let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in 
   { 
       infer_state_vars = vs;
-      infer_state_rel = new Gen.stack_noinit pr;
+      infer_state_rel = new Gen.stack;
   }
 
 let no_infer_state = create_infer_state []
@@ -6503,24 +6505,23 @@ let is_rel_in_vars (vl:spec_var list) (f:formula)
         | Some n -> if mem n vl then true else false
         | _ -> false
 
-let rec split_conjunctions = function
-  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
-  | z -> [z]
-;;
+(* let rec split_conjunctions = function *)
+(*   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y) *)
+(*   | z -> [z] *)
+(* ;; *)
 
-let rec split_disjunctions = function
-  | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
-  | z -> [z]
-;;
+let split_disjunctions = split_disjuncts
+(* function *)
+(*   | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y) *)
+(*   | z -> [z] *)
 
-let join_disjunctions xs = 
-  let rec helper xs r = match xs with
-    | [] -> r
-    | x::xs -> mkOr x (helper xs r) None no_pos in
-  match xs with
-    | [] -> mkTrue no_pos
-    | x::xs -> helper xs x
-;;
+let join_disjunctions xs = disj_of_list xs no_pos
+  (* let rec helper xs r = match xs with *)
+  (*   | [] -> r *)
+  (*   | x::xs -> mkOr x (helper xs r) None no_pos in *)
+  (* match xs with *)
+  (*   | [] -> mkTrue no_pos *)
+  (*   | x::xs -> helper xs x *)
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
@@ -6539,5 +6540,125 @@ let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) 
 
 let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   let pr = !print_formula in
-  Gen.Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)
+  Gen.Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
+
+let drop_formula (pr:p_formula -> formula option) (f:formula) : formula =
+  let rec helper f = match f with
+        | BForm ((b,_),_) -> 
+              (match pr b with
+                | None -> f
+                | Some nf -> nf)
+        | And (f1,f2,p) -> And (helper f1,helper f2,p)
+        | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
+        | _ -> f
+  in helper f
+
+let drop_rel_formula (f:formula) : formula =
+  let pr b = match b with
+        | RelForm (_,_,p) -> Some (mkTrue p)
+        | _ -> None 
+  in drop_formula pr f
+
+let drop_rel_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
+
+let memoise_rel_formula ivs (f:formula) : 
+      (formula * ((spec_var * formula) list)) =
+  let stk = new Gen.stack in
+  let pr b = match b with
+    | RelForm (i,_,p) -> 
+          let rid = SpecVar(RelT,i,Unprimed) in
+          if mem rid ivs then
+            let id = fresh_old_name "memo_rel_hole_" in
+            let v = SpecVar(Bool,id,Unprimed) in
+            let rel_f = BForm ((b,None),None) in
+            stk # push (v,rel_f);
+            Some (BForm ((BVar (v,p),None),None))
+          else None
+    | _ -> None 
+  in 
+  let f = drop_formula pr f in
+  let ans = stk # get_stk in
+  (f,ans)
+
+let memoise_rel_formula ivs (f:formula) : 
+      (formula * ((spec_var * formula) list)) =
+  let pr = !print_formula in
+  let pr2 = pr_pair pr (pr_list (pr_pair !print_sv pr)) in
+  Gen.Debug.no_2 "memoise_rel_formula" (!print_svl) pr pr2 memoise_rel_formula ivs f
+
+let subs_rel_formula subs (f:formula) : formula =
+  let pr b = match b with
+    | BVar (id,_) -> 
+          begin
+            try
+              let (_,memo_f) = List.find (fun (i,_) -> eq_spec_var id i) subs in
+              Some memo_f
+            with _ -> None
+          end
+    | _ -> None 
+  in drop_formula pr f
+
+let subs_rel_formula subs (f:formula) : formula =
+  let pr = !print_formula in
+  let pr2 = (pr_list (pr_pair !print_sv pr)) in
+  Gen.Debug.no_2 "subs_rel_formula" pr2 pr pr subs_rel_formula subs f
+
+let comb_disj nxs : formula =
+  let rec helper nxs f =
+    match nxs with
+      | [] -> f
+      | []::_ -> mkTrue no_pos
+      | nx::nxs -> 
+            let nx = join_conjunctions nx in
+            helper nxs (mkOr nx f None no_pos)
+  in helper nxs (mkFalse no_pos)
+ 
+let remove_conj x xs =
+  let rec helper xs ac =
+    match xs with
+      | [] -> None
+      | b::bs -> if equalFormula_f eq_spec_var b x then Some (ac@bs)
+        else helper bs (b::ac) 
+  in helper xs []
+
+let remove_common x nxs =
+  let rs = List.map (remove_conj x) nxs in
+  if List.exists (fun x -> x==None) rs then
+    None
+  else Some (List.map (fun m -> match m with 
+    | None -> []
+    | Some xs -> xs) rs)
+
+let simplify_disj_aux nx nxs : formula =
+  let rec helper nx nxs rx cx =
+    match nx with 
+      | [] -> 
+            let r = comb_disj (rx::nxs) in
+            let c = join_conjunctions cx in
+            mkAnd r c no_pos
+      | (x::nx) -> 
+            begin
+            match (remove_common x nxs) with
+              | None -> helper nx nxs (x::rx) cx
+              | Some nxs -> helper nx nxs rx (x::cx)
+            end
+  in helper nx nxs [] []
+
+
+(* assumes absence of duplicates *)
+let simplify_disj (f:formula) : formula =
+  let fs=split_disjunctions f in
+  match fs with
+    | [] -> report_error no_pos ("simplify_disj : not possible to have empty disj")
+    | [x] -> x
+    | x::xs -> 
+          let nx = split_conjunctions x in
+          let nxs = List.map split_conjunctions xs in
+         simplify_disj_aux nx nxs
+
+let simplify_disj (f:formula) : formula =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f

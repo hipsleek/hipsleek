@@ -375,16 +375,12 @@ end;;
 
 exception Stack_Error
 
-class ['a] stack (x_init:'a) (epr:'a->string)  =
+class ['a] stack  =
    object 
-     val emp_val = x_init
      val mutable stk = []
-     val elem_pr = epr 
-       (* = (fun _ -> "elem printer not initialised!") *)
      method push (i:'a) = 
        begin
          stk <- i::stk
-         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
        end
      method get_stk  = stk (* return entire content of stack *)
      method override_stk newstk  = stk <- newstk 
@@ -400,51 +396,27 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
      method pop_no_exc = match stk with 
        | [] -> () 
        | x::xs -> stk <- xs
-     method top_no_exc : 'a = match stk with 
-       | [] ->  emp_val
-       | x::xs -> x
      method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
-     (* method set_pr f = elem_pr <- f *)
-     (* method string_of = BList.string_of_f elem_pr stk *)
-     method string_of = Basic.pr_list elem_pr stk
-   end;;
-
-class ['a] stack_noinit (epr:'a->string)  =
-   object 
-     val mutable stk = []
-     val elem_pr = epr 
-       (* = (fun _ -> "elem printer not initialised!") *)
-     method push (i:'a) = 
-       begin
-         stk <- i::stk
-         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
-       end
      method push_list (ls:'a list) = 
        begin
          stk <- ls@stk
          (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
        end
-      method get_stk  = stk (* return entire content of stack *)
-     method override_stk newstk  = stk <- newstk 
-       (* override with a new stack *)
-     method pop = match stk with 
-       | [] -> print_string "ERROR : popping empty stack"; 
-               raise Stack_Error
-       | x::xs -> stk <- xs
-     method top : 'a = match stk with 
-       | [] -> print_string "ERROR : top of empty stack"; 
-               raise Stack_Error
+   end;;
+
+class ['a] stack_noexc (x_init:'a) (epr:'a->string)  =
+   object 
+     inherit ['a] stack
+     val emp_val = x_init
+     val elem_pr = epr 
+     method top_no_exc : 'a = match stk with 
+       | [] ->  emp_val
        | x::xs -> x
-     method pop_no_exc = match stk with 
-       | [] -> () 
-       | x::xs -> stk <- xs
-     method is_empty = stk == []
-     method len = List.length stk
-     method reverse = stk <- List.rev stk
      method string_of = Basic.pr_list elem_pr stk
    end;;
+
 
 class counter x_init =
    object 
@@ -532,7 +504,7 @@ struct
 
   (* let (stkint:int stack3) = new stack3  *)
 
-  let error_list = new stack "error - stack underflow" (fun x -> x)
+  let error_list = new stack_noexc "error - stack underflow" (fun x -> x)
 
   let warning_no  = new counter 0
 
@@ -840,7 +812,7 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let debug_stk = new stack (-1) string_of_int
+  let debug_stk = new stack_noexc (-1) string_of_int
 
   (* pop last element from call stack of ho debug *)
   let pop_call () = debug_stk # pop
@@ -1358,7 +1330,7 @@ module Profiling =
 struct
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack ("stack underflow",0.,false) 
+  let profiling_stack = new stack_noexc ("stack underflow",0.,false) 
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")")
 
   let add_to_counter (s:string) i = 

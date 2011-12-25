@@ -3123,7 +3123,7 @@ let rec context_fv (c:context) : CP.spec_var list =
     | Ctx es ->  es_fv es
     | OCtx (c1,c2) -> (context_fv c1)@(context_fv c2)
 
-let empty_infer_rel () = new Gen.stack_noinit print_infer_rel
+let empty_infer_rel () = new Gen.stack
 
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in

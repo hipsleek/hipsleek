@@ -112,7 +112,7 @@ and proc_decl = {
     proc_dynamic_specs : Cformula.struc_formula;
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
-    proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_noinit;
+    proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     proc_call_order : int;

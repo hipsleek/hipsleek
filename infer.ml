@@ -563,9 +563,7 @@ let rec simplify_fml pf =
   | _ -> pf
 
 (* a good simplifier is needed here *)
-let lhs_simplifier xpure_lhs_h1 lhs_p =
-    let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
-    let lhs_p = MCP.pure_of_mix lhs_p in
+let lhs_simplifier lhs_h lhs_p =
     let lhs = simplify_fml (trans_dnf(mkAnd lhs_h lhs_p no_pos)) in
     lhs
 
@@ -575,9 +573,13 @@ let rel_filter_assumption lhs rel =
   let (lhs,rel) = CP.assumption_filter lhs rel in
   (lhs,rel)
 
+(* let rel_filter_assumption lhs rel = *)
+(*   let pr = CP.print_formula in *)
+(*   Gen.Debug.no_2 "rel_filter_assumption" pr pr (fun (r,_) -> pr r) rel_filter_assumption lhs rel  *)
+
 let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br =
   (* TODO : need to handle pure_branches in future ? *)
-  if no_infer estate then (estate,rhs_p,rhs_p_br) 
+  if no_infer estate then (estate,lhs_p,rhs_p,rhs_p_br) 
   else 
     let pr = !CP.print_formula_br in
     let ivs = estate.es_infer_vars in
@@ -587,8 +589,15 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
     let (rel_rhs,other_rhs) = List.partition (CP.is_rel_in_vars ivs) rhs_ls in 
     let rhs_p_2 = CP.join_conjunctions other_rhs in
     let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
-    let lhs = lhs_simplifier xpure_lhs_h1 lhs_p in
-    let inf_rel_ls = List.map (rel_filter_assumption lhs) rel_rhs in
+    let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let (lhs_p_memo,subs) = CP.memoise_rel_formula ivs lhs_p in
+    let lhs = lhs_simplifier lhs_h lhs_p_memo in
+    let lhs_2 = subs_rel_formula subs lhs in
+    let filter_ass lhs rhs = 
+      let (lhs,rhs) = rel_filter_assumption lhs rhs in
+      (simplify_disj lhs,rhs) in
+    let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
     let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
     if inf_rel_ls != [] then
       begin
@@ -597,7 +606,9 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
         let _ = print_endline "*****************" in
         let _ = print_endline ("infer vars:"^(!print_svl ivs)) in
         let _ = print_endline ("LHS heap Xpure1:"^(!print_mix_formula xpure_lhs_h1)) in
-        let _ = print_endline ("LHS pure:"^(!print_mix_formula lhs_p)) in
+        let _ = print_endline ("LHS pure:"^(!CP.print_formula lhs_p)) in
+        let _ = print_endline ("LHS pure (without rel):"^(!CP.print_formula lhs_p_memo)) in
+        let _ = print_endline ("LHS pure (simplified):"^(!CP.print_formula lhs)) in
         let _ = print_endline ("RHS pure:"^(!CP.print_formula rhs_p)) in
         let _ = print_endline ("RHS pure list:"^(pr_list !CP.print_formula rhs_ls)) in
         let _ = print_endline ("RHS rel list:"^(pr_list !CP.print_formula rel_rhs)) in
@@ -605,7 +616,7 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
         let _ = print_endline ("Residue RHS:"^(!CP.print_formula rhs_p_2)) 
         in ()
       end;
-    (estate,rhs_p_new,rhs_p_br)
+    (estate,(MCP.mix_of_pure lhs_p_memo),rhs_p_new,rhs_p_br)
 (*
 Given:
 infer vars:[n,R]

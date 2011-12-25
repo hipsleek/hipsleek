@@ -880,6 +880,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 		else r
 
     | OmegaCalc ->
+          let f = CP.drop_rel_formula f in
           if (CP.is_float_formula f) then (Redlog.is_sat f sat_no)
           else
             begin
@@ -907,6 +908,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | Mona | MonaH -> Mona.is_sat f sat_no
     | CO -> 
           begin
+            let f = CP.drop_rel_formula f in
             let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
             match result1 with
               | Some f -> f
@@ -915,6 +917,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
                     (Omega.is_sat f sat_no)
           end
     | CM -> 
+          let f = CP.drop_rel_formula f in
           begin
             if (is_bag_constraint f) then
               (Mona.is_sat f sat_no)
@@ -927,6 +930,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
                       (Omega.is_sat f sat_no)
           end
     | OM ->
+          let f = CP.drop_rel_formula f in
           if (is_bag_constraint f) then
             begin
               (Mona.is_sat f sat_no);
@@ -936,6 +940,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               (Omega.is_sat f sat_no);
             end
   | AUTO ->
+      let f = CP.drop_rel_formula f in
       if (is_bag_constraint f) then
         begin
           (Mona.is_sat f sat_no);
@@ -959,9 +964,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         end
       else
         begin
+          let f = CP.drop_rel_formula f in
           (Omega.is_sat f sat_no);
         end
     | OI ->
+          let f = CP.drop_rel_formula f in
           if (is_bag_constraint f) then
             begin
               (Isabelle.is_sat f sat_no);
@@ -970,15 +977,21 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             begin
               (Omega.is_sat f sat_no);
             end
-    | SetMONA -> Setmona.is_sat f
-    | Redlog -> Redlog.is_sat f sat_no
+    | SetMONA -> 
+          let f = CP.drop_rel_formula f in
+          Setmona.is_sat f
+    | Redlog -> 
+          let f = CP.drop_rel_formula f in
+          Redlog.is_sat f sat_no
     | RM ->
+          let f = CP.drop_rel_formula f in
           if (is_bag_constraint f) then
             Mona.is_sat f sat_no
           else
             Redlog.is_sat f sat_no
   | ZM ->
 	  if (is_bag_constraint f) then
+        let f = CP.drop_rel_formula f in
         Mona.is_sat f sat_no
       else
 		Smtsolver.is_sat f sat_no
@@ -1343,8 +1356,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | OmegaCalc -> 
           if (CP.is_float_formula ante) || (CP.is_float_formula conseq) 
           then  Redlog.imply ante conseq imp_no
-          else
-            (Omega.imply ante conseq (imp_no^"XX") timeout)
+          else  (Omega.imply ante conseq (imp_no^"XX") timeout)
     | CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> begin
         match process with
@@ -1665,6 +1677,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   else if (CP.isConstFalse f) then false
   else
 	let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    (* let f = CP.drop_rel_formula f in *)
 	tp_is_sat f sat_no do_cache
 ;;
 

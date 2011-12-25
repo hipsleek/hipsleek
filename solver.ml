@@ -5477,7 +5477,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
-  let (estate,rhs_p,rhs_p_br) = Inf.infer_collect_rel estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br in
+  let (estate,lhs_p,rhs_p,rhs_p_br) = Inf.infer_collect_rel estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br in
   let fold_fun (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =
 	begin
       if (is_ok = false) then (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) else

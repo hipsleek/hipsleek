@@ -7,8 +7,10 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+relation R(int n, int m).
+
 int length(node x)
-  infer [n,R]
+  infer [R]
   requires x::ll<n>@L
   ensures R(res,n);
   // R(res,n) = res=n
@@ -31,10 +33,12 @@ int length(node x)
 
 */
 
+relation F(int n, int m).
+
 int foo(node x)
-  infer [n,R]
+  infer [F]
   requires x::ll<n>@L
-  ensures R(res,n);  
+  ensures F(res,n);  
   // R(res,n) = res=0
 {
   if (x==null) return 0;
@@ -44,11 +48,12 @@ int foo(node x)
   }
 }
 
+relation A(int n, int m, int z).
 
 void append(node x, node y)
-  infer [n,R]
+  infer [n,A]
   requires x::ll<n>*y::ll<m> 
-  ensures x::ll<z> & R(n,m,z);
+  ensures x::ll<z> & A(n,m,z);
 {
   if (x.next==null) {
     x.next=y; 
