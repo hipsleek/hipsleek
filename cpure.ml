@@ -40,6 +40,10 @@ type formula =
   | Forall of (spec_var * formula * (formula_label option) * loc)
   | Exists of (spec_var * formula * (formula_label option) * loc)
 
+and formula_branch = (branch_label * formula )
+
+and formula_branches = (branch_label * formula ) list
+
 and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
@@ -350,6 +354,7 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
 
 let do_with_check msg prv_call (pe : formula) : 'a option =
   try
@@ -6457,3 +6462,42 @@ let rec add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Gen.Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+type infer_state = 
+  { 
+      infer_state_vars : spec_var list; (* [] if no inference *)
+      infer_state_rel : (formula * formula) Gen.stack_noinit (* output *)
+  }
+
+let create_infer_state vs =
+  let prf = !print_formula in
+  let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in 
+  { 
+      infer_state_vars = vs;
+      infer_state_rel = new Gen.stack_noinit pr;
+  }
+
+let no_infer_state = create_infer_state []
+
+(* any inference for is *)
+let no_infer (is:infer_state) = is.infer_state_vars ==[]
+
+(* is v an infer var of is *)
+let mem_infer_var (v:spec_var) (is:infer_state) 
+      = mem v is.infer_state_vars
+
+(* add lhs -> rhs to infer state is *)
+let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
+      = is.infer_state_rel # push (lhs,rhs)
+
+let get_rel_id (f:formula) 
+      = match f with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(n,_,_),_) -> Some (SpecVar (RelT,n,Unprimed))
+                | _ -> None)
+        | _ -> None
+  
+let is_rel_in_vars (vl:spec_var list) (f:formula) 
+      = match (get_rel_id f) with
+        | Some n -> if mem n vl then true else false
+        | _ -> false

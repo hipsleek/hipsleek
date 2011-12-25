@@ -421,7 +421,12 @@ class ['a] stack_noinit (epr:'a->string)  =
          stk <- i::stk
          (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
        end
-     method get_stk  = stk (* return entire content of stack *)
+     method push_list (ls:'a list) = 
+       begin
+         stk <- ls@stk
+         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
+       end
+      method get_stk  = stk (* return entire content of stack *)
      method override_stk newstk  = stk <- newstk 
        (* override with a new stack *)
      method pop = match stk with 

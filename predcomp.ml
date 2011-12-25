@@ -112,6 +112,7 @@ and aug_class_name (t : typ) = match t with
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
   | AnnT -> "AnnAug"
+  | RelT -> "RelAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
   | NUM -> "NUMAug"

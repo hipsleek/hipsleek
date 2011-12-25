@@ -541,6 +541,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           Some (new_estate,new_p)
 
 let infer_pure_m i estate lhs_xpure rhs_xpure pos =
+  (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
       Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option (pr_pair pr2 !print_pure_f)) 
@@ -548,6 +549,67 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
+
+(* a good simplifier is needed here *)
+let lhs_simplifier xpure_lhs_h1 lhs_p =
+    let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let lhs = (* good simplier needed *) mkAnd lhs_h lhs_p no_pos in
+    lhs
+
+(* to filter relevant LHS term for selected relation rel *)
+(* requires simplify and should preserve relation and != *)
+let rel_filter_assumption lhs rel =
+  let lhs = (* good filter assumption *) lhs in
+  (lhs,rel)
+
+let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br =
+  (* TODO : need to handle pure_branches in future ? *)
+  if no_infer estate then (estate,rhs_p,rhs_p_br) 
+  else 
+    let pr = !CP.print_formula_br in
+    let ivs = estate.es_infer_vars in
+    (* let _ = print_endline (pr rhs_p_br) in *)
+    let rhs_p = MCP.pure_of_mix rhs_p in
+    let rhs_ls = CP.split_conjunctions rhs_p in
+    let (rel_rhs,other_rhs) = List.partition (CP.is_rel_in_vars ivs) rhs_ls in 
+    let rhs_p_2 = CP.join_conjunctions other_rhs in
+    let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
+    let lhs = lhs_simplifier xpure_lhs_h1 lhs_p in
+    let inf_rel_ls = List.map (rel_filter_assumption lhs) rel_rhs in
+    let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
+    if inf_rel_ls != [] then
+      begin
+        let _ = print_endline "*****************" in
+        let _ = print_endline "infer_collect_rel" in
+        let _ = print_endline "*****************" in
+        let _ = print_endline ("infer vars:"^(!print_svl ivs)) in
+        let _ = print_endline ("LHS heap Xpure1:"^(!print_mix_formula xpure_lhs_h1)) in
+        let _ = print_endline ("LHS pure:"^(!print_mix_formula lhs_p)) in
+        let _ = print_endline ("RHS pure:"^(!CP.print_formula rhs_p)) in
+        let _ = print_endline ("RHS pure list:"^(pr_list !CP.print_formula rhs_ls)) in
+        let _ = print_endline ("RHS rel list:"^(pr_list !CP.print_formula rel_rhs)) in
+        let _ = print_endline ("Rel Inferred:"^(pr_list (pr_pair !CP.print_formula !CP.print_formula) inf_rel_ls)) in
+        let _ = print_endline ("Residue RHS:"^(!CP.print_formula rhs_p_2)) 
+        in ()
+      end;
+    (estate,rhs_p_new,rhs_p_br)
+(*
+Given:
+infer vars:[n,R]
+LHS heap Xpure1: x=null & n=0 | x!=null & 1<=n
+LHS pure: x=null & rs=0
+RHS pure R(rs,n) & x=null
+(1) simplify LHS to:
+     x=null & n=0 & rs=0
+(2) partition RHS to 
+    (a) R(rs,n)
+    (b) x=null
+(3) for inferred relation R, use filter
+    assumption to obtain:
+     (n=0 rs=0 --> R(rs,n)) to add to es_infer_rel 
+*)
+
 
 (* let infer_empty_rhs_old estate lhs_p rhs_p pos = *)
 (*   if no_infer estate then estate *)

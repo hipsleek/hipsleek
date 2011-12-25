@@ -980,6 +980,12 @@ let string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  pr_h_formul
 let printer_of_h_formula (crt_fmt: Format.formatter) (e:h_formula) : unit =
   poly_printer_of_pr crt_fmt pr_h_formula e
 
+let  pr_formula_branches l =
+   pr_seq_option " & " (fun (l, f) -> fmt_string ("\"" ^ l ^ "\" : "); 
+   pr_pure_formula f) l
+
+let  string_of_formula_branches l = poly_string_of_pr pr_formula_branches l
+
 let  pr_pure_formula_branches (f, l) =
  (pr_bracket pure_formula_wo_paren pr_pure_formula f); 
    pr_seq_option " & " (fun (l, f) -> fmt_string ("\"" ^ l ^ "\" : "); 
@@ -1100,6 +1106,13 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
+let pr_lhs_rhs (lhs,rhs) = 
+  fmt_open_box 1;
+  pr_pure_formula lhs;
+  fmt_string "-->";
+  pr_pure_formula rhs;
+  fmt_close()
+
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ""
@@ -1107,10 +1120,12 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
         begin
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
+          let lrel = collect_rel ctx in
           fmt_open_vbox 0;
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
+          pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           f b;
           fmt_print_newline ();
           fmt_close_box ();
@@ -1294,12 +1309,6 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
 
-let pr_lhs_rhs (lhs,rhs) = 
-  fmt_open_box 1;
-  pr_pure_formula lhs;
-  fmt_string "-->";
-  pr_pure_formula rhs;
-  fmt_close()
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
@@ -2464,6 +2473,7 @@ Mcpure.print_mix_f := string_of_mix_formula;;
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
+Cpure.print_formula_br := string_of_formula_branches;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_formula := string_of_formula;;
@@ -2486,6 +2496,7 @@ Cformula.print_context_short := string_of_context_short;;
 Cformula.print_context := string_of_context;;
 Cformula.print_entail_state := string_of_entail_state(* _short *);;
 Cformula.print_entail_state_short := string_of_entail_state_short;;
+(* Cformula.print_formula_br := string_of_formula_branches;; *)
 Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;

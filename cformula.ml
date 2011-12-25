@@ -289,6 +289,7 @@ let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
+let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -3122,6 +3123,8 @@ let rec context_fv (c:context) : CP.spec_var list =
     | Ctx es ->  es_fv es
     | OCtx (c1,c2) -> (context_fv c1)@(context_fv c2)
 
+let empty_infer_rel () = new Gen.stack_noinit print_infer_rel
+
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
 {
@@ -3170,7 +3173,7 @@ let empty_es flowt pos =
   es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-  es_infer_rel = []; 
+  es_infer_rel = [] ;
   es_infer_invs = [];
 }
 
@@ -3755,6 +3758,11 @@ let rec collect_pre_heap ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let rec collect_rel ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_rel 
+  | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2) 
 
 let rec collect_infer_vars ctx = 
   match ctx with

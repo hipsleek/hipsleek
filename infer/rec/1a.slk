@@ -10,5 +10,6 @@ pred ll<n> == self = null & n = 0
 relation R(int rs,int n).
 
 //  ==> res=0 & n=0 --> R(res,n)
-infer [n,R] x::ll<n>@L & x=null & rs=0 |- R(rs,n).
+infer [n,R] x::ll<n>@L & x=null & rs=0 |- R(rs,n) & x=null.
 
+print residue.
