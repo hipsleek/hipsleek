@@ -107,7 +107,7 @@ let rec fixcalc_of_formula e = match e with
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
 
-let fixcalc = "fixcalc"
+let fixcalc = "fixcalc_mod"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
@@ -135,14 +135,14 @@ let compute_inv name vars fml pf =
     flush oc;
     close_out oc;
     let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-    let output_of_fixcalc = "fixcalc.out" in
+(*    let output_of_fixcalc = "fixcalc.out" in
     let ic = open_out output_of_fixcalc in
     Printf.fprintf ic "%s" res;
     close_out ic;
     let _ = syscall ("sed -i /^#/d " ^ output_of_fixcalc) in
     let _ = syscall ("sed -i /^T/d " ^ output_of_fixcalc) in
     let _ = syscall ("sed -i /^$/d " ^ output_of_fixcalc) in
-    let res = syscall ("cat " ^ output_of_fixcalc) in
+    let res = syscall ("cat " ^ output_of_fixcalc) in*)
     let new_pf = Parse_fix.parse_fix res in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
