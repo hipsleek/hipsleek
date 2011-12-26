@@ -66,7 +66,7 @@ let rec fixcalc_of_b_formula b =
       else
         fixcalc_of_exp e1 ^ op_neq ^ fixcalc_of_exp e2
     | CP.RelForm (id,args,_) -> id ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
-    | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Not supported bformula")
+    | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
