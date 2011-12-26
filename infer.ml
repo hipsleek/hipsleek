@@ -629,6 +629,8 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
         (simplify_disj lhs,rhs) in
       let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
       let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
+    (*let fp = if inf_rel_ls = [] then (CP.mkTrue no_pos) else Fixcalc.compute_fixpoint inf_rel_ls in
+    print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fp);*)
       if inf_rel_ls != [] then
         begin
           DD.devel_pprint "*****************" pos;
