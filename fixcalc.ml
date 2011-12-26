@@ -65,7 +65,7 @@ let rec fixcalc_of_b_formula b =
         let s = fixcalc_of_exp e1 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
       else
         fixcalc_of_exp e1 ^ op_neq ^ fixcalc_of_exp e2
-    | CP.RelForm (id,args,_) -> id ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
+    | CP.RelForm (id,args,_) -> (CP.name_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
@@ -164,7 +164,7 @@ let compute_fixpoint input_pairs =
     | _ -> report_error no_pos "Fixcalc.ml: More than one input relation"
   in
   let (name,vars) = match rel_fml with
-    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (name, (List.concat (List.map CP.afv args)))
+    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos "Wrong format"
   in
   let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in
