@@ -7,8 +7,8 @@ open Gen.Basic
 open Cformula
 
 module Pr = Cprinter
-module P = Cpure
-module MP = Mcpure
+module CP = Cpure
+module MCP = Mcpure
 
 (* Operators *)
 let op_lt = "<" 
@@ -23,10 +23,10 @@ let op_add = "+"
 let op_sub = "-"
 
 let is_self = function
-  | P.Var (P.SpecVar (_,id,_),_) -> id=self
+  | CP.Var (CP.SpecVar (_,id,_),_) -> id=self
   | _ -> false
 
-let is_null = P.is_null
+let is_null = CP.is_null
 
 let rec string_of_elems elems string_of sep = match elems with 
   | [] -> ""
@@ -34,30 +34,30 @@ let rec string_of_elems elems string_of sep = match elems with
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 let fixcalc_of_spec_var x = match x with
-  | P.SpecVar (_, id, _) -> id
+  | CP.SpecVar (_, id, _) -> id
 
 let rec fixcalc_of_exp e = match e with
-  | P.Null _ -> "null"
-  | P.Var (x, _) -> fixcalc_of_spec_var x
-  | P.IConst (i, _) -> string_of_int i
-  | P.FConst (f, _) -> string_of_float f
-  | P.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
-  | P.Subtract (e1, e2, _) -> fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
+  | CP.Null _ -> "null"
+  | CP.Var (x, _) -> fixcalc_of_spec_var x
+  | CP.IConst (i, _) -> string_of_int i
+  | CP.FConst (f, _) -> string_of_float f
+  | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
+  | CP.Subtract (e1, e2, _) -> fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let rec fixcalc_of_b_formula b =
   let (pf, _) = b in
   match pf with
-    | P.BConst (b,_) -> string_of_bool b 
-    | P.BVar (x, _) -> fixcalc_of_spec_var x
-    | P.Lt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lt ^ fixcalc_of_exp e2
-    | P.Lte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lte ^ fixcalc_of_exp e2
-    | P.Gt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gt ^ fixcalc_of_exp e2
-    | P.Gte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gte ^ fixcalc_of_exp e2
-    | P.Eq (e1, e2, _) -> 
+    | CP.BConst (b,_) -> string_of_bool b 
+    | CP.BVar (x, _) -> fixcalc_of_spec_var x
+    | CP.Lt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lt ^ fixcalc_of_exp e2
+    | CP.Lte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lte ^ fixcalc_of_exp e2
+    | CP.Gt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gt ^ fixcalc_of_exp e2
+    | CP.Gte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gte ^ fixcalc_of_exp e2
+    | CP.Eq (e1, e2, _) -> 
       if (is_self e1 & is_null e2) || (is_self e2 & is_null e1) then self ^ op_lte ^ "0"
       else fixcalc_of_exp e1 ^ op_eq ^ fixcalc_of_exp e2
-    | P.Neq (e1, e2, _) ->
+    | CP.Neq (e1, e2, _) ->
       if is_self e1 then 
         let s = fixcalc_of_exp e2 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
       else
@@ -65,17 +65,19 @@ let rec fixcalc_of_b_formula b =
         let s = fixcalc_of_exp e1 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
       else
         fixcalc_of_exp e1 ^ op_neq ^ fixcalc_of_exp e2
+    | CP.RelForm (id,args,_) -> id ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Not supported bformula")
 
 let rec fixcalc_of_pure_formula f = match f with
-  | P.BForm (b,_) -> fixcalc_of_b_formula b
-  | P.And (p1, p2, _) ->
+  | CP.BForm (b,_) -> fixcalc_of_b_formula b
+  | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
-  | P.Or (p1, p2,_ , _) -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Or-formula")
-  | P.Not (p,_ , _) -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
-  | P.Forall (sv, p,_ , _) ->
+  | CP.Or (p1, p2,_ , _) ->
+    "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
+  | CP.Not (p,_ , _) -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
+  | CP.Forall (sv, p,_ , _) ->
     " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^ fixcalc_of_pure_formula p ^ ")) "
-  | P.Exists (sv, p,_ , _) ->
+  | CP.Exists (sv, p,_ , _) ->
     " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^ fixcalc_of_pure_formula p ^ ")) "
 
 let rec fixcalc_of_h_formula f = match f with
@@ -85,10 +87,10 @@ let rec fixcalc_of_h_formula f = match f with
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_or ^ fixcalc_of_h_formula h2 ^ ")"
   | DataNode {h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs} -> 
-    if P.is_self_spec_var sv then self ^ op_gt ^ "0"
+    if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; h_formula_view_arguments = svs} ->
-    if P.is_self_spec_var sv then self ^ op_gt ^ "0"
+    if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "True"
   | HFalse -> "False"
@@ -153,9 +155,34 @@ let compute_inv name vars fml pf =
       new_pf)
     else pf
 
+let compute_fixpoint input_pairs =
+  let (pfs, rels) = List.split input_pairs in
+  let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
+  let rel_fml = match rels with
+    | [] -> report_error no_pos "Error in compute_fixpoint"
+    | [hd] -> hd
+    | _ -> report_error no_pos "Fixcalc.ml: More than one input relation"
+  in
+  let (name,vars) = match rel_fml with
+    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (name, (List.concat (List.map CP.afv args)))
+    | _ -> report_error no_pos "Wrong format"
+  in
+  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in
+  let rhs = fixcalc_of_pure_formula pf in
+  let input_fixcalc = name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
+    ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
+  in
+  (*print_endline ("INPUT: " ^ input_fixcalc);*)
+  let output_of_sleek = "fixcalc.inf" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+  (*print_endline ("RES: " ^ res);*)
+  let fixpoint = Parse_fix.parse_fix res in
+  (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
+  fixpoint
   
-    
-    
-
 
 
