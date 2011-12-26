@@ -141,6 +141,12 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_rel c) cl))  ctx in
   List.concat r
 
+let collect_rel_list_partial_context (ctx:list_partial_context) =
+  let pr1 = !CF.print_list_partial_context in
+  let pr2 = pr_list print_lhs_rhs in
+  Gen.Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
+      collect_rel_list_partial_context ctx
+ 
 let init_vars ctx infer_vars iv_rel orig_vars = 
   let rec helper ctx = 
     match ctx with

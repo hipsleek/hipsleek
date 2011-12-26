@@ -11,9 +11,9 @@ pred ll<n> == self = null & n = 0
 
 relation R(int rs, int n).
 //  ==> res=0 & n=0 --> R(res,n)
-infer [R] x::ll<n>@L & x=null & rs=0 |- R(rs,n).
+infer [R] x::ll<n>@L & x=null & rs=t & t=0 |- R(rs,n).
 print residue.
 
 // ==> res=1+r & n=1+m & R(r,m) --> R(res,n)
-infer [R] x::node<_,q>@L * q::ll<m>@L & m=n-1 & x!=null & rs=1+r & R(r,m) |- R(rs,n).
-print residue.
+//infer [R] x::node<_,q>@L * q::ll<m>@L & m=n-1 & x!=null & rs=1+r & R(r,m) |- R(rs,n).
+//print residue.

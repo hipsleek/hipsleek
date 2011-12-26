@@ -296,13 +296,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
-                      let rels = Inf.collect_rel_list_partial_context res_ctx in
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* no abductive inference for post-condition *)
                       let res_ctx = Inf.remove_infer_vars_all_list_partial_context res_ctx in
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
+                      let rels = Inf.collect_rel_list_partial_context tmp_ctx in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
@@ -955,14 +955,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
-  let _ = pr_list Cprinter.string_of_partial_context in
-  let pr1 x = string_of_int (List.length x) in
-  let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
+  let pr = Cprinter.string_of_list_partial_context in
+  let pr1 = Cprinter.string_of_formula in
+  (* let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in *)
+  Gen.Debug.no_2(* loop_2_no *) "check_post" pr pr1 pr  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
-          r ) pos ctx
+          r ) ctx post
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)

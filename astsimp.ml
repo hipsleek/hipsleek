@@ -4010,10 +4010,16 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             (* let _ = print_endline ("EI infer vars:"^(pr_list (fun (i,_) -> i)  ivs)) in *)
             let ct = trans_ext_formula b.IF.formula_inf_continuation stab in
             let new_ivs = List.map (fun (i,p) -> get_spec_var_ident stab i p) ivs in
-            (* TODO : should remove hack below *)
+            (* TODO : any warning below should be fixed *)
             let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
-            let ivs_rel = List.map (fun x -> match x with CP.SpecVar(_,i,p) -> CP.SpecVar(RelT,i,p)) ivs_unk in
-            let new_ivs = new_ivs@ivs_rel in
+            if ivs_unk!=[] then 
+              begin
+                print_endline "WARNING : converting the following ivs_unk vars from UNK to RelT type";
+                print_endline ("WARNING (must fix) : ivs_unk = "^(Cprinter.string_of_spec_var_list ivs_unk))
+              end;
+            let new_ivs = List.map (fun x -> match x with CP.SpecVar(t,i,p) -> 
+                if t==UNK then CP.SpecVar(RelT,i,p) else x) new_ivs in
+            (* let new_ivs = new_ivs@ivs_rel in *)
             (* if ivs_unk!=[] then  *)
             (*   Err.report_error { Err.error_loc = pos;  *)
             (*   Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) } *)
