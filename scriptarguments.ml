@@ -10,6 +10,7 @@ let pred_to_compile = ref ([] : string list)
 
 let print_version_flag = ref false
 
+
 let inter = ref false
 
 let enable_gui = ref false
@@ -113,6 +114,7 @@ let common_arguments = [
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");

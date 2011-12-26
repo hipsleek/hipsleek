@@ -29,7 +29,7 @@ let pprint msg (pos:loc) =
 (* system development debugging *)
 let devel_print s = 
   if !devel_debug_on then 
-    let msg = "\n\n!!!" ^ s in
+    let msg = "\n!!!" ^ s in
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
     else

@@ -72,7 +72,7 @@ and p_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
   | ListPerm of (exp * exp * loc)
-  | RelForm of (ident * (exp list) * loc)
+  | RelForm of (spec_var * (exp list) * loc)
   (* | RelForm of (SpecVar * (exp list) * loc)             *)
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
@@ -484,7 +484,8 @@ and bfv (bf : b_formula) =
           let fv2 = afv a2 in
           fv1 @ fv2
     | RelForm (r, args, _) ->
-          let vid = SpecVar(RelT,r,Unprimed) in
+          let vid = r in
+          (* SpecVar(RelT,r,Unprimed) in *)
 		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
 
@@ -1150,7 +1151,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
     | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) & (eq sv2 sv4)
     | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
-    | (RelForm (r1,args1,_), RelForm (r2,args2,_)) -> (r1 = r2) && (eqExp_list_f eq args1 args2)
+    | (RelForm (r1,args1,_), RelForm (r2,args2,_)) -> (eq_spec_var r1 r2) && (eqExp_list_f eq args1 args2)
     | _ -> false
           (*
             match (f1,f2) with
@@ -2319,21 +2320,22 @@ and list_of_disjs (f0 : formula) : formula list =
   helper f0 []
 
 (* 
+   WARNING : this should not be used!
    deeper split of disjuncts (seems an explosion)
 *)
-and split_disjuncts (f0 : formula): formula list = match f0 with
-  | BForm _ -> [f0]
-  | And (f1,f2,_) -> 
-        let l1 = split_disjuncts f1 in
-        let l2 = split_disjuncts f2 in
-        List.concat (List.map (fun f-> List.map (fun d-> mkAnd d f no_pos) l1) l2)
-  | Or (f1,f2,_,_) -> 
-        let l1 = split_disjuncts f1 in
-        let l2 = split_disjuncts f2 in
-        l1@l2
-  | Not _ -> [f0] 
-  | Forall _ -> [f0]
-  | Exists (v,f,_,_) -> List.map (fun f-> mkExists [v] f None no_pos) (split_disjuncts f)
+(* and split_disjuncts (f0 : formula): formula list = match f0 with *)
+(*   | BForm _ -> [f0] *)
+(*   | And (f1,f2,_) ->  *)
+(*         let l1 = split_disjuncts f1 in *)
+(*         let l2 = split_disjuncts f2 in *)
+(*         List.concat (List.map (fun f-> List.map (fun d-> mkAnd d f no_pos) l1) l2) *)
+(*   | Or (f1,f2,_,_) ->  *)
+(*         let l1 = split_disjuncts f1 in *)
+(*         let l2 = split_disjuncts f2 in *)
+(*         l1@l2 *)
+(*   | Not _ -> [f0]  *)
+(*   | Forall _ -> [f0] *)
+(*   | Exists (v,f,_,_) -> List.map (fun f-> mkExists [v] f None no_pos) (split_disjuncts f) *)
         
 (*	
 	and disj_of_list (fs : formula list) pos : formula =
@@ -5807,7 +5809,6 @@ let filter_ante (ante : formula) (conseq : formula) : formula =
 	let new_ante = filter_var ante fvar in
 	  new_ante
 
-
 (* automatic slicing of variables *)
 
 (* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
@@ -6496,7 +6497,7 @@ let get_rel_id (f:formula)
       = match f with
         | BForm (bf,_) ->
               (match bf with
-                | (RelForm(n,_,_),_) -> Some (SpecVar (RelT,n,Unprimed))
+                | (RelForm(id,_,_),_) -> Some id
                 | _ -> None)
         | _ -> None
   
@@ -6510,10 +6511,11 @@ let is_rel_in_vars (vl:spec_var list) (f:formula)
 (*   | z -> [z] *)
 (* ;; *)
 
-let split_disjunctions = split_disjuncts
-(* function *)
-(*   | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y) *)
-(*   | z -> [z] *)
+let rec split_disjunctions = 
+(* split_disjuncts *)
+function
+  | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
+  | z -> [z]
 
 let join_disjunctions xs = disj_of_list xs no_pos
   (* let rec helper xs r = match xs with *)
@@ -6551,6 +6553,7 @@ let drop_formula (pr:p_formula -> formula option) (f:formula) : formula =
                 | Some nf -> nf)
         | And (f1,f2,p) -> And (helper f1,helper f2,p)
         | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
+        | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
         | _ -> f
   in helper f
 
@@ -6569,7 +6572,7 @@ let memoise_rel_formula ivs (f:formula) :
   let stk = new Gen.stack in
   let pr b = match b with
     | RelForm (i,_,p) -> 
-          let rid = SpecVar(RelT,i,Unprimed) in
+          let rid = i in
           if mem rid ivs then
             let id = fresh_old_name "memo_rel_hole_" in
             let v = SpecVar(Bool,id,Unprimed) in

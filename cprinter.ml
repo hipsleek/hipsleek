@@ -694,7 +694,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-			| P.RelForm (r, args, l) -> fmt_string (r ^ "("); match args with
+			| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
 				| [] -> ()
 				| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 										let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
@@ -1114,6 +1114,8 @@ let pr_lhs_rhs ((lhs,rhs) as rel) =
   (* pr_pure_formula rhs; *)
   (* fmt_close() *)
 
+let string_of_lhs_rhs (e) : string =  poly_string_of_pr  pr_lhs_rhs e
+
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ""
@@ -1342,6 +1344,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
+  pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
@@ -1471,12 +1474,12 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,iv,ih,ip) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
-    pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     fmt_close_box();
@@ -1488,12 +1491,12 @@ let pr_context_short (ctx : context) =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,iv,ih,ip) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
-    pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     fmt_close_box();
@@ -1514,6 +1517,7 @@ let pr_entail_state_short e =
   (pr_seq "" pr_spec_var) e.es_ante_evars;
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
+  pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
@@ -2312,7 +2316,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
-	| P.RelForm (r, args, l) -> r ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+	| P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
 
 let rec html_of_pure_formula f =
 	match f with

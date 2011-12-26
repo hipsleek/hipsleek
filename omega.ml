@@ -382,6 +382,10 @@ let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
 
+let is_sat_weaken (pe : formula)  (sat_no : string): bool =
+  let pe = drop_rel_formula pe in
+  is_sat pe sat_no
+
 let is_sat_with_check (pe : formula) sat_no : bool option =
   do_with_check "" (fun x -> is_sat x sat_no) pe 
 

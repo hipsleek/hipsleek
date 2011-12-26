@@ -2391,6 +2391,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_gen_impl_vars = new_impl_vars;
               es_trace = fold_es.es_trace;
               es_infer_vars = fold_es.es_infer_vars;
+              es_infer_vars_rel = fold_es.es_infer_vars_rel;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_rel = fold_es.es_infer_rel;
@@ -5274,14 +5275,14 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
   else
     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
 
-and build_and_failures (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
+and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
       (fail_ctx_template: fail_context): list_context=
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
-  Gen.Debug.no_1 "build_and_failures" pr4 pr2 
+  Gen.Debug.no_1_num i "build_and_failures" pr4 pr2 
       (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template)
       (contra_list, must_list, may_list)
 
@@ -5395,7 +5396,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 	(match r1 with
 	  | CP.RelForm (rn1, args1, _) -> (match r2 with
 		  | CP.RelForm (rn2, args2, _) -> (* TODO Implement *) 
-				if (rn1 = rn2) then
+				if (CP.eq_spec_var rn1 rn2) then
 				  (* If the arguments at non-vars positions matched*)
 				  (* then we add the args1[i] = args2[i] where *)
 				  (* args2[i] should be a variable in vars *)
@@ -5477,7 +5478,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
-  let (estate,lhs_p,rhs_p,rhs_p_br) = Inf.infer_collect_rel estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br in
+  let estate = estate_orig in
+  let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
   let fold_fun (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =
 	begin
       if (is_ok = false) then (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) else
@@ -5687,7 +5689,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 		            fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br pos) pos;
 		            fc_current_conseq = CF.formula_of_heap HFalse pos;
 		            fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
-                (build_and_failures "213" Globals.logical_error (contra_list, must_list, may_list) fc_template, prf)
+                (build_and_failures 1 "213" Globals.logical_error (contra_list, must_list, may_list) fc_template, prf)
               else
                 (CF.mkFailCtx_in (Basic_Reason ({
 		            fc_message = "failed in entailing pure formula(s) in conseq";
@@ -6020,6 +6022,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label;
         es_infer_vars = estate.es_infer_vars;
+        es_infer_vars_rel = estate.es_infer_vars_rel;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
         es_infer_rel = estate.es_infer_rel;
@@ -6815,7 +6818,7 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
                     | CF.Failure_Valid -> estate.es_formula
           } in
           let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-          let olc = build_and_failures "15.3 no match for rhs data node: "
+          let olc = build_and_failures 2 "15.3 no match for rhs data node: "
             Globals.logical_error (contra_list, must_list, may_list) fc_template in
           let lc =
             ( match olc with
@@ -7161,7 +7164,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                               | CF.Failure_Valid -> estate.es_formula
                     } in
                     let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-                    (build_and_failures "15.3" sl_error (contra_list, must_list, may_list) fc_template, UnsatConseq)
+                    (build_and_failures 3 "15.3" sl_error (contra_list, must_list, may_list) fc_template, UnsatConseq)
                   else
                     let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
                       ^ " (may-bug)."in

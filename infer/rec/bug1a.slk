@@ -12,7 +12,13 @@ relation A(int n, int m, int z).
 infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
 print residue.
 // TODO bug with --eps
-// soln : replace rel from antecedent by true
+/*
+WARNING : Illegal_Prover_Format for :Omega.omega_of_exp: bag or list constraint
+Apply Omega.imply on ante Formula : 0<=z
+and conseq Formula : A(n,m,z)
+*/
+
+// TODO BUG : whya extra false state?
 /*
 <1>true & n=1 & Anon_48=Anon_12 & q_49=y & m+1=z & {FLOW,(17,18)=__norm}
 inferred rel: [1<=m & n=1 & m+1=z | m=0 & n=1 & m+1=z-->A(n,m,z)]

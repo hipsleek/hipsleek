@@ -23,6 +23,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_rel_ids : (typ * ident) list; 
                    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
@@ -1791,6 +1792,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+                prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
@@ -1806,6 +1808,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_enum_decls = [];
                 prog_view_decls = [];
                 prog_rel_decls = [];
+                prog_rel_ids = [];
                 prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];

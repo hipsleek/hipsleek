@@ -1246,6 +1246,7 @@ hprogn:
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
       prog_rel_decls = !rel_defs; (* An Hoa *)
+      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) !rel_defs; (* WN *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 

@@ -40,6 +40,7 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];
+        I.prog_rel_ids = [];
         I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
@@ -492,7 +493,10 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
-  let ctx = Inf.init_vars ctx vars orig_vars in
+  let (vrel,iv) = List.partition (fun v -> match v with CP.SpecVar(t,_,_) -> t==RelT) vars in
+  (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+  (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
+  let ctx = Inf.init_vars ctx iv vrel orig_vars in
 
   let _ = if !Globals.print_core 
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)

@@ -1012,11 +1012,14 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 	  (* exlist # compute_hierarchy; *)
       (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
 	  let prims,prim_rels = gen_primitives prog0 in
+      (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
    let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
 	  (* let prims,prim_rels = ([],[]) in *)
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 		  (* AN HOA : adjoint the program with primitive relations *)
-		  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;} in
+		  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
+		  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
+      } in
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
@@ -1039,6 +1042,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -1948,9 +1952,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 (*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
 	(** An Hoa : end **)
 	let final_dynamic_specs_list = dynamic_specs_list in
+    (* TODO: is below being computed multiple times? *)
+    let args2 = args@(prog.I.prog_rel_ids) in
     let _ = 
-      let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv_infer final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args) in
+      let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
+ 
+      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv_infer final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -3884,7 +3891,7 @@ and trans_var_x (ve, pe) stab pos =
                 Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
             }			
             
-and trans_var_safe (ve, pe) stab pos =
+and trans_var_safe (ve, pe) et stab pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
   (* if (ve.[0] = '#') then  *)
   (*   CP.SpecVar (UNK,"#",Unprimed) *)
@@ -3895,7 +3902,7 @@ and trans_var_safe (ve, pe) stab pos =
       let ve_info = H.find stab ve
       in
       (match ve_info.sv_info_kind with
-        | UNK -> CP.SpecVar (UNK, ve, pe)
+        | UNK -> CP.SpecVar (et, ve, pe)
 (*              Err.report_error                                                                                                                       *)
 (*                  {                                                                                                                                  *)
 (*                      Err.error_loc = pos;                                                                                                           *)
@@ -3905,7 +3912,7 @@ and trans_var_safe (ve, pe) stab pos =
 
       )
     with Not_found ->   
-        CP.SpecVar (UNK, ve, pe)
+        CP.SpecVar (et, ve, pe)
 
 and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula = 
   let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:CF.struc_formula): CF.struc_formula =
@@ -3976,9 +3983,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             let nc = trans_struc_formula_hlp b.IF.formula_ext_continuation 
               (fvars @ (fst (List.split(IF.heap_fv b.IF.formula_ext_base))))in
             let nb = trans_formula prog quantify fvars false b.IF.formula_ext_base stab false in
-            let ex_inst = List.map (fun c-> trans_var_safe c stab b.IF.formula_ext_pos) b.IF.formula_ext_explicit_inst in
-            let ext_impl = List.map (fun c-> trans_var_safe c stab b.IF.formula_ext_pos) b.IF.formula_ext_implicit_inst in
-            let ext_exis = List.map (fun c-> trans_var_safe c stab b.IF.formula_ext_pos) b.IF.formula_ext_exists in
+            let ex_inst = List.map (fun c-> trans_var_safe c UNK stab b.IF.formula_ext_pos) b.IF.formula_ext_explicit_inst in
+            let ext_impl = List.map (fun c-> trans_var_safe c UNK stab b.IF.formula_ext_pos) b.IF.formula_ext_implicit_inst in
+            let ext_exis = List.map (fun c-> trans_var_safe c UNK stab b.IF.formula_ext_pos) b.IF.formula_ext_exists in
             CF.EBase {
                 CF.formula_ext_explicit_inst = ex_inst;
                 CF.formula_ext_implicit_inst = ext_impl;
@@ -4003,11 +4010,14 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             (* let _ = print_endline ("EI infer vars:"^(pr_list (fun (i,_) -> i)  ivs)) in *)
             let ct = trans_ext_formula b.IF.formula_inf_continuation stab in
             let new_ivs = List.map (fun (i,p) -> get_spec_var_ident stab i p) ivs in
+            (* TODO : should remove hack below *)
             let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
-            if ivs_unk!=[] then 
-              Err.report_error { Err.error_loc = pos; 
-              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
-             else 
+            let ivs_rel = List.map (fun x -> match x with CP.SpecVar(_,i,p) -> CP.SpecVar(RelT,i,p)) ivs_unk in
+            let new_ivs = new_ivs@ivs_rel in
+            (* if ivs_unk!=[] then  *)
+            (*   Err.report_error { Err.error_loc = pos;  *)
+            (*   Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) } *)
+            (*  else  *)
         CF.EInfer {
         CF.formula_inf_post = b.IF.formula_inf_post;
         CF.formula_inf_vars = new_ivs;
@@ -4019,7 +4029,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   (* let _ = collect_type_info_struc_f prog f0 stab in	 *)
   let _ = gather_type_info_struc_f prog f0 stab in
   let r = trans_struc_formula_hlp f0 fvars in
-  let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) stab (IF.pos_of_struc_formula f0)) fvars in
+  let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK stab (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
   (* let cfvhp2 = List.map (fun c-> trans_var_safe (c,Unprimed) stab (IF.pos_of_struc_formula f0)) fvars in *)
   let cfvhp = cfvhp1@cfvhp2 in
@@ -4123,7 +4133,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
       | (e, label) :: rest ->
             let e_hvars = match e with
               | IP.Var ((ve, pe), pos_e) -> 
-                    trans_var_safe (ve, pe) stab pos_e
+                    trans_var_safe (ve, pe) UNK stab pos_e
               | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
@@ -4373,7 +4383,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } in 
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var_safe c stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl nb pos 
 	          
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
@@ -4463,9 +4473,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
     | IP.RelForm (r, args, pos) ->    
+          let nv = trans_var_safe (r,Unprimed) RelT stab pos in
     	  (* Match types of arguments with relation signature *)
 		  let cpargs = trans_pure_exp_list args stab in
-		  CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+		  CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
   in
   match sl with
 	| None -> (npf, None)
@@ -5259,6 +5270,7 @@ and gather_type_info_b_formula_x prog b0 stab =
 		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
 		    (* let _ = List.map Iprinter.string_of_formula_exp args in
 		       let _ = List.map string_of_typ args_exp_types in *)
+            let _ = gather_type_info_var r stab RelT in
 		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
 		  with
 		    | Not_found ->   
@@ -6728,16 +6740,23 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
-  {  Iast.prog_data_decls = cdata;
-  Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
-  Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
-  Iast.prog_view_decls = tmp_views;
-  Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
-  Iast.prog_axiom_decls = prog.Iast.prog_axiom_decls; (* [4/10/2011] An Hoa TODO implement*)
-  Iast.prog_proc_decls = procs1;
-  Iast.prog_coercion_decls = coer1;
-  Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     
+  { prog with 
+      Iast.prog_data_decls = cdata;
+      Iast.prog_view_decls = tmp_views;
+      Iast.prog_proc_decls = procs1;
+      Iast.prog_coercion_decls = coer1;
   }
+  (* {  Iast.prog_data_decls = cdata; *)
+  (* Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls;  *)
+  (* Iast.prog_enum_decls = prog.Iast.prog_enum_decls; *)
+  (* Iast.prog_view_decls = tmp_views; *)
+  (* Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (\* An Hoa TODO implement*\) *)
+  (* Iast.prog_rel_ids = prog.Iast.prog_rel_ids; *)
+  (* Iast.prog_axiom_decls = prog.Iast.prog_axiom_decls; (\* [4/10/2011] An Hoa TODO implement*\) *)
+  (* Iast.prog_proc_decls = procs1; *)
+  (* Iast.prog_coercion_decls = coer1; *)
+  (* Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;      *)
+  (* } *)
 
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) 
 	  (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos:

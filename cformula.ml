@@ -2993,6 +2993,7 @@ type entail_state = {
   es_infer_post : bool; 
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
+  es_infer_vars_rel : CP.spec_var list; 
   es_infer_label: formula; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
@@ -3170,6 +3171,7 @@ let empty_es flowt pos =
   es_orig_vars = [];
   es_infer_post = false;
   es_infer_vars = [];
+  es_infer_vars_rel = [];
   es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -3973,6 +3975,7 @@ let false_ctx_with_orig_ante es f flowt pos =
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; 
         es_infer_vars = es.es_infer_vars;
+        es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
@@ -6040,6 +6043,7 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
     es_infer_vars = es.es_infer_vars;
+    es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
     es_infer_rel = es.es_infer_rel;
