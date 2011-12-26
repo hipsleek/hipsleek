@@ -4009,21 +4009,28 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             (* let _ = print_endline ("EI fvars:"^(pr_list pr_id fvars)) in *)
             (* let _ = print_endline ("EI infer vars:"^(pr_list (fun (i,_) -> i)  ivs)) in *)
             let ct = trans_ext_formula b.IF.formula_inf_continuation stab in
-            let new_ivs = List.map (fun (i,p) -> get_spec_var_ident stab i p) ivs in
+            let new_ivs = List.map (fun (i,p) -> 
+                let v=get_spec_var_ident stab i p in
+                match v with
+                  | CP.SpecVar(t,id,pr) ->
+                        if t==UNK then
+                          try
+                            let d = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+                            CP.SpecVar(RelT,id,pr)
+                          with _ -> v
+                        else v
+            ) ivs in
             (* TODO : any warning below should be fixed *)
             let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
             if ivs_unk!=[] then 
               begin
-                print_endline "WARNING : converting the following ivs_unk vars from UNK to RelT type";
-                print_endline ("WARNING (must fix) : ivs_unk = "^(Cprinter.string_of_spec_var_list ivs_unk))
+                let s = (Cprinter.string_of_spec_var_list ivs_unk) in
+                print_endline ("WARNING (must fix): Vars from"^s^"has type UNK")
               end;
-            let new_ivs = List.map (fun x -> match x with CP.SpecVar(t,i,p) -> 
-                if t==UNK then CP.SpecVar(RelT,i,p) else x) new_ivs in
-            (* let new_ivs = new_ivs@ivs_rel in *)
-            (* if ivs_unk!=[] then  *)
-            (*   Err.report_error { Err.error_loc = pos;  *)
-            (*   Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) } *)
-            (*  else  *)
+            if ivs_unk!=[] then
+              Err.report_error { Err.error_loc = pos;
+              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
+             else
         CF.EInfer {
         CF.formula_inf_post = b.IF.formula_inf_post;
         CF.formula_inf_vars = new_ivs;

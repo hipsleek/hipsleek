@@ -1434,12 +1434,14 @@ let elim_redundant impl (f:memo_pure): memo_pure =
     r)
   else f
   
-let elim_redundant_debug impl (f:memo_pure) : memo_pure  = 
-  let r1,r2 = elim_redundant_aux impl f in
-  print_string ("eliminate_redundant input: "^(!print_mp_f f)^"\n");
-  print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n");
-  print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n");
-  r1
+let elim_redundant impl (f:memo_pure) : memo_pure  =
+  let pr = !print_mp_f in
+  Gen.Debug.ho_1 "elim_redundant" pr pr (fun _ -> elim_redundant impl f) f
+  (* let r1,r2 = elim_redundant_aux impl f in *)
+  (* print_string ("eliminate_redundant input: "^(!print_mp_f f)^"\n"); *)
+  (* print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n"); *)
+  (* print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n"); *)
+  (* r1 *)
 
 (* wrapper for fast_imply*)
 let rec fast_memo_imply (g:memoised_group) (f:b_formula):int =

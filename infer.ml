@@ -366,7 +366,7 @@ let rec filter_var f vars = match f with
           try 
             Omega.is_sat_weaken f "0" 
           with _ -> false
-              (* spurious pre inf when set to true *)
+              (* spurious pre inf when set to true; check 2c.slk *)
         in
         if flag
         then CP.filter_var f vars 
@@ -430,7 +430,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos =
 let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
+  Gen.Debug.ho_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
 
 (*
    should this be done by ivars?

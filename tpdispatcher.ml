@@ -1463,10 +1463,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 ;;
 
 
-let tp_imply_no_cache ante conseq imp_no timeout process =	
+let tp_imply_no_cache i ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Gen.Debug.no_2 "tp_imply_no_cache" 
+  Gen.Debug.ho_2_num i "tp_imply_no_cache" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
@@ -1513,7 +1513,7 @@ let add_conseq_to_cache s =
           
 let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then
-    tp_imply_no_cache ante conseq imp_no timeout process
+    tp_imply_no_cache 1 ante conseq imp_no timeout process
   else
     (*let _ = Gen.Profiling.push_time "cache overhead" in*)
     let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
@@ -1524,7 +1524,7 @@ let tp_imply ante conseq imp_no timeout process =
       try
         Hashtbl.find !impl_cache fstring
       with Not_found ->
-        let r = tp_imply_no_cache ante conseq imp_no timeout process in
+        let r = tp_imply_no_cache 2 ante conseq imp_no timeout process in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !impl_cache fstring r in
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
@@ -1543,7 +1543,7 @@ let tp_imply ante conseq imp_no timeout do_cache process =
             (* print_string ("hit rhs: "^s_rhs^"\n");*)
             r
         with Not_found ->
-            let r = tp_imply_no_cache ante conseq imp_no timeout process in
+            let r = tp_imply_no_cache 3 ante conseq imp_no timeout process in
             (Hashtbl.add imply_cache s r ;
              (*print_string ("s rhs: "^s_rhs^"\n");*)
              Gen.Profiling.inc_counter "impl_proof_count";
@@ -2505,7 +2505,7 @@ let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
 
 (* is below called by pruning *)
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process =
-Gen.Debug.no_2 "imply_msg_no_no " 
+Gen.Debug.loop_2 "imply_msg_no_no " 
   Cprinter.string_of_pure_formula 
   Cprinter.string_of_pure_formula
  (fun (x,_,_)-> string_of_bool x) 
