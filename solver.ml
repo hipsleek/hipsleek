@@ -4805,7 +4805,8 @@ and heap_entail_split_lhs_phases_x
 Find matched pairs of thread formula, do entailment, accumulate pure constraint
 a1 : child threads in the ante
 a2 : child threads in the conseq
-allp is total pure constraints in all threads of the ante
+alla is total pure constraints in all threads of the ante (used to indentify thread id and assist proving)
+allc is total pure constraints in all threads of the conseq (used to identify thread id)
 return res1,res2,res2
 where
   res1 : None -> fail to entail the pairs, errors found in res2 (FAIL)
@@ -4819,7 +4820,7 @@ Others:
 estate: estate or ante of the main entailment. a1 belongs to estate
 conseq: conseq of the main entailment. a2 belongs to conseq
 *)
-and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_formula list) (a2: one_formula list) (allp: MCP.mix_formula) pos : ((MCP.mix_formula*MCP.mix_formula) * entail_state) option * (list_context * proof) * (one_formula list) =
+and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_formula list) (a2: one_formula list) (alla: MCP.mix_formula) (allc: MCP.mix_formula) pos : ((MCP.mix_formula*MCP.mix_formula) * entail_state) option * (list_context * proof) * (one_formula list) =
   let pr_one = Cprinter.string_of_one_formula in
   let pr_one_list = Cprinter.string_of_one_formula_list in
   let pr_out (a,(b1,b2),c) =
@@ -4831,44 +4832,48 @@ and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_f
     let str3 = pr_one_list c in
     ("\n ### new_pure = " ^ str1 ^ "\n ### CTX = " ^ str2 ^ "\n ### rest_a = " ^ str3)
   in
-  Gen.Debug.no_5 "heap_entail_thread"
-      Cprinter.string_of_entail_state Cprinter.string_of_formula pr_one_list pr_one_list Cprinter.string_of_mix_formula pr_out
- (fun _ _ _ _ _ -> heap_entail_thread_x prog estate conseq a1 a2 allp pos) estate conseq a1 a2 allp
+  Gen.Debug.no_6 "heap_entail_thread"
+      Cprinter.string_of_entail_state Cprinter.string_of_formula pr_one_list pr_one_list Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
+ (fun _ _ _ _ _ _ -> heap_entail_thread_x prog estate conseq a1 a2 alla allc pos) estate conseq a1 a2 alla allc
 
-and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one_formula list) (a2: one_formula list) (allp: MCP.mix_formula) pos : ((MCP.mix_formula*MCP.mix_formula) * entail_state) option * (list_context * proof) * (one_formula list) =
+and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one_formula list) (a2: one_formula list) (alla: MCP.mix_formula) (allc: MCP.mix_formula) pos : ((MCP.mix_formula*MCP.mix_formula) * entail_state) option * (list_context * proof) * (one_formula list) =
   (*return pair of matched one_formula of LHS and RHS*)
   (*MUST exist a Injective and non-surjective mapping from a2 to a1*)
   (*otherwise, failed*)
 
   (*return a matched pair (f,one_f) and the rest (a1-f)*)
-  let compute_thread_one_match_x a1 one_f =
+  let compute_thread_one_match_x a1 one_f alla allc =
     let rec helper a1 one_f =
       match a1 with
         | [] -> None,a1
         | x::xs ->
-            if (CP.eq_spec_var x.formula_thread one_f.formula_thread) then
+            let vs1 = MCP.find_closure_mix_formula x.formula_thread alla in
+            let vs2 = MCP.find_closure_mix_formula one_f.formula_thread allc in
+            let tmp = (Gen.BList.intersect_eq CP.eq_spec_var vs1 vs2) in
+            (* if (CP.eq_spec_var x.formula_thread one_f.formula_thread) then *)
+            if (tmp!=[]) then
               (Some (x,one_f),xs)
             else
               let res1,res2 = helper xs one_f in
               (res1,x::res2)
     in helper a1 one_f
   in
-  let compute_thread_one_match (a1 : one_formula list) (one_f : one_formula) =
+  let compute_thread_one_match (a1 : one_formula list) (one_f : one_formula) (alla:MCP.mix_formula) (allc: MCP.mix_formula) =
     let pr_out =
       pr_pair (pr_option (pr_pair Cprinter.string_of_one_formula Cprinter.string_of_one_formula)) (Cprinter.string_of_one_formula_list)
     in
     Gen.Debug.no_2 "compute_thread_one_match"
         Cprinter.string_of_one_formula_list  Cprinter.string_of_one_formula pr_out
-        compute_thread_one_match_x a1 one_f
+        (fun _ _ -> compute_thread_one_match_x a1 one_f alla allc) a1 one_f
   in
-  (*finf all matched pairs*)
-  let compute_thread_matches_x a1 a2 =
+  (*find all matched pairs*)
+  let compute_thread_matches_x a1 a2 alla allc=
     let rec helper a1 a2 =
       match a2 with
         | [] -> (Some [], "empty",a1)
         | x::xs ->
             (*find a match for each iterm in a2*)
-            let res1,a_rest = compute_thread_one_match a1 x in
+            let res1,a_rest = compute_thread_one_match a1 x alla allc in
             (match res1 with
               | None ->
                   let error_msg = ("thread with id = " ^ (Cprinter.string_of_spec_var x.formula_thread) ^ " not found") in
@@ -4880,7 +4885,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
                     | Some ls -> (Some ((f1,f2)::ls)) , "empty" , a1_rest))
     in helper a1 a2
   in
-  let compute_thread_matches (a1 : one_formula list) (a2 : one_formula list) =
+  let compute_thread_matches (a1 : one_formula list) (a2 : one_formula list) (alla:MCP.mix_formula) (allc: MCP.mix_formula) =
     let pr_one = Cprinter.string_of_one_formula in
     let pr_out (a,b,c) =
       let str1 = pr_option (pr_list (pr_pair pr_one pr_one)) a in
@@ -4890,12 +4895,12 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
        ^ "\n ### msg = " ^ str2
        ^ "\n ### rest_a = " ^ str3)
     in
-    Gen.Debug.no_2 "compute_thread_matches"
-        Cprinter.string_of_one_formula_list Cprinter.string_of_one_formula_list pr_out
-        compute_thread_matches_x a1 a2
+    Gen.Debug.no_4 "compute_thread_matches"
+        Cprinter.string_of_one_formula_list Cprinter.string_of_one_formula_list Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
+        (fun _ _ _ _ -> compute_thread_matches_x a1 a2 alla allc) a1 a2 alla allc
   in
   (*compute matched pairs*)
-  let res,msg,rest_a1 = compute_thread_matches a1 a2 in
+  let res,msg,rest_a1 = compute_thread_matches a1 a2 alla allc in
   (*process matched pairs*)
   let res = match res with
     | None ->
@@ -4997,7 +5002,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
                               (Some (p2,es2),ctx2))))
           in helper estate matches to_ante to_conseq
         in
-        (*allp is total pure constraints in all threads of the ante*)
+        (*alla is total pure constraints in all threads of the ante*)
         let process_thread_matches estate matches to_ante to_conseq =
           let pr_one = Cprinter.string_of_one_formula in
           let pr = pr_list (pr_pair pr_one pr_one) in
@@ -5014,7 +5019,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
               (fun _ _ -> process_thread_matches_x estate matches to_ante to_conseq) matches to_ante
         in
         let to_conseq = (MCP.mkMTrue pos) in
-        let res_p,res_ctx = process_thread_matches estate matches allp to_conseq in
+        let res_p,res_ctx = process_thread_matches estate matches alla to_conseq in
         (res_p, (res_ctx,Unknown),rest_a1)
   in res
 
@@ -5306,9 +5311,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 					    formula_base_branches = br1;
 					    formula_base_label = None;
 					    formula_base_pos = pos } in
-             (*allp is the pure constraints in all threads*)
-             let allp = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
-             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 allp pos in
+             (*alla is the pure constraints in all threads*)
+             let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
+             (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
+             let allc = p2 in (*TO CHECK: p2 only to find closure*)
+             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
              (match new_p with
                | None -> lctx (*Failed when entail threads*)
                | Some ((to_ante,to_conseq),new_es) ->
@@ -5364,9 +5371,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 					    formula_base_branches = br2;
 					    formula_base_label = None;
 					    formula_base_pos = pos } in
-             (*allp is the pure constraints in all threads*)
-             let allp = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
-             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 allp pos in
+             (*alla is the pure constraints in all threads*)
+             let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
+             (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
+             let allc = p2 in (*TO CHECK: p2 only to find closure*)
+             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
              (match new_p with
                | None -> lctx (*Failed when entail threads*)
                | Some ((to_ante,to_conseq),new_es) ->

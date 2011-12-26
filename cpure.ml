@@ -1426,6 +1426,15 @@ and fresh_spec_var (sv : spec_var) =
   let t = type_of_spec_var sv in
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 
+and fresh_thread_var () =
+  let old_name = "tid" in
+  let name = fresh_old_name old_name in
+  (*--- 09.05.2000 *)
+  (*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
+  (*09.05.2000 ---*)
+  let t = thread_typ in
+  SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
+
 and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
 
 and fresh_spec_var_prefix s (sv : spec_var) =

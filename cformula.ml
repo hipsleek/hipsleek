@@ -395,7 +395,7 @@ and struc_formula_of_heap h pos = [EBase {
 	formula_ext_base = formula_of_heap h pos;
 	formula_ext_continuation = [];
 	formula_ext_pos = pos}]
-  
+
 and struc_formula_of_formula f pos = [EBase { 
 	formula_ext_explicit_inst = [];	 
     formula_ext_implicit_inst = []; 
@@ -403,7 +403,6 @@ and struc_formula_of_formula f pos = [EBase {
 	formula_ext_base = f;
 	formula_ext_continuation = [];
 	formula_ext_pos = pos}]
-  
   
 and mkTrueFlow () = 
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
@@ -2192,7 +2191,8 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
 and one_formula_subst sst (f : one_formula) = 
   let base = formula_of_one_formula f in
   let rs = subst sst base in
-  (one_formula_of_formula rs f.formula_thread)
+  let tid = CP.subst_var_par sst f.formula_thread in
+  (one_formula_of_formula rs tid)
 
 (*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -2352,7 +2352,8 @@ and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
 and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_formula) = 
   let base = formula_of_one_formula f in
   let rs = apply_one s base in
-  (one_formula_of_formula rs f.formula_thread)
+  let tid = subst_var s f.formula_thread in
+  (one_formula_of_formula rs tid)
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
@@ -4908,7 +4909,7 @@ and subst_var_exp (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else
 
 and apply_one_exp_one_formula ((fr, t) as s : (CP.spec_var * CP.exp)) (f : one_formula) = 
   let base = formula_of_one_formula f in
-  let rs = apply_one_exp s base in
+  let rs = apply_one_exp s base in (*TO CHECK: how about formula_thread*)
   (one_formula_of_formula rs f.formula_thread)
 
 and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match f with
@@ -6319,10 +6320,12 @@ let rec string_of_list_of_pair_formula ls =
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 (* and print_struc_formula = ref(fun (c:struc_formula) -> "Cprinter not initialized") *)
 		
-and split_struc_formula f0 = split_struc_formula_a f0
+(* and split_struc_formula f0 = split_struc_formula_a f0 *)
 
-and split_struc_formula_debug f0 =
+(*This will lose information about explicit,implicit instantiation vars*)
+and split_struc_formula(* _debug *) f0 =
   Gen.Debug.no_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
+
 (* split the struc_formula into the list of pre/post pairs *)  
 and split_struc_formula_a (f0:struc_formula):(formula*formula) list = 
 	let rec ext_to_formula (f:ext_formula):(formula*formula) list = match f with
@@ -6997,3 +7000,58 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
           let r = merge_ext_pre c pre in
           EInfer {b with formula_inf_continuation = r}
 
+(*=======split_pre_post ->  ========*)
+(*TO DO: ECase*)
+let rec split_pre_post_ext (spec:ext_formula) : (struc_formula * struc_formula) =
+  match spec with
+    | EVariance e -> 
+        (*ignore EVariance*)
+        split_pre_post_struc e.formula_var_continuation
+    | EBase b -> 
+        (* let f = b.formula_ext_base in *)
+        let pre,post = split_pre_post_struc b.formula_ext_continuation in
+        let new_b = EBase {b with formula_ext_continuation=[]} in
+        (new_b::pre,post)
+    | ECase c -> 
+        let _ = print_string "[split_pre_post_ext] Warning: not support ECase " in
+        (* let normalize_struc (f1:struc_formula) (f2:formula):struc_formula = *)
+        (*   let func f1 = (match f1 with *)
+        (*     | EVariance _ *)
+        (*     | ECase _ *)
+        (*     | EAssume _ ->  *)
+        (*         let _ = print_string "[split_pre_post_ext] Warning: not expecting other than EBase: normalize_struc failed" in *)
+        (*         f1 *)
+        (*     | EBase b -> *)
+        (*         let new_base = (normalize 4 f2 b.formula_ext_base b.formula_ext_pos) in *)
+        (*         EBase {b with formula_ext_base = new_base}) *)
+        (*   in *)
+        (*   (List.map func f1) *)
+        (* in *)
+        (* let _ = (List.map (fun (c1,c2)-> *)
+		(* 	let pre,post = split_pre_post_struc c2 in *)
+        (*     let f = (formula_of_pure_N c1 c.formula_case_pos) in *)
+        (*     let new_pre = normalize_struc pre f in *)
+        (*     (new_pre,post)) *)
+        (*              c.formula_case_branches) *)
+        (* in *)
+        ([spec],[])
+    | EAssume _ -> ([],[spec])
+
+and split_pre_post_struc (specs:struc_formula) : (struc_formula * struc_formula) =
+  match specs with
+    | [] -> ([],[])
+    | spec::rest -> 
+        let pre,post = split_pre_post_struc rest in
+        let pre1,post1 = split_pre_post_ext spec in
+        (pre1@pre,post1@post)
+
+and split_specs_x (specs:struc_formula) : (struc_formula * struc_formula) =
+  split_pre_post_struc specs
+
+(*split pre/post of a spec*)
+(*TO DO: split multiple specs*)
+and split_specs (specs:struc_formula) : (struc_formula * struc_formula) =
+  let pr (ls1,ls2) = ("\n ###pre= " ^ (!print_struc_formula ls1) ^ "\n ###post=" ^ (!print_struc_formula ls2)) in
+  Gen.Debug.no_1 "split_specs" !print_struc_formula pr
+      split_specs_x specs
+(*=======split_pre_post <- ========*)

@@ -1878,7 +1878,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let pr2 x = 
     if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name
     else (add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs) in
-  Gen.Debug.ho_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+  Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (* An Hoa *)
@@ -2299,7 +2299,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
               }
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       trans_exp_type =
-  Gen.Debug.ho_1 "trans_exp"
+  Gen.Debug.no_1 "trans_exp"
       Iprinter.string_of_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
       (fun _ -> trans_exp_x prog proc ie) ie 
@@ -2730,6 +2730,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_recv_path_id = pi;
                 I.exp_call_recv_pos = pos; } in helper call_recv)
             else if (mn=Globals.fork_name) then
+              (*============================*)
+              (*========== FORK >>>=========*)
+              (*============================*)
               (*fork is a generic functions. Its arguments can vary*)
               (*fork has at least a method name*)
               (if (List.length args <1) then
@@ -2761,7 +2764,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           let call_e = C.SCall {
                               C.exp_scall_type = ret_ct;
                               C.exp_scall_method_name = mingled_mn;
-                              C.exp_scall_arguments = arg_vars;
+                              C.exp_scall_arguments = mingled_forked_mn::arg_vars;
 					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                               C.exp_scall_pos = pos;
                               C.exp_scall_path_id = pi; } in
@@ -2772,35 +2775,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_block_local_vars = local_vars;
                               C.exp_block_pos = pos; }),ret_ct))))
                     with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
-
-
-                (* let fun0 arg =  *)
-                (*   let (e,ct) = helper arg in *)
-                (*   ct *)
-                (* in *)
-                (* let arg_types = List.map fun0 args in *)
-                (* if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts arg_types then *)
-                (*   Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; } *)
-                (* else *)
-                (*   let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in *)
-                (*   (\* let ret_ct  = Globals.thread_typ in (\*identical*\) *\)  *)
-                (*   let positions = List.map I.get_exp_pos args in *)
-                (*   let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in *)
-                (*         let call_e = C.SCall { *)
-                (*             C.exp_scall_type = ret_ct; *)
-                (*             C.exp_scall_method_name = mingled_mn; *)
-                (*             C.exp_scall_arguments = arg_vars; *)
-	            (*             C.exp_scall_is_rec = false; (\* default value - it will be set later in trans_prog *\) *)
-                (*             C.exp_scall_pos = pos; *)
-                (*             C.exp_scall_path_id = pi; } in *)
-                (*         let seq_1 = C.mkSeq ret_ct init_seq call_e pos in *)
-                (*         ((C.Block { *)
-                (*             C.exp_block_type = ret_ct; *)
-                (*             C.exp_block_body = seq_1; *)
-                (*             C.exp_block_local_vars = local_vars; *)
-                (*             C.exp_block_pos = pos; }),ret_ct)) *)
-                (*   with | Not_found -> *)
-                (*       Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: fork procedure: " ^ (method_name ^ " is not found");} *)
+            (*======== <<<<FORK ==========*)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
