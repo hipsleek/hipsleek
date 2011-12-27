@@ -2742,7 +2742,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 let method_name = match method_name_exp with
                   | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } -> v
                   | _ -> 
-                      Err.report_error { Err.error_loc = pos; Err.error_text = ("fork:" ^ "expecting the first argument as a var"); }
+                      Err.report_error { Err.error_loc = pos; Err.error_text = ("fork:" ^ "expecting the first argument as a var: a method name"); }
                 in
                 let method_args = (List.tl args) in (*forked method args*)
                 let tmp = List.map (helper) method_args in

@@ -829,8 +829,8 @@ and one_formula_of_formula (f : formula) (tid: CP.spec_var): one_formula =
 and add_formula_and (a: one_formula list) (f:formula) : formula =
   match f with
     | Or o -> mkOr (add_formula_and a o.formula_or_f1) (add_formula_and a o.formula_or_f2) o.formula_or_pos
-    | Base b -> Base { b with formula_base_and = a@b.formula_base_and}
-    | Exists e -> Exists {e with formula_exists_and = a@e.formula_exists_and}
+    | Base b -> Base { b with formula_base_and = b.formula_base_and@a}
+    | Exists e -> Exists {e with formula_exists_and = e.formula_exists_and@a}
 
 and replace_formula_and (a: one_formula list) (f:formula) : formula =
   match f with
@@ -989,6 +989,8 @@ formula_base_label = None;
 formula_base_pos = pos})
 
 and mkTrue_nf pos = mkTrue (mkTrueFlow ()) pos
+
+and mkFalse_nf pos = mkFalse (mkTrueFlow ()) pos
 
 and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse; 
 formula_base_pure = MCP.mkMFalse pos; 
