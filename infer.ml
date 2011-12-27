@@ -634,7 +634,16 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
       let filter_ass lhs rhs = 
         let (lhs,rhs) = rel_filter_assumption lhs rhs in
         (simplify_disj lhs,rhs) in
+      let wrap_exists (lhs,rhs) =
+        let vs_r = CP.fv rhs in
+        let vs_l = CP.fv lhs in
+        let diff_vs = diff_svl vs_l vs_r in
+        let new_lhs = CP.wrap_exists_svl lhs diff_vs in
+        let new_lhs = Redlog.elim_exists_with_eq new_lhs in
+        let new_lhs = CP.arith_simplify 11 new_lhs in
+        (new_lhs,rhs) in
       let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
+      let inf_rel_ls = List.map wrap_exists inf_rel_ls in
       let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
     (*let fp = if inf_rel_ls = [] then (CP.mkTrue no_pos) else Fixcalc.compute_fixpoint inf_rel_ls in
     print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fp);*)
