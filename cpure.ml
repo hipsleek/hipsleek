@@ -3815,7 +3815,9 @@ and b_form_simplify_x (b:b_formula) :b_formula =
            BagSub (simp_mult e1, simp_mult e2, l)
     |  BagMin _ -> pf
     |  BagMax _ -> pf
-	|  RelForm _ -> pf (* An Hoa TODO implement *)
+	|  RelForm (v,exs,p) ->  
+           let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
+           RelForm (v,new_exs,p)
   in (npf,il)
            
 (* a+a    --> 2*a
@@ -4497,8 +4499,10 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
         | BConst _ | BVar _ | EqMax _ 
         | EqMin _ |  BagSub _ | BagMin _ 
-        | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _
-	    | RelForm _ -> pf (* An hoa *)
+        | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
+	    | RelForm (id,exs,l) -> 
+              let exs = List.map norm_exp exs in
+              RelForm (id,exs,l)
     in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
@@ -4522,6 +4526,16 @@ let norm_bform_option_debug (bf:b_formula) : b_formula option =
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
 
+
+let arith_simplify_new (pf : formula) :  formula =   
+  let rec helper pf = match pf with
+    |  BForm (b,lbl) -> BForm (norm_bform_aux b,lbl)
+    |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
+    |  Or (f1, f2, lbl, loc) -> Or (helper f1, helper f2, lbl, loc)
+    |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
+    |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
+    |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
+  in helper pf
 
 (* get string name of var e *)
 let string_of_var_eset e : string =
