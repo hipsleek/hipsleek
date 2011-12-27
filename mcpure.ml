@@ -1436,7 +1436,7 @@ let elim_redundant impl (f:memo_pure): memo_pure =
   
 let elim_redundant impl (f:memo_pure) : memo_pure  =
   let pr = !print_mp_f in
-  Gen.Debug.ho_1 "elim_redundant" pr pr (fun _ -> elim_redundant impl f) f
+  Gen.Debug.no_1 "elim_redundant" pr pr (fun _ -> elim_redundant impl f) f
   (* let r1,r2 = elim_redundant_aux impl f in *)
   (* print_string ("eliminate_redundant input: "^(!print_mp_f f)^"\n"); *)
   (* print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n"); *)
@@ -2025,7 +2025,25 @@ let drop_triv_grps f = match f with
 let drop_pf f = match f with
   | MemoF f -> f
   | OnePF _ -> []
-    
+
+let memo_group_drop_rel f =
+  let mc = f.memo_group_cons in
+  let ms = f.memo_group_slice in
+  let mc = List.filter (fun bf -> match bf.memo_formula with (RelForm _,_) -> false | _ -> true) mc in
+  let ms = List.map (Cpure.drop_rel_formula) ms in
+  { f with memo_group_cons = mc; memo_group_slice = ms}
+
+(* drop unknown rel constraint from f *)
+let memo_drop_rel f = List.map (memo_group_drop_rel) f
+
+let memo_drop_rel f =
+  let pr = !print_mp_f in
+  Gen.Debug.no_1 "memo_drop_rel" pr pr memo_drop_rel f
+
+let mix_drop_rel f = match f with
+  | MemoF f -> MemoF (memo_drop_rel f)
+  | OnePF f -> OnePF (drop_rel_formula f)
+
 let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula * 'b) = 
   let mf,pf = f in
   let ma,pa = f_arg in

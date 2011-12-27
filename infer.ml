@@ -430,7 +430,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos =
 let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.ho_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
+  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
 
 (*
    should this be done by ivars?
