@@ -1,3 +1,6 @@
+echo "======= 2 ======"
+
+
 bug1a.slk
  - extra false case, why?
 infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
@@ -9,7 +12,9 @@ inferred rel: [( (m=0 | 1<=m) & m+1=z & n=1) -->  A(n,m,z)]
 inferred pure: [n!=1]
 
 
-
+Implicit z important for inference (see r1c-i.ss)
+             EXISTS(z: x::ll<z>@M[Orig][LHSCase] & A(n,m,z) &
+             {FLOW,(20,21)=__norm})
 
 FIXED
 =====
