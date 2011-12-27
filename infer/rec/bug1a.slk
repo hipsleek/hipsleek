@@ -9,14 +9,11 @@ pred ll<n> == self = null & n = 0
 
 relation A(int n, int m, int z).
 //  ==> A(n,m,z) <- n=1 & z =1+m
-infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+infer [n] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+//infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+
+//infer [n] x::node<_,y> * y::ll<m> & n=1 |- x=null .
 print residue.
-// TODO bug with --eps
-/*
-WARNING : Illegal_Prover_Format for :Omega.omega_of_exp: bag or list constraint
-Apply Omega.imply on ante Formula : 0<=z
-and conseq Formula : A(n,m,z)
-*/
 
 // TODO BUG : whya extra false state?
 /*

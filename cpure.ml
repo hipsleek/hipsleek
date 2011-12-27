@@ -6573,30 +6573,36 @@ let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   Gen.Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
-let drop_formula (pr:p_formula -> formula option) (f:formula) : formula =
+let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 
-              (match pr b with
+              (match pr_w b with
                 | None -> f
                 | Some nf -> nf)
         | And (f1,f2,p) -> And (helper f1,helper f2,p)
         | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
         | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
-        | Not (f,l,p) -> Not (helper f,l,p)
-        | _ -> f
+        | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)
+        | Forall (vs,f,l,p) -> Forall (vs, drop_formula pr_s pr_w f, l, p)
   in helper f
 
 let drop_rel_formula (f:formula) : formula =
-  let pr b = match b with
+  let pr_weak b = match b with
         | RelForm (_,_,p) -> Some (mkTrue p)
-        | _ -> None 
-  in drop_formula pr f
-
-let stronger_drop_rel_formula (f:formula) : formula =
-  let pr b = match b with
+        | _ -> None in
+  let pr_strong b = match b with
         | RelForm (_,_,p) -> Some (mkFalse p)
-        | _ -> None 
-  in drop_formula pr f
+        | _ -> None in
+   drop_formula pr_weak pr_strong f
+
+let strong_drop_rel_formula (f:formula) : formula =
+  let pr_weak b = match b with
+        | RelForm (_,_,p) -> Some (mkTrue p)
+        | _ -> None in
+  let pr_strong b = match b with
+        | RelForm (_,_,p) -> Some (mkFalse p)
+        | _ -> None in
+   drop_formula pr_strong pr_weak f
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
@@ -6617,7 +6623,7 @@ let memoise_rel_formula ivs (f:formula) :
           else None
     | _ -> None 
   in 
-  let f = drop_formula pr f in
+  let f = drop_formula pr pr f in
   let ans = stk # get_stk in
   (f,ans)
 
@@ -6637,7 +6643,7 @@ let subs_rel_formula subs (f:formula) : formula =
             with _ -> None
           end
     | _ -> None 
-  in drop_formula pr f
+  in drop_formula pr pr f
 
 let subs_rel_formula subs (f:formula) : formula =
   let pr = !print_formula in

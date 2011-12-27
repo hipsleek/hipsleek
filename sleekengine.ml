@@ -576,7 +576,6 @@ let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
   print_string ("exception in " ^ check_id ^ " check\n")
-
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try 

@@ -9,10 +9,18 @@ inferred rel: [( (m=0 | 1<=m) & m+1=z & n=1) -->  A(n,m,z)]
 <2>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [n!=1]
 
+post-process multiple result to remove false state with inferred pre
 
+loop in bug1c.slk
+
+aggressive assumption filter with is_unsat checking
 
 FIXED
 =====
+
+added weaken/strengthen pair to go inside negation
+
+
 
 Implicit z important for inference (see r1c-i.ss)
              EXISTS(z: x::ll<z>@M[Orig][LHSCase] & A(n,m,z) &

@@ -895,17 +895,17 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
                     (* Cvc3.is_sat f sat_no *)
           end
     | Z3 -> Smtsolver.is_sat f sat_no
-    | Isabelle -> Isabelle.is_sat f sat_no
+    | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq -> (*Coq.is_sat f sat_no*)
-          if (is_list_constraint f) then
+          if (is_list_constraint wf) then
             begin
-              (Coq.is_sat f sat_no);
+              (Coq.is_sat wf sat_no);
             end
           else
             begin
           (Smtsolver(*Omega*).is_sat f sat_no);
             end
-    | Mona | MonaH -> Mona.is_sat f sat_no
+    | Mona | MonaH -> Mona.is_sat wf sat_no
     | CO -> 
           begin
             let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
@@ -1342,7 +1342,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 			(* print_endline ("\n>>> CHECKING VERIFICATION CONDITION USING " ^ (string_of_prover !tp) ^ " >>>\n\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n"); *)
 	  	end in
   let ante_w = CP.drop_rel_formula ante  in
-  let conseq_s = CP.stronger_drop_rel_formula conseq in
+  let conseq_s = CP.strong_drop_rel_formula conseq in
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
@@ -2601,8 +2601,8 @@ let imply_raw ante conseq  =
   tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
 
 let is_sat_raw (f: CP.formula) =
-  let f = drop_rel_formula f in
-  tp_is_sat f "999" false
+  (* let f = drop_rel_formula f in *)
+  tp_is_sat_no_cache f "999"
 
 
 
