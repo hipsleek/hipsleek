@@ -373,11 +373,11 @@ let rec filter_var f vars = match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
   | _ ->
-        let flag =  
-          try 
-            Omega.is_sat_weaken f "0" 
-          with _ -> false
-              (* spurious pre inf when set to true; check 2c.slk *)
+        let flag = TP.is_sat_raw f
+(*          try                                                      *)
+(*            Omega.is_sat_weaken f "0"                              *)
+(*          with _ -> true                                           *)
+(*              (* spurious pre inf when set to true; check 2c.slk *)*)
         in
         if flag
         then CP.filter_var f vars 
@@ -492,7 +492,7 @@ let infer_lhs_contra_estate e f pos =
 
 let helper fml lhs_rhs_p = 
   let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
-  if Omega.is_sat_weaken new_fml "0" then
+  if TP.is_sat_raw new_fml then
     let args = CP.fv new_fml in
     let iv = CP.fv fml in
     let quan_var = CP.diff_svl args iv in
@@ -564,7 +564,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           in
           Some (new_estate,new_p)
     else
-      let check_sat = Omega.is_sat_weaken lhs_xpure "0" in
+      let check_sat = TP.is_sat_raw lhs_xpure in
       if not(check_sat) then None
       else      
         let lhs_simplified = simplify lhs_xpure iv in

@@ -6582,6 +6582,7 @@ let drop_formula (pr:p_formula -> formula option) (f:formula) : formula =
         | And (f1,f2,p) -> And (helper f1,helper f2,p)
         | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
         | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
+        | Not (f,l,p) -> Not (helper f,l,p)
         | _ -> f
   in helper f
 

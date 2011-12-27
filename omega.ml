@@ -117,6 +117,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
 and omega_of_formula f  =

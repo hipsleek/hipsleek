@@ -17,14 +17,14 @@ OLD SPECS:  EInfer [x,A]
 NEW SPECS:  EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
        y::ll<m>@M[Orig][LHSCase] & x!=null & {FLOW,(20,21)=__norm}
          EAssume 1::
-           EXISTS(z_593: x::ll<z_593>@M[Orig][LHSCase] & A(n,m,z_593) & 
+           EXISTS(z_591: x::ll<z_591>@M[Orig][LHSCase] & A(n,m,z_591) & 
            0<=n & 0<=m & {FLOW,(20,21)=__norm})
-NEW RELS: [ ( (m=0 | 1<=m) & n=1) -->  A(n,m,z_566), ( 1<=n & exists(z_579:0<=m & 1<=z_579 & A(n - 1,m,z_579))) -->  A(n,m,z_580)]
+NEW RELS: [ ( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z), ( 2<=z & 0<=m & 1<=n & A(n - 1,m,z - 1)) -->  A(n,m,z)]
 
 Procedure append$node~node SUCCESS
 Stop Omega... 83 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.408024 second(s)
-	Time spent in main process: 0.372022 second(s)
-	Time spent in child processes: 0.036002 second(s)
+Total verification time: 0.36 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.02 second(s)

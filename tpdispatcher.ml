@@ -2601,6 +2601,7 @@ let imply_raw ante conseq  =
   tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
 
 let is_sat_raw (f: CP.formula) =
+  let f = drop_rel_formula f in
   tp_is_sat f "999" false
 
 
