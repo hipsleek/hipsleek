@@ -26,7 +26,7 @@ Entail  (3): Valid.
 <1>true & a=inf_a_43 & b=inf_b_44 & c=inf_c_46 & d=inf_d_47 & inf_ann_45<=0 & inf_ann_42<=0 & {FLOW,(17,18)=__norm}
 inferred heap: [b::node<inf_c_46,inf_d_47>@inf_ann_45[Orig]; 
                y::node<inf_a_43,inf_b_44>@inf_ann_42[Orig]]
-inferred pure: [inf_ann_45<=0; inf_ann_42<=0; b=inf_b_44]
+inferred pure: [inf_ann_45<=0; inf_ann_42<=0; inf_b_44=b]
 
 infer_heap_nodes
 infer var: [y]
@@ -38,7 +38,7 @@ Entail  (4): Valid.
 <1>true & a=inf_a_54 & b=inf_b_55 & m=inf_m_57 & inf_ann_56<=0 & inf_ann_53<=0 & {FLOW,(17,18)=__norm}
 inferred heap: [b::ll<inf_m_57>@inf_ann_56[Orig][LHSCase]; 
                y::node<inf_a_54,inf_b_55>@inf_ann_53[Orig]]
-inferred pure: [inf_ann_56<=0; inf_ann_53<=0; b=inf_b_55]
+inferred pure: [inf_ann_56<=0; inf_ann_53<=0; inf_b_55=b]
 
 infer_heap_nodes
 infer var: [x]
@@ -90,4 +90,4 @@ Entail  (13): Valid.
 <1>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [y!=null]
 
-Stop Omega... 271 invocations 
+Stop Omega... 243 invocations 

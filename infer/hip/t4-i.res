@@ -17,11 +17,11 @@ OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase x::node<inf_val_14_498,inf_next_14_499>@L[Orig] & true &
        {FLOW,(1,23)=__flow}
          EAssume 1::ref [x]
-           true & x=x' & res=inf_val_14_498 & {FLOW,(20,21)=__norm}
+           true & x'=x & inf_val_14_498=res & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hd0$node SUCCESS
-Stop Omega... 37 invocations 
+Stop Omega... 35 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.14 second(s)

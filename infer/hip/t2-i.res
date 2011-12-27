@@ -22,7 +22,7 @@ NEW SPECS:  EBase x::node<inf_val_20_543,inf_next_20_544>@L[Orig] *
        inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 1::ref [x]
-           true & inf_next_20_544=x' & res=inf_val_21_550 &
+           true & x'=inf_next_20_544 & inf_val_21_550=res &
            {FLOW,(20,21)=__norm}
 NEW RELS: []
 
@@ -40,7 +40,7 @@ OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase x::node<inf_val_33_557,inf_next_33_558>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 3::
-           true & res=inf_val_33_557 & {FLOW,(20,21)=__norm}
+           true & inf_val_33_557=res & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hd1$node SUCCESS
@@ -56,7 +56,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null 
        {FLOW,(20,21)=__norm}
          EAssume 4::
            x::node<Anon_575,q_576>@M[Orig] * q_576::ll<flted_8_574>@M[Orig] &
-           n=flted_8_574+1 & res=Anon_575 & 0<=n & {FLOW,(20,21)=__norm}
+           flted_8_574=n - 1 & Anon_575=res & 0<=n & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hd2$node SUCCESS
@@ -72,7 +72,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & n!=0 &
        {FLOW,(20,21)=__norm}
          EAssume 5::
            x::node<Anon_593,q_594>@M[Orig] * q_594::ll<flted_8_592>@M[Orig] &
-           n=flted_8_592+1 & res=Anon_593 & 0<=n & {FLOW,(20,21)=__norm}
+           flted_8_592=n - 1 & Anon_593=res & 0<=n & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hd3$node SUCCESS
@@ -110,7 +110,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
 NEW RELS: []
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 86 invocations 
+Stop Omega... 78 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.25 second(s)

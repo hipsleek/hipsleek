@@ -245,7 +245,8 @@ let get_alias_formula (f:CF.formula) =
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
 let is_elem_of conj conjs =
-  let filtered = List.filter (fun c -> TP.imply_raw conj c && TP.imply_raw c conj) conjs in
+(*  let filtered = List.filter (fun c -> TP.imply_raw conj c && TP.imply_raw c conj) conjs in*)
+  let filtered = List.filter (fun c -> CP.equalFormula conj (TP.simplify_raw c)) conjs in
   match filtered with
     | [] -> false
     | _ -> true
@@ -318,9 +319,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         (* r certainly has one element *)
         let r = List.hd r in
         let r = CP.mkVar r no_pos in
-        let new_p = TP.simplify_raw (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
-            (CP.mkTrue no_pos) 
-            (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
+        let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) 
+            (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in
         let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
         let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
         let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
@@ -404,7 +404,7 @@ let infer_lhs_contra lhs_xpure ivars =
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let f = simplify_helper (CP.mkExists_with_simpl TP.simplify_raw exists_var f None no_pos) in
+        let f = simplify_helper (CP.mkExists exists_var f None no_pos) in
         if CP.isConstTrue f then None
         else Some (Redlog.negate_formula f)
 
@@ -527,7 +527,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
             let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
             let args = CP.fv new_p in
             let quan_var = CP.diff_svl args iv in
-            TP.simplify_raw (CP.mkExists_with_simpl TP.simplify_raw quan_var new_p None pos)
+            TP.simplify_raw (CP.mkExists quan_var new_p None pos)
           else
             simplify new_p iv
         in
@@ -560,7 +560,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let lhs_simplified = simplify lhs_xpure iv in
         let args = CP.fv lhs_simplified in 
         let exists_var = CP.diff_svl args iv in
-        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl TP.simplify_raw exists_var lhs_simplified None pos) in
+        let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
         if CP.isConstFalse new_p then None
         else

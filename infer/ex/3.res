@@ -10,7 +10,7 @@ Entail  (1): Valid.
 <1>true & a=inf_a_41 & b=inf_b_42 & c=inf_c_44 & d=inf_d_45 & inf_ann_43<=0 & inf_ann_40<=0 & {FLOW,(17,18)=__norm}
 inferred heap: [b::node<inf_c_44,inf_d_45>@inf_ann_43[Orig]; 
                y::node<inf_a_41,inf_b_42>@inf_ann_40[Orig]]
-inferred pure: [inf_ann_43<=0; inf_ann_40<=0; b=inf_b_42]
+inferred pure: [inf_ann_43<=0; inf_ann_40<=0; inf_b_42=b]
 
 infer_heap_nodes
 infer var: [y]
@@ -161,7 +161,7 @@ Entail  (27): Valid.
 <1>true & m+1=0 & a=inf_a_385 & b=inf_b_386 & inf_ann_387<=0 & inf_ann_384<=0 & inf_m_388=0 - 1 & {FLOW,(17,18)=__norm}
 inferred heap: [b::ll<inf_m_388>@inf_ann_387[Orig][LHSCase]; 
                y::node<inf_a_385,inf_b_386>@inf_ann_384[Orig]]
-inferred pure: [inf_ann_387<=0; inf_ann_384<=0; b=inf_b_386; inf_m_388=0 - 1]
+inferred pure: [inf_ann_387<=0; inf_ann_384<=0; inf_b_386=b; inf_m_388=0 - 1]
 
 infer_heap_nodes
 infer var: [y,m]
@@ -173,7 +173,7 @@ Entail  (28): Valid.
 <1>true & m+1=0 & a=inf_a_407 & b=inf_b_408 & inf_ann_409<=0 & inf_ann_406<=0 & inf_m_410=0 - 1 & {FLOW,(17,18)=__norm}
 inferred heap: [b::ll<inf_m_410>@inf_ann_409[Orig][LHSCase]; 
                y::node<inf_a_407,inf_b_408>@inf_ann_406[Orig]]
-inferred pure: [inf_ann_409<=0; inf_ann_406<=0; b=inf_b_408; inf_m_410=0 - 1]
+inferred pure: [inf_ann_409<=0; inf_ann_406<=0; inf_b_408=b; inf_m_410=0 - 1]
 
 infer_heap_nodes
 infer var: [y,b]
@@ -199,4 +199,4 @@ inferred heap: [b::ll<inf_m_451>@inf_ann_450[Orig][LHSCase];
                y::node<inf_a_447,inf_b_448>@inf_ann_446[Orig]]
 inferred pure: [inf_ann_450<=0; inf_ann_446<=0; inf_b_448=b]
 
-Stop Omega... 599 invocations 
+Stop Omega... 549 invocations 

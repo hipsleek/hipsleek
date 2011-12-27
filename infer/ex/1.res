@@ -8,4 +8,4 @@ Entail  (1): Valid.
 inferred heap: [y::ll<inf_n_31>@inf_ann_30[Orig][LHSCase]]
 inferred pure: [inf_ann_30<=0; inf_n_31=0]
 
-Stop Omega... 50 invocations 
+Stop Omega... 48 invocations 

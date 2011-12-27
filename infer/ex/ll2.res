@@ -15,7 +15,7 @@ Entail  (1): Valid.
    
 inferred heap: [q_53::ll<inf_flted_7_59>@inf_ann_58[Orig]; 
                q_76::ll<inf_flted_7_82>@inf_ann_81[Orig]]
-inferred pure: [inf_ann_58<=0; q_53=p; inf_ann_81<=0; q_76=p]
+inferred pure: [inf_ann_58<=0; p=q_53; inf_ann_81<=0; p=q_76]
 
 Entail  (2): Valid. 
 <1>
@@ -58,4 +58,4 @@ Entail  (7): Valid.
    
 inferred pure: [n!=1; n=2]
 
-Stop Omega... 292 invocations 
+Stop Omega... 277 invocations 

@@ -17,7 +17,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null 
        {FLOW,(20,21)=__norm}
          EAssume 1::
            x::node<Anon_535,q_536>@M[Orig] * q_536::ll<flted_7_534>@M[Orig] &
-           n=flted_7_534+1 & res=Anon_535 & 0<=n & {FLOW,(20,21)=__norm}
+           flted_7_534=n - 1 & Anon_535=res & 0<=n & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hd$node SUCCESS
@@ -34,7 +34,7 @@ OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase x::node<inf_val_38_542,inf_next_38_543>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           true & res=inf_next_38_543 & {FLOW,(20,21)=__norm}
+           true & inf_next_38_543=res & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure tl$node SUCCESS
@@ -56,13 +56,14 @@ NEW SPECS:  EBase x::node<inf_inf_val_38_552,inf_inf_next_38_553>@L[Orig] *
        inf_inf_next_38_553!=null & {FLOW,(20,21)=__norm}
          EAssume 2::ref [x]
            x'::node<Anon_535,q_536>@M[Orig] * 
-           q_536::ll<flted_7_534>@M[Orig] & inf_ann_558<=0 & res=Anon_535 & 
-           inf_inf_next_38_553=x' & flted_7_534=inf_n_559 - 1 & x!=null & 
-           x'!=null & 0<=inf_n_559 & 0<=inf_n_559 & {FLOW,(20,21)=__norm}
+           q_536::ll<flted_7_534>@M[Orig] & inf_ann_558<=0 & Anon_535=res & 
+           x'=inf_inf_next_38_553 & inf_n_559=flted_7_534+1 & x!=null & 
+           inf_inf_next_38_553!=null & 0<=(1+flted_7_534) & 0<=inf_n_559 &
+           {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 118 invocations 
+Stop Omega... 111 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.25 second(s)
