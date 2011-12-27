@@ -5695,6 +5695,7 @@ let is_linear_exp e0 =
   fold_exp e0 f and_list
 
 let inner_simplify simpl f =
+  (* Thai: Why only simplify with Exists stms? *)
   let f_f e = match e with
     | Exists _ -> (Some (simpl e))
     | _ -> None in

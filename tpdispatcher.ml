@@ -1151,6 +1151,7 @@ let simplify (f : CP.formula) : CP.formula =
 	    else r
       with | _ -> f)
 
+let simplify_raw (f: CP.formula) = simplify f 
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
@@ -2602,7 +2603,5 @@ let imply_raw ante conseq  =
 let is_sat_raw (f: CP.formula) =
   tp_is_sat f "999" false
 
-let simplify_raw (f: CP.formula) = match !tp with
- | Mona | MonaH -> if is_bag_constraint f then f else Omega.simplify f 
- | _ -> Omega.simplify f 
+
 
