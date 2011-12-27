@@ -2491,6 +2491,7 @@ Cformula.print_svl := string_of_spec_var_list;;
 Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
+Cformula.print_context_list_short := string_of_context_list_short;;
 Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;

@@ -6633,6 +6633,22 @@ let memoise_rel_formula ivs (f:formula) :
   let pr2 = pr_pair pr (pr_list (pr_pair !print_sv pr)) in
   Gen.Debug.no_2 "memoise_rel_formula" (!print_svl) pr pr2 memoise_rel_formula ivs f
 
+let memoise_all_rel_formula (f:formula) : 
+      (formula * ((spec_var * formula) list)) =
+  let stk = new Gen.stack in
+  let pr b = match b with
+    | RelForm (i,_,p) -> 
+            let id = fresh_old_name "memo_rel_hole_" in
+            let v = SpecVar(Bool,id,Unprimed) in
+            let rel_f = BForm ((b,None),None) in
+            stk # push (v,rel_f);
+            Some (BForm ((BVar (v,p),None),None))
+    | _ -> None 
+  in 
+  let f = drop_formula pr pr f in
+  let ans = stk # get_stk in
+  (f,ans)
+
 let subs_rel_formula subs (f:formula) : formula =
   let pr b = match b with
     | BVar (id,_) -> 

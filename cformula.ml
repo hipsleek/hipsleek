@@ -3083,8 +3083,6 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
-
-
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
@@ -4074,8 +4072,41 @@ let mk_list_partial_context (c:list_context) : (list_partial_context) =
 
 let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
-  
-  
+
+let is_inferred_pre estate = 
+  let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in
+  if r>0 then true else false
+
+let rec is_inferred_pre_ctx ctx = 
+  match ctx with
+  | Ctx estate -> is_inferred_pre estate 
+  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
+
+let anyPreInCtx c = is_inferred_pre_ctx c
+
+let proc_left t1 t2 =
+    match t1 with
+      | [] -> Some t2
+      | [c1] -> 
+            if isAnyFalseCtx c1 then
+              if anyPreInCtx c1 then Some t2 (* drop FalseCtx with Pre *)
+              else Some t1 (* keep FalseCtx wo Pre *)
+            else None
+      | _ -> None 
+
+(* remove false with precondition *)
+let simplify_ctx_elim_false_dupl t1 t2 =
+  match proc_left t1 t2 with
+    | Some r1 -> r1
+    | None -> 
+          (match proc_left t2 t1 with
+            | Some r2 -> r2
+            | None -> t1@t2)
+
+let simplify_ctx_elim_false_dupl t1 t2 =
+  let pr = !print_context_list_short in
+  Gen.Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+
   (*context set union*)
 
 let list_context_union_x c1 c2 = 
@@ -4095,7 +4126,7 @@ match c1,c2 with
 	     (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify(t1@t2))
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
   let pr = !print_list_context_short in

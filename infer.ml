@@ -84,19 +84,11 @@ let rec get_all_args alias_of_root heap = match heap with
   | Phase p -> (get_all_args alias_of_root p.h_formula_phase_rd) @ (get_all_args alias_of_root p.h_formula_phase_rw) 
   | _ -> []
 
-let is_inferred_pre estate = 
-  let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in
-  if r>0 then true else false
-
-let rec is_inferred_pre_ctx ctx = 
-  match ctx with
-  | Ctx estate -> is_inferred_pre estate 
-  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
 let is_inferred_pre_list_context ctx = 
   match ctx with
   | FailCtx _ -> false
-  | SuccCtx lst -> List.exists is_inferred_pre_ctx lst
+  | SuccCtx lst -> List.exists CF.is_inferred_pre_ctx lst
 
 let is_inferred_pre_list_context ctx = 
   Gen.Debug.no_1 "is_inferred_pre_list_context"
