@@ -6563,6 +6563,12 @@ let drop_rel_formula (f:formula) : formula =
         | _ -> None 
   in drop_formula pr f
 
+let stronger_drop_rel_formula (f:formula) : formula =
+  let pr b = match b with
+        | RelForm (_,_,p) -> Some (mkFalse p)
+        | _ -> None 
+  in drop_formula pr f
+
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f

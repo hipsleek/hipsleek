@@ -366,7 +366,7 @@ let rec filter_var f vars = match f with
           try 
             Omega.is_sat_weaken f "0" 
           with _ -> false
-              (* spurious pre inf when set to true *)
+              (* spurious pre inf when set to true; check 2c.slk *)
         in
         if flag
         then CP.filter_var f vars 
