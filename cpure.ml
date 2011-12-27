@@ -6583,25 +6583,24 @@ let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formu
         | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
         | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
         | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)
-        | Forall (vs,f,l,p) -> Forall (vs, drop_formula pr_s pr_w f, l, p)
+        | Forall (vs,f,l,p) -> Forall (vs, helper f, l, p)
   in helper f
 
-let drop_rel_formula (f:formula) : formula =
+let drop_rel_formula_ops =
   let pr_weak b = match b with
         | RelForm (_,_,p) -> Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | RelForm (_,_,p) -> Some (mkFalse p)
         | _ -> None in
+  (pr_weak,pr_strong)
+
+let drop_rel_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_weak pr_strong f
 
 let strong_drop_rel_formula (f:formula) : formula =
-  let pr_weak b = match b with
-        | RelForm (_,_,p) -> Some (mkTrue p)
-        | _ -> None in
-  let pr_strong b = match b with
-        | RelForm (_,_,p) -> Some (mkFalse p)
-        | _ -> None in
+  let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_strong pr_weak f
 
 let drop_rel_formula (f:formula) : formula =

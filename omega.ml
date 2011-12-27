@@ -120,17 +120,36 @@ and omega_of_b_formula b =
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
-and omega_of_formula f  =
+(* and omega_of_formula f  = *)
+(*   let rec helper f =  *)
+(*     match f with *)
+(*   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")" *)
+(*   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")" *)
+(*   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")" *)
+(*   | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	 *)
+(*   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
+(*   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
+(*   in helper f *)
+
+and omega_of_formula_old f  =
+  let pr x = None in
+  omega_of_formula pr pr f
+
+and omega_of_formula pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
+  | BForm ((b,_) as bf,_) -> 		
+        begin
+          match (pr_w b) with
+            | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
+            | Some f -> helper f
+        end
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
+  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   in helper f
-
 
 let omegacalc = ref ("oc":string)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
@@ -333,7 +352,7 @@ let get_vars_formula (p : formula):(string list) =
   tool may probably be used ...
 *)
 
-let is_sat (pe : formula)  (sat_no : string): bool =
+let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
   begin
@@ -344,7 +363,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       begin
           omega_subst_lst := [];
           let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-          let fstr = omega_of_formula pe in
+          let fstr = omega_of_formula pr_weak pr_strong pe in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
           if !log_all_flag then begin
@@ -380,6 +399,10 @@ let is_sat (pe : formula)  (sat_no : string): bool =
   end
 
 let is_sat (pe : formula)  (sat_no : string): bool =
+  let pr x = None in
+  is_sat_ops pr pr pe sat_no
+
+let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
 
@@ -401,14 +424,14 @@ let is_sat (pe : formula) sat_no : bool =
         failwith s
       end
 
-let is_valid (pe : formula) timeout: bool =
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
 	        omega_subst_lst := [];
-            let fstr = omega_of_formula pe in
+            let fstr = omega_of_formula pr_strong pr_weak pe in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
             let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)
@@ -446,6 +469,10 @@ let is_valid (pe : formula) timeout: bool =
   end
 
 let is_valid (pe : formula) timeout: bool =
+  let pr x = None in
+  is_valid_ops pr pr pe timeout
+
+let is_valid (pe : formula) timeout: bool =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
 
@@ -461,7 +488,7 @@ let is_valid_with_default (pe : formula) timeout : bool =
 (*   do_with_check_default "Omega is_valid"  *)
 (*       (fun x -> is_valid x timeout) pe false *)
 
-let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
   incr test_number;
   (*
@@ -473,7 +500,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   	
-  let result = is_valid tmp_form !in_timeout in
+  let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
     if result then 
       output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
@@ -482,12 +509,16 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   end else ();
   result
 
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  let pr x = None in
+  imply_ops pr pr (ante : formula) (conseq : formula) (imp_no : string) timeout 
+
 let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
   do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
 
-let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
   try
-    imply ante conseq imp_no timeout
+    imply_ops pr_weak pr_strong ante conseq imp_no timeout
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
@@ -536,7 +567,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
     tmp
 
 
-let simplify (pe : formula) : formula =
+let simplify_ops pr_weak pr_strong (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
   (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
   begin
@@ -546,7 +577,7 @@ let simplify (pe : formula) : formula =
     begin
       try
         omega_subst_lst := [];
-        let fstr = omega_of_formula pe in
+        let fstr = omega_of_formula pr_weak pr_strong pe in
         let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
         let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	(*test*)
@@ -587,6 +618,10 @@ let simplify (pe : formula) : formula =
   end
 
 let simplify (pe : formula) : formula =
+  let pr x = None in
+  simplify_ops pr pr pe
+
+let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
 
@@ -604,7 +639,7 @@ let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
   begin
 		omega_subst_lst := [];
-    let fstr = omega_of_formula pe in
+    let fstr = omega_of_formula_old pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
     let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
@@ -625,11 +660,11 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 		omega_subst_lst := [];
-    let fstr = omega_of_formula pe in
+    let fstr = omega_of_formula_old pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
      let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-	
+
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
 	
@@ -646,8 +681,8 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
 		omega_subst_lst := [];
-    let fstr1 = omega_of_formula pe1 in
-        let fstr2 = omega_of_formula pe2 in
+    let fstr1 = omega_of_formula_old pe1 in
+        let fstr2 = omega_of_formula_old pe2 in
         let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in
 				let l1 = List.map omega_of_spec_var vars_list  in
     let vstr = String.concat "," l1  in

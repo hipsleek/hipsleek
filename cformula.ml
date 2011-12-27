@@ -4105,7 +4105,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 
 let simplify_ctx_elim_false_dupl t1 t2 =
   let pr = !print_context_list_short in
-  Gen.Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+  Gen.Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
 
