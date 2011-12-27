@@ -9,10 +9,21 @@ inferred rel: [( (m=0 | 1<=m) & m+1=z & n=1) -->  A(n,m,z)]
 inferred pure: [n!=1]
 
 
-existential elimination for inferred rel.
+
 
 FIXED
 =====
+
+existential elimination for inferred rel.
+// redlog exist_eliminator left some residue of form 0-0
+ntail  (2): Valid. 
+<1>x::ll<n>@L[Orig][LHSCase] & x=null & rs=t & t=0 & {FLOW,(17,18)=__norm}
+inferred rel: [( n=0 & rs=0 - (0 - 0)) -->  R(rs,n); 
+              ( x=null & rs=0 - (0 - 0)) -->  P(x,rs)]
+further simplified to:
+inferred rel: [( n=0 & rs=0) -->  R(rs,n); ( x=null & rs=0) -->  P(x,rs)]
+
+
 --eps problem solved using stronger_drop_rel_formula for
   conseq
 

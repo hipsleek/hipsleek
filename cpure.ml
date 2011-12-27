@@ -3121,6 +3121,7 @@ let merge_branches_with_common l1 l2 cf =
   List.map map_fun branches
 ;;*)
 
+let wrap_exists_svl f evars = mkExists evars f None no_pos
 
 let merge_branches_with_common l1 l2 cf evars =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -3823,7 +3824,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (i:int) (pf : formula) :  formula =   
-  Gen.Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
+  Gen.Debug.no_1_num i ("arith_simplify LHS") !print_formula !print_formula 
       arith_simplify_x pf
 
 

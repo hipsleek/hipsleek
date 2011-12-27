@@ -827,9 +827,9 @@ let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   in
   CP.map_formula f0 (f_f, somef, somef)
 
-let rec elim_exists_with_eq f0 = 
+let rec elim_exists_with_eq_x f0 = 
   let core qvar qf lbl pos =
-    let qf = elim_exists_with_eq qf in
+    let qf = elim_exists_with_eq_x qf in
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
     let conjs = CP.list_of_conjs bare_f in
@@ -844,7 +844,7 @@ let rec elim_exists_with_eq f0 =
     if not (Gen.is_empty st) then
       let new_qf = CP.subst_term st pp1 in
       let new_qf = CP.mkExists qvars0 new_qf lbl pos in
-      let tmp3 = elim_exists_with_eq new_qf in
+      let tmp3 = elim_exists_with_eq_x new_qf in
       let tmp4 = CP.mkAnd no_qvars tmp3 pos in
       tmp4
     else (* if qvar is not equated to any variables, try the next one *)
@@ -852,6 +852,10 @@ let rec elim_exists_with_eq f0 =
       let tmp2 = CP.mkExists [qvar] tmp1 lbl pos in
       tmp2
   in elim_exists_helper core f0
+
+and elim_exists_with_eq f0 =
+  let pr = !CP.print_formula in
+  Gen.Debug.no_1 "elim_exists_with_eq" pr pr elim_exists_with_eq_x f0
 
 and elim_exists_min f0 =
   let core qvar qf lbl pos =
