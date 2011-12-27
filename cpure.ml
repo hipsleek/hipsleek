@@ -6544,6 +6544,18 @@ let join_disjunctions xs = disj_of_list xs no_pos
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
+    (filter_ante ante conseq, conseq)
+	(* let fvar = CP.fv conseq in *)
+	(* let new_ante = CP.filter_var ante fvar in *)
+	(*   (new_ante, conseq) *)
+  else
+    (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
+	(ante, conseq)
+
+(* need unsat checking for disjunctive LHS *)
+let assumption_filter_aggressive (ante : formula) (conseq : formula) : (formula * formula) =
+  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
+  if !filtering_flag (*&& (not !allow_pred_spec)*) then
     let ante_ls = split_disjunctions ante in
     let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
     let ante = join_disjunctions ante_ls in

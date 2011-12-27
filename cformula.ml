@@ -7072,4 +7072,26 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
       EVariance {b with formula_var_continuation = r}
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
+(*
+type: (ext_formula -> ext_formula option) * (formula -> formula option) *
+  (h_formula -> h_formula option) *
+  ((Mcpure_D.memo_pure -> Mcpure_D.memo_pure option) *
+   (Mcpure_D.var_aset -> Mcpure_D.var_aset option) *
+   (CP.formula -> CP.formula option) *
+   (CP.b_formula -> CP.b_formula option) * (CP.exp -> CP.exp option)) ->
+  struc_formula -> struc_formula
+*)
 
+(* let lax_implicit_ensures f =  *)
+(*   let f_e_f e = match e with *)
+(*     | EAssume (rvs,f,l) -> EAssume(rvs, lax_impl_formula f,l) *)
+(*     | _ -> None *)
+(*   in *)
+(*   let f_f e = Some e in *)
+(*   let f_h_f e =  Some h in *)
+(*   let f_memo e =  Some (e) in *)
+(*   let f_aset e = Some e in *)
+(*   let f_formula e = Some e in *)
+(*   let f_b_formula e = Some e in *)
+(*   let f_exp e = Some e in			 *)
+(*   transform_struc_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f *)
