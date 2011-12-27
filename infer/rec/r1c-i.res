@@ -6,21 +6,26 @@ Starting Reduce...
 Starting Omega...oc
 Translating global variables to procedure parameters...
 Checking procedure append$node~node... 
-WARNING : Illegal_Prover_Format for :Omega.omega_of_exp: bag or list constraint
-Apply Omega.is_sat on formula : x=null & z_594=0 & 
-exists(v_bool_17_513':exists(A:exists(z_579:exists(n_555:exists(m_556:exists(Anon_581:exists(Anon_540:exists(q_582:flted_7_539+
-1=n & q_541!=null & 137::!(v_bool_17_513') & q_541!=null & 
-!(v_bool_17_513') & n_555=flted_7_539 & m_556=m & A(n_555,m_556,z_579) & 
-0<=n_555 & 0<=m_556 & Anon_581=Anon_540 & q_582=q_541 & A(n,m,z_594)))))))))
+Inferred Heap:[]
+Inferred Pure:[ x!=null, x!=null, x!=null, x!=null]
+OLD SPECS:  EInfer [x,A]
+   EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
+         y::ll<m>@M[Orig][LHSCase] & true & {FLOW,(20,21)=__norm}
+           EAssume 1::
+             EXISTS(z: x::ll<z>@M[Orig][LHSCase] & A(n,m,z) &
+             {FLOW,(20,21)=__norm})
+NEW SPECS:  EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
+       y::ll<m>@M[Orig][LHSCase] & x!=null & {FLOW,(20,21)=__norm}
+         EAssume 1::
+           EXISTS(z_593: x::ll<z_593>@M[Orig][LHSCase] & A(n,m,z_593) & 
+           0<=n & 0<=m & {FLOW,(20,21)=__norm})
+NEW RELS: [ ( (m=0 | 1<=m) & flted_7_539+1=n & flted_7_539=0) -->  A(n,m,z_566), ( 0<=m_556 & 0<=n_555 & n_555=flted_7_539 & 1<=z_579 & flted_7_539+1=n & 
+m_556=m & A(n_555,m_556,z_579)) -->  A(n,m,z_580)]
 
-Procedure append$node~node FAIL-2
-
-ExceptionFailure("Omega.omega_of_exp: bag or list constraint")Occurred!
-
-Error(s) detected when checking procedure append$node~node
-Stop Omega... 82 invocations 
+Procedure append$node~node SUCCESS
+Stop Omega... 83 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.220074 second(s)
-	Time spent in main process: 1.124069 second(s)
-	Time spent in child processes: 0.096005 second(s)
+Total verification time: 0.396024 second(s)
+	Time spent in main process: 0.368023 second(s)
+	Time spent in child processes: 0.028001 second(s)

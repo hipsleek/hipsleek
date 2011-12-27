@@ -24,6 +24,6 @@ inferred pure: [n!=1]
 
 // ==> z=1+z1  & A(n-1,m,z1) --> A(n,m,z)
 
-infer [n,A] x::node<_,y> * y::ll<z1> & y!=null & A(n1,m,z1) & z=1+z1 & n=n1+1 & n>=1 |- x::ll<z> & A(n,m,z).
+infer [n,A] x::node<_,y> * y::ll<z1> & y!=null & A(n1,m,z1) & n=n1+1 & n>=1 |- x::ll<z> & A(n,m,z).
 print residue.
 

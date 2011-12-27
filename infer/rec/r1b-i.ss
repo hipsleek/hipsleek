@@ -11,7 +11,7 @@ ll<n> == self = null & n = 0
 relation F(int n, int m).
 
 int foo(node x)
-  infer [F]
+  infer @pre [F]
   requires x::ll<n>@L
   ensures F(res,n);  
   // R(res,n) = res=0

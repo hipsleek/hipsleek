@@ -10,7 +10,7 @@ ll<n> == self = null & n = 0
 relation A(int n, int m, int z).
 
 void append(node x, node y)
-  infer [n,A]
+  infer @pre [x,A]
   requires x::ll<n>*y::ll<m> 
   ensures x::ll<z> & A(n,m,z);
 {

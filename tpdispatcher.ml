@@ -2595,3 +2595,12 @@ let change_prover prover =
   clear_prover_log ();
   tp := prover;
   start_prover ();;
+
+let imply_raw ante conseq  =
+  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
+
+let is_sat_raw (f: CP.formula) =
+  tp_is_sat f "999" false
+
+let simplify_raw (f: CP.formula) = simplify f 
+
