@@ -4906,7 +4906,7 @@ and heap_entail_split_lhs_phases_x
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3_no "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Gen.Debug.no_3 "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -9367,15 +9367,24 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
       pr1 pr2 (fun (r,_)->pr1 r)
       (fun _ _ -> heap_entail_list_failesc_context_init prog is_folding cl conseq pos pid) cl conseq
 
+(* TODO : what is this verify_pre_is_sat verification for? *)
 let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
-  | Base b -> let fml,_,_,_ = xpure prog fml in Omega.is_sat (MCP.pure_of_mix fml) "14"
+  | Base b -> 
+        let fml,_,_,_ = xpure prog fml 
+        in Omega.is_sat (MCP.pure_of_mix fml) "14"
   | Exists e ->
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
     in verify_pre_is_sat prog fml
 
-let rec simplify_heap_x h p prog = match h with
+let verify_pre_is_sat prog fml = 
+  let pr = Cprinter.string_of_formula in
+  Gen.Debug.no_1 "verify_pre_is_sat" pr pr_no 
+      (fun _ -> verify_pre_is_sat prog fml) fml
+
+let rec simplify_heap_x h p prog : CF.h_formula * CP.spec_var list
+      = match h with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} -> 
@@ -9398,7 +9407,7 @@ let rec simplify_heap_x h p prog = match h with
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
     let disjs = CP.list_of_disjs pure_h in
-    let res = List.filter (fun d -> Omega.is_sat (CP.mkAnd d p no_pos) "15") disjs in
+    let res = List.filter (fun d -> TP.is_sat_sub_no (CP.mkAnd d p no_pos) (ref 13)) disjs in
     begin
       match res with
         | [] -> (HFalse,[])
@@ -9410,8 +9419,12 @@ let rec simplify_heap_x h p prog = match h with
 and simplify_heap h p prog =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_2 "simplify_heap" pr pr2 pr 
+  let pr3 = Cprinter.string_of_spec_var_list in
+  Gen.Debug.no_2 "simplify_heap" pr pr2 (pr_pair pr pr3)
       (fun _ _ -> simplify_heap_x h p prog) h p
+
+(* TODO : simplification here relies too much on Omega.simplify *)
+(* TODO : problematic with other kinds of constraints *)
 
 let rec simplify_post post_fml post_vars prog = match post_fml with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
@@ -9421,12 +9434,19 @@ let rec simplify_post post_fml post_vars prog = match post_fml with
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
-    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify post_vars p None no_pos) in
+    let p = Omega.simplify (CP.mkExists_with_simpl Omega.simplify post_vars p None no_pos) in
     let h,rm_vars = simplify_heap h p prog in
     let rm_vars = CP.diff_svl rm_vars (h_fv h) in
-    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify rm_vars p None no_pos) in
+    let p = Omega.simplify (CP.mkExists_with_simpl Omega.simplify rm_vars p None no_pos) in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
     post_fml
+
+let simplify_post post_fml post_vars prog = 
+  let pr = Cprinter.string_of_formula in
+  let pr2 = Cprinter.string_of_spec_var_list in
+  Gen.Debug.no_2 "simplify_post" pr pr2 pr_no
+      (fun _ _ -> simplify_post post_fml post_vars prog) post_fml post_vars 
+
 
 
 

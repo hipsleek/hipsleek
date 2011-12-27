@@ -1064,11 +1064,11 @@ and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
-and mkExists_with_simpl_debug simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Gen.Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
-      (fun vs f -> mkExists_with_simpl simpl vs f lbl pos) vs f
-
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
+  Gen.Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+      (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
+
+and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
   let r = mkExists vs f lbl pos in
   if contains_exists r then
     simpl r

@@ -502,7 +502,7 @@ let is_valid (pe : formula) timeout : bool =
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-        print_endline ("Apply Omega.is_CCvalid on Formula :"^(!print_pure pe));
+        print_endline ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
         flush stdout;
         failwith s
       end
@@ -543,6 +543,7 @@ let simplify (pe : formula) : formula =
     (*todo: should fix in code of OC: done*)
     (*if not safe then pe else*)
     begin
+      try
         omega_subst_lst := [];
         let fstr = omega_of_formula pe in
         let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
@@ -555,7 +556,6 @@ let simplify (pe : formula) : formula =
             output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
             flush log_all;
         end;
-
         let simp_f =
 	      try
               begin
@@ -581,6 +581,7 @@ let simplify (pe : formula) : formula =
     (*   let time = (post_time -. pre_time) *. 1000. in *)
     (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
         simp_f
+      with _ -> pe (* not simplified *)
     end
   end
 

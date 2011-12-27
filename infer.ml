@@ -403,7 +403,7 @@ let infer_lhs_contra lhs_xpure ivars =
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let f = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var f None no_pos) in
+        let f = simplify_helper (CP.mkExists_with_simpl Omega.simplify exists_var f None no_pos) in
         if CP.isConstTrue f then None
         else Some (Redlog.negate_formula f)
 
@@ -485,7 +485,7 @@ let helper fml lhs_rhs_p =
     let args = CP.fv new_fml in
     let iv = CP.fv fml in
     let quan_var = CP.diff_svl args iv in
-    CP.mkExists_with_simpl_debug Omega.simplify quan_var new_fml None no_pos
+    CP.mkExists_with_simpl Omega.simplify quan_var new_fml None no_pos
   else CP.mkFalse no_pos
 
 let rec simplify_disjs pf lhs_rhs =
@@ -514,7 +514,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
 (*      else                                                      *)
         let args = CP.fv fml in
         let quan_var = CP.diff_svl args iv in
-(*        let new_p = CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos in*)
+(*        let new_p = CP.mkExists_with_simpl Omega.simplify quan_var new_p None pos in*)
         let new_p = Omega.simplify (CP.mkForall quan_var 
           (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
         let new_p = Omega.simplify (simplify_disjs new_p (CP.mkAnd lhs_xpure rhs_xpure no_pos)) in
@@ -526,7 +526,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
             let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
             let args = CP.fv new_p in
             let quan_var = CP.diff_svl args iv in
-            Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos)
+            Omega.simplify (CP.mkExists_with_simpl Omega.simplify quan_var new_p None pos)
           else
             simplify new_p iv
         in
@@ -559,7 +559,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let lhs_simplified = simplify lhs_xpure iv in
         let args = CP.fv lhs_simplified in 
         let exists_var = CP.diff_svl args iv in
-        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos) in
+        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl Omega.simplify exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
         if CP.isConstFalse new_p then None
         else
@@ -639,9 +639,7 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
     print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fp);*)
       if inf_rel_ls != [] then
         begin
-          DD.devel_pprint "*****************" pos;
-          DD.devel_pprint "infer_collect_rel" pos;
-          DD.devel_pprint "*****************" pos;
+          DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
           DD.devel_pprint ("Infer Rel Ids:"^(!print_svl ivs)) pos;
           (* DD.devel_pprint ("LHS heap Xpure1:"^(!print_mix_formula xpure_lhs_h1)) pos; *)
           DD.devel_pprint ("LHS pure:"^(!CP.print_formula lhs_p)) pos;

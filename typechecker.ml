@@ -1,3 +1,4 @@
+module DD = Debug
 open Globals
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
@@ -313,8 +314,11 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
                           let i_pre =
                             if infer_pre_flag then (
-                                (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
-                                (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
+                                DD.devel_pprint ">>>>>> HIP gather infer pre <<<<<<" no_pos;
+                                DD.devel_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) no_pos;
+                                DD.devel_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) no_pos;
+                                print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ;
+                                print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
                                 let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
                                 let fml = List.fold_left (fun f p -> CF.normalize 1 fml p no_pos)
@@ -356,6 +360,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
                                 let post_fml = Solver.simplify_post post_fml post_vars prog in
+                                DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" no_pos;
+                                DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) no_pos;
+                                DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) no_pos;
                                 (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
                                 (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
