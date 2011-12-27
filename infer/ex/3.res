@@ -199,4 +199,4 @@ inferred heap: [b::ll<inf_m_451>@inf_ann_450[Orig][LHSCase];
                y::node<inf_a_447,inf_b_448>@inf_ann_446[Orig]]
 inferred pure: [inf_ann_450<=0; inf_ann_446<=0; inf_b_448=b]
 
-Stop Omega... 638 invocations 
+Stop Omega... 599 invocations 

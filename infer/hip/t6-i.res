@@ -15,6 +15,9 @@ new infer var: [inf_ann_527,inf_Anon_528,inf_b_529,x]
 infer_heap_nodes
 infer var: [inf_ann_527,inf_Anon_528,inf_b_529,x]
 new infer var: [inf_ann_534,inf_a_535,inf_Anon_536,inf_ann_527,inf_Anon_528,inf_b_529,x]
+
+Inferred Heap:[ x::node<inf_Anon_528,inf_b_529>@inf_ann_527[Orig], inf_b_529::node<inf_a_535,inf_Anon_536>@inf_ann_534[Orig]]
+Inferred Pure:[]
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 3::ref [x]
@@ -24,11 +27,12 @@ NEW SPECS:  EBase x::node<inf_Anon_528,inf_b_529>@L[Orig] *
        {FLOW,(20,21)=__norm}
          EAssume 3::ref [x]
            true & x'=inf_b_529 & res=inf_a_535 & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 50 invocations 
+Stop Omega... 47 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.576034 second(s)
-	Time spent in main process: 0.480029 second(s)
-	Time spent in child processes: 0.096005 second(s)
+Total verification time: 0.19 second(s)
+	Time spent in main process: 0.18 second(s)
+	Time spent in child processes: 0.01 second(s)

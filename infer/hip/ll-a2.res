@@ -5,7 +5,10 @@ Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure append2$node~node... OLD SPECS:  EInfer [n1]
+Checking procedure append2$node~node... 
+Inferred Heap:[]
+Inferred Pure:[ n1!=0, n1!=0, n1!=0, n1!=0]
+OLD SPECS:  EInfer [n1]
    EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] * 
          y::ll<n2>@M[Orig][LHSCase] & true & {FLOW,(20,21)=__norm}
            EAssume 1::
@@ -16,11 +19,12 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] *
          EAssume 1::
            EXISTS(m_589: x::ll<m_589>@M[Orig][LHSCase] & m_589=n2+n1 & 
            0<=n1 & 0<=n2 & {FLOW,(20,21)=__norm})
+NEW RELS: []
 
 Procedure append2$node~node SUCCESS
-Stop Omega... 107 invocations 
+Stop Omega... 79 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.860052 second(s)
-	Time spent in main process: 0.748046 second(s)
-	Time spent in child processes: 0.112006 second(s)
+Total verification time: 0.35 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.02 second(s)
