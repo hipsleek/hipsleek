@@ -2602,5 +2602,7 @@ let imply_raw ante conseq  =
 let is_sat_raw (f: CP.formula) =
   tp_is_sat f "999" false
 
-let simplify_raw (f: CP.formula) = simplify f 
+let simplify_raw (f: CP.formula) = match !tp with
+ | Mona | MonaH -> if is_bag_constraint f then f else Omega.simplify f 
+ | _ -> Omega.simplify f 
 
