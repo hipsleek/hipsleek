@@ -5225,8 +5225,8 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
             in
             (*shoudl use ll in future*)
            (* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*)
-              let msg = "(failure_code="^failure_code ^ ") " ^
-                (String.concat "; " strs) ^ " ("  ^ failure_string ^ ")." in
+              let msg = "(failure_code="^failure_code ^ ") And_Reason[" ^
+                (String.concat "; " strs) ^ " ("  ^ failure_string ^ ").]" in
               let fe = match fk with
                 |  Failure_May _ -> mk_failure_may msg failure_name
                 | Failure_Must _ -> (mk_failure_must msg failure_name)
