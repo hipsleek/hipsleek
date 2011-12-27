@@ -7035,7 +7035,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-    let check_sat = Omega.is_sat fml "13" in
+    let check_sat = TP.is_sat_raw fml in
     (* check if there is a contraction with the RHS heap *)
     let r = 
       if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq
@@ -7055,7 +7055,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               in
               let fml,_,_,_ = xpure prog new_estate.es_formula in
               let fml = MCP.pure_of_mix fml in
-              if Omega.is_sat fml "0" then
+              if TP.is_sat_raw fml then
                 let ctx1 = (Ctx new_estate) in
 			    let ctx1 = set_unsat_flag ctx1 true in
 			    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
@@ -9372,7 +9372,7 @@ let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
   | Base b -> 
         let fml,_,_,_ = xpure prog fml 
-        in Omega.is_sat (MCP.pure_of_mix fml) "14"
+        in TP.is_sat_raw (MCP.pure_of_mix fml)
   | Exists e ->
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
@@ -9434,10 +9434,10 @@ let rec simplify_post post_fml post_vars prog = match post_fml with
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
-    let p = Omega.simplify (CP.mkExists_with_simpl Omega.simplify post_vars p None no_pos) in
+    let p = TP.simplify_raw (CP.mkExists_with_simpl TP.simplify_raw post_vars p None no_pos) in
     let h,rm_vars = simplify_heap h p prog in
     let rm_vars = CP.diff_svl rm_vars (h_fv h) in
-    let p = Omega.simplify (CP.mkExists_with_simpl Omega.simplify rm_vars p None no_pos) in
+    let p = TP.simplify_raw (CP.mkExists_with_simpl TP.simplify_raw rm_vars p None no_pos) in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
     post_fml
 
