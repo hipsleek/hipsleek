@@ -615,7 +615,7 @@ let lhs_simplifier lhs_h lhs_p =
 (* to filter relevant LHS term for selected relation rel *)
 (* requires simplify and should preserve relation and != *)
 let rel_filter_assumption lhs rel =
-  let (lhs,rel) = CP.assumption_filter lhs rel in
+  let (lhs,rel) = CP.assumption_filter_aggressive lhs rel in
   (lhs,rel)
 
 (* let rel_filter_assumption lhs rel = *)
