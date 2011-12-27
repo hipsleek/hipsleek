@@ -5972,7 +5972,10 @@ let normalize_max_renaming_s f pos b ctx =
   must be cleared.
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
-  Ctx {(empty_es (mkTrueFlow ()) no_pos) with
+  (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
+  Ctx { 
+      (* es with es_heap=HTrue;} *)
+    (empty_es (mkTrueFlow ()) no_pos) with
 	es_formula = es.es_formula;
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
@@ -5982,10 +5985,11 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
+  }
 (*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
-  } 
+
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   
@@ -6534,35 +6538,35 @@ and simplify_branch_context (brctx : branch_ctx) (bv : CP.spec_var list) =
 and simplify_context (ctx : context) (bv : CP.spec_var list) = 
 	match ctx with
 		| Ctx ({ es_formula = esformula;
-				  es_heap = esheap;
-				  es_pure = espure;
-				  es_evars = esevars;
-				  es_ivars = esivars;
-				  es_ante_evars = esanteevars;
-				  es_gen_expl_vars = esgenexplvars; 
-				  es_gen_impl_vars = esgenimplvars; 
-				  es_unsat_flag = esunsatflag;
-				  es_pp_subst = esppsubst;
-				  es_arith_subst = esarithsubst;
-				  es_success_pts = essuccesspts;
-				  es_residue_pts = esresiduepts;
-				  es_id = esid;
-				  es_orig_ante   = esorigante; 
-				  es_orig_conseq = esorigconseq;
-				  es_path_label = espathlabel;
-				  es_prior_steps = espriorsteps;
-				  es_var_measures = esvarmeasures;
-				  es_var_label = esvarlabel;
-				  es_var_ctx_lhs = esvarctxlhs;
-				  es_var_ctx_rhs = esvarctxrhs;
-				  es_var_subst = esvarsubst;
-				  es_rhs_eqset = esrhseqset;
-				  es_cont = escont;
-				  es_crt_holes = escrtholes;
-				  es_hole_stk = esholestk;
-				  es_aux_xpure_1 = esauxxpure1;
-				  es_subst = essubst; 
-				  es_aux_conseq = esauxconseq;
+				  (* es_heap = esheap; *)
+				  (* es_pure = espure; *)
+				  (* es_evars = esevars; *)
+				  (* es_ivars = esivars; *)
+				  (* es_ante_evars = esanteevars; *)
+				  (* es_gen_expl_vars = esgenexplvars;  *)
+				  (* es_gen_impl_vars = esgenimplvars;  *)
+				  (* es_unsat_flag = esunsatflag; *)
+				  (* es_pp_subst = esppsubst; *)
+				  (* es_arith_subst = esarithsubst; *)
+				  (* es_success_pts = essuccesspts; *)
+				  (* es_residue_pts = esresiduepts; *)
+				  (* es_id = esid; *)
+				  (* es_orig_ante   = esorigante;  *)
+				  (* es_orig_conseq = esorigconseq; *)
+				  (* es_path_label = espathlabel; *)
+				  (* es_prior_steps = espriorsteps; *)
+				  (* es_var_measures = esvarmeasures; *)
+				  (* es_var_label = esvarlabel; *)
+				  (* es_var_ctx_lhs = esvarctxlhs; *)
+				  (* es_var_ctx_rhs = esvarctxrhs; *)
+				  (* es_var_subst = esvarsubst; *)
+				  (* es_rhs_eqset = esrhseqset; *)
+				  (* es_cont = escont; *)
+				  (* es_crt_holes = escrtholes; *)
+				  (* es_hole_stk = esholestk; *)
+				  (* es_aux_xpure_1 = esauxxpure1; *)
+				  (* es_subst = essubst;  *)
+				  (* es_aux_conseq = esauxconseq; *)
 					} as es) -> 
 						let sesfml = simplify_formula esformula bv in
 							Ctx { es with es_formula = sesfml }
