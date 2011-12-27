@@ -268,8 +268,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	                (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
-	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-	    	        if (CF.isFailListPartialCtx res_ctx) 
+	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
+	    	        if (CF.isFailListPartialCtx_new res_ctx)
                     then (spec, [], false)
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
@@ -277,7 +277,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let iv = CF.collect_infer_vars ctx in
                       let postf = CF.collect_infer_post ctx in
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
-                      let res = CF.isSuccessListPartialCtx tmp_ctx in
+                      let res = CF.isSuccessListPartialCtx_new tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
                       let infer_post_flag = infer_pre_flag || (List.length iv)>0 in
@@ -539,7 +539,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
+              (*let _ = print_endline "locle10" in *)
+	          if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then   
                 begin
 		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
                       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
@@ -779,14 +780,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_pprint (to_print^"\n") pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
+                  (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
 
                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*) 
-                  if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
-                    Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                 (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                    Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
                   rs
                 in
                  (*******************************END_CHECK_PRE_POST****************************************)
@@ -808,10 +810,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                   end else false in
 
-                let res = if (CF.isFailListFailescCtx ctx) then
-				  let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
-                  ctx
+                let res = if (CF.isFailListFailescCtx_new ctx) then
+				      let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
+                    (*  let _ = print_endline "locle7" in*)
+                      ctx
                     else
+                    (*  let _ = print_endline "locle8" in *)
                       (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
                       let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in                      
                       check_pre_post pre_with_new_pos ctx scall_pre_cond_pushed
@@ -823,7 +827,47 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           Tpdispatcher.restore_suppress_imply_output_state ();
                   (* print_endline "OK.\n" *)
                       end in
-                res
+                if (CF.isSuccessListFailescCtx_new res) then
+                 (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
+                  res
+                else begin
+                 (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
+      (* get source code position of failed branches *)
+                    let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
+                    let _ =
+                      if not !Globals.disable_failure_explaining then
+                        let s= CF.get_failure_list_failesc_context res
+          (*match CF.get_must_failure_list_partial_context rs with
+            | Some s -> "(must) cause:\n"^s
+            | None -> (match CF.get_may_failure_list_partial_context rs with
+            | Some s -> "(may) cause:\n"^s
+            | None -> "INCONSISTENCY : expected failure but success instead"
+            ) *)
+          (*should check bot with is_bot_status*)
+                        in
+                        if (String.length s) >  0 then
+                          let _ = print_string (to_print ^s^"\n") in
+                          Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving precondition in method failed."
+                            }
+                        else ()
+                      else
+                        begin
+                            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context res)^") ") 
+                                ("Proving precondition in method failed\n") pos;
+	                        Debug.print_info ("(Cause of PreCond Failure)")
+                                (Cprinter.string_of_failure_list_failesc_context res) pos;
+                            Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving precondition in method failed."
+                            }
+                        end
+                    in
+                    res
+                end
               end
         | Seq ({exp_seq_type = te2;
           exp_seq_exp1 = e1;
@@ -833,7 +877,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* Astsimp ensures that e1 is of type void *)
             (* let _ = print_endline ("WN C1:"^(Cprinter.string_of_list_failesc_context ctx1)) in*)
 	        let ctx2= check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
-            (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in *)
+            (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in*)
             ctx2
 	      end
         | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
@@ -967,7 +1011,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
        final_state
     else ctx
       in
-  (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) final_state)) in*)
+  (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) fn_state)) in*)
   let rs, prf = heap_entail_list_partial_context_init prog false fn_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
   let _ = if !print_proof then
@@ -978,9 +1022,11 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
       Prooftracer.pop_div ();
 	  (* print_endline "DONE!" *)
 	end in
-  if (CF.isSuccessListPartialCtx rs) then 
+  if (CF.isSuccessListPartialCtx_new rs) then 
+  (*  let _ = print_endline ("\nlocle3:") in*)
     rs
   else begin
+   (*   let _ = print_endline ("\nlocle4:") in*)
     (* get source code position of failed branches *)
     (*let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
@@ -990,7 +1036,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
       in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let s= CF.get_may_failure_list_partial_context rs
+          let s= CF.get_failure_list_partial_context rs
             (*match CF.get_must_failure_list_partial_context rs with
               | Some s -> "(must) cause:\n"^s
               | None -> (match CF.get_may_failure_list_partial_context rs with

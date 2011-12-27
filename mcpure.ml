@@ -1968,6 +1968,11 @@ let memo_subst s f = match f with
   | MemoF f -> MemoF (memo_subst s f)
   | OnePF f -> OnePF (subst s f)  
 
+let list_pos_of_mix_formula mf=
+  match mf with
+  | MemoF f -> []
+  | OnePF f -> (Cpure.pos_of_formula f [])
+
 let subst_pos_mix_formula p mf=
  match mf with
   | MemoF f -> mf

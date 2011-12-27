@@ -81,6 +81,7 @@ and ext_base_formula =
 		formula_ext_exists : Cpure.spec_var list;
 		formula_ext_base : formula;
 		formula_ext_continuation : struc_formula;
+        (*formula_ext_complete: bool;*)
 		formula_ext_pos : loc
 	}
 
@@ -370,6 +371,7 @@ and struc_formula_of_heap h pos = [EBase {
 	formula_ext_exists = [];
 	formula_ext_base = formula_of_heap h pos;
 	formula_ext_continuation = [];
+   (* formula_ext_complete = true;*)
 	formula_ext_pos = pos}]
   
 and struc_formula_of_formula f pos = [EBase { 
@@ -378,6 +380,7 @@ and struc_formula_of_formula f pos = [EBase {
     formula_ext_exists = [];
 	formula_ext_base = f;
 	formula_ext_continuation = [];
+   (* formula_ext_complete = true;*)
 	formula_ext_pos = pos}]
   
   
@@ -407,6 +410,7 @@ and mk_ebase f ct pos =
       formula_ext_exists =[];
       formula_ext_base = f;
       formula_ext_continuation = ct;
+     (* formula_ext_complete = false;*)
       formula_ext_pos = pos;
   } in EBase bf
 
@@ -914,6 +918,7 @@ and mkEFalse flowt pos = EBase({
 	formula_ext_exists = [];
 	formula_ext_base = mkFalse flowt pos;
 	formula_ext_continuation = [];
+    (*formula_ext_complete = true;*)
 	formula_ext_pos = pos})
 
 and mkETrue flowt pos = EBase({
@@ -922,6 +927,7 @@ and mkETrue flowt pos = EBase({
 	formula_ext_exists = [];
 	formula_ext_base = mkTrue flowt pos;
 	formula_ext_continuation = [];
+    (*formula_ext_complete = true;*)
 	formula_ext_pos = pos})
   
 and mkOr f1 f2 pos =
@@ -1615,6 +1621,25 @@ and pos_of_formula (f : formula) : loc = match f with
   (* | Or ({formula_or_pos = pos}) -> pos *)
   | Exists ({formula_exists_pos = pos}) -> pos
 
+and list_pos_of_formula (f : formula) : (loc list)= match f with
+    | Base ({formula_base_heap = h;
+           formula_base_pure = mf;
+           formula_base_pos = pos}) -> (list_pos_of_heap_formula h) @ (MCP.list_pos_of_mix_formula mf) @ [pos]
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> (list_pos_of_formula f1) @ (list_pos_of_formula f2) @ [pos]
+    | Exists ({formula_exists_heap = h;
+               formula_exists_pure = mf;
+               formula_exists_pos = pos}) -> (list_pos_of_heap_formula h) @ (MCP.list_pos_of_mix_formula mf) @ [pos]
+
+and list_pos_of_heap_formula (h: h_formula): (loc list)= match h with
+  | Star {h_formula_star_pos = pos} -> [pos]
+  | Conj {h_formula_conj_pos = pos} -> [pos]
+  | _ -> []
+
+and get_lines (ll: loc list): (int list)=
+  Gen.Basic.remove_dups (List.map (fun x -> x.start_pos.Lexing.pos_lnum) ll)
+
 and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
   List.map (subst_pos_ext_formula p) f
 
@@ -1633,12 +1658,14 @@ and subst_pos_ext_formula (p:loc) (f:ext_formula): ext_formula=
 		formula_ext_exists =svl;
 		formula_ext_base = f;
 		formula_ext_continuation = sf;
+        (*formula_ext_complete = bc;*)
 		formula_ext_pos = l
 	} -> EBase { formula_ext_explicit_inst =ispvs;
 		formula_ext_implicit_inst = espvs;
 		formula_ext_exists =svl;
 		formula_ext_base = subst_pos_formula p f;
 		formula_ext_continuation = subst_pos_struc_formula p sf;
+        (*formula_ext_complete = bc;*)
 		formula_ext_pos = p}
 	| EAssume (x,b,l)-> EAssume (x, subst_pos_formula p b, l)
 	| EVariance b -> EVariance {b with formula_var_pos=p}
@@ -1935,6 +1962,7 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 			  formula_ext_exists = List.map (subst_var s)  b.formula_ext_exists;
 			  formula_ext_base = apply_one s  b.formula_ext_base;
 			  formula_ext_continuation = apply_one_struc_pre s b.formula_ext_continuation;
+             (* formula_ext_complete = b.formula_ext_complete;*)
 			  formula_ext_pos = b.formula_ext_pos	
 		  })
 	| EAssume (x,b,y)-> if (List.mem fr x) then f
@@ -1962,6 +1990,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 			  formula_ext_exists = List.map (subst_var s)  b.formula_ext_exists;
 			  formula_ext_base = apply_one s  b.formula_ext_base;
 			  formula_ext_continuation = apply_one_struc s b.formula_ext_continuation;
+            (*  formula_ext_complete = b.formula_ext_complete;*)
 			  formula_ext_pos = b.formula_ext_pos	
 		  })
 	| EAssume (x,b,y)-> EAssume((subst_var_list [s] x),(apply_one s b),y)
@@ -2016,6 +2045,7 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
 			  formula_ext_base = ext_base;
 			  (* formula_ext_base = apply_one_w_perm s  b.formula_ext_base permvar; *)
 			  formula_ext_continuation = ext_cont_f;
+             (* formula_ext_complete = b.formula_ext_complete;*)
 			  formula_ext_pos = b.formula_ext_pos
 		  })
         in res_f
@@ -3232,13 +3262,18 @@ let mk_failure_may msg name = {fe_kind = Failure_May msg;fe_name = name ;fe_locs
 
 let mk_failure_must msg name = {fe_kind = mk_failure_must_raw msg;fe_name = name ;fe_locs=[]}
 
-let mk_failure_bot msg = {fe_kind = mk_failure_bot_raw msg;fe_name = "" ;fe_locs=[]}
+let mk_failure_bot msg name= {fe_kind = mk_failure_bot_raw msg;fe_name = name ;fe_locs=[]}
+
+let mk_failure_valid = {fe_kind = Failure_Valid;fe_name = "Valid" ;fe_locs=[]}
 
 let mkAnd_Reason (ft1:fail_type option) (ft2:fail_type option): fail_type option=
   match ft1, ft2 with
     | None, ft2 -> ft2
     | _ , None -> ft1
     | Some ft1, Some ft2 -> Some (And_Reason (ft1, ft2))
+
+let mkOr_Reason ft1 ft2=
+  Or_Reason (ft1, ft2)
 
 let comb_must m1 m2 = "["^m1^","^m2^"]"
 
@@ -3247,13 +3282,29 @@ let is_must_failure_fe (f:fail_explaining) =
     | Failure_Must _ -> true 
     | _ -> false
 
+let is_bot_failure_fe (f:fail_explaining) =
+  match f.fe_kind with
+    | Failure_Bot _ -> true 
+    | _ -> false
+
 let rec is_must_failure_ft (f:fail_type) =
   match f with
     | Basic_Reason (_,fe) -> is_must_failure_fe fe
-    | Or_Reason (f1,f2) -> (is_must_failure_ft f1) && (is_must_failure_ft f2)
+    | Or_Reason (f1,f2) -> (((is_must_failure_ft f1) && (is_must_failure_ft f2)) ||
+                                   ((is_bot_failure_ft f1) && (is_must_failure_ft f2)) ||
+                                   ((is_must_failure_ft f1) && (is_bot_failure_ft f2)) )
     | And_Reason (f1,f2) -> (is_must_failure_ft f1) || (is_must_failure_ft f2)
-    | Union_Reason (f1,f2) -> (is_must_failure_ft f1) || (is_must_failure_ft f2)
+    | Union_Reason (f1,f2) -> (is_must_failure_ft f1) && (is_must_failure_ft f2)
     | _ -> false
+
+and is_bot_failure_ft (f:fail_type) =
+  match f with
+    | Basic_Reason (_,fe) -> is_bot_failure_fe fe
+    | Or_Reason (f1,f2) -> (is_bot_failure_ft f1) && (is_bot_failure_ft f2)
+    | And_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
+    | Union_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
+    | _ -> false
+
 
 let is_must_failure (f:list_context) =
   match f with
@@ -3466,7 +3517,7 @@ let get_may_failure_ft f =
     | Failure_Must m -> Some ("must:"^m)
     | Failure_May m -> Some (m)
     | Failure_Valid -> Some ("Failure_Valid")
-    | Failure_Bot m -> Some ("Failure_None"^m)
+    | Failure_Bot m -> Some ("Failure_Bot"^m)
 
 let get_may_failure (f:list_context) =
   match f with
@@ -3524,8 +3575,8 @@ let get_must_failure (ft:list_context) =
 let rec get_must_failure_list_partial_context (ls:list_partial_context): (string option)=
     (*may use lor to combine the list first*)
     let los= List.map get_must_failure_partial_context ls in
-    (*los contains path traces*)
-    ( match (combine_helper "union\n" los "") with
+    (*los contains mutilpe specs??*)
+    ( match (combine_helper "RAND\n" los "") with
       | "" -> None
       | s -> Some s
     )
@@ -3565,19 +3616,20 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
-let rec get_may_failure_list_partial_context (ls:list_partial_context): (string)=
+let rec get_failure_list_partial_context (ls:list_partial_context): (string)=
     (*may use lor to combine the list first*)
-    let los= List.map get_may_failure_partial_context ls in
+    let los= List.map get_failure_partial_context ls in
     (*los contains path traces*)
-    combine_helper "union\n" los ""
+    combine_helper "RAND\n" los ""
 
-and get_may_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
-    let helper (pt, ft)=
-      let os = get_may_failure_ft ft in
-      match os with
-        | None -> None
-        | Some (s) ->  let spt = !print_path_trace pt in
-                    Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n    cause: " ^s)
+and get_failure_branch bfl=
+   let helper (pt, ft)=
+     let spt = !print_path_trace pt in
+      match  (get_failure_ft ft) with
+        | Failure_Must m -> Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (must) cause: " ^m)
+        | Failure_May m -> Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (may) cause: " ^m)
+        | Failure_Valid -> None
+        | Failure_Bot m -> Some ("  path trace: " ^spt^"\n   unreachable: "^m)
     in
     match bfl with
       | [] -> None
@@ -3586,6 +3638,18 @@ and get_may_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx 
                 | "" -> None
                 | s -> Some s
               )
+
+and get_failure_partial_context ((bfl:branch_fail list), _): (string option)=
+   get_failure_branch bfl
+
+let rec get_failure_list_failesc_context (ls:list_failesc_context): (string)=
+    (*may use rand to combine the list first*)
+    let los= List.map get_failure_failesc_context ls in
+    (*los contains path traces*)
+    combine_helper "RAND\n" los ""
+
+and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option)=
+  get_failure_branch bfl
 
 let get_bot_status (ft:list_context) =
   match ft with
@@ -4099,6 +4163,7 @@ let rec union_context_left c_l = match (List.length c_l) with
     (*  | SuccCtx t1,FailCtx t2 -> SuccCtx t1 *)
     (*  | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l) *)
 
+(*should use union_context_left directly*)
 and fold_context_left_x c_l = union_context_left c_l 
 
  (*list_context or*)
@@ -4154,6 +4219,24 @@ and fold_context_left c_l =
 (* Fail or Succ --> Fail *)
 (* Fail m1 or Fail m2 --> Or m1 m2 *)
   (*list_context or*)
+
+(*LOR*)
+and or_list_context_x_new c1 c2 =
+  match c1,c2 with
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
+     | FailCtx t1 ,SuccCtx t2 ->
+         if is_bot_failure_ft t1 then
+           c2
+         else
+           let t = mk_not_a_failure in
+           FailCtx (Or_Reason (t1,t))
+     | SuccCtx t1 ,FailCtx t2 ->
+         if is_bot_failure_ft t2 then
+           c1
+         else
+           let t = mk_not_a_failure in
+           FailCtx (Or_Reason (t,t2))
+     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
@@ -4212,7 +4295,7 @@ and fold_list_context_or c_l = match List.length c_l with
 
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
-  Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
+  Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x_new c1 c2
 
 (* can remove redundancy here? *)
 
@@ -4223,17 +4306,49 @@ let isFailFailescCtx (fs,es,ss) =
   if (Gen.is_empty fs) then false else true
 (* if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false *)
 
+let isFailBranchFail (_,ft) =
+   match (get_failure_ft ft) with
+        | Failure_Must _ -> true
+        | Failure_May _ -> true
+        | Failure_Valid -> false
+        | Failure_Bot _ -> false
+
+let isFailFailescCtx_new (fs,_,_) =
+  List.exists isFailBranchFail fs
+
+let isFailPartialCtx_new (fs,ss) =
+  List.exists isFailBranchFail fs
+
 let isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 
 
+let isFailListPartialCtx_new cl =
+  List.for_all isFailPartialCtx_new cl 
+
 let isFailListFailescCtx cl =
   List.for_all isFailFailescCtx cl 
-  
+
+let isFailListFailescCtx_new cl =
+  List.for_all isFailFailescCtx_new cl
+
 let isSuccessPartialCtx (fs,ss) =
 if (Gen.is_empty fs) then true else false
 
+let isSuccessBranchFail (_,ft) =
+   match  (get_failure_ft ft) with
+        | Failure_Must _ -> false
+        | Failure_May _ -> false
+        | Failure_Valid -> true
+        | Failure_Bot _ -> true
+
+let isSuccessPartialCtx_new (fs,_) =
+ List.for_all isSuccessBranchFail fs
+
 let isSuccessFailescCtx (fs,_,_) =
 if (Gen.is_empty fs) then true else false
+
+let isSuccessFailescCtx_new (fs,_,_) =
+  List.for_all isSuccessBranchFail fs
 
 let isSuccessListPartialCtx cl =
   cl==[] || List.exists isSuccessPartialCtx cl 
@@ -4241,7 +4356,10 @@ let isSuccessListPartialCtx cl =
 let isSuccessListPartialCtx cl =
   let pr = !print_list_partial_context in
   Gen.Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
-  
+
+let isSuccessListPartialCtx_new cl =
+  cl==[] || List.exists isSuccessPartialCtx_new cl
+
 let isSuccessListFailescCtx cl =
   cl==[] || List.exists isSuccessFailescCtx cl 
 
@@ -4249,6 +4367,9 @@ let isSuccessListFailescCtx cl =
   (* let cl = list_failesc_context_simplify cl in *)
   let pr = !print_list_failesc_context in
   Gen.Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
+
+let isSuccessListFailescCtx_new cl =
+  cl==[] || List.exists isSuccessFailescCtx_new cl 
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
@@ -4578,7 +4699,6 @@ and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | _ -> Err.report_error {Err.error_loc = pos;
 						   Err.error_text = "estate_of_context: disjunctive or fail context"}
 
-						   
 and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> flow_formula_of_formula es.es_formula
   | _ -> Err.report_error {Err.error_loc = pos;
@@ -5089,6 +5209,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
+                    (*formula_ext_complete = true;*)
 		 			formula_ext_pos = b.formula_base_pos})]
 		| Exists b-> [EBase ({
 			 		formula_ext_explicit_inst =[];
@@ -5096,6 +5217,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
+                    (*formula_ext_complete = true;*)
 		 			formula_ext_pos = b.formula_exists_pos})]
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
 	(helper f)
@@ -5215,6 +5337,7 @@ and case_to_disjunct_x f  =
        formula_ext_exists = [];
        formula_ext_base = formula_of_pure_N c no_pos;
        formula_ext_continuation = [f];
+       (*formula_ext_complete = true;*)
        formula_ext_pos = no_pos;
     }	
   and helper f = match f with
@@ -6397,6 +6520,7 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 		formula_base_pos = loc;
 	};*)
 	formula_ext_continuation = [];
+    (*formula_ext_complete = true;*)
 	formula_ext_pos = loc;
   }	
 
@@ -6918,6 +7042,7 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
 		      formula_ext_exists = [];
 		      formula_ext_base = pre;
 		      formula_ext_continuation = [sp];
+              (*formula_ext_complete = true;*)
 		      formula_ext_pos = no_pos
         }
     | EVariance b -> 

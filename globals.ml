@@ -271,6 +271,7 @@ let res_name = "res"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
+let fnc_error = "function call"
 let lemma_error = "lemma"
 let undefined_error = "undefined"
 

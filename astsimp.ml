@@ -3975,6 +3975,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                 CF.formula_ext_exists = ext_exis;
                 CF.formula_ext_base = nb;
                 CF.formula_ext_continuation = nc;
+               (* CF.formula_ext_complete = b.IF.formula_ext_complete;*)
                 CF.formula_ext_pos = b.IF.formula_ext_pos}
 	  | IF.EVariance b -> CF.EVariance {
 		    CF.formula_var_label = b.IF.formula_var_label;
@@ -6190,6 +6191,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
                 IF.formula_ext_explicit_inst = all_expl;
                 IF.formula_ext_exists = [];
                 IF.formula_ext_continuation = nc;
+               (* IF.formula_ext_complete = b.IF.formula_ext_complete;*)
                 IF.formula_ext_pos = b.IF.formula_ext_pos}),(Gen.BList.remove_dups_eq (=) (h2@h3)))in
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r

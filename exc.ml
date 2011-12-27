@@ -518,7 +518,8 @@ module type ETABLE =
       (* method sort : unit *)
       method remove_dupl : unit
       method clear : unit
-      method sub_type_obj : ident -> ident -> bool 
+      method sub_type_obj : ident -> ident -> bool
+      method union_flow_ne: nflow -> nflow -> nflow
     end
     val exlist : exc
    end;;
@@ -732,6 +733,10 @@ struct
         let n1 = self#get_hash t1 in
         let n2 = self#get_hash t2
         in is_subset_flow n1 n2
+      end
+    method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
+      begin
+          ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc
@@ -1031,6 +1036,10 @@ struct
         let n1 = self#get_hash t1 in
         let n2 = self#get_hash t2
         in is_subset_flow n1 n2
+      end
+    method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
+      begin
+          ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc
