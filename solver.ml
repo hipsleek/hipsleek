@@ -4379,9 +4379,9 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
           (* TODO : es_aux_conseq is an input here *)
           let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p) in
           let aux_c = estate.es_aux_conseq in
-          let _ = print_endline ("*********************************") in
-          let _ = print_endline ("input aux_conseq:"^(Cprinter.string_of_pure_formula aux_c)) in
-          let _ = print_endline ("*********************************") in
+          (* let _ = print_endline ("*********************************") in *)
+          (* let _ = print_endline ("input aux_conseq:"^(Cprinter.string_of_pure_formula aux_c)) in *)
+          (* let _ = print_endline ("*********************************") in *)
           let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
 		  (*  let _ = print_string("context = " ^ (Cprinter.string_of_context c) ^ "\n") in		  
