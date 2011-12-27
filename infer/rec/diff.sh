@@ -4,7 +4,11 @@ echo "======= 2 ======"
 diff 2a.res 2a.n
 diff 2b.res 2b.n
 diff 2b.res 2c.n
-echo "======= 3 ======"
+echo "======= 1-i ======"
+diff r1a-i.res r1a-i.n
+diff r1b-i.res r1b-i.n
+diff r1c-i.res r1ccase 
+-i.n
 echo "======= 4 ======"
 echo "======= 5 ======"
 echo "======= 6 ======"
