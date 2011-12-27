@@ -10,8 +10,6 @@ Entail  (2): Valid.
 <1>true & y!=null & A(n1,m,z1) & n=1+n1 & 1<=n & Anon_58=Anon_13 & q_59=y & z1+1=z & {FLOW,(17,18)=__norm}
 inferred rel: [( 1<=n & 2<=z & A(n - 1,m,z - 1)) -->  A(n,m,z)]
 <2>false & false & {FLOW,(17,18)=__norm}
-inferred pure: [!(exists(y:exists(A:exists(m:exists(z1:exists(n1:y!=null & 
-               (y=null & z1=0 | y!=null & 1<=z1) & A(n1,m,z1) & n=1+n1 & 
-               1<=n))))))]
+inferred pure: [1>n]
 
-Stop Omega... 46 invocations 
+Stop Omega... 50 invocations 

@@ -69,7 +69,7 @@ NEW SPECS:  EAssume 13::ref [i]
 NEW RELS: []
 
 Procedure foo2a$int result FAIL-1
-Stop Omega... 79 invocations 
+Stop Omega... 81 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.21 second(s)

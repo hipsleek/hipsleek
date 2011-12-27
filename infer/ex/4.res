@@ -32,4 +32,4 @@ infer var: [inf_ann_70,inf_a_71,inf_b_72,y]
 new infer var: [inf_ann_74,inf_m_75,inf_ann_70,inf_a_71,inf_b_72,y]
 Entail  (3): Fail.(may) cause:(failure_code=15.3)  true |-  y!=null (may-bug).
 
-Stop Omega... 140 invocations 
+Stop Omega... 146 invocations 

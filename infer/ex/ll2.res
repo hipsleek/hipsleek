@@ -58,4 +58,4 @@ Entail  (7): Valid.
    
 inferred pure: [n!=1; n=2]
 
-Stop Omega... 277 invocations 
+Stop Omega... 281 invocations 

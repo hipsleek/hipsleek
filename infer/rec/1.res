@@ -14,4 +14,4 @@ inferred rel: [( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z)]
 <2>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [n!=1]
 
-Stop Omega... 37 invocations 
+Stop Omega... 39 invocations 

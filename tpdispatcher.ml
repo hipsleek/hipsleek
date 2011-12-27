@@ -1151,7 +1151,9 @@ let simplify (f : CP.formula) : CP.formula =
 	    else r
       with | _ -> f)
 
-let simplify_raw (f: CP.formula) = simplify f 
+let simplify_raw (f: CP.formula) = 
+  let f = drop_rel_formula f in
+  simplify f 
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 

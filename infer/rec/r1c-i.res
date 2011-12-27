@@ -22,7 +22,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] *
 NEW RELS: [ ( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z), ( 2<=z & 0<=m & 1<=n & A(n - 1,m,z - 1)) -->  A(n,m,z)]
 
 Procedure append$node~node SUCCESS
-Stop Omega... 83 invocations 
+Stop Omega... 84 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.36 second(s)

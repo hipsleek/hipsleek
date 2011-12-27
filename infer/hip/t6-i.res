@@ -30,7 +30,7 @@ NEW SPECS:  EBase x::node<inf_Anon_528,inf_b_529>@L[Orig] *
 NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 44 invocations 
+Stop Omega... 45 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.19 second(s)

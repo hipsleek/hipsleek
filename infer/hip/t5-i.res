@@ -63,7 +63,7 @@ NEW SPECS:  EBase x::node<inf_inf_val_38_552,inf_inf_next_38_553>@L[Orig] *
 NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 111 invocations 
+Stop Omega... 115 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.25 second(s)

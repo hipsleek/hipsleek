@@ -568,7 +568,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
       if not(check_sat) then None
       else      
         let lhs_simplified = simplify lhs_xpure iv in
-        let args = CP.fv lhs_simplified in 
+        let args = CP.fv lhs_simplified in
         let exists_var = CP.diff_svl args iv in
         let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in

@@ -90,4 +90,4 @@ Entail  (13): Valid.
 <1>false & false & {FLOW,(17,18)=__norm}
 inferred pure: [y!=null]
 
-Stop Omega... 243 invocations 
+Stop Omega... 257 invocations 
