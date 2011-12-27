@@ -7095,3 +7095,25 @@ type: (ext_formula -> ext_formula option) * (formula -> formula option) *
 (*   let f_b_formula e = Some e in *)
 (*   let f_exp e = Some e in			 *)
 (*   transform_struc_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f *)
+
+let unwrap_exists f =
+  let helper f =
+    match f with
+      | Base b -> ([],[],f)
+      | Exists b -> (b.formula_exists_qvars, 
+        h_fv b.formula_exists_heap, Exists {b with formula_exists_qvars=[]} )
+      | _ -> ([],[],f)
+  in helper f
+
+let add_exists vs f =
+  if vs==[] then f
+  else match f with
+    | Exists b -> Exists {b with formula_exists_qvars=(vs@b.formula_exists_qvars)}
+    | _ -> report_error no_pos "expecting ExistBase formula here"
+
+let lax_impl_of_post f =
+  let (evs,hvs,bf) = unwrap_exists f in
+  let impl_vs = CP.intersect evs hvs in
+  let new_evs = CP.diff_svl evs impl_vs in
+  (impl_vs, add_exists new_evs bf)
+  

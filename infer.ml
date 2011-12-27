@@ -61,6 +61,16 @@ let rec restore_infer_vars_ctx iv ctx =
         else Ctx {estate with es_infer_vars=iv;}
   | OCtx (ctx1, ctx2) -> OCtx (restore_infer_vars_ctx iv ctx1, restore_infer_vars_ctx iv ctx2)
 
+let add_impl_vars_ctx iv ctx =
+  let rec helper ctx = 
+    match ctx with
+      | Ctx estate -> Ctx {estate with es_gen_impl_vars = iv@estate.es_gen_impl_vars;}
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+
+let add_impl_vars_list_partial_context iv (ctx:list_partial_context) =
+  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_vars_ctx iv b)) bl)) ctx
+
 let restore_infer_vars iv cl =
   if (iv==[]) then cl
   else match cl with
