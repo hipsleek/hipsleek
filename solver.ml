@@ -4173,7 +4173,7 @@ and heap_entail_split_rhs_phases_x
     CF.set_context (fun es -> 
         {es with 
             es_rhs_eqset=(es.es_rhs_eqset@eqns);
-            es_imm_pure_stk=p::es.es_imm_pure_stk;}) ctx_0 in
+            (* es_imm_pure_stk=p::es.es_imm_pure_stk; *)}) ctx_0 in
   let helper ctx_00 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
 
     let h1, h2, h3 = split_phase h in
@@ -6475,9 +6475,9 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
 and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
   let pure = 
-    if !allow_imm && (estate.es_imm_pure_stk!=[]) 
-    then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk) 
-    else MCP.pure_of_mix rhs_p in
+    (* if !allow_imm && (estate.es_imm_pure_stk!=[])  *)
+    (* then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk)  *)
+    (* else *) MCP.pure_of_mix rhs_p in
   let ptr_eq = MCP.ptr_equations_with_null rhs_p in
 
   (* below are equality in RHS taken away during --imm option *)
@@ -6758,9 +6758,9 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
       let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
       let rhs_mix_p = MCP.memoise_add_pure_N (*rhs_b.formula_base_pure*) temp rhs_disj_set_p in
       let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
-      let rhs_mix_p_withlsNull_imm = if !allow_imm && (estate.es_imm_pure_stk!=[])
-      then MCP.memoise_add_pure_N rhs_mix_p_withlsNull  (MCP.pure_of_mix (List.hd estate.es_imm_pure_stk))
-      else rhs_mix_p_withlsNull
+      let rhs_mix_p_withlsNull_imm = (* if !allow_imm && (estate.es_imm_pure_stk!=[]) *)
+      (* then MCP.memoise_add_pure_N rhs_mix_p_withlsNull  (MCP.pure_of_mix (List.hd estate.es_imm_pure_stk)) *)
+      (* else *) rhs_mix_p_withlsNull
       in
       let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull_imm in
       (*contradiction on RHS?*)
