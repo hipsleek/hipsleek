@@ -153,7 +153,7 @@ module Make (Token : SleekTokenS)
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
-   ("join", JOIN);
+   ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA);
    ("len", LENGTH);
 	 ("let", LET);

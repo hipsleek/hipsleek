@@ -287,7 +287,7 @@ let thread_name = "thread"  (*special thread id*)
 let thread_typ = Int  (*special thread id*)
 let proc_typ = Void  (*special thread id*)
 let fork_name = "fork"  (*generic, its args can vary*)
-let join_name = "join1"
+let join_name = "join"
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)

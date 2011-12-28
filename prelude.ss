@@ -258,7 +258,7 @@ int fork()
   requires true
   ensures true;
 
-void join1(int id)
+void join(int id)
   requires true
   ensures true;
 

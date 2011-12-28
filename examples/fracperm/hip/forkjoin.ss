@@ -39,7 +39,7 @@ void testjoin(int id, cell x)
   requires [i] (true) and x::cell<i+1> & thread=id //'
   ensures x::cell<i+1>; //'
 {
-  join1(id);
+  join(id);
 }
 
 //valid
@@ -66,5 +66,5 @@ void test(cell x, cell y)
   int id;
   id=fork(inc,x); // generate a unique symbolic var for id
   inc(y);
-  join1(id);
+  join(id);
 }

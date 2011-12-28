@@ -147,7 +147,7 @@ void para_qsort(ref node xs)
           para_qsort(xsnext);
         }
         //dprint;
-        join1(id);
+        join(id);
 		tmp = new node(v, tmp);
         xs = append_bll(xs.next, tmp);
 	}
@@ -178,8 +178,8 @@ void para_qsort2(ref node xs)
           id2 = fork(para_qsort2,xsnext);
         }
         //dprint;
-        join1(id1);
-        join1(id2);
+        join(id1);
+        join(id2);
 		tmp = new node(v, tmp);
         xs = append_bll(xs.next, tmp);
 	}

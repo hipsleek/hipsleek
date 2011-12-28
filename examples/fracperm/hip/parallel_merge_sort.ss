@@ -132,7 +132,7 @@ void parallel_merge_sort(node xs,ref node ys)
         id = fork(parallel_merge_sort,s1,s2);
         parallel_merge_sort(xs,s3);
         //dprint;
-        join1(id);
+        join(id);
         ys = merge(s2,s3);
 	}
 	else {
@@ -159,8 +159,8 @@ void parallel_merge_sort2(node xs,ref node ys)
         id1 = fork(parallel_merge_sort2,s1,s2);
         id2 = fork(parallel_merge_sort2,xs,s3);
         //dprint;
-        join1(id1);
-        join1(id2);
+        join(id1);
+        join(id2);
         ys = merge(s2,s3);
 	}
 	else {

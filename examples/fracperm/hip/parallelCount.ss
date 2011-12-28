@@ -32,7 +32,7 @@ void parallelCount(node2 t, int2 count)
   else{
     int id = fork(parallelCount,t.left,cleft);
     parallelCount(t.right,cright);
-    join1(id);
+    join(id);
     count.val = 1+cleft.val+cright.val;
   }
 }
@@ -54,9 +54,9 @@ void parallelCount2(node2 t, int2 count)
     //dprint;
     id2 = fork(parallelCount2,t.right,cright);
     //dprint;
-    join1(id1);
+    join(id1);
     //dprint;
-    join1(id2);
+    join(id2);
     count.val = 1+cleft.val+cright.val;
   }
 }
