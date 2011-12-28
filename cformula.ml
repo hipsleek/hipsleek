@@ -2986,7 +2986,6 @@ type entail_state = {
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*) 
   (* WN : isn't above the same as prior steps? *)
   es_is_normalizing : bool; (*normalizing process*)
-  es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
 
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
@@ -2994,7 +2993,6 @@ type entail_state = {
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list; 
-  es_infer_label: formula; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
@@ -3166,11 +3164,9 @@ let empty_es flowt pos =
   es_must_error = None;
   es_trace = [];
   es_is_normalizing = false;
-  es_orig_vars = [];
   es_infer_post = false;
   es_infer_vars = [];
   es_infer_vars_rel = [];
-  es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;

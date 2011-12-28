@@ -153,7 +153,7 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
 let init_vars ctx infer_vars iv_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
-      | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel; es_orig_vars = orig_vars}
+      | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -636,11 +636,17 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       let lhs_2 = subs_rel_formula subs lhs in
       let filter_ass lhs rhs = 
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
-        (simplify_disj lhs,rhs) in
+        (simplify_disj lhs,rhs) in      
       let wrap_exists (lhs,rhs) =
+        (* Begin: To keep vars of rel_form in lhs *)
+        let lhs_ls = CP.split_conjunctions lhs in
+        let rel_lhs = List.filter CP.is_RelForm lhs_ls in
+        let rel_vars = List.concat (List.map CP.fv rel_lhs) in
+        (* End  : To keep vars of rel_form in lhs *)
+        
         let vs_r = CP.fv rhs in
         let vs_l = CP.fv lhs in
-        let diff_vs = diff_svl vs_l vs_r in
+        let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
         let new_lhs = CP.wrap_exists_svl lhs diff_vs in
         let new_lhs = Redlog.elim_exists_with_eq new_lhs in
         let new_lhs = CP.arith_simplify_new new_lhs in

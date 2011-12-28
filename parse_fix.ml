@@ -21,12 +21,12 @@ EXTEND Gram
 GLOBAL: expression formula pformula exp specvar;
   expression:
   [ "expression" NONA
-    [ OPT "("; x = formula; OPT ")" -> typ := "node"; x ]
+    [ x = formula -> typ := "node"; x ]
   ];
 
   formula:
   [ "formula" LEFTA
-    [ x = SELF; "&&"; y = SELF -> And (x, y, loc) 
+    [ "("; x = SELF; "&&"; y = SELF; ")" -> And (x, y, loc) 
     | x = pformula -> BForm ((x, None), None) ]			
   ];
 
@@ -34,14 +34,18 @@ GLOBAL: expression formula pformula exp specvar;
   [ "pformula" LEFTA
     [ x = INT; "="; y = INT ->
       if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc)
-    | "self"; "<="; y = exp -> Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-    | "self"; ">="; y = exp -> Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-    | x = exp; ">="; "self" -> Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-    | x = exp; "<="; "self" -> Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-    |	x = exp; "<"; y = exp -> Gt (y, x, loc) 
-    | x = exp; "<="; y = exp -> Gte (y, x, loc) 
-    | x = exp; ">"; y = exp -> Lt (y, x, loc) 
-    | x = exp; ">="; y = exp -> Lte (y, x, loc)
+    |	x = exp; "<"; y = exp -> Lt (x, y, loc) 
+    | x = exp; ">"; y = exp -> Gt (x, y, loc) 
+    | x = exp; "<="; y = exp ->
+      if is_self_var x then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else
+      if is_self_var y then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else Lte (x, y, loc)
+    | x = exp; ">="; y = exp ->
+      if is_self_var x then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else
+      if is_self_var y then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else Gte (x, y, loc)
     | x = exp; "="; y = exp -> Eq (x, y, loc)
     | x = exp; "!="; y = exp -> Neq (x, y, loc)
     ]

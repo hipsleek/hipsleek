@@ -120,6 +120,9 @@ and rounding_func =
   | Ceil
   | Floor
 
+let is_self_var = function
+  | Var (SpecVar (_,id,_),_) -> id=self
+  | _ -> false
 
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
   | SpecVar (_, _, p) -> p 
@@ -6521,6 +6524,10 @@ let is_rel_in_vars (vl:spec_var list) (f:formula)
       = match (get_rel_id f) with
         | Some n -> if mem n vl then true else false
         | _ -> false
+
+let is_RelForm (f:formula) = match f with
+  | BForm((RelForm _,_),_) -> true
+  | _ -> false
 
 (* let rec split_conjunctions = function *)
 (*   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y) *)
