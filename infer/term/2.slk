@@ -1,0 +1,11 @@
+
+
+
+infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- LexVar[0,p2,m].
+print residue.
+
+infer [p1,p2] n=m+1 & LexVar[0,p1]{n,m} |- LexVar[0,p2]{n,m}.
+print residue.
+
+
+
