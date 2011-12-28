@@ -14,14 +14,6 @@ relation A(int n, int m, int z).
 infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
 print residue.
 
-/*
-TODO : why is there a false?
-<1>true & n=1 & Anon_34=Anon_12 & q_35=y & m+1=z & {FLOW,(17,18)=__norm}
-inferred rel: [( (m=0 | 1<=m) & m+1=z & n=1) -->  A(n,m,z)]
-<2>false & false & {FLOW,(17,18)=__norm}
-inferred pure: [n!=1]
-*/
-
 // ==> z=1+z1  & A(n-1,m,z1) --> A(n,m,z)
 
 infer [n,A] x::node<_,y> * y::ll<z1> & y!=null & A(n1,m,z1) & n=n1+1 & n>=1 |- x::ll<z> & A(n,m,z).
