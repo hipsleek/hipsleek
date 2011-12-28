@@ -7043,6 +7043,10 @@ and split_pre_post_struc (specs:struc_formula) : (struc_formula * struc_formula)
   match specs with
     | [] -> ([],[])
     | spec::rest -> 
+        (*a spec is a pair of specifications. There may be multiple specifications*)
+        (* let restspec = split_pre_post_struc rest in *)
+        (* let aspec = split_pre_post_ext spec in *)
+        (* (aspec::restspec) *)
         let pre,post = split_pre_post_struc rest in
         let pre1,post1 = split_pre_post_ext spec in
         (pre1@pre,post1@post)

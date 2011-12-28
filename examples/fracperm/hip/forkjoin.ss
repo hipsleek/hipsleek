@@ -45,7 +45,7 @@ void testjoin(int id, cell x)
 //valid
 int main()
   requires true
-  ensures res=2;
+  ensures res>=2;
 { cell x=new cell(0);
   cell y=new cell(0);
   int id;

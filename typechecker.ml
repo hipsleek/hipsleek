@@ -784,12 +784,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
 
                     (* entail pre and then post instead of both *)
-                    (* let pre,post = List.hd (CF.split_struc_formula pre2) in (\*TO CHECK: only check the first pair:*\) *)
+                    (* let prepost = CF.split_struc_formula pre2 in (\*TO CHECK: only check the first pair:*\)  (*THIS IS not CORRECT*)*)
+                    (* let _ = print_endline ("\n\n check_exp: SCall: fork: \n ### struc =" ^ (Cprinter.string_of_struc_formula pre2) ^ "\n ##prepost = " ^ (pr_list (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) prepost) ^ "\n\n") in *)
                     (* let pre = CF.struc_formula_of_formula pre pos in *)
-                    let pre,post = CF.split_specs pre2 in
-                    let _ = Debug.devel_pprint ("check_exp: SCall: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula pre) ^ "\n ###post=" ^ (!print_struc_formula post))) no_pos in
+                    (*TO DO: currently pickup the first specification*)
+                    let list_pre,list_post = (CF.split_specs pre2) in
+                    let pre = List.hd list_pre in
+                    let post = List.hd list_post in
+                    let _ = print_endline ("\n\n check_exp: SCall: fork: \n ### specs =" ^ (Cprinter.string_of_struc_formula pre2)) in
+                    let _ = Debug.devel_pprint ("check_exp: SCall: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula list_pre) ^ "\n ###post=" ^ (!print_struc_formula list_post))) no_pos in
                     (* entail pre-cond only, put post-cond into a concurrent thread *)
-                    let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx pre pos pid in
+                    let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx [pre] pos pid in
                     let _ = Debug.devel_pprint ("check_exp: SCall: fork: after entailing the precondition"
                                                 ^ ((Cprinter.string_of_list_failesc_context rs_pre)^ "\n")) pos in
                     if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs_pre) then
@@ -807,7 +812,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (*split EAssume into evars and formula*)
                       let fct es = 
                         let f = es.CF.es_formula in
-                        let post_ext = List.hd post in (*TO CHECK: may we have multiple EAssume ???. If so, merge them together *)
+                        let post_ext = List.hd [post] in (*TO CHECK: may we have multiple EAssume ???. If so, merge them together *)
                         let post_f,post_evars =
                           (match post_ext with
                             | CF.EAssume (vs,f,lbl) -> f,vs

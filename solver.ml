@@ -3262,6 +3262,7 @@ and heap_entail_conjunct_lhs_struc_x
 	            let r = helper b.formula_case_branches in
 	            let r = match r with
 	              | None -> begin
+                      let _ = print_endline ("helper_inner: try all cases") in
 		              List.map (fun (c1, c2) -> 
 			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
                           (*this unsat check is essential for completeness of result*)
@@ -3277,6 +3278,7 @@ and heap_entail_conjunct_lhs_struc_x
 					        inner_entailer 2 n_ctx c2) b.formula_case_branches 
 				    end
 	              | Some (p, e) -> begin
+                      let _ = print_endline ("helper_inner: find it syntactically") in
 				      let n_ctx = CF.transform_context (
 				          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
 
@@ -3333,11 +3335,12 @@ and heap_entail_conjunct_lhs_struc_x
 	            (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
-	            (*let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
+	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
-                (*let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in*)
+                (* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *)
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
+                (* print_string ("\n after prune_ctx:"^(Cprinter.string_of_context rs4)^"\n"); *)
 	            ((SuccCtx [rs4]),TrueConseq)
         | EInfer e -> 
               (* ignores any EInfer on the RHS *) 
