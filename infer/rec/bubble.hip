@@ -20,7 +20,7 @@ ll<n> == self=null & n=0
 	inv n>=0;
 
 relation A(bool x).
-relation B(bool x).
+//relation B(bool x).
 
 lemma self::sll<n, sm, lg> <- self::ll<n>;
 
@@ -28,10 +28,12 @@ lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 
 bool bubble(node xs)
-     infer @pre[xs,A,B]
-	requires xs::ll<n> // &x!=null
-	ensures xs::sll<n, s, l> & A(res) //!res
+//     infer [A]
+     requires xs::ll<n> & xs!=null
+     ensures xs::sll<n, s, l>  /*& A(res)*/  &!res
 		or  xs::ll<n> & res; //& B(res);
+
+
 {
 	int aux, tmp1;
 	bool tmp, flag; 
