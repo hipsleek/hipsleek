@@ -1331,7 +1331,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*           CP.mkAnd c12  rf no_pos *)
   (*     | [] -> f *)
   (* in *)
-
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
@@ -1475,7 +1474,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 let tp_imply_no_cache i ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Gen.Debug.no_2_num i "tp_imply_no_cache" 
+  Gen.Debug.ho_2_num i "tp_imply_no_cache" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq

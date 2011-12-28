@@ -1,0 +1,5 @@
+checkentail n=m+1 & p1=p2 & LexVar[0,p1,n] |- LexVar[0,p2,m].
+
+//checkentail n=m+1 & p1=p2 & LexVar[0,p1,n] |- ((0>0) | (0=0 & p1>p2) | (0=0 & p1=p2 & n>m)) & LexVar[0,p2,m].
+
+

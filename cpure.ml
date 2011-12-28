@@ -1435,6 +1435,42 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) 
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
+and pos_of_b_formula (b: b_formula) = 
+	let (p, _) = b in
+	match p with
+	| LexVar (_, _, p) -> p
+	| BConst (_, p) -> p
+  | BVar (_, p) -> p
+  | Lt (_, _, p) -> p
+  | Lte (_, _, p) -> p
+  | Gt (_, _, p) -> p
+  | Gte (_, _, p) -> p
+  | Eq (_, _, p) -> p
+  | Neq (_, _, p) -> p
+  | EqMax (_, _, _, p) -> p
+  | EqMin (_, _, _, p) -> p
+	  (* bag formulas *)
+  | BagIn (_, _, p) -> p
+  | BagNotIn (_, _, p) -> p
+  | BagSub (_, _, p) -> p
+  | BagMin (_, _, p) -> p
+  | BagMax (_, _, p) -> p
+	  (* list formulas *)
+  | ListIn (_, _, p) -> p
+  | ListNotIn (_, _, p) -> p
+  | ListAllN (_, _, p) -> p
+  | ListPerm (_, _, p) -> p
+  | RelForm (_, _, p) -> p
+
+and pos_of_formula (f: formula) =
+	match f with
+	| BForm (b, _) -> pos_of_b_formula b
+  | And (_, _, p) -> p
+  | Or (_, _, _, p) -> p
+  | Not (_, _, p) -> p
+  | Forall (_, _, _, p) -> p
+  | Exists (_, _, _, p) -> p
+
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
   let slen = (String.length s) in
@@ -6632,11 +6668,11 @@ let drop_rel_formula_ops =
 
 let drop_complex_ops =
   let pr_weak b = match b with
-        | LexVar (_,_,p) 
+        (*| LexVar (_,_,p) *)
         | RelForm (_,_,p) -> Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
-        | LexVar (_,_,p) 
+        (*| LexVar (_,_,p) *)
         | RelForm (_,_,p) -> Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
@@ -6767,3 +6803,22 @@ let simplify_disj (f:formula) : formula =
 let simplify_disj (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f
+
+(* To find a LexVar formula *)
+exception No_LexVar;;
+
+let find_lexvar_b_formula (bf: b_formula) : exp list =
+  let (pf, _) = bf in
+  match pf with
+  | LexVar (el, _, _) -> el
+  | _ -> raise No_LexVar
+
+let rec find_lexvar_formula (f: formula) : exp list =
+  match f with
+  | BForm (bf, _) -> find_lexvar_b_formula bf
+  | And (f1, f2, _) ->
+      try find_lexvar_formula f1
+      with No_LexVar -> find_lexvar_formula f2
+  (* Chanh: I am not sure whether a lexvar formula
+   * can be appear in Or, Not, Forall and Exists? *)
+  | _ -> raise No_LexVar
