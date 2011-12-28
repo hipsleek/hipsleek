@@ -1,5 +1,4 @@
 (*
-
   Choose with theorem prover to prove formula
 *)
 
@@ -871,6 +870,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
+  let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
+  let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
   let res = 
   match !tp with
@@ -884,7 +885,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 		else r
 
     | OmegaCalc ->
-          if (CP.is_float_formula wf) then (Redlog.is_sat wf sat_no)
+          if (CP.is_float_formula wf) then (redlog_is_sat wf)
           else
             begin
               (omega_is_sat f);
@@ -908,7 +909,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             begin
           (Smtsolver(*Omega*).is_sat f sat_no);
             end
-    | Mona | MonaH -> Mona.is_sat wf sat_no
+    | Mona | MonaH -> mona_is_sat wf
     | CO -> 
           begin
             let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
@@ -921,7 +922,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | CM -> 
           begin
             if (is_bag_constraint wf) then
-              (Mona.is_sat wf sat_no)
+              (mona_is_sat wf)
             else
               let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
               match result1 with
@@ -934,7 +935,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           (* let f = CP.drop_rel_formula f in *)
           if (is_bag_constraint wf) then
             begin
-              (Mona.is_sat wf sat_no);
+              (mona_is_sat wf);
             end
           else
             begin
@@ -944,7 +945,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       (* let f = CP.drop_rel_formula f in *)
       if (is_bag_constraint wf) then
         begin
-          (Mona.is_sat wf sat_no);
+          (mona_is_sat wf);
         end
       else if (is_list_constraint wf) then
         begin
@@ -983,16 +984,16 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           Setmona.is_sat wf
     | Redlog -> 
           (* let f = CP.drop_rel_formula f in *)
-          Redlog.is_sat wf sat_no
+          redlog_is_sat wf
     | RM ->
           (* let f = CP.drop_rel_formula f in *)
           if (is_bag_constraint wf) then
-            Mona.is_sat wf sat_no
+            mona_is_sat wf
           else
-            Redlog.is_sat wf sat_no
+            redlog_is_sat wf
   | ZM ->
 	  if (is_bag_constraint wf) then
-        Mona.is_sat wf sat_no
+        mona_is_sat wf
       else
 		Smtsolver.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
@@ -1353,6 +1354,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
+  let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
+  let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
@@ -1365,7 +1368,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else r
     | OmegaCalc -> 
           if (CP.is_float_formula ante) || (CP.is_float_formula conseq) 
-          then  Redlog.imply ante_w conseq_s imp_no
+          then  redlog_imply ante_w conseq_s
           else  (omega_imply ante conseq)
     | CvcLite -> Cvclite.imply ante_w conseq_s
     | Cvc3 -> begin
@@ -1384,7 +1387,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
-          (called_prover :="Mona "; Mona.imply ante_w conseq_s imp_no);
+          (called_prover :="Mona "; mona_imply ante_w conseq_s);
         end
       else if (is_list_constraint ante) || (is_list_constraint conseq) then
         begin
@@ -1407,7 +1410,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         begin
           (called_prover :="omega "; omega_imply ante conseq)
         end
-  | Mona | MonaH -> Mona.imply ante_w conseq_s imp_no 
+  | Mona | MonaH -> mona_imply ante_w conseq_s 
   | CO -> 
       begin
         let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -1420,7 +1423,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | CM -> 
       begin
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          Mona.imply ante_w conseq_s imp_no
+          mona_imply ante_w conseq_s
         else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
               match result1 with
@@ -1431,7 +1434,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           end
     | OM ->
 	      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		    (called_prover :="mona " ; Mona.imply ante_w conseq_s imp_no)
+		    (called_prover :="mona " ; mona_imply ante_w conseq_s)
 	      else
 		    (called_prover :="omega " ; omega_imply ante conseq)
     | OI ->
@@ -1442,15 +1445,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | SetMONA -> Setmona.imply ante_w conseq_s 
   | Redlog -> 
       (* let _ = print_string ("tp_imply_no_cache: Redlog \n") in *)
-      Redlog.imply ante_w conseq_s imp_no 
+      redlog_imply ante_w conseq_s  
     | RM -> 
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-            Mona.imply ante_w conseq_s imp_no
+            mona_imply ante_w conseq_s
           else
-            Redlog.imply ante_w conseq_s imp_no
+            redlog_imply ante_w conseq_s
   | ZM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        Mona.imply ante_w conseq_s imp_no
+        mona_imply ante_w conseq_s
       else
         Smtsolver.imply ante conseq timeout
   in

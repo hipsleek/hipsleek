@@ -704,6 +704,7 @@ and is_list (e : exp) : bool =
     | ListReverse _ -> true
     | _ -> false
 
+
 and is_bag_bform (b: b_formula) : bool =
   let (pf,_) = b in
   match pf with
@@ -883,6 +884,10 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
+
+and mkPure bf = BForm ((bf,None), None)
+
+and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
 and mkVarNull v pos = 
   if is_null_const v then Null pos
@@ -6630,6 +6635,10 @@ let drop_rel_formula_ops =
         | _ -> None in
   (pr_weak,pr_strong)
 
+let no_drop_ops =
+  let pr x = None in
+  (pr,pr)
+
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar (_,_,p) 
@@ -6653,63 +6662,88 @@ let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
 
-let memoise_rel_formula ivs (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
+let memoise_formula_ho is_complex (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let stk = new Gen.stack in
+  let bool_vars = new Gen.stack in
   let pr b = match b with
-    | RelForm (i,_,p) -> 
-          let rid = i in
-          if mem rid ivs then
+    | BVar(v,_) -> bool_vars # push v; None
+    | _ ->
+          if (is_complex b) then
             let id = fresh_old_name "memo_rel_hole_" in
             let v = SpecVar(Bool,id,Unprimed) in
             let rel_f = BForm ((b,None),None) in
             stk # push (v,rel_f);
-            Some (BForm ((BVar (v,p),None),None))
-          else None
-    | _ -> None 
+            Some (BForm ((BVar (v,no_pos),None),None))
+          else None 
   in 
   let f = drop_formula pr pr f in
   let ans = stk # get_stk in
-  (f,ans)
+  (f,ans, bool_vars # get_stk)
 
 let memoise_rel_formula ivs (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
+  let pr b = match b with
+    | RelForm (i,_,p) -> mem i ivs
+    | _ -> false
+  in memoise_formula_ho pr f
+
+let memoise_rel_formula ivs (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
   let pr2 = pr_pair pr (pr_list (pr_pair !print_sv pr)) in
   Gen.Debug.no_2 "memoise_rel_formula" (!print_svl) pr pr2 memoise_rel_formula ivs f
 
 let memoise_all_rel_formula (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
-  let stk = new Gen.stack in
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
-    | RelForm (i,_,p) -> 
-            let id = fresh_old_name "memo_rel_hole_" in
-            let v = SpecVar(Bool,id,Unprimed) in
-            let rel_f = BForm ((b,None),None) in
-            stk # push (v,rel_f);
-            Some (BForm ((BVar (v,p),None),None))
-    | _ -> None 
-  in 
-  let f = drop_formula pr pr f in
-  let ans = stk # get_stk in
-  (f,ans)
+    | RelForm (i,_,p) -> true
+    | _ -> false
+  in memoise_formula_ho pr f
 
-let subs_rel_formula subs (f:formula) : formula =
-  let pr b = match b with
-    | BVar (id,_) -> 
-          begin
-            try
-              let (_,memo_f) = List.find (fun (i,_) -> eq_spec_var id i) subs in
-              Some memo_f
-            with _ -> None
-          end
-    | _ -> None 
+
+let mk_bvar_subs v subs =
+  try
+    let (_,memo_f) = List.find (fun (i,_) -> eq_spec_var v i) subs in
+    memo_f
+  with _ -> 
+      (match v with
+        | SpecVar(_,id,p) -> (mkBVar_pure id p no_pos))
+
+let mk_neg_bvar_subs v subs =
+  let e = mk_bvar_subs v subs in
+  mkNot e None no_pos
+
+(*
+  v>0, 0<v, v>=1, 1<=v --> v
+  v<=0, 0>=v, v<1, 1>v --> !v
+  v1=v2
+  v1!=v2
+
+*)
+let restore_bool_omega bf bvars subs =
+  match bf with
+    | Lt (IConst(0,_),Var(v,_),_) 
+    | Lte (IConst(1,_),Var(v,_),_) 
+    | Gt(Var(v,_),IConst(0,_),_) 
+    | Gte(Var(v,_),IConst(1,_),_) 
+        -> if mem v bvars then Some(mk_bvar_subs v subs) else None
+    | Gte (IConst(0,_),Var(v,_),_) 
+    | Lte(Var(v,_),IConst(0,_),_) 
+    | Gt (IConst(1,_),Var(v,_),_) 
+    | Lt(Var(v,_),IConst(1,_),_) 
+        -> if mem v bvars then Some(mk_neg_bvar_subs v subs) else None
+    | _ -> None
+
+let restore_memo_formula subs bvars (f:formula) : formula =
+  let bvars = bvars@(List.map fst subs) in
+  let pr b = restore_bool_omega b bvars subs 
   in drop_formula pr pr f
 
-let subs_rel_formula subs (f:formula) : formula =
+let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in
   let pr2 = (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_2 "subs_rel_formula" pr2 pr pr subs_rel_formula subs f
+  Gen.Debug.no_2 "restore_rel_formula" pr2 pr pr (fun _ _ -> restore_memo_formula subs bvars f) subs f
 
 let comb_disj nxs : formula =
   let rec helper nxs f =

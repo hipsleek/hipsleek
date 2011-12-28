@@ -628,14 +628,14 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
     if rel_rhs==[] then (estate,lhs_p,rhs_p,rhs_p_br) 
     else 
       let lhs_p = MCP.pure_of_mix lhs_p in
-      let (lhs_p_memo,subs) = CP.memoise_rel_formula ivs lhs_p in
+      let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p in
       let pr = !CP.print_formula_br in
       (* let _ = print_endline (pr rhs_p_br) in *)
       let rhs_p_2 = CP.join_conjunctions other_rhs in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
       let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
       let lhs = lhs_simplifier lhs_h lhs_p_memo in
-      let lhs_2 = subs_rel_formula subs lhs in
+      let lhs_2 = CP.restore_memo_formula subs bvars lhs in
       let filter_ass lhs rhs = 
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
         (simplify_disj lhs,rhs) in      
