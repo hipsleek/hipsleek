@@ -4074,22 +4074,23 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
 let is_inferred_pre estate = 
-  let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in
-  if r>0 then true else false
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[])
+  (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
+  (* if r>0 then true else false *)
 
 let rec is_inferred_pre_ctx ctx = 
   match ctx with
   | Ctx estate -> is_inferred_pre estate 
   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
-let anyPreInCtx c = is_inferred_pre_ctx c
+(* let anyPreInCtx c = is_inferred_pre_ctx c *)
 
 let proc_left t1 t2 =
     match t1 with
       | [] -> Some t2
       | [c1] -> 
             if isAnyFalseCtx c1 then
-              if anyPreInCtx c1 then Some t2 (* drop FalseCtx with Pre *)
+              if is_inferred_pre_ctx c1 then Some t2 (* drop FalseCtx with Pre *)
               else Some t1 (* keep FalseCtx wo Pre *)
             else None
       | _ -> None 

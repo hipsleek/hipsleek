@@ -5,7 +5,7 @@ diff 2a.res 2a.n
 echo "======= 2b ======"
 diff 2b.res 2b.n
 echo "======= 2c ======"
-diff 2b.res 2c.n
+diff 2c.res 2c.n
 echo "======= 1a-i ======"
 diff r1a-i.res r1a-i.n
 echo "======= 1b-i ======"
