@@ -1,3 +1,20 @@
+current examples:
+  - ll-<fn>.ss (for inference)
+  - v-ll.ss (for verification)
+
+to more examples
+
+integer examples
+ - bubble-sort (provide verify and infer)
+ - dll (double linked-list)
+ - tree (trees)
+
+bag examples:
+ - ll-bag (provide verify and infer)
+ - dll-bag (provide verify and infer)
+ - bubble-sort-bag (provide verify and infer)
+ - tree-bag (provide verify and infer)
+
 
 loop in bug1c.slk
 

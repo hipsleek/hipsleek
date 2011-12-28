@@ -2,6 +2,7 @@
 ../../sleek 2a.slk > 2a.n
 ../../sleek 2b.slk > 2b.n
 ../../sleek 2c.slk > 2c.n
-../../hip r1a-i.ss > r1a-i.n
-../../hip r1b-i.ss > r1b-i.n
-../../hip r1c-i.ss > r1c-i.n
+../../hip ll-len.ss > ll-len.n
+../../hip ll-const.ss > ll-const.n
+../../hip ll-app.ss > ll-app.n
+
