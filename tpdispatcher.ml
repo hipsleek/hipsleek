@@ -868,7 +868,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let f = Cpure.add_ann_constraints imm_vrs f in
   let _ = disj_cnt f None "sat_no_cache" in
-  let (pr_weak,pr_strong) = CP.drop_rel_formula_ops in
+  let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
@@ -1349,7 +1349,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	  	end in
   (* let ante_w = CP.drop_rel_formula ante  in *)
   (* let conseq_s = CP.strong_drop_rel_formula conseq in *)
-  let (pr_weak,pr_strong) = CP.drop_rel_formula_ops in
+  let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in

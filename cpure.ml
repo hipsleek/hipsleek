@@ -6630,6 +6630,17 @@ let drop_rel_formula_ops =
         | _ -> None in
   (pr_weak,pr_strong)
 
+let drop_complex_ops =
+  let pr_weak b = match b with
+        | LexVar (_,_,p) 
+        | RelForm (_,_,p) -> Some (mkTrue p)
+        | _ -> None in
+  let pr_strong b = match b with
+        | LexVar (_,_,p) 
+        | RelForm (_,_,p) -> Some (mkFalse p)
+        | _ -> None in
+  (pr_weak,pr_strong)
+
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_weak pr_strong f
