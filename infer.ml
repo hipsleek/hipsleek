@@ -540,6 +540,8 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           let new_p_conjs = CP.list_of_conjs new_p in
           let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
             (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
+          if CP.isConstTrue new_p then None
+          else
           (* Thai: Should check if the precondition overlaps with the orig ante *)
           (* And simplify the pure in the residue *)
           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
