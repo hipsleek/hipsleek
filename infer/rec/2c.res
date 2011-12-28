@@ -8,4 +8,4 @@ Entail  (2): Valid.
 <1>true & y!=null & A(n1,m,z1) & n=1+n1 & 1<=n & Anon_58=Anon_13 & q_59=y & z1+1=z & {FLOW,(17,18)=__norm}
 inferred rel: [( 1<=z1 & A(n1,m,z1) & -1+n=n1 & 1<=n & 1+z1=z) -->  A(n,m,z)]
 
-Stop Omega... 50 invocations 
+Stop Omega... 45 invocations 

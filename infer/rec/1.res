@@ -12,4 +12,4 @@ Entail  (3): Valid.
 <1>true & n=1 & Anon_48=Anon_12 & q_49=y & m+1=z & {FLOW,(17,18)=__norm}
 inferred rel: [( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z)]
 
-Stop Omega... 43 invocations 
+Stop Omega... 40 invocations 

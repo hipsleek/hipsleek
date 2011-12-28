@@ -248,7 +248,7 @@ let build_var_aset lst = CP.EMapSV.build_eset lst
 
 let is_elem_of conj conjs =
 (*  let filtered = List.filter (fun c -> TP.imply_raw conj c && TP.imply_raw c conj) conjs in*)
-  let filtered = List.filter (fun c -> CP.equalFormula conj (TP.simplify_raw c)) conjs in
+  let filtered = List.filter (fun c -> CP.equalFormula conj c) conjs in
   match filtered with
     | [] -> false
     | _ -> true
@@ -364,16 +364,16 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
 let rec filter_var f vars = match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ ->
-        let flag = TP.is_sat_raw f
+  | _ -> CP.filter_var f vars
+(*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
 (*          with _ -> true                                           *)
 (*              (* spurious pre inf when set to true; check 2c.slk *)*)
-        in
+(*        in
         if flag
         then CP.filter_var f vars 
-        else CP.mkFalse no_pos
+        else CP.mkFalse no_pos*)
 
 let filter_var f vars =
   let pr = !print_pure_f in
@@ -407,7 +407,7 @@ let infer_lhs_contra lhs_xpure ivars =
       else 
         let exists_var = CP.diff_svl vf ivars in
         let f = simplify_helper (CP.mkExists exists_var f None no_pos) in
-        if CP.isConstTrue f then None
+        if CP.isConstTrue f || CP.isConstFalse f then None
         else Some (Redlog.negate_formula f)
 
 let infer_lhs_contra f ivars =
@@ -540,7 +540,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           let new_p_conjs = CP.list_of_conjs new_p in
           let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
             (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-          if CP.isConstTrue new_p then None
+          if CP.isConstTrue new_p || CP.isConstFalse new_p then None
           else
           (* Thai: Should check if the precondition overlaps with the orig ante *)
           (* And simplify the pure in the residue *)
@@ -566,7 +566,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let exists_var = CP.diff_svl args iv in
         let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
-        if CP.isConstFalse new_p then None
+        if CP.isConstFalse new_p || CP.isConstTrue new_p then None
         else
 (*          let args = CP.fv new_p in *)
           (* let new_iv = (CP.diff_svl iv args) in *)

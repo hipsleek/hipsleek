@@ -21,9 +21,9 @@ NEW SPECS:  EBase x::node<inf_val_14_498,inf_next_14_499>@L[Orig] & true &
 NEW RELS: []
 
 Procedure hd0$node SUCCESS
-Stop Omega... 34 invocations 
+Stop Omega... 33 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.14 second(s)
-	Time spent in main process: 0.13 second(s)
+Total verification time: 0.15 second(s)
+	Time spent in main process: 0.14 second(s)
 	Time spent in child processes: 0.01 second(s)

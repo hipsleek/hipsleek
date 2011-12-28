@@ -25,9 +25,9 @@ NEW RELS: [ ( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z), ( 0<=m_556 & 0<=n_555 &
 z_578=z & 1+n_555=n) -->  A(n,m,z)]
 
 Procedure append$node~node SUCCESS
-Stop Omega... 91 invocations 
+Stop Omega... 90 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.4 second(s)
-	Time spent in main process: 0.34 second(s)
+Total verification time: 0.41 second(s)
+	Time spent in main process: 0.35 second(s)
 	Time spent in child processes: 0.06 second(s)
