@@ -17,14 +17,15 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase] & n1!=0 
        {FLOW,(20,21)=__norm}
          EAssume 1::
            
-           x::node<Anon_527,y>@M[Orig] & 0<=n1 & {FLOW,(20,21)=__norm}
+           x::node<Anon_527,y>@M[Orig] & q_528=null & 0<=n1 &
+           {FLOW,(20,21)=__norm}
            or x::node<Anon_527,q_528>@M[Orig] & q_528!=null & 0<=n1 &
               {FLOW,(20,21)=__norm}
            
 NEW RELS: []
 
 Procedure appif$node~node SUCCESS
-Stop Omega... 63 invocations 
+Stop Omega... 61 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.2 second(s)

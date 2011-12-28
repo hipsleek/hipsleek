@@ -14,7 +14,7 @@ OLD SPECS:  EInfer [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 1<=i & {FLOW,(20,21)=__norm}
          EAssume 1::ref [i]
-           true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
+           true & i=i'+1 & 0<=i' & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure foo1$int SUCCESS
@@ -24,7 +24,7 @@ Checking procedure foo1a$int... OLD SPECS:  EInfer @post []
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
          EAssume 4::ref [i]
-           true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
+           true & i=i'+1 & 0<=i' & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure foo1a$int SUCCESS
@@ -34,7 +34,7 @@ Checking procedure foo1b$int... OLD SPECS:  EInfer [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
          EAssume 7::ref [i]
-           true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
+           true & i=i'+1 & 0<=i' & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure foo1b$int SUCCESS
@@ -69,7 +69,7 @@ NEW SPECS:  EAssume 13::ref [i]
 NEW RELS: []
 
 Procedure foo2a$int result FAIL-1
-Stop Omega... 81 invocations 
+Stop Omega... 77 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.21 second(s)
