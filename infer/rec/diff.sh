@@ -12,11 +12,6 @@ echo "======= ll-const ======"
 diff ll-const.res ll-const.n
 echo "======= ll-app ======"
 diff ll-app.res ll-app.n
-echo "======= 4 ======"
-echo "======= 5 ======"
-echo "======= 6 ======"
-echo "======= 8 ======"
-echo "======= t1 ======"
 echo "======= todo ======"
 echo "======= bug1 ======"
 echo "======= bug2 ======"

@@ -6553,20 +6553,26 @@ let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) 
 	(ante, conseq)
 
 (* need unsat checking for disjunctive LHS *)
-let assumption_filter_aggressive (ante : formula) (conseq : formula) : (formula * formula) =
+let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (formula * formula) =
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
-    let ante_ls = split_disjunctions ante in
-    let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
-    let ante = join_disjunctions ante_ls in
-     (* let _ = print_endline ("Splitted Disj:"^(pr_list !print_formula ante_ls)) in *)
-    (ante, conseq)
-	(* let fvar = CP.fv conseq in *)
-	(* let new_ante = CP.filter_var ante fvar in *)
-	(*   (new_ante, conseq) *)
+    let ante_ls = List.filter is_sat (split_disjunctions ante) in
+    if ante_ls==[] then (mkFalse no_pos,conseq)
+    else 
+      let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
+      let ante = join_disjunctions ante_ls in
+      (* let _ = print_endline ("Splitted Disj:"^(pr_list !print_formula ante_ls)) in *)
+      (ante, conseq)
+	      (* let fvar = CP.fv conseq in *)
+	      (* let new_ante = CP.filter_var ante fvar in *)
+	      (*   (new_ante, conseq) *)
   else
     (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
 	(ante, conseq)
+
+
+let assumption_filter_aggressive_incomplete (ante : formula) (conseq : formula) : (formula * formula) =
+  assumption_filter_aggressive (fun x -> true) ante conseq 
 
 let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   let pr = !print_formula in

@@ -606,15 +606,16 @@ let lhs_simplifier lhs_h lhs_p =
 
 (* to filter relevant LHS term for selected relation rel *)
 (* requires simplify and should preserve relation and != *)
-let rel_filter_assumption lhs rel =
-  let (lhs,rel) = CP.assumption_filter_aggressive lhs rel in
+let rel_filter_assumption is_sat lhs rel =
+  (* let (lhs,rel) = CP.assumption_filter_aggressive_incomplete  lhs rel in *)
+  let (lhs,rel) = CP.assumption_filter_aggressive is_sat lhs rel in
   (lhs,rel)
 
 (* let rel_filter_assumption lhs rel = *)
 (*   let pr = CP.print_formula in *)
 (*   Gen.Debug.no_2 "rel_filter_assumption" pr pr (fun (r,_) -> pr r) rel_filter_assumption lhs rel  *)
 
-let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos =
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos =
   (* TODO : need to handle pure_branches in future ? *)
   if no_infer_rel estate then (estate,lhs_p,rhs_p,rhs_p_br) 
   else 
@@ -634,7 +635,7 @@ let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rh
       let lhs = lhs_simplifier lhs_h lhs_p_memo in
       let lhs_2 = subs_rel_formula subs lhs in
       let filter_ass lhs rhs = 
-        let (lhs,rhs) = rel_filter_assumption lhs rhs in
+        let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
         (simplify_disj lhs,rhs) in
       let wrap_exists (lhs,rhs) =
         let vs_r = CP.fv rhs in
@@ -681,12 +682,12 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos =
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
   Gen.Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2 
-      (fun _ _  _ -> infer_collect_rel estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
+      (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
