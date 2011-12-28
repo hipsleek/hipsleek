@@ -661,17 +661,17 @@ let pr_slicing_label sl =
 		  
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
+  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   let (pf,il) = e in
   pr_slicing_label il;
   match pf with
-    | P.LexVar (ls1,ls2, l)        -> fmt_string "LexVar[]{}"
-          (* let str =  *)
-          (*   let opt = if ls2==[] then "" else *)
-          (*     "{"^(pr_list string_of_formula_exp ls2)^"}" *)
-          (*   in "LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt *)
-          (* in fmt_string str *)
+    | P.LexVar (ls1,ls2, l)        -> 
+          pr_s "LexVar" pr_formula_exp ls1;
+          if ls2!=[] then
+            pr_set pr_formula_exp ls2
+          else ()
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
