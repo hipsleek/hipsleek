@@ -872,6 +872,9 @@ cexp_w :
 		lc=SELF; `LTE;    cl=SELF       ->
 		let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 		set_slicing_utils_pure_double f false
+     | lc=SELF; `LT;     cl=SELF       ->
+	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	  set_slicing_utils_pure_double f false
             (* TODO : need to add the optional arguments {..} *)
       | lc=SELF; `SUBANN;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
