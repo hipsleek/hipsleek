@@ -9383,26 +9383,65 @@ let verify_pre_is_sat prog fml =
   Gen.Debug.no_1 "verify_pre_is_sat" pr pr_no 
       (fun _ -> verify_pre_is_sat prog fml) fml
 
-let rec simplify_heap_x h p prog : CF.h_formula * CP.spec_var list
-      = match h with
+(*let rec simplify_heap_x h p prog : CF.h_formula * CP.spec_var list               *)
+(*      = match h with                                                             *)
+(*  | Star {h_formula_star_h1 = h1;                                                *)
+(*    h_formula_star_h2 = h2;                                                      *)
+(*    h_formula_star_pos = pos} ->                                                 *)
+(*    let h1,vars1 = simplify_heap h1 p prog in                                    *)
+(*    let h2,vars2 = simplify_heap h2 p prog in                                    *)
+(*    (mkStarH h1 h2 pos, vars1 @ vars2)                                           *)
+(*  | Conj {h_formula_conj_h1 = h1;                                                *)
+(*    h_formula_conj_h2 = h2;                                                      *)
+(*    h_formula_conj_pos = pos} ->                                                 *)
+(*    let h1,vars1 = simplify_heap h1 p prog in                                    *)
+(*    let h2,vars2 = simplify_heap h2 p prog in                                    *)
+(*    (mkConjH h1 h2 pos, vars1 @ vars2)                                           *)
+(*  | Phase { h_formula_phase_rd = h1;                                             *)
+(*    h_formula_phase_rw = h2;                                                     *)
+(*    h_formula_phase_pos = pos} ->                                                *)
+(*    let h1,vars1 = simplify_heap h1 p prog in                                    *)
+(*    let h2,vars2 = simplify_heap h2 p prog in                                    *)
+(*    (mkPhaseH h1 h2 pos, vars1 @ vars2)                                          *)
+(*  | ViewNode v ->                                                                *)
+(*    let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in                   *)
+(*    let pure_h = MCP.pure_of_mix mix_h in                                        *)
+(*    let disjs = CP.list_of_disjs pure_h in                                       *)
+(*    let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in*)
+(*    begin                                                                        *)
+(*      match res with                                                             *)
+(*        | [] -> (HFalse,[])                                                      *)
+(*        | hd::[] -> (HTrue,v.h_formula_view_node::v.h_formula_view_arguments)    *)
+(*        | _ -> (h,[])                                                            *)
+(*    end                                                                          *)
+(*  | _ -> (h,[])                                                                  *)
+
+(*and simplify_heap h p prog =                            *)
+(*  let pr = Cprinter.string_of_h_formula in              *)
+(*  let pr2 = Cprinter.string_of_pure_formula in          *)
+(*  let pr3 = Cprinter.string_of_spec_var_list in         *)
+(*  Gen.Debug.no_2 "simplify_heap" pr pr2 (pr_pair pr pr3)*)
+(*      (fun _ _ -> simplify_heap_x h p prog) h p         *)
+
+let rec simplify_heap_x h p prog : CF.h_formula = match h with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} -> 
-    let h1,vars1 = simplify_heap h1 p prog in
-    let h2,vars2 = simplify_heap h2 p prog in
-    (mkStarH h1 h2 pos, vars1 @ vars2)
+    let h1 = simplify_heap h1 p prog in
+    let h2 = simplify_heap h2 p prog in
+    mkStarH h1 h2 pos
   | Conj {h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos} -> 
-    let h1,vars1 = simplify_heap h1 p prog in
-    let h2,vars2 = simplify_heap h2 p prog in
-    (mkConjH h1 h2 pos, vars1 @ vars2)
+    let h1 = simplify_heap h1 p prog in
+    let h2 = simplify_heap h2 p prog in
+    mkConjH h1 h2 pos
   | Phase { h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos} -> 
-    let h1,vars1 = simplify_heap h1 p prog in
-    let h2,vars2 = simplify_heap h2 p prog in
-    (mkPhaseH h1 h2 pos, vars1 @ vars2)
+    let h1 = simplify_heap h1 p prog in
+    let h2 = simplify_heap h2 p prog in
+    mkPhaseH h1 h2 pos
   | ViewNode v ->
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
@@ -9410,42 +9449,64 @@ let rec simplify_heap_x h p prog : CF.h_formula * CP.spec_var list
     let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in
     begin
       match res with
-        | [] -> (HFalse,[])
-        | hd::[] -> (HTrue,v.h_formula_view_node::v.h_formula_view_arguments)
-        | _ -> (h,[])
+        | [] -> HFalse
+        | hd::[] -> HTrue
+        | _ -> h
     end 
-  | _ -> (h,[])
+  | _ -> h
 
 and simplify_heap h p prog =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_pure_formula in
-  let pr3 = Cprinter.string_of_spec_var_list in
-  Gen.Debug.no_2 "simplify_heap" pr pr2 (pr_pair pr pr3)
+  Gen.Debug.no_2 "simplify_heap" pr pr2 pr
       (fun _ _ -> simplify_heap_x h p prog) h p
 
 (* TODO : simplification here relies too much on Omega.simplify *)
 (* TODO : problematic with other kinds of constraints *)
 
-let rec simplify_post post_fml post_vars prog = match post_fml with
+let rec simplify_post_heap_only fml prog = match fml with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
-    Or {formula_or_f1 = simplify_post f1 post_vars prog; 
-        formula_or_f2 = simplify_post f2 post_vars prog; 
+    Or {formula_or_f1 = simplify_post_heap_only f1 prog; 
+        formula_or_f2 = simplify_post_heap_only f2 prog; 
         formula_or_pos = pos}
+  | _ -> 
+    let h, p, fl, b, t = split_components fml in
+    let p = MCP.pure_of_mix p in
+    let h = simplify_heap h p prog in
+    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+
+let rec simplify_post post_fml post_vars prog subst_fml = match post_fml with
+  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
+    let f1 = simplify_post f1 post_vars prog subst_fml in
+    let f2 = simplify_post f2 post_vars prog subst_fml in
+    if f1 = f2 then f1
+    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
-    let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
-    let h,rm_vars = simplify_heap h p prog in
-    let rm_vars = CP.diff_svl rm_vars (h_fv h) in
-    let p = TP.simplify_raw (CP.mkExists rm_vars p None no_pos) in
-    let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
-    post_fml
+    let p = begin
+      match subst_fml with
+      | None -> TP.simplify_raw (CP.mkExists post_vars p None no_pos)
+      | Some (rel, fp) -> 
+        let ps = CP.split_conjunctions p in
+        let ps = List.filter (fun x -> x=rel) ps in
+        let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) fp ps in
+        let post_vars = CP.diff_svl post_vars (CP.fv fp) in
+        TP.simplify_raw (CP.mkExists post_vars p None no_pos)
+      end
+    in
+(*    let h,rm_vars = simplify_heap h p prog in    *)
+(*    let rm_vars = CP.diff_svl rm_vars (h_fv h) in*)
+(*    print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list rm_vars);*)
+(*    print_endline ("FML: " ^ Cprinter.string_of_formula post_fml);      *)
+(*    let p = TP.simplify_raw (CP.mkExists rm_vars p None no_pos) in*)
+    mkBase h (MCP.mix_of_pure p) t fl b no_pos
 
-let simplify_post post_fml post_vars prog = 
+let simplify_post post_fml post_vars prog subst_fml = 
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_spec_var_list in
   Gen.Debug.no_2 "simplify_post" pr pr2 pr_no
-      (fun _ _ -> simplify_post post_fml post_vars prog) post_fml post_vars 
+      (fun _ _ -> simplify_post post_fml post_vars prog subst_fml) post_fml post_vars
 
 
 

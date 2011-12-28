@@ -356,6 +356,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
+                                let flist = List.map (fun fml -> Solver.simplify_post_heap_only fml prog) flist in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
@@ -372,7 +373,11 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
-                                let post_fml = Solver.simplify_post post_fml post_vars prog in
+                                let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None else 
+                                  let (rel_fml, fixpoint) = Fixcalc.compute_fixpoint rels in
+                                  print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);
+                                  Solver.simplify_post post_fml post_vars prog (Some (rel_fml, fixpoint))
+                                in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
                                 DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
@@ -1102,9 +1107,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
-                        let fixpoint = if rels = [] then (CP.mkTrue no_pos) else
-                          Fixcalc.compute_fixpoint rels in
-                        print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
                         print_endline ("NEW RELS: "^new_rels);

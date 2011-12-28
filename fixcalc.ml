@@ -180,7 +180,7 @@ let compute_fixpoint input_pairs =
   (*print_endline ("RES: " ^ res);*)
   let fixpoint = Parse_fix.parse_fix res in
   (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-  fixpoint
+  (rel_fml, fixpoint)
   
 
 
