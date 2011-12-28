@@ -666,6 +666,12 @@ let rec pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   match pf with
+    | P.LexVar (ls1,ls2, l)        -> fmt_string "LexVar[]{}"
+          (* let str =  *)
+          (*   let opt = if ls2==[] then "" else *)
+          (*     "{"^(pr_list string_of_formula_exp ls2)^"}" *)
+          (*   in "LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt *)
+          (* in fmt_string str *)
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -694,10 +700,10 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-			| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-				| [] -> ()
-				| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-										let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
+		| [] -> ()
+		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -2295,6 +2301,11 @@ let rec html_of_pure_b_formula f = match f with
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
+    | P.LexVar (e1, e2, l) -> "LexVar(to be implemented)"
+  (* | P.Lexvar (ls1,ls2, l)        ->  *)
+  (*       let opt = if ls2==[] then "" else *)
+  (*         "{"^(pr_list html_of_formula_exp ls2)^"}" *)
+  (*       in "LexVar["^(pr_list html_of_formula_exp ls1)^"]"^opt *)
     | P.Gt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gt ^ (html_of_formula_exp e2)
     | P.Gte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gte ^ (html_of_formula_exp e2)
     | P.Eq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_eq ^ (html_of_formula_exp e2)

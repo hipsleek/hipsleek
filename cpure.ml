@@ -50,6 +50,7 @@ and bf_annot = (bool * int * (exp list))
 and b_formula = p_formula * (bf_annot option)
 	
 and p_formula =
+  | LexVar of ((exp list) * (exp list) * loc)
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
@@ -488,9 +489,10 @@ and bfv (bf : b_formula) =
           fv1 @ fv2
     | RelForm (r, args, _) ->
           let vid = r in
-          (* SpecVar(RelT,r,Unprimed) in *)
 		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
+    | LexVar (args1, args2, _) ->
+              List.concat (List.map afv (args1@args2))
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -828,7 +830,7 @@ and trans_eq_bform (b : b_formula) : b_formula =
           
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 match pf with
-  | BConst _  | BVar _ | SubAnn _ -> true
+  | BConst _  | BVar _ | SubAnn _ | LexVar _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
@@ -1642,7 +1644,8 @@ and b_apply_subs sst bf =
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-  in let nsl = match sl with
+    | LexVar (args1, args2, pos) -> LexVar(e_apply_subs_list sst args1, e_apply_subs_list sst args2, pos) (* An Hoa *)
+   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
   in (npf,nsl)
@@ -1872,6 +1875,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, a_apply_par_term_list sst args, pos) (* An Hoa *)
+    | LexVar (args1, args2, pos) -> LexVar (a_apply_par_term_list sst args1, a_apply_par_term_list sst args2, pos) 
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -1951,6 +1955,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, List.map (a_apply_one_term (fr, t)) args, pos) (* An Hoa *)
+    | LexVar (r, args, pos) -> LexVar (List.map (a_apply_one_term (fr, t)) r, List.map (a_apply_one_term (fr, t)) args, pos) 
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -3034,6 +3039,7 @@ and b_apply_one_exp (fr, t) bf =
   | ListAllN (a1, a2, pos) -> pf
   | ListPerm (a1, a2, pos) -> pf
   | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
+  | LexVar (r, args, pos) -> LexVar (e_apply_one_list_exp (fr, t) r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -3725,7 +3731,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let (pf,il) = b in
   let npf = match pf with
     |  BConst _ 
-    |  SubAnn _
+    |  SubAnn _ | LexVar _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -4094,11 +4100,18 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 	            let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListPerm (ne1,ne2,l),f_comb[r1;r2])
-					| RelForm (r, args, l) -> (* An Hoa *)
+		  | RelForm (r, args, l) -> (* An Hoa *)
 					    let tmp = List.map (helper new_arg) args in
 							let nargs = List.map fst tmp in
 							let rs = List.map snd tmp in
                 (RelForm (r,nargs,l),f_comb rs)
+		  | LexVar (args1, args2, l) -> 
+					    let tmp1 = List.map (helper new_arg) args1 in
+					    let nargs1 = List.map fst tmp1 in
+					    let tmp2 = List.map (helper new_arg) args2 in
+					    let nargs2 = List.map fst tmp2 in
+							let rs = List.map snd (tmp1@tmp2) in
+                (LexVar (nargs1,nargs2,l),f_comb rs)
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -4189,6 +4202,10 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		| RelForm (r, args, l) -> (* An Hoa *)
 		  let nargs = List.map (transform_exp f_exp) args in
 		  RelForm (r,nargs,l)
+		| LexVar (r, args, l) -> 
+		  let nr = List.map (transform_exp f_exp) r in
+		  let nargs = List.map (transform_exp f_exp) args in
+		  LexVar (nr,nargs,l)
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -4506,7 +4523,11 @@ let norm_bform_a (bf:b_formula) : b_formula =
 	    | RelForm (id,exs,l) -> 
               let exs = List.map norm_exp exs in
               RelForm (id,exs,l)
-    in (npf, il)
+ 	    | LexVar (args1,args2,l) -> 
+              let args1 = List.map norm_exp args1 in
+              let args2 = List.map norm_exp args2 in
+              LexVar (args1,args2,l)
+   in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -5408,11 +5429,12 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
     | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
     | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+    | RelForm (v,es,l) -> RelForm (v, List.map norm_exp es, l)
+    | LexVar (es1,es2,l) -> LexVar (List.map norm_exp es1, List.map norm_exp es2, l)
     | SubAnn _
     | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
-    | BagMax _ | ListAllN _ | ListPerm _
-	| RelForm _ -> pf
+    | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
 
 (***********************************

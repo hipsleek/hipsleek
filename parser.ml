@@ -145,6 +145,8 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
+let cexp_list_to_pure fct ls = Pure_f (P.BForm (((fct ls), None), None))
+
 let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
@@ -870,8 +872,9 @@ cexp_w :
 		lc=SELF; `LTE;    cl=SELF       ->
 		let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 		set_slicing_utils_pure_double f false
-      | lc=SELF; `LT;     cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+            (* TODO : need to add the optional arguments {..} *)
+      | lc=SELF; `SUBANN;     cl=SELF       ->
+	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
       | lc=SELF; `SUBANN;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -916,8 +919,12 @@ cexp_w :
 	  set_slicing_utils_pure_double f false
       | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false]
-
+	  set_slicing_utils_pure_double f false
+      | `LEXVAR;  `OSQUARE; ls= opt_cexp_list; `CSQUARE
+            -> 
+	      let f = cexp_list_to_pure (fun ls-> P.LexVar(ls,[],(get_pos_camlp4 _loc 1))) ls in
+	      set_slicing_utils_pure_double f false
+      ]
 	  
 	  
   | "pure_paren" 
@@ -1005,6 +1012,14 @@ cexp_w :
 
 		  
 	  ];
+
+(* [[ *)
+(*     il=OPT measures2 -> un_option il [] *)
+(* ]]; *)
+
+(* opt_measures:[[ `OPAREN; t=LIST0 cexp SEP `COMMA ;`CPAREN -> t]]; *)
+
+(* opt_measures:[[t=LIST0 cexp SEP `COMMA -> t]];  *)
 
 opt_comma_list:[[t = LIST0 opt_comma SEP `COMMA -> t
 ]];

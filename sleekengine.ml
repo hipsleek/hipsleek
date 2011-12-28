@@ -527,7 +527,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+  Gen.Debug.ho_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
@@ -535,7 +535,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Gen.Debug.ho_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   if not valid then
