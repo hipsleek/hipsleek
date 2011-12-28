@@ -783,53 +783,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				    (* An Hoa : output the context and new spec before checking pre-condition *)
 				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
 
-                    (* entail pre and then post instead of both *)
-                    (* let prepost = CF.split_struc_formula pre2 in (\*TO CHECK: only check the first pair:*\)  (*THIS IS not CORRECT*)*)
-                    (* let _ = print_endline ("\n\n check_exp: SCall: fork: \n ### struc =" ^ (Cprinter.string_of_struc_formula pre2) ^ "\n ##prepost = " ^ (pr_list (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) prepost) ^ "\n\n") in *)
-                    (* let pre = CF.struc_formula_of_formula pre pos in *)
-                    (*TO DO: currently pickup the first specification*)
-                    let list_pre,list_post = (CF.split_specs pre2) in
-                    let pre = List.hd list_pre in
-                    let post = List.hd list_post in
-                    let _ = print_endline ("\n\n check_exp: SCall: fork: \n ### specs =" ^ (Cprinter.string_of_struc_formula pre2)) in
-                    let _ = Debug.devel_pprint ("check_exp: SCall: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula list_pre) ^ "\n ###post=" ^ (!print_struc_formula list_post))) no_pos in
-                    (* entail pre-cond only, put post-cond into a concurrent thread *)
-                    let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx [pre] pos pid in
-                    let _ = Debug.devel_pprint ("check_exp: SCall: fork: after entailing the precondition"
-                                                ^ ((Cprinter.string_of_list_failesc_context rs_pre)^ "\n")) pos in
-                    if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs_pre) then
-                      let _ = Debug.print_info "procedure call" (to_print^" has failed: can not prove its precondition\n") pos in
-                      rs_pre (*FAIL*)
-                    else
-                      (*ADD add res= unique_threadid to the main formula
-                        and unique_threadid is the thread id*)
-                      let tmp = (CP.mkRes thread_typ) in
-                      let tid = CP.fresh_thread_var () in
-                      let f = CF.formula_of_pure_N (CP.mkEqVar tmp tid pos) pos in
-                      let new_rs_pre = CF.normalize_max_renaming_list_failesc_context f pos true rs_pre in
-		              (* let _ = print_endline ("check_exp: fork : ### rs_pre: " ^ (Cprinter.string_of_list_failesc_context rs_pre) ^ "\n ### new_rs_pre: " ^ (Cprinter.string_of_list_failesc_context new_rs_pre) ) in *)
-                      (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
-                      (*split EAssume into evars and formula*)
-                      let fct es = 
-                        let f = es.CF.es_formula in
-                        let post_ext = List.hd [post] in (*TO CHECK: may we have multiple EAssume ???. If so, merge them together *)
-                        let post_f,post_evars =
-                          (match post_ext with
-                            | CF.EAssume (vs,f,lbl) -> f,vs
-                            | _ -> Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml] check_exp : SCall : expecting EAssume in the post-condition"})
-                        in
-                        let qvars,base = CF.split_quantifiers post_f in
-                        let one_f = CF.one_formula_of_formula base tid in
-                        (*add thread id*)
-                        let evars = post_evars@qvars in
-                        let f1 = CF.add_quantifiers evars f in
-                        let f2 = CF.add_formula_and [one_f] f1 in
-                        let new_es = {es with CF.es_formula = f2} in
-                        CF.Ctx new_es
-                      in
-                      let res = CF.transform_list_failesc_context (idf,idf,fct) new_rs_pre in
-		              (* let _ = print_endline ("check_exp: fork : after forked \n ### rs_pre: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
-                      res
+                    (*Call heap_entail... to prove the precondition and add the post condition into thread id*)
+                    let tid = CP.fresh_thread_var () in
+                    let rs, prf = heap_entail_struc_list_failesc_context_fork prog false true sctx pre2 tid pos pid in
+
+				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
+                    let _ = PTracer.log_proof prf in
+                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
+                                        if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                      Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                    rs
                   in
                   (*=======check_pre_post - END ========*)
                   (* Call check_pre_post with debug information *)

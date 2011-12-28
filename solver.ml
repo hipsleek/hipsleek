@@ -3081,12 +3081,319 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
   Gen.Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
       (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_x prog is_folding has_post a c pos pid) cl conseq
 
+and heap_entail_struc_fork_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid:CP.spec_var) pos pid: (list_context * proof) =
+  match cl with 
+    | FailCtx _ -> (cl,Failure)
+    | SuccCtx cl ->
+	      if !Globals.use_set || Gen.is_empty cl then
+	        let tmp1 = List.map (fun c -> heap_entail_one_context_struc_fork "4" tid prog is_folding  has_post c conseq pos pid) cl in
+	        let tmp2, tmp_prfs = List.split tmp1 in
+	        let prf = mkContextList cl conseq tmp_prfs in
+            ((fold_context_left tmp2), prf)
+	      else
+	        (heap_entail_one_context_struc_fork "5" tid prog is_folding  has_post (List.hd cl) conseq pos pid)
+
+and heap_entail_struc_fork (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid:CP.spec_var) pos (pid:control_path_id): (list_context * proof) =
+  Gen.Debug.no_3 "heap_entail_struc_fork" Cprinter.string_of_list_context Cprinter.string_of_struc_formula Cprinter.string_of_spec_var
+      (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c tid-> heap_entail_struc_fork_x prog is_folding has_post a c tid pos pid) cl conseq tid
+
 and heap_entail_one_context_struc p i1 hp cl cs pos pid =
   Gen.Profiling.do_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid =
   let str="heap_entail_one_context_struc" in
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs pos pid
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+(*tid is the thread id*)
+and heap_entail_one_context_struc_fork n tid p i1 hp cl cs pos pid =
+  Gen.Debug.no_1 "heap_entail_one_context_struc_fork" 
+      Cprinter.string_of_context (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
+      (* (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl *)
+      (fun _ -> heap_entail_one_context_struc_fork_x p i1 hp cl cs tid pos pid) cl
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+and heap_entail_one_context_struc_fork_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid:CP.spec_var) pos pid : (list_context * proof) =
+  Debug.devel_pprint ("heap_entail_one_context_struc_fork:"
+  ^ "\ntid:\n" ^ (Cprinter.string_of_spec_var tid)
+  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
+  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+    if isAnyFalseCtx ctx then
+      (*set context as bot*)
+      let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in
+      (* check this first so that false => false is true (with false residual) *)
+      ((SuccCtx [bot_ctx]), UnsatAnte)
+    else(* if isConstFalse conseq then
+	       (--[], UnsatConseq)
+	       else *)
+      if isConstETrue conseq then
+        ((SuccCtx [ctx]), TrueConseq)
+      else
+        (*let ctx = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
+          if isAnyFalseCtx ctx then
+          ([false_ctx pos], UnsatAnte)
+          else*)
+        let result, prf = heap_entail_after_sat_struc_fork prog is_folding  has_post ctx conseq tid pos pid []  in
+        (result, prf)
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+and heap_entail_after_sat_struc_fork prog is_folding  has_post
+      ctx conseq tid pos pid (ss:steps) : (list_context * proof) =
+  Gen.Debug.no_2 "heap_entail_after_sat_struc_fork" Cprinter.string_of_context
+	  Cprinter.string_of_struc_formula
+	  (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
+	  (fun _ _ -> heap_entail_after_sat_struc_fork_x prog is_folding has_post ctx conseq tid pos pid ss) ctx conseq
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+and heap_entail_after_sat_struc_fork_x prog is_folding has_post
+      ctx conseq tid pos pid (ss:steps) : (list_context * proof) =
+  match ctx with
+    | OCtx (c1, c2) ->
+          Debug.devel_pprint ("heap_entail_after_sat_struc_fork:"
+          ^ "\ntid:\n" ^ (Cprinter.string_of_spec_var tid)
+		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
+		  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+          let rs1, prf1 = heap_entail_after_sat_struc_fork prog is_folding
+            has_post c1 conseq tid pos pid (CF.add_to_steps ss "left OR 5 on ante") in
+          let rs2, prf2 = heap_entail_after_sat_struc_fork prog is_folding
+            (* WN : what is init_caller for? *)
+            has_post c2 conseq tid pos pid (CF.add_to_steps ss "right OR 5 on ante") in
+	      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
+    | Ctx es -> begin
+        Debug.devel_pprint ("heap_entail_after_sat_struc_fork: invoking heap_entail_conjunct_lhs_struc_fork"
+        ^ "\ntid:\n" ^ (Cprinter.string_of_spec_var tid)
+		^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
+		^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+        (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
+        let es = (CF.add_to_estate_with_steps es ss) in
+        let tmp, prf = heap_entail_conjunct_lhs_struc_fork prog is_folding has_post (Ctx es) conseq tid pos pid in
+	    (filter_set tmp, prf)
+      end
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+(*Add post to thread only when seeing EAssume*)
+and heap_entail_conjunct_lhs_struc_fork
+      p is_folding  has_post ctx conseq tid
+      pos pid : (list_context * proof) = 
+  let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
+  Gen.Debug.no_3 "heap_entail_conjunct_lhs_struc_fork"
+      pr (Cprinter.string_of_struc_formula) Cprinter.string_of_spec_var
+      (fun (a,b) -> Cprinter.string_of_list_context a)
+      (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_fork_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid
+
+and heap_entail_conjunct_lhs_struc_fork_x
+      (prog : prog_decl) 
+      (is_folding : bool) 
+      
+      (has_post:bool)
+      (ctx_00 : context) 
+      (conseq : struc_formula) (tid: CP. spec_var) pos pid : (list_context * proof) =
+
+  let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
+	Gen.Debug.no_2 "helper_inner"
+	    Cprinter.string_of_context
+	    Cprinter.string_of_ext_formula
+	    (fun (lc, _) -> Cprinter.string_of_list_context lc)
+	    helper_inner_x ctx11 f
+
+  and helper_inner_x (ctx11 : context) (f:ext_formula) : list_context * proof = 
+    begin
+      match f with
+        | ECase b   -> 
+	          (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
+              (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
+              let ctx = add_to_context_num 1 ctx11 "case rule" in
+	          if (List.length b.formula_case_exists)>0 then 
+	            let ws = CP.fresh_spec_vars b.formula_case_exists in
+	            let st = List.combine b.formula_case_exists ws in
+	            let new_struc = subst_struc st [(ECase {b with formula_case_exists = []})]in
+	            let new_ctx = push_exists_context ws ctx in
+	            let nc,np = inner_entailer 1 new_ctx new_struc in 
+	            (nc, (mkEexStep ctx [f] np))
+	          else if (List.length b.formula_case_branches )=0 then ((SuccCtx [ctx]),TrueConseq)
+	          else 
+	            let rec helper l = match l with
+	              | [] -> None
+	              | (p,e)::t -> 
+		                let tt = (syn_imply ctx p) in
+		                (*print_string ("\n -------------:\n"^(Cprinter.string_of_context ctx)^"\n\n"^
+		                  (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
+		                if tt then Some (p,e) else helper t in
+			    
+			    (* Find the branch whose condition is satisfied by the current context *)
+			    (* Because these conditions are disjoint, the context can only statisfy at most one condition *)
+	            let r = helper b.formula_case_branches in
+	            let r = match r with
+	              | None -> begin
+                      (* let _ = print_endline ("helper_inner: try all cases") in *)
+		              List.map (fun (c1, c2) -> 
+			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
+                          (*this unsat check is essential for completeness of result*)
+				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
+				          else
+					        (* Termination: add target condition *)
+					        let n_ctx = CF.transform_context (
+					            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
+
+					        (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)					
+					        
+					        let n_ctx = prune_ctx prog n_ctx in
+					        inner_entailer 2 n_ctx c2) b.formula_case_branches 
+				    end
+	              | Some (p, e) -> begin
+                      (* let _ = print_endline ("helper_inner: find it syntactically") in *)
+				      let n_ctx = CF.transform_context (
+				          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
+
+				      (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
+				      
+				      [inner_entailer 3 n_ctx e] end in
+	            let rez1, rez2 = List.split r in
+                let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
+	            (rez1, (mkCaseStep ctx [f] rez2))
+        | EBase ({
+		      formula_ext_explicit_inst = expl_inst;
+		      formula_ext_implicit_inst = impl_inst;
+		      formula_ext_exists = base_exists;
+		      formula_ext_base = formula_base;
+		      formula_ext_continuation = formula_cont;
+		      formula_ext_pos = struc_pos;
+		  } as b) -> 
+              if (List.length base_exists) > 0 then 
+	            let ws = CP.fresh_spec_vars base_exists in
+	            let st = List.combine base_exists ws in
+	            let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
+	            let new_ctx = push_exists_context ws ctx11 in
+	            let nc, np = inner_entailer 4 new_ctx new_struc in 
+	            (nc, (mkEexStep ctx11 [f] np))
+	          else 
+			    (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
+                
+	            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
+	            let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base pos in
+			    (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
+	            let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
+			    (match n_ctx_list with
+	              | FailCtx _ -> (n_ctx_list, prf)
+	              | SuccCtx sc ->
+		                if (List.length formula_cont)>0 then
+                          let res, n_rpf = heap_entail_struc_fork prog is_folding has_post n_ctx_list formula_cont tid pos pid in
+                          (* let res, n_rpf = List.split (List.map (fun c->inner_entailer 5 c formula_cont) sc) in *)
+                          (* let res = fold_context_left res in *)
+                          let res = if !wrap_exists_implicit_explicit
+					      then push_exists_list_context (expl_inst@impl_inst) res 
+					      else res in
+				          (res, n_rpf) (* (mkBaseStep ctx11 [f] prf (mkCaseStep ctx11 [f] n_rpf)) *)
+		                else	 
+                          let res = if !wrap_exists_implicit_explicit
+					      then push_exists_list_context (expl_inst@impl_inst) n_ctx_list 
+		                  else n_ctx_list in
+		                  (*let _ = print_string ("\nresidue: "^(Cprinter.string_of_context_list res)^"\n  "^(string_of_bool (isFalseCtx (List.hd res)))^"\n") in*)
+				          (res,prf)
+                )
+        | EAssume (ref_vars, post, (i,y)) ->
+		      if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition when forked!")
+	          else
+	            let rs = clear_entailment_history ctx11 in
+	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
+                (*   (\*ADD add res= unique_threadid to the main formula *)
+                (*     and unique_threadid is the thread id*\) *)
+                let tmp = (CP.mkRes thread_typ) in
+                let f = CF.formula_of_pure_N (CP.mkEqVar tmp tid pos) pos in
+	            let rs1 = CF.transform_context (normalize_es f pos true) rs in
+                (* let _ = print_string ("\n after adding res=tid :"^(Cprinter.string_of_context rs1)^"\n") in *)
+                (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
+                (*add the post condition into formul_*_and *)
+                let fct es = 
+                  let f = es.CF.es_formula in
+                  let qvars,base = CF.split_quantifiers post in
+                  let one_f = CF.one_formula_of_formula base tid in
+                        (*add thread id*)
+                  let evars = ref_vars@qvars in
+                  let f1 = CF.add_quantifiers evars f in
+                  let f2 = CF.add_formula_and [one_f] f1 in
+                  let new_es = {es with CF.es_formula = f2} in
+                  CF.Ctx new_es
+                in
+	            let rs2 = CF.transform_context fct rs1 in
+                (* let _ = print_string ("\n after adding post condition:"^(Cprinter.string_of_context rs2)^"\n") in *)
+	            let rs3 = add_path_id rs2 (pid,i) in
+                let rs4 = prune_ctx prog rs3 in
+                (* print_string ("\n after prune_ctx:"^(Cprinter.string_of_context rs4)^"\n"); *)
+	            ((SuccCtx [rs4]),TrueConseq)
+        | EInfer e -> 
+              (* ignores any EInfer on the RHS *) 
+              (* assumes each EInfer contains exactly one continuation *)
+              (* TODO : change the syntax of EInfer? *)
+              let c=e.Cformula.formula_inf_continuation in
+              helper_inner_x ctx11 c
+	    | EVariance e ->
+              let es = match ctx11 with
+                | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc_fork : OCtx encountered \n")
+                | Ctx es -> es in 
+              let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
+              let t = List.map (fun (_, v, mn) ->
+                  let CP.SpecVar (t, i, p) = v in
+                  let nid = i ^ "_" ^ mn in
+                  CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
+              let normalize_ctx_rhs =
+                let rec filter pformula =
+                  match pformula with
+                    | CP.And (f1, f2, pos) ->
+                          let nf2 = CP.subst_avoid_capture f t f2 in
+                          let nf1 = filter f1 in
+                          if (CP.equalFormula f2 nf2) then nf1
+                          else CP.mkAnd nf1 nf2 pos
+                    | _ ->
+                          let nf = CP.subst_avoid_capture f t pformula in
+                          if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
+                          else nf
+                in filter es.es_var_ctx_rhs
+              in
+
+              (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
+                let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
+
+              let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
+
+              variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
+              var_checked_list := !var_checked_list @ [(nes, e)];
+              inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
+    end 
+
+  and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof =
+	Gen.Debug.no_2 "inner_entailer"
+	    Cprinter.string_of_context
+	    Cprinter.string_of_struc_formula
+	    (fun (cl, _) -> Cprinter.string_of_list_context cl)
+	    (fun _ _ -> inner_entailer_x i ctx22 conseq) ctx22 conseq
+	    
+  and inner_entailer_x i (ctx22 : context) (conseq : struc_formula): list_context * proof = 
+    let _ = match ctx22 with 
+	  | OCtx _ ->
+            Error.report_warning {
+				Error.error_loc = post_pos#get;
+				Error.error_text = ("[inner entailer" ^ (string_of_int i) ^ "] unexpected dealing with OCtx " ^ (string_of_int (count_octx ctx22)) ^ "\n" ^ (Cprinter.string_of_context_short ctx22))
+            }
+	  | _ -> () in
+	if (List.length conseq) > 0 then	
+	  (* this call captures an OCtx, why?? *)
+	  let ctx = CF.add_to_context_num 2 ctx22 "para OR on conseq" in
+	  let r = List.map (helper_inner ctx) conseq in
+	  let l1,l2 = List.split r in
+	  ((fold_context_left l1), (mkCaseStep ctx conseq l2))
+	else 
+	  (* TODO : can do a stronger falsity check on LHS *)
+	  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error)) , UnsatConseq)
+		  (* ((SuccCtx [ctx]),TrueConseq) *)
+  in
+  inner_entailer 8 ctx_00 conseq 
+
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
   Gen.Debug.no_1 "heap_entail_one_context_struc" 
@@ -3262,7 +3569,7 @@ and heap_entail_conjunct_lhs_struc_x
 	            let r = helper b.formula_case_branches in
 	            let r = match r with
 	              | None -> begin
-                      let _ = print_endline ("helper_inner: try all cases") in
+                      (* let _ = print_endline ("helper_inner: try all cases") in *)
 		              List.map (fun (c1, c2) -> 
 			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
                           (*this unsat check is essential for completeness of result*)
@@ -3278,7 +3585,7 @@ and heap_entail_conjunct_lhs_struc_x
 					        inner_entailer 2 n_ctx c2) b.formula_case_branches 
 				    end
 	              | Some (p, e) -> begin
-                      let _ = print_endline ("helper_inner: find it syntactically") in
+                      (* let _ = print_endline ("helper_inner: find it syntactically") in *)
 				      let n_ctx = CF.transform_context (
 				          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
 
@@ -9544,6 +9851,30 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
 	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq pos pid) cl conseq
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+let heap_entail_struc_list_failesc_context_fork_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
+	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var) pos (pid:control_path_id) : (list_failesc_context * proof) = 
+  let _ = set_entail_pos pos in
+  Debug.devel_pprint ("heap_entail_struc_list_failesc_context_fork:"
+          ^ "\ntid : "^ (Cprinter.string_of_spec_var tid) 
+          ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
+         ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
+  ^"\n") pos; 
+  let res,prf = heap_entail_failesc_prefix_init prog is_folding  has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_fork "2" tid)) in
+  (CF.list_failesc_context_simplify res,prf)
+
+(*Handle pre/post condition when a method forked*)
+(*Entail pre, add post to thread with tid*)
+let heap_entail_struc_list_failesc_context_fork (prog : prog_decl) (is_folding : bool)  (has_post: bool)
+	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var) pos (pid:control_path_id) : (list_failesc_context * proof) =
+  Gen.Debug.no_3 "heap_entail_struc_list_failesc_context_fork"
+	Cprinter.string_of_list_failesc_context
+	Cprinter.string_of_struc_formula
+    Cprinter.string_of_spec_var
+	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
+	(fun _ _ _ -> heap_entail_struc_list_failesc_context_fork_x prog is_folding has_post cl conseq tid pos pid) cl conseq tid
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 

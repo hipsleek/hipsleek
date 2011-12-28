@@ -115,7 +115,7 @@ node insert(node x, int v)
   treat variables as resources.
 */
 void parallel_merge_sort(node xs,ref node ys)
-  requires xs::bnd<n, sm, bg> & perm(ys,1.0) & n > 0
+  requires xs::bnd<n, sm, bg> & n > 0
 	ensures ys'::sll<n, smres, bgres> & smres >= sm & bgres <= bg; //'
 {
 	int c, middle;
