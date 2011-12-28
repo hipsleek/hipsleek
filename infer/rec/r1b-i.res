@@ -20,6 +20,6 @@ Procedure foo$node SUCCESS
 Stop Omega... 62 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.368022 second(s)
-	Time spent in main process: 0.300018 second(s)
-	Time spent in child processes: 0.068004 second(s)
+Total verification time: 0.2 second(s)
+	Time spent in main process: 0.18 second(s)
+	Time spent in child processes: 0.02 second(s)

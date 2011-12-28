@@ -40,8 +40,6 @@ inferred pure: [n!=0; n=1]
 
 Entail  (5): Valid. 
 <1>x::ll<n>@M[Orig][LHSCase] & n=0 & {FLOW,(17,18)=__norm}
-<2>false & false & {FLOW,(17,18)=__norm}
-inferred pure: [n!=0]
 
 Entail  (6): Valid. 
 <1>x::ll<n>@M[Orig][LHSCase] & n=0 & {FLOW,(17,18)=__norm}
