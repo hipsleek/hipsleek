@@ -22,9 +22,7 @@ let op_or = " || "
 let op_add = "+"
 let op_sub = "-"
 
-let is_self = function
-  | CP.Var (CP.SpecVar (_,id,_),_) -> id=self
-  | _ -> false
+let is_self = CP.is_self_var
 
 let is_null = CP.is_null
 
@@ -172,7 +170,7 @@ let compute_fixpoint input_pairs =
   let input_fixcalc = name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
     ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
   in
-  (*print_endline ("INPUT: " ^ input_fixcalc);*)
+  (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
   let output_of_sleek = "fixcalc.inf" in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
