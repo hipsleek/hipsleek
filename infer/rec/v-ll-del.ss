@@ -27,13 +27,17 @@ m=1 & m_622=0 & 1<=n | (2+v_int_33_623)<=n & -1+m=m_622 & -1+
 a=v_int_33_623 & 1<=v_int_33_623 & 1<=m_622) & B(m_622,n_601) & 1+n_601=n))) -->  B(m,n)]
 
 n>=0 & n>a 
+
+a>0 is necessary
  */
+
+
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-  infer [a,n,B]
-	requires x::ll<n>  //& n > a & a > 0 
-	ensures x::ll<m> & B(m,n);
+    //infer [a,B]
+	requires x::ll<n> & n > a & a>0
+	ensures x::ll<m> & n=m+1 ;
 {
         if (a == 1)
 	{

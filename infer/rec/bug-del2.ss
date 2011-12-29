@@ -1,0 +1,16 @@
+
+void del(int n)
+  infer @pre [n]
+  requires n>=0
+  ensures  true; 
+{  
+    acc(n);
+    n=n-1; 
+    dprint;
+    acc(n);
+}
+
+void acc(int n)
+  requires n>=1
+  ensures true;
+
