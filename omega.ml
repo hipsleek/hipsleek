@@ -87,7 +87,7 @@ and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
-  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0"
+  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
@@ -133,8 +133,8 @@ and omega_of_b_formula b =
 (*   in helper f *)
 
 and omega_of_formula_old f  =
-  let pr x = None in
-  omega_of_formula pr pr f
+  let (pr_w,pr_s) = no_drop_ops in
+  omega_of_formula pr_w pr_s f
 
 and omega_of_formula pr_w pr_s f  =
   let rec helper f = 
@@ -469,20 +469,19 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
         end
   end
 
-let is_valid (pe : formula) timeout: bool =
-  let pr x = None in
-  is_valid_ops pr pr pe timeout
+(* let is_valid (pe : formula) timeout: bool = *)
+(*   let pr x = None in *)
+(*   is_valid_ops pr pr pe timeout *)
 
-let is_valid (pe : formula) timeout: bool =
-  let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
+(* let is_valid (pe : formula) timeout: bool = *)
+(*   let pf = !print_pure in *)
+(*   Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
 
-let is_valid_with_check (pe : formula) timeout : bool option =
-  do_with_check "" (fun x -> is_valid x timeout) pe
+let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
 
-let is_valid_with_default (pe : formula) timeout : bool =
-  do_with_check_default "" (fun x -> is_valid x timeout) pe false
-
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool =
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -511,8 +510,8 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
   result
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
-  let pr x = None in
-  imply_ops pr pr (ante : formula) (conseq : formula) (imp_no : string) timeout 
+  let (pr_w,pr_s) = drop_complex_ops in
+  imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
 let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
   do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
@@ -530,8 +529,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
       end
 
 let is_valid (pe : formula) timeout : bool =
+  let (pr_w,pr_s) = drop_complex_ops in
   try
-    is_valid pe timeout
+    is_valid_ops pr_w pr_s pe timeout
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
