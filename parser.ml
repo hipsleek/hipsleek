@@ -1265,6 +1265,7 @@ hprogn:
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
+      prog_logical_vars = []; (* TODO: to pick from declaration *)
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;

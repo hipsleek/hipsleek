@@ -6650,6 +6650,14 @@ let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   Gen.Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
+let is_lexvar (f:formula) : bool =
+  match f with
+    | BForm ((b,_),_) -> 
+              (match b with
+                | LexVar _ -> true
+                | _ -> false)
+    | _ -> false
+
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 
@@ -6678,14 +6686,15 @@ let no_drop_ops =
 
 let drop_complex_ops =
   let pr_weak b = match b with
-        (*| LexVar (_,_,p) *)
+        | LexVar (_,_,p)
         | RelForm (_,_,p) -> Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
-        (*| LexVar (_,_,p) *)
+        | LexVar (_,_,p)
         | RelForm (_,_,p) -> Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
+
 
 let memo_complex_ops stk bool_vars is_complex =
   let pr b = match b with

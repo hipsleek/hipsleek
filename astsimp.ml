@@ -965,6 +965,9 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 
+let trans_logical_vars lvars =
+  List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
+  
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   let _ = (exlist # add_edge "Object" "") in
@@ -1051,9 +1054,11 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
+		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_vars) in 
 		  let cprog =   {
               C.prog_data_decls = cdata;
               C.prog_view_decls = cviews;
+              C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
               C.prog_proc_decls = cprocs;
