@@ -1062,6 +1062,9 @@ let simplify_omega f =
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
+    let omega_simplify f = Omega.simplify_clever f in
+    (* this simplifcation will first remove complex formula
+       as boolean vars but later restore them *)
     if !external_prover then 
       match Netprover.call_prover (Simplify f) with
           Some res -> res
@@ -1082,21 +1085,21 @@ let simplify (f : CP.formula) : CP.formula =
                 else
                   (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                   let f1 = CP.add_gte0_for_mona f in
-                  let f=(Omega.simplify f1) 
+                  let f=(omega_simplify f1) 
                   in CP.arith_simplify 12 f
           | OM ->
                 if (is_bag_constraint f) then
                   (Mona.simplify f)
-                else let f=(Omega.simplify f) 
+                else let f=(omega_simplify f) 
                 in CP.arith_simplify 12 f
           | OI ->
                 if (is_bag_constraint f) then
                   (Isabelle.simplify f)
-                else (Omega.simplify f)
+                else (omega_simplify f)
           | SetMONA -> Mona.simplify f
           | CM ->
                 if is_bag_constraint f then Mona.simplify f
-                else Omega.simplify f
+                else omega_simplify f
           | Z3 -> Smtsolver.simplify f
           | Redlog -> Redlog.simplify f
           | RM -> 
@@ -1124,7 +1127,7 @@ let simplify (f : CP.formula) : CP.formula =
                   end
                 else
                   begin
-                    (Omega.simplify f);
+                    (omega_simplify f);
                   end
           | OZ ->
                 if (is_array_constraint f) then
@@ -1133,9 +1136,9 @@ let simplify (f : CP.formula) : CP.formula =
                   end
                 else
                   begin
-                    (Omega.simplify f);
+                    (omega_simplify f);
                   end
-         | _ -> Omega.simplify f in
+         | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
 
             (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)

@@ -93,7 +93,7 @@ and omega_of_b_formula b =
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
-  | LexVar (a1, a2, _) -> "(0=0)"
+  (* | LexVar (a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"
@@ -119,6 +119,7 @@ and omega_of_b_formula b =
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
+  | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
 (* and omega_of_formula f  = *)
@@ -626,6 +627,13 @@ let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
 
+
+let simplify_clever (pe : formula) : formula =
+  simplify pe
+
+let simplify_clever (pe : formula) : formula =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.simplify_clever" pf pf simplify_clever pe
 
 (* let simplify_with_check (pe : formula) : formula option = *)
 (*   do_with_check "Omega simplify" simplify pe *)
