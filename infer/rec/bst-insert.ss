@@ -18,7 +18,7 @@ relation B(int x, int y).
 
 /* insert a node in a bst */
 node2 insert(node2 x, int a)
-        //infer @pre[A]
+        infer @pre[A]
 	requires x::bst<sm, lg> 
 	ensures res::bst<mi, ma> & res != null & mi = min(sm, a) & A(ma, lg, a);  //& ma = max(lg, a);
 	
