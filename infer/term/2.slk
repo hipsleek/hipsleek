@@ -24,5 +24,10 @@ infer [p1,p2] n=m+1 & LexVar[0,p1,n]{} |- LexVar[0,p2,m]{} .
 infer [p1,p2] n=m+1 & LexVar[0,p1]{n,m} |- LexVar[0,p2]{n,m}.
 //print residue.
 
+infer [p1,p2,p3] (n=m+1 & LexVar[0,p1,n]) | (n=m+2 & LexVar[0,p2,m]) |- LexVar[0,p3,m].
+
+checkentail (n=m+1 & LexVar[0,p1,n]) |- LexVar[0,p3,m].
+
+
 
 

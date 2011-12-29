@@ -9,14 +9,17 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
   try
     let ante = MCP.pure_of_mix lhs_p in
     let conseq = MCP.pure_of_mix rhs_p in
-    let src_lv = CP.find_lexvar_formula ante in (* [s1,s2] *)
     let dst_lv = CP.find_lexvar_formula conseq in (* [d1,d2] *)
+    let src_lv = CP.find_lexvar_formula ante in (* [s1,s2] *)
+    (* Filter LexVar in RHS *)
     let rhs_ls = CP.split_conjunctions conseq in
-    let (lexvar_rhs,other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
+    let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
     let conseq = CP.join_conjunctions other_rhs in
     (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
     let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
-    if bnd_measures = [] then (estate, lhs_p, rhs_p)
+    (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
+    let bnd_measures = CP.syn_simplify_lexvar bnd_measures in
+    if bnd_measures = [] then (estate, lhs_p, MCP.mix_of_pure conseq)
     else
       (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
       let lst_measures = List.fold_right (fun bm res ->
@@ -50,5 +53,5 @@ type: 'a ->
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state_short in
-   Gen.Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
+   Gen.Debug.ho_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
       (fun _ _ -> trans_lexvar_rhs estate lhs_p rhs_p pos) lhs_p rhs_p

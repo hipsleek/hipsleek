@@ -1116,7 +1116,6 @@ and split_conjunctions f = list_of_conjs f
 and join_conjunctions fl = conj_of_list fl no_pos
 
 
-  
 and is_member_pure (f:formula) (p:formula):bool = 
   let y = split_conjunctions p in
   List.exists (fun c-> equalFormula f c) y
@@ -1207,7 +1206,6 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
-
 
 and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
@@ -4932,6 +4930,13 @@ let is_lt eq e1 e2 =
           -> (int_of_heap_ann i1)<(int_of_heap_ann i2)
     | _,_ -> false
 
+let is_gt eq e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1>i2
+    | AConst (i1,_), AConst(i2,_) 
+          -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
+    | _,_ -> false
+
 let is_diff e1 e2 =
   match e1,e2 with
     | IConst (i1,_), IConst(i2,_) -> i1<>i2
@@ -6885,3 +6890,14 @@ let rec find_lexvar_formula (f: formula) : exp list =
   (* Chanh: I am not sure whether a lexvar formula
    * can be appear in Or, Not, Forall and Exists? *)
   | _ -> raise No_LexVar
+
+(* To syntactic simplify LexVar formula *)  
+let rec syn_simplify_lexvar bnd_measures =
+  match bnd_measures with
+  | [] -> []
+  | (s,d)::rest -> 
+      if (eqExp s d) then syn_simplify_lexvar rest
+      else if (is_gt eq_spec_var s d) then []
+      else if (is_lt eq_spec_var s d) then [(s,d)]
+      else bnd_measures 
+
