@@ -2960,10 +2960,11 @@ type entail_state = {
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* is below for VARIANCE checking *)
-  es_var_measures : CP.exp list;
-  es_var_label : int option;
-  es_var_ctx_lhs : CP.formula;
-  es_var_ctx_rhs : CP.formula;
+  es_var_measures : CP.exp list; (* lexical ordering *)
+  es_var_label : int option; (* phase number *)
+  es_var_ctx_lhs : CP.formula; (* original LHS? of variance*)
+  es_var_ctx_rhs : CP.formula; (* rhs where call is made? *)
+  (* subst used for phase inference *)
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   es_var_loc : loc;
 
@@ -7144,4 +7145,7 @@ let lax_impl_of_post f =
   let impl_vs = CP.intersect evs hvs in
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
-  
+
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs

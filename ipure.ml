@@ -32,6 +32,7 @@ and p_formula =
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
 	  (* bags and bag formulae *)
+  | LexVar of ((exp list) * (exp list) * loc)
   | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -151,6 +152,9 @@ and bfv (bf : b_formula) =
 		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | RelForm (_,args,_) -> (* An Hoa *)
 		let args_fv = List.concat (List.map afv args) in
+		Gen.BList.remove_dups_eq (=) args_fv
+  | LexVar (args1,args2,_) -> (* An Hoa *)
+		let args_fv = List.concat (List.map afv (args1@args2)) in
 		Gen.BList.remove_dups_eq (=) args_fv
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
@@ -435,7 +439,7 @@ and pos_of_formula (f : formula) = match f with
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-		  | RelForm (_,_,p) -> p
+		  | RelForm (_,_,p)  | LexVar (_,_,p) -> p
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -546,6 +550,10 @@ and b_apply_one (fr, t) bf =
   | RelForm (r, args, pos) -> 
           (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
           RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos)
+  | LexVar (args1, args2, pos) -> 
+        let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
+        let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
+          LexVar (args1,args2,pos)
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -658,7 +666,13 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
-  | RelForm _ -> [] (* An Hoa : TODO implement *)
+  | LexVar (args1, args2, _) -> 
+        let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
+        vs
+  | RelForm (_,args,_) -> 
+        let vs = List.concat (List.map look_for_anonymous_exp (args)) in
+        vs
+
   
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -701,6 +715,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| LexVar (e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -952,8 +967,8 @@ and float_out_pure_min_max (p : formula) : formula =
   let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
 	let (pf,il) = b in
 	match pf with
-	  | BConst _ -> BForm (b,lbl)
-	  | BVar _ -> BForm (b,lbl)
+	  | BConst _ | BVar _ 
+	  | LexVar _ -> BForm (b,lbl)
 	  | Lt (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

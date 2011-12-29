@@ -965,6 +965,9 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 
+let trans_logical_vars lvars =
+  List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
+  
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   let _ = (exlist # add_edge "Object" "") in
@@ -1051,9 +1054,11 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
+		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_vars) in 
 		  let cprog =   {
               C.prog_data_decls = cdata;
               C.prog_view_decls = cviews;
+              C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
               C.prog_proc_decls = cprocs;
@@ -4432,6 +4437,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   let npf =  match pf with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
+    | IP.LexVar (ls1, ls2, pos) ->
+          let pe1 = List.map (fun e ->trans_pure_exp e stab) ls1 in
+          let pe2 = List.map (fun e ->trans_pure_exp e stab) ls2 in
+          CP.LexVar(pe1,pe2,pos)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -5216,7 +5225,10 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let _ = gather_type_info_exp a1 stab (Cpure.ann_type) in
 	      let _ = gather_type_info_exp a2 stab (Cpure.ann_type) in
           ()
-
+    | IP.LexVar(ls1,ls2,pos) ->
+	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls1 in
+	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls2 in
+          ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in
@@ -5777,7 +5789,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
             | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
           let gather_type_info_perm p stab = match p with
             | None -> ()
-            | Some e -> gather_type_info_exp e stab ft; () in
+            | Some e -> let _ = gather_type_info_exp e stab ft in () in
           let _ = gather_type_info_perm perm stab in
           let _ = gather_type_info_ann ann stab in
 		  (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)

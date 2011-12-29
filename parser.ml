@@ -145,6 +145,8 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
+let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
+
 let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
@@ -827,7 +829,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[ peek_pure_out; t=cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
+pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
 					match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
@@ -870,7 +872,7 @@ cexp_w :
 		lc=SELF; `LTE;    cl=SELF       ->
 		let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 		set_slicing_utils_pure_double f false
-      | lc=SELF; `LT;     cl=SELF       ->
+     | lc=SELF; `LT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
       | lc=SELF; `SUBANN;     cl=SELF       ->
@@ -916,8 +918,12 @@ cexp_w :
 	  set_slicing_utils_pure_double f false
       | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false]
-
+	  set_slicing_utils_pure_double f false
+      | `LEXVAR; `OSQUARE; ls1= cexp_list; `CSQUARE; ls2=opt_measures_seq
+            ->
+	      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
+	      set_slicing_utils_pure_double f false
+      ]
 	  
 	  
   | "pure_paren" 
@@ -935,7 +941,7 @@ cexp_w :
 	  | `OLIST; c1 = opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
 	  |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
 	  | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
-	  | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
+	  | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
 	  | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
 	  | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> (* print_string("herel"); *)apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
 	  | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
@@ -1006,6 +1012,14 @@ cexp_w :
 		  
 	  ];
 
+(* [[ *)
+(*     il=OPT measures2 -> un_option il [] *)
+(* ]]; *)
+
+(* opt_measures:[[ `OPAREN; t=LIST0 cexp SEP `COMMA ;`CPAREN -> t]]; *)
+
+(* opt_measures:[[t=LIST0 cexp SEP `COMMA -> t]];  *)
+
 opt_comma_list:[[t = LIST0 opt_comma SEP `COMMA -> t
 ]];
 
@@ -1014,9 +1028,13 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
-opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]]; 
+opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
 
-(* cexp_list: [[t=LIST1 cexp_w SEP `COMMA -> t]]; *)
+measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+
+opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
+
+cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 (********** Procedures and Coercion **********)
 
@@ -1242,6 +1260,7 @@ hprogn:
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
+      prog_logical_vars = []; (* TODO: to pick from declaration *)
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;

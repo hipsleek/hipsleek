@@ -87,12 +87,13 @@ and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
-  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0"
+  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
+  | LexVar (a1, a2, _) -> "(0=0)"
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"
@@ -118,6 +119,7 @@ and omega_of_b_formula b =
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
+  | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
 (* and omega_of_formula f  = *)
@@ -132,8 +134,8 @@ and omega_of_b_formula b =
 (*   in helper f *)
 
 and omega_of_formula_old f  =
-  let pr x = None in
-  omega_of_formula pr pr f
+  let (pr_w,pr_s) = no_drop_ops in
+  omega_of_formula pr_w pr_s f
 
 and omega_of_formula pr_w pr_s f  =
   let rec helper f = 
@@ -468,20 +470,19 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
         end
   end
 
-let is_valid (pe : formula) timeout: bool =
-  let pr x = None in
-  is_valid_ops pr pr pe timeout
+(* let is_valid (pe : formula) timeout: bool = *)
+(*   let pr x = None in *)
+(*   is_valid_ops pr pr pe timeout *)
 
-let is_valid (pe : formula) timeout: bool =
-  let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
+(* let is_valid (pe : formula) timeout: bool = *)
+(*   let pf = !print_pure in *)
+(*   Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
 
-let is_valid_with_check (pe : formula) timeout : bool option =
-  do_with_check "" (fun x -> is_valid x timeout) pe
+let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
 
-let is_valid_with_default (pe : formula) timeout : bool =
-  do_with_check_default "" (fun x -> is_valid x timeout) pe false
-
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool =
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -510,8 +511,8 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
   result
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
-  let pr x = None in
-  imply_ops pr pr (ante : formula) (conseq : formula) (imp_no : string) timeout 
+  let (pr_w,pr_s) = drop_complex_ops in
+  imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
 let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
   do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
@@ -529,8 +530,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
       end
 
 let is_valid (pe : formula) timeout : bool =
+  let (pr_w,pr_s) = drop_complex_ops in
   try
-    is_valid pe timeout
+    is_valid_ops pr_w pr_s pe timeout
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
@@ -626,8 +628,82 @@ let simplify (pe : formula) : formula =
   Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
 
 
-(* let simplify_with_check (pe : formula) : formula option = *)
-(*   do_with_check "Omega simplify" simplify pe *)
+(* let simplify_ho is_complex (orig_pe : formula) : formula = *)
+(*  (\* print_endline "LOCLE: simplify";*\) *)
+(*   (\*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*\) *)
+(*   begin *)
+(*     let (pe,subs,bvars) = memoise_formula_ho is_complex orig_pe in *)
+(*     let (pr_weak,pr_strong) = no_drop_ops in *)
+(*     let vars_list = get_vars_formula pe in *)
+(*     (\*todo: should fix in code of OC: done*\) *)
+(*     (\*if not safe then pe else*\) *)
+(*     begin *)
+(*       try *)
+(*         omega_subst_lst := []; *)
+(*         let fstr = omega_of_formula pr_weak pr_strong pe in *)
+(*         let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in *)
+(*         let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in *)
+(* 	(\*test*\) *)
+(* 	(\*print_endline (Gen.break_lines fomega);*\) *)
+(*         if !log_all_flag then begin *)
+(* (\*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*\) *)
+(*             output_string log_all ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str); *)
+(*             output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str); *)
+(*             flush log_all; *)
+(*         end; *)
+(*         let simp_f = *)
+(* 	      try *)
+(*               begin *)
+(* 	              let rel = send_and_receive fomega !in_timeout (\* 0.0  *\)in *)
+(* 	              let new_pe = match_vars (fv pe) rel in *)
+(*                   restore_memo_formula subs bvars new_pe  *)
+(*                   (\* restore the extracted term and bool vars*\) *)
+(* 	          end *)
+(* 	      with *)
+(*             | Procutils.PrvComms.Timeout -> *)
+(*           (\*log ERROR ("TIMEOUT");*\) *)
+(*                 restart ("Timeout when checking #simplify "); *)
+(*                 orig_pe *)
+(*             | End_of_file -> *)
+(*                 restart ("End_of_file when checking #simplify \n"); *)
+(*                 orig_pe *)
+(*             | exc -> (\* stop (); raise exc  *\) *)
+(*                 begin *)
+(*                     Printf.eprintf "Unexpected exception : %s" (Printexc.to_string exc); *)
+(*                     restart ("Unexpected exception when checking #simplify\n "); *)
+(*                     orig_pe *)
+(*                 end *)
+(*         in *)
+(*     (\*   let post_time = Unix.gettimeofday () in *\) *)
+(*     (\*   let time = (post_time -. pre_time) *. 1000. in *\) *)
+(*     (\*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*\) *)
+(*         simp_f *)
+(*       with _ -> orig_pe (\* not simplified *\) *)
+(*     end *)
+(*   end *)
+
+(* (\* does not work since complex term may be *)
+(*    inside quantifers, subst may involve name capture *\) *)
+(* let simplify_clever (pe : formula) : formula = *)
+(*   let is_complex b = match b with *)
+(*     | LexVar _  *)
+(*     | RelForm _ -> true *)
+(*     | _ -> false *)
+(*   in simplify_ho is_complex pe *)
+
+(* (\* let simplify_with_check (pe : formula) : formula option = *\) *)
+(* (\*   do_with_check "Omega simplify" simplify pe *\) *)
+
+
+(* let simplify_memo (pe : formula) : formula = *)
+(*   match (do_with_check "" simplify_clever pe) *)
+(*   with  *)
+(*     | None -> pe *)
+(*     | Some f -> f *)
+
+(* let simplify_memo (pe : formula) : formula = *)
+(*   let pf = !print_pure in *)
+(*   Gen.Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
 let simplify (pe : formula) : formula =
   match (do_with_check "" simplify pe)

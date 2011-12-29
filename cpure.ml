@@ -50,6 +50,7 @@ and bf_annot = (bool * int * (exp list))
 and b_formula = p_formula * (bf_annot option)
 	
 and p_formula =
+  | LexVar of ((exp list) * (exp list) * loc)
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
@@ -488,9 +489,10 @@ and bfv (bf : b_formula) =
           fv1 @ fv2
     | RelForm (r, args, _) ->
           let vid = r in
-          (* SpecVar(RelT,r,Unprimed) in *)
 		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
+    | LexVar (args1, args2, _) ->
+              List.concat (List.map afv (args1@args2))
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -702,6 +704,7 @@ and is_list (e : exp) : bool =
     | ListReverse _ -> true
     | _ -> false
 
+
 and is_bag_bform (b: b_formula) : bool =
   let (pf,_) = b in
   match pf with
@@ -828,7 +831,7 @@ and trans_eq_bform (b : b_formula) : b_formula =
           
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 match pf with
-  | BConst _  | BVar _ | SubAnn _ -> true
+  | BConst _  | BVar _ | SubAnn _ | LexVar _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
@@ -881,6 +884,10 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
+
+and mkPure bf = BForm ((bf,None), None)
+
+and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
 and mkVarNull v pos = 
   if is_null_const v then Null pos
@@ -1109,7 +1116,6 @@ and split_conjunctions f = list_of_conjs f
 and join_conjunctions fl = conj_of_list fl no_pos
 
 
-  
 and is_member_pure (f:formula) (p:formula):bool = 
   let y = split_conjunctions p in
   List.exists (fun c-> equalFormula f c) y
@@ -1208,7 +1214,6 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
-
 
 and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
@@ -1441,6 +1446,43 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) 
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
+and pos_of_b_formula (b: b_formula) = 
+	let (p, _) = b in
+	match p with
+	| LexVar (_, _, p) -> p
+	| SubAnn (_, _, p) -> p
+	| BConst (_, p) -> p
+  | BVar (_, p) -> p
+  | Lt (_, _, p) -> p
+  | Lte (_, _, p) -> p
+  | Gt (_, _, p) -> p
+  | Gte (_, _, p) -> p
+  | Eq (_, _, p) -> p
+  | Neq (_, _, p) -> p
+  | EqMax (_, _, _, p) -> p
+  | EqMin (_, _, _, p) -> p
+	  (* bag formulas *)
+  | BagIn (_, _, p) -> p
+  | BagNotIn (_, _, p) -> p
+  | BagSub (_, _, p) -> p
+  | BagMin (_, _, p) -> p
+  | BagMax (_, _, p) -> p
+	  (* list formulas *)
+  | ListIn (_, _, p) -> p
+  | ListNotIn (_, _, p) -> p
+  | ListAllN (_, _, p) -> p
+  | ListPerm (_, _, p) -> p
+  | RelForm (_, _, p) -> p
+
+and pos_of_formula (f: formula) =
+	match f with
+	| BForm (b, _) -> pos_of_b_formula b
+  | And (_, _, p) -> p
+  | Or (_, _, _, p) -> p
+  | Not (_, _, p) -> p
+  | Forall (_, _, _, p) -> p
+  | Exists (_, _, _, p) -> p
+
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
   let slen = (String.length s) in
@@ -1650,7 +1692,8 @@ and b_apply_subs sst bf =
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-  in let nsl = match sl with
+    | LexVar (args1, args2, pos) -> LexVar(e_apply_subs_list sst args1, e_apply_subs_list sst args2, pos) (* An Hoa *)
+   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
   in (npf,nsl)
@@ -1880,6 +1923,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, a_apply_par_term_list sst args, pos) (* An Hoa *)
+    | LexVar (args1, args2, pos) -> LexVar (a_apply_par_term_list sst args1, a_apply_par_term_list sst args2, pos) 
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -1959,6 +2003,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, List.map (a_apply_one_term (fr, t)) args, pos) (* An Hoa *)
+    | LexVar (r, args, pos) -> LexVar (List.map (a_apply_one_term (fr, t)) r, List.map (a_apply_one_term (fr, t)) args, pos) 
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -3042,6 +3087,7 @@ and b_apply_one_exp (fr, t) bf =
   | ListAllN (a1, a2, pos) -> pf
   | ListPerm (a1, a2, pos) -> pf
   | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
+  | LexVar (r, args, pos) -> LexVar (e_apply_one_list_exp (fr, t) r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -3733,7 +3779,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let (pf,il) = b in
   let npf = match pf with
     |  BConst _ 
-    |  SubAnn _
+    |  SubAnn _ | LexVar _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -4102,11 +4148,18 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 	            let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListPerm (ne1,ne2,l),f_comb[r1;r2])
-					| RelForm (r, args, l) -> (* An Hoa *)
+		  | RelForm (r, args, l) -> (* An Hoa *)
 					    let tmp = List.map (helper new_arg) args in
 							let nargs = List.map fst tmp in
 							let rs = List.map snd tmp in
                 (RelForm (r,nargs,l),f_comb rs)
+		  | LexVar (args1, args2, l) -> 
+					    let tmp1 = List.map (helper new_arg) args1 in
+					    let nargs1 = List.map fst tmp1 in
+					    let tmp2 = List.map (helper new_arg) args2 in
+					    let nargs2 = List.map fst tmp2 in
+							let rs = List.map snd (tmp1@tmp2) in
+                (LexVar (nargs1,nargs2,l),f_comb rs)
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -4197,6 +4250,10 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		| RelForm (r, args, l) -> (* An Hoa *)
 		  let nargs = List.map (transform_exp f_exp) args in
 		  RelForm (r,nargs,l)
+		| LexVar (r, args, l) -> 
+		  let nr = List.map (transform_exp f_exp) r in
+		  let nargs = List.map (transform_exp f_exp) args in
+		  LexVar (nr,nargs,l)
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -4514,7 +4571,11 @@ let norm_bform_a (bf:b_formula) : b_formula =
 	    | RelForm (id,exs,l) -> 
               let exs = List.map norm_exp exs in
               RelForm (id,exs,l)
-    in (npf, il)
+ 	    | LexVar (args1,args2,l) -> 
+              let args1 = List.map norm_exp args1 in
+              let args2 = List.map norm_exp args2 in
+              LexVar (args1,args2,l)
+   in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -4875,6 +4936,13 @@ let is_lt eq e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<i2
     | AConst (i1,_), AConst(i2,_) 
           -> (int_of_heap_ann i1)<(int_of_heap_ann i2)
+    | _,_ -> false
+
+let is_gt eq e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1>i2
+    | AConst (i1,_), AConst(i2,_) 
+          -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
 let is_diff e1 e2 =
@@ -5416,11 +5484,12 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
     | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
     | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+    | RelForm (v,es,l) -> RelForm (v, List.map norm_exp es, l)
+    | LexVar (es1,es2,l) -> LexVar (List.map norm_exp es1, List.map norm_exp es2, l)
     | SubAnn _
     | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
-    | BagMax _ | ListAllN _ | ListPerm _
-	| RelForm _ -> pf
+    | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
 
 (***********************************
@@ -6594,6 +6663,14 @@ let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   Gen.Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
+let is_lexvar (f:formula) : bool =
+  match f with
+    | BForm ((b,_),_) -> 
+              (match b with
+                | LexVar _ -> true
+                | _ -> false)
+    | _ -> false
+
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 
@@ -6616,6 +6693,35 @@ let drop_rel_formula_ops =
         | _ -> None in
   (pr_weak,pr_strong)
 
+let no_drop_ops =
+  let pr x = None in
+  (pr,pr)
+
+let drop_complex_ops =
+  let pr_weak b = match b with
+        | LexVar (_,_,p)
+        | RelForm (_,_,p) -> Some (mkTrue p)
+        | _ -> None in
+  let pr_strong b = match b with
+        | LexVar (_,_,p)
+        | RelForm (_,_,p) -> Some (mkFalse p)
+        | _ -> None in
+  (pr_weak,pr_strong)
+
+
+let memo_complex_ops stk bool_vars is_complex =
+  let pr b = match b with
+    | BVar(v,_) -> bool_vars # push v; None
+    | _ ->
+          if (is_complex b) then
+            let id = fresh_old_name "memo_rel_hole_" in
+            let v = SpecVar(Bool,id,Unprimed) in
+            let rel_f = BForm ((b,None),None) in
+            stk # push (v,rel_f);
+            Some (BForm ((BVar (v,no_pos),None),None))
+          else None 
+  in (pr, pr)
+
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_weak pr_strong f
@@ -6628,63 +6734,94 @@ let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
 
-let memoise_rel_formula ivs (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
+let memoise_formula_ho is_complex (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let stk = new Gen.stack in
-  let pr b = match b with
-    | RelForm (i,_,p) -> 
-          let rid = i in
-          if mem rid ivs then
-            let id = fresh_old_name "memo_rel_hole_" in
-            let v = SpecVar(Bool,id,Unprimed) in
-            let rel_f = BForm ((b,None),None) in
-            stk # push (v,rel_f);
-            Some (BForm ((BVar (v,p),None),None))
-          else None
-    | _ -> None 
-  in 
-  let f = drop_formula pr pr f in
+  let bool_vars = new Gen.stack in
+  let (pr_w,pr_s) = memo_complex_ops stk bool_vars is_complex in
+  (* let pr b = match b with *)
+  (*   | BVar(v,_) -> bool_vars # push v; None *)
+  (*   | _ -> *)
+  (*         if (is_complex b) then *)
+  (*           let id = fresh_old_name "memo_rel_hole_" in *)
+  (*           let v = SpecVar(Bool,id,Unprimed) in *)
+  (*           let rel_f = BForm ((b,None),None) in *)
+  (*           stk # push (v,rel_f); *)
+  (*           Some (BForm ((BVar (v,no_pos),None),None)) *)
+  (*         else None  *)
+  (* in  *)
+  let f = drop_formula pr_w pr_s f in
   let ans = stk # get_stk in
-  (f,ans)
+  (f,ans, bool_vars # get_stk)
+
+let memoise_formula_ho isC (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
+  let pr = !print_formula in
+  let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
+  Gen.Debug.no_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
 
 let memoise_rel_formula ivs (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
+  let pr b = match b with
+    | RelForm (i,_,p) -> mem i ivs
+    | _ -> false
+  in memoise_formula_ho pr f
+
+let memoise_rel_formula ivs (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
-  let pr2 = pr_pair pr (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_2 "memoise_rel_formula" (!print_svl) pr pr2 memoise_rel_formula ivs f
+  let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
+  Gen.Debug.no_2 "memoise_rel_formula" !print_svl pr pr2 (fun _ _ -> memoise_rel_formula ivs f) ivs f
 
 let memoise_all_rel_formula (f:formula) : 
-      (formula * ((spec_var * formula) list)) =
-  let stk = new Gen.stack in
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
-    | RelForm (i,_,p) -> 
-            let id = fresh_old_name "memo_rel_hole_" in
-            let v = SpecVar(Bool,id,Unprimed) in
-            let rel_f = BForm ((b,None),None) in
-            stk # push (v,rel_f);
-            Some (BForm ((BVar (v,p),None),None))
-    | _ -> None 
-  in 
-  let f = drop_formula pr pr f in
-  let ans = stk # get_stk in
-  (f,ans)
+    | RelForm (i,_,p) -> true
+    | _ -> false
+  in memoise_formula_ho pr f
 
-let subs_rel_formula subs (f:formula) : formula =
-  let pr b = match b with
-    | BVar (id,_) -> 
-          begin
-            try
-              let (_,memo_f) = List.find (fun (i,_) -> eq_spec_var id i) subs in
-              Some memo_f
-            with _ -> None
-          end
-    | _ -> None 
+let mk_bvar_subs v subs =
+  try
+    let (_,memo_f) = List.find (fun (i,_) -> eq_spec_var v i) subs in
+    memo_f
+  with _ -> 
+      (match v with
+        | SpecVar(_,id,p) -> (mkBVar_pure id p no_pos))
+
+let mk_neg_bvar_subs v subs =
+  let e = mk_bvar_subs v subs in
+  mkNot e None no_pos
+
+(*
+  v>0, 0<v, v>=1, 1<=v --> v
+  v<=0, 0>=v, v<1, 1>v --> !v
+  v1=v2
+  v1!=v2
+
+*)
+let restore_bool_omega bf bvars subs =
+  match bf with
+    | Lt (IConst(0,_),Var(v,_),_) 
+    | Lte (IConst(1,_),Var(v,_),_) 
+    | Gt(Var(v,_),IConst(0,_),_) 
+    | Gte(Var(v,_),IConst(1,_),_) 
+        -> if mem v bvars then Some(mk_bvar_subs v subs) else None
+    | Gte (IConst(0,_),Var(v,_),_) 
+    | Lte(Var(v,_),IConst(0,_),_) 
+    | Gt (IConst(1,_),Var(v,_),_) 
+    | Lt(Var(v,_),IConst(1,_),_) 
+        -> if mem v bvars then Some(mk_neg_bvar_subs v subs) else None
+    | _ -> None
+
+let restore_memo_formula subs bvars (f:formula) : formula =
+  let bvars = bvars@(List.map fst subs) in
+  let pr b = restore_bool_omega b bvars subs 
   in drop_formula pr pr f
 
-let subs_rel_formula subs (f:formula) : formula =
+let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in
   let pr2 = (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_2 "subs_rel_formula" pr2 pr pr subs_rel_formula subs f
+  Gen.Debug.no_3 "restore_rel_formula" pr2 !print_svl pr pr (fun _ _ _ -> restore_memo_formula subs bvars f) subs bvars f
 
 let comb_disj nxs : formula =
   let rec helper nxs f =
@@ -6742,3 +6879,36 @@ let simplify_disj (f:formula) : formula =
 let simplify_disj (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f
+
+(* To find a LexVar formula *)
+exception No_LexVar;;
+
+let find_lexvar_b_formula (bf: b_formula) : exp list =
+  let (pf, _) = bf in
+  match pf with
+  | LexVar (el, _, _) -> el
+  | _ -> raise No_LexVar
+
+let rec find_lexvar_formula (f: formula) : exp list =
+  match f with
+  | BForm (bf, _) -> find_lexvar_b_formula bf
+  | And (f1, f2, _) ->
+      (try find_lexvar_formula f1
+      with _ -> find_lexvar_formula f2)
+  (* Chanh: I am not sure whether a lexvar formula
+   * can be appear in Or, Not, Forall and Exists? *)
+  | _ -> raise No_LexVar
+
+(* To syntactic simplify LexVar formula *)  
+let rec syn_simplify_lexvar bnd_measures =
+  match bnd_measures with
+  | [] -> []
+  | (s,d)::rest -> 
+      if (eqExp s d) then syn_simplify_lexvar rest
+      else if (is_gt eq_spec_var s d) then []
+      else if (is_lt eq_spec_var s d) then [(s,d)]
+      else bnd_measures 
+
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (type_of_spec_var v) != RelT) vs
