@@ -17,7 +17,7 @@ relation B(int x, int y).
 
 /* delete a node from a doubly linked list */
 void delete(node2 x, int a)
-    infer @pre[B]  
+    infer [B]  
     // this pre may be hard to infer; let us focus
     // first on inferring post; Currently I got empty FIXPOINT
     // can we try a simpler example using singly linked list?
