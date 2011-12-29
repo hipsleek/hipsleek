@@ -228,12 +228,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             in
 	        (CF.EBase {b with CF.formula_ext_base = new_base; CF.formula_ext_continuation = c}, [], rels, r) 
 	  | CF.EVariance b ->
-        (* TODO *)
         Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-			  (*let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
-			    CF.es_var_label = b.CF.formula_var_label}) ctx in*)
-		    let (c,pre,rel,f) = do_spec_verify_infer prog proc ctx e0 do_infer b.CF.formula_var_continuation in
-	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel,f) 
+        (* Termination: Add termination arguments into context *)
+			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
+          CF.es_var_measures = CF.lexvar_of_evariance b}) ctx in
+		    let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_var_continuation in
+	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) 
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
             let postf = b.CF.formula_inf_post in

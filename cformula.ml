@@ -258,6 +258,12 @@ and has_variance_ext ext_f =
     | EVariance _ -> true
     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont
 
+let lexvar_of_evariance (v: ext_variance_formula) : CP.formula =
+	let vm = fst (List.split v.formula_var_measures) in
+	let vi = v.formula_var_infer in
+  let pos = v.formula_var_pos in
+  CP.mkPure (CP.mkLexVar vm vi pos) 	
+
 (* generalized to data and view *)
 let get_ptr_from_data h =
   match h with
@@ -2945,7 +2951,7 @@ type entail_state = {
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For VARIANCE checking *)
-  es_var_measures : CP.exp list; (* lexical ordering *)
+  es_var_measures : CP.formula; (* Lexical ordering - It should only be a LexVar *)
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
@@ -3135,7 +3141,7 @@ let empty_es flowt pos =
   es_rhs_eqset = [];
   es_path_label  =[];
   es_prior_steps  = [];
-  es_var_measures = [];
+  es_var_measures = CP.mkPure (CP.mkLexVar [] [] pos);
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
@@ -7078,7 +7084,8 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
       let new_f = simplify_fml_ann f in
       let new_f = remove_lend new_f in
       EAssume(svl,new_f,fl)
-    | EVariance b -> report_error no_pos "[cformula.ml]: Do not expect EVariance at this level (simplify_ext_ann)."
+    | EVariance b -> 
+        EVariance {b with formula_var_continuation = simplify_ext_ann b.formula_var_continuation }
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
 (*

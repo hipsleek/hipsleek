@@ -885,6 +885,8 @@ and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
+and mkLexVar m i pos = LexVar (m, i, pos)
+
 and mkPure bf = BForm ((bf,None), None)
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)

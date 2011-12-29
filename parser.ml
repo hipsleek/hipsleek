@@ -1388,11 +1388,6 @@ spec:
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
-opt_var_label: [[t=OPT var_label -> t]];
-
-var_label: [[ `OPAREN; vl=integer_literal; `CPAREN -> vl
-|`OPAREN ; `MINUS; vl=integer_literal; `CPAREN -> -vl]];	
-          
 opt_measures: [[t=OPT measures -> un_option t []]];
 
 measures: [[`OSQUARE; vl=variance_list; `CSQUARE -> vl]];
@@ -1402,10 +1397,6 @@ variance_list: [[t=LIST1 cexp_with_bound SEP `COMMA -> t]];
 cexp_with_bound: 
   [[ t=cexp -> (t, None)
 	 | t1=cexp; `AT; t2=cexp -> (t1, Some t2)]];
-
-opt_escape_conditions: [[ t= OPT escape_conditions -> un_option t []]];
-
-escape_conditions: [[ `ESCAPE; `OSQUARE; t=condition_list; `CSQUARE -> t]];
 
 condition_list: [[t=pure_constr ->[t]]];
   

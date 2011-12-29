@@ -3561,7 +3561,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   (* let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx) *)
   (* ^ "\n proof = " ^ (string_of_proof proof) *)
   (* ^"\n\n") in *)
-  Gen.Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Gen.Debug.ho_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
@@ -3684,46 +3684,50 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 
   (** [Internal] Process duplicated pointers in an entail state **)
   let process_entail_state (es : entail_state) =
-	(* Extract the heap formula *)
-	let f = es.es_formula in
-	(* let _ = print_endline ("heap_entail_conjunct_lhs_x :: process_entail_state :: " ^ PR.string_of_formula f) in *)
-	let h,p = match f with
+    (* Extract the heap formula and pure formula *)
+	  let f = es.es_formula in
+	  (* let _ = print_endline ("heap_entail_conjunct_lhs_x :: process_entail_state :: " ^ PR.string_of_formula f) in *)
+	  let h,p = match f with
 	  | Base b -> (b.formula_base_heap,b.formula_base_pure)
 	  | Or _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OR formula in context!"
 	  | Exists b -> (b.formula_exists_heap,b.formula_exists_pure)
-	in
-	let eqns = ptr_equations_with_null p in
-	(* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ "," ^ (Cprinter.string_of_spec_var y) ^ "]")) eqns in *)
-	let eset = CP.EMapSV.build_eset eqns in
-	(* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ " == " ^ (String.concat "," (List.map Cprinter.string_of_spec_var y)) ^ "]\n")) eset in
+	  in
+	  let eqns = ptr_equations_with_null p in
+	  (* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ "," ^ (Cprinter.string_of_spec_var y) ^ "]")) eqns in *)
+	  let eset = CP.EMapSV.build_eset eqns in
+	  (* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ " == " ^ (String.concat "," (List.map Cprinter.string_of_spec_var y)) ^ "]\n")) eset in
 	   let _ = print_string "\n" in *)
-	(* Collect and sort the data and view predicates *)
-	let dv = collect_data_view h in
-	let dv = List.sort
-	  (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset)
-	  dv in
-	(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
-	(* Produce an action to perform *)
-	let action = generate_action dv eset in
-	(* Process the action to get the new entail state *)
-	let b = { formula_base_heap = HTrue;
-    formula_base_pure = Mcpure.mkMTrue no_pos;
-    formula_base_type = TypeTrue; 
-    formula_base_flow = mkTrueFlow ();
-    formula_base_branches = []; 
-    formula_base_label = None;
-    formula_base_pos = no_pos } in
-	let res = process_action 0 prog es conseq b b action [] is_folding pos in
-	(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
-	   let _ = print_endline (PR.string_of_entail_state es) in
-	   let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
-	   let _ = print_endline (PR.string_of_list_context lctx) in *)
-	(res, match action with
-	  | Context.M_Nothing_to_do _ -> false
-	  | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
-		(* let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in *)
+	  (* Collect and sort the data and view predicates *)
+	  let dv = collect_data_view h in
+	  let dv = List.sort
+	    (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset)
+	    dv in
+	  (* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
+	  (* Produce an action to perform *)
+	  let action = generate_action dv eset in
+	  (* Process the action to get the new entail state *)
+	  let b = { 
+      formula_base_heap = HTrue;
+      formula_base_pure = Mcpure.mkMTrue no_pos;
+      formula_base_type = TypeTrue; 
+      formula_base_flow = mkTrueFlow ();
+      formula_base_branches = []; 
+      formula_base_label = None;
+      formula_base_pos = no_pos } in
+	  let res = process_action 0 prog es conseq b b action [] is_folding pos in
+	  (*let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+	    let _ = print_endline (PR.string_of_entail_state es) in
+	    let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
+	    let _ = print_endline (PR.string_of_list_context lctx) in *)
+	  (res, match action with
+	    | Context.M_Nothing_to_do _ -> false
+	    | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
+		  (* let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in *)
 		true)
   in (* End of process_entail_state *)
+
+  (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
+  let ctx = Term.strip_lexvar_lhs ctx in
 
   (* Call the internal function to do the unfolding and do the checking *)
   let temp,dup = if !unfold_duplicated_pointers then
