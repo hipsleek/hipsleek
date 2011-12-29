@@ -19,42 +19,16 @@ ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
-relation A(bool x).
+//relation A(bool x).
 //relation B(bool x).
-
-lemma self::sll<n, sm, lg> <- self::ll<n>;
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 
 bool bubble(node xs)
-//     infer [A]
      requires xs::ll<n> & xs!=null
-     ensures xs::sll<n, s, l>  /*& A(res)*/  &!res
-		or  xs::ll<n> & res; //& B(res);
-
-
-{
-	int aux, tmp1;
-	bool tmp, flag; 
-
-	if (xs.next == null) {
-		return false;
-	}
-	else {    
-		tmp = bubble(xs.next);
-    int xv = xs.val;
-    int xnv = xs.next.val;
-		if (xv <= xnv) 
-			flag = false;
-		else {
-			xs.val = xnv;
-			xs.next.val = xv; //ERROR: lhs and rhs do not match
-			flag = true; 
-		}
-		return (flag || tmp);	
-	}
-}
+     ensures xs::sll<n, s, l>  & !res
+		or  xs::ll<n> & res;
 
 
 void bsort(node xs)

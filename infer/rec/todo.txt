@@ -63,3 +63,11 @@ bug1a.slk
 r1a-i.ss (to fix)
 WARNING : converting the following ivs_unk vars from UNK to RelT type
 WARNING (must fix) : ivs_unk = [R]
+
+NEW EXAMPLES WITH ISSUES: 
+========================
+dll-del.ss -> is it ok to infer a<2 in the precondition?
+bst-insert.ss -> fails (can i infer any relation between ma, lg, a?)
+bst-del.ss -> fails
+bsort-1.ss: the inference succeeds but the new rels look very big and some sub-relations seem to be repeating..
+
