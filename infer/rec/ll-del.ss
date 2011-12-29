@@ -13,30 +13,24 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 
-//relation A(int x, int y).
 relation B(int x, int y).
 
-/* delete a node from a doubly linked list */
-void delete(node x, int a)
-        infer @pre[B]  
-        requires x::dll<p, n> & n > a & a > 0 
-	    ensures x::dll<m> & B(m,n); //m=n-1;
-{
-	node tmp;
-	node tmp_null = null;
 
-	if (a == 1) 
+/* function to delete the a-th node in a singly linked list */
+void delete(node x, int a)
+        infer [a,B]
+	requires x::ll<n> & n > a //& a > 0 
+	ensures x::ll<m> & B(m,n);
+{
+        if (a == 1)
 	{
-		if (x.next.next != null)
-		{
-			x.next.next.prev = x;
-			tmp = x.next.next;
-			x.next = tmp;
-		}
-		else
-			x.next = tmp_null;
+		//node tmp = x.next.next;
+		//x.next = tmp;
+                  x.next = x.next.next;
 	}
-	else {
+	else
+	{
 		delete(x.next, a-1);
-	}
+	}	
 }
+
