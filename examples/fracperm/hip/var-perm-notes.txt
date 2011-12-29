@@ -1,0 +1,58 @@
+We introduce a variable type-state:
+
+    v@F denotes var will full access
+    v@Z denotes var with possibly zero access
+
+
+   v@F  |- v@Copy --> v@F
+   v@F  |- v@Ref --> v@Z
+
+   v@Z  |- v@Copy --> fail
+   v@Z  |- v@Ref --> fail
+
+(a) no two vars can be passed by ref to the same location
+
+(b) when a thread is given a pass-by-ref, the variable
+     cannot be accessed until the thread has terminated
+
+(c) for pass by value, a copy of the variable is passed to
+     onwards; but the original location still have full access
+
+(d)
+
+Representation
+
+  {v1,..,vn}@F with full permission
+
+        v \in S
+  --------------------
+  S@F |- v@C  --> S@F
+
+
+         v \in S
+  -----------------------
+  S@F |- v@R  --> S-{v}@F
+
+  S1@F or  S2@F ==> (S1 \cap S2)@F
+  S1@F and S2@F ==> (S1 \cup S2)@F
+
+========================================================
+
+Another Representation
+
+  {v1,..,vn}@Z which may have zero permission
+
+     not(v \in S)
+  --------------------
+  S@Z |- v@C  --> S@Z
+
+
+         not(v \in S)
+  -----------------------
+  S@Z |- v@R  --> S+{v}@F
+
+
+  S1@Z and S2@F ==> (S1-S2)@Z
+  S1@Z or  S2@Z  ==> (S1 \cup S2)@Z
+  S1@Z and S2@Z  ==> (S1 \cap S2)@Z
+
