@@ -9446,7 +9446,7 @@ let rec simplify_heap_x h p prog : CF.h_formula = match h with
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
     let disjs = CP.list_of_disjs pure_h in
-    let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in
+    let res = Inf.remove_contra_disjs disjs p in
     begin
       match res with
         | [] -> HFalse

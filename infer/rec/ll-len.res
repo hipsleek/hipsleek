@@ -19,9 +19,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase] & true &
 NEW RELS: [ ( n=0 & res=0) -->  R(res,n), ( R(r_24',n_539) & 0<=n_539 & -1+res=r_24' & (n=1 | 2<=n) & 1+n_539=n) -->  R(res,n)]
 
 Procedure length$node SUCCESS
-Stop Omega... 68 invocations 
+Stop Omega... 64 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.2 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.19 second(s)
 	Time spent in child processes: 0.04 second(s)

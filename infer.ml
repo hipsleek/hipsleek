@@ -586,25 +586,44 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
       Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option (pr_pair pr2 !print_pure_f)) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
+
+let remove_contra_disjs f1s f2 =
+  let helper c1 c2 = 
+    let conjs1 = CP.list_of_conjs c1 in
+    let conjs2 = CP.list_of_conjs c2 in
+    (Gen.BList.intersect_eq CP.equalFormula conjs1 conjs2) != []
+  in 
+  let new_f1s = List.filter (fun f -> helper f f2) f1s in
+  match new_f1s with
+    | [] -> f1s
+    | [hd] -> [hd]
+    | ls -> f1s
+  
+
+let lhs_simplifier lhs_h lhs_p =
+  let disjs = CP.list_of_disjs lhs_h in
+  let disjs = remove_contra_disjs disjs lhs_p in
+  trans_dnf (CP.mkAnd (disj_of_list disjs no_pos) lhs_p no_pos)
+
 (* TODO : proc below seems very inefficient *)
-let rec simplify_fml pf =
-  let helper fml =
-    let fml = CP.drop_rel_formula fml in
-    if TP.is_sat_raw fml then remove_dup_constraints fml
-    else CP.mkFalse no_pos
-  in
-  match pf with
-  | BForm _ -> if CP.isConstFalse pf then pf else helper pf
-  | And _ -> helper pf
-  | Or (f1,f2,l,p) -> mkOr (simplify_fml f1) (simplify_fml f2) l p
-  | Forall (s,f,l,p) -> Forall (s,simplify_fml f,l,p)
-  | Exists (s,f,l,p) -> Exists (s,simplify_fml f,l,p)
-  | _ -> pf
+(*let rec simplify_fml pf =                                         *)
+(*  let helper fml =                                                *)
+(*    let fml = CP.drop_rel_formula fml in                          *)
+(*    if TP.is_sat_raw fml then remove_dup_constraints fml          *)
+(*    else CP.mkFalse no_pos                                        *)
+(*  in                                                              *)
+(*  match pf with                                                   *)
+(*  | BForm _ -> if CP.isConstFalse pf then pf else helper pf       *)
+(*  | And _ -> helper pf                                            *)
+(*  | Or (f1,f2,l,p) -> mkOr (simplify_fml f1) (simplify_fml f2) l p*)
+(*  | Forall (s,f,l,p) -> Forall (s,simplify_fml f,l,p)             *)
+(*  | Exists (s,f,l,p) -> Exists (s,simplify_fml f,l,p)             *)
+(*  | _ -> pf                                                       *)
 
 (* a good simplifier is needed here *)
-let lhs_simplifier lhs_h lhs_p =
-    let lhs = simplify_fml (trans_dnf(mkAnd lhs_h lhs_p no_pos)) in
-    lhs
+(*let lhs_simplifier lhs_h lhs_p =                                   *)
+(*    let lhs = simplify_fml (trans_dnf(mkAnd lhs_h lhs_p no_pos)) in*)
+(*    lhs                                                            *)
 
 (* to filter relevant LHS term for selected relation rel *)
 (* requires simplify and should preserve relation and != *)

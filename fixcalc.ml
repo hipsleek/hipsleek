@@ -53,16 +53,20 @@ let rec fixcalc_of_b_formula b =
     | CP.Gt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gt ^ fixcalc_of_exp e2
     | CP.Gte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gte ^ fixcalc_of_exp e2
     | CP.Eq (e1, e2, _) -> 
-      if (is_self e1 & is_null e2) || (is_self e2 & is_null e1) then self ^ op_lte ^ "0"
+      if is_null e2 then fixcalc_of_exp e1 ^ op_lte ^ "0"
+      else
+      if is_null e1 then fixcalc_of_exp e2 ^ op_lte ^ "0"
       else fixcalc_of_exp e1 ^ op_eq ^ fixcalc_of_exp e2
     | CP.Neq (e1, e2, _) ->
-      if is_self e1 then 
-        let s = fixcalc_of_exp e2 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
+      if is_null e1 then 
+        let s = fixcalc_of_exp e2 in s ^ op_gt ^ "0"
       else
-      if is_self e2 then 
-        let s = fixcalc_of_exp e1 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
+      if is_null e2 then 
+        let s = fixcalc_of_exp e1 in s ^ op_gt ^ "0"
       else
-        fixcalc_of_exp e1 ^ op_neq ^ fixcalc_of_exp e2
+        let s = fixcalc_of_exp e1 in
+        let t = fixcalc_of_exp e2 in
+        "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
     | CP.RelForm (id,args,_) -> (CP.name_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
