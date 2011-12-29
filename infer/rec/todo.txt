@@ -1,3 +1,19 @@
+NEW ISSUES: 
+===========
+
+Can we try a simpler ll-del.ss example
+
+dll-del.ss -> is it ok to infer a<2 in the precondition?
+bst-insert.ss -> fails (can i infer any relation between ma, lg, a?)
+bst-del.ss -> fails
+bsort-1.ss: the inference succeeds but the new rels look very big and some sub-relations seem to be repeating..
+
+
+Why is FIXPOINT calculator not invoked? Has it failed
+for dll-del.ss example. Some message would be good.
+FIXPOINT calc is invoked for the other examples,
+like ll-len, ll-app and ll-const.
+
 current examples:
   - ll-<fn>.ss (for inference)
   - v-ll.ss (for verification)
@@ -15,14 +31,15 @@ bag examples:
  - bubble-sort-bag (provide verify and infer)
  - tree-bag (provide verify and infer)
 
+loop in bug1c.slk (where is the example now?)
 
-loop in bug1c.slk
-
-aggressive assumption filter using unsat checking
-(this cannot be used in tpdispatcher, as counter productive)
 
 FIXED
 =====
+// added in aggressive_safe
+aggressive assumption filter using unsat checking
+(this cannot be used in tpdispatcher, as counter productive)
+
 DONE
 post-process multiple result to remove false state with inferred pre
 
@@ -64,10 +81,4 @@ r1a-i.ss (to fix)
 WARNING : converting the following ivs_unk vars from UNK to RelT type
 WARNING (must fix) : ivs_unk = [R]
 
-NEW EXAMPLES WITH ISSUES: 
-========================
-dll-del.ss -> is it ok to infer a<2 in the precondition?
-bst-insert.ss -> fails (can i infer any relation between ma, lg, a?)
-bst-del.ss -> fails
-bsort-1.ss: the inference succeeds but the new rels look very big and some sub-relations seem to be repeating..
 
