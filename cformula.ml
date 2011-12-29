@@ -2960,10 +2960,11 @@ type entail_state = {
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* is below for VARIANCE checking *)
-  es_var_measures : CP.exp list;
-  es_var_label : int option;
-  es_var_ctx_lhs : CP.formula;
-  es_var_ctx_rhs : CP.formula;
+  es_var_measures : CP.exp list; (* lexical ordering *)
+  es_var_label : int option; (* phase number *)
+  es_var_ctx_lhs : CP.formula; (* original LHS? of variance*)
+  es_var_ctx_rhs : CP.formula; (* rhs where call is made? *)
+  (* subst used for phase inference *)
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   es_var_loc : loc;
 

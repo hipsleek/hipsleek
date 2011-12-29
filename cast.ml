@@ -22,6 +22,7 @@ type typed_ident = (typ * ident)
 
 and prog_decl = { 
     mutable prog_data_decls : data_decl list;
+    mutable prog_logical_vars : P.spec_var list;
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)

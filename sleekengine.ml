@@ -37,6 +37,7 @@ let iobj_def = { I.data_name = "Object";
 
 let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_global_var_decls = [];
+			  I.prog_logical_vars = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];
@@ -55,6 +56,7 @@ let cobj_def = { C.data_name = "Object";
 
 let cprog = ref { C.prog_data_decls = [];
 			  C.prog_view_decls = [];
+			  C.prog_logical_vars = [];
 				C.prog_rel_decls = []; (* An Hoa *)
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  C.prog_proc_decls = [];
