@@ -378,6 +378,7 @@ and check_exp prog proc ctx e0 label =
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
+  (* print_endline ("\ncheck_exp: ctx: " ^ (Cprinter.string_of_list_failesc_context ctx)); *)
   if (exp_to_check e0) then  
     (* let _ = if (List.exists CF.isAnyFalseFailescCtx ctx) then *)
     (*   print_string ("\n false at :"^(Cprinter.string_of_exp e0))  *)
@@ -600,8 +601,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
 	        let ctx1 = check_exp prog proc ctx e post_start_label in
+		    (* let _ = print_endline ("check_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
+		    (* let _ = print_endline ("check_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
+		    (* let _ = print_endline ("check_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
 	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
@@ -629,6 +633,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin
+            (* let _ = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
 		    let ctx = prune_ctx_failesc_list prog ctx in
             let ctx = list_failesc_context_and_unsat_now prog ctx in
             if str = "" then begin
@@ -861,7 +866,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               | None -> None,[]
                               | Some f -> Some f, x::res2))
                   in
-                  let res1,res2 = helper a tids in (*res is the thread, res2 is the rest*)
+                  let res1,res2 = helper a tids in (*res1 is the thread, res2 is the rest*)
                   match res1 with
                     | None ->
                         (*FAIL to find the thread with tid*)
@@ -871,7 +876,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some one_f ->
                         let base = CF.formula_of_one_formula one_f in
                         let es_f = CF.replace_formula_and res2 es_f in
-                        let new_f = CF.normalize 7 es_f base pos in
+                        (* let _ = print_endline ("LDK") in *)
+                        let new_f = CF.compose_formula es_f base one_f.F.formula_ref_vars CF.Flow_combine pos in
+                        (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                         let new_es = {es with CF.es_formula = new_f} in
                         (*merge*)
                         CF.Ctx new_es
@@ -971,7 +978,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
 
-                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
+                  (* let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
@@ -1002,6 +1009,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Tpdispatcher.restore_suppress_imply_output_state ();
                     (* print_endline "OK.\n" *)
                   end in 
+                (* let _ = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
                 res
               end
         | Seq ({exp_seq_type = te2;

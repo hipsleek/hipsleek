@@ -1009,6 +1009,7 @@ let rec string_of_sharp_flow sf = match sf with
 let pr_one_formula (f:one_formula) = 
   let h,p,br,th,lb,pos = split_one_formula f in
   fmt_string (" <thread="); (pr_spec_var th); fmt_string ("> ");
+  fmt_string (" <ref:"); fmt_string (string_of_spec_var_list f.formula_ref_vars); fmt_string ("> ");
   pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,br)
 
 let string_of_one_formula f = poly_string_of_pr  pr_one_formula f

@@ -141,6 +141,7 @@ and one_formula = {
     formula_pure : MCP.mix_formula;
     formula_branches : (branch_label * CP.formula) list;
     formula_thread : CP.spec_var;
+    formula_ref_vars : CP.spec_var list; (*to update ref vars when join*)
     formula_label : formula_label option;
     formula_pos : loc
 }
@@ -1055,6 +1056,7 @@ and mkOneFormula (h : h_formula) (p : MCP.mix_formula) b (tid : CP.spec_var) lbl
    formula_pure = p;
    formula_branches = b;
    formula_thread = tid;
+   formula_ref_vars = [];
    formula_label = lbl;
    formula_pos = pos;
   }
@@ -2193,8 +2195,10 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
 and one_formula_subst sst (f : one_formula) = 
   let base = formula_of_one_formula f in
   let rs = subst sst base in
+  let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
   let tid = CP.subst_var_par sst f.formula_thread in
-  (one_formula_of_formula rs tid)
+  let one_f = (one_formula_of_formula rs tid) in
+  {one_f with formula_ref_vars = ref_vars}
 
 (*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -2355,7 +2359,9 @@ and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_
   let base = formula_of_one_formula f in
   let rs = apply_one s base in
   let tid = subst_var s f.formula_thread in
-  (one_formula_of_formula rs tid)
+  let ref_vars = List.map (subst_var s) f.formula_ref_vars in
+  let one_f = (one_formula_of_formula rs tid) in
+  {one_f with formula_ref_vars = ref_vars}
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
@@ -4912,7 +4918,8 @@ and subst_var_exp (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else
 and apply_one_exp_one_formula ((fr, t) as s : (CP.spec_var * CP.exp)) (f : one_formula) = 
   let base = formula_of_one_formula f in
   let rs = apply_one_exp s base in (*TO CHECK: how about formula_thread*)
-  (one_formula_of_formula rs f.formula_thread)
+  let one_f = (one_formula_of_formula rs f.formula_thread) in
+  {one_f with formula_ref_vars = f.formula_ref_vars}
 
 and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 

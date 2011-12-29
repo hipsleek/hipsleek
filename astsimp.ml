@@ -4465,6 +4465,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                   CF.formula_pure = mix_p;
                   CF.formula_branches = new_br;
                   CF.formula_thread = id_var;
+                  CF.formula_ref_vars = [];
                   CF.formula_label = None;
                   CF.formula_pos = pos} in
     (new_f,type_f)
