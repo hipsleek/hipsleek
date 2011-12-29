@@ -1111,8 +1111,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
-                        let (_, fixpoint) = Fixcalc.compute_fixpoint rels in
-                        print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);
+                        let _ = 
+                          if rels = [] then ()
+                          else (
+                            let (_, fixpoint) = Fixcalc.compute_fixpoint rels in
+                            print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);)
+                        in
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
                         print_endline ("NEW RELS: "^new_rels);
