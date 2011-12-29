@@ -180,11 +180,17 @@ let compute_fixpoint input_pairs =
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-  (*print_endline ("RES: " ^ res);*)
-  let fixpoint = Parse_fix.parse_fix res in
-  (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-  (rel_fml, fixpoint)
-  
+  try 
+    let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+    (*print_endline ("RES: " ^ res);*)
+    let fixpoint = Parse_fix.parse_fix res in
+    (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
+    (rel_fml, fixpoint)
+  with _ -> 
+    let _ = report_error no_pos "compute_fixpoint#fixcalc.ml: fails as it requires a
+      fixpoint calculator to be located at /usr/local/bin/fixcalc_mod" in
+    (rel_fml, rel_fml)
+
+ 
 
 
