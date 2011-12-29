@@ -1444,6 +1444,7 @@ and pos_of_b_formula (b: b_formula) =
 	let (p, _) = b in
 	match p with
 	| LexVar (_, _, p) -> p
+	| SubAnn (_, _, p) -> p
 	| BConst (_, p) -> p
   | BVar (_, p) -> p
   | Lt (_, _, p) -> p
@@ -6686,6 +6687,19 @@ let drop_complex_ops =
         | _ -> None in
   (pr_weak,pr_strong)
 
+let memo_complex_ops stk bool_vars is_complex =
+  let pr b = match b with
+    | BVar(v,_) -> bool_vars # push v; None
+    | _ ->
+          if (is_complex b) then
+            let id = fresh_old_name "memo_rel_hole_" in
+            let v = SpecVar(Bool,id,Unprimed) in
+            let rel_f = BForm ((b,None),None) in
+            stk # push (v,rel_f);
+            Some (BForm ((BVar (v,no_pos),None),None))
+          else None 
+  in (pr, pr)
+
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_weak pr_strong f
@@ -6702,20 +6716,27 @@ let memoise_formula_ho is_complex (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let stk = new Gen.stack in
   let bool_vars = new Gen.stack in
-  let pr b = match b with
-    | BVar(v,_) -> bool_vars # push v; None
-    | _ ->
-          if (is_complex b) then
-            let id = fresh_old_name "memo_rel_hole_" in
-            let v = SpecVar(Bool,id,Unprimed) in
-            let rel_f = BForm ((b,None),None) in
-            stk # push (v,rel_f);
-            Some (BForm ((BVar (v,no_pos),None),None))
-          else None 
-  in 
-  let f = drop_formula pr pr f in
+  let (pr_w,pr_s) = memo_complex_ops stk bool_vars is_complex in
+  (* let pr b = match b with *)
+  (*   | BVar(v,_) -> bool_vars # push v; None *)
+  (*   | _ -> *)
+  (*         if (is_complex b) then *)
+  (*           let id = fresh_old_name "memo_rel_hole_" in *)
+  (*           let v = SpecVar(Bool,id,Unprimed) in *)
+  (*           let rel_f = BForm ((b,None),None) in *)
+  (*           stk # push (v,rel_f); *)
+  (*           Some (BForm ((BVar (v,no_pos),None),None)) *)
+  (*         else None  *)
+  (* in  *)
+  let f = drop_formula pr_w pr_s f in
   let ans = stk # get_stk in
   (f,ans, bool_vars # get_stk)
+
+let memoise_formula_ho isC (f:formula) : 
+      (formula * ((spec_var * formula) list) * (spec_var list)) =
+  let pr = !print_formula in
+  let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
+  Gen.Debug.no_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
 
 let memoise_rel_formula ivs (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -6727,8 +6748,8 @@ let memoise_rel_formula ivs (f:formula) :
 let memoise_rel_formula ivs (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
-  let pr2 = pr_pair pr (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_2 "memoise_rel_formula" (!print_svl) pr pr2 memoise_rel_formula ivs f
+  let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
+  Gen.Debug.no_2 "memoise_rel_formula" !print_svl pr pr2 (fun _ _ -> memoise_rel_formula ivs f) ivs f
 
 let memoise_all_rel_formula (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -6736,7 +6757,6 @@ let memoise_all_rel_formula (f:formula) :
     | RelForm (i,_,p) -> true
     | _ -> false
   in memoise_formula_ho pr f
-
 
 let mk_bvar_subs v subs =
   try
@@ -6779,7 +6799,7 @@ let restore_memo_formula subs bvars (f:formula) : formula =
 let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in
   let pr2 = (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_2 "restore_rel_formula" pr2 pr pr (fun _ _ -> restore_memo_formula subs bvars f) subs f
+  Gen.Debug.no_3 "restore_rel_formula" pr2 !print_svl pr pr (fun _ _ _ -> restore_memo_formula subs bvars f) subs bvars f
 
 let comb_disj nxs : formula =
   let rec helper nxs f =
@@ -6851,8 +6871,8 @@ let rec find_lexvar_formula (f: formula) : exp list =
   match f with
   | BForm (bf, _) -> find_lexvar_b_formula bf
   | And (f1, f2, _) ->
-      try find_lexvar_formula f1
-      with No_LexVar -> find_lexvar_formula f2
+      (try find_lexvar_formula f1
+      with _ -> find_lexvar_formula f2)
   (* Chanh: I am not sure whether a lexvar formula
    * can be appear in Or, Not, Forall and Exists? *)
   | _ -> raise No_LexVar
