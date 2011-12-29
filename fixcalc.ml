@@ -169,27 +169,29 @@ let compute_fixpoint input_pairs =
     | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos "Wrong format"
   in
-  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in
-  let rhs = fixcalc_of_pure_formula pf in
-  let input_fixcalc = name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
-    ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
-  in
-  (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
-  let output_of_sleek = "fixcalc.inf" in
-  let oc = open_out output_of_sleek in
-  Printf.fprintf oc "%s" input_fixcalc;
-  flush oc;
-  close_out oc;
-  try 
-    let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-    (*print_endline ("RES: " ^ res);*)
-    let fixpoint = Parse_fix.parse_fix res in
-    (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-    (rel_fml, fixpoint)
-  with _ -> 
-    let _ = report_error no_pos "compute_fixpoint#fixcalc.ml: fails as it requires a
-      fixpoint calculator to be located at /usr/local/bin/fixcalc_mod" in
-    (rel_fml, rel_fml)
+  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in  
+  try
+    let rhs = fixcalc_of_pure_formula pf in 
+    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
+      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
+    in
+    (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+    let output_of_sleek = "fixcalc.inf" in
+    let oc = open_out output_of_sleek in
+    Printf.fprintf oc "%s" input_fixcalc;
+    flush oc;
+    close_out oc;
+    try 
+      let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+      (*print_endline ("RES: " ^ res);*)
+      let fixpoint = Parse_fix.parse_fix res in
+      (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
+      (rel_fml, fixpoint)
+    with _ -> 
+      let _ = report_error no_pos "compute_fixpoint#fixcalc.ml: fails as it requires a
+        fixpoint calculator to be located at /usr/local/bin/fixcalc_mod" in
+      (rel_fml, rel_fml)
+  with _ -> (rel_fml, pf) 
 
  
 
