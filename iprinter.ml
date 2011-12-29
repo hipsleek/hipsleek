@@ -381,21 +381,19 @@ let rec string_of_ext_formula = function
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
-    | Iformula.EVariance {
-			Iformula.formula_var_label = label;
+  | Iformula.EVariance {
 			Iformula.formula_var_measures = measures;
-			Iformula.formula_var_escape_clauses = escape_clauses;
+			Iformula.formula_var_infer = infer_exps;
 			Iformula.formula_var_continuation = continuation;
 	  } ->
-	    let string_of_label = match label with
-		  | None -> ""
-		  | Some i -> "(" ^ (string_of_int i) ^ ")" in
-		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
-																			| None -> rs^(string_of_formula_exp expr)^" "
-																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
-		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
-		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
-		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
+		let string_of_measures = List.fold_left (fun rs (expr, bound) -> 
+      match bound with
+      | None -> rs^(string_of_formula_exp expr)^" "
+			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+    let string_of_infer_exps = List.fold_left (fun acc exp -> 
+      acc ^ " " ^ (string_of_formula_exp exp)) "" infer_exps in
+		let string_of_continuation = string_of_ext_formula continuation in
+    "EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer_exps ^ "} " ^ string_of_continuation 
  | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
    Iformula.formula_inf_post = postf;
    Iformula.formula_inf_continuation = continuation;} ->

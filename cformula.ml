@@ -86,10 +86,9 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
-		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
-		formula_var_escape_clauses : Cpure.formula list;
-	    formula_var_continuation : struc_formula;
+		formula_var_infer : Cpure.exp list;
+	  formula_var_continuation : ext_formula;
 		formula_var_pos : loc
 	}
 
@@ -245,15 +244,6 @@ let mkConstAnn i = match i with
   | _ -> report_error no_pos "Const Ann is greater than 2"  
 
 let mkPolyAnn v = PolyAnn v
-
-let empty_ext_variance_formula =
-	{
-		formula_var_label = None;
-		formula_var_measures = [];
-		formula_var_escape_clauses = [];
-	  formula_var_continuation = [];
-		formula_var_pos = no_pos;
-	}
 
 let rec has_variance_struc struc_f =
   List.exists (fun ef -> has_variance_ext ef) struc_f
@@ -754,8 +744,8 @@ and struc_formula_is_eq_flow (f:struc_formula) ff : bool =
         (formula_is_eq_flow b.formula_ext_base ff) && (struc_formula_is_eq_flow b.formula_ext_continuation ff)
 	| ECase b -> List.for_all (fun (_,c) -> struc_formula_is_eq_flow c ff) b.formula_case_branches 
 	| EAssume (x,b,y) -> formula_is_eq_flow b ff
-	| EVariance b -> struc_formula_is_eq_flow b.formula_var_continuation ff 
- | EInfer b -> helper b.formula_inf_continuation
+	| EVariance b -> helper b.formula_var_continuation
+  | EInfer b -> helper b.formula_inf_continuation
   in List.for_all helper f
 
 and formula_subst_flow (f:formula) ff : formula =
@@ -772,7 +762,7 @@ and struc_formula_subst_flow (f:struc_formula) ff : struc_formula =
 	| ECase b -> ECase {b with formula_case_branches = 
               List.map (fun (c1,c2) -> (c1,(struc_formula_subst_flow c2 ff))) b.formula_case_branches;}
 	| EAssume (x,b,y) -> EAssume (x,(formula_subst_flow b ff),y)
-	| EVariance b -> EVariance {b with formula_var_continuation = struc_formula_subst_flow  b.formula_var_continuation ff}
+	| EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
   in
   List.map helper f	
@@ -810,7 +800,7 @@ and flow_formula_of_struc_formula (f:struc_formula):flow_formula=
         let ls = List.map (fun (_,c2) -> (flow_formula_of_struc_formula c2)) b.formula_case_branches in
         fold_left_compare_flows ls
 	| EAssume (x,b,y) -> flow_formula_of_formula b
-	| EVariance b -> flow_formula_of_struc_formula b.formula_var_continuation
+	| EVariance b -> helper b.formula_var_continuation
  | EInfer b -> helper b.formula_inf_continuation
   in
   let flow_list = List.map helper f in
@@ -847,7 +837,7 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 		  formula_ext_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_ext_continuation}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2) -> (c1,(substitute_flow_in_struc_f to_flow from_flow  c2))) b.formula_case_branches;}
 	| EAssume (x,b,y) -> EAssume (x,(substitute_flow_in_f to_flow from_flow  b),y)
-	| EVariance b -> EVariance {b with formula_var_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_var_continuation}
+	| EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
   in
   List.map helper f	
@@ -1502,7 +1492,7 @@ and reset_struc_origins (f : struc_formula) =
 	  | EBase b -> EBase {b with formula_ext_base = reset_origins b.formula_ext_base ; 
 			formula_ext_continuation = helper b.formula_ext_continuation}
 	  | EAssume (x,b,y) ->  EAssume (x,(reset_origins b),y)
-	  | EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
+	  | EVariance b -> EVariance {b with formula_var_continuation = ext_f b.formula_var_continuation}
    | EInfer b -> EInfer {b with formula_inf_continuation = ext_f b.formula_inf_continuation}
 	in
 	List.map ext_f f in	
@@ -1528,7 +1518,7 @@ and add_struc_original (f : struc_formula) original =
 	  | EBase b -> EBase {b with formula_ext_base = add_original b.formula_ext_base original ; 
 			formula_ext_continuation = helper b.formula_ext_continuation}
 	  | EAssume (x,b,y) ->  EAssume (x,(add_original b original),y)
-	  | EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
+	  | EVariance b -> EVariance {b with formula_var_continuation = ext_f b.formula_var_continuation}
    | EInfer b -> EInfer {b with formula_inf_continuation = ext_f b.formula_inf_continuation}
 	in
 	List.map ext_f f in	
@@ -1565,9 +1555,8 @@ and struc_formula_set_lhs_case (f:struc_formula) (flag:bool) : struc_formula =
 	| ECase b -> ECase {b with formula_case_branches = 
               List.map (fun (c1,c2) -> (c1 ,(struc_formula_set_lhs_case c2 flag))) b.formula_case_branches;}
 	| EAssume (x,b,y) -> EAssume (x,(set_lhs_case b flag),y)
-	| EVariance b -> 
-        EVariance {b with 
-            formula_var_continuation = struc_formula_set_lhs_case  b.formula_var_continuation flag}
+	| EVariance b -> EVariance {b with 
+      formula_var_continuation = helper b.formula_var_continuation}
  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
   in
   List.map helper f	
@@ -1592,7 +1581,7 @@ and add_struc_origins (f:struc_formula) origs =
 	  | EBase b -> EBase {b with formula_ext_base = add_origins b.formula_ext_base origs ; 
 			formula_ext_continuation = helper b.formula_ext_continuation}
 	  | EAssume (x,b,y) ->  EAssume (x,(add_origins b origs),y)
-	  | EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
+	  | EVariance b -> EVariance {b with formula_var_continuation = ext_f b.formula_var_continuation}
    | EInfer b -> EInfer {b with formula_inf_continuation = ext_f b.formula_inf_continuation}
 	in
 	List.map ext_f f in	
@@ -1635,12 +1624,12 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 		  Gen.BList.difference_eq CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
 	| EAssume (x,b,_) -> fv b
 	| EVariance b ->
-		  let measures_fv = (List.concat (List.map (fun (expr, bound) -> match bound with
+		  let measures_fv = List.concat (List.map (fun (expr, bound) -> match bound with
 			| None -> (CP.afv expr)
-			| Some b_expr -> (CP.afv expr)@(CP.afv b_expr)) b.formula_var_measures)) in
-		  let escapes_fv = (List.concat (List.map (fun f -> CP.fv f) b.formula_var_escape_clauses)) in
-		  let continuation_fv = struc_fv b.formula_var_continuation in
-		  Gen.BList.remove_dups_eq (=) (measures_fv@escapes_fv@continuation_fv)
+			| Some b_expr -> (CP.afv expr)@(CP.afv b_expr)) b.formula_var_measures) in
+		  let infer_fv = List.concat (List.map CP.afv b.formula_var_infer) in
+		  let cont_fv = ext_fv b.formula_var_continuation in
+		  Gen.BList.remove_dups_eq (=) (measures_fv@infer_fv@cont_fv)
  | EInfer b -> 
     let continuation_fv = ext_fv b.formula_inf_continuation in
     Gen.BList.remove_dups_eq (=) continuation_fv
@@ -1661,9 +1650,9 @@ and struc_fv_infer (f: struc_formula) : CP.spec_var list =
       let measures_fv = (List.concat (List.map (fun (expr, bound) -> match bound with
         | None -> (CP.afv expr)
         | Some b_expr -> (CP.afv expr)@(CP.afv b_expr)) b.formula_var_measures)) in
-          let escapes_fv = (List.concat (List.map (fun f -> CP.fv f) b.formula_var_escape_clauses)) in
-          let continuation_fv = struc_fv_infer b.formula_var_continuation in
-          Gen.BList.remove_dups_eq (=) (measures_fv@escapes_fv@continuation_fv)
+          let infer_fv = List.concat (List.map CP.afv b.formula_var_infer) in
+          let continuation_fv = ext_fv b.formula_var_continuation in
+          Gen.BList.remove_dups_eq (=) (measures_fv@infer_fv@continuation_fv)
     | EInfer b -> 
       let infer_vars = b.formula_inf_vars in
       let continuation_fv = ext_fv b.formula_inf_continuation in
@@ -1675,7 +1664,7 @@ and struc_post_fv (f:struc_formula):Cpure.spec_var list =
 	| ECase b-> List.fold_left (fun a (_,c2)-> a@(struc_post_fv c2)) [] b.formula_case_branches
 	| EBase b->	struc_post_fv b.formula_ext_continuation
 	| EAssume (x,b,_)-> fv b
-	| EVariance b -> struc_post_fv b.formula_var_continuation
+	| EVariance b -> helper b.formula_var_continuation
  | EInfer b -> helper b.formula_inf_continuation
   in	
   List.fold_left (fun a c-> a@(helper c)) [] f
@@ -1920,11 +1909,12 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 	| EAssume (x,b,y)-> if (List.mem fr x) then f
 	  else EAssume (x, (apply_one s b),y)
 	| EVariance b -> EVariance ({ b with
-		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
-			| None -> ((CP.e_apply_one s expr), None)
-			| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures;
-		  formula_var_escape_clauses = List.map (fun f -> CP.apply_one s f) b.formula_var_escape_clauses;
-		  formula_var_continuation = apply_one_struc_pre s b.formula_var_continuation
+		  formula_var_measures = List.map (fun (expr, bound) -> 
+        match bound with
+        | None -> ((CP.e_apply_one s expr), None)
+			  | Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures;
+		  formula_var_infer = List.map (fun e -> CP.e_apply_one s e) b.formula_var_infer;
+		  formula_var_continuation = helper b.formula_var_continuation
 	  })
  | EInfer b -> EInfer {b with
     formula_inf_continuation = helper b.formula_inf_continuation}
@@ -1949,8 +1939,8 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
 			| None -> ((CP.e_apply_one s expr), None)
 			| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures;
-		  formula_var_escape_clauses = List.map (fun f -> CP.apply_one s f) b.formula_var_escape_clauses;
-		  formula_var_continuation = apply_one_struc s b.formula_var_continuation;
+		  formula_var_infer = List.map (fun e -> CP.e_apply_one s e) b.formula_var_infer;
+		  formula_var_continuation = helper b.formula_var_continuation;
 	  })
     | EInfer b -> EInfer {b with
       (*formula_inf_vars = List.map (subst_var s) b.formula_inf_vars;*)
@@ -2004,14 +1994,11 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
                 let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for EAssume not added \n") in
                 f
 	| EVariance b ->
-        let cont = add_mix_formula_to_struc_formula_x rhs_p b.formula_var_continuation in
-        let res =
-        EVariance ({ b with
-		  formula_var_measures = b.formula_var_measures;
-		  formula_var_escape_clauses = b.formula_var_escape_clauses;
-		  formula_var_continuation = cont;
-	  }) in
-        res
+      let cont = helper b.formula_var_continuation in
+      let res = EVariance ({ b with
+		    formula_var_continuation = cont;
+	    }) in
+      res
  | EInfer b ->
    let cont = helper b.formula_inf_continuation in
    let res = EInfer ({ b with
@@ -2655,8 +2642,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
 		  (List.hd f)
 	| EAssume (x,b,y)-> EAssume (x,(rename_bound_vars b),y)
 	| EVariance b -> EVariance { b with
-		  formula_var_escape_clauses = List.map (fun f -> Cpure.rename_top_level_bound_vars f) b.formula_var_escape_clauses;
-		  formula_var_continuation = rename_struc_bound_vars b.formula_var_continuation;
+		  formula_var_continuation = helper b.formula_var_continuation;
 	  }
  | EInfer b -> EInfer { b with
     (* Need to check again *)
@@ -2804,8 +2790,7 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 			  formula_ext_continuation = new_cont_f;
 		  }
 	| EVariance b -> EVariance { b with
-		  formula_var_continuation = rename_struc_clash_bound_vars b.formula_var_continuation f2
-	  }
+		  formula_var_continuation = helper b.formula_var_continuation }
  | EInfer b -> EInfer {b with
    (* Need to check again *)
    formula_inf_continuation = helper b.formula_inf_continuation}
@@ -2959,8 +2944,11 @@ type entail_state = {
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
-  (* is below for VARIANCE checking *)
+  (* For VARIANCE checking *)
   es_var_measures : CP.exp list; (* lexical ordering *)
+
+  (* Some fields below have not yet been necessary 
+   * They will be removed *)
   es_var_label : int option; (* phase number *)
   es_var_ctx_lhs : CP.formula; (* original LHS? of variance*)
   es_var_ctx_rhs : CP.formula; (* rhs where call is made? *)
@@ -4962,7 +4950,7 @@ let rec struc_to_formula_gen (f0:struc_formula):(formula*formula_label option li
 				  | [] -> [(f nf, nl)]
 				  | _ -> List.map (fun (c1,c2)-> (f c1,nl@c2)) lc)
 		| EAssume (_,b,_)-> [(b,[None])]
-		| EVariance b -> struc_to_formula_gen b.formula_var_continuation
+		| EVariance b -> ext_to_formula b.formula_var_continuation
   | EInfer b -> ext_to_formula b.formula_inf_continuation
 	in	
 	List.concat (List.map ext_to_formula f0) 
@@ -5069,7 +5057,7 @@ let rec struc_to_formula_x (f0:struc_formula):formula =
 				let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
 				nf
 		| EAssume (_,b,_)-> b 
-		| EVariance b -> struc_to_formula_x b.formula_var_continuation (* (mkTrue (mkTrueFlow ()) b.formula_var_pos) *)
+		| EVariance b -> ext_to_formula b.formula_var_continuation (* (mkTrue (mkTrueFlow ()) b.formula_var_pos) *)
   | EInfer b -> ext_to_formula b.formula_inf_continuation
 			in	
     formula_of_disjuncts (List.map ext_to_formula f0)
@@ -5102,7 +5090,7 @@ let rec struc_to_precond_formula (f0 : struc_formula) : formula =
 		let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
 			nf
 	| EAssume (_,b,_) -> (* Eliminate assume by making it true *) formula_of_heap HTrue no_pos 
-	| EVariance b -> struc_to_precond_formula b.formula_var_continuation 
+	| EVariance b -> ext_to_precond_formula b.formula_var_continuation 
  | EInfer b -> ext_to_precond_formula b.formula_inf_continuation
  in formula_of_disjuncts (List.map ext_to_precond_formula f0)
 (* An Hoa : end of pre-condition construction *)
@@ -5137,7 +5125,7 @@ and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula =
 	| EAssume (_,b,t)->  EAssume (w,(filter_quantifiers  w b),t)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(plug_ref_vars c2 w))) b.formula_case_branches;}
 	| EBase b -> EBase {b with formula_ext_continuation = plug_ref_vars b.formula_ext_continuation w}
-	| EVariance b -> EVariance {b with formula_var_continuation = plug_ref_vars b.formula_var_continuation w}
+	| EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
 	in 
 	List.map helper f0
@@ -5176,7 +5164,7 @@ and guard_vars (f:struc_formula) =
    Gen.BList.remove_dups_eq (=) (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
 	| EBase b -> Gen.BList.difference_eq (=) (guard_vars b.formula_ext_continuation) b.formula_ext_exists
 	| EAssume b-> []
-	| EVariance b -> guard_vars b.formula_var_continuation
+	| EVariance b -> helper b.formula_var_continuation
  | EInfer b -> helper b.formula_inf_continuation
  in
 	Gen.BList.remove_dups_eq (=) (List.fold_left (fun a ext-> a@(helper ext)) [] f)
@@ -5323,7 +5311,7 @@ let rec replace_struc_formula_label1 nl f =
         ) b.formula_case_branches in
       ECase { b with formula_case_branches = new_br;}
 	| EAssume (b1,b2,b3)-> EAssume (b1,(replace_formula_label1 nl b2),b3)
-	| EVariance b -> EVariance {b with formula_var_continuation = replace_struc_formula_label1 nl b.formula_var_continuation}
+	| EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
  in List.map helper f
 	
@@ -5692,12 +5680,14 @@ let rec transform_ext_formula f (e:ext_formula) :ext_formula =
 				 formula_ext_continuation = transform_struc_formula f b.formula_ext_continuation;
 				}
 		| EAssume (v,e,pid)-> EAssume (v,(transform_formula f e),pid)
-		| EVariance b -> let (_, _, _, _, f_exp) = f_p_t in EVariance { b with
-							formula_var_measures = List.map (fun (expr, bound) -> match bound with
-															   | None -> ((CP.transform_exp f_exp expr), None)
-															   | Some b_expr -> ((CP.transform_exp f_exp expr), Some (CP.transform_exp f_exp b_expr))) b.formula_var_measures;
-							formula_var_escape_clauses = List.map (fun f -> CP.transform_formula f_p_t f) b.formula_var_escape_clauses;
-							formula_var_continuation = transform_struc_formula f b.formula_var_continuation;
+		| EVariance b -> let (_, _, _, _, f_exp) = f_p_t in 
+        EVariance { b with
+				  formula_var_measures = List.map (fun (expr, bound) -> 
+            match bound with
+						| None -> ((CP.transform_exp f_exp expr), None)
+						| Some b_expr -> ((CP.transform_exp f_exp expr), Some (CP.transform_exp f_exp b_expr))) b.formula_var_measures;
+					formula_var_infer = List.map (fun e -> CP.transform_exp f_exp e) b.formula_var_infer;
+					formula_var_continuation = transform_ext_formula f b.formula_var_continuation;
 		  }
   | EInfer b -> EInfer {b with
     formula_inf_continuation = transform_ext_formula f b.formula_inf_continuation;}
@@ -5720,12 +5710,14 @@ let rec transform_ext_formula_w_perm f (permvar:cperm_var) (e:ext_formula) :ext_
 				 formula_ext_continuation = transform_struc_formula_w_perm f b.formula_ext_continuation permvar;
 				}
 		| EAssume (v,e,pid)-> EAssume (v,(transform_formula_w_perm f_f e permvar),pid)
-		| EVariance b -> let (_, _, _, _, f_exp) = f_p_t in EVariance { b with
-							formula_var_measures = List.map (fun (expr, bound) -> match bound with
-															   | None -> ((CP.transform_exp f_exp expr), None)
-															   | Some b_expr -> ((CP.transform_exp f_exp expr), Some (CP.transform_exp f_exp b_expr))) b.formula_var_measures;
-							formula_var_escape_clauses = List.map (fun f -> CP.transform_formula f_p_t f) b.formula_var_escape_clauses;
-							formula_var_continuation = transform_struc_formula_w_perm f b.formula_var_continuation permvar;}
+		| EVariance b -> let (_, _, _, _, f_exp) = f_p_t in 
+        EVariance { b with
+				  formula_var_measures = List.map (fun (expr, bound) -> 
+            match bound with
+						| None -> ((CP.transform_exp f_exp expr), None)
+						| Some b_expr -> ((CP.transform_exp f_exp expr), Some (CP.transform_exp f_exp b_expr))) b.formula_var_measures;
+					formula_var_infer = List.map (fun e -> CP.transform_exp f_exp e) b.formula_var_infer;
+					formula_var_continuation = transform_ext_formula_w_perm f permvar b.formula_var_continuation;}
   | EInfer b -> EInfer {b with
     formula_inf_continuation = transform_ext_formula_w_perm f permvar b.formula_inf_continuation;}
 
@@ -5775,18 +5767,20 @@ let rec trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formu
 		| EVariance b ->
 			let (_, _, f_pure_exp) = f_pure in
 			let (_, _, f_pure_exp_arg) = f_pure_arg in
-			let new_escape_clauses, val1 = List.split (List.map (fun f -> trans_pure f new_arg) b.formula_var_escape_clauses) in
-			let trans_pure_exp (e: CP.exp) (arg: 'a) : (CP.exp * 'b) = CP.trans_exp e arg f_pure_exp f_pure_exp_arg f_comb in
-			let new_measures, val2 = List.split (List.map (fun (expr, bound) -> match bound with
-												  | None -> let new_exp, v = (trans_pure_exp expr new_arg) in ((new_exp, None), v)
-												  | Some b_expr -> let new_exp, v1 = (trans_pure_exp expr new_arg) in
-																   let new_bexp, v2 = (trans_pure_exp b_expr new_arg) in
-																   ((new_exp, Some new_bexp), f_comb [v1; v2])) b.formula_var_measures) in
-			let new_cont, val3 = trans_struc b.formula_var_continuation new_arg in
+      let trans_pure_exp (e: CP.exp) (arg: 'a) : (CP.exp * 'b) = CP.trans_exp e arg f_pure_exp f_pure_exp_arg f_comb in
+
+			let new_infer_exps, val1 = List.split (List.map (fun e -> trans_pure_exp e new_arg) b.formula_var_infer) in
+			let new_measures, val2 = List.split (List.map (fun (expr, bound) -> 
+        match bound with
+        | None -> let new_exp, v = (trans_pure_exp expr new_arg) in ((new_exp, None), v)
+				| Some b_expr -> let new_exp, v1 = (trans_pure_exp expr new_arg) in
+				let new_bexp, v2 = (trans_pure_exp b_expr new_arg) in
+				((new_exp, Some new_bexp), f_comb [v1; v2])) b.formula_var_measures) in
+			let new_cont, val3 = trans_ext b.formula_var_continuation new_arg in
 			(EVariance { b with
-						  formula_var_measures = new_measures;
-						  formula_var_escape_clauses = new_escape_clauses
-					  }, f_comb (val1@val2@[val3]))
+        formula_var_measures = new_measures;
+        formula_var_infer = new_infer_exps;
+        formula_var_continuation = new_cont }, f_comb (val1@val2@[val3]))
         | EInfer b -> 
           let new_cont, val3 = trans_ext b.formula_inf_continuation new_arg in
           (EInfer {b with formula_inf_continuation = new_cont}, f_comb [val3])    
@@ -6272,12 +6266,8 @@ let rec add_post post f =
       ECase {b with formula_case_branches  = fcb1;}
   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
   | EVariance b ->
-	  let fec = if (List.length b.formula_var_continuation)>0 then 
-                  add_post post b.formula_var_continuation
-                else 
-                  let (svs,pf,(i_lbl,s_lbl)) = post in
-                  [EAssume (svs,pf,(fresh_formula_label s_lbl))] in 
-		EVariance {b with formula_var_continuation = fec}
+	  let fec = helper b.formula_var_continuation in		
+    EVariance {b with formula_var_continuation = fec}
   | EInfer b ->
     let fec = helper b.formula_inf_continuation in
     EInfer {b with formula_inf_continuation = fec}
@@ -6312,7 +6302,7 @@ and split_struc_formula_a (f0:struc_formula):(formula*formula) list =
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
 		| EAssume (x,b,_)-> [((mkTrue (mkNormalFlow ()) no_pos),b)]
-		| EVariance b -> split_struc_formula_a b.formula_var_continuation
+		| EVariance b -> ext_to_formula b.formula_var_continuation
   | EInfer b -> ext_to_formula b.formula_inf_continuation
 			in	
 	List.fold_left (fun a c-> a@(ext_to_formula c)) [] f0	
@@ -6340,8 +6330,8 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
         if l=[] then [] else [ECase {b with formula_case_branches = l}]
     | EAssume (x,b,l)-> if (List.mem l br) then [f] else []
     | EVariance b ->
-		    let l = filter_helper br b.formula_var_continuation in
-      if l=[] then [] else [EVariance {b with formula_var_continuation = l}]
+		    let l = filter_ext b.formula_var_continuation in
+        if l=[] then [] else [EVariance {b with formula_var_continuation = List.hd l}]
     | EInfer b ->
       let l = filter_ext b.formula_inf_continuation in
       (* Need to check again *)
@@ -6368,7 +6358,7 @@ let rec label_view (f0:struc_formula):struc_formula =
     | EBase b -> EBase{b with formula_ext_continuation = label_view b.formula_ext_continuation; formula_ext_base= label_formula b.formula_ext_base}
     | ECase b -> ECase{b with formula_case_branches = List.map (fun (c1,c2)->(c1,label_view c2)) b.formula_case_branches}
     | EAssume (x,b,l)-> EAssume (x,label_formula b,l)
-   	| EVariance b -> EVariance {b with formula_var_continuation = label_view b.formula_var_continuation}
+   	| EVariance b -> EVariance {b with formula_var_continuation = label_ext b.formula_var_continuation}
     | EInfer b -> EInfer {b with formula_inf_continuation = label_ext b.formula_inf_continuation}
   in
   List.map label_ext f0
@@ -6396,7 +6386,7 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
         let r = formula_br b.formula_ext_base in
         List.map (fun (c1,c2) -> ((push_exists l_e_v c1),c2) ) r 
 		| EAssume (_,b,_)-> []
-		| EVariance b -> get_view_branches b.formula_var_continuation
+		| EVariance b -> ext_formula_br b.formula_var_continuation
   | EInfer b -> ext_formula_br b.formula_inf_continuation
 	in	
   List.concat (List.map ext_formula_br f0)
@@ -6908,7 +6898,7 @@ let rec push_case_f pf sf =
   let rec helper f = match f with 
     | ECase f -> ECase {f with formula_case_branches = List.map (fun (c1,c2)-> (CP.mkAnd c1 pf no_pos, c2)) f.formula_case_branches}
     | EBase f -> EBase {f with formula_ext_continuation = push_case_f pf f.formula_ext_continuation}
-    | EVariance v -> EVariance {v with formula_var_continuation = push_case_f pf v.formula_var_continuation}
+    | EVariance v -> EVariance {v with formula_var_continuation = helper v.formula_var_continuation}
     | EInfer v -> EInfer {v with formula_inf_continuation = helper v.formula_inf_continuation}
     | EAssume _ -> f
   in
@@ -6963,9 +6953,9 @@ and norm_ext_spec (sp:ext_formula): ext_formula =
               | _ -> EBase {b with formula_ext_continuation = r}
           else  EBase {b with formula_ext_continuation = r}
     | EAssume(svl,f,fl) -> sp
-    | EVariance b -> 
-          let r = norm_specs b.formula_var_continuation in
-          EVariance {b with formula_var_continuation = r}
+    | EVariance b ->
+        let r = norm_ext_spec b.formula_var_continuation in
+        EVariance {b with formula_var_continuation = r}
     | EInfer b -> 
           (* eliminate EInfer where possible *)
           let r = norm_ext_spec b.formula_inf_continuation in
@@ -6986,17 +6976,9 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
 		      formula_ext_pos = no_pos
         }
     | EVariance b -> 
-          let c = b.formula_var_continuation in
-          let c =
-            begin
-            match c with
-            | [] -> sp
-            | [hd] -> hd
-            | _ -> report_error b.formula_var_pos ("Not supported nested case analysis")
-            end
-          in          
-          let r = merge_ext_pre c pre in
-          EVariance {b with formula_var_continuation = [r]}
+        let c = b.formula_var_continuation in
+        let r = merge_ext_pre c pre in
+        EVariance {b with formula_var_continuation = r}
     | EInfer b ->
           let c = b.formula_inf_continuation in
           let r = merge_ext_pre c pre in
@@ -7096,9 +7078,7 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
       let new_f = simplify_fml_ann f in
       let new_f = remove_lend new_f in
       EAssume(svl,new_f,fl)
-    | EVariance b -> 
-      let r = simplify_ann b.formula_var_continuation in
-      EVariance {b with formula_var_continuation = r}
+    | EVariance b -> report_error no_pos "[cformula.ml]: Do not expect EVariance at this level (simplify_ext_ann)."
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
 (*

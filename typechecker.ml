@@ -228,11 +228,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             in
 	        (CF.EBase {b with CF.formula_ext_base = new_base; CF.formula_ext_continuation = c}, [], rels, r) 
 	  | CF.EVariance b ->
-            Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
-			    CF.es_var_label = b.CF.formula_var_label}) ctx in
-		    let (c,pre,rel,f) = check_specs_infer_a prog proc nctx b.CF.formula_var_continuation e0 do_infer in
-	        (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel,f) 
+        (* TODO *)
+        Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+			  (*let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
+			    CF.es_var_label = b.CF.formula_var_label}) ctx in*)
+		    let (c,pre,rel,f) = do_spec_verify_infer prog proc ctx e0 do_infer b.CF.formula_var_continuation in
+	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel,f) 
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
             let postf = b.CF.formula_inf_post in
@@ -757,6 +758,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* Termination: Stripping the "variance" feature from org_spec
 				     if the call is not a recursive call *)
+            (*
 			      let stripped_spec = if ir then org_spec else
                     let rec strip_variance ls = match ls with
                       | [] -> []
@@ -768,7 +770,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           | _ -> spec::(strip_variance rest)
                     in strip_variance org_spec
                   in
-
+                  *)
+              let stripped_spec = org_spec in
                   (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
@@ -814,14 +817,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* Termination checking *)
                   let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
                   let _ = Debug.devel_pprint (str_debug_variance) pos in
-                  let _ = 
+                  (*let _ = 
                     if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
                       (* Termination: Add a false entail state for 
                        * unreachable recursive call if variance exists *)
                       var_checked_list := !var_checked_list @ [(
                           {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
                           CF.empty_ext_variance_formula)];
-                  in 
+                  in*) 
                   (*print_string (str_debug_variance ^ "\n");*) 
                   
                   (* TODO: call the entailment checking function in solver.ml *)
@@ -1271,7 +1274,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
     end else
       raise e
 
-
+(*
 let rec equalpf_a f1 f2 =
   let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
   let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
@@ -1366,7 +1369,7 @@ let variance_numbering ls g =
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
   else ls
-
+*)
 let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
@@ -1417,14 +1420,16 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
     let proc_ordered_by_call = proc_top @ proc_base in
     
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
+    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call)
+    (*
     let g = build_state_trans_graph !Solver.variance_graph in
     let cl = variance_numbering !Solver.var_checked_list g in
     if (List.length cl) != 0 then
       let _ = if !print_proof then begin Prooftracer.push_term (); end in
       let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
       if !print_proof then begin Prooftracer.pop_div (); end 
-    else () 
+    else ()
+    *)
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in

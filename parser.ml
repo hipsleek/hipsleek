@@ -1379,12 +1379,11 @@ spec:
 			F.ECase {
 						F.formula_case_branches = bl; 
 						F.formula_case_pos = get_pos_camlp4 _loc 1; }
-	 | `VARIANCE; il=opt_var_label; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
+	 | `VARIANCE; m=opt_measures; i=opt_measures_seq; s=SELF ->
 			F.EVariance {
-					F.formula_var_label = il;
 					F.formula_var_measures = m;
-					F.formula_var_escape_clauses = ec;
-					F.formula_var_continuation = [s];
+          F.formula_var_infer = i;
+					F.formula_var_continuation = s;
 					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

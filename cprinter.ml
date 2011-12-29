@@ -1242,26 +1242,19 @@ and pr_ext_formula  (e:ext_formula) =
 	              fmt_cut();
 	              wrap_box ("B",0) pr_formula b) b	 
 	| EVariance {
-		  formula_var_label = label;
 		  formula_var_measures = measures;
-		  formula_var_escape_clauses = escape_clauses;
+		  formula_var_infer = infer_exps;
 		  formula_var_continuation = cont;} ->
-	      let string_of_label = match label with
-		  | None -> ""
-		  | Some i -> "(" ^ (string_of_int i) ^ ")" in
-		  let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
-			| None -> rs^(string_of_formula_exp expr)^" "
-			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
-		  let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(poly_string_of_pr pr_pure_formula f)) "" escape_clauses in
+		  let string_of_measures = List.fold_left (fun rs (expr, bound) -> 
+        match bound with
+        | None -> rs^(string_of_formula_exp expr)^" "
+			  | Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+		  let string_of_infer =  List.fold_left (fun rs e -> rs^(string_of_formula_exp e)) "" infer_exps in
 		  fmt_open_vbox 2;
-		  fmt_string ("EVariance "^(string_of_label)^" [ "^string_of_measures^"] "
-          ^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ]"));
-          if not(Gen.is_empty(cont)) then
-		    begin
-			  fmt_cut();
-			  wrap_box ("B",0) pr_struc_formula cont;
-            end;
-          fmt_close();
+		  fmt_string ("EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer ^ "}");
+      fmt_cut();
+			wrap_box ("B",0) pr_ext_formula cont;
+      fmt_close();
     | EInfer {
       formula_inf_post = postf;
       formula_inf_vars = lvars;
@@ -2442,10 +2435,7 @@ let rec html_of_ext_formula f = match f with
 		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ (html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (if not(Gen.is_empty(cont)) then  html_of_struc_formula cont else "")
 	| EAssume (x,b,(y1,y2)) ->
 		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
-	| EVariance { formula_var_label = label;
-							formula_var_measures = measures;
-							formula_var_escape_clauses = escape_clauses;
-							formula_var_continuation = cont; } -> ""
+	| EVariance _ -> ""
  | EInfer _ -> ""
 
 and html_of_struc_formula f = 

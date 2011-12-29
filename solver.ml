@@ -58,9 +58,6 @@ let helper prog h_node = match h_node with
   let _ = transform_context f_ctx cl in
   ()
 
-let variance_graph = ref []
-let var_checked_list = ref []
-
 (*
   - count how many int constants are contained in one expression
   - if there are more than 1 --> means that we can simplify further (by performing the operation)
@@ -1163,8 +1160,8 @@ and prune_pred_struc_x prog (simp_b:bool) f =
         | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
               formula_ext_continuation = prune_pred_struc_x prog simp_b b.formula_ext_continuation}
         | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
-        | EVariance b -> EVariance {b with 
-              formula_var_continuation = prune_pred_struc_x prog simp_b b.formula_var_continuation}
+        | EVariance b -> EVariance {b with
+            formula_var_continuation = helper b.formula_var_continuation}
         | EInfer b -> EInfer {b with 
               formula_inf_continuation = helper b.formula_inf_continuation}
   in    
@@ -3374,6 +3371,8 @@ and heap_entail_conjunct_lhs_struc_x
               let c=e.Cformula.formula_inf_continuation in
               helper_inner_x ctx11 c
 	    | EVariance e ->
+          (* Temporarily disable variance checking *)
+          (*
               let es = match ctx11 with
                 | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
                 | Ctx es -> es in 
@@ -3404,7 +3403,8 @@ and heap_entail_conjunct_lhs_struc_x
 
               variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
               var_checked_list := !var_checked_list @ [(nes, e)];
-              inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
+              *)
+              helper_inner_x ctx11 e.Cformula.formula_var_continuation
     end 
 
   and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof =
@@ -3442,117 +3442,6 @@ and heap_entail_conjunct_lhs_struc_x
 		let a = snd (List.hd adv_u) in
 		print_string "sta1\n";
 	    process_unfold prog estate conseq a is_folding pos has_post pid*)
-
-and heap_entail_variance
-	  (prog : prog_decl) 
-	  (es : entail_state) 
-	  (e : ext_variance_formula) =
-  let pr1 = Cprinter.string_of_entail_state in
-  let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
-  Gen.Debug.no_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
-
-and heap_entail_variance_x
-	  (prog : prog_decl) 
-	  (es : entail_state) 
-	  (e : ext_variance_formula) =
-  (*let loc = e.formula_var_pos in*)
-  let loc = es.es_var_loc in
-  let ctx = (CF.Ctx es) in
-
-  if CF.isAnyFalseCtx ctx then (* Unreachable state *)
-	let _ = Debug.print_info "Termination" "Unreachable state" loc in
-	let _ = if !print_proof then Prooftracer.push_term_checking loc false in
-	let _ = if !print_proof then Prooftracer.pop_div () in ()
-  else
-	let _ = if !print_proof then Prooftracer.push_term_checking loc true in
-	let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
-		let str = Cprinter.string_of_formula_exp e in
-		if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
-
-  	let _ = Debug.print_info "Termination" 
-	  ("Transition from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ 
-		  " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc in
-
-	let var_label_rhs = match e.formula_var_label with
-	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	  | Some i -> i
-  	in
-
-	let var_label_lhs = match es.es_var_label with
-	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	  | Some i -> i
-	in
-	
-	if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then (* Case 1: In loop *)
-	  let _ = print_string ("Termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ 
-		  (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
-	  let lhs_measures = es.es_var_measures in
-	  let rhs_measures = e.formula_var_measures in
-	  let rec binding lhs_m rhs_m =
-		if ((List.length lhs_m) != (List.length rhs_m)) then
-		  report_error no_pos ("Termination: variance checking: LHS does not match RHS \n")
-		else match lhs_m with
-		  | [] -> []
-		  | h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
-	  let binding_measures = binding lhs_measures rhs_measures in
-	  
-	  let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
-		let (_, term_formula) = List.fold_right (fun (l,r) (flag,res) ->
-			let lower_bound = match (snd r) with
-			  | None -> report_error no_pos ("Termination: variance checking: error with lower bound in termination checking \n")
-			  | Some exp -> exp in
-			let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
-			let lexico_ranking_formula = 
-			  if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
-			  else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
-			let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in	
-			(false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
-		in
-		(*let _ = print_string ("\nTermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
-        let _ = if !print_proof then Prooftracer.push_entail_variance (es.CF.es_formula, term_formula) in     
-		(*let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-         * Tpdispatcher.suppress_imply_output () end in*)
-		let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false ctx [mkEBase term_formula loc] no_pos None) in
-		(*let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end
-         * in*)
-        let _ = if !print_proof then Prooftracer.pop_div(); in 
-        
-	  	let res = not (CF.isFailCtx rs) in
-		(*let _ = if !print_proof then Prooftracer.push_pop_entail_variance
-         * (es.CF.es_formula, term_formula, res) in*)
-		res
-	  in
-
-	  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
-		List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
-	  in
-	  (*
-		let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
-		if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
-	  *)
-	  let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
-	  
-	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
-	  let _ = if !print_proof then begin Prooftracer.pop_div (); end in
-	  
-	  if res then
-		Debug.print_info "Termination" 
-			("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
-	  else
-	    Debug.print_info "Termination" 
-			("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
-
-	else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
-	  Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
-	else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
-	  Debug.print_info "Termination" ("non-terminating state ") loc
-	else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
-	  (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-	  Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		  " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
-	else (* Case 5: Reverved loop transtion: might lead to non-terminating case *)
-	  Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		  " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Gen.Debug.no_2 "heap_entail_init"
@@ -9211,12 +9100,13 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	  in r
 	| EVariance e -> let r = match f2 with
 		| ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
-		| EBase _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
-		| EAssume _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
-        | EInfer _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
-		| EVariance e2 -> EVariance ({e with formula_var_measures = e.formula_var_measures@e2.formula_var_measures;
-			  formula_var_escape_clauses = e.formula_var_escape_clauses@e2.formula_var_escape_clauses; (* [ec1,ec2] means ec1 or ec2 *)
-			  formula_var_continuation = combine_struc e.formula_var_continuation e2.formula_var_continuation}) 
+		| EBase _ -> EVariance ({e with formula_var_continuation = combine_ext_struc e.formula_var_continuation f2})
+		| EAssume _ -> EVariance ({e with formula_var_continuation = combine_ext_struc e.formula_var_continuation f2})
+    | EInfer _ -> EVariance ({e with formula_var_continuation = combine_ext_struc e.formula_var_continuation f2})
+		| EVariance e2 -> EVariance ({e with 
+        formula_var_measures = e.formula_var_measures @ e2.formula_var_measures;
+			  formula_var_infer = e.formula_var_infer @ e2.formula_var_infer; 
+			  formula_var_continuation = combine_ext_struc e.formula_var_continuation e2.formula_var_continuation}) 
 	  in r
     | EInfer e -> let r = match f2 with
         | ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
