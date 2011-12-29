@@ -1062,7 +1062,7 @@ let simplify_omega f =
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
-    let omega_simplify f = Omega.simplify_clever f in
+    let omega_simplify f = Omega.simplify f in
     (* this simplifcation will first remove complex formula
        as boolean vars but later restore them *)
     if !external_prover then 

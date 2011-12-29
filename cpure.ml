@@ -6750,7 +6750,7 @@ let memoise_formula_ho isC (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
   let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
-  Gen.Debug.no_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
+  Gen.Debug.ho_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
 
 let memoise_rel_formula ivs (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =

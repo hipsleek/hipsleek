@@ -53,5 +53,5 @@ type: 'a ->
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state_short in
-   Gen.Debug.ho_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
+   Gen.Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
       (fun _ _ -> trans_lexvar_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
