@@ -7145,4 +7145,7 @@ let lax_impl_of_post f =
   let impl_vs = CP.intersect evs hvs in
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
-  
+
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs

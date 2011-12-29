@@ -6909,3 +6909,6 @@ let rec syn_simplify_lexvar bnd_measures =
       else if (is_lt eq_spec_var s d) then [(s,d)]
       else bnd_measures 
 
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (type_of_spec_var v) != RelT) vs
