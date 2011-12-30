@@ -27,3 +27,14 @@ int goo (ref int x, ref int y)
    y = y - 2;
    return x;
 }
+//[39;35;31;36;32;33]
+int test1(ref int x, ref int y)
+  requires x = 1 & y = 6
+  ensures  res > 0;//'
+{
+  if (x>0){
+   y = x;
+   y = y - 2;
+  }
+   return y;
+}
