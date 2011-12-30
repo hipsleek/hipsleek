@@ -231,7 +231,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
         Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
         (* Termination: Add termination arguments into context *)
 			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
-          CF.es_var_measures = CF.lexvar_of_evariance b}) ctx in
+          CF.es_var_measures = Some (CF.measures_of_evariance b)}) ctx in
 		    let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_var_continuation in
 	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) 
       | CF.EInfer b ->

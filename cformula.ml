@@ -262,7 +262,13 @@ let lexvar_of_evariance (v: ext_variance_formula) : CP.formula =
 	let vm = fst (List.split v.formula_var_measures) in
 	let vi = v.formula_var_infer in
   let pos = v.formula_var_pos in
-  CP.mkPure (CP.mkLexVar vm vi pos) 	
+  CP.mkPure (CP.mkLexVar vm vi pos) 
+
+let measures_of_evariance (v: ext_variance_formula) : (CP.exp list * CP.exp list) =
+  let vm = fst (List.split v.formula_var_measures) in
+	let vi = v.formula_var_infer in
+  (vm, vi)
+
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -2951,7 +2957,7 @@ type entail_state = {
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For VARIANCE checking *)
-  es_var_measures : CP.formula; (* Lexical ordering - It should only be a LexVar *)
+  es_var_measures : (CP.exp list * CP.exp list) option; (* Lexical ordering *)
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
@@ -3141,7 +3147,7 @@ let empty_es flowt pos =
   es_rhs_eqset = [];
   es_path_label  =[];
   es_prior_steps  = [];
-  es_var_measures = CP.mkPure (CP.mkLexVar [] [] pos);
+  es_var_measures = None;
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;

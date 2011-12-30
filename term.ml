@@ -5,14 +5,46 @@ module DD = Debug
 open Gen.Basic
 open Globals
 
+(* To find a LexVar formula *)
+exception LexVar_Not_found;;
+
+let find_lexvar_b_formula (bf: CP.b_formula) : (CP.exp list * CP.exp list) =
+  let (pf, _) = bf in
+  match pf with
+  | CP.LexVar (el, il, _) -> (el, il)
+  | _ -> raise LexVar_Not_found
+
+let rec find_lexvar_formula (f: CP.formula) : (CP.exp list * CP.exp list) =
+  match f with
+  | CP.BForm (bf, _) -> find_lexvar_b_formula bf
+  | CP.And (f1, f2, _) ->
+      (try find_lexvar_formula f1
+      with _ -> find_lexvar_formula f2)
+  (* Chanh: I am not sure whether a lexvar formula
+   * can be appear in Or, Not, Forall and Exists? *)
+  | _ -> raise LexVar_Not_found
+
+(* To syntactic simplify LexVar formula *)  
+let rec syn_simplify_lexvar bnd_measures =
+  match bnd_measures with
+  | [] -> []
+  | (s,d)::rest -> 
+      if (CP.eqExp s d) then syn_simplify_lexvar rest
+      else if (CP.is_gt CP.eq_spec_var s d) then []
+      else if (CP.is_lt CP.eq_spec_var s d) then [(s,d)]
+      else bnd_measures 
+
+let find_lexvar_es (es: CF.entail_state) =
+  match es.CF.es_var_measures with
+  | None -> raise LexVar_Not_found
+  | Some (el, il) -> (el, il)
+
 (* To handle LexVar formula *)
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   try
-    let ante = MCP.pure_of_mix lhs_p in
     let conseq = MCP.pure_of_mix rhs_p in
-    let dst_lv = CP.find_lexvar_formula conseq in (* [d1,d2] *)
-    (*let src_lv = CP.find_lexvar_formula ante in (* [s1,s2] *)*)
-    let src_lv = CP.find_lexvar_formula (estate.CF.es_var_measures) in
+    let dst_lv = fst (find_lexvar_formula conseq) in (* [d1,d2] *)
+    let src_lv = fst (find_lexvar_es estate) in
     (* Filter LexVar in RHS *)
     let rhs_ls = CP.split_conjunctions conseq in
     let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
@@ -20,7 +52,7 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
     (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
     let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
     (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
-    let bnd_measures = CP.syn_simplify_lexvar bnd_measures in
+    let bnd_measures = syn_simplify_lexvar bnd_measures in
     if bnd_measures = [] then (estate, lhs_p, MCP.mix_of_pure conseq)
     else
       (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
@@ -80,7 +112,7 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
     | [] -> CF.Ctx es
     | lv::[] -> CF.Ctx { es with 
       CF.es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
-      CF.es_var_measures = lv; 
+      CF.es_var_measures = Some (find_lexvar_formula lv); 
     }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in CF.transform_context es_strip_lexvar_lhs ctx

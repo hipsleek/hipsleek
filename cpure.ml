@@ -6874,32 +6874,4 @@ let simplify_disj (f:formula) : formula =
   let pr = !print_formula in
   Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f
 
-(* To find a LexVar formula *)
-exception No_LexVar;;
-
-let find_lexvar_b_formula (bf: b_formula) : exp list =
-  let (pf, _) = bf in
-  match pf with
-  | LexVar (el, _, _) -> el
-  | _ -> raise No_LexVar
-
-let rec find_lexvar_formula (f: formula) : exp list =
-  match f with
-  | BForm (bf, _) -> find_lexvar_b_formula bf
-  | And (f1, f2, _) ->
-      (try find_lexvar_formula f1
-      with _ -> find_lexvar_formula f2)
-  (* Chanh: I am not sure whether a lexvar formula
-   * can be appear in Or, Not, Forall and Exists? *)
-  | _ -> raise No_LexVar
-
-(* To syntactic simplify LexVar formula *)  
-let rec syn_simplify_lexvar bnd_measures =
-  match bnd_measures with
-  | [] -> []
-  | (s,d)::rest -> 
-      if (eqExp s d) then syn_simplify_lexvar rest
-      else if (is_gt eq_spec_var s d) then []
-      else if (is_lt eq_spec_var s d) then [(s,d)]
-      else bnd_measures 
 
