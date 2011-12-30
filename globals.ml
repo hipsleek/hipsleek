@@ -1,5 +1,8 @@
 (* global types and utility functions *)
 
+type ('a,'b) twoAns = 
+  | FstAns of 'a
+  | SndAns of 'b
 
 type ident = string
 type constant_flow = string

@@ -3783,12 +3783,15 @@ let rec add_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let add_infer_pure_to_estate cp es =
+  let old_cp = es.es_infer_pure in
+  let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c old_cp)) cp in
+        {es with es_infer_pure = es.es_infer_pure@new_cp;}
+
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-      | Ctx es -> 
-        let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_pure)) cp in
-        Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
+      | Ctx es -> Ctx (add_infer_pure_to_estate cp es)
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 

@@ -128,17 +128,20 @@ Inferred Pure:[ !(m=2 & 1<=n)]
 {FLOW,(17,18)=__norm}
 */
 
+// LOOPING!
 // (13) 
-infer [p] x::node<p,q> & m>2  |- x::node<a,b> & a>m.
-print residue.
+//infer [p] x::node<p,q> & m>2  |- x::node<a,b> & a>m.
+//print residue.
 
+// LOOPING!
 // (14) 
-infer [p] m>2  |- p>m & m>4.
-print residue.
+//infer [p] m>2  |- p>m & m>4.
+//print residue.
 
+// LOOPING!
 // (15) 
-infer [m] m>2  |- p>m & m>4.
-print residue.
+//infer [m] m>2  |- p>m & m>4.
+//print residue.
 
 // (16) 
 infer [p,m] m>2  |- p>m & m>4.

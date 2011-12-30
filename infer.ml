@@ -157,23 +157,23 @@ let init_vars ctx infer_vars iv_rel orig_vars =
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
-(*let conv_infer_heap hs =
-  let rec helper hs h = match hs with
-    | [] -> h
-    | x::xs -> 
-      let acc = 
-	    Star({h_formula_star_h1 = x;
-	      h_formula_star_h2 = h;
-	      h_formula_star_pos = no_pos})
-        in helper xs acc in
-  match hs with
-    | [] -> HTrue 
-    | x::xs -> helper xs x
+(* let conv_infer_heap hs = *)
+(*   let rec helper hs h = match hs with *)
+(*     | [] -> h *)
+(*     | x::xs ->  *)
+(*       let acc =  *)
+(* 	    Star({h_formula_star_h1 = x; *)
+(* 	      h_formula_star_h2 = h; *)
+(* 	      h_formula_star_pos = no_pos}) *)
+(*         in helper xs acc in *)
+(*   match hs with *)
+(*     | [] -> HTrue  *)
+(*     | x::xs -> helper xs x *)
 
-let extract_pre_list_context x = 
-  (* TODO : this has to be implemented by extracting from es_infer_* *)
-  (* print_endline (!print_list_context x); *)
-  None*)
+(* let extract_pre_list_context x =  *)
+(*   (\* TODO : this has to be implemented by extracting from es_infer_* *\) *)
+(*   (\* print_endline (!print_list_context x); *\) *)
+(*   None *)
 
 let to_unprimed_data_root aset h =
   let r = h.h_formula_data_node in
@@ -511,10 +511,10 @@ let rec simplify_disjs pf lhs_rhs =
   | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
   | _ -> pf
 
-let infer_pure_m estate lhs_xpure rhs_xpure pos =
-  if no_infer estate then None
+let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
+  if no_infer estate then (None,None)
   else
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
@@ -544,65 +544,73 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           else
             simplify new_p iv
         in
-        if CP.isConstTrue new_p || CP.isConstFalse new_p then None
+        if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
         else
           let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
           let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
           let new_p_conjs = CP.list_of_conjs new_p in
           let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
             (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-          if CP.isConstTrue new_p || CP.isConstFalse new_p then None
+          if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
           else
           (* Thai: Should check if the precondition overlaps with the orig ante *)
           (* And simplify the pure in the residue *)
-          let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
-(*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *)
-(*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*)
-          let args = List.filter (fun v -> if is_substr "inf" (name_of_spec_var v) then true else false) (CP.fv new_p) in
-          let new_iv = CP.diff_svl iv args in
-          let new_estate =
-            {estate with 
-                es_formula = new_es_formula;
-                (* es_infer_pure = estate.es_infer_pure@[new_p]; *)
-                es_infer_vars = new_iv
-            }
-          in
-          Some (new_estate,new_p)
+(*           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in *)
+(* (\*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *\) *)
+(* (\*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*\) *)
+(*           let args = List.filter (fun v -> if is_substr "inf" (name_of_spec_var v) then true else false) (CP.fv new_p) in *)
+(*           let new_iv = CP.diff_svl iv args in *)
+(*           let new_estate = *)
+(*             {estate with  *)
+(*                 es_formula = new_es_formula; *)
+(*                 (\* es_infer_pure = estate.es_infer_pure@[new_p]; *\) *)
+(*                 es_infer_vars = new_iv *)
+(*             } *)
+(*           in *)
+          (None,Some new_p)
     else
-      let check_sat = TP.is_sat_raw lhs_xpure in
-      if not(check_sat) then None
-      else      
-        let lhs_simplified = simplify lhs_xpure iv in
-        let args = CP.fv lhs_simplified in
-        let exists_var = CP.diff_svl args iv in
-        let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in
-        (*let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in*)
-        let new_p = simplify_contra (CP.mkNot_s lhs_simplified) iv in
-        if CP.isConstFalse new_p || CP.isConstTrue new_p then None
-        else
-(*          let args = CP.fv new_p in *)
-          (* let new_iv = (CP.diff_svl iv args) in *)
-          let new_estate =
-            {estate with 
-                es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos
-                (* ;es_infer_pure = estate.es_infer_pure@[new_p] *)
-                    (* ;es_infer_vars = new_iv *)
-            }
-          in
-          Some (new_estate,new_p)
+      (* contradiction detected *)
+      (infer_lhs_contra_estate estate lhs_xpure_orig pos "ante contradict with conseq",None)
+(*       let check_sat = TP.is_sat_raw lhs_xpure in *)
+(*       if not(check_sat) then None *)
+(*       else *)
+(*         let lhs_simplified = simplify lhs_xpure iv in *)
+(*         let args = CP.fv lhs_simplified in *)
+(*         let exists_var = CP.diff_svl args iv in *)
+(*         let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in *)
+(*         (\*let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in*\) *)
+(*         let new_p = simplify_contra (CP.mkNot_s lhs_simplified) iv in *)
+(*         if CP.isConstFalse new_p || CP.isConstTrue new_p then None *)
+(*         else *)
+(* (\*          let args = CP.fv new_p in *\) *)
+(*           (\* let new_iv = (CP.diff_svl iv args) in *\) *)
+(*           let new_estate = *)
+(*             {estate with *)
+(*                 es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos *)
+(*                 (\* ;es_infer_pure = estate.es_infer_pure@[new_p] *\) *)
+(*                     (\* ;es_infer_vars = new_iv *\) *)
+(*             } *)
+(*           in *)
+(*           Some (new_estate,new_p) *)
+(*
+  Cformula.entail_state ->
+  MCP.mix_formula (LHS) ->
+  MCP.mix_formula (RHS) ->
+  Globals.loc -> (Cformula.entail_state * CP.formula) option
+*)
 
 let infer_pure_m i estate lhs_xpure rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
+  let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
       Gen.Debug.no_3_num i "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
-          (add_str "(new es,inf pure) " (pr_option (pr_pair pr2 !print_pure_f))) 
+          (add_str "(new es,inf pure) " (pr_pair (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p)))
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
-
 
 let remove_contra_disjs f1s f2 =
   let helper c1 c2 = 
