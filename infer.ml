@@ -448,7 +448,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.to_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -520,6 +520,8 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   else
     let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
+    (* below will help greatly reduce the redundant information inferred from state *)
+    let (lhs_xpure,_) = CP.assumption_filter lhs_xpure rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
@@ -615,7 +617,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Gen.Debug.no_3 "infer_pure_m" 
+      Gen.Debug.to_3 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
