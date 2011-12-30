@@ -1,0 +1,18 @@
+/*
+Syntatically correct
+Not yet implement the semantics
+*/
+
+
+//test normalize
+checkentail @zero[v1,v2] & @zero[v1,v2] & @p_val[x1,x2] & @p_val[x1,x3] & @p_ref[x4,x5] & @p_ref[x6,x5] & @full[x7,x8] & @full[x9,x10] |- false.
+//   --> @zero[v1,v2].
+
+//checkentail @zero[v1,v2] |- @p_val[x1,x2]. 
+//   --> @zero[v1,v2].
+
+//checkentail v1'=x1 & @zero[v1,v2] |- @p_val[x1,x2].
+//   --> @zero[v1,v2].
+
+//checkentail @zero[v1,v2] |- @p_ref[x1].
+
