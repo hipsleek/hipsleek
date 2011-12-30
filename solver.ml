@@ -5543,14 +5543,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let split_ante1 = new_ante1 in
         (* let lhs_xpure = split_ante1 in *)
         (* let rhs_xpure = split_conseq in *)
-        let (ip1,ip2) = Inf.infer_pure_m 1 estate split_ante1 split_conseq  pos in
-        begin
-          match ip1 with
-            | Some(es,p) -> 
-                  stk_inf_pure # push p;
-                  stk_estate # push es
-            | None -> ()
-        end;
         (* match ip1 with *)
         (*   | Some(es,p) -> *)
         (*   | None -> *)
@@ -5566,22 +5558,33 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    (*       let res1,res2,re3 =  *)
 	    (* ======= *)
         let i_res1,i_res2,i_res3 = 
-          if (MCP.isConstMTrue rhs_p) || not(stk_estate # is_empty) then (true,[],None)
+          if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
           (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) 
         in
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
-          else match ip2 with
-            | None -> i_res1,i_res2,i_res3
-            | Some pf ->
-                  stk_inf_pure # push pf;
-                  let new_pf = MCP.mix_of_pure pf in
-                  let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
-                  let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
-                  let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-                  (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) 
-        in
+          else 
+            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_conseq  pos in
+            begin
+              match ip1 with
+                | Some(es,p) -> 
+                      stk_inf_pure # push p;
+                      stk_estate # push es;
+                      (true,[],None)
+                | None ->
+                      begin
+                        match ip2 with
+                          | None -> i_res1,i_res2,i_res3
+                          | Some pf ->
+                                stk_inf_pure # push pf;
+                                let new_pf = MCP.mix_of_pure pf in
+                                let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
+                                let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
+                                let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
+                                (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset)
+                      end
+            end in
         let res1,res2,re3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list)) =
           if i_res1 = false && branch_id = "" then
             begin

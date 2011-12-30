@@ -599,13 +599,13 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
-let infer_pure_m i estate lhs_xpure rhs_xpure pos =
+let infer_pure_m estate lhs_xpure rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Gen.Debug.no_3_num i "infer_pure_m" 
+      Gen.Debug.no_3"infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
