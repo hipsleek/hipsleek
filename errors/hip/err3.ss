@@ -1,3 +1,4 @@
+//./hip errors/hip/err3.ss -tp redlog
 //VALID
 int foo1(int x, int y)
   requires y>0 & x > 1
