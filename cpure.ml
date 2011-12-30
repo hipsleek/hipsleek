@@ -5704,42 +5704,65 @@ module ArithNormalizer = struct
   let norm_bform_neq e1 e2 l = 
     norm_bform_relation (<>) e1 e2 l (fun x -> Neq x)
 
+  let test_null e1 e2 =
+    match e1 with
+      | Null _ -> Some (e2,e1)
+      | _ -> (match e2 with
+          | Null _ -> Some (e1,e2) 
+          | _ -> None
+        )
+
   let norm_b_formula (bf: b_formula) : b_formula option =
 	let (pf,il) = bf in
 	let npf = match pf with
-    | Lt (e1, e2, l) -> 
-        let e1 = Add (e1, IConst(1, no_pos), l) in 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Lte (e1, e2, l) -> 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Gt (e1, e2, l) -> 
-        let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Gte (e1, e2, l) ->  
-        let lhs, rhs = norm_two_sides e2 e1 in
-        Some (norm_bform_leq lhs rhs l)
-    | Eq (e1, e2, l) ->
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_eq lhs rhs l)
-    | Neq (e1, e2, l) -> 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_neq lhs rhs l)
-    | _ -> None
+      | Lt (e1, e2, l) -> 
+            let e1 = Add (e1, IConst(1, no_pos), l) in 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Lte (e1, e2, l) -> 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Gt (e1, e2, l) -> 
+            let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Gte (e1, e2, l) ->  
+            let lhs, rhs = norm_two_sides e2 e1 in
+            Some (norm_bform_leq lhs rhs l)
+      | Eq (e1, e2, l) ->
+            begin
+              match test_null e1 e2 with
+                | None ->
+                      let lhs, rhs = norm_two_sides e1 e2 in
+                      Some (norm_bform_eq lhs rhs l)
+                | Some (e1,e2) -> Some (Eq (e1,e2,l))
+            end
+      | Neq (e1, e2, l) -> 
+            begin
+              match test_null e1 e2 with
+                | None ->
+                      let lhs, rhs = norm_two_sides e1 e2 in
+                      Some (norm_bform_neq lhs rhs l)
+                | Some (e1,e2) -> Some (Neq (e1,e2,l))
+            end
+      | _ -> None
 	in match npf with
 	  | None -> None
 	  | Some pf -> Some (pf,il)
 
-  let norm_formula_0 (f: formula) : formula =
+  let norm_formula (f: formula) : formula =
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
-  let norm_formula(*_debug*) f =
-    Gen.Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula
-        norm_formula_0 f
 
 end (* of ArithNormalizer module's definition *)
+
+let norm_form f = ArithNormalizer.norm_formula f 
+
+let norm_form f =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "cpure::norm_formula" 
+      pr pr
+      norm_form f
 
 let has_var_exp e0 =
   let f e = match e with

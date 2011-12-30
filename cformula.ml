@@ -3785,8 +3785,11 @@ let rec add_pre_heap ctx =
 
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
-  let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c old_cp)) cp in
-        {es with es_infer_pure = es.es_infer_pure@new_cp;}
+  let new_cp = List.concat (List.map CP.split_conjunctions cp) in
+  let new_cp = List.fold_left (fun a n -> 
+      let n = CP.norm_form n in
+      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
+        {es with es_infer_pure = new_cp;}
 
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
