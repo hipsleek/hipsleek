@@ -594,7 +594,12 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
-      Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option (pr_pair pr2 !print_pure_f)) 
+  let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
+      Gen.Debug.no_3_num i "infer_pure_m" 
+          (add_str "estate " pr0) 
+          (add_str "lhs xpure " pr1) 
+          (add_str "rhs xpure " pr1)
+          (add_str "(new es,inf pure) " (pr_option (pr_pair pr2 !print_pure_f))) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
 
@@ -819,6 +824,18 @@ let infer_for_unfold prog estate lhs_node pos =
         else estate.es_infer_invs @ [i]
       | _ -> estate.es_infer_invs
     in {estate with es_infer_invs = inv} 
+
+
+(* Calculate the invariant relating to unfolding *)
+let infer_for_unfold prog estate lhs_node pos =
+  let pr es =  pr_list !CP.print_formula es.es_infer_invs in
+  let pr2 = !print_h_formula in
+  Gen.Debug.no_2 "infer_for_unfold" 
+      (add_str "es_infer_inv (orig) " pr) 
+      (add_str "lhs_node " pr2) 
+      (add_str "es_infer_inv (new) " pr)
+      (fun _ _ -> infer_for_unfold prog estate lhs_node pos) estate lhs_node
+
 
 (* let infer_for_unfold_old prog estate lhs_node pos = *)
 (*   if no_infer estate then estate *)

@@ -147,8 +147,8 @@ Inferred Pure:[ x!=null]
 
 */
 
-// (22) inferred n=1
-infer [n] y::ll<n> |- y::node<_,null>.
+// (22) inferred nn=1
+infer [nn] y::ll<nn> |- y::node<_,null>.
 print residue.
 /*
 Inferred Heap:[]

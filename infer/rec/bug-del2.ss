@@ -14,3 +14,7 @@ void acc(int n)
   requires n>=1
   ensures true;
 
+
+void acc2(int n)
+  requires n>=2
+  ensures true;
