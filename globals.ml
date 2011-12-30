@@ -36,6 +36,9 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
+and vp_ann =  VP_Zero | VP_Full | VP_Value | VP_Ref
+
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)

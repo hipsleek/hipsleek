@@ -3101,6 +3101,10 @@ type entail_state = {
   es_is_normalizing : bool; (*normalizing process*)
   es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
 
+  (* to support permission of variables *)
+  (* denotes stack variables with possibly zero permission *)
+  es_var_zero_perm : CP.spec_var list;
+
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
   es_infer_post : bool; 
@@ -3112,6 +3116,7 @@ type entail_state = {
   es_infer_pure : CP.formula list; (* output : pre pure inferred *)
   (* es_infer_pures : CP.formula list; *)
   es_infer_invs : CP.formula list (* WN : what is this? *)
+
 
 }
 
@@ -3261,6 +3266,7 @@ let empty_es flowt pos =
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_invs = [];
+  es_var_zero_perm = [];
 }
 
 let is_one_context (c:context) =

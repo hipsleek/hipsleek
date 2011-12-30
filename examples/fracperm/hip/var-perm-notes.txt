@@ -1,3 +1,31 @@
+
+
+checkentail @zero[v1,v2] |- @p_val[x1,x2] 
+   --> @zero[v1,v2].
+
+checkentail v1'=x1 & @zero[v1,v2] |- @p_val[x1,x2] 
+   --> @zero[v1,v2].
+
+checkentail @zero[v1,v2] |- @p_ref[x1] 
+   --> @zero[v1,v2,x1].
+
+foo(ref int x, ref int y)
+   requires @p_val[x] & @p_ref[y]
+   ensures  @full[x] & @full[y]
+
+foo(ref int x, ref int y)
+   requires @p_val[x] & @p_ref[y]
+   ensures  @full[x,y]
+
+
+  S1@F and S2@F  ==> (S1@S2)@Z
+  S1@F or S2@F  ==> (S1 \cap S2)@Z
+  S1@Z and S2@F  ==> (S1-S2)@Z
+  S1@Z or  S2@Z  ==> (S1 \cup S2)@Z
+  S1@Z and S2@Z  ==> (S1@S2)@Z
+
+
+
 We introduce a variable type-state:
 
     v@F denotes var will full access

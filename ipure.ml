@@ -18,6 +18,7 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
+
 and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
@@ -38,6 +39,7 @@ and p_formula =
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)	
 	  (* lists and list formulae *)
+  | VarPerm of (vp_ann * (ident list) * loc)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)

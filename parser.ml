@@ -145,6 +145,8 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
+let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
+
 let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
@@ -651,7 +653,14 @@ cid_typ:
 ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 opt_ann_list: [[t=LIST0 ann -> t]];
-  
+
+p_vp_ann:
+  [[ `PZERO -> VP_Zero
+    | `PFULL -> VP_Full
+    | `PVALUE -> VP_Value
+    | `PREF -> VP_Ref
+  ]];
+
 ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
@@ -927,6 +936,10 @@ cexp_w :
       | lc=SELF; `NOTINLIST; cl=SELF             ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
+      | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE
+            ->
+	      let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
+	      set_slicing_utils_pure_double f false
       | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
 	  set_slicing_utils_pure_double f false

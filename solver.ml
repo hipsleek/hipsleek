@@ -244,6 +244,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
+    es_var_zero_perm = es.es_var_zero_perm;
   }
 
 (*;
@@ -6312,6 +6313,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_gen_impl_vars = estate.es_gen_impl_vars; 
         es_ante_evars = estate.es_ante_evars;
         es_unsat_flag = false;
+        es_var_zero_perm = estate.es_var_zero_perm;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
@@ -6459,6 +6461,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_pure = estate.es_infer_pure;
+                 es_var_zero_perm = estate.es_var_zero_perm;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
 		         es_var_measures = estate.es_var_measures;
