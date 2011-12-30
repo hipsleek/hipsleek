@@ -7039,12 +7039,12 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     let check_sat = TP.is_sat_raw fml in
     (* check if there is a contraction with the RHS heap *)
     let r = 
-      if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq
+      if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq pos
       else None in 
     begin
       match r with
         | Some (new_iv,new_rn,new_p) -> 
-              let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in
+              (* let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in *)
               let new_p = if CP.isConstTrue new_p then [] else [new_p] in
               let new_estate = 
                 {estate with 
@@ -7096,7 +7096,8 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
   (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
   (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
   (* Thai: change back to Inf.infer_pure *)
-  let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in
+  let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
+  let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
   match r with
     | Some (new_estate,pf) ->
           (* explicitly force unsat checking to be done here *)

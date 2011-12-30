@@ -277,7 +277,7 @@ let is_elem_of conj conjs =
   end
 *)
 
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   if no_infer es then None
   else 
     let iv = es.es_infer_vars in
@@ -285,7 +285,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     let lhs_aset = build_var_aset lhs_als in
     let rt = get_args_h_formula lhs_aset rhs in
     (*let rhs_als = get_alias_formula conseq in
-    let rhs_aset = build_var_aset rhs_als in*)
+      let rhs_aset = build_var_aset rhs_als in*)
     let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
       | None -> false,[],[],HTrue,iv,[],[]
       | Some (r,args,arg2,av,h) -> 
@@ -297,9 +297,6 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
             let alias = if List.mem r iv then [] else alias in
             (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
     (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
-    let _ = print_endline ("infer_heap_nodes") in
-    let _ = print_endline ("infer var: "^(!print_svl iv)) in
-    let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in
     (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
     (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
     (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)
@@ -322,22 +319,28 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         let r = List.hd r in
         let r = CP.mkVar r no_pos in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) 
-            (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in
+          (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in
         let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
         let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
         let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
         let new_p_conjs = CP.list_of_conjs new_p in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
           (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-       let r = {
-           match_res_lhs_node = new_h;
-           match_res_lhs_rest = lhs_h;
-           match_res_holes = [];
-           match_res_type = Root;
-           match_res_rhs_node = rhs;
-           match_res_rhs_rest = rhs_rest;
-       } in
-       let act = M_match r in
+        DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
+        DD.devel_pprint ("unmatch RHS : "^(!print_h_formula rhs)) pos;
+        DD.devel_pprint ("inf vars    : "^(!print_svl iv)) pos;
+        DD.devel_pprint ("inf LHS heap:"^(!print_h_formula new_h)) pos;
+        DD.devel_pprint ("new inf vars: "^(!print_svl new_iv)) pos;
+        DD.devel_pprint ("new pure add: "^(!CP.print_formula new_p)) pos;
+        let r = {
+            match_res_lhs_node = new_h;
+            match_res_lhs_rest = lhs_h;
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs;
+            match_res_rhs_rest = rhs_rest;
+        } in
+        let act = M_match r in
         (
             (* WARNING : any dropping of match action must be followed by pop *)
             must_action_stk # push act;
@@ -351,12 +354,12 @@ type: Cformula.entail_state ->
   Cformula.h_formula ->
   'a -> (Cformula.CP.spec_var list * Cformula.h_formula * CP.formula) option
 *)
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_pure_f) in
   Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
-      (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
+      (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
 (* picks ctr from f that are related to vars *)
@@ -392,34 +395,42 @@ let simplify f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
-let infer_lhs_contra lhs_xpure ivars =
+let infer_lhs_contra lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
   (* else *)
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
-    let lhs_xpure = CP.drop_rel_formula lhs_xpure in
-    let check_sat = TP.is_sat_raw lhs_xpure in
-    if not(check_sat) then None
+  let lhs_xpure_orig = MCP.pure_of_mix lhs_xpure in
+  let lhs_xpure = CP.drop_rel_formula lhs_xpure_orig in
+  let check_sat = TP.is_sat_raw lhs_xpure in
+  if not(check_sat) then None
+  else 
+    let f = simplify_contra lhs_xpure ivars in
+    let vf = CP.fv f in
+    let over_v = CP.intersect vf ivars in
+    if (over_v ==[]) then None
     else 
-      let f = simplify_contra lhs_xpure ivars in
-      let vf = CP.fv f in
-      let over_v = CP.intersect vf ivars in
-      if (over_v ==[]) then None
+      let exists_var = CP.diff_svl vf ivars in
+      let f = simplify_helper (CP.mkExists exists_var f None pos) in
+      if CP.isConstTrue f || CP.isConstFalse f then None
       else 
-        let exists_var = CP.diff_svl vf ivars in
-        let f = simplify_helper (CP.mkExists exists_var f None no_pos) in
-        if CP.isConstTrue f || CP.isConstFalse f then None
-        else Some (Redlog.negate_formula f)
+        let neg_f = Redlog.negate_formula f in
+        DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
+        DD.devel_pprint ("trigger cond   : "^msg) pos; 
+        DD.devel_pprint ("LHS pure       : "^(!print_formula lhs_xpure_orig)) pos; 
+        DD.devel_pprint ("ovrlap inf vars: "^(!print_svl over_v)) pos; 
+        DD.devel_pprint ("contra infer   : "^(!print_formula neg_f)) pos; 
+        Some (neg_f)
 
-let infer_lhs_contra f ivars =
+let infer_lhs_contra f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) infer_lhs_contra f ivars
+  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+      (fun _ _ -> infer_lhs_contra f ivars pos msg) f ivars
 
-let infer_lhs_contra_estate estate lhs_xpure pos =
+let infer_lhs_contra_estate estate lhs_xpure pos msg =
   if no_infer estate then None
   else
     let ivars = estate.es_infer_vars in
-    let r = infer_lhs_contra lhs_xpure ivars in
+    let r = infer_lhs_contra lhs_xpure ivars pos msg in
     match r with
       | None -> None
       | Some pf ->
@@ -430,10 +441,10 @@ let infer_lhs_contra_estate estate lhs_xpure pos =
               } in
             Some (new_estate,pf)
 
-let infer_lhs_contra_estate e f pos =
+let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
+  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
