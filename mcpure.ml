@@ -151,7 +151,7 @@ and isConstMFalse f =
 let rec filter_mem_fct fct lst =  
   let l = List.map (fun c->{c with memo_group_cons = List.filter fct c.memo_group_cons}) lst in
   List.filter (fun c-> not (isConstGroupTrue c)) l
-      
+
 and filter_mem_triv lst = 
   filter_mem_fct (fun c ->
     let (pf,_) = c.memo_formula in
@@ -2170,3 +2170,35 @@ let simplify_mix_formula mf =
 			let nf = remove_dup_constraints f in
 			let nf = remove_redundant_constraints nf in
 				OnePF nf
+
+let normalize_varperm_mix_formula_x (mix_f:mix_formula) : mix_formula =
+  match mix_f with
+    | OnePF f -> OnePF (normalize_varperm f)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mix_f in
+        let new_f = normalize_varperm f in
+        (mix_of_pure new_f)
+
+let normalize_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
+  Gen.Debug.ho_1 "normalize_varperm_mix_formula"
+      !print_mix_f !print_mix_f
+      normalize_varperm_mix_formula_x mix_f
+
+let filter_varperm_mix_formula_x (mix_f:mix_formula) : (formula list * mix_formula) =
+  match mix_f with
+    | OnePF f -> 
+        let ls,f1 = filter_varperm f in
+        (ls,OnePF f1)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mix_f in
+        let ls,new_f = filter_varperm f in
+        (ls, (mix_of_pure new_f))
+
+let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula) =
+  let pr_out (ls,f) =
+    "\n ### ls = " ^ (pr_list !print_formula ls)
+    ^ "\n ### f = " ^ (!print_mix_f f)
+  in
+  Gen.Debug.ho_1 "filter_varperm_mix_formula"
+      !print_mix_f pr_out
+      filter_varperm_mix_formula_x mix_f

@@ -85,7 +85,8 @@ module Token = struct
     | MUT -> "@M"
     | POST -> "@post"
     | SUBANN -> "<:"
-    
+    | PREF -> "@p_ref" | PVALUE -> "@p_val" | PFULL -> "@full" | PZERO -> "@zero"
+
   let print ppf x = pp_print_string ppf (to_string x)
 
   let match_keyword kwd _ = false 

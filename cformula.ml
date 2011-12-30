@@ -7074,3 +7074,47 @@ and split_specs (specs:struc_formula) : (struc_formula * struc_formula) =
   Gen.Debug.no_1 "split_specs" !print_struc_formula pr
       split_specs_x specs
 (*=======split_pre_post <- ========*)
+
+let normalize_varperm_formula_x (f:formula) : formula = 
+  let rec helper f = match f with
+    | Base b ->
+        let mf = MCP.normalize_varperm_mix_formula b.formula_base_pure in
+        Base {b with formula_base_pure = mf}
+    | Exists b ->
+        let mf = MCP.normalize_varperm_mix_formula b.formula_exists_pure in
+        Exists {b with formula_exists_pure = mf}
+    | Or o -> 
+        let f1 = helper o.formula_or_f1 in
+        let f2 = helper o.formula_or_f2 in
+        Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
+  in helper f
+
+let normalize_varperm_formula (f:formula) : formula = 
+  Gen.Debug.ho_1 "normalize_varperm_formula"
+      !print_formula !print_formula
+      normalize_varperm_formula_x f
+
+let filter_varperm_formula_x (f:formula) : CP.formula list * formula = 
+  let rec helper f = match f with
+    | Base b ->
+        let ls,mf = MCP.filter_varperm_mix_formula b.formula_base_pure in
+        ls,Base {b with formula_base_pure = mf}
+    | Exists b ->
+        let ls,mf = MCP.filter_varperm_mix_formula b.formula_exists_pure in
+        ls,Exists {b with formula_exists_pure = mf}
+    | Or o -> 
+        report_error no_pos "filter_varperm_formula: disjunctive form"
+        (*  TO CHECK : can use approximation*)
+        (* let f1 = helper o.formula_or_f1 in *)
+        (* let f2 = helper o.formula_or_f2 in *)
+        (* Or {o with formula_or_f1 = f1; formula_or_f2 = f2} *)
+  in helper f
+
+let filter_varperm_formula (f:formula) : CP.formula list * formula =
+  let pr_out (ls,f) =
+    "\n ### ls = " ^ (pr_list !print_pure_f ls)
+    ^ "\n ### f = " ^ (!print_formula f)
+  in
+  Gen.Debug.ho_1 "filter_varperm_formula" 
+      !print_formula pr_out
+      filter_varperm_formula_x f

@@ -2618,7 +2618,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Gen.Debug.no_1 "unsat_base_nth" 
+  Gen.Debug.ho_1 "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
@@ -3677,6 +3677,17 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         (* let es = {es with es_formula = prune_preds prog true es.es_formula} in *)
         (* let conseq = prune_preds prog true conseq in *)
         let es = (CF.add_to_estate_with_steps es ss) in
+        (*FILTER OUR VarPerm formula*)
+        let es_f = es.es_formula in
+        let es_f = normalize_varperm_formula es_f in
+        let vperm_fs, new_f = filter_varperm_formula es_f in
+        let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in
+        let _ = if (ls2!=[]) then
+              print_endline ("[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero))
+        in
+        let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
+        let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in
+        let es = {es with es_formula = new_f; es_var_zero_perm=vars} in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
 	    (filter_set tmp, prf)

@@ -683,6 +683,9 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
     | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
     | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
+    | P.VarPerm (t,ls,l) -> 
+        fmt_string (string_of_vp_ann t); fmt_string ("[");
+        fmt_string (string_of_spec_var_list ls); fmt_string ("]")
     | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
@@ -1358,6 +1361,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs; 
+  pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_var_zero_perm;
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
 

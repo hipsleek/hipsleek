@@ -484,6 +484,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n") no_pos in
+  let ante = CF.normalize_varperm_formula ante in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
   let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in

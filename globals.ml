@@ -104,6 +104,14 @@ let int_of_heap_ann a =
     | Imm -> 1
     | Mutable -> 0
 
+let string_of_vp_ann a =  
+  (match a with
+    | VP_Zero -> "@zero"
+    | VP_Full -> "@full"
+    | VP_Value -> "@p_val"
+    | VP_Ref-> "@p_ref"
+  )
+
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 

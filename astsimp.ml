@@ -4599,6 +4599,13 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
           CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
           CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
+    | IP.VarPerm (ct,ls,pos) ->
+        let func v =
+	      CP.SpecVar (UNK,v,Unprimed) (*TO CHECK: type info*)
+        in
+        let ls1 = List.map func ls in
+        (* let ls1 = List.map (fun v -> trans_var (v,Unprimed) stab pos) ls in *)
+        CP.VarPerm (ct,ls1,pos)
     | IP.ListIn (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListIn (pe1, pe2, pos)
@@ -5387,6 +5394,7 @@ and gather_type_info_b_formula_x prog b0 stab =
           let t = must_unify t1 NUM stab pos  in
 	      let _ = gather_type_info_var v2 stab (BagT t) pos in
           ()
+    | IP.VarPerm _ -> () (*TO CHECK: no type info*)
     | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) ->
           let new_et = fresh_tvar stab in
           let t1 = gather_type_info_exp e2 stab (List new_et) in
