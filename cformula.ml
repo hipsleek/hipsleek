@@ -3784,7 +3784,9 @@ let rec add_pre_heap ctx =
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-      | Ctx es -> Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
+      | Ctx es -> 
+        let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_pure)) cp in
+        Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -3796,7 +3798,9 @@ let add_infer_pure_to_ctx cp ctx =
 let add_infer_heap_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-      | Ctx es -> Ctx {es with es_infer_heap = es.es_infer_heap@cp;}
+      | Ctx es -> 
+        let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_heap)) cp in
+        Ctx {es with es_infer_heap = es.es_infer_heap@cp;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
