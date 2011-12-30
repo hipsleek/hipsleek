@@ -185,10 +185,11 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          in 
 		          let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
 		          (* Termination: Add source condition *)
-		          let nctx = CF.transform_context (fun es ->
-			          CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (*???*)
+		          (*let nctx = CF.transform_context (fun es ->
+			          CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd
+                es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in*)
 		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
-		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
+		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
 		          let (new_c2,pre,rel,f) = check_specs_infer_a prog proc nctx c2 e0 do_infer in
                   (* Thai: Need to generate EBase from pre if necessary *)
                   let new_c2 = 
@@ -740,7 +741,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
 		| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
-        | SCall ({
+    | SCall ({
 			  exp_scall_type = ret_t;
 			  exp_scall_method_name = mn; (* mn is mingled name of the method *)
 			  exp_scall_arguments = vs;
@@ -756,23 +757,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 
                 (* Internal function to check pre/post condition of the function call. *)        
 	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
-                  (* Termination: Stripping the "variance" feature from org_spec
-				     if the call is not a recursive call *)
-            (*
-			      let stripped_spec = if ir then org_spec else
-                    let rec strip_variance ls = match ls with
-                      | [] -> []
-                      | spec::rest -> match spec with
-                          | CF.EVariance e -> (strip_variance e.CF.formula_var_continuation)@(strip_variance rest)
-                          | CF.EInfer e -> (strip_variance [e.CF.formula_inf_continuation])@(strip_variance rest)
-                          | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = strip_variance b.CF.formula_ext_continuation})::(strip_variance rest)
-                          | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.CF.formula_case_branches})::(strip_variance rest)
-                          | _ -> spec::(strip_variance rest)
-                    in strip_variance org_spec
-                  in
-                  *)
-              let stripped_spec = org_spec in
-                  (* org_spec -> stripped_spec *)
+                (* Termination: Stripping the "variance" feature from 
+                 * org_spec if the call is not a recursive call *)
+                let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in
+           
+                (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                     (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
@@ -794,7 +783,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			        let _ = String.blit mn 0 new_mn 0 l in
 			        let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
                   (* Termination: Cache the subst for output pretty printing *)
-                  let sctx = if not ir then sctx else
+                  (*let sctx = if not ir then sctx else
                     let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
                     List.map (fun fctx ->
                         let (lb,estk,lbctx) = fctx in
@@ -804,7 +793,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                 CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; 
                                     CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
                         (lb,estk,nlbctx)) sctx
-                  in
+                  in*)
                   (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
                     (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
@@ -813,20 +802,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-                  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
-                  (* Termination checking *)
-                  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
-                  let _ = Debug.devel_pprint (str_debug_variance) pos in
-                  (*let _ = 
-                    if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
-                      (* Termination: Add a false entail state for 
-                       * unreachable recursive call if variance exists *)
-                      var_checked_list := !var_checked_list @ [(
-                          {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
-                          CF.empty_ext_variance_formula)];
-                  in*) 
-                  (*print_string (str_debug_variance ^ "\n");*) 
                   
+                  (* Termination checking *)
+                  let term_res = 
+                    if ir then 
+                      DD.devel_pprint (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<") pos 
+                    else ()
+                  in 
+                                   
                   (* TODO: call the entailment checking function in solver.ml *)
                   (* let _ = print_endline ("WN 1:"^Cprinter.string_of_list_failesc_context sctx) in *)
                   let successful_ctx = List.map CF.succ_context_of_failesc_context sctx in
@@ -1420,16 +1403,9 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
     let proc_ordered_by_call = proc_top @ proc_base in
     
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call)
-    (*
-    let g = build_state_trans_graph !Solver.variance_graph in
-    let cl = variance_numbering !Solver.var_checked_list g in
-    if (List.length cl) != 0 then
-      let _ = if !print_proof then begin Prooftracer.push_term (); end in
-      let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
-      if !print_proof then begin Prooftracer.pop_div (); end 
-    else ()
-    *)
+    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
+    
+    Term.term_check_output Term.term_res_stk
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in

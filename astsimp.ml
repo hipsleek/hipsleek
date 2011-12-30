@@ -7712,10 +7712,10 @@ and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUt
 	| x::xs -> if (is_found ip pname x) then x else (find_scc_group ip pname xs)
 
 and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.IG.V.t list) : bool =
-  (* let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
-     let _ = print_string ("The proc name: "^pname^"\n") in *)
+  (*let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
+  let _ = print_string ("The proc name: "^pname^"\n") in*)
   match scc with
-    | [] -> false
+  | [] -> false
 	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
 	  (* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
 	  if (mingled_name = pname) then true else (is_found ip pname xs)

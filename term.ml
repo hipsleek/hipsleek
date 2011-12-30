@@ -4,6 +4,70 @@ module MCP = Mcpure
 module DD = Debug
 open Gen.Basic
 open Globals
+open Cprinter
+
+type phase_trans = int * int
+
+type term_reason =
+  (* The variance is not well-founded *)
+  | Not_Decrease_Measure     
+  | Not_Bounded_Measure
+  (* The variance is well-founded *)
+  | Valid_Measure     
+
+(* The termination can only be determined when 
+ * a base case or an infinite loop is reached *)  
+type term_status =
+  | Term of term_reason
+  | NonTerm of term_reason
+  | MayTerm of term_reason
+  | Unreachable (* Original context causes unreachable *)
+
+(* Location of the recursive call/loop and its termination status *)
+type term_res = loc * term_status
+
+(* Using stack to store term_res *)
+let term_res_stk : term_res Gen.stack = new Gen.stack
+
+(* Printing Utilities *)
+let pr_phase_trans (trans: phase_trans) =
+  let (src, dst) = trans in
+  fmt_string "Transition ";
+  pr_int src; fmt_string "->"; pr_int dst
+
+let string_of_phase_trans (trans: phase_trans) = 
+  poly_string_of_pr pr_phase_trans trans
+
+let pr_term_reason = function
+  | Not_Decrease_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
+  | Not_Bounded_Measure -> fmt_string "The variance is not well-founded (not bounded)."
+  | Valid_Measure -> fmt_string "The given variance is well-founded."
+
+let string_of_term_reason (reason: term_reason) =
+  poly_string_of_pr pr_term_reason reason
+
+let pr_term_status = function
+  | Term reason -> fmt_string "Terminating: "; pr_term_reason reason
+  | NonTerm reason -> fmt_string "Non-terminating: "; pr_term_reason reason
+  | MayTerm reason -> fmt_string "May-terminating: "; pr_term_reason reason
+  | Unreachable -> fmt_string "Unreachable state"
+
+let string_of_term_status = poly_string_of_pr pr_term_status
+
+let pr_term_res (pos, status) =
+  fmt_string (string_of_loc pos);
+  fmt_string ": ";
+  pr_term_status status
+
+let string_of_term_res = poly_string_of_pr pr_term_res
+
+let pr_term_res_stk stk =
+  List.iter (fun r -> pr_term_res r; fmt_string "\n"; flush stdout) stk
+
+let term_check_output stk = 
+  pr_term_res_stk (stk # get_stk) 
+
+(* End of Printing Utilities *)
 
 (* To find a LexVar formula *)
 exception LexVar_Not_found;;
@@ -20,8 +84,6 @@ let rec find_lexvar_formula (f: CP.formula) : (CP.exp list * CP.exp list) =
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
-  (* Chanh: I am not sure whether a lexvar formula
-   * can be appear in Or, Not, Forall and Exists? *)
   | _ -> raise LexVar_Not_found
 
 (* To syntactic simplify LexVar formula *)  
@@ -77,12 +139,6 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
       (estate, lhs_p, n_rhs_p)
   with _ -> (estate, lhs_p, rhs_p)
 
-(*
-type: 'a ->
-  MCP.mix_formula ->
-  MCP.mix_formula -> Globals.loc -> 'a * MCP.mix_formula * MCP.mix_formula
-*)
-
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state_short in
@@ -116,4 +172,19 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
     }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in CF.transform_context es_strip_lexvar_lhs ctx
+  
+let check_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res = 
+  let lv = CF.formula_of_pure_formula (CF.lexvar_of_evariance measure) pos in
+  let res = f ctx lv pos in (* check decreasing *)
+  let term_res = 
+    if (CF.isFailCtx res) then (pos, MayTerm Not_Decrease_Measure)
+    else
+      (* The default lower bound is zero *)
+      let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
+      let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
+      let res = f ctx bnd pos in (* check boundedness *)
+      if (CF.isFailCtx res) then (pos, MayTerm Not_Bounded_Measure)
+      else (pos, Term Valid_Measure)
+  in term_res_stk # push term_res;
+  term_res
 

@@ -13,7 +13,7 @@ ll<n> == self = null & n = 0
 int length(node x)
   // infer @pre [p1,p2,p3]
   requires x::ll<n>@L
-  //variance [0,p1,n]
+  variance [0,0,-n]
 	//variance [0,p1]{n}
   ensures res=n;
 {
@@ -27,7 +27,7 @@ int length(node x)
 int foo(node x)
   // infer @pre [p1,p2,p3]
   requires x::ll<n>@L
-  //variance [0,p2,n]
+  variance [0,p2,n]
   ensures res=0;
 {
   if (x==null) return 0;
@@ -41,7 +41,7 @@ void append(node x, node y)
   // infer @pre [p1,p2,p3]
   requires x::ll<n>*y::ll<m> & n>0
   //variance [0,p3]{n}
-	variance [0,0]{n}
+	variance [0,0,n]
   ensures x::ll<n+m>;
 {
   if (x.next==null) {

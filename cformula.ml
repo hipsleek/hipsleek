@@ -269,6 +269,15 @@ let measures_of_evariance (v: ext_variance_formula) : (CP.exp list * CP.exp list
 	let vi = v.formula_var_infer in
   (vm, vi)
 
+let rec strip_variance (spec: struc_formula) : struc_formula =
+  match spec with
+  | [] -> []
+  | s::r -> match s with
+    | EVariance e -> (strip_variance [e.formula_var_continuation])@(strip_variance r)
+    | EInfer e -> (strip_variance [e.formula_inf_continuation])@(strip_variance r)
+    | EBase b -> (EBase {b with formula_ext_continuation = strip_variance b.formula_ext_continuation})::(strip_variance r)
+    | ECase c -> (ECase {c with formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.formula_case_branches})::(strip_variance r)
+    | _ -> s::(strip_variance r)
 
 (* generalized to data and view *)
 let get_ptr_from_data h =

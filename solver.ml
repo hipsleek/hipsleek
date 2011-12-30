@@ -3371,40 +3371,10 @@ and heap_entail_conjunct_lhs_struc_x
               let c=e.Cformula.formula_inf_continuation in
               helper_inner_x ctx11 c
 	    | EVariance e ->
-          (* Temporarily disable variance checking *)
-          (*
-              let es = match ctx11 with
-                | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
-                | Ctx es -> es in 
-              let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
-              let t = List.map (fun (_, v, mn) ->
-                  let CP.SpecVar (t, i, p) = v in
-                  let nid = i ^ "_" ^ mn in
-                  CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
-              let normalize_ctx_rhs =
-                let rec filter pformula =
-                  match pformula with
-                    | CP.And (f1, f2, pos) ->
-                          let nf2 = CP.subst_avoid_capture f t f2 in
-                          let nf1 = filter f1 in
-                          if (CP.equalFormula f2 nf2) then nf1
-                          else CP.mkAnd nf1 nf2 pos
-                    | _ ->
-                          let nf = CP.subst_avoid_capture f t pformula in
-                          if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
-                          else nf
-                in filter es.es_var_ctx_rhs
-              in
-
-              (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
-                let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
-
-              let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
-
-              variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
-              var_checked_list := !var_checked_list @ [(nes, e)];
-              *)
-              helper_inner_x ctx11 e.Cformula.formula_var_continuation
+          let entail_f = fun ctx m pos -> 
+            fst (heap_entail_one_context prog false ctx m pos) in
+          let _ = Term.check_term_measure entail_f ctx11 e pos in
+          helper_inner_x ctx11 e.CF.formula_var_continuation
     end 
 
   and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof =
@@ -3561,7 +3531,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   (* let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx) *)
   (* ^ "\n proof = " ^ (string_of_proof proof) *)
   (* ^"\n\n") in *)
-  Gen.Debug.ho_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Gen.Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 

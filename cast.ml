@@ -18,11 +18,9 @@ module Err = Error
 
 type typed_ident = (typ * ident)
 
-
-
 and prog_decl = { 
-    mutable prog_data_decls : data_decl list;
-    mutable prog_logical_vars : P.spec_var list;
+  mutable prog_data_decls : data_decl list;
+  mutable prog_logical_vars : P.spec_var list;
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -34,11 +32,11 @@ and prog_or_branches = (prog_decl *
     ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
-    data_name : ident;
-    data_fields : typed_ident list;
+  data_name : ident;
+  data_fields : typed_ident list;
 	data_parent_name : ident;
-    data_invs : F.formula list;
-    data_methods : proc_decl list; }
+  data_invs : F.formula list;
+  data_methods : proc_decl list; }
     
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
@@ -46,7 +44,7 @@ and mater_property = {
   mater_var : P.spec_var;
   mater_full_flag : bool;
   mater_target_view : ident list; (*the view to which it materializes*)
-  }
+}
   
     
 and view_decl = { 
