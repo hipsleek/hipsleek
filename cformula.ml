@@ -1197,6 +1197,11 @@ and get_node_var (h : h_formula) = match h with
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
   
+and set_node_var newc (h : h_formula) = match h with
+  | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
+  | DataNode w -> DataNode {w with h_formula_data_node = newc;}
+  | _ -> failwith ("set_node_var: invalid argument")
+
 and get_node_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) 
   | DataNode ({h_formula_data_imm = imm}) -> imm

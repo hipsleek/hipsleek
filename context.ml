@@ -153,7 +153,7 @@ let string_of_action_wt_res0 e = poly_string_of_pr (pr_action_wt_res (fun _ -> f
 
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
-let must_action_stk = new Gen.stack_noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl
+let must_action_stk = new Gen.stack_noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=)
    
 let action_get_holes a = match a with
   | Undefined_action e

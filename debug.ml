@@ -28,7 +28,7 @@ let pprint msg (pos:loc) =
 
 (* system development debugging *)
 let devel_print s = 
-  if !devel_debug_on then 
+  if !devel_debug_on  || Gen.StackTrace.force_dd_print () then 
     let msg = "\n!!!" ^ s in
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
@@ -38,7 +38,8 @@ let devel_print s =
 
 let devel_pprint msg (pos:loc) = 
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
-  let tmp = tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]" in
+  let tmp = if is_no_pos !entail_pos then tmp 
+  else (tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]") in
   let tmp = tmp^ msg in
 	devel_print tmp
 
