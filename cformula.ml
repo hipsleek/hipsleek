@@ -3003,7 +3003,7 @@ type entail_state = {
   (* output : post inferred relation lhs --> rhs *)
   es_infer_rel : (CP.formula * CP.formula) list; 
   (* es_infer_pures : CP.formula list; *)
-  es_infer_invs : CP.formula list (* WN : what is this? *)
+(*  es_infer_invs : CP.formula list (* WN : what is this? *)*)
 
 }
 
@@ -3171,7 +3171,7 @@ let empty_es flowt pos =
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
-  es_infer_invs = [];
+  (*es_infer_invs = [];*)
 }
 
 let is_one_context (c:context) =

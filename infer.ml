@@ -520,7 +520,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
     let iv = estate.es_infer_vars in
-    let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
+    (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
     if check_sat then
 (*      let new_p = simplify fml iv in                            *)
 (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
@@ -537,7 +537,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           if CP.intersect args iv == [] then
             let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
             let new_p = simplify new_p iv in
-            let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+            (*let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
             let args = CP.fv new_p in
             let quan_var = CP.diff_svl args iv in
             TP.simplify_raw (CP.mkExists quan_var new_p None pos)
@@ -576,7 +576,8 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let args = CP.fv lhs_simplified in
         let exists_var = CP.diff_svl args iv in
         let lhs_simplified = simplify_helper (CP.mkExists exists_var lhs_simplified None pos) in
-        let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
+        (*let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in*)
+        let new_p = simplify_contra (CP.mkNot_s lhs_simplified) iv in
         if CP.isConstFalse new_p || CP.isConstTrue new_p then None
         else
 (*          let args = CP.fv new_p in *)
@@ -812,7 +813,7 @@ let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
 (*         es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]} *)
 
 (* Calculate the invariant relating to unfolding *)
-let infer_for_unfold prog estate lhs_node pos =
+(*let infer_for_unfold prog estate lhs_node pos =
   if no_infer estate then estate
   else
 (*    let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.CF.es_formula)^ "\n\n")  pos in*)
@@ -823,18 +824,18 @@ let infer_for_unfold prog estate lhs_node pos =
         if List.mem i estate.es_infer_invs then estate.es_infer_invs
         else estate.es_infer_invs @ [i]
       | _ -> estate.es_infer_invs
-    in {estate with es_infer_invs = inv} 
+    in {estate with es_infer_invs = inv} *)
 
 
 (* Calculate the invariant relating to unfolding *)
-let infer_for_unfold prog estate lhs_node pos =
+(*let infer_for_unfold prog estate lhs_node pos =
   let pr es =  pr_list !CP.print_formula es.es_infer_invs in
   let pr2 = !print_h_formula in
   Gen.Debug.no_2 "infer_for_unfold" 
       (add_str "es_infer_inv (orig) " pr) 
       (add_str "lhs_node " pr2) 
       (add_str "es_infer_inv (new) " pr)
-      (fun _ _ -> infer_for_unfold prog estate lhs_node pos) estate lhs_node
+      (fun _ _ -> infer_for_unfold prog estate lhs_node pos) estate lhs_node*)
 
 
 (* let infer_for_unfold_old prog estate lhs_node pos = *)
