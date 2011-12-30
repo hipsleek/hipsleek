@@ -597,7 +597,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
-	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
+	          let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
 	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
                 begin

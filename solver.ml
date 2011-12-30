@@ -243,14 +243,15 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
 (* 	es_var_subst = es.es_var_subst*\) *)
 (*   }  *)
 
-let clear_entailment_history (ctx : context) : context =  
-  transform_context clear_entailment_history_es ctx
 
-let clear_entailment_history_list (ctx : list_context) : list_context = 
-  transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
+(* let clear_entailment_history xp (ctx : context) : context =   *)
+(*   transform_context (clear_entailment_history_es xp) ctx *)
 
-let clear_entailment_history_partial_list (ctx : list_partial_context) : list_partial_context = 
-  transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
+(* let clear_entailment_history_list xp (ctx : list_context) : list_context =  *)
+(*   transform_list_context (clear_entailment_history_es xp,(fun c->c)) ctx  *)
+
+(* let clear_entailment_history_partial_list xp (ctx : list_partial_context) : list_partial_context =  *)
+(*   transform_list_partial_context (clear_entailment_history_es xp,(fun c->c)) ctx  *)
 
 let fail_ctx_stk = ref ([]:fail_type list)
 let previous_failure () = not(Gen.is_empty !fail_ctx_stk)
@@ -3357,7 +3358,7 @@ and heap_entail_conjunct_lhs_struc_x
         | EAssume (ref_vars, post, (i,y)) ->
 		      if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	          else
-	            let rs = clear_entailment_history ctx11 in
+	            let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic prog x 0)) ctx11 in
 	            (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
@@ -7185,6 +7186,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                     CF.mk_failure_may s logical_error)), NoAlias)
               end
           end
+
 
 and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in

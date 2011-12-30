@@ -49,8 +49,8 @@ For precondition we get:
 
 
 void append(node x, node y)
-  infer @pre [n,A]
-  requires x::ll<n>*y::ll<m> 
+  infer @pre [n,m,A]
+  requires x::ll<n>*y::ll<m> & n>=0 & m>=0
   ensures x::ll<z> & A(n,m,z);
 
 //  requires x::ll<n>*y::ll<m> 

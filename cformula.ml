@@ -290,6 +290,8 @@ let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
+let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -3003,7 +3005,7 @@ type entail_state = {
   (* output : post inferred relation lhs --> rhs *)
   es_infer_rel : (CP.formula * CP.formula) list; 
   (* es_infer_pures : CP.formula list; *)
-(*  es_infer_invs : CP.formula list (* WN : what is this? *)*)
+  (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)
 
 }
 
@@ -6067,12 +6069,23 @@ let normalize_max_renaming_s f pos b ctx =
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
 *)
-let clear_entailment_history_es (es :entail_state) :context = 
+
+let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
-  Ctx { 
+  let hf = es.es_heap in
+  (* adding xpure0 of es_heap into es_formula *)
+  let es_f = match xp hf with
+    | None -> es.es_formula
+    | Some (mf,br,svl,mm)  -> 
+          (* print_endline ("mixf:"^(!print_mix_formula mf)); *)
+          (* print_endline ("svl:"^(!CP.print_svl svl)); *)
+          (* print_endline ("mem:"^(!print_mem_formula mm)); *)
+          mkAnd_pure_and_branch es.es_formula mf br no_pos
+  in 
+  Ctx {
       (* es with es_heap=HTrue;} *)
     (empty_es (mkTrueFlow ()) no_pos) with
-	es_formula = es.es_formula;
+	es_formula = es_f;
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
@@ -6084,21 +6097,22 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_pure = es.es_infer_pure;
     es_infer_rel = es.es_infer_rel;
   }
+
 (*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
 
-let clear_entailment_history (ctx : context) : context =  
-  transform_context clear_entailment_history_es ctx
+let clear_entailment_history xp (ctx : context) : context =  
+  transform_context (clear_entailment_history_es xp) ctx
   
-let clear_entailment_history_list (ctx : list_context) : list_context = 
-  transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
+let clear_entailment_history_list xp (ctx : list_context) : list_context = 
+  transform_list_context (clear_entailment_history_es xp,(fun c->c)) ctx 
 
-let clear_entailment_history_partial_list (ctx : list_partial_context) : list_partial_context = 
-  transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
+let clear_entailment_history_partial_list xp (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context (clear_entailment_history_es xp,(fun c->c)) ctx 
 
-let clear_entailment_history_failesc_list (ctx : list_failesc_context) : list_failesc_context = 
-  transform_list_failesc_context (idf,idf,clear_entailment_history_es) ctx 
+let clear_entailment_history_failesc_list xp (ctx : list_failesc_context) : list_failesc_context = 
+  transform_list_failesc_context (idf,idf,clear_entailment_history_es xp) ctx 
   
 let fold_partial_context_left_or (c_l:(list_partial_context list)) = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
