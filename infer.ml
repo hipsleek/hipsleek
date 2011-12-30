@@ -558,13 +558,13 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
 (*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *)
 (*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*)
-(*          let args = CP.fv new_p in *)
-(*          let new_iv = CP.diff_svl iv args in*)
+          let args = List.filter (fun v -> if is_substr "inf" (name_of_spec_var v) then true else false) (CP.fv new_p) in
+          let new_iv = CP.diff_svl iv args in
           let new_estate =
             {estate with 
                 es_formula = new_es_formula;
                 (* es_infer_pure = estate.es_infer_pure@[new_p]; *)
-                (*es_infer_vars = new_iv*)
+                es_infer_vars = new_iv
             }
           in
           Some (new_estate,new_p)

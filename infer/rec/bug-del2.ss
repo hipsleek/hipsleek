@@ -1,7 +1,7 @@
 
 void del(int n)
   infer @pre [n]
-  requires n>=0
+  requires true
   ensures  true; 
 {  
     acc(n);

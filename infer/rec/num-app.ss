@@ -2,7 +2,7 @@ relation A(int n, int m, int z).
 
 int appN(int n, int m)
   infer [n,m,A]
-  requires n>=0
+  requires true
   ensures A(n,m,res);
 {
   acc(n);
