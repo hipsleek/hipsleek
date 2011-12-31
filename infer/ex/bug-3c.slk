@@ -34,13 +34,14 @@ inferred pure: [
 */
 // (27)
 
-infer [y] true |- y::ll<m> & m=0.
-print residue.
+//infer [y] true |- y::ll<m> & m=-1.
+//print residue.
 
 //infer [y] true |- y::node<_,_>* y::node<_,_>.
 
 //infer [y,b] true |- y::node<_,b>*b::node<_,_>.
 
+// bad
 infer [y] true |- y::node<a,b> * b::ll<m> & m=-1.
 
 

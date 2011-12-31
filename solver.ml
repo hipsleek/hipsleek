@@ -7099,7 +7099,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               let new_estate = 
                 {estate with 
                     es_infer_vars = new_iv; 
-                    es_infer_vars_dead = dead_iv::estate.es_infer_vars_dead; 
+                    es_infer_vars_dead = dead_iv@estate.es_infer_vars_dead; 
                     es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
                     (* es_infer_heap = estate.es_infer_heap@[new_rn]; *)
                     (* es_infer_pure = estate.es_infer_pure@(if CP.isConstTrue new_p then [] else [new_p]); *)

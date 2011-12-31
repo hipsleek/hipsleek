@@ -282,6 +282,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   if no_infer es then None
   else 
     let iv = es.es_infer_vars in
+    let dead_iv = es.es_infer_vars_dead in
     let lhs_als = get_alias_formula es.es_formula in
     let lhs_aset = build_var_aset lhs_als in
     let rt = get_args_h_formula lhs_aset rhs in
@@ -295,8 +296,9 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             (*   | Some (orig_r,args,inf_arg,inf_av,h) ->  *)
             let alias = CP.EMapSV.find_equiv_all orig_r lhs_aset in
             let rt_al = [orig_r]@alias in (* set of alias with root of rhs *)
+            let over_dead = CP.intersect dead_iv rt_al in
             let iv_alias = CP.intersect iv rt_al in 
-            let b = (iv_alias == []) in (* does alias of root intersect with iv? *)
+            let b = (over_dead!=[] || iv_alias == []) in (* does alias of root intersect with iv? *)
             (* let new_iv = (CP.diff_svl (inf_arg@iv) rt_al) in *)
             (* let alias = if List.mem orig_r iv then [] else alias in *)
             if b then None
@@ -309,7 +311,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* iv_alias certainly has one element *)
                 let new_r = List.hd iv_alias in
                 (* each heap node may only be instantiated once *)
-                let new_iv = diff_svl new_iv [new_r] in
+                (* let new_iv = diff_svl new_iv [new_r] in *)
                 (* above cause incompleteness in 3.slk (29) & (30). *)
                 let new_h = 
                   if CP.eq_spec_var orig_r new_r 
@@ -338,6 +340,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 DD.devel_pprint ("orig inf vars : "^(!print_svl iv)) pos;
                 DD.devel_pprint ("inf LHS heap:"^(!print_h_formula new_h)) pos;
                 DD.devel_pprint ("new inf vars: "^(!print_svl new_iv)) pos;
+                DD.devel_pprint ("dead inf vars: "^(!print_svl iv_alias)) pos;
                 (* DD.devel_pprint ("new pure add: "^(!CP.print_formula new_p)) pos; *)
                 let r = {
                     match_res_lhs_node = new_h;
@@ -351,7 +354,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
                     must_action_stk # push act;
-                    Some (new_iv,new_h,new_r))
+                    Some (new_iv,new_h,iv_alias))
               end
 
 
@@ -364,7 +367,7 @@ type: Cformula.entail_state ->
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
-  let pr3 = pr_option (pr_triple !print_svl pr2 !print_sv) in
+  let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
   Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
@@ -436,7 +439,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Gen.Debug.to_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
@@ -545,9 +548,9 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
-    let iv = estate.es_infer_vars@estate.es_infer_vars_dead in
+    let iv = estate.es_infer_vars in
     (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
-    if check_sat then
+    (* if check_sat then *)
       (*      let new_p = simplify fml iv in                            *)
       (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
       (*      if CP.isConstTrue new_p then None                         *)
@@ -571,7 +574,16 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
           simplify new_p iv
       in
       (* abstract common terms from disj into conjunctive form *)
-      if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
+      if CP.isConstTrue new_p || CP.isConstFalse new_p then 
+        begin
+            DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+            DD.devel_pprint "Did not manage to infer a useful precondition" pos;
+            DD.devel_pprint ("LHS : "^(!CP.print_formula lhs_xpure)) pos;               
+            DD.devel_pprint ("RHS : "^(!CP.print_formula rhs_xpure)) pos;
+            (* DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos; *)
+            DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos;
+            (None,None)
+        end
       else
         let new_p_good = CP.simplify_disj_new new_p in
         (* remove ctr already present in the orig LHS *)
@@ -617,9 +629,10 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
               (*                 es_infer_vars = new_iv *)
               (*             } *)
               (*           in *)
-    else
-      (* contradiction detected *)
-      (infer_lhs_contra_estate estate lhs_xpure_orig pos "ante contradict with conseq",None)
+    (* below removed because of ex/bug-3e.slk *)
+    (* else *)
+    (*   (\* contradiction detected *\) *)
+    (*   (infer_lhs_contra_estate estate lhs_xpure_orig pos "ante contradict with conseq",None) *)
 (*       let check_sat = TP.is_sat_raw lhs_xpure in *)
 (*       if not(check_sat) then None *)
 (*       else *)
@@ -654,7 +667,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Gen.Debug.no_3 "infer_pure_m" 
+      Gen.Debug.to_3 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
