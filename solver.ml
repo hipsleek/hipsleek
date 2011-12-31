@@ -3345,57 +3345,16 @@ and heap_entail_conjunct_lhs_struc_x
                   | None ->
                       begin
 	            let rs = clear_entailment_history ctx11 in
-	            let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in
-                let ps,new_post = filter_varperm_formula post in
-                let vperm_constr = List.fold_left (fun a b -> CP.mkAnd a b pos) (CP.mkTrue no_pos) ps in
-                let vperm_formula = CF.formula_of_pure_formula vperm_constr pos in
-                (*Prove var permissions constraints*)
-                let rs_vperm, prf_vperm = heap_entail_one_context prog false rs vperm_formula None pos in
-                match rs_vperm with
-                  | FailCtx _ -> (rs_vperm, prf_vperm)
-	              | SuccCtx sc ->
-             begin
-                
-
-
-                (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in *)
-                (* let add_vperm_full es = *)
-                (*   let zero_vars = es.es_var_zero_perm in *)
-                (*   let tmp = Gen.BList.difference_eq CP.eq_spec_var full_vars zero_vars in *)
-                (*   if (tmp!=[]) then *)
-                (*   (\*all @full in the conseq should be in @zero in the ante*\) *)
-                (*     let msg = "failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is " ^(string_of_vp_ann VP_Zero) in *)
-                (*     Debug.devel_pprint msg pos; *)
-                (*     let es = {es with es_formula = mkFalse_nf pos} in *)
-                (*     Ctx es *)
-                (*   else *)
-                (*     let vars1 = Gen.BList.difference_eq CP.eq_spec_var zero_vars full_vars in *)
-                (*     let es = {es with CF.es_var_zero_perm=vars1} in *)
-                (*     Ctx es *)
-                (* in *)
-	            (* let _ =print_endline ("\nbefore add_vperm_full:"^(Cprinter.string_of_context rs)^"\n") in *)
-                (* let rs = CF.transform_context add_vperm_full rs in *)
-	            (* let _ =print_endline ("\nafter add_vperm_full:"^(Cprinter.string_of_context rs)^"\n") in *)
-                 let compose es =
-                   let ctx = Ctx es in
-                   CF.compose_context_formula ctx new_post ref_vars Flow_replace pos
-                 in
-                 let rs1 = CF.transform_list_context (compose,(fun c->c)) rs_vperm in
-                 let rs2 = CF.transform_list_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) rs1 in
-                 let rs3 = CF.transform_list_context ((fun es -> add_path_id (Ctx es) (pid,i)),(fun c->c)) rs2 in
-                 let rs4 = CF.transform_list_context ((fun es -> prune_ctx prog (Ctx es)),(fun c->c)) rs2 in
-                 (rs4,TrueConseq)
-
-                (* (\* TOCHECK : why compose_context fail to set unsat_flag? *\) *)
-	            (* let rs1 = CF.compose_context_formula rs_vperm new_post ref_vars Flow_replace pos in *)
-	            (* (\* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *\) *)
-	            (* let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in *)
-                (* (\* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *\) *)
-	            (* let rs3 = add_path_id rs2 (pid,i) in *)
-                (* let rs4 = prune_ctx prog rs3 in *)
-                (* (\* print_string ("\n after prune_ctx:"^(Cprinter.string_of_context rs4)^"\n"); *\) *)
-	            (* ((SuccCtx [rs4]),TrueConseq) *)
-             end
+	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
+                (* TOCHECK : why compose_context fail to set unsat_flag? *)
+	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
+	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
+	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+                (* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *)
+	            let rs3 = add_path_id rs2 (pid,i) in
+                let rs4 = prune_ctx prog rs3 in
+                (* print_string ("\n after prune_ctx:"^(Cprinter.string_of_context rs4)^"\n"); *)
+	            ((SuccCtx [rs4]),TrueConseq)
                       end
                   | Some id ->
                       (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
@@ -3730,8 +3689,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         in
         let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
         (* let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
-        let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
-        let es = {es with es_formula = new_f; es_var_zero_perm=new_zero_vars} in
+        let es = {es with es_formula = new_f; es_var_zero_perm=vars} in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
 	    (filter_set tmp, prf)
@@ -5971,84 +5929,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     (*        let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in*)
     (*        (r1,prf)                                                                                               *)
     (*      | None ->                                                                                                *)
-
-    (*************************************************************************)
-    (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
-    (*************************************************************************)
-    let lhs_zero_vars = estate.es_var_zero_perm in
-    let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
-    let rhs_ref, rhs_vrest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Ref) rhs_vrest in
-    let rhs_full, rhs_vrest3 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) rhs_vrest2 in
-    (* let _ = print_endline ("\n LDK: " ^ (pr_list Cprinter.string_of_pure_formula rhs_vrest3)) in *)
-    let _ = if (rhs_vrest3!=[]) then
-          print_endline ("[Warning] heap_entail_empty_rhs_heap: the conseq should not include variable permissions other than " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full)) 
-    (*ignore those var perms in rhs_vrest3*)
-    in
-    let rhs_val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) rhs_val) in
-    let rhs_ref_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Ref)) rhs_ref) in
-    let rhs_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) rhs_full) in
-    (* v@Z  |- v@Copy --> fail *)
-    (* v@Z  |- v@Ref --> fail *)
-    (* v@Z  |- v@Full --> fail *)
-    let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_val_vars) in
-    let tmp2 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_ref_vars) in
-    (* let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_full_vars) in *)
-    if (tmp1!=[] || tmp2!=[]) then
-      begin
-          (*FAIL*)
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap:" ^ (Cprinter.string_of_spec_var_list (tmp1@tmp2))^ "is " ^(string_of_vp_ann VP_Zero) ^ "\n") pos; (*TO DO: error messages can be more instructive*)
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing " ^ (string_of_vp_ann VP_Value) ^ " and " ^ (string_of_vp_ann VP_Ref) ^ " variable permissions in conseq\n") pos;
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
-          let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
-          (CF.mkFailCtx_in (Basic_Reason ({
-		      fc_message = "failed in entailing " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq";
-		      fc_current_lhs  = estate;
-		      fc_prior_steps = estate.es_prior_steps;
-		      fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) pos;
-		      fc_current_conseq = CF.formula_of_heap HFalse pos;
-		      fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
-                                          {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]})), Failure) (*TO CHECK: more expressive explanation*)
-      end
-    else
-    let tmp4 = Gen.BList.difference_eq CP.eq_spec_var_ident (rhs_full_vars) lhs_zero_vars  in
-    (*all @full in the conseq should be in @zero in the ante*)
-    if (tmp4!=[]) then
-      begin
-          (* not(v \in S) *)
-          (* -------------------- *)
-          (* S@zero |- v@full  --> FAIL *)
-          (*FAIL*)
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap:" ^ (Cprinter.string_of_spec_var_list tmp4)^ "is " ^(string_of_vp_ann VP_Zero) ^ "\n") pos; (*TO DO: error messages can be more instructive*)
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq\n") pos;
-          Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
-          let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
-          (CF.mkFailCtx_in (Basic_Reason ({
-		      fc_message = "failed in entailing " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq";
-		      fc_current_lhs  = estate;
-		      fc_prior_steps = estate.es_prior_steps;
-		      fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) pos;
-		      fc_current_conseq = CF.formula_of_heap HFalse pos;
-		      fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
-                                          {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]})), Failure) (*TO CHECK: more expressive explanation*)
-      end
-    else
-    (* not(v \in S) *)
-    (* -------------------- *)
-    (* S@Z |- v@C  --> S@Z *)
-    (*     not(v \in S) *)
-    (* ----------------------- *)
-    (* S@Z |- v@R  --> S+{v}@Z *)
-
-    (* (v \in S) *)
-    (* -------------------- *)
-    (* S@zero |- v@full  --> S-{v}@zero *)
-    let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident lhs_zero_vars rhs_full_vars in
-    let new_lhs_zero_vars = Gen.BList.remove_dups_eq CP.eq_spec_var_ident (rhs_ref_vars@vars1) in
-    let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
-    (*************************************************************************)
-    (*************************** END *****************************************)
-    (*************************************************************************)
-
 	if is_folding then begin
       (*LDK: the rhs_p is considered a part of residue and 
         is added to es_pure only when folding.
@@ -6067,6 +5947,57 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  (SuccCtx[res_ctx], prf)
 	end
 	else begin
+      (*************************************************************************)
+      (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
+      (*************************************************************************)
+      let lhs_zero_vars = estate.es_var_zero_perm in
+      let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
+      let rhs_ref, rhs_vrest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Ref) rhs_vrest in
+      let rhs_full, rhs_vrest3 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) rhs_vrest2 in
+      (* let _ = print_endline ("\n LDK: " ^ (pr_list Cprinter.string_of_pure_formula rhs_vrest3)) in *)
+      let _ = if (rhs_vrest3!=[]) then
+            print_endline ("[Warning] heap_entail_empty_rhs_heap: the conseq should not include variable permissions other than " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full)) 
+      (*ignore those var perms in rhs_vrest3*)
+      in
+      let rhs_val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) rhs_val) in
+      let rhs_ref_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Ref)) rhs_ref) in
+      let rhs_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) rhs_full) in
+      (* v@Z  |- v@Copy --> fail *)
+      (* v@Z  |- v@Ref --> fail *)
+      (* v@Z  |- v@Full --> fail *)
+      let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_val_vars) in
+      let tmp2 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_ref_vars) in
+      let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_full_vars) in
+      if (tmp1!=[] || tmp2!=[] || tmp3!=[]) then
+        begin
+        (*FAIL*)
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap:" ^ (Cprinter.string_of_spec_var_list (tmp1@tmp2@tmp3))^ "is " ^(string_of_vp_ann VP_Zero) ^ "\n") pos; (*TO DO: error messages can be more instructive*)
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq\n") pos;
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
+            let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
+            (CF.mkFailCtx_in (Basic_Reason ({
+		        fc_message = "failed in entailing " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq";
+		        fc_current_lhs  = estate;
+		        fc_prior_steps = estate.es_prior_steps;
+		        fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) pos;
+		        fc_current_conseq = CF.formula_of_heap HFalse pos;
+		        fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
+                                            {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]})), Failure) (*TO CHECK: more expressive explanation*)
+        end
+      else
+
+      (* not(v \in S) *)
+      (* -------------------- *)
+      (* S@Z |- v@C  --> S@Z *)
+      (*     not(v \in S) *)
+      (* ----------------------- *)
+      (* S@Z |- v@R  --> S+{v}@Z *)
+      let new_lhs_zero_vars = CP.remove_dups_svl (lhs_zero_vars@rhs_ref_vars) in
+      let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
+      (*************************************************************************)
+      (*************************** END *****************************************)
+      (*************************************************************************)
+
 	  let res_ctx = Ctx {estate with es_formula = res_delta;
           (*LDK: ??? add rhs_p into residue( EMP rule in p78). 
             Similar to the above

@@ -459,13 +459,13 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                               ^"\n\n") no_pos in
   let ante = meta_to_formula iante0 false [] stab in
   let ante = Solver.prune_preds !cprog true ante in
-  let ante =
-    if (Perm.allow_perm ()) then
-      (*add default full permission to ante;
-        need to add type of full perm to stab *)
-      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
-    else ante
-  in
+  (* let ante = *)
+  (*   if (Perm.allow_perm ()) then *)
+  (*     (\*add default full permission to ante; *)
+  (*       need to add type of full perm to stab *\) *)
+  (*     CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante *)
+  (*   else ante *)
+  (* in *)
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
 (*  let _ = flush stdout in*)
