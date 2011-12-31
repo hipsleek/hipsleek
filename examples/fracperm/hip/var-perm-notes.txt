@@ -18,6 +18,9 @@ foo(ref int x, ref int y)
    ensures  @full[x,y]
 
 
+PRE-CONDITION: @p_val and @p_ref
+POST-CONDITION: @full
+
   S1@F and S2@F  ==> (S1@S2)@Z
   S1@F or S2@F  ==> (S1 \cap S2)@Z
   S1@Z and S2@F  ==> (S1-S2)@Z
@@ -77,7 +80,7 @@ Another Representation
 
          not(v \in S)
   -----------------------
-  S@Z |- v@R  --> S+{v}@F
+  S@Z |- v@R  --> S+{v}@Z
 
 
   S1@Z and S2@F ==> (S1-S2)@Z

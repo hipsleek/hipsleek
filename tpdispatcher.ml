@@ -1175,7 +1175,7 @@ let simplify (f:CP.formula): CP.formula =
 
 let simplify (f:CP.formula): CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_1 "TP.simplify" pr pr simplify f
+  Gen.Debug.ho_1 "TP.simplify" pr pr simplify f
 
 
 
@@ -1745,6 +1745,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             (*>> for log - numbering *)
             (*<< test the pair for implication - implication result is saved in res1*)
 	        (* let _ = print_string ("imply_timeout: before tp_imply [Imply] :: " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+            (*DROP VarPerm formula before checking*)
+            let conseq = CP.drop_varperm_formula conseq in
+            let ante = CP.drop_varperm_formula ante in
 			let res1 =
 			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
 				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache process in
@@ -1815,7 +1818,9 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 
 			  (*let _ = print_string ("imply_timeout: imply_conj_lhs: ante: " ^ (Cprinter.string_of_pure_formula ante) ^ "\n") in*)
 			  (*let _ = print_string ("imply_timeout: imply_conj_lhs: cons: " ^ (Cprinter.string_of_pure_formula cons) ^ "\n") in*)
-			  
+              (*DROP VarPerm formula before checking*)
+			  let cons = CP.drop_varperm_formula cons in
+              let ante = CP.drop_varperm_formula ante in
 			  let res =
 				if (not (CP.is_formula_arith ante)) && (CP.is_formula_arith cons) then
 				  let res = tp_imply (CP.drop_bag_formula ante) cons imp_no timeout do_cache process in

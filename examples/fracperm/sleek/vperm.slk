@@ -1,18 +1,56 @@
 /*
-Syntatically correct
-Not yet implement the semantics
+In a method:
+Proving PRE-CONDITION: @p_val and @p_ref
+Proving POST-CONDITION: @full
+
+   Variable permissions:
+   v@zero  |- v@p_val --> fail
+   v@zero  |- v@p_ref --> fail
+   v@zero  |- v@full --> fail
+
+     not(v \in S)
+  --------------------
+  S@zero |- v@p_val  --> S@zero
+
+     not(v \in S)
+  --------------------
+  S@zero |- v@full  --> S@zero
+
+         not(v \in S)
+  -----------------------
+  S@zero |- v@p_ref  --> S+{v}@zero
+
 */
 
 
+//(1)
+checkentail @zero[v1,v2] |- @p_ref[x1].
+//valid   --> @zero[v1,v2,x1].
+
+//(2)
+checkentail @zero[v1,v2] |- @p_val[x1,x2] & @p_ref[x5,x6] & @full[v3,x4].
+// valid --> @zero[v1,v2,x5,x6].
+
+//(3)
+checkentail @zero[v1,v2] |- @p_val[x1,x2]. 
+//valid   --> @zero[v1,v2].
+
+//(4)
+checkentail @zero[v1,v2] |- @p_val[x1,x2] & @p_ref[x3,x4].
+//valid   --> @zero[v1,v2,x3,x4].
+
+//(5)
+checkentail @zero[v1,v2] |- @p_val[x1,x2] & @p_ref[v1,x4].
+// Fail
+
+//(6)
+checkentail @zero[v1,v2] |- @p_val[x1,x2] & @full[v1,x4].
+// Fail
+
+//(7)
+checkentail @zero[v1,v2] |- @p_val[v2,x2] & @full[v3,x4].
+// Fail
+
 //test normalize
-checkentail @zero[v1,v2] & @zero[v1,v2] & @p_val[x1,x2] & @p_val[x1,x3] & @p_ref[x4,x5] & @p_ref[x6,x5] & @full[x7,x8] & @full[x9,x10] |- false.
+//checkentail @zero[v1,v2] & @zero[v1,v2] & @p_val[x1,x2] & @p_val[x1,x3] & @p_ref[x4,x5] & @p_ref[x6,x5] & @full[x7,x8] & @full[x9,x10] |- false.
 //   --> @zero[v1,v2].
-
-//checkentail @zero[v1,v2] |- @p_val[x1,x2]. 
-//   --> @zero[v1,v2].
-
-//checkentail v1'=x1 & @zero[v1,v2] |- @p_val[x1,x2].
-//   --> @zero[v1,v2].
-
-//checkentail @zero[v1,v2] |- @p_ref[x1].
-

@@ -7090,7 +7090,7 @@ let normalize_varperm_formula_x (f:formula) : formula =
   in helper f
 
 let normalize_varperm_formula (f:formula) : formula = 
-  Gen.Debug.ho_1 "normalize_varperm_formula"
+  Gen.Debug.no_1 "normalize_varperm_formula"
       !print_formula !print_formula
       normalize_varperm_formula_x f
 
@@ -7115,6 +7115,6 @@ let filter_varperm_formula (f:formula) : CP.formula list * formula =
     "\n ### ls = " ^ (pr_list !print_pure_f ls)
     ^ "\n ### f = " ^ (!print_formula f)
   in
-  Gen.Debug.ho_1 "filter_varperm_formula" 
+  Gen.Debug.no_1 "filter_varperm_formula" 
       !print_formula pr_out
       filter_varperm_formula_x f

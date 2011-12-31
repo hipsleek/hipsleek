@@ -2978,6 +2978,42 @@ and drop_bag_b_formula (bf : b_formula) : b_formula =
   | _ -> pf
   in (npf,il)
 
+  
+(*
+  Drop VarPerm constraints for satisfiability checking.
+*)
+let rec drop_varperm_formula (f0 : formula) : formula = match f0 with
+  | BForm (bf,lbl) -> BForm (drop_varperm_b_formula bf, lbl)
+  | And (f1, f2, pos) ->
+	  let df1 = drop_varperm_formula f1 in
+	  let df2 = drop_varperm_formula f2 in
+	  let df = mkAnd df1 df2 pos in
+		df
+  | Or (f1, f2, lbl, pos) ->
+	  let df1 = drop_varperm_formula f1 in
+	  let df2 = drop_varperm_formula f2 in
+	  let df = mkOr df1 df2 lbl pos in
+		df
+  | Not (f1, lbl, pos) ->
+	  let df1 = drop_varperm_formula f1 in
+	  let df = mkNot df1 lbl pos in
+		df
+  | Forall (qvar, qf,lbl, pos) ->
+	  let dqf = drop_varperm_formula qf in
+	  let df = mkForall [qvar] dqf lbl pos in
+		df
+  | Exists (qvar, qf,lbl, pos) ->
+	  let dqf = drop_varperm_formula qf in
+	  let df = mkExists [qvar] dqf lbl pos in
+		df
+
+and drop_varperm_b_formula (bf : b_formula) : b_formula =
+  let (pf,il) = bf in
+  let npf = match pf with
+    | VarPerm _ ->  BConst (true, no_pos)
+    | _ -> pf
+  in (npf,il)
+
 
 (**************************************************************)
 (**************************************************************)
@@ -6515,12 +6551,13 @@ let mk_varperm typ ls pos =
   (BForm ((pf,None),None))
 
 (* formula -> formula_w_varperm * formula_wo_varperm*)
+(* combine VarPerm formulas into 4 types*)
 let normalize_varperm_x (f:formula) : formula =
   let ls = split_conjunctions f in
   let lsf1,lsf2 = List.partition (is_varperm) ls in
-  let _ = print_endline ("normalize_varperm:" 
-                         ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1))
-                         ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in
+  (* let _ = print_endline ("normalize_varperm:"  *)
+  (*                        ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1)) *)
+  (*                        ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in *)
   (*zero, full , p_val , p_ref*)
   let rec helper ls =
     match ls with
@@ -6563,7 +6600,7 @@ let normalize_varperm_x (f:formula) : formula =
   new_f
 
 let normalize_varperm (f:formula) : formula =
-  Gen.Debug.ho_1 "normalize_varperm" 
+  Gen.Debug.no_1 "normalize_varperm" 
       !print_formula !print_formula
       normalize_varperm_x f
 (* let filter_varperm (f:formula) : formula * formula =  *)
