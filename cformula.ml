@@ -3984,15 +3984,25 @@ let false_ctx flowt pos =
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
-let false_ctx_with_orig_ante es f flowt pos = 
-	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; 
+let false_es_with_flow_and_orig_ante es flowt f pos =
+	let new_f = mkFalse flowt pos in
+    {(empty_es flowt pos) with es_formula = new_f ; es_orig_ante = f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
-    })
+    }
+
+let false_es_with_orig_ante es f pos =
+    let flowt = flow_formula_of_formula f in
+      false_es_with_flow_and_orig_ante es flowt f pos
+
+let false_ctx_with_flow_and_orig_ante es flowt f pos = 
+	Ctx (false_es_with_flow_and_orig_ante es flowt f pos)
+
+let false_ctx_with_orig_ante es f pos = 
+	Ctx (false_es_with_orig_ante es f pos)
 
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in

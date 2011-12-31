@@ -308,6 +308,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* let iv_al = CP.diff_svl iv_al r in *)
                 (* iv_alias certainly has one element *)
                 let new_r = List.hd iv_alias in
+                (* each heap node may only be instantiated once *)
+                let new_iv = diff_svl new_iv [new_r] in
                 let new_h = 
                   if CP.eq_spec_var orig_r new_r 
                   then inf_rhs
@@ -322,7 +324,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* we do not need to add lhs_root=iv into the inf_pure as info is in LHS*)
                 (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)  *)
                 (*   (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in *)
-                let new_p = (CP.mkTrue no_pos) in
+                (* let new_p = (CP.mkTrue no_pos) in *)
                 let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
                 (* why is orig_ante being used?????? *)
                 (* let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in *)
@@ -332,10 +334,10 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (*   (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in *)
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_pprint ("unmatch RHS : "^(!print_h_formula rhs)) pos;
-                DD.devel_pprint ("inf vars    : "^(!print_svl iv)) pos;
+                DD.devel_pprint ("orig inf vars : "^(!print_svl iv)) pos;
                 DD.devel_pprint ("inf LHS heap:"^(!print_h_formula new_h)) pos;
                 DD.devel_pprint ("new inf vars: "^(!print_svl new_iv)) pos;
-                DD.devel_pprint ("new pure add: "^(!CP.print_formula new_p)) pos;
+                (* DD.devel_pprint ("new pure add: "^(!CP.print_formula new_p)) pos; *)
                 let r = {
                     match_res_lhs_node = new_h;
                     match_res_lhs_rest = lhs_h;
@@ -348,7 +350,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
                     must_action_stk # push act;
-                    Some (new_iv,new_h,new_p))
+                    Some (new_iv,new_h))
               end
 
 
@@ -356,13 +358,13 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
 type: Cformula.entail_state ->
   Cformula.h_formula ->
   Cformula.h_formula ->
-  'a -> (Cformula.CP.spec_var list * Cformula.h_formula * CP.formula) option
+  'a -> (Cformula.CP.spec_var list * Cformula.h_formula) option
 *)
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
-  let pr3 = pr_option (pr_triple !print_svl pr2 !print_pure_f) in
-  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
+  let pr3 = pr_option (pr_pair !print_svl pr2) in
+  Gen.Debug.to_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
@@ -438,17 +440,13 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
     match r with
       | None -> None
       | Some pf ->
-            let new_estate =
-              {estate with 
-                  es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
-                  (* es_infer_pure = estate.es_infer_pure@[pf]; *)
-              } in
+            let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
             Some (new_estate,pf)
 
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Gen.Debug.to_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -522,7 +520,9 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     (* let rhs_vars = CP.fv rhs_xpure in *)
     (* below will help greatly reduce the redundant information inferred from state *)
+    (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
     let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
+(* assumption_filter_aggressive *)
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
@@ -554,9 +554,9 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
       (* abstract common terms from disj into conjunctive form *)
       if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
       else
-        let new_p = CP.simplify_disj_new new_p in
+        let new_p_good = CP.simplify_disj_new new_p in
         (* filter away irrelevant constraint for infer_pure *)
-        let new_p_good = CP.filter_ante new_p rhs_xpure in
+        (* let new_p_good = CP.filter_ante new_p rhs_xpure in *)
         (* let _ = print_endline ("new_p:"^(!CP.print_formula new_p)) in *)
         (* let _ = print_endline ("new_p_good:"^(!CP.print_formula new_p_good)) in *)
         (* should not be using es_orig_ante *)

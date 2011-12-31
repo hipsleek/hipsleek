@@ -2634,7 +2634,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
   if not b then Ctx{es with es_unsat_flag = true } else 
-	false_ctx_with_orig_ante es f (flow_formula_of_formula es.es_formula) no_pos
+	false_ctx_with_orig_ante es f no_pos
 
 and elim_unsat_ctx_now (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
@@ -5022,7 +5022,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 			            (* let _ = print_string "pp 1\n" in*)
 			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
 			              (* let _ = print_string ("got: "^(Cprinter.string_of_formula ante)^"|-"^(Cprinter.string_of_formula conseq)^"\n\n") in *)
-			              (SuccCtx [false_ctx_with_orig_ante estate ante fl1 pos], UnsatAnte)
+			              (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
 			            else					  
 			              (*  let _ = print_string "pp 2\n" in*)
 			              (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
@@ -7088,9 +7088,9 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
       else None in 
     begin
       match r with
-        | Some (new_iv,new_rn,new_p) -> 
+        | Some (new_iv,new_rn) -> 
               (* let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in *)
-              let new_p = if CP.isConstTrue new_p then [] else [new_p] in
+              (* let new_p = if CP.isConstTrue new_p then [] else [new_p] in *)
               let new_estate = 
                 {estate with 
                     es_infer_vars = new_iv; 
@@ -7105,7 +7105,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               let ctx1 = (Ctx new_estate) in
 			  let ctx1 = set_unsat_flag ctx1 true in
 			  let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
-              let r1 = add_infer_pure_to_list_context new_p r1 in
+              (* let r1 = add_infer_pure_to_list_context new_p r1 in *)
               let r1 = add_infer_heap_to_list_context [new_rn] r1 in
               (r1,prf)
                   (* else *)

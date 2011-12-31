@@ -6901,7 +6901,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.ho_1 "simplify_disj_new" pr pr simplify_disj_new f
+  Gen.Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
 
 (* To find a LexVar formula *)
 exception No_LexVar;;
