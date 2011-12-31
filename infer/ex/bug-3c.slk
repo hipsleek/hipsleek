@@ -33,11 +33,15 @@ inferred pure: [
   inf_ann_33<=0; inf_ann_36<=0]
 */
 // (27)
-infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
 
-//infer [y] true |- y::ll<m> & m=0.
-//infer [y] true |- y::ll<m> & m<0.
+infer [y] true |- y::ll<m> & m=0.
+print residue.
 
+//infer [y] true |- y::node<_,_>* y::node<_,_>.
+
+//infer [y,b] true |- y::node<_,b>*b::node<_,_>.
+
+infer [y] true |- y::node<a,b> * b::ll<m> & m=-1.
 
 
 print residue.

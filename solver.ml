@@ -2394,6 +2394,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_trace = fold_es.es_trace;
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
+              es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
@@ -6078,6 +6079,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label;
         es_infer_vars = estate.es_infer_vars;
+        es_infer_vars_dead = estate.es_infer_vars_dead;
         es_infer_vars_rel = estate.es_infer_vars_rel;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
@@ -7091,12 +7093,13 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
       else None in 
     begin
       match r with
-        | Some (new_iv,new_rn) -> 
+        | Some (new_iv,new_rn,dead_iv) -> 
               (* let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in *)
               (* let new_p = if CP.isConstTrue new_p then [] else [new_p] in *)
               let new_estate = 
                 {estate with 
                     es_infer_vars = new_iv; 
+                    es_infer_vars_dead = dead_iv::estate.es_infer_vars_dead; 
                     es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
                     (* es_infer_heap = estate.es_infer_heap@[new_rn]; *)
                     (* es_infer_pure = estate.es_infer_pure@(if CP.isConstTrue new_p then [] else [new_p]); *)

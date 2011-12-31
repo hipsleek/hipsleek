@@ -309,7 +309,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* iv_alias certainly has one element *)
                 let new_r = List.hd iv_alias in
                 (* each heap node may only be instantiated once *)
-                (* let new_iv = diff_svl new_iv [new_r] in *)
+                let new_iv = diff_svl new_iv [new_r] in
                 (* above cause incompleteness in 3.slk (29) & (30). *)
                 let new_h = 
                   if CP.eq_spec_var orig_r new_r 
@@ -351,7 +351,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
                     must_action_stk # push act;
-                    Some (new_iv,new_h))
+                    Some (new_iv,new_h,new_r))
               end
 
 
@@ -364,7 +364,7 @@ type: Cformula.entail_state ->
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
-  let pr3 = pr_option (pr_pair !print_svl pr2) in
+  let pr3 = pr_option (pr_triple !print_svl pr2 !print_sv) in
   Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
@@ -545,7 +545,7 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
-    let iv = estate.es_infer_vars in
+    let iv = estate.es_infer_vars@estate.es_infer_vars_dead in
     (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
     if check_sat then
       (*      let new_p = simplify fml iv in                            *)

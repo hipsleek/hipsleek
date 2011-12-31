@@ -3000,7 +3000,9 @@ type entail_state = {
   es_infer_post : bool; 
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
-  es_infer_vars_rel : CP.spec_var list; 
+  es_infer_vars_rel : CP.spec_var list;
+  (* input vars to denote vars already instantiated *)
+  es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
@@ -3179,6 +3181,7 @@ let empty_es flowt pos =
   es_is_normalizing = false;
   es_infer_post = false;
   es_infer_vars = [];
+  es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -4002,6 +4005,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
     {(empty_es flowt pos) with es_formula = new_f ; es_orig_ante = f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
+        es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
