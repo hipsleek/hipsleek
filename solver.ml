@@ -3346,8 +3346,29 @@ and heap_entail_conjunct_lhs_struc_x
                       begin
 	            let rs = clear_entailment_history ctx11 in
 	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
+                (*************Compose variable permissions >>> ******************)
+                let ps,new_post = filter_varperm_formula post in
+                let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @zero*)
+                let add_vperm_full es =
+                  let zero_vars = es.es_var_zero_perm in
+                  let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+                  if (tmp!=[]) then
+                  (*all @full in the conseq should be in @zero in the ante*)
+                    let msg = "failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is " ^(string_of_vp_ann VP_Zero) in
+                    Debug.devel_pprint msg pos;
+                    let es = {es with es_formula = mkFalse_nf pos} in
+                    Ctx es
+                  else
+                    let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
+                    let es = {es with CF.es_var_zero_perm=vars1} in
+                    Ctx es
+                in
+	            (* let _ =print_endline ("\nbefore add_vperm_full:"^(Cprinter.string_of_context rs)^"\n") in *)
+                let rs = CF.transform_context add_vperm_full rs in
+	            (* let _ =print_endline ("\nafter add_vperm_full:"^(Cprinter.string_of_context rs)^"\n") in *)
+                (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
-	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
+	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
 	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                 (* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *)
