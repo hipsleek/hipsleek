@@ -1075,7 +1075,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	      let c = (mark_recursive_call prog cprog5) in 
+	      let c = (mark_rec_and_call_order cprog5) in 
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -7697,45 +7697,90 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
 	  
-(* Recursive call detection *)
-(* irf = is_rec_field *)	
-and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
-  let cg = IastUtil.callgraph_of_prog ip in
-  let scc_list = List.rev (IastUtil.IGC.scc_list cg) in
-  call_graph := scc_list; (* To keep time of making call hierachy for inference *)
-  (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
-  irf_traverse_prog ip cp scc_list
+(* Recursive call and call order detection *)
+(* irf = is_rec_field *)
+and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
+  let cg = Cast.callgraph_of_prog cp in
+  let scc_list = List.rev (Cast.IGC.scc_list cg) in
+  let cp = mark_recursive_call cp scc_list cg in
+  mark_call_order cp scc_list cg
+  
+and mark_recursive_call (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl = 
+  let _ = printf "The scc list of program:\n";
+	List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list;
+	printf "**********\n"
+  in
+  irf_traverse_prog cp scc_list
 
-and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUtil.IG.V.t list list) : (IastUtil.IG.V.t list) =
+and mark_call_order (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl =
+  let proc_top, proc_base  = List.partition (fun proc -> proc.Cast.proc_is_main) cp.Cast.prog_proc_decls in
+  let proc_top_names = List.map (fun p -> p.Cast.proc_name) proc_top in
+  let scc_list = List.filter (fun scc -> Gen.BList.overlap_eq (=) scc proc_top_names) scc_list in
+  let scc_list = scc_sort scc_list cg in
+  let _, scc_list = List.fold_left (fun (index, acc) scc ->
+	(index+1, acc @ [(index, scc)])) (0, []) scc_list in
+  let call_hierarchy = List.concat (List.map (fun (i, scc) -> List.map (fun m -> (m,i)) scc) scc_list) in 
+
+  let cal_index name list =
+	try List.assoc name list with _ ->  0
+  in 
+  
+  let proc_top = List.map (fun p -> {p with Cast.proc_call_order = cal_index p.Cast.proc_name call_hierarchy}) proc_top in
+  let sorted_proc_top = List.fast_sort (fun p1 p2 -> p1.Cast.proc_call_order - p2.Cast.proc_call_order) proc_top in
+  {cp with Cast.prog_proc_decls = sorted_proc_top @ proc_base}
+	
+(*
+and find_scc_group (cp: Cast.prog_decl) (pname: Globals.ident) (scc_list: Cast.IG.V.t list list) : (Cast.IG.V.t list) =
   match scc_list with
 	| [] -> []
 	| x::xs -> if (is_found ip pname x) then x else (find_scc_group ip pname xs)
 
-and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.IG.V.t list) : bool =
+and is_found (cp: Cast.prog_decl) (pname: Globals.ident) (scc: Cast.IG.V.t list) : bool =
   (*let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
   let _ = print_string ("The proc name: "^pname^"\n") in*)
   match scc with
   | [] -> false
-	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
-	  (* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
+	| x::xs ->
+	  let mingled_name = (Cast.look_up_proc_def_raw cp.Cast.prog_proc_decls x).Cast.proc_mingled_name in
 	  if (mingled_name = pname) then true else (is_found ip pname xs)
+*)
+and is_found (cp: Cast.prog_decl) (pname: Globals.ident) (scc: Cast.IG.V.t list) : bool =
+  List.exists (fun m ->
+	let mn = (Cast.look_up_proc_def_raw cp.Cast.prog_proc_decls m).Cast.proc_name in
+	mn = pname) scc
+			  
+and find_scc_group (cp: Cast.prog_decl) (pname: Globals.ident) (scc_list: Cast.IG.V.t list list) : (Cast.IG.V.t list) =
+  try List.find (fun scc -> is_found cp pname scc) scc_list
+  with _ -> []
+	
+and neighbors_of_scc (scc: Cast.IG.V.t list) (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
+	let neighbors = List.filter (fun m -> not (List.mem m scc)) (Cast.IGN.list_from_vertices cg scc) in
+	let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
+	scc_neighbors
+	
+and scc_sort (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
+  let compare_scc scc1 scc2 =
+		if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
+		else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
+		else 0
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list 
 
-and irf_traverse_prog (ip: Iast.prog_decl) (cp: Cast.prog_decl) (scc_list: IastUtil.IG.V.t list list) : Cast.prog_decl = 
+and irf_traverse_prog (cp: Cast.prog_decl) (scc_list: Cast.IG.V.t list list) : Cast.prog_decl = 
   {cp with
-	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
   }
 
-and irf_traverse_proc (ip: Iast.prog_decl) (proc: Cast.proc_decl) (scc: IastUtil.IG.V.t list) : Cast.proc_decl =
+and irf_traverse_proc (cp: Cast.prog_decl) (proc: Cast.proc_decl) (scc: Cast.IG.V.t list) : Cast.proc_decl =
   {proc with
 	  Cast.proc_body = 
 		  match proc.Cast.proc_body with
 			| None -> None
-			| Some body -> Some (irf_traverse_exp ip body scc)
+			| Some body -> Some (irf_traverse_exp cp body scc)
   }
 
-and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t list) : Cast.exp =
+and irf_traverse_exp (cp: Cast.prog_decl) (exp: Cast.exp) (scc: Cast.IG.V.t list) : Cast.exp =
   match exp with
-	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp ip e.Cast.exp_label_exp scc)}
+	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp cp e.Cast.exp_label_exp scc)}
 	| Cast.CheckRef e -> Cast.CheckRef e
 	| Cast.Java e -> Cast.Java e
 	| Cast.Assert e -> Cast.Assert e
@@ -7743,13 +7788,15 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	      (*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
 	      (*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
 	      (* An Hoa END *)
-	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
+	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp cp e.Cast.exp_assign_rhs scc)}
 	| Cast.BConst e -> Cast.BConst e
-	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp ip e.Cast.exp_bind_body scc)}
-	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp ip e.Cast.exp_block_body scc)}
-	| Cast.Cond e -> Cast.Cond {e with Cast.exp_cond_then_arm = (irf_traverse_exp ip e.Cast.exp_cond_then_arm scc); Cast.exp_cond_else_arm = (irf_traverse_exp ip e.Cast.exp_cond_else_arm scc)}
-	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp ip e.Cast.exp_cast_body scc)}
-	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp ip e.Cast.exp_catch_body scc)}
+	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp cp e.Cast.exp_bind_body scc)}
+	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp cp e.Cast.exp_block_body scc)}
+	| Cast.Cond e -> Cast.Cond {e with
+		Cast.exp_cond_then_arm = (irf_traverse_exp cp e.Cast.exp_cond_then_arm scc);
+		Cast.exp_cond_else_arm = (irf_traverse_exp cp e.Cast.exp_cond_else_arm scc)}
+	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp cp e.Cast.exp_cast_body scc)}
+	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp cp e.Cast.exp_catch_body scc)}
 	| Cast.Debug e -> Cast.Debug e
 	| Cast.Dprint e -> Cast.Dprint e
 	| Cast.FConst e -> Cast.FConst e
@@ -7759,18 +7806,22 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.Null e -> Cast.Null e
 	| Cast.EmptyArray e -> Cast.EmptyArray e (* An Hoa *)
 	| Cast.Print e -> Cast.Print e
-	| Cast.Seq e -> Cast.Seq {e with Cast.exp_seq_exp1 = (irf_traverse_exp ip e.Cast.exp_seq_exp1 scc); Cast.exp_seq_exp2 = (irf_traverse_exp ip e.Cast.exp_seq_exp2 scc)}
+	| Cast.Seq e -> Cast.Seq {e with
+		Cast.exp_seq_exp1 = (irf_traverse_exp cp e.Cast.exp_seq_exp1 scc);
+		Cast.exp_seq_exp2 = (irf_traverse_exp cp e.Cast.exp_seq_exp2 scc)}
 	| Cast.This e -> Cast.This e
 	| Cast.Time e -> Cast.Time e
 	| Cast.Var e -> Cast.Var e
 	| Cast.VarDecl e -> Cast.VarDecl e
 	| Cast.Unfold e -> Cast.Unfold e
 	| Cast.Unit e -> Cast.Unit e
-	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp ip e.Cast.exp_while_body scc)}
+	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp cp e.Cast.exp_while_body scc)}
 	| Cast.Sharp e -> Cast.Sharp e
-	| Cast.Try e -> Cast.Try {e with Cast.exp_try_body = (irf_traverse_exp ip e.Cast.exp_try_body scc); Cast.exp_catch_clause = (irf_traverse_exp ip e.Cast.exp_catch_clause scc)}
-	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found ip e.Cast.exp_icall_method_name scc)}
-	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found ip e.Cast.exp_scall_method_name scc)}
+	| Cast.Try e -> Cast.Try {e with
+		Cast.exp_try_body = (irf_traverse_exp cp e.Cast.exp_try_body scc);
+		Cast.exp_catch_clause = (irf_traverse_exp cp e.Cast.exp_catch_clause scc)}
+	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found cp e.Cast.exp_icall_method_name scc)}
+	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found cp e.Cast.exp_scall_method_name scc)}
 		  
 
 (* Build call graph of the program *)

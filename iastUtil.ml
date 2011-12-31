@@ -981,6 +981,7 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
 
 let ngs_union gs = 
   List.fold_left IGO.union IG.empty gs 
@@ -995,8 +996,7 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
     | _ -> None
   in
   fold_exp exp f ngs_union cg
-
-
+	
 let addin_callgraph_of_proc cg proc : IG.t = 
   match proc.proc_body with
   | None -> cg

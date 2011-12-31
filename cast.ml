@@ -1561,3 +1561,48 @@ let add_uni_vars_to_view cprog (l2r_coers:coercion_decl list) (view:view_decl) :
       !print_view_decl
       !print_view_decl
       (fun _ _ -> add_uni_vars_to_view_x cprog l2r_coers view) l2r_coers view
+
+(************************************************************
+Building the call graph for procedure hierarchy based on Cast
+*************************************************************)
+module IdentComp = struct
+  type t = ident
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = ( = )
+end
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
+
+let ex_args f a b = f b a
+
+let ngs_union gs = 
+  List.fold_left IGO.union IG.empty gs 
+
+let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t = 
+  let f e = 
+    match e with
+    | ICall e ->
+      Some (IG.add_edge cg mnv e.exp_icall_method_name)
+    | SCall e ->
+      Some (IG.add_edge cg mnv e.exp_scall_method_name)
+    | _ -> None
+  in
+  fold_exp exp f ngs_union cg
+	
+let addin_callgraph_of_proc cg proc : IG.t = 
+  match proc.proc_body with
+  | None -> cg
+  | Some e -> addin_callgraph_of_exp cg e proc.proc_name
+
+let callgraph_of_prog prog : IG.t = 
+  let cg = IG.empty in
+  let pn pc = pc.proc_name in
+  let mns = List.map pn prog.prog_proc_decls in
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  List.fold_right (ex_args addin_callgraph_of_proc) prog.prog_proc_decls cg
+
+

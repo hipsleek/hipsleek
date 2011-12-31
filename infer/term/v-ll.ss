@@ -27,7 +27,8 @@ int length(node x)
 int foo(node x)
   // infer @pre [p1,p2,p3]
   requires x::ll<n>@L
-  variance [0,p2,n]
+  //variance [0,p2,n]
+	variance [0,0,n]
   ensures res=0;
 {
   if (x==null) return 0;

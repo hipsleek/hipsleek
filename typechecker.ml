@@ -1257,103 +1257,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
     end else
       raise e
 
-(*
-let rec equalpf_a f1 f2 =
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  r1 & r2
-
-and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
-
-and comparepf_a f1 f2 =
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  if (r1 & r2) then 0
-  else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
-	
-and comparepf f1 f2 = Gen.Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
-
-module FComp = struct
-  type t = CP.formula
-  let compare = comparepf
-  let hash = Hashtbl.hash
-  let equal = equalpf
-end
-module IG = Graph.Persistent.Digraph.Concrete(FComp)
-module IGO = Graph.Oper.P(IG)
-module IGN = Graph.Oper.Neighbourhood(IG)
-module IGC = Graph.Components.Make(IG)
-module IGP = Graph.Path.Check(IG)
-
-module IComp = struct
-  type t = int
-  let compare = compare
-  let hash = Hashtbl.hash
-  let equal = (=)
-end
-module GS = Graph.Persistent.Digraph.Concrete(IComp)
-module GSO = Graph.Oper.P(GS)
-module GSN = Graph.Oper.Neighbourhood(GS)
-module GSC = Graph.Components.Make(GS)
-module GSP = Graph.Path.Check(GS)
-
-(* TODO : This printing of check_prog needs to be tidied *)
-let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");*)
-
-  let gr = IG.empty in
-  let g = List.fold_left (fun g (f1,f2) ->
-    let ng1 = IG.add_vertex g f1 in
-	let ng2 = IG.add_vertex ng1 f2 in
-	let ng3 = IG.add_edge ng2 f1 f2 in
-	ng3) gr ls in
-  g
-
-let scc_numbering g =
-  let scc_list = IGC.scc_list g in
-  let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
-
-  let mem e ls = List.fold_left (fun rs e1 -> if (equalpf e e1) then true else rs) false ls in
-  let meml ls1 ls2 = List.fold_left (fun rs e -> if (mem e ls2) then true else rs) false ls1 in
-  
-  let scc_graph = GS.empty in
-  
-  let scc_graph = List.fold_left (fun sg (n,_) -> GS.add_vertex sg n) scc_graph scc_list in
-
-  let scc_graph = List.fold_left (fun sg (n,l) ->
-	let neighbours = IGN.list_from_vertices g l in
-	List.fold_left (fun nsg (n1,l1) -> if (meml l1 neighbours) then GS.add_edge nsg n n1 else nsg) sg scc_list 
-  ) scc_graph scc_list in
-
-  let (nscc, fscc) = GSC.scc scc_graph in
-
-  fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list
-  
-
-let variance_numbering ls g =
-  if !Globals.term_auto_number then
-  let f = scc_numbering g in
-  let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
-  let helper ele =
-	let (es,e) = ele in
-	let nes = {es with CF.es_var_label =
-		let user_defined_var_label_lhs = es.CF.es_var_label in
-		match user_defined_var_label_lhs with
-		  | None -> Some (nf es.CF.es_var_ctx_lhs)
-		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_lhs
-			          else Some (nf es.CF.es_var_ctx_lhs)} in
-	let ne = {e with CF.formula_var_label =
-		let user_defined_var_label_rhs = e.CF.formula_var_label in
-		match user_defined_var_label_rhs with
-		  | None -> Some (nf es.CF.es_var_ctx_rhs)
-		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_rhs
-			          else Some (nf es.CF.es_var_ctx_rhs)}
-	in (nes,ne)
-  in List.map (fun e -> helper e) ls
-  else ls
-*)
-let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
+let check_prog (prog : prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
       begin
@@ -1362,6 +1266,7 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
       check_coercion prog;
       print_string "DONE.\n"
       end;
+	(*
     (* List of procs with user-given order *)
     let proc_ordered_by_user = prog.prog_proc_decls in
     let iproc_main_names = List.map (fun p -> p.I.proc_name) iprog.I.prog_proc_decls in
@@ -1401,9 +1306,10 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
       List.fast_sort (fun proc1 proc2 -> proc1.proc_call_order - proc2.proc_call_order) procs in
     let proc_top = sort_by_call proc_top in
     let proc_ordered_by_call = proc_top @ proc_base in
-    
+    *)
+	
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
+    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
     
     Term.term_check_output Term.term_res_stk
 	    
@@ -1428,5 +1334,5 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
   else
   () *)
 
-let check_prog (prog : prog_decl) iprog =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog
+let check_prog (prog : prog_decl) =
+  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog
