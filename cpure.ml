@@ -6889,7 +6889,7 @@ let simplify_disj_aux nx nxs : formula =
 
 
 (* assumes absence of duplicates *)
-let simplify_disj (f:formula) : formula =
+let simplify_disj_new (f:formula) : formula =
   let fs=split_disjunctions f in
   match fs with
     | [] -> report_error no_pos ("simplify_disj : not possible to have empty disj")
@@ -6899,9 +6899,9 @@ let simplify_disj (f:formula) : formula =
           let nxs = List.map split_conjunctions xs in
          simplify_disj_aux nx nxs
 
-let simplify_disj (f:formula) : formula =
+let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f
+  Gen.Debug.ho_1 "simplify_disj_new" pr pr simplify_disj_new f
 
 (* To find a LexVar formula *)
 exception No_LexVar;;

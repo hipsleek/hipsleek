@@ -520,8 +520,9 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   else
     let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
+    (* let rhs_vars = CP.fv rhs_xpure in *)
     (* below will help greatly reduce the redundant information inferred from state *)
-    let (lhs_xpure,_) = CP.assumption_filter lhs_xpure rhs_xpure in
+    let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
@@ -550,21 +551,30 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
         else
           simplify new_p iv
       in
+      (* abstract common terms from disj into conjunctive form *)
       if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
       else
-        let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
-        let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
-        let new_p_conjs = CP.list_of_conjs new_p in
-        let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
-          (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-        if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
-        else
+        let new_p = CP.simplify_disj_new new_p in
+        (* filter away irrelevant constraint for infer_pure *)
+        let new_p_good = CP.filter_ante new_p rhs_xpure in
+        (* let _ = print_endline ("new_p:"^(!CP.print_formula new_p)) in *)
+        (* let _ = print_endline ("new_p_good:"^(!CP.print_formula new_p_good)) in *)
+        (* should not be using es_orig_ante *)
+        (* let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in *)
+        (* let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in *)
+        (* let new_p_conjs = CP.list_of_conjs new_p_good in *)
+        (* below redundant with filter_ante *)
+       (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) *)
+       (*    (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in *)
+        (* if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None) *)
+        (* else *)
           begin
             DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
             DD.devel_pprint ("LHS : "^(!CP.print_formula lhs_xpure)) pos;               
             DD.devel_pprint ("RHS : "^(!CP.print_formula rhs_xpure)) pos;
-            DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos;
-            (None,Some new_p)
+            (* DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos; *)
+            DD.devel_pprint ("new pure: "^(!CP.print_formula new_p_good)) pos;
+            (None,Some new_p_good)
           end
               (* Thai: Should check if the precondition overlaps with the orig ante *)
               (* And simplify the pure in the residue *)
@@ -702,7 +712,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       let lhs_2 = CP.restore_memo_formula subs bvars lhs in
       let filter_ass lhs rhs = 
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
-        (simplify_disj lhs,rhs) in      
+        (simplify_disj_new lhs,rhs) in      
       let wrap_exists (lhs,rhs) =
         (* Begin: To keep vars of rel_form in lhs *)
         let lhs_ls = CP.split_conjunctions lhs in

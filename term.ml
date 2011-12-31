@@ -32,7 +32,7 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
         (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
       let rank_formula = List.fold_left (fun acc m ->
         CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-      let n_conseq = CP.mkAnd conseq (CP.simplify_disj rank_formula) pos in
+      let n_conseq = CP.mkAnd conseq (CP.simplify_disj_new rank_formula) pos in
       let n_rhs_p = MCP.mix_of_pure n_conseq in
       begin
         (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)

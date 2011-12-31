@@ -1104,12 +1104,12 @@ struct
   let no_5_opt  _ _ _ _ _ _ _ _ f = f
   let no_6_opt  _ _ _ _ _ _ _ _ _ f = f
 
-  let no_eff_1_opt  _ _ _ _ _ f = f
-  let no_eff_2_opt  _ _ _ _ _ _ f = f
-  let no_eff_3_opt  _ _ _ _ _ _ _ f = f
-  let no_eff_4_opt  _ _ _ _ _ _ _ _ f = f
-  let no_eff_5_opt  _ _ _ _ _ _ _ _ _ f = f
-  let no_eff_6_opt  _ _ _ _ _ _ _ _ _ _ f = f
+  (* let no_eff_1_opt  _ _ _ _ _ f = f *)
+  (* let no_eff_2_opt  _ _ _ _ _ _ f = f *)
+  (* let no_eff_3_opt  _ _ _ _ _ _ _ f = f *)
+  (* let no_eff_4_opt  _ _ _ _ _ _ _ _ f = f *)
+  (* let no_eff_5_opt  _ _ _ _ _ _ _ _ _ f = f *)
+  (* let no_eff_6_opt  _ _ _ _ _ _ _ _ _ _ f = f *)
 end;;
 
 
