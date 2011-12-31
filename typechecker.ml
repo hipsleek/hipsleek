@@ -875,13 +875,27 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.Ctx new_es
                     | Some one_f ->
                         let base = CF.formula_of_one_formula one_f in
-                        let es_f = CF.replace_formula_and res2 es_f in
-                        (* let _ = print_endline ("LDK") in *)
-                        let new_f = CF.compose_formula es_f base one_f.F.formula_ref_vars CF.Flow_combine pos in
-                        (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
-                        let new_es = {es with CF.es_formula = new_f} in
-                        (*merge*)
-                        CF.Ctx new_es
+                        (**********Compose variable permissions >>> *******)
+                        let ps,new_base = CF.filter_varperm_formula base in
+                        let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
+                        let zero_vars = es.CF.es_var_zero_perm in
+                        let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+                        if (tmp!=[]) then
+                          (*all @full in the conseq should be in @zero in the ante*)
+                          let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
+                          Debug.devel_pprint msg pos;
+                          let es = {es with CF.es_formula = CF.mkFalse_nf pos} in
+                          CF.Ctx es
+                        else
+                          let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
+                          let es = {es with CF.es_var_zero_perm=vars1} in
+                          (**********<<< Compose variable permissions *******)
+                          let es_f = CF.replace_formula_and res2 es_f in
+                          let new_f = CF.compose_formula es_f new_base one_f.F.formula_ref_vars CF.Flow_combine pos in
+                          (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
+                          let new_es = {es with CF.es_formula = new_f} in
+                          (*merge*)
+                          CF.Ctx new_es
                 in
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
 		        (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) in *)

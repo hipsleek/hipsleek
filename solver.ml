@@ -3348,13 +3348,13 @@ and heap_entail_conjunct_lhs_struc_x
 	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
                 (*************Compose variable permissions >>> ******************)
                 let ps,new_post = filter_varperm_formula post in
-                let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @zero*)
+                let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
                 let add_vperm_full es =
                   let zero_vars = es.es_var_zero_perm in
                   let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
                   if (tmp!=[]) then
                   (*all @full in the conseq should be in @zero in the ante*)
-                    let msg = "failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is " ^(string_of_vp_ann VP_Zero) in
+                    let msg = "heap_entail_conjunct_lhs_struc: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not " ^(string_of_vp_ann VP_Zero) in
                     Debug.devel_pprint msg pos;
                     let es = {es with es_formula = mkFalse_nf pos} in
                     Ctx es
