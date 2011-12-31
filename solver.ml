@@ -3689,7 +3689,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         in
         let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
         (* let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
-        let es = {es with es_formula = new_f; es_var_zero_perm=vars} in
+        let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
+        let es = {es with es_formula = new_f; es_var_zero_perm=new_zero_vars} in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
 	    (filter_set tmp, prf)
@@ -5928,25 +5929,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     (*        let ctx1 = set_unsat_flag ctx1 true in                                                                 *)
     (*        let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in*)
     (*        (r1,prf)                                                                                               *)
-    (*      | None ->                                                                                                *)
-	if is_folding then begin
-      (*LDK: the rhs_p is considered a part of residue and 
-        is added to es_pure only when folding.
-        Rule F-EMP in Mr Hai thesis, p86*)
-      (*TO CHECK: when folding, do not need to entail VarPerm*)
-	  let res_es = {estate with es_formula = res_delta; 
-		  es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
-		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
-			| Some s1,Some s2 -> (s1,s2)::a
-			| _ -> a) [] r_succ_match)@estate.es_success_pts;
-		  es_unsat_flag = false;} in
-	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
-	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
-	  (SuccCtx[res_ctx], prf)
-	end
-	else begin
+    (*      | None ->
+                                                                                                *)
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
@@ -5998,6 +5982,24 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (*************************** END *****************************************)
       (*************************************************************************)
 
+	if is_folding then begin
+      (*LDK: the rhs_p is considered a part of residue and 
+        is added to es_pure only when folding.
+        Rule F-EMP in Mr Hai thesis, p86*)
+      (*TO CHECK: when folding, do not need to entail VarPerm*)
+	  let res_es = {estate with es_formula = res_delta; 
+		  es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
+		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
+			| Some s1,Some s2 -> (s1,s2)::a
+			| _ -> a) [] r_succ_match)@estate.es_success_pts;
+		  es_unsat_flag = false;} in
+	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
+	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
+	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
+	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
+	  (SuccCtx[res_ctx], prf)
+	end
+	else begin
 	  let res_ctx = Ctx {estate with es_formula = res_delta;
           (*LDK: ??? add rhs_p into residue( EMP rule in p78). 
             Similar to the above
