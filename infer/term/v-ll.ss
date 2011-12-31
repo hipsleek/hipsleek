@@ -3,7 +3,7 @@ data node {
   node next;
 }
 
-//logical p1, p2, p3;
+logical int p1, p2, p3;
 
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
@@ -11,9 +11,9 @@ ll<n> == self = null & n = 0
 
 // note that p1,p2,p3 are global
 int length(node x)
-  // infer @pre [p1,p2,p3]
+  //infer @pre [p1]
   requires x::ll<n>@L
-  variance [0,0,-n]
+  variance [p1,0,n]
 	//variance [0,p1]{n}
   ensures res=n;
 {

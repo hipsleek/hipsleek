@@ -766,6 +766,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                     (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
                         (CF.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                  let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
+                    pre_free_vars prog.Cast.prog_logical_vars in 
                   (* free vars get to be substituted by fresh vars *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
@@ -1270,7 +1272,7 @@ let check_prog (prog : prog_decl) =
     (* List of procs with user-given order *)
     let proc_ordered_by_user = prog.prog_proc_decls in
     let iproc_main_names = List.map (fun p -> p.I.proc_name) iprog.I.prog_proc_decls in
-    (*    let _ = List.iter (fun p -> print_endline (string_of_bool p.proc_is_main)) proc_ordered_by_user in     *)
+    (*    let _ = List.iter (fun p -> print_endline (string_of_bool p.proc_is_main)) proc_ordered_by_user in*)
     (*    let _ = List.iter (fun p -> print_endline (string_of_bool p.I.proc_is_main)) iprog.I.prog_proc_decls in*)
     
     let is_sub name1 name2 = if String.length name1 >= String.length name2 then false 

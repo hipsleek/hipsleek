@@ -37,7 +37,7 @@ let iobj_def = { I.data_name = "Object";
 
 let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_global_var_decls = [];
-			  I.prog_logical_vars = [];
+			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];

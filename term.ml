@@ -172,6 +172,10 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
     }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in CF.transform_context es_strip_lexvar_lhs ctx
+
+let strip_lexvar_lhs (ctx: CF.context) : CF.context =
+  let pr = Cprinter.string_of_context in
+  Gen.Debug.ho_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
   
 let check_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res = 
   let lv = CF.formula_of_pure_formula (CF.lexvar_of_evariance measure) pos in

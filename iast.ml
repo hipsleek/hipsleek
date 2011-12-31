@@ -20,7 +20,7 @@ type typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
-                   prog_logical_vars : exp_var_decl list;
+                   prog_logical_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
@@ -1357,6 +1357,12 @@ and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
 							  exp_var_decl_decls = d;
 							  exp_var_decl_pos = p }
 
+and mkLogicalVarDecl t d p = {
+  exp_var_decl_type = t;
+	exp_var_decl_decls = d;
+	exp_var_decl_pos = p 
+}
+
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2
   | _ -> match e2 with
@@ -1789,7 +1795,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | hd::tl ->
         let new_iprims = {
                 prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
-                prog_logical_vars = hd.prog_logical_vars @ iprims.prog_logical_vars;
+                prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
@@ -1807,7 +1813,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
         let new_prims = {
                 prog_data_decls = [];
                 prog_global_var_decls = [];
-                prog_logical_vars = [];
+                prog_logical_var_decls = [];
                 prog_enum_decls = [];
                 prog_view_decls = [];
                 prog_rel_decls = [];

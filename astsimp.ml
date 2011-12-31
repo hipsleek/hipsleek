@@ -1053,17 +1053,17 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
-		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_vars) in 
-		  let cprog =   {
-              C.prog_data_decls = cdata;
-              C.prog_view_decls = cviews;
-              C.prog_logical_vars = log_vars;
+		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+		  let cprog = {
+        C.prog_data_decls = cdata;
+        C.prog_view_decls = cviews;
+        C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
-              C.prog_proc_decls = cprocs;
-              C.prog_left_coercions = l2r_coers;
-              C.prog_right_coercions = r2l_coers;
-          } in
+        C.prog_proc_decls = cprocs;
+        C.prog_left_coercions = l2r_coers;
+        C.prog_right_coercions = r2l_coers;
+      } in
 	      let cprog1 = { cprog with			
 			  C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
 			  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
@@ -1960,8 +1960,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     let args2 = args@(prog.I.prog_rel_ids) in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
- 
-      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv_infer final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
+      
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+      let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
+      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
