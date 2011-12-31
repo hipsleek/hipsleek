@@ -3011,7 +3011,12 @@ type entail_state = {
   es_infer_rel : (CP.formula * CP.formula) list; 
   (* es_infer_pures : CP.formula list; *)
   (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)
-
+  (* input precondition inferred so far, for heap
+     you may accumulate the xpure0 information;
+     to be used by infer_lhs_contra to determine if
+     a FALSE is being inferred
+  *)
+     es_infer_pure_thus : CP.formula; 
 }
 
 and context = 
@@ -3178,6 +3183,7 @@ let empty_es flowt pos =
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
+  es_infer_pure_thus = CP.mkTrue no_pos ;
   (*es_infer_invs = [];*)
 }
 
@@ -3788,14 +3794,21 @@ let rec add_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let add_infer_pure_thus_estate cp es =
+  {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
+  }
+
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
   let new_cp = List.fold_left (fun a n -> 
       (* let n = CP.norm_form n in *)
       let n = CP.arith_simplify_new n in
-      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
-        {es with es_infer_pure = new_cp;}
+      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp 
+  in  {es with es_infer_pure = new_cp;
+      (* add inferred pre to pure_this too *)
+               es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
+  }
 
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
@@ -3814,7 +3827,7 @@ let add_infer_heap_to_ctx cp ctx =
     match ctx with
       | Ctx es -> 
         let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_heap)) cp in
-        Ctx {es with es_infer_heap = es.es_infer_heap@cp;}
+        Ctx {es with es_infer_heap = cp@es.es_infer_heap;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -3992,6 +4005,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
+        es_infer_pure_thus = es.es_infer_pure_thus;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -7189,3 +7203,4 @@ let lax_impl_of_post f =
 let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
+

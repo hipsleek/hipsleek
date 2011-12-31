@@ -28,8 +28,12 @@ let pprint msg (pos:loc) =
 
 (* system development debugging *)
 let devel_print s = 
-  if !devel_debug_on  || Gen.StackTrace.force_dd_print () then 
-    let msg = "\n!!!" ^ s in
+  let d = Gen.StackTrace.is_same_dd_get () in
+  if !devel_debug_on  || not(d==None) then 
+    let msg = match d with 
+      | None -> ("\n!!!" ^ s)
+      | Some cid -> ("\n@"^(string_of_int cid)^"!"^ s) 
+    in
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
     else

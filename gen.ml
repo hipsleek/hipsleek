@@ -820,9 +820,9 @@ struct
 
   let dd_stk = new stack
 
-  let force_dd_print () =
-    let d = dd_stk # get_stk in
-    debug_stk # overlap d
+  (* let force_dd_print () = *)
+  (*   let d = dd_stk # get_stk in *)
+  (*   debug_stk # overlap d *)
 
   let is_same_dd () =
     if dd_stk # is_empty then false
@@ -830,6 +830,13 @@ struct
       let v1 = dd_stk # top in
       let v2 = debug_stk # top in
        (v1==v2) 
+
+  let is_same_dd_get () =
+    if dd_stk # is_empty then None
+    else 
+      let v1 = dd_stk # top in
+      let v2 = debug_stk # top in
+       if (v1==v2) then Some v1 else None
 
   (* pop last element from call stack of ho debug *)
   let pop_call () = 

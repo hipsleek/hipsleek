@@ -2396,6 +2396,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
+              es_infer_pure_thus = fold_es.es_infer_pure_thus;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
@@ -6080,6 +6081,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars_rel = estate.es_infer_vars_rel;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
+        es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
 		es_var_ctx_lhs = estate.es_var_ctx_lhs;
 		es_var_ctx_rhs = estate.es_var_ctx_rhs;
@@ -6221,6 +6223,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_pure = estate.es_infer_pure;
+                 es_infer_pure_thus = estate.es_infer_pure_thus;
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
@@ -7102,6 +7105,10 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               (* let fml,_,_,_ = xpure prog new_estate.es_formula in *)
               (* let fml = MCP.pure_of_mix fml in *)
               (* if TP.is_sat_raw fml then *)
+              (* add xpure0 of inferred heap to es_infer_pre_thus *)
+              let (mf,_,_,_) = xpure_heap_symbolic prog new_rn 0 in
+              let inv_f = MCP.pure_of_mix mf in
+              let new_estate = add_infer_pure_thus_estate inv_f new_estate in
               let ctx1 = (Ctx new_estate) in
 			  let ctx1 = set_unsat_flag ctx1 true in
 			  let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in

@@ -309,7 +309,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* iv_alias certainly has one element *)
                 let new_r = List.hd iv_alias in
                 (* each heap node may only be instantiated once *)
-                let new_iv = diff_svl new_iv [new_r] in
+                (* let new_iv = diff_svl new_iv [new_r] in *)
+                (* above cause incompleteness in 3.slk (29) & (30). *)
                 let new_h = 
                   if CP.eq_spec_var orig_r new_r 
                   then inf_rhs
@@ -364,7 +365,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_pair !print_svl pr2) in
-  Gen.Debug.to_2 "infer_heap_nodes" pr1 pr2 pr3
+  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
@@ -401,7 +402,7 @@ let simplify f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
-let infer_lhs_contra lhs_xpure ivars pos msg =
+let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
   (* else *)
   let lhs_xpure_orig = MCP.pure_of_mix lhs_xpure in
@@ -419,34 +420,46 @@ let infer_lhs_contra lhs_xpure ivars pos msg =
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let neg_f = Redlog.negate_formula f in
+        let b = if CP.isConstTrue pre_thus then false
+          else let f = CP.mkAnd pre_thus neg_f no_pos in
+               not(TP.is_sat_raw f) 
+        in
         DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
         DD.devel_pprint ("trigger cond   : "^msg) pos; 
         DD.devel_pprint ("LHS pure       : "^(!print_formula lhs_xpure_orig)) pos; 
         DD.devel_pprint ("ovrlap inf vars: "^(!print_svl over_v)) pos; 
-        DD.devel_pprint ("contra infer   : "^(!print_formula neg_f)) pos; 
+        DD.devel_pprint ("new pre infer   : "^(!print_formula neg_f)) pos; 
+        DD.devel_pprint ("pre thus   : "^(!print_formula pre_thus)) pos; 
+        DD.devel_pprint ("contradict?: "^(string_of_bool b)) pos; 
         Some (neg_f)
 
-let infer_lhs_contra f ivars pos msg =
+let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
   Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
-      (fun _ _ -> infer_lhs_contra f ivars pos msg) f ivars
+      (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
   if no_infer estate then None
   else
     let ivars = estate.es_infer_vars in
-    let r = infer_lhs_contra lhs_xpure ivars pos msg in
+    let p_thus = estate.es_infer_pure_thus in
+    let r = infer_lhs_contra p_thus lhs_xpure ivars pos msg in
     match r with
       | None -> None
       | Some pf ->
+            (* let prev_inf_h = estate.es_infer_heap in *)
+            (* let prev_inf_p = estate.es_infer_pure in *)
+            (* let _ = print_endline ("\nprev inf heap:"^(pr_list !print_h_formula prev_inf_h)) in *)
+            (* let _ = print_endline ("prev inf pure:"^(pr_list !CP.print_formula prev_inf_p)) in *)
             let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
+
             Some (new_estate,pf)
 
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.to_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -513,6 +526,13 @@ let rec simplify_disjs pf lhs_rhs =
   | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
   | _ -> pf
 
+let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
+  (* not quite needed, it seems *)
+  (* let disj_p = CP.split_disjunctions new_pre in *)
+  (* List.exists (fun a -> List.exists (CP.equalFormula a) disj_p) orig_ls *)
+  List.exists (CP.equalFormula new_pre) orig_ls
+
+
 let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   if no_infer estate then (None,None)
   else
@@ -522,7 +542,6 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
     (* below will help greatly reduce the redundant information inferred from state *)
     (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
     let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
-(* assumption_filter_aggressive *)
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
     let fml = CP.drop_rel_formula fml in
     let check_sat = TP.is_sat_raw fml in
@@ -555,6 +574,13 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
       if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None)
       else
         let new_p_good = CP.simplify_disj_new new_p in
+        (* remove ctr already present in the orig LHS *)
+        let lhs_orig_list = CP.split_conjunctions lhs_xpure in
+        let pre_list = CP.split_conjunctions new_p_good in
+        let (red_pre,pre_list) = List.partition (present_in lhs_orig_list) pre_list in
+        if pre_list==[] then (None,None)
+        else 
+          let new_p_good = CP.join_conjunctions pre_list in
         (* filter away irrelevant constraint for infer_pure *)
         (* let new_p_good = CP.filter_ante new_p rhs_xpure in *)
         (* let _ = print_endline ("new_p:"^(!CP.print_formula new_p)) in *)
@@ -573,6 +599,7 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
             DD.devel_pprint ("LHS : "^(!CP.print_formula lhs_xpure)) pos;               
             DD.devel_pprint ("RHS : "^(!CP.print_formula rhs_xpure)) pos;
             (* DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos; *)
+            if red_pre!=[] then DD.devel_pprint ("already in LHS: "^(pr_list !CP.print_formula red_pre)) pos;
             DD.devel_pprint ("new pure: "^(!CP.print_formula new_p_good)) pos;
             (None,Some new_p_good)
           end
@@ -627,7 +654,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Gen.Debug.to_3 "infer_pure_m" 
+      Gen.Debug.no_3 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
