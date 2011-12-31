@@ -249,6 +249,12 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
+let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2
+
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
@@ -1670,9 +1676,9 @@ and b_apply_subs sst bf =
   | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
   | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-  | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*TO CHECK: do not substitute*)
-      (* let ls1 = List.map (subs_one sst) ls in *)
-      (* VarPerm (ct,ls1,pos) (\*TO CHECK*\) *)
+  | VarPerm (ct,ls,pos) -> (* VarPerm (ct,ls,pos) (\*TO CHECK: do not substitute*\) *)
+      let ls1 = List.map (subs_one sst) ls in
+      VarPerm (ct,ls1,pos) (*TO CHECK*)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
