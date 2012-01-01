@@ -824,19 +824,17 @@ struct
   (*   let d = dd_stk # get_stk in *)
   (*   debug_stk # overlap d *)
 
-  let is_same_dd () =
-    if dd_stk # is_empty then false
-    else 
-      let v1 = dd_stk # top in
-      let v2 = debug_stk # top in
-       (v1==v2) 
-
   let is_same_dd_get () =
     if dd_stk # is_empty then None
     else 
       let v1 = dd_stk # top in
       let v2 = debug_stk # top in
        if (v1==v2) then Some v1 else None
+
+  let is_same_dd () =
+    match (is_same_dd_get()) 
+    with | None -> false
+      | _ -> true
 
   (* pop last element from call stack of ho debug *)
   let pop_call () = 
@@ -1054,6 +1052,20 @@ struct
   let ho_eff_4 s l = ho_4_opt_aux false l false (fun _ -> true) None s
   let ho_eff_5 s l = ho_5_opt_aux false l false (fun _ -> true) None s
   let ho_eff_6 s l = ho_6_opt_aux false l false (fun _ -> true) None s
+
+  let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
+  let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s
+  let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s
+  let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s
+  let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s
+  let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s
+
+  let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str
+  let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str
+  let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str
+  let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
+  let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
+  let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
 
   let loop_1 s = ho_1_opt_aux false [] true (fun _ -> true) None s
   let loop_2 s = ho_2_opt_aux false [] true (fun _ -> true) None s
