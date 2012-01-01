@@ -47,6 +47,9 @@ let devel_pprint msg (pos:loc) =
   let tmp = tmp^ msg in
 	devel_print tmp
 
+let trace_pprint msg (pos:loc) = 
+	devel_print (" "^msg)
+
 let print_info prefix str (pos:loc) = 
   let tmp = "\n" ^ prefix ^ ":" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^": " ^ str ^ "\n" in
 	print_string tmp; flush stdout
