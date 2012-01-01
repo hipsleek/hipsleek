@@ -67,25 +67,25 @@ let parallelize num =
 	  
 (*   	        let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in *)
 (*   	        let r = check_specs_a prog proc nctx c2 e0 in *)
-(*   	        (\*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*\) *)
+(*   	        (\*let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in*\) *)
 (*   	        r) b.CF.formula_case_branches *)
 (*     | CF.EBase b -> *)
-(*           Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos; *)
+(*           Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
 (*           let nctx = *)
 (*             if !Globals.max_renaming *)
 (*             then (CF.transform_context (CF.normalize_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) (\*apply normalize_es into ctx.es_state*\) *)
 (*             else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in *)
 (*   		(\* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *\) *)
 (*           let r = check_specs_a prog proc nctx b.CF.formula_ext_continuation e0 in *)
-(*           let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in *)
+(*           let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in *)
 (*           r *)
 (*     | CF.EVariance b -> *)
-(*           Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos; *)
+(*           Debug.devel_zprint (lazy ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
 (*   		let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures; *)
 (*   		    CF.es_var_label = b.CF.formula_var_label}) ctx in *)
 (*   	    check_specs_a prog proc nctx b.CF.formula_var_continuation e0 *)
 (*     | CF.EInfer b -> *)
-(*           Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos; *)
+(*           Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
 (*           let vars = b.CF.formula_inf_vars in *)
 (*           let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in *)
 (*           check_specs_a prog proc nctx b.CF.formula_inf_continuation e0 *)
@@ -96,7 +96,7 @@ let parallelize num =
 (*   	          Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")} *)
 (*           else *)
 (*             let _ = post_pos#set (CF.pos_of_formula post_cond) in *)
-(*             Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos; *)
+(*             Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
 (*             let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in *)
 (*             (\* let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *\) *)
 (*             if (CF.isAnyFalseCtx ctx1) then *)
@@ -197,21 +197,21 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                         List.map2 CF.merge_ext_pre new_c2 pre 
                       end
                     else new_c2 in
-		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+		          (*let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
             let br = List.for_all pr_id fl in
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
             (new_spec,[],true)
 	  | CF.EBase b ->
-            Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+            Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 	        let nctx = 
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in
 			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
 	        let (c,pre,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 in
-	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
+	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             (*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
             let base = b.CF.formula_ext_base in
             let pos = b.CF.formula_ext_pos in
@@ -224,13 +224,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             in 
 	        (CF.EBase {b with CF.formula_ext_base = base; CF.formula_ext_continuation = c}, [], r) 
 	  | CF.EVariance b ->
-            Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+            Debug.devel_zprint (lazy ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
 			    CF.es_var_label = b.CF.formula_var_label}) ctx in
 		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_var_continuation e0 in
 	        (CF.EVariance {b with CF.formula_var_continuation = c}, pre, f) 
       | CF.EInfer b ->
-            Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+            Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             let postf = b.CF.formula_inf_post in
             let vars = b.CF.formula_inf_vars in
             (if vars!=[] || postf then pre_ctr # inc) ;
@@ -262,12 +262,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	              Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
 	        else
               let _ = post_pos#set (CF.pos_of_formula post_cond) in
-              Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+              Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 	          let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	          (* let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *)
 	          if (CF.isAnyFalseCtx ctx1) then
-	            let _ = Debug.devel_pprint ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
-	    		    (Cprinter.string_of_context_short ctx)) no_pos in
+	            let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
+	    		    (Cprinter.string_of_context_short ctx))) no_pos in
 	            (spec,[],true)
 	          else
 	            let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
@@ -487,7 +487,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
 
-            (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
+            (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	        let _ = proving_loc#set pos in
 	        let field_types, vs = List.split lvars in
 	        let v_prim = CP.SpecVar (v_t, v, Primed) in
@@ -505,8 +505,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
 	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-	        let _ = Debug.devel_pprint ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
-            ^ "\n") pos in
+	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
+            ^ "\n")) pos in
 	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
             (*     ^ "\n") in *)
 
@@ -614,9 +614,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let then_cond_prim = MCP.mix_of_pure pure_cond in
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
-	        Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
+	        Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
 	        let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
-	        Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx)) pos;
+	        Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
 	        let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
 	        let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
 	        let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
@@ -782,7 +782,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
                   (* Termination checking *)
                   let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
-                  let _ = Debug.devel_pprint (str_debug_variance) pos in
+                  let _ = Debug.devel_zprint (lazy (str_debug_variance)) pos in
                   let _ = 
                     if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
                       (* Termination: Add a false entail state for 
@@ -796,7 +796,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* TODO: call the entailment checking function in solver.ml *)
                   let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
-                  Debug.devel_pprint (to_print^"\n") pos;
+                  Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
@@ -970,7 +970,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
   (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
   (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
-  Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
+  Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n")) pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
@@ -1027,8 +1027,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    if !Globals.print_proc then 
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-			    Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-			    Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+			    Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
+			    Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
 			    let ftypes, fnames = List.split proc.proc_args in
 			    (* fsvars are the spec vars corresponding to the parameters *)
 			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in

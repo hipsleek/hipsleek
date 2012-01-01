@@ -1384,7 +1384,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
-      (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
+      (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
   )
