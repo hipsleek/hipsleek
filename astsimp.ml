@@ -7708,10 +7708,10 @@ and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
   mark_call_order cp scc_list cg
   
 and mark_recursive_call (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl = 
-  let _ = printf "The scc list of program:\n";
-	List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list;
-	printf "**********\n"
-  in
+  (*let _ = printf "The scc list of program:\n";
+	  List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list;
+	  printf "**********\n"
+  in*)
   irf_traverse_prog cp scc_list
 
 and mark_call_order (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl =

@@ -8,6 +8,7 @@ ensures true;
 
 int loop(int x, int s)
 requires s>=1
+variance [0,1,10*s-x+90,x]
 case {
 	//Lexicographical ranking function <10s-x+90,x>
 	x>100 -> case {

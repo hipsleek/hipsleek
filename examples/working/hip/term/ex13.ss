@@ -1,23 +1,23 @@
 void loop(ref int x, ref int y, ref int z, bool b)
 case {
-	x<0 -> ensures "l1":true;
+	x<0 -> variance [0,0] ensures "l1":true;
 	x>=0 -> case {
-				//l2 -> l3 -> l1
-				b -> case {
-					z>=0 -> //variance z
-						   ensures "l2":true;
-					z<0 -> //variance x
-						   ensures "l3":true;
-				}
+		//l2 -> l3 -> l1
+		b -> case {
+			z>=0 -> variance [0,4,z]
+				    ensures "l2":true;
+			z<0 -> variance [0,3,x]
+				   ensures "l3":true;
+		}
 
-				//l4 -> l5 -> l1
-				!b -> case {
-					y>=0 -> //variance y
-						    ensures "l4":true;
-					y<0 -> //variance x
-						   ensures "l5":true;
-				}
-		   }
+		//l4 -> l5 -> l1
+		!b -> case {
+			y>=0 -> variance [0,2,y]
+				    ensures "l4":true;
+			y<0 -> variance [0,1,x]
+				   ensures "l5":true;
+		}
+	}
 }
 {
 	int x1, y1, z1;

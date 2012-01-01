@@ -1,20 +1,23 @@
 //Example from the slide of "The polyranking principles"
-
+// Generalization of ex9.ss
 void loop(ref int x, ref int y, int k, int N, bool b)
 requires k>0
 case {
-	x>N -> ensures "l1":x'=x & y'=y;
+	x>N -> variance [0,0] ensures "l1":x'=x & y'=y;
 	x<=N -> case {
 				//l3 -> l2 -> l1
 				b -> case {
 						y>N+1 -> //variance N-x
+								 variance [0,1,N-x]
 								 ensures "l2":true;
 						y<=N+1 -> //variance (N+1)-y
+	                variance [0,2,(N+1)-y]
 								  ensures "l3":true;
 					 }
 
 				//l2 -> l1
 				!b -> //variance N-x
+            variance [0,3,N-x]
 					  ensures "l2":true;
 			}
 }
