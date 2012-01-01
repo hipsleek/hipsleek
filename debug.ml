@@ -27,9 +27,9 @@ let pprint msg (pos:loc) =
 	print tmp
 
 (* system development debugging *)
-let ho_print (pr:'a->string) (m:'a) : unit = 
+let ho_print flag (pr:'a->string) (m:'a) : unit = 
   let d = Gen.StackTrace.is_same_dd_get () in
-  if !devel_debug_on  || not(d==None) then 
+  if flag (* !devel_debug_on *)  || not(d==None) then 
     let s = (pr m) in
     let msg = match d with 
       | None -> ("\n!!!" ^ s)
@@ -43,7 +43,7 @@ let ho_print (pr:'a->string) (m:'a) : unit =
 
 (* system development debugging *)
 let devel_print s = 
-  ho_print (fun x -> x) s 
+  ho_print !devel_debug_on (fun x -> x) s 
 (* let d = Gen.StackTrace.is_same_dd_get () in *)
 (*   if !devel_debug_on  || not(d==None) then  *)
 (*     let msg = match d with  *)
@@ -63,20 +63,22 @@ let prior_msg pos =
   in tmp
 
 let devel_pprint (msg:string) (pos:loc) =
-	ho_print (fun m -> (prior_msg pos)^m) msg
+	ho_print !devel_debug_on (fun m -> (prior_msg pos)^m) msg
+
+let devel_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+	ho_print !devel_debug_on (fun x -> (prior_msg pos)^(pr x)) m
 
 let devel_zprint msg (pos:loc) =
-	ho_print (fun m -> (prior_msg pos)^(Lazy.force m)) msg
+	ho_print !devel_debug_on (fun m -> (prior_msg pos)^(Lazy.force m)) msg
 
 let trace_pprint (msg:string) (pos:loc) : unit = 
-	ho_print (fun a -> " "^a) msg
-
+	ho_print false (fun a -> " "^a) msg
 
 let trace_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print (fun x -> " "^(pr x)) m
+	ho_print false (fun x -> " "^(pr x)) m
 
 let trace_zprint m (pos:loc) = 
-	ho_print (fun x -> Lazy.force x) m
+	ho_print false (fun x -> Lazy.force x) m
 
 
 (* let devel_zprint msg (pos:loc) = *)
