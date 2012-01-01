@@ -330,7 +330,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
   method popto (process: Globals.prover_process_t) (n: int): unit = 
     let n = 
       if ( n > !push_no) then begin
-        Debug.devel_pprint ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no)) no_pos;
+        Debug.devel_zprint (lazy ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no))) no_pos;
         !push_no 
       end
       else n in
@@ -1685,8 +1685,8 @@ let simpl_pair rid (ante, conseq) =
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
-  Debug.devel_pprint ("SAT #" ^ sat_no) no_pos;
-  Debug.devel_pprint (!print_pure f) no_pos;
+  Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
+  Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   let f = elim_exists f in
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
@@ -1704,9 +1704,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
-  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
-  Debug.devel_pprint ("imply_timeout: ante: " ^ (!print_pure ante0)) no_pos;
-  Debug.devel_pprint ("imply_timeout: conseq: " ^ (!print_pure conseq0)) no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
+  Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
+  Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos;
   if !external_prover then 
 
     (* let _ = print_string ("imply_timeout: !external_prove \n ") in *)
@@ -1786,9 +1786,9 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
-  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
-  Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
-  Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
+  Debug.devel_zprint (lazy ("ante: " ^ (!print_pure ante0))) no_pos;
+  Debug.devel_zprint (lazy ("conseq: " ^ (!print_pure conseq0))) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       | Some res -> (res,[],None)       
@@ -1935,9 +1935,9 @@ let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no :
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
-  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
-  Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
-  Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
+  Debug.devel_zprint (lazy ("ante: " ^ (!print_pure ante0))) no_pos;
+  Debug.devel_zprint (lazy ("conseq: " ^ (!print_pure conseq0))) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -2061,7 +2061,7 @@ let incr_sat_no () =
 
 let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
   let sat = is_sat f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
-  (* Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos; *)
+  (* Debug.devel_zprint (lazy ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno))) no_pos; *)
   sat_subno := !sat_subno+1;
   sat
 ;;
@@ -2507,7 +2507,7 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache =
-  Debug.devel_pprint ("IMP #" ^ imp_no ^ "\n") no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
   (* imp_no := !imp_no+1;*)
   imply ante0 conseq0 imp_no do_cache
 
