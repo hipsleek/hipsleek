@@ -336,12 +336,12 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) *)
                 (*   (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in *)
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
-                DD.devel_pprint ("unmatch RHS : "^(!print_h_formula rhs)) pos;
-                DD.devel_pprint ("orig inf vars : "^(!print_svl iv)) pos;
-                DD.devel_pprint ("inf LHS heap:"^(!print_h_formula new_h)) pos;
-                DD.devel_pprint ("new inf vars: "^(!print_svl new_iv)) pos;
-                DD.devel_pprint ("dead inf vars: "^(!print_svl iv_alias)) pos;
-                (* DD.devel_pprint ("new pure add: "^(!CP.print_formula new_p)) pos; *)
+                DD.devel_zprint (lazy ("unmatch RHS : "^(!print_h_formula rhs))) pos;
+                DD.devel_zprint (lazy ("orig inf vars : "^(!print_svl iv))) pos;
+                DD.devel_zprint (lazy ("inf LHS heap:"^(!print_h_formula new_h))) pos;
+                DD.devel_zprint (lazy ("new inf vars: "^(!print_svl new_iv))) pos;
+                DD.devel_zprint (lazy ("dead inf vars: "^(!print_svl iv_alias))) pos;
+                (* DD.devel_zprint (lazy ("new pure add: "^(!CP.print_formula new_p))) pos; *)
                 let r = {
                     match_res_lhs_node = new_h;
                     match_res_lhs_rest = lhs_h;
@@ -428,12 +428,12 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
                not(TP.is_sat_raw f) 
         in
         DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
-        DD.devel_pprint ("trigger cond   : "^msg) pos; 
-        DD.devel_pprint ("LHS pure       : "^(!print_formula lhs_xpure_orig)) pos; 
-        DD.devel_pprint ("ovrlap inf vars: "^(!print_svl over_v)) pos; 
-        DD.devel_pprint ("new pre infer   : "^(!print_formula neg_f)) pos; 
-        DD.devel_pprint ("pre thus   : "^(!print_formula pre_thus)) pos; 
-        DD.devel_pprint ("contradict?: "^(string_of_bool b)) pos; 
+        DD.devel_zprint (lazy ("trigger cond   : "^msg)) pos; 
+        DD.devel_zprint (lazy ("LHS pure       : "^(!print_formula lhs_xpure_orig))) pos; 
+        DD.devel_zprint (lazy ("ovrlap inf vars: "^(!print_svl over_v))) pos; 
+        DD.devel_zprint (lazy ("new pre infer   : "^(!print_formula neg_f))) pos; 
+        DD.devel_zprint (lazy ("pre thus   : "^(!print_formula pre_thus))) pos; 
+        DD.devel_zprint (lazy ("contradict?: "^(string_of_bool b))) pos; 
         Some (neg_f)
 
 let infer_lhs_contra pre_thus f ivars pos msg =
@@ -588,10 +588,10 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
         begin
             DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
             DD.devel_pprint "Did not manage to infer a useful precondition" pos;
-            DD.devel_pprint ("LHS : "^(!CP.print_formula lhs_xpure)) pos;               
-            DD.devel_pprint ("RHS : "^(!CP.print_formula rhs_xpure)) pos;
-            (* DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos; *)
-            DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos;
+            DD.devel_zprint (lazy ("LHS : "^(!CP.print_formula lhs_xpure))) pos;               
+            DD.devel_zprint (lazy ("RHS : "^(!CP.print_formula rhs_xpure))) pos;
+            (* DD.devel_zprint (lazy ("new pure: "^(!CP.print_formula new_p))) pos; *)
+            DD.devel_zprint (lazy ("new pure: "^(!CP.print_formula new_p))) pos;
             (None,None)
         end
       else
@@ -618,11 +618,11 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
         (* else *)
           begin
             DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
-            DD.devel_pprint ("LHS : "^(!CP.print_formula lhs_xpure)) pos;               
-            DD.devel_pprint ("RHS : "^(!CP.print_formula rhs_xpure)) pos;
-            (* DD.devel_pprint ("new pure: "^(!CP.print_formula new_p)) pos; *)
-            if red_pre!=[] then DD.devel_pprint ("already in LHS: "^(pr_list !CP.print_formula red_pre)) pos;
-            DD.devel_pprint ("new pure: "^(!CP.print_formula new_p_good)) pos;
+            DD.devel_zprint (lazy ("LHS : "^(!CP.print_formula lhs_xpure))) pos;               
+            DD.devel_zprint (lazy ("RHS : "^(!CP.print_formula rhs_xpure))) pos;
+            (* DD.devel_zprint (lazy ("new pure: "^(!CP.print_formula new_p))) pos; *)
+            if red_pre!=[] then DD.devel_zprint (lazy ("already in LHS: "^(pr_list !CP.print_formula red_pre))) pos;
+            DD.devel_zprint (lazy ("new pure: "^(!CP.print_formula new_p_good))) pos;
             (None,Some new_p_good)
           end
               (* Thai: Should check if the precondition overlaps with the orig ante *)
@@ -785,16 +785,16 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       if inf_rel_ls != [] then
         begin
           DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-          DD.devel_pprint ("Infer Rel Ids:"^(!print_svl ivs)) pos;
-          (* DD.devel_pprint ("LHS heap Xpure1:"^(!print_mix_formula xpure_lhs_h1)) pos; *)
-          DD.devel_pprint ("LHS pure:"^(!CP.print_formula lhs_p)) pos;
-          (* DD.devel_pprint ("LHS pure (without rel):"^(!CP.print_formula lhs_p_memo)) pos; *)
-          (* DD.devel_pprint ("LHS pure (simplified):"^(!CP.print_formula lhs)) pos; *)
-          DD.devel_pprint ("RHS pure:"^(!CP.print_formula rhs_p_n)) pos;
-          (* DD.devel_pprint ("RHS pure list:"^(pr_list !CP.print_formula rhs_ls)) pos; *)
-          DD.devel_pprint ("RHS Rel List:"^(pr_list !CP.print_formula rel_rhs)) pos;
-          DD.devel_pprint ("Rel Inferred:"^(pr_list print_lhs_rhs inf_rel_ls)) pos
-          (* ;DD.devel_pprint ("Residue RHS:"^(!CP.print_formula rhs_p_2)) pos *)
+          DD.devel_zprint (lazy ("Infer Rel Ids:"^(!print_svl ivs))) pos;
+          (* DD.devel_zprint (lazy ("LHS heap Xpure1:"^(!print_mix_formula xpure_lhs_h1))) pos; *)
+          DD.devel_zprint (lazy ("LHS pure:"^(!CP.print_formula lhs_p))) pos;
+          (* DD.devel_zprint (lazy ("LHS pure (without rel):"^(!CP.print_formula lhs_p_memo))) pos; *)
+          (* DD.devel_zprint (lazy ("LHS pure (simplified):"^(!CP.print_formula lhs))) pos; *)
+          DD.devel_zprint (lazy ("RHS pure:"^(!CP.print_formula rhs_p_n))) pos;
+          (* DD.devel_zprint (lazy ("RHS pure list:"^(pr_list !CP.print_formula rhs_ls))) pos; *)
+          DD.devel_zprint (lazy ("RHS Rel List:"^(pr_list !CP.print_formula rel_rhs))) pos;
+          DD.devel_zprint (lazy ("Rel Inferred:"^(pr_list print_lhs_rhs inf_rel_ls))) pos
+          (* ;DD.devel_zprint (lazy ("Residue RHS:"^(!CP.print_formula rhs_p_2))) pos *)
         end;
       (estate,(MCP.mix_of_pure lhs_p_memo),rhs_p_new,rhs_p_br)
 (*

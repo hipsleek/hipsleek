@@ -8,19 +8,25 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 //(1)
+//inferred pure: [-1<=y]
 infer [y] m=y+1 |- m>=0.
 print residue.
 
 //(2)
+// @2! new_p2:  false
+//infer_pure_m@2 EXIT out :(new es,inf pure) :(None,None)
 infer [y] m=y+1 |- m=0 & m!=0.
 print residue.
 
 //(3)
+//inferred pure: [1<=y]
 infer [y] y>=0 |- y>0.
 print residue.
 
 //(4)
-// should it not(y=0|y=1)?
+// should it not be(y=0|y=1)?
+// LHS contradict RHS
+// @4! new_p2:  false
 infer [y] (y=0 | y=1) |- y>4.
 print residue.
 
