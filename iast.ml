@@ -1209,7 +1209,7 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
 
 and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
   let pr = !print_struc_formula in
-  Gen.Debug.loop_1_no "data_name_of_view" pr (fun x->x)
+  Gen.Debug.no_1_loop "data_name_of_view" pr (fun x->x)
       (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula)) f0
 
 and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 

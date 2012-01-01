@@ -153,7 +153,7 @@ let string_of_action_wt_res0 e = poly_string_of_pr (pr_action_wt_res (fun _ -> f
 
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
-let must_action_stk = new Gen.stack_noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl
+let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
    
 let action_get_holes a = match a with
   | Undefined_action e
@@ -273,7 +273,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   if Gen.is_empty paset then  
     failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
-	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
+	(Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
   else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =

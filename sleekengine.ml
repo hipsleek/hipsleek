@@ -477,17 +477,17 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
-  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
-                        ^"\n\n") no_pos in
+                        ^"\n\n")) no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
-  let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
-                        ^"\n\n") no_pos in
+                        ^"\n\n")) no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (* List of vars appearing in original formula *)
