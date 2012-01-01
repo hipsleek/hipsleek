@@ -3391,11 +3391,13 @@ and heap_entail_conjunct_lhs_struc_x
                           (*add the post condition into formul_*_and *)
                           let fct es = 
                             let f = es.CF.es_formula in
+                            (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_formula post)) in *)
                             let qvars,base = CF.split_quantifiers post in
                             let one_f = CF.one_formula_of_formula base id in
                             let one_f = {one_f with CF.formula_ref_vars = ref_vars;} in
                             (*add thread id*)
-                            let evars = ref_vars@qvars in (*TO CHECK*)
+                            (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
+                            let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
                             let f1 = CF.add_quantifiers evars f in
                             let f2 = CF.add_formula_and [one_f] f1 in
                             let new_es = {es with CF.es_formula = f2} in
@@ -3706,7 +3708,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         let vperm_fs, new_f = filter_varperm_formula es_f in
         let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in
         let _ = if (ls2!=[]) then
-              print_endline ("[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero))
+              print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.")
         in
         let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
         (* let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
@@ -4915,7 +4917,7 @@ and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_f
     let str3 = pr_one_list c in
     ("\n ### new_pure = " ^ str1 ^ "\n ### CTX = " ^ str2 ^ "\n ### rest_a = " ^ str3)
   in
-  Gen.Debug.no_6 "heap_entail_thread"
+  Gen.Debug.ho_6 "heap_entail_thread"
       Cprinter.string_of_entail_state Cprinter.string_of_formula pr_one_list pr_one_list Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
  (fun _ _ _ _ _ _ -> heap_entail_thread_x prog estate conseq a1 a2 alla allc pos) estate conseq a1 a2 alla allc
 
@@ -4991,11 +4993,39 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
     | Some matches ->
         (*try to entail f1 & p |- f2, p is additional pure constraints *)
         let process_thread_one_match_x estate (f1,f2 : one_formula * one_formula) =
-          let base_f1 = formula_of_one_formula f1 in
-          let base_f2 = formula_of_one_formula f2 in
+          (*************************************************)
+          (**********matching variable permissions**********)
+          (*************************************************)
+          let f1_p = f1.formula_pure in
+          let f1_vperms, new_f1_p = MCP.filter_varperm_mix_formula f1_p in
+          let f1_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f1_vperms) in (*only pickup @full*)
+          let f2_p = f2.formula_pure in
+          let f2_vperms, new_f2_p = MCP.filter_varperm_mix_formula f2_p in
+          let f2_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f2_vperms) in (*only pickup @full*)
+          let vpem_str = ((string_of_vp_ann VP_Full) ^ (Cprinter.string_of_spec_var_list f1_full_vars) ^ " |- " ^ (string_of_vp_ann VP_Full) ^ (Cprinter.string_of_spec_var_list f2_full_vars)) in
+          let _ = if (f1_full_vars!=[] || f2_full_vars!=[]) then 
+                Debug.devel_pprint ("\n process_thread_one_match: matching variable permissions of thread with id = " ^ (CP.string_of_spec_var f1.formula_thread) ^ " : " ^ vpem_str ^ "\n") pos
+          in
+          (*lhs should be more than rhs*)
+          let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident f2_full_vars f1_full_vars in
+          if (tmp!=[]) then
+            let base_f1 = formula_of_one_formula f1 in
+            let base_f2 = formula_of_one_formula f2 in
+            let new_es = {estate with es_formula=base_f1} in (*TO CHECK: should estate is a parameter*)
+            let _ = Debug.devel_pprint ("\nConcurrency Error: could not match variable permissions LHS and RHS of the thread with id = " ^ (CP.string_of_spec_var f1.formula_thread) ^ " : " ^ vpem_str ^ "\n") pos in
+            let msg = ("Concurrency Error: could not match variable permissions LHS and RHS of the thread with id = " ^ (CP.string_of_spec_var f1.formula_thread)) in
+            (None, mkFailCtx_simple msg new_es base_f2 pos)
+          else
+          (*************************************************)
+          (*************************************************)
+          let new_f1 = {f1 with formula_pure = new_f1_p} in
+          let new_f2 = {f2 with formula_pure = new_f2_p} in
+          let base_f1 = formula_of_one_formula new_f1 in
+          let base_f2 = formula_of_one_formula new_f2 in
           let new_es = {estate with es_formula=base_f1} in (*TO CHECK: should estate is a parameter*)
           let new_ctx = Ctx new_es in
 	      Debug.devel_pprint ("process_thread_one_match:"^"\n ### ante = " ^ (Cprinter.string_of_estate new_es)^"\n ###  conseq = " ^ (Cprinter.string_of_formula base_f2)) pos;
+          (*a thread is a post-condition of its method. Therefore, it only has @full*)
           let rs0, prf0 = heap_entail_conjunct_helper 1 prog false new_ctx base_f2 [] pos in
 	      (**************************************)
 	      (*        process_one 								*)
@@ -5395,9 +5425,22 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 					    formula_base_label = None;
 					    formula_base_pos = pos } in
              (*alla is the pure constraints in all threads*)
-             let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
+             (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (*this is redundant*)*)
+             (*01/02/2012: TO CHECK: we only propagate pure constraints
+               related to thread id and logical variables in the heap nodes*)
+             (*pure constraints related to actual variables are not added
+               to ensure a consistent view among threads because a thread does not
+               know the values of variables of another thread.*)
+             let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
+             let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
+             let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
+             let alla = MCP.find_rel_constraints p1 a_vars in
              (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
              let allc = p2 in (*TO CHECK: p2 only to find closure*)
+             (*remove @zero of the main thread from the entail state
+             need to re-add after entail_thread*)
+             let zero_vars = estate.es_var_zero_perm in
+             let estate = {estate with es_var_zero_perm = []} in
              let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
              (match new_p with
                | None -> lctx (*Failed when entail threads*)
@@ -5412,6 +5455,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                    let new_estate = {estate with
                       es_evars = new_es.es_evars;
                       es_ivars = new_es.es_ivars;
+                      es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
                       es_gen_impl_vars = new_es.es_gen_impl_vars;
                       es_gen_expl_vars = new_es.es_gen_expl_vars;}
                    in
@@ -5455,9 +5499,23 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 					    formula_base_label = None;
 					    formula_base_pos = pos } in
              (*alla is the pure constraints in all threads*)
-             let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
+             (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (\*this is redundant*\) *)
+             (*01/02/2012: TO CHECK: we only propagate pure constraints
+               related to thread id and logical variables in the heap nodes*)
+             (*pure constraints related to actual variables are not added
+               to ensure a consistent view among threads because a thread does not
+               know the values of variables of another thread.*)
+             let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
+             let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
+             let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
+             let alla = MCP.find_rel_constraints p1 a_vars in
+
              (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
              let allc = p2 in (*TO CHECK: p2 only to find closure*)
+             (*remove @zero of the main thread from the entail state
+             need to re-add after entail_thread*)
+             let zero_vars = estate.es_var_zero_perm in
+             let estate = {estate with es_var_zero_perm = []} in
              let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
              (match new_p with
                | None -> lctx (*Failed when entail threads*)
@@ -5474,6 +5532,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                    let new_estate = {estate with
                       es_evars = new_es.es_evars;
                       es_ivars = new_es.es_ivars;
+                      es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
                       es_gen_impl_vars = new_es.es_gen_impl_vars;
                       es_gen_expl_vars = new_es.es_gen_expl_vars;}
                    in
@@ -5956,6 +6015,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
       let lhs_zero_vars = estate.es_var_zero_perm in
+      let _ = if (lhs_zero_vars!=[] or rhs_vperms!=[]) then
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^(string_of_vp_ann VP_Zero)^ (Cprinter.string_of_spec_var_list lhs_zero_vars) ^ " |- "  ^ (pr_list Cprinter.string_of_pure_formula rhs_vperms)^"\n") pos
+      in
       let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
       let rhs_ref, rhs_vrest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Ref) rhs_vrest in
       let rhs_full, rhs_vrest3 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) rhs_vrest2 in
@@ -5970,9 +6032,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (* v@Z  |- v@Copy --> fail *)
       (* v@Z  |- v@Ref --> fail *)
       (* v@Z  |- v@Full --> fail *)
-      let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_val_vars) in
-      let tmp2 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_ref_vars) in
-      let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var lhs_zero_vars (rhs_full_vars) in
+      let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_val_vars) in
+      let tmp2 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_ref_vars) in
+      let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_full_vars) in
       if (tmp1!=[] || tmp2!=[] || tmp3!=[]) then
         begin
         (*FAIL*)

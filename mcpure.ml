@@ -212,6 +212,9 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
   regroup_memo_group (helper sst f_l)
 
 and m_apply_one (s: spec_var * spec_var) f = m_apply_par [s] f
+
+and m_apply_one_varperm (s: spec_var * spec_var) f = m_apply_par_varperm [s] f
+
   (* let r1 = List.map (fun c ->  *)
   (*   	       let r = EMapSV.subs_eset(\*_debug !print_sv_f*\) s c.memo_group_aset in *)
   (*   		 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var s v) c.memo_group_fv); *)
@@ -238,6 +241,23 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
   let pr1 = pr_list (pr_pair !print_sv_f !print_sv_f ) in
   let pr2 = !print_mp_f in
   Gen.Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
+
+and m_apply_par_varperm_x (sst:(spec_var * spec_var) list) f = 
+  let r1 = List.map (fun c -> 
+	let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in (*TO CHECK*)
+	{ memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv); (*TO CHECK: var does not contain VarPerm*)
+	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
+	  memo_group_changed = c.memo_group_changed;
+	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs_varperm sst d.memo_formula;}) c.memo_group_cons;
+	  memo_group_slice = List.map (apply_subs_varperm sst) c.memo_group_slice; 
+	  memo_group_aset = r }) f in  
+  let r = filter_mem_triv r1 in
+  r
+
+and m_apply_par_varperm (sst:(spec_var * spec_var) list) f = 
+  let pr1 = pr_list (pr_pair !print_sv_f !print_sv_f ) in
+  let pr2 = !print_mp_f in
+  Gen.Debug.no_2 "m_apply_par_varperm" pr1 pr2 pr2 m_apply_par_varperm_x sst f
 
 and b_f_ptr_equations_aux with_null f =
   let (pf, _) = f in
@@ -1817,6 +1837,10 @@ let isConstMTrue mx = match mx with
 let m_apply_one s qp = match qp with
   | MemoF f -> MemoF (m_apply_one s f)
   | OnePF f -> OnePF (apply_subs [s] f)
+
+let m_apply_one_varperm s qp = match qp with
+  | MemoF f -> MemoF (m_apply_one_varperm s f)
+  | OnePF f -> OnePF (apply_subs_varperm [s] f)
   
 let m_apply_par sst qp = match qp with
   | MemoF f -> MemoF (m_apply_par sst f)

@@ -448,7 +448,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
-		    (* let _ = print_endline ("Assign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+		    let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
 	        let fct c1 = 
 	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
@@ -601,11 +601,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
 	        let ctx1 = check_exp prog proc ctx e post_start_label in
-		    (* let _ = print_endline ("check_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+		    let _ = print_endline ("\ncheck_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
-		    (* let _ = print_endline ("check_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
-		    (* let _ = print_endline ("check_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
+		    let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in
+		    let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in
 	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
@@ -774,10 +774,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                       (Cprinter.string_of_pos pos) ^ "\n" ^
                       (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
-                    let renamed_spec = CF.subst_struc st1 renamed_spec in
-                    let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+                    let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
+                    let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
                     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
-                    let pre2 = CF.subst_struc_pre st2 renamed_spec in
+                    let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
                     (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
@@ -794,7 +794,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
 				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     let _ = PTracer.log_proof prf in
-                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
+                    let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
                                         if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                       Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                     rs
@@ -962,10 +962,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
                     (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
-                  let renamed_spec = CF.subst_struc st1 renamed_spec in
-                  let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+                  let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
+                  let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
-                  let pre2 = CF.subst_struc_pre st2 renamed_spec in
+                  let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
                   (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
                   (* Termination checking *)
