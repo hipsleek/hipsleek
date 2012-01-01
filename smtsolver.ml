@@ -920,7 +920,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Gen.Debug.loop_2_no "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Gen.Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _ -> smt_imply_x ante conseq prover timeout) (ante,conseq) timeout
 
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -984,7 +984,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Gen.Debug.loop_1_no "smt.imply" string_of_float string_of_bool
+  Gen.Debug.no_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
