@@ -4910,7 +4910,7 @@ and heap_entail_split_lhs_phases_x
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.no_3 "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Gen.Debug.no_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -7010,7 +7010,7 @@ and push_hole_action_x a1 r1=
     | None -> r1
     | Some h -> push_crt_holes_list_ctx r1 h
 and push_hole_action a1 r1=
-  Gen.Debug.loop_1_no "push_hole_action" pr_no pr_no 
+  Gen.Debug.no_1_loop "push_hole_action" pr_no pr_no 
       (fun _ -> push_hole_action_x a1 r1) a1
 
 

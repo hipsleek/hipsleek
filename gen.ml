@@ -1074,12 +1074,40 @@ struct
   let loop_5 s = ho_5_opt_aux false [] true (fun _ -> true) None s
   let loop_6 s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
-  let loop_1_no _ _ _ s = s
-  let loop_2_no _ _ _ _ s = s
-  let loop_3_no _ _ _ _ _ s = s
-  let loop_4_no _ _ _ _ _ _ s = s
-  let loop_5_no _ _ _ _ _ _ _ s = s
-  let loop_6_no _ _ _ _ _ _ _ _ s = s
+  let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
+  let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s
+  let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s
+  let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s
+  let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s
+  let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s
+
+  let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str
+  let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str
+  let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str
+  let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
+  let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
+  let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
+
+  let to_1_loop s = ho_1_opt_aux true [] true (fun _ -> true) None s
+  let to_2_loop s = ho_2_opt_aux true [] true (fun _ -> true) None s
+  let to_3_loop s = ho_3_opt_aux true [] true (fun _ -> true) None s
+  let to_4_loop s = ho_4_opt_aux true [] true (fun _ -> true) None s
+  let to_5_loop s = ho_5_opt_aux true [] true (fun _ -> true) None s
+  let to_6_loop s = ho_6_opt_aux true [] true (fun _ -> true) None s
+
+  let ho_1_loop s = ho_1_opt_aux false [] true (fun _ -> true) None s
+  let ho_2_loop s = ho_2_opt_aux false [] true (fun _ -> true) None s
+  let ho_3_loop s = ho_3_opt_aux false [] true (fun _ -> true) None s
+  let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
+  let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
+  let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
+
+  let no_1_loop _ _ _ s = s
+  let no_2_loop _ _ _ _ s = s
+  let no_3_loop _ _ _ _ _ s = s
+  let no_4_loop _ _ _ _ _ _ s = s
+  let no_5_loop _ _ _ _ _ _ _ s = s
+  let no_6_loop _ _ _ _ _ _ _ _ s = s
 
   let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
   let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str

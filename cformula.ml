@@ -4557,7 +4557,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Gen.Debug.loop_2_no "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Gen.Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
@@ -4589,7 +4589,6 @@ match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_failesc_context pid c_opt) lpc
 
-  
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
