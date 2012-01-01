@@ -2003,19 +2003,11 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
     (i) find FV=free vars of to_ante; (ii) select ctrs connected to FV (iii) remove redundant exists vars
   *)
 
-  Debug.devel_pprint ("split_universal: evars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var evars))) pos;
-  Debug.devel_pprint ("split_universal: expl_inst_vars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var expl_inst_vars))) pos;
-  Debug.devel_pprint ("split_universal: vvars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var vvars))) pos;
-  Debug.devel_pprint ("split_universal: to_ante: "
-  ^ (Cprinter.string_of_pure_formula_branches (to_ante, to_ante_b))) pos;
-  Debug.devel_pprint ("split_universal: to_conseq: "
-  ^ (Cprinter.string_of_pure_formula_branches (to_conseq, to_conseq_b))) pos;
+  Debug.devel_zprint (lazy ("split_universal: evars: " ^ (String.concat ", " (List.map Cprinter.string_of_spec_var evars)))) pos;
+  Debug.devel_zprint (lazy ("split_universal: expl_inst_vars: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var expl_inst_vars)))) pos;
+  Debug.devel_zprint (lazy ("split_universal: vvars: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vvars)))) pos;
+  Debug.devel_zprint (lazy ("split_universal: to_ante: "^ (Cprinter.string_of_pure_formula_branches (to_ante, to_ante_b)))) pos;
+  Debug.devel_zprint (lazy ("split_universal: to_conseq: "^ (Cprinter.string_of_pure_formula_branches (to_conseq, to_conseq_b)))) pos;
   let fvars = CP.fv f in
 
   (* 27.05.2008 *)
@@ -2279,9 +2271,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let view_form = match use_case with 
                 | None -> view_form 
                 | Some f -> push_case_f f view_form in
-              Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
-              Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
-              Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
+              Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
+              Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
+              Debug.devel_zprint (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
               let estate = estate_of_context ctx pos in
               (*LDK: propagate es_vars from the estate to FOLD context
                 to avoid proving es_vars as universal vars when finishing FOLDING*)
@@ -2319,7 +2311,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	          (*        process_one 								*)
 	          (**************************************)
               let rec process_one_x (ss:CF.steps) rs1  =
-	            Debug.devel_pprint ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1)) pos;
+	            Debug.devel_zprint (lazy ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1))) pos;
 	            match rs1 with
 	              | OCtx (c1, c2) ->
 		                (*
@@ -2346,14 +2338,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                         let tmp_pure = mix_f,rest in 
 		                let res_rs = Ctx {es with es_evars = estate.es_evars;
 				            es_pure = tmp_pure; es_prior_steps = (ss @ es.es_prior_steps);} in
-		                Debug.devel_pprint ("fold: context at beginning of fold: "
-				        ^ (Cprinter.string_of_spec_var p) ^ "\n"
-				        ^ (Cprinter.string_of_context ctx)) pos;
-		                Debug.devel_pprint ("fold: context at end of fold: "
-				        ^ (Cprinter.string_of_spec_var p) ^ "\n"
-				        ^ (Cprinter.string_of_context res_rs)) pos;
-		                Debug.devel_pprint ("fold: es.es_pure: "
-				        ^ (Cprinter.string_of_mix_formula_branches es.es_pure)) pos;
+		                Debug.devel_zprint (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
+		                Debug.devel_zprint (lazy ("fold: context at end of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context res_rs))) pos;
+		                Debug.devel_zprint (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula_branches es.es_pure))) pos;
 		                res_rs in
               let process_one (ss:CF.steps) fold_rs1 = 
                 let pr = Cprinter.string_of_context  in
@@ -2367,8 +2354,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	          | Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
           end
         | _ ->
-              Debug.devel_pprint ("fold: second parameter is not a view: "
-		      ^ (Cprinter.string_of_h_formula view)) pos;
+              Debug.devel_zprint (lazy ("fold: second parameter is not a view: "^ (Cprinter.string_of_h_formula view))) pos;
               report_error no_pos ("fold: second parameter is not a view\n") 
 	              (*([], Failure)*)
 
@@ -2418,25 +2404,16 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
           } 
           in
 	      let new_ctx = (Ctx new_es) in
-	      Debug.devel_pprint ("process_fold_result: new_ctx after folding: "
-		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		  ^ (Cprinter.string_of_context new_ctx)) pos;
-	      Debug.devel_pprint ("process_fold_result: vs2: "
-		  ^ (String.concat ", "
-			  (List.map Cprinter.string_of_spec_var vs2))) pos;
-	      Debug.devel_pprint ("process_fold_result: to_ante: "
-		  ^ (Cprinter.string_of_pure_formula to_ante)) pos;
-	      Debug.devel_pprint ("process_fold_result: to_conseq: "
-		  ^ (Cprinter.string_of_pure_formula to_conseq)) pos;
-	      Debug.devel_pprint ("process_fold_result: new_conseq:\n"
-		  ^ (Cprinter.string_of_formula new_conseq)) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
           (* WN : we need to restore es_infer_vars here *)
           let new_ctx = Inf.restore_infer_vars_ctx ivars new_ctx in
 	      let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx new_conseq None pos
 	      in
-	      Debug.devel_pprint ("process_fold_result: context at end fold: "
-		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		  ^ (Cprinter.string_of_list_context rest_rs)) pos;
+	      Debug.devel_zprint (lazy ("process_fold_result: context at end fold: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_list_context rest_rs))) pos;
           let r = add_to_aux_conseq rest_rs to_conseq pos in
 	      (r, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 
@@ -2455,7 +2432,7 @@ and redundant_existential_check (svs : CP.spec_var list) (ctx0 : context) =
   match ctx0 with
     | Ctx es -> let free_var_list = (fv es.es_formula) in
 	  begin if (not ( CP.disjoint svs free_var_list)) then
-	    Debug.devel_pprint ("Some variable introduced by existential elimination where found in the residue") no_pos end
+	    Debug.devel_zprint (lazy ("Some variable introduced by existential elimination where found in the residue")) no_pos end
     | OCtx (c1, c2) ->
 	      let _ = redundant_existential_check svs c1 in
 	      (redundant_existential_check svs c2)
@@ -2908,10 +2885,10 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
                                               ->control_path_id->(list_context * proof)) to_string : (list_partial_context * proof) =           
   (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
   (* print_string (Cprinter.string_of_list_partial_context cl); *)
-  Debug.devel_pprint ("heap_entail_struc_list_partial_context:"
+  Debug.devel_zprint (lazy ("heap_entail_struc_list_partial_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
-  ^ "\nconseq:\n" ^ (to_string conseq)) pos; 
+  ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
     let l = List.map 
       (fun c-> heap_entail_struc_partial_context prog is_folding  has_post c conseq tid pos pid f to_string) cl in
     let l_ctx , prf_l = List.split l in
@@ -2949,10 +2926,10 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       (f: prog_decl->bool->bool->context->'a -> CP.spec_var option ->  loc ->control_path_id->(list_context * proof)) to_string
       : (list_partial_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
-  Debug.devel_pprint ("heap_entail_struc_partial_context:"
+  Debug.devel_zprint (lazy ("heap_entail_struc_partial_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
-  ^ "\nconseq:\n" ^ (to_string conseq)) pos; 
+  ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
     let fail_branches, succ_branches  = cl in
     let res = List.map (fun (lbl,c2)-> 
 		(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
@@ -2986,10 +2963,9 @@ and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool)
 and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) 
       (has_post: bool)(cl : failesc_context) (conseq:'a) (tid: CP.spec_var option) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
-  Debug.devel_pprint ("heap_entail_struc_failesc_context:"
+  Debug.devel_zprint (lazy ("heap_entail_struc_failesc_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
-  ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)
-  ^ "\nconseq:\n" ^ (to_string conseq)) pos; 
+  ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)^ "\nconseq:\n" ^ (to_string conseq))) pos; 
     let fail_branches, esc_branches, succ_branches  = cl in
     let res = List.map (fun (lbl,c2)-> 
 		(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
@@ -3041,9 +3017,7 @@ and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_
 
 (*this does not have thread id -> None*)
 and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
-  Debug.devel_pprint ("heap_entail_struc_init:"
-  ^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos; 
+  Debug.devel_zprint (lazy ("heap_entail_struc_init:"^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos; 
     match cl with
       | FailCtx fr -> (cl,Failure)
       | SuccCtx _ ->
@@ -3101,9 +3075,7 @@ and heap_entail_one_context_struc_debug p i1 hp cl cs (tid: CP.spec_var option) 
       (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs tid pos pid) cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) pos pid : (list_context * proof) =
-  Debug.devel_pprint ("heap_entail_one_context_struc:"
-  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+  Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
     if isAnyFalseCtx ctx then
       (*set context as bot*)
       let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in
@@ -3133,10 +3105,9 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
       ctx conseq tid pos pid (ss:steps) : (list_context * proof) =     
   match ctx with
     | OCtx (c1, c2) ->
-          Debug.devel_pprint ("heap_entail_after_sat_struc:"
+          Debug.devel_zprint (lazy ("heap_entail_after_sat_struc:" 
           ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
-		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
-		  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+          ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
           let rs1, prf1 = heap_entail_after_sat_struc prog is_folding
             has_post c1 conseq tid pos pid (CF.add_to_steps ss "left OR 5 on ante") in
           let rs2, prf2 = heap_entail_after_sat_struc prog is_folding
@@ -3144,10 +3115,9 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
             has_post c2 conseq tid pos pid (CF.add_to_steps ss "right OR 5 on ante") in
 	      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
     | Ctx es -> begin
-        Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
+        Debug.devel_zprint (lazy ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
         ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
-		^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
-		^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+        ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
         (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
         let es = (CF.add_to_estate_with_steps es ss) in
         let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid pos pid in
@@ -3653,9 +3623,7 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
-  Debug.devel_pprint ("heap_entail_one_context:"
-  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n") pos;
+  Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then
       (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
@@ -3678,9 +3646,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
       (ss:CF.steps) : (list_context * proof) =
   match ctx with
     | OCtx (c1, c2) ->
-          Debug.devel_pprint ("heap_entail_after_sat:"
-		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
-		  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+          Debug.devel_zprint (lazy ("heap_entail_after_sat:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
           let rs1, prf1 = heap_entail_after_sat prog is_folding
             c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in  
           let rs2, prf2 = heap_entail_after_sat prog is_folding
@@ -3693,9 +3659,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 	      *)
 	      ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
     | Ctx es -> begin
-        Debug.devel_pprint ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"
-		^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
-		^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+        Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
 		(*print_string ("An Hoa CHECKPOINT 2664 :: heap_entail_after_sat\n");
 		  print_string ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs" ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*) 
         (* print_string ("going: "^(Cprinter.string_of_formula es.es_formula)^"\n") ;*)
@@ -3910,10 +3874,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
 	  formula_or_pos = pos1}) ->
-          Debug.devel_pprint ("heap_entail_conjunct_lhs: \nante:\n"
+          Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: \nante:\n"
 		  ^ (Cprinter.string_of_context ctx)
 		  ^ "\nconseq:\n"
-		  ^ (Cprinter.string_of_formula conseq)) pos;
+		  ^ (Cprinter.string_of_formula conseq))) pos;
           let ctx_L = CF.add_to_context_num 3 ctx "left OR 2 on conseq" in
           let ctx_R = CF.add_to_context_num 4 ctx "right OR 2 on conseq" in
           if !Globals.use_set then
@@ -3931,7 +3895,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
         let r1,p1 =
 	      if !Globals.allow_imm then
             begin
-              Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases") pos;
+              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
               (* TO CHECK: ignore this --imm at the moment*)
 	          heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
             end
@@ -4127,8 +4091,8 @@ and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_fo
 		                (* update the current phase *)
 			            (* crt_phase := phase; *)
 		                let target_node = get_node target coer_rhs_h in
-		                let _ = Debug.devel_pprint ("Target: " ^ (Cprinter.string_of_h_formula target_node) ^ "\n") no_pos in
-		                let _ = Debug.devel_pprint ("Target match: " ^ (Cprinter.string_of_h_formula anode) ^ "\n") no_pos in
+		                let _ = Debug.devel_zprint (lazy ("Target: " ^ (Cprinter.string_of_h_formula target_node) ^ "\n")) no_pos in
+		                let _ = Debug.devel_zprint (lazy ("Target match: " ^ (Cprinter.string_of_h_formula anode) ^ "\n")) no_pos in
 			            begin
 			              match target_node, anode with
 			                | ViewNode ({h_formula_view_node = p1; h_formula_view_name = c1}),
@@ -4252,11 +4216,11 @@ and heap_entail_split_rhs_phases_x
 	          | FailCtx _ -> (res_ctx, res_prf)	    
   in
 
-  Debug.devel_pprint ("heap_entail_split_rhs_phases: 
+  Debug.devel_zprint (lazy ("heap_entail_split_rhs_phases: 
                             \nante:\n"
   ^ (Cprinter.string_of_context ctx_0)
   ^ "\nconseq:\n"
-  ^ (Cprinter.string_of_formula conseq)) pos;
+  ^ (Cprinter.string_of_formula conseq))) pos;
 
   match ctx_0 with
     | Ctx estate -> begin
@@ -4562,11 +4526,11 @@ and heap_entail_split_lhs_phases_x
       (drop_read_phase : bool)
       pos : (list_context * proof) =
 
-  Debug.devel_pprint ("heap_entail_split_lhs_phases: 
+  Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: 
                             \nante:\n"
   ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n"
-  ^ (Cprinter.string_of_formula conseq)) pos;
+  ^ (Cprinter.string_of_formula conseq))) pos;
 
     (***** main helper method ******)
     (* called for both formula base and formula exists *)
@@ -4624,8 +4588,7 @@ and heap_entail_split_lhs_phases_x
 	      (******************************************************)
 	      let lhs_rd = func h1 in
 	      let rd_ctx = CF.set_context_formula ctx0 lhs_rd in
-	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
-                            \ncall heap_entail_conjunct with lhs = reading phase\n") pos;
+	      Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct with lhs = reading phase\n")) pos;
 	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 	      (* let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
 	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
@@ -4652,8 +4615,7 @@ and heap_entail_split_lhs_phases_x
 	      (* set the es_formula to h2 *)
 	      let f_h2 = func h2 in
 	      let wr_ctx = CF.set_context_formula new_ctx f_h2 in
-	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
-                            \ncall heap_entail_conjunct with lhs = writing phase\n") pos;
+	      Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct with lhs = writing phase\n")) pos;
 
 	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 	      (* let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
@@ -4779,10 +4741,10 @@ and heap_entail_split_lhs_phases_x
 
 	              let after_wr_ctx, after_wr_prf =
 		            if (CF.contains_phase h3) then
-		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n") pos;
+		              (Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n")) pos;
 		              heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
 		            else
-		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n") pos;
+		              (Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;
 		              heap_entail_conjunct prog is_folding  cont_ctx conseq [] pos)
 	              in
 		          (match after_wr_ctx with
@@ -5144,15 +5106,15 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3_no "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Gen.Debug.no_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
-  Debug.devel_pprint ("heap_entail_conjunct:"
+  Debug.devel_zprint (lazy ("heap_entail_conjunct:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
 	(*print_string ("heap_entail_conjunct:"
       ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
       ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*)
@@ -5176,9 +5138,9 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
 
 and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.devel_pprint ("heap_entail_conjunct_helper:"
+  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
 	(*print_string ("\nAn Hoa :: heap_entail_conjunct_helper:" ^ "\nContext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nConsequence:\n" ^ (Cprinter.string_of_formula conseq));*)
     match ctx0 with
       | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
@@ -5266,12 +5228,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 			              (*  let _ = print_string "pp 2\n" in*)
 			              (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
 			              if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then begin
-			                Debug.devel_pprint ("heap_entail_conjunct_helper: "
+			                Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
 						    ^ "conseq has an incompatible flow type"
 						    ^ "\ncontext:\n"
 						    ^ (Cprinter.string_of_context ctx0)
 						    ^ "\nconseq:\n"
-						    ^ (Cprinter.string_of_formula conseq)) pos;
+						    ^ (Cprinter.string_of_formula conseq))) pos;
                             (* TODO : change to meaningful msg *)
                             (* what if must failure on the ante -> conseq *)
                             if CF.overlap_flow_ff fl2 fl1 then
@@ -5342,12 +5304,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
 			                  | HTrue -> begin
-				                  Debug.devel_pprint ("heap_entail_conjunct_helper: "
+				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
 						          ^ "conseq has an empty heap component"
 						          ^ "\ncontext:\n"
 						          ^ (Cprinter.string_of_context ctx0)
 						          ^ "\nconseq:\n"
-						          ^ (Cprinter.string_of_formula conseq)) pos;
+						          ^ (Cprinter.string_of_formula conseq))) pos;
 				                  let b1 = { formula_base_heap = h1;
 					              formula_base_pure = p1;
 					              formula_base_type = t1;
@@ -5378,12 +5340,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 				                  (new_ctx, proof)
 				                end
 			                  | _ -> begin 
-				                  Debug.devel_pprint ("heap_entail_conjunct_helper: "
+				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
 						          ^ "conseq has an non-empty heap component"
 						          ^ "\ncontext:\n"
 						          ^ (Cprinter.string_of_context ctx0)
 						          ^ "\nconseq:\n"
-						          ^ (Cprinter.string_of_formula conseq)) pos;
+						          ^ (Cprinter.string_of_formula conseq))) pos;
 				                  let b1 = { formula_base_heap = h1;
 					              formula_base_pure = p1;
 					              formula_base_type = t1;
@@ -5908,7 +5870,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	      if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&&
             not(TP.is_mix_list_constraint new_conseq0) then
               begin
-	            let simp_conseq = (Debug.devel_pprint ("simplify the consequent with omega") no_pos;
+	            let simp_conseq = (Debug.devel_zprint (lazy ("simplify the consequent with omega")) no_pos;
 		        (*simpl_memo_pure_formula*) new_conseq0) in
 	            let simp_conseq1 =  if !omega_err = false
                 then simp_conseq
@@ -5920,8 +5882,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	      else new_conseq0
         in
         (* let _ = print_endline ("WN: new_conseq0"^(Cprinter.string_of_mix_formula new_conseq0)) in *)
-        let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)
-            (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
+        let _ = Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int !imp_no))) pos in
+            (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*) 
 	        (* <<<<<<< solver.ml *)
 	        (*       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in *)
 	        (*       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in *)
@@ -6077,8 +6039,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 			| _ -> a) [] r_succ_match)@estate.es_success_pts;
 		  es_unsat_flag = false;} in
 	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
 	  (SuccCtx[res_ctx], prf)
 	end
@@ -6094,8 +6056,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 			| Some s1,Some s2 -> (s1,s2)::a
 			| _ -> a) [] r_succ_match)@estate.es_success_pts;} in
-	  Debug.devel_pprint ("heap_entail_empty_heap: formula is valid") pos;
-	  Debug.devel_pprint ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
    	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap :: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
 	  (SuccCtx[res_ctx], prf)
 	end
@@ -6116,7 +6078,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
             (r1,prf)
       | None ->
             begin
-              Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
+              Debug.devel_zprint (lazy ("heap_entail_empty_rhs_heap: formula is not valid\n")) pos;
               (*compute lub of estate.es_formula and current fc_flow*)
               (*
                 fc_flow: safe -> normal_flow --or higher
@@ -6336,13 +6298,13 @@ and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout mem
       | None -> TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))
       | Some t -> TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t 
   in
-  Debug.devel_pprint ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))) no_pos;
   (r1,r2,r3)
 
 and imply_formula_no_memo new_ante new_conseq imp_no memset =   
   let new_conseq = solve_ineq_pure_formula new_ante memset new_conseq in
   let res,_,_ = TP.imply new_ante new_conseq ((string_of_int imp_no)) false None in
-  Debug.devel_pprint ("IMP #" ^ (string_of_int imp_no)) no_pos;
+  Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no))) no_pos;
   res
       (*
         and return_base_cases prog ln2 rhs pos = 
@@ -6454,8 +6416,8 @@ and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_foldi
 and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b =
   if (is_data lhs_node) then None
   else begin
-    (Debug.devel_pprint ("do_base_case_unfold attempt for : " ^
-	    (Cprinter.string_of_h_formula lhs_node)) pos);
+    (Debug.devel_zprint (lazy ("do_base_case_unfold attempt for : " ^
+	    (Cprinter.string_of_h_formula lhs_node))) pos);
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let _ = Gen.Profiling.push_time "empty_predicate_testing" in
@@ -6491,8 +6453,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (*                           ) *)
     (*                       ^ "\n\n") in *)
     let na,prf = match lhs_vd.view_base_case with
-      | None ->  Debug.devel_pprint ("do_base_case_unfold attempt : unsuccessful for : " ^
-	        (Cprinter.string_of_h_formula lhs_node)) pos;
+      | None ->  Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
+	        (Cprinter.string_of_h_formula lhs_node))) pos;
             (CF.mkFailCtx_in(Basic_Reason ( {
 			    fc_message ="failure 1 ?? when checking for aliased node";
 			    fc_current_lhs = estate;
@@ -6528,14 +6490,14 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
                 (* TODO : need to trigger UNSAT checking here *)
 		        let ctx = unfold_context_unsat_now prog (prog, Some (base,branches, (lhs_name,lhs_arg))) (SuccCtx[nctx]) lhs_var pos in
 
-		        Debug.devel_pprint ("do_base_case_unfold attempt : successful : " ^
+		        Debug.devel_zprint (lazy ("do_base_case_unfold attempt : successful : " ^
  	                (Cprinter.string_of_h_formula lhs_node)^ 
                     "\n Start Ante :"^(Cprinter.string_of_formula ante)^
-	                "\n New Ante :"^(Cprinter.string_of_list_context_short ctx)) pos; 
+	                "\n New Ante :"^(Cprinter.string_of_list_context_short ctx))) pos; 
                 (ctx,TrueConseq)
               else begin
-                Debug.devel_pprint ("do_base_case_unfold attempt : unsuccessful for : " ^
-	                (Cprinter.string_of_h_formula lhs_node)) pos; 
+                Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
+	                (Cprinter.string_of_h_formula lhs_node))) pos; 
                 (CF.mkFailCtx_in(Basic_Reason  ( { 
 				    fc_message ="failure 2 ?? when checking for aliased node";
 				    fc_current_lhs = estate;
@@ -6582,8 +6544,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
   let na,prf = 
     (match vd.view_base_case with
       | None ->
-            Debug.devel_pprint ("do_lhs_case : unsuccessful for : "
-            ^ (Cprinter.string_of_h_formula lhs_node)) pos;
+            Debug.devel_zprint (lazy ("do_lhs_case : unsuccessful for : "
+            ^ (Cprinter.string_of_h_formula lhs_node))) pos;
             (CF.mkFailCtx_in(Basic_Reason ( {
 			    fc_message ="failure 1 ?? no vd.view_base_case to do case analysis";
 			    fc_current_lhs = estate;
@@ -6686,11 +6648,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
   (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
   (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
-  Debug.devel_pprint ("do_match: using " ^
+  Debug.devel_zprint (lazy ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
-	  (Cprinter.string_of_h_formula r_node)) pos;
-    Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos;
-    Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos;
+	  (Cprinter.string_of_h_formula r_node))) pos;
+    Debug.devel_zprint (lazy ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate))) pos; 
+    Debug.devel_zprint (lazy ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs))) pos; 
     let l_args, l_node_name, l_perm, l_ann = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
@@ -6889,17 +6851,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
 	          (* print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx)); *)
 	          (* print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq)); *)
-              Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
-              Debug.devel_pprint ("do_match (after): RHS:"
-	          ^ (Cprinter.string_of_formula new_conseq)) pos;
+              Debug.devel_zprint (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx))) pos;
+              Debug.devel_zprint (lazy ("do_match (after): RHS:"
+	          ^ (Cprinter.string_of_formula new_conseq))) pos;
               let res_es1, prf1 = (*heap_entail_split_rhs_phases*) heap_entail_conjunct prog is_folding  new_ctx new_conseq
                 (rhs_matched_set @ [r_var]) pos in
               (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.devel_pprint ("heap_entail_conjunct_non_empty_rhs_heap:"
+  Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
     let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
     let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
@@ -7152,12 +7114,12 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
 	(tmp, prf)
   else begin
-	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
+	Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
 	^ (Cprinter.string_of_context ctx0) ^ "\n"
 	^ "to:ln2: "
 	^ (Cprinter.string_of_h_formula ln2)
 	^ "\nrhs_p: "
-	^ (Cprinter.string_of_mix_formula rhs_p) ^"..end") pos;
+	^ (Cprinter.string_of_mix_formula rhs_p) ^"..end")) pos;
 	(fold_rs, fold_prf)
   end 
 
@@ -7393,7 +7355,7 @@ and push_hole_action_x a1 r1=
     | None -> r1
     | Some h -> push_crt_holes_list_ctx r1 h
 and push_hole_action a1 r1=
-  Gen.Debug.loop_1_no "push_hole_action" pr_no pr_no 
+  Gen.Debug.no_1_loop "push_hole_action" pr_no pr_no 
       (fun _ -> push_hole_action_x a1 r1) a1
 
 
@@ -7467,7 +7429,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     begin
       match r with
         | Some (new_iv,new_rn,new_p) -> 
-              let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in
+              let _ = Debug.devel_zprint (lazy ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")) pos in
               let new_estate = 
                 {estate with 
                     es_infer_vars = new_iv; 
@@ -7618,11 +7580,11 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   if not(Context.is_complex_action a) then
     begin
-      Debug.devel_pprint ("process_action :"
+      Debug.devel_zprint (lazy ("process_action :"
       ^ "\n ### action = " ^ (Context.string_of_action_res a)
       ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state_short estate)
       ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
-      ^ "\n\n")  pos 
+      ^ "\n\n"))  pos 
     end;
     (*add tracing into the entailment state*)
     let action_name:string = Context.string_of_action_name a in
@@ -8010,7 +7972,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
    h_formula_view_remaining_branches = r_rem_brs;
    h_formula_view_pruning_conditions = r_p_cond;
    h_formula_view_pos = pos2}) -> begin
-   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: trying to prove " ^ (Cprinter.string_of_h_formula ln2)) pos;
+   Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: trying to prove " ^ (Cprinter.string_of_h_formula ln2))) pos;
    
 
    match actions with 
@@ -8028,7 +7990,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
 (* let _ = print_string("no match\n") in *)
    if is_data ln2 then begin (* fail *)
 (* let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
-   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: no aliased node for data node " ^ (Cprinter.string_of_h_formula ln2)^ " is found in LHS\n") pos;
+   Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: no aliased node for data node " ^ (Cprinter.string_of_h_formula ln2)^ " is found in LHS\n")) pos;
    (CF.mkFailCtx_in (Continuation ( {
    fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
    fc_current_lhs = estate;
@@ -8134,7 +8096,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
 (*******************************************************************************************************************************************************************************************)
    let ans =	
    if (is_view anode) || (is_view ln2) then
-   (Debug.devel_pprint ("do_coercion for LHS:" ^ (Cprinter.string_of_h_formula anode) ^" RHS:"^(Cprinter.string_of_h_formula ln2)^ "\n") pos;
+   (Debug.devel_zprint (lazy ("do_coercion for LHS:" ^ (Cprinter.string_of_h_formula anode) ^" RHS:"^(Cprinter.string_of_h_formula ln2)^ "\n")) pos;
    Some (do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos pid)  )
 (* else (CF.SuccCtx [], []) in
    - this does not work! *)
@@ -8179,13 +8141,13 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
    if !use_coercion then 
    begin
 (* two different predicates match, try coercion *)
-   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
+   Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion")) pos;
    let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid in
    let prf = mkCoercion2 ctx0 conseq prfs in
    (res, prf)
    end else 
    begin
-   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "can't reduce, fold, unfold") pos;
+   Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: " ^ "can't reduce, fold, unfold")) pos;
    (CF.mkFailCtx_in (Basic_Reason ( {
    fc_message = "can't reduce, fold, unfold";
    fc_current_lhs = estate;
@@ -8199,7 +8161,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
    end (*end of match at root*)
    else if !use_coercion then (* there is a match at some node, but not at root *)
    begin
-   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: there is a match at some node, but not at root\n") pos;
+   Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: there is a match at some node, but not at root\n")) pos;
    let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid in
    let prf = mkCoercion2 ctx0 conseq prfs in
    (res, prf)
@@ -8386,7 +8348,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
             if (not(apply_coer) or (is_cycle_coer coer origs))
 	        then
               (* let s = (pr_list string_of_bool [f1;f3;f4;f5;f6]) in *)
-		      (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!"(* ^s *)) pos; 
+		      (Debug.devel_zprint (lazy("[do_universal]: Coercion cannot be applied!"(* ^s *))) pos; 
 		      (CF.mkFailCtx_in(Basic_Reason( { 
 				  fc_message ="failed coercion application";
 				  fc_current_lhs = estate;
@@ -8589,7 +8551,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             if (flag or(is_cycle_coer coer origs))
 	        then
               (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
-		      (Debug.devel_pprint("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)) pos; (0, mkTrue (mkTrueFlow ()) no_pos))
+		      (Debug.devel_zprint (lazy("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *))) pos; (0, mkTrue (mkTrueFlow ()) no_pos))
 	        else
 		      (* we can apply coercion *)
 		      begin
@@ -8664,8 +8626,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		                  (*
 		                    Doing case splitting based on the guard.
 		                  *)
-		                  Debug.devel_pprint
-		                      ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
+		                  Debug.devel_pprint ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
 		                  let neg_guard = CP.mkNot lhs_guard_new None pos in
                           let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
 		                  let f0 = normalize 10 f (formula_of_heap node pos) pos in
@@ -8683,8 +8644,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		                  let new_f = normalize_replace f coer_rhs_new pos in
 			              (1, new_f)
 		        end else begin
-		          Debug.devel_pprint
-		              ("rewrite_coercion: guard is not satisfied, " ^ "no splitting.\n") pos;
+		          Debug.devel_pprint "rewrite_coercion: guard is not satisfied, no splitting.\n" pos;
 		          (0, mkTrue (mkTrueFlow ()) no_pos)
 		        end
 		      end
@@ -8716,7 +8676,7 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
   else begin
     let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br lhs_a pos in(* Assume coercions have no branches *)
     let estate = CF.moving_ivars_to_evars estate anode in
-    let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos in
+    let _ = Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos in
     (*do_universal anode f coer*)
     do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
   end
@@ -8772,8 +8732,8 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   then (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "no lemma found in both LHS and RHS nodes (do coercion)" 
       Globals.sl_error)), [])
   else begin 
-    Debug.devel_pprint ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n") pos;
-    Debug.devel_pprint ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
+    Debug.devel_zprint (lazy ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n")) pos;
+    Debug.devel_zprint (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
     (* get origins of a node *)
     (* let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in  *)
     (* let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in *)
@@ -8876,15 +8836,15 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     let lhs_a = formula_and_of_formula (CF.Base lhs_b) in
     (*let _ = print_string("left coercion\n") in*)
     let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br lhs_a pos in
-    let _ = Debug.devel_pprint ("apply_left_coercion: left_coercion:"
+    let _ = Debug.devel_zprint (lazy ("apply_left_coercion: left_coercion:"
     ^ "\ n### c1 = " ^ c1
     ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode)
-    ^ "\n") pos in
+    ^ "\n")) pos in
     let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
-    let _ = Debug.devel_pprint ( "apply_left_coercion: after rewrite_coercion"
+    let _ = Debug.devel_zprint (lazy ( "apply_left_coercion: after rewrite_coercion"
     ^ "\n ### ok = "^ (string_of_int ok)
     ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
-    ^ "\n\n") pos in
+    ^ "\n\n")) pos in
     if ok>0 then begin
       (* lhs_b -> rhs_b *)
       (* anode |- _ *)
@@ -8915,9 +8875,9 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     (* let _ = print_string ("mmmm, heap_entail_non_empty_rhs_heap: " *)
     (* ^ "left_coercion: c1 = " *)
     (* ^ c1 ^ "\n") in *)
-    let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
+    let _ = Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: "
     ^ "left_coercion: c1 = "
-    ^ c1 ^ "\n") pos in
+    ^ c1 ^ "\n")) pos in
     apply_left_coercion_complex  estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos
 
 
@@ -9000,7 +8960,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
           if (is_cycle_coer coer origs)
 	      then
             (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
-		    let _ = Debug.devel_pprint("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *)) pos in
+		    let _ = Debug.devel_zprint (lazy("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *))) pos in
             (CF.mkFailCtx_in( Basic_Reason ( { 
 	            fc_message ="failed left coercion application: in a cycle";
 	            fc_current_lhs = estate;
@@ -9054,18 +9014,18 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
             (*prove extra heap + guard*)
             let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos in 
             (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in *)           
-	        Debug.devel_pprint ("apply_left_coercion_complex: check extra heap") pos;
-	        Debug.devel_pprint ("apply_left_coercion_complex: new_ctx after folding: "
+	        Debug.devel_zprint (lazy ("apply_left_coercion_complex: check extra heap")) pos;
+	        Debug.devel_zprint (lazy ("apply_left_coercion_complex: new_ctx after folding: "
 		    ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		    ^ (Cprinter.string_of_context new_ctx1)) pos;
-	        Debug.devel_pprint ("apply_left_coercion_complex: conseq_extra:\n"
-		    ^ (Cprinter.string_of_formula conseq_extra)) pos;
+		    ^ (Cprinter.string_of_context new_ctx1))) pos;
+	        Debug.devel_zprint (lazy ("apply_left_coercion_complex: conseq_extra:\n"
+		    ^ (Cprinter.string_of_formula conseq_extra))) pos;
 
             let check_res, check_prf = heap_entail prog false new_ctx conseq_extra pos in
 
-	        Debug.devel_pprint ("apply_left_coercion_complex: after check extra heap: "
+	        Debug.devel_zprint (lazy ("apply_left_coercion_complex: after check extra heap: "
 		    ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		    ^ (Cprinter.string_of_list_context check_res)) pos;
+		    ^ (Cprinter.string_of_list_context check_res))) pos;
 
             (*PROCCESS RESULT*)
             let rec process_one_x (ss:CF.steps) res = match res with
@@ -9088,15 +9048,15 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                     let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
                     let new_ctx = (Ctx new_es) in
 
-	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check") pos;
-	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx)) pos;
-	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq)) pos;
+	                Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: resume entail check")) pos;
+	                Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx))) pos;
+	                Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq))) pos;
 
 
 	                let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx conseq None pos in
 
 
-	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: after resume entail check: rest_res =  " ^ (Cprinter.string_of_list_context check_res)) pos;
+	                Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: after resume entail check: rest_res =  " ^ (Cprinter.string_of_list_context check_res))) pos;
 
                     (rest_rs,prf)
             in
@@ -9107,7 +9067,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 
             (match check_res with 
               | FailCtx _ -> 
-                    let _ = Debug.devel_pprint ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n") pos in
+                    let _ = Debug.devel_zprint (lazy ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n")) pos in
                     (CF.mkFailCtx_in( Basic_Reason ( { 
 	                    fc_message ="failed left coercion application: can not match extra heap";
 	                    fc_current_lhs = estate;
@@ -9327,18 +9287,18 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] [] no_pos in 
               (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in  *)
 
-	          Debug.devel_pprint ("normalize_w_coers:process_one: check extra heap") no_pos;
-	          Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx: "
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: check extra heap")) no_pos;
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: new_ctx: "
 		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		      ^ (Cprinter.string_of_context new_ctx1)) no_pos;
-	          Debug.devel_pprint ("normalize_w_coers:process_one: conseq_extra:\n"
-		      ^ (Cprinter.string_of_formula conseq_extra)) no_pos;
+		      ^ (Cprinter.string_of_context new_ctx1))) no_pos;
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n"
+		      ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
               let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
 
-	          Debug.devel_pprint ("normalize_w_coers:process_one: after check extra heap: "
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: "
 		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		      ^ (Cprinter.string_of_list_context check_res)) no_pos;
+		      ^ (Cprinter.string_of_list_context check_res))) no_pos;
 
               (*PROCCESS RESULT*)
               match check_res with 
@@ -9476,8 +9436,8 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
   let rhs_a = formula_and_of_formula (CF.Base rhs_b) in
   (*let _ = print_string("right coercion\n") in*)
   let f = mkBase resth2 rhs_p rhs_t rhs_fl [] rhs_a pos in
-  let _ = Debug.devel_pprint ("do_right_coercion : c2 = "
-  ^ c2 ^ "\n") pos in
+  let _ = Debug.devel_zprint (lazy ("do_right_coercion : c2 = "
+  ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
   if (is_coercible ln2)&& (ok>0)  then begin
@@ -9487,7 +9447,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     (* need to make implicit var become explicit *)
     let vl = Gen.BList.intersect_eq CP.eq_spec_var estate.es_gen_impl_vars (h_fv ln2) in
     let new_iv = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars vl in
-    let _ = if not(vl==[]) then Debug.devel_pprint ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n") pos in
+    let _ = if not(vl==[]) then Debug.devel_zprint (lazy ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n")) pos in
     let nctx = set_context (fun es -> {es with (* es_must_match = true; *)
         es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
 	let new_ctx = SuccCtx [nctx] (* (set_context_must_match ctx0)] *) in
@@ -9499,7 +9459,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
 	in
 	(res, [prf])
   end else
-    let _ = Debug.devel_pprint ("do_right_coercion :  " ^ c2 ^ "failed \n") pos in
+    let _ = Debug.devel_zprint (lazy ("do_right_coercion :  " ^ c2 ^ "failed \n")) pos in
     (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
     fc_current_lhs = estate;
     fc_prior_steps = estate.es_prior_steps;
@@ -9718,11 +9678,11 @@ let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
         (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let _ = set_entail_pos pos in
-  Debug.devel_pprint ("heap_entail_struc_list_partial_context_init:"
+  Debug.devel_zprint (lazy ("heap_entail_init struc_list_partial_context_init:"
            ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
-  ^"\n") pos; 
+  ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";
   let cl = prune_ctx_list prog cl in
 (*  let _ = count_br_specialized prog cl in*)
@@ -9733,11 +9693,11 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option)pos (pid:control_path_id) : (list_failesc_context * proof) = 
   let _ = set_entail_pos pos in
-  Debug.devel_pprint ("heap_entail_init struc_list_failesc_context_init:"
+  Debug.devel_zprint (lazy ("heap_entail_init struc_list_failesc_context_init:"
            ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
-  ^"\n") pos; 
+  ^"\n")) pos; 
   let res,prf = heap_entail_failesc_prefix_init prog is_folding  has_post cl conseq tid pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
   (CF.list_failesc_context_simplify res,prf)
 
@@ -9752,11 +9712,11 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let _ = set_entail_pos pos in
-  Debug.devel_pprint ("heap_entail_init list_partial_context_init:"
+  Debug.devel_zprint (lazy ("heap_entail_init list_partial_context_init:"
             ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
         ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
-  ^"\n") pos; 
+  ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";  
   if cl==[] then ([],UnsatAnte)
   else begin
@@ -9781,11 +9741,11 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
       (conseq:formula)  (tid: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   let _ = set_entail_pos pos in
-  Debug.devel_pprint ("heap_entail_init list_failesc_context_init:"
+  Debug.devel_zprint (lazy ("heap_entail_init list_failesc_context_init:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
-  ^"\n") pos;
+  ^"\n")) pos;
   if cl==[] then ([],UnsatAnte)
   else begin 
     Gen.Profiling.push_time "entail_prune";  

@@ -1401,7 +1401,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
-      (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
+      (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
   )
@@ -1982,7 +1982,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_static_specs = final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
           (* C.proc_static_specs_with_pre =  []; *)
-          C.proc_stk_of_static_specs = new Gen.stack_noinit Cprinter.string_of_struc_formula;
+          C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
           C.proc_by_name_params = by_names;
           C.proc_body = body;
           C.proc_file = proc.I.proc_file;

@@ -42,7 +42,7 @@ checkentail @zero[v1,v2] |- @p_val[v1].
 // TODO: need a better error message
 // e.g pass-by-val var cannot have possibly zero permission
 
-checkentail @zero[v1',v2] |- @p_val[v1].
+checkentail @zero[v1',v2] & x>0 |- @p_val[v1].
 print residue.
 // TODO: this should also fail. v' and v denote the same
 // stack variable

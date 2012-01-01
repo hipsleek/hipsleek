@@ -27,20 +27,66 @@ let pprint msg (pos:loc) =
 	print tmp
 
 (* system development debugging *)
-let devel_print s = 
-  if !devel_debug_on then 
-    let msg = "\n\n!!!" ^ s in
+let ho_print flag (pr:'a->string) (m:'a) : unit = 
+  let d = Gen.StackTrace.is_same_dd_get () in
+  if flag (* !devel_debug_on *)  || not(d==None) then 
+    let s = (pr m) in
+    let msg = match d with 
+      | None -> ("\n!!!" ^ s)
+      | Some cid -> ("\n@"^(string_of_int cid)^"!"^ s) 
+    in
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
     else
       (print_string msg; flush stdout)
   else ()
 
-let devel_pprint msg (pos:loc) = 
+(* system development debugging *)
+let devel_print s = 
+  ho_print !devel_debug_on (fun x -> x) s 
+(* let d = Gen.StackTrace.is_same_dd_get () in *)
+(*   if !devel_debug_on  || not(d==None) then  *)
+(*     let msg = match d with  *)
+(*       | None -> ("\n!!!" ^ s) *)
+(*       | Some cid -> ("\n@"^(string_of_int cid)^"!"^ s)  *)
+(*     in *)
+(*     if !log_devel_debug then  *)
+(*       Buffer.add_string debug_log msg *)
+(*     else *)
+(*       (print_string msg; flush stdout) *)
+(*   else () *)
+
+let prior_msg pos =
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
-  let tmp = tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]" in
-  let tmp = tmp^ msg in
-	devel_print tmp
+  let tmp = if is_no_pos !entail_pos then tmp 
+  else (tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]") 
+  in tmp
+
+let devel_pprint (msg:string) (pos:loc) =
+	ho_print !devel_debug_on (fun m -> (prior_msg pos)^m) msg
+
+let devel_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+	ho_print !devel_debug_on (fun x -> (prior_msg pos)^(pr x)) m
+
+let devel_zprint msg (pos:loc) =
+	ho_print !devel_debug_on (fun m -> (prior_msg pos)^(Lazy.force m)) msg
+
+let trace_pprint (msg:string) (pos:loc) : unit = 
+	ho_print false (fun a -> " "^a) msg
+
+let trace_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+	ho_print false (fun x -> " "^(pr x)) m
+
+let trace_zprint m (pos:loc) = 
+	ho_print false (fun x -> Lazy.force x) m
+
+
+(* let devel_zprint msg (pos:loc) = *)
+(* 	lazy_print (prior_msg pos) msg *)
+
+(* let trace_zprint msg (pos:loc) =  *)
+(* 	lazy_print (fun () -> " ") msg *)
+
 
 let print_info prefix str (pos:loc) = 
   let tmp = "\n" ^ prefix ^ ":" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^": " ^ str ^ "\n" in

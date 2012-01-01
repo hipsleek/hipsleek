@@ -5,6 +5,7 @@
   Formula
 *)
 
+module DD = Debug
 open Globals
 open Gen
 open Exc.GTable
@@ -4675,7 +4676,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Gen.Debug.loop_2_no "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Gen.Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
@@ -4707,7 +4708,6 @@ match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_failesc_context pid c_opt) lpc
 
-  
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
@@ -4932,22 +4932,29 @@ and formula_of_context ctx0 =
     Gen.Debug.no_1 "formula_of_context" pr !print_formula formula_of_context ctx0
 
 (*LDK: add es_pure into residue*)
-and formula_trace_of_context ctx0 = match ctx0 with
+and formula_trace_of_context_x ctx0 = match ctx0 with
   | OCtx (c1, c2) ->
-	  let f1,trace1 = formula_trace_of_context c1 in
-	  let f2,trace2  = formula_trace_of_context c2 in
+	  let f1,trace1 = formula_trace_of_context_x c1 in
+	  let f2,trace2  = formula_trace_of_context_x c2 in
 	  let f = mkOr f1 f2 no_pos in
       let trace = trace1@["||OR||"]@trace2 in
       (f,trace)
   | Ctx es -> 
-      let mix_f,_ = es.es_pure in
+      let ep,_ = es.es_pure in
+      let orig_f = es.es_formula in
       let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in
-      let mix_f = MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
-      (* let mix_f,_ = es.es_pure in *)
-      let f = add_mix_formula_to_formula mix_f es.es_formula in
+      let mix_f = MCP.merge_mems ep (MCP.mix_of_pure m) true in
+      let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
+      DD.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;
+      DD.trace_hprint (add_str "es_pure:" !print_mix_formula) ep no_pos;
       (f,trace)
   
+and formula_trace_of_context ctx0 = 
+  let pr = !print_context_short in
+  let pr2 (f,_) = !print_formula f in
+    Gen.Debug.to_1 "formula_trace_of_context" pr pr2 formula_trace_of_context_x ctx0
+
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
   | FailCtx _ -> mkTrue (mkTrueFlow()) no_pos
