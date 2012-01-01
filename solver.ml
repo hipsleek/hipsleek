@@ -4917,7 +4917,7 @@ and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_f
     let str3 = pr_one_list c in
     ("\n ### new_pure = " ^ str1 ^ "\n ### CTX = " ^ str2 ^ "\n ### rest_a = " ^ str3)
   in
-  Gen.Debug.ho_6 "heap_entail_thread"
+  Gen.Debug.no_6 "heap_entail_thread"
       Cprinter.string_of_entail_state Cprinter.string_of_formula pr_one_list pr_one_list Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
  (fun _ _ _ _ _ _ -> heap_entail_thread_x prog estate conseq a1 a2 alla allc pos) estate conseq a1 a2 alla allc
 

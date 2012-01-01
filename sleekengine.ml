@@ -573,6 +573,11 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
+let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let pr = Cprinter.string_of_list_context_short in
+  Gen.Debug.no_2 "print_entail_result" string_of_bool pr pr_no (fun _ _ -> print_entail_result valid residue num_id) valid residue
+
+
 let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
   let _ = print_entail_result valid residue num_id in
   let rs = residue in

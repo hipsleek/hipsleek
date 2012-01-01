@@ -6624,6 +6624,12 @@ let mk_varperm typ ls pos =
   let pf = mk_varperm_p typ ls pos in
   (BForm ((pf,None),None))
 
+let mk_varperm_zero ls pos =
+  mk_varperm VP_Zero ls pos
+
+let mk_varperm_full ls pos =
+  mk_varperm VP_Full ls pos
+
 (* formula -> formula_w_varperm * formula_wo_varperm*)
 (* combine VarPerm formulas into 4 types*)
 let normalize_varperm_x (f:formula) : formula =

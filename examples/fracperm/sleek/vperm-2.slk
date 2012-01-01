@@ -1,0 +1,50 @@
+/*
+In a method:
+Proving PRE-CONDITION: @p_val and @p_ref
+Proving POST-CONDITION: @full
+
+   Variable permissions:
+   v@zero  |- v@p_val --> fail
+   v@zero  |- v@p_ref --> fail
+   v@zero  |- v@full --> fail
+
+     not(v \in S)
+  --------------------
+  S@zero |- v@p_val  --> S@zero
+
+     not(v \in S)
+  --------------------
+  S@zero |- v@full  --> S@zero
+
+         not(v \in S)
+  -----------------------
+  S@zero |- v@p_ref  --> S+{v}@zero
+
+*/
+
+
+//(1)
+checkentail @zero[v1,v2] & x>0 |- x>=0.
+//valid   --> @zero[v1,v2,x1].
+
+checkentail @zero[v1,v2] |- @p_ref[x1].
+
+checkentail @zero[v1,v2] |- @p_ref[v1].
+// TODO: need a better error message
+// e.g pass-by-ref var cannot have possibly zero permission
+
+checkentail @zero[v1,v2] & v1=x1 |- @p_ref[x1].
+
+
+checkentail @zero[v1,v2] |- @p_val[x1].
+
+checkentail @zero[v1,v2] |- @p_val[v1].
+// TODO: need a better error message
+// e.g pass-by-val var cannot have possibly zero permission
+
+checkentail @zero[v1',v2] |- @p_val[v1].
+print residue.
+// TODO: this should also fail. v' and v denote the same
+// stack variable
+
+

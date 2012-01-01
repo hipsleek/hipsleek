@@ -4916,14 +4916,20 @@ and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_
 (*   | Ctx es -> es.es_formula *)
  
 (*LDK: add es_pure into residue*)
-and formula_of_context ctx0 = match ctx0 with
+and formula_of_context_x ctx0 = match ctx0 with
   | OCtx (c1, c2) ->
-	  let f1 = formula_of_context c1 in
-	  let f2 = formula_of_context c2 in
+	  let f1 = formula_of_context_x c1 in
+	  let f2 = formula_of_context_x c2 in
 		mkOr f1 f2 no_pos
   | Ctx es -> 
       let mix_f,_ = es.es_pure in
+      let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in
+      let mix_f = MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
       add_mix_formula_to_formula mix_f es.es_formula
+
+and formula_of_context ctx0 = 
+  let pr = !print_context_short in
+    Gen.Debug.no_1 "formula_of_context" pr !print_formula formula_of_context ctx0
 
 (*LDK: add es_pure into residue*)
 and formula_trace_of_context ctx0 = match ctx0 with
@@ -4935,6 +4941,9 @@ and formula_trace_of_context ctx0 = match ctx0 with
       (f,trace)
   | Ctx es -> 
       let mix_f,_ = es.es_pure in
+      let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in
+      let mix_f = MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
+      (* let mix_f,_ = es.es_pure in *)
       let f = add_mix_formula_to_formula mix_f es.es_formula in
       let trace = es.es_trace in
       (f,trace)

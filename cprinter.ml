@@ -1361,6 +1361,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs; 
+  fmt_string "hello";
   pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_var_zero_perm;
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
@@ -1498,14 +1499,23 @@ let pr_context_short (ctx : context) =
     else pr_seq "or" pr ls in
   (pr_disj (f ctx))
 
+let pr_formula_vperm (f,vp) =
+  fmt_open_vbox 1;
+  pr_formula_wrap f;
+  pr_wrap_test "@zero: " Gen.is_empty  (pr_seq "" pr_spec_var) vp;
+  fmt_close_box ()
+
+let pr_formula_vperm_wrap t =
+    (wrap_box ("H",1) pr_formula_vperm) t
+
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [e.es_formula]
+    | Ctx e -> [(e.es_formula,e.es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let lls = List.map f ctx in
   let pr_disj ls = 
-    if (List.length ls == 1) then pr_formula (List.hd ls)
-    else pr_seq "or" pr_formula_wrap ls 
+    if (List.length ls == 1) then pr_formula_vperm (List.hd ls)
+    else pr_seq "or" pr_formula_vperm_wrap ls 
   in
    pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
     
@@ -1516,6 +1526,7 @@ let pr_list_context_short (ctx:list_context) =
     
 let pr_entail_state_short e = 
   (pr_seq "" pr_spec_var) e.es_ante_evars;
+  pr_wrap_test "@zero:" Gen.is_empty  (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_formula_wrap e.es_formula
     
 
