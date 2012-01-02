@@ -108,7 +108,7 @@ let check_data_pred_name name : bool =
 let check_data_pred_name name :bool = 
   let pr1 x = x in
   let pr2 = string_of_bool in 
-  Gen.Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
+  Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
 (* let process_data_def ddef = *)
 (*   print_endline (Iprinter.string_of_data_decl ddef); *)
@@ -178,7 +178,7 @@ let process_pred_def pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def pdef = 
-  Gen.Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
+  Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
 
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
@@ -195,7 +195,7 @@ let process_pred_def_4_iast pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def_4_iast pdef = 
-  Gen.Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
+  Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
 
 
 let convert_pred_to_cast () = 
@@ -216,7 +216,7 @@ let convert_pred_to_cast () =
   cprog := cprog5
 
 let convert_pred_to_cast () = 
-  Gen.Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+  Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
@@ -285,7 +285,7 @@ let process_data_def ddef =
       end
 
 let process_data_def ddef =
-  Gen.Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
+  Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 
 (** An Hoa : Second stage of parsing : iprog already contains the whole input.
              We do a reparse in order to distinguish between data & enum that
@@ -339,7 +339,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   in helper mf0 quant fv_idents stab 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Gen.Debug.no_4 "meta_to_struc_formula"
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
@@ -523,7 +523,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
@@ -531,7 +531,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   if not valid then
@@ -603,7 +603,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
+  Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -631,7 +631,7 @@ let process_lemma ldef =
   residues := (LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type)
 
 let process_lemma ldef =
-  Gen.Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
+  Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
 
 let process_print_command pcmd0 = match pcmd0 with

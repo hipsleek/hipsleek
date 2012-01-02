@@ -977,7 +977,7 @@ and expand_inline_fields ddefs fls =
 
 and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
   let pr1 = pr_list (fun (ti,_,_) -> pr_pair string_of_typ pr_id ti) in 
-  Gen.Debug.no_1 "look_up_all_fields" pr_id pr1 (fun _ -> look_up_all_fields_x prog c) c.data_name
+  Debug.no_1 "look_up_all_fields" pr_id pr1 (fun _ -> look_up_all_fields_x prog c) c.data_name
 
 and look_up_all_fields_x (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
@@ -1032,7 +1032,7 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
   else (dl,el)
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
-  Gen.Debug.no_1 "syn_data_name" pr_no pr_no
+  Debug.no_1 "syn_data_name" pr_no pr_no
       (fun _ -> syn_data_name_x data_decls view_decls) () 
 
 and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
@@ -1145,7 +1145,7 @@ and fixpt_data_name (view_ans)  =
   let pr1 vd = vd.view_name in
   let pr2 = pr_list (fun x -> x) in
   let pr = pr_list (pr_triple pr1 pr2 pr2)  in 
-  Gen.Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
+  Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
 
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
 
@@ -1167,7 +1167,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
     else true in
   (* let check a1 a2 c =  *)
   (*   let pr (_,a,_) = string_of_ident_list a in *)
-  (*   Gen.Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in  *)
+  (*   Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in  *)
   let change = List.fold_right2 check r view_ans false in 
   if change then fixpt_data_name_x r
   else r
@@ -1193,7 +1193,7 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr x = "?" in 
-  Gen.Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
@@ -1205,7 +1205,7 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
 
 and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
   let pr = !print_struc_formula in
-  Gen.Debug.no_1_loop "data_name_of_view" pr (fun x->x)
+  Debug.no_1_loop "data_name_of_view" pr (fun x->x)
       (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula)) f0
 
 and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
@@ -1480,7 +1480,7 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = exlist # string_of in
-  Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
+  Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with

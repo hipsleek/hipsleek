@@ -31,7 +31,7 @@ let parallelize num =
 
 (* let rec check_specs prog proc ctx spec_list e0 = *)
 (*   check_specs_a prog proc ctx spec_list e0 *)
-(*       (\*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
+(*       (\*Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
 
 (* (\* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *\) *)
       
@@ -153,7 +153,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
   let pr2 s = "nothing" in
   let pr3 = pr_triple pr1 pr2 string_of_bool in
-  Gen.Debug.no_1 "check_specs_infer" pr1 pr3
+  Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0) spec_list
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
@@ -372,7 +372,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
   let pr = Cprinter.string_of_list_failesc_context in
-  Gen.Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
+  Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -814,7 +814,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.summary_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
-                  Gen.Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+                  Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
 				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin
@@ -939,7 +939,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
+  Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
@@ -1227,7 +1227,7 @@ let rec equalpf_a f1 f2 =
   let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
   r1 & r2
 
-and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
+and equalpf f1 f2 = Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
 
 and comparepf_a f1 f2 =
   let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
@@ -1235,7 +1235,7 @@ and comparepf_a f1 f2 =
   if (r1 & r2) then 0
   else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
 	
-and comparepf f1 f2 = Gen.Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
+and comparepf f1 f2 = Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
 
 module FComp = struct
   type t = CP.formula
@@ -1393,4 +1393,4 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
   () *)
 
 let check_prog (prog : prog_decl) iprog =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog

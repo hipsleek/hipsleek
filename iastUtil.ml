@@ -1063,7 +1063,7 @@ let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) =
 let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) = 
   let pr2 = pr_list (pr_list (fun x -> x)) in
   let pr3 = pr_list (pr_pair (pr_list (fun x -> x)) pr_no) in
-  Gen.Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
+  Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
  
 
 let cmbn_rw a b = 
@@ -1229,7 +1229,7 @@ let add_globalv_to_mth_prog prog =
   }
 
 let add_globalv_to_mth_prog prog = 
-  Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+  Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
 prog: current program*)  
@@ -1252,7 +1252,7 @@ let pre_process_of_iprog iprims prog =
 let pre_process_of_iprog iprims prog = 
   let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
   (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
-  Gen.Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
+  Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
 
