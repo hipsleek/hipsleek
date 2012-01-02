@@ -317,8 +317,8 @@ let rec string_of_spec_var_list l = match l with
   | h::[]            -> string_of_spec_var h 
   | h::t             -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list t)
 
-and string_of_spec_var = function 
-  | CP.SpecVar (_, id, p) -> id ^ (match p with 
+and string_of_spec_var = function
+  | CP.SpecVar (_, id, p) -> id ^ (match p with
     | Primed   -> "'"
     | Unprimed -> "")
 (*09.05.2000 ---*)
@@ -7265,3 +7265,13 @@ let filter_varperm_formula (f:formula) : CP.formula list * formula =
   Gen.Debug.no_1 "filter_varperm_formula" 
       !print_formula pr_out
       filter_varperm_formula_x f
+
+let drop_varperm_formula (f:formula) = 
+  let rec helper f =
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.drop_varperm_mix_formula b.formula_base_pure}
+      | Exists b-> Exists {b with formula_exists_pure = MCP.drop_varperm_mix_formula b.formula_exists_pure}
+      | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;
+	      formula_or_f2 = helper b.formula_or_f2}
+  in
+  helper f

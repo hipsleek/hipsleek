@@ -39,7 +39,7 @@ and p_formula =
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)	
 	  (* lists and list formulae *)
-  | VarPerm of (vp_ann * (ident list) * loc)
+  | VarPerm of (vp_ann * ((ident * primed) list) * loc)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)
@@ -136,8 +136,9 @@ and bfv (bf : b_formula) =
   | BagMax (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
   | BagMin (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
   | VarPerm (ct,ls,_) -> 
-      let ls1 = List.map (fun v -> (v,Unprimed)) ls in
-      ls1
+      ls
+      (* let ls1 = List.map (fun v -> (v,Unprimed)) ls in *)
+      (* ls1 *)
   | ListIn (a1, a2, _) -> 
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
@@ -547,10 +548,7 @@ and b_apply_one (fr, t) bf =
   | BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
   | VarPerm (ct,ls,pos) -> (*TO CHECK*)
       let func v =
-        if (eq_var (v,Unprimed) fr) then
-          let v,_ = t in
-          v
-        else v
+        (if eq_var v fr then t else v)
       in
       let ls1 = List.map func ls in
       VarPerm (ct,ls1,pos)

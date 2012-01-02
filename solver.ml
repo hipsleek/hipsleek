@@ -4867,6 +4867,8 @@ Others:
 estate: estate or ante of the main entailment. a1 belongs to estate
 conseq: conseq of the main entailment. a2 belongs to conseq
 *)
+(*NOTE: currently not support rhs with thread id as an evar
+or inst var*)
 and heap_entail_thread prog (estate: entail_state) (conseq : formula) (a1: one_formula list) (a2: one_formula list) (alla: MCP.mix_formula) (allc: MCP.mix_formula) pos : ((MCP.mix_formula*MCP.mix_formula) * entail_state) option * (list_context * proof) * (one_formula list) =
   let pr_one = Cprinter.string_of_one_formula in
   let pr_one_list = Cprinter.string_of_one_formula_list in
@@ -4988,7 +4990,8 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
           let new_ctx = Ctx new_es in
 	      Debug.devel_pprint ("process_thread_one_match:"^"\n ### ante = " ^ (Cprinter.string_of_estate new_es)^"\n ###  conseq = " ^ (Cprinter.string_of_formula base_f2)) pos;
           (*a thread is a post-condition of its method. Therefore, it only has @full*)
-          let rs0, prf0 = heap_entail_conjunct_helper 1 prog false new_ctx base_f2 [] pos in (* check the flag to see whether should be true to result in es_pure*)
+          let rs0, prf0 = heap_entail_conjunct_helper 1 prog true new_ctx base_f2 [] pos in (*is_folding = true to collect the pure constraints of the RHS to es_pure*)
+          (* check the flag to see whether should be true to result in es_pure*)
 	      (**************************************)
 	      (*        process_one 								*)
 	      (**************************************)
@@ -5010,10 +5013,10 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
                     split_universal (e_pure, snd es.es_pure) es.es_evars es.es_gen_expl_vars es.es_gen_impl_vars [] pos in
                   (*ignore formula_branches at the moment*)
                   (*TO CHECK: es.es_formula*)
-                  let _,p,_,_,_,_ = split_components es.es_formula in
+                  (* let _,p,_,_,_,_ = split_components es.es_formula in *)
                   (*return the pure constraint to carry on with other threads*)
                   (* (mix_f) *)
-                  let to_ante = (MCP.memoise_add_pure_N p to_ante) in
+                  let to_ante = (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) to_ante) in
                   (* let to_ante = remove_dupl_conj_eq_mix_formula to_ante in *)
                   let to_conseq = (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) to_conseq) in
                   (*TO DO: check for evars, ivars, expl_inst, impl_inst*)
@@ -5408,6 +5411,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                | None -> lctx (*Failed when entail threads*)
                | Some ((to_ante,to_conseq),new_es) ->
                    (*TO DO: use split_universal to decide where to move the pure constraints*)
+                   (* let _ = print_endline ("\n### to_ante = " ^ (Cprinter.string_of_mix_formula to_ante) ^"\n### to_conseq = " ^ (Cprinter.string_of_mix_formula to_conseq)) in *)
                    let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in
                    (*LDK: remove duplicated conj from the new_p2*)
                    let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in

@@ -204,7 +204,7 @@ let string_of_b_formula (pf,il) =
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
-  | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (string_of_ident_list ls)^"]"
+  | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"

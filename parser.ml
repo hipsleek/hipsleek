@@ -938,7 +938,14 @@ cexp_w :
 	  set_slicing_utils_pure_double f false
       | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE
             ->
-	      let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
+            let func t =
+              if  String.contains t '\'' then 
+                (* Remove the primed in the identifier *)
+				(Str.global_replace (Str.regexp "[']") "" t,Primed)
+			  else (t,Unprimed)
+            in
+            let ls = List.map func ls in
+	        let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
 	      set_slicing_utils_pure_double f false
       | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
@@ -1135,7 +1142,7 @@ id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
 id:[[`IDENTIFIER id-> id]];
-  
+
 (********** Higher Order Preds *******)
 
 hopred_decl: 

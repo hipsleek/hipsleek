@@ -4550,10 +4550,10 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
           let sv = trans_var (v,p) stab pos in
 	      CP.mkExists [ sv ] pf lbl pos
 			  
-and trans_pure_b_formula_debug (b0 : IP.b_formula) stab : CP.b_formula =
-  Gen.Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula b stab) b0 			
-	  
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
+  Gen.Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b stab) b0 			
+	  
+and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  match pf with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
@@ -4600,10 +4600,11 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
           CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
     | IP.VarPerm (ct,ls,pos) ->
-        let func v =
-	      CP.SpecVar (UNK,v,Unprimed) (*TO CHECK: type info*)
+        let func (v,p) =
+	      CP.SpecVar (UNK,v,p) (*TO CHECK: ignore type info*)
         in
         let ls1 = List.map func ls in
+        (* let ls1 = List.map (fun (v,p) -> trans_var (v,p) stab pos) ls in *)
         (* let ls1 = List.map (fun v -> trans_var (v,Unprimed) stab pos) ls in *)
         CP.VarPerm (ct,ls1,pos)
     | IP.ListIn (e1, e2, pos) ->

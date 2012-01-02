@@ -2236,3 +2236,17 @@ let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula
   Gen.Debug.no_1 "filter_varperm_mix_formula"
       !print_mix_f pr_out
       filter_varperm_mix_formula_x mix_f
+
+(*Note: use this method with care.
+The conversion between pure_of_mix and mix_of_pure
+may affect --eps*)
+let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
+  match mix_f with
+    | OnePF f -> 
+        let f1 = Cpure.drop_varperm_formula f in
+        (OnePF f1)
+    | MemoF mp -> 
+        let f = pure_of_mix mix_f in
+        let f1 = Cpure.drop_varperm_formula f in
+        let f2 = mix_of_pure f1 in
+        f2

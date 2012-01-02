@@ -1,7 +1,6 @@
 /*
  Issues:
  - Equalities on permission vars, e.g. ex (4)
- - Primeness in SLEEK, e.g. ex (7)
 */
 
 //(1)
@@ -33,10 +32,7 @@ checkentail @zero[v1,v2] |- @p_val[v1].
 
 //(7)
 checkentail @zero[v1',v2] & x>0 |- @p_val[v1].
-// TODO: this should also fail. v' and v denote the same
-// stack variable
-// This may valid because there may not be the notion of primeness in sleek
-// TO CHECK: should we handle this
+// Fail. v' and v denote the same stack variable
 
 //(8)
 checkentail @zero[v1,v2] or @zero[v2] |- @p_val[v1].
