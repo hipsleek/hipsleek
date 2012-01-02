@@ -816,7 +816,7 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let debug_stk = new stack_noexc (-1) string_of_int (=)
+  let debug_stk = new stack_noexc (-2) string_of_int (=)
 
   let dd_stk = new stack
 
@@ -848,11 +848,21 @@ struct
     with exc -> (pop_call(); raise exc))
     in pop_call(); r
 
+  (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+    let r = (try 
+      (f e)
+    with exc -> (debug_stk # pop; raise exc))
+    in debug_stk # pop; r
+
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
     let h = debug_stk#get_stk in
     (* ("Length is:"^(string_of_int (List.length h))) *)
-    String.concat "@" (List.map string_of_int h)
+    String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
+
+  let push_no_call () =
+    debug_stk # push (-1)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag:bool) : (string * string) = 
@@ -1064,6 +1074,21 @@ end;;
 (*   let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s *)
 (*   let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s *)
 (*   let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s *)
+
+  (* let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s *)
+  (* let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s *)
+  (* let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s *)
+  (* let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s *)
+  (* let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s *)
+  (* let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s *)
+
+  (* let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str *)
+  (* let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str *)
+  (* let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str *)
+  (* let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str *)
+  (* let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str *)
+  (* let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str *)
+
 
 (*   let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str *)
 (*   let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str *)
