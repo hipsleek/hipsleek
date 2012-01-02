@@ -146,8 +146,8 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
       begin
         (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
         (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p)) ; *)
-        DD.devel_pprint ">>>>>> trans_lexvar_rhs <<<<<<" pos;
-        DD.devel_pprint ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p)) pos;
+        DD.devel_zprint (lazy (">>>>>> trans_lexvar_rhs <<<<<<")) pos;
+        DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p))) pos;
       end;
       (estate, lhs_p, n_rhs_p)
   with _ -> (estate, lhs_p, rhs_p)
