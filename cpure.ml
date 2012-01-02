@@ -207,7 +207,7 @@ let conv_var_to_exp (v:spec_var) :exp =
     | None -> Var(v,no_pos)
 
 (* let conv_var_to_exp_debug (v:spec_var) :exp = *)
-(*  Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v *)
+(*  Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v *)
 
 (* is exp a var  *)
 let is_var (f:exp) = match f with
@@ -552,7 +552,7 @@ and string_of_relation (e:relation) : string =
     | UnionRel (r1,r2) -> (string_of_relation r1)^"\n"^(string_of_relation r2)^"\n"
 
 and isConstTrue_debug (p:formula) =
-  Gen.Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
+  Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 
 and isConstTrue (p:formula) = match p with
@@ -665,7 +665,7 @@ and can_be_aliased_aux_x with_null (e : exp) : bool =
 and can_be_aliased_aux with_null (e : exp) : bool =
   let pr1 = string_of_bool in
   let pr2 = !print_exp in
-  Gen.Debug.no_2 "can_be_aliased_aux" pr1 pr2 pr1 can_be_aliased_aux_x with_null e
+  Debug.no_2 "can_be_aliased_aux" pr1 pr2 pr1 can_be_aliased_aux_x with_null e
 
 and can_be_aliased (e : exp) : bool =
   can_be_aliased_aux true e
@@ -790,7 +790,7 @@ and is_float_formula_x f0 =
   in helper f0
 
 and is_float_formula f0 =
-  Gen.Debug.no_1 "is_float_formula" 
+  Debug.no_1 "is_float_formula" 
       !print_formula string_of_bool
       is_float_formula_x f0
 
@@ -1077,7 +1077,7 @@ and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Gen.Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
       (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
 
 and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
@@ -1316,7 +1316,7 @@ and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
   let prt = fun al -> List.fold_left (fun r a -> r ^ "; " ^ (!print_exp a)) "" al in
-  Gen.Debug.no_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
+	Debug.no_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
       
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
@@ -1390,7 +1390,7 @@ and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
 
 and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
-  Gen.Debug.no_2 "diff svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
+  Debug.no_2 "diff svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
 
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
@@ -1505,7 +1505,7 @@ and fresh_old_name_x (s: string):string =
   n
 
 and fresh_old_name s =
-  Gen.Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
+  Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
       
 and fresh_spec_var (sv : spec_var) =
   let old_name = name_of_spec_var sv in
@@ -1597,7 +1597,7 @@ and subst_var_list_par sst (svs : spec_var list) = match svs with
   let f2 = subst st2 f1 in
   f2*)
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
-  Gen.Debug.no_3 "[cpure]subst_avoid_capture"
+  Debug.no_3 "[cpure]subst_avoid_capture"
       !print_svl
       !print_svl
       !print_formula
@@ -1771,7 +1771,7 @@ and b_subst_x (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
 and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
   let pr = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_b_formula in
-  Gen.Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
+  Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
       
 
 (* PLEASE  use b_apply_subs instead *)
@@ -2334,7 +2334,7 @@ and string_of_ls_pure_formula ls =
     | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
 
 and filter_redundant ante cons =
-  Gen.Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
+  Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
       (fun a c -> filter_redundant_x a c) ante cons
 
 and filter_redundant_x ante cons =
@@ -2544,7 +2544,7 @@ and elim_exists_with_ineq (f0: formula): formula =
 
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.no_1 "elim_exists" pr pr elim_exists_x f0
+  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
 
 
 
@@ -2612,7 +2612,7 @@ and elim_exists_x (f0 : formula) : formula =
 
 (*
 and elim_exists (f0 : formula) : formula = 
-  Gen.Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
+  Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
 *)
 (*
 add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
@@ -2665,7 +2665,7 @@ let add_gte0_for_mona (f0 : formula): (formula)=
 
 let add_gte0_for_mona (f0 : formula): (formula)=
   let pr = !print_formula in
-  Gen.Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
+  Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
 
 
 (* (\* pretty printing for types *\) *)
@@ -3749,7 +3749,7 @@ and purge_mult (e :  exp):  exp = match e with
 	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (pf : b_formula) :  b_formula =   
-  Gen.Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
+  Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
       b_form_simplify_x pf
 
 and b_form_simplify_x (b:b_formula) :b_formula = 
@@ -3885,7 +3885,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (i:int) (pf : formula) :  formula =   
-  Gen.Debug.no_1_num i ("arith_simplify LHS") !print_formula !print_formula 
+  Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
       arith_simplify_x pf
 
 
@@ -4390,7 +4390,7 @@ let rec transform_formula f (e:formula) :formula =
 		    Exists(v,ne,fl,l)
 
 let transform_formula f (e:formula) :formula =
-  Gen.Debug.no_1 "transform_formula" 
+  Debug.no_1 "transform_formula" 
       !print_formula
       !print_formula
       (fun _ -> transform_formula f e ) e
@@ -4669,7 +4669,7 @@ let get_bform_eq_args_with_const (bf:b_formula) =
    get_bform_eq_args_aux conv_exp_with_const bf
 
 let get_bform_eq_args_with_const_debug (bf:b_formula) =
-   Gen.Debug.no_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
+   Debug.no_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
 
 let get_bform_neq_args_with_const (bf:b_formula) =
    get_bform_neq_args_aux conv_exp_with_const bf
@@ -4758,7 +4758,7 @@ let get_elems_eq_with_const aset =
     List.filter (fun v -> true) vl
 
 (* let get_elems_eq_with_const_debug aset = *)
-(*   Gen.Debug.no_1_list "get_elems_eq_with_const" (string_of_var_eset) (full_name_of_spec_var) get_elems_eq_with_const aset *)
+(*   Debug.no_1_list "get_elems_eq_with_const" (string_of_var_eset) (full_name_of_spec_var) get_elems_eq_with_const aset *)
 
 (* get var elements from a eq-map allowing null *)
 let get_elems_eq_with_null aset =
@@ -5010,7 +5010,7 @@ let check_imply_neq eq lhs e1 e2 =
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
 let check_imply_neq_debug eq lhs e1 e2 = 
-Gen.Debug.no_3 
+Debug.no_3 
     "check_imply_neq" 
     (fun c-> String.concat "&" (List.map !print_b_formula c))
     !print_exp 
@@ -5068,7 +5068,7 @@ let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let pr1 = !print_b_formula in
 (*    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in*)
-  Gen.Debug.no_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
+  Debug.no_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
   
 
 let rec replace_pure_formula_label nl f = match f with
@@ -5682,7 +5682,7 @@ module ArithNormalizer = struct
     (add_term_list_to_exp lhs_terms), (add_term_list_to_exp rhs_terms)
 
   let norm_two_sides_debug e1 e2 =
-    Gen.Debug.no_2 "cpure::norm_two_sides" string_of_exp string_of_exp 
+    Debug.no_2 "cpure::norm_two_sides" string_of_exp string_of_exp 
     (fun (x,y) -> (string_of_exp x) ^ " | " ^ (string_of_exp y))
     norm_two_sides e1 e2
 
@@ -5691,7 +5691,7 @@ module ArithNormalizer = struct
     add_term_list_to_exp term_list
 
   let norm_exp_debug e =
-    Gen.Debug.no_1 "cpure::norm_exp" string_of_exp string_of_exp norm_exp e
+    Debug.no_1 "cpure::norm_exp" string_of_exp string_of_exp norm_exp e
 
   let norm_bform_relation rel e1 e2 l makef = match e1, e2 with
     | IConst (i1, _), IConst (i2, _) -> BConst (rel i1 i2, l)
@@ -5755,6 +5755,10 @@ module ArithNormalizer = struct
   let norm_formula (f: formula) : formula =
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
+    (*   let norm_formula(\*_debug*\) f = *)
+    (* Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula *)
+    (*     norm_formula_0 f *)
+
 
 end (* of ArithNormalizer module's definition *)
 
@@ -5762,7 +5766,7 @@ let norm_form f = ArithNormalizer.norm_formula f
 
 let norm_form f =
   let pr = !print_formula in
-  Gen.Debug.no_1 "cpure::norm_formula" 
+  Debug.no_1 "cpure::norm_formula" 
       pr pr
       norm_form f
 
@@ -5794,10 +5798,10 @@ let is_linear_formula f0 =
   fold_formula f0 (nonef, f_bf, f_e) and_list
 
 let is_linear_formula f0 =
-  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_formula f0 =
-  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_exp e0 =
   let f e =
@@ -5829,7 +5833,7 @@ let elim_exists_with_simpl simpl (f0 : formula) : formula =
   inner_simplify simpl f
 
 let elim_exists_with_simpl simpl (f0 : formula) : formula = 
-  Gen.Debug.no_1 "elim_exists_with_simpl" !print_formula !print_formula 
+  Debug.no_1 "elim_exists_with_simpl" !print_formula !print_formula 
     (fun f0 -> elim_exists_with_simpl simpl f0) f0
 
 (* result of xpure with baga and memset/diffset *)
@@ -5947,7 +5951,7 @@ let slice_formula (fl : formula list) : (spec_var list * formula list) list =
 let slice_formula (fl : formula list) : (spec_var list * formula list) list =
   let pr = pr_list !print_formula in
   let pr2 = pr_list (pr_pair !print_svl pr) in
-  Gen.Debug.no_1 "slice_formula" pr pr2 slice_formula fl
+  Debug.no_1 "slice_formula" pr pr2 slice_formula fl
 
 let part_contradiction is_sat pairs =
 
@@ -5962,7 +5966,7 @@ let refine_one_contradiction is_sat f=
 
 let refine_one_contradiction is_sat f=
 let pr = !print_formula in
-  Gen.Debug.no_1 "refine_one_contradiction" pr pr refine_one_contradiction f
+  Debug.no_1 "refine_one_contradiction" pr pr refine_one_contradiction f
 *)
 let part_must_failures is_sat pairs =
 
@@ -6010,7 +6014,7 @@ let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
-  Gen.Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2 (fun  _ ->refine_one_must is_sat (ante, conseq)) (ante, conseq)
+  Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2 (fun  _ ->refine_one_must is_sat (ante, conseq)) (ante, conseq)
 
 
 let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
@@ -6049,7 +6053,7 @@ let find_all_failures is_sat ante cons =
 let find_all_failures is_sat  ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
-  Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
+  Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
 
 let find_must_failures is_sat ante cons =
 
@@ -6062,7 +6066,7 @@ let find_must_failures is_sat ante cons =
 let find_must_failures is_sat ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
-  Gen.Debug.no_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
+  Debug.no_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
 
 let check_maymust_failure is_sat ante cons =
 
@@ -6074,7 +6078,7 @@ let check_maymust_failure is_sat ante cons =
 
 let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
-  Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
+  Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula =
   let n_a =
@@ -6086,7 +6090,7 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
-  Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq
+  Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq
 
 (*=================================================*)
 (* Forced Slicing                                  *)	
@@ -6232,7 +6236,7 @@ and fv_with_slicing_label f =
   else fv_with_slicing_label_new_1 f
 
 and bfv_with_slicing_label bf =
-  Gen.Debug.no_1 "bfv_with_slicing_label" !print_b_formula
+  Debug.no_1 "bfv_with_slicing_label" !print_b_formula
 	(fun (nlv, lv) -> (pr_list !print_sv nlv) ^ (pr_list !print_sv lv))
 	bfv_with_slicing_label_x bf
 
@@ -6284,7 +6288,7 @@ and b_formula_linking_vars_exps bf =
  
 (* Group related vars together after filtering the <IL> formula *)
 let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list =
-  Gen.Debug.no_1 "group_related_vars"
+  Debug.no_1 "group_related_vars"
 	(fun bfl -> List.fold_left (fun acc bf -> acc ^ "\n" ^ (!print_b_formula bf)) "" bfl)
 	(fun sv_bfl -> List.fold_left (fun acc1 (svl,lkl,bfl) ->
 	  acc1 ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" svl) ^ " ]"
@@ -6572,7 +6576,7 @@ let compute_instantiations pure_f v_of_int avail_v =
   let pr1 = !print_formula in
   let pr2 = !print_svl in
   let pr3 = pr_list (pr_pair !print_sv !print_formula) in
-  Gen.Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
+  Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
 
 let rec add_ann_constraints vrs f = 
   match vrs with
@@ -6586,7 +6590,7 @@ let rec add_ann_constraints vrs f =
 
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
-  Gen.Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+  Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
@@ -6685,7 +6689,7 @@ let assumption_filter_aggressive_incomplete (ante : formula) (conseq : formula) 
 
 let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   let pr = !print_formula in
-  Gen.Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
+  Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
 let is_lexvar (f:formula) : bool =
@@ -6757,7 +6761,7 @@ let strong_drop_rel_formula (f:formula) : formula =
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
+  Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
 
 let memoise_formula_ho is_complex (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -6783,7 +6787,7 @@ let memoise_formula_ho isC (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
   let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
-  Gen.Debug.no_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
+  Debug.no_1 "memoise_formula_ho" pr pr2 (fun _ -> memoise_formula_ho isC f) f
 
 let memoise_rel_formula ivs (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -6796,7 +6800,7 @@ let memoise_rel_formula ivs (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr = !print_formula in
   let pr2 = pr_triple pr (pr_list (pr_pair !print_sv pr)) (!print_svl) in
-  Gen.Debug.no_2 "memoise_rel_formula" !print_svl pr pr2 (fun _ _ -> memoise_rel_formula ivs f) ivs f
+  Debug.no_2 "memoise_rel_formula" !print_svl pr pr2 (fun _ _ -> memoise_rel_formula ivs f) ivs f
 
 let memoise_all_rel_formula (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -6846,7 +6850,7 @@ let restore_memo_formula subs bvars (f:formula) : formula =
 let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in
   let pr2 = (pr_list (pr_pair !print_sv pr)) in
-  Gen.Debug.no_3 "restore_rel_formula" pr2 !print_svl pr pr (fun _ _ _ -> restore_memo_formula subs bvars f) subs bvars f
+  Debug.no_3 "restore_rel_formula" pr2 !print_svl pr pr (fun _ _ _ -> restore_memo_formula subs bvars f) subs bvars f
 
 let comb_disj nxs : formula =
   let rec helper nxs f =
@@ -6903,7 +6907,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj_new f
+  Debug.no_1 "simplify_disj" pr pr simplify_disj_new f
 
 let fv_wo_rel (f:formula) =
   let vs = fv f in

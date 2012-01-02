@@ -179,7 +179,7 @@ let pr_list_open_sep (f_open:unit -> unit)
 let pr_list_open_sep (f_open:unit -> unit) 
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
-  Gen.Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) 
+  Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) 
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) xs) (List.length xs)
 
@@ -1517,9 +1517,9 @@ let pr_list_context_short (ctx:list_context) =
     | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
     | SuccCtx sc -> pr_context_list_short sc
     
-let pr_entail_state_short e = 
+let pr_entail_state_short e =
   fmt_open_vbox 1;
-  (pr_seq "" pr_spec_var) e.es_ante_evars;
+  pr_formula_wrap e.es_formula;
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
@@ -2098,7 +2098,7 @@ let string_of_proc_decl p =
 ;; 
 
 let string_of_proc_decl i p =
-  Gen.Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p
+  Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p
 
 (* pretty printing for a list of data_decl *)
 let rec string_of_data_decl_list l = match l with 
@@ -2115,7 +2115,7 @@ let rec string_of_proc_decl_list l = match l with
 ;;
 
 let string_of_proc_decl_list l =
-  Gen.Debug.no_1 " string_of_proc_decl_list" (fun _ -> "?") (fun _ -> "?") string_of_proc_decl_list l
+  Debug.no_1 " string_of_proc_decl_list" (fun _ -> "?") (fun _ -> "?") string_of_proc_decl_list l
 
 (* pretty printing for a list of view_decl *)
 let rec string_of_view_decl_list l = match l with 

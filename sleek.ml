@@ -182,7 +182,7 @@ let main () =
     match !Scriptarguments.fe with
       | Scriptarguments.NativeFE -> NF.parse x
       | Scriptarguments.XmlFE -> XF.parse x in
-  let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in
+  let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
@@ -237,7 +237,7 @@ let main () =
       (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
-(*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
+(*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
 let _ =
    wrap_exists_implicit_explicit := false ;

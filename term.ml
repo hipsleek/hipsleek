@@ -169,7 +169,7 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state_short in
-   Gen.Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
+   Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
       (fun _ _ -> trans_lexvar_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
 
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
@@ -202,7 +202,7 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let pr = Cprinter.string_of_context in
-  Gen.Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
+  Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
 
 let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
   let _ = 

@@ -433,7 +433,7 @@ let merge_mater_props_x x y =
 
 let merge_mater_props x y =
   let pr = !print_mater_prop in
-  Gen.Debug.no_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
+  Debug.no_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
   
 let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
@@ -447,11 +447,11 @@ let subst_mater_list fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Gen.Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+  Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Gen.Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
+  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -749,7 +749,7 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
 let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Gen.Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
@@ -765,7 +765,7 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
 	Error.error_text = name ^ " is not a view definition"}
 
 let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
-  Gen.Debug.no_1_num i "look_up_view_def" pr_id pr_no 
+  Debug.no_1_num i "look_up_view_def" pr_id pr_no 
       (fun _ -> look_up_view_def pos defs name) name
 
 let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
@@ -780,14 +780,14 @@ let collect_rhs_view (n:ident) (f:F.struc_formula) : (ident * ident list) =
   let id x = x in
   let pr1 x = x in
   let pr2 = pr_pair id (pr_list id) in 
-  Gen.Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
+  Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
   let  (_,ns) = collect_rhs_view lhs rhs in
   List.mem lhs ns
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
-  Gen.Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
+  Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
 
 (* pre: name exists as a view in prog *)
 let is_rec_view_def prog (name : ident) : bool = 
@@ -806,7 +806,7 @@ let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
@@ -936,7 +936,7 @@ let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl 
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   let pr1 = pr_list !print_coercion in
-  Gen.Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
+  Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
     (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
     
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
@@ -1301,7 +1301,7 @@ let get_catch_of_exp e = match e with
   
 (* let get_catch_of_exp e = *)
 (*   let pr = !print_prog_exp in *)
-(*   Gen.Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
+(*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
 let rec check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
@@ -1363,7 +1363,7 @@ let rec check_proper_return cret_type exc_list f =
 let check_proper_return cret_type exc_list f = 
   let pr1 = pr_list pr_no in
   let pr2 = !print_struc_formula in
-  Gen.Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
+  Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
 (* TODO : res must be consistent with flow outcome *)
 
 let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
@@ -1385,7 +1385,7 @@ let vdef_fold_use_bc prog ln2  =
   let pr2 x = match x with
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
-  Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+  Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
 
 let get_xpure_one vdef rm_br  =
@@ -1399,7 +1399,7 @@ let get_xpure_one vdef rm_br  =
 
 let get_xpure_one vdef rm_br  =
   let pr (mf,_) = !print_mix_formula mf in
-  Gen.Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
+  Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 
   let ff e = match e with
@@ -1419,7 +1419,7 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 
 let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
-  Gen.Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+  Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
 
 (*find and add uni_vars to view*)
 (*if the view is recursive, only consider its view_vars
@@ -1478,7 +1478,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
         | _ -> []
   in 
   let look_up_one (coer:coercion_decl) (view:view_decl): P.spec_var list =
-    Gen.Debug.no_2 "look_up_one"
+    Debug.no_2 "look_up_one"
         !print_coercion
         !print_view_decl
         !print_svl
@@ -1556,7 +1556,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
 
 (*find and add uni_vars to view*)
 let add_uni_vars_to_view cprog (l2r_coers:coercion_decl list) (view:view_decl) : view_decl =
-  Gen.Debug.no_2 "add_uni_vars_to_view"
+  Debug.no_2 "add_uni_vars_to_view"
       !print_coerc_decl_list
       !print_view_decl
       !print_view_decl

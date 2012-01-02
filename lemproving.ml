@@ -68,7 +68,7 @@ let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_de
 
 let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_decl) =
   let pr = string_of_lem_formula in
-  Gen.Debug.no_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 lemma_name cprog) iante0 iconseq0
+  Debug.no_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 lemma_name cprog) iante0 iconseq0
 
 (* prepares the lhs&rhs of the coercion to be checked 
    - unfold lhs once
@@ -92,7 +92,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs
+  Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
@@ -112,7 +112,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Cprinter.string_of_struc_formula in
-  Gen.Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
+  Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
@@ -123,7 +123,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
 
 let check_left_coercion coer cprog  =
   let pr = Cprinter.string_of_coercion in
-  Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
+  Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
 
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
@@ -134,7 +134,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 
 let check_right_coercion coer (cprog: C.prog_decl) =
   let pr = Cprinter.string_of_coercion in
-  Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
+  Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
@@ -194,4 +194,4 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in
-  Gen.Debug.no_3 "verify_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+  Debug.no_3 "verify_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
