@@ -20,8 +20,22 @@ checkentail @zero[v1,v2] |- @p_val[v1].
 // e.g pass-by-val var cannot have possibly zero permission
 
 checkentail @zero[v1',v2] & x>0 |- @p_val[v1].
-print residue.
 // TODO: this should also fail. v' and v denote the same
 // stack variable
+
+
+checkentail @zero[v1,v2] or @zero[v2] |- @p_val[v1].
+// OK to fail
+
+checkentail @zero[v1,v2] |- @p_val[x2] or @p_val[x1].
+// succeed with 2 answers
+
+checkentail @zero[v1,v2] |- @p_val[v1] or @p_val[x1].
+// succeed with 1 answer
+
+checkentail @zero[v1,v2] or @zero[v2] |- @p_val[x3].
+// OK to fail
+
+print residue.
 
 

@@ -1123,15 +1123,17 @@ let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
-let rec pr_numbered_list_formula (e:list_formula) (count:int) =
+let rec pr_numbered_list_formula (count:int) (e:list_formula)  =
   match e with
-    | [] -> ""
+    | [] -> ()
     | x::xs -> 
-        begin
+          begin
+            fmt_open_hbox ();
             fmt_string ("<" ^ (string_of_int count) ^ ">");
-            pr_formula x;
+            pr_formula_wrap x;
             fmt_print_newline ();
-            pr_numbered_list_formula xs (count+1);
+            pr_numbered_list_formula (count+1) xs ;
+            fmt_close ()
         end
 
 let pr_es_trace (trace:string list) : unit =
@@ -1139,36 +1141,39 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let rec pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f =
+let rec pr_numbered_list_formula_trace_ho (count:int) f (e:(formula*formula_trace) list)   =
   match e with
-    | [] -> ""
+    | [] -> ()
     | (a,b)::xs -> 
-        begin
+          begin
+            fmt_open_hbox ();
             fmt_string ("<" ^ (string_of_int count) ^ ">");
-            pr_formula a;
-            fmt_print_newline ();
+            pr_formula_wrap a;
+            (* fmt_print_newline (); *)
             f b;
             fmt_print_newline ();
-            pr_numbered_list_formula_trace_ho xs (count+1) f;
+            pr_numbered_list_formula_trace_ho (count+1) f xs ;
+            fmt_close ();
         end
 
-let pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:int) =
+let pr_numbered_list_formula_trace (count:int) (e:(formula*formula_trace) list)  =
   let f b = begin
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
   end in
-  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
+  pr_numbered_list_formula_trace_ho (count:int) f (e:(formula*formula_trace) list) 
 
-let pr_numbered_list_formula_no_trace (e:(formula*formula_trace) list) (count:int) =
+let pr_numbered_list_formula_no_trace (count:int) (e:(formula*formula_trace) list)  =
   let f b = () in
-  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
+  pr_numbered_list_formula_trace_ho (count:int) f (e:(formula*formula_trace) list)  
 
-let string_of_numbered_list_formula (e:list_formula) : string =  pr_numbered_list_formula e 1
+let string_of_numbered_list_formula (e:list_formula) : string =  
+   poly_string_of_pr (pr_numbered_list_formula 1) e
 
-let string_of_numbered_list_formula_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_trace e 1
+let string_of_numbered_list_formula_trace (e: (formula*formula_trace) list) : string =  poly_string_of_pr (pr_numbered_list_formula_trace 1) e
 
-let string_of_numbered_list_formula_no_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_no_trace e 1
+let string_of_numbered_list_formula_no_trace (e: (formula*formula_trace) list) : string =  poly_string_of_pr (pr_numbered_list_formula_no_trace 1) e
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"

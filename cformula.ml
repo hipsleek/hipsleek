@@ -4953,7 +4953,7 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
 and formula_trace_of_context ctx0 = 
   let pr = !print_context_short in
   let pr2 (f,_) = !print_formula f in
-    Gen.Debug.to_1 "formula_trace_of_context" pr pr2 formula_trace_of_context_x ctx0
+    Gen.Debug.no_1 "formula_trace_of_context" pr pr2 formula_trace_of_context_x ctx0
 
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
