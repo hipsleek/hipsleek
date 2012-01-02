@@ -2890,6 +2890,12 @@ type entail_state = {
   es_evars : CP.spec_var list; (* existential variables on RHS *)
 
   (* WN : What is es_pure for? *)
+    (*  It is added into the residue in
+the method "heap_entail_empty_rhs_heap" but only when we do folding. It
+is the pure constraints of the RHS when there is no heap. This es_pure
+will be split into to_ante and to_conseq when ~Sprocess_fold_result~T. I
+think it is used to instantiate when folding.
+    *)
   es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
 
   (*used by universal LEMMAS for instantiation? *)

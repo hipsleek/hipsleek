@@ -1464,10 +1464,12 @@ let pr_list_context_short (ctx:list_context) =
     | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
     | SuccCtx sc -> pr_context_list_short sc
     
-let pr_entail_state_short e = 
-  (pr_seq "" pr_spec_var) e.es_ante_evars;
-  pr_formula_wrap e.es_formula
-    
+let pr_entail_state_short e =
+  fmt_open_vbox 0;
+  pr_formula_wrap e.es_formula;
+  pr_wrap_test "es_ante_vars: " Gen.is_empty (pr_seq "" pr_spec_var) e.es_ante_evars;
+  (* pr_vwrap "es_pure: " pr_mix_formula_branches e.es_pure; *)
+  fmt_close()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
