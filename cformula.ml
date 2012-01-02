@@ -2960,7 +2960,8 @@ type entail_state = {
   es_success_pts : (formula_label * formula_label)  list  ;(* successful pt from conseq *)
   es_residue_pts : formula_label  list  ;(* residue pts from antecedent *)
   es_id      : int              ; (* unique +ve id *)
-  es_orig_ante   : formula        ;  (* original antecedent formula *) 
+  (* below is to store an antecedent prior to it becoming false *)
+  es_orig_ante   : formula option       ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
@@ -3156,7 +3157,7 @@ let empty_es flowt pos =
   es_success_pts = [];
   es_residue_pts  = [];
   es_id = 0 ;
-  es_orig_ante = x;
+  es_orig_ante = None;
   es_orig_conseq = [mkETrue flowt pos] ;
   es_rhs_eqset = [];
   es_path_label  =[];
@@ -3996,13 +3997,13 @@ let invert_outcome (l:list_context) : list_context =
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
-let false_ctx flowt pos = 
-	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
+(* let false_ctx flowt pos =  *)
+(* 	let x = mkFalse flowt pos in *)
+(* 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; }) *)
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
 	let new_f = mkFalse flowt pos in
-    {(empty_es flowt pos) with es_formula = new_f ; es_orig_ante = f; 
+    {(empty_es flowt pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_dead = es.es_infer_vars_dead;
@@ -4028,7 +4029,7 @@ let false_es flowt pos =
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
-let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos)
+(* let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos) *)
 
 let or_context_list (cl10 : context list) (cl20 : context list) : context list = 
   let rec helper cl1 = match cl1 with
@@ -4730,9 +4731,9 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
   Gen.Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
-and simplify_context (ctx:context):context = 
-	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)
-								else  ctx
+(* and simplify_context_0 (ctx:context):context =  *)
+(* 	if (allFalseCtx ctx) then ctx (\* (false_ctx (mkFalseFlow) no_pos) *\) *)
+(* 								else  ctx *)
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
@@ -6130,6 +6131,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
+	es_orig_ante = es.es_orig_ante;
     es_infer_vars = es.es_infer_vars;
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_heap = es.es_infer_heap;

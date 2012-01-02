@@ -2519,7 +2519,7 @@ let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
 
 (* is below called by pruning *)
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process =
-Gen.Debug.ho_2 "imply_msg_no_no " 
+Gen.Debug.no_2 "imply_msg_no_no " 
   Cprinter.string_of_pure_formula 
   Cprinter.string_of_pure_formula
  (fun (x,_,_)-> string_of_bool x) 

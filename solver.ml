@@ -2378,6 +2378,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_unsat_flag =false;
               es_gen_impl_vars = new_impl_vars;
               es_trace = fold_es.es_trace;
+              es_orig_ante = fold_es.es_orig_ante;
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
@@ -2845,7 +2846,7 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
 		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
 		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-		  es_orig_ante   = es.es_formula;
+		  (* es_orig_ante   = es.es_formula; *)
 		  (*es_orig_conseq = conseq ;*)}in	
       let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
       let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq pos pid f to_string in 
@@ -2868,7 +2869,7 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
 		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
 		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-		  es_orig_ante   = es.es_formula;
+		  (* es_orig_ante   = es.es_formula; *)
 		  (*es_orig_conseq = conseq ;*)}in
       let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
       heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq pos pid f to_string
@@ -3013,7 +3014,7 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
 				es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 				es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
 				es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-				es_orig_ante   = es.es_formula;
+				(* es_orig_ante   = es.es_formula; *)
 				es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
             let entail_fct = fun c-> heap_entail_struc prog is_folding  has_post c conseq pos pid in
@@ -3540,7 +3541,7 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
 			  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 			  es_residue_pts  = residue_labels_in_formula es.es_formula   ;(* residue pts from antecedent *)
 			  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-			  es_orig_ante   = es.es_formula;
+			  (* es_orig_ante   = es.es_formula; *)
 			  es_orig_conseq = struc_formula_of_formula conseq pos;} in	
 	      let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es (reset_original_es es)))),(fun c->c)) cl in
 	      let conseq_new = conseq in
@@ -6033,6 +6034,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label;
+        es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
         es_infer_vars_rel = estate.es_infer_vars_rel;
@@ -6177,6 +6179,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_unsat_flag = false;
                  es_prior_steps = estate.es_prior_steps;
                  es_path_label = estate.es_path_label;
+                 es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_pure = estate.es_infer_pure;
