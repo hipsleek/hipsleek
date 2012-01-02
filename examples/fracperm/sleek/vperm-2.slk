@@ -1,26 +1,3 @@
-/*
-In a method:
-Proving PRE-CONDITION: @p_val and @p_ref
-Proving POST-CONDITION: @full
-
-   Variable permissions:
-   v@zero  |- v@p_val --> fail
-   v@zero  |- v@p_ref --> fail
-   v@zero  |- v@full --> fail
-
-     not(v \in S)
-  --------------------
-  S@zero |- v@p_val  --> S@zero
-
-     not(v \in S)
-  --------------------
-  S@zero |- v@full  --> S@zero
-
-         not(v \in S)
-  -----------------------
-  S@zero |- v@p_ref  --> S+{v}@zero
-
-*/
 
 
 //(1)

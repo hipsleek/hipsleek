@@ -4929,7 +4929,7 @@ and formula_of_context_x ctx0 = match ctx0 with
 
 and formula_of_context ctx0 = 
   let pr = !print_context_short in
-    Gen.Debug.no_1 "formula_of_context" pr !print_formula formula_of_context ctx0
+    Gen.Debug.no_1 "formula_of_context" pr !print_formula formula_of_context_x ctx0
 
 (*LDK: add es_pure into residue*)
 and formula_trace_of_context_x ctx0 = match ctx0 with
