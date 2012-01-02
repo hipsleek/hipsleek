@@ -1,3 +1,4 @@
+module DD=Debug (* which Debug is this? *)
 open Camlp4
 open Globals
 (* open Exc.ETABLE_NFLOW *)
@@ -385,8 +386,9 @@ let rec set_il_formula f il =
 	| P.BForm (bf, lbl) -> P.BForm (set_il_b_formula bf il, lbl)
 	| _ -> f
 
+(* TOCHECK : not sure why Debug.ml module cannot be called from here *)
 and set_il_b_formula bf il =
-  Gen.Debug.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
+ DD.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
 	(fun bf -> set_il_b_formula_x bf il) bf
 	  
 and set_il_b_formula_x bf il =
@@ -406,18 +408,18 @@ and contain_vars_pure_double f =
 	| Pure_f _ -> false
 	| Pure_c pc -> P.contain_vars_exp pc
 
-and set_slicing_utils_pure_double f il =
-  let pr_pure_double = function
-	| Pure_f pf -> Iprinter.string_of_pure_formula pf
-	| Pure_c pc -> Iprinter.string_of_formula_exp pc
-  in 
-  Gen.Debug.no_2 "set_slicing_utils_pure_double"
-	pr_pure_double 
-	string_of_bool
-	pr_pure_double
-	set_slicing_utils_pure_double_x f il
+(* and set_slicing_utils_pure_double f il = *)
+(*   let pr_pure_double = function *)
+(* 	| Pure_f pf -> Iprinter.string_of_pure_formula pf *)
+(* 	| Pure_c pc -> Iprinter.string_of_formula_exp pc *)
+(*   in  *)
+(*   DD.no_2 "set_slicing_utils_pure_double" *)
+(* 	pr_pure_double  *)
+(* 	string_of_bool *)
+(* 	pr_pure_double *)
+(* 	set_slicing_utils_pure_double_x f il *)
 				   
-and set_slicing_utils_pure_double_x f il =
+and set_slicing_utils_pure_double f il =
   (*
 	il = true  -> Pure_f pf is a linking constraint
 	il = false -> Pure_f pf is not a linking constraint,
@@ -1937,15 +1939,15 @@ arrayaccess_expression:[[
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
-(* let parse_sleek n s =  *)
-(*   Gen.Debug.loop_1_no "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n *)
+let parse_sleek n s =
+  DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
-(* let parse_hip n s =   *)
-(*   Gen.Debug.loop_1_no "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
+let parse_hip n s =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
-  let pr_no x = "?" in Gen.Debug.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
+  let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 
  

@@ -29,7 +29,7 @@ let remove_infer_vars_partial estate rt =
 let remove_infer_vars_partial estate rt =
   let pr1 = !print_entail_state in
   let pr2 = !print_svl in
-  Gen.Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
+  Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
       remove_infer_vars_partial estate rt 
 
 let rec remove_infer_vars_all_ctx ctx =
@@ -91,7 +91,7 @@ let is_inferred_pre_list_context ctx =
   | SuccCtx lst -> List.exists CF.is_inferred_pre_ctx lst
 
 let is_inferred_pre_list_context ctx = 
-  Gen.Debug.no_1 "is_inferred_pre_list_context"
+  Debug.no_1 "is_inferred_pre_list_context"
       !print_list_context string_of_bool
       is_inferred_pre_list_context ctx
 
@@ -147,7 +147,7 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
 let collect_rel_list_partial_context (ctx:list_partial_context) =
   let pr1 = !CF.print_list_partial_context in
   let pr2 = pr_list print_lhs_rhs in
-  Gen.Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
+  Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
       collect_rel_list_partial_context ctx
  
 let init_vars ctx infer_vars iv_rel orig_vars = 
@@ -237,7 +237,7 @@ let get_args_h_formula aset (h:h_formula) =
 let get_args_h_formula aset (h:h_formula) =
   let pr1 = !print_h_formula in
   let pr2 = pr_option (pr_penta !print_sv !print_svl !print_svl !print_svl pr1) in
-  Gen.Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
+  Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
   let (h, p, fl, b, t) = split_components f in
@@ -245,7 +245,7 @@ let get_alias_formula (f:CF.formula) =
   eqns
 
 (* let get_alias_formula (f:CF.formula) = *)
-(*   Gen.Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
+(*   Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
 
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
@@ -258,7 +258,7 @@ let is_elem_of conj conjs =
 
 let is_elem_of conj conjs = 
   let pr = !CP.print_formula in
-  Gen.Debug.no_1 "is_elem_of" pr pr_no (fun _ -> is_elem_of conj conjs) conj
+  Debug.no_1 "is_elem_of" pr pr_no (fun _ -> is_elem_of conj conjs) conj
 
             (* (b,args,inf_arg,h,new_iv,over_iv,[orig_r]) in *)
             (* (List.exists (CP.eq_spec_var_aset lhs_aset r) *)
@@ -368,7 +368,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
-  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
+  Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
@@ -390,7 +390,7 @@ let rec filter_var f vars = match f with
 
 let filter_var f vars =
   let pr = !print_pure_f in
-  Gen.Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
+  Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
 let simplify_helper f = match f with
   | BForm ((Neq _,_),_) -> f
@@ -403,7 +403,7 @@ let simplify_contra f vars = filter_var f vars
 
 let simplify f vars =
   let pr = !print_pure_f in
-  Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+  Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
 let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
@@ -439,7 +439,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
@@ -462,7 +462,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !print_pure_f)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -490,7 +490,7 @@ let infer_lhs_contra_estate e f pos msg =
 
 (* let infer_lhs_rhs_pure lhs rhs ivars = *)
 (*   let pr = !print_pure_f in *)
-(*   Gen.Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars *)
+(*   Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars *)
 
 (* let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos = *)
 (*   let ivars = estate.es_infer_vars in *)
@@ -677,7 +677,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Gen.Debug.no_3 "infer_pure_m" 
+      Debug.no_3 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
@@ -727,7 +727,7 @@ let lhs_simplifier_tp lhs_h lhs_p =
 
 let lhs_simplifier_tp lhs_h lhs_p =
   let pr = !CP.print_formula in
-    Gen.Debug.no_2 "lhs_simplifier_tp" pr pr pr lhs_simplifier_tp lhs_h lhs_p
+    Debug.no_2 "lhs_simplifier_tp" pr pr pr lhs_simplifier_tp lhs_h lhs_p
 
 (* to filter relevant LHS term for selected relation rel *)
 (* requires simplify and should preserve relation and != *)
@@ -738,7 +738,7 @@ let rel_filter_assumption is_sat lhs rel =
 
 (* let rel_filter_assumption lhs rel = *)
 (*   let pr = CP.print_formula in *)
-(*   Gen.Debug.no_2 "rel_filter_assumption" pr pr (fun (r,_) -> pr r) rel_filter_assumption lhs rel  *)
+(*   Debug.no_2 "rel_filter_assumption" pr pr (fun (r,_) -> pr r) rel_filter_assumption lhs rel  *)
 
 let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos =
   (* TODO : need to handle pure_branches in future ? *)
@@ -814,7 +814,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-  Gen.Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2 
+      Debug.no_3 "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
@@ -907,7 +907,7 @@ let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
 (*let infer_for_unfold prog estate lhs_node pos =
   let pr es =  pr_list !CP.print_formula es.es_infer_invs in
   let pr2 = !print_h_formula in
-  Gen.Debug.no_2 "infer_for_unfold" 
+  Debug.no_2 "infer_for_unfold" 
       (add_str "es_infer_inv (orig) " pr) 
       (add_str "lhs_node " pr2) 
       (add_str "es_infer_inv (new) " pr)
