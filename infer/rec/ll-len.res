@@ -5,7 +5,9 @@ Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure length$node... OLD SPECS:  EInfer [R]
+Checking procedure length$node... 
+FIXPOINT:  res>=0 & res=n
+OLD SPECS:  EInfer [R]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase] & true &
          {FLOW,(20,21)=__norm}
            EAssume 1::
@@ -13,13 +15,13 @@ Checking procedure length$node... OLD SPECS:  EInfer [R]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase] & true &
        {FLOW,(20,21)=__norm}
          EAssume 1::
-           true & R(res,n) & 0<=n & {FLOW,(20,21)=__norm}
-NEW RELS: [ ( n=0 & res=0) -->  R(res,n), ( (n=1 | 2<=n) & 1<=n & R(res - 1,n - 1)) -->  R(res,n)]
+           true & n=res & 0<=res & 0<=n & {FLOW,(20,21)=__norm}
+NEW RELS: [ ( n=0 & res=0) -->  R(res,n), ( R(r_24',n_539) & 0<=n_539 & -1+res=r_24' & (n=1 | 2<=n) & 1+n_539=n) -->  R(res,n)]
 
 Procedure length$node SUCCESS
-Stop Omega... 63 invocations 
+Stop Omega... 64 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.248014 second(s)
-	Time spent in main process: 0.220013 second(s)
-	Time spent in child processes: 0.028001 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.19 second(s)
+	Time spent in child processes: 0.04 second(s)

@@ -26,11 +26,11 @@ NEW SPECS:  EBase x::node<inf_Anon_528,inf_b_529>@L[Orig] *
        inf_b_529::node<inf_a_535,inf_Anon_536>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 3::ref [x]
-           true & inf_b_529=x' & inf_a_535=res & {FLOW,(20,21)=__norm}
+           true & x'=inf_b_529 & res=inf_a_535 & {FLOW,(20,21)=__norm}
 NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 45 invocations 
+Stop Omega... 40 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.19 second(s)

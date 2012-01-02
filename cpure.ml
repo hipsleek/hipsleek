@@ -1140,6 +1140,14 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   match (pf1,pf2) with
     | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
     | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
+    | (Lte(IConst(i1, _), e2, _), Lt(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
+    | (Lte(e1, IConst(i2, _), _), Lt(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
+    | (Lt(IConst(i1, _), e2, _), Lte(IConst(i3, _), e4, _)) -> i1=i3-1 && eqExp_f eq e2 e4
+    | (Lt(e1, IConst(i2, _), _), Lte(e3, IConst(i4, _), _)) -> i2=i4+1 && eqExp_f eq e1 e3
+    | (Gte(IConst(i1, _), e2, _), Gt(IConst(i3, _), e4, _)) -> i1=i3-1 && eqExp_f eq e2 e4
+    | (Gte(e1, IConst(i2, _), _), Gt(e3, IConst(i4, _), _)) -> i2=i4+1 && eqExp_f eq e1 e3
+    | (Gt(IConst(i1, _), e2, _), Gte(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
+    | (Gt(e1, IConst(i2, _), _), Gte(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lte(e1, e2, _), Gt(e4, e3, _))
     | (Gt(e1, e2, _), Lte(e4, e3, _))
     | (Gte(e1, e2, _), Lt(e4, e3, _))
@@ -5698,42 +5706,65 @@ module ArithNormalizer = struct
   let norm_bform_neq e1 e2 l = 
     norm_bform_relation (<>) e1 e2 l (fun x -> Neq x)
 
+  let test_null e1 e2 =
+    match e1 with
+      | Null _ -> Some (e2,e1)
+      | _ -> (match e2 with
+          | Null _ -> Some (e1,e2) 
+          | _ -> None
+        )
+
   let norm_b_formula (bf: b_formula) : b_formula option =
 	let (pf,il) = bf in
 	let npf = match pf with
-    | Lt (e1, e2, l) -> 
-        let e1 = Add (e1, IConst(1, no_pos), l) in 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Lte (e1, e2, l) -> 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Gt (e1, e2, l) -> 
-        let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_leq lhs rhs l)
-    | Gte (e1, e2, l) ->  
-        let lhs, rhs = norm_two_sides e2 e1 in
-        Some (norm_bform_leq lhs rhs l)
-    | Eq (e1, e2, l) ->
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_eq lhs rhs l)
-    | Neq (e1, e2, l) -> 
-        let lhs, rhs = norm_two_sides e1 e2 in
-        Some (norm_bform_neq lhs rhs l)
-    | _ -> None
+      | Lt (e1, e2, l) -> 
+            let e1 = Add (e1, IConst(1, no_pos), l) in 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Lte (e1, e2, l) -> 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Gt (e1, e2, l) -> 
+            let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
+            let lhs, rhs = norm_two_sides e1 e2 in
+            Some (norm_bform_leq lhs rhs l)
+      | Gte (e1, e2, l) ->  
+            let lhs, rhs = norm_two_sides e2 e1 in
+            Some (norm_bform_leq lhs rhs l)
+      | Eq (e1, e2, l) ->
+            begin
+              match test_null e1 e2 with
+                | None ->
+                      let lhs, rhs = norm_two_sides e1 e2 in
+                      Some (norm_bform_eq lhs rhs l)
+                | Some (e1,e2) -> Some (Eq (e1,e2,l))
+            end
+      | Neq (e1, e2, l) -> 
+            begin
+              match test_null e1 e2 with
+                | None ->
+                      let lhs, rhs = norm_two_sides e1 e2 in
+                      Some (norm_bform_neq lhs rhs l)
+                | Some (e1,e2) -> Some (Neq (e1,e2,l))
+            end
+      | _ -> None
 	in match npf with
 	  | None -> None
 	  | Some pf -> Some (pf,il)
 
-  let norm_formula_0 (f: formula) : formula =
+  let norm_formula (f: formula) : formula =
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
-  let norm_formula(*_debug*) f =
-    Gen.Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula
-        norm_formula_0 f
 
 end (* of ArithNormalizer module's definition *)
+
+let norm_form f = ArithNormalizer.norm_formula f 
+
+let norm_form f =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "cpure::norm_formula" 
+      pr pr
+      norm_form f
 
 let has_var_exp e0 =
   let f e = match e with
@@ -6860,7 +6891,7 @@ let simplify_disj_aux nx nxs : formula =
 
 
 (* assumes absence of duplicates *)
-let simplify_disj (f:formula) : formula =
+let simplify_disj_new (f:formula) : formula =
   let fs=split_disjunctions f in
   match fs with
     | [] -> report_error no_pos ("simplify_disj : not possible to have empty disj")
@@ -6870,8 +6901,11 @@ let simplify_disj (f:formula) : formula =
           let nxs = List.map split_conjunctions xs in
          simplify_disj_aux nx nxs
 
-let simplify_disj (f:formula) : formula =
+let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj f
+  Gen.Debug.no_1 "simplify_disj" pr pr simplify_disj_new f
 
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (type_of_spec_var v) != RelT) vs
 

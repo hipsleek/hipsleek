@@ -34,18 +34,28 @@ GLOBAL: expression formula pformula exp specvar;
   [ "pformula" LEFTA
     [ x = INT; "="; y = INT ->
       if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc)
-    |	x = exp; "<"; y = exp -> Lt (x, y, loc) 
-    | x = exp; ">"; y = exp -> Gt (x, y, loc) 
+    |	x = exp; "<"; y = exp ->
+      if is_self_var y then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else
+      if is_zero x then Neq (y, Null loc, loc)
+      else Lt (x, y, loc) 
+    | x = exp; ">"; y = exp ->
+      if is_self_var x then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      else 
+      if is_zero y then Neq (x, Null loc, loc)
+      else Gt (x, y, loc) 
     | x = exp; "<="; y = exp ->
       if is_self_var x then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
       else
-      if is_self_var y then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-      else Lte (x, y, loc)
-    | x = exp; ">="; y = exp ->
-      if is_self_var x then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      if is_zero y then Eq (x, Null loc, loc)
       else
+      Lte (x, y, loc)
+    | x = exp; ">="; y = exp ->
       if is_self_var y then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-      else Gte (x, y, loc)
+      else
+      if is_zero x then Eq (y, Null loc, loc)
+      else
+      Gte (x, y, loc)
     | x = exp; "="; y = exp -> Eq (x, y, loc)
     | x = exp; "!="; y = exp -> Neq (x, y, loc)
     ]

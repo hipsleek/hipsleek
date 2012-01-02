@@ -53,16 +53,20 @@ let rec fixcalc_of_b_formula b =
     | CP.Gt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gt ^ fixcalc_of_exp e2
     | CP.Gte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_gte ^ fixcalc_of_exp e2
     | CP.Eq (e1, e2, _) -> 
-      if (is_self e1 & is_null e2) || (is_self e2 & is_null e1) then self ^ op_lte ^ "0"
+      if is_null e2 then fixcalc_of_exp e1 ^ op_lte ^ "0"
+      else
+      if is_null e1 then fixcalc_of_exp e2 ^ op_lte ^ "0"
       else fixcalc_of_exp e1 ^ op_eq ^ fixcalc_of_exp e2
     | CP.Neq (e1, e2, _) ->
-      if is_self e1 then 
-        let s = fixcalc_of_exp e2 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
+      if is_null e1 then 
+        let s = fixcalc_of_exp e2 in s ^ op_gt ^ "0"
       else
-      if is_self e2 then 
-        let s = fixcalc_of_exp e1 in "((" ^ self ^ op_lt ^ s ^ ")" ^ op_or ^ "(" ^ self ^ op_gt ^ s ^ "))"
+      if is_null e2 then 
+        let s = fixcalc_of_exp e1 in s ^ op_gt ^ "0"
       else
-        fixcalc_of_exp e1 ^ op_neq ^ fixcalc_of_exp e2
+        let s = fixcalc_of_exp e1 in
+        let t = fixcalc_of_exp e2 in
+        "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
     | CP.RelForm (id,args,_) -> (CP.name_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
@@ -165,22 +169,30 @@ let compute_fixpoint input_pairs =
     | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos "Wrong format"
   in
-  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in
-  let rhs = fixcalc_of_pure_formula pf in
-  let input_fixcalc = name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
-    ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
-  in
-  (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
-  let output_of_sleek = "fixcalc.inf" in
-  let oc = open_out output_of_sleek in
-  Printf.fprintf oc "%s" input_fixcalc;
-  flush oc;
-  close_out oc;
-  let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-  (*print_endline ("RES: " ^ res);*)
-  let fixpoint = Parse_fix.parse_fix res in
-  (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-  fixpoint
-  
+  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in  
+  try
+    let rhs = fixcalc_of_pure_formula pf in 
+    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
+      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
+    in
+    (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+    let output_of_sleek = "fixcalc.inf" in
+    let oc = open_out output_of_sleek in
+    Printf.fprintf oc "%s" input_fixcalc;
+    flush oc;
+    close_out oc;
+    try 
+      let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+      (*print_endline ("RES: " ^ res);*)
+      let fixpoint = Parse_fix.parse_fix res in
+      (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
+      (rel_fml, fixpoint)
+    with _ -> 
+      let _ = report_error no_pos "compute_fixpoint#fixcalc.ml: fails as it requires a
+        fixpoint calculator to be located at /usr/local/bin/fixcalc_mod" in
+      (rel_fml, rel_fml)
+  with _ -> (rel_fml, pf) 
+
+ 
 
 

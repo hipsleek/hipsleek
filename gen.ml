@@ -402,7 +402,6 @@ class ['a] stack  =
      method exists (i:'a) = List.mem i stk 
      method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
      method push_list (ls:'a list) =  stk <- ls@stk
-         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
    end;;
 
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
@@ -1053,6 +1052,27 @@ struct
   let ho_eff_4 s l = ho_4_opt_aux false l false (fun _ -> true) None s
   let ho_eff_5 s l = ho_5_opt_aux false l false (fun _ -> true) None s
   let ho_eff_6 s l = ho_6_opt_aux false l false (fun _ -> true) None s
+
+  let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
+  let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s
+  let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s
+  let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s
+  let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s
+  let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s
+
+  let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str
+  let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str
+  let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str
+  let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
+  let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
+  let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
+
+  let loop_1 s = ho_1_opt_aux false [] true (fun _ -> true) None s
+  let loop_2 s = ho_2_opt_aux false [] true (fun _ -> true) None s
+  let loop_3 s = ho_3_opt_aux false [] true (fun _ -> true) None s
+  let loop_4 s = ho_4_opt_aux false [] true (fun _ -> true) None s
+  let loop_5 s = ho_5_opt_aux false [] true (fun _ -> true) None s
+  let loop_6 s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
   let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
   let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s

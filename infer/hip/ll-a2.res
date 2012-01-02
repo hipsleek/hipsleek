@@ -22,7 +22,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] *
 NEW RELS: []
 
 Procedure append2$node~node SUCCESS
-Stop Omega... 81 invocations 
+Stop Omega... 80 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.36 second(s)

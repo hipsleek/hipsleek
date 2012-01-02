@@ -301,6 +301,8 @@ let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
+let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -1206,6 +1208,11 @@ and get_node_var (h : h_formula) = match h with
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
   
+and set_node_var newc (h : h_formula) = match h with
+  | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
+  | DataNode w -> DataNode {w with h_formula_data_node = newc;}
+  | _ -> failwith ("set_node_var: invalid argument")
+
 and get_node_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) 
   | DataNode ({h_formula_data_imm = imm}) -> imm
@@ -2959,7 +2966,8 @@ type entail_state = {
   es_success_pts : (formula_label * formula_label)  list  ;(* successful pt from conseq *)
   es_residue_pts : formula_label  list  ;(* residue pts from antecedent *)
   es_id      : int              ; (* unique +ve id *)
-  es_orig_ante   : formula        ;  (* original antecedent formula *) 
+  (* below is to store an antecedent prior to it becoming false *)
+  es_orig_ante   : formula option       ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
@@ -3002,7 +3010,9 @@ type entail_state = {
   es_infer_post : bool; 
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
-  es_infer_vars_rel : CP.spec_var list; 
+  es_infer_vars_rel : CP.spec_var list;
+  (* input vars to denote vars already instantiated *)
+  es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
@@ -3012,8 +3022,13 @@ type entail_state = {
   (* output : post inferred relation lhs --> rhs *)
   es_infer_rel : (CP.formula * CP.formula) list; 
   (* es_infer_pures : CP.formula list; *)
-  es_infer_invs : CP.formula list (* WN : what is this? *)
-
+  (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)
+  (* input precondition inferred so far, for heap
+     you may accumulate the xpure0 information;
+     to be used by infer_lhs_contra to determine if
+     a FALSE is being inferred
+  *)
+     es_infer_pure_thus : CP.formula; 
 }
 
 and context = 
@@ -3154,7 +3169,7 @@ let empty_es flowt pos =
   es_success_pts = [];
   es_residue_pts  = [];
   es_id = 0 ;
-  es_orig_ante = x;
+  es_orig_ante = None;
   es_orig_conseq = [mkETrue flowt pos] ;
   es_rhs_eqset = [];
   es_path_label  =[];
@@ -3179,11 +3194,13 @@ let empty_es flowt pos =
   es_is_normalizing = false;
   es_infer_post = false;
   es_infer_vars = [];
+  es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
-  es_infer_invs = [];
+  es_infer_pure_thus = CP.mkTrue no_pos ;
+  (*es_infer_invs = [];*)
 }
 
 let is_one_context (c:context) =
@@ -3790,7 +3807,10 @@ let rec collect_formula ctx =
 
 let rec collect_orig_ante ctx =
 	match ctx with
-	| Ctx estate -> [estate.es_orig_ante]
+	| Ctx estate -> 
+      (match estate.es_orig_ante with
+      | None -> []
+      | Some ante -> [ante])
 	| OCtx (ctx1, ctx2) -> (collect_orig_ante ctx1) @ (collect_orig_ante ctx2)
 
 let rec add_pre_heap ctx = 
@@ -3798,10 +3818,26 @@ let rec add_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let add_infer_pure_thus_estate cp es =
+  {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
+  }
+
+let add_infer_pure_to_estate cp es =
+  let old_cp = es.es_infer_pure in
+  let new_cp = List.concat (List.map CP.split_conjunctions cp) in
+  let new_cp = List.fold_left (fun a n -> 
+      (* let n = CP.norm_form n in *)
+      let n = CP.arith_simplify_new n in
+      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp 
+  in  {es with es_infer_pure = new_cp;
+      (* add inferred pre to pure_this too *)
+               es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
+  }
+
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-      | Ctx es -> Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
+      | Ctx es -> Ctx (add_infer_pure_to_estate cp es)
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -3813,7 +3849,9 @@ let add_infer_pure_to_ctx cp ctx =
 let add_infer_heap_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-      | Ctx es -> Ctx {es with es_infer_heap = es.es_infer_heap@cp;}
+      | Ctx es -> 
+        let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_heap)) cp in
+        Ctx {es with es_infer_heap = cp@es.es_infer_heap;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -3984,19 +4022,31 @@ let invert_outcome (l:list_context) : list_context =
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
-let false_ctx flowt pos = 
-	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
+(* let false_ctx flowt pos =  *)
+(* 	let x = mkFalse flowt pos in *)
+(* 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; }) *)
 
-let false_ctx_with_orig_ante es f flowt pos = 
-	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; 
+let false_es_with_flow_and_orig_ante es flowt f pos =
+	let new_f = mkFalse flowt pos in
+    {(empty_es flowt pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
+        es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
-    })
+        es_infer_pure_thus = es.es_infer_pure_thus;
+    }
+
+let false_es_with_orig_ante es f pos =
+    let flowt = flow_formula_of_formula f in
+      false_es_with_flow_and_orig_ante es flowt f pos
+
+let false_ctx_with_flow_and_orig_ante es flowt f pos = 
+	Ctx (false_es_with_flow_and_orig_ante es flowt f pos)
+
+let false_ctx_with_orig_ante es f pos = 
+	Ctx (false_es_with_orig_ante es f pos)
 
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in
@@ -4004,7 +4054,7 @@ let false_es flowt pos =
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
-let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos)
+(* let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos) *)
 
 let or_context_list (cl10 : context list) (cl20 : context list) : context list = 
   let rec helper cl1 = match cl1 with
@@ -4706,9 +4756,9 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
   Gen.Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
-and simplify_context (ctx:context):context = 
-	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)
-								else  ctx
+(* and simplify_context_0 (ctx:context):context =  *)
+(* 	if (allFalseCtx ctx) then ctx (\* (false_ctx (mkFalseFlow) no_pos) *\) *)
+(* 								else  ctx *)
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
@@ -6090,38 +6140,51 @@ let normalize_max_renaming_s f pos b ctx =
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
 *)
-let clear_entailment_history_es (es :entail_state) :context = 
+
+let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
-  Ctx { 
+  let hf = es.es_heap in
+  (* adding xpure0 of es_heap into es_formula *)
+  let es_f = match xp hf with
+    | None -> es.es_formula
+    | Some (mf,br,svl,mm)  -> 
+          (* print_endline ("mixf:"^(!print_mix_formula mf)); *)
+          (* print_endline ("svl:"^(!CP.print_svl svl)); *)
+          (* print_endline ("mem:"^(!print_mem_formula mm)); *)
+          mkAnd_pure_and_branch es.es_formula mf br no_pos
+  in 
+  Ctx {
       (* es with es_heap=HTrue;} *)
     (empty_es (mkTrueFlow ()) no_pos) with
-	es_formula = es.es_formula;
+	es_formula = es_f;
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
+	es_orig_ante = es.es_orig_ante;
     es_infer_vars = es.es_infer_vars;
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
     es_infer_rel = es.es_infer_rel;
   }
+
 (*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
 
-let clear_entailment_history (ctx : context) : context =  
-  transform_context clear_entailment_history_es ctx
+let clear_entailment_history xp (ctx : context) : context =  
+  transform_context (clear_entailment_history_es xp) ctx
   
-let clear_entailment_history_list (ctx : list_context) : list_context = 
-  transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
+let clear_entailment_history_list xp (ctx : list_context) : list_context = 
+  transform_list_context (clear_entailment_history_es xp,(fun c->c)) ctx 
 
-let clear_entailment_history_partial_list (ctx : list_partial_context) : list_partial_context = 
-  transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
+let clear_entailment_history_partial_list xp (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context (clear_entailment_history_es xp,(fun c->c)) ctx 
 
-let clear_entailment_history_failesc_list (ctx : list_failesc_context) : list_failesc_context = 
-  transform_list_failesc_context (idf,idf,clear_entailment_history_es) ctx 
+let clear_entailment_history_failesc_list xp (ctx : list_failesc_context) : list_failesc_context = 
+  transform_list_failesc_context (idf,idf,clear_entailment_history_es xp) ctx 
   
 let fold_partial_context_left_or (c_l:(list_partial_context list)) = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
@@ -7159,4 +7222,8 @@ let lax_impl_of_post f =
   let impl_vs = CP.intersect evs hvs in
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
-  
+
+let fv_wo_rel (f:formula) =
+  let vs = fv f in
+  List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
+

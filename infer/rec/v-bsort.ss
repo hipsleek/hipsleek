@@ -28,10 +28,9 @@ lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 
 bool bubble(node xs)
-//     infer [A]
      requires xs::ll<n> & xs!=null
-     ensures xs::sll<n, s, l>  /*& A(res)*/  &!res
-		or  xs::ll<n> & res; //& B(res);
+     ensures xs::sll<n, s, l> &!res
+		or  xs::ll<n> & res;
 
 
 {
@@ -58,8 +57,7 @@ bool bubble(node xs)
 
 
 void bsort(node xs)
-     infer @pre[xs]
-	requires xs::ll<n> //& n>0
+	requires xs::ll<n> & n>0
 	ensures xs::sll<n, _, _>;
 {
 	bool b;

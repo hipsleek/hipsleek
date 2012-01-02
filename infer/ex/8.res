@@ -46,4 +46,4 @@ infer var: [z,y]
 new infer var: [inf_ann_127,inf_flted_31_128,z,y]
 Entail  (5): Fail.(may) cause:(failure_code=213)  z!=null & x!=null |-  x=z (may-bug).
 
-Stop Omega... 222 invocations 
+Stop Omega... 186 invocations 

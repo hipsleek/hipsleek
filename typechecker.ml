@@ -318,7 +318,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                         else ([],post_cond) in
                       let res_ctx = Inf.add_impl_vars_list_partial_context impl_vs res_ctx in
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
-                      let rels = Inf.collect_rel_list_partial_context tmp_ctx in
+                      let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
@@ -358,6 +358,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
+                                let flist = Gen.BList.remove_dups_eq (=) (List.map (fun fml -> Solver.simplify_post_heap_only fml prog) flist) in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
@@ -374,7 +375,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
-                                let post_fml = Solver.simplify_post post_fml post_vars prog in
+                                let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None 
+                                  else (
+(*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));*)
+                                    let (rel_fml, fixpoint) = Fixcalc.compute_fixpoint rels in
+(*                                    print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);*)
+(*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml);         *)
+(*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);             *)
+                                    Solver.simplify_post post_fml post_vars prog (Some (rel_fml, fixpoint)))
+                                in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
                                 DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
@@ -590,7 +599,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
-	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
+	          let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
 	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
                 begin
@@ -741,7 +750,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
 		| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
-    | SCall ({
+        | SCall ({
 			  exp_scall_type = ret_t;
 			  exp_scall_method_name = mn; (* mn is mingled name of the method *)
 			  exp_scall_arguments = vs;
@@ -1094,9 +1103,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
-                        let fixpoint = if rels = [] then (CP.mkTrue no_pos) else
-                          Fixcalc.compute_fixpoint rels in
-                        print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);
+                        let _ = 
+                          if rels = [] then ()
+                          else (
+                            let (_, fixpoint) = Fixcalc.compute_fixpoint rels in
+                            print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);)
+                        in
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
                         print_endline ("NEW RELS: "^new_rels);

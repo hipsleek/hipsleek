@@ -830,7 +830,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[ peek_pure_out; t=cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
+pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
 					match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
@@ -875,10 +875,6 @@ cexp_w :
 		set_slicing_utils_pure_double f false
      | lc=SELF; `LT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f false
-            (* TODO : need to add the optional arguments {..} *)
-      | lc=SELF; `SUBANN;     cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
       | lc=SELF; `SUBANN;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -925,8 +921,7 @@ cexp_w :
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
       | `LEXVAR; `OSQUARE; ls1= cexp_list; `CSQUARE; ls2=opt_measures_seq
-(* ls1=opt_measures *)
-            -> 
+            ->
 	      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
 	      set_slicing_utils_pure_double f false
       ]

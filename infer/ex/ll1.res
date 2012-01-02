@@ -159,4 +159,4 @@ Entail  (29): Valid.
 inferred heap: [x::node<inf_Anon_567,inf_flted_95_568>@inf_ann_566[Orig]]
 inferred pure: [inf_ann_566<=0; inf_flted_95_568=null]
 
-Stop Omega... 594 invocations 
+Stop Omega... 498 invocations 
