@@ -377,7 +377,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
 let rec filter_var f vars = match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> CP.filter_var f vars
+  | _ -> if TP.is_sat_raw f then CP.filter_var f vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -539,39 +539,42 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
 let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   if no_infer estate then (None,None)
   else
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    (* let rhs_vars = CP.fv rhs_xpure in *)
-    (* below will help greatly reduce the redundant information inferred from state *)
-    (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
-    let _ = DD.trace_hprint (add_str "lhs: " !CP.print_formula) lhs_xpure pos in
-    let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
-    let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
-    let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
-    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-    let fml = CP.drop_rel_formula fml in
-    let check_sat = TP.is_sat_raw fml in
-    let iv = estate.es_infer_vars in
-    (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
-    (* if check_sat then *)
+    if not (TP.is_sat_raw rhs_xpure) then 
+      (DD.devel_pprint "Cannot infer a precondition: RHS contradiction" pos;
+      (None,None))
+    else
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
+      (* let rhs_vars = CP.fv rhs_xpure in *)
+      (* below will help greatly reduce the redundant information inferred from state *)
+      (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
+      let _ = DD.trace_hprint (add_str "lhs: " !CP.print_formula) lhs_xpure pos in
+      let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+      let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
+      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+      let fml = CP.drop_rel_formula fml in
+      (*let check_sat = TP.is_sat_raw fml in*)
+      let iv = estate.es_infer_vars in
+      (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
+      (* if check_sat then *)
       (*      let new_p = simplify fml iv in                            *)
       (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
       let args = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      (*        let new_p = CP.mkExists_with_simpl Omega.simplify quan_var new_p None pos in*)
       let new_p = TP.simplify_raw (CP.mkForall quan_var 
           (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
       let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
       let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
       let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
       let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
-      let new_p = TP.simplify_raw (simplify_disjs new_p (CP.mkAnd lhs_xpure rhs_xpure no_pos)) in
+      let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
       let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
       let args = CP.fv new_p in
       let new_p =
-        if CP.intersect args iv == [] then
+        if CP.intersect args iv == [] && quan_var != [] then
           let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
           let _ = DD.trace_hprint (add_str "new_p3: " !CP.print_formula) new_p pos in
           let new_p = simplify new_p iv in
@@ -677,7 +680,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.no_3 "infer_pure_m" 
+      Debug.to_3 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "rhs xpure " pr1)
