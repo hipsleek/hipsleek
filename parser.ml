@@ -1,3 +1,4 @@
+module DD=Debug (* which Debug is this? *)
 open Camlp4
 open Globals
 (* open Exc.ETABLE_NFLOW *)
@@ -6,7 +7,6 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
-open Debug (* which Debug is this? *)
 
 open Perm
 
@@ -385,11 +385,11 @@ let rec set_il_formula f il =
 	| _ -> f
 
 (* TOCHECK : not sure why Debug.ml module cannot be called from here *)
-(* and set_il_b_formula bf il = *)
-(*  Debug.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula *)
-(* 	(fun bf -> set_il_b_formula_x bf il) bf *)
-	  
 and set_il_b_formula bf il =
+ DD.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
+	(fun bf -> set_il_b_formula_x bf il) bf
+	  
+and set_il_b_formula_x bf il =
   let (pf, o_il) = bf in
   match o_il with
 	| None -> (pf, il)
@@ -1919,15 +1919,15 @@ arrayaccess_expression:[[
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
-(* let parse_sleek n s =  *)
-(*   Debug.loop_1_no "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n *)
+let parse_sleek n s =
+  DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
-(* let parse_hip n s =   *)
-(*   Debug.loop_1_no "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
+let parse_hip n s =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
-  let pr_no x = "?" in Debug.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
+  let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 
  
