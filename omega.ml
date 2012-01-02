@@ -298,7 +298,7 @@ let check_formula f timeout =
   end
 
 let check_formula i f timeout =
-  Gen.Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
+  Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
       check_formula f timeout
 
 (* linear optimization with omega *)
@@ -336,7 +336,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Gen.Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -406,7 +406,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+  Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
 
 let is_sat_weaken (pe : formula)  (sat_no : string): bool =
   let pe = drop_rel_formula pe in
@@ -476,7 +476,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 
 (* let is_valid (pe : formula) timeout: bool = *)
 (*   let pf = !print_pure in *)
-(*   Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
+(*   Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
 
 let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
@@ -625,7 +625,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
+  Debug.no_1 "Omega.simplify" pf pf simplify pe
 
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
@@ -703,7 +703,7 @@ let simplify (pe : formula) : formula =
 
 (* let simplify_memo (pe : formula) : formula = *)
 (*   let pf = !print_pure in *)
-(*   Gen.Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
+(*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
 let simplify (pe : formula) : formula =
   match (do_with_check "" simplify pe)

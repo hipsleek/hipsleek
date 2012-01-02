@@ -344,7 +344,7 @@ let is_eq_view_name a b =
     | {h_formula_view_name = c1;}, {h_formula_view_name = c2;}-> c1=c2
 
 let is_eq_view_name a b =
-  Gen.Debug.no_2 "is_eq_view_name" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_name a b) 
+  Debug.no_2 "is_eq_view_name" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_name a b) 
       a.h_formula_view_name b.h_formula_view_name
 
 let is_eq_view_ann a b =
@@ -362,7 +362,7 @@ let is_eq_view_spec a b =
     | {h_formula_view_remaining_branches = c1;}, {h_formula_view_remaining_branches = c2;}-> br_match c1 c2)
 
 let is_eq_view_spec a b =
-  Gen.Debug.no_2 "is_eq_view_spec" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_spec a b) 
+  Debug.no_2 "is_eq_view_spec" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_spec a b) 
       a.h_formula_view_name b.h_formula_view_name
 
 (* returns false if unsatisfiable *)
@@ -548,7 +548,7 @@ and isStrictConstTrue_x f = match f with
   | _ -> false
 
 and isStrictConstTrue (f:formula) = 
-  Gen.Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
+  Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HTrue;
@@ -573,7 +573,7 @@ and is_coercible_x (h : h_formula) : bool = match h with
   | _ -> false
 
 and is_coercible (h : h_formula) : bool =
-  Gen.Debug.no_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
+  Debug.no_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
 
 
 (*
@@ -665,7 +665,7 @@ and subsume_flow t1 t2 : bool =
 
 (* and subsume_flow n p : bool =  *)
 (*   let pr1 = pr_pair string_of_int  string_of_int in *)
-(*   Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p  *)
+(*   Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p  *)
 
 (* and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1) *)
 
@@ -686,13 +686,13 @@ and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formu
 
 (* and subsume_flow_ff i f1 f2 :bool =  *)
 (*   let pr = !print_flow_formula in *)
-(*   Gen.Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2 *)
+(*   Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2 *)
 
 and overlap_flow_ff f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formula_flow_interval
 
 (* and overlap_flow_ff f1 f2 :bool =  *)
 (*   let pr = !print_flow_formula in *)
-(*   Gen.Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2 *)
+(*   Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2 *)
 
 and get_flow_from_stack c l pos = 
   try
@@ -819,7 +819,7 @@ and flow_formula_of_struc_formula (f:struc_formula):flow_formula=
   fold_left_compare_flows flow_list
 
 and substitute_flow_in_f to_flow from_flow (f:formula):formula = 
-  Gen.Debug.no_3 "substitute_flow_in_f" string_of_flow string_of_flow !print_formula !print_formula (fun _ _ _ -> substitute_flow_in_f_x to_flow from_flow f) to_flow from_flow f
+  Debug.no_3 "substitute_flow_in_f" string_of_flow string_of_flow !print_formula !print_formula (fun _ _ _ -> substitute_flow_in_f_x to_flow from_flow f) to_flow from_flow f
 
 and substitute_flow_in_f_x to_flow from_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
@@ -857,7 +857,7 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
   let pr = !print_flow_formula in
   let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
-  Gen.Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
+  Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
 
 (*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
 and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
@@ -1066,7 +1066,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Gen.Debug.no_2 "mkstar_combine"
+  Debug.no_2 "mkstar_combine"
       (!print_formula)
       (!print_formula)
       (!print_formula)
@@ -1225,7 +1225,7 @@ and get_view_modes_x (h : h_formula) = match h with
 
 and get_view_modes (h : h_formula) =
   let pr l = string_of_int (List.length l) in 
-  Gen.Debug.no_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
+  Debug.no_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
   
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
@@ -1242,7 +1242,7 @@ and get_data_derv (h : h_formula) = match h with
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
   let pr2 = !print_ident_list in
-  Gen.Debug.no_2 "h_add_origins" pr pr2 pr h_add_origins_a h origs
+  Debug.no_2 "h_add_origins" pr pr2 pr h_add_origins_a h origs
 
 and h_add_origins_a (h : h_formula) origs =
   let rec helper h = match h with
@@ -1260,7 +1260,7 @@ and h_add_origins_a (h : h_formula) origs =
 and h_add_perm (h : h_formula) (permvar:cperm_var) : h_formula = 
   let pr = !print_h_formula in
   let pr2 = !print_spec_var in
-  Gen.Debug.no_2 "h_add_perm" pr pr2 pr h_add_perm_a h permvar
+  Debug.no_2 "h_add_perm" pr pr2 pr h_add_perm_a h permvar
 
 and h_add_perm_a (h : h_formula) (permvar:cperm_var) : h_formula=
   let rec helper h = match h with
@@ -1451,7 +1451,7 @@ and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs =
 and add_origins (f : formula) origs = 
   let pr = !print_formula in
   let pr2 = !print_ident_list in
-  Gen.Debug.no_2 "add_origins" pr pr2 pr add_origins_a f origs
+  Debug.no_2 "add_origins" pr pr2 pr add_origins_a f origs
 
 and add_origins_a (f : formula) origs = 
   let rec helper f = match f with
@@ -1809,7 +1809,7 @@ and br_fv br init_l: CP.spec_var list =
 and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list =
   let pr1 = !print_struc_formula in
   let pr2 = !print_svl in
-  Gen.Debug.no_1 "f_top_level_vars_struc" pr1 pr2 f_top_level_vars_struc_x f
+  Debug.no_1 "f_top_level_vars_struc" pr1 pr2 f_top_level_vars_struc_x f
 
 and f_top_level_vars_struc_x (f:struc_formula) : CP.spec_var list = 
   let rec helper f = match f with
@@ -1830,7 +1830,7 @@ and f_top_level_vars_x (f : formula) : CP.spec_var list = match f with
 and f_top_level_vars (f : formula) : CP.spec_var list = 
   let pr1 = !print_formula in
   let pr2 = !print_svl in
-  Gen.Debug.no_1 "f_top_level_vars" pr1 pr2 f_top_level_vars_x f 
+  Debug.no_1 "f_top_level_vars" pr1 pr2 f_top_level_vars_x f 
 
 
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
@@ -1853,7 +1853,7 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
-  Gen.Debug.no_3 "subst_avoid_capture" 
+  Debug.no_3 "subst_avoid_capture" 
       (add_str "from vars:" !print_svl) 
       (add_str "to vars:" !print_svl)
       !print_formula 
@@ -1872,7 +1872,7 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   f2
       
 and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
-  Gen.Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
+  Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
       (fun _ _ _ -> subst_avoid_capture_h_x fr t f) fr t f
 
 and subst_avoid_capture_h_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
@@ -1967,7 +1967,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 
 (*LDK: add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formula): struc_formula =
-  Gen.Debug.no_2 "add_mix_formula_to_struc_formula"
+  Debug.no_2 "add_mix_formula_to_struc_formula"
       !print_mix_formula !print_struc_formula !print_struc_formula
       add_mix_formula_to_struc_formula_x rhs_p f 
 
@@ -2034,7 +2034,7 @@ and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula 
 
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =
-  Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
+  Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
       !print_formula
       add_mix_formula_to_formula_x f1_mix f2_f
 
@@ -2113,7 +2113,7 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
 and subst sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
 
 and subst_x sst (f : formula) =
   let rec helper f =
@@ -2239,7 +2239,7 @@ and h_subst sst (f : h_formula) =
 and subst_one_by_one sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_x sst f 
+  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_x sst f 
 
 and subst_one_by_one_x sst (f : formula) = match sst with
   | s :: rest -> subst_one_by_one_x rest (apply_one s f)
@@ -2248,7 +2248,7 @@ and subst_one_by_one_x sst (f : formula) = match sst with
 and subst_one_by_one_h sst (f : h_formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_h_formula in
-  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
+  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
 
 and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
@@ -2405,7 +2405,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
     end
 
 and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
-  Gen.Debug.no_1_num i "normalize" (!print_formula) (!print_formula) (fun _ -> normalize_x f1 f2 pos) f1
+  Debug.no_1_num i "normalize" (!print_formula) (!print_formula) (fun _ -> normalize_x f1 f2 pos) f1
 	    
 and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
@@ -2413,11 +2413,11 @@ and normalize_x (f1 : formula) (f2 : formula) (pos : loc) =
       (* todo: check if this is ok *)
 
 (* and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) =  *)
-(*   Gen.Debug.no_1 "normalize_replace" pr_no pr_no (fun _ -> normalize_replace_x f1 f2 pos) f1 *)
+(*   Debug.no_1 "normalize_replace" pr_no pr_no (fun _ -> normalize_replace_x f1 f2 pos) f1 *)
 
 (*LDK*)
 and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
-  Gen.Debug.no_2 "normalize_replace" !print_formula !print_formula !print_formula
+  Debug.no_2 "normalize_replace" !print_formula !print_formula !print_formula
       (fun _ _ -> normalize_replace_x f1 f2 pos) f1 f2
 
 and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
@@ -2453,7 +2453,7 @@ and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f
 
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
   let pr = !print_formula in
-  Gen.Debug.no_2 "normalize_combine_star" pr pr pr 
+  Debug.no_2 "normalize_combine_star" pr pr pr 
       (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
 
 and normalize_combine_conj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -2506,7 +2506,7 @@ and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1
 (* normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) *)
 
 and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = 
-  Gen.Debug.no_2 "normalize_only_clash_rename" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_only_clash_rename_x f1 f2 pos) f1 f2
+  Debug.no_2 "normalize_only_clash_rename" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_only_clash_rename_x f1 f2 pos) f1 f2
 
 and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
@@ -2676,7 +2676,7 @@ and rename_bound_vars (f : formula) = rename_bound_vars_x f
 
 (*
   and rename_bound_vars (f : formula) = 
-  Gen.Debug.no_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
+  Debug.no_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
 *)
 
 and rename_bound_vars_x (f : formula) = match f with
@@ -2698,7 +2698,7 @@ and rename_bound_vars_x (f : formula) = match f with
 		resform
 
 and propagate_perm_formula (f : formula) (permvar:cperm_var) : formula =
-  Gen.Debug.no_2 "propagate_perm_formula"
+  Debug.no_2 "propagate_perm_formula"
       !print_formula
       !print_spec_var
       !print_formula
@@ -2866,7 +2866,7 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let pr1 = !print_formula in
   let pr3 = !print_svl in
-   Gen.Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
+   Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
 	  
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
@@ -2892,7 +2892,7 @@ and get_var_type_x v (f: formula): (typ * bool) =
 
 and get_var_type v (f: formula): (typ * bool) = 
   let pr2 = pr_pair string_of_typ string_of_bool in
-  Gen.Debug.no_2 "get_var_type" 
+  Debug.no_2 "get_var_type" 
       pr_id !print_formula pr2
       (fun _ _ -> get_var_type_x v f) v f
 
@@ -2941,6 +2941,12 @@ type entail_state = {
   es_evars : CP.spec_var list; (* existential variables on RHS *)
 
   (* WN : What is es_pure for? *)
+    (*  It is added into the residue in
+the method "heap_entail_empty_rhs_heap" but only when we do folding. It
+is the pure constraints of the RHS when there is no heap. This es_pure
+will be split into to_ante and to_conseq when ~Sprocess_fold_result~T. I
+think it is used to instantiate when folding.
+    *)
   es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
 
   (*used by universal LEMMAS for instantiation? *)
@@ -3125,7 +3131,7 @@ let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
 let succ_context_of_failesc_context ((_,_,sl) as x) =
   let pr = !print_failesc_context in
   let pr2 = !print_context_short in
-  Gen.Debug.no_1 "succ_context_of_failesc_context" pr pr2
+  Debug.no_1 "succ_context_of_failesc_context" pr pr2
       succ_context_of_failesc_context x
 
 let es_fv (es:entail_state) : CP.spec_var list =
@@ -3207,7 +3213,7 @@ let isFailCtx cl = match cl with
 	| SuccCtx _ -> false
 
 let isFailCtx cl = 
-  Gen.Debug.no_1 "isFailCtx" 
+  Debug.no_1 "isFailCtx" 
       !print_list_context_short string_of_bool isFailCtx cl
 
 let get_must_error_from_ctx cs = 
@@ -3376,7 +3382,7 @@ let gen_rand (m1,n1,e1) (m2,n2,e2)=
                          | None -> tmp
                          | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
-  Gen.Debug.no_2 "gen_rand" pr pr pr1 (fun x y -> gen_rand_x x y) (m1,n1,e1) (m2,n2,e2)
+  Debug.no_2 "gen_rand" pr pr pr1 (fun x y -> gen_rand_x x y) (m1,n1,e1) (m2,n2,e2)
 
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
@@ -3408,7 +3414,7 @@ let gen_lor (m1,n1,e1) (m2,n2,e2)=
                          | None -> tmp
                          | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
-  Gen.Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
+  Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
 
 
 (*gen_ror*)
@@ -3438,7 +3444,7 @@ let gen_ror (m1,n1,e1) (m2,n2,e2)=
                          | None -> tmp
                          | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
-  Gen.Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
+  Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
 
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
@@ -3465,7 +3471,7 @@ let get_failure_es_ft (ft:fail_type) : (failure_kind * (entail_state option)) =
                          | None -> tmp
                          | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
-  Gen.Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
+  Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
 
 let get_failure_ft (ft:fail_type) : (failure_kind) =
   fst (get_failure_es_ft ft)
@@ -3598,7 +3604,7 @@ let convert_must_failure_to_value_orig (l:list_context) : list_context =
 
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
  let pr = !print_list_context_short in
-  Gen.Debug.no_1 "convert_must_failure_to_value_orig" pr pr
+  Debug.no_1 "convert_must_failure_to_value_orig" pr pr
   (fun _ -> convert_must_failure_to_value_orig l) l
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
@@ -3709,7 +3715,7 @@ let remove_dupl_false (sl:branch_ctx list) =
 
 let remove_dupl_false (sl:branch_ctx list) = 
   let pr n = string_of_int(List.length n) in
-  Gen.Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
+  Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
 
 let remove_dupl_false_context_list (sl:context list) = 
   let nl = (List.filter (fun oc -> not (isAnyFalseCtx oc) ) sl) in
@@ -3761,7 +3767,7 @@ let es_simplify (e1:entail_state):entail_state =
 
 let es_simplify e1 = 
   let pr  = !print_entail_state in
-  Gen.Debug.no_1 "es_simplify" pr pr es_simplify e1
+  Debug.no_1 "es_simplify" pr pr es_simplify e1
 
 let rec collect_pre_pure ctx = 
   match ctx with
@@ -3822,7 +3828,7 @@ let add_infer_pure_to_ctx cp ctx =
   in helper ctx
 
 let add_infer_pure_to_ctx cp ctx =
-  Gen.Debug.no_1 "add_infer_pure_to_ctx"
+  Debug.no_1 "add_infer_pure_to_ctx"
       (pr_list !print_pure_f) pr_no
       (fun _ -> add_infer_pure_to_ctx cp ctx) cp
 
@@ -3842,7 +3848,7 @@ let add_infer_pure_to_list_context cp (l : list_context) : list_context  =
 
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   let pr = !print_list_context_short in
-  Gen.Debug.no_2 "add_infer_pure_to_list_context"
+  Debug.no_2 "add_infer_pure_to_list_context"
       (pr_list !print_pure_f) pr pr
       add_infer_pure_to_list_context cp l
 
@@ -3896,7 +3902,7 @@ let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_cont
 
 let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.no_1 "list_failesc_context_simplify" pr pr list_failesc_context_simplify l 
+  Debug.no_1 "list_failesc_context_simplify" pr pr list_failesc_context_simplify l 
 
 
 let mk_empty_frame () : (h_formula * int ) = 
@@ -4045,7 +4051,7 @@ let or_context_list (cl10 : context list) (cl20 : context list) : context list =
 
 let or_context_list cl10 cl20 =
   let pr = !print_context_list_short in
-  Gen.Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
+  Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
   
 let mkFailContext msg estate conseq pid pos = {
   fc_prior_steps = estate.es_prior_steps ;
@@ -4150,7 +4156,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 
 let simplify_ctx_elim_false_dupl t1 t2 =
   let pr = !print_context_list_short in
-  Gen.Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+  Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
 
@@ -4175,7 +4181,7 @@ match c1,c2 with
 
 let list_context_union c1 c2 =
   let pr = !print_list_context_short in
-  Gen.Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+  Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
       pr pr pr
       list_context_union_x c1 c2 
 
@@ -4248,7 +4254,7 @@ and isMayFailCtx cl = match cl with
 and fold_context_left c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-  Gen.Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
+  Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
 
 (* Fail U Succ --> Succ *)
 (* Fail m1 U Fail m2 --> And m1 m2 *)
@@ -4313,7 +4319,7 @@ and fold_list_context_or c_l = match List.length c_l with
 
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
-  Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
+  Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
 
 (* can remove redundancy here? *)
 
@@ -4341,7 +4347,7 @@ let isSuccessListPartialCtx cl =
 
 let isSuccessListPartialCtx cl =
   let pr = !print_list_partial_context in
-  Gen.Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
+  Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
   
 let isSuccessListFailescCtx cl =
   cl==[] || List.exists isSuccessFailescCtx cl 
@@ -4349,7 +4355,7 @@ let isSuccessListFailescCtx cl =
 let isSuccessListFailescCtx cl =
   (* let cl = list_failesc_context_simplify cl in *)
   let pr = !print_list_failesc_context in
-  Gen.Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
+  Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
@@ -4401,7 +4407,7 @@ let remove_true_conj_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
 
 (*remove v=v from formula*)
 let remove_true_conj_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.no_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
+  Debug.no_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_true_conj_mix_formula_x f
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_pure (p:CP.formula) =
@@ -4420,7 +4426,7 @@ let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
   )
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
+  Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_eq_mix_formula_x f
 
 (*remove v=v from formula*)
@@ -4438,7 +4444,7 @@ let remove_dupl_conj_eq_formula_x (f:formula):formula =
   in helper f
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_formula (f:formula):formula = 
-  Gen.Debug.no_1 "remove_dupl_conj_eq_formula" !print_formula !print_formula 
+  Debug.no_1 "remove_dupl_conj_eq_formula" !print_formula !print_formula 
       remove_dupl_conj_eq_formula_x f
 
 (*remove v=v from formula*)
@@ -4447,6 +4453,7 @@ let remove_dupl_conj_estate (estate:entail_state) : entail_state =
   let mix_f1 = remove_dupl_conj_eq_mix_formula mix_f in
   {estate with es_pure=mix_f1,rest}
 
+  (* Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl *)
 
   
 
@@ -4464,11 +4471,11 @@ let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_contex
 
 let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = 
   let pr x = string_of_int(List.length x) in
-  Gen.Debug.no_2 "list_partial_context_union" pr pr pr list_partial_context_union l1 l2
+  Debug.no_2 "list_partial_context_union" pr pr pr list_partial_context_union l1 l2
 
 let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = 
   let pr x = string_of_int(List.length x) in
-  Gen.Debug.no_2 "list_failesc_context_union" pr pr pr list_failesc_context_union l1 l2
+  Debug.no_2 "list_failesc_context_union" pr pr pr list_failesc_context_union l1 l2
 
 
 let select n l = 
@@ -4524,7 +4531,7 @@ let rec merge_esc f e1 e2 =
 
 let merge_esc f e1 e2 =
   let pr1 x = "#"^(!print_esc_stack x)^"#" in
-  Gen.Debug.no_2 "merge_esc" pr1 pr1 pr_no (fun _ _ -> merge_esc f e1 e2) e1 e2 
+  Debug.no_2 "merge_esc" pr1 pr1 pr_no (fun _ _ -> merge_esc f e1 e2) e1 e2 
 
 let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
   let s1 = remove_dupl_false s1 in
@@ -4542,7 +4549,7 @@ let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_
 
 let merge_failesc_context_or f (((f1,e1,s1):failesc_context) as x1) (((f2,e2,s2):failesc_context) as x2) : failesc_context =
   let pr = !print_failesc_context in
-  Gen.Debug.no_2 "merge_failesc_context_or" pr pr pr
+  Debug.no_2 "merge_failesc_context_or" pr pr pr
       (fun _ _ -> merge_failesc_context_or f (x1) (x2)) x1 x2
 
 
@@ -4558,14 +4565,14 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Gen.Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.no_2 "list_failesc_context_or" 
+  Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
@@ -4728,7 +4735,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Gen.Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
 (* and simplify_context_0 (ctx:context):context =  *)
@@ -5037,7 +5044,7 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr1 xs1
   in
   let pr2 = pr_option !print_h_formula in
-  Gen.Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
+  Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
   join_star_conjunctions_opt_x hs
 
 
@@ -5060,7 +5067,7 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
       | [] -> ""
       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
   in
-  Gen.Debug.no_1 "split_star_conjunctions" !print_h_formula pr
+  Debug.no_1 "split_star_conjunctions" !print_h_formula pr
   split_star_conjunctions_x f
 
 let type_of_formula (f: formula) : formula_type =
@@ -5127,7 +5134,7 @@ let rec struc_to_formula_x (f0:struc_formula):formula =
 and struc_to_formula f0 :formula = 
   let pr1 = !print_struc_formula in
   let pr2 = !print_formula in
-  Gen.Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
+  Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
 
 (* An Hoa : construct pre-condition from a structured spec formula *)
 let rec struc_to_precond_formula (f0 : struc_formula) : formula =
@@ -5271,7 +5278,7 @@ and set_es_evars (c:context)(v:Cpure.spec_var list):context =
   
 and case_to_disjunct f  =
   let pr = !print_struc_formula in
-  Gen.Debug.no_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
+  Debug.no_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
 
 and case_to_disjunct_x f  =
   let rec push_pure c f =  match f with
@@ -5507,7 +5514,7 @@ let transform_formula_x f (e:formula):formula =
 
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
-  Gen.Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+  Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
 	let r =  f e in 
@@ -5517,7 +5524,7 @@ let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permva
 
 let transform_formula_w_perm (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let pr = !print_formula in
-  Gen.Debug.no_3 "transform_formula_w_perm" 
+  Debug.no_3 "transform_formula_w_perm" 
       (fun _ -> "f") pr !print_spec_var pr 
       transform_formula_w_perm_x f e permvar
 
@@ -5575,7 +5582,7 @@ let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permva
 
 let transform_formula_w_perm (f:formula -> formula option) (e:formula) (permvar:cperm_var):formula =
   let pr = !print_formula in
-  Gen.Debug.no_3 "transform_formula_w_perm" 
+  Debug.no_3 "transform_formula_w_perm" 
       (fun _ -> "f") pr !print_spec_var pr 
       transform_formula_w_perm_x f e permvar
 
@@ -6191,7 +6198,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     (elim_ex_fn: context -> context) = 
   let pr1 = pr_option (pr_pair string_of_typ pr_id) in
   let pr2 = !print_entail_state in
-  Gen.Debug.no_2 "conv_elim_res" pr1 pr2 !print_context_short
+  Debug.no_2 "conv_elim_res" pr1 pr2 !print_context_short
       (fun _ _ -> conv_elim_res cvar c elim_ex_fn) cvar c
 
 (* convert entail state to ctx with nf flow *)
@@ -6259,7 +6266,7 @@ let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
   let pr2 = !print_flow in
-  Gen.Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
+  Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
 	
 let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
@@ -6301,7 +6308,7 @@ let add_to_context (c:context) (s:string) =
 
 let add_to_context_num i (c:context) (s:string) = 
   let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in  
-  Gen.Debug.no_1_num i "add_to_context" pr pr_no (fun _ -> add_to_context c s) c
+  Debug.no_1_num i "add_to_context" pr pr_no (fun _ -> add_to_context c s) c
 
 let add_to_estate (es:entail_state) (s:string) = 
   {es with es_prior_steps = s::es.es_prior_steps; }
@@ -6355,7 +6362,7 @@ let rec string_of_list_of_pair_formula ls =
 and split_struc_formula f0 = split_struc_formula_a f0
 
 and split_struc_formula_debug f0 =
-  Gen.Debug.no_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
+  Debug.no_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
 (* split the struc_formula into the list of pre/post pairs *)  
 and split_struc_formula_a (f0:struc_formula):(formula*formula) list = 
 	let rec ext_to_formula (f:ext_formula):(formula*formula) list = match f with
@@ -6416,7 +6423,7 @@ let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_for
   let pr1 x = match x with
     | None -> "None"
     | Some l -> "Some"^string_of_int(List.length l) in
-  Gen.Debug.no_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
+  Debug.no_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
   
 let rec label_view (f0:struc_formula):struc_formula = 
   let rec label_formula (f:formula):formula = match f with
@@ -6504,7 +6511,7 @@ let propagate_perm_struc_formula_x e (permvar:cperm_var)=
     transform_struc_formula_w_perm f e permvar
 
 let propagate_perm_struc_formula e (permvar:cperm_var)=
-  Gen.Debug.no_2 "propagate_perm_struc_formula" 
+  Debug.no_2 "propagate_perm_struc_formula" 
       !print_struc_formula !print_spec_var !print_struc_formula 
       propagate_perm_struc_formula_x  e permvar
 
@@ -6522,7 +6529,7 @@ let propagate_perm_struc_formula_x e (permvar:cperm_var)=
     transform_struc_formula_w_perm f e permvar
 
 let propagate_perm_struc_formula e (permvar:cperm_var)=
-  Gen.Debug.no_2 "propagate_perm_struc_formula" 
+  Debug.no_2 "propagate_perm_struc_formula" 
       !print_struc_formula !print_spec_var !print_struc_formula 
       propagate_perm_struc_formula_x  e permvar
 
@@ -6646,7 +6653,7 @@ let is_no_heap_ext_formula (e : ext_formula) : bool =
 
 let is_no_heap_ext_formula (e : ext_formula) : bool = 
   let pr = !print_ext_formula in
-  Gen.Debug.no_1 "is_no_heap_ext_formula" pr string_of_bool is_no_heap_ext_formula e 
+  Debug.no_1 "is_no_heap_ext_formula" pr string_of_bool is_no_heap_ext_formula e 
 
 let extr_rhs_b (e:formula) =
   let h1, p1, fl1, br1, t1 = split_components e in
@@ -7117,7 +7124,7 @@ and simp_ann heap pures =
   let pr1 = !print_h_formula in
   let pr2 = pr_list !print_pure_f in
   let pr3 = pr_pair pr1 pr2 in
-  Gen.Debug.no_2 "simp_ann" pr1 pr2 pr3
+  Debug.no_2 "simp_ann" pr1 pr2 pr3
     (fun _ _ -> simp_ann_x heap pures) heap pures
      
 let rec simplify_fml_ann fml = match fml with

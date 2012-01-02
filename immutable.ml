@@ -17,12 +17,12 @@ module TP = Tpdispatcher
 module IF = Iformula
 module IP = Iprinter
 
-let rec split_phase_debug_lhs h = Gen.Debug.no_1 "split_phase(lhs)"
+let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
 
-and split_phase_debug_rhs h = Gen.Debug.no_1 "split_phase(rhs)"
+and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
@@ -30,7 +30,7 @@ and split_phase_debug_rhs h = Gen.Debug.no_1 "split_phase(rhs)"
 and split_phase (h : h_formula) : (h_formula * h_formula * h_formula )= 
   let pr = Cprinter.string_of_h_formula in
   let pr2 = pr_triple pr pr pr in
-  Gen.Debug.no_1 "split_phase" pr pr2 split_phase_x h
+  Debug.no_1 "split_phase" pr pr2 split_phase_x h
 
 and split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
   let h = remove_true_rd_phase h in
@@ -117,7 +117,7 @@ and consume_heap_h_formula (f : h_formula) : bool =  match f with
 
        
 and is_lend_debug f = 
-  Gen.Debug.no_1 "is_lend"
+  Debug.no_1 "is_lend"
       (!print_formula)
       (string_of_bool)
       is_lend f
@@ -131,7 +131,7 @@ and is_lend (f : formula) : bool =  match f with
         (is_lend f1) or (is_lend f2)
             
 and is_lend_h_formula_debug f = 
-  Gen.Debug.no_1 "is_lend_h_formula"
+  Debug.no_1 "is_lend_h_formula"
       (!print_h_formula)
       (string_of_bool)
       is_lend_h_formula f
@@ -163,7 +163,7 @@ and is_lend_h_formula (f : h_formula) : bool =  match f with
 
 
 and contains_phase_debug (f : h_formula) : bool =  
-  Gen.Debug.no_1 "contains_phase"
+  Debug.no_1 "contains_phase"
       (!print_h_formula) 
       (string_of_bool)
       (contains_phase)
@@ -182,7 +182,7 @@ let rec iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann =
       CF.PolyAnn(CP.SpecVar (AnnT, id, p))
 
 and normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
-  Gen.Debug.no_1 "normalize_h_formula"
+  Debug.no_1 "normalize_h_formula"
     (IP.string_of_h_formula)
     (IP.string_of_h_formula)
     (fun _ -> normalize_h_formula_x h wr_phase) h
@@ -457,7 +457,7 @@ and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula =
 (* M <: I <: L *)
 
 and subtype_ann (imm1 : ann) (imm2 : ann) : bool = 
-    Gen.Debug.no_2 "subtype_ann" 
+    Debug.no_2 "subtype_ann" 
       (Cprinter.string_of_imm) 
       (Cprinter.string_of_imm) 
       string_of_bool 
@@ -525,7 +525,7 @@ and pop_cont_es (es : entail_state) : (h_formula * entail_state) =
 and push_crt_holes_list_ctx (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = pr_no (* pr_list (pr_pair string_of_h_formula string_of_int ) *) in
-  Gen.Debug.no_2 "push_crt_holes_list_ctx" pr1 pr2 pr1 (fun _ _-> push_crt_holes_list_ctx_x ctx holes) ctx holes
+  Debug.no_2 "push_crt_holes_list_ctx" pr1 pr2 pr1 (fun _ _-> push_crt_holes_list_ctx_x ctx holes) ctx holes
       
 and push_crt_holes_list_ctx_x (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
   match ctx with

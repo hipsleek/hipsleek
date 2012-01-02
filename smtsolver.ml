@@ -198,7 +198,7 @@ let rec smt_of_formula f =
 		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
 
 let smt_of_formula f =
-  Gen.Debug.no_1 "smt_of_formula" !print_pure pr_id smt_of_formula f 
+  Debug.no_1 "smt_of_formula" !print_pure pr_id smt_of_formula f 
 
 (***************************************************************
                        FORMULA INFORMATION                      
@@ -644,7 +644,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Gen.Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -930,7 +930,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Gen.Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _ -> smt_imply_x ante conseq prover timeout) (ante,conseq) timeout
 
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -994,7 +994,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Gen.Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -1035,7 +1035,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover): bool =
 	let pr = !print_pure in
-	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
+	Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
 let is_sat f sat_no =
@@ -1045,7 +1045,7 @@ let is_sat f sat_no =
 let is_sat_with_check (pe : CP.formula) sat_no : bool option =
   CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
-(* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
+(* let is_sat f sat_no = Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
 
 let is_sat (pe : CP.formula) sat_no : bool =
   try

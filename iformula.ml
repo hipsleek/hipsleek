@@ -556,11 +556,11 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 	in Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f0))
  
 and struc_split_fv_debug f0 wi =
-  Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+  Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
 
 and struc_split_fv f0 wi =
-  Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+  Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
 
 
@@ -646,7 +646,7 @@ let formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_continuation = [];
 		 			formula_ext_pos = b.formula_exists_pos})]
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
-	Gen.Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
+	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
   
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
@@ -893,7 +893,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 
 and float_out_exps_from_heap (f:formula ):formula = float_out_exps_from_heap_x f
 (* let pr = Iprinter.string_of_formula in *)
-(* Gen.Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
+(* Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
 
 and float_out_exps_from_heap_x (f:formula ):formula = 
 	
