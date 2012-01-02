@@ -5,8 +5,6 @@ open Lexing
 
 let loc = no_pos;;
 
-let typ = ref "";;
-
 let expression = Gram.Entry.mk "expression";;
 
 let formula = Gram.Entry.mk "formula";;
@@ -21,13 +19,13 @@ EXTEND Gram
 GLOBAL: expression formula pformula exp specvar;
   expression:
   [ "expression" NONA
-    [ x = formula -> typ := "node"; x ]
+    [ x = LIST1 formula -> x ]
   ];
 
   formula:
   [ "formula" LEFTA
-    [ "("; x = SELF; "&&"; y = SELF; ")" -> And (x, y, loc) 
-    | x = pformula -> BForm ((x, None), None) ]			
+    [ x = SELF; "&&"; y = SELF -> And (x, y, loc)
+    | x = pformula -> BForm ((x, None), None) ]
   ];
 
   pformula:
@@ -35,23 +33,23 @@ GLOBAL: expression formula pformula exp specvar;
     [ x = INT; "="; y = INT ->
       if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc)
     |	x = exp; "<"; y = exp ->
-      if is_self_var y then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      if is_self_var y then Neq (Var(SpecVar(UNK, self, Unprimed), loc), Null loc, loc)
       else
       if is_zero x then Neq (y, Null loc, loc)
       else Lt (x, y, loc) 
     | x = exp; ">"; y = exp ->
-      if is_self_var x then Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      if is_self_var x then Neq (Var(SpecVar(UNK, self, Unprimed), loc), Null loc, loc)
       else 
       if is_zero y then Neq (x, Null loc, loc)
       else Gt (x, y, loc) 
     | x = exp; "<="; y = exp ->
-      if is_self_var x then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      if is_self_var x then Eq (Var(SpecVar(UNK, self, Unprimed), loc), Null loc, loc)
       else
       if is_zero y then Eq (x, Null loc, loc)
       else
       Lte (x, y, loc)
     | x = exp; ">="; y = exp ->
-      if is_self_var y then Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+      if is_self_var y then Eq (Var(SpecVar(UNK, self, Unprimed), loc), Null loc, loc)
       else
       if is_zero x then Eq (y, Null loc, loc)
       else
@@ -72,7 +70,9 @@ GLOBAL: expression formula pformula exp specvar;
 		
   specvar:
   [ "specvar" NONA
-    [ x = LIDENT -> SpecVar (Int, x, Unprimed)]
+    [ x = LIDENT -> SpecVar (Int, x, Unprimed)
+    | x = UIDENT -> SpecVar (Int, x, Unprimed)
+    ]
   ]; 
 
 END

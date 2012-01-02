@@ -373,14 +373,14 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
-                                let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None 
-                                  else (
+                                let post_fml = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None 
+(*                                  else ( *)
 (*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));*)
-                                    let (rel_fml, fixpoint) = Fixcalc.compute_fixpoint rels in
+(*                                    let (rel_fml, fixpoint) = Fixcalc.compute_fixpoint rels in*)
 (*                                    print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);*)
 (*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml);         *)
 (*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);             *)
-                                    Solver.simplify_post post_fml post_vars prog (Some (rel_fml, fixpoint)))
+(*                                    Solver.simplify_post post_fml post_vars prog (Some (rel_fml, fixpoint)))*)
                                 in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
@@ -1114,8 +1114,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let _ = 
                           if rels = [] then ()
                           else (
-                            let (_, fixpoint) = Fixcalc.compute_fixpoint rels in
-                            print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);)
+                            let (_, post, pre) = Fixcalc.compute_fixpoint rels in
+                            print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
+                            print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);)
                         in
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
