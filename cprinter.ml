@@ -1315,7 +1315,8 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
+  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure;
+  pr_vwrap "es_orig_ante: " pr_formula es.es_orig_ante; 
   (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
@@ -1336,6 +1337,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_vwrap "es_var_measures: " (pr_opt (fun (l1, l2) -> 
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2)) es.es_var_measures;
+  (*
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
@@ -1343,6 +1345,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
+  *)
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
@@ -1570,7 +1573,7 @@ let pr_successful_states e = match e with
   | _ ->   
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context_short fs)) e
+		  pr_vwrap "State:" pr_context(*_short*) fs)) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e

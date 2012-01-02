@@ -796,9 +796,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                     CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
                         (lb,estk,nlbctx)) sctx
                   in*)
-                  (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
+                  let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
-                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
+                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in
                   let renamed_spec = CF.subst_struc st1 renamed_spec in
                   let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
@@ -807,9 +807,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   
                   (* Termination checking *)
                   let term_res = 
-                    if ir then 
-                      DD.devel_pprint (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<") pos 
-                    else ()
+                    if ir & (CF.has_variance_struc stripped_spec) then
+                      let _ = DD.devel_zprint 
+                        (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
+                      if not (CF.isNonFalseListFailescCtx sctx) then
+                        let _ = Term.add_unreachable_res sctx pos in ()
+                      else ()
+                   else ()
                   in 
                                    
                   (* TODO: call the entailment checking function in solver.ml *)
@@ -838,7 +842,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.string_of_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
-                  Gen.Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+                  Gen.Debug.ho_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
 				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin

@@ -3121,6 +3121,9 @@ let succ_context_of_failesc_context ((_,_,sl) as x) =
   let pr2 = !print_context_short in
   Gen.Debug.no_1 "succ_context_of_failesc_context" pr pr2
       succ_context_of_failesc_context x
+			
+let succ_context_of_list_failesc_context ctx = 
+	List.map succ_context_of_failesc_context ctx
 
 let es_fv (es:entail_state) : CP.spec_var list =
   (fv es.es_formula)@(h_fv es.es_heap)
@@ -3785,6 +3788,11 @@ let rec collect_formula ctx =
   | Ctx estate -> [estate.es_formula]
   | OCtx (ctx1, ctx2) -> (collect_formula ctx1) @ (collect_formula ctx2) 
 
+let rec collect_orig_ante ctx =
+	match ctx with
+	| Ctx estate -> [estate.es_orig_ante]
+	| OCtx (ctx1, ctx2) -> (collect_orig_ante ctx1) @ (collect_orig_ante ctx2)
+
 let rec add_pre_heap ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_heap 
@@ -3864,6 +3872,11 @@ let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context =
   let cs = remove_dupl_false cs in
   let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
   (l,a,newcs)
+
+let failesc_context_simplify (ctx: failesc_context) : failesc_context =
+  let pr = !print_failesc_context in
+  Gen.Debug.no_1 "failesc_context_simplify" pr pr
+    failesc_context_simplify ctx
 
 let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_context = 
   List.map failesc_context_simplify l
