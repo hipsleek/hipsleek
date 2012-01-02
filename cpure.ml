@@ -251,8 +251,7 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	    (* translation has ensured well-typedness.
-		   We need only to compare names and primedness *)
+	    (* We need only to compare names  of permission variables*)
 	    v1 = v2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl

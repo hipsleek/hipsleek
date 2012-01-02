@@ -41,3 +41,14 @@ requires true
   dprint;
   assert i'=0 & j'=1;
 }
+
+void testabc(int x)
+  requires true
+  ensures true;
+{
+  dprint;
+  assert x'=x;
+  x=0;
+  dprint;
+  assert x'=0;
+}

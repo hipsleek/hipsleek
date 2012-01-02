@@ -4988,7 +4988,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
           let new_ctx = Ctx new_es in
 	      Debug.devel_pprint ("process_thread_one_match:"^"\n ### ante = " ^ (Cprinter.string_of_estate new_es)^"\n ###  conseq = " ^ (Cprinter.string_of_formula base_f2)) pos;
           (*a thread is a post-condition of its method. Therefore, it only has @full*)
-          let rs0, prf0 = heap_entail_conjunct_helper 1 prog false new_ctx base_f2 [] pos in
+          let rs0, prf0 = heap_entail_conjunct_helper 1 prog false new_ctx base_f2 [] pos in (* check the flag to see whether should be true to result in es_pure*)
 	      (**************************************)
 	      (*        process_one 								*)
 	      (**************************************)
@@ -5997,11 +5997,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_val_vars) in
       let tmp2 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_ref_vars) in
       let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_full_vars) in
+      (* let _ = print_endline ("heap_entail_empty_rhs_heap: rhs_val_vars = " ^ (Cprinter.string_of_spec_var_list rhs_val_vars)) in *)
+      (* let _ = print_endline ("heap_entail_empty_rhs_heap: rhs_val_vars = " ^ (Cprinter.string_of_spec_var_list rhs_ref_vars)) in *)
+      (* let _ = print_endline ("heap_entail_empty_rhs_heap: lhs_zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)
+      (* let _ = print_endline ("heap_entail_empty_rhs_heap: tmp1 = " ^ (Cprinter.string_of_spec_var_list tmp1)) in *)
+      (* let _ = print_endline ("heap_entail_empty_rhs_heap: tmp2 = " ^ (Cprinter.string_of_spec_var_list tmp2)) in *)
       if (tmp1!=[] || tmp2!=[] || tmp3!=[]) then
         begin
         (*FAIL*)
-            Debug.devel_pprint ("heap_entail_empty_rhs_heap:" ^ (Cprinter.string_of_spec_var_list (tmp1@tmp2@tmp3))^ "is " ^(string_of_vp_ann VP_Zero) ^ "\n") pos; (*TO DO: error messages can be more instructive*)
-            Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing " ^ (string_of_vp_ann VP_Value) ^ ", " ^ (string_of_vp_ann VP_Ref) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq\n") pos;
+            let _ = if tmp1!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") pos in
+            let _ = if tmp2!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-ref var " ^ (Cprinter.string_of_spec_var_list (tmp2))^ " cannot have possibly zero permission" ^ "\n") pos in
+            let _ = if tmp3!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: full permission var " ^ (Cprinter.string_of_spec_var_list (tmp3))^ " cannot have possibly zero permission" ^ "\n") pos in
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing variable permissions in conseq\n") pos;
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
             let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
             (CF.mkFailCtx_in (Basic_Reason ({

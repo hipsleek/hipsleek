@@ -1,41 +1,60 @@
-
+/*
+ Issues:
+ - Equalities on permission vars, e.g. ex (4)
+ - Primeness in SLEEK, e.g. ex (7)
+*/
 
 //(1)
 checkentail @zero[v1,v2] & x>0 |- x>=0.
+print residue.
+
+//(2)
+checkentail @zero[v1,v2] |- @p_ref[x1].
+print residue.
 //valid   --> @zero[v1,v2,x1].
 
-checkentail @zero[v1,v2] |- @p_ref[x1].
-
+//(3)
 checkentail @zero[v1,v2] |- @p_ref[v1].
-// TODO: need a better error message
-// e.g pass-by-ref var cannot have possibly zero permission
+// Fail
+// pass-by-ref var cannot have possibly zero permission
 
+//(4)
 checkentail @zero[v1,v2] & v1=x1 |- @p_ref[x1].
+print residue. // TO CHECK: can this happen??? should we handle this
 
-
+//(5)
 checkentail @zero[v1,v2] |- @p_val[x1].
+print residue.
 
+//(6)
 checkentail @zero[v1,v2] |- @p_val[v1].
-// TODO: need a better error message
-// e.g pass-by-val var cannot have possibly zero permission
+// Fail
+// pass-by-val var cannot have possibly zero permission
 
+//(7)
 checkentail @zero[v1',v2] & x>0 |- @p_val[v1].
 // TODO: this should also fail. v' and v denote the same
 // stack variable
+// This may valid because there may not be the notion of primeness in sleek
+// TO CHECK: should we handle this
 
-
+//(8)
 checkentail @zero[v1,v2] or @zero[v2] |- @p_val[v1].
 // OK to fail
 
+//(9)
 checkentail @zero[v1,v2] |- @p_val[x2] or @p_val[x1].
+print residue.
 // succeed with 2 answers
 
+//(10)
 checkentail @zero[v1,v2] |- @p_val[v1] or @p_val[x1].
+print residue.
 // succeed with 1 answer
 
+//(11)
 checkentail @zero[v1,v2] or @zero[v2] |- @p_val[x3].
-// OK to fail
-
+// succedd with an OR
 print residue.
 
 
