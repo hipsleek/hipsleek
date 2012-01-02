@@ -816,7 +816,7 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let debug_stk = new stack_noexc (-1) string_of_int (=)
+  let debug_stk = new stack_noexc (-2) string_of_int (=)
 
   let dd_stk = new stack
 
@@ -848,11 +848,21 @@ struct
     with exc -> (pop_call(); raise exc))
     in pop_call(); r
 
+  (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+    let r = (try 
+      (f e)
+    with exc -> (debug_stk # pop; raise exc))
+    in debug_stk # pop; r
+
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
     let h = debug_stk#get_stk in
     (* ("Length is:"^(string_of_int (List.length h))) *)
-    String.concat "@" (List.map string_of_int h)
+    String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
+
+  let push_no_call () =
+    debug_stk # push (-1)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag:bool) : (string * string) = 

@@ -278,6 +278,15 @@ let is_elem_of conj conjs =
 (* (\* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *\) *)
 (* (\* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *\) *)
 
+(* let aux_test () = *)
+(*       DD.trace_pprint "hello" no_pos *)
+(* let aux_test () = *)
+(*       Debug.no_1_loop "aux_test" pr_no pr_no aux_test () *)
+(* let aux_test2 () = *)
+(*       DD.trace_pprint "hello" no_pos *)
+(* let aux_test2 () = *)
+(*       Debug.no_1_num 13 "aux_test2" pr_no pr_no aux_test2 () *)
+
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   if no_infer es then None
   else 
@@ -286,6 +295,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
     let lhs_als = get_alias_formula es.es_formula in
     let lhs_aset = build_var_aset lhs_als in
     let rt = get_args_h_formula lhs_aset rhs in
+    (* let _ = aux_test() in *)
+    (* let _ = aux_test2() in *)
     (*  let rhs_als = get_alias_formula conseq in *)
     (*  let rhs_aset = build_var_aset rhs_als in *) 
     match rt with 
@@ -368,7 +379,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
-  Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
+  Debug.to_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)

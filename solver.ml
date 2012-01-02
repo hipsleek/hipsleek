@@ -5727,7 +5727,7 @@ and solve_ineq(* _debug *) a m c =
       (Cprinter.string_of_mix_formula) 
       (Cprinter.string_of_mem_formula)
       (Cprinter.string_of_mix_formula) 
-      (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq_x a m c) m c
+      (Cprinter.string_of_mix_formula) (fun a m c -> solve_ineq_x a m c) a m c
 
 and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =

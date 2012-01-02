@@ -171,6 +171,11 @@ let choose bs xs =
     | b::bs, (i,s)::xs -> if b then (i,s)::(hp bs xs) else (hp bs xs) in
   hp bs xs
 
+let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
+  push_no_call ();
+  pop_aft_apply_with_exc_no f last
+
+
 let ho_1_opt_aux df (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr_o:'z->string)  (f:'a -> 'z) (e1:'a) : 'z =
   let a1 = pr1 e1 in
   let lz = choose flags [(1,lazy (pr1 e1))] in
@@ -300,13 +305,6 @@ let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
 let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
 let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
-let no_1_loop _ _ _ s = s
-let no_2_loop _ _ _ _ s = s
-let no_3_loop _ _ _ _ _ s = s
-let no_4_loop _ _ _ _ _ _ s = s
-let no_5_loop _ _ _ _ _ _ _ s = s
-let no_6_loop _ _ _ _ _ _ _ _ s = s
-
 let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
 let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
 let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str
@@ -314,40 +312,83 @@ let ho_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_4 str
 let ho_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_5 str
 let ho_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_6 str
 
-let no_1_num (i:int) s _ _ f  =  f
-let no_2_num (i:int) s _ _ _ f =  f
-let no_3_num (i:int) s _ _ _ _ f =  f
-let no_4_num (i:int) s _ _ _ _ _ f =  f
-let no_5_num (i:int) s _ _ _ _ _ _ f =  f
-let no_6_num (i:int) s _ _ _ _ _ _ _ f =  f
+let no_1_loop _ _ _ f 
+      = ho_aux_no f
+let no_2_loop _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_3_loop _ _ _ _ _ f e1 e2
+      = ho_aux_no (f e1 e2)
+let no_4_loop _ _ _ _ _ _ f e1 e2 e3
+      = ho_aux_no (f e1 e2 e3)
+let no_5_loop _ _ _ _ _ _ _ f e1 e2 e3 e4
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6_loop _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
+      = ho_aux_no (f e1 e2 e3 e4 e5)
 
-let no_1 _ _ _ f = f
-let no_2 _ _ _ _ f = f
-let no_3 _ _ _ _ _ f = f
-let no_4 _ _ _ _ _ _ f = f
-let no_5 _ _ _ _ _ _ _ f = f
-let no_6 _ _ _ _ _ _ _ _ f = f
+let no_1_num (i:int) s _ _ f
+      = ho_aux_no f
+let no_2_num (i:int) s _ _ _ f e1
+      = ho_aux_no (f e1)
+let no_3_num (i:int) s _ _ _ _ f e1 e2
+      = ho_aux_no (f e1 e2)
+let no_4_num (i:int) s _ _ _ _ _ f e1 e2 e3
+      = ho_aux_no (f e1 e2 e3)
+let no_5_num (i:int) s _ _ _ _ _ _ f e1 e2 e3 e4
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6_num (i:int) s _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
+      = ho_aux_no (f e1 e2 e3 e4 e5)
 
-let no_1_cmp _ _ _ _ f = f
-let no_2_cmp _ _ _ _ _ f = f
-let no_3_cmp _ _ _ _ _ _ f = f
-let no_4_cmp _ _ _ _ _ _ _ f = f
-let no_5_cmp _ _ _ _ _ _ _ _ f = f
-let no_6_cmp _ _ _ _ _ _ _ _ _ f = f
+let no_1 _ _ _ f 
+      = ho_aux_no f
+let no_2 _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_3 _ _ _ _ _ f e1 e2 
+      = ho_aux_no (f e1 e2)
+let no_4 _ _ _ _ _ _ f e1 e2 e3 
+      = ho_aux_no (f e1 e2 e3)
+let no_5 _ _ _ _ _ _ _ f e1 e2 e3 e4 
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
+      = ho_aux_no (f e1 e2 e3 e4 e5)
 
-let no_eff_1 _ _ _ _ f = f
-let no_eff_2 _ _ _ _ _ f = f
-let no_eff_3 _ _ _ _ _ _ f = f
-let no_eff_4 _ _ _ _ _ _ _ f = f
-let no_eff_5 _ _ _ _ _ _ _ _ f = f
-let no_eff_6 _ _ _ _ _ _ _ _ _ f = f
+let no_1_cmp _ _ _ _ f 
+      = ho_aux_no f
+let no_2_cmp _ _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_3_cmp _ _ _ _ _ _ f e1 e2 
+      = ho_aux_no (f e1 e2)
+let no_4_cmp _ _ _ _ _ _ _ f e1 e2 e3 
+      = ho_aux_no (f e1 e2 e3)
+let no_5_cmp _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6_cmp _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
+      = ho_aux_no (f e1 e2 e3 e4 e5)
 
-let no_1_opt  _ _ _ _ f = f
-let no_2_opt  _ _ _ _ _ f = f
-let no_3_opt  _ _ _ _ _ _ f = f
-let no_4_opt  _ _ _ _ _ _ _ f = f
-let no_5_opt  _ _ _ _ _ _ _ _ f = f
-let no_6_opt  _ _ _ _ _ _ _ _ _ f = f
+let no_eff_1 _ _ _ _ f 
+      = ho_aux_no f
+let no_eff_2 _ _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_eff_3 _ _ _ _ _ _ f e1 e2 
+      = ho_aux_no (f e1 e2)
+let no_eff_4 _ _ _ _ _ _ _ f e1 e2 e3 
+      = ho_aux_no (f e1 e2 e3)
+let no_eff_5 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_eff_6 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
+      = ho_aux_no (f e1 e2 e3 e4 e5)
+
+let no_1_opt _ _ _ _ f 
+      = ho_aux_no f
+let no_2_opt _ _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_3_opt _ _ _ _ _ _ f e1 e2 
+      = ho_aux_no (f e1 e2)
+let no_4_opt _ _ _ _ _ _ _ f e1 e2 e3 
+      = ho_aux_no (f e1 e2 e3)
+let no_5_opt _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6_opt _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
+      = ho_aux_no (f e1 e2 e3 e4 e5)
 
   (* let no_eff_1_opt  _ _ _ _ _ f = f *)
   (* let no_eff_2_opt  _ _ _ _ _ _ f = f *)
