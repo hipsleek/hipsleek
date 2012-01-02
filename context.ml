@@ -176,7 +176,7 @@ let action_get_holes a = match a with
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
   let pr2 = pr_option pr_no in
-  Gen.Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
+  Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
 
 let action_wt_get_holes (_,a) = action_get_holes a
    
@@ -215,7 +215,7 @@ let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list 
   let psv = Cprinter.string_of_spec_var in
   let pr1 l = pr_list (pr_pair psv psv) l in
   let pr2 l = pr_list (pr_list psv) l in
-  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+  Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
 
 let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
   let tmp = List.filter (fun a -> CP.mem v a) aset in
@@ -228,7 +228,7 @@ let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 let psv = Cprinter.string_of_spec_var in
  let pr1 = (pr_list psv) in
  let pr2 = pr_list pr1 in
- Gen.Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+ Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
 
 let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
     let eqns = MCP.ptr_equations_without_null rhs_p in
@@ -238,7 +238,7 @@ let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
  let psv = Cprinter.string_of_spec_var in
  let pr2 = (pr_list (pr_list psv)) in
  let pr1 = Cprinter.string_of_mix_formula in
- Gen.Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
+ Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
 
 let comp_alias_part r_asets a_vars = 
     (* let a_vars = lhs_fv @ posib_r_aliases in *)
@@ -284,7 +284,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.no_5 "choose_context" 
+  Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -303,7 +303,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 and view_mater_match prog c vs1 aset imm f =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
-  Gen.Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
@@ -333,7 +333,7 @@ and view_mater_match_x prog c vs1 aset imm f =
 (*   let psv = Cprinter.string_of_spec_var in *)
 (*   let pr1 = pr_list psv in *)
 (*   let pr2 = pr_list  psv in   *)
-(*   Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
+(*   Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
               
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
@@ -355,7 +355,7 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr (c,_) = string_of_coercion c in
-  Gen.Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
+  Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
@@ -385,7 +385,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Gen.Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
       
 (*
@@ -404,7 +404,7 @@ and spatial_ctx_extract p f a i rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
-  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
+  Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
@@ -473,7 +473,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
-  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
+  Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -741,7 +741,7 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   match l with
@@ -811,7 +811,7 @@ and choose_match f ys =
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -847,12 +847,12 @@ and sort_wt_match opt (ys: action_wt list) : action list =
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
-  Gen.Debug.no_1 "sort_wt_new" pr pr sort_wt_new_x ys
+  Debug.no_1 "sort_wt_new" pr pr sort_wt_new_x ys
 
 and group_equal_actions (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
         (action_wt list)=
   let pr = pr_list string_of_action_wt_res_simpl in
-  Gen.Debug.no_4 "group_equal_actions" pr pr string_of_int pr pr group_equal_actions_x ys running running_w rs
+  Debug.no_4 "group_equal_actions" pr pr string_of_int pr pr group_equal_actions_x ys running running_w rs
 
 and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
         (action_wt list)=
@@ -982,7 +982,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_3 "compute_actions" 
+  Debug.no_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)

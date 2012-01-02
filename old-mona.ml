@@ -426,7 +426,7 @@ and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | _ -> begin false; end
 
 and is_firstorder_mem f e vs =
-  Gen.Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
+  Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
 
 and is_firstorder_mem_a f e vs =
   match e with
@@ -446,7 +446,7 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Gen.Debug.no_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Debug.no_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
@@ -523,7 +523,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
-   Gen.Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+   Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
       (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
@@ -536,7 +536,7 @@ and mona_of_formula_exp_list l f = match l with
 
 (* pretty printing for boolean vars *)
 and mona_of_b_formula b f vs = 
-  Gen.Debug.no_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
+  Debug.no_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
       (fun _ -> mona_of_b_formula_x b f vs) b
 
 (* pretty printing for boolean vars *)
@@ -684,7 +684,7 @@ and mona_of_b_formula_x b f vs =
   ret
 
 and equation a1 a2 f sec_order_symbol first_order_symbol vs =
-   Gen.Debug.no_2 "equation" Cprinter.string_of_formula_exp Cprinter.string_of_formula_exp (fun x -> x)
+   Debug.no_2 "equation" Cprinter.string_of_formula_exp Cprinter.string_of_formula_exp (fun x -> x)
    (fun a1 a2 -> equation_a a1 a2 f sec_order_symbol first_order_symbol vs) a1 a2
 
 and equation_a a1 a2 f sec_order_symbol first_order_symbol vs =
@@ -711,7 +711,7 @@ and equation_a a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Gen.Debug.no_2 "mona_of_formula" Cprinter.string_of_pure_formula
+  Debug.no_2 "mona_of_formula" Cprinter.string_of_pure_formula
       Cprinter.string_of_pure_formula 
       (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
       f initial_f 
@@ -1071,7 +1071,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   imply ante conseq imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
