@@ -3317,6 +3317,7 @@ and heap_entail_conjunct_lhs_struc_x
 	            let rs = clear_entailment_history ctx11 in
 	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
                 (*************Compose variable permissions >>> ******************)
+                Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_ext_formula f)^"\n")) pos;
                 let ps,_ = filter_varperm_formula post in
                 let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
                 let new_post = drop_varperm_formula post in
@@ -3342,6 +3343,7 @@ and heap_entail_conjunct_lhs_struc_x
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
 	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+                Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
                 (* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *)
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
