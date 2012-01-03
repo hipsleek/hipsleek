@@ -5240,6 +5240,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 (* let _ = print_endline ("WN#5:"^(Cprinter.string_of_list_context r)) in *)
 				                (r, prf))
 		          | _ ->
+                        (*conseq without exist vars*)
                         (*ante comes from ctx0*)
 		                let h1, p1, fl1, br1, t1, a1 = split_components ante in
 		                let h2, p2, fl2, br2, t2, a2 = split_components conseq in
@@ -5396,144 +5397,213 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
        (* if ante and conseq has valid #threads*)
        (*ENTAIL the child thread first, then the main thread*)
        (*TO DO: re-organize the code*)
-       match h2 with
-		 | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
-		 | HTrue -> begin
-			 Debug.devel_pprint ("heap_entail_conjunct_helper: with threads: "
-						         ^ "conseq has an empty heap component"
-						         ^ "\ncontext:\n"
-						         ^ (Cprinter.string_of_context ctx0)
-						         ^ "\nconseq:\n"
-						         ^ (Cprinter.string_of_formula conseq)) pos;
-			 let b1 = { formula_base_heap = h1;
-					    formula_base_pure = p1;
-					    formula_base_type = t1;
-                        formula_base_and = a1; (*TO CHECK: ???*)
-					    formula_base_flow = fl1;
-					    formula_base_branches = br1;
-					    formula_base_label = None;
-					    formula_base_pos = pos } in
-             (*alla is the pure constraints in all threads*)
-             (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (*this is redundant*)*)
-             (*01/02/2012: TO CHECK: we only propagate pure constraints
-               related to thread id and logical variables in the heap nodes*)
-             (*pure constraints related to actual variables are not added
-               to ensure a consistent view among threads because a thread does not
-               know the values of variables of another thread.*)
-             let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
-             let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
-             let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
-             let alla = MCP.find_rel_constraints p1 a_vars in
-             (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
-             let allc = p2 in (*TO CHECK: p2 only to find closure*)
-             (*remove @zero of the main thread from the entail state
-             need to re-add after entail_thread*)
-             let zero_vars = estate.es_var_zero_perm in
-             let estate = {estate with es_var_zero_perm = []} in
-             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
-             (match new_p with
-               | None -> lctx (*Failed when entail threads*)
-               | Some ((to_ante,to_conseq),new_es) ->
-                   (*TO DO: use split_universal to decide where to move the pure constraints*)
-                   (* let _ = print_endline ("\n### to_ante = " ^ (Cprinter.string_of_mix_formula to_ante) ^"\n### to_conseq = " ^ (Cprinter.string_of_mix_formula to_conseq)) in *)
-                   let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in
-                   (*LDK: remove duplicated conj from the new_p2*)
-                   let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in
-                   let new_p1 = add_mix_formula_to_mix_formula to_ante p1 in
-                   let new_b1 = {b1 with formula_base_pure=new_p1;
-                       formula_base_and = rest_a} in
-                   let new_estate = {estate with
-                      es_evars = new_es.es_evars;
-                      es_ivars = new_es.es_ivars;
-                      es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
-                      es_gen_impl_vars = new_es.es_gen_impl_vars;
-                      es_gen_expl_vars = new_es.es_gen_expl_vars;}
-                   in
-			       Debug.devel_pprint ("heap_entail_conjunct_helper: after heap_entail_thread: "
-						               ^ "conseq has an empty heap component"
-						               ^ "\nnew_ante:\n"
-						               ^ (Cprinter.string_of_formula_base new_b1)
-						               ^ "\nnew_conseq:\n"
-						               ^ (Cprinter.string_of_mix_formula new_p2)) pos;
-			       let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  new_estate new_b1 new_p2 br2 pos in
-                   (* explicit instantiation
-                      this will move some constraint to the LHS*)
-                   (*LDK: 25/08/2011, also instatiate ivars*)
-                   (*this move_expl_inst call can occur at the end of folding and also 
-                     at the end of entailments of stages possibly leading to duplications of instantiations
-                     moving it would require the rhs pure to be moved as well...*)
-			       let new_ctx = move_expl_inst_ctx_list ctx p2 in
-			       (new_ctx, proof))
-		 end
-		 | _ -> begin 
-			 Debug.devel_pprint ("heap_entail_conjunct_helper: with threads: "
-						         ^ "conseq has an non-empty heap component"
-						         ^ "\ncontext:\n"
-						         ^ (Cprinter.string_of_context ctx0)
-						         ^ "\nconseq:\n"
-						         ^ (Cprinter.string_of_formula conseq)) pos;
-			 let b1 = { formula_base_heap = h1;
-					    formula_base_pure = p1;
-					    formula_base_type = t1;
-					    formula_base_branches = br1;
-                        formula_base_and = a1; (*TO CHECK: ???*)
-					    formula_base_flow = fl1;
-					    formula_base_label = None;
-					    formula_base_pos = pos } in
-			 let b2 = { formula_base_heap = h2;
-					    formula_base_pure = p2;
-					    formula_base_type = t2;
-                        formula_base_and = a2; (*TO CHECK: ???*)
-					    formula_base_flow = fl2;
-					    formula_base_branches = br2;
-					    formula_base_label = None;
-					    formula_base_pos = pos } in
-             (*alla is the pure constraints in all threads*)
-             (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (\*this is redundant*\) *)
-             (*01/02/2012: TO CHECK: we only propagate pure constraints
-               related to thread id and logical variables in the heap nodes*)
-             (*pure constraints related to actual variables are not added
-               to ensure a consistent view among threads because a thread does not
-               know the values of variables of another thread.*)
-             let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
-             let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
-             let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
-             let alla = MCP.find_rel_constraints p1 a_vars in
+       Debug.devel_pprint ("\nheap_entail_conjunct_helper: with threads: "
+						   ^ "\ncontext:\n"
+						   ^ (Cprinter.string_of_context ctx0)
+						   ^ "\nconseq:\n"
+						   ^ (Cprinter.string_of_formula conseq)) pos;
+	   let b1 = { formula_base_heap = h1;
+				  formula_base_pure = p1;
+				  formula_base_type = t1;
+				  formula_base_branches = br1;
+                  formula_base_and = a1; (*TO CHECK: ???*)
+				  formula_base_flow = fl1;
+				  formula_base_label = None;
+				  formula_base_pos = pos } in
+	   let b2 = { formula_base_heap = h2;
+				  formula_base_pure = p2;
+				  formula_base_type = t2;
+                  formula_base_and = a2; (*TO CHECK: ???*)
+				  formula_base_flow = fl2;
+				  formula_base_branches = br2;
+				  formula_base_label = None;
+				  formula_base_pos = pos } in
+       (*alla is the pure constraints in all threads*)
+       (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (*this is redundant*)*)
+       (*01/02/2012: TO CHECK: we only propagate pure constraints
+         related to thread id and logical variables in the heap nodes*)
+       (*pure constraints related to actual variables are not added
+         to ensure a consistent view among threads because a thread does not
+         know the values of variables of another thread.*)
+       let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
+       let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
+       let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
+       let alla = MCP.find_rel_constraints p1 a_vars in
+       (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
+       let allc = p2 in (*TO CHECK: p2 only to find closure*)
+       (*remove @zero of the main thread from the entail state
+         need to re-add after entail_thread*)
+       let zero_vars = estate.es_var_zero_perm in
+       let estate = {estate with es_var_zero_perm = []} in
+       let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
+       (match new_p with
+         | None -> lctx (*Failed when entail threads*)
+         | Some ((to_ante,to_conseq),new_es) ->
+             (*TO DO: use split_universal to decide where to move the pure constraints*)
+             (* let _ = print_endline ("\n### to_ante = " ^ (Cprinter.string_of_mix_formula to_ante) ^"\n### to_conseq = " ^ (Cprinter.string_of_mix_formula to_conseq)) in *)
+             let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in
+             (*LDK: remove duplicated conj from the new_p2*)
+             let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in
+             let new_p1 = add_mix_formula_to_mix_formula to_ante p1 in
+             let new_b1 = {b1 with formula_base_pure=new_p1;
+                 formula_base_and = rest_a} in
+             let new_b2 = {b2 with formula_base_pure=new_p2;
+                 formula_base_and = []} in
+             let new_estate = {estate with
+                 es_formula = (Base new_b1);
+                 es_evars = new_es.es_evars;
+                 es_ivars = new_es.es_ivars;
+                 es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
+                 es_gen_impl_vars = new_es.es_gen_impl_vars;
+                 es_gen_expl_vars = new_es.es_gen_expl_vars;}
+             in
+             let new_conseq = (Base new_b2) in
+			 Debug.devel_pprint ("\nheap_entail_conjunct_helper: after heap_entail_thread: "
+						         ^ "\nnew_ante:\n"
+						         ^ (Cprinter.string_of_entail_state new_estate)
+						         ^ "\nnew_conseq:\n"
+						         ^ (Cprinter.string_of_formula new_conseq)) pos;
+             let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_estate) new_conseq rhs_h_matched_set pos in
+             (ctx,proof))
 
-             (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
-             let allc = p2 in (*TO CHECK: p2 only to find closure*)
-             (*remove @zero of the main thread from the entail state
-             need to re-add after entail_thread*)
-             let zero_vars = estate.es_var_zero_perm in
-             let estate = {estate with es_var_zero_perm = []} in
-             let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in
-             (match new_p with
-               | None -> lctx (*Failed when entail threads*)
-               | Some ((to_ante,to_conseq),new_es) ->
-                   (*TO DO: use split_universal to decide where to move the pure constraints*)
-                   let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in
-                   (*LDK: remove duplicated conj from the new_p2*)
-                   let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in
-                   let new_p1 = add_mix_formula_to_mix_formula to_ante p1 in
-                   let new_b1 = {b1 with formula_base_pure=new_p1;
-                       formula_base_and = rest_a} in
-                   let new_b2 = {b2 with formula_base_pure=new_p2;
-                       formula_base_and = []} in
-                   let new_estate = {estate with
-                      es_evars = new_es.es_evars;
-                      es_ivars = new_es.es_ivars;
-                      es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
-                      es_gen_impl_vars = new_es.es_gen_impl_vars;
-                      es_gen_expl_vars = new_es.es_gen_expl_vars;}
-                   in
-			       Debug.devel_pprint ("heap_entail_conjunct_helper: after heap_entail_thread: "
-						               ^ "conseq has an non-empty heap component"
-						               ^ "\nnew ante :\n"
-						               ^ (Cprinter.string_of_formula_base new_b1)
-						               ^ "\nnew conseq:\n"
-						               ^ (Cprinter.string_of_formula_base new_b2)) pos;
-			       heap_entail_non_empty_rhs_heap prog is_folding  ctx0 new_estate ante conseq new_b1 new_b2 rhs_h_matched_set pos)
-		 end
+       (* match h2 with *)
+	   (*   | HFalse (\* -> (--[], UnsatConseq)  entailment fails *\) *)
+		 (* | HTrue -> begin *)
+		 (*     Debug.devel_pprint ("heap_entail_conjunct_helper: with threads: " *)
+		 (*    			         ^ "conseq has an empty heap component" *)
+		 (*    			         ^ "\ncontext:\n" *)
+		 (*    			         ^ (Cprinter.string_of_context ctx0) *)
+		 (*    			         ^ "\nconseq:\n" *)
+		 (*    			         ^ (Cprinter.string_of_formula conseq)) pos; *)
+		 (*     let b1 = { formula_base_heap = h1; *)
+		 (*    		    formula_base_pure = p1; *)
+		 (*    		    formula_base_type = t1; *)
+         (*                formula_base_and = a1; (\*TO CHECK: ???*\) *)
+		 (*    		    formula_base_flow = fl1; *)
+		 (*    		    formula_base_branches = br1; *)
+		 (*    		    formula_base_label = None; *)
+		 (*    		    formula_base_pos = pos } in *)
+         (*     (\*alla is the pure constraints in all threads*\) *)
+         (*     (\* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (\*this is redundant*\)*\) *)
+         (*     (\*01/02/2012: TO CHECK: we only propagate pure constraints *)
+         (*       related to thread id and logical variables in the heap nodes*\) *)
+         (*     (\*pure constraints related to actual variables are not added *)
+         (*       to ensure a consistent view among threads because a thread does not *)
+         (*       know the values of variables of another thread.*\) *)
+         (*     let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in *)
+         (*     let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in *)
+         (*     let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in *)
+         (*     let alla = MCP.find_rel_constraints p1 a_vars in *)
+         (*     (\* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *\) *)
+         (*     let allc = p2 in (\*TO CHECK: p2 only to find closure*\) *)
+         (*     (\*remove @zero of the main thread from the entail state *)
+         (*     need to re-add after entail_thread*\) *)
+         (*     let zero_vars = estate.es_var_zero_perm in *)
+         (*     let estate = {estate with es_var_zero_perm = []} in *)
+         (*     let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in *)
+         (*     (match new_p with *)
+         (*       | None -> lctx (\*Failed when entail threads*\) *)
+         (*       | Some ((to_ante,to_conseq),new_es) -> *)
+         (*           (\*TO DO: use split_universal to decide where to move the pure constraints*\) *)
+         (*           (\* let _ = print_endline ("\n### to_ante = " ^ (Cprinter.string_of_mix_formula to_ante) ^"\n### to_conseq = " ^ (Cprinter.string_of_mix_formula to_conseq)) in *\) *)
+         (*           let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in *)
+         (*           (\*LDK: remove duplicated conj from the new_p2*\) *)
+         (*           let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in *)
+         (*           let new_p1 = add_mix_formula_to_mix_formula to_ante p1 in *)
+         (*           let new_b1 = {b1 with formula_base_pure=new_p1; *)
+         (*               formula_base_and = rest_a} in *)
+         (*           let new_estate = {estate with *)
+         (*              es_evars = new_es.es_evars; *)
+         (*              es_ivars = new_es.es_ivars; *)
+         (*              es_var_zero_perm = zero_vars; (\*re-add @zero of the main thread*\) *)
+         (*              es_gen_impl_vars = new_es.es_gen_impl_vars; *)
+         (*              es_gen_expl_vars = new_es.es_gen_expl_vars;} *)
+         (*           in *)
+		 (*           Debug.devel_pprint ("heap_entail_conjunct_helper: after heap_entail_thread: " *)
+		 (*    			               ^ "conseq has an empty heap component" *)
+		 (*    			               ^ "\nnew_ante:\n" *)
+		 (*    			               ^ (Cprinter.string_of_formula_base new_b1) *)
+		 (*    			               ^ "\nnew_conseq:\n" *)
+		 (*    			               ^ (Cprinter.string_of_mix_formula new_p2)) pos; *)
+		 (*           let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  new_estate new_b1 new_p2 br2 pos in *)
+         (*           (\* explicit instantiation *)
+         (*              this will move some constraint to the LHS*\) *)
+         (*           (\*LDK: 25/08/2011, also instatiate ivars*\) *)
+         (*           (\*this move_expl_inst call can occur at the end of folding and also  *)
+         (*             at the end of entailments of stages possibly leading to duplications of instantiations *)
+         (*             moving it would require the rhs pure to be moved as well...*\) *)
+		 (*           let new_ctx = move_expl_inst_ctx_list ctx p2 in *)
+		 (*           (new_ctx, proof)) *)
+		 (* end *)
+		 (* | _ -> begin  *)
+		 (*     Debug.devel_pprint ("heap_entail_conjunct_helper: with threads: " *)
+		 (*    			         ^ "conseq has an non-empty heap component" *)
+		 (*    			         ^ "\ncontext:\n" *)
+		 (*    			         ^ (Cprinter.string_of_context ctx0) *)
+		 (*    			         ^ "\nconseq:\n" *)
+		 (*    			         ^ (Cprinter.string_of_formula conseq)) pos; *)
+		 (*     let b1 = { formula_base_heap = h1; *)
+		 (*    		    formula_base_pure = p1; *)
+		 (*    		    formula_base_type = t1; *)
+		 (*    		    formula_base_branches = br1; *)
+         (*                formula_base_and = a1; (\*TO CHECK: ???*\) *)
+		 (*    		    formula_base_flow = fl1; *)
+		 (*    		    formula_base_label = None; *)
+		 (*    		    formula_base_pos = pos } in *)
+		 (*     let b2 = { formula_base_heap = h2; *)
+		 (*    		    formula_base_pure = p2; *)
+		 (*    		    formula_base_type = t2; *)
+         (*                formula_base_and = a2; (\*TO CHECK: ???*\) *)
+		 (*    		    formula_base_flow = fl2; *)
+		 (*    		    formula_base_branches = br2; *)
+		 (*    		    formula_base_label = None; *)
+		 (*    		    formula_base_pos = pos } in *)
+         (*     (\*alla is the pure constraints in all threads*\) *)
+         (*     (\* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (\\*this is redundant*\\) *\) *)
+         (*     (\*01/02/2012: TO CHECK: we only propagate pure constraints *)
+         (*       related to thread id and logical variables in the heap nodes*\) *)
+         (*     (\*pure constraints related to actual variables are not added *)
+         (*       to ensure a consistent view among threads because a thread does not *)
+         (*       know the values of variables of another thread.*\) *)
+         (*     let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in *)
+         (*     let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in *)
+         (*     let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in *)
+         (*     let alla = MCP.find_rel_constraints p1 a_vars in *)
+
+         (*     (\* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *\) *)
+         (*     let allc = p2 in (\*TO CHECK: p2 only to find closure*\) *)
+         (*     (\*remove @zero of the main thread from the entail state *)
+         (*     need to re-add after entail_thread*\) *)
+         (*     let zero_vars = estate.es_var_zero_perm in *)
+         (*     let estate = {estate with es_var_zero_perm = []} in *)
+         (*     let new_p, lctx,rest_a = heap_entail_thread prog estate conseq a1 a2 alla allc pos in *)
+         (*     (match new_p with *)
+         (*       | None -> lctx (\*Failed when entail threads*\) *)
+         (*       | Some ((to_ante,to_conseq),new_es) -> *)
+         (*           (\*TO DO: use split_universal to decide where to move the pure constraints*\) *)
+         (*           let new_p2 = add_mix_formula_to_mix_formula to_conseq p2 in *)
+         (*           (\*LDK: remove duplicated conj from the new_p2*\) *)
+         (*           let new_p2 = remove_dupl_conj_eq_mix_formula new_p2 in *)
+         (*           let new_p1 = add_mix_formula_to_mix_formula to_ante p1 in *)
+         (*           let new_b1 = {b1 with formula_base_pure=new_p1; *)
+         (*               formula_base_and = rest_a} in *)
+         (*           let new_b2 = {b2 with formula_base_pure=new_p2; *)
+         (*               formula_base_and = []} in *)
+         (*           let new_estate = {estate with *)
+         (*              es_evars = new_es.es_evars; *)
+         (*              es_ivars = new_es.es_ivars; *)
+         (*              es_var_zero_perm = zero_vars; (\*re-add @zero of the main thread*\) *)
+         (*              es_gen_impl_vars = new_es.es_gen_impl_vars; *)
+         (*              es_gen_expl_vars = new_es.es_gen_expl_vars;} *)
+         (*           in *)
+		 (*           Debug.devel_pprint ("heap_entail_conjunct_helper: after heap_entail_thread: " *)
+		 (*    			               ^ "conseq has an non-empty heap component" *)
+		 (*    			               ^ "\nnew ante :\n" *)
+		 (*    			               ^ (Cprinter.string_of_formula_base new_b1) *)
+		 (*    			               ^ "\nnew conseq:\n" *)
+		 (*    			               ^ (Cprinter.string_of_formula_base new_b2)) pos; *)
+		 (*           heap_entail_non_empty_rhs_heap prog is_folding  ctx0 new_estate ante conseq new_b1 new_b2 rhs_h_matched_set pos) *)
+		 (* end *)
    end
 	          end
         end

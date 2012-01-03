@@ -1,6 +1,5 @@
 /*
- Issues:
- - Equalities on permission vars, e.g. ex (4)
+  Variable permissions
 */
 
 //(1)
@@ -19,8 +18,9 @@ checkentail @zero[v1,v2] |- @full[v1].
 
 //(4)
 checkentail @zero[v1,v2] & v1=x1 |- @full[x1].
-print residue. // TO CHECK: can this happen??? should we handle this
-//currently   --> @zero[v1,v2,x1]
+print residue.
+// x1 and v1 are distinct stack variables if equal values
+//valid   --> @zero[v1,v2,x1]
 
 //(5)
 checkentail @zero[v1,v2] |- @value[x1].
@@ -66,3 +66,4 @@ print residue.
 checkentail @zero[x] & y'=y+1 & id=z and @full[x] & x'=x+1 & thread=z
             |- [i] @value[id] and @full[x] & x'=i+1 & thread=id.
 print residue.
+// valid -> @zero[x] & i=x & y'=1+y & id=z
