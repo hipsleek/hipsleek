@@ -24,6 +24,9 @@ pass-by-ref -> v@full
 
 - Rules
 
+    v@zero  |- v@value --> fail
+    v@zero  |- v@full --> fail
+
      not(v \in S)
   --------------------
   S@zero |- v@value  --> S@Z

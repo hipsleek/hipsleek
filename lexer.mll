@@ -269,8 +269,8 @@ rule tokenizer file_name = parse
   | "@post" { POST }
   | "@zero" {PZERO}
   | "@full" {PFULL}
-  | "@p_val" {PVALUE}
-  | "@p_ref" {PREF}
+  | "@value" {PVALUE}
+  (* | "@p_ref" {PREF} *)
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }

@@ -6637,25 +6637,23 @@ let normalize_varperm_x (f:formula) : formula =
   (* let _ = print_endline ("normalize_varperm:"  *)
   (*                        ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1)) *)
   (*                        ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in *)
-  (*zero, full , p_val , p_ref*)
+  (*zero, full , value *)
   let rec helper ls =
     match ls with
-      | [] -> [],[],[],[] (*list of vars*)
+      | [] -> [],[],[] (*list of vars*)
       | x::xs ->
-          let ls1,ls2,ls3,ls4 = helper xs in
+          let ls1,ls2,ls3 = helper xs in
           (match x with
             | BForm ((pf,_),_) ->
                ( match pf with
                   | VarPerm (ct,xs,_) ->
                       (match ct with
                         | VP_Zero ->
-                            (remove_dups_svl (xs@ls1)),ls2,ls3,ls4
+                            (remove_dups_svl (xs@ls1)),ls2,ls3
                         | VP_Full ->
-                            ls1,(remove_dups_svl (xs@ls2)),ls3,ls4
+                            ls1,(remove_dups_svl (xs@ls2)),ls3
                         | VP_Value ->
-                            ls1,ls2,(remove_dups_svl (xs@ls3)),ls4
-                        | VP_Ref ->
-                            ls1,ls2,ls3,(remove_dups_svl (xs@ls4))
+                            ls1,ls2,(remove_dups_svl (xs@ls3))
                       )
                   | _ -> Error.report_error {Error.error_loc = no_pos;
                                              Error.error_text = "normalize_varperm: VarPerm not found";}
@@ -6664,7 +6662,7 @@ let normalize_varperm_x (f:formula) : formula =
                                              Error.error_text = "normalize_varperm: BForm of VarPerm not found";}
           )
   in
-  let ls1,ls2,ls3,ls4 = helper lsf1 in (*find out 4 types of var permission*)
+  let ls1,ls2,ls3 = helper lsf1 in (*find out 4 types of var permission*)
   let func typ ls =
     (match ls with
       | [] -> mkTrue no_pos
@@ -6673,8 +6671,7 @@ let normalize_varperm_x (f:formula) : formula =
   let f1 = func VP_Zero ls1 in
   let f2 = func VP_Full ls2 in
   let f3 = func VP_Value ls3 in
-  let f4 = func VP_Ref ls4 in
-  let lsf1 = [f1;f2;f3;f4] in
+  let lsf1 = [f1;f2;f3] in
   let new_f = join_conjunctions (lsf1@lsf2) in
   new_f
 

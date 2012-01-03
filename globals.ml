@@ -36,7 +36,7 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
-and vp_ann =  VP_Zero | VP_Full | VP_Value | VP_Ref
+and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
 
 (* and prim_type =  *)
@@ -110,8 +110,8 @@ let string_of_vp_ann a =
   (match a with
     | VP_Zero -> "@zero"
     | VP_Full -> "@full"
-    | VP_Value -> "@p_val"
-    | VP_Ref-> "@p_ref"
+    | VP_Value -> "@value"
+    (* | VP_Ref-> "@p_ref" *)
   )
 
 let string_of_loc (p : loc) = 

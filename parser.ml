@@ -658,7 +658,7 @@ p_vp_ann:
   [[ `PZERO -> VP_Zero
     | `PFULL -> VP_Full
     | `PVALUE -> VP_Value
-    | `PREF -> VP_Ref
+    (* | `PREF -> VP_Ref *)
   ]];
 
 ann:

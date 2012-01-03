@@ -101,7 +101,7 @@ and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
     
-and proc_decl = { 
+and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
 		proc_return : typ;
