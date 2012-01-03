@@ -565,8 +565,11 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
       let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
       let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
       let fml = CP.drop_rel_formula fml in
-      (*let check_sat = TP.is_sat_raw fml in*)
       let iv = estate.es_infer_vars in
+      let check_sat = TP.is_sat_raw fml in
+      if not(check_sat) then 
+        (infer_lhs_contra_estate estate lhs_xpure_orig pos "ante contradict with conseq",None)
+      else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
       (* if check_sat then *)
       (*      let new_p = simplify fml iv in                            *)
