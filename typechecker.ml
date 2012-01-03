@@ -375,10 +375,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
+                                (* TODO : What if we have multiple ensures in a spec? *)                                
+                                (* It may be too early to compute a fix-point. *)
                                 let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None 
                                   else (
 (*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));   *)
-                                    let (rel_fml, post, pre) = Fixcalc.compute_fixpoint rels in
+                                    let (rel_fml, post, pre) = Fixcalc.compute_fixpoint 1 rels in
 (*                                    print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);*)
 (*                                    print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);   *)
 (*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml); *)
@@ -1090,7 +1092,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let _ = 
                           if rels = [] then ()
                           else (
-                            let (_, post, pre) = Fixcalc.compute_fixpoint rels in
+                            (* TODO : What if we have multiple unknown relations? *)
+                            (* Would we need to split up the relations for separate fix-point? *)
+                             let (_, post, pre) = Fixcalc.compute_fixpoint 2 rels in
                             print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
                             print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);)
                         in

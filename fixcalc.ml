@@ -189,6 +189,8 @@ let compute_fixpoint input_pairs =
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+    DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" pos;
     DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
     let output_of_sleek = "fixcalc.inf" in
     let oc = open_out output_of_sleek in
@@ -202,13 +204,23 @@ let compute_fixpoint input_pairs =
     let fixpoint = Parse_fix.parse_fix res in
     DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
     let fixpoint = List.map (fun f -> 
-      let args = CP.fv f in 
-      let quan_vars = CP.diff_svl args vars in
-      TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
+        let args = CP.fv f in 
+        let quan_vars = CP.diff_svl args vars in
+        TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
     match fixpoint with
       | [pre;post] -> (rel_fml, pre, post)
       | _ -> report_error no_pos "Expecting a pair of pre-post"
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"
+
+(*
+type: (CP.formula * CP.formula) list ->
+  CP.formula * TP.CP.formula * TP.CP.formula
+*)
+let compute_fixpoint (i:int) input_pairs =
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list (pr_pair pr0 pr0) in
+  Debug.to_1_num i "compute_fixpoint" pr1 (pr_triple pr0 pr0 pr0) 
+      compute_fixpoint input_pairs 
 
  
 
