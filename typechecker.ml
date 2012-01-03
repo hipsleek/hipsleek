@@ -147,7 +147,7 @@ let parallelize num =
 (*pre_f : pre-condition*)
 
 (* pre_f = b.CF.formula_ext_base *)
-let check_varperm (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (pre_f:CF.formula) pos = 
+let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.ext_formula) (ctx : CF.context) (pre_f:CF.formula) pos = 
   (*************************************************************)
   (********* Check permissions variables in pre-condition ******)
   (*************************************************************) 
@@ -156,18 +156,18 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (pre_
   (*a parameter MUST be either @value or @full*)
   (*TO DO: have to deal with OR *)
   (*Pickup variable permissions in both thread only*)
-  Debug.devel_zprint (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition:  \n" ^ (Cprinter.string_of_context ctx) ^ "\n")) pos;
+  Debug.devel_zprint (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition:  \n" ^ (Cprinter.string_of_ext_formula spec) ^ "\n")) pos;
   let vp_list,_ = CF.filter_varperm_formula_all pre_f in
   let val_list, vp_rest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in
   let full_list, vp_rest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_rest in
   let _ = if (vp_rest2!=[]) then
-        report_error pos ("\ncheck_specs: EBase: unexpected @zero in the pre-condition")
+        report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition")
   in
   let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in
   let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in
   let tmp = Gen.BList.intersect_eq CP.eq_spec_var_ident val_vars full_vars in
   let _ = if (tmp!=[]) then
-        report_error pos ("\ncheck_specs: EBase: duplicated variable permissions: " ^ (Cprinter.string_of_spec_var_list tmp))
+        report_error pos ("\ncheck_specs: EBase: duplicated VarPerm: " ^ (Cprinter.string_of_spec_var_list tmp))
   in
   (*Ensure that all arguments have corresponding varialbe permissions*)
   let all_vars = val_vars@full_vars in
@@ -262,7 +262,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************) 
             let ctx,ext_base = if !Globals.ann_vp then
-                  check_varperm prog proc ctx b.CF.formula_ext_base pos_spec 
+                  check_varperm prog proc spec ctx b.CF.formula_ext_base pos_spec 
                 else (ctx,b.CF.formula_ext_base)
             in
             (*************************************************************)
@@ -963,6 +963,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           CF.Ctx new_es
                 in
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
+                let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
 		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res
                 else
