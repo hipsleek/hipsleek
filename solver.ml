@@ -3317,8 +3317,9 @@ and heap_entail_conjunct_lhs_struc_x
 	            let rs = clear_entailment_history ctx11 in
 	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
                 (*************Compose variable permissions >>> ******************)
-                let ps,new_post = filter_varperm_formula post in
+                let ps,_ = filter_varperm_formula post in
                 let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
+                let new_post = drop_varperm_formula post in
                 let add_vperm_full es =
                   let zero_vars = es.es_var_zero_perm in
                   let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
@@ -3666,18 +3667,22 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         (* let es = {es with es_formula = prune_preds prog true es.es_formula} in *)
         (* let conseq = prune_preds prog true conseq in *)
         let es = (CF.add_to_estate_with_steps es ss) in
-        (*FILTER OUR VarPerm formula*)
-        let es_f = es.es_formula in
-        let es_f = normalize_varperm_formula es_f in
-        let vperm_fs, new_f = filter_varperm_formula es_f in
-        let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in
-        let _ = if (ls2!=[]) then
-              print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.")
+        let es = if (!Globals.ann_vp) then
+              (*FILTER OUR VarPerm formula*)
+              let es_f = es.es_formula in
+              let es_f = normalize_varperm_formula es_f in
+              let vperm_fs, _ = filter_varperm_formula es_f in
+              let new_f = drop_varperm_formula es_f in
+              let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in
+              let _ = if (ls2!=[]) then
+                    print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.")
+              in
+              let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
+              (* let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
+              let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
+              {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}
+            else es
         in
-        let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
-        (* let _ = print_endline  ("heap_entail_conjunct_lhs: \n ###vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
-        let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
-        let es = {es with es_formula = new_f; es_var_zero_perm=new_zero_vars} in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
 	    (filter_set tmp, prf)
@@ -4958,8 +4963,11 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
         (*try to entail f1 & p |- f2, p is additional pure constraints *)
         let process_thread_one_match_x estate (f1,f2 : one_formula * one_formula) =
           (*************************************************)
-          (**********matching variable permissions**********)
+          (**************** matching VarPerm ***************)
           (*************************************************)
+          (* CONVENTION: *)
+          (*  @zero for the main thread *)
+          (*  @full for the concurrent threads *)
           let f1_p = f1.formula_pure in
           let f1_vperms, new_f1_p = MCP.filter_varperm_mix_formula f1_p in
           let f1_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f1_vperms) in (*only pickup @full*)
@@ -4976,11 +4984,14 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
             let base_f1 = formula_of_one_formula f1 in
             let base_f2 = formula_of_one_formula f2 in
             let new_es = {estate with es_formula=base_f1} in (*TO CHECK: should estate is a parameter*)
-            let _ = Debug.devel_pprint ("\nConcurrency Error: could not match variable permissions LHS and RHS of the thread with id = " ^ (CP.string_of_spec_var f1.formula_thread) ^ " : " ^ vpem_str ^ "\n") pos in
+            Debug.devel_pprint ("heap_entail_thread: var " ^ (Cprinter.string_of_spec_var_list tmp)^ " MUST have full permission" ^ "\n") pos;
+            Debug.devel_pprint ("heap_entail_thread: failed in entailing variable permissions in conseq\n") pos;
+            Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
             let msg = ("Concurrency Error: could not match variable permissions LHS and RHS of the thread with id = " ^ (CP.string_of_spec_var f1.formula_thread)) in
             (None, mkFailCtx_simple msg new_es base_f2 pos)
           else
           (*************************************************)
+          (*********<<<<<<< matching VarPerm ***************)
           (*************************************************)
           let new_f1 = {f1 with formula_pure = new_f1_p} in
           let new_f2 = {f2 with formula_pure = new_f2_p} in
@@ -5009,14 +5020,23 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 	          | Ctx es ->
                   (*Using es.es_pure for instantiation when needed*)
                   let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true (fst es.es_pure) in
+                  (*TO CHECK: this may have no effect at all*)
 	              let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = 
                     split_universal (e_pure, snd es.es_pure) es.es_evars es.es_gen_expl_vars es.es_gen_impl_vars [] pos in
                   (*ignore formula_branches at the moment*)
-                  (*TO CHECK: es.es_formula*)
-                  (* let _,p,_,_,_,_ = split_components es.es_formula in *)
-                  (*return the pure constraint to carry on with other threads*)
-                  (* (mix_f) *)
-                  let to_ante = (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) to_ante) in
+                  (* TO CHECK: es.es_formula *)
+                  let _,p,_,_,_,_ = split_components es.es_formula in
+                  (* propagate the pure constraint to LHS of other threads *)
+                  (*instatiation*)
+                  let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars@es.es_ivars in
+                  let f = MCP.find_rel_constraints p l_inst in
+                  (*elim f1_full_vars because it can not appear in other threads*)
+                  let eli_evars = List.map (fun var -> match var with
+                            | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed)) f1_full_vars in
+                  let eli_evars=eli_evars@es.es_evars in
+                  let f2 = if (eli_evars = []) then f else
+		                (elim_exists_mix_formula(*_debug*) eli_evars f no_pos) in
+                  let to_ante = (MCP.memoise_add_pure_N f2 to_ante) in
                   (* let to_ante = remove_dupl_conj_eq_mix_formula to_ante in *)
                   let to_conseq = (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) to_conseq) in
                   (*TO DO: check for evars, ivars, expl_inst, impl_inst*)
@@ -5372,7 +5392,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* ante and conseq with concurrent threads*)
                               (* PRE: a1!=[] and a2!=[] and |a1|>=|a2|*)
    begin
-	   match h2 with
+	   
+       (* if ante and conseq has valid #threads*)
+       (*ENTAIL the child thread first, then the main thread*)
+       (*TO DO: re-organize the code*)
+       match h2 with
 		 | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
 		 | HTrue -> begin
 			 Debug.devel_pprint ("heap_entail_conjunct_helper: with threads: "
@@ -5977,6 +6001,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     (*        (r1,prf)                                                                                               *)
     (*      | None ->
                                                                                                 *)
+
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
@@ -6007,7 +6032,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (* let _ = print_endline ("heap_entail_empty_rhs_heap: tmp2 = " ^ (Cprinter.string_of_spec_var_list tmp2)) in *)
       if (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
         begin
-        (*FAIL*)
+            (*FAIL*)
             let _ = if tmp1!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") pos in
             (* let _ = if tmp2!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-ref var " ^ (Cprinter.string_of_spec_var_list (tmp2))^ " cannot have possibly zero permission" ^ "\n") pos in *)
             let _ = if tmp3!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: full permission var " ^ (Cprinter.string_of_spec_var_list (tmp3))^ " cannot have possibly zero permission" ^ "\n") pos in
@@ -6033,17 +6058,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (*        not(v \in S) *)
       (* ----------------------- *)
       (* S@zero |- v@full  --> S+{v}@Z *)
-      let new_lhs_zero_vars = (lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
-      let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
-      (*************************************************************************)
-      (*************************** END *****************************************)
-      (*************************************************************************)
+        let new_lhs_zero_vars = (lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
+        let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
+    (*************************************************************************)
+    (*************************** END *****************************************)
+    (*************************************************************************)
+    (*if there exist VarPerm, they will be automatically 
+      dropped during the proving process*)
 
 	if is_folding then begin
       (*LDK: the rhs_p is considered a part of residue and 
         is added to es_pure only when folding.
         Rule F-EMP in Mr Hai thesis, p86*)
-      (*TO CHECK: when folding, do not need to entail VarPerm*)
 	  let res_es = {estate with es_formula = res_delta; 
 		  es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
 		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

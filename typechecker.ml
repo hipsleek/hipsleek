@@ -144,6 +144,59 @@ let parallelize num =
 (* (\* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *\) *)
 (* List.for_all do_spec_verification spec_list *)
 
+(*pre_f : pre-condition*)
+
+(* pre_f = b.CF.formula_ext_base *)
+let check_varperm (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (pre_f:CF.formula) pos = 
+  (*************************************************************)
+  (********* Check permissions variables in pre-condition ******)
+  (*************************************************************) 
+  (*In the precondition, there will be @value in the main thread
+    and @full in the child threads*)
+  (*a parameter MUST be either @value or @full*)
+  (*TO DO: have to deal with OR *)
+  (*Pickup variable permissions in both thread only*)
+  Debug.devel_zprint (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition:  \n" ^ (Cprinter.string_of_context ctx) ^ "\n")) pos;
+  let vp_list,_ = CF.filter_varperm_formula_all pre_f in
+  let val_list, vp_rest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in
+  let full_list, vp_rest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_rest in
+  let _ = if (vp_rest2!=[]) then
+        report_error pos ("\ncheck_specs: EBase: unexpected @zero in the pre-condition")
+  in
+  let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in
+  let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in
+  let tmp = Gen.BList.intersect_eq CP.eq_spec_var_ident val_vars full_vars in
+  let _ = if (tmp!=[]) then
+        report_error pos ("\ncheck_specs: EBase: duplicated variable permissions: " ^ (Cprinter.string_of_spec_var_list tmp))
+  in
+  (*Ensure that all arguments have corresponding varialbe permissions*)
+  let all_vars = val_vars@full_vars in
+  let farg_types, farg_names = List.split proc.proc_args in
+  let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+  let tmp1 = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars in
+  (*enable this check require enabling --ann-vp *)
+  (* let _ = if (tmp1!=[]) then *)
+  (*       report_error pos ("\ncheck_specs: EBase: missing variable permissions for " ^ (Cprinter.string_of_spec_var_list tmp1)) *)
+  (* in *)
+  (*Find out @zero for the main thread*)
+  (*Pickup variable permissions in the main thread only*)
+  let vp_list2,_ = CF.filter_varperm_formula pre_f in
+  let full_list2, vp_rest4 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_list2 in
+  let val_list2, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_rest4 in
+  let full_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list2) in
+  let val_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list2) in
+  let all_vars2 = full_vars2@val_vars2 in
+  (*@zero of the main thread*)
+  let zero_vars = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars2 in
+  let ctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_zero_perm = zero_vars}) ctx in
+  (*drop VarPerm in the main thread*)
+  let ext_base = CF.drop_varperm_formula pre_f in
+  Debug.devel_zprint (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition: Done. " ^ "\n ### zero_vars = " ^ (Cprinter.string_of_spec_var_list zero_vars) ^ "\n")) pos;
+  (ctx,ext_base)
+(*************************************************************)
+(*****<<<< Check permissions variables in pre-condition ******)
+(*************************************************************) 
+
 let pre_ctr = new Gen.counter 0
 
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
@@ -205,8 +258,16 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             (new_spec,[],true)
 	  | CF.EBase b ->
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
-            (*at the begining, assume @zero[]*)
-            let ext_base = CF.drop_varperm_formula b.CF.formula_ext_base in
+            (*************************************************************)
+            (********* Check permissions variables in pre-condition ******)
+            (*************************************************************) 
+            let ctx,ext_base = if !Globals.ann_vp then
+                  check_varperm prog proc ctx b.CF.formula_ext_base pos_spec 
+                else (ctx,b.CF.formula_ext_base)
+            in
+            (*************************************************************)
+            (*****<<<< Check permissions variables in pre-condition ******)
+            (*************************************************************) 
 	        let nctx = 
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
@@ -848,7 +909,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 Otherwise, we have to compose*)
                 let tid = List.hd vs in
                 let tid =  CP.SpecVar (thread_typ, tid, Primed) in (*TO CHECK: Primed or Unprimed*)
-		        (* let _ = print_endline ("\ncheck_exp: SCall : join : before join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### ctx: " ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
+		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : before join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### ctx: " ^ (Cprinter.string_of_list_failesc_context ctx)) pos  in
                 let fct es = 
                   let es_f = es.CF.es_formula in
                   (*TO CHECK: asssume no disjuntive form in f*)
@@ -891,7 +952,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         else
                           let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
                           let es = {es with CF.es_var_zero_perm=vars1} in
-                          (**********<<< Compose variable permissions *******)
+                          (**********<<< Compose @full variable permissions *******)
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
@@ -902,7 +963,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           CF.Ctx new_es
                 in
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
-		        (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
+		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res
                 else
                 (*=========================*)

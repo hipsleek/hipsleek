@@ -55,4 +55,14 @@ checkentail @zero[v1,v2] or @zero[v2] |- @value[x3].
 // succeed with an OR
 print residue.
 
+//examples with threads
 
+//(12)
+checkentail @zero[x] and @full[x] & x'=x+1 & thread=id |- @full[y].
+print residue.
+// valid --> @zero[x,y] and @full[x] & x'=x+1
+
+//(13)
+checkentail @zero[x] & y'=y+1 & id=z and @full[x] & x'=x+1 & thread=z
+            |- [i] @value[id] and @full[x] & x'=i+1 & thread=id.
+print residue.

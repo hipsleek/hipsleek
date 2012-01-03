@@ -19,7 +19,9 @@ int testfork(ref int x,ref int y)
 {
   int id;
   id=fork(inc,x);
+  dprint;
   inc(y);
+  dprint;
   return id;
 }
 
@@ -45,8 +47,9 @@ requires true
   int x,y;
   x=0;y=0;
   id = testfork(x,y);
-  testjoin(id,x); 
-  //join(id);
+  dprint;
+  //testjoin(id,x); 
+  join(id);
   dprint;
   return x+y;
 }

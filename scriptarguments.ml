@@ -112,6 +112,8 @@ let common_arguments = [
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
+	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
+	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
