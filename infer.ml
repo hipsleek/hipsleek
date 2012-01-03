@@ -445,7 +445,10 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
         DD.devel_hprint (add_str "new pre infer   : " !print_formula) neg_f pos; 
         DD.devel_hprint (add_str "pre thus   : " !print_formula) pre_thus pos; 
         DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos; 
-        Some (neg_f)
+        if b then
+          (DD.devel_pprint "contradiction in inferred pre!" pos; 
+          None)
+        else Some (neg_f)
 
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
@@ -473,7 +476,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !CP.print_formula)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
