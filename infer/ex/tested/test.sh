@@ -1,7 +1,5 @@
-./sleek infer/ex/tested/test1.slk > infer/ex/tested/test1.res
-./sleek infer/ex/tested/test2.slk > infer/ex/tested/test2.res
-./sleek infer/ex/tested/test3.slk > infer/ex/tested/test3.res
-./sleek infer/ex/tested/test4.slk > infer/ex/tested/test4.res
-./sleek infer/ex/tested/test5.slk > infer/ex/tested/test5.res
-
-
+../../../sleek test1.slk > test1.res
+../../../sleek test2.slk > test2.res
+../../../sleek test3.slk > test3.res
+../../../sleek test4.slk > test4.res
+../../../sleek test5.slk > test5.res
