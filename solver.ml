@@ -2822,7 +2822,7 @@ and heap_entail_failesc_prefix_init i (prog : prog_decl) (is_folding : bool)  (h
 	  ) : (list_failesc_context * proof) =
   let pr = to_string in
   let pr2 = Cprinter.string_of_list_failesc_context in
-  Debug.ho_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
+  Debug.no_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
       (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl conseq pos pid (rename_f,to_string,f))
 	  cl conseq
 
