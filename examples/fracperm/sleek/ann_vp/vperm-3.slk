@@ -1,20 +1,29 @@
-/*
-  Variable permissions
-*/
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
 
 //(1)
 checkentail @zero[v1,v2] & x>0 |- x>=0.
-print residue.
+//valid   --> @zero[v1,v2,x1].
 
 //(2)
 checkentail @zero[v1,v2] |- @full[x1].
 print residue.
 //valid   --> @zero[v1,v2,x1].
 
+//checkentail x::node<_,b>*b::node<_,c>  |- x::node<_,y>.
+//print residue.
+
 //(3)
 checkentail @zero[v1,v2] |- @full[v1].
 // Fail
 // @full var [v1] cannot have possibly zero permission
+// TODO : can change error message?
+// Entail (3): Fail.(may) cause:Failure_Valid
+
 
 //(4)
 checkentail @zero[v1,v2] & v1=x1 |- @full[x1].
@@ -67,3 +76,8 @@ checkentail @zero[x] & y'=y+1 & id=z and @full[x] & x'=x+1 & thread=z
             |- [i] @value[id] and @full[x] & x'=i+1 & thread=id.
 print residue.
 // valid -> @zero[x] & i=x & y'=1+y & id=z
+
+//(14)
+checkentail @zero[x] and @full[x] & x'=x+1 & thread=id |- @full[x].
+print residue.
+// valid --> @zero[x,y] and @full[x] & x'=x+1
