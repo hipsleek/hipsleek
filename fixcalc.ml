@@ -190,7 +190,7 @@ let compute_fixpoint input_pairs =
     in
     (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
     DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" pos;
+    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
     DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
     let output_of_sleek = "fixcalc.inf" in
     let oc = open_out output_of_sleek in
