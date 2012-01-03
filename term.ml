@@ -19,6 +19,7 @@ type term_reason =
   | Non_Term_Reached
   (* Reason for error *)
   | Invalid_Phase_Trans
+  | Variance_Not_Given
 
 (* The termination can only be determined when 
  * a base case or an infinite loop is reached *)  
@@ -52,6 +53,8 @@ let pr_term_reason = function
   | Base_Case_Reached -> fmt_string "The base case is reached."
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
+  | Variance_Not_Given -> 
+      fmt_string "The recursive case needs a given/inferred variance for termination proof."
 
 let string_of_term_reason (reason: term_reason) =
   poly_string_of_pr pr_term_reason reason
@@ -69,6 +72,7 @@ let pr_term_ctx (ctx: CF.formula) =
   let h_f, p_f, _, _, _ = CF.split_components ctx in
   begin
     fmt_string "Current context";
+    fmt_print_newline ();
     pr_wrap_test "heap: " CF.is_true pr_h_formula h_f;
     pr_wrap_test "pure: " MCP.isConstMTrue pr_mix_formula p_f;
     fmt_print_newline ();
@@ -77,7 +81,7 @@ let pr_term_ctx (ctx: CF.formula) =
 let pr_term_res pr_ctx (pos, ctx, status) =
   fmt_string (string_of_loc pos);
   if pr_ctx then (fmt_string ": "; pr_term_ctx ctx) else ();
-  fmt_string ": ";
+  if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
   if pr_ctx then fmt_print_newline () else ()
 
@@ -113,7 +117,7 @@ let rec find_lexvar_formula (f: CP.formula) : (CP.exp list * CP.exp list) =
       with _ -> find_lexvar_formula f2)
   | _ -> raise LexVar_Not_found
 
-(* To syntactic simplify LexVar formula *)  
+(* To syntactically simplify LexVar formula *)  
 let rec syn_simplify_lexvar bnd_measures =
   match bnd_measures with
   | [] -> []
@@ -128,12 +132,29 @@ let find_lexvar_es (es: CF.entail_state) =
   | None -> raise LexVar_Not_found
   | Some (el, il) -> (el, il)
 
+(* Normalize the longer LexVar prior to the shorter one *)
+let norm_lexvar_by_length src dst =
+  let rec strip_list n l = 
+    if (n<=0) then []
+    else
+      match l with
+      | [] -> []
+      | hd::tl -> hd::(strip_list (n-1) tl)
+  in 
+  let sl = List.length src in
+  let dl = List.length dst in
+  if (sl = dl) then (src, dst)
+  else if (sl > dl) then
+    (strip_list dl src, dst)
+  else (src, strip_list sl dst)
+
 (* To handle LexVar formula *)
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   try
     let conseq = MCP.pure_of_mix rhs_p in
     let dst_lv = fst (find_lexvar_formula conseq) in (* [d1,d2] *)
     let src_lv = fst (find_lexvar_es estate) in
+    let (src_lv, dst_lv) = norm_lexvar_by_length src_lv dst_lv in
     (* Filter LexVar in RHS *)
     let rhs_ls = CP.split_conjunctions conseq in
     let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
@@ -204,6 +225,15 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
 
+(* End of LexVar handling *) 
+
+
+(* HIP: Collecting information for termination proof *)
+let report_term_error (ctx: CF.formula) (reason: term_reason) pos : term_res =
+  let err = (pos, ctx, TermErr reason) in
+  term_res_stk # push err;
+  err
+
 let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
   let _ = 
     begin
@@ -222,39 +252,63 @@ let get_phase_num (measure: CF.ext_variance_formula) : int =
   let phase_num = fst (List.nth measure.CF.formula_var_measures 1) in
   if (CP.is_num phase_num) then CP.to_int_const phase_num CP.Floor 
   else raise Invalid_Phase_Num 
-  
+(*  
 let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res =
   let orig_ante = CF.formula_of_context ctx in
   try
-    let phase_num = get_phase_num measure in 
-    if (phase_num < 0) then
-      (pos, orig_ante, NonTerm Non_Term_Reached)
-    else if (phase_num = 0) then
-      (pos, orig_ante, Term Base_Case_Reached)
-    else 
-      let lv = CF.formula_of_pure_formula (CF.lexvar_of_evariance measure) pos in
-      let res = f ctx lv pos in (* check decreasing *)
-      if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure)
+    let phase_num = get_phase_num measure in
+    let term_res =
+      if (phase_num < 0) then
+        (pos, orig_ante, NonTerm Non_Term_Reached)
+      else if (phase_num = 0) then
+        (pos, orig_ante, Term Base_Case_Reached)
       else
-        (* The default lower bound is zero *)
-        let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
-        let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
-        let res = f ctx bnd pos in (* check boundedness *)
-        if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure)
-        else (pos, orig_ante, Term Valid_Measure)
+        let lv = CF.lexvar_of_evariance measure in 
+        match lv with
+        | None -> report_term_error orig_ante Variance_Not_Given pos
+        | Some m -> 
+            let lv = CF.formula_of_pure_formula m pos in
+            let res = f ctx lv pos in (* check decreasing *)
+            if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure)
+            else
+              (* The default lower bound is zero *)
+              let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
+              let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
+              let res = f ctx bnd pos in (* check boundedness *)
+              if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure)
+              else (pos, orig_ante, Term Valid_Measure)
+    in term_res_stk # push term_res; term_res
   with 
   | Invalid_Phase_Num
-  | Failure "nth" -> (pos, orig_ante, TermErr Invalid_Phase_Trans)
+  | Failure "nth" -> report_term_error orig_ante Invalid_Phase_Trans pos
+*)
+let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res =
+  let orig_ante = CF.formula_of_context ctx in
+  let lv = CF.lexvar_of_evariance measure in
+  match lv with
+  | None -> report_term_error orig_ante Variance_Not_Given pos
+  | Some m -> 
+      let lv = CF.formula_of_pure_formula m pos in
+      let res = f ctx lv pos in (* check decreasing *)
+      let term_res =
+        if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure)
+        else
+          (* The default lower bound is zero *)
+          let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
+          let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
+          let res = f ctx bnd pos in (* check boundedness *)
+          if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure)
+          else (pos, orig_ante, Term Valid_Measure)
+      in term_res_stk # push term_res; 
+      term_res 
 
 let check_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res =
-  let term_res = 
-    if (CF.isAnyFalseCtx ctx) then
-      let orig_ante = CF.formula_of_disjuncts (CF.collect_orig_ante ctx) in
-      (pos, orig_ante, Unreachable)
-    else
-      check_reachable_term_measure f ctx measure pos
-  in
-  term_res_stk # push term_res;
-  term_res
+  if (CF.isAnyFalseCtx ctx) then
+    let orig_ante = CF.formula_of_disjuncts (CF.collect_orig_ante ctx) in
+    let term_res = (pos, orig_ante, Unreachable) in
+    term_res_stk # push term_res;
+    term_res
+  else
+    check_reachable_term_measure f ctx measure pos
 
 

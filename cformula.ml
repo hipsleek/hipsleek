@@ -258,11 +258,36 @@ and has_variance_ext ext_f =
     | EVariance _ -> true
     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont
 
-let lexvar_of_evariance (v: ext_variance_formula) : CP.formula =
-	let vm = fst (List.split v.formula_var_measures) in
-	let vi = v.formula_var_infer in
-  let pos = v.formula_var_pos in
-  CP.mkPure (CP.mkLexVar vm vi pos) 
+let rec norm_struc_with_variance struc_f =
+  List.map (fun ef -> norm_ext_with_variance ef) struc_f
+
+and norm_ext_with_variance ext_f =
+  match ext_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl = List.map (fun (c, sf) -> (c, norm_struc_with_variance sf)) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ({ formula_ext_continuation = cont } as ef) ->
+      let n_cont = norm_struc_with_variance cont in
+      EBase { ef with formula_ext_continuation = n_cont }
+  | EAssume _ ->
+      EVariance {
+        formula_var_measures = [];
+        formula_var_infer = [];
+        formula_var_continuation = ext_f;
+        formula_var_pos = no_pos
+      }
+  | EVariance _ -> ext_f 
+  | EInfer ({ formula_inf_continuation = cont } as ef) ->
+      let n_cont = norm_ext_with_variance cont in
+      EInfer { ef with formula_inf_continuation = n_cont }
+
+let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
+  if (v.formula_var_measures = []) then None 
+  else
+	  let vm = fst (List.split v.formula_var_measures) in
+	  let vi = v.formula_var_infer in
+    let pos = v.formula_var_pos in
+    Some (CP.mkPure (CP.mkLexVar vm vi pos))
 
 let measures_of_evariance (v: ext_variance_formula) : (CP.exp list * CP.exp list) =
   let vm = fst (List.split v.formula_var_measures) in

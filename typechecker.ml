@@ -788,43 +788,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
                   let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
 
-                  (*let l = (String.index mn '$') in
-                    let new_mn = String.create l in
-			        let _ = print_string ("mn: " ^ mn ^ "\n") in
-			        let _ = String.blit mn 0 new_mn 0 l in
-			        let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
-                  (* Termination: Cache the subst for output pretty printing *)
-                  (*let sctx = if not ir then sctx else
-                    let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
-                    List.map (fun fctx ->
-                        let (lb,estk,lbctx) = fctx in
-                        let nlbctx = List.map (fun bctx ->
-                            let (pt,ctx) = bctx in
-                            let nctx = CF.transform_context (fun es -> 
-                                CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; 
-                                    CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
-                        (lb,estk,nlbctx)) sctx
-                  in*)
-                  let _ = Debug.trace_zprint (lazy ("\ncheck_pre_post@SCall@sctx: " ^
-                    (Cprinter.string_of_pos pos) ^ "\n" ^
-                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n")) in
                   let renamed_spec = CF.subst_struc st1 renamed_spec in
                   let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-                  
+
                   (* Termination checking *)
-                  let term_res = 
-                    if ir & (CF.has_variance_struc stripped_spec) then
+                  let pre2 = 
+                    if ir then (* Only check termination of a recursive call *)
                       let _ = DD.devel_zprint 
                         (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
+                      (* Normalise the specification with variance 
+                       * to further inference or error reporting *)
+                      let n_pre2 = CF.norm_struc_with_variance pre2 in 
                       if not (CF.isNonFalseListFailescCtx sctx) then
-                        let _ = Term.add_unreachable_res sctx pos in ()
-                      else ()
-                   else ()
+                        let _ = Term.add_unreachable_res sctx pos in n_pre2
+                      else n_pre2
+                    else pre2
                   in 
-                                   
+
                   (* TODO: call the entailment checking function in solver.ml *)
                   (* let _ = print_endline ("WN 1:"^Cprinter.string_of_list_failesc_context sctx) in *)
                   let successful_ctx = List.map CF.succ_context_of_failesc_context sctx in
