@@ -32,7 +32,7 @@ int testfork(ref int x,ref int y)
 void testjoin(int id, ref int x)
   requires [i] @p_ref[x] & @p_val[id]
            and @full[x] & x'=i+1 & thread=id //'
-  ensures x'=i+1; //'
+  ensures @full[x] & x'=i+1; //'
 {
   dprint;
   join(id);
