@@ -1,28 +1,21 @@
 //Example from the slide of "The polyranking principles"
-// Generalization of ex9.ss
-void loop(ref int x, ref int y, int k, int N, bool b)
+
+void loop(ref int x, ref int y, int k, int N)
 requires k>0
 case {
-	x>N -> variance [0,0] ensures "l1":x'=x & y'=y;
-	x<=N -> case {
-				//l3 -> l2 -> l1
-				b -> case {
-						y>N+1 -> //variance N-x
-								 variance [0,1,N-x]
-								 ensures "l2":true;
-						y<=N+1 -> //variance (N+1)-y
-	                variance [0,2,(N+1)-y]
-								  ensures "l3":true;
-					 }
-
-				//l2 -> l1
-				!b -> //variance N-x
-            variance [0,3,N-x]
-					  ensures "l2":true;
-			}
+	x>N -> ensures "l1":x'=x & y'=y;
+	x<=N -> //l3 -> l2 -> l1
+			case {
+				y>N+1 -> //variance N-x
+						 ensures "l2":true;
+				y<=N+1 -> //variance (N+1)-y
+						  ensures "l3":true;
+			 }
 }
 {	
 	if (x<=N) {
+		bool b;
+		b = randBool();
 		if (b) {
 			update1(x, y, k);
 
@@ -33,7 +26,7 @@ case {
 			assert "l3": (N+1-y')-(N+1-y)<0;
 			assert "l3": true & (N+1-y'>=0 | y'>N+1); //bounded or l3->l2
 		   
-			loop(x, y, k, N, randBool());
+			loop(x, y, k, N);
 		} else {
 			update2(x, y);
 
@@ -41,7 +34,7 @@ case {
 			assert "l2": N-x>=0;
 			//assert "l2": N-x'>=0;
 			
-			loop(x, y, k, N, randBool());
+			loop(x, y, k, N);
 		}
 	}
 }

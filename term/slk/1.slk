@@ -1,0 +1,35 @@
+//(1): Valid
+checkentail LexVar[1,_,_] |- LexVar[0,_,_].
+
+//(2): Fail 
+checkentail LexVar[0,1,_] |- LexVar[1,0,_]. 
+
+//(3): Valid
+checkentail LexVar[p1+1,_,_] |- LexVar[p1,_,_].
+
+//(4): Valid
+checkentail LexVar[p1,p2+1,_] |- LexVar[p1,p2,_].
+
+//(5): Fail
+checkentail LexVar[p1,p2,_] |- LexVar[p1,p2+1,_].
+
+//(6): Valid
+checkentail n=m+1 & LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+
+//(7): Valid
+infer[n,m] LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+
+//(8): Valid
+infer[n] p1>=0 & p2>=0 & LexVar[p1,p2,n] |- LexVar[0,0,0].
+
+//(9): Valid
+infer[p1,p2] LexVar[0,p1,n+1] |- LexVar[0,p2,n].
+
+//(10): Fail
+infer[m] LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+
+//(11): Valid
+checkentail LexVar[1] |- LexVar[0,_,_].
+
+//(12): Valid
+checkentail n=m+1 & LexVar[n,_,_] |- LexVar[m,_].

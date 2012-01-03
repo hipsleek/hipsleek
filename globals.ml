@@ -472,7 +472,7 @@ let is_sat_slicing = ref false
 let do_infer_inv = ref false
 
 (* Inference *)
-let call_graph : ((string list) list) ref = ref [[]]
+(*let call_graph : ((string list) list) ref = ref [[]]*)
 
 let add_count (t: int ref) = 
 	t := !t+1

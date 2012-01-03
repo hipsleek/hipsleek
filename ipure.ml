@@ -604,6 +604,9 @@ and subst_list_of_pair sst ls = match sst with
   | [] -> ls
   | s::rest -> subst_list_of_pair rest (e_apply_one_list_of_pair s ls)
 			 						
+and subst_list_of_exp sst ls = match sst with
+	| [] -> ls
+	| s::rest -> subst_list_of_exp rest (e_apply_one_list s ls)
 
 and look_for_anonymous_exp_list (args : exp list) :
   (ident * primed) list =

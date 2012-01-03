@@ -20,7 +20,7 @@ type typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
-                   prog_logical_vars : exp_var_decl list;
+                   prog_logical_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
@@ -143,7 +143,7 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
-      proc_is_main : bool;
+          proc_is_main : bool;
           proc_file : string;
 				  proc_loc : loc }
 
@@ -1004,7 +1004,7 @@ and collect_ext (f:Iformula.ext_formula):ident list = match f with
   | Iformula.EAssume (b,_) -> collect_formula b
   | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
   | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
-  | Iformula.EVariance b -> collect_struc b.F.formula_var_continuation
+  | Iformula.EVariance b -> collect_ext b.F.formula_var_continuation
   | Iformula.EInfer b -> collect_ext b.F.formula_inf_continuation
 
 and collect_formula (f0 : F.formula) : ident list = 
@@ -1228,7 +1228,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formu
 	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view_x  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])
-	| Iformula.EVariance b -> data_name_of_view view_decls b.F.formula_var_continuation
+	| Iformula.EVariance b -> data_name_in_ext b.F.formula_var_continuation
  | Iformula.EInfer b -> data_name_in_ext b.F.formula_inf_continuation
   in
   handle_list_res (List.map data_name_in_ext f0) 
@@ -1356,6 +1356,12 @@ and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
 and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
 							  exp_var_decl_decls = d;
 							  exp_var_decl_pos = p }
+
+and mkLogicalVarDecl t d p = {
+  exp_var_decl_type = t;
+	exp_var_decl_decls = d;
+	exp_var_decl_pos = p 
+}
 
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2
@@ -1789,7 +1795,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | hd::tl ->
         let new_iprims = {
                 prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
-                prog_logical_vars = hd.prog_logical_vars @ iprims.prog_logical_vars;
+                prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
@@ -1807,7 +1813,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
         let new_prims = {
                 prog_data_decls = [];
                 prog_global_var_decls = [];
-                prog_logical_vars = [];
+                prog_logical_var_decls = [];
                 prog_enum_decls = [];
                 prog_view_decls = [];
                 prog_rel_decls = [];

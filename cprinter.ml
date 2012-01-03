@@ -1242,26 +1242,19 @@ and pr_ext_formula  (e:ext_formula) =
 	              fmt_cut();
 	              wrap_box ("B",0) pr_formula b) b	 
 	| EVariance {
-		  formula_var_label = label;
 		  formula_var_measures = measures;
-		  formula_var_escape_clauses = escape_clauses;
+		  formula_var_infer = infer_exps;
 		  formula_var_continuation = cont;} ->
-	      let string_of_label = match label with
-		  | None -> ""
-		  | Some i -> "(" ^ (string_of_int i) ^ ")" in
-		  let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
-			| None -> rs^(string_of_formula_exp expr)^" "
-			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
-		  let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(poly_string_of_pr pr_pure_formula f)) "" escape_clauses in
+		  let string_of_measures = List.fold_left (fun rs (expr, bound) -> 
+        match bound with
+        | None -> rs^(string_of_formula_exp expr)^" "
+			  | Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+		  let string_of_infer =  List.fold_left (fun rs e -> rs^(string_of_formula_exp e)) "" infer_exps in
 		  fmt_open_vbox 2;
-		  fmt_string ("EVariance "^(string_of_label)^" [ "^string_of_measures^"] "
-          ^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ]"));
-          if not(Gen.is_empty(cont)) then
-		    begin
-			  fmt_cut();
-			  wrap_box ("B",0) pr_struc_formula cont;
-            end;
-          fmt_close();
+		  fmt_string ("EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer ^ "}");
+      fmt_cut();
+			wrap_box ("B",0) pr_ext_formula cont;
+      fmt_close();
     | EInfer {
       formula_inf_post = postf;
       formula_inf_vars = lvars;
@@ -1322,7 +1315,8 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
+  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure;
+  pr_vwrap "es_orig_ante: " (pr_opt pr_formula) es.es_orig_ante; 
   (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
@@ -1341,7 +1335,9 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
-  pr_wrap_test "es_var_measures: " Gen.is_empty (pr_seq "" pr_formula_exp) es.es_var_measures;
+  pr_vwrap "es_var_measures: " (pr_opt (fun (l1, l2) -> 
+    pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2)) es.es_var_measures;
+  (*
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
@@ -1349,6 +1345,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
+  *)
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
@@ -2444,10 +2441,7 @@ let rec html_of_ext_formula f = match f with
 		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ (html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (if not(Gen.is_empty(cont)) then  html_of_struc_formula cont else "")
 	| EAssume (x,b,(y1,y2)) ->
 		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
-	| EVariance { formula_var_label = label;
-							formula_var_measures = measures;
-							formula_var_escape_clauses = escape_clauses;
-							formula_var_continuation = cont; } -> ""
+	| EVariance _ -> ""
  | EInfer _ -> ""
 
 and html_of_struc_formula f = 

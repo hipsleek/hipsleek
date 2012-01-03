@@ -1,0 +1,49 @@
+
+
+
+
+ int foo(int n)
+  case {
+   n<0 & Loop -> ensures false;
+   n=0 & Term[] -> ensures res=0
+   n>0 & Term[n] -> ensures res=2*n
+  }
+ { 
+   if (n=0) return 0;
+   else return 2+foo(n-1);
+ }
+
+
+ int foo(int n)
+  case {
+   n<0 & Loop -> ensures false;
+   n=0 & Term[] -> ensures res=0
+   n>0 & Term[n] -> ensures res=2*n
+  }
+ { 
+   if (n=0) return 0;
+   else return 2+foo(n-1);
+ }
+
+
+ Term[..] - definite termination
+ MayLoop  - may terminate or may loop
+ Loop     - definite looping
+ 
+ MayLoop |- Term[..] --> MayLoop
+ MayLoop |- MayLoop --> MayLoop
+ MayLoop |- Loop ==> MayLoop
+
+       [.x.] > [.y.]
+ ---------------------------------
+ Term[.x.] |- Term[.y.] ==> Term[..]
+
+ Loop  |- Term ==> Loop
+ Loop  |- MayLoop ==> Loop
+
+ Term[..] |- MayLoop (fail)
+ Term[..] |- MayLoop (fail)
+ Term[..] |- Loop (fail)
+
+
+

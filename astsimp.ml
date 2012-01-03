@@ -483,7 +483,7 @@ and convert_ext2 prog (f0:IF.ext_formula):IF.ext_formula = match f0 with
 		IF.formula_ext_base = convert_heap2 prog b.IF.formula_ext_base;
 		IF.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.IF.formula_ext_continuation}
   | IF.EVariance b -> IF.EVariance {b with
-		IF.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.IF.formula_var_continuation}  
+		IF.formula_var_continuation = convert_ext2 prog b.IF.formula_var_continuation}  
   | IF.EInfer b -> IF.EInfer {b with
   IF.formula_inf_continuation = convert_ext2 prog b.IF.formula_inf_continuation}
 
@@ -520,9 +520,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 	| IF.EBase {IF.formula_ext_base =fb;
 	  IF.formula_ext_continuation = cont}-> List.fold_left 
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
-	| IF.EVariance b -> List.fold_left 
-		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.IF.formula_var_continuation
- | IF.EInfer b -> gen_name_pairs_ext vname b.IF.formula_inf_continuation
+	| IF.EVariance b -> gen_name_pairs_ext vname b.IF.formula_var_continuation
+  | IF.EInfer b -> gen_name_pairs_ext vname b.IF.formula_inf_continuation
 
   in
   
@@ -1054,17 +1053,17 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
-		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_vars) in 
-		  let cprog =   {
-              C.prog_data_decls = cdata;
-              C.prog_view_decls = cviews;
-              C.prog_logical_vars = log_vars;
+		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+		  let cprog = {
+        C.prog_data_decls = cdata;
+        C.prog_view_decls = cviews;
+        C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
-              C.prog_proc_decls = cprocs;
-              C.prog_left_coercions = l2r_coers;
-              C.prog_right_coercions = r2l_coers;
-          } in
+        C.prog_proc_decls = cprocs;
+        C.prog_left_coercions = l2r_coers;
+        C.prog_right_coercions = r2l_coers;
+      } in
 	      let cprog1 = { cprog with			
 			  C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
 			  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
@@ -1076,7 +1075,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	      let c = (mark_recursive_call prog cprog5) in 
+	      let c = (mark_rec_and_call_order cprog5) in 
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -1837,8 +1836,8 @@ and set_pre_flow_x f =
     | CF.ECase b-> CF.ECase {b with 
           CF.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow_x c2))) b.CF.formula_case_branches;}
     | CF.EAssume (b1,b2,b3)-> CF.EAssume (b1,((* CF.substitute_flow_in_f !norm_flow_int !top_flow_int  *)b2),b3)
-	| CF.EVariance b -> CF.EVariance {b with
-		  CF.formula_var_continuation = set_pre_flow_x b.CF.formula_var_continuation}
+	  | CF.EVariance b -> CF.EVariance {b with
+		  CF.formula_var_continuation = helper b.CF.formula_var_continuation}
     | CF.EInfer b -> CF.EInfer {b with
       CF.formula_inf_continuation = helper b.CF.formula_inf_continuation}
   in
@@ -1858,7 +1857,7 @@ and check_valid_flows (f:IF.struc_formula) =
     | IF.EBase b-> (check_valid_flows_f b.IF.formula_ext_base); check_valid_flows b.IF.formula_ext_continuation
     | IF.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.IF.formula_case_branches)
     | IF.EAssume (b,_)-> check_valid_flows_f b
-	| IF.EVariance b -> check_valid_flows b.IF.formula_var_continuation
+	  | IF.EVariance b -> helper b.IF.formula_var_continuation
     | IF.EInfer b -> helper b.IF.formula_inf_continuation
   in
   (* if f==[] then print_endline "Empty Spec detected" else *)
@@ -1961,8 +1960,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     let args2 = args@(prog.I.prog_rel_ids) in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
- 
-      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv_infer final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
+      
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+      let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
+      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -3855,7 +3856,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
             Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
 	      let _ = List.map (case_coverage_x instant) r2 in true
-	| CF.EVariance b -> case_coverage_x instant b.CF.formula_var_continuation
+	  | CF.EVariance b -> ext_case_coverage instant b.CF.formula_var_continuation
     | CF.EInfer b -> ext_case_coverage instant b.CF.formula_inf_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
@@ -3939,8 +3940,7 @@ and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
 	    | CF.EAssume (ref_vars, bf,y) ->
 	          CF.EAssume (ref_vars, (CF.normalize 2 bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
 		| CF.EVariance b -> CF.EVariance {b with
-			  CF.formula_var_continuation = inner_add_pre pf branches b.CF.formula_var_continuation;
-		  }
+			  CF.formula_var_continuation = helper pf branches b.CF.formula_var_continuation;}
   | CF.EInfer b -> CF.EInfer {b with
     CF.formula_inf_continuation = helper pf branches b.CF.formula_inf_continuation;}
     in	List.map (helper pf branches ) f 
@@ -3999,14 +3999,13 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                 CF.formula_ext_continuation = nc;
                 CF.formula_ext_pos = b.IF.formula_ext_pos}
 	  | IF.EVariance b -> CF.EVariance {
-		    CF.formula_var_label = b.IF.formula_var_label;
-			CF.formula_var_measures = List.map (fun (expr, bound) -> match bound with
-			  | None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
-			  | Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.IF.formula_var_measures;
-			CF.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify 3 (trans_pure_formula f stab)) b.IF.formula_var_escape_clauses;
-			CF.formula_var_continuation = trans_struc_formula_hlp b.IF.formula_var_continuation fvars;
-			CF.formula_var_pos = b.IF.formula_var_pos
-		}
+        CF.formula_var_measures = List.map (fun (expr, bound) -> 
+          match bound with
+          | None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
+			    | Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.IF.formula_var_measures;
+			  CF.formula_var_infer = List.map (fun e -> Cpure.norm_exp (trans_pure_exp e stab)) b.IF.formula_var_infer;
+			  CF.formula_var_continuation = trans_ext_formula b.IF.formula_var_continuation stab;
+        CF.formula_var_pos = b.IF.formula_var_pos }
       | IF.EInfer b -> 
             (* TODO : check iv - fvars = {} *)
             let pos = b.IF.formula_inf_pos in
@@ -5611,15 +5610,13 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) stab =
 	    let _ = inner_collector b.IF.formula_ext_continuation in ()								
 	  | IF.EVariance b ->
 		    let _ = List.map (fun (expr, bound) -> 
-	            let _ = gather_type_info_exp expr stab Int  in 
-                match bound with
-			      | None -> ()
-			      | Some b_expr -> 
-	                    let _ = gather_type_info_exp b_expr stab Int in 
-                        ()) 
-              b.IF.formula_var_measures in
-		    let _ = List.map (fun f -> gather_type_info_pure prog f stab) b.IF.formula_var_escape_clauses in
-		    let _ = inner_collector b.IF.formula_var_continuation in ()
+          let _ = gather_type_info_exp expr stab Int in
+          match bound with
+			    | None -> ()
+			    | Some b_expr -> 
+	          let _ = gather_type_info_exp b_expr stab Int in ()) b.IF.formula_var_measures in
+		    let _ = List.map (fun e -> gather_type_info_exp e stab Int) b.IF.formula_var_infer in
+		    let _ = helper b.IF.formula_var_continuation in ()
       | IF.EInfer b -> let _ = helper b.IF.formula_inf_continuation in ()
     in
     let _ = List.map helper f0 in 
@@ -6248,8 +6245,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r
 	  | IF.EVariance b -> (IF.EVariance ({b with
-			IF.formula_var_continuation = fst (helper h b.IF.formula_var_continuation strad_vs vars)
-		}), [])
+			IF.formula_var_continuation = List.hd (fst (helper h [b.IF.formula_var_continuation] strad_vs vars))}), [])
       | IF.EInfer b -> 
         let infer_vars = b.IF.formula_inf_vars in
 (*        print_endline ("VARS: " ^ Cprinter.str_ident_list (List.map (fun t -> fst t) infer_vars));*)
@@ -6539,7 +6535,7 @@ and check_eprim_in_struc_formula s f =
           check_eprim_in_formula s b.IF.formula_ext_base;
           check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
     | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
-    | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
+    | IF.EVariance b -> helper b.IF.formula_var_continuation
     | IF.EInfer b -> helper b.IF.formula_inf_continuation
   in
   List.iter helper f
@@ -7647,9 +7643,9 @@ and move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_var li
 		  let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
 			| None -> Cpure.afv e1
 			| Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.CF.formula_var_measures in
-		  let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.CF.formula_var_escape_clauses in
-		  let new_cont, c_var_list = move_instantiations b.CF.formula_var_continuation in
-		  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
+		  let i_var_list = List.fold_left (fun rs e -> rs@(Cpure.afv e)) [] b.CF.formula_var_infer in
+		  let new_cont, c_var_list = helper b.CF.formula_var_continuation in
+		  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))
     | CF.EInfer b ->
       let new_cont, c_var_list = helper b.CF.formula_inf_continuation in
       (CF.EInfer {b with CF.formula_inf_continuation = new_cont}, c_var_list)
@@ -7703,45 +7699,90 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
 	  
-(* Recursive call detection *)
-(* irf = is_rec_field *)	
-and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
-  let cg = IastUtil.callgraph_of_prog ip in
-  let scc_list = List.rev (IastUtil.IGC.scc_list cg) in
-  call_graph := scc_list; (* To keep time of making call hierachy for inference *)
-  (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
-  irf_traverse_prog ip cp scc_list
+(* Recursive call and call order detection *)
+(* irf = is_rec_field *)
+and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
+  let cg = Cast.callgraph_of_prog cp in
+  let scc_list = List.rev (Cast.IGC.scc_list cg) in
+  let cp = mark_recursive_call cp scc_list cg in
+  mark_call_order cp scc_list cg
+  
+and mark_recursive_call (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl = 
+  (*let _ = printf "The scc list of program:\n";
+	  List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list;
+	  printf "**********\n"
+  in*)
+  irf_traverse_prog cp scc_list
 
-and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUtil.IG.V.t list list) : (IastUtil.IG.V.t list) =
+and mark_call_order (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl =
+  let proc_top, proc_base  = List.partition (fun proc -> proc.Cast.proc_is_main) cp.Cast.prog_proc_decls in
+  let proc_top_names = List.map (fun p -> p.Cast.proc_name) proc_top in
+  let scc_list = List.filter (fun scc -> Gen.BList.overlap_eq (=) scc proc_top_names) scc_list in
+  let scc_list = scc_sort scc_list cg in
+  let _, scc_list = List.fold_left (fun (index, acc) scc ->
+	(index+1, acc @ [(index, scc)])) (0, []) scc_list in
+  let call_hierarchy = List.concat (List.map (fun (i, scc) -> List.map (fun m -> (m,i)) scc) scc_list) in 
+
+  let cal_index name list =
+	try List.assoc name list with _ ->  0
+  in 
+  
+  let proc_top = List.map (fun p -> {p with Cast.proc_call_order = cal_index p.Cast.proc_name call_hierarchy}) proc_top in
+  let sorted_proc_top = List.fast_sort (fun p1 p2 -> p1.Cast.proc_call_order - p2.Cast.proc_call_order) proc_top in
+  {cp with Cast.prog_proc_decls = sorted_proc_top @ proc_base}
+	
+(*
+and find_scc_group (cp: Cast.prog_decl) (pname: Globals.ident) (scc_list: Cast.IG.V.t list list) : (Cast.IG.V.t list) =
   match scc_list with
 	| [] -> []
 	| x::xs -> if (is_found ip pname x) then x else (find_scc_group ip pname xs)
 
-and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.IG.V.t list) : bool =
-  (* let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
-     let _ = print_string ("The proc name: "^pname^"\n") in *)
+and is_found (cp: Cast.prog_decl) (pname: Globals.ident) (scc: Cast.IG.V.t list) : bool =
+  (*let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
+  let _ = print_string ("The proc name: "^pname^"\n") in*)
   match scc with
-    | [] -> false
-	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
-	  (* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
+  | [] -> false
+	| x::xs ->
+	  let mingled_name = (Cast.look_up_proc_def_raw cp.Cast.prog_proc_decls x).Cast.proc_mingled_name in
 	  if (mingled_name = pname) then true else (is_found ip pname xs)
+*)
+and is_found (cp: Cast.prog_decl) (pname: Globals.ident) (scc: Cast.IG.V.t list) : bool =
+  List.exists (fun m ->
+	let mn = (Cast.look_up_proc_def_raw cp.Cast.prog_proc_decls m).Cast.proc_name in
+	mn = pname) scc
+			  
+and find_scc_group (cp: Cast.prog_decl) (pname: Globals.ident) (scc_list: Cast.IG.V.t list list) : (Cast.IG.V.t list) =
+  try List.find (fun scc -> is_found cp pname scc) scc_list
+  with _ -> []
+	
+and neighbors_of_scc (scc: Cast.IG.V.t list) (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
+	let neighbors = List.filter (fun m -> not (List.mem m scc)) (Cast.IGN.list_from_vertices cg scc) in
+	let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
+	scc_neighbors
+	
+and scc_sort (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
+  let compare_scc scc1 scc2 =
+		if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
+		else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
+		else 0
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list 
 
-and irf_traverse_prog (ip: Iast.prog_decl) (cp: Cast.prog_decl) (scc_list: IastUtil.IG.V.t list list) : Cast.prog_decl = 
+and irf_traverse_prog (cp: Cast.prog_decl) (scc_list: Cast.IG.V.t list list) : Cast.prog_decl = 
   {cp with
-	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
   }
 
-and irf_traverse_proc (ip: Iast.prog_decl) (proc: Cast.proc_decl) (scc: IastUtil.IG.V.t list) : Cast.proc_decl =
+and irf_traverse_proc (cp: Cast.prog_decl) (proc: Cast.proc_decl) (scc: Cast.IG.V.t list) : Cast.proc_decl =
   {proc with
 	  Cast.proc_body = 
 		  match proc.Cast.proc_body with
 			| None -> None
-			| Some body -> Some (irf_traverse_exp ip body scc)
+			| Some body -> Some (irf_traverse_exp cp body scc)
   }
 
-and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t list) : Cast.exp =
+and irf_traverse_exp (cp: Cast.prog_decl) (exp: Cast.exp) (scc: Cast.IG.V.t list) : Cast.exp =
   match exp with
-	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp ip e.Cast.exp_label_exp scc)}
+	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp cp e.Cast.exp_label_exp scc)}
 	| Cast.CheckRef e -> Cast.CheckRef e
 	| Cast.Java e -> Cast.Java e
 	| Cast.Assert e -> Cast.Assert e
@@ -7749,13 +7790,15 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	      (*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
 	      (*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
 	      (* An Hoa END *)
-	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
+	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp cp e.Cast.exp_assign_rhs scc)}
 	| Cast.BConst e -> Cast.BConst e
-	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp ip e.Cast.exp_bind_body scc)}
-	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp ip e.Cast.exp_block_body scc)}
-	| Cast.Cond e -> Cast.Cond {e with Cast.exp_cond_then_arm = (irf_traverse_exp ip e.Cast.exp_cond_then_arm scc); Cast.exp_cond_else_arm = (irf_traverse_exp ip e.Cast.exp_cond_else_arm scc)}
-	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp ip e.Cast.exp_cast_body scc)}
-	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp ip e.Cast.exp_catch_body scc)}
+	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp cp e.Cast.exp_bind_body scc)}
+	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp cp e.Cast.exp_block_body scc)}
+	| Cast.Cond e -> Cast.Cond {e with
+		Cast.exp_cond_then_arm = (irf_traverse_exp cp e.Cast.exp_cond_then_arm scc);
+		Cast.exp_cond_else_arm = (irf_traverse_exp cp e.Cast.exp_cond_else_arm scc)}
+	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp cp e.Cast.exp_cast_body scc)}
+	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp cp e.Cast.exp_catch_body scc)}
 	| Cast.Debug e -> Cast.Debug e
 	| Cast.Dprint e -> Cast.Dprint e
 	| Cast.FConst e -> Cast.FConst e
@@ -7765,18 +7808,22 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.Null e -> Cast.Null e
 	| Cast.EmptyArray e -> Cast.EmptyArray e (* An Hoa *)
 	| Cast.Print e -> Cast.Print e
-	| Cast.Seq e -> Cast.Seq {e with Cast.exp_seq_exp1 = (irf_traverse_exp ip e.Cast.exp_seq_exp1 scc); Cast.exp_seq_exp2 = (irf_traverse_exp ip e.Cast.exp_seq_exp2 scc)}
+	| Cast.Seq e -> Cast.Seq {e with
+		Cast.exp_seq_exp1 = (irf_traverse_exp cp e.Cast.exp_seq_exp1 scc);
+		Cast.exp_seq_exp2 = (irf_traverse_exp cp e.Cast.exp_seq_exp2 scc)}
 	| Cast.This e -> Cast.This e
 	| Cast.Time e -> Cast.Time e
 	| Cast.Var e -> Cast.Var e
 	| Cast.VarDecl e -> Cast.VarDecl e
 	| Cast.Unfold e -> Cast.Unfold e
 	| Cast.Unit e -> Cast.Unit e
-	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp ip e.Cast.exp_while_body scc)}
+	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp cp e.Cast.exp_while_body scc)}
 	| Cast.Sharp e -> Cast.Sharp e
-	| Cast.Try e -> Cast.Try {e with Cast.exp_try_body = (irf_traverse_exp ip e.Cast.exp_try_body scc); Cast.exp_catch_clause = (irf_traverse_exp ip e.Cast.exp_catch_clause scc)}
-	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found ip e.Cast.exp_icall_method_name scc)}
-	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found ip e.Cast.exp_scall_method_name scc)}
+	| Cast.Try e -> Cast.Try {e with
+		Cast.exp_try_body = (irf_traverse_exp cp e.Cast.exp_try_body scc);
+		Cast.exp_catch_clause = (irf_traverse_exp cp e.Cast.exp_catch_clause scc)}
+	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found cp e.Cast.exp_icall_method_name scc)}
+	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found cp e.Cast.exp_scall_method_name scc)}
 		  
 
 (* Build call graph of the program *)

@@ -28,6 +28,7 @@ open Perm
     | Rel of rel_decl (* An Hoa *)
     | Axm of axiom_decl (* An Hoa *)
     | Global_var of exp_var_decl
+    | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
 		
@@ -1229,6 +1230,7 @@ hprogn:
   [[ t = opt_decl_list ->
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
+      let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
 	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
@@ -1246,7 +1248,8 @@ hprogn:
           end
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
-        | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
+        | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
+        | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
       | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
@@ -1262,7 +1265,7 @@ hprogn:
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
-      prog_logical_vars = []; (* TODO: to pick from declaration *)
+      prog_logical_var_decls = !logical_var_defs;
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
@@ -1280,6 +1283,7 @@ decl:
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
+  |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
   | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
 
@@ -1294,6 +1298,11 @@ type_decl:
 (***************** Global_variable **************)
 global_var_decl:
   [[ `GLOBAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON -> mkGlobalVarDecl lvt vd (get_pos_camlp4 _loc 1)]];
+
+logical_var_decl:
+  [[ `LOGICAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON ->
+        mkLogicalVarDecl lvt vd (get_pos_camlp4 _loc 1)
+  ]];
 
 (**************** Class ******************)
 
@@ -1376,21 +1385,15 @@ spec:
 			F.ECase {
 						F.formula_case_branches = bl; 
 						F.formula_case_pos = get_pos_camlp4 _loc 1; }
-	 | `VARIANCE; il=opt_var_label; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
+	 | `VARIANCE; m=opt_measures; i=opt_measures_seq; s=SELF ->
 			F.EVariance {
-					F.formula_var_label = il;
 					F.formula_var_measures = m;
-					F.formula_var_escape_clauses = ec;
-					F.formula_var_continuation = [s];
+          F.formula_var_infer = i;
+					F.formula_var_continuation = s;
 					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
-opt_var_label: [[t=OPT var_label -> t]];
-
-var_label: [[ `OPAREN; vl=integer_literal; `CPAREN -> vl
-|`OPAREN ; `MINUS; vl=integer_literal; `CPAREN -> -vl]];	
-          
 opt_measures: [[t=OPT measures -> un_option t []]];
 
 measures: [[`OSQUARE; vl=variance_list; `CSQUARE -> vl]];
@@ -1400,10 +1403,6 @@ variance_list: [[t=LIST1 cexp_with_bound SEP `COMMA -> t]];
 cexp_with_bound: 
   [[ t=cexp -> (t, None)
 	 | t1=cexp; `AT; t2=cexp -> (t1, Some t2)]];
-
-opt_escape_conditions: [[ t= OPT escape_conditions -> un_option t []]];
-
-escape_conditions: [[ `ESCAPE; `OSQUARE; t=condition_list; `CSQUARE -> t]];
 
 condition_list: [[t=pure_constr ->[t]]];
   

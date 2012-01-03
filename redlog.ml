@@ -1078,7 +1078,7 @@ let is_sat f sat_no =
 (*   res *)
 
 (* let is_sat f sat_no = *)
-(*   Gen.Debug.no_2 "[Redlog] is_sat" *)
+(*   Debug.no_2 "[Redlog] is_sat" *)
 (*       string_of_formula *)
 (*       (fun c -> c) *)
 (*       string_of_bool *)
@@ -1178,7 +1178,7 @@ let imply f imp_no =
       string_of_bool imply ante conseq imp_no
 
 (* let imply ante conseq imp_no = *)
-(*   Gen.Debug.no_3 "[Redlog] imply"  *)
+(*   Debug.no_3 "[Redlog] imply"  *)
 (*       (add_str "ante" string_of_formula)  *)
 (*       (add_str "conseq" string_of_formula) *)
 (*       (add_str "imp_no" (fun c -> c))  *)

@@ -1797,6 +1797,8 @@ let pure_of_mix f = match f with
   | MemoF f -> fold_mem_lst (mkTrue no_pos) false true f 
   
 let mkMFalse_no_mix = mkMFalse
+
+let mkMTrue_no_mix = mkMTrue
   
 let mkMTrue pos = 
     if (!Globals.allow_pred_spec or !Globals.do_slicing) then  MemoF (mkMTrue pos)
@@ -1867,9 +1869,10 @@ let merge_mems_debug f1 f2 slice_dup =
   | MemoF f -> MemoF (replace_memo_pure_label lb f)
   | OnePF f -> OnePF (replace_pure_formula_label lb f)
 	
-let transform_mix_formula f_p_t f = match f with
-  | MemoF f -> MemoF (transform_memo_formula f_p_t f)
-  | OnePF f -> OnePF (transform_formula f_p_t f)
+let transform_mix_formula f_p_t f = 
+  match f with
+    | MemoF f -> MemoF (transform_memo_formula f_p_t f)
+    | OnePF f -> OnePF (transform_formula f_p_t f)
 	
 let memo_pure_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
@@ -1920,6 +1923,8 @@ let fold_mem_lst init_f with_dupl with_inv f =
 	!print_p_f_f !print_mix_f !print_p_f_f
 	(fun _ _ -> fold_mem_lst init_f with_dupl with_inv f) init_f f
 *)
+let memoise_add_pure_N_m = memoise_add_pure_N
+
 let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
   | MemoF f -> MemoF (memoise_add_pure_N f pf)
   | OnePF f -> OnePF (mkAnd f pf no_pos)

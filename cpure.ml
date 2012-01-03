@@ -885,6 +885,8 @@ and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
+and mkLexVar m i pos = LexVar (m, i, pos)
+
 and mkPure bf = BForm ((bf,None), None)
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
@@ -5753,6 +5755,10 @@ module ArithNormalizer = struct
   let norm_formula (f: formula) : formula =
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
+    (*   let norm_formula(\*_debug*\) f = *)
+    (* Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula *)
+    (*     norm_formula_0 f *)
+
 
 end (* of ArithNormalizer module's definition *)
 
@@ -6903,35 +6909,7 @@ let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
 
-(* To find a LexVar formula *)
-exception No_LexVar;;
-
-let find_lexvar_b_formula (bf: b_formula) : exp list =
-  let (pf, _) = bf in
-  match pf with
-  | LexVar (el, _, _) -> el
-  | _ -> raise No_LexVar
-
-let rec find_lexvar_formula (f: formula) : exp list =
-  match f with
-  | BForm (bf, _) -> find_lexvar_b_formula bf
-  | And (f1, f2, _) ->
-      (try find_lexvar_formula f1
-      with _ -> find_lexvar_formula f2)
-  (* Chanh: I am not sure whether a lexvar formula
-   * can be appear in Or, Not, Forall and Exists? *)
-  | _ -> raise No_LexVar
-
-(* To syntactic simplify LexVar formula *)  
-let rec syn_simplify_lexvar bnd_measures =
-  match bnd_measures with
-  | [] -> []
-  | (s,d)::rest -> 
-      if (eqExp s d) then syn_simplify_lexvar rest
-      else if (is_gt eq_spec_var s d) then []
-      else if (is_lt eq_spec_var s d) then [(s,d)]
-      else bnd_measures 
-
 let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (type_of_spec_var v) != RelT) vs
+
