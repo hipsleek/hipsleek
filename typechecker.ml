@@ -375,12 +375,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                   else post_cond in
                                 let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None 
                                   else (
-(*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));*)
+(*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));   *)
                                     let (rel_fml, post, pre) = Fixcalc.compute_fixpoint rels in
-                                    print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
-                                    print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);
-(*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml);         *)
-(*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);             *)
+(*                                    print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);*)
+(*                                    print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);   *)
+(*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml); *)
+(*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);     *)
                                     Solver.simplify_post post_fml post_vars prog (Some (rel_fml, post)))
                                 in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
