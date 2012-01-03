@@ -3,9 +3,12 @@
 *)
 
 open Globals
-open Gen.Basic
+module DD = Debug
+open Gen
+open Exc.GTable
+open Perm
 open Cformula
-
+open Context
 module Pr = Cprinter
 module CP = Cpure
 module MCP = Mcpure
@@ -33,7 +36,10 @@ let rec string_of_elems elems string_of sep = match elems with
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (_, id, _) -> id
+  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
+  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+  | CP.SpecVar (_, id, Unprimed) -> id
+  | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
 let rec fixcalc_of_exp e = match e with
   | CP.Null _ -> "null"
@@ -68,7 +74,7 @@ let rec fixcalc_of_b_formula b =
         let s = fixcalc_of_exp e1 in
         let t = fixcalc_of_exp e2 in
         "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
-    | CP.RelForm (id,args,_) -> (CP.name_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
+    | CP.RelForm (id,args,_) -> (fixcalc_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
@@ -183,6 +189,7 @@ let compute_fixpoint input_pairs =
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+    DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
     let output_of_sleek = "fixcalc.inf" in
     let oc = open_out output_of_sleek in
     Printf.fprintf oc "%s" input_fixcalc;
@@ -191,7 +198,9 @@ let compute_fixpoint input_pairs =
     let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
     let res = remove_paren res (String.length res) in
     (*print_endline ("RES: " ^ res);*)
+    DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
     let fixpoint = Parse_fix.parse_fix res in
+    DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
     let fixpoint = List.map (fun f -> 
       let args = CP.fv f in 
       let quan_vars = CP.diff_svl args vars in
@@ -199,8 +208,6 @@ let compute_fixpoint input_pairs =
     match fixpoint with
       | [pre;post] -> (rel_fml, pre, post)
       | _ -> report_error no_pos "Expecting a pair of pre-post"
-    (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-    (*(rel_fml, List.hd fixpoint)    *)
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"
 
  

@@ -1363,7 +1363,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       (*                       ^"\n\n") in *)
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-	  let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str pf in
+	  let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) pf in
       (*			print_endline (Cprinter.string_of_pure_formula pf ^ "a");    *)
       (*      print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
