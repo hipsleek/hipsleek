@@ -85,6 +85,8 @@ let no_pos =
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
+let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0)
+
 let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
@@ -456,6 +458,9 @@ let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+
+(* Inference *)
+let call_graph : ((string list) list) ref = ref [[]]
 
 let add_count (t: int ref) = 
 	t := !t+1

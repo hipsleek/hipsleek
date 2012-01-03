@@ -66,7 +66,7 @@ let rec process_primitives (file_list: string list) : Iast.prog_decl list =
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Gen.Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
+  Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -178,7 +178,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog cprog prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -251,7 +251,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

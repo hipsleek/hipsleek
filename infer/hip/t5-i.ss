@@ -3,14 +3,6 @@ data node {
   node next;
 }
 
-int hdtl(ref node x)
- infer [x] 
- requires true
- ensures true; 
-{
-  x = tl(x);
-  return hd(x);
-}
 
 int hd(node x)
  infer [x] 
@@ -22,6 +14,15 @@ int hd(node x)
 */
 {
   return x.val;
+}
+
+int hdtl(ref node x)
+ infer [x] 
+ requires true
+ ensures true; 
+{
+  x = tl(x);
+  return hd(x);
 }
 
 node tl(node x)

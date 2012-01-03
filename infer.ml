@@ -16,8 +16,7 @@ let no_infer estate = (estate.es_infer_vars == [])
  
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
-  if (iv==[]) then (estate,iv)
-  else ({estate with es_infer_vars=[];}, iv) 
+   ({estate with es_infer_vars=[];}, iv) 
 
 let remove_infer_vars_partial estate rt =
   let iv = estate.es_infer_vars in
@@ -27,12 +26,36 @@ let remove_infer_vars_partial estate rt =
 let remove_infer_vars_partial estate rt =
   let pr1 = !print_entail_state in
   let pr2 = !print_svl in
-  Gen.Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
+  Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
       remove_infer_vars_partial estate rt 
+
+let rec remove_infer_vars_all_ctx ctx =
+  match ctx with
+  | Ctx estate -> 
+        let (es,_) = remove_infer_vars_all estate in
+        Ctx es
+  | OCtx (ctx1, ctx2) -> OCtx (remove_infer_vars_all_ctx ctx1, remove_infer_vars_all_ctx ctx2)
+
+let remove_infer_vars_all_partial_context (a,pc) = 
+  (a,List.map (fun (b,c) -> (b,remove_infer_vars_all_ctx c)) pc)
+
+let remove_infer_vars_all_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> ctx
+  | SuccCtx lst -> SuccCtx (List.map remove_infer_vars_all_ctx lst)
+
+let remove_infer_vars_all_list_partial_context lpc = 
+  List.map remove_infer_vars_all_partial_context lpc
+
+(* let collect_pre_heap_list_partial_context (ctx:list_partial_context) = *)
+(*   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in *)
+(*   List.concat r *)
 
 let rec restore_infer_vars_ctx iv ctx = 
   match ctx with
-  | Ctx estate -> Ctx {estate with es_infer_vars=iv;}
+  | Ctx estate -> 
+        if iv==[] then ctx
+        else Ctx {estate with es_infer_vars=iv;}
   | OCtx (ctx1, ctx2) -> OCtx (restore_infer_vars_ctx iv ctx1, restore_infer_vars_ctx iv ctx2)
 
 let restore_infer_vars iv cl =
@@ -63,7 +86,7 @@ let is_inferred_pre_list_context ctx =
   | SuccCtx lst -> List.exists is_inferred_pre_ctx lst
 
 let is_inferred_pre_list_context ctx = 
-  Gen.Debug.no_1 "is_inferred_pre_list_context"
+  Debug.no_1 "is_inferred_pre_list_context"
       !print_list_context string_of_bool
       is_inferred_pre_list_context ctx
 
@@ -177,7 +200,7 @@ type: Cformula.h_formula ->
 let get_args_h_formula aset (h:h_formula) =
   let pr1 = !print_h_formula in
   let pr2 = pr_option (pr_quad !print_sv !print_svl !print_svl pr1) in
-  Gen.Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
+  Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
   let (h, p, fl, b, t) = split_components f in
@@ -185,7 +208,7 @@ let get_alias_formula (f:CF.formula) =
   eqns
 
 (* let get_alias_formula (f:CF.formula) = *)
-(*   Gen.Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
+(*   Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
 
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
@@ -263,24 +286,24 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
             (CP.mkTrue no_pos) 
             (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
+        let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
         let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
         let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
         let new_p_conjs = CP.list_of_conjs new_p in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
           (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-(*        let r = {                                         *)
-(*            match_res_lhs_node = new_h;                   *)
-(*            match_res_lhs_rest = HTrue;                   *)
-(*            match_res_holes = [];                         *)
-(*            match_res_type = Root;                        *)
-(*            match_res_rhs_node = rhs;                     *)
-(*            match_res_rhs_rest = rhs_rest;                *)
-(*            (* match_res_add_constr = CP.mkTrue no_pos; *)*)
-(*        } in                                              *)
-(*        let act = M_match r in                            *)
+       let r = {
+           match_res_lhs_node = new_h;
+           match_res_lhs_rest = lhs_h;
+           match_res_holes = [];
+           match_res_type = Root;
+           match_res_rhs_node = rhs;
+           match_res_rhs_rest = rhs_rest;
+       } in
+       let act = M_match r in
         (
             (* WARNING : any dropping of match action must be followed by pop *)
-            (* must_action_stk # push act; *)
+            must_action_stk # push act;
             Some (new_iv,new_h,new_p))
       end
     else None
@@ -295,7 +318,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   let pr1 = !print_entail_state in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_pure_f) in
-  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
+  Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
 
 (* picks ctr from f that are related to vars *)
@@ -310,7 +333,7 @@ let rec filter_var f vars = match f with
 
 let filter_var f vars =
   let pr = !print_pure_f in
-  Gen.Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
+  Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
 (* TODO : this simplify could be improved *)
 let simplify f vars = Omega.simplify (filter_var (Omega.simplify f) vars)
@@ -318,7 +341,7 @@ let simplify_contra f vars = filter_var f vars
 
 let simplify f vars =
   let pr = !print_pure_f in
-  Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+  Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
 let infer_lhs_contra lhs_xpure ivars =
   (* if ivars==[] then None *)
@@ -340,7 +363,7 @@ let infer_lhs_contra lhs_xpure ivars =
 let infer_lhs_contra f ivars =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) infer_lhs_contra f ivars
+  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) infer_lhs_contra f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos =
   if no_infer estate then None
@@ -360,7 +383,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos =
 let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state in
   let pr = !print_mix_formula in
-  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
+  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
 
 (*
    should this be done by ivars?
@@ -388,7 +411,7 @@ let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (* evars *) =
 
 let infer_lhs_rhs_pure lhs rhs ivars =
   let pr = !print_pure_f in
-  Gen.Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars
+  Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars
 
 let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos =
   let ivars = estate.es_infer_vars in
@@ -508,7 +531,7 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state in 
-      Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
+      Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

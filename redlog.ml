@@ -167,7 +167,7 @@ let send_and_receive f =
 
 
 let send_and_receive f =
-  Gen.Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
       send_and_receive f
 
 let check_formula f =
@@ -181,7 +181,7 @@ let check_formula f =
     None
 
 let check_formula f =
-  Gen.Debug.no_1 "check_formula" (fun s -> s) 
+  Debug.no_1 "check_formula" (fun s -> s) 
       (pr_option string_of_bool) check_formula f 
 
 (* 
@@ -407,7 +407,7 @@ let rec is_linear_formula f0 =
         (is_linear_formula f1) && (is_linear_formula f2)
 
 let is_linear_formula f0 =
-  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 
 let has_var_exp e0 =
@@ -514,7 +514,7 @@ let has_exists2 f0 =
 
  let strengthen_formula f =
    let pr = string_of_formula in
-   Gen.Debug.no_1 "strengthen_formula"
+   Debug.no_1 "strengthen_formula"
        pr pr
        strengthen_formula f
 
@@ -928,7 +928,7 @@ let rec elim_exists_with_ineq f0 =
   in elim_exists_helper core f0
 
 let elim_exists_with_ineq f =
-  Gen.Debug.no_1 "elim_exists_with_ineq"
+  Debug.no_1 "elim_exists_with_ineq"
    !print_formula !print_formula elim_exists_with_ineq f
 
 
@@ -941,7 +941,7 @@ let elim_exist_quantifier f =
   f
 
 let elim_exist_quantifier f =
-  Gen.Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
+  Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
 
 
 (*********************************
@@ -979,7 +979,7 @@ let rec negate_formula f0 = match f0 with
 
 let negate_formula f0 =
   let pr = !print_formula in
-  Gen.Debug.no_1 "negate_formula" pr pr negate_formula f0
+  Debug.no_1 "negate_formula" pr pr negate_formula f0
   
 let rec normalize_formula f0 = match f0 with
   | CP.BForm _ -> f0
@@ -1023,7 +1023,7 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     (sat, time)
 
 let is_sat_no_cache f sat_no =
-  Gen.Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
+  Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
       (fun (b,_) -> string_of_bool b)
       (fun _ -> is_sat_no_cache f sat_no) f 
 
@@ -1053,7 +1053,7 @@ let is_sat f sat_no =
   res
 
 let is_sat f sat_no =
-  Gen.Debug.no_2 "[Redlog] is_sat"
+  Debug.no_2 "[Redlog] is_sat"
       string_of_formula
       (fun c -> c)
       string_of_bool
@@ -1071,7 +1071,7 @@ let is_valid f imp_no =
   (valid, time)
 
 let is_valid f imp_no =
-  Gen.Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
        is_valid f imp_no
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
@@ -1107,7 +1107,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   res
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
-  Gen.Debug.no_2 "[Redlog] imply_no_cache" 
+  Debug.no_2 "[Redlog] imply_no_cache" 
       (add_str "formula" string_of_formula)
       (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
@@ -1140,7 +1140,7 @@ let imply ante conseq imp_no =
   res
 
 let imply ante conseq imp_no =
-  Gen.Debug.no_3 "[Redlog] imply" 
+  Debug.no_3 "[Redlog] imply" 
       (add_str "ante" string_of_formula) 
       (add_str "conseq" string_of_formula)
       (add_str "imp_no" (fun c -> c)) 
@@ -1162,7 +1162,7 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
-  Gen.Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
+  Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
 
 (*Note: a linear formula is passed to Omega only when
 it is not a float formula.

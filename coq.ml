@@ -232,7 +232,7 @@ let start () =
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Gen.Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
+  Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
 
 (* stopping Coq *)
 let stop () =
@@ -246,7 +246,7 @@ let stop () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Gen.Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
+  Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
@@ -301,7 +301,7 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
 
 let write (ante : CP.formula) (conseq : CP.formula) : bool =
-  Gen.Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
+  Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
 	string_of_bool write ante conseq
 	
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -322,7 +322,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
-  Gen.Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
+  Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
 	string_of_bool imply ante conseq
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =

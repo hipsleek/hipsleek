@@ -5,4 +5,5 @@
 ../../sleek 5.slk > 5.res
 ../../sleek 6.slk > 6.res
 ../../sleek 7.slk > 7.res
+../../sleek 8.slk > 8.res
 ../../sleek todo.slk > todo.res

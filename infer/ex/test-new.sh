@@ -5,5 +5,6 @@
 ../../sleek 5.slk > 5.n
 ../../sleek 6.slk > 6.n
 ../../sleek 7.slk > 7.n
+../../sleek 8.slk > 8.n
 ../../sleek todo.slk > todo.n
 
