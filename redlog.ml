@@ -1045,6 +1045,13 @@ let is_sat f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   is_sat_ops pr_w pr_s f sat_no
 
+  let is_sat f sat_no =
+  Debug.no_2 "[Redlog] is_sat"
+      string_of_formula
+      (fun c -> c)
+      string_of_bool
+      is_sat f sat_no
+
 (* let is_sat f sat_no = *)
 (*   let sf = simplify_var_name (normalize_formula f) in *)
 (*   let fstring = string_of_formula sf in *)
@@ -1162,6 +1169,13 @@ let imply_ops pr_w pr_s ante conseq imp_no =
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
    imply_ops pr_w pr_s f imp_no
+
+   let imply ante conseq imp_no =
+  Debug.no_3 "[Redlog] imply" 
+      (add_str "ante" string_of_formula) 
+      (add_str "conseq" string_of_formula)
+      (add_str "imp_no" (fun c -> c)) 
+      string_of_bool imply ante conseq imp_no
 
 (* let imply ante conseq imp_no = *)
 (*   Debug.no_3 "[Redlog] imply"  *)

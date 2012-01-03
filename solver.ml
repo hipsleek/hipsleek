@@ -5385,7 +5385,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
           else 
-            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_conseq  pos in
+            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_ante0 split_conseq pos in
             begin
               match ip1 with
                 | Some(es,p) -> 
@@ -9323,7 +9323,7 @@ let rec simplify_heap_x h p prog : CF.h_formula = match h with
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
     let disjs = CP.list_of_disjs pure_h in
-    let res = Inf.remove_contra_disjs disjs p in
+    let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in
     begin
       match res with
         | [] -> HFalse

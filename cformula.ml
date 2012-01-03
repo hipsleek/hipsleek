@@ -4503,6 +4503,7 @@ let remove_dupl_conj_estate (estate:entail_state) : entail_state =
   let mix_f1 = remove_dupl_conj_eq_mix_formula mix_f in
   {estate with es_pure=mix_f1,rest}
 
+  (* Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl *)
 
   
 

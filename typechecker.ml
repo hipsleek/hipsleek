@@ -377,12 +377,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                   else post_cond in
                                 let post_fml = if rels = [] then Solver.simplify_post post_fml post_vars prog None 
                                   else (
-(*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));*)
-                                    let (rel_fml, fixpoint) = Fixcalc.compute_fixpoint rels in
-(*                                    print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);*)
-(*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml);         *)
-(*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);             *)
-                                    Solver.simplify_post post_fml post_vars prog (Some (rel_fml, fixpoint)))
+(*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));   *)
+                                    let (rel_fml, post, pre) = Fixcalc.compute_fixpoint rels in
+(*                                    print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);*)
+(*                                    print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);   *)
+(*                                    print_endline ("Rel:"^Cprinter.string_of_pure_formula rel_fml); *)
+(*                                    print_endline ("FML:"^Cprinter.string_of_formula post_fml);     *)
+                                    Solver.simplify_post post_fml post_vars prog (Some (rel_fml, post)))
                                 in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
@@ -962,7 +963,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = Cprinter.string_of_formula in
   (* let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in *)
-  Debug.no_2(* loop_2_no *) "check_post" pr pr1 pr  
+  Debug.no_2(* loop_2_no *) "check_post" pr pr1 pr (*Cprinter.string_of_pos pr2 pr2*)  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
@@ -1089,8 +1090,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let _ = 
                           if rels = [] then ()
                           else (
-                            let (_, fixpoint) = Fixcalc.compute_fixpoint rels in
-                            print_endline ("\nFIXPOINT: "^Cprinter.string_of_pure_formula fixpoint);)
+                            let (_, post, pre) = Fixcalc.compute_fixpoint rels in
+                            print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
+                            print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);)
                         in
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
@@ -1336,5 +1338,5 @@ let check_prog (prog : prog_decl) =
   () *)
 
 let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

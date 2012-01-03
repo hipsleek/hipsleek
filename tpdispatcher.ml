@@ -780,6 +780,10 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
 (*   let pr = Cprinter.string_of_pure_formula in *)
 (*   Debug.no_2 "filter" pr pr (fun (l, _) -> pr l) *)
 (* 	assumption_filter ante cons *)
+let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)
+	assumption_filter ante cons
 
 	  
 (* rename variables for better caching of formulas *)

@@ -9,6 +9,7 @@ open Cformula
 module Pr = Cprinter
 module CP = Cpure
 module MCP = Mcpure
+module TP = Tpdispatcher
 
 (* Operators *)
 let op_lt = "<" 
@@ -147,7 +148,7 @@ let compute_inv name vars fml pf =
     let _ = syscall ("sed -i /^T/d " ^ output_of_fixcalc) in
     let _ = syscall ("sed -i /^$/d " ^ output_of_fixcalc) in
     let res = syscall ("cat " ^ output_of_fixcalc) in*)
-    let new_pf = Parse_fix.parse_fix res in
+    let new_pf = List.hd (Parse_fix.parse_fix res) in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
       Pr.fmt_string "INV:  ";
@@ -156,6 +157,11 @@ let compute_inv name vars fml pf =
                      "\nNEW: " ^ (Pr.string_of_pure_formula new_pf) ^ "\n\n");			
       new_pf)
     else pf
+
+let rec remove_paren s n = if n=0 then "" else match s.[0] with
+  | '(' -> remove_paren (String.sub s 1 (n-1)) (n-1)
+  | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
+  | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
 let compute_fixpoint input_pairs =
   let (pfs, rels) = List.split input_pairs in
@@ -173,7 +179,8 @@ let compute_fixpoint input_pairs =
   try
     let rhs = fixcalc_of_pure_formula pf in 
     let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
-      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n"
+      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
+      ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
     let output_of_sleek = "fixcalc.inf" in
@@ -181,17 +188,20 @@ let compute_fixpoint input_pairs =
     Printf.fprintf oc "%s" input_fixcalc;
     flush oc;
     close_out oc;
-    try 
-      let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-      (*print_endline ("RES: " ^ res);*)
-      let fixpoint = Parse_fix.parse_fix res in
-      (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
-      (rel_fml, fixpoint)
-    with _ -> 
-      let _ = report_error no_pos "compute_fixpoint#fixcalc.ml: fails as it requires a
-        fixpoint calculator to be located at /usr/local/bin/fixcalc_mod" in
-      (rel_fml, rel_fml)
-  with _ -> (rel_fml, pf) 
+    let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+    let res = remove_paren res (String.length res) in
+    (*print_endline ("RES: " ^ res);*)
+    let fixpoint = Parse_fix.parse_fix res in
+    let fixpoint = List.map (fun f -> 
+      let args = CP.fv f in 
+      let quan_vars = CP.diff_svl args vars in
+      TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
+    match fixpoint with
+      | [pre;post] -> (rel_fml, pre, post)
+      | _ -> report_error no_pos "Expecting a pair of pre-post"
+    (*print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fixpoint);*)
+    (*(rel_fml, List.hd fixpoint)    *)
+  with _ -> report_error no_pos "Unexpected error in computing fixpoint"
 
  
 

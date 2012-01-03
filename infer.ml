@@ -278,6 +278,15 @@ let is_elem_of conj conjs =
 (* (\* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *\) *)
 (* (\* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *\) *)
 
+(* let aux_test () = *)
+(*       DD.trace_pprint "hello" no_pos *)
+(* let aux_test () = *)
+(*       Debug.no_1_loop "aux_test" pr_no pr_no aux_test () *)
+(* let aux_test2 () = *)
+(*       DD.trace_pprint "hello" no_pos *)
+(* let aux_test2 () = *)
+(*       Debug.no_1_num 13 "aux_test2" pr_no pr_no aux_test2 () *)
+
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   if no_infer es then None
   else 
@@ -286,6 +295,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
     let lhs_als = get_alias_formula es.es_formula in
     let lhs_aset = build_var_aset lhs_als in
     let rt = get_args_h_formula lhs_aset rhs in
+    (* let _ = aux_test() in *)
+    (* let _ = aux_test2() in *)
     (*  let rhs_als = get_alias_formula conseq in *)
     (*  let rhs_aset = build_var_aset rhs_als in *) 
     match rt with 
@@ -377,7 +388,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
 let rec filter_var f vars = match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> CP.filter_var f vars
+  | _ -> if TP.is_sat_raw f then CP.filter_var f vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -405,6 +416,24 @@ let simplify f vars =
   let pr = !print_pure_f in
   Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
+let helper fml lhs_rhs_p = 
+  let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
+  if TP.is_sat_raw new_fml then fml
+(*    let args = CP.fv new_fml in
+    let iv = CP.fv fml in
+    let quan_var = CP.diff_svl args iv in
+    CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos*)
+  else CP.mkFalse no_pos
+
+let rec simplify_disjs pf lhs_rhs =
+  match pf with
+  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs
+  | And _ -> helper pf lhs_rhs
+  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs) (simplify_disjs f2 lhs_rhs) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
+  | _ -> pf
+
 let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
   (* else *)
@@ -423,18 +452,32 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let neg_f = Redlog.negate_formula f in
-        let b = if CP.isConstTrue pre_thus then false
+        (* Thai: Remove disjs contradicting with pre_thus *)
+        let new_neg_f = 
+          if CP.isConstTrue pre_thus then neg_f
+          else simplify_disjs neg_f pre_thus
+(*        let b = if CP.isConstTrue pre_thus then false
           else let f = CP.mkAnd pre_thus neg_f no_pos in
-               not(TP.is_sat_raw f) 
+               not(TP.is_sat_raw f) *)
         in
         DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
         DD.devel_hprint (add_str "trigger cond   : " pr_id) msg pos; 
         DD.devel_hprint (add_str "LHS pure       : " !print_formula) lhs_xpure_orig pos; 
         DD.devel_hprint (add_str "ovrlap inf vars: " !print_svl) over_v pos; 
-        DD.devel_hprint (add_str "new pre infer   : " !print_formula) neg_f pos; 
+        DD.devel_hprint (add_str "pre infer   : " !print_formula) neg_f pos; 
+        DD.devel_hprint (add_str "new pre infer   : " !print_formula) new_neg_f pos; 
         DD.devel_hprint (add_str "pre thus   : " !print_formula) pre_thus pos; 
-        DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos; 
-        Some (neg_f)
+
+        if CP.isConstFalse new_neg_f then
+          (DD.devel_pprint "contradiction in inferred pre!" pos; 
+          None)
+        else Some (new_neg_f)
+
+(*        DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos; 
+        if b then
+          (DD.devel_pprint "contradiction in inferred pre!" pos; 
+          None)
+        else Some (neg_f)*)
 
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
@@ -462,7 +505,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option (pr_pair pr0 !CP.print_formula)) (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -511,24 +554,6 @@ let infer_lhs_contra_estate e f pos msg =
 (*               } in *)
 (*             Some new_estate *)
 
-let helper fml lhs_rhs_p = 
-  let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
-  if TP.is_sat_raw new_fml then
-    let args = CP.fv new_fml in
-    let iv = CP.fv fml in
-    let quan_var = CP.diff_svl args iv in
-    CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos
-  else CP.mkFalse no_pos
-
-let rec simplify_disjs pf lhs_rhs =
-  match pf with
-  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs
-  | And _ -> helper pf lhs_rhs
-  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs) (simplify_disjs f2 lhs_rhs) l p
-  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs,l,p)
-  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
-  | _ -> pf
-
 let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   (* not quite needed, it seems *)
   (* let disj_p = CP.split_disjunctions new_pre in *)
@@ -536,42 +561,55 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   List.exists (CP.equalFormula new_pre) orig_ls
 
 
-let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
+let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
   if no_infer estate then (None,None)
   else
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    (* let rhs_vars = CP.fv rhs_xpure in *)
-    (* below will help greatly reduce the redundant information inferred from state *)
-    (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
-    let _ = DD.trace_hprint (add_str "lhs: " !CP.print_formula) lhs_xpure pos in
-    let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
-    let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
-    let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
-    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-    let fml = CP.drop_rel_formula fml in
-    let check_sat = TP.is_sat_raw fml in
-    let iv = estate.es_infer_vars in
-    (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
-    (* if check_sat then *)
+    if not (TP.is_sat_raw rhs_xpure) then 
+      (DD.devel_pprint "Cannot infer a precondition: RHS contradiction" pos;
+      (None,None))
+    else
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in
+      (* let rhs_vars = CP.fv rhs_xpure in *)
+      (* below will help greatly reduce the redundant information inferred from state *)
+      (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
+      let _ = DD.trace_hprint (add_str "lhs: " !CP.print_formula) lhs_xpure pos in
+      let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+      let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
+      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+      let fml = CP.drop_rel_formula fml in
+      let iv = estate.es_infer_vars in
+      let check_sat = TP.is_sat_raw fml in
+      if not(check_sat) then
+        (DD.devel_pprint "LHS-RHS contradiction" pos;
+        let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in
+        let _ = DD.trace_hprint (add_str "lhs0: " !CP.print_formula) lhs_xpure0 pos in
+        let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+        let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in
+        let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in
+        let lhs_xpure0 = MCP.mix_of_pure lhs_xpure0 in
+        (infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq",None))
+      else
+      (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
+      (* if check_sat then *)
       (*      let new_p = simplify fml iv in                            *)
       (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
       let args = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      (*        let new_p = CP.mkExists_with_simpl Omega.simplify quan_var new_p None pos in*)
       let new_p = TP.simplify_raw (CP.mkForall quan_var 
           (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
       let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
       let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
       let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
       let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
-      let new_p = TP.simplify_raw (simplify_disjs new_p (CP.mkAnd lhs_xpure rhs_xpure no_pos)) in
+      let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
       let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
       let args = CP.fv new_p in
       let new_p =
-        if CP.intersect args iv == [] then
+        if CP.intersect args iv == [] && quan_var != [] then
           let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
           let _ = DD.trace_hprint (add_str "new_p3: " !CP.print_formula) new_p pos in
           let new_p = simplify new_p iv in
@@ -603,6 +641,11 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
         if pre_list==[] then (None,None)
         else 
           let new_p_good = CP.join_conjunctions pre_list in
+          (*let pre_thus = estate.es_infer_pure_thus in
+          let b = if CP.isConstTrue pre_thus then false
+            else let f = CP.mkAnd pre_thus new_p_good no_pos in
+              not(TP.is_sat_raw f) 
+          in*)
         (* filter away irrelevant constraint for infer_pure *)
         (* let new_p_good = CP.filter_ante new_p rhs_xpure in *)
         (* let _ = print_endline ("new_p:"^(!CP.print_formula new_p)) in *)
@@ -623,6 +666,10 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
             (* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos; *)
             if red_pre!=[] then DD.devel_hprint (add_str "already in LHS: " (pr_list !CP.print_formula)) red_pre pos;
             DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p_good pos;
+            (*DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos;
+            if b then
+              (DD.devel_pprint "contradiction in inferred pre!" pos; (None,None))
+            else*)
             (None,Some new_p_good)
           end
               (* Thai: Should check if the precondition overlaps with the orig ante *)
@@ -671,18 +718,19 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
-let infer_pure_m estate lhs_xpure rhs_xpure pos =
+let infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.no_3 "infer_pure_m" 
+      Debug.no_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
+          (add_str "lhs xpure0 " pr1)
           (add_str "rhs xpure " pr1)
           (add_str "(new es,inf pure) " (pr_pair (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p)))
-      (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
+      (fun _ _ _ _ -> infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
 
 let remove_contra_disjs f1s f2 =
   let helper c1 c2 = 
@@ -814,7 +862,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-  Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2 
+      Debug.no_3 "infer_collect_rel" pr2 pr1 pr1 (pr_option pr2) 
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
