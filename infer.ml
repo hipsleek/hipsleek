@@ -379,7 +379,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
-  Debug.to_2 "infer_heap_nodes" pr1 pr2 pr3
+  Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
@@ -547,7 +547,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   List.exists (CP.equalFormula new_pre) orig_ls
 
 
-let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
+let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
   if no_infer estate then (None,None)
   else
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
@@ -567,8 +567,15 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
       let fml = CP.drop_rel_formula fml in
       let iv = estate.es_infer_vars in
       let check_sat = TP.is_sat_raw fml in
-      if not(check_sat) then 
-        (infer_lhs_contra_estate estate lhs_xpure_orig pos "ante contradict with conseq",None)
+      if not(check_sat) then
+        (DD.devel_pprint "LHS-RHS contradiction" pos;
+        let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in
+        let _ = DD.trace_hprint (add_str "lhs0: " !CP.print_formula) lhs_xpure0 pos in
+        let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+        let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in
+        let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in
+        let lhs_xpure0 = MCP.mix_of_pure lhs_xpure0 in
+        (infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq",None))
       else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
       (* if check_sat then *)
@@ -688,18 +695,19 @@ let infer_pure_m estate lhs_xpure_orig rhs_xpure pos =
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
-let infer_pure_m estate lhs_xpure rhs_xpure pos =
+let infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.to_3 "infer_pure_m" 
+      Debug.no_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
+          (add_str "lhs xpure0 " pr1)
           (add_str "rhs xpure " pr1)
           (add_str "(new es,inf pure) " (pr_pair (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p)))
-      (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
+      (fun _ _ _ _ -> infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
 
 let remove_contra_disjs f1s f2 =
   let helper c1 c2 = 
