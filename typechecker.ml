@@ -224,7 +224,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let new_base = begin
               match pre with
                 | [] -> base
-                | [p] -> (pre_ctr # inc; CF.normalize 1 base p pos)
+                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 base p pos))
                 | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
             end in
             let _ = if rels==[] then () else pre_ctr#inc  

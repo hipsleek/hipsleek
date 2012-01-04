@@ -9385,6 +9385,17 @@ let simplify_post post_fml post_vars prog subst_fml =
   Debug.no_2 "simplify_post" pr pr2 pr_no
       (fun _ _ -> simplify_post post_fml post_vars prog subst_fml) post_fml post_vars
 
+let rec simplify_pre pre_fml = match pre_fml with
+  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
+    let f1 = simplify_pre f1 in
+    let f2 = simplify_pre f2 in
+    if f1 = f2 then f1
+    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}
+  | _ ->
+    let h, p, fl, b, t = split_components pre_fml in
+    let p = TP.simplify_raw (MCP.pure_of_mix p) in
+    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+
 let rec simplify_relation (sp:struc_formula) subst_fml prog: struc_formula = 
   List.map (fun s -> simplify_ext_relation s subst_fml prog) sp
 
