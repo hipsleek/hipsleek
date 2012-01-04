@@ -258,6 +258,8 @@ and has_variance_ext ext_f =
     | EVariance _ -> true
     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont
 
+(* TODO: Termination: These two below functions 
+ * need to be removed *)    
 let rec norm_struc_with_variance struc_f =
   List.map (fun ef -> norm_ext_with_variance ef) struc_f
 
@@ -3007,7 +3009,7 @@ think it is used to instantiate when folding.
 
   (* For VARIANCE checking *)
   (* Term ann with Lexical ordering *)
-  es_var_measures : (term_ann * CP.exp list * CP.exp list ) option; 
+  es_var_measures : (term_ann * CP.exp list * CP.exp list * string Gen.stack) option; 
   (* es_var_stack :  string Gen.stack; *)
 
   (* Some fields below have not yet been necessary 
@@ -3851,7 +3853,7 @@ let rec collect_term_ann_context ctx =
 	match ctx with
 	| Ctx es -> (match es.es_var_measures with
 		| None -> []
-		| Some (t_ann, _, _) -> [t_ann])
+		| Some (t_ann, _, _, _) -> [t_ann])
 	| OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
 
 let collect_term_ann_list_context ctx =
@@ -4899,7 +4901,7 @@ and formula_trace_of_context ctx0 = match ctx0 with
       let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
       let mix_f = match esvm with
         | None -> ep
-        | Some (ta,l1,l2) -> 
+        | Some (ta,l1,l2,_) -> 
               let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
               Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
               MCP.merge_mems ep (MCP.mix_of_pure m) true in
@@ -6581,6 +6583,17 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 	formula_ext_continuation = [];
 	formula_ext_pos = loc;
   }	
+	
+let mkEBase_with_cont (pf:CP.formula) cont loc : ext_formula =
+  EBase	{
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	(*formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
+	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+	formula_ext_continuation = cont;
+	formula_ext_pos = loc;
+  }	
 
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
   let f_e_f e = None  in
@@ -7290,4 +7303,34 @@ let lax_impl_of_post f =
 let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
+
+(* Termination: Check whether a formula contains LexVar *)
+let has_lexvar_formula f =
+  let _, pure_f, _, _, _ = split_components f in 
+  CP.has_lexvar (MCP.pure_of_mix pure_f) 
+
+let rec norm_struc_with_lexvar struc_f is_primitive =
+  List.map (fun ef -> norm_ext_with_lexvar ef is_primitive) struc_f
+
+and norm_ext_with_lexvar ext_f is_primitive =
+  match ext_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl = List.map (fun (c, sf) -> 
+        (c, norm_struc_with_lexvar sf is_primitive)) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ({ formula_ext_continuation = cont } as ef) ->
+      if (has_lexvar_formula ef.formula_ext_base) then ext_f
+      else
+        let n_cont = norm_struc_with_lexvar cont is_primitive in
+        EBase { ef with formula_ext_continuation = n_cont }
+  | EAssume _ ->
+      let lexvar = 
+        if is_primitive then CP.mkLexVar Term [] [] no_pos
+        else CP.mkLexVar MayLoop [] [] no_pos
+      in 
+      mkEBase_with_cont (CP.mkPure lexvar) [ext_f] no_pos
+  | EVariance _ -> ext_f 
+  | EInfer ({ formula_inf_continuation = cont } as ef) ->
+      let n_cont = norm_ext_with_lexvar cont is_primitive in
+      EInfer { ef with formula_inf_continuation = n_cont }
 

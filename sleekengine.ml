@@ -541,7 +541,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
-  (* let term_ann = CF.collect_term_ann_list_context residue in *)
+  let term_ann = CF.collect_term_ann_list_context residue in
+  let t_valid = not (List.exists (fun r -> r = Fail) term_ann) in
+  let valid = valid && t_valid in
   (* let str_term_ann = if term_ann = [] then "" else pr_list string_of_term_ann term_ann in *)
   if not valid then
     begin

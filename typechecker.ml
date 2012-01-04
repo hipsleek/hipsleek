@@ -231,8 +231,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	  | CF.EVariance b ->
             Debug.devel_zprint (lazy ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         (* Termination: Add termination arguments into context *)
+        let t_ann, ml, il = CF.measures_of_evariance b in
 			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
-          CF.es_var_measures = Some (CF.measures_of_evariance b)}) ctx in
+          CF.es_var_measures = Some (t_ann, ml, il, new Gen.stack)}) ctx in
 		    let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_var_continuation in
 	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) 
       | CF.EInfer b ->
@@ -802,7 +803,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
                       (* Normalise the specification with variance 
                        * to further inference or error reporting *)
-                      let n_pre2 = CF.norm_struc_with_variance pre2 in 
+                      let n_pre2 = CF.norm_struc_with_variance pre2 in
                       if not (CF.isNonFalseListFailescCtx sctx) then
                         let _ = Term.add_unreachable_res sctx pos in n_pre2
                       else n_pre2

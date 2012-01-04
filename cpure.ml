@@ -6704,6 +6704,15 @@ let is_lexvar (f:formula) : bool =
                 | _ -> false)
     | _ -> false
 
+let rec has_lexvar (f: formula) : bool =
+  match f with
+  | BForm _ -> is_lexvar f
+  | And (f1, f2, _) -> (has_lexvar f1) || (has_lexvar f2)
+  | Or (f1, f2, _, _) -> (has_lexvar f1) && (has_lexvar f2)
+  | Not (f, _, _) -> has_lexvar f
+  | Forall (_, f, _, _)
+  | Exists (_, f, _, _) -> has_lexvar f
+
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 

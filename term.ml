@@ -2,6 +2,7 @@ module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
 module DD = Debug
+module TP = Tpdispatcher
 open Gen.Basic
 open Globals
 open Cprinter
@@ -127,10 +128,11 @@ let rec syn_simplify_lexvar bnd_measures =
       else if (CP.is_lt CP.eq_spec_var s d) then [(s,d)]
       else bnd_measures 
 
-let find_lexvar_es (es: CF.entail_state) : (term_ann * CP.exp list * CP.exp list) =
+let find_lexvar_es (es: CF.entail_state) : 
+  (term_ann * CP.exp list * CP.exp list * string Gen.stack) =
   match es.CF.es_var_measures with
   | None -> raise LexVar_Not_found
-  | Some (t_ann, el, il) -> (t_ann, el, il)
+  | Some (t_ann, el, il, err_stk) -> (t_ann, el, il, err_stk)
 
 (* Normalize the longer LexVar prior to the shorter one *)
 let norm_term_measures_by_length src dst =
@@ -154,20 +156,14 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
-let trans_term_measures estate lhs_p rhs_p src_lv dst_lv pos = 
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
+  src_lv dst_lv err_stk pos = 
   let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
-  (* Filter LexVar in RHS *)
-	(*
-  let rhs_ls = CP.split_conjunctions conseq in
-  let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
-  let conseq = CP.join_conjunctions other_rhs in
-	*)
-	let _, conseq = strip_lexvar_mix_formula rhs_p in
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
   (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
   let bnd_measures = syn_simplify_lexvar bnd_measures in
-  if bnd_measures = [] then (estate, lhs_p, MCP.mix_of_pure conseq)
+  if bnd_measures = [] then (estate, lhs_p, rhs_p) (* Success *)
   else
     (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
     let lst_measures = List.fold_right (fun bm res ->
@@ -180,52 +176,62 @@ let trans_term_measures estate lhs_p rhs_p src_lv dst_lv pos =
         (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
     let rank_formula = List.fold_left (fun acc m ->
       CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-    let n_conseq = CP.mkAnd conseq (CP.simplify_disj_new rank_formula) pos in
-    let n_rhs_p = MCP.mix_of_pure n_conseq in
+    let entail_res, _, _ = TP.imply (MCP.pure_of_mix xpure_lhs_h1) rank_formula "" true None in  
     begin
       (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
-      (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p)) ; *)
+      (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
       DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-      DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p))) pos;
+      DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+      DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
     end;
-    (estate, lhs_p, n_rhs_p)
+    if entail_res then (estate, lhs_p, rhs_p) (* Success *)
+    else
+      let msg = "The given variance is not wellfounded." in
+      let _ = err_stk # push msg in
+      (estate, lhs_p, rhs_p) (* Fail *)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
-let trans_lexvar_rhs estate lhs_p rhs_p pos =
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es: " !CF.print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
-      let t_ann_s, src_lv, _ = find_lexvar_es estate in
+      let t_ann_s, src_lv, _, err_stk = find_lexvar_es estate in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-			let rhs_p = MCP.mix_of_pure rhs_p in
+      let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
-      | (Term, Term) -> trans_term_measures estate lhs_p rhs_p src_lv dst_lv pos
+      | (Term, Term) -> 
+          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
+            src_lv dst_lv err_stk pos
       | (Term, _) ->
-          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [])} in
+          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [], err_stk)} in
           (n_estate, lhs_p, rhs_p)
       | (Loop, _) -> 
-          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [])} in
+          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [], err_stk)} in
           (n_estate, lhs_p, rhs_p)
       | (MayLoop, _) ->
-          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [])} in
+          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [], err_stk)} in
           (n_estate, lhs_p, rhs_p)
       | (Fail, _) ->  
-          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [])} in
+          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [], err_stk)} in
           (n_estate, lhs_p, rhs_p)
     end
   with _ -> (estate, lhs_p, rhs_p)
 
-let trans_lexvar_rhs estate lhs_p rhs_p pos =
+let check_term_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state_short in
    Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
-      (fun _ _ -> trans_lexvar_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
+      (fun _ _ -> check_term_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
+    let err_stk = match es.CF.es_var_measures with
+    | None -> new Gen.stack
+    | Some (_, _, _, stk) -> stk 
+    in 
     let _, pure_f, _, _, _ = CF.split_components es.CF.es_formula in
     let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
     (* Using transform_formula to update the pure part of es_f *)
@@ -239,10 +245,12 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
     let f_e _ = None in
     match lexvar with
     | [] -> CF.Ctx es
-    | lv::[] -> CF.Ctx { es with 
-      CF.es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
-      CF.es_var_measures = Some (find_lexvar_formula lv); 
-    }
+    | lv::[] -> 
+        let t_ann, ml, il = find_lexvar_formula lv in 
+        CF.Ctx { es with 
+          CF.es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
+          CF.es_var_measures = Some (t_ann, ml, il, err_stk); 
+        }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in CF.transform_context es_strip_lexvar_lhs ctx
 

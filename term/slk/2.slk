@@ -4,27 +4,41 @@ print residue.
 
 //(2) Fail. T
 checkentail Term[0,_] |- Term[1,_,_].
+print residue.
 
 //(3) F
 checkentail Term[_] |- MayLoop.
+print residue.
 
 //(4) F
 checkentail Term[_] |- Loop.
+print residue.
 
 //(5) L
 checkentail Loop |- Loop.
+print residue.
 
 //(6) F
 checkentail Loop |- Term[_].
+print residue.
 
 //(7) L
 checkentail Loop |- MayLoop.
+print residue.
 
 //(8) ML
 checkentail MayLoop |- Term[_].
+print residue.
 
 //(9) ML
 checkentail MayLoop |- Loop.
+print residue.
 
 //(10) ML
 checkentail MayLoop |- MayLoop.
+print residue.
+
+//(11) 
+checkentail n=m+1 & Term[n] |- Term[m].
+print residue.
+
