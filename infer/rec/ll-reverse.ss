@@ -18,9 +18,13 @@ ll<n> == self = null & n = 0
 	
 relation A(int x, int y, int z).
 
+// TODO : xs'<=0 is same as xs'=null
+// POST:  n=t - m & 0<=m & m<=t & xs'<=0
+
+
 /* function to reverse a singly linked list */
 void reverse(ref node xs, ref node ys)
-        infer [A]
+    infer [A]
 	requires xs::ll<n> * ys::ll<m> 
 	ensures ys'::ll<t> & xs' = null & A(t,m,n);
 {
