@@ -5311,7 +5311,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   let estate = estate_orig in
   let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
-  let (estate,_,rhs_p) = Term.trans_lexvar_rhs estate lhs_p rhs_p pos in
+  let (estate,_,rhs_p) = Term.trans_lexvar_rhs estate lhs_p (* xpure_lhs_h0 xpure_lhs_h1 *) rhs_p pos in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =

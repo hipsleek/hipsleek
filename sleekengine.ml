@@ -541,8 +541,8 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
-  let term_ann = CF.collect_term_ann_list_context residue in
-  let str_term_ann = if term_ann = [] then "" else pr_list string_of_term_ann term_ann in
+  (* let term_ann = CF.collect_term_ann_list_context residue in *)
+  (* let str_term_ann = if term_ann = [] then "" else pr_list string_of_term_ann term_ann in *)
   if not valid then
     begin
       let s =
@@ -556,7 +556,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
         (*should check bot with is_bot_status*)
         else ""
       in
-      print_string (num_id^": Fail."^s^"\n"^str_term_ann^"\n")
+      print_string (num_id^": Fail."^s^"\n"(* ^str_term_ann^"\n" *))
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
@@ -569,7 +569,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
             | false -> (*expect normal (OK) here*) ""
         else ""
         in
-        print_string (num_id^": Valid. "^s^"\n"^str_term_ann^"\n")
+        print_string (num_id^": Valid. "^s^"\n"(* ^str_term_ann^"\n" *))
         (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
     end
   (* with e -> *)

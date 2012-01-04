@@ -118,10 +118,10 @@ let int_of_heap_ann a =
 
 let string_of_term_ann a =
   match a with
-  | Term -> "T"
-  | Loop -> "L"
-  | MayLoop -> "ML"
-  | Fail -> "F"
+  | Term -> "Term"
+  | Loop -> "Loop"
+  | MayLoop -> "MayLoop"
+  | Fail -> "ErrTerm"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"

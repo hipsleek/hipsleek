@@ -669,7 +669,7 @@ let rec pr_b_formula (e:P.b_formula) =
   match pf with
     | P.LexVar (t_ann, ls1,ls2, l)        -> 
         fmt_string (string_of_term_ann t_ann);
-        pr_s "_LexVar" pr_formula_exp ls1;
+        pr_s "" pr_formula_exp ls1;
         if ls2!=[] then
           pr_set pr_formula_exp ls2
         else ()

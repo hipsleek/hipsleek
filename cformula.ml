@@ -3007,7 +3007,8 @@ think it is used to instantiate when folding.
 
   (* For VARIANCE checking *)
   (* Term ann with Lexical ordering *)
-  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
+  es_var_measures : (term_ann * CP.exp list * CP.exp list ) option; 
+  (* es_var_stack :  string Gen.stack; *)
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
@@ -4887,11 +4888,27 @@ and formula_trace_of_context ctx0 = match ctx0 with
 	  let f = mkOr f1 f2 no_pos in
       let trace = trace1@["||OR||"]@trace2 in
       (f,trace)
+  (* | Ctx es ->  *)
+  (*     let mix_f,_ = es.es_pure in *)
+  (*     let f = add_mix_formula_to_formula mix_f es.es_formula in *)
+  (*     let trace = es.es_trace in *)
+  (*     (f,trace) *)
   | Ctx es -> 
-      let mix_f,_ = es.es_pure in
-      let f = add_mix_formula_to_formula mix_f es.es_formula in
+      let ep,_ = es.es_pure in
+      let orig_f = es.es_formula in
+      let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
+      let mix_f = match esvm with
+        | None -> ep
+        | Some (ta,l1,l2) -> 
+              let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
+              Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+              MCP.merge_mems ep (MCP.mix_of_pure m) true in
+      let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
+      Debug.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;
       (f,trace)
+
+
   
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
