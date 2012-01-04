@@ -233,7 +233,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
         (* Termination: Add termination arguments into context *)
         let t_ann, ml, il = CF.measures_of_evariance b in
 			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
-          CF.es_var_measures = Some (t_ann, ml, il, new Gen.stack)}) ctx in
+          CF.es_var_measures = Some (t_ann, ml, il)}) ctx in
 		    let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_var_continuation in
 	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) 
       | CF.EInfer b ->

@@ -39,6 +39,6 @@ checkentail MayLoop |- MayLoop.
 print residue.
 
 //(11) 
-checkentail n=m+1 & Term[n] |- Term[m].
+checkentail n=m+2 & Term[n] |- Term[m].
 print residue.
 

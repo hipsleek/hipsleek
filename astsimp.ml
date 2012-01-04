@@ -1870,7 +1870,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let pr2 x = 
     if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name
     else (add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs) in
-  Debug.ho_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+  Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (* An Hoa *)
