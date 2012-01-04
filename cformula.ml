@@ -3846,6 +3846,19 @@ let rec collect_orig_ante ctx =
       | Some ante -> [ante])
 	| OCtx (ctx1, ctx2) -> (collect_orig_ante ctx1) @ (collect_orig_ante ctx2)
 
+let rec collect_term_ann_context ctx =
+	match ctx with
+	| Ctx es -> (match es.es_var_measures with
+		| None -> []
+		| Some (t_ann, _, _) -> [t_ann])
+	| OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
+
+let collect_term_ann_list_context ctx =
+	match ctx with
+	| FailCtx _ -> []
+	| SuccCtx l_ctx -> 
+		List.concat (List.map (fun ctx -> collect_term_ann_context ctx) l_ctx) 
+
 let rec add_pre_heap ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_heap 

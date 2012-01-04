@@ -148,12 +148,21 @@ let norm_term_measures_by_length src dst =
     (strip_list dl src, dst)
   else (src, strip_list sl dst)
 
-let trans_term_measures estate lhs_p conseq src_lv dst_lv pos = 
+let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
+  let mf_p = MCP.pure_of_mix mf in
+  let mf_ls = CP.split_conjunctions mf_p in
+  let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
+  (lexvar, CP.join_conjunctions other_p)
+
+let trans_term_measures estate lhs_p rhs_p src_lv dst_lv pos = 
   let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
   (* Filter LexVar in RHS *)
+	(*
   let rhs_ls = CP.split_conjunctions conseq in
   let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
   let conseq = CP.join_conjunctions other_rhs in
+	*)
+	let _, conseq = strip_lexvar_mix_formula rhs_p in
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
   (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
@@ -182,14 +191,30 @@ let trans_term_measures estate lhs_p conseq src_lv dst_lv pos =
     (estate, lhs_p, n_rhs_p)
 
 (* To handle LexVar formula *)
+(* Remember to remove LexVar in RHS *)
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   try
     begin
+      let _ = DD.trace_hprint (add_str "es: " !CF.print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, _ = find_lexvar_es estate in
+      let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+			let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
-      | (Term, Term) -> trans_term_measures estate lhs_p conseq src_lv dst_lv pos
+      | (Term, Term) -> trans_term_measures estate lhs_p rhs_p src_lv dst_lv pos
+      | (Term, _) ->
+          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [])} in
+          (n_estate, lhs_p, rhs_p)
+      | (Loop, _) -> 
+          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [])} in
+          (n_estate, lhs_p, rhs_p)
+      | (MayLoop, _) ->
+          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [])} in
+          (n_estate, lhs_p, rhs_p)
+      | (Fail, _) ->  
+          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [])} in
+          (n_estate, lhs_p, rhs_p)
     end
   with _ -> (estate, lhs_p, rhs_p)
 
@@ -198,12 +223,6 @@ let trans_lexvar_rhs estate lhs_p rhs_p pos =
   let pr2 = !CF.print_entail_state_short in
    Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
       (fun _ _ -> trans_lexvar_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
-
-let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
-  let mf_p = MCP.pure_of_mix mf in
-  let mf_ls = CP.split_conjunctions mf_p in
-  let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
-  (lexvar, CP.join_conjunctions other_p)
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =

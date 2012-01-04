@@ -1,20 +1,30 @@
+//(1) Valid. T
 checkentail Term[1,_] |- Term[0].
 print residue.
 
+//(2) Fail. T
 checkentail Term[0,_] |- Term[1,_,_].
 
+//(3) F
 checkentail Term[_] |- MayLoop.
 
+//(4) F
 checkentail Term[_] |- Loop.
 
+//(5) L
 checkentail Loop |- Loop.
 
+//(6) F
 checkentail Loop |- Term[_].
 
+//(7) L
 checkentail Loop |- MayLoop.
 
+//(8) ML
 checkentail MayLoop |- Term[_].
 
+//(9) ML
 checkentail MayLoop |- Loop.
 
+//(10) ML
 checkentail MayLoop |- MayLoop.
