@@ -246,7 +246,9 @@ let compute_fixpoint_aux rel_fml pf =
     let fixpoint = List.map (fun f -> 
         let args = CP.fv f in 
         let quan_vars = CP.diff_svl args vars in
-        TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
+        let new_f = CP.wrap_exists_svl f quan_vars in
+        let new_f = Redlog.elim_exists_with_eq new_f in
+        let new_f = CP.arith_simplify_new new_f in new_f) fixpoint in
     match fixpoint with
       | [pre;post] -> (rel_fml, pre, post)
       | _ -> report_error no_pos "Expecting a pair of pre-post"
