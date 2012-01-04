@@ -4896,6 +4896,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
   (*return pair of matched one_formula of LHS and RHS*)
   (*MUST exist a Injective and non-surjective mapping from a2 to a1*)
   (*otherwise, failed*)
+  let rhs_b = extr_rhs_b conseq in
 
   (*return a matched pair (f,one_f) and the rest (a1-f)*)
   let compute_thread_one_match_x a1 one_f alla allc =
@@ -4990,7 +4991,9 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
             Debug.devel_pprint ("heap_entail_thread: failed in entailing variable permissions in conseq\n") pos;
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
             let msg = ("Concurrency Error: could not match variable permissions LHS and RHS of the thread with id = " ^ (CP.string_of_spec_var f1.formula_thread)) in
-            (None, mkFailCtx_simple msg new_es base_f2 pos)
+            let err_o = mkFailCtx_vperm "123" rhs_b estate conseq  pos in
+            (* (None, mkFailCtx_simple msg new_es base_f2 pos) *)
+            (None, err_o)
           else
           (*************************************************)
           (*********<<<<<<< matching VarPerm ***************)
@@ -5972,14 +5975,19 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing variable permissions in conseq\n") pos;
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
             let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
-            (CF.mkFailCtx_in (Basic_Reason ({
-		        fc_message = "failed in entailing " ^ (string_of_vp_ann VP_Value) (* ^ ", " ^ (string_of_vp_ann VP_Ref) *) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq";
-		        fc_current_lhs  = estate;
-		        fc_prior_steps = estate.es_prior_steps;
-		        fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) pos;
-		        fc_current_conseq = CF.formula_of_heap HFalse pos;
-		        fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
-                                            {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]})), Failure) (*TO CHECK: more expressive explanation*)
+            (* picking original conseq since not found here *)
+            let conseq = (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) in
+            let rhs_b = extr_rhs_b conseq in
+            let err_o = mkFailCtx_vperm "321" rhs_b estate conseq  pos in
+            (err_o,Failure)
+            (* (CF.mkFailCtx_in (Basic_Reason ({ *)
+		    (*     fc_message = "failed in entailing " ^ (string_of_vp_ann VP_Value) (\* ^ ", " ^ (string_of_vp_ann VP_Ref) *\) ^ " and " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq"; *)
+		    (*     fc_current_lhs  = estate; *)
+		    (*     fc_prior_steps = estate.es_prior_steps; *)
+		    (*     fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br [] pos) pos; *)
+		    (*     fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+		    (*     fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];}, *)
+            (*                                 {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]})), Failure) (\*TO CHECK: more expressive explanation*\) *)
         end
       else
 

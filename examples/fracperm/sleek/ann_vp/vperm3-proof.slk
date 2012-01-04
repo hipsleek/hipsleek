@@ -1,6 +1,4 @@
-checkentail true |- true.
-
-
+//checkentail true |- true.
 //from vperm3.ss
 
 //(1)
@@ -15,9 +13,8 @@ print residue.
 checkentail true |- @value[x] & @full[y].
 print residue.
 //valid --> @zero[y]
-
 //COMPOSE: @zero[y] & x'=x+1 o{y} @full[y] & y'=y+1 
-           --> x'=x+1 & y'=y+1
+//           --> x'=x+1 & y'=y+1
 
 
 
@@ -34,16 +31,16 @@ print residue.
 // valid --> @zero[x,y] and @full[x] & x'=x+1
 
 //COMPOSE @zero[x,y] and @full[x] & x'=x+1 o{y} @full[y] & y'=y+1 
-          |- @zero[x] & y'=y+1 and @full[x] & x'=x+1.
+//          |- @zero[x] & y'=y+1 and @full[x] & x'=x+1.
 
 // NOTE: when entailing threads, check for @full only
 
 //COMPOSE @zero[x] & y'=y+1 o{x} @full[x] & x'=x+1
-          --> y'=y+1 & x'=x+1
+//          --> y'=y+1 & x'=x+1
 
 //(5)
 checkentail @zero[x] & y'=y+1 & id=z and @full[x] & x'=x+1 & thread=z
-            | [i] @value[id] and @full[x] & x'=i+1 & thread=id.
+            |- [i] @value[id] and @full[x] & x'=i+1 & thread=id.
 print residue.
 
 //COMPOSE: @zero[x] o{x} @full[x] & x'=i+1 & thread=id //'

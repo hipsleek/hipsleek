@@ -4181,6 +4181,12 @@ let mkFailCtx_simple msg estate conseq pos =
   (*temporary no failure explaining*)
   mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex))
 
+let mkFailCtx_vperm msg rhs_b estate conseq pos = 
+  let s = "variable permission mismatch "^msg in
+  let new_estate = {estate  with es_formula = substitute_flow_into_f
+          !top_flow_int estate.es_formula} in
+  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error))
+
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
