@@ -3,34 +3,52 @@ checkentail Term[1,_] |- Term[0].
 print residue.
 
 //(2) Fail. T
-// TODO : should fail, but got the following:
-//Entail (2): Valid. 
+// TODO : residue should be ErrTerm[0,Anon_12]
+// so that we can continue checking even if there was a previous error
+// Entail (2): Fail. 
+// _0_0: Error: The variance is not well-founded (not decreasing).
 //<1>true & Term[0,Anon_12] & {FLOW,(17,18)=__norm}
 checkentail Term[0,_] |- Term[1,_,_].
 print residue.
 
 //(3) F
-// better message? esp when we print formula?
-//Entail (3): Fail.INCONSISTENCY : expected failure but success instead
 checkentail Term[_] |- MayLoop.
 print residue.
+// TODO : WHY is residue printed twice?
+/*
+<1>true & ErrTerm & {FLOW,(17,18)=__norm}
+
+<1>true & ErrTerm & {FLOW,(17,18)=__norm}
+*/
 
 //(4) F
-checkentail Term[_] |- Loop.
+//checkentail Term[_] |- Loop.
 print residue.
 
 //(5) L
-// TODO : I think residue should be "false" after entailing LOOP.
 checkentail Loop |- Loop.
 print residue.
 
 //(6) F
 checkentail Loop |- Term[_].
 print residue.
+/*
+TODO : This residue should NOT be false.
+It is UNSOUND! It should be just LOOP!
+Entail (6): Valid. 
+<1>true & false & {FLOW,(17,18)=__norm}
+*/
 
 //(7) L
 checkentail Loop |- MayLoop.
 print residue.
+/*
+TODO : This residue should NOT be MayLoop.
+It is UNSOUND! It should be just LOOP!
+
+<1>true & MayLoop & {FLOW,(17,18)=__norm}
+
+*/
 
 //(8) ML
 checkentail MayLoop |- Term[_].
