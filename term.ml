@@ -9,6 +9,8 @@ open Cprinter
 
 type phase_trans = int * int
 
+type term_ann_trans = term_ann * term_ann
+
 type term_reason =
   (* The variance is not well-founded *)
   | Not_Decreasing_Measure     
@@ -23,7 +25,7 @@ type term_reason =
   (* Reason for error *)
   | Invalid_Phase_Trans
   | Variance_Not_Given
-  | Invalid_Status_Trans
+  | Invalid_Status_Trans of term_ann_trans
 
 (* The termination can only be determined when 
  * a base case or an infinite loop is reached *)  
@@ -50,6 +52,13 @@ let pr_phase_trans (trans: phase_trans) =
 let string_of_phase_trans (trans: phase_trans) = 
   poly_string_of_pr pr_phase_trans trans
 
+let pr_term_ann_trans (src, dst) =
+  fmt_string (string_of_term_ann src);
+  fmt_string "->";
+  fmt_string (string_of_term_ann dst)
+
+let string_of_term_ann_trans = poly_string_of_pr pr_term_ann_trans 
+
 let pr_term_reason = function
   | Not_Decreasing_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
   | Not_Bounded_Measure -> fmt_string "The variance is not well-founded (not bounded)."
@@ -59,7 +68,9 @@ let pr_term_reason = function
   | Base_Case_Reached -> fmt_string "The base case is reached."
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
-  | Invalid_Status_Trans -> fmt_string "The transition of termination status is invalid"
+  | Invalid_Status_Trans trans -> 
+      pr_term_ann_trans trans;
+      fmt_string " transition is invalid."
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
 
@@ -219,7 +230,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
             src_lv dst_lv pos
       | (Term, _) ->
-          let term_res = (pos, None, TermErr Invalid_Status_Trans) in
+          let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
           let n_estate = {estate with 
             CF.es_var_measures = Some (Fail, [], []);
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
@@ -232,7 +243,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [])} in
           (n_estate, lhs_p, rhs_p)
       | (Fail, _) -> 
-          let term_res = (pos, None, TermErr Invalid_Status_Trans) in
+          let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
           let n_estate = {estate with 
             CF.es_var_measures = Some (Fail, [], []);
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
