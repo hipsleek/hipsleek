@@ -983,6 +983,7 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
+  (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -1013,7 +1014,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   let prog0 = { prog1 with
       I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
 
-  (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
+  (* let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in *)
   (* let _ = I.find_empty_static_specs prog0 in *)
   let _ = I.build_hierarchy prog0 in
   (* let _ = print_string "trans_prog :: I.build_hierarchy PASSED\n" in *)
@@ -1871,14 +1872,19 @@ and check_valid_flows (f:IF.struc_formula) =
   (* if f==[] then print_endline "Empty Spec detected" else *)
   List.iter helper f
       
+(* and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl = *)
+(*   let pr x =  *)
+(*     if (x.I.proc_static_specs==[]) then "Empty Spec "^x.I.proc_name  *)
+(*     else (add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs) in *)
+(*   let pr2 x =  *)
+(*     if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name *)
+(*     else (add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs) in *)
+(*   Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc *)
+
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
-  let pr x = 
-    if (x.I.proc_static_specs==[]) then "Empty Spec "^x.I.proc_name 
-    else (add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs) in
-  let pr2 x = 
-    if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name
-    else (add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs) in
-  Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+  let pr_out p = (Cprinter.string_of_proc_decl 1 p) in
+  Gen.Debug.no_1 "trans_proc" Iprinter.string_of_proc_decl pr_out
+      (fun _ -> trans_proc_x prog proc) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (* An Hoa *)

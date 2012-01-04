@@ -612,8 +612,11 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 	  end
   | I.CallNRecv e ->
       if (e.I.exp_call_nrecv_method=Globals.fork_name) then
+        (*TO DO: add global variables into fork method*)
+        (*we can reconstruct CallNRecv, transform and reverse back*)
         exp
       else if (e.I.exp_call_nrecv_method=Globals.join_name) then
+        (*no need for join*)
         exp
       else
 	  begin
