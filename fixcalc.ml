@@ -78,6 +78,7 @@ let rec fixcalc_of_b_formula b =
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
+  | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
@@ -86,7 +87,7 @@ let rec fixcalc_of_pure_formula f = match f with
   | CP.Not (p,_ , _) -> 
     begin
     match p with
-    | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_eq ^ "0"
+    | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
     end
   | CP.Forall (sv, p,_ , _) ->
