@@ -3,10 +3,15 @@ checkentail Term[1,_] |- Term[0].
 print residue.
 
 //(2) Fail. T
+// TODO : should fail, but got the following:
+//Entail (2): Valid. 
+//<1>true & Term[0,Anon_12] & {FLOW,(17,18)=__norm}
 checkentail Term[0,_] |- Term[1,_,_].
 print residue.
 
 //(3) F
+// better message? esp when we print formula?
+//Entail (3): Fail.INCONSISTENCY : expected failure but success instead
 checkentail Term[_] |- MayLoop.
 print residue.
 
@@ -15,6 +20,7 @@ checkentail Term[_] |- Loop.
 print residue.
 
 //(5) L
+// TODO : I think residue should be "false" after entailing LOOP.
 checkentail Loop |- Loop.
 print residue.
 
@@ -31,6 +37,7 @@ checkentail MayLoop |- Term[_].
 print residue.
 
 //(9) ML
+// TODO : I think residue should be "false" after entailing LOOP.
 checkentail MayLoop |- Loop.
 print residue.
 
@@ -39,6 +46,5 @@ checkentail MayLoop |- MayLoop.
 print residue.
 
 //(11) 
-checkentail n=m+1 & Term[n] |- Term[m].
+checkentail n=m+1 & Term[n] |- Term[n].
 print residue.
-
