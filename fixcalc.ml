@@ -83,7 +83,12 @@ let rec fixcalc_of_pure_formula f = match f with
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
-  | CP.Not (p,_ , _) -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
+  | CP.Not (p,_ , _) -> 
+    begin
+    match p with
+    | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_eq ^ "0"
+    | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
+    end
   | CP.Forall (sv, p,_ , _) ->
     " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^ fixcalc_of_pure_formula p ^ ")) "
   | CP.Exists (sv, p,_ , _) ->
@@ -169,7 +174,7 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
-let compute_fixpoint input_pairs =
+(*let compute_fixpoint input_pairs =
   let (pfs, rels) = List.split input_pairs in
   let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
   let rel_fml = match rels with
@@ -210,7 +215,61 @@ let compute_fixpoint input_pairs =
     match fixpoint with
       | [pre;post] -> (rel_fml, pre, post)
       | _ -> report_error no_pos "Expecting a pair of pre-post"
+  with _ -> report_error no_pos "Unexpected error in computing fixpoint"*)
+
+let compute_fixpoint_aux rel_fml pf = 
+  let (name,vars) = match rel_fml with
+    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
+    | _ -> report_error no_pos "Wrong format"
+  in
+  try
+    let rhs = fixcalc_of_pure_formula pf in 
+    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
+      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
+      ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
+    in
+    (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
+    DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+    let output_of_sleek = "fixcalc.inf" in
+    let oc = open_out output_of_sleek in
+    Printf.fprintf oc "%s" input_fixcalc;
+    flush oc;
+    close_out oc;
+    let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+    let res = remove_paren res (String.length res) in
+    (*print_endline ("RES: " ^ res);*)
+    DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
+    let fixpoint = Parse_fix.parse_fix res in
+    DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
+    let fixpoint = List.map (fun f -> 
+        let args = CP.fv f in 
+        let quan_vars = CP.diff_svl args vars in
+        TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
+    match fixpoint with
+      | [pre;post] -> (rel_fml, pre, post)
+      | _ -> report_error no_pos "Expecting a pair of pre-post"
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"
+
+let helper input_pairs rel = 
+  let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
+  let pfs,_ = List.split pairs in
+  match pfs with
+  | [] -> []
+  | [hd] -> [(rel,hd)]
+  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs))]
+
+let compute_fixpoint input_pairs =
+  let (pfs, rels) = List.split input_pairs in
+  let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
+  let pairs = match rels with
+    | [] -> report_error no_pos "Error in compute_fixpoint"
+    | [hd] -> let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in [(hd,pf)]
+    | _ -> List.concat (List.map (fun r -> helper input_pairs r) rels)
+  in
+  DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+  List.map (fun (rel_fml,pf) -> compute_fixpoint_aux rel_fml pf) pairs
+
 
 (*
 type: (CP.formula * CP.formula) list ->

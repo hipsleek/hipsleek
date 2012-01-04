@@ -9364,12 +9364,12 @@ let rec simplify_post post_fml post_vars prog subst_fml = match post_fml with
     let p = begin
       match subst_fml with
       | None -> TP.simplify_raw (CP.mkExists post_vars p None no_pos)
-      | Some (rel, fp) -> 
-        let ps = CP.split_conjunctions p in
-        let ps = List.filter (fun x -> x=rel) ps in
-        let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) fp ps in
-        let post_vars = CP.diff_svl post_vars (CP.fv fp) in
-        TP.simplify_raw (CP.mkExists post_vars p None no_pos)
+      | Some triples (*(rel, post, pre)*) -> 
+        let posts = List.map (fun (_,a2,_) -> a2) triples in
+        let post = CP.conj_of_list posts no_pos in
+        let p = CP.drop_rel_formula p in
+        let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
+        CP.mkAnd post p no_pos        
       end
     in
 (*    let h,rm_vars = simplify_heap h p prog in    *)

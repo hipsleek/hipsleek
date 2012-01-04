@@ -338,9 +338,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
                                 let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
-                                let fml = List.fold_left (fun f p -> CF.normalize 1 fml p no_pos)
-                                  fml (List.map (fun p -> CF.formula_of_pure_formula p no_pos) lp)
-                                in if Solver.verify_pre_is_sat prog fml then [fml] else []
+                                let fml = CF.normalize 1 fml (CF.formula_of_pure_formula (TP.simplify_raw (CP.conj_of_list lp no_pos)) no_pos) no_pos in
+                                if Solver.verify_pre_is_sat prog fml then [fml] else []
                             )
                             else
                               (*print_endline " ";*)
@@ -1090,18 +1089,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let new_spec = 
                           if rels = [] then new_spec
                           else 
-                            (* TODO: Split rels into parts corresponding to names of relation *)
-                            (
-                            (* TODO : What if we have multiple unknown relations? *)
-                            (* Would we need to split up the relations for separate fix-point? *)
-                            let (rel, post, pre) = Fixcalc.compute_fixpoint 2 rels in
-                            print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
-                            print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);
                             let inf_post_flag = post_ctr # get > 0 in
-                            print_endline ("INF-POST-FLAG: " ^string_of_bool inf_post_flag);
-                            if inf_post_flag then Solver.simplify_relation new_spec (Some (rel, post)) prog
+                            print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);                            
+                            let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels in
+                            let _ = List.iter (fun (rel,post,pre) ->
+                              print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
+                              print_endline ("POST: "^Cprinter.string_of_pure_formula post);
+                              print_endline ("PRE : "^Cprinter.string_of_pure_formula pre)) triples in
+                            if inf_post_flag then Solver.simplify_relation new_spec (Some triples) prog
                             else new_spec
-                            )
                         in
                         let new_spec = AS.add_pre prog new_spec in
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
