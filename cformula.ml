@@ -3009,8 +3009,8 @@ think it is used to instantiate when folding.
 
   (* For VARIANCE checking *)
   (* Term ann with Lexical ordering *)
-  es_var_measures : (term_ann * CP.exp list * CP.exp list * string Gen.stack) option; 
-  (* es_var_stack :  string Gen.stack; *)
+  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
+  es_var_stack :  string list; 
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
@@ -3206,11 +3206,12 @@ let empty_es flowt pos =
   es_residue_pts  = [];
   es_id = 0 ;
   es_orig_ante = None;
-  es_orig_conseq = [mkETrue flowt pos] ;
+  es_orig_conseq = [mkETrue flowt pos];
   es_rhs_eqset = [];
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = None;
+  es_var_stack = [];
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
@@ -3853,7 +3854,7 @@ let rec collect_term_ann_context ctx =
 	match ctx with
 	| Ctx es -> (match es.es_var_measures with
 		| None -> []
-		| Some (t_ann, _, _, _) -> [t_ann])
+		| Some (t_ann, _, _) -> [t_ann])
 	| OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
 
 let collect_term_ann_list_context ctx =
@@ -3861,6 +3862,19 @@ let collect_term_ann_list_context ctx =
 	| FailCtx _ -> []
 	| SuccCtx l_ctx -> 
 		List.concat (List.map (fun ctx -> collect_term_ann_context ctx) l_ctx) 
+
+let rec collect_term_err_msg_context ctx =
+  match ctx with
+  | Ctx es -> es.es_var_stack
+  | OCtx (ctx1, ctx2) -> 
+      (collect_term_err_msg_context ctx1) @
+      (collect_term_err_msg_context ctx2)
+
+let collect_term_err_msg_list_context ctx =
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx l_ctx ->
+      List.concat (List.map (fun ctx -> collect_term_err_msg_context ctx) l_ctx)
 
 let rec add_pre_heap ctx = 
   match ctx with
@@ -4901,7 +4915,7 @@ and formula_trace_of_context ctx0 = match ctx0 with
       let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
       let mix_f = match esvm with
         | None -> ep
-        | Some (ta,l1,l2,_) -> 
+        | Some (ta,l1,l2) -> 
               let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
               Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
               MCP.merge_mems ep (MCP.mix_of_pure m) true in

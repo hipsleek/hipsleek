@@ -11,16 +11,19 @@ type phase_trans = int * int
 
 type term_reason =
   (* The variance is not well-founded *)
-  | Not_Decrease_Measure     
+  | Not_Decreasing_Measure     
   | Not_Bounded_Measure
   (* The variance is well-founded *)
-  | Valid_Measure   
+  | Valid_Measure  
+  | Decreasing_Measure
+  | Bounded_Measure
   (* Reachability *)
   | Base_Case_Reached
   | Non_Term_Reached
   (* Reason for error *)
   | Invalid_Phase_Trans
   | Variance_Not_Given
+  | Invalid_Status_Trans
 
 (* The termination can only be determined when 
  * a base case or an infinite loop is reached *)  
@@ -33,7 +36,7 @@ type term_status =
 
 (* Location of the recursive call/loop, 
  * context and its termination status *)
-type term_res = loc * CF.formula * term_status
+type term_res = loc * CF.formula option * term_status
 
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
@@ -48,12 +51,15 @@ let string_of_phase_trans (trans: phase_trans) =
   poly_string_of_pr pr_phase_trans trans
 
 let pr_term_reason = function
-  | Not_Decrease_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
+  | Not_Decreasing_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
   | Not_Bounded_Measure -> fmt_string "The variance is not well-founded (not bounded)."
   | Valid_Measure -> fmt_string "The given variance is well-founded."
+  | Decreasing_Measure -> fmt_string "The variance is decreasing."
+  | Bounded_Measure -> fmt_string "The variance is bounded."
   | Base_Case_Reached -> fmt_string "The base case is reached."
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
+  | Invalid_Status_Trans -> fmt_string "The transition of termination status is invalid"
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
 
@@ -81,7 +87,9 @@ let pr_term_ctx (ctx: CF.formula) =
 
 let pr_term_res pr_ctx (pos, ctx, status) =
   fmt_string (string_of_loc pos);
-  if pr_ctx then (fmt_string ": "; pr_term_ctx ctx) else ();
+  (match ctx with
+  | None -> ();
+  | Some c -> if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
   if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
   if pr_ctx then fmt_print_newline () else ()
@@ -129,10 +137,10 @@ let rec syn_simplify_lexvar bnd_measures =
       else bnd_measures 
 
 let find_lexvar_es (es: CF.entail_state) : 
-  (term_ann * CP.exp list * CP.exp list * string Gen.stack) =
+  (term_ann * CP.exp list * CP.exp list) =
   match es.CF.es_var_measures with
   | None -> raise LexVar_Not_found
-  | Some (t_ann, el, il, err_stk) -> (t_ann, el, il, err_stk)
+  | Some (t_ann, el, il) -> (t_ann, el, il)
 
 (* Normalize the longer LexVar prior to the shorter one *)
 let norm_term_measures_by_length src dst =
@@ -156,8 +164,7 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
-  src_lv dst_lv err_stk pos = 
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos = 
   let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
@@ -176,19 +183,25 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
         (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
     let rank_formula = List.fold_left (fun acc m ->
       CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-    let entail_res, _, _ = TP.imply (MCP.pure_of_mix xpure_lhs_h1) rank_formula "" true None in  
+    let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+    let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
     begin
       (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
       (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
       DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
       DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+      DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
+      DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
+      DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
       DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
     end;
-    if entail_res then (estate, lhs_p, rhs_p) (* Success *)
-    else
-      let msg = "The given variance is not wellfounded." in
-      let _ = err_stk # push msg in
-      (estate, lhs_p, rhs_p) (* Fail *)
+    let term_res = 
+      if entail_res then (pos, None, Term_S Decreasing_Measure)
+      else (pos, None, TermErr Not_Decreasing_Measure) 
+    in 
+    let n_estate = { estate with 
+      CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack } in
+    (n_estate, lhs_p, rhs_p)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
@@ -198,24 +211,32 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let _ = DD.trace_hprint (add_str "es: " !CF.print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
-      let t_ann_s, src_lv, _, err_stk = find_lexvar_es estate in
+      let t_ann_s, src_lv, _ = find_lexvar_es estate in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
       | (Term, Term) -> 
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
-            src_lv dst_lv err_stk pos
+            src_lv dst_lv pos
       | (Term, _) ->
-          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [], err_stk)} in
+          let term_res = (pos, None, TermErr Invalid_Status_Trans) in
+          let n_estate = {estate with 
+            CF.es_var_measures = Some (Fail, [], []);
+            CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
+          } in
           (n_estate, lhs_p, rhs_p)
       | (Loop, _) -> 
-          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [], err_stk)} in
+          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [])} in
           (n_estate, lhs_p, rhs_p)
       | (MayLoop, _) ->
-          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [], err_stk)} in
+          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [])} in
           (n_estate, lhs_p, rhs_p)
-      | (Fail, _) ->  
-          let n_estate = {estate with CF.es_var_measures = Some (Fail, [], [], err_stk)} in
+      | (Fail, _) -> 
+          let term_res = (pos, None, TermErr Invalid_Status_Trans) in
+          let n_estate = {estate with 
+            CF.es_var_measures = Some (Fail, [], []);
+            CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
+          } in
           (n_estate, lhs_p, rhs_p)
     end
   with _ -> (estate, lhs_p, rhs_p)
@@ -228,10 +249,6 @@ let check_term_rhs estate lhs_p rhs_p pos =
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
-    let err_stk = match es.CF.es_var_measures with
-    | None -> new Gen.stack
-    | Some (_, _, _, stk) -> stk 
-    in 
     let _, pure_f, _, _, _ = CF.split_components es.CF.es_formula in
     let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
     (* Using transform_formula to update the pure part of es_f *)
@@ -249,7 +266,7 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
         let t_ann, ml, il = find_lexvar_formula lv in 
         CF.Ctx { es with 
           CF.es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
-          CF.es_var_measures = Some (t_ann, ml, il, err_stk); 
+          CF.es_var_measures = Some (t_ann, ml, il); 
         }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in CF.transform_context es_strip_lexvar_lhs ctx
@@ -263,7 +280,7 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
 
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: CF.formula) (reason: term_reason) pos : term_res =
-  let err = (pos, ctx, TermErr reason) in
+  let err = (pos, Some ctx, TermErr reason) in
   term_res_stk # push err;
   err
 
@@ -277,7 +294,7 @@ let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
   let succ_ctx = CF.succ_context_of_list_failesc_context ctx in
   let orig_ante_l = List.concat (List.map CF.collect_orig_ante succ_ctx) in
   let orig_ante = CF.formula_of_disjuncts orig_ante_l in
-  let term_res = (pos, orig_ante, Unreachable) in
+  let term_res = (pos, Some orig_ante, Unreachable) in
   term_res_stk # push term_res;
   term_res
 
@@ -324,21 +341,22 @@ let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_f
       let lv = CF.formula_of_pure_formula m pos in
       let res = f ctx lv pos in (* check decreasing *)
       let term_res =
-        if (CF.isFailCtx res) then (pos, orig_ante, MayTerm_S Not_Decrease_Measure)
+        if (CF.isFailCtx res) then 
+          (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
         else
           (* The default lower bound is zero *)
           let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
           let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar Term zero [] pos)) pos in
           let res = f ctx bnd pos in (* check boundedness *)
-          if (CF.isFailCtx res) then (pos, orig_ante, MayTerm_S Not_Bounded_Measure)
-          else (pos, orig_ante, Term_S Valid_Measure)
+          if (CF.isFailCtx res) then (pos, Some orig_ante, MayTerm_S Not_Bounded_Measure)
+          else (pos, Some orig_ante, Term_S Valid_Measure)
       in term_res_stk # push term_res; 
       term_res 
 
 let check_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res =
   if (CF.isAnyFalseCtx ctx) then
     let orig_ante = CF.formula_of_disjuncts (CF.collect_orig_ante ctx) in
-    let term_res = (pos, orig_ante, Unreachable) in
+    let term_res = (pos, Some orig_ante, Unreachable) in
     term_res_stk # push term_res;
     term_res
   else
