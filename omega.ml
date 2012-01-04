@@ -93,7 +93,7 @@ and omega_of_b_formula b =
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
-  | LexVar (a1, a2, _) -> "(0=0)"
+  | LexVar (_, a1, a2, _) -> "(0=0)"
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"

@@ -41,6 +41,11 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
+and term_ann = 
+  | Term (* definitely terminates *)
+  | Loop (* definitely loops *)
+  | MayLoop (* don't know *)
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -109,6 +114,12 @@ let int_of_heap_ann a =
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
+
+let string_of_term_ann a =
+  match a with
+  | Term -> "T"
+  | Loop -> "L"
+  | MayLoop -> "ML"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"

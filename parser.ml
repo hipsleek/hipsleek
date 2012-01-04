@@ -838,6 +838,14 @@ pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr
                     | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
+ann_term: 
+  [[
+     `TERM -> Term 
+   | `LOOP -> Loop
+   | `MAYLOOP -> MayLoop
+  ]];
+
+
 cexp: [[t= cexp_w -> match t with
                     | Pure_c f -> f
                     | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
@@ -922,9 +930,9 @@ cexp_w :
       | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
-      | `LEXVAR; `OSQUARE; ls1= cexp_list; `CSQUARE; ls2=opt_measures_seq
+      | t_ann=ann_term; ls1=opt_measures_seq_sqr; ls2=opt_measures_seq
             ->
-	      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
+	      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
 	      set_slicing_utils_pure_double f false
       ]
 	  
@@ -1034,6 +1042,10 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
 opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
 
 measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+
+opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
+
+measures_seq_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

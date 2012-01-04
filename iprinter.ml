@@ -171,10 +171,14 @@ let string_of_b_formula (pf,il) =
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
         (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
-  | P.LexVar (ls1,ls2, l)        -> 
-        let opt = if ls2==[] then "" else
-          "{"^(pr_list string_of_formula_exp ls2)^"}"
-        in "LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
+  | P.LexVar (t_ann, ls1, ls2, l) ->
+      let ann = string_of_term_ann t_ann in
+      (match t_ann with
+      | Term -> 
+          let opt = if ls2==[] then "" else
+            "{"^(pr_list string_of_formula_exp ls2)^"}"
+          in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
+      | _ -> ann)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

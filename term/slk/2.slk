@@ -1,0 +1,20 @@
+checkentail Term[1,_] |- Term[0].
+print residue.
+
+checkentail Term[0,_] |- Term[1,_,_].
+
+checkentail Term[_] |- MayLoop.
+
+checkentail Term[_] |- Loop.
+
+checkentail Loop |- Loop.
+
+checkentail Loop |- Term[_].
+
+checkentail Loop |- MayLoop.
+
+checkentail MayLoop |- Term[_].
+
+checkentail MayLoop |- Loop.
+
+checkentail MayLoop |- MayLoop.

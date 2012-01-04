@@ -4436,10 +4436,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   let npf =  match pf with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
-    | IP.LexVar (ls1, ls2, pos) ->
+    | IP.LexVar (t_ann, ls1, ls2, pos) ->
           let pe1 = List.map (fun e ->trans_pure_exp e stab) ls1 in
           let pe2 = List.map (fun e ->trans_pure_exp e stab) ls2 in
-          CP.LexVar(pe1,pe2,pos)
+          CP.LexVar(t_ann, pe1, pe2, pos)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -5224,10 +5224,10 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let _ = gather_type_info_exp a1 stab (Cpure.ann_type) in
 	      let _ = gather_type_info_exp a2 stab (Cpure.ann_type) in
           ()
-    | IP.LexVar(ls1,ls2,pos) ->
+    | IP.LexVar(t_ann, ls1, ls2, pos) ->
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls1 in
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls2 in
-          ()
+        ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in

@@ -281,18 +281,19 @@ and norm_ext_with_variance ext_f =
       let n_cont = norm_ext_with_variance cont in
       EInfer { ef with formula_inf_continuation = n_cont }
 
+(* TODO: Termination *)
 let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
   if (v.formula_var_measures = []) then None 
   else
 	  let vm = fst (List.split v.formula_var_measures) in
 	  let vi = v.formula_var_infer in
     let pos = v.formula_var_pos in
-    Some (CP.mkPure (CP.mkLexVar vm vi pos))
+    Some (CP.mkPure (CP.mkLexVar Term vm vi pos))
 
-let measures_of_evariance (v: ext_variance_formula) : (CP.exp list * CP.exp list) =
+let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) =
   let vm = fst (List.split v.formula_var_measures) in
 	let vi = v.formula_var_infer in
-  (vm, vi)
+  (Term, vm, vi)
 
 let rec strip_variance (spec: struc_formula) : struc_formula =
   match spec with
@@ -3005,7 +3006,8 @@ think it is used to instantiate when folding.
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For VARIANCE checking *)
-  es_var_measures : (CP.exp list * CP.exp list) option; (* Lexical ordering *)
+  (* Term ann with Lexical ordering *)
+  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)

@@ -24,9 +24,9 @@ type term_reason =
 (* The termination can only be determined when 
  * a base case or an infinite loop is reached *)  
 type term_status =
-  | Term of term_reason
-  | NonTerm of term_reason
-  | MayTerm of term_reason
+  | Term_S of term_reason
+  | NonTerm_S of term_reason
+  | MayTerm_S of term_reason
   | Unreachable 
   | TermErr of term_reason
 
@@ -60,9 +60,9 @@ let string_of_term_reason (reason: term_reason) =
   poly_string_of_pr pr_term_reason reason
 
 let pr_term_status = function
-  | Term reason -> fmt_string "Terminating: "; pr_term_reason reason
-  | NonTerm reason -> fmt_string "Non-terminating: "; pr_term_reason reason
-  | MayTerm reason -> fmt_string "May-terminating: "; pr_term_reason reason
+  | Term_S reason -> fmt_string "Terminating: "; pr_term_reason reason
+  | NonTerm_S reason -> fmt_string "Non-terminating: "; pr_term_reason reason
+  | MayTerm_S reason -> fmt_string "May-terminating: "; pr_term_reason reason
   | Unreachable -> fmt_string "Unreachable state."
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
@@ -103,13 +103,13 @@ let term_check_output stk =
 exception LexVar_Not_found;;
 exception Invalid_Phase_Num;;
 
-let find_lexvar_b_formula (bf: CP.b_formula) : (CP.exp list * CP.exp list) =
+let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list) =
   let (pf, _) = bf in
   match pf with
-  | CP.LexVar (el, il, _) -> (el, il)
+  | CP.LexVar (t_ann, el, il, _) -> (t_ann, el, il)
   | _ -> raise LexVar_Not_found
 
-let rec find_lexvar_formula (f: CP.formula) : (CP.exp list * CP.exp list) =
+let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list) =
   match f with
   | CP.BForm (bf, _) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) ->
@@ -127,13 +127,13 @@ let rec syn_simplify_lexvar bnd_measures =
       else if (CP.is_lt CP.eq_spec_var s d) then [(s,d)]
       else bnd_measures 
 
-let find_lexvar_es (es: CF.entail_state) =
+let find_lexvar_es (es: CF.entail_state) : (term_ann * CP.exp list * CP.exp list) =
   match es.CF.es_var_measures with
   | None -> raise LexVar_Not_found
-  | Some (el, il) -> (el, il)
+  | Some (t_ann, el, il) -> (t_ann, el, il)
 
 (* Normalize the longer LexVar prior to the shorter one *)
-let norm_lexvar_by_length src dst =
+let norm_term_measures_by_length src dst =
   let rec strip_list n l = 
     if (n<=0) then []
     else
@@ -148,43 +148,49 @@ let norm_lexvar_by_length src dst =
     (strip_list dl src, dst)
   else (src, strip_list sl dst)
 
+let trans_term_measures estate lhs_p conseq src_lv dst_lv pos = 
+  let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
+  (* Filter LexVar in RHS *)
+  let rhs_ls = CP.split_conjunctions conseq in
+  let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
+  let conseq = CP.join_conjunctions other_rhs in
+  (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
+  let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
+  (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
+  let bnd_measures = syn_simplify_lexvar bnd_measures in
+  if bnd_measures = [] then (estate, lhs_p, MCP.mix_of_pure conseq)
+  else
+    (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
+    let lst_measures = List.fold_right (fun bm res ->
+      [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
+    (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
+    let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
+      let f = 
+		    if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
+			  else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+        (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
+    let rank_formula = List.fold_left (fun acc m ->
+      CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
+    let n_conseq = CP.mkAnd conseq (CP.simplify_disj_new rank_formula) pos in
+    let n_rhs_p = MCP.mix_of_pure n_conseq in
+    begin
+      (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
+      (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p)) ; *)
+      DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
+      DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p))) pos;
+    end;
+    (estate, lhs_p, n_rhs_p)
+
 (* To handle LexVar formula *)
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
   try
-    let conseq = MCP.pure_of_mix rhs_p in
-    let dst_lv = fst (find_lexvar_formula conseq) in (* [d1,d2] *)
-    let src_lv = fst (find_lexvar_es estate) in
-    let (src_lv, dst_lv) = norm_lexvar_by_length src_lv dst_lv in
-    (* Filter LexVar in RHS *)
-    let rhs_ls = CP.split_conjunctions conseq in
-    let (_, other_rhs) = List.partition (CP.is_lexvar) rhs_ls in
-    let conseq = CP.join_conjunctions other_rhs in
-    (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
-    let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
-    (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
-    let bnd_measures = syn_simplify_lexvar bnd_measures in
-    if bnd_measures = [] then (estate, lhs_p, MCP.mix_of_pure conseq)
-    else
-      (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
-      let lst_measures = List.fold_right (fun bm res ->
-        [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
-      (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
-      let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
-        let f = 
-			    if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-			    else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
-        (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
-      let rank_formula = List.fold_left (fun acc m ->
-        CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-      let n_conseq = CP.mkAnd conseq (CP.simplify_disj_new rank_formula) pos in
-      let n_rhs_p = MCP.mix_of_pure n_conseq in
-      begin
-        (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
-        (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p)) ; *)
-        DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-        DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula n_rhs_p))) pos;
-      end;
-      (estate, lhs_p, n_rhs_p)
+    begin
+      let conseq = MCP.pure_of_mix rhs_p in
+      let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_s, src_lv, _ = find_lexvar_es estate in
+      match (t_ann_s, t_ann_d) with
+      | (Term, Term) -> trans_term_measures estate lhs_p conseq src_lv dst_lv pos
+    end
   with _ -> (estate, lhs_p, rhs_p)
 
 let trans_lexvar_rhs estate lhs_p rhs_p pos =
@@ -291,14 +297,14 @@ let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_f
       let lv = CF.formula_of_pure_formula m pos in
       let res = f ctx lv pos in (* check decreasing *)
       let term_res =
-        if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure)
+        if (CF.isFailCtx res) then (pos, orig_ante, MayTerm_S Not_Decrease_Measure)
         else
           (* The default lower bound is zero *)
           let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.CF.formula_var_measures in       
-          let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
+          let bnd = CF.formula_of_pure_formula (CP.mkPure (CP.mkLexVar Term zero [] pos)) pos in
           let res = f ctx bnd pos in (* check boundedness *)
-          if (CF.isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure)
-          else (pos, orig_ante, Term Valid_Measure)
+          if (CF.isFailCtx res) then (pos, orig_ante, MayTerm_S Not_Bounded_Measure)
+          else (pos, orig_ante, Term_S Valid_Measure)
       in term_res_stk # push term_res; 
       term_res 
 
