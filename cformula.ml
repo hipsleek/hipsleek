@@ -6242,6 +6242,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
+        es_var_stack = es.es_var_stack;
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
 	es_orig_ante = es.es_orig_ante;

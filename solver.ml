@@ -5895,7 +5895,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_unsat_flag = false;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-		es_var_measures = estate.es_var_measures;
+	es_var_measures = estate.es_var_measures;
+        es_var_stack = estate.es_var_stack;
 		es_var_label = estate.es_var_label;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
@@ -6050,7 +6051,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
-		         es_var_measures = estate.es_var_measures;
+		 es_var_measures = estate.es_var_measures;
+                 es_var_stack = estate.es_var_stack;
 		         es_var_label = estate.es_var_label} in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
