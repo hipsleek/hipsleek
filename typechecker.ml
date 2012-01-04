@@ -146,10 +146,12 @@ let parallelize num =
 (* List.for_all do_spec_verification spec_list *)
 
 let pre_ctr = new Gen.counter 0
+let post_ctr = new Gen.counter 0
 
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
   let _ = pre_ctr # reset in
+  let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
   let pr2 s = "nothing" in
@@ -349,6 +351,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                             if not(infer_post_flag) then spec
                             else
                               begin
+                                let _ = post_ctr # inc in
                                 let pre_vars = CF.context_fv ctx in
                                 (* filter out is_prime *)
                                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
@@ -1084,20 +1087,27 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     if (pre_ctr # get> 0) 
                     then
                       begin
+                        let new_spec = 
+                          if rels = [] then new_spec
+                          else 
+                            (* TODO: Split rels into parts corresponding to names of relation *)
+                            (
+                            (* TODO : What if we have multiple unknown relations? *)
+                            (* Would we need to split up the relations for separate fix-point? *)
+                            let (rel, post, pre) = Fixcalc.compute_fixpoint 2 rels in
+                            print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
+                            print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);
+                            let inf_post_flag = post_ctr # get > 0 in
+                            print_endline ("INF-POST-FLAG: " ^string_of_bool inf_post_flag);
+                            if inf_post_flag then Solver.simplify_relation new_spec (Some (rel, post)) prog
+                            else new_spec
+                            )
+                        in
                         let new_spec = AS.add_pre prog new_spec in
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
-                        let _ = 
-                          if rels = [] then ()
-                          else (
-                            (* TODO : What if we have multiple unknown relations? *)
-                            (* Would we need to split up the relations for separate fix-point? *)
-                             let (_, post, pre) = Fixcalc.compute_fixpoint 2 rels in
-                            print_endline ("\nPOST: "^Cprinter.string_of_pure_formula post);
-                            print_endline ("PRE : "^Cprinter.string_of_pure_formula pre);)
-                        in
                         print_endline ("OLD SPECS: "^old_sp);
                         print_endline ("NEW SPECS: "^new_sp);
                         print_endline ("NEW RELS: "^new_rels);

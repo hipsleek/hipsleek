@@ -9385,8 +9385,22 @@ let simplify_post post_fml post_vars prog subst_fml =
   Debug.no_2 "simplify_post" pr pr2 pr_no
       (fun _ _ -> simplify_post post_fml post_vars prog subst_fml) post_fml post_vars
 
+let rec simplify_relation (sp:struc_formula) subst_fml prog: struc_formula = 
+  List.map (fun s -> simplify_ext_relation s subst_fml prog) sp
 
-
-
+and simplify_ext_relation (sp:ext_formula) subst_fml prog: ext_formula = 
+  match sp with
+    | ECase b -> 
+      let r = List.map (fun (p,s)->(p,simplify_relation s subst_fml prog)) b.formula_case_branches in
+      ECase {b with formula_case_branches = r}
+    | EBase b ->
+      let r = simplify_relation b.formula_ext_continuation subst_fml prog in
+      EBase {b with formula_ext_continuation = r}
+    | EAssume(svl,f,fl) ->
+      let new_f = simplify_post f (CF.fv f) prog subst_fml in
+      EAssume(svl,new_f,fl)
+    | EVariance b -> 
+        EVariance {b with formula_var_continuation = simplify_ext_relation b.formula_var_continuation subst_fml prog}
+    | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
 

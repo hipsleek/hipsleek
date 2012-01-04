@@ -219,7 +219,7 @@ type: (CP.formula * CP.formula) list ->
 let compute_fixpoint (i:int) input_pairs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
-  Debug.to_1_num i "compute_fixpoint" pr1 (pr_triple pr0 pr0 pr0) 
+  Debug.no_1_num i "compute_fixpoint" pr1 (pr_triple pr0 pr0 pr0) 
       compute_fixpoint input_pairs 
 
  
