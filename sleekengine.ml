@@ -547,12 +547,16 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     try ignore (Str.search_forward re s1 0); true
     with Not_found -> false
   in
-  let term_ann = CF.collect_term_ann_list_context residue in
-  let term_msg = CF.collect_term_err_msg_list_context residue in
-  let term_output = List.fold_left (fun a m -> a ^ "\n" ^ m) "" term_msg in
-  let t_valid = not (List.exists (fun r -> 
-    match r with | Fail _ -> true | _ -> false) term_ann) &&
-    not (contains term_output "Error: ") 
+  let term_res = CF.collect_term_ann_and_msg_list_context residue in
+  let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
+  let (_,term_output) = List.fold_left (fun (no,a) (b,m) -> 
+      if b then (no+1, "<"^(string_of_int no)^">:"^ a ^ "\n" ^ m)
+      else (no+1,a)) (1,"") term_res 
+  (* let term_ann = CF.collect_term_ann_list_context residue in *)
+  (* let term_msg = CF.collect_term_err_msg_list_context residue in *)
+  (* let t_valid = not (List.for_all (fun r -> match r with | Fail _ -> true | _ -> false) term_ann)  *)
+    (* && *)
+    (* not (contains term_output "Error: ")  *)
   in
   (* let str_term_ann = if term_ann = [] then "" else pr_list string_of_term_ann term_ann in *)
   if not valid then

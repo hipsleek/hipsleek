@@ -3,23 +3,12 @@ checkentail Term[1,_] |- Term[0].
 print residue.
 
 //(2) Fail. T
-// TODO : residue should be ErrTerm[0,Anon_12]
-// so that we can continue checking even if there was a previous error
-// Entail (2): Fail. 
-// _0_0: Error: The variance is not well-founded (not decreasing).
-//<1>true & Term[0,Anon_12] & {FLOW,(17,18)=__norm}
 checkentail Term[0,_] |- Term[1,_,_].
 print residue.
 
 //(3) F
 checkentail Term[_] |- MayLoop.
 print residue.
-// TODO : WHY is residue printed twice?
-/*
-<1>true & ErrTerm & {FLOW,(17,18)=__norm}
-
-<1>true & ErrTerm & {FLOW,(17,18)=__norm}
-*/
 
 //(4) F
 checkentail Term[_] |- Loop.
@@ -32,30 +21,17 @@ print residue.
 //(6) F
 checkentail Loop |- Term[_].
 print residue.
-/*
-TODO : This residue should NOT be false.
-It is UNSOUND! It should be just LOOP!
-Entail (6): Valid. 
-<1>true & false & {FLOW,(17,18)=__norm}
-*/
+
 
 //(7) L
 checkentail Loop |- MayLoop.
 print residue.
-/*
-TODO : This residue should NOT be MayLoop.
-It is UNSOUND! It should be just LOOP!
-
-<1>true & MayLoop & {FLOW,(17,18)=__norm}
-
-*/
 
 //(8) ML
 checkentail MayLoop |- Term[_].
 print residue.
 
 //(9) ML
-// TODO : I think residue should be "false" after entailing LOOP.
 checkentail MayLoop |- Loop.
 print residue.
 
@@ -66,3 +42,62 @@ print residue.
 //(11) 
 checkentail n=m+2 & Term[n] |- Term[m].
 print residue.
+
+
+//(12)
+checkentail Term[x] & n>-3 |- 
+            case {
+              n<0 -> [] Loop; 
+              n>=0 -> [] Term[x-1];
+            }.
+print residue.
+
+//(13)
+checkentail Term[x] & n>=0 |- n<0 & Loop or n>=0 &Term[x-1].
+print residue.
+
+//(14)
+checkentail Term[x] & n>=-3 |- n<0 & Loop or n>=0 &Term[x-1].
+print residue.
+
+//(15)
+checkentail Term[x] & n>5 |- n<0 & Loop or n>=0 &Term[x-1].
+print residue.
+
+//(16)
+checkentail Term[x] & n>=-3 |- n<0 & Term[x-2] or n>=0 &Term[x-1].
+print residue.
+
+//(17)
+checkentail Term[x] & n>=-3 |- Loop or Term[x-1].
+print residue.
+
+//(18)
+checkentail Term[x] or Loop |- Term[x-2].
+print residue.
+
+//(19)
+checkentail Term[x] or Loop |- Loop.
+print residue.
+
+//(20)
+checkentail Term[x] |- Term[x-1] or Loop.
+print residue.
+
+//(21)
+checkentail Loop |- Term[x-1] or Loop.
+print residue.
+
+//(22)
+checkentail Term[x] or Loop |- Term[x-1] or Loop.
+print residue.
+
+//(23)
+checkentail Term[x] or Term[x-1] |- Loop.
+print residue.
+
+//(24)
+checkentail Term[x] or Term[x-1] |- Term[x-1] or MayLoop.
+print residue.
+
+
