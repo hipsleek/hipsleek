@@ -97,11 +97,22 @@ checkentail Term[x] or Loop |- Term[x-1] or Loop.
 print residue.
 
 //(23)
-checkentail Term[x] or Term[x-1] |- Loop.
+checkentail Term[x] or Term[x-1] |- Term[x-1].
 print residue.
 
 //(24)
+checkentail Term[x] or Term[x-1] |- Loop.
+print residue.
+
+//(25)
 checkentail Term[x] or Term[x-1] |- Term[x-1] or MayLoop.
 print residue.
 
+//(26)
+checkentail Term[x] |- Term[y].
+print residue.
+
+//(27)
+checkentail Term[x] |- Term[x].
+print residue.
 
