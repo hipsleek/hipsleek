@@ -37,12 +37,15 @@ print residue.
 
 //(10): Valid
 infer[n] p1>=0 & p2>=0 & Term[p1,p2,n] |- Term[0,0,0].
+print residue.
 
 //(11): Valid
 infer[p1,p2] Term[0,p1,n+1] |- Term[0,p2,n].
+print residue.
 
 //(12): Fail
 infer[m] Term[p1,p2,n] |- Term[p1,p2,m].
+print residue.
 
 //(13): Fail
 checkentail Term[x] |- Term[x].
@@ -58,5 +61,19 @@ checkentail Term[x] |- Term[x-1].
 
 //(17): Fail
 checkentail Term[x,1,y] |- Term[x,1,y+1,_].
+
+//(18): Valid
+infer[n] p1>=0 & Term[p1,n] |- Term[0,0].
+print residue.
+//TODO :why isn't this inferring when (19) is:
+//Entail  (18): Valid. 
+//<1>true & Term[p1,n] & 0<=p1 & {FLOW,(17,18)=__norm}
+
+
+// (19)
+infer[n] p1>=0 |- p1>0 | (p1=0 & n>0).
+print residue.
+//<1>true & 0<=p1 & 1<=n & {FLOW,(17,18)=__norm}
+//inferred pure: [1<=n]
 
 
