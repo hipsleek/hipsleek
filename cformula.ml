@@ -4743,6 +4743,15 @@ and set_list_context f (ctx : list_context) : list_context = match ctx with
   | FailCtx f -> ctx
   | SuccCtx l -> let nl = List.map (set_context f) l in SuccCtx nl
 
+and estate_opt_of_list_context (ctx : list_context) : entail_state option = 
+  match ctx with
+  | SuccCtx (c::_) -> estate_opt_of_context c
+  | _ -> None
+
+and estate_opt_of_context (ctx : context) = match ctx with
+  | Ctx es -> Some es
+  | _ -> None
+
 and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> es
   | _ -> Err.report_error {Err.error_loc = pos;

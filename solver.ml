@@ -1,4 +1,3 @@
-
 (*
 26.11.2008
 todo: disable the default logging for omega
@@ -5256,6 +5255,15 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
   List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) match_conditions
       (* End of pure_match *)
 
+
+  (* Termination: Try to prove rhs_wf with inference *)
+  (* rhs_wf = None --> measure succeeded *)
+  (* lctx = Fail --> well-founded termination failure *)
+  (* lctx = Succ --> termination succeeded with inference *)
+and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+    let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
+    in CF.estate_opt_of_list_context lctx
+
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
@@ -5320,21 +5328,24 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   *)
   (* Termination: Try to prove rhs_wf with inference *)
-  let res = match rhs_wf with
-  | None -> true 
+  (* rhs_wf = None --> measure succeeded *)
+  (* lctx = Fail --> well-founded termination failure *)
+  (* lctx = Succ --> termination succeeded with inference *)
+  let estate = match rhs_wf with
+  | None -> estate 
   | Some rank -> 
-      let lctx, _ = heap_entail_empty_rhs_heap 
-        prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos in 
-      not (CF.isFailCtx lctx)
-  in 
-  let estate = if res then estate else
-    let t_ann, ml, il = Term.find_lexvar_es estate in
-    {estate with 
-      CF.es_var_measures = Some (Fail May, ml, il);
-      CF.es_var_stack = (Term.string_of_term_res (pos, None, Term.TermErr Term.Not_Decreasing_Measure))
-        ::estate.CF.es_var_stack; 
-    }
-  in 
+        begin
+          match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
+            | None ->     
+                  let t_ann, ml, il = Term.find_lexvar_es estate in
+                  {estate with 
+                      CF.es_var_measures = Some (Fail May, ml, il);
+                      CF.es_var_stack = (Term.string_of_term_res (pos, None, Term.TermErr Term.Not_Decreasing_Measure))
+                          ::estate.CF.es_var_stack; 
+                  }
+            | Some es -> es
+        end
+  in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =
