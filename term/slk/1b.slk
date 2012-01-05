@@ -1,0 +1,16 @@
+//TODO: should be valid (decreasing)
+//(1)
+checkentail Term[x] |- Term[].
+print residue.
+/*
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
+<1>true & Fail_May[x] & {FLOW,(17,18)=__norm}
+*/
+
+//(2)
+checkentail Term[] |- Term[].
+print residue.
+
+//(3)
+checkentail Term[] |- Term[x].
+print residue.
