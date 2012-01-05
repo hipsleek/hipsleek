@@ -13,8 +13,8 @@ int length(node x)
   infer /* @pre */ [R]
   requires x::ll<n>@L
   case {
-    n=0 -> ensures R(res,n);
-    n!=0 -> ensures R(res,n);
+    n=0 -> ensures R(n,res);
+    n!=0 -> ensures R(n,res);
   }
   // R(res,n) = res=n
 {

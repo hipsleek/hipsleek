@@ -26,7 +26,7 @@ relation A(int x, int y, int z).
 void reverse(ref node xs, ref node ys)
     infer [A]
 	requires xs::ll<n> * ys::ll<m> 
-	ensures ys'::ll<t> & xs' = null & A(t,m,n);
+	ensures ys'::ll<t> & xs' = null & A(m,n,t);
 {
 	if (xs != null) {
 		node tmp;

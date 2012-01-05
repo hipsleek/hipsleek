@@ -817,8 +817,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         (simplify_disj_new lhs,rhs) in      
       let wrap_exists (lhs,rhs) =
         (* Begin: To keep vars of rel_form in lhs *)
-        let lhs_ls = CP.split_conjunctions lhs in
-        let rel_lhs = List.filter CP.is_RelForm lhs_ls in
+        let _,rel_lhs = List.split subs in
         let rel_vars = List.concat (List.map CP.fv rel_lhs) in
         (* End  : To keep vars of rel_form in lhs *)
         
@@ -866,7 +865,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.no_3 "infer_collect_rel" pr2 pr1 pr1 (pr_option pr2) 
+      Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

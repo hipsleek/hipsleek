@@ -1088,10 +1088,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                       begin
                         let new_spec = 
                           if rels = [] then new_spec
-                          else 
+                          else
                             let inf_post_flag = post_ctr # get > 0 in
-                            print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);                            
-                            let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels in
+                            print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);
+                            let pre_vars = CF.get_pre_vars proc.proc_static_specs in
+                            let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars in
                             let _ = List.iter (fun (rel,post,pre) ->
                               print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
                               print_endline ("POST: "^Cprinter.string_of_pure_formula post);

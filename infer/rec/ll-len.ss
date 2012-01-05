@@ -12,7 +12,7 @@ relation R(int n, int m).
 int length(node x)
   infer /* @pre */ [R]
   requires x::ll<n>@L
-  ensures R(res,n);
+  ensures R(n,res);
   // R(res,n) = res=n
 {
   if (x==null) return 0;

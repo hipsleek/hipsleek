@@ -218,15 +218,17 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
       | _ -> report_error no_pos "Expecting a pair of pre-post"
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"*)
 
-let compute_fixpoint_aux rel_fml pf = 
+let compute_fixpoint_aux rel_fml pf pre_vars = 
   let (name,vars) = match rel_fml with
     | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos "Wrong format"
   in
+  let pre_vars, post_vars = List.partition (fun v -> List.mem v pre_vars) vars in
   try
     let rhs = fixcalc_of_pure_formula pf in 
-    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
-      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
+    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> "
+      ^ "[" ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: " 
+      ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
@@ -243,35 +245,121 @@ let compute_fixpoint_aux rel_fml pf =
     DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
     let fixpoint = Parse_fix.parse_fix res in
     DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
-    let fixpoint = List.map (fun f -> 
+    (*let fixpoint = List.map (fun f -> 
         let args = CP.fv f in 
         let quan_vars = CP.diff_svl args vars in
         let new_f = CP.wrap_exists_svl f quan_vars in
         let new_f = Redlog.elim_exists_with_eq new_f in
-        let new_f = CP.arith_simplify_new new_f in new_f) fixpoint in
+        let new_f = CP.arith_simplify_new new_f in new_f) fixpoint in*)
     match fixpoint with
       | [pre;post] -> (rel_fml, pre, post)
       | _ -> report_error no_pos "Expecting a pair of pre-post"
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"
 
+let rec is_rec pf = match pf with
+  | CP.BForm (bf,_) -> CP.is_RelForm pf
+  | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
+  | CP.Or (f1,f2,_,_) -> is_rec f1 || is_rec f2
+  | CP.Not (f,_,_) -> is_rec f
+  | CP.Forall (_,f,_,_) -> is_rec f
+  | CP.Exists (_,f,_,_) -> is_rec f
+
+let rec get_rel_vars pf = match pf with
+  | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
+  | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
+  | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
+  | CP.Not (f,_,_) -> get_rel_vars f
+  | CP.Forall (_,f,_,_) -> get_rel_vars f
+  | CP.Exists (_,f,_,_) -> get_rel_vars f
+
+let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)
+  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->
+    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))
+  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
+    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(e3, CP.IConst(i4, _), _))
+  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
+    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lt(e3, CP.IConst(i4, _), _)) ->
+    if CP.eqExp e1 e3 && i2 >= i4 then Some (CP.Lt(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gte(e3, CP.IConst(i4, _), _)) ->
+    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))
+  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
+    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gt(e3, CP.IConst(i4, _), _)) ->
+    if CP.eqExp e1 e3 && i2 <= i4 then Some (CP.Gt(e1, CP.IConst(i4, no_pos), no_pos)) else None
+  | _ -> None  
+
+let propagate_exp exp1 exp2 = 
+  let pr0 = !CP.print_p_formula in
+  Debug.no_2 "propagate_exp" pr0 pr0 (pr_option pr0)
+      (fun _ _ -> propagate_exp exp1 exp2) exp1 exp2
+
+let propagate_fml rcase bcase = match (rcase, bcase) with
+  | (CP.BForm ((exp1,_),_), CP.BForm ((exp2,_),_)) -> 
+    let exp = propagate_exp exp1 exp2 in
+    (match exp with
+    | None -> []
+    | Some e -> [CP.BForm ((e,None),None)])
+  | _ -> []
+
+let propagate_fml rcase bcase = 
+  let pr0 = !CP.print_formula in
+  Debug.no_2 "propagate_fml" pr0 pr0 (pr_list pr0)
+      (fun _ _ -> propagate_fml rcase bcase) rcase bcase
+
+let propagate_rec_helper rcase_orig bcase_orig rel =
+  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
+  let rcase = CP.drop_rel_formula rcase_orig in
+  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in
+  let rcase = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
+  try
+    let pairs = List.combine (CP.fv rel) rel_vars in
+    let bcase = CP.subst pairs bcase_orig in
+    let pf = List.concat (List.map (fun b -> List.concat 
+        (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase))) (CP.list_of_conjs bcase)) in
+    let pf = CP.conj_of_list pf no_pos in
+  (*  print_endline ("PURE: " ^ Cprinter.string_of_pure_formula rcase);*)
+  (*  print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula bcase);*)
+  (*  print_endline ("PURE3: " ^ Cprinter.string_of_pure_formula pf);*)
+    CP.mkAnd rcase_orig pf no_pos
+  with _ -> rcase_orig
+
+let propagate_rec pfs rel = match CP.get_rel_id rel with
+  | None -> pfs
+  | Some ivs ->
+    let (rcases, bcases) = List.partition is_rec pfs in
+    match bcases with
+    | [bcase] -> [bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel) rcases)
+    | _ -> pfs
+
 let helper input_pairs rel = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
+  let pfs = propagate_rec pfs rel in
+  let pfs = List.map (fun p -> let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in 
+      CP.mkExists exists_vars p None no_pos) pfs in
   match pfs with
   | [] -> []
   | [hd] -> [(rel,hd)]
   | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs))]
 
-let compute_fixpoint input_pairs =
+let compute_fixpoint input_pairs pre_vars =
   let (pfs, rels) = List.split input_pairs in
   let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
   let pairs = match rels with
     | [] -> report_error no_pos "Error in compute_fixpoint"
-    | [hd] -> let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in [(hd,pf)]
+    | [hd] -> 
+      let pfs = propagate_rec pfs hd in
+      let pfs = List.map (fun p -> let exists_vars = CP.diff_svl (CP.fv p) (CP.fv hd) in 
+          CP.mkExists exists_vars p None no_pos) pfs in
+      let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in [(hd,pf)]
     | _ -> List.concat (List.map (fun r -> helper input_pairs r) rels)
   in
   DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-  List.map (fun (rel_fml,pf) -> compute_fixpoint_aux rel_fml pf) pairs
+  List.map (fun (rel_fml,pf) -> compute_fixpoint_aux rel_fml pf pre_vars) pairs
 
 
 (*
@@ -281,11 +369,12 @@ type: (CP.formula * CP.formula) list ->
 type: (CP.formula * CP.formula) list ->
   CP.formula * TP.CP.formula * TP.CP.formula
 *)
-let compute_fixpoint (i:int) input_pairs =
+let compute_fixpoint (i:int) input_pairs pre_vars =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
-  Debug.to_1_num i "compute_fixpoint" pr1 (pr_list (pr_triple pr0 pr0 pr0)) 
-      compute_fixpoint input_pairs 
+  let pr2 = !CP.print_svl in
+  Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+      (fun _ _ -> compute_fixpoint input_pairs pre_vars) input_pairs pre_vars
 
  
 

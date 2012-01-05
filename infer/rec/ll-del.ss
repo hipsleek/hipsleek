@@ -33,7 +33,7 @@ n>=0 & n>a
 void delete(node x, int a)
   infer [a,n,B]
 	requires x::ll<n>  //& n > a & a > 0 
-	ensures x::ll<m> & B(m,n);
+	ensures x::ll<m> & B(n,m);
 {
         if (a == 1)
 	{
