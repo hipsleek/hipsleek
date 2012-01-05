@@ -16,7 +16,7 @@ checkentail Term[p1,p2,_] |- Term[p1,p2+1,_].
 //(6): Valid
 checkentail n=m+1 & Term[p1,p2,n] |- Term[p1,p2,m].
 
-// TODo : error here, should fail.
+// TODO : error here, should fail.
 //(7): Valid
 checkentail Term[1] |- Term[1,_,_].
 print residue.
@@ -41,5 +41,20 @@ infer[p1,p2] Term[0,p1,n+1] |- Term[0,p2,n].
 
 //(12): Fail
 infer[m] Term[p1,p2,n] |- Term[p1,p2,m].
+
+//(13): Fail
+checkentail Term[x] |- Term[x].
+
+//(14): Fail
+checkentail Term[x,_] |- Term[x].
+
+//(15): Fail
+checkentail Term[x] |- Term[y].
+
+//(16): Valid
+checkentail Term[x] |- Term[x-1].
+
+//(17): Fail
+checkentail Term[x,1,y] |- Term[x,1,y+1,_].
 
 

@@ -57,19 +57,19 @@ checkentail Term[x] & n>-3 |-
 print residue.
 
 //(13)
-checkentail Term[x] & n>=0 |- n<0 & Loop or n>=0 &Term[x-1].
+checkentail Term[x] & n>=0 |- n<0 & Loop or n>=0 & Term[x-1].
 print residue.
 
 //(14)
-checkentail Term[x] & n>=-3 |- n<0 & Loop or n>=0 &Term[x-1].
+checkentail Term[x] & n>=-3 |- n<0 & Loop or n>=0 & Term[x-1].
 print residue.
 
 //(15)
-checkentail Term[x] & n>5 |- n<0 & Loop or n>=0 &Term[x-1].
+checkentail Term[x] & n>5 |- n<0 & Loop or n>=0 & Term[x-1].
 print residue.
 
 //(16)
-checkentail Term[x] & n>=-3 |- n<0 & Term[x-2] or n>=0 &Term[x-1].
+checkentail Term[x] & n>=-3 |- n<0 & Term[x-2] or n>=0 & Term[x-1].
 print residue.
 
 //(17)
@@ -105,7 +105,7 @@ checkentail Term[x] or Term[x-1] |- Loop.
 print residue.
 
 //(25)
-checkentail Term[x] or Term[x-1] |- Term[x-1] or MayLoop.
+checkentail Term[x] or Term[x-1] |- Term[x-1] or Loop.
 print residue.
 
 //(26)

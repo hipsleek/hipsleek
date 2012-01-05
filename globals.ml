@@ -43,17 +43,13 @@ and heap_ann = Lend | Imm | Mutable
 
 and term_ann = 
   | Term    (* definitely terminates *)
-  | Loop of term_loop    (* definitely loops *)
+  | Loop    (* definitely loops *)
   | MayLoop (* don't know *)
   | Fail of term_fail    (* failed because of invalid trans *)
 
 and term_fail =
   | May
   | Must
-
-and term_loop =
-  | Loop_LHS
-  | Loop_RHS
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -127,7 +123,7 @@ let int_of_heap_ann a =
 let string_of_term_ann a =
   match a with
   | Term -> "Term"
-  | Loop _ -> "Loop"
+  | Loop -> "Loop"
   | MayLoop -> "MayLoop"
   | Fail f -> match f with
     | May -> "Fail_May"

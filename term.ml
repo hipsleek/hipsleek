@@ -137,15 +137,16 @@ let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp l
       with _ -> find_lexvar_formula f2)
   | _ -> raise LexVar_Not_found
 
-(* To syntactically simplify LexVar formula *)  
+(* To syntactically simplify LexVar formula *) 
+(* (false,[]) means not decreasing *)
 let rec syn_simplify_lexvar bnd_measures =
   match bnd_measures with
-  | [] -> []
+  | [] -> (false, []) (* 2 measures are identical *)
   | (s,d)::rest -> 
       if (CP.eqExp s d) then syn_simplify_lexvar rest
-      else if (CP.is_gt CP.eq_spec_var s d) then []
-      else if (CP.is_lt CP.eq_spec_var s d) then [(s,d)]
-      else bnd_measures 
+      else if (CP.is_gt CP.eq_spec_var s d) then (true, [])
+      else if (CP.is_lt CP.eq_spec_var s d) then (false, [])
+      else (true, bnd_measures) 
 
 let find_lexvar_es (es: CF.entail_state) : 
   (term_ann * CP.exp list * CP.exp list) =
@@ -180,8 +181,20 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
   (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
-  let bnd_measures = syn_simplify_lexvar bnd_measures in
-  if bnd_measures = [] then (estate, lhs_p, rhs_p) (* Success *)
+  let res, bnd_measures = syn_simplify_lexvar bnd_measures in
+  if bnd_measures = [] then 
+    let t_ann, ml, il = find_lexvar_es estate in
+    let term_measures =
+      if res then Some (t_ann, ml, il)
+      else Some (Fail May, ml, il)
+    in 
+    let n_estate = { estate with
+      CF.es_var_measures = term_measures;
+      CF.es_var_stack = 
+        if res then estate.CF.es_var_stack
+        else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+    } in
+    (n_estate, lhs_p, rhs_p)
   else
     (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
     let lst_measures = List.fold_right (fun bm res ->
@@ -206,10 +219,12 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
       DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
       DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
     end;
+    (*
     let term_res = 
       if entail_res then (pos, None, Term_S Decreasing_Measure)
       else (pos, None, TermErr Not_Decreasing_Measure) 
     in
+    *)
     let t_ann, ml, il = find_lexvar_es estate in
     let term_measures =
       if entail_res then Some (t_ann, ml, il)
@@ -240,7 +255,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, _) ->
           let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
           let term_measures = match t_ann_d with
-            | Loop _ -> Some (Fail Must, src_lv, src_il)
+            | Loop -> Some (Fail Must, src_lv, src_il)
             | MayLoop -> Some (Fail May, src_lv, src_il)
           in 
           let n_estate = {estate with 
@@ -248,17 +263,23 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
           } in
           (n_estate, lhs_p, rhs_p)
-      | (Loop _, _) ->
-          let term_measures = match t_ann_d with
+      | (Loop, _) ->
+          let term_measures = Some (Loop, [], []) 
+            (*
+            match t_ann_d with
             | Loop _ -> Some (Loop Loop_RHS, [], [])
             | _ -> Some (Loop Loop_LHS, [], [])
+            *)
           in 
           let n_estate = {estate with CF.es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p)
       | (MayLoop, _) ->
-          let term_measures = match t_ann_d with
+          let term_measures = Some (MayLoop, [], []) 
+            (*
+            match t_ann_d with
             | Loop _ -> Some (Loop Loop_RHS, [], [])
             | _ -> Some (MayLoop, [], [])
+            *)
           in 
           let n_estate = {estate with CF.es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p)

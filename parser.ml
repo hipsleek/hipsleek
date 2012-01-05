@@ -841,7 +841,7 @@ pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr
 ann_term: 
   [[
      `TERM -> Term 
-   | `LOOP -> Loop Loop_LHS
+   | `LOOP -> Loop
    | `MAYLOOP -> MayLoop
   ]];
 
