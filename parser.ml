@@ -1045,7 +1045,7 @@ measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
 opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
 
-measures_seq_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
+measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

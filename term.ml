@@ -179,6 +179,8 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos =
   let orig_ante = estate.CF.es_formula in
   let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
+  let primitive_term_measures = CP.mkIConst (-1) no_pos in
+  let is_primitive = dst_lv == [primitive_term_measures] in
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
   (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
@@ -193,7 +195,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
       if res then (pos, Some orig_ante, Term_S Valid_Measure)
       else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
     in
-    term_res_stk # push term_res;
+    if (not is_primitive) then term_res_stk # push term_res;
     let n_estate = { estate with
       CF.es_var_measures = term_measures;
       CF.es_var_stack = 
@@ -235,7 +237,8 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
       if entail_res then (pos, Some orig_ante, Term_S Valid_Measure)
       else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
     in
-    term_res_stk # push term_res;
+    (* Silent if the RHS function is primitive *)
+    if (not is_primitive) then term_res_stk # push term_res;
 
     let t_ann, ml, il = find_lexvar_es estate in
     let term_measures, term_stack, rank_formula =

@@ -1917,6 +1917,14 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+  (* Termination: Normalize the specification 
+   * with the default termination information
+   * Primitive functions: Term[] 
+   * User-defined functions: MayLoop *)
+  let is_primitive = not (proc.I.proc_is_main) in
+  let static_specs_list = CF.norm_struc_with_lexvar static_specs_list is_primitive in
+  let dynamic_specs_list = CF.norm_struc_with_lexvar dynamic_specs_list is_primitive in
+
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
 	let r_int = exlist # get_hash abnormal_flow in
 	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
