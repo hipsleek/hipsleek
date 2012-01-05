@@ -4915,12 +4915,12 @@ and formula_trace_of_context ctx0 = match ctx0 with
       let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
       let mix_f = match esvm with
         | None -> ep
-        | Some (ta,l1,l2) -> 
-              let m = match ta with
-                | Loop -> CP.mkFalse no_pos
-                | _ -> CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
-              Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
-              MCP.merge_mems ep (MCP.mix_of_pure m) true in
+        | Some (ta,l1,l2) ->
+            let m = match ta with
+              | Loop Loop_RHS -> CP.mkFalse no_pos
+              | _ -> CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
+            Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+            MCP.merge_mems ep (MCP.mix_of_pure m) true in
       let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
       Debug.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;

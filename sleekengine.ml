@@ -550,7 +550,8 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   let term_ann = CF.collect_term_ann_list_context residue in
   let term_msg = CF.collect_term_err_msg_list_context residue in
   let term_output = List.fold_left (fun a m -> a ^ "\n" ^ m) "" term_msg in
-  let t_valid = not (List.exists (fun r -> r = Fail) term_ann) &&
+  let t_valid = not (List.exists (fun r -> 
+    match r with | Fail _ -> true | _ -> false) term_ann) &&
     not (contains term_output "Error: ") 
   in
   (* let str_term_ann = if term_ann = [] then "" else pr_list string_of_term_ann term_ann in *)

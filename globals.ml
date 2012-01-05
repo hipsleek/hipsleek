@@ -43,9 +43,17 @@ and heap_ann = Lend | Imm | Mutable
 
 and term_ann = 
   | Term    (* definitely terminates *)
-  | Loop    (* definitely loops *)
+  | Loop of term_loop    (* definitely loops *)
   | MayLoop (* don't know *)
-  | Fail    (* failed because of invalid trans *)
+  | Fail of term_fail    (* failed because of invalid trans *)
+
+and term_fail =
+  | May
+  | Must
+
+and term_loop =
+  | Loop_LHS
+  | Loop_RHS
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -119,9 +127,11 @@ let int_of_heap_ann a =
 let string_of_term_ann a =
   match a with
   | Term -> "Term"
-  | Loop -> "Loop"
+  | Loop _ -> "Loop"
   | MayLoop -> "MayLoop"
-  | Fail -> "ErrTerm"
+  | Fail f -> match f with
+    | May -> "Fail_May"
+    | Must -> "Fail_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"

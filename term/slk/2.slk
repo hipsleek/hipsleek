@@ -22,7 +22,7 @@ print residue.
 */
 
 //(4) F
-//checkentail Term[_] |- Loop.
+checkentail Term[_] |- Loop.
 print residue.
 
 //(5) L

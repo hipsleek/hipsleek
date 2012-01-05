@@ -209,8 +209,14 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
     let term_res = 
       if entail_res then (pos, None, Term_S Decreasing_Measure)
       else (pos, None, TermErr Not_Decreasing_Measure) 
+    in
+    let t_ann, ml, il = find_lexvar_es estate in
+    let term_measures =
+      if entail_res then Some (t_ann, ml, il)
+      else Some (Fail May, ml, il)
     in 
-    let n_estate = { estate with 
+    let n_estate = { estate with
+      CF.es_var_measures = term_measures;
       CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack } in
     (n_estate, lhs_p, rhs_p)
 
@@ -222,7 +228,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let _ = DD.trace_hprint (add_str "es: " !CF.print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
-      let t_ann_s, src_lv, _ = find_lexvar_es estate in
+      let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
@@ -231,24 +237,38 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             src_lv dst_lv pos
       | (Term, _) ->
           let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
+          let term_measures = match t_ann_d with
+            | Loop _ -> Some (Fail Must, src_lv, src_il)
+            | MayLoop -> Some (Fail May, src_lv, src_il)
+          in 
           let n_estate = {estate with 
-            CF.es_var_measures = Some (Fail, [], []);
+            CF.es_var_measures = term_measures;
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
           } in
           (n_estate, lhs_p, rhs_p)
-      | (Loop, _) -> 
-          let n_estate = {estate with CF.es_var_measures = Some (Loop, [], [])} in
+      | (Loop _, _) ->
+          let term_measures = match t_ann_d with
+            | Loop _ -> Some (Loop Loop_RHS, [], [])
+            | _ -> Some (Loop Loop_LHS, [], [])
+          in 
+          let n_estate = {estate with CF.es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p)
       | (MayLoop, _) ->
-          let n_estate = {estate with CF.es_var_measures = Some (MayLoop, [], [])} in
+          let term_measures = match t_ann_d with
+            | Loop _ -> Some (Loop Loop_RHS, [], [])
+            | _ -> Some (MayLoop, [], [])
+          in 
+          let n_estate = {estate with CF.es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p)
-      | (Fail, _) -> 
+      (*
+      | (Fail _, _) -> 
           let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
           let n_estate = {estate with 
             CF.es_var_measures = Some (Fail, [], []);
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
           } in
           (n_estate, lhs_p, rhs_p)
+      *)
     end
   with _ -> (estate, lhs_p, rhs_p)
 
