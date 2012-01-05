@@ -217,7 +217,10 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
     in 
     let n_estate = { estate with
       CF.es_var_measures = term_measures;
-      CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack } in
+      CF.es_var_stack = 
+        if entail_res then estate.CF.es_var_stack
+        else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+    } in
     (n_estate, lhs_p, rhs_p)
 
 (* To handle LexVar formula *)
@@ -233,8 +236,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
       | (Term, Term) -> 
-          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p 
-            src_lv dst_lv pos
+          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos
       | (Term, _) ->
           let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
           let term_measures = match t_ann_d with
