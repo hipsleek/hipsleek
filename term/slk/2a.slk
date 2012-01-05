@@ -1,0 +1,5 @@
+//(26)
+checkentail Term[x] |- Term[y].
+print residue.
+
+

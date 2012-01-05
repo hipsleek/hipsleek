@@ -37,7 +37,7 @@ Entail (8): Valid.
 
 Entail (9): Valid. 
 
-<1>true & Loop & {FLOW,(17,18)=__norm}
+<1>true & MayLoop & {FLOW,(17,18)=__norm}
 
 Entail (10): Valid. 
 
@@ -122,11 +122,12 @@ Entail (22): Valid.
    or true & Loop & {FLOW,(17,18)=__norm}
    
 
-Entail (23): Valid. 
+Entail (23): Fail. 
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
 
 <1>
    true & Term[x] & {FLOW,(17,18)=__norm}
-   or true & Term[x - 1] & {FLOW,(17,18)=__norm}
+   or true & Fail_May[x - 1] & {FLOW,(17,18)=__norm}
    
 
 Entail (24): Fail. 
@@ -138,27 +139,29 @@ Entail (24): Fail.
    or true & Fail_Must[x - 1] & {FLOW,(17,18)=__norm}
    
 
-Entail (25): Valid. 
-<2>: _0_0: Error: Term->MayLoop transition is invalid.
-<3>: _0_0: Error: Term->MayLoop transition is invalid.
-<4>: _0_0: Error: Term->MayLoop transition is invalid.
- _0_0: Error: Term->MayLoop transition is invalid.
+Entail (25): Fail. 
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
+<2>: _0_0: Error: Term->Loop transition is invalid.
+<3>: _0_0: Error: Term->Loop transition is invalid.
+ _0_0: Error: The variance is not well-founded (not decreasing).
+<4>: _0_0: Error: Term->Loop transition is invalid.
+ _0_0: Error: Term->Loop transition is invalid.
 
 <1>
    true & Term[x] & {FLOW,(17,18)=__norm}
-   or true & Term[x - 1] & {FLOW,(17,18)=__norm}
+   or true & Fail_May[x - 1] & {FLOW,(17,18)=__norm}
    
 <2>
    true & Term[x] & {FLOW,(17,18)=__norm}
-   or true & Fail_May[x - 1] & {FLOW,(17,18)=__norm}
+   or true & Fail_Must[x - 1] & {FLOW,(17,18)=__norm}
    
 <3>
-   true & Fail_May[x] & {FLOW,(17,18)=__norm}
-   or true & Term[x - 1] & {FLOW,(17,18)=__norm}
+   true & Fail_Must[x] & {FLOW,(17,18)=__norm}
+   or true & Fail_May[x - 1] & {FLOW,(17,18)=__norm}
    
 <4>
-   true & Fail_May[x] & {FLOW,(17,18)=__norm}
-   or true & Fail_May[x - 1] & {FLOW,(17,18)=__norm}
+   true & Fail_Must[x] & {FLOW,(17,18)=__norm}
+   or true & Fail_Must[x - 1] & {FLOW,(17,18)=__norm}
    
 
 Entail (26): Fail. 
@@ -166,8 +169,9 @@ Entail (26): Fail.
 
 <1>true & Fail_May[x] & {FLOW,(17,18)=__norm}
 
-Entail (27): Valid. 
+Entail (27): Fail. 
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
 
-<1>true & Term[x] & {FLOW,(17,18)=__norm}
+<1>true & Fail_May[x] & {FLOW,(17,18)=__norm}
 
-Stop Omega... 35 invocations 
+Stop Omega... 34 invocations 

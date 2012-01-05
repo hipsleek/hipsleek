@@ -33,9 +33,6 @@ print residue.
 
 
 //(9) ML
-// TODO: should be MayLoop in residue
-//Entail (9): Valid. 
-//<1>true & Loop & {FLOW,(17,18)=__norm}
 checkentail MayLoop |- Loop.
 print residue.
 
