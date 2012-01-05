@@ -1,0 +1,84 @@
+MS - must hold by current thread
+HS - may hold by current thread
+
+	{P} pn(w*) {Q}  	
+	D |- P * D1	
+----------------------------------------------------(FORK)
+ {D} v:=fork(pn,w*) {D1 o_{v} v'=id /\ Q & thread=id }
+
+
+??? How to properly formalize this?
+      D |- thread=v --> D1
+-------------------------------(JOIN)
+     {D} join(v) {D1}
+
+	
+    Inv(b,v*) ::= INV
+    D |- b.lock::lbit<_> --> D1	
+----------------------------------------------------------(INIT)
+  {D} init(b) with Inv(b,v*)
+      	 {D1 * b'::LOCK(1)<v*> o_{HS,MS} HS'=HS+{b'} & MS'=MS+{b'}}
+
+
+     D |- b::LOCK(1)<v*> --> D1
+----------------------------------------------------------------(FINALIZE)
+     {D} finalize(b)
+     	 {D1 * b'.lock::lbit<_> o_{HS,MS} HS'=HS-{b'} & MS'=MS-{b'}}
+
+
+       D |- b::LOCK(f)<v*>@I & not(b in (HS)) --> D1		
+       Inv(b,v*) := INV 		
+----------------------------------------------------------------------------(ACQUIRE)
+    {D} acquire(b) {D1 * INV o_{HS,MS} HS'=HS+{b} & MS'=MS+{b'}}
+
+
+      Inv(b,v*) := INV 
+      D |-  (b in MS) --> D1	
+      D1 |- INV --> D2
+--------------------------------------------------------(RELEASE)
+     {D} release(b) {D2 o_{HS,MS} HS'=HS-{b'} & MS'=MS-{b'} }
+
+
+MS1,HS1 \/ MS2,HS2 ==> intersect(MS1,MS2),union(MS1,MS2)
+	 
+
+
+
+We may need a primitive:
+
+  bool isHeld(ref b:lock)
+  requires b::LOCK(f)<v*>@I 
+  case {
+    b in MS -> res=true
+	not(b in MS) ->
+      case {
+	    b in HS ->
+		   	ensures  MS'=MS+{b} & res=true
+                  or HS'=HS-{b}  & res=false 
+	  not(b in HS) -> res=false
+	  }
+
+
+	  
+That would determine at runtime if a given lock is being held
+by a thread or not.
+
+The LOCK(f)<..>@I is useful if we want to support
+a runtime operator isHeld that would determine if
+a lock is currently being held by the current thread.
+
+
+thread
+ requires pre & MS=HS={}
+ ensures post & HS'={}
+ {
+   ....
+  }
+
+  thread
+ requires pre 
+ ensures post 
+ 
+	
+	
+	
