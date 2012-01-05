@@ -30,6 +30,8 @@ checkentail n=m+1 & Term[n,_,_] |- Term[m,_].
 // else if fail ignore the outcome.
 
 //(9): Valid
+//infer[n,m] true |- n>m.
+//checkentail Term[p1,p2,n] |- Term[p1,p2,m].
 infer[n,m] Term[p1,p2,n] |- Term[p1,p2,m].
 print residue.
 

@@ -5313,10 +5313,28 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
+  (*
   let rhs_p = match rhs_wf with
   | None -> rhs_p
   | Some rank -> MCP.merge_mems rhs_p (MCP.mix_of_pure rank) true 
   in
+  *)
+  (* Termination: Try to prove rhs_wf with inference *)
+  let res = match rhs_wf with
+  | None -> true 
+  | Some rank -> 
+      let lctx, _ = heap_entail_empty_rhs_heap 
+        prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos in 
+      not (CF.isFailCtx lctx)
+  in 
+  let estate = if res then estate else
+    let t_ann, ml, il = Term.find_lexvar_es estate in
+    {estate with 
+      CF.es_var_measures = Some (Fail May, ml, il);
+      CF.es_var_stack = (Term.string_of_term_res (pos, None, Term.TermErr Term.Not_Decreasing_Measure))
+        ::estate.CF.es_var_stack; 
+    }
+  in 
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =

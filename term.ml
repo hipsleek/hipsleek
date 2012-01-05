@@ -226,22 +226,22 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
     in
     *)
     let t_ann, ml, il = find_lexvar_es estate in
-    let term_measures =
-      if entail_res then Some (t_ann, ml, il)
+    let term_measures, term_stack, rank_formula =
+      if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
       else
         if estate.CF.es_infer_vars = [] then (* No inference *)
-          Some (Fail May, ml, il) 
-        else Some (t_ann, ml, il) 
+          Some (Fail May, ml, il), 
+          (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
+          None
+        else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
         (* Inference: the es_var_measures will be
          * changed based on the result of inference *)
     in 
     let n_estate = { estate with
       CF.es_var_measures = term_measures;
-      CF.es_var_stack = 
-        if entail_res then estate.CF.es_var_stack
-        else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+      CF.es_var_stack = term_stack; 
     } in
-    (n_estate, lhs_p, rhs_p, Some rank_formula)
+    (n_estate, lhs_p, rhs_p, rank_formula)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
