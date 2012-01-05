@@ -65,4 +65,18 @@ Entail  (19): Valid.
 <1>true & 0<=p1 & 1<=n & {FLOW,(17,18)=__norm}
 inferred pure: [1<=n]
 
-Stop Omega... 86 invocations 
+Entail (20): Valid. 
+
+<1>true & Term[x] & {FLOW,(17,18)=__norm}
+
+Entail (21): Fail. 
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
+
+<1>true & Fail_May & {FLOW,(17,18)=__norm}
+
+Entail (22): Fail. 
+<1>: _0_0: Error: The variance is not well-founded (not decreasing).
+
+<1>true & Fail_May & {FLOW,(17,18)=__norm}
+
+Stop Omega... 87 invocations 

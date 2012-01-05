@@ -76,4 +76,15 @@ print residue.
 //<1>true & 0<=p1 & 1<=n & {FLOW,(17,18)=__norm}
 //inferred pure: [1<=n]
 
+//(20)
+checkentail Term[x] |- Term[].
+print residue.
+
+//(21)
+checkentail Term[] |- Term[].
+print residue.
+
+//(22)
+checkentail Term[] |- Term[x].
+print residue.
 

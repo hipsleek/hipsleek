@@ -160,15 +160,17 @@ let norm_term_measures_by_length src dst =
     if (n<=0) then []
     else
       match l with
-      | [] -> []
-      | hd::tl -> hd::(strip_list (n-1) tl)
+        | [] -> []
+        | hd::tl -> hd::(strip_list (n-1) tl)
   in 
   let sl = List.length src in
   let dl = List.length dst in
-  if (sl = dl) then (src, dst)
-  else if (sl > dl) then
-    (strip_list dl src, dst)
-  else (src, strip_list sl dst)
+  if dl==0 && sl>0 then None
+  else
+    if (sl = dl) then Some (src, dst)
+    else if (sl > dl) then
+      Some (strip_list dl src, dst)
+    else Some (src, strip_list sl dst)
 
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let mf_p = MCP.pure_of_mix mf in
@@ -177,86 +179,94 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   (lexvar, CP.join_conjunctions other_p)
 
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos =
-  let orig_ante = estate.CF.es_formula in
-  let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
-  let primitive_term_measures = CP.mkIConst (-1) no_pos in
-  let is_primitive = dst_lv == [primitive_term_measures] in
-  (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
-  let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
-  (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
-  let res, bnd_measures = syn_simplify_lexvar bnd_measures in
-  if bnd_measures = [] then 
-    let t_ann, ml, il = find_lexvar_es estate in
-    let term_measures =
-      if res then Some (t_ann, ml, il)
-      else Some (Fail May, ml, il)
-    in
-    let term_res = 
-      if res then (pos, Some orig_ante, Term_S Valid_Measure)
-      else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-    in
-    if (not is_primitive) then term_res_stk # push term_res;
-    let n_estate = { estate with
-      CF.es_var_measures = term_measures;
-      CF.es_var_stack = 
-        if res then estate.CF.es_var_stack
-        else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
-    } in
-    (n_estate, lhs_p, rhs_p, None)
-  else
-    (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
-    let lst_measures = List.fold_right (fun bm res ->
-      [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
-    (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
-    let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
-      let f = 
-		    if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-			  else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
-        (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
-    let rank_formula = List.fold_left (fun acc m ->
-      CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-    let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-    let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
-    begin
-      (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
-      (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
-      DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-      DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
-      DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
-      DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
-      DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
-      DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
-    end;
-    (*
-    let term_res = 
-      if entail_res then (pos, None, Term_S Decreasing_Measure)
-      else (pos, None, TermErr Not_Decreasing_Measure) 
-    in
-    *)
-    let term_res = 
-      if entail_res then (pos, Some orig_ante, Term_S Valid_Measure)
-      else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-    in
-    (* Silent if the RHS function is primitive *)
-    if (not is_primitive) then term_res_stk # push term_res;
+  let ans  = norm_term_measures_by_length src_lv dst_lv in
+  match ans with
+    | None -> (estate, lhs_p, rhs_p, None)
+    | Some (src_lv, dst_lv) ->
+          (* TODO : Let us assume Term[] is for base-case
+             and primitives. In the case of non-primitive,
+             it will be converted to Term[call] using
+             the call hierarchy. No need for Term[-1]
+             and some code dealing with primitives below *)
+          let orig_ante = estate.CF.es_formula in
+          let primitive_term_measures = CP.mkIConst (-1) no_pos in
+          let is_primitive = dst_lv == [primitive_term_measures] in
+          (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
+          let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
+          (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
+          let res, bnd_measures = syn_simplify_lexvar bnd_measures in
+          if bnd_measures = [] then 
+            let t_ann, ml, il = find_lexvar_es estate in
+            let term_measures =
+              if res then Some (t_ann, ml, il)
+              else Some (Fail May, ml, il)
+            in
+            let term_res = 
+              if res then (pos, Some orig_ante, Term_S Valid_Measure)
+              else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+            in
+            if (not is_primitive) then term_res_stk # push term_res;
+            let n_estate = { estate with
+                CF.es_var_measures = term_measures;
+                CF.es_var_stack = 
+                    if res then estate.CF.es_var_stack
+                    else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+            } in
+            (n_estate, lhs_p, rhs_p, None)
+          else
+            (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
+            let lst_measures = List.fold_right (fun bm res ->
+                [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
+            (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
+            let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
+                let f = 
+		          if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
+			      else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+                (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
+            let rank_formula = List.fold_left (fun acc m ->
+                CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
+            let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+            let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
+            begin
+              (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
+              (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
+              DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
+              DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+              DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
+              DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
+              DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
+              DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
+            end;
+            (*
+              let term_res = 
+              if entail_res then (pos, None, Term_S Decreasing_Measure)
+              else (pos, None, TermErr Not_Decreasing_Measure) 
+              in
+            *)
+            let term_res = 
+              if entail_res then (pos, Some orig_ante, Term_S Valid_Measure)
+              else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+            in
+            (* Silent if the RHS function is primitive *)
+            if (not is_primitive) then term_res_stk # push term_res;
 
-    let t_ann, ml, il = find_lexvar_es estate in
-    let term_measures, term_stack, rank_formula =
-      if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
-      else
-        if estate.CF.es_infer_vars = [] then (* No inference *)
-          Some (Fail May, ml, il), 
-          (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
-          None
-        else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
-        (* Inference: the es_var_measures will be
-         * changed based on the result of inference *)
-    in 
-    let n_estate = { estate with
-      CF.es_var_measures = term_measures;
-      CF.es_var_stack = term_stack; 
-    } in
-    (n_estate, lhs_p, rhs_p, rank_formula)
+            let t_ann, ml, il = find_lexvar_es estate in
+            let term_measures, term_stack, rank_formula =
+              if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
+              else
+                if estate.CF.es_infer_vars = [] then (* No inference *)
+                  Some (Fail May, ml, il), 
+              (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
+              None
+                else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
+                    (* Inference: the es_var_measures will be
+                     * changed based on the result of inference *)
+            in 
+            let n_estate = { estate with
+                CF.es_var_measures = term_measures;
+                CF.es_var_stack = term_stack; 
+            } in
+            (n_estate, lhs_p, rhs_p, rank_formula)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
