@@ -194,7 +194,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
         if res then estate.CF.es_var_stack
         else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
     } in
-    (n_estate, lhs_p, rhs_p)
+    (n_estate, lhs_p, rhs_p, None)
   else
     (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
     let lst_measures = List.fold_right (fun bm res ->
@@ -228,7 +228,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
     let t_ann, ml, il = find_lexvar_es estate in
     let term_measures =
       if entail_res then Some (t_ann, ml, il)
-      else Some (Fail May, ml, il)
+      else (*Some (Fail May, ml, il)*) Some (t_ann, ml, il)
     in 
     let n_estate = { estate with
       CF.es_var_measures = term_measures;
@@ -236,7 +236,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
         if entail_res then estate.CF.es_var_stack
         else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
     } in
-    (n_estate, lhs_p, rhs_p)
+    (n_estate, lhs_p, rhs_p, Some rank_formula)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
@@ -262,7 +262,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             CF.es_var_measures = term_measures;
             CF.es_var_stack = (string_of_term_res term_res)::estate.CF.es_var_stack
           } in
-          (n_estate, lhs_p, rhs_p)
+          (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
           let term_measures = Some (Loop, [], []) 
             (*
@@ -272,7 +272,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             *)
           in 
           let n_estate = {estate with CF.es_var_measures = term_measures} in
-          (n_estate, lhs_p, rhs_p)
+          (n_estate, lhs_p, rhs_p, None)
       | (MayLoop, _) ->
           let term_measures = Some (MayLoop, [], []) 
             (*
@@ -282,7 +282,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             *)
           in 
           let n_estate = {estate with CF.es_var_measures = term_measures} in
-          (n_estate, lhs_p, rhs_p)
+          (n_estate, lhs_p, rhs_p, None)
       (*
       | (Fail _, _) -> 
           let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
@@ -293,7 +293,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           (n_estate, lhs_p, rhs_p)
       *)
     end
-  with _ -> (estate, lhs_p, rhs_p)
+  with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p rhs_p pos =
   let pr = !CF.print_mix_formula in
