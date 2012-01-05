@@ -7361,7 +7361,9 @@ and norm_ext_with_lexvar ext_f is_primitive =
         EBase { ef with formula_ext_continuation = n_cont }
   | EAssume _ ->
       let lexvar = 
-        if is_primitive then CP.mkLexVar Term [CP.mkIConst (-1) no_pos] [] no_pos
+        if is_primitive then 
+          (* CP.mkLexVar Term [CP.mkIConst (-1) no_pos] [] no_pos *)
+          CP.mkLexVar Term [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos
       in 
       mkEBase_with_cont (CP.mkPure lexvar) [ext_f] no_pos

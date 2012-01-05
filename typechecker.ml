@@ -294,8 +294,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
                 (* Termination: Printing the termination checking 
                  * result in the final context *)
-
-	              let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in
+	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
                     let pos = CF.pos_of_formula post_cond in

@@ -1,8 +1,8 @@
 int foo (int x)
  case {
 	x<0 -> requires Loop 
-           ensures true; /* poststate of Loop must be unreachable */
-	x=0 -> requires Term[0]
+           ensures false;
+	x=0 -> requires Term[-1]  /* ERROR : unbounded negative measure */
            ensures res=0;
 	x>0 -> requires Term[x] 
            ensures res=2*x;
