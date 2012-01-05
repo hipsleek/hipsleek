@@ -3881,10 +3881,9 @@ let rec collect_term_err_msg_context ctx =
 let collect_term_ann_and_msg_list_context ctx =
 	match ctx with
 	| FailCtx _ -> []
-	| SuccCtx l_ctx -> 
-		(List.map (fun ctx -> 
-            (List.exists (fun a -> match a with Fail _ -> true | _ -> false) (collect_term_ann_context ctx), 
-            (String.concat "\n" (collect_term_err_msg_context ctx)))) l_ctx) 
+	| SuccCtx l_ctx -> (List.map (fun ctx -> 
+      (List.exists (fun a -> match a with Fail _ -> true | _ -> false) (collect_term_ann_context ctx), 
+      (String.concat "\n" (collect_term_err_msg_context ctx)))) l_ctx) 
 
 let rec add_pre_heap ctx = 
   match ctx with
@@ -4929,7 +4928,7 @@ and formula_trace_of_context ctx0 = match ctx0 with
             (* let m = match ta with *)
             (*   | Loop Loop_RHS -> CP.mkFalse no_pos *)
             (*   | _ ->  *)
-              let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
+            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems ep (MCP.mix_of_pure m) true in
       let f = add_mix_formula_to_formula mix_f orig_f in

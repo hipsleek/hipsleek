@@ -549,9 +549,9 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   in
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
-  let (_,term_output) = List.fold_left (fun (no,a) (b,m) -> 
-      if b then (no+1, "<"^(string_of_int no)^">:"^ a ^ "\n" ^ m)
-      else (no+1,a)) (1,"") term_res 
+  let (_, term_output) = List.fold_left (fun (no,a) (b,m) -> 
+      if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
+      else (no+1, a)) (1,"") term_res 
   (* let term_ann = CF.collect_term_ann_list_context residue in *)
   (* let term_msg = CF.collect_term_err_msg_list_context residue in *)
   (* let t_valid = not (List.for_all (fun r -> match r with | Fail _ -> true | _ -> false) term_ann)  *)
