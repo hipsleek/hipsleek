@@ -1,3 +1,4 @@
+
 (*
 26.11.2008
 todo: disable the default logging for omega
@@ -3338,9 +3339,9 @@ and heap_entail_conjunct_lhs_struc_x
               let c=e.Cformula.formula_inf_continuation in
               helper_inner_x ctx11 c
 	    | EVariance e ->
-          let entail_f = fun ctx m pos -> 
+          (*let entail_f = fun ctx m pos -> 
             fst (heap_entail_one_context prog false ctx m pos) in
-          let _ = Term.check_term_measure entail_f ctx11 e pos in
+          let _ = Term.check_term_measure entail_f ctx11 e pos in*)
           helper_inner_x ctx11 e.CF.formula_var_continuation
     end 
 

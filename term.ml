@@ -176,7 +176,8 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos = 
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos =
+  let orig_ante = estate.CF.es_formula in
   let (src_lv, dst_lv) = norm_term_measures_by_length src_lv dst_lv in
   (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
   let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
@@ -187,7 +188,12 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
     let term_measures =
       if res then Some (t_ann, ml, il)
       else Some (Fail May, ml, il)
-    in 
+    in
+    let term_res = 
+      if res then (pos, Some orig_ante, Term_S Valid_Measure)
+      else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+    in
+    term_res_stk # push term_res;
     let n_estate = { estate with
       CF.es_var_measures = term_measures;
       CF.es_var_stack = 
@@ -225,6 +231,12 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
       else (pos, None, TermErr Not_Decreasing_Measure) 
     in
     *)
+    let term_res = 
+      if entail_res then (pos, Some orig_ante, Term_S Valid_Measure)
+      else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+    in
+    term_res_stk # push term_res;
+
     let t_ann, ml, il = find_lexvar_es estate in
     let term_measures, term_stack, rank_formula =
       if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
@@ -258,7 +270,8 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, Term) -> 
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos
       | (Term, _) ->
-          let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
+          let term_res = (pos, Some estate.CF.es_formula, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
+          term_res_stk # push term_res;
           let term_measures = match t_ann_d with
             | Loop -> Some (Fail Must, src_lv, src_il)
             | MayLoop -> Some (Fail May, src_lv, src_il)
@@ -300,11 +313,12 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     end
   with _ -> (estate, lhs_p, rhs_p, None)
 
-let check_term_rhs estate lhs_p rhs_p pos =
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !CF.print_mix_formula in
-  let pr2 = !CF.print_entail_state_short in
-   Debug.no_2 "trans_lexvar_rhs" pr pr (pr_triple pr2 pr pr)  
-      (fun _ _ -> check_term_rhs estate lhs_p rhs_p pos) lhs_p rhs_p
+  let pr2 = !CF.print_entail_state in
+   Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
+    (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+      (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
