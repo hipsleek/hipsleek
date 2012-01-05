@@ -1,35 +1,45 @@
 //(1): Valid
-checkentail LexVar[1,_,_] |- LexVar[0,_,_].
+checkentail Term[1,_,_] |- Term[0,_,_].
 
 //(2): Fail 
-checkentail LexVar[0,1,_] |- LexVar[1,0,_]. 
+checkentail Term[0,1,_] |- Term[1,0,_]. 
 
 //(3): Valid
-checkentail LexVar[p1+1,_,_] |- LexVar[p1,_,_].
+checkentail Term[p1+1,_,_] |- Term[p1,_,_].
 
 //(4): Valid
-checkentail LexVar[p1,p2+1,_] |- LexVar[p1,p2,_].
+checkentail Term[p1,p2+1,_] |- Term[p1,p2,_].
 
 //(5): Fail
-checkentail LexVar[p1,p2,_] |- LexVar[p1,p2+1,_].
+checkentail Term[p1,p2,_] |- Term[p1,p2+1,_].
 
 //(6): Valid
-checkentail n=m+1 & LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+checkentail n=m+1 & Term[p1,p2,n] |- Term[p1,p2,m].
 
+// TODo : error here, should fail.
 //(7): Valid
-infer[n,m] LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+checkentail Term[1] |- Term[1,_,_].
+print residue.
 
 //(8): Valid
-infer[n] p1>=0 & p2>=0 & LexVar[p1,p2,n] |- LexVar[0,0,0].
+checkentail n=m+1 & Term[n,_,_] |- Term[m,_].
+
+// TODO: inference is not working!
+// need to call heap_entail_empty_rhs for answers!
+// if succeed; proceed
+// else if fail ignore the outcome.
 
 //(9): Valid
-infer[p1,p2] LexVar[0,p1,n+1] |- LexVar[0,p2,n].
+infer[n,m] Term[p1,p2,n] |- Term[p1,p2,m].
+print residue.
 
-//(10): Fail
-infer[m] LexVar[p1,p2,n] |- LexVar[p1,p2,m].
+//(10): Valid
+infer[n] p1>=0 & p2>=0 & Term[p1,p2,n] |- Term[0,0,0].
 
 //(11): Valid
-checkentail LexVar[1] |- LexVar[0,_,_].
+infer[p1,p2] Term[0,p1,n+1] |- Term[0,p2,n].
 
-//(12): Valid
-checkentail n=m+1 & LexVar[n,_,_] |- LexVar[m,_].
+//(12): Fail
+infer[m] Term[p1,p2,n] |- Term[p1,p2,m].
+
+
