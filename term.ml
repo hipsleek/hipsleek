@@ -156,21 +156,21 @@ let find_lexvar_es (es: CF.entail_state) :
 
 (* Normalize the longer LexVar prior to the shorter one *)
 let norm_term_measures_by_length src dst =
-  let rec strip_list n l = 
-    if (n<=0) then []
-    else
-      match l with
-        | [] -> []
-        | hd::tl -> hd::(strip_list (n-1) tl)
-  in 
+  (* let rec strip_list n l =  *)
+  (*   if (n<=0) then [] *)
+  (*   else *)
+  (*     match l with *)
+  (*       | [] -> [] *)
+  (*       | hd::tl -> hd::(strip_list (n-1) tl) *)
+  (* in  *)
   let sl = List.length src in
   let dl = List.length dst in
   if dl==0 && sl>0 then None
   else
     if (sl = dl) then Some (src, dst)
     else if (sl > dl) then
-      Some (strip_list dl src, dst)
-    else Some (src, strip_list sl dst)
+      Some (Gen.BList.take dl src, dst)
+    else Some (src, Gen.BList.take sl dst)
 
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let mf_p = MCP.pure_of_mix mf in
