@@ -9,7 +9,13 @@ open Cprinter
 
 type phase_trans = int * int
 
-type term_ann_trans = term_ann * term_ann
+(* Transition on termination annotation with measures (if any) *)
+type term_ann_trans = (term_ann * CP.exp list) * (term_ann * CP.exp list)
+
+(* Transition on program location 
+ * src: post_pos
+ * dst: proving_loc *)
+type term_trans_loc = loc * loc 
 
 type term_reason =
   (* The variance is not well-founded *)
@@ -36,9 +42,11 @@ type term_status =
   | Unreachable 
   | TermErr of term_reason
 
-(* Location of the recursive call/loop, 
- * context and its termination status *)
-type term_res = loc * CF.formula option * term_status
+(* Location of the transition (from spec to call),
+ * Termination Annotation transition,
+ * Context and 
+ * Its termination status *)
+type term_res = term_trans_loc * term_ann_trans option * CF.formula option * term_status
 
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
@@ -52,10 +60,16 @@ let pr_phase_trans (trans: phase_trans) =
 let string_of_phase_trans (trans: phase_trans) = 
   poly_string_of_pr pr_phase_trans trans
 
-let pr_term_ann_trans (src, dst) =
-  fmt_string (string_of_term_ann src);
+let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) =
+  fmt_open_hbox();
+  fmt_string (string_of_term_ann ann_s);
+  pr_seq "" pr_formula_exp m_s;
+  fmt_close_box();
   fmt_string "->";
-  fmt_string (string_of_term_ann dst)
+  fmt_open_hbox();
+  fmt_string (string_of_term_ann ann_d);
+  pr_seq "" pr_formula_exp m_d;
+  fmt_close_box()
 
 let string_of_term_ann_trans = poly_string_of_pr pr_term_ann_trans 
 
@@ -84,6 +98,11 @@ let pr_term_status = function
   | Unreachable -> fmt_string "Unreachable state."
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
+let pr_term_status_short = function
+  | Term_S _ -> fmt_string "(OK)"
+  | Unreachable -> fmt_string "(UNR)"
+  | _ -> fmt_string "(ERR)"
+
 let string_of_term_status = poly_string_of_pr pr_term_status
 
 let pr_term_ctx (ctx: CF.formula) =
@@ -96,18 +115,45 @@ let pr_term_ctx (ctx: CF.formula) =
     fmt_print_newline ();
   end 
 
-let pr_term_res pr_ctx (pos, ctx, status) =
-  fmt_string (string_of_loc pos);
+let string_of_term_ctx = poly_string_of_pr pr_term_ctx
+
+let pr_term_trans_loc (src, dst) =
+  let fname = src.start_pos.Lexing.pos_fname in
+  let src_line = src.start_pos.Lexing.pos_lnum in
+  let dst_line = dst.start_pos.Lexing.pos_lnum in
+  fmt_string (fname ^ " ");
+  fmt_string ("(" ^ (string_of_int src_line) ^ ")");
+  fmt_string ("->");
+  fmt_string ("(" ^ (string_of_int dst_line) ^ ")")
+
+let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
+  pr_term_trans_loc pos;
+  fmt_string " ";
+  pr_term_status_short status;
+  fmt_string " ";
+  (match ann_trans with
+  | None -> ()
+  | Some trans -> pr_term_ann_trans trans);
   (match ctx with
   | None -> ();
   | Some c -> if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
+  (*
   if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
+  *)
   if pr_ctx then fmt_print_newline () else ()
 
 let string_of_term_res = poly_string_of_pr (pr_term_res false)
 
 let pr_term_res_stk stk =
+  let stk = 
+    if (!Globals.term_verbosity == 0) then stk
+    else List.filter (fun (_, _, _, status) ->
+      match status with
+      | TermErr _ -> true
+      | _ -> false
+    ) stk
+  in 
   List.iter (fun r -> 
     pr_term_res !Debug.devel_debug_on r; 
     fmt_print_newline ();) stk
@@ -178,95 +224,93 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos =
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
+  let term_pos = (post_pos # get, proving_loc # get) in
   match ans with
     | None -> (estate, lhs_p, rhs_p, None)
     | Some (src_lv, dst_lv) ->
-          (* TODO : Let us assume Term[] is for base-case
-             and primitives. In the case of non-primitive,
-             it will be converted to Term[call] using
-             the call hierarchy. No need for Term[-1]
-             and some code dealing with primitives below *)
-          let orig_ante = estate.CF.es_formula in
-          let primitive_term_measures = CP.mkIConst (-1) no_pos in
-          let is_primitive = dst_lv == [primitive_term_measures] in
-          (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
-          let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
-          (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
-          let res, bnd_measures = syn_simplify_lexvar bnd_measures in
-          if bnd_measures = [] then 
-            let t_ann, ml, il = find_lexvar_es estate in
-            let term_measures =
-              if res then Some (t_ann, ml, il)
-              else Some (Fail May, ml, il)
-            in
-            let term_res = 
-              if res then (pos, Some orig_ante, Term_S Valid_Measure)
-              else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-            in
-            if (not is_primitive) then term_res_stk # push term_res;
-            let n_estate = { estate with
-                CF.es_var_measures = term_measures;
-                CF.es_var_stack = 
-                    if res then estate.CF.es_var_stack
-                    else (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
-            } in
-            (n_estate, lhs_p, rhs_p, None)
-          else
-            (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
-            let lst_measures = List.fold_right (fun bm res ->
-                [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
-            (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
-            let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
-                let f = 
+        (* TODO : Let us assume Term[] is for base-case
+           and primitives. In the case of non-primitive,
+           it will be converted to Term[call] using
+           the call hierarchy. No need for Term[-1]
+           and some code dealing with primitives below *)
+        let orig_ante = estate.CF.es_formula in
+        (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
+        let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
+        (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
+        let res, bnd_measures = syn_simplify_lexvar bnd_measures in
+        if bnd_measures = [] then 
+          let t_ann, ml, il = find_lexvar_es estate in
+          let term_measures =
+            if res then Some (t_ann, ml, il)
+            else Some (Fail May, ml, il)
+          in
+          let term_res = 
+            if res then (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure)
+            else (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+          in
+          term_res_stk # push term_res;
+          let n_estate = { estate with
+            CF.es_var_measures = term_measures;
+            CF.es_var_stack = 
+              if res then estate.CF.es_var_stack
+              else (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+          } in
+          (n_estate, lhs_p, rhs_p, None)
+        else
+          (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
+          let lst_measures = List.fold_right (fun bm res ->
+            [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
+          (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
+          let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
+            let f = 
 		          if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-			      else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+			        else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
                 (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
-            let rank_formula = List.fold_left (fun acc m ->
-                CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
-            let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-            let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
-            begin
-              (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
-              (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
-              DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-              DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
-              DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
-              DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
-              DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
-              DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
-            end;
-            (*
-              let term_res = 
-              if entail_res then (pos, None, Term_S Decreasing_Measure)
-              else (pos, None, TermErr Not_Decreasing_Measure) 
-              in
-            *)
-            let term_res = 
-              if entail_res then (pos, Some orig_ante, Term_S Valid_Measure)
-              else (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-            in
-            (* Silent if the RHS function is primitive *)
-            if (not is_primitive) then term_res_stk # push term_res;
+          let rank_formula = List.fold_left (fun acc m ->
+            CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
+          let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+          let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
+          begin
+            (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
+            (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
+            DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
+            DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+            DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
+            DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
+            DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
+            DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
+          end;
+          (*
+          let term_res = 
+            if entail_res then (pos, None, Term_S Decreasing_Measure)
+            else (pos, None, TermErr Not_Decreasing_Measure) 
+          in
+          *)
+          let term_res = 
+            if entail_res then (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure)
+            else (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
+          in
+          term_res_stk # push term_res;
 
-            let t_ann, ml, il = find_lexvar_es estate in
-            let term_measures, term_stack, rank_formula =
-              if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
-              else
-                if estate.CF.es_infer_vars = [] then (* No inference *)
-                  Some (Fail May, ml, il), 
-              (string_of_term_res (pos, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
-              None
-                else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
-                    (* Inference: the es_var_measures will be
-                     * changed based on the result of inference *)
-            in 
-            let n_estate = { estate with
-                CF.es_var_measures = term_measures;
-                CF.es_var_stack = term_stack; 
-            } in
-            (n_estate, lhs_p, rhs_p, rank_formula)
+          let t_ann, ml, il = find_lexvar_es estate in
+          let term_measures, term_stack, rank_formula =
+            if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
+            else
+              if estate.CF.es_infer_vars = [] then (* No inference *)
+                Some (Fail May, ml, il), 
+                (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
+                None
+              else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
+              (* Inference: the es_var_measures will be
+               * changed based on the result of inference *)
+          in 
+          let n_estate = { estate with
+            CF.es_var_measures = term_measures;
+            CF.es_var_stack = term_stack; 
+          } in
+          (n_estate, lhs_p, rhs_p, rank_formula)
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
@@ -274,16 +318,21 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es: " !CF.print_entail_state) estate pos in
+      let term_pos = (post_pos # get, proving_loc # get) in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
+      let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
+      let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
       | (Term, Term) -> 
-          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv pos
+          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
+            src_lv dst_lv t_ann_trans_opt pos
       | (Term, _) ->
-          let term_res = (pos, Some estate.CF.es_formula, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
+          let term_res = (term_pos, t_ann_trans_opt, Some estate.CF.es_formula,
+            TermErr (Invalid_Status_Trans t_ann_trans)) in
           term_res_stk # push term_res;
           let term_measures = match t_ann_d with
             | Loop -> Some (Fail Must, src_lv, src_il)
@@ -366,7 +415,7 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
 
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: CF.formula) (reason: term_reason) pos : term_res =
-  let err = (pos, Some ctx, TermErr reason) in
+  let err = (pos, None, Some ctx, TermErr reason) in
   term_res_stk # push err;
   err
 
@@ -376,11 +425,12 @@ let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
       DD.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
       DD.devel_hprint (add_str "Context: " Cprinter.string_of_list_failesc_context) ctx pos
     end
-  in 
+  in
+  let term_pos = (post_pos # get, proving_loc # get) in
   let succ_ctx = CF.succ_context_of_list_failesc_context ctx in
   let orig_ante_l = List.concat (List.map CF.collect_orig_ante succ_ctx) in
   let orig_ante = CF.formula_of_disjuncts orig_ante_l in
-  let term_res = (pos, Some orig_ante, Unreachable) in
+  let term_res = (term_pos, None, Some orig_ante, Unreachable) in
   term_res_stk # push term_res;
   term_res
 
@@ -418,6 +468,7 @@ let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_f
   | Invalid_Phase_Num
   | Failure "nth" -> report_term_error orig_ante Invalid_Phase_Trans pos
 *)
+(*
 let check_reachable_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) pos : term_res =
   let orig_ante = CF.formula_of_context ctx in
   let lv = CF.lexvar_of_evariance measure in
@@ -447,5 +498,5 @@ let check_term_measure f (ctx: CF.context) (measure: CF.ext_variance_formula) po
     term_res
   else
     check_reachable_term_measure f ctx measure pos
-
+*)
 

@@ -5339,9 +5339,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
             | None ->     
                   let t_ann, ml, il = Term.find_lexvar_es estate in
+                  let term_pos = (post_pos # get, proving_loc # get) in
                   {estate with 
                       CF.es_var_measures = Some (Fail May, ml, il);
-                      CF.es_var_stack = (Term.string_of_term_res (pos, None, Term.TermErr Term.Not_Decreasing_Measure))
+                      (* TODO: Need to add the termination transition here *)
+                      CF.es_var_stack = (Term.string_of_term_res (term_pos,
+                        None, None, Term.TermErr Term.Not_Decreasing_Measure))
                           ::estate.CF.es_var_stack; 
                   }
             | Some es -> es

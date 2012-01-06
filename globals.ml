@@ -477,7 +477,8 @@ let disable_multiple_specs =ref false
   let do_sat_slice = ref false
 
 (* for Termination *)
-  let term_auto_number = ref false
+let term_auto_number = ref false
+let term_verbosity = ref 1
   
 (* Options for slicing *)
 let do_slicing = ref false

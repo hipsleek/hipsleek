@@ -799,6 +799,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
 
                   (* Termination checking *)
+                  (* TODO: Need to be removed - 
+                   * Only keep the unreachable case *)
                   let pre2 = 
                     if ir then (* Only check termination of a recursive call *)
                       let _ = DD.devel_zprint 
