@@ -14,8 +14,9 @@ case {
 		}
 		z > 0 -> case {
 			y >= 0 -> requires Loop ensures false;
-			y < 0 -> requires Term[3,-y] ensures true;	
+			y < 0 -> requires /*Term[3,-y]*/Loop ensures true;	
 		}
+    //z > 0 -> requires Loop ensures false;
     z = 0 -> requires MayLoop ensures true;
 	}
 }
