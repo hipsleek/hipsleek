@@ -5334,21 +5334,21 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* lctx = Succ --> termination succeeded with inference *)
   let estate = match rhs_wf with
   | None -> estate 
-  | Some rank -> 
-        begin
-          match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
-            | None ->     
-                  let t_ann, ml, il = Term.find_lexvar_es estate in
-                  let term_pos = (post_pos # get, proving_loc # get) in
-                  {estate with 
-                      CF.es_var_measures = Some (Fail May, ml, il);
-                      (* TODO: Need to add the termination transition here *)
-                      CF.es_var_stack = (Term.string_of_term_res (term_pos,
-                        None, None, Term.TermErr Term.Not_Decreasing_Measure))
-                          ::estate.CF.es_var_stack; 
-                  }
-            | Some es -> es
-        end
+  | Some rank ->
+      begin
+        match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
+          | None ->     
+              let t_ann, ml, il = Term.find_lexvar_es estate in
+              let term_pos = (post_pos # get, proving_loc # get) in
+              {estate with 
+                 CF.es_var_measures = Some (Fail May, ml, il);
+                 (* TODO: Need to add the termination transition here *)
+                 CF.es_var_stack = (Term.string_of_term_res (term_pos,
+                   None, None, Term.TermErr Term.Not_Decreasing_Measure))
+                   ::estate.CF.es_var_stack; 
+              }
+          | Some es -> es
+      end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)

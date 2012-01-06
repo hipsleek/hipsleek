@@ -2570,7 +2570,11 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-and split_components (f : formula) = 
+and split_components (f: formula) =
+  Debug.no_1 "split_components" !print_formula (fun _ -> "")
+  split_components_x f 
+
+and split_components_x (f : formula) = 
   if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse)
   else match f with
     | Base ({formula_base_heap = h; 
@@ -7340,10 +7344,17 @@ let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
 
-(* Termination: Check whether a formula contains LexVar *)
-let has_lexvar_formula f =
-  let _, pure_f, _, _, _ = split_components f in 
-  CP.has_lexvar (MCP.pure_of_mix pure_f) 
+(* Termination: Check whether a formula contains LexVar *) 
+(* TODO: Need to add default term info
+ * into a branch of OR context *) 
+let rec has_lexvar_formula f =
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, _ = split_components f in 
+      CP.has_lexvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      (has_lexvar_formula f1) || (has_lexvar_formula f2)
 
 let rec norm_struc_with_lexvar struc_f is_primitive =
   List.map (fun ef -> norm_ext_with_lexvar ef is_primitive) struc_f
