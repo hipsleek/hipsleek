@@ -1,0 +1,4 @@
+1. Clean up EVariance and useless code of termination
+2. Add call group (from proc_call_order of proc_decl)
+3. Infer phase transition by inference mechanism
+4. Prepare benchmarks and evaluation
