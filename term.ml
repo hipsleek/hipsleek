@@ -258,7 +258,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
               estate.CF.es_var_stack
             else 
-              Some (Fail May, ml, il),
+              Some (Fail TermErr_May, ml, il),
               (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
               (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
           in
@@ -301,7 +301,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               None
             else
               if estate.CF.es_infer_vars = [] then (* No inference *)
-                Some (Fail May, ml, il),
+                Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
                 (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
                 None
@@ -340,7 +340,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
       | (Term, Term)
-      | (Fail May, Term) ->
+      | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt pos
@@ -349,8 +349,8 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           term_res_stk # push term_res;
           let term_measures = match t_ann_d with
-            | Loop -> Some (Fail Must, src_lv, src_il)
-            | MayLoop -> Some (Fail May, src_lv, src_il)
+            | Loop -> Some (Fail TermErr_Must, src_lv, src_il)
+            | MayLoop -> Some (Fail TermErr_May, src_lv, src_il)
           in 
           let n_estate = {estate with 
             CF.es_var_measures = term_measures;

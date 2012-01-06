@@ -48,8 +48,8 @@ and term_ann =
   | Fail of term_fail    (* failed because of invalid trans *)
 
 and term_fail =
-  | May
-  | Must
+  | TermErr_May
+  | TermErr_Must
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -126,8 +126,8 @@ let string_of_term_ann a =
   | Loop -> "Loop"
   | MayLoop -> "MayLoop"
   | Fail f -> match f with
-    | May -> "Fail_May"
-    | Must -> "Fail_Must"
+    | TermErr_May -> "TermErr_May"
+    | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
