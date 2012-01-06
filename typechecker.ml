@@ -157,6 +157,12 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0 do_infer) spec_list
 
+(* this procedure to check that Term[x1,x2,xn] are bounded by x1,x2,xn>=0 *)
+(* in case of failure, please put message into term_msg stack *)
+(* the resulting ctx may contain inferred constraint *)
+and check_bounded_term  prog proc res_ctx post_pos post_label =
+  res_ctx
+
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
   let r = List.map (do_spec_verify_infer prog proc ctx e0 do_infer) spec_list in
@@ -320,7 +326,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                           (impl_vs,new_post)
                         else ([],post_cond) in
                       let res_ctx = Inf.add_impl_vars_list_partial_context impl_vs res_ctx in
-                      let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
+                      let pos_post = (CF.pos_of_formula post_cond) in
+                      let res_ctx = check_bounded_term  prog proc res_ctx post_pos post_label in
+                      let tmp_ctx = check_post prog proc res_ctx post_cond  pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
