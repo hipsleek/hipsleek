@@ -3,10 +3,10 @@ data Cell2{
   int val;
 }
 
-cellInv2<> == self::Cell2::<#,v> & v>=0;
+cellInv2<> == self::Cell2<#,v> & v>=0;
   inv true;
 
-declare_lock LOCKB<> == self::Cell2::<_,#> //this can cause init more than twice
+declare_lock LOCKB<> == self::Cell2<_,#> //this can cause init more than twice
   inv self::cellInv2<>;
 
 -------------------------------------------------

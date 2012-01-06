@@ -6689,3 +6689,8 @@ let filter_varperm (f:formula) : (formula list * formula) =
   let ls = split_conjunctions f in
   let lsf1,lsf2 = List.partition (is_varperm) ls in
   (lsf1, join_conjunctions lsf2)
+
+let is_hole_spec_var (x:spec_var) =
+  (match x with
+    | SpecVar (_,vn,_) -> if (vn.[0] = '#') then true else false)
+

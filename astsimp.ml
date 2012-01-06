@@ -1335,6 +1335,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         (* let _ = print_endline ("WN vs1: "^Cprinter.string_of_typed_spec_var_list vs1 ) in *)
         (* let _ = print_endline ("WN vs2: "^Cprinter.string_of_typed_spec_var_list vs2 ) in *)
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
+        (*filter out holes (#) *)
+        let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
         if (ffv!=[]) then 
           Error.report_error { 
               Err.error_loc = no_pos; 
