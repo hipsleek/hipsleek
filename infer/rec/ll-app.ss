@@ -56,7 +56,7 @@ void append(node x, node y)
   infer [n,m,A]
 //infer [n,A]
   requires x::ll<n>*y::ll<m> & n>=0 & m>=0
-  ensures x::ll<z> & A(n,m,z);
+  ensures x::ll<z> & A(z,m,n);
 
 //  requires x::ll<n>*y::ll<m> 
 //  ensures x::ll<z> & A(n,m,z);
