@@ -4213,7 +4213,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   let cf = helper f0 in
   (* let _ = print_endline ("[trans_formula] (bf CF.merge_partial_heaps) output = " ^ (Cprinter.string_of_formula cf)) in *)
   (*TO CHECK: temporarily disabled*) 
-  (* let cf = CF.merge_partial_heaps cf in *)
+  let cf = CF.merge_partial_heaps cf in (*ENABLE THIS for partial fields*)
   (* let _ = print_endline ("[trans_formula] (af CF.merge_partial_heaps) output = " ^ (Cprinter.string_of_formula cf)) in *)
   cf
 
