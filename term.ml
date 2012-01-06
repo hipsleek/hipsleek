@@ -64,9 +64,7 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) =
   fmt_open_hbox();
   fmt_string (string_of_term_ann ann_s);
   pr_seq "" pr_formula_exp m_s;
-  fmt_close_box();
   fmt_string "->";
-  fmt_open_hbox();
   fmt_string (string_of_term_ann ann_d);
   pr_seq "" pr_formula_exp m_d;
   fmt_close_box()
@@ -130,7 +128,7 @@ let pr_term_trans_loc (src, dst) =
   let fname = src.start_pos.Lexing.pos_fname in
   let src_line = src.start_pos.Lexing.pos_lnum in
   let dst_line = dst.start_pos.Lexing.pos_lnum in
-  fmt_string (fname ^ " ");
+  (* fmt_string (fname ^ " "); *)
   fmt_string ("(" ^ (string_of_int src_line) ^ ")");
   fmt_string ("->");
   fmt_string ("(" ^ (string_of_int dst_line) ^ ")")

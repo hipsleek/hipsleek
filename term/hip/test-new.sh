@@ -3,8 +3,10 @@
 ../../hip valid-1b.ss > 1b.n
 ../../hip valid-1c.ss > 1c.n
 ../../hip valid-1d.ss > 1d.n
+../../hip valid-1e.ss > 1e.n
 ../../hip invalid-1.ss > w1.n
 ../../hip invalid-1a.ss > w1a.n
 ../../hip invalid-1b.ss > w1b.n
 ../../hip invalid-1c.ss > w1c.n
-
+../../hip invalid-1d.ss > w1d.n
+../../hip invalid-1e.ss > w1e.n
