@@ -3888,6 +3888,23 @@ let collect_term_ann_and_msg_list_context ctx =
 	| SuccCtx l_ctx -> (List.map (fun ctx -> 
       (List.exists (fun a -> match a with Fail _ -> true | _ -> false) (collect_term_ann_context ctx), 
       (String.concat "\n" (collect_term_err_msg_context ctx)))) l_ctx) 
+			
+let rec collect_term_measures_context ctx =
+	match ctx with
+	| Ctx es -> (match es.es_var_measures with
+		| None -> []
+    | Some (_, ml, _) -> [ml])
+	| OCtx (ctx1, ctx2) -> 
+      (collect_term_measures_context ctx1) @
+      (collect_term_measures_context ctx2)
+
+let collect_term_measures_branch_ctx_list br_ctx_l =
+  List.concat (List.map (fun (_, ctx) -> 
+    collect_term_measures_context ctx) br_ctx_l)
+
+let collect_term_measures_list_partial_context p_ctx_l =
+  List.concat (List.map (fun (_, br_ctx_l) -> 
+    collect_term_measures_branch_ctx_list br_ctx_l) p_ctx_l)
 
 let rec add_pre_heap ctx = 
   match ctx with
@@ -7345,7 +7362,7 @@ let fv_wo_rel (f:formula) =
   List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
 
 (* Termination: Check whether a formula contains LexVar *) 
-(* TODO: Need to add default term info
+(* TODO: Termination: Need to add default term info
  * into a branch of OR context *) 
 let rec has_lexvar_formula f =
   match f with
@@ -7373,7 +7390,7 @@ and norm_ext_with_lexvar ext_f is_primitive =
   | EAssume _ ->
       let lexvar = 
         if is_primitive then 
-          (* CP.mkLexVar Term [CP.mkIConst (-1) no_pos] [] no_pos *)
+          (* CP.mkLexVar Term [CP.mkIConst (-1) no_pos] [] no_pos *) 
           CP.mkLexVar Term [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos
       in 

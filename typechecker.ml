@@ -157,11 +157,41 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0 do_infer) spec_list
 
-(* this procedure to check that Term[x1,x2,xn] are bounded by x1,x2,xn>=0 *)
+(* this procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* in case of failure, please put message into term_msg stack *)
 (* the resulting ctx may contain inferred constraint *)
-and check_bounded_term  prog proc res_ctx post_pos post_label =
-  res_ctx
+and check_bounded_term prog proc ctx post_pos post_label =
+  let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed)) proc.proc_args in  
+  let r = proc.proc_by_name_params in
+  let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
+  let final_state_prim = CF.push_exists_list_partial_context w ctx in
+  let final_state = 
+    if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) 
+    else final_state_prim in
+  let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
+  let _ = print_endline (pr_list (fun m -> (pr_list !CP.print_exp m) ^ "\n") l_term_measures) in
+
+  let check_bounded_one_measures m =
+    let bnd_formula_l = List.map (fun e ->
+      CP.mkPure (CP.mkGte e (CP.mkIConst 0 no_pos) no_pos)) m in
+    let bnd_formula = CF.formula_of_pure_formula
+      (CP.join_conjunctions bnd_formula_l) no_pos in
+    let rs, _ = heap_entail_list_partial_context_init 
+      prog false final_state bnd_formula post_pos (Some post_label) in
+    if (CF.isSuccessListPartialCtx rs) then ()
+    else
+      print_endline ("Bounded checking failed.\n")
+  in
+  List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
+  (*
+  let rs, prf = heap_entail_list_partial_context_init 
+    prog false final_state post_pos (Some post_label) in
+  let _ = 
+    if (CF.isSuccessListPartialCtx rs) then () 
+    else Term.term_res_stk # push term_res
+  in
+  *)
+  ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
@@ -327,8 +357,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                         else ([],post_cond) in
                       let res_ctx = Inf.add_impl_vars_list_partial_context impl_vs res_ctx in
                       let pos_post = (CF.pos_of_formula post_cond) in
-                      let res_ctx = check_bounded_term  prog proc res_ctx post_pos post_label in
-                      let tmp_ctx = check_post prog proc res_ctx post_cond  pos_post post_label in
+                      let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
+                      let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
@@ -809,6 +839,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* Termination checking *)
                   (* TODO: Need to be removed - 
                    * Only keep the unreachable case *)
+                  (*
                   let pre2 = 
                     if ir then (* Only check termination of a recursive call *)
                       let _ = DD.devel_zprint 
@@ -820,7 +851,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let _ = Term.add_unreachable_res sctx pos in n_pre2
                       else n_pre2
                     else pre2
-                  in 
+                  in
+                  *)
+                  let _ = 
+                    if ir then (* Only check termination of a recursive call *)
+                      let _ = DD.devel_zprint 
+                        (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
+                      (* Normalise the specification with variance 
+                       * to further inference or error reporting *)
+                      if not (CF.isNonFalseListFailescCtx sctx) then
+                        let _ = Term.add_unreachable_res sctx pos in ()
+                      else ()
+                    else ()
+                  in
+
+
 
                   (* TODO: call the entailment checking function in solver.ml *)
                   (* let _ = print_endline ("WN 1:"^Cprinter.string_of_list_failesc_context sctx) in *)

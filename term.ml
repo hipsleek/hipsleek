@@ -146,13 +146,15 @@ let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
 let string_of_term_res = poly_string_of_pr (pr_term_res false)
 
 let pr_term_res_stk stk =
-  let stk = 
-    if (!Globals.term_verbosity == 0) then stk
-    else List.filter (fun (_, _, _, status) ->
+  let stk =
+    let (err, ok) = List.partition (fun (_, _, _, status) ->
       match status with
-      | TermErr _ -> true
-      | _ -> false
-    ) stk
+      | Term_S _
+      | Unreachable -> false
+      | _ -> true
+    ) stk in
+    if (!Globals.term_verbosity == 0) then err@ok
+    else err
   in 
   List.iter (fun r -> 
     pr_term_res !Debug.devel_debug_on r; 
@@ -187,7 +189,9 @@ let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp l
 (* (false,[]) means not decreasing *)
 let rec syn_simplify_lexvar bnd_measures =
   match bnd_measures with
-  | [] -> (false, []) (* 2 measures are identical *)
+  (* 2 measures are identical, 
+   * so that they are not decreasing *)
+  | [] -> (false, [])   
   | (s,d)::rest -> 
       if (CP.eqExp s d) then syn_simplify_lexvar rest
       else if (CP.is_gt CP.eq_spec_var s d) then (true, [])
@@ -224,11 +228,25 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
+(* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let term_pos = (post_pos # get, proving_loc # get) in
   match ans with
-    | None -> (estate, lhs_p, rhs_p, None)
+    | None ->
+        let orig_ante = estate.CF.es_formula in
+        let t_ann, ml, il = find_lexvar_es estate in
+        let term_measures, term_res, term_stack =
+          Some (t_ann, ml, il), (* Residue of termination *)
+          (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+          estate.CF.es_var_stack
+        in 
+        let n_estate = { estate with
+          CF.es_var_measures = term_measures;
+          CF.es_var_stack = term_stack 
+        } in
+        term_res_stk # push term_res;
+        (n_estate, lhs_p, rhs_p, None)
     | Some (src_lv, dst_lv) ->
         (* TODO : Let us assume Term[] is for base-case
            and primitives. In the case of non-primitive,
@@ -242,21 +260,24 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
         let res, bnd_measures = syn_simplify_lexvar bnd_measures in
         if bnd_measures = [] then 
           let t_ann, ml, il = find_lexvar_es estate in
-          let term_measures =
-            if res then Some (t_ann, ml, il)
-            else Some (Fail May, ml, il)
+          (* Residue of the termination,
+           * The termination checking result - For HIP (stored in term_res_stk)
+           * The stack of error - For SLEEK *)
+          let term_measures, term_res, term_stack =
+            if res then (* The measures are decreasing *)
+              Some (t_ann, ml, il), (* Residue of termination *)
+              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              estate.CF.es_var_stack
+            else 
+              Some (Fail May, ml, il),
+              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
+              (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
           in
-          let term_res = 
-            if res then (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure)
-            else (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-          in
-          term_res_stk # push term_res;
           let n_estate = { estate with
             CF.es_var_measures = term_measures;
-            CF.es_var_stack = 
-              if res then estate.CF.es_var_stack
-              else (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack 
+            CF.es_var_stack = term_stack 
           } in
+          term_res_stk # push term_res;
           (n_estate, lhs_p, rhs_p, None)
         else
           (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
@@ -271,7 +292,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-          let entail_res, _, _ = TP.imply lhs rank_formula "" false None in  
+          let entail_res, _, _ = TP.imply lhs rank_formula "" false None in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
@@ -282,35 +303,43 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
             DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
           end;
-          (*
-          let term_res = 
-            if entail_res then (pos, None, Term_S Decreasing_Measure)
-            else (pos, None, TermErr Not_Decreasing_Measure) 
-          in
-          *)
           let term_res = 
             if entail_res then (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure)
-            (* TODO: Add boundedness checking *)
+            (* TODO: Termination: Add boundedness checking *)
             else (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
           in
           term_res_stk # push term_res;
 
           let t_ann, ml, il = find_lexvar_es estate in
-          let term_measures, term_stack, rank_formula =
-            if entail_res then Some (t_ann, ml, il), estate.CF.es_var_stack, None
+          let term_measures, term_res, term_stack, rank_formula =
+            if entail_res then (* Decreasing *) 
+              Some (t_ann, ml, il), 
+              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              estate.CF.es_var_stack, 
+              None
             else
               if estate.CF.es_infer_vars = [] then (* No inference *)
-                Some (Fail May, ml, il), 
+                Some (Fail May, ml, il),
+                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
                 (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.CF.es_var_stack,
                 None
-              else Some (t_ann, ml, il), estate.CF.es_var_stack, Some rank_formula 
-              (* Inference: the es_var_measures will be
-               * changed based on the result of inference *)
+              else
+                (* Inference: the es_var_measures will be
+                 * changed based on the result of inference 
+                 * The term_res_stk and es_var_stack 
+                 * should be updated based on this result: 
+                 * MayTerm_S -> Term_S *)
+								(* Assumming Inference will be successed *)
+                Some (t_ann, ml, il),
+                (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+                estate.CF.es_var_stack, 
+                Some rank_formula  
           in 
           let n_estate = { estate with
             CF.es_var_measures = term_measures;
             CF.es_var_stack = term_stack; 
           } in
+          term_res_stk # push term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
 
 (* To handle LexVar formula *)
@@ -328,7 +357,9 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let rhs_p = MCP.mix_of_pure rhs_p in
       match (t_ann_s, t_ann_d) with
-      | (Term, Term) -> 
+      | (Term, Term)
+      | (Fail May, Term) ->
+          (* Check wellfoundedness of the transition *)
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt pos
       | (Term, _) ->
@@ -379,7 +410,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state in
-   Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
+   Debug.ho_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 

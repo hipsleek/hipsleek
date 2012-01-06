@@ -5322,15 +5322,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
-  (*
-  let rhs_p = match rhs_wf with
-  | None -> rhs_p
-  | Some rank -> MCP.merge_mems rhs_p (MCP.mix_of_pure rank) true 
-  in
-  *)
   (* Termination: Try to prove rhs_wf with inference *)
-  (* rhs_wf = None --> measure succeeded *)
-  (* lctx = Fail --> well-founded termination failure *)
+  (* rhs_wf = None --> measure succeeded or no striggered inference *)
+  (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
   (* lctx = Succ --> termination succeeded with inference *)
   let estate = match rhs_wf with
   | None -> estate 
@@ -5339,13 +5333,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
           | None ->     
               let t_ann, ml, il = Term.find_lexvar_es estate in
-              let term_pos = (post_pos # get, proving_loc # get) in
-              {estate with 
-                 CF.es_var_measures = Some (Fail May, ml, il);
-                 (* TODO: Need to add the termination transition here *)
-                 CF.es_var_stack = (Term.string_of_term_res (term_pos,
-                   None, None, Term.TermErr Term.Not_Decreasing_Measure))
-                   ::estate.CF.es_var_stack; 
+              let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+              let term_measures, term_res, term_stack =
+                Some (Fail May, ml, il),
+                (term_pos, t_ann_trans, orig_ante, Term.MayTerm_S Term.Not_Decreasing_Measure),
+                (Term.string_of_term_res (term_pos, t_ann_trans, None, 
+                  Term.TermErr Term.Not_Decreasing_Measure))::estate.CF.es_var_stack
+              in
+              Term.term_res_stk # pop;
+              Term.term_res_stk # push term_res;
+              { estate with 
+                 CF.es_var_measures = term_measures;
+                 CF.es_var_stack = term_stack; 
               }
           | Some es -> es
       end
