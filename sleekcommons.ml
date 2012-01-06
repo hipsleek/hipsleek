@@ -36,6 +36,7 @@ exception SLEEK_Exception
 type command =
   | DataDef of I.data_decl
   | PredDef of I.view_decl
+  | LockDef of I.lock_decl
   | RelDef of I.rel_decl (* An Hoa *)
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl
@@ -75,6 +76,7 @@ let var_tab : var_table_t = H.create 10240
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef _ -> "PredDef" 
+  | LockDef _ -> "LockDef"
   | RelDef  _ -> "RelDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"

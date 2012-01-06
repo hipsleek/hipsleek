@@ -7,7 +7,7 @@ pred cellInv2<> == self::Cell2<#,v> & v>=0
   inv true.
 
 /*
-declare_lock LOCKB<> == self::Cell2<_,#>
+lock_pred LOCKB<> == self::Cell2<_,#>
   inv self::cellInv2<>;
 */
 

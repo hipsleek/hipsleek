@@ -54,6 +54,19 @@ and view_decl = { view_name : ident;
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
 
+and lock_decl = { lock_name : ident; 
+		  mutable lock_data_name : ident;
+          (* lock_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+		  lock_vars : ident list;
+		  lock_labels : branch_label list;
+		  lock_modes : mode list;
+		  mutable lock_typed_vars : (typ * ident) list;
+		  lock_invariant : (F.formula * (branch_label * P.formula) list); (*different from normal view def*)
+		  lock_formula : Iformula.struc_formula;
+		  mutable lock_pt_by_self : ident list; (* list of locks pointed by self *)
+		  (* lock_targets : ident list;  *)(* list of locks pointed within declaration *)
+		  lock_try_case_inference: bool}
+
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
 		  (* rel_vars : ident list; *)

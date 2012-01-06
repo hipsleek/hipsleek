@@ -21,6 +21,7 @@ open Perm
 	| Enum of enum_decl
 	| View of view_decl
     | Hopred of hopred_decl
+	| Lock of lock_decl
 		
   type decl = 
     | Type of type_decl
@@ -470,6 +471,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
+      | `LPRED;t=lock_decl     -> LockDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -535,6 +537,37 @@ field_list2:[[
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
 (*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos_camlp4 _loc 1)  *)
 (*    ]];  *)
+
+ (********** Locks **********)
+lock_decl: 
+  [[ vh= lock_header; `EQEQ; vb=view_body; oi= lock_inv
+      -> { vh with lock_formula = (fst vb); lock_invariant = oi; lock_try_case_inference = (snd vb) } ]];
+
+lock_inv:
+  [[`INV; dc=disjunctive_constr; ob=opt_branches -> (dc,ob)
+   |`INV; h=ho_fct_header -> (F.mkTrue top_flow no_pos, [])]]; (*TO CHECK: top_flow*)
+
+lock_header:
+  [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
+      let cids, anns = List.split l in
+      let cids_t, br_labels = List.split cids in
+      let _, cids = List.split cids_t in
+      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
+      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
+      (* else *)
+        let modes = get_modes anns in
+        { lock_name = vn;
+          lock_data_name = "";
+          lock_vars = (* List.map fst *) cids;
+          (* lock_frac_var = empty_iperm; *)
+          lock_labels = br_labels;
+          lock_modes = modes;
+          lock_typed_vars = cids_t;
+          lock_pt_by_self  = [];
+          lock_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          lock_invariant = (F.mkTrue top_flow (get_pos_camlp4 _loc 1), []);
+          lock_try_case_inference = false;
+			}]];
 
  (********** Views **********)
 
