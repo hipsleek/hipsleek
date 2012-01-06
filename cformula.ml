@@ -3889,14 +3889,14 @@ let collect_term_ann_and_msg_list_context ctx =
       (List.exists (fun a -> match a with Fail _ -> true | _ -> false) (collect_term_ann_context ctx), 
       (String.concat "\n" (collect_term_err_msg_context ctx)))) l_ctx) 
 			
+(* Termination: The term_measures of an OR context
+ * should only be collected once *)  
 let rec collect_term_measures_context ctx =
 	match ctx with
 	| Ctx es -> (match es.es_var_measures with
 		| None -> []
     | Some (_, ml, _) -> [ml])
-	| OCtx (ctx1, ctx2) -> 
-      (collect_term_measures_context ctx1) @
-      (collect_term_measures_context ctx2)
+	| OCtx (ctx1, _) -> collect_term_measures_context ctx1
 
 let collect_term_measures_branch_ctx_list br_ctx_l =
   List.concat (List.map (fun (_, ctx) -> 

@@ -87,6 +87,11 @@ let pr_term_reason = function
       fmt_string " transition is invalid."
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
+			
+let pr_term_reason_short = function
+	| Not_Decreasing_Measure -> fmt_string "not decreasing"
+	| Not_Bounded_Measure -> fmt_string "not bounded"
+	| _ -> ()
 
 let string_of_term_reason (reason: term_reason) =
   poly_string_of_pr pr_term_reason reason
@@ -101,6 +106,10 @@ let pr_term_status = function
 let pr_term_status_short = function
   | Term_S _ -> fmt_string "(OK)"
   | Unreachable -> fmt_string "(UNR)"
+  | MayTerm_S r -> 
+      fmt_string "(ERR: ";
+      pr_term_reason_short r;
+      fmt_string ")"
   | _ -> fmt_string "(ERR)"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
@@ -206,13 +215,6 @@ let find_lexvar_es (es: CF.entail_state) :
 
 (* Normalize the longer LexVar prior to the shorter one *)
 let norm_term_measures_by_length src dst =
-  (* let rec strip_list n l =  *)
-  (*   if (n<=0) then [] *)
-  (*   else *)
-  (*     match l with *)
-  (*       | [] -> [] *)
-  (*       | hd::tl -> hd::(strip_list (n-1) tl) *)
-  (* in  *)
   let sl = List.length src in
   let dl = List.length dst in
   if dl==0 && sl>0 then None
@@ -233,20 +235,9 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let term_pos = (post_pos # get, proving_loc # get) in
   match ans with
-    | None ->
-        let orig_ante = estate.CF.es_formula in
-        let t_ann, ml, il = find_lexvar_es estate in
-        let term_measures, term_res, term_stack =
-          Some (t_ann, ml, il), (* Residue of termination *)
-          (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
-          estate.CF.es_var_stack
-        in 
-        let n_estate = { estate with
-          CF.es_var_measures = term_measures;
-          CF.es_var_stack = term_stack 
-        } in
-        term_res_stk # push term_res;
-        (n_estate, lhs_p, rhs_p, None)
+      (* From primitive calls - 
+       * Do not need to add messages to stack *)
+    | None -> (estate, lhs_p, rhs_p, None)     
     | Some (src_lv, dst_lv) ->
         (* TODO : Let us assume Term[] is for base-case
            and primitives. In the case of non-primitive,
@@ -303,13 +294,6 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
             DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
           end;
-          let term_res = 
-            if entail_res then (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure)
-            (* TODO: Termination: Add boundedness checking *)
-            else (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-          in
-          term_res_stk # push term_res;
-
           let t_ann, ml, il = find_lexvar_es estate in
           let term_measures, term_res, term_stack, rank_formula =
             if entail_res then (* Decreasing *) 
@@ -410,7 +394,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !CF.print_mix_formula in
   let pr2 = !CF.print_entail_state in
-   Debug.ho_3 "trans_lexvar_rhs" pr2 pr pr
+   Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 

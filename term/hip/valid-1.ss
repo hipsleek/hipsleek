@@ -4,7 +4,7 @@ int foo (int x)
            ensures false;
 	x=0 -> requires Term[0] 
            ensures res=0;
-	x>0 -> requires Term[-x] 
+	x>0 -> requires Term[x] 
            ensures res=2*x;
  }
 {

@@ -1,12 +1,12 @@
-// Precondition failure? triggered by bad measure. (Fixed)
+//Example to check the bounded checking
+//Can we use infer to make the bounded 
+//condition satisfied, e.g. x>=0?
 
 int foo (int x)
  case {
-	x<0 -> requires Loop 
-           ensures false;
 	x=0 -> requires Term[0]
            ensures res=0;
-	x>0 -> requires Term[-x] 
+	x!=0 -> requires Term[x] 
            ensures res=2*x;
  }
 {

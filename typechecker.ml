@@ -169,7 +169,7 @@ and check_bounded_term prog proc ctx post_pos post_label =
     if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) 
     else final_state_prim in
   let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
-  let _ = print_endline (pr_list (fun m -> (pr_list !CP.print_exp m) ^ "\n") l_term_measures) in
+  (*let _ = print_endline (pr_list (fun m -> (pr_list !CP.print_exp m) ^ "\n") l_term_measures) in*)
 
   let check_bounded_one_measures m =
     let bnd_formula_l = List.map (fun e ->
@@ -180,17 +180,11 @@ and check_bounded_term prog proc ctx post_pos post_label =
       prog false final_state bnd_formula post_pos (Some post_label) in
     if (CF.isSuccessListPartialCtx rs) then ()
     else
-      print_endline ("Bounded checking failed.\n")
+      let term_pos = (post_pos, proving_loc # get) in
+      let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
+      Term.term_res_stk # push term_res
   in
   List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
-  (*
-  let rs, prf = heap_entail_list_partial_context_init 
-    prog false final_state post_pos (Some post_label) in
-  let _ = 
-    if (CF.isSuccessListPartialCtx rs) then () 
-    else Term.term_res_stk # push term_res
-  in
-  *)
   ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
@@ -328,8 +322,6 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                     let init_esc = [((0,""),[])] in
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
 	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
-                (* Termination: Printing the termination checking 
-                 * result in the final context *)
 	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
