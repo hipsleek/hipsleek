@@ -23,7 +23,6 @@ type typed_ident = (typ * ident)
 and prog_decl = { 
     mutable prog_data_decls : data_decl list;
 	mutable prog_view_decls : view_decl list;
-	mutable prog_lock_decls : lock_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
 	prog_proc_decls : proc_decl list;
@@ -75,36 +74,6 @@ and view_decl = {
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
     view_raw_base_case: Cformula.formula option;}
-
-(*there may be a lot of redundancy in lock_decl
-remove them later*)
-and lock_decl = { 
-    lock_name : ident; 
-    lock_vars : P.spec_var list;
-    (* lock_case_vars : P.spec_var list; (\* predicate parameters that are bound to guard of case, but excluding self; subset of lock_vars*\) *)
-    lock_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    lock_labels : branch_label list;
-    lock_modes : mode list;
-    mutable lock_partially_bound_vars : bool list;
-    mutable lock_materialized_vars : mater_property list; (* lock vars that can point to objects *)
-    lock_data_name : ident;
-    lock_formula : F.struc_formula; (* case-structured formula *)
-    lock_user_inv : (F.formula * (branch_label * P.formula) list); (* different from views*)
-    (* mutable lock_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (\*XPURE 1 -> revert to P.formula*\) *)
-    mutable lock_baga : Gen.Baga(P.PtrSV).baga;
-    mutable lock_addr_vars : P.spec_var list;
-    (* (\* if lock has only a single eqn, then place complex subpart into complex_inv *\)   *)
-    (* lock_complex_inv : (MP.mix_formula * (branch_label * P.formula) list) option; (\*COMPLEX INV for --eps option*\) *)
-    lock_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-    (* lock_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (\* guard for base case, base case (common pure, pure branches)*\) *)
-    (* lock_prune_branches: formula_label list; (\* all the branches of a lock *\) *)
-    (* lock_is_rec : bool; *)
-    lock_pt_by_self : ident list;
-    (* lock_prune_conditions: (P.b_formula * (formula_label list)) list; *)
-    (* lock_prune_conditions_baga: ba_prun_cond list; *)
-    (* lock_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ; *)
-    (* lock_raw_base_case: Cformula.formula option; *)
-}
 
 (* An Hoa : relation *)					
 and rel_decl = { 
@@ -426,7 +395,6 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_lock_decl = ref (fun (c:lock_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")

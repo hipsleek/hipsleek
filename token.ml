@@ -43,7 +43,6 @@ type sleek_token =
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | SUBANN | PRE | POST
-  | LPRED (*Lock predicate declaration*)
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -87,7 +86,6 @@ module Token = struct
     | POST -> "@post"
     | SUBANN -> "<:"
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
-    | LPRED ->"lock_pred" (*lock predicate declaration*)
 
   let print ppf x = pp_print_string ppf (to_string x)
 

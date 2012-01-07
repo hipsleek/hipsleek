@@ -21,7 +21,6 @@ open Perm
 	| Enum of enum_decl
 	| View of view_decl
     | Hopred of hopred_decl
-	| Lock of lock_decl
 		
   type decl = 
     | Type of type_decl
@@ -471,7 +470,6 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-      | `LPRED;t=lock_decl     -> LockDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -537,37 +535,6 @@ field_list2:[[
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
 (*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos_camlp4 _loc 1)  *)
 (*    ]];  *)
-
- (********** Locks **********)
-lock_decl: 
-  [[ vh= lock_header; `EQEQ; vb=view_body; oi= lock_inv
-      -> { vh with lock_formula = (fst vb); lock_invariant = oi; lock_try_case_inference = (snd vb) } ]];
-
-lock_inv:
-  [[`INV; dc=disjunctive_constr; ob=opt_branches -> (dc,ob)
-   |`INV; h=ho_fct_header -> (F.mkTrue top_flow no_pos, [])]]; (*TO CHECK: top_flow*)
-
-lock_header:
-  [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
-      let cids, anns = List.split l in
-      let cids_t, br_labels = List.split cids in
-      let _, cids = List.split cids_t in
-      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
-      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
-      (* else *)
-        let modes = get_modes anns in
-        { lock_name = vn;
-          lock_data_name = "";
-          lock_vars = (* List.map fst *) cids;
-          (* lock_frac_var = empty_iperm; *)
-          lock_labels = br_labels;
-          lock_modes = modes;
-          lock_typed_vars = cids_t;
-          lock_pt_by_self  = [];
-          lock_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          lock_invariant = (F.mkTrue top_flow (get_pos_camlp4 _loc 1), []);
-          lock_try_case_inference = false;
-			}]];
 
  (********** Views **********)
 
@@ -1280,7 +1247,6 @@ hprogn:
       let global_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
-      let lock_defs = ref ([] : lock_decl list) in
 	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
 	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -1292,7 +1258,6 @@ hprogn:
           | Data ddef -> data_defs := ddef :: !data_defs
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
-          | Lock ldef -> lock_defs := ldef :: !lock_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
@@ -1316,7 +1281,6 @@ hprogn:
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
-      prog_lock_decls = !lock_defs;
       prog_rel_decls = !rel_defs; (* An Hoa *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
@@ -1338,7 +1302,6 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
-   | l=lock_decl; `SEMICOLON -> Lock l
    | h=hopred_decl-> Hopred h ]];
 
    

@@ -168,8 +168,7 @@ module Make (Token : SleekTokenS)
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
    ("perm",PERM);
- 	 ("pred", PRED);
- 	 ("lock_pred", LPRED);
+	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
    ("raise", RAISE);

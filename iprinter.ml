@@ -654,11 +654,6 @@ let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant) ^ " view_data_name: " ^ v.view_data_name)                    (* incomplete *)
 ;;
 
-(* pretty printig for lock declaration *)
-let string_of_lock_decl v = v.lock_name ^ "<" ^ (concatenate_string_list v.lock_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.lock_formula) ^ " inv " ^ (string_of_formula (fst v.lock_invariant) ^ " lock_data_name: " ^ v.lock_data_name)                    (* incomplete *)
-;;
-
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^

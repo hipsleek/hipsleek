@@ -1744,48 +1744,6 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
-(* pretty printing for a lock *)
-let pr_lock_decl v =
-  pr_mem:=false;
-  (* let f bc = *)
-  (*   match bc with *)
-  (*     | None -> () *)
-  (*     | Some (s1,(s3,s2)) ->  *)
-  (*           pr_vwrap "base case: " *)
-  (*               (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) () *)
-  (* in *)
-  fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("lock "^v.lock_name) pr_typed_spec_var v.lock_vars; fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.lock_formula; 
-  pr_vwrap  "inv: "  pr_formula (fst v.lock_user_inv);
-  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.lock_un_struc_formula;
-  (* pr_vwrap  "xform: " pr_mix_formula (fst v.lock_x_formula); *)
-  (* pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.lock_is_rec); *)
-  pr_vwrap  "lock_data_name: " fmt_string v.lock_data_name;
-  pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.lock_pt_by_self);
-  pr_vwrap  "materialized vars: " pr_mater_prop_list v.lock_materialized_vars;
-  pr_vwrap  "addr vars: " pr_list_of_spec_var v.lock_addr_vars;
-  pr_vwrap  "uni_vars: " fmt_string (string_of_spec_var_list v.lock_uni_vars);
-  pr_vwrap  "bag of addr: " pr_list_of_spec_var v.lock_baga;
-  (* (match v.lock_raw_base_case with  *)
-  (*   | None -> () *)
-  (*   | Some s -> pr_vwrap  "raw base case: " pr_formula s);   *)
-  (* f v.lock_base_case; *)
-  (* pr_vwrap  "lock_complex_inv: " (pr_opt pr_mix_formula_branches) v.lock_complex_inv; *)
-  (* pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.lock_prune_branches; *)
-  (* pr_vwrap  "prune conditions: " pr_case_guard v.lock_prune_conditions; *)
-  (* pr_vwrap  "prune baga conditions: "  *)
-  (*   (fun c-> fmt_string  *)
-  (*       (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.lock_prune_conditions_baga; *)
-  (* let i = string_of_int(List.length v.lock_prune_invariants) in *)
-  (* pr_vwrap  ("prune invs:"^i^":") (\* (fun c-> pr_seq "," (fun (c1,(ba,c2))->  *\) *)
-  (*     (\* let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in *\) *)
-  (*     (\* let b = string_of_spec_var_list ba in *\) *)
-  (*     (\* let d = String.concat ";" (List.map string_of_b_formula c2) in *\) *)
-  (*     (\* fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) *\) pr_prune_invariants v.lock_prune_invariants; *)
-  fmt_close_box ();
-  pr_mem:=true
-
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
       (fun c-> (fun (c1,c2)-> 
@@ -2553,7 +2511,6 @@ Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_view_decl := string_of_view_decl;
-Cast.print_lock_decl := string_of_lock_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
 print_coerc_decl_list := string_of_coerc_decl_list;;

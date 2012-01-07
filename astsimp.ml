@@ -6956,14 +6956,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
 	  { c with Iast.view_formula = 	wf;}) tmp_views in
   (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
-  let tmp_locks = (* order_views *) prog.I.prog_lock_decls in
-  let tmp_locks = List.map (fun c-> 
-	  let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.lock_vars ) in
-	  let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.lock_vars ) in
-	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.lock_formula false false [] in
-	  { c with Iast.lock_formula = 	wf;}) tmp_locks in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
-  let prog = {prog with Iast.prog_lock_decls = tmp_locks} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
@@ -6972,7 +6965,6 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   {  Iast.prog_data_decls = cdata;
   Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
   Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
-  Iast.prog_lock_decls = tmp_locks;
   Iast.prog_view_decls = tmp_views;
   Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
   Iast.prog_axiom_decls = prog.Iast.prog_axiom_decls; (* [4/10/2011] An Hoa TODO implement*)
