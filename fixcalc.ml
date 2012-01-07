@@ -247,14 +247,6 @@ let rec get_rel_vars pf = match pf with
   | CP.Forall (_,f,_,_) -> get_rel_vars f
   | CP.Exists (_,f,_,_) -> get_rel_vars f
 
-let rec get_RelForm pf = match pf with
-  | CP.BForm (bf,_) -> if CP.is_RelForm pf then [pf] else []
-  | CP.And (f1,f2,_) -> get_RelForm f1 @ get_RelForm f2
-  | CP.Or (f1,f2,_,_) -> get_RelForm f1 @ get_RelForm f2
-  | CP.Not (f,_,_) -> get_RelForm f
-  | CP.Forall (_,f,_,_) -> get_RelForm f
-  | CP.Exists (_,f,_,_) -> get_RelForm f
-
 let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)
   | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->
     if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None
@@ -296,7 +288,7 @@ let propagate_fml rcase bcase =
 let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
   let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
-  let rels = get_RelForm rcase_orig in
+  let rels = CP.get_RelForm rcase_orig in
   let rels = List.map (fun r -> arr_para_order r rel ante_vars) rels in
   let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in
   let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
