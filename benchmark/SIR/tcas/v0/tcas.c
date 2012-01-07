@@ -57,9 +57,9 @@ void initialize(ref int[] Positive_RA_Alt_Thresh)
     Positive_RA_Alt_Thresh[3] = 740;
 }
 
-int ALIM (ref int[] arr,  int i)
+int ALIM (int[] arr,  int i)
  requires  dom(arr, 0, 3) & 0<=i<=3
- ensures  arr'=arr & res=arr[i];
+ ensures   res=arr[i];
 {
  int k =  arr[i];
  return k;
@@ -77,7 +77,7 @@ int Inhibit_Biased_Climb ()
 }
 
 bool Non_Crossing_Biased_Climb(ref int [] arr)
-  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
+  requires dom(arr,0,3) & Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
  case {
   (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation)) -> case {
      Other_Tracked_Alt < Own_Tracked_Alt -> case {
@@ -130,7 +130,7 @@ bool Non_Crossing_Biased_Climb(ref int [] arr)
 }
 
 bool Non_Crossing_Biased_Descend(ref int [] arr)
-  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
+  requires dom(arr,0,3) & Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
 case {
    (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation)) -> case {
        Other_Tracked_Alt < Own_Tracked_Alt-> case {
@@ -204,7 +204,7 @@ case {
 }
 
 int alt_sep_test(ref int[] arr)
-  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
+  requires dom(arr,0,3) & Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
  case {
   (High_Confidence & Own_Tracked_Alt_Rate <= 600 & Cur_Vertical_Sep > 600) -> case {
     (((Other_Capability = 1)& Two_of_Three_Reports_Valid & Other_RAC = 0) | Other_Capability != 1) -> case {
