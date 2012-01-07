@@ -6,10 +6,9 @@ data Cell2{
 pred cellInv2<> == self::Cell2<#,v> & v>=0
   inv true.
 
-/*
-declare_lock LOCKB<> == self::Cell2<_,#>
-  inv self::cellInv2<>;
-*/
+pred LOCKB<> == self::cellInv2<> // self::Cell2<_,#>
+  inv self!=null
+  inv_lock self::cellInv2<>.
 
 checkentail x::Cell2<a,b> |- x::Cell2<x1,#> * x::Cell2<#,x2>.
 print residue. //valid

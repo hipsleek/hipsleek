@@ -178,7 +178,8 @@ let process_pred_def pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def pdef = 
-  Gen.Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
+  let pr = Iprinter.string_of_view_decl in
+  Gen.Debug.no_1 "process_pred_def" pr pr_no process_pred_def pdef
 
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
@@ -187,7 +188,15 @@ let process_pred_def_4_iast pdef =
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
-		let new_pdef = {pdef with Iast.view_formula = wf} in
+        let inv_lock = pdef.I.view_inv_lock in
+        let inv_lock =
+          (match inv_lock with
+            | None -> None
+            | Some f ->
+                let new_f = AS.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
+                Some new_f)
+        in
+		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
@@ -195,7 +204,8 @@ let process_pred_def_4_iast pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def_4_iast pdef = 
-  Gen.Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
+  let pr = Iprinter.string_of_view_decl in
+  Gen.Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
 
 let convert_pred_to_cast () = 

@@ -288,7 +288,7 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
+    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid   ;
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
@@ -300,7 +300,7 @@ let rec string_of_h_formula = function
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
           ((string_of_id xid)
-      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
+      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 
@@ -651,7 +651,7 @@ let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant) ^ " view_data_name: " ^ v.view_data_name)                    (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name)                    (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
