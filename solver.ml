@@ -16,8 +16,7 @@ open Perm
 open Mcpure_D
 open Mcpure
 
-open Partial
-
+module PF = Partial
 module Inf = Infer
 module CP = Cpure
 module PR = Cprinter
@@ -6091,8 +6090,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 			  let new_l_args,new_r_args = List.split new_args in
 			  (* let _ = print_endline ("[do_match] cancelled lhs node = { " ^ (PR.string_of_spec_var_list new_l_args) ^ " } ==> " ^ (if CF.is_empty new_l_args then "empty" else "add to lhs")) in *)
 			  (* let _ = print_endline ("[do_match] cancelled rhs node = { " ^ (PR.string_of_spec_var_list new_r_args) ^ " } ==> " ^ (if CF.is_empty new_r_args then "empty" else "add to rhs")) in *)
-			  let new_l_holes = CF.compute_holes_list new_l_args in
-			  let new_r_holes = CF.compute_holes_list new_r_args in
+			  let new_l_holes = PF.compute_holes_list new_l_args in
+			  let new_r_holes = PF.compute_holes_list new_r_args in
 			  (* let _ = print_endline ("[do_match] lhs holes = { " ^ (String.concat "," (List.map string_of_int new_l_holes)) ^ " }") in *)
 			  (* let _ = print_endline ("[do_match] rhs holes = { " ^ (String.concat "," (List.map string_of_int new_r_holes)) ^ " }") in *)
 			  (* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)

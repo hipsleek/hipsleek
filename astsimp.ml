@@ -21,6 +21,7 @@ module MCP = Mcpure
 module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
+module PF = Partial (* partial fields *)
 
 
 
@@ -4103,7 +4104,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   let cf = helper f0 in
   (* let _ = print_endline ("[trans_formula] (bf CF.merge_partial_heaps) output = " ^ (Cprinter.string_of_formula cf)) in *)
   (*TO CHECK: temporarily disabled*) 
-  let cf = CF.merge_partial_heaps cf in
+  let cf = PF.merge_partial_heaps cf in
   (* let _ = print_endline ("[trans_formula] (af CF.merge_partial_heaps) output = " ^ (Cprinter.string_of_formula cf)) in *)
   cf
 
@@ -4160,26 +4161,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 				(* An Hoa : The rest are copied from the original code with modification to account for the holes *)
 				let labels = List.map (fun _ -> "") exps in
 				let hvars = match_exp (List.combine exps labels) pos in
-				(* [Internal] Create a list [x,x+1,...,x+n-1] *)
-				let rec first_naturals n x = 
-				  if n = 0 then [] 
-				  else x :: (first_naturals (n-1) (x+1)) in
-				(* [Internal] Extends hvars with holes and collect the list of holes! *)
-				let rec extend_and_collect_holes vs offset num_ptrs =
-				  let temp = first_naturals num_ptrs 0 in
-				  (* let _ = print_endline ("Testing code : " ^ (String.concat "," (List.map string_of_int temp))) in *)
-				  let numargs = List.length vs in
-				  let holes = List.fold_left (fun l i -> let d = i - offset in
-				  if (d < 0 || d >= numargs) then List.append l [i] else l)
-					[] temp	in
-				  let newvs = List.map (fun i -> if (List.mem i holes) then 
-					CP.SpecVar (UNK,"#",Unprimed) 
-				  else List.nth vs (i - offset)) temp in
-				  (* let _ = print_endline ("holes = { " ^ (String.concat "," (List.map string_of_int holes)) ^ " }") in *)
-				  (* let _ = print_endline ("vars = { " ^ (String.concat "," (List.map Cprinter.string_of_spec_var newvs)) ^ " }") in *)
-				  (newvs,holes) in
+				(* (\* [Internal] Create a list [x,x+1,...,x+n-1] *\) *)
+				(* let rec first_naturals n x =  *)
+				(*   if n = 0 then []  *)
+				(*   else x :: (first_naturals (n-1) (x+1)) in *)
+				(* (\* [Internal] Extends hvars with holes and collect the list of holes! *\) *)
+				(* let rec extend_and_collect_holes vs offset num_ptrs = *)
+				(*   let temp = first_naturals num_ptrs 0 in *)
+				(*   (\* let _ = print_endline ("Testing code : " ^ (String.concat "," (List.map string_of_int temp))) in *\) *)
+				(*   let numargs = List.length vs in *)
+				(*   let holes = List.fold_left (fun l i -> let d = i - offset in *)
+				(*   if (d < 0 || d >= numargs) then List.append l [i] else l) *)
+				(* 	[] temp	in *)
+				(*   let newvs = List.map (fun i -> if (List.mem i holes) then  *)
+				(* 	CP.SpecVar (UNK,"#",Unprimed)  *)
+				(*   else List.nth vs (i - offset)) temp in *)
+				(*   (\* let _ = print_endline ("holes = { " ^ (String.concat "," (List.map string_of_int holes)) ^ " }") in *\) *)
+				(*   (\* let _ = print_endline ("vars = { " ^ (String.concat "," (List.map Cprinter.string_of_spec_var newvs)) ^ " }") in *\) *)
+				(*   (newvs,holes) in *)
 				(* [Internal] End of function <extend_and_collect_holes> *)
-				let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
+				let hvars, holes = PF.extend_and_collect_holes hvars field_offset num_ptrs in
                 (*TO CHECK: for correctness*)
                 (*LDK: linearize perm permission as a spec var*)
                 let permvar = (match perm with
@@ -4252,11 +4253,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                         let hvars = match_exp (List.combine exps labels) pos in
                         let new_v = CP.SpecVar (Named c, v, p) in
 						(* An Hoa : find the holes here! *)
-						let rec collect_holes vars n = match vars with
-						  | [] -> []
-						  | x::t -> let th = collect_holes t (n+1) in 
-							(match x with 
-							  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in
+						(* let rec collect_holes vars n = match vars with *)
+						(*   | [] -> [] *)
+						(*   | x::t -> let th = collect_holes t (n+1) in  *)
+						(* 	(match x with  *)
+						(* 	  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in *)
                         (*LDK: linearize perm permission as a spec var*)
                         let permvar = match perm with 
                           | None -> None
@@ -4266,7 +4267,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                                 let permvars = match_exp (List.combine perms permlabels) pos in
                                 Some (List.nth permvars 0) 
 						in
-						let holes = collect_holes hvars 0 in
+						let holes = PF.collect_holes hvars 0 in
                         let new_h = CF.DataNode {
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
