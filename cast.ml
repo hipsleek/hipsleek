@@ -1605,4 +1605,28 @@ let callgraph_of_prog prog : IG.t =
   let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
   List.fold_right (ex_args addin_callgraph_of_proc) prog.prog_proc_decls cg
 
+(* Termination: Add the call number to specifications
+ * if the option --dis-call-num is not enabled (default) *)
+let rec add_term_call_num_prog (cp: prog_decl) : prog_decl =
+  if !Globals.dis_call_num then cp 
+  else 
+    { cp with
+      prog_proc_decls = List.map (fun proc ->
+        add_term_call_num_proc proc
+      ) cp.prog_proc_decls
+    }
+
+(* Do not add call number into the specification
+ * of a primitive call *)    
+and add_term_call_num_proc (proc: proc_decl) : proc_decl =
+  let _ = print_endline (proc.proc_name ^ ": " ^ (string_of_bool
+  proc.proc_is_main) ^ "\n") in
+  if not (proc.proc_is_main) then proc
+  else 
+    { proc with
+      proc_static_specs = 
+        F.add_term_call_num_struc proc.proc_static_specs proc.proc_call_order;
+      proc_dynamic_specs = 
+        F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
+    }
 

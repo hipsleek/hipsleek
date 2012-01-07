@@ -7400,3 +7400,46 @@ and norm_ext_with_lexvar ext_f is_primitive =
       let n_cont = norm_ext_with_lexvar cont is_primitive in
       EInfer { ef with formula_inf_continuation = n_cont }
 
+(* Termination: Add the call number if the option
+ * --dis-call-num is not enabled (default) *)
+let rec add_term_call_num_struc struc_f call_num =
+  List.map (fun ef -> add_term_call_num_ext ef call_num) struc_f
+
+and add_term_call_num_ext ext_f call_num =
+  match ext_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl  = List.map (fun (c, sf) ->
+        (c, add_term_call_num_struc sf call_num )) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ({
+      formula_ext_base = base;
+      formula_ext_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_struc cont call_num in
+      let n_base = add_term_call_num_formula base call_num in
+      EBase { ef with
+        formula_ext_base = n_base;
+        formula_ext_continuation = n_cont
+      }
+  | EAssume _ -> ext_f
+  | EVariance ({ formula_var_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_ext cont call_num in
+      EVariance { ef with formula_var_continuation = n_cont }
+  | EInfer ({ formula_inf_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_ext cont call_num in
+      EInfer { ef with formula_inf_continuation = n_cont }
+
+and add_term_call_num_formula f call_num = 
+  match f with
+  | Base ({ formula_base_pure = p } as base) ->
+      let p = MCP.pure_of_mix p in
+      let n_p = CP.add_term_call_num_pure p call_num in
+      Base { base with formula_base_pure = MCP.mix_of_pure n_p }
+  | Exists ({ formula_exists_pure = p } as ex) ->
+      let p = MCP.pure_of_mix p in
+      let n_p = CP.add_term_call_num_pure p call_num in
+      Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }
+  | Or ({ formula_or_f1 = f1; formula_or_f2 = f2 } as orf) ->
+      let n_f1 = add_term_call_num_formula f1 in
+      let n_f2 = add_term_call_num_formula f2 in
+      Or { orf with formula_or_f1 = f1; formula_or_f2 = f2 }
+

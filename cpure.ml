@@ -6926,3 +6926,40 @@ let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (type_of_spec_var v) != RelT) vs
 
+(* Termination: Add the call number if the option
+ * --dis-call-num is not enabled (default) *)
+let rec add_term_call_num_pure f call_num =
+  match f with
+  | BForm (bf, lbl) ->
+      let n_bf = add_term_call_num_b_formula bf call_num in
+      BForm (n_bf, lbl)
+  | And (f1, f2, pos) ->
+      let n_f1 = add_term_call_num_pure f1 call_num in
+      let n_f2 = add_term_call_num_pure f2 call_num in
+      And (n_f1, n_f2, pos)
+  | Or (f1, f2, lbl, pos) ->
+      let n_f1 = add_term_call_num_pure f1 call_num in
+      let n_f2 = add_term_call_num_pure f2 call_num in
+      Or (n_f1, n_f2, lbl, pos)
+  | Not (f, lbl, pos) ->
+      let n_f = add_term_call_num_pure f call_num in
+      Not (n_f, lbl, pos)
+  | Forall (sv, f, lbl, pos) ->
+      let n_f = add_term_call_num_pure f call_num in
+      Forall (sv, n_f, lbl, pos)
+  | Exists (sv, f, lbl, pos) ->
+      let n_f = add_term_call_num_pure f call_num in
+      Exists (sv, n_f, lbl, pos)
+
+and add_term_call_num_b_formula bf call_num =
+  let (pf, ann) = bf in
+  let n_pf = match pf with
+    | LexVar (t_ann, ml, il, pos) ->
+        let cn = mkIConst call_num pos in
+        LexVar (t_ann, cn::ml, il, pos)
+    | _ -> pf
+  in (n_pf, ann)
+
+
+
+

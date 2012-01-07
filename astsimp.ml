@@ -1073,9 +1073,12 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in        
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
-          let cprog4 = (add_pre_to_cprog cprog3) in
-	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	      let c = (mark_rec_and_call_order cprog5) in 
+          (*let cprog4 = (add_pre_to_cprog cprog3) in*)
+	      (*let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in*)
+        let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog3 else cprog3 in
+	      let c = (mark_rec_and_call_order cprog5) in
+        let c = Cast.add_term_call_num_prog c in
+        let c = (add_pre_to_cprog c) in
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -1924,7 +1927,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let is_primitive = not (proc.I.proc_is_main) in
   let static_specs_list = CF.norm_struc_with_lexvar static_specs_list is_primitive in
   let dynamic_specs_list = CF.norm_struc_with_lexvar dynamic_specs_list is_primitive in
-
+  
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
 	let r_int = exlist # get_hash abnormal_flow in
 	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -2699,7 +2702,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_icall_receiver_type = crecv_t;
                       C.exp_icall_method_name = mingled_mn;
                       C.exp_icall_arguments = arg_vars;
-					  C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                      (* Termination: Default value - 
+                       * it will be set later in trans_prog
+                       * by mark_rec_and_call_order *)
+                      C.exp_icall_is_rec = false;                       
                       C.exp_icall_path_id = pi;
                       C.exp_icall_pos = pos;} in
                   let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2750,7 +2756,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_scall_type = ret_ct;
                       C.exp_scall_method_name = mingled_mn;
                       C.exp_scall_arguments = arg_vars;
-					  C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                      (* Termination: Default value - 
+                       * it will be set later in trans_prog
+                       * by mark_rec_and_call_order *)
+                      C.exp_scall_is_rec = false; 
                       C.exp_scall_pos = pos;
                       C.exp_scall_path_id = pi; } in
                   let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -7706,7 +7715,8 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
       
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
-	  
+
+(* Termination *)			  
 (* Recursive call and call order detection *)
 (* irf = is_rec_field *)
 and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
@@ -7777,7 +7787,9 @@ and scc_sort (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
 
 and irf_traverse_prog (cp: Cast.prog_decl) (scc_list: Cast.IG.V.t list list) : Cast.prog_decl = 
   {cp with
-	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+	  Cast.prog_proc_decls = List.map (fun proc -> 
+			irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)
+		) cp.Cast.prog_proc_decls
   }
 
 and irf_traverse_proc (cp: Cast.prog_decl) (proc: Cast.proc_decl) (scc: Cast.IG.V.t list) : Cast.proc_decl =
@@ -7864,7 +7876,7 @@ and irf_traverse_exp (cp: Cast.prog_decl) (exp: Cast.exp) (scc: Cast.IG.V.t list
   List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
   cg
 *)
-		  
+
 and slicing_label_inference_program (prog : I.prog_decl) : I.prog_decl =
   {prog with
 	  I.prog_view_decls = List.map (fun v -> slicing_label_inference_view v) prog.I.prog_view_decls;}
@@ -7982,3 +7994,5 @@ and fm_main g lv =
   let lp = [lp1] @ [lp2] in
   let unlocked_v = List.map (fun v -> (v, fm_gain g (fm_find_partition lp v) v)) lv in
   helper g lp (unlocked_v, [])
+
+
