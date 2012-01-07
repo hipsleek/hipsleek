@@ -241,6 +241,7 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 		     exp_bool_lit_pos : loc }
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
+               exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
 		       exp_call_nrecv_pos : loc }

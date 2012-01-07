@@ -1972,11 +1972,13 @@ let rec string_of_exp = function
 		        | _ -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
 	exp_scall_method_name = id;
+	exp_scall_lock = lock;
 	exp_scall_arguments = idl;
 	exp_scall_path_id = pid;
 	exp_scall_pos = l;
 	exp_scall_is_rec = is_rec}) ->
-        string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
+      let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
+        string_of_control_path_id_opt pid (id ^ lock_info ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
   | Seq ({exp_seq_type = _;
 	exp_seq_exp1 = e1;
 	exp_seq_exp2 = e2;

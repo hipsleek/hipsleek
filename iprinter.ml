@@ -525,9 +525,11 @@ let rec string_of_exp = function
             else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
           else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
+                exp_call_nrecv_lock = lock;
 				exp_call_nrecv_path_id = pid;
 				exp_call_nrecv_arguments = el})-> 
-          string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+          let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
+          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")")
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
 			   exp_call_recv_path_id = pid;

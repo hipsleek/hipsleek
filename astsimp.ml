@@ -2345,6 +2345,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	  	    let r = List.length index in
 		    let new_e = I.CallNRecv {
 			    I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+                I.exp_call_nrecv_lock = None;
 			    I.exp_call_nrecv_arguments = a :: index;
 			    I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
 			    I.exp_call_nrecv_pos = pos;} in 
@@ -2505,6 +2506,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						      let new_rhs = I.CallNRecv {
 			                      I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
 							      (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+                                  I.exp_call_nrecv_lock = None;
 			                      I.exp_call_nrecv_arguments = rhs :: a :: index;
 			                      I.exp_call_nrecv_path_id = pid;
 			                      I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
@@ -2602,6 +2604,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               let b_call = get_binop_call new_op in
               let new_e = I.CallNRecv {
                   I.exp_call_nrecv_method = b_call;
+                  I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1_prim ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                   I.exp_call_nrecv_pos = pos;}in 
@@ -2610,6 +2613,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               (let b_call = get_binop_call b_op in
               let new_e = I.CallNRecv {
                   I.exp_call_nrecv_method = b_call;
+                  I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                   I.exp_call_nrecv_pos = pos; } in 
@@ -2731,6 +2735,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		    )
       | I.CallNRecv {
             I.exp_call_nrecv_method = mn;
+            I.exp_call_nrecv_lock = lock;
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
@@ -2785,6 +2790,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           let call_e = C.SCall {
                               C.exp_scall_type = ret_ct;
                               C.exp_scall_method_name = mingled_mn;
+                              C.exp_scall_lock = None;
                               C.exp_scall_arguments = mingled_forked_mn::arg_vars;
 					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                               C.exp_scall_pos = pos;
@@ -2821,6 +2827,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   let call_e = C.SCall {
                       C.exp_scall_type = ret_ct;
                       C.exp_scall_method_name = mingled_mn;
+                      C.exp_scall_lock = lock;
                       C.exp_scall_arguments = arg_vars;
 					  C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                       C.exp_scall_pos = pos;
@@ -2977,6 +2984,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			(* simply translate "new int[n]" into "aalloc___(n)" *)
 			let newie = I.CallNRecv {
 				I.exp_call_nrecv_method = array_allocate_call;
+                I.exp_call_nrecv_lock = None;
 				I.exp_call_nrecv_arguments = [List.hd dims];
 				I.exp_call_nrecv_path_id = None;
 				I.exp_call_nrecv_pos = pos; }
@@ -3087,6 +3095,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let u_call = "not___" in
                     let call_e = I.CallNRecv {
                         I.exp_call_nrecv_method = u_call;
+                        I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = [ e ];
                         I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
@@ -3286,6 +3295,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     I.exp_seq_exp1 = w_body_1;                     
                     I.exp_seq_exp2 = I.CallNRecv {
                         I.exp_call_nrecv_method = w_name;
+                        I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = w_args;
                         I.exp_call_nrecv_pos = pos;
                         I.exp_call_nrecv_path_id = pi; };
@@ -3322,6 +3332,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_loc = pos; } in
             let temp_call =  I.CallNRecv {
                 I.exp_call_nrecv_method = w_name;
+                I.exp_call_nrecv_lock = None;
                 I.exp_call_nrecv_arguments = w_args;
                 I.exp_call_nrecv_pos = pos;
                 I.exp_call_nrecv_path_id = pi; } in

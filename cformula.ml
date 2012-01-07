@@ -6893,10 +6893,10 @@ and merge_partial_h_formula_x f =
 	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in
 	(* Partition the data nodes into groups of same pointer *)
 	let dnodespart = List.map (fun x -> List.filter (fun y -> CP.eq_spec_var (get_ptr_from_data y) x) dns) dnrootptrs in
-	let _ = print_endline ("\n[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in
+	(* let _ = print_endline ("\n[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in *)
 	(* Merge the data nodes in each group *)
 	let merged_data_nodes = List.map merge_data_nodes_common_ptr dnodespart in
-	let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in
+	(* let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in *)
 	(* Combine the parts to get the result *)
 	let f = combine_star_h (List.append merged_data_nodes vns) in
 		f
@@ -6970,7 +6970,7 @@ and merge_two_nodes dn1 dn2 =
 								let svname = CP.name_of_spec_var sv in
 									svname.[0] = '#' in
 							(* [Internal] Select the non-hole spec_var. *)
-                            let _ = print_endline ("merge_two_nodes: \n ### args1 = " ^ (string_of_spec_var_list args1) ^ "\n ### args2 = " ^ (string_of_spec_var_list args2)) in
+                            (* let _ = print_endline ("merge_two_nodes: \n ### args1 = " ^ (string_of_spec_var_list args1) ^ "\n ### args2 = " ^ (string_of_spec_var_list args2)) in *)
 							let combine_vars sv1 sv2 =
 								if (is_hole_specvar sv1) then (sv2,true) 
 								else if (is_hole_specvar sv2) then (sv1,true)

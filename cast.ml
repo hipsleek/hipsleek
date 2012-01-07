@@ -253,6 +253,7 @@ and exp_return = { exp_return_type : typ;
 (* static call *)
 and exp_scall = { exp_scall_type : typ;
    exp_scall_method_name : ident;
+   exp_scall_lock : ident option;
     exp_scall_arguments : ident list;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)

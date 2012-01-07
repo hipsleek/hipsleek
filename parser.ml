@@ -243,6 +243,7 @@ let peek_try =
      (fun strm ->
        match Stream.npeek 2 strm with
           | [_; OPAREN,_] -> ()
+          | [_; OSQUARE,_] -> ()
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -839,8 +840,9 @@ simple_heap_constr:
 (*LDK: parse optional fractional permission, default = 1.0*)
 opt_perm: [[t = OPT perm -> t ]];
 
-(*LDK: for fractionlap permission, we expect cexp*)
+(*LDK: for fractionl permission, we expect cexp*)
 perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
+
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
 (*general_h_args:
@@ -1604,7 +1606,7 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_ca
 
 expression_statement: [[(* t=statement_expression -> t *)
         t= invocation_expression -> t
-      | t=object_creation_expression -> t
+      | t= object_creation_expression -> t
       | t= post_increment_expression -> t
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
@@ -1879,11 +1881,17 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | `IDENTIFIER id; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
+                exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
                 exp_call_nrecv_path_id = None;
-                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }]];
+                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
+  ]];
+
+opt_lock_info: [[t = OPT lock_info -> t ]];
+
+lock_info: [[`OSQUARE; t = id; `CSQUARE -> t ]];
 
 qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 

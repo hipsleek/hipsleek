@@ -220,6 +220,7 @@ let rec find_read_write_global_var
         in
         let args = List.tl e.I.exp_call_nrecv_arguments in
         let new_e = I.CallNRecv {
+            I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
 		    I.exp_call_nrecv_arguments = args;
 		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;

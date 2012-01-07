@@ -47,6 +47,24 @@ void main()
 }
 
 =======================================
+-------------------------------------------------
+  init[LOCKA](self) -->
+    requires self::lock<_ > //partial field
+    ensures self::LOCKA(1)<>
+
+  finalize(self) -->
+    requires self::LOCKA(1)<>
+    ensures self::lock<_>
+
+  acquire(self) -->
+    requires self::LOCKA(f)<n>
+    ensures  self::LOCKA(f)<n> * self::cellInv<>
+
+  release(self) -->
+    requires self::LOCKA(f)<> * self::CellInv<>
+    ensures  self::LOCKA(f)<>
+-------------------------------------------------
+
 data cell{
   int val;
 }
@@ -55,8 +73,12 @@ data lock{
   int lck;
 }
 
-declare_lock LOCKA<x> == self::lock<_>
-  inv x::cell<v> & v>=0;
+pred cellInv<> == x::cell<v> & v>=0
+  inv self!=null;
+
+pred LOCKA<x> == self::lock<_>
+  inv self!=null
+  inv_lock x::cellInv<>;
 
 void main()
   requires true
