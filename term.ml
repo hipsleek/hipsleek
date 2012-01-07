@@ -219,12 +219,13 @@ let one_exp = [CP.mkIConst 1 no_pos]
 let norm_term_measures_by_length src dst =
   let sl = List.length src in
   let dl = List.length dst in
-  if dl==0 && sl>0 then None
-  else
-    if (sl = dl) then Some (src, dst)
-    else if (sl > dl) then
-      Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
-    else Some (src, Gen.BList.take sl dst)
+  (* if dl==0 && sl>0 then None *)
+  (* else *)
+  if (sl = dl) then Some (src, dst)
+  else if (sl > dl) then
+    if dl=0 then None
+    else Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
+  else Some (src, Gen.BList.take sl dst)
 
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let mf_p = MCP.pure_of_mix mf in

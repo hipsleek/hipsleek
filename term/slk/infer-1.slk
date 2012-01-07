@@ -19,3 +19,7 @@ print residue.
 //(5)
 infer[p1,p2] n=m-1 & Term[p1,n] |- Term[p2,m].
 print residue.
+
+//(6)
+infer[p1,p2,n,m] Term[p1,n] |- Term[p2,m].
+print residue.

@@ -38,3 +38,10 @@ case {
 	else
 		loop_2 (x+y, y+z, z);
 }
+
+/*
+Termination checking result:
+(17)->(27) (ERR) Term[3; 0 - y]->Loop
+ x>0 & z>0 & y<0
+         x+y(negative),y+z,z(+ve)
+*/
