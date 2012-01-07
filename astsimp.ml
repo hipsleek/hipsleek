@@ -1307,12 +1307,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   (* let _ = vdef.I.view_typed_vars <- [] in (\* removing the typed arguments *\) *)
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let inv_lock = vdef.I.view_inv_lock in
-  let _ = print_endline ("LDK") in
   let inv_lock = 
     (match inv_lock with
       | None -> None
       | Some f -> 
-          let new_f = trans_formula prog true (self :: vdef.I.view_vars) false f stab false in
+          let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in (*sep_collect should be = true*)
           Some new_f)
   in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 

@@ -198,7 +198,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
                         h_formula_data_arguments : CP.spec_var list;
-						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *)
+						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -6877,6 +6877,11 @@ let rec merge_partial_heaps f = match f with
 					Exists { fe with formula_exists_heap = nh }
 
 and merge_partial_h_formula f = 
+  Gen.Debug.no_1 "merge_partial_h_formula" 
+      !print_h_formula !print_h_formula
+      merge_partial_h_formula_x f
+
+and merge_partial_h_formula_x f = 
 	(* let _ = print_endline ("[merge_partial_h_formula] input = { " ^ (!print_h_formula f) ^ " }") in *)
 	let sc = split_star_h f in
 	(* let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in *)
@@ -6888,10 +6893,10 @@ and merge_partial_h_formula f =
 	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in
 	(* Partition the data nodes into groups of same pointer *)
 	let dnodespart = List.map (fun x -> List.filter (fun y -> CP.eq_spec_var (get_ptr_from_data y) x) dns) dnrootptrs in
-	(* let _ = print_endline ("[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in *)
+	let _ = print_endline ("\n[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in
 	(* Merge the data nodes in each group *)
 	let merged_data_nodes = List.map merge_data_nodes_common_ptr dnodespart in
-	(* let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in *)
+	let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in
 	(* Combine the parts to get the result *)
 	let f = combine_star_h (List.append merged_data_nodes vns) in
 		f
@@ -6958,10 +6963,14 @@ and merge_two_nodes dn1 dn2 =
 						h_formula_data_pruning_conditions = pc2;
 						h_formula_data_pos = pos2 } -> 
 							(* [Internal] Check if a spec_var is a hole spec_var. *)
+                            (* TO DO: ??? Can not use spec_var name to tell whether it is a hole
+                            or not. It also depends on the positions stored in
+                            h_formula_data_holes *)
 							let is_hole_specvar sv = 
 								let svname = CP.name_of_spec_var sv in
 									svname.[0] = '#' in
 							(* [Internal] Select the non-hole spec_var. *)
+                            let _ = print_endline ("merge_two_nodes: \n ### args1 = " ^ (string_of_spec_var_list args1) ^ "\n ### args2 = " ^ (string_of_spec_var_list args2)) in
 							let combine_vars sv1 sv2 =
 								if (is_hole_specvar sv1) then (sv2,true) 
 								else if (is_hole_specvar sv2) then (sv1,true)
@@ -6969,6 +6978,7 @@ and merge_two_nodes dn1 dn2 =
 							in
 							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
 							let not_clashed = List.for_all (fun x -> x) not_clashes in
+                            let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 						                h_formula_data_derv = dr1; (*TO CHECK*)

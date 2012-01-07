@@ -376,6 +376,11 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
         h_formula_view_pos = pos}) ->
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
+            (*TO DO: Temporarily ignore LOCK*)
+            (match vdef.view_inv_lock with
+              | Some f -> 
+                  {mem_formula_mset =[]}
+              | None ->
             let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
  	        let new_mset = 
@@ -386,6 +391,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                 | Some ls -> 
                    lookup_view_baga_with_subs ls vdef from_svs to_svs) in
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
+            )
       | Hole _
       | HTrue
       | HFalse ->
@@ -418,7 +424,9 @@ and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_f
       = Gen.Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
   (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
 
+(*TO CHECK: merge_partial_heaps before xpure*)
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+  let h0 = merge_partial_h_formula h0 in
   if (!Globals.allow_imm) then 
     if (Perm.allow_perm ()) then 
       xpure_heap_symbolic_perm prog h0 which_xpure
@@ -2622,7 +2630,7 @@ and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_stat
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
   Gen.Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
-  	  
+
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
   let _ = reset_int2 () in
@@ -6791,9 +6799,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 tmp_a2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
+            let consumed_h =  (match rem_l_node with
+		      | HTrue | HFalse -> 
+                  l_node
+              | _ -> 
+                  (*TO DO: this may not be correct because we may also
+                  have to update the holes*)
+                  subst_one_by_one_h rho_0 r_node)
+            in
               let new_consumed = 
                 if not(isLend (get_imm r_node))
-                then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) mkStarH l_node estate.es_heap pos 
+                then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) mkStarH consumed_h estate.es_heap pos 
                 else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		          (*match rem_l_node with 
 		            | HTrue -> let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in mkStarH l_node estate.es_heap pos 

@@ -876,6 +876,7 @@ let rec pr_h_formula h =
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
 			(** [Internal] Replace the specvars at positions of holes with '-' **)
+        (*TO CHECK: this may hide some potential errors*)
         let perm_str = string_of_cperm perm in
 			let rec replace_holes svl hs n = 
 				if hs = [] then svl
@@ -896,6 +897,7 @@ let rec pr_h_formula h =
           pr_angle (c^perm_str) pr_spec_var svs ;
 	      pr_imm imm;
 	      pr_derv dr;
+          if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
