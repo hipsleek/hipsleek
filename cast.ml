@@ -1619,8 +1619,6 @@ let rec add_term_call_num_prog (cp: prog_decl) : prog_decl =
 (* Do not add call number into the specification
  * of a primitive call *)    
 and add_term_call_num_proc (proc: proc_decl) : proc_decl =
-  let _ = print_endline (proc.proc_name ^ ": " ^ (string_of_bool
-  proc.proc_is_main) ^ "\n") in
   if not (proc.proc_is_main) then proc
   else 
     { proc with

@@ -211,6 +211,10 @@ let find_lexvar_es (es: CF.entail_state) :
   | None -> raise LexVar_Not_found
   | Some (t_ann, el, il) -> (t_ann, el, il)
 
+let zero_exp = [CP.mkIConst 0 no_pos]
+ 
+let one_exp = [CP.mkIConst 1 no_pos] 
+
 (* Normalize the longer LexVar prior to the shorter one *)
 let norm_term_measures_by_length src dst =
   let sl = List.length src in
@@ -219,7 +223,7 @@ let norm_term_measures_by_length src dst =
   else
     if (sl = dl) then Some (src, dst)
     else if (sl > dl) then
-      Some (Gen.BList.take dl src, dst)
+      Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
     else Some (src, Gen.BList.take sl dst)
 
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =

@@ -3937,7 +3937,7 @@ and trans_var_safe (ve, pe) et stab pos =
     with Not_found ->   
         CP.SpecVar (et, ve, pe)
 
-and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula = 
+and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula = 
   let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:CF.struc_formula): CF.struc_formula =
     let rec helper (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:CF.ext_formula):CF.ext_formula=
       match f with
@@ -3963,11 +3963,12 @@ and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
-and add_pre_debug prog f = 
-  let r = add_pre prog f in
-  let _ = print_string ("add_pre input: "^(Cprinter.string_of_struc_formula f)^"\n") in
-  let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in  
-  r
+and add_pre prog f =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+(*   let _ = print_string ("add_pre input: "^(Cprinter.string_of_struc_formula f)^"\n") in *)
+(*   let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in   *)
+(*   r *)
       
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : IF.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): CF.struc_formula = 
