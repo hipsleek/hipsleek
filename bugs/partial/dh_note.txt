@@ -1,0 +1,48 @@
+To build a new xpure, I like to suggest the following.
+
+Say we have an object with
+three fields:
+
+data triple {
+    int fst;
+    int snd;
+    int th;
+}
+
+Partial fields are currently represented using:
+
+  v1::triple<v,#,#>
+  v2::triple<#,w,#>
+  v3::triple<#,#,z>
+
+However, we currently keep
+{v1,v2,v3} in the memset. I think
+to have a more accurate disjointness
+test for partial fields, we would need to use instead
+
+  {(v1,Some [1])
+  ,(V2,Some [2])
+  ,(v3, Some [3])}
+
+Then two partial fields of the
+form (v1,Some f1) and (v2,Some f2) are disjoint only if
+
+  (i) they are of different type
+or (ii) they are the same type
+        and f1/\f2 != {}
+
+In the case of full fields, such
+as v1::triple<v,w,z>, we will be
+using instead: {(v1,None)} which
+is automatically disjoint from
+all other ptrs.
+
+Given a memset, we will use a function (select_disjoint memset)
+to select all nodes that are
+definitely disjoint. These could
+then be mapped into distinct
+numbers or be placed as diffset
+by xpure.
+
+We can do this a little later; and to first
+do it through sleek first.

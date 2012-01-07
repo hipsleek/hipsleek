@@ -1,0 +1,39 @@
+data node {
+	int f1;
+	int f2;
+	int f3;
+	node f4;
+	node f5;
+}.
+
+// NOT WORKING
+checkentail  x::node<m,n,#,a,b> * y::node<m,n,#,#,#> 
+  |- x::node<m1,#,#,#,#> & a!=b & m=n.
+print residue. //should fail but VALID
+// BUG: why ante = false
+// REASON: consumed heap after MATCHING is not correct.
+// memset should be modifed to support partial fields
+
+/*
+xpure_heap_mem_enum@3
+xpure_heap_mem_enum inp1 : x::node<-,n,-,a,b>@M[Orig] * y::node<m_27,n_28,-,-,->@M[Orig] * 
+x::node<m,n,-,a,b>@M[Orig]
+xpure_heap_mem_enum inp2 :1
+xpure_heap_mem_enum@3 EXIT out : false# [[x,y,x]]
+
+// The consumed heap should be x::node<m,-,-,-,->@M[Orig] instead of x::node<m,n,-,a,b>@M[Orig]
+// We should have merged partial field nodes before xpure
+
+*/
+
+// NOT WORKING
+checkentail  x::node<#,f,#,#,#> * y::node<a,#,#,#,#> 
+  |- x=y.
+// BUGS: we can not say anything about this.
+//above should fail but proven as valid
+// BAGA needs to be refined
+
+
+
+
+
