@@ -812,6 +812,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                     (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
                         (CF.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                  (* Termination: The logical vars should not be renamed *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                     pre_free_vars prog.Cast.prog_logical_vars in 
                   (* free vars get to be substituted by fresh vars *)
