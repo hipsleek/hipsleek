@@ -16,6 +16,8 @@ open Perm
 open Mcpure_D
 open Mcpure
 
+open Partial
+
 module Inf = Infer
 module CP = Cpure
 module PR = Cprinter
