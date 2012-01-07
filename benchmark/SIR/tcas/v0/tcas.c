@@ -47,16 +47,17 @@ global bool Climb_Inhibit;		/* true/false */
 //#define DOWNWARD_RA 2
 
 void initialize(ref int[] Positive_RA_Alt_Thresh)
-  requires   dom(Positive_RA_Alt_Thresh, 0, 3)
+  requires dom(Positive_RA_Alt_Thresh, 0, 3)
     ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
                Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740;
+/*
 {
     Positive_RA_Alt_Thresh[0] = 400;
     Positive_RA_Alt_Thresh[1] = 500;
     Positive_RA_Alt_Thresh[2] = 640;
     Positive_RA_Alt_Thresh[3] = 740;
 }
-
+*/
 int ALIM (int[] arr,  int i)
  requires  dom(arr, 0, 3) & 0<=i<=3
  ensures   res=arr[i];
@@ -211,21 +212,21 @@ int alt_sep_test(ref int[] arr)
  (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation))-> case {
      Own_Tracked_Alt <= Other_Tracked_Alt -> ensures arr'= arr & res=0;
      Own_Tracked_Alt > Other_Tracked_Alt -> case {
-      Up_Separation >= arr[Alt_Layer_Value] ->  ensures arr'= arr & res=2;
-      Up_Separation < arr[Alt_Layer_Value] -> ensures arr'= arr & res=0;
+      Up_Separation >= arr[Alt_Layer_Value] ->  ensures res=2;
+      Up_Separation < arr[Alt_Layer_Value] -> ensures res=0;
     }
  }
  (!Climb_Inhibit & (Up_Separation > Down_Separation)) | (Climb_Inhibit & (Up_Separation +100> Down_Separation)) -> case {
    Own_Tracked_Alt < Other_Tracked_Alt -> case {
-      Down_Separation >= arr[Alt_Layer_Value] -> ensures arr'= arr & res=0;
-      Down_Separation < arr[Alt_Layer_Value] -> ensures arr'= arr & res=1;
+      Down_Separation >= arr[Alt_Layer_Value] -> ensures res=0;
+      Down_Separation < arr[Alt_Layer_Value] -> ensures res=1;
    }
-     Own_Tracked_Alt >= Other_Tracked_Alt -> ensures arr'= arr & res=0;
+     Own_Tracked_Alt >= Other_Tracked_Alt -> ensures res=0;
  }
  }
-  ((!Two_of_Three_Reports_Valid | Other_RAC != 0) & Other_Capability = 1) ->ensures arr'= arr & res = 4;
+  ((!Two_of_Three_Reports_Valid | Other_RAC != 0) & Other_Capability = 1) ->ensures res = 4;
   }
-   (!High_Confidence | Own_Tracked_Alt_Rate > 600 | Cur_Vertical_Sep <= 600) -> ensures arr'= arr & res = 4;
+   (!High_Confidence | Own_Tracked_Alt_Rate > 600 | Cur_Vertical_Sep <= 600) -> ensures res = 4;
 }
 {
     bool enabled, tcas_equipped, intent_not_known;
