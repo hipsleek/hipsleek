@@ -6951,12 +6951,16 @@ let rec add_term_call_num_pure f call_num =
       let n_f = add_term_call_num_pure f call_num in
       Exists (sv, n_f, lbl, pos)
 
+(* Only add call number to Term *)      
 and add_term_call_num_b_formula bf call_num =
   let (pf, ann) = bf in
   let n_pf = match pf with
     | LexVar (t_ann, ml, il, pos) ->
-        let cn = mkIConst call_num pos in
-        LexVar (t_ann, cn::ml, il, pos)
+        (match t_ann with
+          | Term -> 
+              let cn = mkIConst call_num pos in
+              LexVar (t_ann, cn::ml, il, pos)
+          | _ -> pf)
     | _ -> pf
   in (n_pf, ann)
 
