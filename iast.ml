@@ -22,6 +22,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_lock_decls : lock_decl list;
                    mutable prog_rel_decls : rel_decl list; 
                    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
@@ -1800,6 +1801,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+                prog_lock_decls = hd.prog_lock_decls @ iprims.prog_lock_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
@@ -1815,6 +1817,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_global_var_decls = [];
                 prog_enum_decls = [];
                 prog_view_decls = [];
+                prog_lock_decls = [];
                 prog_rel_decls = [];
                 prog_axiom_decls = [];
                 prog_hopred_decls = [];

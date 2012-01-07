@@ -39,6 +39,7 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_global_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
+			  I.prog_lock_decls = [];
         I.prog_rel_decls = [];
         I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
@@ -65,6 +66,7 @@ let residues =  ref (None : CF.list_context option)
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
   iprog.I.prog_view_decls <- [];
+  iprog.I.prog_lock_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_coercion_decls <- []
 

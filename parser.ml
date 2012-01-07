@@ -1280,6 +1280,7 @@ hprogn:
       let global_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
+      let lock_defs = ref ([] : lock_decl list) in
 	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
 	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -1291,6 +1292,7 @@ hprogn:
           | Data ddef -> data_defs := ddef :: !data_defs
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
+          | Lock ldef -> lock_defs := ldef :: !lock_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
@@ -1314,6 +1316,7 @@ hprogn:
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
+      prog_lock_decls = !lock_defs;
       prog_rel_decls = !rel_defs; (* An Hoa *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
@@ -1335,6 +1338,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+   | l=lock_decl; `SEMICOLON -> Lock l
    | h=hopred_decl-> Hopred h ]];
 
    
