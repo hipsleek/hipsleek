@@ -159,6 +159,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0 do_infer) spec_list
 
+(* Termination *)      
 (* this procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* in case of failure, please put message into term_msg stack *)
 (* the resulting ctx may contain inferred constraint *)
@@ -216,12 +217,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 			        | _ -> None
 		          in 
 		          let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
-		          (* Termination: Add source condition *)
-		          (*let nctx = CF.transform_context (fun es ->
-			          CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd
-                es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in*)
-		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
-		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
+		         	let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
 		          let (new_c2,pre,rel,f) = check_specs_infer_a prog proc nctx c2 e0 do_infer in
                   (* Thai: Need to generate EBase from pre if necessary *)
                   let new_c2 = 
@@ -329,7 +325,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
                     let pos = CF.pos_of_formula post_cond in
 	    	        if (CF.isFailListPartialCtx res_ctx) 
-                    then (spec, [], [],false)
+                    then (spec, [], [], false)
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
@@ -351,7 +347,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                         else ([],post_cond) in
                       let res_ctx = Inf.add_impl_vars_list_partial_context impl_vs res_ctx in
                       let pos_post = (CF.pos_of_formula post_cond) in
+                      (* Termination: Check the boundedness 
+                       * of the termination measures *)
                       let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
+                      (* Termination: Collect the constraints of
+                       * phase transitions inferred by inference 
+                       * Need to filter the constraints *)
+                      let _ = DD.trace_hprint (add_str "Inferred constraints: " (pr_list !CP.print_formula)) lp pos in
+                      let _ = Term.add_phase_constr lp in
+                                           
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in

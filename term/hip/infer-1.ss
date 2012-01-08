@@ -10,7 +10,7 @@ case {
 	}
 }
 */
-/*
+
 case {
 	x<=0 -> requires Term[p1] ensures true;
   x>0 -> case {
@@ -18,8 +18,8 @@ case {
 		y>=0 -> requires Term[p3,y] ensures true;
 	}
 }
-*/
 
+/*
 case {
 	x<=0 -> requires Term[0] ensures true;
   x>0 -> case {
@@ -27,7 +27,7 @@ case {
 		y>=0 -> requires Term[1,y] ensures true;
 	}
 }
-
+*/
 {
 	if (x > 0) {
 		loop (x+y, y-1);	

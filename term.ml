@@ -52,6 +52,10 @@ type term_res = term_trans_loc * term_ann_trans option * formula option * term_s
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
 
+(* Using stack to store inferred phase
+ * transition constraints by inference *)
+let phase_constr_stk : CP.formula Gen.stack = new Gen.stack
+
 (* Printing Utilities *)
 let pr_phase_trans (trans: phase_trans) =
   let (src, dst) = trans in
@@ -169,6 +173,8 @@ let pr_term_res_stk stk =
     fmt_print_newline ();) stk
 
 let term_check_output stk =
+  fmt_string "\nInferred phase constraints: ";
+  fmt_string (pr_list !CP.print_formula (phase_constr_stk # get_stk));
   fmt_string "\nTermination checking result:\n";
   pr_term_res_stk (stk # get_stk);
   fmt_print_newline ()
@@ -546,4 +552,17 @@ let check_term_measure f (ctx: context) (measure: ext_variance_formula) pos : te
   else
     check_reachable_term_measure f ctx measure pos
 *)
+
+(* Store the inferred phase constraints *)
+(* TODO: These constraints should be normalized
+ * and filtered to keep only constraints 
+ * related to LexVar before adding them to stack *)
+let add_phase_constr (lp: CP.formula list) =
+  phase_constr_stk # push_list lp
+
+(* Build the graph for phase numbering based on
+ * inferred phase constraints
+ * p2>p1 -> p2 --> p1
+ * p2>=p1 -> {p2,p1} *)
+
 
