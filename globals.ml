@@ -41,6 +41,16 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
+and term_ann = 
+  | Term    (* definitely terminates *)
+  | Loop    (* definitely loops *)
+  | MayLoop (* don't know *)
+  | Fail of term_fail    (* failed because of invalid trans *)
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -109,6 +119,15 @@ let int_of_heap_ann a =
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
+
+let string_of_term_ann a =
+  match a with
+  | Term -> "Term"
+  | Loop -> "Loop"
+  | MayLoop -> "MayLoop"
+  | Fail f -> match f with
+    | TermErr_May -> "TermErr_May"
+    | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -458,7 +477,10 @@ let disable_multiple_specs =ref false
   let do_sat_slice = ref false
 
 (* for Termination *)
-  let term_auto_number = ref false
+let term_auto_number = ref false
+let term_verbosity = ref 1
+let dis_call_num = ref false
+let dis_phase_num = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false

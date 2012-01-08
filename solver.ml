@@ -3339,9 +3339,9 @@ and heap_entail_conjunct_lhs_struc_x
               let c=e.Cformula.formula_inf_continuation in
               helper_inner_x ctx11 c
 	    | EVariance e ->
-          let entail_f = fun ctx m pos -> 
+          (*let entail_f = fun ctx m pos -> 
             fst (heap_entail_one_context prog false ctx m pos) in
-          let _ = Term.check_term_measure entail_f ctx11 e pos in
+          let _ = Term.check_term_measure entail_f ctx11 e pos in*)
           helper_inner_x ctx11 e.CF.formula_var_continuation
     end 
 
@@ -5256,6 +5256,15 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
   List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) match_conditions
       (* End of pure_match *)
 
+
+  (* Termination: Try to prove rhs_wf with inference *)
+  (* rhs_wf = None --> measure succeeded *)
+  (* lctx = Fail --> well-founded termination failure *)
+  (* lctx = Succ --> termination succeeded with inference *)
+and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+    let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
+    in CF.estate_opt_of_list_context lctx
+
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
@@ -5311,7 +5320,35 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   let estate = estate_orig in
   let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
-  let (estate,_,rhs_p) = Term.trans_lexvar_rhs estate lhs_p rhs_p pos in
+  (* Termination *)
+  let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
+  (* Termination: Try to prove rhs_wf with inference *)
+  (* rhs_wf = None --> measure succeeded or no striggered inference *)
+  (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
+  (* lctx = Succ --> termination succeeded with inference *)
+  let estate = match rhs_wf with
+  | None -> estate 
+  | Some rank ->
+      begin
+        match (heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos) with
+          | None ->     
+              let t_ann, ml, il = Term.find_lexvar_es estate in
+              let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+              let term_measures, term_res, term_stack =
+                Some (Fail TermErr_May, ml, il),
+                (term_pos, t_ann_trans, orig_ante, Term.MayTerm_S Term.Not_Decreasing_Measure),
+                (Term.string_of_term_res (term_pos, t_ann_trans, None, 
+                  Term.TermErr Term.Not_Decreasing_Measure))::estate.CF.es_var_stack
+              in
+              Term.term_res_stk # pop;
+              Term.term_res_stk # push term_res;
+              { estate with 
+                 CF.es_var_measures = term_measures;
+                 CF.es_var_stack = term_stack; 
+              }
+          | Some es -> es
+      end
+  in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =
@@ -5895,7 +5932,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_unsat_flag = false;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-		es_var_measures = estate.es_var_measures;
+	es_var_measures = estate.es_var_measures;
+        es_var_stack = estate.es_var_stack;
 		es_var_label = estate.es_var_label;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
@@ -6050,7 +6088,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
-		         es_var_measures = estate.es_var_measures;
+		 es_var_measures = estate.es_var_measures;
+                 es_var_stack = estate.es_var_stack;
 		         es_var_label = estate.es_var_label} in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 

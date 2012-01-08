@@ -258,6 +258,8 @@ and has_variance_ext ext_f =
     | EVariance _ -> true
     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont
 
+(* TODO: Termination: These two below functions 
+ * need to be removed *)    
 let rec norm_struc_with_variance struc_f =
   List.map (fun ef -> norm_ext_with_variance ef) struc_f
 
@@ -281,18 +283,19 @@ and norm_ext_with_variance ext_f =
       let n_cont = norm_ext_with_variance cont in
       EInfer { ef with formula_inf_continuation = n_cont }
 
+(* TODO: Termination *)
 let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
   if (v.formula_var_measures = []) then None 
   else
 	  let vm = fst (List.split v.formula_var_measures) in
 	  let vi = v.formula_var_infer in
     let pos = v.formula_var_pos in
-    Some (CP.mkPure (CP.mkLexVar vm vi pos))
+    Some (CP.mkPure (CP.mkLexVar Term vm vi pos))
 
-let measures_of_evariance (v: ext_variance_formula) : (CP.exp list * CP.exp list) =
+let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) =
   let vm = fst (List.split v.formula_var_measures) in
 	let vi = v.formula_var_infer in
-  (vm, vi)
+  (Term, vm, vi)
 
 let rec strip_variance (spec: struc_formula) : struc_formula =
   match spec with
@@ -2567,7 +2570,11 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-and split_components (f : formula) = 
+and split_components (f: formula) =
+  Debug.no_1 "split_components" !print_formula (fun _ -> "")
+  split_components_x f 
+
+and split_components_x (f : formula) = 
   if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse)
   else match f with
     | Base ({formula_base_heap = h; 
@@ -3005,7 +3012,9 @@ think it is used to instantiate when folding.
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For VARIANCE checking *)
-  es_var_measures : (CP.exp list * CP.exp list) option; (* Lexical ordering *)
+  (* Term ann with Lexical ordering *)
+  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
+  es_var_stack :  string list; 
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
@@ -3201,11 +3210,12 @@ let empty_es flowt pos =
   es_residue_pts  = [];
   es_id = 0 ;
   es_orig_ante = None;
-  es_orig_conseq = [mkETrue flowt pos] ;
+  es_orig_conseq = [mkETrue flowt pos];
   es_rhs_eqset = [];
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = None;
+  es_var_stack = [];
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
@@ -3843,6 +3853,58 @@ let rec collect_orig_ante ctx =
       | None -> []
       | Some ante -> [ante])
 	| OCtx (ctx1, ctx2) -> (collect_orig_ante ctx1) @ (collect_orig_ante ctx2)
+
+let rec collect_term_ann_context ctx =
+	match ctx with
+	| Ctx es -> (match es.es_var_measures with
+		| None -> []
+		| Some (t_ann, _, _) -> [t_ann])
+	| OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
+
+let collect_term_ann_list_context ctx =
+	match ctx with
+	| FailCtx _ -> []
+	| SuccCtx l_ctx -> 
+		List.concat (List.map (fun ctx -> collect_term_ann_context ctx) l_ctx) 
+
+let rec collect_term_err_msg_context ctx =
+  match ctx with
+  | Ctx es -> es.es_var_stack
+  | OCtx (ctx1, ctx2) -> 
+      (collect_term_err_msg_context ctx1) @
+      (collect_term_err_msg_context ctx2)
+
+
+
+(* let collect_term_err_msg_list_context ctx = *)
+(*   match ctx with *)
+(*   | FailCtx _ -> [] *)
+(*   | SuccCtx l_ctx -> *)
+(*       List.concat (List.map (fun ctx -> collect_term_err_msg_context ctx) l_ctx) *)
+
+let collect_term_ann_and_msg_list_context ctx =
+	match ctx with
+	| FailCtx _ -> []
+	| SuccCtx l_ctx -> (List.map (fun ctx -> 
+      (List.exists (fun a -> match a with Fail _ -> true | _ -> false) (collect_term_ann_context ctx), 
+      (String.concat "\n" (collect_term_err_msg_context ctx)))) l_ctx) 
+			
+(* Termination: The term_measures of an OR context
+ * should only be collected once *)  
+let rec collect_term_measures_context ctx =
+	match ctx with
+	| Ctx es -> (match es.es_var_measures with
+		| None -> []
+    | Some (_, ml, _) -> [ml])
+	| OCtx (ctx1, _) -> collect_term_measures_context ctx1
+
+let collect_term_measures_branch_ctx_list br_ctx_l =
+  List.concat (List.map (fun (_, ctx) -> 
+    collect_term_measures_context ctx) br_ctx_l)
+
+let collect_term_measures_list_partial_context p_ctx_l =
+  List.concat (List.map (fun (_, br_ctx_l) -> 
+    collect_term_measures_branch_ctx_list br_ctx_l) p_ctx_l)
 
 let rec add_pre_heap ctx = 
   match ctx with
@@ -4702,6 +4764,15 @@ and set_list_context f (ctx : list_context) : list_context = match ctx with
   | FailCtx f -> ctx
   | SuccCtx l -> let nl = List.map (set_context f) l in SuccCtx nl
 
+and estate_opt_of_list_context (ctx : list_context) : entail_state option = 
+  match ctx with
+  | SuccCtx (c::_) -> estate_opt_of_context c
+  | _ -> None
+
+and estate_opt_of_context (ctx : context) = match ctx with
+  | Ctx es -> Some es
+  | _ -> None
+
 and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> es
   | _ -> Err.report_error {Err.error_loc = pos;
@@ -4872,11 +4943,30 @@ and formula_trace_of_context ctx0 = match ctx0 with
 	  let f = mkOr f1 f2 no_pos in
       let trace = trace1@["||OR||"]@trace2 in
       (f,trace)
+  (* | Ctx es ->  *)
+  (*     let mix_f,_ = es.es_pure in *)
+  (*     let f = add_mix_formula_to_formula mix_f es.es_formula in *)
+  (*     let trace = es.es_trace in *)
+  (*     (f,trace) *)
   | Ctx es -> 
-      let mix_f,_ = es.es_pure in
-      let f = add_mix_formula_to_formula mix_f es.es_formula in
+      let ep,_ = es.es_pure in
+      let orig_f = es.es_formula in
+      let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
+      let mix_f = match esvm with
+        | None -> ep
+        | Some (ta,l1,l2) ->
+            (* let m = match ta with *)
+            (*   | Loop Loop_RHS -> CP.mkFalse no_pos *)
+            (*   | _ ->  *)
+            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
+            Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+            MCP.merge_mems ep (MCP.mix_of_pure m) true in
+      let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
+      Debug.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;
       (f,trace)
+
+
   
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
@@ -6192,6 +6282,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
+        es_var_stack = es.es_var_stack;
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
 	es_orig_ante = es.es_orig_ante;
@@ -6547,6 +6638,17 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 		formula_base_pos = loc;
 	};*)
 	formula_ext_continuation = [];
+	formula_ext_pos = loc;
+  }	
+	
+let mkEBase_with_cont (pf:CP.formula) cont loc : ext_formula =
+  EBase	{
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	(*formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
+	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+	formula_ext_continuation = cont;
 	formula_ext_pos = loc;
   }	
 
@@ -7273,4 +7375,86 @@ let lax_impl_of_post f =
 let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
+
+(* Termination: Check whether a formula contains LexVar *) 
+(* TODO: Termination: Need to add default term info
+ * into a branch of OR context *) 
+let rec has_lexvar_formula f =
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, _ = split_components f in 
+      CP.has_lexvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      (has_lexvar_formula f1) || (has_lexvar_formula f2)
+
+let rec norm_struc_with_lexvar struc_f is_primitive =
+  List.map (fun ef -> norm_ext_with_lexvar ef is_primitive) struc_f
+
+and norm_ext_with_lexvar ext_f is_primitive =
+  match ext_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl = List.map (fun (c, sf) -> 
+        (c, norm_struc_with_lexvar sf is_primitive)) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ({ formula_ext_continuation = cont } as ef) ->
+      if (has_lexvar_formula ef.formula_ext_base) then ext_f
+      else
+        let n_cont = norm_struc_with_lexvar cont is_primitive in
+        EBase { ef with formula_ext_continuation = n_cont }
+  | EAssume _ ->
+      let lexvar = 
+        if is_primitive then 
+          (* CP.mkLexVar Term [CP.mkIConst (-1) no_pos] [] no_pos *) 
+          CP.mkLexVar Term [] [] no_pos
+        else CP.mkLexVar MayLoop [] [] no_pos
+      in 
+      mkEBase_with_cont (CP.mkPure lexvar) [ext_f] no_pos
+  | EVariance _ -> ext_f 
+  | EInfer ({ formula_inf_continuation = cont } as ef) ->
+      let n_cont = norm_ext_with_lexvar cont is_primitive in
+      EInfer { ef with formula_inf_continuation = n_cont }
+
+(* Termination: Add the call number if the option
+ * --dis-call-num is not enabled (default) *)
+let rec add_term_call_num_struc struc_f call_num =
+  List.map (fun ef -> add_term_call_num_ext ef call_num) struc_f
+
+and add_term_call_num_ext ext_f call_num =
+  match ext_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl  = List.map (fun (c, sf) ->
+        (c, add_term_call_num_struc sf call_num )) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ({
+      formula_ext_base = base;
+      formula_ext_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_struc cont call_num in
+      let n_base = add_term_call_num_formula base call_num in
+      EBase { ef with
+        formula_ext_base = n_base;
+        formula_ext_continuation = n_cont
+      }
+  | EAssume _ -> ext_f
+  | EVariance ({ formula_var_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_ext cont call_num in
+      EVariance { ef with formula_var_continuation = n_cont }
+  | EInfer ({ formula_inf_continuation = cont } as ef) ->
+      let n_cont = add_term_call_num_ext cont call_num in
+      EInfer { ef with formula_inf_continuation = n_cont }
+
+and add_term_call_num_formula f call_num = 
+  match f with
+  | Base ({ formula_base_pure = p } as base) ->
+      let p = MCP.pure_of_mix p in
+      let n_p = CP.add_term_call_num_pure p call_num in
+      Base { base with formula_base_pure = MCP.mix_of_pure n_p }
+  | Exists ({ formula_exists_pure = p } as ex) ->
+      let p = MCP.pure_of_mix p in
+      let n_p = CP.add_term_call_num_pure p call_num in
+      Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }
+  | Or ({ formula_or_f1 = f1; formula_or_f2 = f2 } as orf) ->
+      let n_f1 = add_term_call_num_formula f1 in
+      let n_f2 = add_term_call_num_formula f2 in
+      Or { orf with formula_or_f1 = f1; formula_or_f2 = f2 }
 

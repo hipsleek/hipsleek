@@ -1073,9 +1073,12 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in        
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
-          let cprog4 = (add_pre_to_cprog cprog3) in
-	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	      let c = (mark_rec_and_call_order cprog5) in 
+          (*let cprog4 = (add_pre_to_cprog cprog3) in*)
+	      (*let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in*)
+        let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog3 else cprog3 in
+	      let c = (mark_rec_and_call_order cprog5) in
+        let c = Cast.add_term_call_num_prog c in
+        let c = (add_pre_to_cprog c) in
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -1917,6 +1920,14 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+  (* Termination: Normalize the specification 
+   * with the default termination information
+   * Primitive functions: Term[] 
+   * User-defined functions: MayLoop *)
+  let is_primitive = not (proc.I.proc_is_main) in
+  let static_specs_list = CF.norm_struc_with_lexvar static_specs_list is_primitive in
+  let dynamic_specs_list = CF.norm_struc_with_lexvar dynamic_specs_list is_primitive in
+  
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
 	let r_int = exlist # get_hash abnormal_flow in
 	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -2691,7 +2702,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_icall_receiver_type = crecv_t;
                       C.exp_icall_method_name = mingled_mn;
                       C.exp_icall_arguments = arg_vars;
-					  C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                      (* Termination: Default value - 
+                       * it will be set later in trans_prog
+                       * by mark_rec_and_call_order *)
+                      C.exp_icall_is_rec = false;                       
                       C.exp_icall_path_id = pi;
                       C.exp_icall_pos = pos;} in
                   let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2742,7 +2756,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_scall_type = ret_ct;
                       C.exp_scall_method_name = mingled_mn;
                       C.exp_scall_arguments = arg_vars;
-					  C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                      (* Termination: Default value - 
+                       * it will be set later in trans_prog
+                       * by mark_rec_and_call_order *)
+                      C.exp_scall_is_rec = false; 
                       C.exp_scall_pos = pos;
                       C.exp_scall_path_id = pi; } in
                   let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -3920,7 +3937,7 @@ and trans_var_safe (ve, pe) et stab pos =
     with Not_found ->   
         CP.SpecVar (et, ve, pe)
 
-and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula = 
+and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula = 
   let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:CF.struc_formula): CF.struc_formula =
     let rec helper (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:CF.ext_formula):CF.ext_formula=
       match f with
@@ -3946,11 +3963,12 @@ and add_pre (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
-and add_pre_debug prog f = 
-  let r = add_pre prog f in
-  let _ = print_string ("add_pre input: "^(Cprinter.string_of_struc_formula f)^"\n") in
-  let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in  
-  r
+and add_pre prog f =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+(*   let _ = print_string ("add_pre input: "^(Cprinter.string_of_struc_formula f)^"\n") in *)
+(*   let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in   *)
+(*   r *)
       
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : IF.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): CF.struc_formula = 
@@ -4436,10 +4454,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   let npf =  match pf with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
-    | IP.LexVar (ls1, ls2, pos) ->
+    | IP.LexVar (t_ann, ls1, ls2, pos) ->
           let pe1 = List.map (fun e ->trans_pure_exp e stab) ls1 in
           let pe2 = List.map (fun e ->trans_pure_exp e stab) ls2 in
-          CP.LexVar(pe1,pe2,pos)
+          CP.LexVar(t_ann, pe1, pe2, pos)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -5224,10 +5242,10 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let _ = gather_type_info_exp a1 stab (Cpure.ann_type) in
 	      let _ = gather_type_info_exp a2 stab (Cpure.ann_type) in
           ()
-    | IP.LexVar(ls1,ls2,pos) ->
+    | IP.LexVar(t_ann, ls1, ls2, pos) ->
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls1 in
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls2 in
-          ()
+        ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in
@@ -7698,7 +7716,8 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
       
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
-	  
+
+(* Termination *)			  
 (* Recursive call and call order detection *)
 (* irf = is_rec_field *)
 and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
@@ -7769,7 +7788,9 @@ and scc_sort (scc_list: Cast.IG.V.t list list) cg : Cast.IG.V.t list list =
 
 and irf_traverse_prog (cp: Cast.prog_decl) (scc_list: Cast.IG.V.t list list) : Cast.prog_decl = 
   {cp with
-	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+	  Cast.prog_proc_decls = List.map (fun proc -> 
+			irf_traverse_proc cp proc (find_scc_group cp proc.Cast.proc_name scc_list)
+		) cp.Cast.prog_proc_decls
   }
 
 and irf_traverse_proc (cp: Cast.prog_decl) (proc: Cast.proc_decl) (scc: Cast.IG.V.t list) : Cast.proc_decl =
@@ -7856,7 +7877,7 @@ and irf_traverse_exp (cp: Cast.prog_decl) (exp: Cast.exp) (scc: Cast.IG.V.t list
   List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
   cg
 *)
-		  
+
 and slicing_label_inference_program (prog : I.prog_decl) : I.prog_decl =
   {prog with
 	  I.prog_view_decls = List.map (fun v -> slicing_label_inference_view v) prog.I.prog_view_decls;}
@@ -7974,3 +7995,5 @@ and fm_main g lv =
   let lp = [lp1] @ [lp2] in
   let unlocked_v = List.map (fun v -> (v, fm_gain g (fm_find_partition lp v) v)) lv in
   helper g lp (unlocked_v, [])
+
+
