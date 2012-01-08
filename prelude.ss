@@ -262,6 +262,23 @@ void join(int id)
   requires true
   ensures true;
 
+void init(lock l)
+  requires true
+  ensures true;
+
+void finalize(lock l)
+  requires true
+  ensures true;
+
+void acquire(lock l)
+  requires true
+  ensures true;
+
+void release(lock l)
+  requires true
+  ensures true;
+
+
 /* ************ */
 /* Concurrency  */
 /* ************ */

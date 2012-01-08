@@ -7336,3 +7336,64 @@ let drop_varperm_formula (f:formula) =
 	      formula_or_f2 = helper b.formula_or_f2}
   in
   helper f
+
+(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
+(*Issues: types of lock and args*)
+(*lock_typ and arg type*)
+let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) pos = 
+  let data_node = DataNode ({
+      h_formula_data_node = var;
+      h_formula_data_name = name;
+	  h_formula_data_derv = false;
+	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_perm = None;
+	  h_formula_data_origins = [];
+	  h_formula_data_original = true;
+      h_formula_data_arguments = []; (*TO CHECK*)
+	  h_formula_data_holes = [];
+      h_formula_data_remaining_branches = None;
+      h_formula_data_pruning_conditions = [];
+      h_formula_data_label = None;
+      h_formula_data_pos = pos}) 
+  in
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None;
+      h_formula_view_arguments = args;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = true;
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  let post = formula_of_heap lock_node pos in
+  let lbl = fresh_formula_label "init" in
+  let post = EAssume ([],post,lbl) in
+  let pre = formula_of_heap data_node pos in
+  let prepost = [EBase { 
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	formula_ext_base = pre;
+	formula_ext_continuation = [post];
+	formula_ext_pos = pos}]
+  in
+  prepost
+
+
+let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) pos = 
+  Gen.Debug.no_4 "prepost_of_init"
+      !print_sv
+      (fun str -> str)
+      (fun str -> str)
+      !print_svl
+      !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_init_x var name sort args pos) var name sort args

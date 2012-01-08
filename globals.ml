@@ -302,6 +302,12 @@ let proc_typ = Void  (*special thread id*)
 let fork_name = "fork"  (*generic, its args can vary*)
 let join_name = "join"
 
+let init_name = "init"  (*generic, its args can vary*)
+let finalize_name = "finalize"
+let acquire_name = "acquire"
+let release_name = "release"
+let lock_name = "lock"
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)

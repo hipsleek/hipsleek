@@ -2790,7 +2790,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           let call_e = C.SCall {
                               C.exp_scall_type = ret_ct;
                               C.exp_scall_method_name = mingled_mn;
-                              C.exp_scall_lock = None;
+                              C.exp_scall_lock = lock;
                               C.exp_scall_arguments = mingled_forked_mn::arg_vars;
 					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                               C.exp_scall_pos = pos;
@@ -2803,6 +2803,50 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_block_pos = pos; }),ret_ct))))
                     with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
             (*======== <<<<FORK ==========*)
+            else if (mn=Globals.init_name) then
+              (*============================*)
+              (*========== INIT >>>=========*)
+              (*============================*)
+              (*INIT is a generic functions. Its arguments can vary*)
+              (*fork has at least a lock as its argument*)
+              (*the rest are ghost arguments*)
+              (if (List.length args <1) then
+                    Err.report_error { Err.error_loc = pos; Err.error_text = "init has less then 1 argument: lock"; }
+               else 
+               (try 
+                    let pdef = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
+                    (*CHECK a matched LOCK EXISTS*)
+                    let _ = match lock with
+                      | None ->
+                          Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init requires an associated lock");}
+                      | Some v ->
+                          (try
+                              let vdef = I.look_up_view_def_raw prog.I.prog_view_decls v in
+                              let n1 = List.length args in
+                              let n2 = List.length (vdef.I.view_vars) in
+                              if (n1-1) != n2 then
+                                Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init :: number of args in " ^ (vdef.I.view_name) ^ " not match");}
+                           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init requires an associated lock");})
+                    in
+                    let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                    let positions = List.map I.get_exp_pos args in
+                    let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                    let call_e = C.SCall {
+                        C.exp_scall_type = ret_ct;
+                        C.exp_scall_method_name = mingled_mn;
+                        C.exp_scall_lock = lock;
+                        C.exp_scall_arguments = arg_vars;
+					    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                        C.exp_scall_pos = pos;
+                        C.exp_scall_path_id = pi; } in
+                    let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                    ((C.Block {
+                        C.exp_block_type = ret_ct;
+                        C.exp_block_body = seq_1;
+                        C.exp_block_local_vars = local_vars;
+                        C.exp_block_pos = pos; }),ret_ct)
+                with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");}))
+            (*======== <<<<INIT ==========*)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then

@@ -781,6 +781,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | SCall ({
 			  exp_scall_type = ret_t;
 			  exp_scall_method_name = mn; (* mn is mingled name of the method *)
+			  exp_scall_lock = lock;
 			  exp_scall_arguments = vs;
 			  exp_scall_is_rec = ir;
 			  exp_scall_path_id = pid;
@@ -966,6 +967,31 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
 		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res
+                else
+                if (mn_str=Globals.init_name) then
+                  (*=====================================*)
+                  (*=== init[LOCK](lock,lock_args) ======*)
+                  (*=====================================*)
+                  let l = List.hd vs in
+                  let lock_args = List.tl vs in
+                  let lock_sort = match lock with
+                    | None -> ""
+                    | Some v -> v
+                  in
+                  let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
+                  let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
+                  let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
+                  let lock_data_name = vdef.view_data_name in
+                  let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
+                  let prepost = CF.prepost_of_init lock_var lock_data_name lock_sort new_args pos in
+                  let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
+                  let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
+                  Debug.devel_zprint (lazy (to_print^"\n")) pos;
+                  let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx prepost None pos pid in
+                  let _ = print_string (("\nSCall: init: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
+                  if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
+                    Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                  rs
                 else
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)
