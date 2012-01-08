@@ -777,7 +777,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                  (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
-                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in *)
+                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in*)
                   let renamed_spec = CF.subst_struc st1 renamed_spec in
                   let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
@@ -802,13 +802,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
+                   (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
+                    (Cprinter.string_of_pos pos) ^ "\n" ^
+                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in *)
                   (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
 
-                 (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*) 
+                 (*let _ = print_string (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
                  (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
                   rs
@@ -1073,7 +1076,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
           }
         else
           begin
-              Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ") 
+              Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
                   ("Postcondition cannot be derived from context\n") pos;
 	          Debug.print_info ("(Cause of PostCond Failure)")
                   (Cprinter.string_of_failure_list_partial_context rs) pos;
