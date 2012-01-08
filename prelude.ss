@@ -262,19 +262,19 @@ void join(int id)
   requires true
   ensures true;
 
-void init(lock l)
+void init()
   requires true
   ensures true;
 
-void finalize(lock l)
+void finalize()
   requires true
   ensures true;
 
-void acquire(lock l)
+void acquire()
   requires true
   ensures true;
 
-void release(lock l)
+void release()
   requires true
   ensures true;
 

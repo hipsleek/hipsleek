@@ -7338,9 +7338,7 @@ let drop_varperm_formula (f:formula) =
   helper f
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
-(*Issues: types of lock and args*)
-(*lock_typ and arg type*)
-let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) pos = 
+let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   let data_node = DataNode ({
       h_formula_data_node = var;
       h_formula_data_name = name;
@@ -7375,7 +7373,6 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) pos =
       h_formula_view_pos = pos })
   in
   let post = formula_of_heap lock_node pos in
-  let lbl = fresh_formula_label "init" in
   let post = EAssume ([],post,lbl) in
   let pre = formula_of_heap data_node pos in
   let prepost = [EBase { 
@@ -7388,12 +7385,154 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) pos =
   in
   prepost
 
-
-let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) pos = 
+(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
+let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   Gen.Debug.no_4 "prepost_of_init"
       !print_sv
       (fun str -> str)
       (fun str -> str)
       !print_svl
       !print_struc_formula
-      (fun _ _ _ _ -> prepost_of_init_x var name sort args pos) var name sort args
+      (fun _ _ _ _ -> prepost_of_init_x var name sort args lbl pos) var name sort args
+
+(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
+let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+  let data_node = DataNode ({
+      h_formula_data_node = var;
+      h_formula_data_name = name;
+	  h_formula_data_derv = false;
+	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_perm = None;
+	  h_formula_data_origins = [];
+	  h_formula_data_original = true;
+      h_formula_data_arguments = []; (*TO CHECK*)
+	  h_formula_data_holes = [];
+      h_formula_data_remaining_branches = None;
+      h_formula_data_pruning_conditions = [];
+      h_formula_data_label = None;
+      h_formula_data_pos = pos}) 
+  in
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None;
+      h_formula_view_arguments = args;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = true;
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  let post = formula_of_heap data_node pos in
+  let post = EAssume ([],post,lbl) in
+  let pre = formula_of_heap lock_node pos in
+  let prepost = [EBase { 
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	formula_ext_base = pre;
+	formula_ext_continuation = [post];
+	formula_ext_pos = pos}]
+  in
+  prepost
+
+(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
+let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+  Gen.Debug.no_4 "prepost_of_finalize"
+      !print_sv
+      (fun str -> str)
+      (fun str -> str)
+      !print_svl
+      !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
+
+let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None; (*TO DO: only need a fraction of permission*)
+      h_formula_view_arguments = args;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = true;
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  let tmp = formula_of_heap lock_node pos in
+  let post = normalize 5 inv tmp pos in
+  let post = EAssume ([],post,lbl) in
+  let pre = tmp in
+  let prepost = [EBase { 
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	formula_ext_base = pre;
+	formula_ext_continuation = [post];
+	formula_ext_pos = pos}]
+  in
+  prepost
+
+let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  Gen.Debug.no_4 "prepost_of_acquire"
+      !print_sv
+      (fun str -> str)
+      !print_svl
+      !print_formula
+      !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
+
+let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None; (*TO DO: only need a fraction of permission*)
+      h_formula_view_arguments = args;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = true;
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  let tmp = formula_of_heap lock_node pos in
+  let post = EAssume ([],tmp,lbl) in
+  let pre = normalize 5 inv tmp pos in
+  let pre_evars, pre_base = split_quantifiers pre in
+  let prepost = [EBase { 
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = pre_evars;
+	formula_ext_exists = [];
+	formula_ext_base = pre_base;
+	formula_ext_continuation = [post];
+	formula_ext_pos = pos}]
+  in
+  prepost
+
+let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  Gen.Debug.no_4 "prepost_of_release"
+      !print_sv
+      (fun str -> str)
+      !print_svl
+      !print_formula
+      !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_release_x var sort args inv lbl pos) var sort args inv

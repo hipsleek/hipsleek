@@ -1311,7 +1311,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
     (match inv_lock with
       | None -> None
       | Some f -> 
-          let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in (*sep_collect should be = true*)
+          let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in
           Some new_f)
   in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
@@ -2803,30 +2803,33 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_block_pos = pos; }),ret_ct))))
                     with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
             (*======== <<<<FORK ==========*)
-            else if (mn=Globals.init_name) then
-              (*============================*)
-              (*========== INIT >>>=========*)
-              (*============================*)
-              (*INIT is a generic functions. Its arguments can vary*)
-              (*fork has at least a lock as its argument*)
+            else if (mn=Globals.init_name) 
+                  || (mn=Globals.finalize_name) 
+                  || (mn=Globals.acquire_name)
+                  || (mn=Globals.release_name) then
+              (*=====================================*)
+              (*========== INIT/FINALIZE >>>=========*)
+              (*=====================================*)
+              (*INIT/FINALIZE is a generic functions. Its arguments can vary*)
+              (*it has at least a lock as its argument*)
               (*the rest are ghost arguments*)
               (if (List.length args <1) then
-                    Err.report_error { Err.error_loc = pos; Err.error_text = "init has less then 1 argument: lock"; }
+                    Err.report_error { Err.error_loc = pos; Err.error_text = "init/finalize has less then 1 argument: lock"; }
                else 
                (try 
                     let pdef = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
                     (*CHECK a matched LOCK EXISTS*)
                     let _ = match lock with
                       | None ->
-                          Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init requires an associated lock");}
+                          Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize requires an associated lock");}
                       | Some v ->
                           (try
                               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls v in
                               let n1 = List.length args in
                               let n2 = List.length (vdef.I.view_vars) in
                               if (n1-1) != n2 then
-                                Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init :: number of args in " ^ (vdef.I.view_name) ^ " not match");}
-                           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init requires an associated lock");})
+                                Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize :: number of args in " ^ (vdef.I.view_name) ^ " not match");}
+                           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize requires an associated lock");})
                     in
                     let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                     let positions = List.map I.get_exp_pos args in
@@ -7022,7 +7025,15 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
 	  let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 	  let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
-	  { c with Iast.view_formula = 	wf;}) tmp_views in
+      let inv_lock = c.Iast.view_inv_lock in
+      let inv_lock =
+        (match inv_lock with
+          | None -> None
+          | Some f ->
+              let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
+              Some new_f)
+      in
+      { c with Iast.view_formula = 	wf; Iast.view_inv_lock = inv_lock}) tmp_views in
   (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
