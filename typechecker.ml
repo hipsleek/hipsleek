@@ -252,7 +252,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
               match pre with
                 | [] -> base
                 | [p] ->
-                    (* print_endline (add_str "Norm Base" !CF.print_formula (CF.normalize 1 base p pos)); *) 
+                    (* print_endline (add_str "Norm Base" !CF.print_formula (CF.normalize 1 base p pos)); *)
                     (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 base p pos))
                 | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
             end in
@@ -359,9 +359,10 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
-                       * Need to filter the constraints *)
+                       * Need to filter the constraints 
+                       * and normalize them *)
                       let _ = DD.trace_hprint (add_str "Inferred constraints: " (pr_list !CP.print_formula)) lp pos in
-                      let _ = Term.add_phase_constr lp in
+                      let _ = Term.add_phase_constr (List.map TP.simplify_raw lp) in
                                            
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
@@ -1215,7 +1216,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 
 let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let pr p = pr_id (name_of_proc p)  in
-  Debug.to_1_opt (fun _ -> not(is_primitive_proc proc)) 
+  Debug.no_1_opt (fun _ -> not(is_primitive_proc proc)) 
       "check_proc" pr string_of_bool (check_proc prog) proc
 
 (* check entire program *)

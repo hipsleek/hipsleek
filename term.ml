@@ -49,6 +49,15 @@ type term_status =
  * Its termination status *)
 type term_res = term_trans_loc * term_ann_trans option * formula option * term_status
 
+(* We are only interested in two kinds 
+ * of constraints in phase inference:
+ * p2>p1 and p2>=p1 *)
+exception Invalid_Phase_Constr;;
+
+type phase_constr =
+  | P_Gt of (CP.spec_var * CP.spec_var)  (* p2>p1 *)
+  | P_Gte of (CP.spec_var * CP.spec_var) (* p2>=p1 *)
+
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
 
@@ -172,13 +181,13 @@ let pr_term_res_stk stk =
     pr_term_res !Debug.devel_debug_on r; 
     fmt_print_newline ();) stk
 
-let term_check_output stk =
-  fmt_string "\nInferred phase constraints: ";
-  fmt_string (pr_list !CP.print_formula (phase_constr_stk # get_stk));
-  fmt_string "\nTermination checking result:\n";
-  pr_term_res_stk (stk # get_stk);
-  fmt_print_newline ()
- 
+let pr_phase_constr = function
+  | P_Gt (v1, v2) -> 
+      pr_spec_var v1; fmt_string ">"; pr_spec_var v2
+  | P_Gte (v1, v2) -> 
+      pr_spec_var v1; fmt_string ">="; pr_spec_var v2 
+
+let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 (* End of Printing Utilities *)
 
 (* To find a LexVar formula *)
@@ -563,6 +572,158 @@ let add_phase_constr (lp: CP.formula list) =
 (* Build the graph for phase numbering based on
  * inferred phase constraints
  * p2>p1 -> p2 --> p1
- * p2>=p1 -> {p2,p1} *)
+ * p2>=p1 -> {p2,p1} 
+ * [x>y, y>=z] --> [[x], [y,z]] *)
 
+let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
+  let fl = List.concat (List.map CP.split_conjunctions fl) in
+  List.map phase_constr_of_formula fl
+  
+and phase_constr_of_formula (f: CP.formula) : phase_constr =
+  match f with
+  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
+  | _ -> raise Invalid_Phase_Constr 
+
+and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr =
+  let (pf, _) = bf in
+  try 
+    match pf with
+    | CP.Gt (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        P_Gt (v1, v2)
+    | CP.Gte (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        P_Gte (v1, v2)
+    | CP.Lt (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        P_Gt (v2, v1)
+    | CP.Lte (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        P_Gte (v2, v1)
+    | _ -> raise Invalid_Phase_Constr
+  with _ -> raise Invalid_Phase_Constr
+
+and var_of_exp (exp: CP.exp) : CP.spec_var =
+  match exp with
+  | CP.Var (sv, _) -> sv
+  | _ -> raise Invalid_Phase_Constr
+
+module PComp = 
+struct
+  type t = CP.spec_var list
+  let compare = 
+    fun l1 l2 -> 
+      if (Gen.BList.list_setequal_eq CP.eq_spec_var l1 l2)
+      then 0
+      else -1
+  let hash = Hashtbl.hash
+  let equal = Gen.BList.list_setequal_eq CP.eq_spec_var
+end
+
+module PG = Graph.Persistent.Digraph.Concrete(PComp)
+module PGO = Graph.Oper.P(PG)
+module PGN = Graph.Oper.Neighbourhood(PG)
+module PGC = Graph.Components.Make(PG)
+module PGP = Graph.Path.Check(PG)
+module PGT = Graph.Traverse.Dfs(PG)
+
+(* Group spec_vars of related P_Gte constraints together *)
+let rec group_related_vars (cl: phase_constr list) : CP.spec_var list list =
+  let gte_l = List.fold_left (fun a c ->
+    match c with 
+    | P_Gt _ -> a
+    | P_Gte (v1, v2) -> [v1; v2]::a 
+  ) [] cl in
+  let rec partition_gte_l l =
+    match l with
+    | [] -> []
+    | h::t ->
+        let n_t = partition_gte_l t in
+        let r, ur = List.partition (fun sl -> 
+          Gen.BList.overlap_eq CP.eq_spec_var h sl
+        ) n_t in
+        let n_h = Gen.BList.remove_dups_eq CP.eq_spec_var (h @ (List.concat r)) in
+        n_h::ur
+  in partition_gte_l gte_l
+
+let build_phase_constr_graph (gt_l: (CP.spec_var list * CP.spec_var list) list) =
+  let g = PG.empty in
+  let g = List.fold_left (fun g (l1, l2) ->
+    let ng1 = PG.add_vertex g l1 in
+	  let ng2 = PG.add_vertex ng1 l2 in
+	  let ng3 = PG.add_edge ng2 l1 l2 in
+	ng3) g gt_l in
+  g
+
+let rank_gt_phase_constr (cl: phase_constr list) =
+  let eq_l = group_related_vars cl in
+  (*
+  let pr_v = !CP.print_sv in
+  let pr_vl = pr_list pr_v in
+  let _ = print_endline ("\neq_l: " ^ (pr_list pr_vl eq_l)) in
+  *)
+  let gt_l = List.fold_left (fun a c ->
+    match c with
+    | P_Gt (v1, v2) -> (v1, v2)::a
+    | P_Gte _ -> a
+  ) [] cl in
+
+  (* let _ = print_endline ("\ngt_l: " ^ (pr_list (pr_pair pr_v pr_v) gt_l)) in *)
+  
+  let find_group v l =
+    try List.find (fun e -> Gen.BList.mem_eq CP.eq_spec_var v e) l
+    with _ -> [v]
+  in 
+
+  let gt_l = List.map (fun (v1, v2) -> 
+    let g_v1 = find_group v1 eq_l in
+    let g_v2 = find_group v2 eq_l in
+    (* p2>p1 and p2>=p1 are not allowed *)
+    if (Gen.BList.overlap_eq CP.eq_spec_var g_v1 g_v2) then
+      raise Invalid_Phase_Constr
+    else (g_v1, g_v2)
+  ) gt_l in
+
+  (* let _ = print_endline ("\ngt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in *)
+
+  let g = build_phase_constr_graph gt_l in
+  if (PGT.has_cycle g) then (* Contradiction: p2>p1 & p1>p2 *)
+    raise Invalid_Phase_Constr
+  else 
+    let n, f_scc = PGC.scc g in
+    PG.fold_vertex (fun l  a -> (f_scc l, l)::a) g [] 
+
+let value_of_vars (v: CP.spec_var) l : int =
+  try
+    let (i, _) = List.find (fun (i, vl) -> 
+      Gen.BList.mem_eq CP.eq_spec_var v vl
+    ) l in i
+  with _ -> raise Invalid_Phase_Constr
+
+(* Main function of the termination checker *)
+let term_check_output stk =
+  fmt_string "\nInferred phase constraints: ";
+  fmt_string (pr_list !CP.print_formula (phase_constr_stk # get_stk));
+
+  let pr_v = !CP.print_sv in
+  let pr_vl = pr_list pr_v in
+
+  let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in
+  let l = rank_gt_phase_constr cl in
+  Debug.trace_hprint (add_str "Phase Numbering"
+    (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
+  ) l no_pos;
+
+
+  fmt_string "\nTermination checking result:\n";
+  pr_term_res_stk (stk # get_stk);
+  fmt_print_newline ()
+
+let term_check_output stk =
+  let pr = fun _ -> "" in
+  Debug.to_1 "term_check_output" pr pr term_check_output stk
 
