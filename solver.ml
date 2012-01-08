@@ -9437,6 +9437,11 @@ let rec simplify_pre pre_fml = match pre_fml with
     let h, p, fl, b, t = split_components pre_fml in
     let p = TP.simplify_raw (MCP.pure_of_mix p) in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
+		
+let simplify_pre pre_fml =
+	let pr = !CF.print_formula in
+	Debug.no_1 "simplify_pre" pr pr simplify_pre pre_fml
+	
 
 let rec simplify_relation (sp:struc_formula) subst_fml prog : struc_formula * CP.formula list = 
   let res = List.map (fun s -> simplify_ext_relation s subst_fml prog) sp in

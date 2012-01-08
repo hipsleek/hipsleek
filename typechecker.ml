@@ -194,6 +194,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
   let r = List.map (do_spec_verify_infer prog proc ctx e0 do_infer) spec_list in
   let (sl,pl,rl,bl) = List.fold_left (fun (a1,a2,a3,a4) (b1,b2,b3,b4) -> (a1@[b1],a2@b2,a3@b3,a4@[b4])) ([],[],[],[]) r in
+  Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) sl no_pos;
   (CF.norm_specs sl, pl, rl, List.for_all pr_id bl)
 
 and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) e0 (do_infer:bool) (spec: CF.ext_formula) 
@@ -236,12 +237,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
             (new_spec,[],rel,true)
 	  | CF.EBase b ->
-            Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
+          Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 	        let nctx = 
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in
-			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
+			    (* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
 	        let (c,pre,rels,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 do_infer in
 	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             (*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
@@ -250,9 +251,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let new_base = begin
               match pre with
                 | [] -> base
-                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 base p pos))
+                | [p] ->
+                    (* print_endline (add_str "Norm Base" !CF.print_formula (CF.normalize 1 base p pos)); *) 
+                    (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 base p pos))
                 | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
             end in
+            Debug.trace_hprint (add_str "Base" !CF.print_formula) base no_pos;
+            Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
+            (* print_endline (add_str "Base" !CF.print_formula base); *)
+            (* print_endline (add_str "New Base" !CF.print_formula new_base); *)
             let _ = if rels==[] then () else pre_ctr#inc  
             in
 	        (CF.EBase {b with CF.formula_ext_base = new_base; CF.formula_ext_continuation = c}, [], rels, r) 
