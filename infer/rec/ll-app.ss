@@ -47,11 +47,16 @@ For precondition we get:
 
 */
 
+// TOCHECK why pre is too weak! when we use:
+// infer [n,m,A]
+// Inferred Pure:[ n!=0 | m!=0, n!=0 | m<=0, n!=0 | m!=0, n!=0 | m<=0]
+// inferred pre : (n!=0 | m<=0) 
 
 void append(node x, node y)
-  infer @pre [n,m,A]
+  infer [n,m,A]
+//infer [n,A]
   requires x::ll<n>*y::ll<m> & n>=0 & m>=0
-  ensures x::ll<z> & A(n,m,z);
+  ensures x::ll<z> & A(z,m,n);
 
 //  requires x::ll<n>*y::ll<m> 
 //  ensures x::ll<z> & A(n,m,z);

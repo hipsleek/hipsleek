@@ -416,23 +416,27 @@ let simplify f vars =
   let pr = !print_pure_f in
   Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
-let helper fml lhs_rhs_p = 
+let helper fml lhs_rhs_p weaken_flag = 
   let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
-  if TP.is_sat_raw new_fml then fml
-(*    let args = CP.fv new_fml in
-    let iv = CP.fv fml in
-    let quan_var = CP.diff_svl args iv in
-    CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos*)
+  if TP.is_sat_raw new_fml then (
+    if weaken_flag then fml
+    else
+      let args = CP.fv new_fml in
+      let iv = CP.fv fml in
+      let quan_var = CP.diff_svl args iv in
+      CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos)
   else CP.mkFalse no_pos
 
-let rec simplify_disjs pf lhs_rhs =
+let rec simplify_disjs pf lhs_rhs weaken_flag =
   match pf with
-  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs
-  | And _ -> helper pf lhs_rhs
-  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs) (simplify_disjs f2 lhs_rhs) l p
-  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs,l,p)
-  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs,l,p)
+  | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs weaken_flag
+  | And _ -> helper pf lhs_rhs weaken_flag
+  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs true) (simplify_disjs f2 lhs_rhs true) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs weaken_flag,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs weaken_flag,l,p)
   | _ -> pf
+
+let simplify_disjs pf lhs_rhs = simplify_disjs pf lhs_rhs false
 
 let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
@@ -813,8 +817,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         (simplify_disj_new lhs,rhs) in      
       let wrap_exists (lhs,rhs) =
         (* Begin: To keep vars of rel_form in lhs *)
-        let lhs_ls = CP.split_conjunctions lhs in
-        let rel_lhs = List.filter CP.is_RelForm lhs_ls in
+        let _,rel_lhs = List.split subs in
         let rel_vars = List.concat (List.map CP.fv rel_lhs) in
         (* End  : To keep vars of rel_form in lhs *)
         
@@ -862,7 +865,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.no_3 "infer_collect_rel" pr2 pr1 pr1 (pr_option pr2) 
+      Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

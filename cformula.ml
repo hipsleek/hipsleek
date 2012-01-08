@@ -7312,6 +7312,21 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
         EVariance {b with formula_var_continuation = simplify_ext_ann b.formula_var_continuation }
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
+let rec get_pre_vars (sp:struc_formula): CP.spec_var list =
+  List.concat (List.map get_pre_vars_ext sp)
+
+and get_pre_vars_ext (sp:ext_formula): CP.spec_var list =
+  match sp with
+    | ECase b -> 
+      List.concat (List.map (fun (p,s)->CP.fv p @ get_pre_vars s) b.formula_case_branches)
+    | EBase b -> 
+      let base_vars = fv b.formula_ext_base in
+      let r_vars = get_pre_vars b.formula_ext_continuation in
+      base_vars @ r_vars
+    | EAssume(svl,f,fl) -> []
+    | EVariance b -> get_pre_vars_ext b.formula_var_continuation
+    | EInfer b -> get_pre_vars_ext b.formula_inf_continuation
+
 (*
 type: (ext_formula -> ext_formula option) * (formula -> formula option) *
   (h_formula -> h_formula option) *

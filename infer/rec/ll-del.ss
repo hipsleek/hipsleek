@@ -13,7 +13,7 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 
-relation B(int x, int y).
+relation B(int x, int y, int z).
 
 /*
 Inferred Heap:[]
@@ -31,15 +31,15 @@ n>=0 & n>a
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-  infer [a,n,B]
+  infer [n,a,B]
 	requires x::ll<n>  //& n > a & a > 0 
-	ensures x::ll<m> & B(m,n);
+	ensures x::ll<m> & B(n,a,m);
 {
         if (a == 1)
 	{
 		//node tmp = x.next.next;
 		//x.next = tmp;
-                  x.next = x.next.next;
+    x.next = x.next.next;
 	}
 	else
 	{
