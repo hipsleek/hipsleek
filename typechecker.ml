@@ -1028,6 +1028,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
           (* let r = list_partial_context_and_unsat_now prog r in *)
           r ) ctx post
 
+and pr_spec = Cprinter.string_of_struc_formula
+
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
@@ -1137,7 +1139,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
                     let (new_spec,_,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                    Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     let new_spec = CF.simplify_ann new_spec in
+                    Debug.trace_hprint (add_str "SPECS (after simplify_ann" pr_spec) new_spec no_pos;
                     if (pre_ctr # get> 0) 
                     then
                       begin
@@ -1159,16 +1163,19 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             if inf_post_flag then fst (Solver.simplify_relation new_spec (Some triples) prog)
                             else new_spec
                         in
+                        Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
                         let new_spec = AS.add_pre prog new_spec in
                         (* TODO WN : what happen to the old MayLoop? *)
-                        let new_spec = CF.norm_struc_with_lexvar new_spec false in 
+                        (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
-                        let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
-                        let new_sp = Cprinter.string_of_struc_formula new_spec in
-                        let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
-                        print_endline ("OLD SPECS: "^old_sp);
-                        print_endline ("NEW SPECS: "^new_sp);
-                        print_endline ("NEW RELS: "^new_rels);
+                        (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
+                        (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
+                        (* let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in *)
+                        Debug.trace_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                        Debug.trace_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                        Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos;
+                        (* print_endline ("NEW SPECS: "^new_sp); *)
+                        (* print_endline ("NEW RELS: "^new_rels); *)
                         let f = if f && !reverify_flag then 
                           let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
                           is_valid
@@ -1193,6 +1200,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	      		result
 		      end
 	end else true
+
+
+let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+  let pr p = pr_id (name_of_proc p)  in
+  Debug.to_1_opt (fun _ -> not(is_primitive_proc proc)) 
+      "check_proc" pr string_of_bool (check_proc prog) proc
 
 (* check entire program *)
 let check_proc_wrapper prog proc =

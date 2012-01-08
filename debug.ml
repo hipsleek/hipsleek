@@ -291,6 +291,13 @@ let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
 let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
 let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
 
+let to_1_opt f = ho_1_opt_aux true [] false f None
+let to_2_opt f = ho_2_opt_aux true [] false f None
+let to_3_opt f = ho_3_opt_aux true [] false f None
+let to_4_opt f = ho_4_opt_aux true [] false f None
+let to_5_opt f = ho_5_opt_aux true [] false f None
+let to_6_opt f = ho_6_opt_aux true [] false f None
+
 let to_1_loop s = ho_1_opt_aux true [] true (fun _ -> true) None s
 let to_2_loop s = ho_2_opt_aux true [] true (fun _ -> true) None s
 let to_3_loop s = ho_3_opt_aux true [] true (fun _ -> true) None s

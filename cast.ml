@@ -402,6 +402,11 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
+let is_primitive_proc p = p.proc_body==None
+
+let name_of_proc p = p.proc_name
+
+
 let get_field_typ f = fst f
 
 let get_field_name f = snd f
