@@ -7312,20 +7312,32 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
         EVariance {b with formula_var_continuation = simplify_ext_ann b.formula_var_continuation }
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
-let rec get_pre_vars (sp:struc_formula): CP.spec_var list =
-  List.concat (List.map get_pre_vars_ext sp)
+let rec get_vars_without_rel f = match f with
+  | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->
+    (get_vars_without_rel f1) @ (get_vars_without_rel f2)
+  | _ -> 
+    let h, p, fl, b, t = split_components f in
+    (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p)))
 
-and get_pre_vars_ext (sp:ext_formula): CP.spec_var list =
+let rec get_pre_post_vars (sp:struc_formula): (CP.spec_var list * CP.spec_var list) =
+  let res = List.map get_pre_post_vars_ext sp in
+  let pres,posts = List.split res in
+  (List.concat pres, List.concat posts)
+
+and get_pre_post_vars_ext (sp:ext_formula): (CP.spec_var list * CP.spec_var list) =
   match sp with
     | ECase b -> 
-      List.concat (List.map (fun (p,s)->CP.fv p @ get_pre_vars s) b.formula_case_branches)
+      let res = List.map (fun (p,s)->let tmp = get_pre_post_vars s in 
+          (CP.fv p @ (fst tmp), snd tmp)) b.formula_case_branches in
+      let pres,posts = List.split res in
+      (List.concat pres, List.concat posts)
     | EBase b -> 
       let base_vars = fv b.formula_ext_base in
-      let r_vars = get_pre_vars b.formula_ext_continuation in
-      base_vars @ r_vars
-    | EAssume(svl,f,fl) -> []
-    | EVariance b -> get_pre_vars_ext b.formula_var_continuation
-    | EInfer b -> get_pre_vars_ext b.formula_inf_continuation
+      let r_vars = get_pre_post_vars b.formula_ext_continuation in
+      (base_vars @ (fst r_vars), snd r_vars)
+    | EAssume(svl,f,fl) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel f))
+    | EVariance b -> get_pre_post_vars_ext b.formula_var_continuation
+    | EInfer b -> get_pre_post_vars_ext b.formula_inf_continuation
 
 (*
 type: (ext_formula -> ext_formula option) * (formula -> formula option) *

@@ -252,6 +252,11 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
+let eq_spec_var_x (sv1 : spec_var) (sv2 : spec_var) = 
+  (* ignore primedness *)
+  match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> t1 = t2 && v1 = v2
+
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
@@ -1377,6 +1382,9 @@ and build_relation_x relop alist10 alist20 lbl pos =
 and mem (sv : spec_var) (svs : spec_var list) : bool =
   List.exists (fun v -> eq_spec_var sv v) svs
 
+and mem_x fun_eq (sv : spec_var) (svs : spec_var list) : bool =
+  List.exists (fun v -> fun_eq sv v) svs
+
 and disjoint (svs1 : spec_var list) (svs2 : spec_var list) =
   List.for_all (fun sv -> not (mem sv svs2)) svs1
 
@@ -1385,6 +1393,9 @@ and subset (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
+
+and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> mem_x fun_eq sv svs2) svs1
 
 and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1

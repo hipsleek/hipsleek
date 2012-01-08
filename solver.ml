@@ -9391,15 +9391,66 @@ let rec simplify_post_heap_only fml prog = match fml with
     let h = simplify_heap h p prog in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 
-let rec simplify_post post_fml post_vars prog subst_fml = match post_fml with
+let rec elim_heap h p pre_vars heap_vars = match h with
+  | Star {h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos} -> 
+    let h1 = elim_heap h1 p pre_vars heap_vars in
+    let h2 = elim_heap h2 p pre_vars heap_vars in
+    mkStarH h1 h2 pos
+  | Conj {h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos} -> 
+    let h1 = elim_heap h1 p pre_vars heap_vars in
+    let h2 = elim_heap h2 p pre_vars heap_vars in
+    mkConjH h1 h2 pos
+  | Phase { h_formula_phase_rd = h1;
+    h_formula_phase_rw = h2;
+    h_formula_phase_pos = pos} -> 
+    let h1 = elim_heap h1 p pre_vars heap_vars in
+    let h2 = elim_heap h2 p pre_vars heap_vars in
+    mkPhaseH h1 h2 pos
+  | ViewNode v ->
+    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
+    let node_aset = CP.EMapSV.build_eset node_als in
+    let alias = (CP.EMapSV.find_equiv_all v.h_formula_view_node node_aset) @ [v.h_formula_view_node] in
+    let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+      && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
+      && not (CP.is_res_spec_var v.h_formula_view_node)
+    in
+    if cond then HTrue else h
+  | DataNode d ->
+    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
+    let node_aset = CP.EMapSV.build_eset node_als in
+    let alias = (CP.EMapSV.find_equiv_all d.h_formula_data_node node_aset) @ [d.h_formula_data_node] in
+    let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+      && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
+      && not (CP.is_res_spec_var d.h_formula_data_node)
+    in
+    if cond then HTrue else h
+  | _ -> h
+
+let eqFormula f1 f2 = match (f1,f2) with
+  | (Base _, Base _) 
+  | (Exists _, Exists _) -> 
+    let h1,p1,fl1,b1,t1 = split_components f1 in
+    let h2,p2,fl2,b2,t2 = split_components f2 in
+    let p1 = MCP.pure_of_mix p1 in
+    let p2 = MCP.pure_of_mix p2 in
+    h1 = h2 && TP.imply_raw p1 p2 && TP.imply_raw p2 p1 && fl1=fl2 && b1=b2 && t1=t2
+  | _ -> f1=f2
+
+let rec simplify_post post_fml post_vars prog subst_fml pre_vars = match post_fml with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
-    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml in
-    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml in
-    if f1 = f2 then (f1,pres1)
+    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml pre_vars in
+    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml pre_vars in
+    if eqFormula f1 f2 then (f1,pres1)
     else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
+    let h = if pre_vars = [] then h else elim_heap h p pre_vars (CF.h_fv h) in
+    (*let post_vars = CP.diff_svl post_vars ((CF.h_fv h)@pre_vars) in*)
     let p,pre = begin
       match subst_fml with
       | None -> (TP.simplify_raw (CP.mkExists post_vars p None no_pos),[])
@@ -9410,22 +9461,18 @@ let rec simplify_post post_fml post_vars prog subst_fml = match post_fml with
           then [(a3,a2)] else []) triples)) in
         let post = CP.conj_of_list posts no_pos in
         let pre = CP.conj_of_list pres no_pos in
-        let p = CP.mkAnd post (TP.simplify_raw (CP.mkExists post_vars p None no_pos)) no_pos in
+        let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_raw (CP.mkExists post_vars p None no_pos)) no_pos) in
         (p,[pre])
       end
     in
-(*    let h,rm_vars = simplify_heap h p prog in    *)
-(*    let rm_vars = CP.diff_svl rm_vars (h_fv h) in*)
-(*    print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list rm_vars);*)
-(*    print_endline ("FML: " ^ Cprinter.string_of_formula post_fml);      *)
-(*    let p = TP.simplify_raw (CP.mkExists rm_vars p None no_pos) in*)
+    (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     (mkBase h (MCP.mix_of_pure p) t fl b no_pos,pre)
 
-let simplify_post post_fml post_vars prog subst_fml = 
+let simplify_post post_fml post_vars prog subst_fml pre_vars = 
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_spec_var_list in
-  Debug.no_2 "simplify_post" pr pr2 pr_no
-      (fun _ _ -> simplify_post post_fml post_vars prog subst_fml) post_fml post_vars
+  Debug.no_2 "simplify_post" pr pr2 (pr_pair pr pr_no)
+      (fun _ _ -> simplify_post post_fml post_vars prog subst_fml pre_vars) post_fml post_vars
 
 let rec simplify_pre pre_fml = match pre_fml with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
@@ -9438,16 +9485,16 @@ let rec simplify_pre pre_fml = match pre_fml with
     let p = TP.simplify_raw (MCP.pure_of_mix p) in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 
-let rec simplify_relation (sp:struc_formula) subst_fml prog : struc_formula * CP.formula list = 
-  let res = List.map (fun s -> simplify_ext_relation s subst_fml prog) sp in
+let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog : struc_formula * CP.formula list = 
+  let res = List.map (fun s -> simplify_ext_relation s subst_fml pre_vars post_vars prog) sp in
   let new_sp, pres = List.split res in
   (new_sp, List.concat pres)
 
-and simplify_ext_relation (sp:ext_formula) subst_fml prog = 
+and simplify_ext_relation (sp:ext_formula) subst_fml pre_vars post_vars prog = 
   match sp with
     | ECase b ->
       let r = List.map (fun (p,s)->(p,
-          let new_s,pres = simplify_relation s subst_fml prog in
+          let new_s,pres = simplify_relation s subst_fml pre_vars post_vars prog in
           if pres = [] then new_s
           else 
             try List.map2 CF.merge_ext_pre new_s (List.map (fun x -> CF.formula_of_pure_formula x no_pos) pres)
@@ -9455,17 +9502,24 @@ and simplify_ext_relation (sp:ext_formula) subst_fml prog =
         )) b.formula_case_branches in
       (ECase {b with formula_case_branches = r},[])
     | EBase b ->
-      let r,pres = simplify_relation b.formula_ext_continuation subst_fml prog in      
+      let r,pres = simplify_relation b.formula_ext_continuation subst_fml pre_vars post_vars prog in      
       let base = if pres = [] then b.formula_ext_base else
           let pre = CP.conj_of_list pres no_pos in 
           simplify_pre (CF.normalize 1 b.formula_ext_base (CF.formula_of_pure_formula pre no_pos) no_pos) 
       in
       (EBase {b with formula_ext_base = base; formula_ext_continuation = r}, [])
     | EAssume(svl,f,fl) ->
-      let (new_f,pres) = simplify_post f (CF.fv f) prog subst_fml in
+      let pvars = CF.fv f in
+      let pvars = CP.diff_svl pvars post_vars in
+      let pvars = CP.remove_dups_svl pvars in
+      (*let vr = List.map CP.to_primed svl in
+      let post_vars = CP.diff_svl post_vars vr in
+      let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
+      let post_vars = CP.remove_dups_svl post_vars in*)
+      let (new_f,pres) = simplify_post f pvars prog subst_fml pre_vars in
       (EAssume(svl,new_f,fl), pres)
     | EVariance b -> 
-      (EVariance {b with formula_var_continuation = fst (simplify_ext_relation b.formula_var_continuation subst_fml prog)},[])
+      (EVariance {b with formula_var_continuation = fst (simplify_ext_relation b.formula_var_continuation subst_fml pre_vars post_vars prog)},[])
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
 

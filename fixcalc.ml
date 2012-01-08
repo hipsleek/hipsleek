@@ -218,19 +218,6 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
       | _ -> report_error no_pos "Expecting a pair of pre-post"
   with _ -> report_error no_pos "Unexpected error in computing fixpoint"*)
 
-let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) : CP.formula = match (rel,rel_def) with
-  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
-    if id = id_def then 
-      let new_args_def = 
-        let pre_args, post_args = List.partition (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args_def in
-        pre_args @ post_args 
-      in
-      let pairs = List.combine args_def args in
-      let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
-      CP.BForm ((CP.RelForm (id,new_args,p), o1), o2)
-    else rel
-  | _ -> report_error no_pos "Expecting relation formulae"
-
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
@@ -246,6 +233,25 @@ let rec get_rel_vars pf = match pf with
   | CP.Not (f,_,_) -> get_rel_vars f
   | CP.Forall (_,f,_,_) -> get_rel_vars f
   | CP.Exists (_,f,_,_) -> get_rel_vars f
+
+let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) : CP.formula = match (rel,rel_def) with
+  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
+    if id = id_def then 
+      let new_args_def = 
+        let pre_args, post_args = List.partition (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args_def in
+        pre_args @ post_args 
+      in
+      let pairs = List.combine args_def args in
+      let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
+      CP.BForm ((CP.RelForm (id,new_args,p), o1), o2)
+    else rel
+  | _ -> report_error no_pos "Expecting relation formulae"
+
+let arr_args rcase_orig rel ante_vars = 
+  let rels = CP.get_RelForm rcase_orig in
+  let rels = List.map (fun r -> arr_para_order r rel ante_vars) rels in
+  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
+  CP.conj_of_list ([rcase]@rels) no_pos
 
 let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)
   | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->
@@ -309,7 +315,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let (rcases, bcases) = List.partition is_rec pfs in
     match bcases with
     | [bcase] -> [bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel ante_vars) rcases)
-    | _ -> pfs
+    | _ -> bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)
 
 let helper input_pairs rel ante_vars = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
