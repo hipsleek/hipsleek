@@ -170,7 +170,7 @@ case {
     int upward_crossing_situation;
     bool result;
 
-    upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+    upward_preferred = Inhibit_Biased_Climb() >= Down_Separation; /* operator mutation */
     if (upward_preferred)
     {
       result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(arr, Alt_Layer_Value));

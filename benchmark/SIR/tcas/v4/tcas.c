@@ -125,7 +125,7 @@ bool Non_Crossing_Biased_Climb(ref int [] arr)
     }
     else
     {
-      result = Own_Above_Threat()&&(Cur_Vertical_Sep >= 300)&&(Up_Separation >= ALIM(arr, Alt_Layer_Value));
+      result = Own_Above_Threat()&&(Cur_Vertical_Sep >= 300)||(Up_Separation >= ALIM(arr, Alt_Layer_Value));/* logic change */
     }
     return result;
 }

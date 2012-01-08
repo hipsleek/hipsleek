@@ -233,7 +233,7 @@ int alt_sep_test(ref int[] arr)
     bool need_upward_RA, need_downward_RA;
     int alt_sep;
 
-    enabled = High_Confidence && (Own_Tracked_Alt_Rate <= 600) && (Cur_Vertical_Sep > 600);
+    enabled = High_Confidence && (Own_Tracked_Alt_Rate <= 600) ;/*&& (Cur_Vertical_Sep > 600);missing code */
     tcas_equipped = Other_Capability == 1;
     intent_not_known = Two_of_Three_Reports_Valid && Other_RAC == 0;
     alt_sep = 4;

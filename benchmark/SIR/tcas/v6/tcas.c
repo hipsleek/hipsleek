@@ -190,7 +190,7 @@ bool Own_Below_Threat()
          ensures !res & Other_Tracked_Alt'=Other_Tracked_Alt & Own_Tracked_Alt'=Own_Tracked_Alt;
    }
 {
-    return (Own_Tracked_Alt < Other_Tracked_Alt);
+    return (Own_Tracked_Alt <= Other_Tracked_Alt);/* operator mutation */
 }
 
 bool Own_Above_Threat()

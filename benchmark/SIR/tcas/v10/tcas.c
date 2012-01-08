@@ -190,7 +190,8 @@ bool Own_Below_Threat()
          ensures !res & Other_Tracked_Alt'=Other_Tracked_Alt & Own_Tracked_Alt'=Own_Tracked_Alt;
    }
 {
-    return (Own_Tracked_Alt < Other_Tracked_Alt);
+    /* NOTE JMW replaced LESS-THAN with LESS-THAN-EQUAL. */
+    return (Own_Tracked_Alt <= Other_Tracked_Alt);
 }
 
 bool Own_Above_Threat()
@@ -201,7 +202,8 @@ case {
       ensures !res & Other_Tracked_Alt'=Other_Tracked_Alt & Own_Tracked_Alt'=Own_Tracked_Alt;
    }
 {
-    return (Other_Tracked_Alt < Own_Tracked_Alt);
+    /* NOTE JMW replaced LESS-THAN with LESS-THAN-EQUAL. */
+    return (Other_Tracked_Alt <= Own_Tracked_Alt);
 }
 
 int alt_sep_test(ref int[] arr)

@@ -48,16 +48,15 @@ global bool Climb_Inhibit;		/* true/false */
 
 void initialize(ref int[] Positive_RA_Alt_Thresh)
   requires dom(Positive_RA_Alt_Thresh, 0, 3)
-    ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
+    ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 & 
                Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740;
-/*
 {
     Positive_RA_Alt_Thresh[0] = 400;
-    Positive_RA_Alt_Thresh[1] = 500;
+    Positive_RA_Alt_Thresh[1] = 550;/* constant mutation */
     Positive_RA_Alt_Thresh[2] = 640;
     Positive_RA_Alt_Thresh[3] = 740;
 }
-*/
+
 int ALIM (int[] arr,  int i)
  requires  dom(arr, 0, 3) & 0<=i<=3
  ensures   res=arr[i];
