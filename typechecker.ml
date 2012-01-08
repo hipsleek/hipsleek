@@ -719,7 +719,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_path_id = pid;
 			  exp_scall_pos = pos}) ->
 		    begin
-                (*let _ = print_endline ("SCall: " ^ mn) in*)
+               (* let _ = print_endline ("SCall: " ^ mn) in*)
                 let _ = proving_loc#set pos in
 	            let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
@@ -847,6 +847,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           Tpdispatcher.restore_suppress_imply_output_state ();
                   (* print_endline "OK.\n" *)
                       end in
+               (* let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context res) ^ "\n") in*)
                 if (CF.isSuccessListFailescCtx_new res) then
                  (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                   res
@@ -1065,7 +1066,11 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
               ) *)
         (*should check bot with is_bot_status*)
           in
-          print_string ("\nPost condition cannot be derived:\n"^s^"\n")
+          let _ = print_string ("\nPost condition cannot be derived:\n" ^s^"\n") in
+          Err.report_error {
+                  Err.error_loc = pos;
+                  Err.error_text = ("Post condition cannot be derived.")
+          }
         else
           begin
               Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ") 
