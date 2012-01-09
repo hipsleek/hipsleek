@@ -374,8 +374,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                        * phase transitions inferred by inference 
                        * Need to filter the constraints 
                        * and normalize them *)
+                      (* Only interest constraints related to logical variables *)
+                      let log_vars = prog.Cast.prog_logical_vars in
+                      let cl = List.filter (fun f -> 
+                        Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
                       let _ = DD.trace_hprint (add_str "Inferred constraints: " (pr_list !CP.print_formula)) lp pos in
-                      let _ = Term.add_phase_constr (List.map TP.simplify_raw lp) in
+                      let _ = Term.add_phase_constr (List.map TP.simplify_raw cl) in
                                            
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in

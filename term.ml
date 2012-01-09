@@ -52,8 +52,7 @@ type term_res = term_trans_loc * term_ann_trans option * formula option * term_s
 (* We are only interested in two kinds 
  * of constraints in phase inference:
  * p2>p1 and p2>=p1 *)
-exception Invalid_Phase_Constr;;
-
+exception Invalid_Phase_Constr
 type phase_constr =
   | P_Gt of (CP.spec_var * CP.spec_var)  (* p2>p1 *)
   | P_Gte of (CP.spec_var * CP.spec_var) (* p2>=p1 *)
@@ -577,14 +576,18 @@ let add_phase_constr (lp: CP.formula list) =
  * p2>p1 -> p2 --> p1
  * p2>=p1 -> {p2,p1} 
  * [x>y, y>=z] --> [[x], [y,z]] *)
-
+(*
 let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   let fl = List.concat (List.map CP.split_conjunctions fl) in
-  List.map phase_constr_of_formula fl
+  List.fold_left (fun a f -> 
+    try let c = phase_constr_of_formula f in c::a
+    with _ -> a) [] fl
   
 and phase_constr_of_formula (f: CP.formula) : phase_constr =
   match f with
-  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
+  | CP.BForm (bf, _) -> 
+      try phase_constr_of_b_formula bf
+      with _ -> raise Invalid_Phase_Constr
   | _ -> raise Invalid_Phase_Constr 
 
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr =
@@ -614,6 +617,55 @@ and var_of_exp (exp: CP.exp) : CP.spec_var =
   match exp with
   | CP.Var (sv, _) -> sv
   | _ -> raise Invalid_Phase_Constr
+*)
+
+let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
+  let fl = List.concat (List.map CP.split_conjunctions fl) in
+  List.fold_left (fun a f -> 
+    let c = phase_constr_of_formula f in 
+    match c with
+    | Some c -> c::a
+    | None -> a) [] fl
+  
+and phase_constr_of_formula (f: CP.formula) : phase_constr option =
+  match f with
+  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
+  | _ -> None 
+
+and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =
+  let (pf, _) = bf in
+   
+    match pf with
+    | CP.Gt (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        (match (v1, v2) with
+         | Some v1, Some v2 -> Some (P_Gt (v1, v2))
+         | _ -> None)
+    | CP.Gte (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        (match (v1, v2) with
+         | Some v1, Some v2 -> Some (P_Gte (v1, v2))
+         | _ -> None)
+    | CP.Lt (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        (match (v1, v2) with
+         | Some v1, Some v2 -> Some (P_Gt (v2, v1))
+         | _ -> None)
+    | CP.Lte (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        (match (v1, v2) with
+         | Some v1, Some v2 -> Some (P_Gte (v2, v1))
+         | _ -> None)
+    | _ -> None
+
+and var_of_exp (exp: CP.exp) : CP.spec_var option =
+  match exp with
+  | CP.Var (sv, _) -> Some sv
+  | _ -> None
 
 module PComp = 
 struct
@@ -710,27 +762,39 @@ let value_of_vars (v: CP.spec_var) l : int =
     ) l in i
   with _ -> raise Invalid_Phase_Constr
 
-(* Main function of the termination checker *)
-let term_check_output stk =
+let phase_num_infer () =
   (* Phase Numbering *) 
   let pr_v = !CP.print_sv in
   let pr_vl = pr_list pr_v in
   let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in
-  let l = rank_gt_phase_constr cl in
+  let _ = Debug.trace_hprint (add_str "Phase Constrs: " (pr_list string_of_phase_constr)) cl no_pos in
+  let l = 
+    try rank_gt_phase_constr cl 
+    with _ -> 
+      fmt_string ("Termination: Contradiction in Phase Constraints."); [] 
+  in
   begin
     Debug.trace_hprint (add_str "Inferred phase constraints: "
       (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
     Debug.trace_hprint (add_str "Phase Numbering"
       (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
     ) l no_pos;
-  end; 
+  end
 
+let phase_num_infer () =
+  let pr = fun _ -> "" in
+  Debug.to_1 "phase_num_infer" pr pr phase_num_infer ()
 
+(* Main function of the termination checker *)
+let term_check_output stk =
+  (if not (!Globals.dis_phase_num) then
+    phase_num_infer ()
+  else ());
   fmt_string "\nTermination checking result:\n";
   pr_term_res_stk (stk # get_stk);
   fmt_print_newline ()
 
 let term_check_output stk =
   let pr = fun _ -> "" in
-  Debug.to_1 "term_check_output" pr pr term_check_output stk
+  Debug.no_1 "term_check_output" pr pr term_check_output stk
 
