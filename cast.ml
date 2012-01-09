@@ -25,6 +25,7 @@ and prog_decl = {
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
 	prog_proc_decls : proc_decl list;
+    new_proc_decls : (ident,proc_decl) Hashtbl.t;
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
@@ -419,6 +420,45 @@ let map_proc (prog:prog_decl)
   { prog with
       prog_proc_decls = List.map (f_p) prog.prog_proc_decls;
   }
+
+
+let same_call_scc p1 p2 = p1.proc_call_order == p2.proc_call_order
+
+(* returns (procs_wo_body, proc_mutual_rec list) *)
+let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
+  let (pr_prim,pr_rest) = List.partition is_primitive_proc pl in
+  let rec helper acc pl = match pl with
+    | [] -> if acc==[] then [] else [acc]
+    | x::rest -> 
+          begin
+            match acc with
+              | [] -> helper [x] rest
+              | a::_ -> if same_call_scc a x then helper (x::acc) rest
+                else acc::(helper [x] rest)
+          end
+  in (pr_prim, helper [] pr_rest)
+
+let replace_proc cp new_proc =
+  let id = new_proc.proc_name in
+  let _ = Hashtbl.replace cp.new_proc_decls id new_proc in
+  cp
+
+(* returns Not_found if id not in prog_decls *)
+let find_proc cp id =
+  Hashtbl.find cp.new_proc_decls id
+
+(* returns Not_found if id not in prog_decls *)
+let find_proc_opt cp id =
+  try 
+    Some (find_proc cp id)
+  with _ -> None
+
+let list_of_procs cp =
+  Hashtbl.fold (fun id pd lst -> pd::lst) cp.new_proc_decls []
+
+let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) = 
+  let lst = list_of_procs cp
+  in re_proc_mutual lst
 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
@@ -1633,19 +1673,4 @@ and add_term_call_num_proc (proc: proc_decl) : proc_decl =
         F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
     }
 
-let same_call p1 p2 = p1.proc_call_order == p2.proc_call_order
-
-(* returns (procs_wo_body, proc_mutual_rec list) *)
-let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
-  let (pr_prim,pr_rest) = List.partition (fun x -> x.proc_body==None) pl in
-  let rec helper acc pl = match pl with
-    | [] -> if acc==[] then [] else [acc]
-    | x::rest -> 
-          begin
-            match acc with
-              | [] -> helper [x] rest
-              | a::_ -> if same_call a x then helper (x::acc) rest
-                else acc::(helper [x] rest)
-          end
-  in (pr_prim, helper [] pr_rest)
 

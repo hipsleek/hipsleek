@@ -1061,6 +1061,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 			  C.prog_rel_decls = crels; (* An Hoa *)
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
         C.prog_proc_decls = cprocs;
+        C.new_proc_decls = Hashtbl.create 20;
         C.prog_left_coercions = l2r_coers;
         C.prog_right_coercions = r2l_coers;
       } in

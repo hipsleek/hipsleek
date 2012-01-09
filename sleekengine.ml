@@ -60,6 +60,7 @@ let cprog = ref { C.prog_data_decls = [];
 				C.prog_rel_decls = []; (* An Hoa *)
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  C.prog_proc_decls = [];
+			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
