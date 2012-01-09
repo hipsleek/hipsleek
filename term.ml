@@ -638,6 +638,12 @@ and phase_constr_of_formula (f: CP.formula) : phase_constr option =
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =
   let (pf, _) = bf in
   match pf with
+    | CP.Eq (e1, e2, _) ->
+        let v1 = var_of_exp e1 in
+        let v2 = var_of_exp e2 in
+        (match (v1, v2) with
+         | Some v1, Some v2 -> Some (P_Gte (v1, v2))
+         | _ -> None)
     | CP.Gt (e1, e2, _) ->
         let v1 = var_of_exp e1 in
         let v2 = var_of_exp e2 in
