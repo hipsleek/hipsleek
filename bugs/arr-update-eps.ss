@@ -10,10 +10,10 @@ void initialize0(ref int[] arr)
 //fail
 void initialize1(ref int[] arr)
                requires dom(arr, 0, 1)
-               ensures  dom(arr', 0, 1) & arr'[0] = 400 & arr'[1] = 500;
+               ensures  dom(arr', 0, 1) & arr'[1] = 500 & arr'[0]=400;//'
 {
- //dprint;
-    arr[0] = 400;
-   // dprint;
    arr[1] = 500;
+   dprint;
+   arr[0] = 400;
+   dprint;
 }
