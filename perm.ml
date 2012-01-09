@@ -55,7 +55,7 @@ module type PERM =
     val apply_one_iperm : ((ident * primed) * (ident*primed)) -> Ipure.exp -> Ipure.exp
     val full_perm_var : cperm_var
     val full_perm_constraint : Mcpure.mix_formula
-    (* val mkFullPerm_pure : cperm -> Cpure.formula *)
+    val mkFullPerm_pure : cperm_var -> Cpure.formula
     (* val mkFullPerm_pure_from_ident : ident -> Cpure.formula *)
     val mkPermInv : cperm_var -> Cpure.formula
     val mkPermWrite : cperm_var -> Cpure.formula
@@ -89,7 +89,7 @@ struct
       | Some f -> [f]
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
-  let mkFullPerm_pure  f : Cpure.formula = 
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
         (Cpure.Var (full_perm_var,no_pos)),
@@ -183,7 +183,7 @@ struct
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   (*LDK: a constraint to indicate FULL permission = 0*)
-  let mkFullPerm_pure  f : Cpure.formula = 
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
         (Cpure.Var (full_perm_var,no_pos)),
@@ -299,9 +299,9 @@ let full_perm_constraint () =   match !perm with
     | Count -> CPERM.full_perm_constraint
     | _ -> FPERM.full_perm_constraint
 
-(* let mkFullPerm_pure =   match !perm with *)
-(*     | Count -> CPERM.mkFullPerm_pure *)
-(*     | _ -> FPERM.mkFullPerm_pure *)
+let mkFullPerm_pure =   match !perm with
+    | Count -> CPERM.mkFullPerm_pure
+    | _ -> FPERM.mkFullPerm_pure
 
 (* let mkFullPerm_pure_from_ident =   match !perm with *)
 (*     | Count -> CPERM.mkFullPerm_pure_from_ident *)

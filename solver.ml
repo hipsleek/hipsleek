@@ -6622,6 +6622,99 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
   in
   Some (na,prf)
 
+(*match and instatiate perm vars*)
+(*Return a substitution, labels, to_ante,to_conseq*)
+and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+    begin
+        if (Perm.allow_perm ()) then
+          (match l_perm, r_perm with
+            | Some f1, Some f2 ->
+                let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                let label_list = (""::label_list) in
+                (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+            | None, Some f2 ->
+                (if (List.mem f2 evars) then
+                      (*rename only*)
+                      let rho_0 = List.combine (f2::r_args) (full_perm_var::l_args) in
+                      let label_list = (""::label_list) in
+                      (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+                 else if (List.mem f2 expl_vars) then
+                   (*f2=full to RHS to inst later*)
+                   let rho_0 = List.combine (r_args) (l_args) in
+                   let p_conseq = mkFullPerm_pure f2 in
+                   let label_list = (label_list) in
+                   (rho_0, label_list,CP.mkTrue no_pos,p_conseq)
+                 else if (List.mem f2 impl_vars) then
+                   (*instantiate: f2=full to LHS. REMEMBER to remove it from impl_vars*)
+                   let rho_0 = List.combine (r_args) (l_args) in
+                   let p_ante = mkFullPerm_pure f2 in
+                   let label_list = (label_list) in
+                   (rho_0, label_list,p_ante,CP.mkTrue no_pos)
+                 else (*global vars*)
+                   (*f2=full to RHS*)
+                   let rho_0 = List.combine (r_args) (l_args) in
+                   let p_conseq = mkFullPerm_pure f2 in
+                   let label_list = (label_list) in
+                   (rho_0, label_list,CP.mkTrue no_pos,p_conseq))
+            | Some f1, None ->
+                (*f1 is either ivar or global
+                  if it is ivar, REMEMBER to convert it to expl_var*)
+                let rho_0 = List.combine r_args l_args in
+                let label_list = (label_list) in
+                let t_conseq = mkFullPerm_pure f1 in
+                (rho_0, label_list,CP.mkTrue no_pos,t_conseq)
+            | _ -> let rho_0 = List.combine r_args l_args in
+                   (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
+          )
+        else
+          let rho_0 = List.combine r_args l_args in (* without branch label *)
+          (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+
+    end
+
+(*Modified a set of vars in estate to reflect instantiation
+ when matching 2 perm vars*)
+and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
+    begin
+        if (Perm.allow_perm ()) then
+          (match l_perm, r_perm with
+            | Some f1, Some f2 ->
+                (*these cases will be handled by existing mechanism*)
+                evars,ivars,impl_vars, expl_vars
+            | None, None  ->
+                (*no change*)
+                evars,ivars,impl_vars, expl_vars
+            | None, Some f2 ->
+                (if (List.mem f2 evars) then
+                      (*rename only. May not need to remove it from evars*)
+                      evars,ivars,impl_vars, expl_vars
+                 else if (List.mem f2 expl_vars) then
+                   (*f2=full to RHS to inst later*)
+                   evars,ivars,impl_vars, expl_vars
+                 else if (List.mem f2 impl_vars) then
+                   (*instantiate: f2=full to LHS. REMEMBER to remove it from impl_vars*)
+                   let new_impl_vars = Gen.BList.difference_eq CP.eq_spec_var impl_vars [f2] in
+                   (evars,ivars,new_impl_vars, expl_vars)
+                 else
+                   (*global vars. No change*)
+                   (*f2=full to RHS*)
+                   evars,ivars,impl_vars, expl_vars)
+            | Some f1, None ->
+                (*f1 is either ivar or global
+                  if it is ivar, REMEMBER to convert it to expl_var*)
+                (if (List.mem f1 ivars) then
+                      let new_ivars = Gen.BList.difference_eq CP.eq_spec_var ivars [f1] in
+                      let new_expl_vars = f1::expl_vars in
+                      (evars,new_ivars,impl_vars,new_expl_vars)
+                 else
+                      (evars,ivars,impl_vars,expl_vars)
+                )
+          )
+        else
+          (*not changed of no perm*)
+          evars,ivars,impl_vars, expl_vars
+    end
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -6726,42 +6819,31 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               with Not_found -> List.map (fun _ -> "") l_args in
               (*LDK: using fractional permission introduces 1 more spec var
                 We also need to add 1 more label*)
-              let rho_0, label_list = 
-                if (Perm.allow_perm ()) then
-                  (match l_perm, r_perm with
-                    | Some f1, Some f2 ->
-                          let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-                          let label_list = (""::label_list) in
-                          (rho_0, label_list)
-                    | None, Some f2 ->
-                          let rho_0 = List.combine (f2::r_args) (full_perm_var::l_args) in
-                          let label_list = (""::label_list) in
-                          (rho_0, label_list)
-                    | Some f1, None ->
-                          let rho_0 = List.combine (full_perm_var::r_args) (f1::l_args) in
-                          let label_list = (""::label_list) in
-                          (rho_0, label_list)
-                    | _ -> let rho_0 = List.combine r_args l_args in
-                      (rho_0, label_list)
-                  )
-                else  
-                  let rho_0 = List.combine r_args l_args in (* without branch label *)
-                  (rho_0, label_list)
+              (*renamed and instantiate perm var*)
+              let evars = estate.es_evars in
+              let ivars = estate.es_ivars in
+              let expl_vars = estate.es_gen_expl_vars in
+              let impl_vars = estate.es_gen_impl_vars in
+              let rho_0, label_list, p_ante,p_conseq =
+                do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars
               in
               let rho = List.combine rho_0 label_list in (* with branch label *)
+              let evars,ivars,impl_vars, expl_vars = 
+                do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars
+              in
               (*impl_tvars are impl_vars that are replaced by ivars in rho. 
                 A pair (impl_var,ivar) belong to rho => 
                 impl_var belongs to impl_tvars
                 ivar belongs to ivars
                 (ivar,impl_var) belongs to ivar_subs_to_conseq
               *)
-              let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars estate.es_gen_impl_vars pos in
+              let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho ivars impl_vars pos in
               let subtract = Gen.BList.difference_eq CP.eq_spec_var in
-              let new_impl_vars = subtract estate.es_gen_impl_vars impl_tvars in
-              let new_exist_vars = estate.es_evars(* @ivars *) in
-              let new_expl_vars = estate.es_gen_expl_vars@impl_tvars in
-              let new_ivars = subtract estate.es_ivars ivars in
-              (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
+              let new_impl_vars = subtract impl_vars impl_tvars in
+              let new_exist_vars = evars(* @tmp_ivars *) in
+              let new_expl_vars = expl_vars@impl_tvars in
+              let new_ivars = subtract ivars tmp_ivars in
+              (* let (expl_inst, tmp_ivars', expl_vars') = (get_eqns_expl_inst rho_0 ivars pos) in *)
               (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
               (*Only instantiate an RHS impl_var to LHS if 
                 it is not matched with an ivar of LHS.
@@ -6771,7 +6853,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : strip all the pair of equality involving # *)
 	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
               let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
-                get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
+                get_eqns_free other_subs new_exist_vars impl_tvars (* evars *) (* expl_vars@ *) expl_vars pos in
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
               (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -6779,6 +6861,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (********************************************************************)
               let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
               let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
+              (*add instantiation for perm vars*)
+              let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante ) in
+              let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	          let l_h = match rem_l_node with
 		        | HTrue | HFalse -> l_h
@@ -6827,9 +6912,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_gen_expl_vars = new_expl_vars (* estate.es_gen_expl_vars@expl_vars' *);
                   (* update ivars - basically, those univ vars for which binsings have been found will be removed:
                      for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
-                  es_gen_impl_vars = subtract new_impl_vars lhs_vars (* Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars (lhs_vars@expl_vars') *) ;
-                  es_evars = new_exist_vars (* Gen.BList.difference_eq CP.eq_spec_var estate.es_evars expl_vars' *) ;
-                  es_ivars = new_ivars (*ivars'*);
+                  es_gen_impl_vars = subtract new_impl_vars lhs_vars (* Gen.BList.difference_eq CP.eq_spec_var impl_vars (lhs_vars@expl_vars') *) ;
+                  es_evars = new_exist_vars (* Gen.BList.difference_eq CP.eq_spec_var evars expl_vars' *) ;
+                  es_ivars = new_ivars (*tmp_ivars'*);
                   es_heap = new_consumed;
                   es_residue_pts = n_es_res;
                   es_success_pts = n_es_succ; 
@@ -6841,8 +6926,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* apply the explicit instantiations to the consequent *)
               (* let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in *)
               (* for each expl inst  vi = wi: make wi existential + remove vi from the exist vars *)
-              let new_es' = new_es in (* {new_es with (\* es_evars = new_es.es_evars @ (snd new_subst); *\) es_must_match = false} in *)
-              let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
+              let new_es' = new_es in (* {new_es with (\* es_evars = evars @ (snd new_subst); *\) es_must_match = false} in *)
+              let new_es = pop_exists_estate tmp_ivars (* (fst new_subst) *) new_es' in
               let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
 	          (* print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx)); *)
 	          (* print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq)); *)
@@ -9400,7 +9485,7 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 and normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
       
 (*******************************************************************************************************************************************************************************************)
