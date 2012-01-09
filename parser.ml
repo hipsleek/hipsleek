@@ -1049,7 +1049,7 @@ measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
-cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];
+(*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
 
 (********** Procedures and Coercion **********)
 
@@ -1396,16 +1396,16 @@ spec:
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			F.ECase {
 						F.formula_case_branches = bl; 
-						F.formula_case_pos = get_pos_camlp4 _loc 1; }
-	 | `VARIANCE; m=opt_measures; i=opt_measures_seq; s=SELF ->
+            F.formula_case_pos = get_pos_camlp4 _loc 1; }]];
+	 (*| `VARIANCE; m=opt_measures; i=opt_measures_seq; s=SELF ->
 			F.EVariance {
 					F.formula_var_measures = m;
           F.formula_var_infer = i;
 					F.formula_var_continuation = s;
-					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];*)
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
-
+(*
 opt_measures: [[t=OPT measures -> un_option t []]];
 
 measures: [[`OSQUARE; vl=variance_list; `CSQUARE -> vl]];
@@ -1417,7 +1417,7 @@ cexp_with_bound:
 	 | t1=cexp; `AT; t2=cexp -> (t1, Some t2)]];
 
 condition_list: [[t=pure_constr ->[t]]];
-  
+*)  
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
 spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];

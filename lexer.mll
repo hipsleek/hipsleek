@@ -199,7 +199,7 @@ module Make (Token : SleekTokenS)
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
 	 ("void", VOID);
-   ("variance", VARIANCE);
+   (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
 	 (flow, FLOW flow);]

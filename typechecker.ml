@@ -276,14 +276,14 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let _ = if rels==[] then () else pre_ctr#inc  
             in
 	        (CF.EBase {b with CF.formula_ext_base = new_base; CF.formula_ext_continuation = c}, [], rels, r) 
-	  | CF.EVariance b ->
+	  (*| CF.EVariance b ->
             Debug.devel_zprint (lazy ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         (* Termination: Add termination arguments into context *)
         let t_ann, ml, il = Term.measures_of_evariance b in
 			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
           CF.es_var_measures = Some (t_ann, ml, il)}) ctx in
 		    let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_var_continuation in
-	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) 
+	      (CF.EVariance {b with CF.formula_var_continuation = c}, pre, rel, f) *)
       | CF.EInfer b ->
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             let postf = b.CF.formula_inf_post in
@@ -839,7 +839,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                 (* Termination: Stripping the "variance" feature from 
                  * org_spec if the call is not a recursive call *)
-                let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in
+                (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
+                let stripped_spec = org_spec in 
            
                 (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)

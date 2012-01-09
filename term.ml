@@ -206,7 +206,7 @@ exception Invalid_Phase_Num;;
 (*     | EAssume _ -> false *)
 (*     | EVariance _ -> true *)
 (*     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont *)
-
+(*
 let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
   if (v.formula_var_measures = []) then None 
   else
@@ -219,7 +219,7 @@ let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * 
   let vm = fst (List.split v.formula_var_measures) in
 	let vi = v.formula_var_infer in
   (Term, vm, vi)
-
+*)
 let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list) =
   let (pf, _) = bf in
   match pf with
@@ -495,10 +495,13 @@ let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   term_res_stk # push term_res;
   term_res
 
+(*
 let get_phase_num (measure: ext_variance_formula) : int =
   let phase_num = fst (List.nth measure.formula_var_measures 1) in
   if (CP.is_num phase_num) then CP.to_int_const phase_num CP.Floor 
   else raise Invalid_Phase_Num 
+*)
+
 (*  
 let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res =
   let orig_ante = formula_of_context ctx in
@@ -634,8 +637,7 @@ and phase_constr_of_formula (f: CP.formula) : phase_constr option =
 
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =
   let (pf, _) = bf in
-   
-    match pf with
+  match pf with
     | CP.Gt (e1, e2, _) ->
         let v1 = var_of_exp e1 in
         let v2 = var_of_exp e2 in

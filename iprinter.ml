@@ -385,7 +385,7 @@ let rec string_of_ext_formula = function
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
-  | Iformula.EVariance {
+  (*| Iformula.EVariance {
 			Iformula.formula_var_measures = measures;
 			Iformula.formula_var_infer = infer_exps;
 			Iformula.formula_var_continuation = continuation;
@@ -397,7 +397,7 @@ let rec string_of_ext_formula = function
     let string_of_infer_exps = List.fold_left (fun acc exp -> 
       acc ^ " " ^ (string_of_formula_exp exp)) "" infer_exps in
 		let string_of_continuation = string_of_ext_formula continuation in
-    "EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer_exps ^ "} " ^ string_of_continuation 
+    "EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer_exps ^ "} " ^ string_of_continuation *)
  | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
    Iformula.formula_inf_post = postf;
    Iformula.formula_inf_continuation = continuation;} ->
