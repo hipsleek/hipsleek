@@ -1,3 +1,4 @@
+//Example used in CAV'08 - Proving conditional termination
 //Infer the precondition for termination
 
 logical int p1,p2,p3;
