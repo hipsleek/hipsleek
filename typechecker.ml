@@ -1427,8 +1427,7 @@ let check_prog (prog : prog_decl) =
     *)
 	
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-    
+    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);    
     Term.term_check_output Term.term_res_stk
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in

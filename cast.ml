@@ -1633,3 +1633,19 @@ and add_term_call_num_proc (proc: proc_decl) : proc_decl =
         F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
     }
 
+let same_call p1 p2 = p1.proc_call_order == p2.proc_call_order
+
+(* returns (procs_wo_body, proc_mutual_rec list) *)
+let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
+  let (pr_prim,pr_rest) = List.partition (fun x -> x.proc_body==None) pl in
+  let rec helper acc pl = match pl with
+    | [] -> if acc==[] then [] else [acc]
+    | x::rest -> 
+          begin
+            match acc with
+              | [] -> helper [x] rest
+              | a::_ -> if same_call a x then helper (x::acc) rest
+                else acc::(helper [x] rest)
+          end
+  in (pr_prim, helper [] pr_rest)
+

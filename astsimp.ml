@@ -7724,15 +7724,27 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
 
+and pr_proc_call_order p = 
+  let n = p.Cast.proc_name in
+  let c = p.Cast.proc_call_order in
+  pr_pair pr_id string_of_int (n,c)
+
 (* Termination *)			  
 (* Recursive call and call order detection *)
 (* irf = is_rec_field *)
-and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
+and mark_rec_and_call_order_x (cp: Cast.prog_decl) : Cast.prog_decl =
   let cg = Cast.callgraph_of_prog cp in
   let scc_list = List.rev (Cast.IGC.scc_list cg) in
   let cp = mark_recursive_call cp scc_list cg in
-  mark_call_order cp scc_list cg
-  
+  let cp = mark_call_order cp scc_list cg in
+  let (prims,mutual_grps) = Cast.re_proc_mutual cp.Cast.prog_proc_decls in
+  Debug.trace_hprint (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
+  cp
+
+and mark_rec_and_call_order (cp: Cast.prog_decl) : Cast.prog_decl =
+  let pr p = pr_list (pr_proc_call_order) (List.filter (fun x -> not(x.Cast.proc_body == None)) p.Cast.prog_proc_decls) in
+  Debug.to_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
+
 and mark_recursive_call (cp: Cast.prog_decl) scc_list cg : Cast.prog_decl = 
   (*let _ = printf "The scc list of program:\n";
 	  List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list;
