@@ -562,6 +562,9 @@ let check_term_measure f (ctx: context) (measure: ext_variance_formula) pos : te
     check_reachable_term_measure f ctx measure pos
 *)
 
+(*****************************************)
+(* Phase Transition Inference            *)
+(*****************************************)
 (* Store the inferred phase constraints *)
 (* TODO: These constraints should be normalized
  * and filtered to keep only constraints 
@@ -618,8 +621,7 @@ struct
   let compare = 
     fun l1 l2 -> 
       if (Gen.BList.list_setequal_eq CP.eq_spec_var l1 l2)
-      then 0
-      else -1
+      then 0 else -1
   let hash = Hashtbl.hash
   let equal = Gen.BList.list_setequal_eq CP.eq_spec_var
 end
@@ -631,7 +633,8 @@ module PGC = Graph.Components.Make(PG)
 module PGP = Graph.Path.Check(PG)
 module PGT = Graph.Traverse.Dfs(PG)
 
-(* Group spec_vars of related P_Gte constraints together *)
+(* Group spec_vars of related 
+ * P_Gte constraints together *)
 let rec group_related_vars (cl: phase_constr list) : CP.spec_var list list =
   let gte_l = List.fold_left (fun a c ->
     match c with 

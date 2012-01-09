@@ -1916,6 +1916,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     (ignore (List.map add_param all_args);
 	let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = H.add stab eres_name { sv_info_kind = Named raisable_class ;id = fresh_int () } in
+  (* Termination: Add info of logical vars *)
+  let add_logical (CP.SpecVar (t, i, _)) = H.add stab i { 
+    sv_info_kind = t; 
+    id = fresh_int () } in
+  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+  (ignore (List.map add_logical log_vars));
+
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
