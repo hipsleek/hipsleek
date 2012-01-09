@@ -443,6 +443,13 @@ let replace_proc cp new_proc =
   let _ = Hashtbl.replace cp.new_proc_decls id new_proc in
   cp
 
+let proc_decls_map f decls =
+  let _ = Hashtbl.iter (fun i p -> 
+      let np = f p in
+      Hashtbl.replace decls i np   
+  ) decls in
+  decls
+
 (* returns Not_found if id not in prog_decls *)
 let find_proc cp id =
   Hashtbl.find cp.new_proc_decls id
