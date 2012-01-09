@@ -173,20 +173,33 @@ and check_bounded_term prog proc ctx post_pos post_label =
     else final_state_prim in
   let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
   (*let _ = print_endline (pr_list (fun m -> (pr_list !CP.print_exp m) ^ "\n") l_term_measures) in*)
+  let _ = Debug.trace_hprint (add_str "Orig context: "
+      !CF.print_list_partial_context) ctx no_pos in
 
   let check_bounded_one_measures m =
     let bnd_formula_l = List.map (fun e ->
       CP.mkPure (CP.mkGte e (CP.mkIConst 0 no_pos) no_pos)) m in
+    let infer_v = List.concat (List.map (fun f -> CP.fv f) bnd_formula_l) in
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) no_pos in
+    let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in
     let rs, _ = heap_entail_list_partial_context_init 
       prog false final_state bnd_formula post_pos (Some post_label) in
+    let _ = Debug.trace_hprint (add_str "Result context: "
+      !CF.print_list_partial_context) rs no_pos in
     if (CF.isSuccessListPartialCtx rs) then ()
     else
       let term_pos = (post_pos, proving_loc # get) in
       let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
       Term.term_res_stk # push term_res
   in
+  
+  let check_bounded_one_measures m =
+    Debug.no_1 "check_bounded_one_measures"
+    (pr_list !CP.print_exp) (fun _ -> "")
+    check_bounded_one_measures m
+  in 
+
   List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
   ctx
 

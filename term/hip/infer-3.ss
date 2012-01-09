@@ -5,7 +5,7 @@ logical int p1, p2, p3, p4;
 
 void f (int x, int y)
 
-infer [p1,p2,p3,p4]
+infer [p1,p2,p3,p4,y]
 case {
 	y>=0 -> requires Term[p1,y] ensures true;
 	y<0 -> requires Term[p2] ensures true;

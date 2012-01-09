@@ -71,6 +71,9 @@ let add_impl_vars_ctx iv ctx =
 let add_impl_vars_list_partial_context iv (ctx:list_partial_context) =
   List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_vars_ctx iv b)) bl)) ctx
 
+let restore_infer_vars_list_partial_context iv (ctx:list_partial_context) =
+  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t, restore_infer_vars_ctx iv b)) bl)) ctx
+
 let restore_infer_vars iv cl =
   if (iv==[]) then cl
   else match cl with

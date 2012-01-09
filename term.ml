@@ -620,8 +620,10 @@ struct
   type t = CP.spec_var list
   let compare = 
     fun l1 l2 -> 
-      if (Gen.BList.list_setequal_eq CP.eq_spec_var l1 l2)
-      then 0 else -1
+      if (Gen.BList.list_setequal_eq CP.eq_spec_var l1 l2) then 0 
+      else 
+        let pr = pr_list !CP.print_sv in
+        String.compare (pr l1) (pr l2)
   let hash = Hashtbl.hash
   let equal = Gen.BList.list_setequal_eq CP.eq_spec_var
 end
@@ -691,14 +693,15 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     else (g_v1, g_v2)
   ) gt_l in
 
-  (* let _ = print_endline ("\ngt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in *)
+  (*let _ = print_endline ("\n1. gt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in*)
 
   let g = build_phase_constr_graph gt_l in
+
   if (PGT.has_cycle g) then (* Contradiction: p2>p1 & p1>p2 *)
     raise Invalid_Phase_Constr
-  else 
+  else
     let n, f_scc = PGC.scc g in
-    PG.fold_vertex (fun l  a -> (f_scc l, l)::a) g [] 
+    PG.fold_vertex (fun l a -> (f_scc l, l)::a) g [] 
 
 let value_of_vars (v: CP.spec_var) l : int =
   try
@@ -709,17 +712,18 @@ let value_of_vars (v: CP.spec_var) l : int =
 
 (* Main function of the termination checker *)
 let term_check_output stk =
-  fmt_string "\nInferred phase constraints: ";
-  fmt_string (pr_list !CP.print_formula (phase_constr_stk # get_stk));
-
+  (* Phase Numbering *) 
   let pr_v = !CP.print_sv in
   let pr_vl = pr_list pr_v in
-
   let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in
   let l = rank_gt_phase_constr cl in
-  Debug.trace_hprint (add_str "Phase Numbering"
-    (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
-  ) l no_pos;
+  begin
+    Debug.trace_hprint (add_str "Inferred phase constraints: "
+      (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
+    Debug.trace_hprint (add_str "Phase Numbering"
+      (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
+    ) l no_pos;
+  end; 
 
 
   fmt_string "\nTermination checking result:\n";
