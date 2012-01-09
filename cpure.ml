@@ -122,7 +122,11 @@ and rounding_func =
   | Floor
 
 let is_self_var = function
-  | Var (SpecVar (_,id,_),_) -> id=self
+  | Var (x,_) -> is_self_spec_var x
+  | _ -> false
+
+let is_res_var = function
+  | Var (x,_) -> is_res_spec_var x
   | _ -> false
 
 let primed_of_spec_var (sv : spec_var) : primed = match sv with

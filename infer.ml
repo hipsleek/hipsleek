@@ -804,10 +804,24 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
     else 
       let lhs_p = MCP.pure_of_mix lhs_p in
       let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p in
+      (* Begin: To keep vars of rel_form in lhs *)
+      let _,rel_lhs = List.split subs in
+      let rel_vars = List.concat (List.map CP.fv rel_lhs) in
+      (* End  : To keep vars of rel_form in lhs *)
+
       let pr = !CP.print_formula_br in
       (* let _ = print_endline (pr rhs_p_br) in *)
       let rhs_p_2 = CP.join_conjunctions other_rhs in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
+
+      (* Eliminate relations whose recursive calls are not defined *)
+      (* e.g. A(x) <- A(t) && other_constraints, *)
+      (* where other_constraints are not related to variable t *)
+      let lhs_rec_vars = CP.fv lhs_p_memo in
+      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then 
+        (estate,(MCP.mix_of_pure lhs_p_memo),rhs_p_new,rhs_p_br)
+      else
+
       let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
       (* let lhs = lhs_simplifier lhs_h lhs_p_memo in *)
       let lhs = lhs_simplifier_tp lhs_h lhs_p_memo in
@@ -816,11 +830,6 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
         (simplify_disj_new lhs,rhs) in      
       let wrap_exists (lhs,rhs) =
-        (* Begin: To keep vars of rel_form in lhs *)
-        let _,rel_lhs = List.split subs in
-        let rel_vars = List.concat (List.map CP.fv rel_lhs) in
-        (* End  : To keep vars of rel_form in lhs *)
-        
         let vs_r = CP.fv rhs in
         let vs_l = CP.fv lhs in
         let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
@@ -831,8 +840,6 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
       let inf_rel_ls = List.map wrap_exists inf_rel_ls in
       let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
-    (*let fp = if inf_rel_ls = [] then (CP.mkTrue no_pos) else Fixcalc.compute_fixpoint inf_rel_ls in
-    print_endline ("FIXPOINT: " ^ Cprinter.string_of_pure_formula fp);*)
       if inf_rel_ls != [] then
         begin
           DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
