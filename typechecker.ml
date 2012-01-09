@@ -413,7 +413,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                   else post_cond in
                                 (* TODO : What if we have multiple ensures in a spec? *)                                
                                 (* It may be too early to compute a fix-point. *)
-                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None []
+                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true
 (*                                  else (                                                            *)
 (*                                    print_endline ("LEN: " ^ (string_of_int (List.length rels)));   *)
 (*                                    let (rel_fml, post, pre) = Fixcalc.compute_fixpoint 1 rels in   *)
@@ -1146,20 +1146,19 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           else
                             let inf_post_flag = post_ctr # get > 0 in
                             print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);
-                            let pres, posts = CF.get_pre_post_vars proc.proc_static_specs in
+                            let pres, posts, inf_vars = CF.get_pre_post_vars proc.proc_static_specs in
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars = CP.remove_dups_svl posts in
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars in
                             let triples = List.map (fun (rel,post,pre) ->
-                                let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars) post None no_pos) in
+                                let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in
                                 (rel,post,pre_new)) triples in
                             let _ = List.iter (fun (rel,post,pre) ->
                               print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
                               print_endline ("POST: "^Cprinter.string_of_pure_formula post);
                               print_endline ("PRE : "^Cprinter.string_of_pure_formula pre)) triples in
-                            if inf_post_flag then fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog)
-                            else new_spec
+                            fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
                         in
                         let new_spec = AS.add_pre prog new_spec in
                         (* TODO WN : what happen to the old MayLoop? *)

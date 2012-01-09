@@ -7319,25 +7319,31 @@ let rec get_vars_without_rel f = match f with
     let h, p, fl, b, t = split_components f in
     (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p)))
 
-let rec get_pre_post_vars (sp:struc_formula): (CP.spec_var list * CP.spec_var list) =
-  let res = List.map get_pre_post_vars_ext sp in
-  let pres,posts = List.split res in
-  (List.concat pres, List.concat posts)
+let split_triple lst = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) lst
 
-and get_pre_post_vars_ext (sp:ext_formula): (CP.spec_var list * CP.spec_var list) =
+let add_fst elem = fun (a1,a2,a3) -> (elem@a1,a2,a3)
+
+let add_rd elem = fun (a1,a2,a3) -> (a1,a2,elem@a3)
+
+let rec get_pre_post_vars (sp:struc_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
+  let res = List.map get_pre_post_vars_ext sp in
+  let pres,posts,inf_vars = split_triple res in
+  (List.concat pres, List.concat posts, List.concat inf_vars)
+
+and get_pre_post_vars_ext (sp:ext_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   match sp with
     | ECase b -> 
       let res = List.map (fun (p,s)->let tmp = get_pre_post_vars s in 
-          (CP.fv p @ (fst tmp), snd tmp)) b.formula_case_branches in
-      let pres,posts = List.split res in
-      (List.concat pres, List.concat posts)
+          add_fst (CP.fv p) tmp) b.formula_case_branches in
+      let pres,posts,inf_vars = split_triple res in
+      (List.concat pres, List.concat posts, List.concat inf_vars)
     | EBase b -> 
       let base_vars = fv b.formula_ext_base in
       let r_vars = get_pre_post_vars b.formula_ext_continuation in
-      (base_vars @ (fst r_vars), snd r_vars)
-    | EAssume(svl,f,fl) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel f))
+      add_fst base_vars r_vars
+    | EAssume(svl,f,fl) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel f), [])
     | EVariance b -> get_pre_post_vars_ext b.formula_var_continuation
-    | EInfer b -> get_pre_post_vars_ext b.formula_inf_continuation
+    | EInfer b -> add_rd b.formula_inf_vars (get_pre_post_vars_ext b.formula_inf_continuation)
 
 (*
 type: (ext_formula -> ext_formula option) * (formula -> formula option) *
