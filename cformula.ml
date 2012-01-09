@@ -6978,7 +6978,7 @@ and merge_two_nodes dn1 dn2 =
 							in
 							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
 							let not_clashed = List.for_all (fun x -> x) not_clashes in
-                            let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in
+                            (* let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 						                h_formula_data_derv = dr1; (*TO CHECK*)
@@ -7362,7 +7362,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_view_perm = None;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
+      h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = true;
       h_formula_view_lhs_case = false;
@@ -7420,7 +7420,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_view_perm = None;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
+      h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = true;
       h_formula_view_lhs_case = false;
@@ -7454,15 +7454,18 @@ let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl
       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  let fresh_perm_name = Cpure.fresh_old_name "f" in
+  let perm_t = cperm_typ () in
+  let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = None; (*TO DO: only need a fraction of permission*)
+      h_formula_view_perm = Some fresh_perm;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
+      h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = true;
       h_formula_view_lhs_case = false;
@@ -7472,13 +7475,14 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
+  let read_f = mkPermInv fresh_perm in
   let tmp = formula_of_heap lock_node pos in
   let post = normalize 5 inv tmp pos in
   let post = EAssume ([],post,lbl) in
-  let pre = tmp in
-  let prepost = [EBase { 
+  let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] [] pos in
+  let prepost = [EBase {
 	formula_ext_explicit_inst = [];
-	formula_ext_implicit_inst = [];
+	formula_ext_implicit_inst = [fresh_perm]; (*instantiate f*)
 	formula_ext_exists = [];
 	formula_ext_base = pre;
 	formula_ext_continuation = [post];
@@ -7496,15 +7500,18 @@ let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
       (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  let fresh_perm_name = Cpure.fresh_old_name "f" in
+  let perm_t = cperm_typ () in
+  let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = None; (*TO DO: only need a fraction of permission*)
+      h_formula_view_perm = Some fresh_perm;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
+      h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = true;
       h_formula_view_lhs_case = false;
@@ -7515,12 +7522,14 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_pos = pos })
   in
   let tmp = formula_of_heap lock_node pos in
+  let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
+  let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] [] pos in
   let post = EAssume ([],tmp,lbl) in
-  let pre = normalize 5 inv tmp pos in
+  let pre = normalize 5 inv tmp_pre pos in
   let pre_evars, pre_base = split_quantifiers pre in
   let prepost = [EBase { 
 	formula_ext_explicit_inst = [];
-	formula_ext_implicit_inst = pre_evars;
+	formula_ext_implicit_inst = fresh_perm::pre_evars; (*instantiate*)
 	formula_ext_exists = [];
 	formula_ext_base = pre_base;
 	formula_ext_continuation = [post];

@@ -578,7 +578,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
 	        let c = string_of_typ v_t in
             let fresh_frac_name = Cpure.fresh_old_name "f" in
-            let fresh_frac =  Cpure.SpecVar (v_t,fresh_frac_name, Unprimed) in (*LDK*)
+            let perm_t = cperm_typ () in
+            let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;

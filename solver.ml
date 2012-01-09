@@ -426,7 +426,7 @@ and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_f
 
 (*TO CHECK: merge_partial_heaps before xpure*)
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
-  let h0 = merge_partial_h_formula h0 in
+  (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
   if (!Globals.allow_imm) then 
     if (Perm.allow_perm ()) then 
       xpure_heap_symbolic_perm prog h0 which_xpure
@@ -9323,7 +9323,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
     (*process a list of pairs (anode * rest) *)
     let rec process_one_h h_lst =
       match h_lst with
-        | [] -> 
+        | [] ->
               (*so far, could not find any entailment -> can not normalize*)
               h,p
         | (anode,rest)::xs ->
@@ -9400,7 +9400,7 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 and normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
       
 (*******************************************************************************************************************************************************************************************)

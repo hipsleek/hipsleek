@@ -10,7 +10,7 @@
     ensures self::lock<_>
 
   acquire(self) -->
-    requires self::LOCKA(f)<n>
+    requires [f] self::LOCKA(f)<n>
     ensures  self::LOCKA(f)<n> * self::cellInv<>
 
   release(self) -->
