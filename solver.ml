@@ -6624,7 +6624,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
     begin
         if (Perm.allow_perm ()) then
           (match l_perm, r_perm with
@@ -6671,6 +6671,20 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
           (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
 
     end
+
+and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+    let pr_out (rho,lbl,ante,conseq) =
+      pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (ante,conseq)
+    in
+    Gen.Debug.no_6 "do_match_inst_perm_vars" 
+        string_of_cperm 
+        string_of_cperm
+        string_of_spec_var_list
+        string_of_spec_var_list
+        string_of_spec_var_list
+        string_of_spec_var_list
+        pr_out
+        (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars impl_vars expl_vars
 
 (*Modified a set of vars in estate to reflect instantiation
  when matching 2 perm vars*)
@@ -6827,6 +6841,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let rho_0, label_list, p_ante,p_conseq =
                 do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars
               in
+              (* let _ = print_endline ("do_match : \n ### p_ante = " ^ (Cprinter.string_of_pure_formula p_ante ^ "\n ### p_conseq = " ^ (Cprinter.string_of_pure_formula p_conseq))) in *)
               let rho = List.combine rho_0 label_list in (* with branch label *)
               let evars,ivars,impl_vars, expl_vars = 
                 do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars

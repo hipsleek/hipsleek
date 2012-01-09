@@ -6254,6 +6254,20 @@ let normalize_max_renaming_s f pos b ctx =
   if !max_renaming then transform_context (normalize_es f pos b) ctx
   else transform_context (normalize_clash_es f pos b) ctx
 
+(*
+  to be used in the type-checker. After every entailment, the history of vars
+  must be cleared.
+*)
+
+let clear_entailment_vars (es :entail_state) : entail_state = 
+     {es with es_heap = HTrue;
+          es_evars = [];
+      es_ivars = [];
+      es_gen_expl_vars = [];
+      es_gen_impl_vars = [];
+      es_subst = ([],[]);
+      }
+
   
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes

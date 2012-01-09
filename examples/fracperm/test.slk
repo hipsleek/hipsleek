@@ -2,15 +2,6 @@ data cell{
   int val;
 }.
 
-data lock{
-}.
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
 
-pred LOCKA<x> == self::lock<>
-  inv self!=null
-  inv_lock (exists v: x::cell<v> & v>=0).
-
-
-checkentail l::LOCKA(perm_66_627)<x_626> & perm_66_627=0.5 & x_626=x |- l::LOCKA<x>.
-print residue.
-
-
+checkentail x::cell<a> |- x::cell(0.5)<b>.

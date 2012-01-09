@@ -2528,3 +2528,4 @@ Redlog.print_exp := string_of_formula_exp;;
 Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
 Redlog.print_sv := string_of_spec_var;;
+Perm.print_sv := string_of_spec_var;;

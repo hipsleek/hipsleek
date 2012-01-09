@@ -580,6 +580,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
             let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
+            (* let perm = (if (Perm.allow_perm ()) then  *)
+            (*       (\*there exists fresh_frac statisfy ... *\) *)
+            (*       (if (read_only) then *)
+            (*             Some fresh_frac  *)
+            (*        else *)
+            (*             (\* writeable *\) *)
+            (*             None) *)
+            (*     else None) *)
+            (* in *)
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
@@ -605,23 +614,43 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             *)
             let vheap = 
               if (Perm.allow_perm ()) then 
+                (*there exists fresh_frac statisfy ... *)
                 if (read_only)
                 then
                   let read_f = mkPermInv fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+                  CF.mkBase (* CF.mkExists [fresh_frac] *) vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
                 else
                   let write_f = mkPermWrite fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+                  CF.mkBase(* CF.mkExists [fresh_frac] *) vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
               else
                 vheap
             in
 
 		    let vheap = prune_preds prog false vheap in
+            let struc_vheap = 
+              (if (Perm.allow_perm ()) then 
+                [CF.EBase { 
+	                CF.formula_ext_explicit_inst = [];	 
+                    CF.formula_ext_implicit_inst = [fresh_frac];  (*need to instantiate f*)
+                    CF.formula_ext_exists = [];
+	                CF.formula_ext_base = vheap;
+	                CF.formula_ext_continuation = [];
+	                CF.formula_ext_pos = pos}]
+              else
+                [CF.EBase { 
+	                CF.formula_ext_explicit_inst = [];	 
+                    CF.formula_ext_implicit_inst = []; 
+                    CF.formula_ext_exists = [];
+	                CF.formula_ext_base = vheap;
+	                CF.formula_ext_continuation = [];
+	                CF.formula_ext_pos = pos}])
+            in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded
 			else 
-	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap None pos pid in
+	          let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
+	          (* let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap None pos pid in *)
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
@@ -655,8 +684,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*     ^ "\n") in *)
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
-                  res
-	                  
+
+                  (*TO CHECK merging nodes*)
+                  let fct (es:CF.entail_state) =
+                    (* let _ = print_endline ("bind: ### es (before clear) = " ^ (Cprinter.string_of_entail_state es)) in *)
+                    let es = CF.clear_entailment_vars es in
+                    (* let _ = print_endline ("bind: ### es (after clear) = " ^ (Cprinter.string_of_entail_state es)) in *)
+                    let f = es.CF.es_formula in
+                    let f = normalize_formula_w_coers prog es f prog.prog_left_coercions in
+                    let es = {es with CF.es_formula = f} in
+                    CF.Ctx es
+                  in
+                  (* let _ = print_string ("bind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
+                  let tmp_res = CF.transform_list_failesc_context (idf,idf,fct) res in
+		          (* let _ = print_string ("bind: after transform: tmp_res:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res)) in *)
+                  tmp_res
                 end
           end; (*end Bind*)
 	          
