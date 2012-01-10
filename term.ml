@@ -886,15 +886,18 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
     let cons = Hashtbl.find phase_constr_tbl index in
     let grp = fst (List.split cons) in
     let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
+    Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos; 
     (* Trigger phase number inference when 
      * all needed information is collected *)
     if is_full_grp then
       let cl = List.concat (snd (List.split cons)) in
       let inf_num = phase_num_infer_one_scc cl in 
+      Debug.trace_hprint (add_str "list of ctr:" 
+        (pr_list !CP.print_formula)) cl no_pos;
       let subst = List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num in
       let subst = List.concat subst in
-      let _ = Debug.trace_hprint (add_str "subst: " 
-        (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos in
+      Debug.trace_hprint (add_str "subst: " 
+        (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos;
       (* Termination: Add the inferred phase numbers 
        * into specifications of functions in mutual group *)
       let n_tbl = Cast.proc_decls_map (fun proc ->
@@ -908,8 +911,8 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_scc_grp" pr pr
-    (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) proc
+  Debug.to_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
+    (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)
 let term_check_output stk =

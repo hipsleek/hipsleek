@@ -1204,7 +1204,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
                         (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
                         (* let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in *)
-                        Debug.trace_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                        Debug.trace_hprint (add_str "OLD.. SPECS" pr_spec) proc.proc_static_specs no_pos;
                         Debug.trace_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                         Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos;
                         (* print_endline ("NEW SPECS: "^new_sp); *)
