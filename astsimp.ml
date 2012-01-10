@@ -7757,7 +7757,7 @@ and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
 and mark_rec_and_call_order (cp: C.prog_decl) : C.prog_decl =
   let pr p = pr_list (pr_proc_call_order) 
     (List.filter (fun x -> not (x.C.proc_body == None)) (C.list_of_procs p)) in
-  Debug.to_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
+  Debug.no_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
 
 and mark_recursive_call (cp: C.prog_decl) scc_list cg : C.prog_decl = 
   (*let _ = printf "The scc list of program:\n";

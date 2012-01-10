@@ -791,7 +791,7 @@ let phase_num_infer () =
 
 let phase_num_infer () =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer" pr pr phase_num_infer ()
+  Debug.no_1 "phase_num_infer" pr pr phase_num_infer ()
 
 (* Main function of the termination checker *)
 let term_check_output stk =

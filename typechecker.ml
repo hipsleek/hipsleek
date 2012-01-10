@@ -1429,10 +1429,16 @@ let check_prog (prog : prog_decl) =
     ignore (List.map (check_data prog) prog.prog_data_decls);
     (* Sort the proc_decls by proc_call_order *)
     let l_proc = Cast.list_of_procs prog in
-    let proc_main, proc_prim = List.partition Cast.is_primitive_proc l_proc in
+    let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
+    let _ = Debug.trace_hprint (add_str "proc_main"
+      (pr_list Astsimp.pr_proc_call_order)
+    ) proc_main no_pos in
     let sorted_proc_main = List.fast_sort (fun p1 p2 -> 
       p1.Cast.proc_call_order - p2.Cast.proc_call_order
     ) proc_main in
+    let _ = Debug.trace_hprint (add_str "sorted_proc_main"
+      (pr_list Astsimp.pr_proc_call_order)
+    ) sorted_proc_main no_pos in
     ignore (List.map (check_proc_wrapper prog) (sorted_proc_main @ proc_prim));
     (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
     Term.term_check_output Term.term_res_stk
