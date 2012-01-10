@@ -222,6 +222,11 @@ let rec contains_exists (f:formula) : bool =  match f with
     | Forall (_ ,f1,_,_) -> (contains_exists f1)  
     | Exists _ -> true
 
+let get_var_opt (e:exp) =
+  match e with 
+    | Var (v,_) -> Some v
+    | _ -> None
+
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true
@@ -255,6 +260,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
+
+let mem_svl v rl = Gen.BList.mem_eq eq_spec_var v rl
 
 (*LDK: check constant TRUE conjuncts of equalities, i.e. v=v *)
 let is_true_conj_eq (f1:formula) : bool =
