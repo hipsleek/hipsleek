@@ -424,9 +424,14 @@ let map_proc (prog:prog_decl)
   }
 *)
 
+(* Sort a list of proc_decl by proc_call_order *)
+let sort_proc_decls (pl: proc_decl list) : proc_decl list =
+  List.fast_sort (fun p1 p2 -> p1.proc_call_order - p2.proc_call_order) pl
+
 let same_call_scc p1 p2 = p1.proc_call_order == p2.proc_call_order
 
 (* returns (procs_wo_body, proc_mutual_rec list) *)
+(* The list of proc_decl must be sorted *)
 let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
   let (pr_prim,pr_rest) = List.partition is_primitive_proc pl in
   let rec helper acc pl = match pl with

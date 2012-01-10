@@ -372,14 +372,16 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
-                       * Need to filter the constraints 
-                       * and normalize them *)
-                      (* Only interest constraints related to logical variables *)
+                       * Need to filter the constraints and normalize 
+                       * them - We only interest constraints related 
+                       * to logical variables *)
                       let log_vars = prog.Cast.prog_logical_vars in
                       let cl = List.filter (fun f -> 
                         Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
                       let _ = DD.trace_hprint (add_str "Inferred constraints: " (pr_list !CP.print_formula)) lp pos in
+                      (* TODO: Termination: The following function is useless *)
                       let _ = Term.add_phase_constr (List.map TP.simplify_raw cl) in
+                      let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in
                                            
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
@@ -476,7 +478,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       (*   (CF.mk_ebase_inferred_pre hf pf [spec],r) *)
 	            with _ as e ->
 	                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
-  in helper spec
+  in 
+  helper spec 
 
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
@@ -1242,7 +1245,25 @@ let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    check_proc prog proc
+    let res = check_proc prog proc in 
+    (* Termination: Infer the phase numbers of functions in a scc group *) 
+    (* TODO: The list of scc group does not 
+     * need to be computed many times *)
+    let n_res = 
+      if (proc.Cast.proc_is_main) then
+      begin
+        let (_, mutual_grps) = Cast.re_proc_mutual (Cast.sort_proc_decls (Cast.list_of_procs prog)) in
+        let name_mutual_grps = List.map (fun lp -> List.map (fun p -> p.Cast.proc_name) lp) mutual_grps in
+        let mutual_grp = List.find (fun g -> List.mem proc.Cast.proc_name g) name_mutual_grps in
+        let n_prog = Term.phase_num_infer_scc_grp mutual_grp prog proc in
+        (* Termination: Reverify all procedures in the scc group *)
+        if !reverify_flag then
+          let scc_procs = List.map (fun nm -> Cast.find_proc n_prog nm) mutual_grp in 
+          List.for_all (fun p -> check_proc n_prog p) scc_procs 
+        else res 
+      end
+      else res
+    in n_res
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)
@@ -1430,12 +1451,7 @@ let check_prog (prog : prog_decl) =
     (* Sort the proc_decls by proc_call_order *)
     let l_proc = Cast.list_of_procs prog in
     let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
-    let _ = Debug.trace_hprint (add_str "proc_main"
-      (pr_list Astsimp.pr_proc_call_order)
-    ) proc_main no_pos in
-    let sorted_proc_main = List.fast_sort (fun p1 p2 -> 
-      p1.Cast.proc_call_order - p2.Cast.proc_call_order
-    ) proc_main in
+    let sorted_proc_main = Cast.sort_proc_decls proc_main in
     let _ = Debug.trace_hprint (add_str "sorted_proc_main"
       (pr_list Astsimp.pr_proc_call_order)
     ) sorted_proc_main no_pos in

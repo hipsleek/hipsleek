@@ -64,6 +64,12 @@ let term_res_stk : term_res Gen.stack = new Gen.stack
  * transition constraints by inference *)
 let phase_constr_stk : CP.formula Gen.stack = new Gen.stack
 
+(* Using hash table to store inferred 
+ * phase transition constraints by 
+ * inference by mutual scc group *)
+let phase_constr_tbl : (int, (ident * CP.formula list) list) Hashtbl.t = 
+  Hashtbl.create 20
+
 (* Printing Utilities *)
 let pr_phase_trans (trans: phase_trans) =
   let (src, dst) = trans in
@@ -579,49 +585,6 @@ let add_phase_constr (lp: CP.formula list) =
  * p2>p1 -> p2 --> p1
  * p2>=p1 -> {p2,p1} 
  * [x>y, y>=z] --> [[x], [y,z]] *)
-(*
-let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
-  let fl = List.concat (List.map CP.split_conjunctions fl) in
-  List.fold_left (fun a f -> 
-    try let c = phase_constr_of_formula f in c::a
-    with _ -> a) [] fl
-  
-and phase_constr_of_formula (f: CP.formula) : phase_constr =
-  match f with
-  | CP.BForm (bf, _) -> 
-      try phase_constr_of_b_formula bf
-      with _ -> raise Invalid_Phase_Constr
-  | _ -> raise Invalid_Phase_Constr 
-
-and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr =
-  let (pf, _) = bf in
-  try 
-    match pf with
-    | CP.Gt (e1, e2, _) ->
-        let v1 = var_of_exp e1 in
-        let v2 = var_of_exp e2 in
-        P_Gt (v1, v2)
-    | CP.Gte (e1, e2, _) ->
-        let v1 = var_of_exp e1 in
-        let v2 = var_of_exp e2 in
-        P_Gte (v1, v2)
-    | CP.Lt (e1, e2, _) ->
-        let v1 = var_of_exp e1 in
-        let v2 = var_of_exp e2 in
-        P_Gt (v2, v1)
-    | CP.Lte (e1, e2, _) ->
-        let v1 = var_of_exp e1 in
-        let v2 = var_of_exp e2 in
-        P_Gte (v2, v1)
-    | _ -> raise Invalid_Phase_Constr
-  with _ -> raise Invalid_Phase_Constr
-
-and var_of_exp (exp: CP.exp) : CP.spec_var =
-  match exp with
-  | CP.Var (sv, _) -> sv
-  | _ -> raise Invalid_Phase_Constr
-*)
-
 let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   let fl = List.concat (List.map CP.split_conjunctions fl) in
   List.fold_left (fun a f -> 
@@ -793,10 +756,159 @@ let phase_num_infer () =
   let pr = fun _ -> "" in
   Debug.no_1 "phase_num_infer" pr pr phase_num_infer ()
 
+(* Do infer phase number per scc group *)
+(* Triggered when phase constraints of 
+ * all function in a scc group has been 
+ * collected *)
+let phase_num_infer_one_scc (pl : CP.formula list) =
+  (* Phase Numbering *) 
+  let pr_v = !CP.print_sv in
+  let pr_vl = pr_list pr_v in
+  let cl = phase_constr_of_formula_list pl in
+  let _ = Debug.trace_hprint (add_str "Phase Constrs: " (pr_list string_of_phase_constr)) cl no_pos in
+  let l = 
+    try rank_gt_phase_constr cl 
+    with _ -> 
+      fmt_string ("Termination: Contradiction in Phase Constraints."); [] 
+  in
+  let _ = 
+    begin
+      Debug.trace_hprint (add_str "Inferred phase constraints: "
+        (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
+      Debug.trace_hprint (add_str "Phase Numbering"
+        (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
+      ) l no_pos;
+    end
+  in l
+
+let phase_num_infer_one_scc (pl: CP.formula list)  =
+  let pr = fun _ -> "" in
+  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+
+(* Infer the phase numbers at the end of check_prog *)  
+let phase_num_infer_by_scc () = 
+  Hashtbl.iter (fun i pl -> 
+    let cl = List.concat (List.map (fun (_, l) -> l) pl) in
+    Debug.trace_hprint (add_str ("scc " ^ (string_of_int i) ^ ": ")
+      (pr_list !CP.print_formula)) cl no_pos;
+    (*phase_num_infer_one_scc cl*)
+  ) phase_constr_tbl
+
+let phase_num_infer_by_scc () =
+  let pr = fun _ -> "" in
+  Debug.no_1 "phase_num_infer_by_scc" pr pr phase_num_infer_by_scc ()
+
+let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
+  let index = proc.Cast.proc_call_order in
+  let pname = proc.Cast.proc_name in
+  let con = (pname, lp) in
+  try
+    let cons = Hashtbl.find phase_constr_tbl index in
+    Hashtbl.replace phase_constr_tbl index (con::cons)
+  with Not_found -> Hashtbl.add phase_constr_tbl index [con]
+
+let subst_phase_num_exp subst exp = 
+  match exp with
+  | CP.Var (v, pos) ->
+      (try
+        let i = List.assoc v subst in
+        CP.mkIConst i pos
+      with _ -> exp)
+  | _ -> exp 
+
+let subst_phase_num_struc subst (struc: struc_formula) : struc_formula =
+  let f_e _ = None in
+  let f_f _ = None in
+  let f_h _ = None in
+  let f_m _ = None in
+  let f_a _ = None in
+  let f_pf _ = None in
+  let f_bf bf =
+    let (pf, sl) = bf in
+    match pf with
+    | CP.LexVar (t_ann, ml, il, pos) ->
+        let n_ml = List.map (fun m -> subst_phase_num_exp subst m) ml in
+        Some (CP.mkLexVar t_ann n_ml il pos, sl)
+    | _ -> None
+  in
+  let f_pe _ = None in
+  let e_f = f_e, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
+
+  (* Remove inferred variables from EInfer *)
+  let f_ext ext = match ext with
+  | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
+      let lv = fst (List.split subst) in
+      let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
+      let n_cont = transform_ext_formula e_f cont in
+      Some (EInfer { e with 
+        formula_inf_vars = n_iv;
+        formula_inf_continuation = n_cont })
+  | _ -> None
+  in
+  
+  let s_f = f_ext, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
+  let n_struc = transform_struc_formula s_f struc in
+  let _ = 
+    begin
+      Debug.trace_hprint (add_str ("OLD_SPECS: ") (!print_struc_formula)) struc no_pos;
+      Debug.trace_hprint (add_str ("NEW_SPECS: ") (!print_struc_formula)) n_struc no_pos;
+    end 
+  in
+  n_struc
+
+let subst_phase_num_struc subst (struc: struc_formula) : struc_formula =
+  let pr = fun _ -> "" in
+  Debug.to_2 "subst_phase_num_struc" pr pr pr 
+  subst_phase_num_struc subst struc
+
+let subst_phase_num_proc subst (proc: Cast.proc_decl) : Cast.proc_decl =
+  let s_specs = subst_phase_num_struc subst proc.Cast.proc_static_specs in
+  let d_specs = subst_phase_num_struc subst proc.Cast.proc_dynamic_specs in
+  let n_spec_stk = List.map (fun spec -> 
+    subst_phase_num_struc subst spec
+  ) (proc.Cast.proc_stk_of_static_specs # get_stk) in 
+  let n_stk = new Gen.stack in
+  let _ = n_stk # push_list n_spec_stk in
+  { proc with
+    Cast.proc_static_specs = s_specs;
+    Cast.proc_dynamic_specs = d_specs;
+    (* TODO: Do we need to update proc_stk_of_static_specs *)
+    Cast.proc_stk_of_static_specs = n_stk;
+  }
+
+let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
+  let index = proc.Cast.proc_call_order in
+  try
+    let cons = Hashtbl.find phase_constr_tbl index in
+    let grp = fst (List.split cons) in
+    let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
+    if is_full_grp then
+      let cl = List.concat (snd (List.split cons)) in
+      let inf_num = phase_num_infer_one_scc cl in 
+      let subst = List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num in
+      let subst = List.concat subst in
+      let _ = Debug.trace_hprint (add_str "subst: " 
+        (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos in
+      (* Termination: Add the inferred phase numbers 
+       * into specifications of functions in mutual group *)
+      let n_tbl = Cast.proc_decls_map (fun proc ->
+        if (List.mem proc.Cast.proc_name mutual_grp) 
+        then subst_phase_num_proc subst proc
+        else proc
+      ) prog.Cast.new_proc_decls in  
+      { prog with Cast.new_proc_decls = n_tbl }
+    else prog
+  with Not_found -> prog
+
+let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
+  let pr = fun _ -> "" in
+  Debug.to_1 "phase_num_infer_scc_grp" pr pr
+    (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) proc
+
 (* Main function of the termination checker *)
 let term_check_output stk =
   (if not (!Globals.dis_phase_num) then
-    phase_num_infer ()
+    phase_num_infer_by_scc ()
   else ());
   fmt_string "\nTermination checking result:\n";
   pr_term_res_stk (stk # get_stk);
