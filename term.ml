@@ -840,7 +840,8 @@ let subst_phase_num_struc subst (struc: struc_formula) : struc_formula =
       let lv = fst (List.split subst) in
       let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
       let n_cont = transform_ext_formula e_f cont in
-      Some (EInfer { e with 
+      if Gen.is_empty n_iv then Some n_cont
+      else Some (EInfer { e with 
         formula_inf_vars = n_iv;
         formula_inf_continuation = n_cont })
   | _ -> None
@@ -858,22 +859,25 @@ let subst_phase_num_struc subst (struc: struc_formula) : struc_formula =
 
 let subst_phase_num_struc subst (struc: struc_formula) : struc_formula =
   let pr = fun _ -> "" in
-  Debug.to_2 "subst_phase_num_struc" pr pr pr 
+  Debug.to_2_opt (fun _ -> not (Gen.is_empty struc)) 
+  "subst_phase_num_struc" pr pr pr 
   subst_phase_num_struc subst struc
 
 let subst_phase_num_proc subst (proc: Cast.proc_decl) : Cast.proc_decl =
   let s_specs = subst_phase_num_struc subst proc.Cast.proc_static_specs in
   let d_specs = subst_phase_num_struc subst proc.Cast.proc_dynamic_specs in
+  (*let t_spec = proc.Cast.proc_stk_of_static_specs # top in*)
+  let _ = proc.Cast.proc_stk_of_static_specs # push s_specs in 
+  (*
   let n_spec_stk = List.map (fun spec -> 
     subst_phase_num_struc subst spec
   ) (proc.Cast.proc_stk_of_static_specs # get_stk) in 
   let n_stk = new Gen.stack in
   let _ = n_stk # push_list n_spec_stk in
+  *)
   { proc with
     Cast.proc_static_specs = s_specs;
     Cast.proc_dynamic_specs = d_specs;
-    (* TODO: Do we need to update proc_stk_of_static_specs *)
-    Cast.proc_stk_of_static_specs = n_stk;
   }
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
@@ -882,6 +886,8 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
     let cons = Hashtbl.find phase_constr_tbl index in
     let grp = fst (List.split cons) in
     let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
+    (* Trigger phase number inference when 
+     * all needed information is collected *)
     if is_full_grp then
       let cl = List.concat (snd (List.split cons)) in
       let inf_num = phase_num_infer_one_scc cl in 
@@ -902,7 +908,7 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer_scc_grp" pr pr
+  Debug.no_1 "phase_num_infer_scc_grp" pr pr
     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) proc
 
 (* Main function of the termination checker *)

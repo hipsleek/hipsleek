@@ -1257,7 +1257,7 @@ let check_proc_wrapper prog proc =
         let mutual_grp = List.find (fun g -> List.mem proc.Cast.proc_name g) name_mutual_grps in
         let n_prog = Term.phase_num_infer_scc_grp mutual_grp prog proc in
         (* Termination: Reverify all procedures in the scc group *)
-        if !reverify_flag then
+        if !term_reverify then
           let scc_procs = List.map (fun nm -> Cast.find_proc n_prog nm) mutual_grp in 
           List.for_all (fun p -> check_proc n_prog p) scc_procs 
         else res 
