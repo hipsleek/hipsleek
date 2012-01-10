@@ -1242,7 +1242,7 @@ and pr_ext_formula  (e:ext_formula) =
 	              if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
 	              fmt_cut();
 	              wrap_box ("B",0) pr_formula b) b	 
-	| EVariance {
+	(*| EVariance {
 		  formula_var_measures = measures;
 		  formula_var_infer = infer_exps;
 		  formula_var_continuation = cont;} ->
@@ -1255,7 +1255,7 @@ and pr_ext_formula  (e:ext_formula) =
 		  fmt_string ("EVariance " ^ " [ " ^ string_of_measures ^ "]{ " ^ string_of_infer ^ "}");
       fmt_cut();
 			wrap_box ("B",0) pr_ext_formula cont;
-      fmt_close();
+      fmt_close();*)
     | EInfer {
       formula_inf_post = postf;
       formula_inf_vars = lvars;
@@ -2161,7 +2161,9 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
-  (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
+  (* TODO: PD *)
+  (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
+  (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
 
@@ -2445,7 +2447,7 @@ let rec html_of_ext_formula f = match f with
 		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ (html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (if not(Gen.is_empty(cont)) then  html_of_struc_formula cont else "")
 	| EAssume (x,b,(y1,y2)) ->
 		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
-	| EVariance _ -> ""
+	(*| EVariance _ -> ""*)
  | EInfer _ -> ""
 
 and html_of_struc_formula f = 

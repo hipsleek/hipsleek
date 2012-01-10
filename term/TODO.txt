@@ -1,4 +1,10 @@
 1. Clean up EVariance and useless code of termination
-2. Add call group (from proc_call_order of proc_decl)
+2. DONE: Add call group (from proc_call_order of proc_decl)
 3. Infer phase transition by inference mechanism
+  - Filter irrelevant phase constraints
+	- Make it work with interprocedural constraints (infer-3.ss), 
+	may need logical vars
+	- Integrate the result into specification
 4. Prepare benchmarks and evaluation
+5. Simplify the context to add useful constraints for
+meaningful printing.

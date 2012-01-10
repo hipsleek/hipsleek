@@ -71,6 +71,9 @@ let add_impl_vars_ctx iv ctx =
 let add_impl_vars_list_partial_context iv (ctx:list_partial_context) =
   List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_vars_ctx iv b)) bl)) ctx
 
+let restore_infer_vars_list_partial_context iv (ctx:list_partial_context) =
+  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t, restore_infer_vars_ctx iv b)) bl)) ctx
+
 let restore_infer_vars iv cl =
   if (iv==[]) then cl
   else match cl with
@@ -611,6 +614,9 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
       let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
       let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
+      (* TODO : simplify_raw seems to undo pairwisecheck *)
+      let new_p = TP.pairwisecheck new_p in
+      let _ = DD.trace_hprint (add_str "new_p2 (pairwisecheck): " !CP.print_formula) new_p pos in
       let args = CP.fv new_p in
       let new_p =
         if CP.intersect args iv == [] && quan_var != [] then

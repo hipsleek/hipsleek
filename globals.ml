@@ -481,6 +481,7 @@ let term_auto_number = ref false
 let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
+let term_reverify = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false

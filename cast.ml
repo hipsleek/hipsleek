@@ -24,7 +24,8 @@ and prog_decl = {
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
-	prog_proc_decls : proc_decl list;
+  (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
+  new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
@@ -402,6 +403,11 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
+let is_primitive_proc p = p.proc_body==None
+
+let name_of_proc p = p.proc_name
+
+
 let get_field_typ f = fst f
 
 let get_field_name f = snd f
@@ -409,11 +415,71 @@ let get_field_name f = snd f
 (** An Hoa [22/08/2011] End **)
 
 (* transform each proc by a map function *)
+(* Replaced by proc_decls_map f_p prog *)
+(*
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =
   { prog with
       prog_proc_decls = List.map (f_p) prog.prog_proc_decls;
   }
+*)
+
+(* Sort a list of proc_decl by proc_call_order *)
+let sort_proc_decls (pl: proc_decl list) : proc_decl list =
+  List.fast_sort (fun p1 p2 -> p1.proc_call_order - p2.proc_call_order) pl
+
+let same_call_scc p1 p2 = p1.proc_call_order == p2.proc_call_order
+
+(* returns (procs_wo_body, proc_mutual_rec list) *)
+(* The list of proc_decl must be sorted *)
+let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
+  let (pr_prim,pr_rest) = List.partition is_primitive_proc pl in
+  let rec helper acc pl = match pl with
+    | [] -> if acc==[] then [] else [acc]
+    | x::rest -> 
+          begin
+            match acc with
+              | [] -> helper [x] rest
+              | a::_ -> if same_call_scc a x then helper (x::acc) rest
+                else acc::(helper [x] rest)
+          end
+  in (pr_prim, helper [] pr_rest)
+
+(* Create a hash table which contains 
+ * a list of proc_decl *)
+let create_proc_decls_hashtbl (cp: proc_decl list) : (ident, proc_decl) Hashtbl.t =
+  let h_tbl = Hashtbl.create 20 in
+  let _ = List.iter (fun p -> Hashtbl.add h_tbl (p.proc_name) p) cp in
+  h_tbl
+
+let replace_proc cp new_proc =
+  let id = new_proc.proc_name in
+  let _ = Hashtbl.replace cp.new_proc_decls id new_proc in
+  cp
+
+let proc_decls_map f decls =
+  let _ = Hashtbl.iter (fun i p -> 
+    let np = f p in
+    Hashtbl.replace decls i np   
+  ) decls in
+  decls
+
+(* returns Not_found if id not in prog_decls *)
+let find_proc cp id =
+  Hashtbl.find cp.new_proc_decls id
+
+(* returns None if id not in prog_decls *)
+let find_proc_opt cp id =
+  try 
+    Some (find_proc cp id)
+  with _ -> None
+
+let list_of_procs cp =
+  Hashtbl.fold (fun id pd lst -> pd::lst) cp.new_proc_decls []
+
+let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) = 
+  let lst = list_of_procs cp
+  in re_proc_mutual lst
 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
@@ -461,14 +527,27 @@ let subst_coercion fr t (c:coercion_decl) =
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)
+(* The following function is replace by proc_decls_fold *)
+(*
 let fold_proc (prog:prog_decl)
   (f_p : proc_decl -> 'b) (f_comb: 'b -> 'b -> 'b) (zero:'b) : 'b =
   List.fold_left (fun x p -> f_comb (f_p p) x) 
 		zero prog.prog_proc_decls
+*)
+
+let proc_decls_fold (prog: prog_decl)
+  (f_p : proc_decl -> 'b) (f_comb: 'b -> 'b -> 'b) (zero:'b) : 'b =
+  Hashtbl.fold (fun id p acc -> f_comb (f_p p) acc) prog.new_proc_decls zero
 
 (* iterate each proc to check for some property *)
+(* The following function is replace by proc_decls_iter *) 
+(*
 let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
+*)
+
+let proc_decls_iter (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
+  proc_decls_fold prog (f_p) (fun _ _ -> ()) ()
 
 (*let arrayat_of_exp e = match e with
 	| ArrayAt t -> t
@@ -820,6 +899,7 @@ let rec look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def pos ddefs name in
 	ddef.data_parent_name
 
+(*
 let rec look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
   | p :: rest ->
       if p.proc_name = name then
@@ -827,7 +907,12 @@ let rec look_up_proc_def_raw (procs : proc_decl list) (name : string) = match pr
       else
 		look_up_proc_def_raw rest name
   | [] -> raise Not_found
-	  
+*)
+
+let rec look_up_proc_def_raw (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  Hashtbl.find procs name 
+
+(*			  
 let rec look_up_proc_def pos (procs : proc_decl list) (name : string) = match procs with
   | p :: rest ->
       if p.proc_name = name then
@@ -836,14 +921,35 @@ let rec look_up_proc_def pos (procs : proc_decl list) (name : string) = match pr
 		look_up_proc_def pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = "procedure " ^ name ^ " is not found"}
+*)
 
+let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try Hashtbl.find procs name 
+	with Not_found -> Error.report_error {
+    Error.error_loc = pos;
+    Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+(* Replaced by the new function with Hashtbl *)
+(*
 let rec look_up_proc_def_no_mingling pos (procs : proc_decl list) (name : string) = match procs with
   | p :: rest ->
 	  if unmingle_name p.proc_name = name then p
 	  else look_up_proc_def_no_mingling pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = "procedure " ^ name ^ " is not found"}
-
+*)
+let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  let proc = Hashtbl.fold (fun i p acc -> 
+    match acc with
+    | None -> if unmingle_name i = name then Some p else None
+    | Some _ -> acc
+  ) procs None in
+  match proc with
+  | None -> Error.report_error {
+      Error.error_loc = pos;
+      Error.error_text = "Procedure " ^ name ^ " is not found." }
+  | Some p -> p
+  
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
 and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = match c.data_name with 
   | "Object" -> [] (* it does not have a superclass *)
@@ -938,11 +1044,11 @@ let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl 
   let pr1 = pr_list !print_coercion in
   Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
     (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
-    
+ 
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
-  let pdef = look_up_proc_def_no_mingling no_pos prog.prog_proc_decls name in
-  let callees = 
-	match pdef.proc_body with
+  (*let pdef = look_up_proc_def_no_mingling no_pos prog.old_proc_decls name in*)
+  let pdef = look_up_proc_def_no_mingling no_pos prog.new_proc_decls name in
+  let callees = match pdef.proc_body with
 	  | Some e -> callees_of_exp e
 	  | None -> [] 
   in
@@ -1353,7 +1459,7 @@ let rec check_proper_return cret_type exc_list f =
 	| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
 	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
 	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-	| F.EVariance b -> ()
+	(*| F.EVariance b -> ()*)
  | F.EInfer b -> ()
   in
   List.iter helper f
@@ -1601,20 +1707,21 @@ let addin_callgraph_of_proc cg proc : IG.t =
 let callgraph_of_prog prog : IG.t = 
   let cg = IG.empty in
   let pn pc = pc.proc_name in
-  let mns = List.map pn prog.prog_proc_decls in
+  (*let mns = List.map pn prog.old_proc_decls in*)
+  let mns = List.map pn (list_of_procs prog) in 
   let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
-  List.fold_right (ex_args addin_callgraph_of_proc) prog.prog_proc_decls cg
+  (*List.fold_right (ex_args addin_callgraph_of_proc) prog.old_proc_decls cg*)
+  Hashtbl.fold (fun i pd acc -> ex_args addin_callgraph_of_proc pd acc) prog.new_proc_decls cg
 
 (* Termination: Add the call number to specifications
  * if the option --dis-call-num is not enabled (default) *)
 let rec add_term_call_num_prog (cp: prog_decl) : prog_decl =
   if !Globals.dis_call_num then cp 
-  else 
-    { cp with
-      prog_proc_decls = List.map (fun proc ->
-        add_term_call_num_proc proc
-      ) cp.prog_proc_decls
-    }
+  else { cp with
+    (*old_proc_decls = List.map (fun proc ->
+      add_term_call_num_proc proc) cp.old_proc_decls;*)
+    new_proc_decls = proc_decls_map add_term_call_num_proc cp.new_proc_decls;
+  }
 
 (* Do not add call number into the specification
  * of a primitive call *)    
@@ -1627,4 +1734,5 @@ and add_term_call_num_proc (proc: proc_decl) : proc_decl =
       proc_dynamic_specs = 
         F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
     }
+
 

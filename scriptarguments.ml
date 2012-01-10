@@ -244,6 +244,8 @@ let common_arguments = [
       "level of detail in termination printing 0-verbose 1-standard(default)");
   ("--dis-call-num", Arg.Set Globals.dis_call_num, "turn off the automatic call numbering");
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
+  ("--term-reverify", Arg.Set Globals.term_reverify, 
+    "enable re-verification for inferred termination specifications");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
