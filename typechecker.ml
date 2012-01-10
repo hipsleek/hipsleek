@@ -827,7 +827,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_pos = pos}) ->
 		      begin
               let _ = proving_loc#set pos in
-	            let proc = look_up_proc_def pos prog.prog_proc_decls mn in
+	            let proc = look_up_proc_def pos prog.new_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
 	            let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	            let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
@@ -1427,7 +1427,14 @@ let check_prog (prog : prog_decl) =
     *)
 	
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);    
+    (* Sort the proc_decls by proc_call_order *)
+    let l_proc = Cast.list_of_procs prog in
+    let proc_main, proc_prim = List.partition Cast.is_primitive_proc l_proc in
+    let sorted_proc_main = List.fast_sort (fun p1 p2 -> 
+      p1.Cast.proc_call_order - p2.Cast.proc_call_order
+    ) proc_main in
+    ignore (List.map (check_proc_wrapper prog) (sorted_proc_main @ proc_prim));
+    (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
     Term.term_check_output Term.term_res_stk
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in

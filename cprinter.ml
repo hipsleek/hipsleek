@@ -2161,7 +2161,9 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
-  (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
+  (* TODO: PD *)
+  (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
+  (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
 
