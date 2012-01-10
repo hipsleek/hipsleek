@@ -1250,7 +1250,7 @@ let check_proc_wrapper prog proc =
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
     let n_res = 
-      if (proc.Cast.proc_is_main) then
+      if (proc.Cast.proc_is_main && not !Globals.dis_phase_num) then
       begin
         let (_, mutual_grps) = Cast.re_proc_mutual (Cast.sort_proc_decls (Cast.list_of_procs prog)) in
         let name_mutual_grps = List.map (fun lp -> List.map (fun p -> p.Cast.proc_name) lp) mutual_grps in

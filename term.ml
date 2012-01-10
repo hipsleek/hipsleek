@@ -922,9 +922,11 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 (* Main function of the termination checker *)
 let term_check_output stk =
+  (*
   (if not (!Globals.dis_phase_num) then
     phase_num_infer_by_scc ()
   else ());
+  *)
   fmt_string "\nTermination checking result:\n";
   pr_term_res_stk (stk # get_stk);
   fmt_print_newline ()
