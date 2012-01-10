@@ -891,13 +891,19 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
      * all needed information is collected *)
     if is_full_grp then
       let cl = List.concat (snd (List.split cons)) in
-      let inf_num = phase_num_infer_one_scc cl in 
+      let inf_num = phase_num_infer_one_scc cl in
       Debug.trace_hprint (add_str "list of ctr:" 
         (pr_list !CP.print_formula)) cl no_pos;
-      let subst = List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num in
-      let subst = List.concat subst in
-      Debug.trace_hprint (add_str "subst: " 
-        (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos;
+      let subst = 
+        if not (Gen.is_empty inf_num) then
+          List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
+        else (* The inferred graph has only one vertex *)
+          let fv = List.concat (List.map (fun f -> CP.fv f) cl) in 
+          let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
+          List.map (fun v -> (v, 0)) fv
+      in
+      let _ = Debug.trace_hprint (add_str "subst: " 
+        (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos in
       (* Termination: Add the inferred phase numbers 
        * into specifications of functions in mutual group *)
       let n_tbl = Cast.proc_decls_map (fun proc ->

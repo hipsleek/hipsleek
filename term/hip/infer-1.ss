@@ -10,7 +10,7 @@ case {
 	}
 }
 */
-
+infer[p1,p2,p3]
 case {
 	x<=0 -> requires Term[p1] ensures true;
   x>0 -> case {
