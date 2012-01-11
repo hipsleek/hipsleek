@@ -638,6 +638,11 @@ and var_of_exp (exp: CP.exp) : CP.spec_var option =
   | CP.Var (sv, _) -> Some sv
   | _ -> None
 
+let fv_of_phase_constr (c: phase_constr) =
+  match c with
+  | P_Gte (v1, v2) -> [v1; v2]
+  | P_Gt (v1, v2) -> [v1; v2]
+
 module PComp = 
 struct
   type t = CP.spec_var list
@@ -771,19 +776,25 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let cl = phase_constr_of_formula_list pl in
   let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in
   let l = 
-    try Some (rank_gt_phase_constr cl)
+    try 
+      let r = rank_gt_phase_constr cl in
+      let _ = 
+        begin
+          Debug.trace_hprint (add_str "Inferred phase constraints"
+            (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
+          Debug.trace_hprint (add_str "Phase Numbering"
+            (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos;
+        end
+      in 
+
+      if Gen.is_empty r then
+        let fv = List.concat (List.map fv_of_phase_constr cl) in
+        Some (r, fv)
+      else Some (r, [])
     with _ -> 
       fmt_string ("Termination: Contradiction in Phase Constraints."); None 
   in
-  let _ = 
-    begin
-      Debug.trace_hprint (add_str "Inferred phase constraints"
-        (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
-      Debug.trace_hprint (add_str "Phase Numbering"
-        (pr_option ((pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))))
-      ) l no_pos;
-    end
-  in l
+  l
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
@@ -913,13 +924,13 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
       let subst =
         match inf_num with
         | None -> []
-        | Some inf_num ->
+        | Some (inf_num, fv) ->
           begin
             if not (Gen.is_empty inf_num) then
               List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
             else (* The inferred graph has only one vertex *)
               (* TODO: fv may contain unrelated variables *)
-              let fv = List.concat (List.map (fun f -> CP.fv f) cl) in 
+              (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
               let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
               List.map (fun v -> (v, 0)) fv
           end
