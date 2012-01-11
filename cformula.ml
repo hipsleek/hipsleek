@@ -6268,7 +6268,9 @@ let clear_entailment_vars (es :entail_state) : entail_state =
       es_subst = ([],[]);
       }
 
-  
+let clear_entailment_history_es_es (es :entail_state) : entail_state = 
+  {es with es_heap = HTrue}
+
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
