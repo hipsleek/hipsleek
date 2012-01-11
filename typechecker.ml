@@ -1107,7 +1107,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	  match proc.proc_body with
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
-		      begin
+		    begin
 			    if !Globals.print_proc then 
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
