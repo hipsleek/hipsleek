@@ -1139,6 +1139,11 @@ and is_member_pure (f:formula) (p:formula):bool =
   List.exists (fun c-> equalFormula f c) y
       
 
+and is_disjunct f : bool =
+  match f with
+    | Or(_,_,_,_) -> true
+    | _ -> false
+
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bool = 
   match (f1,f2) with

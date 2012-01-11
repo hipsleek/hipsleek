@@ -22,4 +22,22 @@ echo "======= invalid-1d.ss ======"
 diff w1d.res w1d.n
 echo "======= invalid-1e.ss ======"
 diff w1e.res w1e.n
+echo "======= infer-1.ss ======"
+diff p1.res p1.n
+echo "======= infer-2.ss ======"
+diff p2.res p2.n
+echo "======= infer-3.ss ======"
+diff p3.res p3.n
+echo "======= infer-4.ss ======"
+diff p4.res p4.n
+echo "======= infer-6a.ss ======"
+diff p6a.res p6a.n
+echo "======= infer-6b.ss ======"
+diff p6b.res p6b.n
+echo "======= infer-gcd-1.ss ======"
+diff p-gcd-1.res p-gcd-1.n
+echo "======= infer-gcd-2.ss ======"
+diff p-gcd-2.res p-gcd-2.n
+echo "======= infer-mutual-1.ss ======"
+diff p-mutual-1.res p-mutual-1.n
 
