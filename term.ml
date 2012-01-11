@@ -759,7 +759,11 @@ let phase_num_infer () =
 (* Do infer phase number per scc group *)
 (* Triggered when phase constraints of 
  * all function in a scc group has been 
- * collected *)
+ * collected - The result may be empty 
+ * if the graph has only one vertex 
+ * + None -> exception
+ * + Some [] -> all_zero
+ * + Some _ *)
 let phase_num_infer_one_scc (pl : CP.formula list) =
   (* Phase Numbering *) 
   let pr_v = !CP.print_sv in
@@ -767,31 +771,33 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let cl = phase_constr_of_formula_list pl in
   let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in
   let l = 
-    try rank_gt_phase_constr cl 
+    try Some (rank_gt_phase_constr cl)
     with _ -> 
-      fmt_string ("Termination: Contradiction in Phase Constraints."); [] 
+      fmt_string ("Termination: Contradiction in Phase Constraints."); None 
   in
   let _ = 
     begin
       Debug.trace_hprint (add_str "Inferred phase constraints"
         (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
       Debug.trace_hprint (add_str "Phase Numbering"
-        (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
+        (pr_option ((pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))))
       ) l no_pos;
     end
   in l
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  Debug.to_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
 
-(* Infer the phase numbers at the end of check_prog *)  
+(* Infer the phase numbers at the end of check_prog *) 
+(* Currently, this method is redundant because we do
+ * aggressive phase inference per scc group *)  
 let phase_num_infer_by_scc () = 
   Hashtbl.iter (fun i pl -> 
     let cl = List.concat (List.map (fun (_, l) -> l) pl) in
     Debug.trace_hprint (add_str ("scc " ^ (string_of_int i))
       (pr_list !CP.print_formula)) cl no_pos;
-    (*phase_num_infer_one_scc cl*)
+    let _ = phase_num_infer_one_scc cl in ()
   ) phase_constr_tbl
 
 let phase_num_infer_by_scc () =
@@ -816,6 +822,8 @@ let subst_phase_num_exp subst exp =
       with _ -> exp)
   | _ -> exp 
 
+(* Substitute the value of phase variables into specification *)
+(* If all values are zero then the phase fields will be removed *)  
 let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula =
   let f_e _ = None in
   let f_f _ = None in
@@ -828,7 +836,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
     match pf with
     | CP.LexVar (t_ann, ml, il, pos) ->
           let n_ml =
-          if rem_phase ==[] then
+          if rem_phase == [] then
             (* replace the phase var with integer *)
              List.map (fun m -> subst_phase_num_exp subst m) ml 
           else 
@@ -878,30 +886,12 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 (*   else subst_phase_num_struc subst struc *)
 
 let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
-  (* if subst==[] then proc *)
-  (* else *)
-  (*   (\* all_zero is set if subs is only of form [v1->0,..,vn->0] *)
-  (*      in this scenario, there is no need for phase vars at all  *)
-  (*   *\) *)
-  (*   let all_zero = List.for_all (fun (_,i) -> i==0) subst in *)
-  (*   let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in *)
-  (*   if all_zero then *)
-  (*     Debug.trace_hprint (add_str ("phase to remove") !CP.print_svl) rp no_pos; *)
   let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
   let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-  (*let t_spec = proc.Cast.proc_stk_of_static_specs # top in*)
   let _ = proc.Cast.proc_stk_of_static_specs # push s_specs in 
-  (*
-    let n_spec_stk = List.map (fun spec -> 
-    subst_phase_num_struc subst spec
-    ) (proc.Cast.proc_stk_of_static_specs # get_stk) in 
-    let n_stk = new Gen.stack in
-    let _ = n_stk # push_list n_spec_stk in
-  *)
   { proc with
       Cast.proc_static_specs = s_specs;
-      Cast.proc_dynamic_specs = d_specs;
-  }
+      Cast.proc_dynamic_specs = d_specs; }
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) : Cast.prog_decl =
   let index = proc.Cast.proc_call_order in
@@ -909,44 +899,50 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
     let cons = Hashtbl.find phase_constr_tbl index in
     let grp = fst (List.split cons) in
     let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
-    Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
 
-    Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos; 
+    Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
+    Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
+
     (* Trigger phase number inference when 
      * all needed information is collected *)
     if is_full_grp then
       let cl = List.concat (snd (List.split cons)) in
       let inf_num = phase_num_infer_one_scc cl in
       Debug.trace_hprint (add_str "list of ctr" 
-          (pr_list !CP.print_formula)) cl no_pos;
-      let subst = 
-        if not (Gen.is_empty inf_num) then
-          List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
-        else (* The inferred graph has only one vertex *)
-          let fv = List.concat (List.map (fun f -> CP.fv f) cl) in 
-          let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
-          List.map (fun v -> (v, 0)) fv
+        (pr_list !CP.print_formula)) cl no_pos;
+      let subst =
+        match inf_num with
+        | None -> []
+        | Some inf_num ->
+          begin
+            if not (Gen.is_empty inf_num) then
+              List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
+            else (* The inferred graph has only one vertex *)
+              (* TODO: fv may contain unrelated variables *)
+              let fv = List.concat (List.map (fun f -> CP.fv f) cl) in 
+              let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
+              List.map (fun v -> (v, 0)) fv
+          end
       in
       (* Termination: Add the inferred phase numbers 
        * into specifications of functions in mutual group *)
       if subst==[] then prog
       else 
         (* all_zero is set if subs is only of form [v1->0,..,vn->0]
-           in this scenario, there is no need for phase vars at all 
-        *)
+           in this scenario, there is no need for phase vars at all *)
         let all_zero = List.for_all (fun (_,i) -> i==0) subst in
         let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
         if all_zero then
-          Debug.trace_hprint (add_str ("phase to remove") !CP.print_svl) rp no_pos
+          Debug.trace_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
         else begin
           Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-          Debug.info_hprint (add_str "Phase Numbering" 
-              (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
+          Debug.info_hprint (add_str "Phase Numbering"
+            (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
         end;
         let n_tbl = Cast.proc_decls_map (fun proc ->
-            if (List.mem proc.Cast.proc_name mutual_grp) 
-            then subst_phase_num_proc rp subst proc
-            else proc
+          if (List.mem proc.Cast.proc_name mutual_grp) 
+          then subst_phase_num_proc rp subst proc
+          else proc
         ) prog.Cast.new_proc_decls in  
         { prog with Cast.new_proc_decls = n_tbl }
     else prog
@@ -959,11 +955,6 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 (* Main function of the termination checker *)
 let term_check_output stk =
-  (*
-  (if not (!Globals.dis_phase_num) then
-    phase_num_infer_by_scc ()
-  else ());
-  *)
   fmt_string "\nTermination checking result:\n";
   pr_term_res_stk (stk # get_stk);
   fmt_print_newline ()
