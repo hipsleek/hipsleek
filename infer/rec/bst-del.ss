@@ -13,8 +13,8 @@ bst <sm, lg> == self = null & sm <= lg
 	inv sm <= lg;
 
 
-relation A(int x, int y, int z).
-relation B(int x, int y).
+//relation A(int x, int y, int z).
+relation B(int x, int y, int a, int b).
 
 
 /* delete a node from a bst */
@@ -24,15 +24,17 @@ int remove_min(ref node2 x)
 	ensures x'::bst<s1, b> & s <= res <= s1;
 
 void delete(ref node2 x, int a)
-        infer @pre[B]
+    infer @pre[B]
 	requires x::bst<sm, lg> 
-	ensures x'::bst<s, l> & B(l,lg) & sm <= s; // & l <= lg;
+    //ensures x'::bst<s, l> & sm <= s & l <= lg; 
+    ensures x'::bst<s, l> & B(sm,s,l,lg); 
 
 {
 	int tmp; 
 
 	if (x != null)
 	{
+        //assume false;
 		bind x to (xval, xleft, xright) in 
 		{
 			if (xval == a) 
@@ -55,6 +57,10 @@ void delete(ref node2 x, int a)
 					delete(xleft, a);
 			}
 		}
+        dprint;
 	}
+    else {
+      assume true;
+    }
 }
 
