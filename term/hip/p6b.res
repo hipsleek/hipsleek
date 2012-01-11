@@ -12,9 +12,9 @@ Procedure f$int~int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 132 invocations 
+Stop Omega... 170 invocations 
 9 false contexts at: ( (48,1)  (44,1)  (46,2)  (46,14)  (46,9)  (46,6)  (45,6)  (45,2)  (45,2) )
 
-Total verification time: 0.32 second(s)
-	Time spent in main process: 0.27 second(s)
-	Time spent in child processes: 0.05 second(s)
+Total verification time: 0.36 second(s)
+	Time spent in main process: 0.3 second(s)
+	Time spent in child processes: 0.06 second(s)
