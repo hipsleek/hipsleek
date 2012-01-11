@@ -4129,6 +4129,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
+        es_var_measures = es.es_var_measures;
     }
 
 let false_es_with_orig_ante es f pos =

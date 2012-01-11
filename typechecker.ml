@@ -1075,6 +1075,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	  Tpdispatcher.unsuppress_imply_output ();
 	  (* print_endline "VERIFYING POST-CONDITION" *)
 	end in
+  let b = Term.check_loop_safety prog proc ctx post pos pid in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in

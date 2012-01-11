@@ -973,3 +973,34 @@ let term_check_output stk =
   let pr = fun _ -> "" in
   Debug.no_1 "term_check_output" pr pr term_check_output stk
 
+let rec get_loop_ctx c =
+  match c with
+    | Ctx es -> (match es.es_var_measures with
+        | None -> []
+        | Some (a,_,_) -> if a==Loop then [es] else []
+      )
+    | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
+
+let get_loop_only sl =
+  let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
+  List.concat ls
+
+(* if Loop, check that ctx is false *)
+let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
+  Debug.trace_hprint (add_str "proc name" pr_id) proc.Cast.proc_name pos;
+  let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in
+  let loop_es = List.concat (List.map (fun (fl,sl) -> get_loop_only sl) good_ls) in
+  if loop_es==[] then true
+  else 
+    begin
+      Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short)ctx pos;
+      Debug.trace_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
+      (* TODO: must check that each entail_state from loop_es implies false *)
+      false
+    end
+
+
+let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
+  Debug.to_1 "check_loop_safety" 
+      pr_id string_of_bool (fun _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name
+

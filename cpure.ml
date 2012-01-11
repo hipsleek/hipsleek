@@ -896,6 +896,11 @@ and mkLexVar t_ann m i pos = LexVar (t_ann, m, i, pos)
 
 and mkPure bf = BForm ((bf,None), None)
 
+and mkLexVar_pure a l1 l2 = 
+  let bf = mkLexVar a l1 l2 no_pos in
+  let p = mkPure bf in
+  p
+
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
 and mkVarNull v pos = 
