@@ -16,9 +16,9 @@ Procedure m$int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 376 invocations 
+Stop Omega... 364 invocations 
 26 false contexts at: ( (38,2)  (38,13)  (38,11)  (38,9)  (40,2)  (40,9)  (51,2)  (51,13)  (51,11)  (51,9)  (53,2)  (53,9)  (11,2)  (11,9)  (13,2)  (13,13)  (13,9)  (13,9)  (24,2)  (24,9)  (26,2)  (26,17)  (26,15)  (26,13)  (26,9)  (26,9) )
 
-Total verification time: 0.392023 second(s)
-	Time spent in main process: 0.292017 second(s)
-	Time spent in child processes: 0.100006 second(s)
+Total verification time: 0.49 second(s)
+	Time spent in main process: 0.38 second(s)
+	Time spent in child processes: 0.11 second(s)

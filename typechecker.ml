@@ -173,8 +173,8 @@ and check_bounded_term prog proc ctx post_pos post_label =
     else final_state_prim in
   let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
   (*let _ = print_endline (pr_list (fun m -> (pr_list !CP.print_exp m) ^ "\n") l_term_measures) in*)
-  let _ = Debug.trace_hprint (add_str "Orig context: "
-      !CF.print_list_partial_context) ctx no_pos in
+  let _ = Debug.trace_hprint (add_str "Orig context" 
+    !CF.print_list_partial_context) ctx no_pos in
 
   let check_bounded_one_measures m =
     let bnd_formula_l = List.map (fun e ->
@@ -185,7 +185,7 @@ and check_bounded_term prog proc ctx post_pos post_label =
     let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in
     let rs, _ = heap_entail_list_partial_context_init 
       prog false final_state bnd_formula post_pos (Some post_label) in
-    let _ = Debug.trace_hprint (add_str "Result context: "
+    let _ = Debug.trace_hprint (add_str "Result context" 
       !CF.print_list_partial_context) rs no_pos in
     if (CF.isSuccessListPartialCtx rs) then ()
     else
@@ -369,6 +369,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let pos_post = (CF.pos_of_formula post_cond) in
                       (* Termination: Check the boundedness 
                        * of the termination measures *)
+                      (* TODO: Termination: Turn the following function off if
+                       * there is not any Term *)
                       let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
@@ -378,9 +380,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let log_vars = prog.Cast.prog_logical_vars in
                       let cl = List.filter (fun f -> 
                         Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
-                      let _ = DD.trace_hprint (add_str "Inferred constraints: " (pr_list !CP.print_formula)) lp pos in
-                      (* TODO: Termination: The following function is useless *)
-                      let _ = Term.add_phase_constr (List.map TP.simplify_raw cl) in
+                      let _ = DD.trace_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                       let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in
                                            
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
@@ -1268,7 +1268,7 @@ let check_proc_wrapper prog proc =
     if !Globals.check_all then begin
       (* dummy_exception(); *)
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
-      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false

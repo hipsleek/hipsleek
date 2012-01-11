@@ -1078,15 +1078,18 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           (*let cprog4 = (add_pre_to_cprog cprog3) in*)
 	      (*let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in*)
         let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog3 else cprog3 in
+        (* Termination: Mark recursive calls and call order of function
+         * Normalize the term specification with call number and implicit
+         * phase variable *)
 	      let c = (mark_rec_and_call_order cprog5) in
-        let c = Cast.add_term_call_num_prog c in
+        let c = Cast.add_term_nums_prog c in
         let c = (add_pre_to_cprog c) in
-          (* let _ = print_endline (exlist # string_of) in *)
-          (* let _ = exlist # sort in *)
+        (* let _ = print_endline (exlist # string_of) in *)
+        (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		   c)))
 	end)
-  else   failwith "Error detected"
+  else failwith "Error detected"
 
 (* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
 (*   Debug.loop_1_no "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
@@ -4474,8 +4477,8 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let pe1 = List.map (fun e ->trans_pure_exp e stab) ls1 in
-          let pe2 = List.map (fun e ->trans_pure_exp e stab) ls2 in
+          let pe1 = List.map (fun e -> trans_pure_exp e stab) ls1 in
+          let pe2 = List.map (fun e -> trans_pure_exp e stab) ls2 in
           CP.LexVar(t_ann, pe1, pe2, pos)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in

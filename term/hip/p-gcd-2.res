@@ -9,10 +9,12 @@ Checking procedure gcd$int~int...
 Procedure gcd$int~int SUCCESS
 
 Termination checking result:
+(21)->(27) (ERR: not decreasing) Term[0; p3; x]->Term[0; p3; v_int_27_622']
+(19)->(29) (ERR: not decreasing) Term[0; p1; y]->Term[0; p1; v_int_29_624']
 
-Stop Omega... 138 invocations 
-10 false contexts at: ( (27,10)  (27,6)  (28,2)  (28,17)  (28,9)  (30,2)  (30,9)  (26,2)  (26,14)  (26,9) )
+Stop Omega... 249 invocations 
+10 false contexts at: ( (28,10)  (28,6)  (29,2)  (29,17)  (29,9)  (31,2)  (31,9)  (27,2)  (27,14)  (27,9) )
 
-Total verification time: 0.224013 second(s)
-	Time spent in main process: 0.188011 second(s)
-	Time spent in child processes: 0.036002 second(s)
+Total verification time: 0.38 second(s)
+	Time spent in main process: 0.29 second(s)
+	Time spent in child processes: 0.09 second(s)

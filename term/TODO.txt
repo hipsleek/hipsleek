@@ -1,10 +1,14 @@
-1. Clean up EVariance and useless code of termination
-2. DONE: Add call group (from proc_call_order of proc_decl)
+1. Clean up EVariance (DONE) and useless code of termination
+2. Add call group (from proc_call_order of proc_decl) (DONE)
 3. Infer phase transition by inference mechanism
-  - Filter irrelevant phase constraints
+  - Filter irrelevant phase constraints (DONE)
 	- Make it work with interprocedural constraints (infer-3.ss), 
-	may need logical vars
-	- Integrate the result into specification
-4. Prepare benchmarks and evaluation
-5. Simplify the context to add useful constraints for
+	may need logical vars (DONE)
+	- Integrate the result into specification (DONE)
+	- Aggressive inference for each scc group (DONE)
+	- Implicit phase variables
+4. Turn off termination checking when there is not any user-defined Term.
+5. Prepare benchmarks and evaluation
+6. Simplify the context to add useful constraints for
 meaningful printing.
+7. Post-condition with Loop

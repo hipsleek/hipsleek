@@ -7415,46 +7415,86 @@ and norm_ext_with_lexvar ext_f is_primitive =
       let n_cont = norm_ext_with_lexvar cont is_primitive in
       EInfer { ef with formula_inf_continuation = n_cont }
 
-(* Termination: Add the call number if the option
- * --dis-call-num is not enabled (default) *)
-let rec add_term_call_num_struc struc_f call_num =
-  List.map (fun ef -> add_term_call_num_ext ef call_num) struc_f
+(* Termination: Add the call numbers and the implicit phase 
+ * variables to specifications if the option 
+ * --dis-call-num and --dis-phase-num are not enabled (default) *)      
+let rec add_term_nums_struc struc_f log_vars call_num add_phase =
+  let res = List.map (fun ef ->
+    add_term_nums_ext ef log_vars call_num add_phase
+  ) struc_f in
+  let n_sf, pvs = List.split res in
+  (n_sf, List.concat pvs)
+ 
+and add_term_nums_sub_struc struc_f log_vars call_num add_phase =
+  let n_sf, pvs = List.split (List.map (fun ef -> 
+    add_term_nums_ext ef log_vars call_num add_phase) struc_f) in
+  (n_sf, List.concat pvs)
 
-and add_term_call_num_ext ext_f call_num =
+and add_term_nums_ext ext_f log_vars call_num add_phase =
   match ext_f with
   | ECase ({ formula_case_branches = cl } as ef) ->
-      let n_cl  = List.map (fun (c, sf) ->
-        (c, add_term_call_num_struc sf call_num )) cl in
-      ECase { ef with formula_case_branches = n_cl }
+      let n_cl, pvs  = List.split (List.map (fun (c, sf) ->
+        let n_sf, pvs = add_term_nums_sub_struc sf log_vars call_num add_phase in
+        ((c, n_sf), pvs)) cl) in
+      let pvs = List.concat pvs in
+      (ECase { ef with formula_case_branches = n_cl }, pvs)
   | EBase ({
       formula_ext_base = base;
       formula_ext_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_struc cont call_num in
-      let n_base = add_term_call_num_formula base call_num in
-      EBase { ef with
+      let n_cont, pvc = add_term_nums_sub_struc cont log_vars call_num add_phase in
+      let n_base, pvb = add_term_nums_formula base log_vars call_num add_phase in
+      (EBase { ef with
         formula_ext_base = n_base;
         formula_ext_continuation = n_cont
-      }
-  | EAssume _ -> ext_f
-  (*| EVariance ({ formula_var_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_ext cont call_num in
-      EVariance { ef with formula_var_continuation = n_cont }*)
+      }, pvb @ pvc)
+  | EAssume _ -> (ext_f, [])
   | EInfer ({ formula_inf_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_ext cont call_num in
-      EInfer { ef with formula_inf_continuation = n_cont }
+      let n_cont, pvc = add_term_nums_ext cont log_vars call_num add_phase in
+      (EInfer { ef with formula_inf_continuation = n_cont }, pvc)
 
-and add_term_call_num_formula f call_num = 
+and add_term_nums_formula f log_vars call_num add_phase = 
   match f with
   | Base ({ formula_base_pure = p } as base) ->
       let p = MCP.pure_of_mix p in
-      let n_p = CP.add_term_call_num_pure p call_num in
-      Base { base with formula_base_pure = MCP.mix_of_pure n_p }
+      let pv = fresh_phase_var_opt add_phase in
+      let n_p, n_pv = CP.add_term_nums_pure p log_vars call_num pv in
+      (Base { base with formula_base_pure = MCP.mix_of_pure n_p }, n_pv)
   | Exists ({ formula_exists_pure = p } as ex) ->
       let p = MCP.pure_of_mix p in
-      let n_p = CP.add_term_call_num_pure p call_num in
-      Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }
+      let pv = fresh_phase_var_opt add_phase in
+      let n_p, n_pv = CP.add_term_nums_pure p log_vars call_num pv in
+      (Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }, n_pv)
   | Or ({ formula_or_f1 = f1; formula_or_f2 = f2 } as orf) ->
-      let n_f1 = add_term_call_num_formula f1 in
-      let n_f2 = add_term_call_num_formula f2 in
-      Or { orf with formula_or_f1 = f1; formula_or_f2 = f2 }
+      let n_f1, pv1 = add_term_nums_formula f1 log_vars call_num add_phase in
+      let n_f2, pv2 = add_term_nums_formula f2 log_vars call_num add_phase in
+      (Or { orf with formula_or_f1 = n_f1; formula_or_f2 = n_f2 }, pv1 @ pv2)
+
+and fresh_phase_var_opt add_phase = 
+  if add_phase then
+    let pv_name = fresh_any_name "pv" in
+    Some (CP.SpecVar(Int, pv_name, Unprimed))
+  else None
+
+and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
+  if Gen.is_empty vl then sf
+  else
+    let n_sf = List.map (fun ef -> 
+      EInfer {
+        formula_inf_post = false;
+        formula_inf_vars = vl;
+        formula_inf_continuation = ef;
+        formula_inf_pos = pos_of_struc_formula [ef];
+      }
+    ) sf
+    in
+    begin
+      Debug.trace_hprint (add_str "ORIG_SPECS" !print_struc_formula) sf no_pos;
+      Debug.trace_hprint (add_str "TRANS_SPECS" !print_struc_formula) n_sf no_pos;
+    end;
+    n_sf
+
+let add_infer_struc vl sf =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_infer_struc" pr pr
+  (fun _ -> add_infer_struc vl sf) sf
 

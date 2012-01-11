@@ -1713,26 +1713,53 @@ let callgraph_of_prog prog : IG.t =
   (*List.fold_right (ex_args addin_callgraph_of_proc) prog.old_proc_decls cg*)
   Hashtbl.fold (fun i pd acc -> ex_args addin_callgraph_of_proc pd acc) prog.new_proc_decls cg
 
-(* Termination: Add the call number to specifications
- * if the option --dis-call-num is not enabled (default) *)
-let rec add_term_call_num_prog (cp: prog_decl) : prog_decl =
-  if !Globals.dis_call_num then cp 
-  else { cp with
-    (*old_proc_decls = List.map (fun proc ->
-      add_term_call_num_proc proc) cp.old_proc_decls;*)
-    new_proc_decls = proc_decls_map add_term_call_num_proc cp.new_proc_decls;
-  }
-
-(* Do not add call number into the specification
- * of a primitive call *)    
-and add_term_call_num_proc (proc: proc_decl) : proc_decl =
-  if not (proc.proc_is_main) then proc
+(* Termination: Add the call numbers and the implicit phase 
+ * variables to specifications if the option 
+ * --dis-call-num and --dis-phase-num are not enabled (default) *)
+let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
+  if !Globals.dis_call_num && !Globals.dis_phase_num then cp 
   else 
-    { proc with
-      proc_static_specs = 
-        F.add_term_call_num_struc proc.proc_static_specs proc.proc_call_order;
-      proc_dynamic_specs = 
-        F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
-    }
+    let (prim_grp, mutual_grps) = re_proc_mutual (sort_proc_decls (list_of_procs cp)) in
+    let log_vars = cp.prog_logical_vars in
+    let pvs = List.map (fun procs ->
+      add_term_nums_proc_scc procs cp.new_proc_decls log_vars
+      (not !dis_call_num) (not !dis_phase_num)) mutual_grps
+    in
+    let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
+      ((List.concat pvs) @ log_vars) in
+    { cp with prog_logical_vars = pvl } 
+
+(* Do not add call numbers and phase variables 
+ * into the specification of a primitive call. 
+ * The return value contains a list of new 
+ * added spec_var *)   
+and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
+  let n_procs, pvs = List.split (List.map (fun proc -> 
+    add_term_nums_proc proc log_vars add_call add_phase
+  ) procs) in 
+  let pvs = List.concat pvs in
+  let n_procs = List.map (fun proc -> { proc with
+    proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs;
+    proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs;
+  }) n_procs in
+  let _ = List.iter (fun proc ->
+    Hashtbl.replace tbl proc.proc_name proc 
+  ) n_procs in 
+  pvs
+
+and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
+  if not (proc.proc_is_main) then (proc, [])
+  else 
+    let call_num = 
+      if add_call then Some proc.proc_call_order
+      else None
+    in
+    (* Still need to add EInfer into n_ss and n_ds *)
+    let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
+    let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
+    ({ proc with
+      proc_static_specs = n_ss; 
+      proc_dynamic_specs = n_ds; 
+    }, pvl1 @ pvl2)
 
 

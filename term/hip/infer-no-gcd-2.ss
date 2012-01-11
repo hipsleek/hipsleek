@@ -14,11 +14,11 @@ case {
 }
 */
 
-infer[p1,p2,p3]
+//infer[p1,p2,p3]
 case {
-	x<y -> requires Term[p1,y] ensures true;
-	x=y -> requires Term[p2] ensures true;
-	x>y -> requires Term[p3,x] ensures true;
+	x<y -> requires Term[y] ensures true;
+	x=y -> requires Term[] ensures true;
+	x>y -> requires Term[x] ensures true;
 }
 
 

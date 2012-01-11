@@ -798,7 +798,7 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
 (* Currently, this method is redundant because we do
@@ -846,7 +846,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
     let (pf, sl) = bf in
     match pf with
     | CP.LexVar (t_ann, ml, il, pos) ->
-          let n_ml =
+        let n_ml =
           if rem_phase == [] then
             (* replace the phase var with integer *)
              List.map (fun m -> subst_phase_num_exp subst m) ml 
@@ -855,7 +855,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
             List.filter (fun e -> match CP.get_var_opt e with
               | None -> true
               | Some v -> not(CP.mem_svl v rem_phase)) ml
-          in Some (CP.mkLexVar t_ann n_ml il pos, sl)
+        in Some (CP.mkLexVar t_ann n_ml il pos, sl)
     | _ -> None
   in
   let f_pe _ = None in
@@ -929,7 +929,6 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
             if not (Gen.is_empty inf_num) then
               List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
             else (* The inferred graph has only one vertex *)
-              (* TODO: fv may contain unrelated variables *)
               (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
               let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
               List.map (fun v -> (v, 0)) fv
@@ -961,7 +960,7 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
+  Debug.to_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)

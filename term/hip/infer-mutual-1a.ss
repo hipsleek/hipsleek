@@ -1,9 +1,9 @@
-logical int p1, p2, p3, p4, p5, p6, p7, p8;
+logical int p1, p2, p3, p4;
 
 int f (int x)
-infer[p1, p2, p5, p6]
+//infer[p1, p2]
 case {
-	x<=0 -> requires Term[p5] ensures res=0;
+	x<=0 -> requires Term[] ensures res=0;
 	x>0 -> requires Term[p1, 2*x] ensures res=3*x;
 }
 {
@@ -14,9 +14,9 @@ case {
 }
 
 int g (int x)
-infer[p1, p2, p5, p6]
+//infer[p1, p2]
 case {
-	x<=0 -> requires Term[p6]  ensures res=0;
+	x<=0 -> requires Term[]  ensures res=0;
 	x>0 -> requires Term[p2, 2*x-1] ensures res=3*x-1;
 }
 {
@@ -28,10 +28,10 @@ case {
 
 
 int m (int x)
-infer[p3, p4, p7, p8]
+//infer[p3, p4]
 case {
 	x>10 -> requires Term[p3, x] ensures true;
-	x<=10 -> requires Term[p7] ensures res=3*x-1 or res=0;
+	x<=10 -> requires Term[] ensures res=3*x-1 or res=0;
 }
 {
 	if (x>10)
@@ -41,10 +41,10 @@ case {
 }
 
 int n (int x)
-infer[p3, p4, p7, p8]
+//infer[p3, p4]
 case {
 	x>5 -> requires Term[p4, x] ensures true;
-	x<=5 -> requires Term[p8] ensures res=3*x or res=0;
+	x<=5 -> requires Term[] ensures res=3*x or res=0;
 }
 {
 	if (x>5)
