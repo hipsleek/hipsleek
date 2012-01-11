@@ -960,7 +960,7 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
+  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)
