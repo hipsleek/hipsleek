@@ -94,7 +94,7 @@ node new_list()
   append_ele
         appends the new_ele to the list. If list is null, a new
 	list is created. The modified list is returned.
-insert at the tail 
+insert at the tail
 -----------------------------------------------------------------------------*/
 node append_ele(ref node x, node a)
 requires x::ll<n> * a::node<v1,v2,null>
@@ -104,6 +104,7 @@ requires x::ll<n> * a::node<v1,v2,null>
   find_nth
         fetches the nth element of the list (count starts at 1)
  -----------------------------------------------------------------------------*/
+
 node find_nth_helper(node l, int j)
   requires l::lseg<p,n> & n>=j & j>=1
   ensures res::lseg<p,m> * l::lseg<res,j-1>  & (m=n-j+1)
@@ -111,7 +112,7 @@ node find_nth_helper(node l, int j)
 {
   if (j>1){
     //assume false;
-    node r2=find_nth_helper(l.next, j-1);
+    node r2=find_nth_helper(l, j-1);
     return r2;
   }
   else {
@@ -119,7 +120,23 @@ node find_nth_helper(node l, int j)
      return l;
   }
 }
-
+/*
+node find_nth_helper_error(node l, int j)
+  requires l::lseg<p,n> & n>=j & j>=1
+  ensures res::lseg<p,n>* l::lseg<res,j-1>  & (m=n-j+1)
+  & res!=null;
+{
+  if (j>1){
+    //assume false;
+    node r2=find_nth_helper(l, j-1);
+    return r2;
+  }
+  else {
+    //assume false;
+     return l;
+  }
+}
+*/
 node find_nth(node f_list, int j)
   requires f_list::ll<n> & n>=j & j>=1
   ensures f_list::lseg<res,j-1> * res::node<_,_,q>
@@ -132,8 +149,6 @@ node find_nth(node f_list, int j)
   return f_ele;
 }
 
-
-//[1...n]
 node find_nth2(node f_list, int j)
   requires  f_list::ll<n> & j>=1 & n>=1
  case {
@@ -286,7 +301,7 @@ requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
     }
 }
 void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref node pq3)
-requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>=1 & prio <=3 & ratio >=1
+requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>0 & prio <=3 & ratio >=1
  case {
   prio = 1 -> case {
     n1 > 0 ->  case {
@@ -354,8 +369,8 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
  requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
   case {
   bq != null -> requires bq::ll<m> & m >0
- case{ ratio <= (m+1) -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-    ratio > (m+1) -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
+ case{ ratio <= m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
+    ratio > m -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
   }
    bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
  }
@@ -376,9 +391,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
     if (bq != null)
     {
       count = get_mem_count(bq);
-      //n = ratio;//(int) (count*ratio + 1);
-      if (ratio == (count+1)) n = count;
-      else n = ratio;
+      n = ratio;//(int) (count*ratio + 1);
       proc = find_nth2(bq, n);
       if (proc != null) {
 	    // block_queue = del_ele(block_queue, proc);

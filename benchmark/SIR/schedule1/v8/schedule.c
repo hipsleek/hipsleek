@@ -97,7 +97,7 @@ node new_list()
 insert at the tail 
 -----------------------------------------------------------------------------*/
 node append_ele(ref node x, node a)
-requires x::ll<n> * a::node<v1,v2,null>
+requires x::ll<n> * a::node<v1,v2,null> & v2>=1 & v2<=3
 	ensures x'::lseg<a,n> * a::node<v1,v2,null> & res=x';
 
 /*-----------------------------------------------------------------------------
@@ -132,12 +132,10 @@ node find_nth(node f_list, int j)
   return f_ele;
 }
 
-
-//[1...n]
 node find_nth2(node f_list, int j)
   requires  f_list::ll<n> & j>=1 & n>=1
  case {
-  j <= n -> ensures (exists q: f_list::lseg<res,j-1> * res::node<_,v2,q> * q::ll<n-j> & v2>=1 & v2<=3);
+  j <= n -> ensures (exists q: f_list::lseg<res,j-1> * res::node<_,v2,q> * q::ll<n-j>) ;//& v2>=1 & v2<=3;
   j > n -> ensures f_list::ll<n> & res=null;
 }
 
@@ -162,7 +160,7 @@ node find_nth2(node f_list, int j)
 -----------------------------------------------------------------------------*/
 node del_ele(ref node x, node ele)
   requires (exists j,q: x::lseg<ele,j> * ele::node<v1,v2,q> * q::ll<m>) //&  v2 >=1 & v2 <= 3
-  ensures x'::lseg<q,j> * q::ll<m> * ele::node<v1,v2,q>& v2 >=1 & v2 <= 3 & res=x';//'
+  ensures x'::lseg<q,j> * q::ll<m> * ele::node<v1,v2,q> & res=x';//' & v2 >=1 & v2 <= 3
 
 /*-----------------------------------------------------------------------------
    free_ele
@@ -253,7 +251,7 @@ void schedule(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
 */
 
 void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
-requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
+requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1 & prio <=3 & ratio >=1
   case {
     n1 > 0 ->  case {
       ratio <= n1  -> ensures pq1'::ll<n1-1> * pq2'::ll<n2+1>;
@@ -274,7 +272,7 @@ requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
       if (proc != null) {
         proc.next = null;
         pq1 = del_ele(pq1, proc);
-        proc.priority = prio;
+       // proc.priority = prio + 1;
         //dprint;
         // assume (false);
         pq2 = append_ele(pq2, proc);
@@ -286,7 +284,7 @@ requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
     }
 }
 void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref node pq3)
-requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>=1 & prio <=3 & ratio >=1
+requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>0 & prio <=3 & ratio >=1
  case {
   prio = 1 -> case {
     n1 > 0 ->  case {
@@ -354,8 +352,8 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
  requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
   case {
   bq != null -> requires bq::ll<m> & m >0
- case{ ratio <= (m+1) -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-    ratio > (m+1) -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
+ case{ ratio <= m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
+    ratio > m -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
   }
    bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
  }
@@ -376,9 +374,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
     if (bq != null)
     {
       count = get_mem_count(bq);
-      //n = ratio;//(int) (count*ratio + 1);
-      if (ratio == (count+1)) n = count;
-      else n = ratio;
+      n = ratio;//(int) (count*ratio + 1);
       proc = find_nth2(bq, n);
       if (proc != null) {
 	    // block_queue = del_ele(block_queue, proc);
@@ -397,7 +393,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
           bq = del_ele(bq, proc);
           proc.next = null;
           pq3 = append_ele(pq3, proc);}
-        //  assume (false);
+          assume (false);
       }
       //dprint;
       //assume (false);

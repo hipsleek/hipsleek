@@ -132,8 +132,6 @@ node find_nth(node f_list, int j)
   return f_ele;
 }
 
-
-//[1...n]
 node find_nth2(node f_list, int j)
   requires  f_list::ll<n> & j>=1 & n>=1
  case {
@@ -286,7 +284,7 @@ requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
     }
 }
 void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref node pq3)
-requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>=1 & prio <=3 & ratio >=1
+requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & prio>0 & prio <=3 & ratio >=1
  case {
   prio = 1 -> case {
     n1 > 0 ->  case {
@@ -354,8 +352,8 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
  requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
   case {
   bq != null -> requires bq::ll<m> & m >0
- case{ ratio <= (m+1) -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-    ratio > (m+1) -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
+ case{ ratio <= m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
+    ratio > m -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
   }
    bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
  }
@@ -376,9 +374,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
     if (bq != null)
     {
       count = get_mem_count(bq);
-      //n = ratio;//(int) (count*ratio + 1);
-      if (ratio == (count+1)) n = count;
-      else n = ratio;
+      n = ratio;//(int) (count*ratio + 1);
       proc = find_nth2(bq, n);
       if (proc != null) {
 	    // block_queue = del_ele(block_queue, proc);
@@ -554,20 +550,29 @@ void main_helper(int i, int maxprio, ref node pq1, ref node pq2, ref node pq3)
   }
 }
 
-void main(int argc)
-  requires prio_queue1::ll<n1> * prio_queue2::ll<n2> * prio_queue3::ll<n3>
-  ensures true;
+int user_input()
+requires true
+ensures true;
+
+
+int main(int argc)
+  requires prio_queue1::ll<n1> * prio_queue2::ll<n2> * prio_queue3::ll<n3> 
+case {  argc >= 4 -> ensures res=0;
+        argc < 4 -> ensures res=-1;
+}
 {
     int command;
     int prio;
+	
 //    float ratio;
 //    int status;
-
-//    if (argc < (/*MAXPRIO*/3+1))
-//    {
-//	fprintf(stdout, "incorrect usage\n");
-//	return;
-//    }
+    //argc = user_input();
+	
+    if (argc < 3)
+    {
+	//fprintf(stdout, "incorrect usage\n");
+	   return -1;
+    }
     
       initialize();
 //    for (prio=/*MAXPRIO*/; prio >= 1; prio--)
@@ -618,6 +623,7 @@ void main(int argc)
 //	    break;
 //	}
 //    }
+  return 0;
 }
 
 
