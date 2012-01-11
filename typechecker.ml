@@ -291,7 +291,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let (vars_rel,vars_inf) = List.partition (fun v -> match v with CP.SpecVar(t,_,_) -> t==RelT) vars in
             (* let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in *)
             (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
-            (if vars!=[] || postf then pre_ctr # inc) ;
+            let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv [b.CF.formula_inf_continuation])) vars_rel) in
+            (if new_vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = vars_inf;CF.es_infer_vars_rel = vars_rel;CF.es_infer_post = postf}) ctx in
             let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_inf_continuation in
