@@ -354,8 +354,10 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let res_ctx = Inf.remove_infer_vars_all_list_partial_context res_ctx in
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
-                       let (impl_vs,post_cond) = 
-                        if pre_ctr # get > 0 then 
+                       let (impl_vs,post_cond) =
+                         (* below seems to cause problem for verification *)
+                         (* see bug-sort-ll.ss *)
+                        if false (* pre_ctr # get > 0 *) then 
                           let (impl_vs,new_post) = CF.lax_impl_of_post post_cond in
                           if impl_vs!=[] then
                             begin
