@@ -3253,7 +3253,6 @@ and heap_entail_conjunct_lhs_struc_x
 	            (nc, (mkEexStep ctx11 [f] np))
 	          else 
 			    (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
-                
 	            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
 	            let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base pos in
 			    (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
@@ -3285,7 +3284,7 @@ and heap_entail_conjunct_lhs_struc_x
                 (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
 	            let rs = clear_entailment_history ctx11 in
 	            (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
-               (* let _ =print_string ("before post:"^(Cprinter.string_of_formula post)^"\n") in *)
+                (*let _ =print_string ("before post:"^(Cprinter.string_of_formula post)^"\n") in *)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
 	            (*let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
@@ -3300,7 +3299,7 @@ and heap_entail_conjunct_lhs_struc_x
                     let lp1 = CF.list_pos_of_formula es.CF.es_formula in
                     let lp2 = CF.list_pos_of_formula postcond in
                     let ll = CF.get_lines (lp1 @ lp2) in
-                    let _ = print_endline ("\nxxx:" ^ (Cprinter.string_of_list_int ll)) in
+                   (* let _ = print_endline ("\nxxx:" ^ (Cprinter.string_of_list_int ll)) in*)
                     (es, ll)
                 in
                 let invert_ctx ctx postcond=
@@ -3308,7 +3307,7 @@ and heap_entail_conjunct_lhs_struc_x
                  (* if CF.isAnyFalseListCtx ctx1 then SuccCtx [ctx] (*should return bot: unreachable*)
                   else*)
                    (*  let _ = print_endline ("###: 3") in*)
-                     (*let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in*)
+                  (*let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in *)
                   let fl = CF.flow_formula_of_formula postcond in
                   if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
                     let es, ll = helper ctx postcond in
@@ -4943,7 +4942,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             else
                               let err_msg,fe =
                                 if CF.subsume_flow_f !error_flow_int fl1 then
-                                  let _ = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in
+                                 (* let _ = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*)
                                   let err_name = (exlist # get_closest fl1.CF.formula_flow_interval) in
                                   let err_msg = "1.1: " ^ err_name in
                                   (err_msg,
@@ -6759,7 +6758,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   if Inf.no_infer estate then
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
-    CF.mk_failure_bot ("Disabled Infer heap and pure 2") sl_error)), NoAlias) 
+    CF.mk_failure_must ("Disabled Infer heap and pure 2") sl_error)), NoAlias) 
   else
     let r = Inf.infer_heap_nodes estate rhs rhs_rest conseq in 
     begin
@@ -6804,7 +6803,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
                                                                                  (*   CF.mk_failure_may (" Inferred heap made contradiction"))), NoAlias)  *)
         | None ->
               (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
-              CF.mk_failure_bot ("Cannot infer heap and pure 2") sl_error)), NoAlias) 
+              CF.mk_failure_must ("Cannot infer heap and pure 2") sl_error)), NoAlias) 
     end
 
 and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
@@ -7081,7 +7080,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                and then restore M_unmatched_rhs to previous code without
                any inference *)
       | Context.M_infer_heap (rhs,rhs_rest) ->
-            do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos 
+          do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
                 (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
                 (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
       | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->

@@ -746,7 +746,8 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
   match l with
     | [] -> 
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-          let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
+          (*locle:temporal comment for performance*)
+        (*  let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in *)
       if (is_view rhs_node) && (get_view_original rhs_node) then
         let r = (2, M_base_case_fold { 
             match_res_lhs_node = HTrue; 
@@ -767,8 +768,10 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
-        (-1, (Cond_action [ ri; r; r0]))
-      else (-1, Cond_action [ ri; r0])
+
+        (*locle:temporal comment for performance*)
+       (-1, (Cond_action [(* ri;*) r; r0]))
+      else (-1, Cond_action [ (*ri;*) r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
     | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
@@ -849,10 +852,11 @@ and sort_wt_x (ys: action_wt list) : action list =
               | _ -> helper ss (ac::rs)
             )
     in
-    match l with
-      | [] -> []
-      | [a] -> []
-      | _ -> helper l []
+      (match l with
+        | [] -> []
+        | [a] -> [a]
+        | _ -> helper l []
+      )
 
 and sort_wt_match opt (ys: action_wt list) : action list =
   match (choose_match opt ys) with
