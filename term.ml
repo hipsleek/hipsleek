@@ -869,7 +869,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
 
 let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
   let pr = fun _ -> "" in
-  Debug.to_1 (* (fun _ -> not (Gen.is_empty struc)) *) 
+  Debug.no_1 (* (fun _ -> not (Gen.is_empty struc)) *) 
   "subst_phase_num_struc" pr pr 
   (subst_phase_num_struc rp subst) struc
 
@@ -877,31 +877,31 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 (*   if struc==[] then struc *)
 (*   else subst_phase_num_struc subst struc *)
 
-let subst_phase_num_proc subst (proc: Cast.proc_decl) : Cast.proc_decl =
-  if subst==[] then proc
-  else
-    (* all_zero is set if subs is only of form [v1->0,..,vn->0]
-       in this scenario, there is no need for phase vars at all 
-    *)
-    let all_zero = List.for_all (fun (_,i) -> i==0) subst in
-    let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
-    if all_zero then
-      Debug.trace_hprint (add_str ("phase to remove") !CP.print_svl) rp no_pos;
-    let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
-    let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-    (*let t_spec = proc.Cast.proc_stk_of_static_specs # top in*)
-    let _ = proc.Cast.proc_stk_of_static_specs # push s_specs in 
-    (*
-      let n_spec_stk = List.map (fun spec -> 
-      subst_phase_num_struc subst spec
-      ) (proc.Cast.proc_stk_of_static_specs # get_stk) in 
-      let n_stk = new Gen.stack in
-      let _ = n_stk # push_list n_spec_stk in
-    *)
-    { proc with
-        Cast.proc_static_specs = s_specs;
-        Cast.proc_dynamic_specs = d_specs;
-    }
+let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
+  (* if subst==[] then proc *)
+  (* else *)
+  (*   (\* all_zero is set if subs is only of form [v1->0,..,vn->0] *)
+  (*      in this scenario, there is no need for phase vars at all  *)
+  (*   *\) *)
+  (*   let all_zero = List.for_all (fun (_,i) -> i==0) subst in *)
+  (*   let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in *)
+  (*   if all_zero then *)
+  (*     Debug.trace_hprint (add_str ("phase to remove") !CP.print_svl) rp no_pos; *)
+  let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
+  let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
+  (*let t_spec = proc.Cast.proc_stk_of_static_specs # top in*)
+  let _ = proc.Cast.proc_stk_of_static_specs # push s_specs in 
+  (*
+    let n_spec_stk = List.map (fun spec -> 
+    subst_phase_num_struc subst spec
+    ) (proc.Cast.proc_stk_of_static_specs # get_stk) in 
+    let n_stk = new Gen.stack in
+    let _ = n_stk # push_list n_spec_stk in
+  *)
+  { proc with
+      Cast.proc_static_specs = s_specs;
+      Cast.proc_dynamic_specs = d_specs;
+  }
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) : Cast.prog_decl =
   let index = proc.Cast.proc_call_order in
@@ -911,7 +911,6 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
     let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
     Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
 
-    Debug.trace_hprint (add_str "mutual_grp" (pr_list pr_id)) mutual_grp no_pos; 
     Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos; 
     (* Trigger phase number inference when 
      * all needed information is collected *)
@@ -928,15 +927,25 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
           let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
           List.map (fun v -> (v, 0)) fv
       in
-      let _ = Debug.trace_hprint (add_str "subst" 
-          (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos in
       (* Termination: Add the inferred phase numbers 
        * into specifications of functions in mutual group *)
       if subst==[] then prog
       else 
+        (* all_zero is set if subs is only of form [v1->0,..,vn->0]
+           in this scenario, there is no need for phase vars at all 
+        *)
+        let all_zero = List.for_all (fun (_,i) -> i==0) subst in
+        let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
+        if all_zero then
+          Debug.trace_hprint (add_str ("phase to remove") !CP.print_svl) rp no_pos
+        else begin
+          Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+          Debug.info_hprint (add_str "Phase Numbering" 
+              (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
+        end;
         let n_tbl = Cast.proc_decls_map (fun proc ->
             if (List.mem proc.Cast.proc_name mutual_grp) 
-            then subst_phase_num_proc subst proc
+            then subst_phase_num_proc rp subst proc
             else proc
         ) prog.Cast.new_proc_decls in  
         { prog with Cast.new_proc_decls = n_tbl }
@@ -945,7 +954,7 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
+  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)

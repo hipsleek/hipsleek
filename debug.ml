@@ -80,6 +80,14 @@ let trace_hprint (pr:'a->string) (m:'a) (pos:loc) =
 let trace_zprint m (pos:loc) = 
 	ho_print false (fun x -> Lazy.force x) m
 
+let info_pprint (msg:string) (pos:loc) : unit = 
+	ho_print true (fun a -> " "^a) msg
+
+let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+	ho_print true (fun x -> " "^(pr x)) m
+
+let info_zprint m (pos:loc) = 
+	ho_print true (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
 (* 	lazy_print (prior_msg pos) msg *)
