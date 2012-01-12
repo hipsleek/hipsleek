@@ -566,7 +566,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   (* not quite needed, it seems *)
   (* let disj_p = CP.split_disjunctions new_pre in *)
   (* List.exists (fun a -> List.exists (CP.equalFormula a) disj_p) orig_ls *)
-  List.exists (CP.equalFormula new_pre) orig_ls
+  List.exists (fun fml -> TP.imply_raw fml new_pre) orig_ls
 
 
 let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =

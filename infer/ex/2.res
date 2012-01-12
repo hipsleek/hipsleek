@@ -48,4 +48,4 @@ inferred heap: [x::node<inf_a_169,inf_q_170>@inf_ann_168[Orig];
                inf_q_170::node<inf_b_172,inf_c_173>@inf_ann_171[Orig]]
 inferred pure: [inf_ann_168<=0; inf_ann_171<=0]
 
-Stop Omega... 116 invocations 
+Stop Omega... 123 invocations 

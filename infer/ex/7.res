@@ -35,8 +35,8 @@ inferred pure: [(1+m)<=p; 5<=m]
 
 Entail  (9): Valid. 
 
-<1>true & 6<m & 5<=m & m<p & {FLOW,(17,18)=__norm}
-inferred pure: [(1+m)<=p; 5<=m]
+<1>true & 6<m & m<p & {FLOW,(17,18)=__norm}
+inferred pure: [(1+m)<=p]
 
 Entail  (10): Fail.(may) cause:(failure_code=213)  6<m |-  m<p (may-bug).
 
@@ -76,4 +76,4 @@ Entail  (18): Valid.
 <1>EXISTS(flted_7_170: b::ll<flted_7_170>@M[Orig] & flted_7_170+1=n & {FLOW,(17,18)=__norm})
 inferred pure: [n!=0 | x!=null]
 
-Stop Omega... 236 invocations 
+Stop Omega... 259 invocations 
