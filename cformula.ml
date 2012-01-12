@@ -3018,12 +3018,12 @@ think it is used to instantiate when folding.
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
-  es_var_label : int option; (* phase number *)
-  es_var_ctx_lhs : CP.formula; (* original LHS? of variance*)
-  es_var_ctx_rhs : CP.formula; (* rhs where call is made? *)
+  (* es_var_label : int option; (* phase number *) *)
+  (* es_var_ctx_lhs : CP.formula; (* original LHS? of variance*) *)
+  (* es_var_ctx_rhs : CP.formula; (* rhs where call is made? *) *)
   (* subst used for phase inference *)
-  es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
-  es_var_loc : loc;
+  (* es_var_subst : (CP.spec_var * CP.spec_var * ident) list; *)
+  (* es_var_loc : loc; *)
 
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
@@ -3216,11 +3216,6 @@ let empty_es flowt pos =
   es_prior_steps  = [];
   es_var_measures = None;
   es_var_stack = [];
-  es_var_label = None;
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_subst = [];
-   es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
@@ -6279,24 +6274,17 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   Ctx {
       (* es with es_heap=HTrue;} *)
     (empty_es (mkTrueFlow ()) no_pos) with
-	es_formula = es_f;
-	es_path_label = es.es_path_label;
-	es_prior_steps = es.es_prior_steps;
-	es_var_measures = es.es_var_measures;
-        es_var_stack = es.es_var_stack;
-	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs;
-	es_orig_ante = es.es_orig_ante;
-    es_infer_vars = es.es_infer_vars;
-    es_infer_vars_rel = es.es_infer_vars_rel;
-    es_infer_heap = es.es_infer_heap;
-    es_infer_pure = es.es_infer_pure;
-    es_infer_rel = es.es_infer_rel;
+      es_formula = es_f;
+      es_path_label = es.es_path_label;
+      es_prior_steps = es.es_prior_steps;
+      es_var_measures = es.es_var_measures;
+      es_var_stack = es.es_var_stack;
+      es_infer_vars = es.es_infer_vars;
+      es_infer_vars_rel = es.es_infer_vars_rel;
+      es_infer_heap = es.es_infer_heap;
+      es_infer_pure = es.es_infer_pure;
+      es_infer_rel = es.es_infer_rel;
   }
-
-(*;
-	es_var_ctx_rhs = es.es_var_ctx_rhs;
-	es_var_subst = es.es_var_subst*)
 
 let clear_entailment_history xp (ctx : context) : context =  
   transform_context (clear_entailment_history_es xp) ctx

@@ -3215,12 +3215,8 @@ and heap_entail_conjunct_lhs_struc_x
                     perform entail against each c2
                     combine result as union
                   *)
-                  let rs = List.map (fun (c1,c2) ->
-					  (* Termination: add target condition *)
-                      (* Chanh: how to do below? *)
-					  (* let ctx = CF.transform_context ( *)
-					  (*           fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) ctx in *)
-			          (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
+                  let rs = List.map (fun (c1,c2) ->	
+                    (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
                   (* remove away false context : need to keep at least one? *)
                   let rs2 = List.filter (fun (c1,_,_) -> not(isAnyFalseCtx c1)) rs in
                   let rs = if rs2==[] then [List.hd rs] else rs2 in
@@ -3263,20 +3259,11 @@ and heap_entail_conjunct_lhs_struc_x
                             (*this unsat check is essential for completeness of result*)
 				            if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
 				            else
-					          (* Termination: add target condition *)
-					          let n_ctx = CF.transform_context (
-					              fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
-					          (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 					          let n_ctx = prune_ctx prog n_ctx in
 					          inner_entailer 2 n_ctx c2) case_brs (* b.formula_case_branches *) 
-				      end
+				            end
 	                | Some (p, e) -> begin
-				        let n_ctx = CF.transform_context (
-				            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
-
-				        (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
-				        
-				        [inner_entailer 3 n_ctx e] end in
+				            [inner_entailer 3 ctx e] end in
 	              let rez1, rez2 = List.split r in
                   let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
 	              (rez1, (mkCaseStep ctx [f] rez2))
@@ -5932,9 +5919,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_unsat_flag = false;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-	es_var_measures = estate.es_var_measures;
+        es_var_measures = estate.es_var_measures;
         es_var_stack = estate.es_var_stack;
-		es_var_label = estate.es_var_label;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
@@ -5943,10 +5929,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
-		es_var_ctx_lhs = estate.es_var_ctx_lhs;
-		es_var_ctx_rhs = estate.es_var_ctx_rhs;
-		es_var_subst = estate.es_var_subst
-	} in
+    } in
     (* let vd = lhs_vd in *)
     (* let _ = print_string ("do_base_case_unfold_only_x:" *)
     (*                       ^ "\n ###  vd.view_name = " ^ (Cprinter.string_of_ident vd.view_name) *)
@@ -6088,9 +6071,9 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
-		 es_var_measures = estate.es_var_measures;
+                 es_var_measures = estate.es_var_measures;
                  es_var_stack = estate.es_var_stack;
-		         es_var_label = estate.es_var_label} in
+		         } in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
                we want to do case analysis
@@ -6818,13 +6801,10 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       (* without unsat_flag reset:
          error at: imm/kara-tight.ss karatsuba_mult
       *)
-	  es_unsat_flag  = false;
-	  es_ivars  = [];
+	    es_unsat_flag  = false;
+	    es_ivars  = [];
       es_pp_subst = [];
       es_arith_subst = [];
-      es_var_ctx_lhs = CP.mkTrue pos;
-      es_var_ctx_rhs = CP.mkTrue pos;
-      es_var_subst = [];
       es_cont = [];
       es_crt_holes = [];
       es_hole_stk = [];                     
