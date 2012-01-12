@@ -742,28 +742,28 @@ let value_of_vars (v: CP.spec_var) l : int =
     ) l in i
   with _ -> raise Invalid_Phase_Constr
 
-let phase_num_infer () =
-  (* Phase Numbering *) 
-  let pr_v = !CP.print_sv in
-  let pr_vl = pr_list pr_v in
-  let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in
-  let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in
-  let l = 
-    try rank_gt_phase_constr cl 
-    with _ -> 
-      fmt_string ("Termination: Contradiction in Phase Constraints."); [] 
-  in
-  begin
-    Debug.trace_hprint (add_str "Inferred phase constraints"
-      (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
-    Debug.trace_hprint (add_str "Phase Numbering"
-      (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))
-    ) l no_pos;
-  end
+(* let phase_num_infer () = *)
+(*   (\* Phase Numbering *\)  *)
+(*   let pr_v = !CP.print_sv in *)
+(*   let pr_vl = pr_list pr_v in *)
+(*   let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in *)
+(*   let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+(*   let l =  *)
+(*     try rank_gt_phase_constr cl  *)
+(*     with _ ->  *)
+(*       fmt_string ("Termination: Contradiction in Phase Constraints."); []  *)
+(*   in *)
+(*   begin *)
+(*     Debug.trace_hprint (add_str "Inferred phase constraints" *)
+(*       (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos; *)
+(*     Debug.trace_hprint (add_str "Phase Numbering" *)
+(*       (pr_list (pr_pair string_of_int (pr_list !CP.print_sv))) *)
+(*     ) l no_pos; *)
+(*   end *)
 
-let phase_num_infer () =
-  let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer" pr pr phase_num_infer ()
+(* let phase_num_infer () = *)
+(*   let pr = fun _ -> "" in *)
+(*   Debug.no_1 "phase_num_infer" pr pr phase_num_infer () *)
 
 (* Do infer phase number per scc group *)
 (* Triggered when phase constraints of 
@@ -944,6 +944,8 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
       else 
         (* all_zero is set if subs is only of form [v1->0,..,vn->0]
            in this scenario, there is no need for phase vars at all *)
+        begin
+        Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
         let all_zero = List.for_all (fun (_,i) -> i==0) subst in
         let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
         if all_zero then
@@ -959,12 +961,13 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
           else proc
         ) prog.Cast.new_proc_decls in  
         { prog with Cast.new_proc_decls = n_tbl }
+        end
     else prog
   with Not_found -> prog
 
 let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
-  let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr
+  let pr = Cprinter.string_of_proc_decl in
+  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr_no
     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)

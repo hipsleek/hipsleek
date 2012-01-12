@@ -889,6 +889,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)
+                      (* WN TODO : is this old code to remove?? *)
                       let _ = DD.devel_zprint 
                         (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
                       (* Normalise the specification with variance 
