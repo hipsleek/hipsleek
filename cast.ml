@@ -1713,6 +1713,10 @@ let callgraph_of_prog prog : IG.t =
   (*List.fold_right (ex_args addin_callgraph_of_proc) prog.old_proc_decls cg*)
   Hashtbl.fold (fun i pd acc -> ex_args addin_callgraph_of_proc pd acc) prog.new_proc_decls cg
 
+let count_term_scc (procs: proc_decl list) : int =
+  List.fold_left (fun acc p -> 
+    acc + (F.count_term_struc p.proc_static_specs)) 0 procs
+
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
  * --dis-call-num and --dis-phase-num are not enabled (default) *)
@@ -1721,10 +1725,17 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
   else 
     let (prim_grp, mutual_grps) = re_proc_mutual (sort_proc_decls (list_of_procs cp)) in
     let log_vars = cp.prog_logical_vars in
+    (* Only add the phase variables into scc group with >1 Term *)
+    let v_mutual_grps, c_mutual_grps = List.partition (fun scc ->
+      (count_term_scc scc) > 1 
+    ) mutual_grps in
     let pvs = List.map (fun procs ->
       add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-      (not !dis_call_num) (not !dis_phase_num)) mutual_grps
+      (not !dis_call_num) (not !dis_phase_num)) v_mutual_grps
     in
+    let _ = List.map (fun procs ->
+      add_term_nums_proc_scc procs cp.new_proc_decls log_vars 
+      (not !dis_call_num) false) c_mutual_grps in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
       ((List.concat pvs) @ log_vars) in
     { cp with prog_logical_vars = pvl } 
@@ -1749,6 +1760,7 @@ and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool)
 
 and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
   if not (proc.proc_is_main) then (proc, [])
+  else if (not add_call) && (not add_phase) then (proc, [])
   else 
     let call_num = 
       if add_call then Some proc.proc_call_order

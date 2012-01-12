@@ -7000,5 +7000,31 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
 
+let rec count_term_pure f = 
+  match f with
+  | BForm (bf, _) ->
+      count_term_b_formula bf
+  | And (f1, f2, _) ->
+      let n_f1 = count_term_pure f1 in
+      let n_f2 = count_term_pure f2 in
+      n_f1 + n_f2
+  | Or (f1, f2, _, _) ->
+      let n_f1 = count_term_pure f1 in
+      let n_f2 = count_term_pure f2 in
+      n_f1 + n_f2
+  | Not (f, _, _) -> count_term_pure f
+  | Forall (_, f, _, _) -> count_term_pure f
+  | Exists (_, f, _, _) -> count_term_pure f
+
+and count_term_b_formula bf =
+  let (pf, _) = bf in
+  match pf with
+  | LexVar (t_ann, _, _, _) ->
+      (match t_ann with
+        | Term -> 1
+        | _ -> 0)
+  | _ -> 0
+
+
 
 

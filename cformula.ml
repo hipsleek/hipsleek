@@ -7499,3 +7499,33 @@ let add_infer_struc vl sf =
   Debug.no_1 "add_infer_struc" pr pr
   (fun _ -> add_infer_struc vl sf) sf
 
+(* Termination: Count the number of Term in a specification *)  
+let rec count_term_struc (sf: struc_formula) : int =
+  List.fold_left (fun acc ef -> acc + (count_term_ext ef)) 0 sf
+
+and count_term_ext (ef: ext_formula) : int =
+  match ef with
+  | ECase { formula_case_branches = cl } ->
+      List.fold_left (fun acc (_, sf) -> acc + (count_term_struc sf)) 0 cl
+  | EBase {
+      formula_ext_base = base;
+      formula_ext_continuation = cont } ->
+      let n_b = count_term_formula base in
+      let n_c = count_term_struc cont in
+      n_b + n_c
+  | EAssume _ -> 0
+  | EInfer { formula_inf_continuation = cont } ->
+      count_term_ext cont
+
+and count_term_formula f = 
+  match f with
+  | Base { formula_base_pure = p } ->
+      let p = MCP.pure_of_mix p in
+      CP.count_term_pure p
+  | Exists { formula_exists_pure = p } ->
+      let p = MCP.pure_of_mix p in
+      CP.count_term_pure p
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      let n_f1 = count_term_formula f1 in
+      let n_f2 = count_term_formula f2 in
+      n_f1 + n_f2

@@ -1012,6 +1012,6 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
     end
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
-  Debug.to_1 "check_loop_safety" 
+  Debug.no_1 "check_loop_safety" 
       pr_id string_of_bool (fun _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name
 

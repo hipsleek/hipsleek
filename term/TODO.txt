@@ -6,9 +6,11 @@
 	may need logical vars (DONE)
 	- Integrate the result into specification (DONE)
 	- Aggressive inference for each scc group (DONE)
-	- Implicit phase variables
+	- Implicit phase variables (DONE)
+	- Do not add phase variables into a scc group if
+	it only has 0 or 1 Term.
 4. Turn off termination checking when there is not any user-defined Term.
 5. Prepare benchmarks and evaluation
 6. Simplify the context to add useful constraints for
 meaningful printing.
-7. Post-condition with Loop
+7. Post-condition with Loop (partialy DONE)
