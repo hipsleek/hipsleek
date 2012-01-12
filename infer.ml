@@ -388,10 +388,11 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
 (* TODO : this procedure needs to be improved *)
 (* picks ctr from f that are related to vars *)
 (* may involve a weakening process *)
-let rec filter_var f vars = match f with
+let rec filter_var f vars = 
+  match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> if TP.is_sat_raw f then CP.filter_var f vars else CP.mkFalse no_pos
+  | _ -> if TP.is_sat_raw f && CP.get_RelForm f = [] then CP.filter_var f vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -615,7 +616,7 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
       let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
       (* TODO : simplify_raw seems to undo pairwisecheck *)
-      let new_p = TP.pairwisecheck new_p in
+      let new_p = TP.pairwisecheck_raw new_p in
       let _ = DD.trace_hprint (add_str "new_p2 (pairwisecheck): " !CP.print_formula) new_p pos in
       let args = CP.fv new_p in
       let new_p =
@@ -844,7 +845,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         let pairwise_proc lhs =
           let lst = CP.split_conjunctions lhs in
           (* perform pairwise only for disjuncts *)
-          let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
+          let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck_raw e else e) lst in
           CP.join_conjunctions lst
         in
         let wrap_exists (lhs,rhs) =
@@ -859,11 +860,17 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
           let new_lhs = CP.arith_simplify_new new_lhs in
           (new_lhs,rhs) 
         in
+(*          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
+          let new_lhs_memo1 = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+          let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_memo1 rel_lhs in
+          if CP.intersect (CP.fv new_lhs_memo1) rel_vars = [] && rel_lhs != [] then [] else
+          if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in*)
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
         let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
         DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_lhs_rhs)) inf_rel_ls pos;
         let inf_rel_ls = List.map wrap_exists inf_rel_ls in
+(*        let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in*)
         let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
         if inf_rel_ls != [] then
           begin

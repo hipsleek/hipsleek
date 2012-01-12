@@ -6656,6 +6656,13 @@ let get_rel_id (f:formula)
                 | (RelForm(id,_,_),_) -> Some id
                 | _ -> None)
         | _ -> None
+
+let get_rel_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (RelForm(id,_,_),_) -> [id]
+    | _ -> [])
+  | _ -> []
   
 let is_rel_in_vars (vl:spec_var list) (f:formula) 
       = match (get_rel_id f) with
