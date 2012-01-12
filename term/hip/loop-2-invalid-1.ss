@@ -5,13 +5,15 @@ int foo (int x)
     x<0 -> requires Loop
            ensures false;
 	x=0 -> requires Loop 
-           ensures res=0; /* poststate of Loop must be unreachable */
+           ensures true; /* poststate of Loop must be unreachable */
 	x>0 -> requires MayLoop 
-           ensures res=2*x;
+           ensures true;
  }
 {
-	if (x==0)
+  if (x==0) {
+        //assume false;
 		return 0;
+      }
 	else
 		return 2+foo(x-1);
 }
