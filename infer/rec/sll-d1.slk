@@ -30,3 +30,7 @@ print residue.
 infer [s2,s3] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)
     |- x::sll<s,l>.
 print residue.
+
+infer [s2,s3,B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & l3<=lg & 
+  B(s2,s3,l3,lg)  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.

@@ -392,7 +392,7 @@ let rec filter_var f vars =
   match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> if TP.is_sat_raw f && CP.get_RelForm f = [] then CP.filter_var f vars else CP.mkFalse no_pos
+  | _ -> if TP.is_sat_raw f && CP.get_Neg_RelForm f = [] then CP.filter_var (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)

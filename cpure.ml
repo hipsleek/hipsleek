@@ -6681,6 +6681,14 @@ let rec get_RelForm pf = match pf with
   | Forall (_,f,_,_) -> get_RelForm f
   | Exists (_,f,_,_) -> get_RelForm f
 
+let rec get_Neg_RelForm pf = match pf with
+  | BForm (bf,_) -> []
+  | And (f1,f2,_) -> get_Neg_RelForm f1 @ get_Neg_RelForm f2
+  | Or (f1,f2,_,_) -> get_Neg_RelForm f1 @ get_Neg_RelForm f2
+  | Not (f,_,_) -> get_RelForm f
+  | Forall (_,f,_,_) -> get_Neg_RelForm f
+  | Exists (_,f,_,_) -> get_Neg_RelForm f
+
 (* let rec split_conjunctions = function *)
 (*   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y) *)
 (*   | z -> [z] *)
