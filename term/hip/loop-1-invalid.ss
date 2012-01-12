@@ -3,7 +3,7 @@
 int foo (int x)
  case {
 	x<0 -> requires Loop 
-           ensures false; /* poststate of Loop must be unreachable */
+           ensures true; /* poststate of Loop must be unreachable */
 	x=0 -> requires Term[0]
            ensures res=0;
 	x>0 -> requires Term[x] 

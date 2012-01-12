@@ -40,7 +40,8 @@ type term_status =
   | Term_S of term_reason
   | NonTerm_S of term_reason
   | MayTerm_S of term_reason
-  | Unreachable 
+  | Unreachable
+  | UnsoundCtx
   | TermErr of term_reason
 
 (* Location of the transition (from spec to call),
@@ -118,6 +119,7 @@ let pr_term_status = function
   | NonTerm_S reason -> fmt_string "Non-terminating: "; pr_term_reason reason
   | MayTerm_S reason -> fmt_string "May-terminating: "; pr_term_reason reason
   | Unreachable -> fmt_string "Unreachable state."
+  | UnsoundCtx -> fmt_string "Unsound context with Loop."
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
 let pr_term_status_short = function
@@ -127,6 +129,7 @@ let pr_term_status_short = function
       fmt_string "(ERR: ";
       pr_term_reason_short r;
       fmt_string ")"
+  | UnsoundCtx -> fmt_string "(ERR: unsound)"
   | _ -> fmt_string "(ERR)"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
@@ -183,7 +186,7 @@ let pr_term_res_stk stk =
     else err
   in 
   List.iter (fun r -> 
-    pr_term_res !Debug.devel_debug_on r; 
+    pr_term_res (!Globals.term_verbosity == 0) r; 
     fmt_print_newline ();) stk
 
 let pr_phase_constr = function
@@ -985,20 +988,28 @@ let get_loop_only sl =
   let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
   List.concat ls
 
+let add_unsound_ctx (es: entail_state) = 
+  let term_pos = (post_pos # get, proving_loc # get) in
+  let term_res = (term_pos, None, Some es.es_formula, UnsoundCtx) in
+  term_res_stk # push term_res
+
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   Debug.trace_hprint (add_str "proc name" pr_id) proc.Cast.proc_name pos;
-  let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in
+  let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in (* Not a fail context *)
   let loop_es = List.concat (List.map (fun (fl,sl) -> get_loop_only sl) good_ls) in
   if loop_es==[] then true
   else 
     begin
-      Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short)ctx pos;
+      Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
       Debug.trace_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
-      false
+      let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in
+      if unsound_ctx == [] then true
+      else 
+        let _ = List.iter (fun es -> add_unsound_ctx es) unsound_ctx in
+        false
     end
-
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   Debug.to_1 "check_loop_safety" 
