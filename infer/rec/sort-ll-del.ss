@@ -19,15 +19,15 @@ relation B(int x, int y, int a, int b).
 void delete(ref node x, int a)
     infer @pre[B]
 	requires x::sll<sm, lg> 
-    ensures x'::sll<s, l> & sm <= s & l <= lg;//' 
-   //ensures x'::bst<s, l> & B(sm,s,l,lg); //'
+    //ensures x'::sll<s, l> & sm <= s & l <= lg;//' 
+    ensures x'::sll<s, l> & B(sm,s,l,lg); //'
 
 {
 	int tmp; 
 
 	if (x != null)
 	{
-      //assume false;
+       assume false;
 		bind x to (xval, xnext) in 
 		{
 			if (xval == a) 

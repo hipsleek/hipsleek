@@ -830,6 +830,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
 
         let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
         (* let lhs = lhs_simplifier lhs_h lhs_p_memo in *)
+        DD.trace_hprint (add_str "lhs_p:" (!CP.print_formula)) lhs_p pos;
+        DD.trace_hprint (add_str "lhs_p_memo:" (!CP.print_formula)) lhs_p_memo pos;
+        DD.trace_hprint (add_str "lhs_h (xpure_lhs_h1):" (!CP.print_formula)) lhs_h pos;
+
         let lhs = lhs_simplifier_tp lhs_h lhs_p_memo in
         DD.trace_hprint (add_str "lhs (after lhs_simplifier):" (!CP.print_formula)) lhs pos;
         let lhs_2 = CP.restore_memo_formula subs bvars lhs in
@@ -847,8 +851,11 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
           let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
+          DD.devel_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
+          DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = Redlog.elim_exists_with_eq new_lhs in
+          DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = CP.arith_simplify_new new_lhs in
           (new_lhs,rhs) 
         in
@@ -861,12 +868,12 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         if inf_rel_ls != [] then
           begin
             DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-            DD.devel_hprint (add_str "Infer Rel Ids:" !print_svl) ivs pos;
+            DD.devel_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* DD.devel_hprint (add_str "LHS heap Xpure1:" !print_mix_formula) xpure_lhs_h1 pos; *)
-            DD.devel_hprint (add_str "LHS pure:" !CP.print_formula) lhs_p pos;
-            DD.devel_hprint (add_str "RHS pure:" !CP.print_formula) rhs_p_n pos;
-            DD.devel_hprint (add_str "RHS Rel List:" (pr_list !CP.print_formula)) rel_rhs pos;
-            DD.devel_hprint (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos
+            DD.devel_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos;
+            DD.devel_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+            DD.devel_hprint (add_str "Rel Inferred" (pr_list print_lhs_rhs)) inf_rel_ls pos
           end;
         (estate,(MCP.mix_of_pure lhs_p_memo),rhs_p_new,rhs_p_br)
 (*
@@ -890,7 +897,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2
+      Debug.to_3 "infer_collect_rel" pr0 pr1 pr1 pr2
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
