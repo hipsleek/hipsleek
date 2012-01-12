@@ -100,13 +100,15 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
             let fs = CP.split_conjunctions p_f in
             let f_fs = List.filter (fun f -> 
               Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) mfv) fs in
-            poly_string_of_pr (pr_list_op " & " pr_pure_formula) f_fs
+            if Gen.is_empty f_fs then ""
+            else 
+              poly_string_of_pr (pr_list_op " & " pr_pure_formula) f_fs
           in 
           str_h ^ str_p
   in 
   
   fmt_open_hbox();
-  fmt_string (str_ctx ^ " & ");
+  (if str_ctx == "" then () else fmt_string (str_ctx ^ " & "));
   fmt_string (string_of_term_ann ann_s);
   pr_seq "" pr_formula_exp m_s;
   fmt_string " -> ";

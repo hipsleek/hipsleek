@@ -403,7 +403,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
-let is_primitive_proc p = p.proc_body==None
+let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 
 let name_of_proc p = p.proc_name
 
@@ -433,7 +433,7 @@ let same_call_scc p1 p2 = p1.proc_call_order == p2.proc_call_order
 (* returns (procs_wo_body, proc_mutual_rec list) *)
 (* The list of proc_decl must be sorted *)
 let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
-  let (pr_prim,pr_rest) = List.partition is_primitive_proc pl in
+  let (pr_prim, pr_rest) = List.partition is_primitive_proc pl in
   let rec helper acc pl = match pl with
     | [] -> if acc==[] then [] else [acc]
     | x::rest -> 
