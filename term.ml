@@ -1,8 +1,8 @@
 module CP = Cpure
-(* module CF = Cformula *)
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
+
 open Gen.Basic
 open Globals
 open Cprinter
@@ -41,7 +41,7 @@ type term_status =
   | NonTerm_S of term_reason
   | MayTerm_S of term_reason
   | Unreachable
-  | UnsoundCtx
+  | UnsoundLoop
   | TermErr of term_reason
 
 (* Location of the transition (from spec to call),
@@ -80,16 +80,41 @@ let pr_phase_trans (trans: phase_trans) =
 let string_of_phase_trans (trans: phase_trans) = 
   poly_string_of_pr pr_phase_trans trans
 
-let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) =
+let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
+  let str_ctx =
+    match ctx with
+    | None -> ""
+    | Some ctx ->
+        let mfv = List.fold_left (fun acc e -> 
+          acc @ (CP.afv e)) [] (m_s @ m_d) in
+        if Gen.is_empty mfv then ""
+        else
+          let h_f, p_f, _, _, _ = split_components ctx in
+          let str_h = 
+            if (Gen.BList.overlap_eq CP.eq_spec_var (h_fv h_f) mfv)
+            then (string_of_h_formula h_f) ^ " & "
+            else ""
+          in 
+          let str_p =
+            let p_f = MCP.pure_of_mix p_f in
+            let fs = CP.split_conjunctions p_f in
+            let f_fs = List.filter (fun f -> 
+              Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) mfv) fs in
+            poly_string_of_pr (pr_list_op " & " pr_pure_formula) f_fs
+          in 
+          str_h ^ str_p
+  in 
+  
   fmt_open_hbox();
+  fmt_string (str_ctx ^ " & ");
   fmt_string (string_of_term_ann ann_s);
   pr_seq "" pr_formula_exp m_s;
-  fmt_string "->";
+  fmt_string " -> ";
   fmt_string (string_of_term_ann ann_d);
   pr_seq "" pr_formula_exp m_d;
   fmt_close_box()
 
-let string_of_term_ann_trans = poly_string_of_pr pr_term_ann_trans 
+let string_of_term_ann_trans ctx = poly_string_of_pr (pr_term_ann_trans ctx)
 
 let pr_term_reason = function
   | Not_Decreasing_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
@@ -101,7 +126,7 @@ let pr_term_reason = function
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
   | Invalid_Status_Trans trans -> 
-      pr_term_ann_trans trans;
+      pr_term_ann_trans trans None;
       fmt_string " transition is invalid."
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
@@ -119,7 +144,7 @@ let pr_term_status = function
   | NonTerm_S reason -> fmt_string "Non-terminating: "; pr_term_reason reason
   | MayTerm_S reason -> fmt_string "May-terminating: "; pr_term_reason reason
   | Unreachable -> fmt_string "Unreachable state."
-  | UnsoundCtx -> fmt_string "Unsound context with Loop."
+  | UnsoundLoop -> fmt_string "Unsound context with Loop."
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
 let pr_term_status_short = function
@@ -129,7 +154,7 @@ let pr_term_status_short = function
       fmt_string "(ERR: ";
       pr_term_reason_short r;
       fmt_string ")"
-  | UnsoundCtx -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
+  | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
   | _ -> fmt_string "(ERR)"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
@@ -163,10 +188,12 @@ let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
   fmt_string " ";
   (match ann_trans with
   | None -> ()
-  | Some trans -> pr_term_ann_trans trans);
+  | Some trans ->  
+      pr_term_ann_trans trans ctx);
   (match ctx with
   | None -> ();
-  | Some c -> if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
+  | Some c -> 
+      if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
   (*
   if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
@@ -994,7 +1021,7 @@ let get_loop_only sl =
 
 let add_unsound_ctx (es: entail_state) pos = 
   let term_pos = (post_pos # get, no_pos) in
-  let term_res = (term_pos, None, Some es.es_formula, UnsoundCtx) in
+  let term_res = (term_pos, None, Some es.es_formula, UnsoundLoop) in
   term_res_stk # push term_res
 
 (* if Loop, check that ctx is false *)
