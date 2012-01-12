@@ -1727,9 +1727,18 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
     let log_vars = cp.prog_logical_vars in
     (* Only add the phase variables into scc group with >1 Term *)
     let mutual_grps = List.map (fun scc -> (count_term_scc scc, scc)) mutual_grps in
+    let mutual_grps = List.filter (fun (c,_) -> c>0) mutual_grps in
+    if mutual_grps!=[] then 
+      begin
+        let pr p = p.proc_name in
+        Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call NUmber and Phase Logical Vars] <<<<<<")) no_pos;
+        Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
+        Debug.devel_pprint "\n" no_pos
+            
+      end;
     let pvs = List.map (fun (n, procs) ->
       add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-      ((not !dis_call_num) && n>0) ((not !dis_phase_num) && n>1)) mutual_grps
+      ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1)) mutual_grps
     in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
       ((List.concat pvs) @ log_vars) in

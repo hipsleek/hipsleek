@@ -1,7 +1,7 @@
 
 Processing file "infer-mutual-1.ss"
 Parsing infer-mutual-1.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/chinwn/hg/sl_term/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -19,6 +19,6 @@ Termination checking result:
 Stop Omega... 465 invocations 
 26 false contexts at: ( (38,2)  (38,13)  (38,11)  (38,9)  (40,2)  (40,9)  (51,2)  (51,13)  (51,11)  (51,9)  (53,2)  (53,9)  (11,2)  (11,9)  (13,2)  (13,13)  (13,9)  (13,9)  (24,2)  (24,9)  (26,2)  (26,17)  (26,15)  (26,13)  (26,9)  (26,9) )
 
-Total verification time: 0.57 second(s)
-	Time spent in main process: 0.43 second(s)
-	Time spent in child processes: 0.14 second(s)
+Total verification time: 0.15 second(s)
+	Time spent in main process: 0.07 second(s)
+	Time spent in child processes: 0.08 second(s)

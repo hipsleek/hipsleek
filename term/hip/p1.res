@@ -1,7 +1,7 @@
 
 Processing file "infer-1.ss"
 Parsing infer-1.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/chinwn/hg/sl_term/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -15,6 +15,6 @@ Termination checking result:
 Stop Omega... 165 invocations 
 5 false contexts at: ( (32,1)  (33,15)  (33,13)  (33,8)  (33,2) )
 
-Total verification time: 0.29 second(s)
-	Time spent in main process: 0.24 second(s)
-	Time spent in child processes: 0.05 second(s)
+Total verification time: 0.08 second(s)
+	Time spent in main process: 0.05 second(s)
+	Time spent in child processes: 0.03 second(s)

@@ -1005,14 +1005,18 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
   if loop_es==[] then true
   else 
     begin
+      Debug.devel_zprint (lazy (" >>>>>> [term.ml][check loop safety] <<<<<<")) no_pos;
       Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
-      Debug.trace_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
+      Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
       let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in
       if unsound_ctx == [] then true
-      else 
-        let _ = List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx in
+      else
+        begin
+        Debug.devel_hprint (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
+        List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx;
         false
+        end;
     end
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =

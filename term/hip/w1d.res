@@ -1,7 +1,7 @@
 
 Processing file "invalid-1d.ss"
 Parsing invalid-1d.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/chinwn/hg/sl_term/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -14,6 +14,6 @@ Termination checking result:
 Stop Omega... 108 invocations 
 8 false contexts at: ( (16,17)  (16,15)  (16,11)  (16,9)  (16,2)  (16,9)  (14,2)  (14,9) )
 
-Total verification time: 0.23 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.04 second(s)
+Total verification time: 0.06 second(s)
+	Time spent in main process: 0.04 second(s)
+	Time spent in child processes: 0.02 second(s)
