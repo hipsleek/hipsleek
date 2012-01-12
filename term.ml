@@ -129,7 +129,7 @@ let pr_term_status_short = function
       fmt_string "(ERR: ";
       pr_term_reason_short r;
       fmt_string ")"
-  | UnsoundCtx -> fmt_string "(ERR: unsound)"
+  | UnsoundCtx -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
   | _ -> fmt_string "(ERR)"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
@@ -152,8 +152,9 @@ let pr_term_trans_loc (src, dst) =
   let dst_line = dst.start_pos.Lexing.pos_lnum in
   (* fmt_string (fname ^ " "); *)
   fmt_string ("(" ^ (string_of_int src_line) ^ ")");
-  fmt_string ("->");
-  fmt_string ("(" ^ (string_of_int dst_line) ^ ")")
+  if (dst_line != 0) then
+    (fmt_string ("->");
+    fmt_string ("(" ^ (string_of_int dst_line) ^ ")"))
 
 let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
   pr_term_trans_loc pos;
@@ -988,8 +989,8 @@ let get_loop_only sl =
   let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
   List.concat ls
 
-let add_unsound_ctx (es: entail_state) = 
-  let term_pos = (post_pos # get, proving_loc # get) in
+let add_unsound_ctx (es: entail_state) pos = 
+  let term_pos = (post_pos # get, no_pos) in
   let term_res = (term_pos, None, Some es.es_formula, UnsoundCtx) in
   term_res_stk # push term_res
 
@@ -1007,7 +1008,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
       let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in
       if unsound_ctx == [] then true
       else 
-        let _ = List.iter (fun es -> add_unsound_ctx es) unsound_ctx in
+        let _ = List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx in
         false
     end
 

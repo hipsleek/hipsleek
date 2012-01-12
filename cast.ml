@@ -1726,16 +1726,11 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
     let (prim_grp, mutual_grps) = re_proc_mutual (sort_proc_decls (list_of_procs cp)) in
     let log_vars = cp.prog_logical_vars in
     (* Only add the phase variables into scc group with >1 Term *)
-    let v_mutual_grps, c_mutual_grps = List.partition (fun scc ->
-      (count_term_scc scc) > 1 
-    ) mutual_grps in
-    let pvs = List.map (fun procs ->
+    let mutual_grps = List.map (fun scc -> (count_term_scc scc, scc)) mutual_grps in
+    let pvs = List.map (fun (n, procs) ->
       add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-      (not !dis_call_num) (not !dis_phase_num)) v_mutual_grps
+      ((not !dis_call_num) && n>0) ((not !dis_phase_num) && n>1)) mutual_grps
     in
-    let _ = List.map (fun procs ->
-      add_term_nums_proc_scc procs cp.new_proc_decls log_vars 
-      (not !dis_call_num) false) c_mutual_grps in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
       ((List.concat pvs) @ log_vars) in
     { cp with prog_logical_vars = pvl } 
