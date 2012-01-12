@@ -1,8 +1,8 @@
 // TODO: this example should result in a Loop unsoundness error?
 
 int foo (int x)
-  requires MayLoop
-  ensures false;
+  requires Loop
+  ensures true;
 {
   return foo(x);
 }
@@ -10,7 +10,7 @@ int foo (int x)
 
 int goo (int x)
   requires Loop
-  ensures true;
+  ensures false;
 {
 	return foo(x);
 }

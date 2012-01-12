@@ -1,7 +1,7 @@
 // TODO: this example should result in a Loop unsoundness error?
 
 int foo (int x)
-  requires MayLoop
+  requires Loop
   ensures false;
 {
   return foo(x);
@@ -9,7 +9,7 @@ int foo (int x)
 
 
 int goo (int x)
-  requires Loop
+  requires MayLoop
   ensures true;
 {
 	return foo(x);

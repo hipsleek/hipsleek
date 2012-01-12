@@ -2,7 +2,7 @@
 
 int foo (int x)
   requires MayLoop
-  ensures false;
+  ensures true;
 {
   return foo(x);
 }
