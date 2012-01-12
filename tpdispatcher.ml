@@ -1174,6 +1174,8 @@ let simplify_raw (f: CP.formula) =
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
   let res_memo = simplify f_memo in
   CP.restore_memo_formula subs bvars res_memo
+
+let simplify_raw_w_rel (f: CP.formula) = simplify f
 	
 let simplify_raw f =
 	let pr = !CP.print_formula in
@@ -1314,6 +1316,10 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
   let res_memo = pairwisecheck f_memo in
   CP.restore_memo_formula subs bvars res_memo
+
+let pairwisecheck_raw (f : CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
 
 (*
 let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =

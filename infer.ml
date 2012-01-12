@@ -782,7 +782,7 @@ let lhs_simplifier lhs_h lhs_p =
 (*    lhs                                                            *)
 
 let lhs_simplifier_tp lhs_h lhs_p =
-    (TP.simplify_raw (mkAnd lhs_h lhs_p no_pos))
+    (TP.simplify_raw_w_rel (mkAnd lhs_h lhs_p no_pos))
 
 let lhs_simplifier_tp lhs_h lhs_p =
   let pr = !CP.print_formula in
@@ -845,7 +845,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
         let pairwise_proc lhs =
           let lst = CP.split_conjunctions lhs in
           (* perform pairwise only for disjuncts *)
-          let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck_raw e else e) lst in
+          let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
           CP.join_conjunctions lst
         in
         let wrap_exists (lhs,rhs) =
@@ -904,7 +904,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.to_3 "infer_collect_rel" pr0 pr1 pr1 pr2
+      Debug.no_3 "infer_collect_rel" pr0 pr1 pr1 pr2
       (fun _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br pos) estate.es_infer_vars_rel lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
