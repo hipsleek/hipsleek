@@ -3383,7 +3383,7 @@ and heap_entail_conjunct_lhs_struc_x
                             (*then clear entail_*)
                             let es = clear_entailment_history_es_es es in
                             let f = es.CF.es_formula in
-                            let _ = print_string ("\n after adding res=tid :"^(Cprinter.string_of_entail_state es)^"\n") in
+                            (* let _ = print_string ("\n after adding res=tid :"^(Cprinter.string_of_entail_state es)^"\n") in *)
                             (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
                             (*Rename ref_vars for later join*)
                             let rs = CP.fresh_spec_vars ref_vars in
@@ -5474,16 +5474,21 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 				  formula_base_label = None;
 				  formula_base_pos = pos } in
        (*alla is the pure constraints in all threads*)
-       (* let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in (*this is redundant*)*)
+       let alla = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p1 a1 in
        (*01/02/2012: TO CHECK: we only propagate pure constraints
          related to thread id and logical variables in the heap nodes*)
        (*pure constraints related to actual variables are not added
          to ensure a consistent view among threads because a thread does not
          know the values of variables of another thread.*)
-       let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in
-       let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in
-       let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in
-       let alla = MCP.find_rel_constraints p1 a_vars in
+
+       (* This can not happen now because of Vperm will ensure 
+          exclusive access => can pass all constraints in all threads*)
+
+       (* let a_h_vars = List.concat (List.map fv_heap_of_one_formula a1)  in *)
+       (* let a_id_vars = (List.map (fun f -> f.formula_thread) a1) in *)
+       (* let a_vars = CP.remove_dups_svl (a_h_vars@a_id_vars) in *)
+       (* let alla = MCP.find_rel_constraints p1 a_vars in *)
+
        (* let allc = List.fold_left (fun a f -> add_mix_formula_to_mix_formula f.formula_pure a) p2 a2 in *)
        let allc = p2 in (*TO CHECK: p2 only to find closure*)
        (*remove @zero of the main thread from the entail state

@@ -81,7 +81,7 @@ node merge(node x1, node x2)
 
 /* function to insert an element in a sorted list */
 node insert(node x, int v)
-  requires x::sll<n, xs, xl> & n > 0 & @value[a,v]
+  requires x::sll<n, xs, xl> & n > 0 & @value[x,v]
 	ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres =  max(v, xl);
 {
 	node tmp;	

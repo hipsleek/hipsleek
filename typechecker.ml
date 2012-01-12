@@ -197,6 +197,21 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.ext_formula) (
 (*****<<<< Check permissions variables in pre-condition ******)
 (*************************************************************) 
 
+(*checking whether the current state has full permissions of a list of spec vars *)
+(*check at | Var | Bind | Assign | Sharp_var*)
+let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
+  if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then
+    (true,ctx) (*propagate fail contexts*)
+  else
+    let full_p = CP.mk_varperm_full xs pos in
+    let full_f = CF.formula_of_pure_formula full_p pos in
+    let rs,prf = heap_entail_list_failesc_context_init prog false ctx full_f None pos None in
+    (if (CF.isFailListFailescCtx rs) then
+          let _ = Debug.print_info "VarPerm Failure" ("check_full_varperm: var " ^ (Cprinter.string_of_spec_var_list xs)^ " MUST have full permission" ^ "\n") pos in
+          (false,rs)
+     else
+          (true,ctx))
+
 let pre_ctr = new Gen.counter 0
 
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
@@ -510,6 +525,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin
+            let b,res = (if !Globals.ann_vp then
+                  (*check for access permissions*)
+                  let t = Gen.unsome (type_of_exp rhs) in
+                  let var = (CP.SpecVar (t, v, Primed)) in
+                  check_full_varperm prog ctx [var] pos
+                else
+                  true,ctx)
+            in
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
 		    (* let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
@@ -552,7 +575,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
-
+            let b,res = (if !Globals.ann_vp then
+                  (*check for access permissions*)
+                  let var = (CP.SpecVar (v_t, v, Primed)) in
+                  check_full_varperm prog ctx [var] pos
+                else
+                  true,ctx)
+            in
+            if (not b) then res (*do not have permission for variable v*)
+            else
             (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	        let _ = proving_loc#set pos in
 	        let field_types, vs = List.split lvars in
@@ -695,9 +726,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let es = {es with CF.es_formula = f} in
                     CF.Ctx es
                   in
-                  (* let _ = print_string ("bind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
+                  (* let _ = print_endline ("\nbind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
                   let tmp_res = CF.transform_list_failesc_context (idf,idf,fct) res in
-		          (* let _ = print_string ("bind: after transform: tmp_res:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res)) in *)
+		          (* let _ = print_endline ("\nbind: after transform: tmp_res:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res)) in *)
                   tmp_res
                 end
           end; (*end Bind*)
@@ -1278,6 +1309,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_var_name = v;
           exp_var_pos = pos}) -> 
               begin
+                let b,res = (if !Globals.ann_vp then
+                      let var = (CP.SpecVar (t, v, Primed)) in
+                      check_full_varperm prog ctx [var] pos
+                    else
+                      true,ctx)
+                in
+                if (not b) then res (*do not have permission for variable v*)
+                else
                 let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
                 CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
               end
@@ -1293,7 +1332,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
 	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
 	          let nctx = match v with 
-	            | Sharp_var (t,v) -> 
+	            | Sharp_var (t,v) ->
+                      let b,res = (if !Globals.ann_vp then
+                          (*check for access permissions*)
+                            let var = (CP.SpecVar (t, v, Primed)) in
+                            check_full_varperm prog ctx [var] pos
+                          else
+                            true,ctx)
+                      in
+                      if (not b) then res (*do not have permission for variable v*)
+                      else
                       let t1 = (get_sharp_flow ft) in
                       (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
                       let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
