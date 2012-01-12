@@ -32,6 +32,7 @@ int test1(ref int x,ref int y)
   id=fork(inc,x);
   dprint;
   x = 0; // --> Assign: fail
+  dprint;
   inc(y);
   return id;
 }

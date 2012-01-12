@@ -1746,6 +1746,21 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
 and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
   let fct es = 
     (* this came from unfolding for bind mostly *)
+    (*VarPerm: to keep track of es_var_zero_perm, when rename_bound_vars, also rename zero_perm*)
+    if (es.es_var_zero_perm!=[]) then
+      (*add in, rename, then filter out*)
+      let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in
+      let new_f = add_pure_formula_to_formula zero_f es.es_formula in
+      let unfolded_f = unfold_nth 7 prog new_f v already_unsat 0 pos in
+      let vp_list, _ = filter_varperm_formula unfolded_f in
+      let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in
+      let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in
+      let unfolded_f2 = drop_varperm_formula unfolded_f in
+      let new_es = {es with es_var_zero_perm = new_zero_vars;} in
+      let res = build_context (Ctx new_es) unfolded_f2 pos in
+      if already_unsat then set_unsat_flag res true
+      else res
+    else
     let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if already_unsat then set_unsat_flag res true
@@ -5245,8 +5260,18 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 		          let st = List.combine qvars ws in
 		          let baref = mkBase qh qp qt qfl qb qa pos in (*TO CHECK*)
 		          let new_baref = subst st baref in
+                  let fct st v =
+                    try 
+                        let (_,v2) = List.find (fun (v1,_) -> CP.eq_spec_var_ident v v1) st in
+                        (*If zero_perm is an exists var -> rename it *)
+                        v2
+                    with _ -> v
+                  in
+                  let new_zero_vars = List.map (fct st) estate.es_var_zero_perm in
+                  (* let _ = print_endline ("heap_entail_conjunct_helper: rename es.es_var_zero_perm: \n ### old = " ^ (Cprinter.string_of_spec_var_list estate.es_var_zero_perm) ^ "\n ### new = " ^ (Cprinter.string_of_spec_var_list new_zero_vars)) in *)
 		          (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
 		          let new_ctx = Ctx {estate with
+                      es_var_zero_perm = new_zero_vars;
 				      es_formula = new_baref;
 				      es_ante_evars = ws @ estate.es_ante_evars;
 				      es_unsat_flag = false;} in
@@ -5996,7 +6021,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
-      let lhs_zero_vars = estate.es_var_zero_perm in
+      let old_lhs_zero_vars = estate.es_var_zero_perm in
+      (*find a closure*)
+      let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in
       let _ = if (lhs_zero_vars!=[] or rhs_vperms!=[]) then
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^(string_of_vp_ann VP_Zero)^ (Cprinter.string_of_spec_var_list lhs_zero_vars) ^ " |- "  ^ (pr_list Cprinter.string_of_pure_formula rhs_vperms)^"\n") pos
       in
@@ -6054,7 +6081,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       (*        not(v \in S) *)
       (* ----------------------- *)
       (* S@zero |- v@full  --> S+{v}@Z *)
-        let new_lhs_zero_vars = (lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
+        (*note: use the old_lhs_zero_vars, not use its closure*)
+        let new_lhs_zero_vars = (old_lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
         let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
     (*************************************************************************)
     (*************************** END *****************************************)

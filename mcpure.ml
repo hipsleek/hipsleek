@@ -1846,6 +1846,10 @@ let m_apply_par sst qp = match qp with
   | MemoF f -> MemoF (m_apply_par sst f)
   | OnePF f -> OnePF (apply_subs sst f)
 
+let m_apply_par_varperm sst qp = match qp with
+  | MemoF f -> MemoF (m_apply_par_varperm sst f)
+  | OnePF f -> OnePF (apply_subs_varperm sst f)
+
 let memo_apply_one_exp s qp = match qp with
   | MemoF mf -> MemoF (memo_apply_one_exp s mf)
   | OnePF f -> OnePF (apply_one_exp s f)

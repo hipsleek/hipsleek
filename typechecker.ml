@@ -203,6 +203,7 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
   if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then
     (true,ctx) (*propagate fail contexts*)
   else
+    let _ = Debug.devel_pprint ("check_full_varperm for var " ^ (Cprinter.string_of_spec_var_list xs)^ "\n") pos in
     let full_p = CP.mk_varperm_full xs pos in
     let full_f = CF.formula_of_pure_formula full_p pos in
     let rs,prf = heap_entail_list_failesc_context_init prog false ctx full_f None pos None in
@@ -533,6 +534,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 else
                   true,ctx)
             in
+            if (not b) then res (*do not have permission for variable v*)
+            else
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
 		    (* let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
@@ -594,12 +597,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
 	        (*let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	        (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
+	        (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
 	        let tmp_ctx =
 	          if !Globals.large_bind then
 	            CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
 	          else ctx in
             let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
+	        (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+	        (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
 	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
@@ -698,8 +704,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 begin
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
-		          (* let _ = print_string ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1) *)
-                  (*   ^ "\n") in *)
+		          (* let _ = print_endline ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1)) in *)
                   let tmp_res2 = 
 		            if (imm != Lend) then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
@@ -707,12 +712,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		            else tmp_res1
 		          in
                   let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
-		          (* let _ = print_string ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2) *)
-                  (* ^ "\n") in  *)
+		          (* let _ = print_endline ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2)) in *)
                   let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                   let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
-                  (* let _ = print_string ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3) *)
-                  (*     ^ "\n") in *)
+                  (* let _ = print_endline ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3)) in *)
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
 

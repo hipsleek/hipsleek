@@ -2280,6 +2280,14 @@ and one_formula_subst sst (f : one_formula) =
   let one_f = (one_formula_of_formula rs tid) in
   {one_f with formula_ref_vars = ref_vars}
 
+and one_formula_subst_varperm sst (f : one_formula) = 
+  let base = formula_of_one_formula f in
+  let rs = subst_varperm sst base in
+  let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
+  let tid = CP.subst_var_par sst f.formula_thread in
+  let one_f = (one_formula_of_formula rs tid) in
+  {one_f with formula_ref_vars = ref_vars}
+
 (*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
   | [] -> f*)
@@ -2338,6 +2346,61 @@ and subst_x sst (f : formula) =
 									formula_exists_pos = pos})
   in helper f
 (** An Hoa : End of formula substitution **)
+
+(*sub everything including VarPerm*)
+and subst_varperm sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Gen.Debug.no_2 "subst_varperm" pr1 pr2 pr2 subst_varperm_x sst f 
+
+and subst_varperm_x sst (f : formula) =
+  let rec helper f =
+	match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+    Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+					formula_base_pure = p; 
+					formula_base_type = t;
+                    formula_base_and = a;
+					formula_base_flow = fl;
+					formula_base_branches = b;
+					formula_base_label = lbl;
+					formula_base_pos = pos}) -> 
+		Base ({formula_base_heap = h_subst sst h; 
+					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par_varperm sst p); 
+					formula_base_type = t;
+                    formula_base_and = (List.map (fun f -> one_formula_subst_varperm sst f) a);
+					formula_base_flow = fl;
+					formula_base_label = lbl;
+					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+					formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+						formula_exists_heap = qh; 
+						formula_exists_pure = qp; 
+						formula_exists_type = tconstr;
+                        formula_exists_and = a; (*TO CHECK*)
+						formula_exists_flow = fl;
+						formula_exists_branches = b;
+						formula_exists_label = lbl;
+						formula_exists_pos = pos}) -> 
+		(* Variable under this existential quantification should NOT be substituted! *)
+		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
+		let qsvnames = (List.map CP.name_of_spec_var qsv) in
+		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+		if sst = [] then f
+		else Exists ({formula_exists_qvars = qsv; 
+									formula_exists_heap =  h_subst sst qh; 
+									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par_varperm sst qp);
+									formula_exists_type = tconstr;
+									(* formula_exists_imm = imm; *)
+                                    formula_exists_and = (List.map (fun f -> one_formula_subst_varperm sst f) a);
+									formula_exists_flow = fl;
+									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+									formula_exists_label = lbl;
+									formula_exists_pos = pos})
+  in helper f
+(** An Hoa : End of formula substitution **)
+
 
 (** An Hoa: Function to substitute variables in a heap formula in parallel **)
 and h_subst sst (f : h_formula) = 
@@ -2929,7 +2992,7 @@ and rename_bound_vars_x (f : formula) = match f with
 		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	    let rho = List.combine qvars new_qvars in
-	    let new_base_f = subst rho base_f in
+	    let new_base_f = subst_varperm rho base_f in (*TO CHECK*)
 	    let resform = add_quantifiers new_qvars new_base_f in
 		resform
 
