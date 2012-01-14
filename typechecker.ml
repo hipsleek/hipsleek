@@ -199,7 +199,7 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.ext_formula) (
 
 (*checking whether the current state has full permissions of a list of spec vars *)
 (*check at | Var | Bind | Assign | Sharp_var*)
-let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
+let check_full_varperm_x prog ctx ( xs:CP.spec_var list) pos =
   if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then
     (true,ctx) (*propagate fail contexts*)
   else
@@ -212,6 +212,14 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
           (false,rs)
      else
           (true,ctx))
+
+let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
+  let pr_out = pr_pair string_of_bool Cprinter.string_of_list_failesc_context in
+  Gen.Debug.no_2 "check_full_varperm"
+      Cprinter.string_of_list_failesc_context
+      Cprinter.string_of_spec_var_list
+      pr_out
+      (fun _ _ -> check_full_varperm_x prog ctx xs pos) ctx xs
 
 let pre_ctr = new Gen.counter 0
 
@@ -258,6 +266,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		          let (new_c2,pre,f) = check_specs_infer_a prog proc nctx c2 e0 in
+		          (* let _ = print_endline ("\ncheck_specs: ECase result = " ^ (string_of_bool f)) in *)
                   (* Thai: Need to generate EBase from pre if necessary *)
                   let new_c2 = 
                     if pre!=[] then 
@@ -269,9 +278,12 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          (*let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
+		    (* let _ = print_endline ("\ncheck_specs: ECase result = " ^ (pr_list string_of_bool fl)) in *)
             let br = List.for_all pr_id fl in
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
-            (new_spec,[],true)
+            (*WHY IT IS TRUE HERE: should be br ????*)
+            (* (new_spec,[],true) *)
+            (new_spec,[],br)
 	  | CF.EBase b ->
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             (*************************************************************)
@@ -610,9 +622,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
-	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
-            (*     ^ "\n") in *)
-
+	        let _ = print_endline ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in
 	        let c = string_of_typ v_t in
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
@@ -704,7 +714,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 begin
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
-		          (* let _ = print_endline ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1)) in *)
+		          let _ = print_endline ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1)) in
                   let tmp_res2 = 
 		            if (imm != Lend) then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
@@ -1034,7 +1044,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+                          (*need to retain exist vars of the child thread after merging
+                          This is because compose_formula will rename all exist vars*)
+                          let qvars,base = CF.split_quantifiers es_f in
+                          let fvars = CF.fv base in
+                          let new_qvars = Gen.BList.intersect_eq CP.eq_spec_var qvars fvars in
+                          let retain1 = Gen.BList.difference_eq CP.eq_spec_var qvars fvars in
+
+                          (* let fvars = CF.fv new_base in *)
+                          (* let retain1 = Gen.BList.intersect_eq CP.eq_spec_var qvars fvars in *)
+                          (* let new_qvars = Gen.BList.difference_eq CP.eq_spec_var qvars fvars in *)
+                          let es_f = CF.add_quantifiers new_qvars base in
+                          let new_base = CF.add_quantifiers retain1 new_base in
+                          (*---------------------------------------------------*)
+
                           let new_f = CF.compose_formula es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
+
+                          (*add exists vars of the child threads*)
+                          (* let new_f = CF.add_quantifiers retain1 new_f in *)
+                          let _ = print_endline ("\n check_exp: SCall: join: merging child states: \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n ### new_base = " ^ (Cprinter.string_of_formula new_base) ^ " \n ### qvars = " ^ (Cprinter.string_of_spec_var_list qvars) ^ " \n ### new_f = " ^ (Cprinter.string_of_formula new_f)) in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in
                           (*merge*)

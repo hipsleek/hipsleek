@@ -347,7 +347,7 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
-let ann_vp = ref true (* Eanble variable permissions, by default, turn on in para5*)
+let ann_vp = ref false (* Eanble variable permissions, by default, turn on in para5*)
 
 let print_proc = ref false
 

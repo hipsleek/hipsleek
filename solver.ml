@@ -3338,7 +3338,7 @@ and heap_entail_conjunct_lhs_struc_x
                   | None ->
                       begin
 	            let rs = clear_entailment_history ctx11 in
-	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
+	            let _ =print_string ("\nbefore post:"^(Cprinter.string_of_context rs)^"\n") in
                 (*************Compose variable permissions >>> ******************)
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_ext_formula f)^"\n")) pos;
                 let ps,_ = filter_varperm_formula post in
@@ -3364,6 +3364,8 @@ and heap_entail_conjunct_lhs_struc_x
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
+                let _ = print_endline ("\n heap_entail_conjunct_lhs_struc: EAssume: \n ### rs = " ^ (Cprinter.string_of_context rs) ^ " \n ### new_post = " ^ (Cprinter.string_of_formula new_post) ^ " \n ### rs1 = " ^ (Cprinter.string_of_context rs1)) in
+
 	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
@@ -3429,15 +3431,15 @@ and heap_entail_conjunct_lhs_struc_x
                                 let eq_f = func v1 v2 in
                                 (add_pure_formula_to_formula eq_f f)
                             ) new_f2 rho3 in
-                            (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_formula post)) in *)
+                            (* let _ = print_endline ("\nheap_entail_conjunct_lhs_struc: \n ### old_post = " ^ (Cprinter.string_of_formula post) ^ " \n ### new_post2 = " ^ (Cprinter.string_of_formula new_post2)) in *)
                             let qvars,base = CF.split_quantifiers new_post2 in
                             let one_f = CF.one_formula_of_formula base id in
                             let one_f = {one_f with CF.formula_ref_vars = ref_vars;} in
                             (*add thread id*)
                             (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
                             let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
-                            let f1 = CF.add_quantifiers evars new_f3 in
-                            let f2 = CF.add_formula_and [one_f] f1 in
+                            let f1 = CF.add_formula_and [one_f] new_f3 in (*add one_f first before adding evars*)
+                            let f2 = CF.add_quantifiers evars f1 in
                             let new_es = {es with CF.es_formula = f2} in
                             CF.Ctx new_es
                           in
