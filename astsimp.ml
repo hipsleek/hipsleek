@@ -1046,7 +1046,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 
 		  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
-		  (*let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in*)
+		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 		  
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
@@ -1058,10 +1058,10 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
-		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
+		  let _ = print_string "trans_prog :: trans_data PASSED\n" in
 		  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
 		  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
+		  let _ = print_string "trans_prog :: trans_proc PASSED\n" in
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
 		  let cprog =   {
@@ -3589,7 +3589,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       end
 	              (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
 	              *)
-  in helper ie
+   in helper ie
 
 and default_value (t :typ) pos : C.exp =
   match t with

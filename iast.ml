@@ -1818,8 +1818,11 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
 let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
 		let ddef = look_up_data_def_raw ddefs data_name in
+        (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
-			field
+		field
+         with _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("field name " ^ field_name ^ " is not found");}
+        )
 	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
 
 
