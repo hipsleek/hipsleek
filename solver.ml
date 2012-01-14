@@ -6005,6 +6005,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   (* An Hoa note: THE FOLLOWING let DOES ALL THE WORK! *)
   (*let _ = print_string ("After folding :  " ^  (string_of_bool r_rez) ^ "\n") in*)
   if r_rez then begin (* Entailment is valid *)
+      let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b lhs_a no_pos in
     (*    let lhs_xpure,_,_,_ = xpure prog res_delta in                                                              *)
     (*    let rhs_xpure = rhs_p in                                                                                   *)
@@ -9559,6 +9560,7 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
               (* let fl = b.formula_base_flow in *)
               (* let br = b.formula_base_branches in *)
               let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              let p = remove_dupl_conj_mix_formula p in
               Base {b with formula_base_heap=h;formula_base_pure=p}
         | Exists e ->
               let h = e.formula_exists_heap in
@@ -9567,6 +9569,7 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
               (* let fl = e.formula_exists_flow in *)
               (* let br = e.formula_exists_branches in *)
               let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              let p = remove_dupl_conj_mix_formula p in
               Exists {e with formula_exists_heap=h; formula_exists_pure=p }
         | Or o ->
 	          let f1 = helper o.formula_or_f1 in

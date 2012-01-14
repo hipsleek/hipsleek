@@ -223,6 +223,25 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
 
 let pre_ctr = new Gen.counter 0
 
+(*Merging fractional heap nodes when possible using normalization lemmas*)
+let normalize_list_failesc_context_w_lemma prog lctx =
+  (if not (Perm.allow_perm ()) then lctx
+  else
+    (*TO CHECK merging nodes*)
+    let fct (es:CF.entail_state) =
+      let es = CF.clear_entailment_vars es in
+      let f = es.CF.es_formula in
+      (*create a tmp estate for normalizing*)
+      let tmp_es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
+      let f = normalize_formula_w_coers prog tmp_es f prog.prog_left_coercions in
+      let es = {es with CF.es_formula = f} in
+      CF.Ctx es
+    in
+    (* let _ = print_endline ("\nbind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
+    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
+    res
+   )
+
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
       CF.struc_formula * (CF.formula list) * bool =
   let _ = pre_ctr # reset in
@@ -727,19 +746,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_endline ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3)) in *)
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
-
+                  let tmp_res = normalize_list_failesc_context_w_lemma prog res in
                   (*TO CHECK merging nodes*)
-                  let fct (es:CF.entail_state) =
-                    (* let _ = print_endline ("bind: ### es (before clear) = " ^ (Cprinter.string_of_entail_state es)) in *)
-                    let es = CF.clear_entailment_vars es in
-                    (* let _ = print_endline ("bind: ### es (after clear) = " ^ (Cprinter.string_of_entail_state es)) in *)
-                    let f = es.CF.es_formula in
-                    let f = normalize_formula_w_coers prog es f prog.prog_left_coercions in
-                    let es = {es with CF.es_formula = f} in
-                    CF.Ctx es
-                  in
-                  (* let _ = print_endline ("\nbind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
-                  let tmp_res = CF.transform_list_failesc_context (idf,idf,fct) res in
+                  (* let fct (es:CF.entail_state) = *)
+                  (*   let es = CF.clear_entailment_vars es in *)
+                  (*   let f = es.CF.es_formula in *)
+                  (*   (\*create a tmp estate for normalizing*\) *)
+                  (*   let tmp_es = CF.empty_es (CF.mkTrueFlow ()) no_pos in *)
+                  (*   let f = normalize_formula_w_coers prog tmp_es f prog.prog_left_coercions in *)
+                  (*   let es = {es with CF.es_formula = f} in *)
+                  (*   CF.Ctx es *)
+                  (* in *)
+                  (* (\* let _ = print_endline ("\nbind: before transform: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *\) *)
+                  (* let tmp_res = CF.transform_list_failesc_context (idf,idf,fct) res in *)
 		          (* let _ = print_endline ("\nbind: after transform: tmp_res:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res)) in *)
                   tmp_res
                 end
@@ -1077,7 +1096,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_string (("\nSCall: init: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs
+                  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+                  tmp_res
                 else
                 if (mn_str=Globals.finalize_name) then
                   (*=====================================*)
@@ -1102,7 +1122,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_string (("\nSCall: finalize: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs
+                  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+                  tmp_res
                 else
                 if (mn_str=Globals.acquire_name) then
                   (*==========================================*)
@@ -1137,7 +1158,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_string (("\nSCall: acquire: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs
+                  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+                  tmp_res
                 else
                 if (mn_str=Globals.release_name) then
                   (*==========================================*)
@@ -1172,7 +1194,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_string (("\nSCall: release: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs
+                  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+                  tmp_res
                 else
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)

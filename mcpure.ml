@@ -1797,6 +1797,7 @@ type mix_formula =
   | OnePF of formula
   
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
+let print_mix_formula  = print_mix_f
 
 let consistent_mix_formula (m:mix_formula) : bool =
   match m with
@@ -2254,3 +2255,18 @@ let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
         let f1 = Cpure.drop_varperm_formula f in
         let f2 = mix_of_pure f1 in
         f2
+
+(*Eq, Lt, Lte, Gt, Gte*)
+let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula = 
+  (match f with
+    | MemoF _ -> 
+        (*Todo: implement this*)
+        (* let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MemoF \n") in *)
+        f
+    | OnePF p_f -> (OnePF (remove_dupl_conj_pure p_f))
+  )
+
+(*Eq, Lt, Lte, Gt, Gte*)
+let remove_dupl_conj_mix_formula (f:mix_formula):mix_formula = 
+  Gen.Debug.no_1 "remove_dupl_conj_mix_formula" !print_mix_formula !print_mix_formula 
+      remove_dupl_conj_mix_formula_x f

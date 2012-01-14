@@ -7425,7 +7425,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
 	  h_formula_data_imm = ConstAnn(Mutable);
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
-	  h_formula_data_original = true;
+	  h_formula_data_original = false; (*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
       h_formula_data_arguments = []; (*TO CHECK*)
 	  h_formula_data_holes = [];
       h_formula_data_remaining_branches = None;
@@ -7443,7 +7443,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
-      h_formula_view_original = true;
+      h_formula_view_original = false;(*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
       h_formula_view_lhs_case = false;
       h_formula_view_unfold_num = 0;
       h_formula_view_remaining_branches = None;
@@ -7483,7 +7483,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
 	  h_formula_data_imm = ConstAnn(Mutable);
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
-	  h_formula_data_original = true;
+	  h_formula_data_original = true; (*after finalize, allow SPLIT*)
       h_formula_data_arguments = []; (*TO CHECK*)
 	  h_formula_data_holes = [];
       h_formula_data_remaining_branches = None;
@@ -7501,7 +7501,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
-      h_formula_view_original = true;
+      h_formula_view_original = false; (*NOT ALLOW SPLIT*)
       h_formula_view_lhs_case = false;
       h_formula_view_unfold_num = 0;
       h_formula_view_remaining_branches = None;
@@ -7546,7 +7546,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
-      h_formula_view_original = true;
+      h_formula_view_original = false; (*NOT ALLOW SPLIT lemmas*)
       h_formula_view_lhs_case = false;
       h_formula_view_unfold_num = 0;
       h_formula_view_remaining_branches = None;
@@ -7592,7 +7592,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
-      h_formula_view_original = true;
+      h_formula_view_original = false;(*NOT ALLOW SPLIT lemmas in pre, but allow in post*)
       h_formula_view_lhs_case = false;
       h_formula_view_unfold_num = 0;
       h_formula_view_remaining_branches = None;
@@ -7600,9 +7600,10 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
-  let tmp = formula_of_heap lock_node pos in
+  let tmp = formula_of_heap lock_node pos in (*not allow SPLIT in pre*)
   let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
   let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] [] pos in
+  let tmp = add_original tmp true in  (*but allow SPLIT in post*)
   let post = EAssume ([],tmp,lbl) in
   let pre = normalize 5 inv tmp_pre pos in
   let pre_evars, pre_base = split_quantifiers pre in

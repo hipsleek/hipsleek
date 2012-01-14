@@ -519,6 +519,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let dr_data_orig = dr.h_formula_data_original in
                   let dl_data_derv = dl.h_formula_data_derv in
                   let dr_data_derv = dr.h_formula_data_derv in
+                  
                   let dl_flag, dr_flag = 
                     if !ann_derv then
                       (not(dl_data_derv)),(not(dr_data_derv))
