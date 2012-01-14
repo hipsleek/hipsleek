@@ -14,3 +14,5 @@ echo "======= parallel_quick_sort.ss ======"
 diff parallel_quick_sort.res parallel_quick_sort.n
 echo "======= alt_threading.ss ======"
 diff alt_threading.res alt_threading.res
+echo "======= threads.ss ======"
+diff threads.res > threads.n

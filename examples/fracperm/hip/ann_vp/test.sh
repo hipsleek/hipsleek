@@ -15,3 +15,5 @@ echo "======= parallel_quick_sort.ss ======"
 ../../../../hip parallel_quick_sort.ss > parallel_quick_sort.res
 echo "======= alt_threading.ss ======"
 ../../../../hip alt_threading.ss > alt_threading.res
+echo "======= threads.ss ======"
+../../../../hip threads.ss > threads.res
