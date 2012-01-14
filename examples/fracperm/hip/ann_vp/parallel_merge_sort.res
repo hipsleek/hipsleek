@@ -24,6 +24,6 @@ Halting Reduce...
 Stop Omega... 256 invocations 
 4 false contexts at: ( (65,3)  (65,10)  (61,2)  (61,9) )
 
-Total verification time: 1.07 second(s)
+Total verification time: 1.17 second(s)
 	Time spent in main process: 0.27 second(s)
-	Time spent in child processes: 0.8 second(s)
+	Time spent in child processes: 0.9 second(s)

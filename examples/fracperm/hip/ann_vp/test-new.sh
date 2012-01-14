@@ -5,3 +5,4 @@
 ../../../../hip vperm_check.ss > vperm_check.n
 ../../../../hip parallelCount.ss > parallelCount.n
 ../../../../hip parallel_merge_sort.ss > parallel_merge_sort.n
+../../../../hip parallel_quick_sort.ss > parallel_quick_sort.n

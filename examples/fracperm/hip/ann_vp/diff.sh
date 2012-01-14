@@ -10,3 +10,5 @@ echo "======= parallelCount.ss ======"
 diff parallelCount.res parallelCount.n
 echo "======= parallel_merge_sort.ss ======"
 diff parallel_merge_sort.res parallel_merge_sort.n
+echo "======= parallel_quick_sort.ss ======"
+diff parallel_quick_sort.res parallel_quick_sort.n

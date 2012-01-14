@@ -149,7 +149,7 @@ void para_qsort(ref node xs)
           //dprint;
           para_qsort(xsnext);
         }
-        dprint;
+        //dprint;
         join(id);
 		tmp = new node(v, tmp);
         //dprint;
@@ -186,7 +186,7 @@ void para_qsort2(ref node xs)
         /* can not add fork here because it won't update xs.next */
         /*   id2 = fork(para_qsort2,xsnext); */
         /* } */
-        dprint;
+        //dprint;
         join(id1);
         join(id2);
         xs.next = tmp2;

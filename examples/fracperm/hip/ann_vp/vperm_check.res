@@ -18,6 +18,7 @@ Successful States:
  State:true & Anon_full_perm=FLOAT 1. & x_659=x & y'=y & id_32'=tid_658 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_658>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
+
  ]
 
 VarPerm Failure:vperm_check.ss:34: 2: check_full_varperm: var [x'] MUST have full permission
@@ -34,6 +35,7 @@ Successful States:
  State:x::cell()<i>@M[Orig] * y::cell()<j>@M[Orig] & Anon_full_perm=FLOAT 1. & x_664=x & y'=y & id_31'=tid_663 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_663>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
+
  ]
 
 VarPerm Failure:vperm_check.ss:50: 2: check_full_varperm: var [x'] MUST have full permission
@@ -49,6 +51,7 @@ Successful States:
  State:true & Anon_full_perm=FLOAT 1. & x_694=x & y'=y & id_26'=tid_693 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_693>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
+
  ]
 
 VarPerm Failure:vperm_check.ss:63: 6: check_full_varperm: var [x'] MUST have full permission
@@ -64,6 +67,7 @@ Successful States:
  State:true & Anon_full_perm=FLOAT 1. & x_699=x & y'=y & id_25'=tid_698 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_698>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
+
  ]
 
 VarPerm Failure:vperm_check.ss:78: 9: check_full_varperm: var [x'] MUST have full permission
@@ -74,6 +78,6 @@ Halting Reduce...
 Stop Omega... 28 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.2 second(s)
+Total verification time: 0.29 second(s)
 	Time spent in main process: 0.04 second(s)
-	Time spent in child processes: 0.16 second(s)
+	Time spent in child processes: 0.25 second(s)
