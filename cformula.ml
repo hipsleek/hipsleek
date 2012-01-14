@@ -2686,33 +2686,10 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			  let eo2 = normalize_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
-            (* (\*do not rename exists vars that only exist in the child threads*\) *)
-            (* let a1 = formula_and_of_formula f1 in *)
-            (* let a2 = formula_and_of_formula f2 in *)
-            (* let fv1 = List.concat (List.map one_formula_fv a1) in *)
-            (* let fv2 = List.concat (List.map one_formula_fv a1) in *)
-            (* let qvars1, base1 = split_quantifiers f1 in *)
-            (* let qvars2, base2 = split_quantifiers f2 in *)
-            (* (\*those exists that belong to child threads*\) *)
-            (* let retain1 = Gen.BList.intersect_eq CP.eq_spec_var fv1 qvars1 in *)
-            (* let retain2 = Gen.BList.intersect_eq CP.eq_spec_var fv2 qvars2 in *)
-            (* (\*those exists that belong to main threads*\) *)
-            (* let new_qvars1 = Gen.BList.difference_eq CP.eq_spec_var qvars1 fv1 in *)
-            (* let new_qvars2 = Gen.BList.difference_eq CP.eq_spec_var qvars2 fv2 in *)
-            (* let _ = print_endline ("normalize_keep_flow: \n ### retain1 = " ^ (!print_svl retain1) ^ "\n ### retain2 = " ^ (!print_svl retain2) ^ "\n ### new_qvars1 = " ^ (!print_svl new_qvars1) ^ "\n ### new_qvars2 = " ^ (!print_svl new_qvars2) ^ "\n ### fv1 = " ^ (!print_svl fv1) ^ "\n ### fv2 = " ^ (!print_svl fv2)) in *)
-            (* (\*put back to f1 and f2*\) *)
-            (* let f1 = add_quantifiers new_qvars1 base1 in *)
-            (* let f2 = add_quantifiers new_qvars2 base2 in *)
-            (*----------------------------------------*)
-            (*proceed normally*)
 			let rf1 = rename_bound_vars f1 in
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-            (*add back qvars of child threads*)
-            let qvars1 = qvars1(* @retain1 *) in 
-            let qvars2 = qvars2(* @retain2 *) in
-            (*-------------------------------*)
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
 			let new_h, new_p, new_fl, b, new_t, new_a = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
@@ -2886,15 +2863,14 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
-and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match f with
+and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
   | Base ({formula_base_heap = h; 
 	formula_base_pure = p; 
 	formula_base_type = t;
 	formula_base_flow = fl;
     formula_base_branches = b;
     formula_base_and = a;
-	formula_base_pos = pos}) -> 
-      mkExists qvars h p t fl b a pos
+	formula_base_pos = pos}) -> mkExists qvars h p t fl b a pos
   | Exists ({formula_exists_qvars = qvs; 
 	formula_exists_heap = h; 
 	formula_exists_pure = p; 
@@ -2906,13 +2882,6 @@ and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match
 	    let new_qvars = CP.remove_dups_svl (qvs @ qvars) in
 		mkExists new_qvars h p t fl b a pos
   | _ -> failwith ("add_quantifiers: invalid argument")
-
-and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula =
-  Gen.Debug.no_2 "add_quantifiers"
-      !print_svl
-      !print_formula
-      !print_formula
-      add_quantifiers_x qvars f
 
 (* 19.05.2008 *)
 and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
