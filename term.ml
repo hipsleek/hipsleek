@@ -108,7 +108,7 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
   in 
   
   fmt_open_hbox();
-  (if str_ctx == "" then () else fmt_string (str_ctx ^ " & "));
+  (*(if str_ctx == "" then () else fmt_string (str_ctx ^ " & "));*)
   fmt_string (string_of_term_ann ann_s);
   pr_seq "" pr_formula_exp m_s;
   fmt_string " -> ";

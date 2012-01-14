@@ -18,7 +18,7 @@ void loop (int x, int y, int z)
 case {
 	x>=y -> requires Term[] ensures true;
 	x<y -> case {
-		z>=x -> requires Term[(y-x) + (y-z)] ensures true;
+		z>=x -> requires Term[y-x, y-z] ensures true; //Term[(y-x) + (y-z)] 
 		z<x -> requires Term[x-z] ensures true;
 	}
 }
