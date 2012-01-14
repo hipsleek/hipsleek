@@ -199,7 +199,7 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.ext_formula) (
 
 (*checking whether the current state has full permissions of a list of spec vars *)
 (*check at | Var | Bind | Assign | Sharp_var*)
-let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
+let check_full_varperm_x prog ctx ( xs:CP.spec_var list) pos =
   if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then
     (true,ctx) (*propagate fail contexts*)
   else
@@ -212,6 +212,14 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
           (false,rs)
      else
           (true,ctx))
+
+let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
+  let pr_out = pr_pair string_of_bool Cprinter.string_of_list_failesc_context in
+  Gen.Debug.no_2 "check_full_varperm"
+      Cprinter.string_of_list_failesc_context
+      Cprinter.string_of_spec_var_list
+      pr_out
+      (fun _ _ -> check_full_varperm_x prog ctx xs pos) ctx xs
 
 let pre_ctr = new Gen.counter 0
 
