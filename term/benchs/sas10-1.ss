@@ -28,13 +28,13 @@ case {
   z>=k -> requires Term ensures z'=z & k'=k;
   z<k -> case {
     z<=0 -> requires Loop ensures false;
-	z>0 -> requires Term[k-z] ensures z'>=k & k'=k;
+		z>0 -> requires Term[k-z] ensures z'>=k & k'=k;
   }
 }
 {
   if (z<k) {
     z = 2*z;
-	loop_1(k, z);
+		loop_1(k, z);
   }
 }
 
@@ -42,8 +42,8 @@ void loop_2 (ref int x, ref int y, ref int z, ref int d)
 case {
   !(x>0 & y>0) -> requires Term ensures true;
   (x>0 & y>0) -> case {
-    d>0 -> requires Term[x, y] ensures true;
-	d<=0 -> requires MayLoop ensures true;
+		d>0 -> requires Term[x, y] ensures true;
+		d<=0 -> requires MayLoop ensures true;
   }
 }
 {
