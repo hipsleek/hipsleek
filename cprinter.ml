@@ -2307,6 +2307,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.BagSub (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subset ^ (html_of_formula_exp e2)
     | P.BagMin (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_min ^ (string_of_spec_var v2) 
     | P.BagMax (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_max ^ (string_of_spec_var v2)
+    | CP.VarPerm (ann,ls,l) -> (string_of_vp_ann ann) ^ (html_of_spec_var_list ls)
     | P.ListIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lin> " ^ (html_of_formula_exp e2)
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)

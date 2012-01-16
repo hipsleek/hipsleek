@@ -17,3 +17,5 @@ echo "======= alt_threading.ss ======"
 ../../../../hip alt_threading.ss > alt_threading.res
 echo "======= threads.ss ======"
 ../../../../hip threads.ss > threads.res
+echo "======= parallel_fibonacci.ss ======"
+../../../../hip -tp z3 -perm none parallel_fibonacci.ss > parallel_fibonacci.res

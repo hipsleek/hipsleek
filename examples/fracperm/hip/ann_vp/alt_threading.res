@@ -1,7 +1,7 @@
 
 Processing file "alt_threading.ss"
 Parsing alt_threading.ss ...
-Parsing /home/khanh/hg/para5/sleekex/prelude.ss ...
+Parsing ../../../../prelude_vp.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -10,7 +10,7 @@ Procedure fac$int SUCCESS
 Checking procedure increment$cell... 
 Procedure increment$cell SUCCESS
 Checking procedure main$... 
-assert:alt_threading.ss:50: 2:  : ok
+assert:alt_threading.ss:49: 2:  : ok
 
 
 Procedure main$ SUCCESS
@@ -18,6 +18,6 @@ Halting Reduce...
 Stop Omega... 30 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.29 second(s)
-	Time spent in main process: 0.04 second(s)
-	Time spent in child processes: 0.25 second(s)
+Total verification time: 0.34 second(s)
+	Time spent in main process: 0.17 second(s)
+	Time spent in child processes: 0.17 second(s)
