@@ -11,8 +11,13 @@ int fac(int x)
   requires @value[x]
   ensures true;
 {
-  if (x<1) {return x;}
-  else return x*fac(x-1);
+  if (x<1) 
+    {
+      return x;
+    }
+  else{ 
+    return x*fac(x-1);
+  }
 }
 
 data node {
@@ -41,6 +46,9 @@ node make_tree(int depth)
     node r = make_tree(depth-1);
     int v = rand();
     node t = new node(v,l,r);
+    //left
+    //right
+    //value
     return t;
   }
 }
@@ -50,7 +58,8 @@ int tree_compute_sum_facs(node t)
   requires t::tree<n> & @value[t]
   ensures t::tree<n>;
 {
-  if (t==null) { return 1;}
+  if (t==null) 
+    { return 1;}
   else{
     int leftSum = tree_compute_sum_facs(t.left);
     int rightSum = tree_compute_sum_facs(t.right);
@@ -64,7 +73,8 @@ void summator(node t, ref int sum)
   requires t::tree<n> & @value[t] & @full[sum]
   ensures t::tree<n> & @full[sum];
 {
-  sum = tree_compute_sum_facs(t);
+  int tmp = tree_compute_sum_facs(t);
+  sum = tmp;
 }
 
 //fork a thread, return its id

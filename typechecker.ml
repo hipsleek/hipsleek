@@ -175,9 +175,9 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.ext_formula) (
   let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
   let tmp1 = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars in
   (*enable this check require enabling --ann-vp *)
-  (* let _ = if (tmp1!=[]) then *)
-  (*       report_error pos ("\ncheck_specs: EBase: missing variable permissions for " ^ (Cprinter.string_of_spec_var_list tmp1)) *)
-  (* in *)
+  let _ = if (tmp1!=[]) then
+        report_error pos ("\ncheck_specs: EBase: missing variable permissions for " ^ (Cprinter.string_of_spec_var_list tmp1))
+  in
   (*Find out @zero for the main thread*)
   (*Pickup variable permissions in the main thread only*)
   let vp_list2,_ = CF.filter_varperm_formula pre_f in

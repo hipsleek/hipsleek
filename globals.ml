@@ -309,7 +309,7 @@ let release_name = "release"
 let lock_name = "lock"
 
 (*precluded files*)
-let header_file_list  = ref (["\"prelude.ss\""] : string list)
+let header_file_list  = ref (["\"prelude_vp.ss\""] : string list)
 let pragma_list = ref ([] : string list)
 
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 

@@ -2525,7 +2525,7 @@ let print_stats () =
 
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
-  Redlog.start ();
+  (* Redlog.start (); *)
   match !tp with
   | Coq -> begin
       Coq.start ();
@@ -2533,7 +2533,7 @@ let start_prover () =
 	 end
   | Redlog | RM -> 
       begin
-      (* Redlog.start (); *)
+      Redlog.start ();
 	  Omega.start ();
 	 end
   | Cvc3 -> 
