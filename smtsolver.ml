@@ -79,6 +79,8 @@ let rec smt_of_typ t =
 			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+    (* TODO *)
+    | RelT -> "Int"
 
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -161,6 +163,8 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
 	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+  | CP.LexVar _ ->
+      illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -243,6 +247,7 @@ and collect_combine_formula_info_raw f1 f2 =
   combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
 
 and collect_bformula_info b = match b with
+  | CP.LexVar _ -> default_formula_info
   | CP.BConst _ | CP.BVar _ -> default_formula_info
   | CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
   | CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 

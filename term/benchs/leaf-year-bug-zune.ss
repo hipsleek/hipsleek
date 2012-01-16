@@ -41,15 +41,15 @@ case {
 				days -= 366;
 				year += 1;
 			}
-			loop(days, year); //(ERR: not decreasing) when 365<days<=366
+			//loop(days, year);
 		}
 		else 
 		{
 			days -= 365;
 			year += 1;
-			loop(days, year);
+			//loop(days, year);
 		}
-		//loop(days, year);
+		loop(days, year); //(ERR: not decreasing) when 365<days<=366
 	}
 }
 

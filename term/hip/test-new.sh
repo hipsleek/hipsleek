@@ -3,7 +3,7 @@
 ../../hip valid-1b.ss > 1b.n
 ../../hip valid-1c.ss > 1c.n
 ../../hip valid-1d.ss > 1d.n
-../../hip valid-1e.ss > 1e.n
+../../hip valid-1e.ss --dis-phase-num > 1e.n
 ../../hip invalid-1.ss > w1.n
 ../../hip invalid-1a.ss > w1a.n
 ../../hip invalid-1b.ss > w1b.n

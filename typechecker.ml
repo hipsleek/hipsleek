@@ -178,14 +178,17 @@ and check_bounded_term_x prog proc ctx post_pos post_label =
     !CF.print_list_partial_context) ctx no_pos in
 
   let check_bounded_one_measures m =
+    (* Termination: filter the exp of phase variables 
+     * (their value non-negative numbers in default) *)
+    let m = List.filter (fun e -> 
+      not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in 
     let bnd_formula_l = List.map (fun e ->
       CP.mkPure (CP.mkGte e (CP.mkIConst 0 no_pos) no_pos)) m in
     (* Termination: turn off the inference with boundedness checking *)
     (* Still need the inference for logical variables, to make sure 
      * the constraint all logical variables are not negative satisfied *)
     (* let infer_v = List.concat (List.map (fun f -> CP.fv f) bnd_formula_l) in *)
-    let infer_v = prog.prog_logical_vars in 
-    let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in
+    (* let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in *)
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) no_pos in
     let rs, _ = heap_entail_list_partial_context_init 
