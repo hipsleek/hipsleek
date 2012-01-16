@@ -2382,6 +2382,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
+              es_assumed_pure = fold_es.es_assumed_pure;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
@@ -5319,7 +5320,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   let estate = estate_orig in
-  let (estate,_,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p rhs_p_br pos in
+  let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 
+    lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
   (* Termination: Try to prove rhs_wf with inference *)
@@ -5355,7 +5357,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	begin
       if (is_ok = false) then (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) 
       else
-        let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
+        let m_lhs = MCP.combine_mix_branch branch_id (lhs_new, lhs_b) in
         let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
         let tmp3 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h1, xpure_lhs_h1_b)) true in
         let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
@@ -5470,7 +5472,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let fold_fun (is_ok,a2,a3, (bug_kind, (contra_list1, must_list1, may_list1))) branch_id_added =
                 if is_ok then (is_ok,a2,a3, (bug_kind, (contra_list1, must_list1, may_list1))) else
 	              let tmp1 = MCP.merge_mems (MCP.combine_mix_branch branch_id_added (xpure_lhs_h1, xpure_lhs_h1_b))
-                    (MCP.combine_mix_branch branch_id_added (lhs_p, lhs_b)) false in
+                    (MCP.combine_mix_branch branch_id_added (lhs_new, lhs_b)) false in
 	              let new_ante, new_conseq = heap_entail_build_mix_formula_check
                     (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 rhs_p pos in
 		          imp_subno := !imp_subno+1;
@@ -5513,7 +5515,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let inf_p = (stk_inf_pure # get_stk) in
       let estate = add_infer_pure_to_estate inf_p estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
-	  let lhs_p = MCP.merge_mems lhs_p to_add true in
+	  let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
       (*    let lhs_xpure,_,_,_ = xpure prog res_delta in                                                              *)
       (*    let rhs_xpure = rhs_p in                                                                                   *)
@@ -5942,6 +5944,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
+        es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
 		es_var_ctx_lhs = estate.es_var_ctx_lhs;
 		es_var_ctx_rhs = estate.es_var_ctx_rhs;
@@ -6085,6 +6088,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_pure = estate.es_infer_pure;
                  es_infer_pure_thus = estate.es_infer_pure_thus;
+                 es_assumed_pure = estate.es_assumed_pure;
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
@@ -6629,6 +6633,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
 	(tmp, prf)
   else begin
+  unable_to_fold_rhs_heap := true;
 	Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
 	^ (Cprinter.string_of_context ctx0) ^ "\n"
 	^ "to:ln2: "

@@ -30,16 +30,27 @@ infer [] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2<=s3
 */
 
 // BUG below
-infer [s2,s3] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)
+/*infer [s2,s3] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)
     |- x::sll<s,l>.
 print residue.
+*/
+
 
 infer [s2,s3,l3,lg,B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & 
   B(s2,s3,l3,lg)  |- x::sll<s,l> & B(sm,s,l,lg).
 print residue.
 
+
 infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
     |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+infer [] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2 <= s3 & l3 <= lg  
+    |- x::sll<s,l> & sm <= s & l <= lg.
+print residue.
+
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2 <= s3 & B(l3,lg)  
+    |- x::sll<s,l> & sm <= s & B(l,lg).
 print residue.
 
 /*
@@ -49,4 +60,13 @@ inferred rel: [( B(s2,s3,l3,lg) & sm<=s2 & l=l3 & s=sm & s3<=l3)
  B(s2,s3,l3,lg) --> s2<=s3]
 
 */
+/*
+inferred pure: [s2<=s3]
+inferred rel: [( B(s2,s3,l3,lg) & sm<=s2 & l=l3 & s=sm & s2<=s3 & s3<=l3) -->  B(sm,s,l,lg)]
 
+*/
+/*
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
+    |- B(sm,s,l,lg).
+print residue.
+*/

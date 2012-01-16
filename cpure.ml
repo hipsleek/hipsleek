@@ -6663,7 +6663,14 @@ let get_rel_id_list (f:formula) = match f with
     | (RelForm(id,_,_),_) -> [id]
     | _ -> [])
   | _ -> []
-  
+
+let get_rel_args (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (RelForm(_,args,_),_) -> List.concat (List.map afv args)
+    | _ -> [])
+  | _ -> []
+
 let is_rel_in_vars (vl:spec_var list) (f:formula) 
       = match (get_rel_id f) with
         | Some n -> if mem n vl then true else false

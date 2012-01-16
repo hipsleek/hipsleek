@@ -494,6 +494,9 @@ let is_sat_slicing = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 
+(* Flag of being unable to fold rhs_heap *)
+let unable_to_fold_rhs_heap = ref false
+
 (* Inference *)
 (*let call_graph : ((string list) list) ref = ref [[]]*)
 

@@ -3061,6 +3061,8 @@ think it is used to instantiate when folding.
   es_infer_pure : CP.formula list; 
   (* output : post inferred relation lhs --> rhs *)
   es_infer_rel : (CP.formula * CP.formula) list; 
+  (* output : pre pure assumed to infer relation *)
+  es_assumed_pure : CP.formula list; 
   (* es_infer_pures : CP.formula list; *)
   (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)
   (* input precondition inferred so far, for heap
@@ -3241,6 +3243,7 @@ let empty_es flowt pos =
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
   es_infer_pure_thus = CP.mkTrue no_pos ;
+  es_assumed_pure = [];
   (*es_infer_invs = [];*)
 }
 
@@ -4129,6 +4132,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
+        es_assumed_pure = es.es_assumed_pure;
     }
 
 let false_es_with_orig_ante es f pos =
