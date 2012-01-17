@@ -19,3 +19,5 @@ echo "======= threads.ss ======"
 ../../../../hip threads.ss > threads.n
 echo "======= parallel_fibonacci.ss ======"
 ../../../../hip -tp z3 -perm none parallel_fibonacci.ss > parallel_fibonacci.n
+echo "======= parallel_tree_search.ss ======"
+../../../../hip parallel_tree_search.ss -tp mona -perm none > parallel_tree_search.n

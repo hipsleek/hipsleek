@@ -841,7 +841,8 @@ let stop () =
 
 let restart reason =
   if !is_mona_running then
-	let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in
+	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
+	let _ = print_endline ("\nMona is running ... "); flush stdout; in
     Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let check_if_mona_is_alive () : bool = 

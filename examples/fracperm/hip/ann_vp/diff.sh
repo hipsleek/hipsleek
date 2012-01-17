@@ -18,3 +18,5 @@ echo "======= threads.ss ======"
 diff threads.res threads.n
 echo "======= parallel_fibonacci.ss ======"
 diff parallel_fibonacci.res parallel_fibonacci.n
+echo "======= parallel_tree_search.ss ======"
+diff parallel_tree_search.res parallel_tree_search.n
