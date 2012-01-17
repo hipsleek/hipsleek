@@ -194,7 +194,7 @@ and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
       !CF.print_list_partial_context) rs no_pos in
     if (CF.isSuccessListPartialCtx rs) then ()
     else
-      let term_pos = (post_pos, proving_loc # get) in
+      let term_pos = (post_pos, no_pos) in
       let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
       Term.term_res_stk # push term_res
   in
