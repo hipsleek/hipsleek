@@ -13,21 +13,20 @@ case {
 	x>y -> requires Term[x] ensures true;
 }
 */
-//requires x>0 & y>0
 /*
+TODO : too strong?
+!!! Inferred Heap :[]
+!!! Inferred Pure :[ 1<=x, pv_630<=p1, p2<=p1, (1+y)<=(2*x), (1+x)<=y]
+!!! Inferred Heap :[]
+!!! Inferred Pure :[ p1<=p2, (1+x)<=(2*y), (1+y)<=x, pv_630<=p2, 1<=y]
+*/
+//requires x>0 & y>0
 infer[p1,p2,p3, x, y]
 case {
   x<y -> requires Term[p1,y] ensures true;
   x=y -> requires Term ensures true;
-	x>y -> requires Term[x] ensures true;
+	x>y -> requires Term[p2,x] ensures true;
 }
-*/
-infer[p1, p2, p3]
-case {
-	x=y -> requires Term ensures true;
-	x!=y -> requires Term[p1, x+y] ensures true;
-}
-
 {
 	if (x>y) 
 		return gcd (x-y, y);

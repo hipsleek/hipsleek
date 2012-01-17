@@ -22,10 +22,15 @@ case {
 	x>y -> requires Term[x] ensures true;
 }
 */
+/* TODO : seems a little strong?
+!!! Inferred Heap :[]
+!!! Inferred Pure :[ pv_629<=p1, (1+y)<=x, 1<=y, pv_629<=p1, (1+x)<=y, 1<=x]
+*/
+
 infer[p1, p2, p3, x, y]
 case {
 	x=y -> requires Term ensures true;
-	x!=y -> requires Term[p1, x, y] ensures true;
+	x!=y -> requires Term[p1, x+y] ensures true;
 }
 
 {
