@@ -4544,10 +4544,13 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
 	| None -> (npf, None)
 	| Some (il,lbl,el) -> let nel = trans_pure_exp_list el stab in (npf, Some (il,lbl,nel))
                                                                        
-and trans_pure_exp_debug (e0 : IP.exp) stab : CP.exp =
-  Debug.no_1 "trans_pure_exp" (Iprinter.string_of_formula_exp) (Cprinter.string_of_formula_exp) (fun e -> trans_pure_exp e stab) e0 
-      
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
+  Debug.no_1 "trans_pure_exp" 
+  (Iprinter.string_of_formula_exp)
+  (Cprinter.string_of_formula_exp) 
+  (fun e -> trans_pure_exp_x e stab) e0 
+      
+and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
