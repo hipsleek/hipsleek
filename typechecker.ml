@@ -306,7 +306,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
             (if vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
-                CF.Ctx {es with CF.es_infer_vars = vars_inf;CF.es_infer_vars_rel = vars_rel;CF.es_infer_post = postf}) ctx in
+                CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
+                    CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
+                    CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
             let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)
             let pos = b.CF.formula_inf_pos in
