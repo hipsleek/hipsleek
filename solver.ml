@@ -5253,7 +5253,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 		                let ws = CP.fresh_spec_vars qvars in
 		                let st = List.combine qvars ws in
 		                let baref = mkBase qh qp qt qfl qb qa pos in (*TO CHECK*)
-		                let new_baref = subst st baref in
+		                let new_baref = subst_varperm st baref in
 				        let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
 		                let tmp_rs, tmp_prf = heap_entail_conjunct_helper 1 prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
 			            (match tmp_rs with

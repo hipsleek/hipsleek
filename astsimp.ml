@@ -6450,9 +6450,17 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
     let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
-    let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then Err.report_error{ 
-        Err.error_loc = IF.pos_of_formula f; 
-        Err.error_text = "call-by-value parameters & existential vars should not be primed"; } in
+    let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then 
+          let vars = List.filter (fun (c1,c2)->c2==Primed) need_quant in
+          let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
+          Err.report_error{ 
+              Err.error_loc = IF.pos_of_formula f; 
+              Err.error_text = msg; } 
+
+        (*   Err.report_error{  *)
+        (* Err.error_loc = IF.pos_of_formula f;  *)
+        (* Err.error_text = "call-by-value parameters & existential vars should not be primed"; }  *)
+    in
     (* let _ = if (List.length need_quant)>0 then  *)
     (*   print_string ("\n warning "^(string_of_loc (IF.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     IF.push_exists need_quant f in

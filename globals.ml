@@ -238,6 +238,23 @@ let rec s_i_list l c = match l with
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 ;;
 
+let string_of_primed p =
+  match p with
+    | Primed -> "'"
+    | Unprimed -> ""
+
+let string_of_primed_ident (id,p) =
+  id ^ string_of_primed p
+
+let rec s_p_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> string_of_primed_ident h
+  | h::t -> (string_of_primed_ident h) ^ c ^ (s_p_i_list t c)
+;;
+
+let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
+;;
+
 let is_substr s id =
   let len_s = String.length s in
   try
