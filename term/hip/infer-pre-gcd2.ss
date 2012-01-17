@@ -21,11 +21,11 @@ TODO : too strong?
 !!! Inferred Pure :[ p1<=p2, (1+x)<=(2*y), (1+y)<=x, pv_630<=p2, 1<=y]
 */
 //requires x>0 & y>0
-infer[p1,p2,p3, x, y]
+infer[x, y]
 case {
-  x<y -> requires Term[p1,y] ensures true;
+  x<y -> requires Term[0,y] ensures true;
   x=y -> requires Term ensures true;
-	x>y -> requires Term[p2,x] ensures true;
+	x>y -> requires Term[0,x] ensures true;
 }
 {
 	if (x>y) 

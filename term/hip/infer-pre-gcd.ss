@@ -25,11 +25,13 @@ case {
 /* TODO : seems a little strong?
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ pv_629<=p1, (1+y)<=x, 1<=y, pv_629<=p1, (1+x)<=y, 1<=x]
+Answer : inference inferred existing state like x>y and x<y which leads
+to false. The new version in infer2 should fix this problem.
 */
 
-infer[p1, p2, p3, x, y]
+infer[p1, p2, x, y]
 case {
-	x=y -> requires Term ensures true;
+	x=y -> requires Term[p2] ensures true;
 	x!=y -> requires Term[p1, x+y] ensures true;
 }
 
