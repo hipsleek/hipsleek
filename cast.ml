@@ -115,8 +115,8 @@ and proc_decl = {
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
-		(* Termination: Set of logical variables of the proc's scc group *)
-		proc_logical_vars : P.spec_var list;
+    (* Termination: Set of logical variables of the proc's scc group *)
+    proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
     proc_file : string;
