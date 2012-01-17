@@ -3341,8 +3341,9 @@ and heap_entail_conjunct_lhs_struc_x
 	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
                 (*************Compose variable permissions >>> ******************)
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_ext_formula f)^"\n")) pos;
-                let ps,_ = filter_varperm_formula post in
-                let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
+                (* let ps,_ = filter_varperm_formula post in *)
+                (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
+                let full_vars = get_varperm_formula post VP_Full in
                 let new_post = drop_varperm_formula post in
                 let add_vperm_full es =
                   let zero_vars = es.es_var_zero_perm in
@@ -3387,61 +3388,10 @@ and heap_entail_conjunct_lhs_struc_x
                           let f = CF.formula_of_pure_N (CP.mkEqVar tmp id pos) pos in
 	                      let rs1 = CF.transform_context (normalize_es f pos true) rs in
                           (* let _ = print_string ("\n after adding res=tid :"^(Cprinter.string_of_context rs1)^"\n") in *)
-                          (*add the post condition into formul_*_and *)
-                          let fct es =
-                            (*collect @var for later use*)
-                            let (p,_) = es.es_pure in (*collect pure info*)
-                            let vp_list,_ = MCP.filter_varperm_mix_formula p in
-                            (*collect @value variales*)
-                            let val_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in
-                            let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in
-                            (*then clear entail_*)
-                            let es = clear_entailment_history_es_es es in
-                            let f = es.CF.es_formula in
-                            (* let _ = print_string ("\n after adding res=tid :"^(Cprinter.string_of_entail_state es)^"\n") in *)
-                            (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
-                            (*Rename ref_vars for later join*)
-                            let rs = CP.fresh_spec_vars ref_vars in
-                            let rho1 = List.combine (List.map CP.to_unprimed ref_vars) rs in
-                            let rho2 = List.combine (List.map CP.to_primed ref_vars) rs in
-                            let new_f = subst rho2 f in
-                            let new_post = subst rho1 post in
-                            (* let new_f = push_exists rs new_f in (\* IMPORTANT: do not do this*\) *)
-                            (*Rename @value for later join*)
-                            (* y'=1 and x'=x+y' => y'=y_20 & y_20=1 and x'=x+y_20*)
 
-                            let fresh_vars = CP.fresh_spec_vars val_vars in
-                            let uprimed_vars = (List.map CP.to_unprimed fresh_vars) in
-                            let rho3 = List.combine val_vars uprimed_vars in
-                            (*x'=x+y_20*)
-                            let new_post2 = subst rho3 new_post in
-                            (*y_20=1*)
-                            let new_f2 = subst rho3 new_f in
-                            (*y'=y_20*)
-                            let func v1 v2 =
-                              Cpure.BForm (((Cpure.Eq (
-                                  (Cpure.Var (v1,no_pos)),
-                                  (Cpure.Var (v2,no_pos)),
-                                  no_pos
-                              )),None), None)
-                            in
-                            let new_f3 = List.fold_left (fun f (v1,v2) -> 
-                                let eq_f = func v1 v2 in
-                                (add_pure_formula_to_formula eq_f f)
-                            ) new_f2 rho3 in
-                            (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_formula post)) in *)
-                            let qvars,base = CF.split_quantifiers new_post2 in
-                            let one_f = CF.one_formula_of_formula base id in
-                            let one_f = {one_f with CF.formula_ref_vars = ref_vars;} in
-                            (*add thread id*)
-                            (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
-                            let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
-                            let f1 = CF.add_quantifiers evars new_f3 in
-                            let f2 = CF.add_formula_and [one_f] f1 in
-                            let new_es = {es with CF.es_formula = f2} in
-                            CF.Ctx new_es
-                          in
-	                      let rs2 = CF.transform_context fct rs1 in
+                          (*add the post condition into formul_*_and *)
+                          (*special compose_context_formula for concurrency*)
+                          let rs2 = compose_context_formula_and rs1 post id ref_vars pos in
                           (* let _ = print_string ("\n after adding post condition: \n ### ref_vars = " ^ (Cprinter.string_of_spec_var_list ref_vars)^ "\n ### rs2 = " ^ (Cprinter.string_of_context rs2)^"\n") in *)
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in

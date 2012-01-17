@@ -7416,6 +7416,34 @@ let drop_varperm_formula (f:formula) =
   in
   helper f
 
+let get_varperm_formula_x (f:formula) typ : CP.spec_var list =
+  let rec helper f =
+    match f with
+      | Base b-> 
+          let p = b.formula_base_pure in
+          let res = MCP.get_varperm_mix_formula p typ in
+          res
+      | Exists b-> 
+          let p = b.formula_exists_pure in
+          let res = MCP.get_varperm_mix_formula p typ in
+          res
+      | Or b-> 
+          let res1 = helper b.formula_or_f1 in
+          let res2 = helper b.formula_or_f1 in
+          (*approximation*)
+          (match typ with
+            | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
+            | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+            | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+          )
+  in
+  helper f
+
+let get_varperm_formula (f:formula) typ : CP.spec_var list =
+  Gen.Debug.no_2 "get_varperm_formula" 
+      !print_formula string_of_vp_ann !print_svl
+      get_varperm_formula_x f typ
+
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   let data_node = DataNode ({
@@ -7625,3 +7653,99 @@ let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
       !print_formula
       !print_struc_formula
       (fun _ _ _ _ -> prepost_of_release_x var sort args inv lbl pos) var sort args inv
+
+(*IMITATE CF.COMPOSE but do not compose 2 formulas*)
+(* Put post into formula_*_and of f instread*)
+let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+  (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
+  (*Rename ref_vars for later join*)
+  let rs = CP.fresh_spec_vars ref_vars in
+  let rho1 = List.combine (List.map CP.to_unprimed ref_vars) rs in
+  let rho2 = List.combine (List.map CP.to_primed ref_vars) rs in
+  let new_f = subst rho2 f in
+  let new_post = subst rho1 post in
+  (* let new_f = push_exists rs new_f in (\* IMPORTANT: do not do this*\) *)
+  (*Rename @value for later join*)
+  (* y'=1 and x'=x+y' => y'=y_20 & y_20=1 and x'=x+y_20*)
+  let fresh_vars = CP.fresh_spec_vars val_vars in
+  let uprimed_vars = (List.map CP.to_unprimed fresh_vars) in
+  let rho3 = List.combine val_vars uprimed_vars in
+  (*x'=x+y_20*)
+  let new_post2 = subst rho3 new_post in
+  (*y_20=1*)
+  let new_f2 = subst rho3 new_f in
+  (*y'=y_20*)
+  let func v1 v2 =
+    Cpure.BForm (((Cpure.Eq (
+        (Cpure.Var (v1,no_pos)),
+        (Cpure.Var (v2,no_pos)),
+        no_pos
+    )),None), None)
+  in
+  let new_f3 = List.fold_left (fun f (v1,v2) -> 
+      let eq_f = func v1 v2 in
+      (add_pure_formula_to_formula eq_f f)
+  ) new_f2 rho3 in
+  (*---------------------------------------------------*)
+  (*NORMALIZE: f1 and (f2 or f3) ===> (f1 and f2) or (f1 and f3)*)
+  let rec helper f post = 
+    match post with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          Or ({formula_or_f1 = helper f f1; formula_or_f2 =  helper f f2; formula_or_pos = pos}) (*This case can not happen*)
+      | _ ->
+          (*Base or Exists*)
+          let qvars,base = split_quantifiers post in
+          let one_f = one_formula_of_formula base id in
+          let one_f = {one_f with formula_ref_vars = ref_vars;} in
+          (*add thread id*)
+          (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
+          let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
+          let f1 = add_quantifiers evars f in
+          let f2 = add_formula_and [one_f] f1 in
+          f2
+  in
+  helper new_f3 new_post2
+
+let compose_formula_and (f : formula) (post : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+  Gen.Debug.no_2 "compose_formula_and"
+      !print_formula 
+      !print_formula 
+      !print_formula
+      (fun _ _ -> compose_formula_and_x f post id ref_vars val_vars pos) f post
+
+(*add the post condition (phi) into formul_*_and *)
+(*special compose_context_formula for concurrency*)
+(*Ctx es o (f1 or f2) -> OCtx (es o f1) (es o f2)*)
+let compose_context_formula_and (ctx : context) (phi : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) pos =
+  let rec helper ctx phi = 
+    (match ctx with
+      | Ctx es -> begin
+	      match phi with
+		    | Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
+			    let new_c1 = helper ctx phi1 in
+			    let new_c2 = helper ctx phi2 in
+			    let res = (mkOCtx new_c1 new_c2 pos ) in
+			    res
+		    | _ -> 
+                (*collect @var for later use *)
+                let (p,_) = es.es_pure in (*collect pure info*)
+                let val_vars = MCP.get_varperm_mix_formula p VP_Value in
+                (*then clear entail_*)
+                let es = clear_entailment_history_es_es es in
+                let f = es.es_formula in
+                (*   (\*IMITATE CF.COMPOSE but do not compose 2 formulas*\) *)
+                let f2 = compose_formula_and f phi id ref_vars val_vars pos in
+                let new_es = {es with
+                    es_formula = f2;
+                    es_unsat_flag =false;}
+                in
+                Ctx new_es
+	  end
+      | OCtx (c1, c2) -> 
+	      let new_c1 = helper c1 phi in
+	      let new_c2 = helper c2 phi in
+	      let res = (mkOCtx new_c1 new_c2 pos) in
+		  res
+    )
+  in
+  helper ctx phi

@@ -982,6 +982,37 @@ and is_varperm_of_typ (f : formula) typ : bool=
     | _ -> false
   )
 
+and get_varperm_pure (f : formula) typ : spec_var list=
+  (match f with
+    | BForm (b,_) -> get_varperm_b b typ
+    | And (f1,f2,_) ->
+        let res1 = get_varperm_pure f1 typ in
+        let res2 = get_varperm_pure f2 typ in
+        (match typ with
+          | VP_Zero -> (res1@res2) (*TO CHECK: merge or AND ???*)
+          | VP_Full -> (res1@res2)
+          | VP_Value -> (res1@res2)
+        )
+    | Or (f1,f2,_,_) ->
+        let res1 = get_varperm_pure f1 typ in
+        let res2 = get_varperm_pure f2 typ in
+        (*approximation*)
+        (match typ with
+          | VP_Zero -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2)
+          | VP_Full -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
+          | VP_Value -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
+        )
+    | _ -> []
+  )
+
+and get_varperm_b (b : b_formula) typ: spec_var list =
+  let (pf, il) = b in
+  match pf with
+	| VarPerm (ct,ls,_) -> 
+        if (ct==typ) then ls
+        else []
+	| _ -> []
+
 and is_varperm_b (b : b_formula) : bool =
   let (pf, il) = b in
   match pf with

@@ -243,6 +243,7 @@ let peek_try =
      (fun strm ->
        match Stream.npeek 2 strm with
           | [_; OPAREN,_] -> ()
+          (* | [_; OBRACE,_] -> () *)
           | [_; OSQUARE,_] -> ()
           | _ -> raise Stream.Failure)
 		  
@@ -1890,6 +1891,8 @@ invocation_expression:
   ]];
 
 opt_lock_info: [[t = OPT lock_info -> t ]];
+
+(* lock_info: [[`OBRACE; t = id; `CBRACE -> t ]]; *)
 
 lock_info: [[`OSQUARE; t = id; `CSQUARE -> t ]];
 

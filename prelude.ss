@@ -259,7 +259,7 @@ int fork()
   ensures true;
 
 void join(int id)
-  requires true
+  requires @value[id]
   ensures true;
 
 void init()

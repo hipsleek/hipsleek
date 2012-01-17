@@ -1948,7 +1948,9 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
     (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+	(* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+	(* let _ = print_string "trans_proc :: set_pre_flow PASSED 2\n" in *)
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
 	let r_int = exlist # get_hash abnormal_flow in
 	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -1979,12 +1981,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	  if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
 	  else static_specs_list in
 	(** An Hoa : print out final_static_specs_list for inspection **)
-(*	let _ = print_string "Static spec list : " in                                      *)
+	(* let _ = print_string "Static spec list : " in *)
 (*	let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in*)
 	let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
 	let imp_vars = List.append imp_vars imp_spec_vars in
 	let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
-(*	let _ = print_string "Important variables found: " in               *)
+	(* let _ = print_string "Important variables found: " in *)
 (*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
 	(** An Hoa : end **)
 	let final_dynamic_specs_list = dynamic_specs_list in
@@ -2030,7 +2032,7 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
 		CF.formula_ext_base = base;
 		CF.formula_ext_continuation = cont;
 		CF.formula_ext_pos = pos }) ->
-            (*									let _ = print_endline "collect_important_vars_in_spec ==> EBase" in                           *)
+            									(* let _ = print_endline "collect_important_vars_in_spec ==> EBase" in *)
             (*									let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in              *)
             (*									let _ = print_endline ("ivars = " ^ (Cprinter.string_of_spec_var_list ivars)) in              *)
             (*									let _ = print_endline ("qvars = " ^ (Cprinter.string_of_spec_var_list qvars)) in              *)

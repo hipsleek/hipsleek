@@ -2242,6 +2242,21 @@ let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula
       !print_mix_f pr_out
       filter_varperm_mix_formula_x mix_f
 
+let get_varperm_mix_formula_x (mix_f:mix_formula) typ : spec_var list =
+  match mix_f with
+    | OnePF f -> 
+        let res = Cpure.get_varperm_pure f typ in
+        res
+    | MemoF mp -> 
+        let f = pure_of_mix mix_f in
+        let res = Cpure.get_varperm_pure f typ in
+        res
+
+let get_varperm_mix_formula (mix_f:mix_formula) typ : spec_var list =
+  Gen.Debug.no_2 "get_varperm_mix_formula"
+      !print_mix_f string_of_vp_ann !print_svl
+      get_varperm_mix_formula_x mix_f typ
+
 (*Note: use this method with care.
 The conversion between pure_of_mix and mix_of_pure
 may affect --eps*)

@@ -1042,6 +1042,8 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
+  let ante = CP.drop_varperm_formula ante in
+  let conseq = CP.drop_varperm_formula conseq in
   let (ante_fv, ante) = prepare_formula_for_mona ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
@@ -1063,6 +1065,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   incr test_number;
+  let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
