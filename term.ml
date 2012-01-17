@@ -978,7 +978,7 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
         let all_zero = List.for_all (fun (_,i) -> i==0) subst in
         let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
         if all_zero then
-          Debug.trace_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
+          Debug.info_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
         else begin
           Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
           Debug.info_hprint (add_str "Phase Numbering"

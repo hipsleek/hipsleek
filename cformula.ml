@@ -7486,7 +7486,7 @@ and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
 
 let add_infer_struc vl sf =
   let pr = !print_struc_formula in
-  Debug.to_1 "add_infer_struc" pr pr
+  Debug.no_1 "add_infer_struc" pr pr
   (fun _ -> add_infer_struc vl sf) sf
 *)
 (* Termination: Count the number of Term in a specification *)  

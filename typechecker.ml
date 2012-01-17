@@ -160,10 +160,10 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0 do_infer) spec_list
 
 (* Termination *)      
-(* this procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
-(* in case of failure, please put message into term_msg stack *)
-(* the resulting ctx may contain inferred constraint *)
-and check_bounded_term_x prog proc ctx post_pos post_label =
+(* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
+(* In case of failure, please put message into term_msg stack *)
+(* The resulting ctx may contain inferred constraint *)
+and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed)) proc.proc_args in  
   let r = proc.proc_by_name_params in
   let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
@@ -184,11 +184,8 @@ and check_bounded_term_x prog proc ctx post_pos post_label =
       not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in 
     let bnd_formula_l = List.map (fun e ->
       CP.mkPure (CP.mkGte e (CP.mkIConst 0 no_pos) no_pos)) m in
-    (* Termination: turn off the inference with boundedness checking *)
-    (* Still need the inference for logical variables, to make sure 
-     * the constraint all logical variables are not negative satisfied *)
-    (* let infer_v = List.concat (List.map (fun f -> CP.fv f) bnd_formula_l) in *)
-    (* let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in *)
+    (* Termination: Restore the list of inferred vars provided by users *)
+    let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) no_pos in
     let rs, _ = heap_entail_list_partial_context_init 
@@ -211,10 +208,10 @@ and check_bounded_term_x prog proc ctx post_pos post_label =
   List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
   ctx
 
-and check_bounded_term prog proc ctx post_pos post_label =
+and check_bounded_term prog proc ctx infer_v post_pos post_label =
   let pr = !CF.print_list_partial_context in
   Debug.no_1 "check_bounded_term" pr pr 
-  (fun _ -> check_bounded_term_x prog proc ctx post_pos post_label) ctx
+  (fun _ -> check_bounded_term_x prog proc ctx infer_v post_pos post_label) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
@@ -386,7 +383,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                        * of the termination measures *)
                       (* TODO: Termination: Turn the following function off if
                        * there is not any Term *)
-                      let res_ctx = check_bounded_term prog proc res_ctx pos_post post_label in
+                      let res_ctx = check_bounded_term prog proc res_ctx post_iv pos_post post_label in
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
                        * Need to filter the constraints and normalize 
@@ -1183,6 +1180,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
             (* Termination: Add the set of logical variables into the initial context *)
             let init_ctx = Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
+            let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
 			    let _ = if !print_proof then begin 
 				  Prooftracer.push_proc proc;
 				  Prooftracer.start_compound_object ();
