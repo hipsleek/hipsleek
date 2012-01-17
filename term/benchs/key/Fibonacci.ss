@@ -17,7 +17,11 @@ case {
 	j=n -> requires Term ensures true;
 	j!=n -> case {
 		j>n -> requires Loop ensures false;
-		j<=n -> requires MayLoop ensures true;
+		j<=n -> 
+			// The program loops if n is not a Fibonacci number
+			// TODO: How to specify this constraints?
+			// Can we use relation?
+			requires MayLoop ensures true;
 	}
 }
 {

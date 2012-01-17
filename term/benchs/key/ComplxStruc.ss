@@ -1,3 +1,5 @@
+//This is a good example for case inference
+
 void complxStruc (int i)
 
 {
@@ -21,8 +23,8 @@ void loop (ref int i, ref int j)
 			} else {
 				j--;
 			}
-		} else {
-			if (i > 0 && j < 0) {
+		} else { // i < j
+			if (i > 0 && j < 0) { // unreachable 
 				i--;
 				if (j < -1) {
 					j++;
