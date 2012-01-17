@@ -115,6 +115,8 @@ and proc_decl = {
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
+		(* Termination: Set of logical variables of the proc's scc group *)
+		proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
     proc_file : string;
@@ -1731,7 +1733,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
     if mutual_grps!=[] then 
       begin
         let pr p = p.proc_name in
-        Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call NUmber and Phase Logical Vars] <<<<<<")) no_pos;
+        Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
         Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
         Debug.devel_pprint "\n" no_pos
             
@@ -1754,8 +1756,12 @@ and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool)
   ) procs) in 
   let pvs = List.concat pvs in
   let n_procs = List.map (fun proc -> { proc with
-    proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs;
-    proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs;
+    (* Option 1: Add logical variables of scc group into specifications for inference *)
+    (* proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs; *)
+    (* proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs; *)
+    (* Option 2: Store the set of logical variables into proc_logical_vars 
+     * It will be added into the initial context in check_proc *)
+       proc_logical_vars = pvs;
   }) n_procs in
   let _ = List.iter (fun proc ->
     Hashtbl.replace tbl proc.proc_name proc 
@@ -1770,7 +1776,6 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       if add_call then Some proc.proc_call_order
       else None
     in
-    (* Still need to add EInfer into n_ss and n_ds *)
     let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
     let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
     ({ proc with

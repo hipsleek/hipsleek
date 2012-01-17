@@ -1179,6 +1179,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     init_form
                 in
 		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+            (* Termination: Add the set of logical variables into the initial context *)
+            let init_ctx = Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
+            let _ = DD.
 			    let _ = if !print_proof then begin 
 				  Prooftracer.push_proc proc;
 				  Prooftracer.start_compound_object ();

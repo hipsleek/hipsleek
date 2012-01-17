@@ -7464,6 +7464,8 @@ and fresh_phase_var_opt add_phase =
     Some (CP.SpecVar(Int, pv_name, Unprimed))
   else None
 
+(* Termination: Add EInfer for logical variables into the specification *) 
+(*
 and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
   if Gen.is_empty vl then sf
   else
@@ -7484,9 +7486,9 @@ and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
 
 let add_infer_struc vl sf =
   let pr = !print_struc_formula in
-  Debug.no_1 "add_infer_struc" pr pr
+  Debug.to_1 "add_infer_struc" pr pr
   (fun _ -> add_infer_struc vl sf) sf
-
+*)
 (* Termination: Count the number of Term in a specification *)  
 let rec count_term_struc (sf: struc_formula) : int =
   List.fold_left (fun acc ef -> acc + (count_term_ext ef)) 0 sf

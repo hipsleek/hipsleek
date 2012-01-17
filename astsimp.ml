@@ -2012,6 +2012,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
           C.proc_by_name_params = by_names;
           C.proc_body = body;
+          C.proc_logical_vars = [];
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_file = proc.I.proc_file;

@@ -2,7 +2,7 @@ logical int p1,p2,p3;
 
 int gcd (int x, int y)
 requires x>0 & y>0
-//infer[p1,p2,p3]
+infer[p1,p2,p3]
 case {
 	x<y -> requires Term[y] ensures true;
 	x=y -> requires Term[] ensures true;
