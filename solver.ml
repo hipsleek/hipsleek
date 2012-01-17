@@ -3107,7 +3107,8 @@ and sem_imply_add_x prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) 
 	        else (ctx,false)
 
 
-and syn_imply ctx p :bool = match ctx with
+and syn_imply ctx p :bool = 
+  match ctx with
   | OCtx _ -> report_error no_pos ("syn_imply: OCtx encountered \n")
   | Ctx c -> 
 	    if (sintactic_search c.es_formula p) then true
@@ -5529,14 +5530,14 @@ and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
     |  _ ->  Error.report_error 
            {Error.error_loc = no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   Debug.no_3 "solve_ineq_pure_formula "
       (Cprinter.string_of_pure_formula)
       (Cprinter.string_of_mem_formula) 
       (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
-      (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
+      (fun ante memset conseq -> solve_ineq_pure_formula_x ante memset conseq ) ante memset conseq
 
-and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula_x (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   let eqset = CP.EMapSV.build_eset (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
@@ -5646,8 +5647,10 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   (*let _ = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^*)
   (*"ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^*)
   (*"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n\n") in*) 
-  let conseq_m = solve_ineq ante_m0 memset conseq_m in
-  match ante_m0,ante_m1,conseq_m with
+  let conseq_m1 = solve_ineq ante_m0 memset conseq_m in
+  Debug.devel_zprint (lazy ("Simplifying the consequent using the set of memory locations memset = " ^ (Cprinter.string_of_mem_formula memset) ^ ": \n")) no_pos;
+  Debug.devel_zprint (lazy ("Old conseq: " ^ (Cprinter.string_of_mix_formula conseq_m)^ " --> New conseq = " ^ (Cprinter.string_of_mix_formula conseq_m1) ^ "\n")) no_pos;
+  match ante_m0,ante_m1,conseq_m1 with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
           begin
             (*print_endline "imply_mix_formula: first";*)
