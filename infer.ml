@@ -902,21 +902,21 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = Redlog.elim_exists_with_eq new_lhs in
           DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
-          let new_lhs = CP.arith_simplify_new new_lhs in
+(*          let new_lhs = CP.arith_simplify_new new_lhs in
           (new_lhs,rhs) 
-        in
-(*          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
+        in*)
+          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
           let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
           let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
           if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then [] 
           else
-          if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in*)
+          if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
         let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
         DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-        let inf_rel_ls = List.map wrap_exists inf_rel_ls in
-(*        let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in*)
+(*        let inf_rel_ls = List.map wrap_exists inf_rel_ls in*)
+        let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
         let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
         if inf_rel_ls != [] then
           begin

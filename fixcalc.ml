@@ -309,6 +309,13 @@ let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
   (*  print_endline ("PURE3: " ^ Cprinter.string_of_pure_formula pf);*)
   with _ -> rcase_orig
 
+(*let rec remove_weaker_bcase bcases = match bcases with
+  | [] -> []
+  | b::bs ->
+    if List.exists (fun fml -> TP.imply_raw fml b) bs then remove_weaker_bcase bs
+    else
+      b::(remove_weaker_bcase (List.filter (fun fml -> not(TP.imply_raw b fml)) bs))*)
+
 let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
   | None -> pfs
   | Some ivs ->
@@ -316,6 +323,8 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     match bcases with
     | [bcase] -> [bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel ante_vars) rcases)
     | _ -> bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)
+(*      let new_bcases = remove_weaker_bcase bcases in
+      new_bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)*)
 
 let helper input_pairs rel ante_vars = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in

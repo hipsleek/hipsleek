@@ -2387,6 +2387,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
+        Debug.devel_zprint (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
 	      Debug.devel_zprint (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
 	      Debug.devel_zprint (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
 	      Debug.devel_zprint (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
@@ -5902,6 +5903,7 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
 	    | Ctx c -> (None,Some c)
       *)
       *)
+
 and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_folding pos rhs_b = 
   let pr x = match x with 
     | None -> "None"
@@ -7119,6 +7121,19 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
           r)
       a estate 
 
+and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
+  | DataNode dl, DataNode dr -> 
+    let alias = dl.h_formula_data_node::(CP.EMapSV.find_equiv_all dl.h_formula_data_node lhs_aset) in
+    if List.mem dr.h_formula_data_node alias then
+    List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) dl.h_formula_data_arguments dr.h_formula_data_arguments
+    else []
+  | ViewNode vl, ViewNode vr -> 
+    let alias = vl.h_formula_view_node::(CP.EMapSV.find_equiv_all vl.h_formula_view_node lhs_aset) in
+    if List.mem vr.h_formula_view_node alias then
+    List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) vl.h_formula_view_arguments vr.h_formula_view_arguments
+    else []
+  | _ -> []
+
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   if not(Context.is_complex_action a) then
     begin
@@ -7175,6 +7190,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} -> 
+            let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+            (* Assumed lhs_h to be star or view_node or data_node *)
+            let lhs_h_list = split_star_conjunctions lhs_h in
+            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+            let init_pure = CP.conj_of_list init_pures pos in
+            let estate = {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} in
             do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
       | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
@@ -7201,6 +7224,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_base_case_unfold {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_rhs_node = rhs_node;}->
+            let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+            (* Assumed lhs_h to be star or view_node or data_node *)
+            let lhs_h_list = split_star_conjunctions lhs_h in
+            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+            let init_pure = CP.conj_of_list init_pures pos in
+            let estate = {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} in
             let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
             (match ans with
               | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
@@ -7210,6 +7241,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_base_case_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} ->
+            let lhs_h, lhs_p, _,_, _ = CF.split_components estate.es_formula in
+            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+            (* Assumed lhs_h to be star or view_node or data_node *)
+            let lhs_h_list = split_star_conjunctions lhs_h in
+            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+            let init_pure = CP.conj_of_list init_pures pos in
+            let new_ante = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
+            let estate = {estate with es_formula = new_ante} in
             if (estate.es_cont != []) then 
 	          (* let  _ = print_string ("rhs_rest = " ^(Cprinter.string_of_h_formula rhs_rest)^ "base = " ^ (Cprinter.string_of_formula (Base rhs_b)) ^ "\n") in  *)
 	          (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (*(Base rhs_b)*) (Cformula.formula_of_heap rhs_rest pos)  (get_node_label rhs_node) pos)), NoAlias)
