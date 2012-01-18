@@ -2,7 +2,6 @@
 Processing file "vperm_check.ss"
 Parsing vperm_check.ss ...
 Parsing ../../../../prelude_vp.ss ...
-Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
 Checking procedure inc$cell... 
@@ -15,7 +14,7 @@ dprint: vperm_check.ss:33: ctx:  List of Failesc Context: [FEC(0, 1, 1  )]
 Successful States:
 [
  Label: 
- State:true & Anon_full_perm=FLOAT 1. & x_659=x & y'=y & id_32'=tid_658 & {FLOW,(20,21)=__norm}
+ State:true & x_659=x & y'=y & id_32'=tid_658 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_658>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
 
@@ -32,7 +31,7 @@ dprint: vperm_check.ss:48: ctx:  List of Failesc Context: [FEC(0, 1, 1  )]
 Successful States:
 [
  Label: 
- State:x::cell()<i>@M[Orig] * y::cell()<j>@M[Orig] & Anon_full_perm=FLOAT 1. & x_664=x & y'=y & id_31'=tid_663 & {FLOW,(20,21)=__norm}
+ State:x::cell<i>@M[Orig] * y::cell<j>@M[Orig] & x_664=x & y'=y & id_31'=tid_663 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_663>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
 
@@ -48,7 +47,7 @@ dprint: vperm_check.ss:62: ctx:  List of Failesc Context: [FEC(0, 1, 1  )]
 Successful States:
 [
  Label: 
- State:true & Anon_full_perm=FLOAT 1. & x_694=x & y'=y & id_26'=tid_693 & {FLOW,(20,21)=__norm}
+ State:true & x_694=x & y'=y & id_26'=tid_693 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_693>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
 
@@ -64,7 +63,7 @@ dprint: vperm_check.ss:76: ctx:  List of Failesc Context: [FEC(0, 1, 1  )]
 Successful States:
 [
  Label: 
- State:true & Anon_full_perm=FLOAT 1. & x_699=x & y'=y & id_25'=tid_698 & {FLOW,(20,21)=__norm}
+ State:true & x_699=x & y'=y & id_25'=tid_698 & {FLOW,(20,21)=__norm}
 AND  <thread=tid_698>  <ref:x> true & @full[x]
          es_var_zero_perm: [x']
 
@@ -74,10 +73,9 @@ VarPerm Failure:vperm_check.ss:78: 9: check_full_varperm: var [x'] MUST have ful
 
 
 Procedure test4$int~int result FAIL-1
-Halting Reduce... 
-Stop Omega... 28 invocations 
+Stop Omega... 33 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.33 second(s)
+Total verification time: 0.19 second(s)
 	Time spent in main process: 0.17 second(s)
-	Time spent in child processes: 0.16 second(s)
+	Time spent in child processes: 0.02 second(s)

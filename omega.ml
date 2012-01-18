@@ -117,6 +117,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
 and omega_of_formula f  =
@@ -338,6 +339,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
+    let pe = drop_varperm_formula pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
       begin
@@ -399,6 +401,7 @@ let is_sat (pe : formula) sat_no : bool =
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
+      let pe = drop_varperm_formula pe in
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
@@ -535,6 +538,7 @@ let simplify (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
   (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
   begin
+    let pe = drop_varperm_formula pe in
     let vars_list = get_vars_formula pe in
     (*todo: should fix in code of OC: done*)
     (*if not safe then pe else*)
@@ -598,6 +602,7 @@ let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
   begin
 		omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
@@ -619,6 +624,7 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 		omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
@@ -640,6 +646,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
 		omega_subst_lst := [];
+    let pe1 = drop_varperm_formula pe1 in
     let fstr1 = omega_of_formula pe1 in
         let fstr2 = omega_of_formula pe2 in
         let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in

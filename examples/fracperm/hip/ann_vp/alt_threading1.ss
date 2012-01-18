@@ -7,9 +7,9 @@ data cell{
   int val;
 }
 
-void increment(cell x)
-  requires x::cell<i> & @value[x]
-  ensures x::cell<i+1>; //'
+void increment(ref cell x)
+  requires x::cell<i> & @full[x]
+  ensures x'::cell<i+1> & @full[x]; //'
 {
   x.val++;
 }
@@ -30,7 +30,8 @@ int main()
   int n = read_int();
   x = new cell(n);
   int id;
-  id = fork(increment,x);
+  id = fork(increment,x); //only child thread has full permission of x
+  dprint;
   join(id);
   int n1 = x.val;
   delete(x);

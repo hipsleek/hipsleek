@@ -25,6 +25,6 @@ Procedure search$node~int~boolean SUCCESS
 
 0 false contexts at: ()
 
-Total verification time: 2.2 second(s)
-	Time spent in main process: 1.54 second(s)
-	Time spent in child processes: 0.66 second(s)
+Total verification time: 3.99 second(s)
+	Time spent in main process: 2.69 second(s)
+	Time spent in child processes: 1.3 second(s)

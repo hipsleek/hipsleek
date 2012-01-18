@@ -16,6 +16,6 @@ Procedure seq_fib2$int~int SUCCESS
 Stop z3... 113 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.42 second(s)
-	Time spent in main process: 0.34 second(s)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.32 second(s)
 	Time spent in child processes: 0.08 second(s)

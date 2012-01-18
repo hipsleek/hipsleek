@@ -3,23 +3,6 @@
    verifast-11.12/tutorial_solutions/threads.c
 */
 
-int rand()
-  requires true
-  ensures true;
-
-int fac(int x)
-  requires @value[x]
-  ensures true;
-{
-  if (x<1) 
-    {
-      return x;
-    }
-  else{ 
-    return x*fac(x-1);
-  }
-}
-
 data node {
 	int val;
 	node left;
@@ -35,6 +18,15 @@ tree<n> == self = null & n = 0
   or self::node<_, p, q> * p::tree<n-1> * q::tree<n-1>
   inv n >= 0; 
 
+//prototype only
+int rand()
+  requires true
+  ensures true;
+
+//prototype only
+int fac(int x)
+  requires @value[x]
+  ensures true;
 
 node make_tree(int depth)
   requires @value[depth]

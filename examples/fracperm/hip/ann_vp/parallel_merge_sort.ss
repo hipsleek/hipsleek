@@ -103,6 +103,30 @@ node insert(node x, int v)
 	}
 }
 
+void seq_merge_sort(node xs,ref node ys)
+  requires xs::bnd<n, sm, bg> & n > 0 & @value[xs] & @full[ys]
+	ensures ys'::sll<n, smres, bgres> & smres >= sm & bgres <= bg & @full[ys]; //'
+{
+	int c, middle;
+	node s1, s2, s3;
+
+	if (xs.next != null)
+	{
+		c = count(xs);
+		middle = div2(c);
+		s1 = split_func(xs, middle);
+        // xs contains up to middle elements
+        // s1 is the rest
+        seq_merge_sort(s1,s2);
+        seq_merge_sort(xs,s3);
+        ys = merge(s2,s3);
+	}
+	else {
+        ys = xs;
+	}
+}
+
+
 // valid
 // 1 child thread
 /* merge sort */
