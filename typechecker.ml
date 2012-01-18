@@ -172,6 +172,13 @@ and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
     if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) 
     else final_state_prim in
   let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
+  (* Termination: Filter the duplicate measures *)
+  let eq_exp_list l1 l2 = 
+    try List.for_all2 (fun e1 e2 -> CP.eqExp e1 e2) l1 l2 
+    with _ -> false
+  in 
+  let l_term_measures = Gen.BList.remove_dups_eq eq_exp_list l_term_measures in 
+  
   let _ = Debug.trace_hprint (add_str "Measures" 
     (pr_list (pr_list !CP.print_exp))) l_term_measures no_pos in
   let _ = Debug.trace_hprint (add_str "Orig context" 
@@ -210,7 +217,7 @@ and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
 
 and check_bounded_term prog proc ctx infer_v post_pos post_label =
   let pr = !CF.print_list_partial_context in
-  Debug.no_1 "check_bounded_term" pr pr 
+  Debug.ho_1 "check_bounded_term" pr pr 
   (fun _ -> check_bounded_term_x prog proc ctx infer_v post_pos post_label) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
