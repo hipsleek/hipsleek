@@ -163,6 +163,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
+(*
 and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed)) proc.proc_args in  
   let r = proc.proc_by_name_params in
@@ -217,8 +218,55 @@ and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
 
 and check_bounded_term prog proc ctx infer_v post_pos post_label =
   let pr = !CF.print_list_partial_context in
-  Debug.ho_1 "check_bounded_term" pr pr 
+  Debug.no_1 "check_bounded_term" pr pr 
   (fun _ -> check_bounded_term_x prog proc ctx infer_v post_pos post_label) ctx
+*)
+
+and check_bounded_term_x prog ctx post_pos =
+  let ctx = Term.strip_lexvar_lhs ctx in
+  let l_term_measures = CF.collect_term_measures_context ctx in
+    
+  let _ = Debug.trace_hprint (add_str "Measures" 
+    (pr_list (pr_list !CP.print_exp))) l_term_measures no_pos in
+  let _ = Debug.trace_hprint (add_str "Orig context" 
+    !CF.print_context) ctx no_pos in
+
+  let check_bounded_one_measures m =
+    (* Termination: filter the exp of phase variables 
+     * (their value non-negative numbers in default) *)
+    let m = List.filter (fun e -> 
+      not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
+    let m_pos = match m with
+      | [] -> no_pos
+      | e::_ -> CP.pos_of_exp e 
+    in
+    let bnd_formula_l = List.map (fun e ->
+      CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
+    let bnd_formula = CF.formula_of_pure_formula
+      (CP.join_conjunctions bnd_formula_l) m_pos in
+    let rs, _ = heap_entail_one_context prog false ctx bnd_formula post_pos in
+    let _ = Debug.trace_hprint (add_str "Result context" 
+      !CF.print_list_context) rs no_pos in
+    if (CF.isFailCtx rs) then 
+      let term_pos = (m_pos, no_pos) in
+      let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
+      Term.term_res_stk # push term_res
+    else ()
+  in
+
+  let check_bounded_one_measures m =
+    Debug.no_1 "check_bounded_one_measures"
+    (pr_list !CP.print_exp) (fun _ -> "")
+    check_bounded_one_measures m
+  in 
+
+  List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
+  ctx
+
+and check_bounded_term prog ctx post_pos =
+  let pr = !CF.print_context in
+  Debug.no_1 "check_bounded_term" pr pr 
+  (fun _ -> check_bounded_term_x prog ctx post_pos) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
@@ -356,16 +404,19 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	          { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
 	                let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
                     (* need to add initial esc_stack *)
-                    let init_esc = [((0,""),[])] in
+                  let init_esc = [((0,""),[])] in
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
-	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
-	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
+                  (* Termination: Check boundedness of the measures 
+                   * before going into the function body *)
+                  let _ = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in 
+	    	          let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+	                (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
+	    	          let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-                    let pos = CF.pos_of_formula post_cond in
-	    	        if (CF.isFailListPartialCtx res_ctx) 
-                    then (spec, [], [], false)
-	    	        else
+                  let pos = CF.pos_of_formula post_cond in
+	    	          if (CF.isFailListPartialCtx res_ctx) 
+                  then (spec, [], [], false)
+	    	          else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
@@ -388,9 +439,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let pos_post = (CF.pos_of_formula post_cond) in
                       (* Termination: Check the boundedness 
                        * of the termination measures *)
-                      (* TODO: Termination: Turn the following function off if
-                       * there is not any Term *)
-                      let res_ctx = check_bounded_term prog proc res_ctx post_iv pos_post post_label in
+                      (* let res_ctx = check_bounded_term prog proc res_ctx post_iv pos_post post_label in *)
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
                        * Need to filter the constraints and normalize 

@@ -37,7 +37,9 @@ Termination checking result:
 */
 
 int length(node x)
-  requires x::ll<n1> & Term[n1-1]
+	//infer[n1]
+  requires x::ll<n1> 
+		& Term[-1+n1]
   ensures res=n1;
 {
 	if (x == null)
