@@ -1,6 +1,7 @@
-/* count the number of node in the tree in parallel */
-/* Using annotations for variable permissions */
-
+/*
+   Description: count the number of node in the tree in parallel.
+   Using a heap location (int2) for counting
+*/
 
 data node2 {
 	int val;
@@ -17,6 +18,24 @@ tree<n> == self = null & n = 0
 	or self::node2<_, p, q> * p::tree<n1> * q::tree<n2> & n = 1 + n1 + n2 
 	inv n >= 0; 
 
+
+//valid
+//one child thread
+void seqCount(node2 t, int2 count)
+  requires t::tree(f)<n> * count::int2<m> & @value[t,count]
+     ensures t::tree(f)<n> * count::int2<n> & n >= 0;
+{
+  int2 cleft = new int2(0);
+  int2 cright = new int2(0);
+  if (t==null){
+    count.val = 0;
+  }
+  else{
+    seqCount(t.left,cleft);
+    seqCount(t.right,cright);
+    count.val = 1+cleft.val+cright.val;
+  }
+}
 
 //valid
 //one child thread
@@ -51,11 +70,8 @@ void parallelCount2(node2 t, int2 count)
   else{
     int id1, id2; 
     id1 = fork(parallelCount2,t.left,cleft);
-    //dprint;
     id2 = fork(parallelCount2,t.right,cright);
-    //dprint;
     join(id1);
-    //dprint;
     join(id2);
     count.val = 1+cleft.val+cright.val;
   }

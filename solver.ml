@@ -4992,6 +4992,12 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
           let f2_p = f2.formula_pure in
           let f2_vperms, new_f2_p = MCP.filter_varperm_mix_formula f2_p in
           let f2_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f2_vperms) in (*only pickup @full*)
+          (*DO NOT CHECK permission for exists vars*)
+          let f2_full_vars = 
+            if f1_full_vars=[] then f2_full_vars
+            else Gen.BList.difference_eq CP.eq_spec_var_ident f2_full_vars estate.es_evars
+          in
+          (*----------------------------------------*)
           let vpem_str = ((string_of_vp_ann VP_Full) ^ (Cprinter.string_of_spec_var_list f1_full_vars) ^ " |- " ^ (string_of_vp_ann VP_Full) ^ (Cprinter.string_of_spec_var_list f2_full_vars)) in
           let _ = if (f1_full_vars!=[] || f2_full_vars!=[]) then 
                 Debug.devel_pprint ("\n process_thread_one_match: matching variable permissions of thread with id = " ^ (CP.string_of_spec_var f1.formula_thread) ^ " : " ^ vpem_str ^ "\n") pos

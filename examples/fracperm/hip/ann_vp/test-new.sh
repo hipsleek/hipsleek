@@ -9,6 +9,8 @@ echo "======= vperm_check.ss ======"
 ../../../../hip vperm_check.ss > vperm_check.n
 echo "======= parallelCount.ss ======"
 ../../../../hip parallelCount.ss > parallelCount.n
+echo "======= parallelCount2.ss ======"
+../../../../hip parallelCount2.ss > parallelCount2.n
 echo "======= parallel_merge_sort.ss ======"
 ../../../../hip parallel_merge_sort.ss > parallel_merge_sort.n
 echo "======= parallel_quick_sort.ss ======"
@@ -19,5 +21,7 @@ echo "======= threads.ss ======"
 ../../../../hip threads.ss > threads.n
 echo "======= parallel_fibonacci.ss ======"
 ../../../../hip -tp z3 -perm none parallel_fibonacci.ss > parallel_fibonacci.n
+echo "======= parallel_fibonacci2.ss ======"
+../../../../hip -tp z3 -perm none parallel_fibonacci2.ss > parallel_fibonacci2.n
 echo "======= parallel_tree_search.ss ======"
 ../../../../hip parallel_tree_search.ss -tp mona -perm none > parallel_tree_search.n

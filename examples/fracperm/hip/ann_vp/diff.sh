@@ -8,6 +8,8 @@ echo "======= vperm_check.ss ======"
 diff vperm_check.res vperm_check.n
 echo "======= parallelCount.ss ======"
 diff parallelCount.res parallelCount.n
+echo "======= parallelCount2.ss ======"
+diff parallelCount2.res parallelCount2.n
 echo "======= parallel_merge_sort.ss ======"
 diff parallel_merge_sort.res parallel_merge_sort.n
 echo "======= parallel_quick_sort.ss ======"
@@ -18,5 +20,7 @@ echo "======= threads.ss ======"
 diff threads.res threads.n
 echo "======= parallel_fibonacci.ss ======"
 diff parallel_fibonacci.res parallel_fibonacci.n
+echo "======= parallel_fibonacci2.ss ======"
+diff parallel_fibonacci2.res parallel_fibonacci2.n
 echo "======= parallel_tree_search.ss ======"
 diff parallel_tree_search.res parallel_tree_search.n
