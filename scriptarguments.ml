@@ -238,8 +238,7 @@ let common_arguments = [
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* Termination options *)
-  (* TODO: Termination: auto-numbering option needs to be removed *)
-  ("--auto-numbering", Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
+  ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
       "level of detail in termination printing 0-verbose 1-standard(default)");
   ("--dis-call-num", Arg.Set Globals.dis_call_num, "turn off the automatic call numbering");

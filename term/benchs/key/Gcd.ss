@@ -1,3 +1,4 @@
+
 int gcd (int a, int b)
 
 {
@@ -19,6 +20,6 @@ void loop (ref int a, ref int b)
 		t = a - b;
 		a = b;
 		b = t;
-		loop (a, b);
+		gcd (a, b);
 	}
 }

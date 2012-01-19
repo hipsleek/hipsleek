@@ -5244,13 +5244,13 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
       (* End of pure_match *)
 
 
-  (* Termination: Try to prove rhs_wf with inference *)
-  (* rhs_wf = None --> measure succeeded *)
-  (* lctx = Fail --> well-founded termination failure *)
-  (* lctx = Succ --> termination succeeded with inference *)
+(* Termination: Try to prove rhs_wf with inference *)
+(* rhs_wf = None --> measure succeeded *)
+(* lctx = Fail --> well-founded termination failure *)
+(* lctx = Succ --> termination succeeded with inference *)
 and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
-    let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
-    in CF.estate_opt_of_list_context lctx
+  let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
+  in CF.estate_opt_of_list_context lctx
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -5609,7 +5609,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	       - if the equality is solved -> remove it from conseq 
         *)
 
-and solve_ineq(* _debug *) a m c = 
+and solve_ineq a m c = 
   Debug.no_3 "solve_ineq "
       (Cprinter.string_of_mix_formula) 
       (Cprinter.string_of_mem_formula)
@@ -5632,6 +5632,7 @@ and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
           end
     |  _ ->  Error.report_error 
            {Error.error_loc = no_pos; Error.error_text = ("antecedent and consequent mismatch")}
+           
 
 and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   Debug.no_3 "solve_ineq_pure_formula "

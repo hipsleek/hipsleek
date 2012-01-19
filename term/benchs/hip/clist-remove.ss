@@ -24,13 +24,6 @@ node remove (node x, int v)
 	requires x::clist<n, S> & (v notin S) & Loop
 	ensures false;
 	
-	/*	
-	requires x::clist<n, S>
-	case {
-		(v notin S) -> requires Loop ensures false;
-		(v in S) -> requires Term[n] ensures res::lseg<n-1, x, S1> & S = union(S1, {v});
-	}
-	*/	
 {
 	if (x == null)
 		return null;

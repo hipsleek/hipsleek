@@ -163,65 +163,6 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
-(*
-and check_bounded_term_x prog proc ctx infer_v post_pos post_label =
-  let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed)) proc.proc_args in  
-  let r = proc.proc_by_name_params in
-  let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
-  let final_state_prim = CF.push_exists_list_partial_context w ctx in
-  let final_state = 
-    if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) 
-    else final_state_prim in
-  let l_term_measures = CF.collect_term_measures_list_partial_context ctx in
-  (* Termination: Filter the duplicate measures *)
-  let eq_exp_list l1 l2 = 
-    try List.for_all2 (fun e1 e2 -> CP.eqExp e1 e2) l1 l2 
-    with _ -> false
-  in 
-  let l_term_measures = Gen.BList.remove_dups_eq eq_exp_list l_term_measures in 
-  
-  let _ = Debug.trace_hprint (add_str "Measures" 
-    (pr_list (pr_list !CP.print_exp))) l_term_measures no_pos in
-  let _ = Debug.trace_hprint (add_str "Orig context" 
-    !CF.print_list_partial_context) ctx no_pos in
-
-  let check_bounded_one_measures m =
-    (* Termination: filter the exp of phase variables 
-     * (their value non-negative numbers in default) *)
-    let m = List.filter (fun e -> 
-      not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in 
-    let bnd_formula_l = List.map (fun e ->
-      CP.mkPure (CP.mkGte e (CP.mkIConst 0 no_pos) no_pos)) m in
-    (* Termination: Restore the list of inferred vars provided by users *)
-    let final_state = Inf.restore_infer_vars_list_partial_context infer_v final_state in
-    let bnd_formula = CF.formula_of_pure_formula
-      (CP.join_conjunctions bnd_formula_l) no_pos in
-    let rs, _ = heap_entail_list_partial_context_init 
-      prog false final_state bnd_formula post_pos (Some post_label) in
-    let _ = Debug.trace_hprint (add_str "Result context" 
-      !CF.print_list_partial_context) rs no_pos in
-    if (CF.isSuccessListPartialCtx rs) then ()
-    else
-      let term_pos = (post_pos, no_pos) in
-      let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
-      Term.term_res_stk # push term_res
-  in
-
-  let check_bounded_one_measures m =
-    Debug.no_1 "check_bounded_one_measures"
-    (pr_list !CP.print_exp) (fun _ -> "")
-    check_bounded_one_measures m
-  in 
-
-  List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
-  ctx
-
-and check_bounded_term prog proc ctx infer_v post_pos post_label =
-  let pr = !CF.print_list_partial_context in
-  Debug.no_1 "check_bounded_term" pr pr 
-  (fun _ -> check_bounded_term_x prog proc ctx infer_v post_pos post_label) ctx
-*)
-
 and check_bounded_term_x prog ctx post_pos =
   let ctx = Term.strip_lexvar_lhs ctx in
   let l_term_measures = CF.collect_term_measures_context ctx in
@@ -263,10 +204,15 @@ and check_bounded_term_x prog ctx post_pos =
   List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
   ctx
 
+and check_bounded_term_opt prog ctx post_pos =
+  if not !Globals.dis_term_chk then 
+    check_bounded_term_x prog ctx post_pos
+  else ctx
+
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
   Debug.no_1 "check_bounded_term" pr pr 
-  (fun _ -> check_bounded_term_x prog ctx post_pos) ctx
+  (fun _ -> check_bounded_term_opt prog ctx post_pos) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
@@ -437,21 +383,19 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                         else ([],post_cond) in
                       let res_ctx = Inf.add_impl_vars_list_partial_context impl_vs res_ctx in
                       let pos_post = (CF.pos_of_formula post_cond) in
-                      (* Termination: Check the boundedness 
-                       * of the termination measures *)
-                      (* let res_ctx = check_bounded_term prog proc res_ctx post_iv pos_post post_label in *)
                       (* Termination: Collect the constraints of
                        * phase transitions inferred by inference 
                        * Need to filter the constraints and normalize 
                        * them - We only interest constraints related 
                        * to logical variables *)
-                      let log_vars = prog.Cast.prog_logical_vars in
-                      let cl = List.filter (fun f -> 
-                        Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
-                      let _ = if not (Gen.is_empty lp) then 
-                        DD.info_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
-                      let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in
-                                           
+                      let _ = if !Globals.dis_term_chk then () else
+                        let log_vars = prog.Cast.prog_logical_vars in
+                        let cl = List.filter (fun f -> 
+                          Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
+                        let _ = if not (Gen.is_empty lp) then 
+                          DD.info_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
+                        let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
+                      in 
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
@@ -939,26 +883,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pre2 = CF.subst_struc_pre st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
 
-                  (* Termination checking *)
-                  (* TODO: Need to be removed - 
-                   * Only keep the unreachable case *)
-                  (*
-                  let pre2 = 
-                    if ir then (* Only check termination of a recursive call *)
-                      let _ = DD.devel_zprint 
-                        (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
-                      (* Normalise the specification with variance 
-                       * to further inference or error reporting *)
-                      let n_pre2 = CF.norm_struc_with_variance pre2 in
-                      if not (CF.isNonFalseListFailescCtx sctx) then
-                        let _ = Term.add_unreachable_res sctx pos in n_pre2
-                      else n_pre2
-                    else pre2
-                  in
-                  *)
+                  (* Termination: Store unreachable state *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)
-                      (* WN TODO : is this old code to remove?? *)
                       let _ = DD.devel_zprint 
                         (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
                       (* Normalise the specification with variance 
@@ -968,8 +895,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else ()
                     else ()
                   in
-
-
 
                   (* TODO: call the entailment checking function in solver.ml *)
                   (* let _ = print_endline ("WN 1:"^Cprinter.string_of_list_failesc_context sctx) in *)
@@ -1146,7 +1071,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	  (* print_endline "VERIFYING POST-CONDITION" *)
 	end in
   (* Termination: Poststate of Loop must be unreachable (soundness) *)
-  let b = Term.check_loop_safety prog proc ctx post pos pid in
+  let b = if !Globals.dis_term_chk then true 
+    else Term.check_loop_safety prog proc ctx post pos pid in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in
@@ -1236,7 +1162,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                 in
 		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
             (* Termination: Add the set of logical variables into the initial context *)
-            let init_ctx = Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
+            let init_ctx = 
+              if !Globals.dis_term_chk then init_ctx
+              else Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
             let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
 			    let _ = if !print_proof then begin 
 				  Prooftracer.push_proc proc;
@@ -1325,7 +1253,9 @@ let check_proc_wrapper prog proc =
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
     let n_res = 
-      if (proc.Cast.proc_is_main && not !Globals.dis_phase_num) then
+      if (proc.Cast.proc_is_main && 
+          not !Globals.dis_phase_num && 
+          not !Globals.dis_term_chk) then
       begin
         let (_, mutual_grps) = Cast.re_proc_mutual (Cast.sort_proc_decls (Cast.list_of_procs prog)) in
         let name_mutual_grps = List.map (fun lp -> List.map (fun p -> p.Cast.proc_name) lp) mutual_grps in

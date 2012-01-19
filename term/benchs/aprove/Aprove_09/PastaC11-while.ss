@@ -12,10 +12,10 @@ ensures true;
 	while (true)
 	case {
 		x<0 -> case {
-			y<0 -> requires Term ensures true;
-			y>=0 -> requires Term[y] ensures true;
+			y<0 -> requires Term[0] ensures true;
+			y>=0 -> requires Term[1,y] ensures true;
 		}
-		x>=0 -> requires Term[x] ensures true;
+		x>=0 -> requires Term[2,x] ensures true;
 	}
 	{
 		if (x >= 0) {
@@ -24,7 +24,7 @@ ensures true;
 		} else if (y >= 0) {
 			y--;
 		} else {
-			break;
+			return; //Problem with break
 		}
 	}
 }

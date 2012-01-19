@@ -24,8 +24,8 @@ case {
 			(w<i & -w>i) -> case {
 				i=w+1 -> requires Loop ensures false;
 				i!=w+1 -> case {
-					i=-w-1 -> requires Loop ensures false;
-					!(i=-w-1) -> requires MayLoop ensures true; // should be Loop here
+					i=1 -> requires Term ensures true;
+					i!=1 -> requires Loop ensures false; 
 				}
 			}
 		}
@@ -35,11 +35,11 @@ case {
 	if (i != 0) {
 		if (i < -w) {
 			i--;
-			i = i * (-1);
+			i = -i;
 		} else {
 			if (i > w) {
 				i++;
-				i = i * (-1);
+				i = -i;
 			} else {
 				i = 0;
 			}

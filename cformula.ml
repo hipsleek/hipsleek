@@ -441,8 +441,8 @@ and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_lin
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
-and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula= 
-  let mix_f = MCP.OnePF p in
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula = 
+  let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
   formula_of_mix_formula mix_f pos 
 
 and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula= 

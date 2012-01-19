@@ -1082,7 +1082,11 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
          * Normalize the term specification with call number and implicit
          * phase variable *)
 	      let c = (mark_rec_and_call_order cprog5) in
-        let c = Cast.add_term_nums_prog c in
+        let c = 
+          if not !Globals.dis_term_chk 
+          then Cast.add_term_nums_prog c 
+          else c 
+        in
         let c = (add_pre_to_cprog c) in
         (* let _ = print_endline (exlist # string_of) in *)
         (* let _ = exlist # sort in *)

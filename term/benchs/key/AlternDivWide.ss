@@ -25,8 +25,8 @@ case {
 			(w<i & -w>i) -> case {
 				i=w+1 -> requires Loop ensures false;
 				i!=w+1 -> case {
-					i=-w-1 -> requires Loop ensures false;
-					!(i=-w-1) -> requires MayLoop ensures true; // should be Loop here
+					i=1 -> requires Term ensures true;
+					i!=1 -> requires Loop ensures false;
 				}
 			}
 		}

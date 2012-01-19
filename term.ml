@@ -430,13 +430,16 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           (* Check wellfoundedness of the transition *)
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt pos
-      | (Term, _) ->
+      | (Term, _)
+      | (Fail TermErr_May, _) -> 
           let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           term_res_stk # push term_res;
           let term_measures = match t_ann_d with
-            | Loop -> Some (Fail TermErr_Must, src_lv, src_il)
-            | MayLoop -> Some (Fail TermErr_May, src_lv, src_il)
+            | Loop 
+            | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
+            | MayLoop 
+            | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
@@ -444,36 +447,29 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
-          let term_measures = Some (Loop, [], []) 
-            (*
-            match t_ann_d with
-            | Loop _ -> Some (Loop Loop_RHS, [], [])
-            | _ -> Some (Loop Loop_LHS, [], [])
-            *)
-          in 
+          let term_measures = Some (Loop, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (MayLoop, _) ->
-          let term_measures = Some (MayLoop, [], []) 
-            (*
-            match t_ann_d with
-            | Loop _ -> Some (Loop Loop_RHS, [], [])
-            | _ -> Some (MayLoop, [], [])
-            *)
-          in 
+          let term_measures = Some (MayLoop, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
-      (*
-      | (Fail _, _) -> 
-          let term_res = (pos, None, TermErr (Invalid_Status_Trans (t_ann_s, t_ann_d))) in
+      | (Fail TermErr_Must, _) ->
           let n_estate = {estate with 
-            es_var_measures = Some (Fail, [], []);
-            es_var_stack = (string_of_term_res term_res)::estate.es_var_stack
+            es_var_measures = Some (Fail TermErr_Must, src_lv, src_il);
           } in
-          (n_estate, lhs_p, rhs_p)
-      *)
+          (n_estate, lhs_p, rhs_p, None)
     end
   with _ -> (estate, lhs_p, rhs_p, None)
+
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  if not !Globals.dis_term_chk then
+    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+  else
+    (* Remove LexVar in RHS *)
+    let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+    let rhs_p = MCP.mix_of_pure rhs_p in
+    (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
