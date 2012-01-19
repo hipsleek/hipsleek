@@ -7974,7 +7974,7 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (int * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_int Cprinter.string_of_formula in
-  Debug.no_4 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion Cprinter.string_of_entail_state
+  Debug.ho_4 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion Cprinter.string_of_entail_state
       p2 (fun _ _ _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f coer estate
       (*
         the fst of res: int
@@ -8005,6 +8005,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   (*SIMPLE lhs*)
   match node, lhs_heap with (*node -> current heap node | lhs_heap -> head of the coercion*)
     | ViewNode ({ h_formula_view_node = p1;
+      h_formula_view_imm = imm1;       
       h_formula_view_name = c1;
       h_formula_view_origins = origs;
       (* h_formula_view_original = original; (*LDK: unused*) *)
@@ -8020,6 +8021,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
           (*lemmas can be applied to data node as well*)
 	| DataNode ({ h_formula_data_node = p1;
 	  h_formula_data_name = c1;
+          h_formula_data_imm = imm1;       
 	  h_formula_data_origins = origs;
 	  h_formula_data_remaining_branches = br1;
 	  h_formula_data_perm = perm1; (*LDK*)
@@ -8093,7 +8095,11 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                     coer_rhs_new1
                 in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
-		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+	        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+
+                (* propagate the immutability annotation inside the definition *)
+                let coer_rhs_new = propagate_imm_formula coer_rhs_new imm1 in
+
                 (* Currently, I am trying to change in advance at the trans_one_coer *)
                 (* Add origins to the body of the coercion which consists of *)
                 (*   several star-conjunction nodes. If there are multiple nodes *)
