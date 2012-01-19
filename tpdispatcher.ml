@@ -2560,6 +2560,11 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
+  (* | AUTO -> *)
+  (*     Omega.start(); *)
+  (*     Mona.start(); *)
+  (*     Smtsolver.start(); *)
+  (*     Coq.start (); *)
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2595,6 +2600,11 @@ let stop_prover () =
 	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+    (* | AUTO -> *)
+	(*     Omega.stop(); *)
+    (*     (\* Mona.stop(); *\) *)
+    (*     (\* Smtsolver.stop(); *\) *)
+    (*     (\* Coq.stop(); *\) *)
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096

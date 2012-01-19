@@ -9,8 +9,8 @@
 
 /* Use axioms for better verification time*/
 relation fiba(int n, int f).
-axiom 0=n ==> fiba(n,0).
-axiom 1=n ==> fiba(n,1).
+axiom n=0 ==> fiba(n,0).
+axiom n=1 ==> fiba(n,1).
 axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
 
 /* sequential version */

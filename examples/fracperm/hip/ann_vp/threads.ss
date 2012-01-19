@@ -1,7 +1,17 @@
 /* 
    Inspired by Verifast example at
    verifast-11.12/tutorial_solutions/threads.c
+
+   Description: concurrent threads access a tree in parallel
 */
+
+int rand()
+  requires true
+  ensures true;
+
+int fac(int x)
+  requires @value[x]
+  ensures true;
 
 data node {
 	int val;
@@ -18,15 +28,6 @@ tree<n> == self = null & n = 0
   or self::node<_, p, q> * p::tree<n-1> * q::tree<n-1>
   inv n >= 0; 
 
-//prototype only
-int rand()
-  requires true
-  ensures true;
-
-//prototype only
-int fac(int x)
-  requires @value[x]
-  ensures true;
 
 node make_tree(int depth)
   requires @value[depth]

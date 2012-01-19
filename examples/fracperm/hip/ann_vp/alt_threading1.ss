@@ -1,40 +1,35 @@
 /*
   Inspired by Verifast example at
   http://people.cs.kuleuven.be/~bart.jacobs/verifast/examples/alt_threading.c.html
+
+  Description: This program demonstrates the passing of
+  variable permissions from a parent thread to a child thread. We use a variable instead of a heap cell.
+
  */
 
-data cell{
-  int val;
-}
-
-void increment(ref cell x)
-  requires x::cell<i> & @full[x]
-  ensures x'::cell<i+1> & @full[x]; //'
+void increment(ref int x)
+  requires @full[x]
+  ensures x'=x+1 & @full[x]; //'
 {
-  x.val++;
+  x++;
 }
 
 int read_int()
   requires true
   ensures true;
 
-int delete(cell x)
-  requires x::cell<i> & @value[x]
-  ensures true;
-
 int main()
   requires true
   ensures true;
 {
-  cell x;
-  int n = read_int();
-  x = new cell(n);
+  int x;
+  int n;
+  n = read_int();
+  x=n;
   int id;
   id = fork(increment,x); //only child thread has full permission of x
-  dprint;
   join(id);
-  int n1 = x.val;
-  delete(x);
+  int n1 = x;
   assert n1' = n' +1;
   return 0;
 }

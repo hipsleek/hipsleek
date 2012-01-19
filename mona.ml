@@ -1039,6 +1039,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
@@ -1061,6 +1062,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   imply ante conseq imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
+  let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
@@ -1070,6 +1072,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   let (f_fv, f) = prepare_formula_for_mona f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
+  print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running));
   let sat = 
     if not !is_mona_running then
       write_to_file true f_fv f sat_no vs
