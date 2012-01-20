@@ -3582,7 +3582,7 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
     (*may use lor to combine the list first*)
     let los= List.map get_must_failure_partial_context ls in
     (*los contains mutilpe specs??*)
-    ( match (combine_helper "RAND\n" los "") with
+    ( match (combine_helper "UNION\n" los "") with
       | "" -> None
       | s -> Some s
     )
@@ -3626,7 +3626,7 @@ let rec get_failure_list_partial_context (ls:list_partial_context): (string)=
     (*may use lor to combine the list first*)
     let los= List.map get_failure_partial_context ls in
     (*los contains path traces*)
-    combine_helper "RAND\n" los ""
+    combine_helper "UNION\n" los ""
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
@@ -3652,7 +3652,7 @@ let rec get_failure_list_failesc_context (ls:list_failesc_context): (string)=
     (*may use rand to combine the list first*)
     let los= List.map get_failure_failesc_context ls in
     (*los contains path traces*)
-    combine_helper "RAND\n" los ""
+    combine_helper "UNION\n" los ""
 
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option)=
   get_failure_branch bfl
