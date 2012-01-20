@@ -261,6 +261,10 @@ $output_file = "log";
 		["aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
 		["aprove/Aprove_09/PastaA10.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 		["aprove/Aprove_09/PastaA1.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+		["aprove/Aprove_09/PastaA4.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaA5.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaA6.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaA7.ss", 1, "", "main", "SUCCESS"],
 		["aprove/Aprove_09/PastaA8.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 		["aprove/Aprove_09/PastaA9.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 		["aprove/Aprove_09/PastaB10.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
@@ -273,6 +277,15 @@ $output_file = "log";
 		["aprove/Aprove_09/PastaB16.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
 		["aprove/Aprove_09/PastaB17.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
 		["aprove/Aprove_09/PastaB18.ss", 3, "", "main", "SUCCESS", "loop", "SUCCESS", "decrease", "SUCCESS"],
+		["aprove/Aprove_09/PastaB1.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB2.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB3.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB4.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB4-loop.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB5.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB6.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB7.ss", 1, "", "main", "SUCCESS"],
+		["aprove/Aprove_09/PastaB8.ss", 1, "", "main", "SUCCESS"],
 		["aprove/Aprove_09/PastaC10-while.ss", 1, "", "main", "SUCCESS"],
 		["aprove/Aprove_09/PastaC11.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 		["aprove/Aprove_09/PastaC11-while.ss", 1, "", "main", "SUCCESS"],
@@ -429,7 +442,7 @@ sub hip_process_file {
             }
 			#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
-			print $output;
+			#print $output;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
@@ -443,7 +456,6 @@ sub hip_process_file {
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 				#Termination checking result
-				if ($output !~)
 			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
