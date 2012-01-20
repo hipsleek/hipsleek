@@ -314,7 +314,7 @@ $output_file = "log";
 		["hip/clist.ss", 4, "-tp om", 
 			"length", "SUCCESS", "duplicate", "SUCCESS",
 			"remove", "SUCCESS", "insert", "SUCCESS"],
-		["hip/avl.ss", 13, "",  
+		["hip/avl.ss", 13, "--eps",  
 			"height", "SUCCESS", "rotate_left", "SUCCESS",
 			"rotate_right", "SUCCESS", "get_max", "SUCCESS",
 			"rotate_double_left", "SUCCESS",
@@ -324,7 +324,6 @@ $output_file = "log";
 			"merge", "SUCCESS", "merge2", "SUCCESS",
 			"remove_min","SUCCESS"
 		]
-
 	]        
 );
 
@@ -430,6 +429,7 @@ sub hip_process_file {
             }
 			#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
+			print $output;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
@@ -442,6 +442,8 @@ sub hip_process_file {
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
 					print "error at: $test->[0] $test->[$i]\n";
 				}
+				#Termination checking result
+				if ($output !~)
 			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
