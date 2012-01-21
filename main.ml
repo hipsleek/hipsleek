@@ -246,8 +246,9 @@ let main1 () =
 
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-      Globals.procs_verified := ["f3"];
-      Globals.source_files := ["examples/test5.ss"]
+      (* Globals.procs_verified := ["f3"]; *)
+      (* Globals.source_files := ["examples/test5.ss"] *)
+        print_string "Source file(s) not specified\n"
     end;
     let _ = Gen.Profiling.push_time "Overall" in
     let _ = List.map process_source_full !Globals.source_files in

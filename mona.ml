@@ -1072,7 +1072,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   let (f_fv, f) = prepare_formula_for_mona f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
-  print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running));
+  (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
       write_to_file true f_fv f sat_no vs
