@@ -263,11 +263,8 @@ int upgrade_prio(int prio,int ratio,ref node curJob,ref node pq1,ref node pq2,re
     status = enqueue(prio + 1, job, curJob, tmp,pq1,pq2,pq3);
     return status;
 }
-
- /* Put current job in blocked queue */
-int block(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
-  requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3> ensures true;
       /*
+ requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case { curJob=null -> case {
     n1+n2+n3>1 ->  ensures pq0'::ll<n+1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6> *curJob'::node<_,_,null> & n4+n5+n6=n1+n2+n3-2 & res=0;//'
     n1+n2+n3=1 -> ensures pq0'::ll<n+1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6> & curJob'=null & n4+n5+n6=n1+n2+n3-1 &res=0;//'
@@ -275,11 +272,16 @@ int block(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq
   }
   curJob!=null -> ensures true;
 }
-      */
+       */
+ /* Put current job in blocked queue */
+int block(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
+      requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
+ case { curJob=null -> ensures true;
+  curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
+}
 {
     node job;
-    assume(curJob=null);
-    job = get_current(curJob, pq0, pq1, pq2, pq3);
+    job = get_current(curJob, pq1, pq2, pq3);
     if(job != null)
     {
       curJob = null;//(struct process *)0; // remove it
@@ -526,7 +528,9 @@ int schedule(int command, int prio, int ratio,ref node curJob,ref node pq0, ref 
     curJob=null -> ensures true;
     curJob!=null ->  requires curJob::node<_,v,null> & v>=1 & v<=3 ensures true;
   }
-  command = 3 -> ensures true;
+  command = 3 -> case { curJob=null -> ensures true;
+  curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
+  }
   command = 4 -> case {
     curJob=null -> ensures true;
     curJob!=null ->  requires curJob::node<_,v,null> & v>=1 & v<=3 ensures true;
