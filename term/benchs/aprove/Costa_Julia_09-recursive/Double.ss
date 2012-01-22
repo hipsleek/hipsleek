@@ -1,19 +1,19 @@
 void test (int n)
-case {
-	n<=0 -> requires Term[1] ensures true;
-	n>0 -> requires Term[n] ensures true;
-}
+requires Term[1, n*n+1] ensures true;
 {
-	int i = 0;
-	
-	while (i < n) 
-	case {
-		i>=n -> requires Term ensures true;
-		i<n -> requires Term[n-i] ensures true;
-	}
-	{
-		test(i);
-		i++;
+	if (n > 0) {
+		test(0);
+		int i = 1;
+		while (i < n) 
+		requires i>0
+		case {
+			i>=n -> requires Term[0] ensures true;
+			i<n -> requires Term[1, n*n-i] ensures true;
+		}
+		{
+			test(i);
+			i++;
+		}
 	}
 }
 
