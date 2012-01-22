@@ -210,6 +210,7 @@ $output_file = "log";
 		["key/ComplInterv2.ss", 1, "", "loop", "SUCCESS"],
 		["key/ComplInterv3.ss", 1, "", "loop", "SUCCESS"],
 		["key/ComplInterv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+		["key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
 		["key/ComplxStruc2.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
 		["key/ConvLower.ss", 1, "", "loop", "SUCCESS"],
 		["key/Cousot.ss", 1, "", "loop", "SUCCESS"],
@@ -229,7 +230,7 @@ $output_file = "log";
 		["key/Flip3.ss", 1, "", "flip", "SUCCESS"],
 		["key/Flip.ss", 1, "", "flip", "SUCCESS"],
 		["key/Gauss.ss", 2, "", "sum", "SUCCESS", "loop", "SUCCESS"],
-		#["key/Gcd.ss", 2, "", "gcd", "SUCCESS", "loop", "SUCCESS"],
+		["key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop
 		["key/Lcm.ss", 2, "", "lcm", "SUCCESS", "loop", "SUCCESS"],
 		["key/Marbie1.ss", 1, "", "loop", "SUCCESS"],
 		["key/Marbie2.ss", 1, "", "loop", "SUCCESS"],
@@ -241,7 +242,7 @@ $output_file = "log";
 		["key/Narrowing.ss", 2, "", "narrowing", "SUCCESS", "loop", "SUCCESS"],
 		["key/NarrowKonv.ss", 2, "", "narrowKonv", "SUCCESS", "loop", "SUCCESS"],
 		["key/NegPos.ss", 1, "-tp redlog", "loop", "SUCCESS"],
-		#["key/Plait.ss", 2, "", "plait", "SUCCESS", "loop", "SUCCESS"],
+		["key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop
 		["key/Sunset.ss", 1, "", "loop", "SUCCESS"],
 		["key/TrueDiv.ss", 1, "", "loop", "SUCCESS"],
 		["key/TwoFloatInterv.ss", 1, "", "loop", "SUCCESS"],
@@ -272,6 +273,7 @@ $output_file = "log";
 		["aprove/Aprove_09/LogIterative.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
 		["aprove/Aprove_09/LogMult.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
 		["aprove/Aprove_09/Log.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
+		["aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop
 		["aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
 		["aprove/Aprove_09/MinusBuiltIn.ss", 1, "", "main", "SUCCESS"],
 		["aprove/Aprove_09/MinusMin.ss", 2, "", "main", "SUCCESS", "mn", "SUCCESS"],

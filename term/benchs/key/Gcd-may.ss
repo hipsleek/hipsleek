@@ -1,6 +1,7 @@
 
 int gcd (int a, int b)
-
+requires true
+ensures true;
 {
 	int t = 0;
 	if (b > a) {
@@ -8,18 +9,13 @@ int gcd (int a, int b)
 		a = b;
 		b = t;
 	}
-	loop(a, b);
-	return a;
-}
-
-void loop (ref int a, ref int b)
-
-{
-	int t = 0;
-	if (b != 0) {
+	while (b != 0) 
+	requires MayLoop
+	ensures true;
+	{
 		t = a - b;
 		a = b;
 		b = t;
-		loop (a, b);
 	}
+	return a;
 }
