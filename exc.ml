@@ -489,7 +489,6 @@ module type ETABLE =
     val empty_flow : nflow 
     val is_false_flow : nflow -> bool
     val is_empty_flow : nflow -> bool
-    val is_exact_flow : nflow -> nflow -> bool
       (* is fst the exact flow of snd *)
     val is_exact_flow : nflow -> nflow -> bool
     val is_full_flow : nflow -> nflow -> bool
