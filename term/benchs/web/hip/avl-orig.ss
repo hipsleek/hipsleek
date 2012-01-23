@@ -447,7 +447,7 @@ case {
       t1=null -> ensures res::avl<s2,h2>;
       t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
 }*/
-
+//Spec for partial correctness
 case {
       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
       t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures res::avl<s1+s2,_>;
@@ -463,6 +463,7 @@ case {
 }
 */
 /*
+//Spec for total correctness
 case {
       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
       t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Loop ensures false;
@@ -478,7 +479,7 @@ case {
  if (t1 == null) return t2;
     else {
 	  node tmp = insert(t2, t1.val);
-		assume tmp!=null;
+		//assume tmp!=null;
 		//assert tmp!=null;
 	  node tmp1 = merge (tmp, t1.left);
 	  return merge(tmp1, t1.right);
