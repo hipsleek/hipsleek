@@ -16,8 +16,6 @@ avl<size, height> == self = null & size = 0 & height = 0
 
 
 
-node node_error() requires true ensures false;
-
 /* function to insert a node in an avl tree (using the rotate functions) */
 node insert(node x, int a)
 
@@ -27,21 +25,7 @@ node insert(node x, int a)
 
 
 node merge(node t1, node t2)
-/*requires t2::avl<s2,h2>
-case {
-      t1=null -> ensures res::avl<s2,h2>;
-      t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
-}*/
-
-/* case { */
-/*       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>; */
-/*       t1!=null ->  */
-/*       case { */
-/*           t2!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures */
-/* res::avl<s1+s2,_>; */
-/*           t2=null -> requires t1::avl<s1,h1> & Loop ensures false; */
-/*       } */
-/* } */
+/*
 
 case {
       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
@@ -50,20 +34,19 @@ case {
       //res::avl<s1+s2,_>;
 }
 
+ */
 
-
-//requires t2::avl<s2,h2> & t1=null
-//ensures res::avl<s2,h2>;
-//requires t1::avl<s1,h1> * t2::avl<s2,h2> & t1!=null 
-//ensures res::avl<s2,h2>;
+case {
+      t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
+      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Loop
+                  ensures false; 
+      //res::avl<s1+s2,_>;
+}
+// incorrect code that LOOPS!
 
 {
  if (t1 == null) return t2;
  else {
-   //dprint;
-      /* int i = t1.val; */
-      /* assume false; */
-      /* return t1; */
 	  node tmp = insert(t2, t1.val);
 	  node tmp1 = merge (tmp, t1.left);
 	  return merge(tmp1, t1.right);
