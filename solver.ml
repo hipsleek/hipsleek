@@ -5198,12 +5198,14 @@ and is_relative_identical (eqctr : CP.formula) (exp1 : CP.exp) (exp2 : CP.exp) :
     over the free variables in lhs.
     RETURN : a formula
 *)
-and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) : CP.formula =
-  let rl = extract_relations lhs in (* Relations in LHS *)
-  let rr = extract_relations rhs in (* Relations in RHS *)
+and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_formula) : CP.formula =
+  let lhs = MCP.fold_mix_lst_to_lst lhs true true true in
+  let rhs = MCP.fold_mix_lst_to_lst rhs true true true in
+  let rl = List.concat (List.map extract_relations lhs) in (* Relations in LHS *)
+  let rr = List.concat (List.map extract_relations rhs) in (* Relations in RHS *)
   (*let fl = CP.fv lhs in Free variables in LHS, assume that fl intersects vars is empty *)
   let pr = List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) rr) rl) in (* Cartesian product of rl and rr. *)
-  let eqctr = extract_equality lhs in
+  let eqctr = extract_equality (CP.conj_of_list lhs no_pos) in
   (*let _ = print_string "pure_match :: pairs of relations found : \n" in
 	let _ = List.map (fun (x,y) -> print_string ("(" ^ Cprinter.string_of_b_formula x ^ "," ^ Cprinter.string_of_b_formula y ^ "\n")) pr in*)
   (* Internal function rel_match to perform matching of two relations *)
@@ -5274,23 +5276,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let evarstoi = estate_orig.es_gen_expl_vars in
   let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
   else (*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
-	match lhs_p with
-	  | MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
-			lhs_p
-	  | MCP.OnePF f -> let lhs_pp = f in
-		match rhs_p with
-		  | MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
-				lhs_p
-		  | MCP.OnePF f -> let rhs_pp = f in
-	 		(*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
-	 		  let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in*)
 			(* Temporarily suppress output of implication checking *)
 			let _ = Smtsolver.suppress_all_output () in
 			let _ = Tpdispatcher.push_suppress_imply_output_state () in
 	 		let _ = Tpdispatcher.suppress_imply_output () in
-	 		let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
-	 		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in 
-	 		let lhs_p = (MCP.OnePF lhs_pp) in
+	 		let inst = pure_match evarstoi lhs_p rhs_p in (* Do matching! *)
+            let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
 			(* Unsuppress the printing *)
 	 		let _ = Smtsolver.unsuppress_all_output ()  in
 	 		let _ = Tpdispatcher.restore_suppress_imply_output_state () in

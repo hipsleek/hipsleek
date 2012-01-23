@@ -259,7 +259,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let rel = List.concat rel_ls in
             let br = List.for_all pr_id fl in
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
-            (new_spec,[],rel,true)
+            (new_spec,[],rel,br)
 	  | CF.EBase b ->
           Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 	        let nctx = 

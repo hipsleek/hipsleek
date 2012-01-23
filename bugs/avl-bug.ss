@@ -33,20 +33,23 @@ case {
       t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
 }*/
 
+/* case { */
+/*       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>; */
+/*       t1!=null ->  */
+/*       case { */
+/*           t2!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures */
+/* res::avl<s1+s2,_>; */
+/*           t2=null -> requires t1::avl<s1,h1> & Loop ensures false; */
+/*       } */
+/* } */
+
 case {
       t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
-      t1!=null -> case {
-          t2!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures
-res::avl<s1+s2,_>;
-          t2=null -> ensures false;
-      }
+      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Loop
+                  ensures false; 
+      //res::avl<s1+s2,_>;
 }
-/*
-case {
-      t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
-      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures res::avl<s1+s2,_>;
-}
-*/
+
 
 
 //requires t2::avl<s2,h2> & t1=null
@@ -56,7 +59,11 @@ case {
 
 {
  if (t1 == null) return t2;
-    else {
+ else {
+   //dprint;
+      /* int i = t1.val; */
+      /* assume false; */
+      /* return t1; */
 	  node tmp = insert(t2, t1.val);
 	  node tmp1 = merge (tmp, t1.left);
 	  return merge(tmp1, t1.right);
