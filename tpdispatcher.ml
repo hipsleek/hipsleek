@@ -367,7 +367,9 @@ let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
     |[] -> ()
     | prover::rest -> 
-        let exit_code = Sys.command ("which "^prover) in
+        (* let exit_code = Sys.command ("which "^prover) in *)
+        (*Do not display system info in the website*)
+        let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
         if exit_code > 0 then
           let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
           exit 0

@@ -32,7 +32,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
+      (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
@@ -88,7 +88,8 @@ let rec process_header_with_pragma hlist plist =
 (***************end process preclude*********************)
 
 let process_source_full source =
-  print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
+  (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
