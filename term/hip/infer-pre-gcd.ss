@@ -29,10 +29,11 @@ Answer : inference inferred existing state like x>y and x<y which leads
 to false. The new version in infer2 should fix this problem.
 */
 
-infer[p1, p2, x, y]
+//requires x>0 & y>0
+infer[x, y]
 case {
-	x=y -> requires Term[p2] ensures true;
-	x!=y -> requires Term[p1, x+y] ensures true;
+	x=y -> requires Term[0] ensures true;
+	x!=y -> requires Term[0, x+y] ensures true;
 }
 
 {
