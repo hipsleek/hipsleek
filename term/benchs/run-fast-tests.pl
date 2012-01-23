@@ -258,7 +258,7 @@ $output_file = "log";
 		["key/WhileSingle.ss", 1, "", "increase", "SUCCESS"],
 		["key/WhileSum.ss", 1, "", "increase", "SUCCESS"],
 		["key/WhileTrue.ss", 1, "", "endless", "SUCCESS"],
-		###############################################(21)
+		###############################################(22)
 		["aprove/Aprove_09/DivMinus2.ss", 3, "", "main", "SUCCESS", "div", "SUCCESS", "minus", "SUCCESS"],
 		["aprove/Aprove_09/DivMinus.ss", 2, "", "main", "SUCCESS", "div", "SUCCESS"],
 		["aprove/Aprove_09/DivWithoutMinus.ss", 1, "", "main", "SUCCESS"],
@@ -303,7 +303,7 @@ $output_file = "log";
 		["aprove/BOG_RTA_11/TerminatiorRec04.ss", 3, "", "main", "SUCCESS", "f", "SUCCESS", "loop", "SUCCESS"],
 		["aprove/BOG_RTA_11/TimesPlusUserDef.ss", 3, "", "main", "SUCCESS", "times", "SUCCESS", "plus", "SUCCESS"],
 		["aprove/BOG_RTA_11/TwoWay.ss", 1, "-tp redlog", "twoWay", "SUCCESS"],
-		###############################################(22)
+		###############################################(28)
 		["/aprove/Costa_Julia_09/Break.ss", 1, "", "main", "SUCCESS"],
 		["/aprove/Costa_Julia_09/Continue1.ss", 1, "", "main", "SUCCESS"],
 		["/aprove/Costa_Julia_09/Continue.ss", 1, "", "main", "SUCCESS"],
