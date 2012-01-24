@@ -646,7 +646,30 @@ and is_float (e : exp) : bool =
   match e with
     | FConst _ -> true
     | _ -> false
-          
+
+and is_specific_val (e: exp): bool =
+  is_int e || is_float e || is_null e
+
+and include_specific_val (f: formula): bool =
+  match f with
+  | BForm (bf,_) -> include_specific_val_bf bf
+  | And (f1,f2,_) -> include_specific_val f1 || include_specific_val f2
+  | Or (f1,f2,_,_) -> include_specific_val f1 || include_specific_val f2
+  | Not (f,_,_) -> include_specific_val f
+  | Forall (_,f,_,_) -> include_specific_val f
+  | Exists (_,f,_,_) -> include_specific_val f
+
+and include_specific_val_bf (bf: b_formula): bool =
+  let (pf,_) = bf in
+  match pf with
+  | Lt (e1,e2,_)
+  | Lte (e1,e2,_)
+  | Gt (e1,e2,_)
+  | Gte (e1,e2,_)
+  | Eq (e1,e2,_)
+  | Neq (e1,e2,_) -> is_specific_val e1 || is_specific_val e2
+  | _ -> false
+
 and get_num_int (e : exp) : int =
   match e with
     | IConst (b,_) -> b

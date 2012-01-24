@@ -65,6 +65,7 @@ GLOBAL: expression formula pformula exp specvar;
       BForm ((tmp, None), None)
     |	x = exp; "<"; y = exp ->
       if is_res_var y && is_zero x then BForm ((BVar (get_var "res" !stab, loc), None), None) else
+      if is_res_var x && is_one y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
       let tmp = if is_node y then Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
         else
         if is_self_var y then Neq (Var(get_var "self" !stab, loc), Null loc, loc)
@@ -74,6 +75,7 @@ GLOBAL: expression formula pformula exp specvar;
       in BForm ((tmp, None), None)
     | x = exp; ">"; y = exp ->
       if is_res_var x && is_zero y then BForm ((BVar (get_var "res" !stab, loc), None), None) else
+      if is_res_var y && is_one x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
       let tmp = if is_node x then Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
         else 
         if is_self_var x then Neq (Var(get_var "self" !stab, loc), Null loc, loc)
@@ -83,6 +85,7 @@ GLOBAL: expression formula pformula exp specvar;
       in BForm ((tmp, None), None)
     | x = exp; "<="; y = exp ->
       if is_res_var x && is_zero y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
+      if is_res_var y && is_one x then BForm ((BVar (get_var "res" !stab, loc), None), None) else
       let tmp = if is_node x then Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
         else
         if is_self_var x then Eq (Var(get_var "self" !stab, loc), Null loc, loc)
@@ -93,6 +96,7 @@ GLOBAL: expression formula pformula exp specvar;
       in BForm ((tmp, None), None)
     | x = exp; ">="; y = exp ->
       if is_res_var y && is_zero x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
+      if is_res_var x && is_one y then BForm ((BVar (get_var "res" !stab, loc), None), None) else
       let tmp = if is_node y then Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
         else
         if is_self_var y then Eq (Var(get_var "self" !stab, loc), Null loc, loc)

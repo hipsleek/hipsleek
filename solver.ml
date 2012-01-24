@@ -5332,6 +5332,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
+  Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
+  Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) ((branch_id, rhs_p):string*MCP.mix_formula) =
 	begin
       if (is_ok = false) then (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) 
@@ -7097,12 +7099,14 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   | DataNode dl, DataNode dr -> 
     let alias = dl.h_formula_data_node::(CP.EMapSV.find_equiv_all dl.h_formula_data_node lhs_aset) in
     if List.mem dr.h_formula_data_node alias then
-    List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) dl.h_formula_data_arguments dr.h_formula_data_arguments
+      try List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) dl.h_formula_data_arguments dr.h_formula_data_arguments
+      with Invalid_argument _ -> []
     else []
   | ViewNode vl, ViewNode vr -> 
     let alias = vl.h_formula_view_node::(CP.EMapSV.find_equiv_all vl.h_formula_view_node lhs_aset) in
     if List.mem vr.h_formula_view_node alias then
-    List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) vl.h_formula_view_arguments vr.h_formula_view_arguments
+      try List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 pos) vl.h_formula_view_arguments vr.h_formula_view_arguments
+      with Invalid_argument _ -> []
     else []
   | _ -> []
 
@@ -9530,7 +9534,8 @@ let rec simplify_pre pre_fml = match pre_fml with
     else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}
   | _ ->
     let h, p, fl, b, t = split_components pre_fml in
-    let p = TP.simplify_raw (MCP.pure_of_mix p) in
+    let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
+    let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 		
 let simplify_pre pre_fml =
@@ -9555,7 +9560,7 @@ and simplify_ext_relation (sp:ext_formula) subst_fml pre_vars post_vars prog inf
       (ECase {b with formula_case_branches = r},[])
     | EBase b ->
       let r,pres = simplify_relation b.formula_ext_continuation subst_fml pre_vars post_vars prog inf_post in      
-      let base = if pres = [] then b.formula_ext_base else
+      let base = if pres = [] then simplify_pre (b.formula_ext_base) else
           let pre = CP.conj_of_list pres no_pos in 
           let xpure_base,_,_,_ = xpure prog b.formula_ext_base in
           let check_fml = CP.mkAnd (MCP.pure_of_mix xpure_base) pre no_pos in

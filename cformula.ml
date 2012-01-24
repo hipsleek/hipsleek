@@ -7305,12 +7305,19 @@ and simplify_ext_ann (sp:ext_formula): ext_formula =
         EVariance {b with formula_var_continuation = simplify_ext_ann b.formula_var_continuation }*)
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 
-let rec get_vars_without_rel f = match f with
+let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->
-    (get_vars_without_rel f1) @ (get_vars_without_rel f2)
-  | _ -> 
+    (get_vars_without_rel pre_vars f1) @ (get_vars_without_rel pre_vars f2)
+  | Base _ -> 
     let h, p, fl, b, t = split_components f in
     (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p)))
+  | Exists e ->
+    let h, p, fl, b, t = split_components f in
+    let res = (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) in
+    let alias = MCP.ptr_equations_without_null p in
+    let aset = CP.EMapSV.build_eset alias in
+    let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
+    CP.diff_svl res evars_to_del
 
 let split_triple lst = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) lst
 
@@ -7318,25 +7325,47 @@ let add_fst elem = fun (a1,a2,a3) -> (elem@a1,a2,a3)
 
 let add_rd elem = fun (a1,a2,a3) -> (a1,a2,elem@a3)
 
-let rec get_pre_post_vars (sp:struc_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
-  let res = List.map get_pre_post_vars_ext sp in
+let rec get_pre_post_vars (pre_vars: CP.spec_var list) (sp:struc_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
+  let res = List.map (get_pre_post_vars_ext pre_vars) sp in
   let pres,posts,inf_vars = split_triple res in
   (List.concat pres, List.concat posts, List.concat inf_vars)
 
-and get_pre_post_vars_ext (sp:ext_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
+and get_pre_post_vars_ext (pre_vars: CP.spec_var list) (sp:ext_formula): (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   match sp with
     | ECase b -> 
-      let res = List.map (fun (p,s)->let tmp = get_pre_post_vars s in 
+      let res = List.map (fun (p,s)->let tmp = get_pre_post_vars pre_vars s in 
           add_fst (CP.fv p) tmp) b.formula_case_branches in
       let pres,posts,inf_vars = split_triple res in
       (List.concat pres, List.concat posts, List.concat inf_vars)
     | EBase b -> 
       let base_vars = fv b.formula_ext_base in
-      let r_vars = get_pre_post_vars b.formula_ext_continuation in
+      let r_vars = get_pre_post_vars (pre_vars@base_vars) b.formula_ext_continuation in
       add_fst base_vars r_vars
-    | EAssume(svl,f,fl) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel f), [])
+    | EAssume(svl,f,fl) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), [])
     (*| EVariance b -> get_pre_vars_ext b.formula_var_continuation*)
-    | EInfer b -> add_rd b.formula_inf_vars (get_pre_post_vars_ext b.formula_inf_continuation)
+    | EInfer b -> add_rd b.formula_inf_vars (get_pre_post_vars_ext pre_vars b.formula_inf_continuation)
+
+let rec get_or_post_x (sp:struc_formula) rel_id: formula list =
+  List.concat (List.map (fun s -> get_or_post_ext s rel_id) sp)
+
+and get_or_post_ext (sp:ext_formula) rel_id: formula list = match sp with
+  | ECase b ->
+    List.concat (List.map (fun (p,s) -> get_or_post s rel_id) b.formula_case_branches)
+  | EBase b -> get_or_post b.formula_ext_continuation rel_id
+  | EAssume(svl,f,fl) -> 
+    begin
+    match f with
+    | Or _ -> if CP.intersect (fv f) rel_id = [] then [] else [f]
+    | _ -> []
+    end
+  | EInfer b -> get_or_post_ext b.formula_inf_continuation rel_id
+
+and get_or_post sp rel_id =
+  let pr1 = !print_struc_formula in
+  let pr2 = !print_svl in
+  let pr3 = pr_list !print_formula in
+  Debug.no_2 "get_or_post" pr1 pr2 pr3
+    (fun _ _ -> get_or_post_x sp rel_id) sp rel_id
 
 (*
 type: (ext_formula -> ext_formula option) * (formula -> formula option) *

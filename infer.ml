@@ -68,15 +68,16 @@ let rec add_infer_vars_ctx iv ctx =
         else Ctx {estate with es_infer_vars = iv @ estate.es_infer_vars;}
   | OCtx (ctx1, ctx2) -> OCtx (add_infer_vars_ctx iv ctx1, add_infer_vars_ctx iv ctx2)
 
-let add_impl_vars_ctx iv ctx =
+let add_impl_expl_vars_ctx iv ev ctx =
   let rec helper ctx = 
     match ctx with
-      | Ctx estate -> Ctx {estate with es_gen_impl_vars = iv@estate.es_gen_impl_vars;}
+      | Ctx estate -> Ctx {estate with es_gen_impl_vars = iv@estate.es_gen_impl_vars;
+                                       es_gen_expl_vars = ev@estate.es_gen_expl_vars;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
-let add_impl_vars_list_partial_context iv (ctx:list_partial_context) =
-  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_vars_ctx iv b)) bl)) ctx
+let add_impl_expl_vars_list_partial_context iv ev (ctx:list_partial_context) =
+  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_expl_vars_ctx iv ev b)) bl)) ctx
 
 let restore_infer_vars_list_partial_context iv (ctx:list_partial_context) =
   List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t, restore_infer_vars_ctx iv b)) bl)) ctx
@@ -656,7 +657,10 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
         let lhs_orig_list = CP.split_conjunctions lhs_xpure in
         let pre_list = CP.split_conjunctions new_p_good in
         let (red_pre,pre_list) = List.partition (present_in lhs_orig_list) pre_list in
-        if pre_list==[] then (None,None)
+        if pre_list==[] then (
+          DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+          DD.devel_pprint "Inferred pure is already in lhs" pos;
+          (None,None))
         else 
           let new_p_good = CP.join_conjunctions pre_list in
           (*let pre_thus = estate.es_infer_pure_thus in
@@ -877,10 +881,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (* e.g. A(x) <- A(t) && other_constraints, *)
       (* where other_constraints are not related to variable t *)
       let lhs_rec_vars = CP.fv lhs_p_memo in
-      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then 
-        (estate,lhs_p_orig,rhs_p_new,rhs_p_br)
+      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
+        DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
+        (estate,lhs_p_orig,rhs_p_new,rhs_p_br))
       else
-
         let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
         (* let lhs = lhs_simplifier lhs_h lhs_p_memo in *)
         DD.trace_hprint (add_str "lhs_p:" (!CP.print_formula)) lhs_p pos;
@@ -915,8 +919,9 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
           let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
           let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
-          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then [] 
-          else
+(*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
+            (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])
+          else*)
           if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;

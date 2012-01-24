@@ -494,6 +494,9 @@ let is_sat_slicing = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 
+(* Options for abduction *)
+let do_abd_from_post = ref false
+
 (* Flag of being unable to fold rhs_heap *)
 let unable_to_fold_rhs_heap = ref false
 
