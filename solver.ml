@@ -3217,12 +3217,8 @@ and heap_entail_conjunct_lhs_struc_x
                     perform entail against each c2
                     combine result as union
                   *)
-                  let rs = List.map (fun (c1,c2) ->
-					  (* Termination: add target condition *)
-                      (* Chanh: how to do below? *)
-					  (* let ctx = CF.transform_context ( *)
-					  (*           fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) ctx in *)
-			          (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
+                  let rs = List.map (fun (c1,c2) ->	
+                    (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
                   (* remove away false context : need to keep at least one? *)
                   let rs2 = List.filter (fun (c1,_,_) -> not(isAnyFalseCtx c1)) rs in
                   let rs = if rs2==[] then [List.hd rs] else rs2 in
@@ -3265,20 +3261,11 @@ and heap_entail_conjunct_lhs_struc_x
                             (*this unsat check is essential for completeness of result*)
 				            if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
 				            else
-					          (* Termination: add target condition *)
-					          let n_ctx = CF.transform_context (
-					              fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
-					          (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 					          let n_ctx = prune_ctx prog n_ctx in
 					          inner_entailer 2 n_ctx c2) case_brs (* b.formula_case_branches *) 
-				      end
+				            end
 	                | Some (p, e) -> begin
-				        let n_ctx = CF.transform_context (
-				            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
-
-				        (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
-				        
-				        [inner_entailer 3 n_ctx e] end in
+				            [inner_entailer 3 ctx e] end in
 	              let rez1, rez2 = List.split r in
                   let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
 	              (rez1, (mkCaseStep ctx [f] rez2))
@@ -5213,12 +5200,14 @@ and is_relative_identical (eqctr : CP.formula) (exp1 : CP.exp) (exp2 : CP.exp) :
     over the free variables in lhs.
     RETURN : a formula
 *)
-and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) : CP.formula =
-  let rl = extract_relations lhs in (* Relations in LHS *)
-  let rr = extract_relations rhs in (* Relations in RHS *)
+and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_formula) : CP.formula =
+  let lhs = MCP.fold_mix_lst_to_lst lhs true true true in
+  let rhs = MCP.fold_mix_lst_to_lst rhs true true true in
+  let rl = List.concat (List.map extract_relations lhs) in (* Relations in LHS *)
+  let rr = List.concat (List.map extract_relations rhs) in (* Relations in RHS *)
   (*let fl = CP.fv lhs in Free variables in LHS, assume that fl intersects vars is empty *)
   let pr = List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) rr) rl) in (* Cartesian product of rl and rr. *)
-  let eqctr = extract_equality lhs in
+  let eqctr = extract_equality (CP.conj_of_list lhs no_pos) in
   (*let _ = print_string "pure_match :: pairs of relations found : \n" in
 	let _ = List.map (fun (x,y) -> print_string ("(" ^ Cprinter.string_of_b_formula x ^ "," ^ Cprinter.string_of_b_formula y ^ "\n")) pr in*)
   (* Internal function rel_match to perform matching of two relations *)
@@ -5259,13 +5248,13 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
       (* End of pure_match *)
 
 
-  (* Termination: Try to prove rhs_wf with inference *)
-  (* rhs_wf = None --> measure succeeded *)
-  (* lctx = Fail --> well-founded termination failure *)
-  (* lctx = Succ --> termination succeeded with inference *)
+(* Termination: Try to prove rhs_wf with inference *)
+(* rhs_wf = None --> measure succeeded *)
+(* lctx = Fail --> well-founded termination failure *)
+(* lctx = Succ --> termination succeeded with inference *)
 and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
-    let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
-    in CF.estate_opt_of_list_context lctx
+  let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
+  in CF.estate_opt_of_list_context lctx
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -5289,23 +5278,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let evarstoi = estate_orig.es_gen_expl_vars in
   let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
   else (*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
-	match lhs_p with
-	  | MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
-			lhs_p
-	  | MCP.OnePF f -> let lhs_pp = f in
-		match rhs_p with
-		  | MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
-				lhs_p
-		  | MCP.OnePF f -> let rhs_pp = f in
-	 		(*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
-	 		  let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in*)
 			(* Temporarily suppress output of implication checking *)
 			let _ = Smtsolver.suppress_all_output () in
 			let _ = Tpdispatcher.push_suppress_imply_output_state () in
 	 		let _ = Tpdispatcher.suppress_imply_output () in
-	 		let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
-	 		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in 
-	 		let lhs_p = (MCP.OnePF lhs_pp) in
+	 		let inst = pure_match evarstoi lhs_p rhs_p in (* Do matching! *)
+            let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
 			(* Unsuppress the printing *)
 	 		let _ = Smtsolver.unsuppress_all_output ()  in
 	 		let _ = Tpdispatcher.restore_suppress_imply_output_state () in
@@ -5625,7 +5603,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	       - if the equality is solved -> remove it from conseq 
         *)
 
-and solve_ineq(* _debug *) a m c = 
+and solve_ineq a m c = 
   Debug.no_3 "solve_ineq "
       (Cprinter.string_of_mix_formula) 
       (Cprinter.string_of_mem_formula)
@@ -5648,6 +5626,7 @@ and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
           end
     |  _ ->  Error.report_error 
            {Error.error_loc = no_pos; Error.error_text = ("antecedent and consequent mismatch")}
+           
 
 and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   Debug.no_3 "solve_ineq_pure_formula "
@@ -5936,9 +5915,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_unsat_flag = false;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-	es_var_measures = estate.es_var_measures;
+        es_var_measures = estate.es_var_measures;
         es_var_stack = estate.es_var_stack;
-		es_var_label = estate.es_var_label;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
@@ -5948,10 +5926,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
-		es_var_ctx_lhs = estate.es_var_ctx_lhs;
-		es_var_ctx_rhs = estate.es_var_ctx_rhs;
-		es_var_subst = estate.es_var_subst
-	} in
+    } in
     (* let vd = lhs_vd in *)
     (* let _ = print_string ("do_base_case_unfold_only_x:" *)
     (*                       ^ "\n ###  vd.view_name = " ^ (Cprinter.string_of_ident vd.view_name) *)
@@ -6094,9 +6069,9 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
-		 es_var_measures = estate.es_var_measures;
+                 es_var_measures = estate.es_var_measures;
                  es_var_stack = estate.es_var_stack;
-		         es_var_label = estate.es_var_label} in
+		         } in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
                we want to do case analysis
@@ -6825,13 +6800,10 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       (* without unsat_flag reset:
          error at: imm/kara-tight.ss karatsuba_mult
       *)
-	  es_unsat_flag  = false;
-	  es_ivars  = [];
+	    es_unsat_flag  = false;
+	    es_ivars  = [];
       es_pp_subst = [];
       es_arith_subst = [];
-      es_var_ctx_lhs = CP.mkTrue pos;
-      es_var_ctx_rhs = CP.mkTrue pos;
-      es_var_subst = [];
       es_cont = [];
       es_crt_holes = [];
       es_hole_stk = [];                     
@@ -8070,6 +8042,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   (*SIMPLE lhs*)
   match node, lhs_heap with (*node -> current heap node | lhs_heap -> head of the coercion*)
     | ViewNode ({ h_formula_view_node = p1;
+      h_formula_view_imm = imm1;       
       h_formula_view_name = c1;
       h_formula_view_origins = origs;
       (* h_formula_view_original = original; (*LDK: unused*) *)
@@ -8085,6 +8058,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
           (*lemmas can be applied to data node as well*)
 	| DataNode ({ h_formula_data_node = p1;
 	  h_formula_data_name = c1;
+          h_formula_data_imm = imm1;       
 	  h_formula_data_origins = origs;
 	  h_formula_data_remaining_branches = br1;
 	  h_formula_data_perm = perm1; (*LDK*)
@@ -8158,7 +8132,11 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                     coer_rhs_new1
                 in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
-		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+	        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+
+                (* propagate the immutability annotation inside the definition *)
+                let coer_rhs_new = propagate_imm_formula coer_rhs_new imm1 in
+
                 (* Currently, I am trying to change in advance at the trans_one_coer *)
                 (* Add origins to the body of the coercion which consists of *)
                 (*   several star-conjunction nodes. If there are multiple nodes *)

@@ -1078,15 +1078,22 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           (*let cprog4 = (add_pre_to_cprog cprog3) in*)
 	      (*let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in*)
         let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog3 else cprog3 in
+        (* Termination: Mark recursive calls and call order of function
+         * Normalize the term specification with call number and implicit
+         * phase variable *)
 	      let c = (mark_rec_and_call_order cprog5) in
-        let c = Cast.add_term_call_num_prog c in
+        let c = 
+          if not !Globals.dis_term_chk 
+          then Cast.add_term_nums_prog c 
+          else c 
+        in
         let c = (add_pre_to_cprog c) in
-          (* let _ = print_endline (exlist # string_of) in *)
-          (* let _ = exlist # sort in *)
+        (* let _ = print_endline (exlist # string_of) in *)
+        (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		   c)))
 	end)
-  else   failwith "Error detected"
+  else failwith "Error detected"
 
 (* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
 (*   Debug.loop_1_no "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
@@ -2009,6 +2016,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
           C.proc_by_name_params = by_names;
           C.proc_body = body;
+          C.proc_logical_vars = [];
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_file = proc.I.proc_file;
@@ -4474,8 +4482,8 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let pe1 = List.map (fun e ->trans_pure_exp e stab) ls1 in
-          let pe2 = List.map (fun e ->trans_pure_exp e stab) ls2 in
+          let pe1 = List.map (fun e -> trans_pure_exp e stab) ls1 in
+          let pe2 = List.map (fun e -> trans_pure_exp e stab) ls2 in
           CP.LexVar(t_ann, pe1, pe2, pos)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
@@ -4540,10 +4548,13 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
 	| None -> (npf, None)
 	| Some (il,lbl,el) -> let nel = trans_pure_exp_list el stab in (npf, Some (il,lbl,nel))
                                                                        
-and trans_pure_exp_debug (e0 : IP.exp) stab : CP.exp =
-  Debug.no_1 "trans_pure_exp" (Iprinter.string_of_formula_exp) (Cprinter.string_of_formula_exp) (fun e -> trans_pure_exp e stab) e0 
-      
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
+  Debug.no_1 "trans_pure_exp" 
+  (Iprinter.string_of_formula_exp)
+  (Cprinter.string_of_formula_exp) 
+  (fun e -> trans_pure_exp_x e stab) e0 
+      
+and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
     | IP.AConst(a,pos) -> CP.AConst(a,pos)

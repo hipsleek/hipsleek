@@ -115,6 +115,8 @@ and proc_decl = {
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
+    (* Termination: Set of logical variables of the proc's scc group *)
+    proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
     proc_file : string;
@@ -403,7 +405,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
-let is_primitive_proc p = p.proc_body==None
+let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 
 let name_of_proc p = p.proc_name
 
@@ -433,7 +435,7 @@ let same_call_scc p1 p2 = p1.proc_call_order == p2.proc_call_order
 (* returns (procs_wo_body, proc_mutual_rec list) *)
 (* The list of proc_decl must be sorted *)
 let re_proc_mutual (pl : proc_decl list) : (proc_decl list * ((proc_decl list) list) ) = 
-  let (pr_prim,pr_rest) = List.partition is_primitive_proc pl in
+  let (pr_prim, pr_rest) = List.partition is_primitive_proc pl in
   let rec helper acc pl = match pl with
     | [] -> if acc==[] then [] else [acc]
     | x::rest -> 
@@ -1713,26 +1715,72 @@ let callgraph_of_prog prog : IG.t =
   (*List.fold_right (ex_args addin_callgraph_of_proc) prog.old_proc_decls cg*)
   Hashtbl.fold (fun i pd acc -> ex_args addin_callgraph_of_proc pd acc) prog.new_proc_decls cg
 
-(* Termination: Add the call number to specifications
- * if the option --dis-call-num is not enabled (default) *)
-let rec add_term_call_num_prog (cp: prog_decl) : prog_decl =
-  if !Globals.dis_call_num then cp 
-  else { cp with
-    (*old_proc_decls = List.map (fun proc ->
-      add_term_call_num_proc proc) cp.old_proc_decls;*)
-    new_proc_decls = proc_decls_map add_term_call_num_proc cp.new_proc_decls;
-  }
+let count_term_scc (procs: proc_decl list) : int =
+  List.fold_left (fun acc p -> 
+    acc + (F.count_term_struc p.proc_static_specs)) 0 procs
 
-(* Do not add call number into the specification
- * of a primitive call *)    
-and add_term_call_num_proc (proc: proc_decl) : proc_decl =
-  if not (proc.proc_is_main) then proc
+(* Termination: Add the call numbers and the implicit phase 
+ * variables to specifications if the option 
+ * --dis-call-num and --dis-phase-num are not enabled (default) *)
+let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
+  if !Globals.dis_call_num && !Globals.dis_phase_num then cp 
   else 
-    { proc with
-      proc_static_specs = 
-        F.add_term_call_num_struc proc.proc_static_specs proc.proc_call_order;
-      proc_dynamic_specs = 
-        F.add_term_call_num_struc proc.proc_dynamic_specs proc.proc_call_order; 
-    }
+    let (prim_grp, mutual_grps) = re_proc_mutual (sort_proc_decls (list_of_procs cp)) in
+    let log_vars = cp.prog_logical_vars in
+    (* Only add the phase variables into scc group with >1 Term *)
+    let mutual_grps = List.map (fun scc -> (count_term_scc scc, scc)) mutual_grps in
+    let mutual_grps = List.filter (fun (c,_) -> c>0) mutual_grps in
+    if mutual_grps!=[] then 
+      begin
+        let pr p = p.proc_name in
+        Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
+        Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
+        Debug.devel_pprint "\n" no_pos
+            
+      end;
+    let pvs = List.map (fun (n, procs) ->
+      add_term_nums_proc_scc procs cp.new_proc_decls log_vars
+      ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1)) mutual_grps
+    in
+    let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
+      ((List.concat pvs) @ log_vars) in
+    { cp with prog_logical_vars = pvl } 
+
+(* Do not add call numbers and phase variables 
+ * into the specification of a primitive call. 
+ * The return value contains a list of new 
+ * added spec_var *)   
+and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
+  let n_procs, pvs = List.split (List.map (fun proc -> 
+    add_term_nums_proc proc log_vars add_call add_phase
+  ) procs) in 
+  let pvs = List.concat pvs in
+  let n_procs = List.map (fun proc -> { proc with
+    (* Option 1: Add logical variables of scc group into specifications for inference *)
+    (* proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs; *)
+    (* proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs; *)
+    (* Option 2: Store the set of logical variables into proc_logical_vars 
+     * It will be added into the initial context in check_proc *)
+       proc_logical_vars = pvs;
+  }) n_procs in
+  let _ = List.iter (fun proc ->
+    Hashtbl.replace tbl proc.proc_name proc 
+  ) n_procs in 
+  pvs
+
+and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
+  if not (proc.proc_is_main) then (proc, [])
+  else if (not add_call) && (not add_phase) then (proc, [])
+  else 
+    let call_num = 
+      if add_call then Some proc.proc_call_order
+      else None
+    in
+    let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
+    let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
+    ({ proc with
+      proc_static_specs = n_ss; 
+      proc_dynamic_specs = n_ds; 
+    }, pvl1 @ pvl2)
 
 

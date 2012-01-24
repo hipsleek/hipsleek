@@ -19,7 +19,7 @@ case {
               x+y<=0 -> requires Term[1] ensures true;
               x+y>0 -> case {
                 y+z >=0 -> requires Loop ensures false;
-                y+z < 0 -> requires /* Term[3,-y]*/ MayLoop  ensures true;
+                y+z < 0 -> requires /*Term[3,x]*/ MayLoop  ensures true;
               }
             }
 		}

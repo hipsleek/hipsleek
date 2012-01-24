@@ -1,5 +1,7 @@
+logical int p1, p2;
+
 int foo (int x)
- infer [p1,p2]
+infer [p1,p2]
  case {
 	x<0 -> requires Loop 
            ensures false;

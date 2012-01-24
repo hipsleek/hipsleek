@@ -441,8 +441,8 @@ and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_lin
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
-and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula= 
-  let mix_f = MCP.OnePF p in
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula = 
+  let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
   formula_of_mix_formula mix_f pos 
 
 and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula= 
@@ -3018,12 +3018,12 @@ think it is used to instantiate when folding.
 
   (* Some fields below have not yet been necessary 
    * They will be removed *)
-  es_var_label : int option; (* phase number *)
-  es_var_ctx_lhs : CP.formula; (* original LHS? of variance*)
-  es_var_ctx_rhs : CP.formula; (* rhs where call is made? *)
+  (* es_var_label : int option; (* phase number *) *)
+  (* es_var_ctx_lhs : CP.formula; (* original LHS? of variance*) *)
+  (* es_var_ctx_rhs : CP.formula; (* rhs where call is made? *) *)
   (* subst used for phase inference *)
-  es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
-  es_var_loc : loc;
+  (* es_var_subst : (CP.spec_var * CP.spec_var * ident) list; *)
+  (* es_var_loc : loc; *)
 
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
@@ -3218,11 +3218,6 @@ let empty_es flowt pos =
   es_prior_steps  = [];
   es_var_measures = None;
   es_var_stack = [];
-  es_var_label = None;
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_subst = [];
-   es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
@@ -4133,6 +4128,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_rel = es.es_infer_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_assumed_pure = es.es_assumed_pure;
+        es_var_measures = es.es_var_measures;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -6282,24 +6278,17 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   Ctx {
       (* es with es_heap=HTrue;} *)
     (empty_es (mkTrueFlow ()) no_pos) with
-	es_formula = es_f;
-	es_path_label = es.es_path_label;
-	es_prior_steps = es.es_prior_steps;
-	es_var_measures = es.es_var_measures;
-        es_var_stack = es.es_var_stack;
-	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs;
-	es_orig_ante = es.es_orig_ante;
-    es_infer_vars = es.es_infer_vars;
-    es_infer_vars_rel = es.es_infer_vars_rel;
-    es_infer_heap = es.es_infer_heap;
-    es_infer_pure = es.es_infer_pure;
-    es_infer_rel = es.es_infer_rel;
+      es_formula = es_f;
+      es_path_label = es.es_path_label;
+      es_prior_steps = es.es_prior_steps;
+      es_var_measures = es.es_var_measures;
+      es_var_stack = es.es_var_stack;
+      es_infer_vars = es.es_infer_vars;
+      es_infer_vars_rel = es.es_infer_vars_rel;
+      es_infer_heap = es.es_infer_heap;
+      es_infer_pure = es.es_infer_pure;
+      es_infer_rel = es.es_infer_rel;
   }
-
-(*;
-	es_var_ctx_rhs = es.es_var_ctx_rhs;
-	es_var_subst = es.es_var_subst*)
 
 let clear_entailment_history xp (ctx : context) : context =  
   transform_context (clear_entailment_history_es xp) ctx
@@ -7437,46 +7426,118 @@ and norm_ext_with_lexvar ext_f is_primitive =
       let n_cont = norm_ext_with_lexvar cont is_primitive in
       EInfer { ef with formula_inf_continuation = n_cont }
 
-(* Termination: Add the call number if the option
- * --dis-call-num is not enabled (default) *)
-let rec add_term_call_num_struc struc_f call_num =
-  List.map (fun ef -> add_term_call_num_ext ef call_num) struc_f
+(* Termination: Add the call numbers and the implicit phase 
+ * variables to specifications if the option 
+ * --dis-call-num and --dis-phase-num are not enabled (default) *)      
+let rec add_term_nums_struc struc_f log_vars call_num add_phase =
+  let res = List.map (fun ef ->
+    add_term_nums_ext ef log_vars call_num add_phase
+  ) struc_f in
+  let n_sf, pvs = List.split res in
+  (n_sf, List.concat pvs)
+ 
+and add_term_nums_sub_struc struc_f log_vars call_num add_phase =
+  let n_sf, pvs = List.split (List.map (fun ef -> 
+    add_term_nums_ext ef log_vars call_num add_phase) struc_f) in
+  (n_sf, List.concat pvs)
 
-and add_term_call_num_ext ext_f call_num =
+and add_term_nums_ext ext_f log_vars call_num add_phase =
   match ext_f with
   | ECase ({ formula_case_branches = cl } as ef) ->
-      let n_cl  = List.map (fun (c, sf) ->
-        (c, add_term_call_num_struc sf call_num )) cl in
-      ECase { ef with formula_case_branches = n_cl }
+      let n_cl, pvs  = List.split (List.map (fun (c, sf) ->
+        let n_sf, pvs = add_term_nums_sub_struc sf log_vars call_num add_phase in
+        ((c, n_sf), pvs)) cl) in
+      let pvs = List.concat pvs in
+      (ECase { ef with formula_case_branches = n_cl }, pvs)
   | EBase ({
       formula_ext_base = base;
       formula_ext_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_struc cont call_num in
-      let n_base = add_term_call_num_formula base call_num in
-      EBase { ef with
+      let n_cont, pvc = add_term_nums_sub_struc cont log_vars call_num add_phase in
+      let n_base, pvb = add_term_nums_formula base log_vars call_num add_phase in
+      (EBase { ef with
         formula_ext_base = n_base;
         formula_ext_continuation = n_cont
-      }
-  | EAssume _ -> ext_f
-  (*| EVariance ({ formula_var_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_ext cont call_num in
-      EVariance { ef with formula_var_continuation = n_cont }*)
+      }, pvb @ pvc)
+  | EAssume _ -> (ext_f, [])
   | EInfer ({ formula_inf_continuation = cont } as ef) ->
-      let n_cont = add_term_call_num_ext cont call_num in
-      EInfer { ef with formula_inf_continuation = n_cont }
+      let n_cont, pvc = add_term_nums_ext cont log_vars call_num add_phase in
+      (EInfer { ef with formula_inf_continuation = n_cont }, pvc)
 
-and add_term_call_num_formula f call_num = 
+and add_term_nums_formula f log_vars call_num add_phase = 
   match f with
   | Base ({ formula_base_pure = p } as base) ->
       let p = MCP.pure_of_mix p in
-      let n_p = CP.add_term_call_num_pure p call_num in
-      Base { base with formula_base_pure = MCP.mix_of_pure n_p }
+      let pv = fresh_phase_var_opt add_phase in
+      let n_p, n_pv = CP.add_term_nums_pure p log_vars call_num pv in
+      (Base { base with formula_base_pure = MCP.mix_of_pure n_p }, n_pv)
   | Exists ({ formula_exists_pure = p } as ex) ->
       let p = MCP.pure_of_mix p in
-      let n_p = CP.add_term_call_num_pure p call_num in
-      Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }
+      let pv = fresh_phase_var_opt add_phase in
+      let n_p, n_pv = CP.add_term_nums_pure p log_vars call_num pv in
+      (Exists { ex with formula_exists_pure = MCP.mix_of_pure n_p }, n_pv)
   | Or ({ formula_or_f1 = f1; formula_or_f2 = f2 } as orf) ->
-      let n_f1 = add_term_call_num_formula f1 in
-      let n_f2 = add_term_call_num_formula f2 in
-      Or { orf with formula_or_f1 = f1; formula_or_f2 = f2 }
+      let n_f1, pv1 = add_term_nums_formula f1 log_vars call_num add_phase in
+      let n_f2, pv2 = add_term_nums_formula f2 log_vars call_num add_phase in
+      (Or { orf with formula_or_f1 = n_f1; formula_or_f2 = n_f2 }, pv1 @ pv2)
 
+and fresh_phase_var_opt add_phase = 
+  if add_phase then
+    let pv_name = fresh_any_name "pv" in
+    Some (CP.SpecVar(Int, pv_name, Unprimed))
+  else None
+
+(* Termination: Add EInfer for logical variables into the specification *) 
+(*
+and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
+  if Gen.is_empty vl then sf
+  else
+    let n_sf = List.map (fun ef -> 
+      EInfer {
+        formula_inf_post = false;
+        formula_inf_vars = vl;
+        formula_inf_continuation = ef;
+        formula_inf_pos = pos_of_struc_formula [ef];
+      }
+    ) sf
+    in
+    begin
+      Debug.trace_hprint (add_str "ORIG_SPECS" !print_struc_formula) sf no_pos;
+      Debug.trace_hprint (add_str "TRANS_SPECS" !print_struc_formula) n_sf no_pos;
+    end;
+    n_sf
+
+let add_infer_struc vl sf =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_infer_struc" pr pr
+  (fun _ -> add_infer_struc vl sf) sf
+*)
+(* Termination: Count the number of Term in a specification *)  
+let rec count_term_struc (sf: struc_formula) : int =
+  List.fold_left (fun acc ef -> acc + (count_term_ext ef)) 0 sf
+
+and count_term_ext (ef: ext_formula) : int =
+  match ef with
+  | ECase { formula_case_branches = cl } ->
+      List.fold_left (fun acc (_, sf) -> acc + (count_term_struc sf)) 0 cl
+  | EBase {
+      formula_ext_base = base;
+      formula_ext_continuation = cont } ->
+      let n_b = count_term_formula base in
+      let n_c = count_term_struc cont in
+      n_b + n_c
+  | EAssume _ -> 0
+  | EInfer { formula_inf_continuation = cont } ->
+      count_term_ext cont
+
+and count_term_formula f = 
+  match f with
+  | Base { formula_base_pure = p } ->
+      let p = MCP.pure_of_mix p in
+      CP.count_term_pure p
+  | Exists { formula_exists_pure = p } ->
+      let p = MCP.pure_of_mix p in
+      CP.count_term_pure p
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      let n_f1 = count_term_formula f1 in
+      let n_f2 = count_term_formula f2 in
+      n_f1 + n_f2

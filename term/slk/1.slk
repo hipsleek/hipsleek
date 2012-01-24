@@ -22,8 +22,8 @@ checkentail Term[1] |- Term[1,_,_].
 print residue.
 
 //(8): Valid
-checkentail n=m+1 & Term[n,_,_] |- Term[m,_].
-
+checkentail n=m+1 & Term[n,_,_] |- Loop & Term[m,_].
+print residue.
 // TODO: inference is not working!
 // need to call heap_entail_empty_rhs for answers!
 // if succeed; proceed

@@ -277,6 +277,18 @@ let wrap_box box_opt f x =
   in
     f_o box_opt; f x; fmt_close()
 
+let pr_wrap_opt hdr (f: 'a -> unit) (x:'a option) =
+  match x with
+    | None -> ()
+    | Some x ->
+          begin
+            fmt_cut();
+            fmt_open_hbox ();
+            fmt_string hdr;
+            f x;
+            fmt_close_box()
+          end
+
 (** if f e  is not true print with a cut in front of  hdr*)    
 let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
@@ -658,7 +670,15 @@ let pr_slicing_label sl =
 		pr_list_none pr_formula_exp el;
 		fmt_string ("]");
 		fmt_string (">")
-		  
+
+let pr_var_measures (t_ann, ls1,ls2) = 
+  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+  fmt_string (string_of_term_ann t_ann);
+  pr_s "" pr_formula_exp ls1;
+  if ls2!=[] then
+    pr_set pr_formula_exp ls2
+  else ()
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -1481,15 +1501,16 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip) =
+  let pr (f,(* ac, *)iv,ih,ip,vm) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
+    pr_wrap_opt "es_var_measures: " pr_var_measures vm;
     fmt_close_box();
   in 
   let pr_disj ls = 
@@ -1524,14 +1545,14 @@ let pr_list_context_short (ctx:list_context) =
 let pr_entail_state_short e =
   fmt_open_vbox 1;
   pr_formula_wrap e.es_formula;
-  pr_formula_wrap e.es_formula;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
   (* pr_wrap_test "es_ante_vars: " Gen.is_empty (pr_seq "" pr_spec_var) e.es_ante_evars;*)
   (* pr_vwrap "es_pure: " pr_mix_formula_branches e.es_pure; *)
-(*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
+  (* pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
+  pr_wrap_opt "es_var_measures: " pr_var_measures e.es_var_measures;
   fmt_close_box()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
@@ -1618,7 +1639,6 @@ let pr_partial_context ((l1,l2): partial_context) =
     	  pr_vwrap "State:" pr_context fs)) l2;
   fmt_close_box ()
 
-
 let pr_partial_context_short ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   pr_vwrap_naive "Successful States:"
@@ -1667,12 +1687,14 @@ let pr_list_partial_context_short (lc : list_partial_context) =
    (* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *)
    fmt_cut (); pr_list_none pr_partial_context_short lc
 
-let pr_list_partial_context_short (lc : list_partial_context) =
-    (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
-   (* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *)
-   fmt_cut (); pr_list_none pr_partial_context_short lc
+(* let pr_list_partial_context_short (lc : list_partial_context) = *)
+(*     (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
+(*    (\* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *\) *)
+(*    fmt_cut (); pr_list_none pr_partial_context_short lc *)
 
 let string_of_list_partial_context (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context lc
+
+let string_of_list_partial_context_short (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context_short lc
 
 let string_of_list_failesc_context (lc: list_failesc_context) =  poly_string_of_pr pr_list_failesc_context lc
 

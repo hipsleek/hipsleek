@@ -5,21 +5,22 @@ logical int p1,p2,p3;
 
 int gcd (int x, int y)
 //requires x>0 & y>0
-infer[x,y] //=> x>=1 & y>=1
+/*
+//infer[x,y] //=> x>=1 & y>=1
 case {
 	x<y -> requires Term[y] ensures true;
 	x=y -> requires Term[] ensures true;
 	x>y -> requires Term[x] ensures true;
 }
-
-/*
-infer[x,y,p1,p2,p3]
-case {
-	x<y -> requires Term[p1,y] ensures true;
-	x=y -> requires Term[p2] ensures true;
-	x>y -> requires Term[p3,x] ensures true;
-}
 */
+//requires x>0 & y>0
+infer[p1,p2,p3,x,y]
+case {
+  x<y -> requires Term[p3,y] ensures true;
+  x=y -> requires Term[p2] ensures true;
+  x>y -> requires Term[p1,x] ensures true;
+}
+
 
 {
 	if (x>y) 

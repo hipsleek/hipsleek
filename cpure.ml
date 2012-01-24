@@ -508,7 +508,7 @@ and bfv (bf : b_formula) =
 		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
     | LexVar (_,args1, args2, _) ->
-              List.concat (List.map afv (args1@args2))
+        List.concat (List.map afv (args1@args2))
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -904,6 +904,11 @@ and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 and mkLexVar t_ann m i pos = LexVar (t_ann, m, i, pos)
 
 and mkPure bf = BForm ((bf,None), None)
+
+and mkLexVar_pure a l1 l2 = 
+  let bf = mkLexVar a l1 l2 no_pos in
+  let p = mkPure bf in
+  p
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
@@ -6983,43 +6988,87 @@ let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> (type_of_spec_var v) != RelT) vs
 
-(* Termination: Add the call number if the option
- * --dis-call-num is not enabled (default) *)
-let rec add_term_call_num_pure f call_num =
+(* Termination: Add the call numbers and the implicit phase 
+ * variables to specifications if the option 
+ * --dis-call-num and --dis-phase-num are not enabled (default) *) 
+let rec add_term_nums_pure f log_vars call_num phase_var =
   match f with
   | BForm (bf, lbl) ->
-      let n_bf = add_term_call_num_b_formula bf call_num in
-      BForm (n_bf, lbl)
+      let n_bf, pv = add_term_nums_b_formula bf log_vars call_num phase_var in
+      (BForm (n_bf, lbl), pv)
   | And (f1, f2, pos) ->
-      let n_f1 = add_term_call_num_pure f1 call_num in
-      let n_f2 = add_term_call_num_pure f2 call_num in
-      And (n_f1, n_f2, pos)
+      let n_f1, pv1 = add_term_nums_pure f1 log_vars call_num phase_var in
+      let n_f2, pv2 = add_term_nums_pure f2 log_vars call_num phase_var in
+      (And (n_f1, n_f2, pos), pv1 @ pv2)
   | Or (f1, f2, lbl, pos) ->
-      let n_f1 = add_term_call_num_pure f1 call_num in
-      let n_f2 = add_term_call_num_pure f2 call_num in
-      Or (n_f1, n_f2, lbl, pos)
+      let n_f1, pv1 = add_term_nums_pure f1 log_vars call_num phase_var in
+      let n_f2, pv2 = add_term_nums_pure f2 log_vars call_num phase_var in
+      (Or (n_f1, n_f2, lbl, pos), pv1 @ pv2)
   | Not (f, lbl, pos) ->
-      let n_f = add_term_call_num_pure f call_num in
-      Not (n_f, lbl, pos)
+      let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
+      (Not (n_f, lbl, pos), pv)
   | Forall (sv, f, lbl, pos) ->
-      let n_f = add_term_call_num_pure f call_num in
-      Forall (sv, n_f, lbl, pos)
+      let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
+      (Forall (sv, n_f, lbl, pos), pv)
   | Exists (sv, f, lbl, pos) ->
-      let n_f = add_term_call_num_pure f call_num in
-      Exists (sv, n_f, lbl, pos)
+      let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
+      (Exists (sv, n_f, lbl, pos), pv)
 
-(* Only add call number to Term *)      
-and add_term_call_num_b_formula bf call_num =
+(* Only add call number to Term *) 
+(* Add phase variable into Term only if 
+ * there is not any logical var inside it *)
+and add_term_nums_b_formula bf log_vars call_num phase_var =
   let (pf, ann) = bf in
-  let n_pf = match pf with
+  let n_pf, pv = match pf with
     | LexVar (t_ann, ml, il, pos) ->
         (match t_ann with
-          | Term -> 
-              let cn = mkIConst call_num pos in
-              LexVar (t_ann, cn::ml, il, pos)
-          | _ -> pf)
-    | _ -> pf
-  in (n_pf, ann)
+          | Term ->
+              let v_ml, pv =
+                (* Termination: If there are logical variables or 
+                 * consts in the measures, it is no need to add phase variables *)
+                let has_const = List.exists (fun e -> is_int e) ml in
+                if has_const then (ml, [])
+                else
+                  let mfv = List.fold_left (fun acc m -> acc @ (afv m)) [] ml in
+                  let log_var = Gen.BList.intersect_eq eq_spec_var mfv log_vars in
+                  let has_log_var = not (Gen.is_empty log_var) in
+                  if has_log_var then (ml, log_var)
+                  else match phase_var with
+                  | None -> (ml, [])
+                  | Some pv -> ((mkVar pv pos)::ml, [pv])
+              in 
+              let n_ml = match call_num with
+                | None -> v_ml
+                | Some i -> (mkIConst i pos)::v_ml
+              in (LexVar (t_ann, n_ml, il, pos), pv)
+          | _ -> (pf, []))
+    | _ -> (pf, [])
+  in ((n_pf, ann), pv)
+
+let rec count_term_pure f = 
+  match f with
+  | BForm (bf, _) ->
+      count_term_b_formula bf
+  | And (f1, f2, _) ->
+      let n_f1 = count_term_pure f1 in
+      let n_f2 = count_term_pure f2 in
+      n_f1 + n_f2
+  | Or (f1, f2, _, _) ->
+      let n_f1 = count_term_pure f1 in
+      let n_f2 = count_term_pure f2 in
+      n_f1 + n_f2
+  | Not (f, _, _) -> count_term_pure f
+  | Forall (_, f, _, _) -> count_term_pure f
+  | Exists (_, f, _, _) -> count_term_pure f
+
+and count_term_b_formula bf =
+  let (pf, _) = bf in
+  match pf with
+  | LexVar (t_ann, _, _, _) ->
+      (match t_ann with
+        | Term -> 1
+        | _ -> 0)
+  | _ -> 0
 
 
 
