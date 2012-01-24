@@ -43,7 +43,7 @@ hip.byte: xml
 hip.native: xml
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
-	cp -u _build/main.byte n-hip
+	cp -u _build/main.native n-hip
 
 sleek.byte: xml
 	@ocamlbuild $(OB_FLAGS) sleek.byte
@@ -53,7 +53,7 @@ sleek.byte: xml
 sleek.native: xml
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
-	cp -u _build/main.byte n-sleek
+	cp -u _build/sleek.native n-sleek
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
