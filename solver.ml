@@ -7162,14 +7162,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} -> 
-            let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
-            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
-            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-            (* Assumed lhs_h to be star or view_node or data_node *)
-            let lhs_h_list = split_star_conjunctions lhs_h in
-            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
-            let init_pure = CP.conj_of_list init_pures pos in
-            let estate = {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} in
+            let estate =
+              if Inf.no_infer_rel estate then estate
+              else 
+                let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+                let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+                let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+                (* Assumed lhs_h to be star or view_node or data_node *)
+                let lhs_h_list = split_star_conjunctions lhs_h in
+                let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+                let init_pure = CP.conj_of_list init_pures pos in
+                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
+            in
             do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
       | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
@@ -7196,14 +7200,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_base_case_unfold {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_rhs_node = rhs_node;}->
-            let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
-            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
-            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-            (* Assumed lhs_h to be star or view_node or data_node *)
-            let lhs_h_list = split_star_conjunctions lhs_h in
-            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
-            let init_pure = CP.conj_of_list init_pures pos in
-            let estate = {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} in
+            let estate =
+              if Inf.no_infer_rel estate then estate
+              else 
+                let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+                let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+                let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+                (* Assumed lhs_h to be star or view_node or data_node *)
+                let lhs_h_list = split_star_conjunctions lhs_h in
+                let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+                let init_pure = CP.conj_of_list init_pures pos in
+                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
+            in
             let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
             (match ans with
               | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
@@ -7213,15 +7221,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_base_case_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} ->
-            let lhs_h, lhs_p, _,_, _ = CF.split_components estate.es_formula in
-            let lhs_alias = MCP.ptr_equations_without_null lhs_p in
-            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-            (* Assumed lhs_h to be star or view_node or data_node *)
-            let lhs_h_list = split_star_conjunctions lhs_h in
-            let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
-            let init_pure = CP.conj_of_list init_pures pos in
-            let new_ante = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
-            let estate = {estate with es_formula = new_ante} in
+            let estate =
+              if Inf.no_infer_rel estate then estate
+              else 
+                let lhs_h, lhs_p, _,_, _ = CF.split_components estate.es_formula in
+                let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+                let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+                (* Assumed lhs_h to be star or view_node or data_node *)
+                let lhs_h_list = split_star_conjunctions lhs_h in
+                let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+                let init_pure = CP.conj_of_list init_pures pos in
+                let new_ante = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
+                {estate with es_formula = new_ante} 
+            in
             if (estate.es_cont != []) then 
 	          (* let  _ = print_string ("rhs_rest = " ^(Cprinter.string_of_h_formula rhs_rest)^ "base = " ^ (Cprinter.string_of_formula (Base rhs_b)) ^ "\n") in  *)
 	          (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (*(Base rhs_b)*) (Cformula.formula_of_heap rhs_rest pos)  (get_node_label rhs_node) pos)), NoAlias)
