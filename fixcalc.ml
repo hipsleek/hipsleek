@@ -234,7 +234,17 @@ let rec get_rel_vars pf = match pf with
   | CP.Forall (_,f,_,_) -> get_rel_vars f
   | CP.Exists (_,f,_,_) -> get_rel_vars f
 
-let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) : CP.formula = match (rel,rel_def) with
+let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with
+  | CP.Var _ -> (e, [])
+  | _ -> (
+    try 
+      let arb = List.hd (CP.afv e) in 
+      let var = CP.fresh_spec_var_prefix "fc" arb in
+      let var = CP.mkVar var no_pos in
+      (var, [CP.mkEqExp var e no_pos])
+    with _ -> (e,[]))
+
+let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) = match (rel,rel_def) with
   | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
     if id = id_def then 
       let new_args_def = 
@@ -243,15 +253,18 @@ let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_v
       in
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
-      CP.BForm ((CP.RelForm (id,new_args,p), o1), o2)
-    else rel
+      let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
+      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
+    else 
+      let args, subs = List.split (List.map (fun a -> substitute a) args) in
+      (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
   | _ -> report_error no_pos "Expecting relation formulae"
 
 let arr_args rcase_orig rel ante_vars = 
   let rels = CP.get_RelForm rcase_orig in
-  let rels = List.map (fun r -> arr_para_order r rel ante_vars) rels in
+  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
   let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
-  CP.conj_of_list ([rcase]@rels) no_pos
+  CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos
 
 let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)
   | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->
@@ -295,7 +308,7 @@ let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
   let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
   let rels = CP.get_RelForm rcase_orig in
-  let rels = List.map (fun r -> arr_para_order r rel ante_vars) rels in
+  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
   let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in
   let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
   try
@@ -303,7 +316,7 @@ let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
     let bcase = CP.subst pairs bcase_orig in
     let pf = List.concat (List.map (fun b -> List.concat 
         (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) (CP.list_of_conjs bcase)) in
-    CP.conj_of_list ([rcase]@rels@pf) no_pos
+    CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos
   (*  print_endline ("PURE: " ^ Cprinter.string_of_pure_formula rcase);*)
   (*  print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula bcase);*)
   (*  print_endline ("PURE3: " ^ Cprinter.string_of_pure_formula pf);*)
