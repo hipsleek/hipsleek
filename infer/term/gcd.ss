@@ -1,13 +1,21 @@
 logical int p1,p2,p3;
 
 int gcd (int x, int y)
-requires x>0 & y>0
-//infer[p1,p2,p3]
-case {
-	x=y -> requires Term[] ensures true;
-	x!=y -> requires Term[x+y] ensures true;
-}
-
+ case {
+  x=y -> requires Term[] ensures res=x;
+  x!=y ->
+  case{
+   x>0 & y>0 -> requires Term[x+y] ensures true;
+   x=0 & y=0 -> requires Term[] ensures res=0;
+   x>0 & y=0 -> requires Loop ensures false;
+   x<0 & y=0 -> requires Loop ensures false;
+   x=0 & y>0 -> requires Loop ensures false;
+   x=0 & y<0 -> requires Loop ensures false;
+   x<0 & y<0 -> requires Loop ensures false;
+   x<0 & y>0 -> requires Loop ensures false;
+   x>0 & y<0 -> requires Loop ensures false;
+  }
+ }
 {
 	if (x>y) 
 		return gcd (x-y, y);

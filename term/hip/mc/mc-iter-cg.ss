@@ -2,7 +2,7 @@
 // McCarthy after doing a trace!!
 
 int mcCarthy (int x)
-requires x<=111
+//requires x<=111
 case {
 	x>100 -> requires Term[] ensures res=x-10;
 	x<=100 -> requires Term[] ensures res=91;
