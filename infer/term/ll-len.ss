@@ -7,12 +7,11 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-relation R(int n, int m).
+ranking r1(int n) = n.
 
 int length(node x)
-  infer @pre [R]
-  requires x::ll<n>@L
-  ensures R(res,n);
+  requires x::ll<n>@L & Term[r1(n)]
+  ensures res=n;
   // R(res,n) = res=n
 {
   if (x==null) return 0;

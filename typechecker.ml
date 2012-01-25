@@ -1235,9 +1235,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         Debug.trace_hprint (add_str "OLD.. SPECS" pr_spec) proc.proc_static_specs no_pos;
                         Debug.trace_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                         Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos;
-                        print_endline ("OLD SPECS: "^old_sp);
-                        print_endline ("NEW SPECS: "^new_sp);
-                        print_endline ("NEW RELS: "^new_rels);
+                        (* print_endline ("OLD SPECS: "^old_sp); *)
+                        (* print_endline ("NEW SPECS: "^new_sp); *)
+                        (* print_endline ("NEW RELS: "^new_rels); *)
                         let f = if f && !reverify_flag then 
                           let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
                           is_valid
