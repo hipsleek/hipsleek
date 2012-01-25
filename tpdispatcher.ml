@@ -1169,8 +1169,13 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* such a simplifier loses information *)
 let simplify_raw (f: CP.formula) = 
-  (* let f = drop_rel_formula f in *)
-  simplify f 
+  let rels = CP.get_RelForm f in
+  let ids = List.concat (List.map get_rel_id_list rels) in
+  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+  let res_memo = simplify f_memo in
+  CP.restore_memo_formula subs bvars res_memo
+
+let simplify_raw_w_rel (f: CP.formula) = simplify f
 	
 let simplify_raw f =
 	let pr = !CP.print_formula in
@@ -1304,6 +1309,17 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
 let pairwisecheck (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "pairwisecheck" pr pr pairwisecheck f
+
+let pairwisecheck_raw (f : CP.formula) : CP.formula =
+  let rels = CP.get_RelForm f in
+  let ids = List.concat (List.map get_rel_id_list rels) in
+  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+  let res_memo = pairwisecheck f_memo in
+  CP.restore_memo_formula subs bvars res_memo
+
+let pairwisecheck_raw (f : CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
 
 (*
 let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =

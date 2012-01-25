@@ -254,6 +254,9 @@ let common_arguments = [
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
 
+  (* abduce pre from post *)
+  ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
+
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ] 

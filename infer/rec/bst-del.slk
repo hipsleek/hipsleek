@@ -1,0 +1,37 @@
+/* binary search trees */
+
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}.
+
+
+/* view for binary search trees */
+pred bst <sm, lg> == self = null & sm <= lg 
+	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
+	inv sm <= lg.
+
+
+//relation A(int x, int y, int z).
+relation B(int x, int y, int a, int b).
+
+
+infer [B]  x::bst<sm,lg> & x=null |- x::bst<s,l> & B(sm,s,l,lg).
+print residue.
+
+infer [B]  x::node2<v,p,q> * p::bst<sm,pl> * q::bst<qs,lg> & pl<=v & qs>=v & xp=p & q=null
+           |- xp::bst<s,l> & B(sm,s,l,lg).
+print residue.
+
+
+//infer [B]  x::node2<v,p,q> * p::bst<sm,pl> * q::bst<qs,lg> & pl<=v & qs>=v & xp=p & q=null & p!=null
+//           |- xp::bst<s,l> & B(sm,s,l,lg).
+//print residue.
+
+
+//infer [B]  x::node2<v,p,q> * p::node2<v1,p1,q1> * p1::bst<sm,pl1> * q1::bst<qs1,pl> * q::bst<qs,lg> & pl<=v & qs>=v & pl1<=v1 & qs1>=v1 & xp=p & q=null
+//           |- xp::bst<s,l> & B(sm,s,l,lg).
+//print residue.
+
+

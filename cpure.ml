@@ -122,7 +122,11 @@ and rounding_func =
   | Floor
 
 let is_self_var = function
-  | Var (SpecVar (_,id,_),_) -> id=self
+  | Var (x,_) -> is_self_spec_var x
+  | _ -> false
+
+let is_res_var = function
+  | Var (x,_) -> is_res_spec_var x
   | _ -> false
 
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
@@ -256,6 +260,11 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
+
+let eq_spec_var_x (sv1 : spec_var) (sv2 : spec_var) = 
+  (* ignore primedness *)
+  match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> t1 = t2 && v1 = v2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
@@ -637,7 +646,30 @@ and is_float (e : exp) : bool =
   match e with
     | FConst _ -> true
     | _ -> false
-          
+
+and is_specific_val (e: exp): bool =
+  is_int e || is_float e || is_null e
+
+and include_specific_val (f: formula): bool =
+  match f with
+  | BForm (bf,_) -> include_specific_val_bf bf
+  | And (f1,f2,_) -> include_specific_val f1 || include_specific_val f2
+  | Or (f1,f2,_,_) -> include_specific_val f1 || include_specific_val f2
+  | Not (f,_,_) -> include_specific_val f
+  | Forall (_,f,_,_) -> include_specific_val f
+  | Exists (_,f,_,_) -> include_specific_val f
+
+and include_specific_val_bf (bf: b_formula): bool =
+  let (pf,_) = bf in
+  match pf with
+  | Lt (e1,e2,_)
+  | Lte (e1,e2,_)
+  | Gt (e1,e2,_)
+  | Gte (e1,e2,_)
+  | Eq (e1,e2,_)
+  | Neq (e1,e2,_) -> is_specific_val e1 || is_specific_val e2
+  | _ -> false
+
 and get_num_int (e : exp) : int =
   match e with
     | IConst (b,_) -> b
@@ -1135,6 +1167,11 @@ and is_member_pure (f:formula) (p:formula):bool =
   List.exists (fun c-> equalFormula f c) y
       
 
+and is_disjunct f : bool =
+  match f with
+    | Or(_,_,_,_) -> true
+    | _ -> false
+
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bool = 
   match (f1,f2) with
@@ -1389,6 +1426,9 @@ and build_relation_x relop alist10 alist20 lbl pos =
 and mem (sv : spec_var) (svs : spec_var list) : bool =
   List.exists (fun v -> eq_spec_var sv v) svs
 
+and mem_x fun_eq (sv : spec_var) (svs : spec_var list) : bool =
+  List.exists (fun v -> fun_eq sv v) svs
+
 and disjoint (svs1 : spec_var list) (svs2 : spec_var list) =
   List.for_all (fun sv -> not (mem sv svs2)) svs1
 
@@ -1397,6 +1437,9 @@ and subset (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
+
+and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> mem_x fun_eq sv svs2) svs1
 
 and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
@@ -6641,7 +6684,21 @@ let get_rel_id (f:formula)
                 | (RelForm(id,_,_),_) -> Some id
                 | _ -> None)
         | _ -> None
-  
+
+let get_rel_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (RelForm(id,_,_),_) -> [id]
+    | _ -> [])
+  | _ -> []
+
+let get_rel_args (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (RelForm(_,args,_),_) -> List.concat (List.map afv args)
+    | _ -> [])
+  | _ -> []
+
 let is_rel_in_vars (vl:spec_var list) (f:formula) 
       = match (get_rel_id f) with
         | Some n -> if mem n vl then true else false
@@ -6658,6 +6715,14 @@ let rec get_RelForm pf = match pf with
   | Not (f,_,_) -> get_RelForm f
   | Forall (_,f,_,_) -> get_RelForm f
   | Exists (_,f,_,_) -> get_RelForm f
+
+let rec get_Neg_RelForm pf = match pf with
+  | BForm (bf,_) -> []
+  | And (f1,f2,_) -> get_Neg_RelForm f1 @ get_Neg_RelForm f2
+  | Or (f1,f2,_,_) -> get_Neg_RelForm f1 @ get_Neg_RelForm f2
+  | Not (f,_,_) -> get_RelForm f
+  | Forall (_,f,_,_) -> get_Neg_RelForm f
+  | Exists (_,f,_,_) -> get_Neg_RelForm f
 
 (* let rec split_conjunctions = function *)
 (*   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y) *)
