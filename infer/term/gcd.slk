@@ -1,6 +1,5 @@
 ranking r(int x, int y).
 
-infer [r] x::node<_,q>*q::ll<n-1>*y::ll<m> & n1=n-1 & x1=q     
-    |- q::ll<n1> * y::ll<m1> & r(n,m)>r(n1,m1).
+infer [r] x>y & x1=x-y & y1=y |- r(x,y)>r(x1,y1).
 
-infer [r] x::ll<n> * y::ll<m> & n>0  |- r(n,m)>=0 .
+infer [r] x<y & x1=x & y1=y-x |- r(x,y)>r(x1,y1).

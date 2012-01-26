@@ -6,6 +6,10 @@ int gcd (int x, int y)
   x!=y ->
   case{
    x>0 & y>0 -> requires Term[x+y] ensures true;
+   x>0 & y<=0 -> requires Loop ensures false;
+   x<=0 & y>0 -> requires Loop ensures false;
+   x<=0 & y<=0 -> requires Loop ensures false;
+   /*
    x=0 & y=0 -> requires Term[] ensures res=0;
    x>0 & y=0 -> requires Loop ensures false;
    x<0 & y=0 -> requires Loop ensures false;
@@ -14,6 +18,7 @@ int gcd (int x, int y)
    x<0 & y<0 -> requires Loop ensures false;
    x<0 & y>0 -> requires Loop ensures false;
    x>0 & y<0 -> requires Loop ensures false;
+   */
   }
  }
 {
