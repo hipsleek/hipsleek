@@ -11,9 +11,9 @@ void loop1(int y, int x)
  case {
      x>0 & y>0 ->
    case {
-       x=y-1 -> requires Term[0,x,1] ensures true;
-       x=y-2 -> requires Term[0,x,2] ensures true;
-       ((x!=y-1) & (x!=y-2)) -> requires Term[1,x+y] ensures true;
+       x=y-1 -> requires Term[x,1] ensures true;
+       x=y-2 -> requires Term[x,2] ensures true;
+       ((x!=y-1) & (x!=y-2)) -> requires Term[x+y] ensures true;
       }
   x<=0 | y<=0 -> requires Term[] ensures true;
   }
