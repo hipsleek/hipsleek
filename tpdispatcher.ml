@@ -32,6 +32,7 @@ type tp_type =
   | OZ (* Omega and Z3 *)
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
+  | SPASS
 
 let test_db = false
 
@@ -79,6 +80,7 @@ let string_of_prover prover = match prover with
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
+  | SPASS -> "SPASS"
 
 
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
@@ -428,6 +430,8 @@ let set_tp tp_str =
     )
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
+  else if tp_str = "spass" then
+    (tp := SPASS; prover_str:= "SPASS"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -452,6 +456,7 @@ let string_of_tp tp = match tp with
   | OZ -> "oz"
    | AUTO -> "auto"
   | DP -> "dp"
+  | SPASS -> "spass"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -473,6 +478,7 @@ let name_of_tp tp = match tp with
   | OZ -> "Omega, Z3"
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
+  | SPASS -> "SPASS"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -484,6 +490,7 @@ let log_file_of_tp tp = match tp with
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
+  | SPASS -> "allinput.spass"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -998,6 +1005,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Mona.is_sat f sat_no
       else
 		Smtsolver.is_sat f sat_no
+    | SPASS -> Spass.is_sat f sat_no
+
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
 
@@ -1137,6 +1146,7 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (Omega.simplify f);
                   end
+          | SPASS -> Spass.simplify f;
          | _ -> Omega.simplify f in
         Gen.Profiling.pop_time "simplify";
 
@@ -1235,6 +1245,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
         Mona.hull f
       else
         Smtsolver.hull f
+  | SPASS -> Spass.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -1275,6 +1286,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | ZM ->
       if is_bag_constraint f then Mona.pairwisecheck f
       else Smtsolver.pairwisecheck f
+  | SPASS -> Spass.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -1453,6 +1465,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Smtsolver.imply ante conseq timeout
+    | SPASS -> Spass.imply ante conseq timeout
   in
 	let _ = if should_output () then
 			begin
@@ -2553,6 +2566,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
+  | SPASS -> (); (* Don't start SPASS here! It need to start only when check_formula *)
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2588,6 +2602,7 @@ let stop_prover () =
 	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+    | SPASS -> ();
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
