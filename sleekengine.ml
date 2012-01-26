@@ -40,6 +40,7 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
+        I.prog_func_decls = [];
         I.prog_rel_decls = [];
         I.prog_rel_ids = [];
         I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -57,6 +58,7 @@ let cobj_def = { C.data_name = "Object";
 let cprog = ref { C.prog_data_decls = [];
 			  C.prog_view_decls = [];
 			  C.prog_logical_vars = [];
+(*				C.prog_func_decls = [];*)
 				C.prog_rel_decls = []; (* An Hoa *)
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  (*C.old_proc_decls = [];*)
@@ -105,7 +107,14 @@ let check_data_pred_name name : bool =
 			  		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
 						false
 					with
-			  		| Not_found -> true
+			  		| Not_found -> 
+              begin
+					      try
+			        		let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
+						      false
+					      with
+			        		| Not_found -> true
+		        	end
 		  	end
 	  end
 
@@ -221,6 +230,19 @@ let convert_pred_to_cast () =
 
 let convert_pred_to_cast () = 
   Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+
+(* TODO: *)
+let process_func_def fdef =
+  if check_data_pred_name fdef.I.func_name then
+	let tmp = iprog.I.prog_func_decls in
+	  try
+			iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
+			(*let cfdef = AS.trans_func iprog fdef in !cprog.C.prog_func_decls <- (cfdef :: !cprog.C.prog_func_decls);*)
+			(*Smtsolver.add_function cfdef.C.func_name cfdef.C.func_vars cfdef.C.func_formula;*)
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
+  else
+		print_string (fdef.I.func_name ^ " is already defined.\n")
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =

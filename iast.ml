@@ -23,6 +23,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_logical_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
                    mutable prog_rel_decls : rel_decl list; 
                    mutable prog_rel_ids : (typ * ident) list; 
                    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -55,6 +56,9 @@ and view_decl = { view_name : ident;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
+
+and func_decl = { func_name : ident; 
+			func_typed_vars : (typ * ident) list;}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
@@ -907,6 +911,10 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs wit
 
 and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | [] -> raise Not_found
+
+and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
   | [] -> raise Not_found
 
 (* An Hoa *)
@@ -1799,6 +1807,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls; (* An Hoa *)
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
                 prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -1816,6 +1825,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_logical_var_decls = [];
                 prog_enum_decls = [];
                 prog_view_decls = [];
+                prog_func_decls = [];
                 prog_rel_decls = [];
                 prog_rel_ids = [];
                 prog_axiom_decls = [];

@@ -872,7 +872,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       let rel_vars = List.concat (List.map CP.fv rel_lhs) in
       (* End  : To keep vars of rel_form in lhs *)
 
-      let pr = !CP.print_formula_br in
+      (*let pr = !CP.print_formula_br in*)
       (* let _ = print_endline (pr rhs_p_br) in *)
       let rhs_p_2 = CP.join_conjunctions other_rhs in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in

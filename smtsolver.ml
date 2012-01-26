@@ -298,6 +298,7 @@ and collect_exp_info e = match e with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+  | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =

@@ -4064,9 +4064,13 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                   | CP.SpecVar(t,id,pr) ->
                         if t==UNK then
                           try
-                            let d = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+                            let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
                             CP.SpecVar(RelT,id,pr)
-                          with _ -> v
+                          with _ -> 
+                            try
+                              let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+                              CP.SpecVar(Int,id,pr)
+                            with _ -> v
                         else v
             ) ivs in
             (* TODO : any warning below should be fixed *)
@@ -4580,6 +4584,9 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e stab, pos)
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
+    | IP.Func (id, es, pos) ->
+		  let es = List.map (fun e -> trans_pure_exp e stab) es in
+		  CP.Func (CP.SpecVar (Int, id, Unprimed), es, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
 		  let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
 		  let dim = List.length ind in (* currently only support int type array *)
@@ -4977,6 +4984,10 @@ and gather_type_info_exp_x a0 stab et =
           let el_t = fresh_tvar stab in
           let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
           BagT t
+    | IP.Func (id, es, pos) -> 
+          let t = I.int_type in
+          let _ = must_unify_expect t et stab pos in
+          t
     | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
           (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
 		  (* and hence, accessing the element at position i, we get the value of expected_type *)

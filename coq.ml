@@ -134,6 +134,8 @@ and coq_of_exp e0 =
 	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
 	  end
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+	| CP.Func _ -> 
+			illegal_format "coq_of_exp : function cannot be handled"
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)

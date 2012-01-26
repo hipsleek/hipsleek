@@ -104,6 +104,7 @@ and exp =
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
   | ArrayAt of (spec_var * (exp list) * loc)      (* An Hoa : array access *)
+  | Func of (spec_var * (exp list) * loc)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here *)
   | ConstRel of bool
@@ -356,6 +357,7 @@ let rec get_exp_type (e : exp) : typ =
   | ListHead _ | ListLength _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
+  | Func _ -> Int
   | ArrayAt (SpecVar (t, a, _), _, _) ->
           (* Type of a[i] is the type of the element of array a *)
           match t with
@@ -547,6 +549,9 @@ and afv (af : exp) : spec_var list =
     | ListTail (a, _)
     | ListLength (a, _)
     | ListReverse (a, _) -> afv a
+    | Func (a, i, _) -> 
+      let ifv = List.concat (List.map afv i) in
+      remove_dups_svl (a :: ifv) 
     | ArrayAt (a, i, _) -> 
   		  let ifv = List.map afv i in
   		  let ifv = List.flatten ifv in
@@ -891,6 +896,7 @@ and is_exp_arith (e:exp) : bool=
               (* list expressions *)
     | List _ | ListCons _ | ListHead _ | ListTail _
     | ListLength _ | ListAppend _ | ListReverse _ -> false
+    | Func _ -> true
     | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
           
 and is_formula_arith (f:formula) :bool = match f with
@@ -1501,6 +1507,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) 
   | ListLength (_, p) 
   | ListReverse (_, p) 
+  | Func (_,_,p)
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
 and pos_of_b_formula (b: b_formula) = 
@@ -1792,6 +1799,7 @@ and e_apply_subs sst e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
+  | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
 
 and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
@@ -1892,6 +1900,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
+  | Func (a, i, pos) -> Func ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
 
 and e_apply_one_list (fr, t) alist = match alist with
@@ -2014,6 +2023,11 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
+  | Func (a, i, pos) ->
+		let a1 = subs_one_term sst a (Var (a,pos)) in
+		(match a1 with
+		  | Var (a2,_) -> Func (a2, a_apply_par_term_list sst i, pos) 
+		  | _ -> failwith "Cannot substitute a function by a non variable!\n")  
   | ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
 		let a1 = subs_one_term sst a (Var (a,pos)) in
 		(match a1 with
@@ -2093,6 +2107,13 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_one_term (fr, t) a1, pos)
+  | Func (a, i, pos) ->
+    let a1 = if eq_spec_var a fr then 
+		  (match t with
+			| Var (a2, _) -> a2
+			| _ -> failwith "Cannot apply a non-variable term to a function.")
+		else a in
+		Func (a1, a_apply_one_term_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> 
 		let a1 = if eq_spec_var a fr then 
 		  (match t with
@@ -2177,6 +2198,9 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | ListReverse (a1, pos) -> 
           let b1,r1 = (helper crt_var a1) in
           (b1,ListReverse (r1, pos))
+  | Func (a, i, pos) ->
+		let b1,i1 = (a_apply_one_term_list crt_var i) in
+    (b1,Func (a, i1, pos))
 	| ArrayAt (a, i, pos) -> (* An Hoa CHECK THIS! *)
 		  let b1,i1 = (a_apply_one_term_list crt_var i) in
           (b1,ArrayAt (a, i1, pos)) in
@@ -3179,6 +3203,14 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
+  | Func (a, i, pos) -> 
+    let a1 = 
+      if eq_spec_var a fr then 
+        (match t with 
+          | Var (s,_) -> s
+          | _ -> failwith "Can only substitute ranking variable by ranking variable\n")  
+      else a 
+    in Func (a1, e_apply_one_list_exp (fr, t) i, pos)
 	| ArrayAt (a, i, pos) -> 
             let a1 = if eq_spec_var a fr then (match t with 
                | Var (s,_) -> s
@@ -3390,6 +3422,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 	| ListReverse _
 	| ListHead _
 	| ListLength _ 
+  | Func _
 	| ArrayAt _ -> false (* An Hoa *) in
   ((is_simple e1)&& match e2 with
 	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
@@ -3538,6 +3571,7 @@ and simp_mult (e : exp) :  exp =
 	  |  ListReverse (_, l)
 	  |  ListHead (_, l)
 	  |  ListLength (_, l) 
+    |  Func (_, _, l)
 		|  ArrayAt (_, _, l) (* An Hoa *) -> 
              match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
@@ -3636,6 +3670,7 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
     |  ListTail (e1, l) -> ((Some e), None)
     |  ListLength (e1, l) -> ((Some e), None)
     |  ListReverse (e1, l) -> ((Some e), None)
+    |  Func (id, es, l) -> ((Some e), None)
 		|  ArrayAt (a, i, l) -> ((Some e), None) (* An Hoa *)
 
 (* 
@@ -3805,6 +3840,7 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
+  |  Func (id, es, l) -> Func (id, List.map purge_mult es, l)
 	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (pf : b_formula) :  b_formula =   
@@ -4052,6 +4088,9 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
           | ListReverse (e1,l) -> 
                 let (ne1,r1) = helper new_arg e1 in
                 (ListReverse (ne1,l),f_comb [r1])
+      | Func (id, es, l) ->
+        let il,rl = List.split (List.map (fun c-> helper new_arg c) es) in
+        (Func (id,il,l), f_comb rl)
 			| ArrayAt (a, i, l) -> (* An Hoa *)
 				let il = List.map (fun c-> helper new_arg c) i in
 				let (il, rl) = List.split il in 
@@ -4121,6 +4160,7 @@ let rec transform_exp f e  =
         | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
         | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
+    | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
 		| ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
 
 let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
@@ -4487,6 +4527,7 @@ let rec get_head e = match e with
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
       if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
+    | Func _ -> ""
 		| ArrayAt (a, i, _) -> "" (* An Hoa *) 
 
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
@@ -4557,8 +4598,9 @@ and norm_exp (e:exp) =
     | ListLength (e,l)-> ListLength(helper e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
     | ListReverse (e,l)-> ListReverse(helper e, l) 
-		| ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) in
-  helper e
+		| ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) 
+    | Func (id, es, l) -> Func (id, List.map helper es, l)
+  in helper e
 
 (* if v->c, replace v by the constant whenever encountered 
    normalise each sub-expresion only once please.
@@ -6591,7 +6633,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
 	  (* expressions that can not be transformed *)
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
-      | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ -> raise Not_found in
+      | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ -> raise Not_found in
     helper e rhs_e in
 
   let prep_eq (acc:(spec_var*exp) list) v e1 e2 = 
@@ -6780,6 +6822,31 @@ let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   let pr = !print_formula in
   Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
+
+(*let rec has_func_exp (e: exp) : bool = match e with
+  | Func _ -> true
+  | _ -> false
+
+and has_func (pf: p_formula) : bool = match pf with
+  | LexVar (_,_,_,_) -> false
+  | Lt (e1,e2,_)
+  | Lte (e1,e2,_)
+  | Gt (e1,e2,_)
+  | Gte (e1,e2,_)
+  | SubAnn (e1,e2,_)
+  | Eq (e1,e2,_)
+  | Neq (e1,e2,_)
+  | BagSub (e1,e2,_)
+  | ListIn (e1,e2,_)
+  | ListNotIn (e1,e2,_)
+  | ListAllN (e1,e2,_)
+  | ListPerm (e1,e2,_) -> has_func_exp e1 || has_func_exp e2
+  | EqMax (e1,e2,e3,_)
+  | EqMin (e1,e2,e3,_) -> has_func_exp e1 || has_func_exp e2 || has_func_exp e3
+  | BagIn (_,e,_)
+  | BagNotIn (_,e,_) -> has_func_exp e
+  | RelForm (_,_,_) -> false
+  | _ -> false*)
 
 let is_lexvar (f:formula) : bool =
   match f with

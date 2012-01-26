@@ -558,6 +558,7 @@ let rec is_array_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_array_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some true
+  | CP.Func _ -> Some false
     | CP.AConst _ | CP.FConst _ | CP.IConst _ 
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
@@ -588,7 +589,7 @@ let rec is_list_exp e = match e with
 		-> (List.fold_left (fun res exp -> match res with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
-    | CP.ArrayAt (_,_,_) -> Some false
+    | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)

@@ -1,9 +1,9 @@
-ranking r(int m, int n). // = (m,n).
+ranking term_r(int m, int n). // = (m,n).
 
-infer [r] n=0 & m1=m-1 |- r(m,n) > r(m1,1).
+infer [term_r] n=0 & m1=m-1 |- term_r(m,n) > term_r(m1,1).
 
-infer [r] n1=n-1 & m1=m-1 |- r(m,n) > r(m,n1).
+//infer [r] n1=n-1 & m1=m-1 |- r(m,n) > r(m,n1).
 
-infer [r] n1=n-1 & m1=m-1 |- r(m,n) > r(m1,_).
+//infer [r] n1=n-1 & m1=m-1 |- r(m,n) > r(m1,_).
 
-infer [r,m,n] true |- r(m,n) >=0.
+//infer [r,m,n] true |- r(m,n) >=0.

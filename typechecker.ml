@@ -519,7 +519,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   helper spec 
 
 and check_exp prog proc ctx e0 label =
-  let pr_pn x = x.proc_name in
+  (*let pr_pn x = x.proc_name in*)
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
 
@@ -1242,9 +1242,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
                           is_valid
                           else f in
-                        ()
-                      end;
-				    (f, None) 
+                        (f, None) 
+                      end
+				            else (f, None) 
                   with | _ as e -> (false, Some e) in
 		        let _ = if !print_proof then begin
 				  Prooftracer.pop_div ();

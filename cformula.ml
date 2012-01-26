@@ -3942,7 +3942,7 @@ let add_infer_heap_to_ctx cp ctx =
     match ctx with
       | Ctx es -> 
         let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_heap)) cp in
-        Ctx {es with es_infer_heap = cp@es.es_infer_heap;}
+        Ctx {es with es_infer_heap = new_cp@es.es_infer_heap;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 

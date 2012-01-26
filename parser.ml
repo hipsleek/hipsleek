@@ -25,6 +25,7 @@ open Perm
 		
   type decl = 
     | Type of type_decl
+    | Func of func_decl
     | Rel of rel_decl (* An Hoa *)
     | Axm of axiom_decl (* An Hoa *)
     | Global_var of exp_var_decl
@@ -473,6 +474,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
+      | t = func_decl          -> FuncDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -992,8 +994,10 @@ cexp_w :
 			 * s(x,1,x+1), s(x,y,x+y), ...
 			 * in our formula.
 			 *)
-      Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-
+        (try (
+          if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+          else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)))
+        with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)))
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
       | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
@@ -1196,8 +1200,20 @@ fct_arg_list: [[ t=LIST1 cid SEP `COMMA -> t]];
 fct_list: [[ `OSQUARE; t=fct_arg_list; `CSQUARE -> [] ]];
 
 opt_fct_list:[[ t = OPT fct_list -> []]];
-  
 
+(*** Function declaration ***)  
+func_decl:
+  [[ fh=func_header -> fh
+  ]];
+
+func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
+
+func_header:
+  [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
+      { func_name = id;
+        func_typed_vars = tl;
+      }
+  ]];
 
 (************ An Hoa :: Relations ************)
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
@@ -1248,6 +1264,7 @@ hprogn:
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
+	  let func_defs = ref ([] : func_decl list) in (* An Hoa *)
 	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
 	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -1261,6 +1278,7 @@ hprogn:
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
+        | Func fdef -> func_defs := fdef :: !func_defs (* An Hoa *)
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -1284,6 +1302,7 @@ hprogn:
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
+      prog_func_decls = !func_defs; (* An Hoa *)
       prog_rel_decls = !rel_defs; (* An Hoa *)
       prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) !rel_defs; (* WN *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -1295,6 +1314,7 @@ opt_decl_list: [[t=LIST0 decl -> t]];
   
 decl:
   [[ t=type_decl                  -> Type t
+  |  r=func_decl; `DOT -> Func r (* An Hoa *)
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

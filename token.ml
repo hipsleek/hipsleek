@@ -17,7 +17,7 @@ type sleek_token =
   | DTIME
   | ELSE_TT
   | ENSURES | ENUM | EXISTS | EXTENDS
-  | FALSE | FLOAT | FORALL
+  | FALSE | FLOAT | FORALL | FUNC
 	| IF 
   | IN_T | INT | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
 	| LEMMA | LET
@@ -65,7 +65,7 @@ module Token = struct
     | CASE ->"case" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | ENSURES ->"ensures" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
-    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall"
+    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
