@@ -976,7 +976,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
