@@ -392,7 +392,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               estate.es_var_stack, 
               None
             else
-              if estate.es_infer_vars = [] then (* No inference *)
+              if Inf.no_infer_all estate then (* No inference at all*)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
                 (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.es_var_stack,
@@ -421,8 +421,16 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
   let pr3 = pr_list !CP.print_exp in
-  Debug.no_5 "check_term_measures" pr2 pr pr pr3 pr3
-    (fun (es, lhs, rhs, rank_fml) -> pr_quad pr2 pr pr (pr_option pr1) (es, lhs, rhs, rank_fml))  
+  Debug.no_5 "check_term_measures" pr2 
+      (add_str "lhs_p" pr) 
+      (add_str "rhs_p" pr) 
+      (add_str "src_lv" pr3) 
+      (add_str "src_rv" pr3)
+    (fun (es, lhs, rhs, rank_fml) -> 
+        pr_quad pr2 (add_str "lhs" pr) 
+            (add_str "rhs" pr) 
+            (add_str "rank_fml" (pr_option pr1)) 
+            (es, lhs, rhs, rank_fml))  
       (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 

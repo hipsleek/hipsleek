@@ -1,5 +1,6 @@
-ranking rr(int x, int y).
+ranking term_r(int x, int y).
 
 //infer [] x>y & x1=x-y & y1=y |- y1>=y.
 
-infer [rr] x<y & x1=x & y1=y-x |- rr(x,y)>rr(x1,y1).
+infer [term_r] x<y & x1=x & y1=y-x |- term_r(x,y)>term_r(x1,y1).
+print residue.

@@ -16,6 +16,8 @@ module TP = Tpdispatcher
 let no_infer estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
+
+let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
  
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
