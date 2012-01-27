@@ -6732,10 +6732,19 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
 
-let get_func_id_list (f:formula) = match f with
+let get_rank_dec_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Gt (Func (id1,_,_), Func (id2,_,_),_),_) -> [id1;id2]
+    | (Lt (Func (id1,_,_), Func (id2,_,_),_),_) -> [id1;id2]
+    | _ -> [])
+  | _ -> []
+
+let get_rank_bnd_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (Gte (Func (id,_,_), IConst (0,_),_),_) -> [id]
+    | (Lte (IConst (0,_), Func (id,_,_),_),_) -> [id]
     | _ -> [])
   | _ -> []
 

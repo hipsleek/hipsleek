@@ -907,8 +907,14 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         in
         let rel_cat_fml = List.hd rel_rhs in
         let rel_def_id = CP.get_rel_id_list rel_cat_fml in
-        let rel_cat = if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) 
-          else CP.RankBnd (List.hd (CP.get_func_id_list rel_cat_fml)) in
+        let rank_bnd_id = CP.get_rank_bnd_id_list rel_cat_fml in
+        let rank_dec_id = CP.get_rank_dec_id_list rel_cat_fml in
+        let rel_cat = 
+          if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) else 
+          if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else
+          if rank_dec_id != [] then CP.RankDecr rank_dec_id else
+          report_error pos "Relation belongs to unexpected category"
+        in
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in

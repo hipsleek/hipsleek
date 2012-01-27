@@ -1149,6 +1149,16 @@ let pr_lhs_rhs ((cat,lhs,rhs) as rel) =
 
 let string_of_lhs_rhs (e) : string =  poly_string_of_pr  pr_lhs_rhs e
 
+let pr_only_lhs_rhs ((lhs,rhs) as rel) = 
+  fmt_string (CP.print_only_lhs_rhs rel)
+  (* fmt_open_box 1; *)
+  (* pr_pure_formula lhs; *)
+  (* fmt_string "-->"; *)
+  (* pr_pure_formula rhs; *)
+  (* fmt_close() *)
+
+let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
+
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ""

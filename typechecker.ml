@@ -1202,6 +1202,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let (new_spec,_,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     let new_spec = CF.simplify_ann new_spec in
+                    let rels = List.concat (List.map (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> [(a2,a3)] | _ -> []) rels) in
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann" pr_spec) new_spec no_pos;
                     if (pre_ctr # get> 0) 
                     then
@@ -1215,7 +1216,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars = CP.remove_dups_svl posts in
-                            let rels = List.concat (List.map (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> [(a2,a3)] | _ -> []) rels) in
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
                                 let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in
@@ -1233,10 +1233,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
-                        let new_rels = pr_list Cprinter.string_of_lhs_rhs rels in
+                        let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in
                         Debug.trace_hprint (add_str "OLD.. SPECS" pr_spec) proc.proc_static_specs no_pos;
                         Debug.trace_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                        Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos;
+                        Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                         (* print_endline ("OLD SPECS: "^old_sp); *)
                         (* print_endline ("NEW SPECS: "^new_sp); *)
                         (* print_endline ("NEW RELS: "^new_rels); *)

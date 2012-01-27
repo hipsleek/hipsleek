@@ -2,6 +2,7 @@ module CP = Cpure
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
+module Inf = Infer
 
 open Gen.Basic
 open Globals
@@ -367,6 +368,11 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+          DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
+          (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check pos & rank_formula(I,O) *)
+          (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
+            lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
+          let rank_formula = MCP.pure_of_mix rank_formula in*)
           let entail_res, _, _ = TP.imply lhs rank_formula "" false None in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
@@ -409,6 +415,16 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           } in
           term_res_stk # push term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
+
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+  let pr = !print_mix_formula in
+  let pr1 = !CP.print_formula in
+  let pr2 = !print_entail_state in
+  let pr3 = pr_list !CP.print_exp in
+  Debug.no_5 "check_term_measures" pr2 pr pr pr3 pr3
+    (fun (es, lhs, rhs, rank_fml) -> pr_quad pr2 pr pr (pr_option pr1) (es, lhs, rhs, rank_fml))  
+      (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+        estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
