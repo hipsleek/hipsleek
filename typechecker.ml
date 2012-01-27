@@ -149,7 +149,7 @@ let pre_ctr = new Gen.counter 0
 let post_ctr = new Gen.counter 0
 
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
-      CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
+      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
   let _ = pre_ctr # reset in
   let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
@@ -215,15 +215,15 @@ and check_bounded_term prog ctx post_pos =
   (fun _ -> check_bounded_term_opt prog ctx post_pos) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
-      CF.struc_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
+      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
   let r = List.map (do_spec_verify_infer prog proc ctx e0 do_infer) spec_list in
   let (sl,pl,rl,bl) = List.fold_left (fun (a1,a2,a3,a4) (b1,b2,b3,b4) -> (a1@[b1],a2@b2,a3@b3,a4@[b4])) ([],[],[],[]) r in
   Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) sl no_pos;
   (CF.norm_specs sl, pl, rl, List.for_all pr_id bl)
 
 and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) e0 (do_infer:bool) (spec: CF.ext_formula) 
-      : (CF.ext_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool) =
-  let rec helper (spec: CF.ext_formula) :  CF.ext_formula * (CF.formula list) * ((CP.formula * CP.formula) list) * bool =
+      : (CF.ext_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool) =
+  let rec helper (spec: CF.ext_formula) :  CF.ext_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
     (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
     let pos_spec = CF.pos_of_struc_formula [spec] in
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
@@ -299,7 +299,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             let postf = b.CF.formula_inf_post in
             let vars = if do_infer then b.CF.formula_inf_vars else [] in
-            let (vars_rel,vars_inf) = List.partition (fun v -> match v with CP.SpecVar(t,_,_) -> t==RelT) vars in
+            let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT || 
+              (try String.sub (CP.name_of_spec_var v) 0 5 = "term_" with _ -> false)) vars in
             (* let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in *)
             (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv [b.CF.formula_inf_continuation])) vars_rel) in
@@ -1214,6 +1215,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars = CP.remove_dups_svl posts in
+                            let rels = List.concat (List.map (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> [(a2,a3)] | _ -> []) rels) in
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
                                 let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in

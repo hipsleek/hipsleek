@@ -1,11 +1,11 @@
-ranking r(int x, int y).
+ranking term_r(int x, int y).
 
 int gcd (int x, int y)
-infer [r] 
+infer [term_r] 
 requires x>0 & y>0
 case {
   x=y -> requires Term[] ensures true;
-  x!=y -> requires Term[r(x,y)] ensures true;
+  x!=y -> requires Term[term_r(x,y)] ensures true;
 }
 
 {

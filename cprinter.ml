@@ -1139,7 +1139,7 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let pr_lhs_rhs ((lhs,rhs) as rel) = 
+let pr_lhs_rhs ((cat,lhs,rhs) as rel) = 
   fmt_string (CP.print_lhs_rhs rel)
   (* fmt_open_box 1; *)
   (* pr_pure_formula lhs; *)

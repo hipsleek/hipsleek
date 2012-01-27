@@ -31,6 +31,12 @@ let is_self_spec_var sv = match sv with
 let is_res_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = res_name
 
+type rel_cat = 
+  | RelDefn of spec_var
+  | RelAssume of spec_var
+  | RankDecr of spec_var list
+  | RankBnd of spec_var
+
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
@@ -368,6 +374,7 @@ let rec get_exp_type (e : exp) : typ =
  * moved here from ocparser.mly *)
 let omega_subst_lst = ref ([]: (string*string*typ) list)
 
+
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:p_formula) -> "cpure printer has not been initialized")
@@ -376,7 +383,13 @@ let print_formula = ref (fun (c:formula) -> "cpure printer has not been initiali
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
-let print_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+let print_rel_cat rel_cat = match rel_cat with
+  | RelDefn v -> "RELDEFN " ^ (!print_sv v)
+  | RelAssume v -> "RELASS " ^ (!print_sv v)
+  | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
+  | RankBnd v -> "RANKBND " ^ (!print_sv v)
+let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
+let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
 
 let do_with_check msg prv_call (pe : formula) : 'a option =
   try
@@ -6719,6 +6732,13 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
 
+let get_func_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Gte (Func (id,_,_), IConst (0,_),_),_) -> [id]
+    | _ -> [])
+  | _ -> []
+
 let get_rel_id (f:formula) 
       = match f with
         | BForm (bf,_) ->
@@ -6823,11 +6843,11 @@ let assumption_filter (ante : formula) (cons : formula) : (formula * formula) =
   Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
-(*let rec has_func_exp (e: exp) : bool = match e with
+let rec has_func_exp (e: exp) : bool = match e with
   | Func _ -> true
   | _ -> false
 
-and has_func (pf: p_formula) : bool = match pf with
+and has_func_pf (pf: p_formula) : bool = match pf with
   | LexVar (_,_,_,_) -> false
   | Lt (e1,e2,_)
   | Lte (e1,e2,_)
@@ -6846,7 +6866,11 @@ and has_func (pf: p_formula) : bool = match pf with
   | BagIn (_,e,_)
   | BagNotIn (_,e,_) -> has_func_exp e
   | RelForm (_,_,_) -> false
-  | _ -> false*)
+  | _ -> false
+
+and has_func (f:formula): bool = match f with 
+  | BForm ((b,_),_) -> has_func_pf b
+  | _ -> false
 
 let is_lexvar (f:formula) : bool =
   match f with

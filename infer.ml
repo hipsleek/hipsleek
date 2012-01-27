@@ -823,7 +823,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let ivs = estate.es_infer_vars_rel in
     let rhs_p_n = MCP.pure_of_mix rhs_p in
     let rhs_ls = CP.split_conjunctions rhs_p_n in
-    let (rel_rhs,other_rhs) = List.partition (CP.is_rel_in_vars ivs) rhs_ls in 
+    let (rel_rhs,other_rhs) = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in 
     if rel_rhs==[] then (
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
@@ -874,7 +874,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 
       (*let pr = !CP.print_formula_br in*)
       (* let _ = print_endline (pr rhs_p_br) in *)
-      let rhs_p_2 = CP.join_conjunctions other_rhs in
+      (*let ranks = List.filter CP.has_func rel_rhs in*)
+      let rhs_p_2 = CP.join_conjunctions (*(ranks @ other_rhs)*) other_rhs in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
 
       (* Eliminate relations whose recursive calls are not defined *)
@@ -904,6 +905,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
           CP.join_conjunctions lst
         in
+        let rel_cat_fml = List.hd rel_rhs in
+        let rel_def_id = CP.get_rel_id_list rel_cat_fml in
+        let rel_cat = if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) 
+          else CP.RankBnd (List.hd (CP.get_func_id_list rel_cat_fml)) in
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
@@ -922,14 +927,16 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
             (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])
           else*)
-          if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in
+          if CP.isConstTrue new_lhs then [] else [(rel_cat,new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
         let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
-        DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+        DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
 (*        let inf_rel_ls = List.map wrap_exists inf_rel_ls in*)
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
-        let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
+        (* TODO: Change corresponding vars for assumed pure *)
+        let assume_rel_ls = List.map (fun ass_pure -> (CP.RelAssume (List.hd rel_def_id), rel_cat_fml, ass_pure)) estate.es_assumed_pure in
+        let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel)@assume_rel_ls } in
         if inf_rel_ls != [] then
           begin
             DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
@@ -963,7 +970,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
