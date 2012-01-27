@@ -827,7 +827,9 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let pr_v = !CP.print_sv in
   let pr_vl = pr_list pr_v in
   let cl = phase_constr_of_formula_list pl in
-  let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in
+  let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
+  (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+  let _ = Debug.trace_pprint s_msg no_pos in
   let l = 
     try 
       let r = rank_gt_phase_constr cl in
@@ -845,13 +847,13 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
         Some (r, fv)
       else Some (r, [])
     with _ -> 
-      fmt_string ("Termination: Contradiction in Phase Constraints."); None 
+      fmt_string ("\nTermination: Contradiction in Phase Constraints."^"\n"^s_msg); None 
   in
   l
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  Debug.to_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
 (* Currently, this method is redundant because we do
