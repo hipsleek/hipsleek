@@ -490,7 +490,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
+   Debug.to_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
