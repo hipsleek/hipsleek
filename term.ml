@@ -853,7 +853,7 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.to_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
 (* Currently, this method is redundant because we do
