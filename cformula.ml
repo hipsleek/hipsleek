@@ -16,6 +16,11 @@ module MCP = Mcpure
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
+type rel_cat = RelDefn of CP.spec_var
+               | RelAssume of CP.spec_var
+               | RankDecr of (CP.spec_var list)
+               | RankBnd of CP.spec_var
+
 type typed_ident = (typ * ident)
 
 and formula_type = 
@@ -3060,7 +3065,19 @@ think it is used to instantiate when folding.
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
   (* output : post inferred relation lhs --> rhs *)
+
+  (*  (i) defn for relation:
+          lhs -> p(...); 
+     (ii) proof obligation for unknown relation
+          p(...) -> ctr
+     (ii) term measures:
+          lhs -> r(..)>=0
+          lhs -> r(..)-r(..)>0
+  RelCat = RelDef (rid) | RelAssume(rid) 
+     | RankDec [rid] | RankBounded id
+  *)
   es_infer_rel : (CP.formula * CP.formula) list; 
+  (* es_infer_rel : (rel_cat * CP.formula * CP.formula) list;  *)
   (* output : pre pure assumed to infer relation *)
   es_assumed_pure : CP.formula list; 
   (* es_infer_pures : CP.formula list; *)
