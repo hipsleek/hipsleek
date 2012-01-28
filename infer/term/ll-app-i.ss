@@ -10,7 +10,7 @@ ll<n> == self = null & n = 0
 ranking r(int n, int m).
 
 void append(node x, node y)
-  infer [r]
+  infer @pre [r]
   requires x::ll<n>*y::ll<m> & n>0 & Term[r(n,m)]
   ensures x::ll<z> & z=m+n;
 {

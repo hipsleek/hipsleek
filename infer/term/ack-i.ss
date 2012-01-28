@@ -1,7 +1,7 @@
 
 ranking term_r(int m, int n). // = (m,n).
 int Ack(int m, int n)
-   infer[term_r]
+   infer @pre [term_r]
    requires n>=0 & m>=0 & Term[term_r(m,n)]
    ensures res>0;
 
