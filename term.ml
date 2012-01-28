@@ -764,7 +764,7 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     try List.find (fun e -> Gen.BList.mem_eq CP.eq_spec_var v e) l
     with _ -> [v]
   in 
-
+  (*
   let gt_l = List.map (fun (v1, v2) -> 
     let g_v1 = find_group v1 eq_l in
     let g_v2 = find_group v2 eq_l in
@@ -773,6 +773,15 @@ let rank_gt_phase_constr (cl: phase_constr list) =
       raise Invalid_Phase_Constr
     else (g_v1, g_v2)
   ) gt_l in
+  *)
+
+  let gt_l = List.fold_left (fun acc (v1, v2) ->
+    let g_v1 = find_group v1 eq_l in
+    let g_v2 = find_group v2 eq_l in
+    (* Get rid of p2>p1 and p2>=p1 *)
+    if (Gen.BList.overlap_eq CP.eq_spec_var g_v1 g_v2) then acc
+    else (g_v1, g_v2)::acc
+  ) [] gt_l in
 
   (*let _ = print_endline ("\n1. gt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in*)
 
