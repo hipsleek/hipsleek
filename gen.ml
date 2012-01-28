@@ -399,8 +399,11 @@ class ['a] stack  =
      method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
-     method exists (i:'a) = List.mem i stk 
-     method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     method mem (i:'a) = List.mem i stk 
+     method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     (* method exists (i:'a) = List.mem i stk  *)
+     (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
+     method exists f = List.exists f stk 
      method push_list (ls:'a list) =  stk <- ls@stk
    end;;
 
@@ -414,7 +417,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
        | [] ->  emp_val
        | x::xs -> x
      method string_of = Basic.pr_list elem_pr stk
-     method exists (i:'a) = List.exists (elem_eq i) stk
+     method mem (i:'a) = List.exists (elem_eq i) stk
      method overlap (ls:'a list) = 
 	   if (ls == []) then false
 	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk

@@ -5,7 +5,7 @@ int gcd (int x, int y)
   x=y -> requires Term[] ensures res=x;
   x!=y ->
   case{
-   x>0 & y>0 -> requires Term[x+y] ensures true;
+    x>0 & y>0 -> requires Term[x+y] ensures res>0;
    x>0 & y<=0 -> requires Loop ensures false;
    x<=0 & y>0 -> requires Loop ensures false;
    x<=0 & y<=0 -> requires Loop ensures false;

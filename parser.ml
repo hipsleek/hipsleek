@@ -51,12 +51,14 @@ let hash_count = ref 0
 
 (* An Hoa : Generic data type for the abbreviated syntax x.f::<a> *)
 let generic_pointer_type_name = "_GENERIC_POINTER_"
+let func_names = new Gen.stack (* list of names of ranking functions *)
+let rel_names = new Gen.stack (* list of names of relations declared *)
 
 let get_pos x = 
-				{start_pos = Parsing.symbol_start_pos ();
-				 end_pos = Parsing. symbol_end_pos ();
-				 mid_pos = Parsing.rhs_start_pos x;
-				}
+  {start_pos = Parsing.symbol_start_pos ();
+  end_pos = Parsing. symbol_end_pos ();
+  mid_pos = Parsing.rhs_start_pos x;
+  }
 let get_pos_camlp4 l x = 
                           {
                            start_pos = Camlp4.PreCast.Loc.start_pos l ;
@@ -994,13 +996,16 @@ cexp_w :
 			 * s(x,1,x+1), s(x,y,x+y), ...
 			 * in our formula.
 			 *)
-        (*if func_decl # exists id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-        (*else if List.mem id !rel_decl then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)))*)
-        else report_error no_pos "Unknown id - neither ranking nor relation"*)
-        (try (
-          if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)))
-        with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)))
+        if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+        else
+          begin
+          if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation");
+          Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          end
+        (* (try ( *)
+        (*   if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1)) *)
+        (*   else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
+        (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
       | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
@@ -1213,6 +1218,7 @@ func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
 func_header:
   [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
+      let _ = func_names # push id in 
       { func_name = id;
         func_typed_vars = tl;
       }
@@ -1220,6 +1226,7 @@ func_header:
 
 (************ An Hoa :: Relations ************)
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
+
 	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
 	(* [4/10/2011] allow for declaration of relation without body; such relations are constant true and need to be axiomatized using axioms declarations. *)
 	| rh=rel_header -> rh
@@ -1241,6 +1248,7 @@ rel_header:[[
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in *)
+    let _ = rel_names # push id in
 		  { rel_name = id;
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
@@ -1267,8 +1275,9 @@ hprogn:
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
-	  let func_defs = new Gen.stack in 
-	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
+      (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
+      let func_defs = new Gen.stack in (* list of ranking functions *)
+      let rel_defs = new Gen.stack in(* list of relations *)
 	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
@@ -1282,7 +1291,7 @@ hprogn:
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
         | Func fdef -> func_defs # push fdef 
-        | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
+        | Rel rdef -> rel_defs # push rdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
@@ -1299,6 +1308,7 @@ hprogn:
 					   data_parent_name = "Object";
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
+    let rel_lst = rel_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_logical_var_decls = !logical_var_defs;
@@ -1306,8 +1316,8 @@ hprogn:
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
       prog_func_decls = func_defs # get_stk ; (* An Hoa *)
-      prog_rel_decls = !rel_defs; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) !rel_defs; (* WN *)
+      prog_rel_decls = rel_lst ; (* An Hoa *)
+      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
