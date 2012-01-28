@@ -1315,7 +1315,7 @@ hprogn:
       prog_enum_decls = !enum_defs;
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ; (* An Hoa *)
+      prog_func_decls = func_defs # get_stk ;
       prog_rel_decls = rel_lst ; (* An Hoa *)
       prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -1327,7 +1327,7 @@ opt_decl_list: [[t=LIST0 decl -> t]];
   
 decl:
   [[ t=type_decl                  -> Type t
-  |  r=func_decl; `DOT -> Func r (* An Hoa *)
+  |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

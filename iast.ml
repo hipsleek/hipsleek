@@ -1807,7 +1807,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
-                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls; (* An Hoa *)
+                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
                 prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)

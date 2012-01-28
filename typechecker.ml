@@ -300,7 +300,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let postf = b.CF.formula_inf_post in
             let vars = if do_infer then b.CF.formula_inf_vars else [] in
             let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT || 
-              (try String.sub (CP.name_of_spec_var v) 0 5 = "term_" with _ -> false)) vars in
+              CP.type_of_spec_var v == FuncT) vars in
             (* let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in *)
             (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv [b.CF.formula_inf_continuation])) vars_rel) in

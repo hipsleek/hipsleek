@@ -76,6 +76,7 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
+  | FuncT (* function type *)
 
 
 (*

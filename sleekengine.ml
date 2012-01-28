@@ -519,7 +519,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT || 
-              (try String.sub (CP.name_of_spec_var v) 0 5 = "term_" with _ -> false)) vars in
+              CP.type_of_spec_var v == FuncT) vars in
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Inf.init_vars ctx iv vrel orig_vars in

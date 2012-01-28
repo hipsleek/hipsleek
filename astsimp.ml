@@ -4586,7 +4586,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
     | IP.Func (id, es, pos) ->
 		  let es = List.map (fun e -> trans_pure_exp e stab) es in
-		  CP.Func (CP.SpecVar (Int, id, Unprimed), es, pos)
+		  CP.Func (CP.SpecVar (FuncT, id, Unprimed), es, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
 		  let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
 		  let dim = List.length ind in (* currently only support int type array *)
