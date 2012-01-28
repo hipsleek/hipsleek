@@ -191,8 +191,9 @@ and check_bounded_term_x prog ctx post_pos =
     if (CF.isFailCtx rs) then 
       let term_pos = (m_pos, no_pos) in
       let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
-      Term.term_res_stk # push term_res
-    else ()
+      let _ = Term.term_res_stk # push term_res in
+      rs
+    else rs
   in
 
   let check_bounded_one_measures m =
@@ -201,17 +202,18 @@ and check_bounded_term_x prog ctx post_pos =
     check_bounded_one_measures m
   in 
 
-  List.iter (fun m -> check_bounded_one_measures m) l_term_measures;
-  ctx
+  let rs_lst = List.map (fun m -> check_bounded_one_measures m) l_term_measures in
+  (ctx, List.concat (List.map Inf.collect_rel_list_context rs_lst))
 
 and check_bounded_term_opt prog ctx post_pos =
   if not !Globals.dis_term_chk then 
     check_bounded_term_x prog ctx post_pos
-  else ctx
+  else (ctx,[])
 
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
-  Debug.no_1 "check_bounded_term" pr pr 
+  let pr1 = pr_pair !CF.print_context (pr_list Cprinter.string_of_lhs_rhs) in
+  Debug.no_1 "check_bounded_term" pr pr1
   (fun _ -> check_bounded_term_opt prog ctx post_pos) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
@@ -301,8 +303,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let vars = if do_infer then b.CF.formula_inf_vars else [] in
             let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT (* ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
-            let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in
-            let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in
+            (* let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in *)
+            (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv [b.CF.formula_inf_continuation])) vars_rel) in
             (if new_vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
@@ -356,7 +358,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
                   (* Termination: Check boundedness of the measures 
                    * before going into the function body *)
-                  let _ = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in 
+                  let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in 
 	    	          let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	                (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	          let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
@@ -502,7 +504,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                               end in
                           (i_post, i_pre)
                         else (spec,[])
-                      in (new_spec_post, pre, rels, res)
+                      in (new_spec_post, pre, rankbnds@rels, res)
 	              in
 	              let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
 	              (spec_and_inferred_post,inferred_pre,inferred_rel,r)
