@@ -407,23 +407,43 @@ class ['a] stack  =
      method push_list (ls:'a list) =  stk <- ls@stk
    end;;
 
-class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
+class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
    object 
      inherit ['a] stack
-     val emp_val = x_init
      val elem_pr = epr 
      val elem_eq = eq 
-     method top_no_exc : 'a = match stk with 
-       | [] ->  emp_val
-       | x::xs -> x
      method string_of = Basic.pr_list elem_pr stk
      method mem (i:'a) = List.exists (elem_eq i) stk
      method overlap (ls:'a list) = 
 	   if (ls == []) then false
 	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-(* Gen.BList.overlap_eq elem_eq ls stk *)
    end;;
 
+class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
+   object 
+     inherit ['a] stack_pr epr eq
+     val emp_val = x_init
+     method top_no_exc : 'a = match stk with 
+       | [] ->  emp_val
+       | x::xs -> x
+   end;;
+
+(* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
+(*    object  *)
+(*      inherit ['a] stack *)
+(*      val emp_val = x_init *)
+(*      val elem_pr = epr  *)
+(*      val elem_eq = eq  *)
+(*      method top_no_exc : 'a = match stk with  *)
+(*        | [] ->  emp_val *)
+(*        | x::xs -> x *)
+(*      method string_of = Basic.pr_list elem_pr stk *)
+(*      method mem (i:'a) = List.exists (elem_eq i) stk *)
+(*      method overlap (ls:'a list) =  *)
+(* 	   if (ls == []) then false *)
+(* 	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk *)
+(* (\* Gen.BList.overlap_eq elem_eq ls stk *\) *)
+(*    end;; *)
 
 class counter x_init =
    object 

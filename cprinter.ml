@@ -472,15 +472,15 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 
 let string_of_typed_spec_var x = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ (string_of_typ t)
+    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
 
 let string_of_spec_var x = 
 (* string_of_typed_spec_var x *)
   match x with
     | P.SpecVar (t, id, p) ->
-		(* An Hoa : handle printing of holes *)
-		let real_id = if (id.[0] = '#') then "#" else id in
-	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
+    	(* An Hoa : handle printing of holes *)
+    	let real_id = if (id.[0] = '#') then "#" else id in
+    real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
 
@@ -1237,6 +1237,17 @@ let pr_case_guard c =
   pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
   fmt_string "}"
 
+(* pretty printing for a spec_var list *)
+let rec string_of_spec_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_spec_var h 
+  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
+;;
+
+let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+
+let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
+
 let rec pr_struc_formula (e:struc_formula) =
   if e==[] then fmt_string "[]" 
   else pr_list_op_none "|| " (wrap_box ("B",0) pr_ext_formula) e
@@ -1879,16 +1890,6 @@ let rec string_of_formulae_list l = match l with
 
 
 
-(* pretty printing for a spec_var list *)
-let rec string_of_spec_var_list_noparen l = match l with 
-  | [] -> ""
-  | h::[] -> string_of_spec_var h 
-  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
-;;
-
-let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
-
-let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
 (*
 let rec string_of_spec = function

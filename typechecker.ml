@@ -299,10 +299,10 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             let postf = b.CF.formula_inf_post in
             let vars = if do_infer then b.CF.formula_inf_vars else [] in
-            let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT || 
-              CP.type_of_spec_var v == FuncT) vars in
-            (* let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in *)
-            (* let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in *)
+            let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT (* ||  *)
+              (* CP.type_of_spec_var v == FuncT *)) vars in
+            let _ = print_endline ("WN:Vars to Infer"^Cprinter.string_of_spec_var_list vars_inf) in
+            let _ = print_endline ("WN:Vars to Rel"^Cprinter.string_of_spec_var_list vars_rel) in
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv [b.CF.formula_inf_continuation])) vars_rel) in
             (if new_vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
@@ -1202,7 +1202,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let (new_spec,_,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     let new_spec = CF.simplify_ann new_spec in
-                    let rels = List.concat (List.map (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> [(a2,a3)] | _ -> []) rels) in
+                    let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
+                    let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
+                    let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in
+                    let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
+                    let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann" pr_spec) new_spec no_pos;
                     if (pre_ctr # get> 0) 
                     then
@@ -1234,10 +1238,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in
-                        Debug.trace_hprint (add_str "OLD.. SPECS" pr_spec) proc.proc_static_specs no_pos;
-                        Debug.trace_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                        Debug.trace_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                        (* print_endline ("OLD SPECS: "^old_sp); *)
+                        Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                        Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                        Debug.info_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                        Debug.info_hprint (add_str "NEW RANK" (pr_list Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+                        (* print_endline ("\nOLD SPECS: "^old_sp); *)
                         (* print_endline ("NEW SPECS: "^new_sp); *)
                         (* print_endline ("NEW RELS: "^new_rels); *)
                         let f = if f && !reverify_flag then 
