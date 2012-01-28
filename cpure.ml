@@ -7147,10 +7147,9 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar (t_ann, ml, il, pos) ->
         (match t_ann with
           | Term ->
-              (* Termination: Do not add phase variables for base cases,
-               * instead, add the default value 0 for base cases *)
+              (* Termination: Do not add phase variables for base cases *)
               let v_ml, pv =
-                if (Gen.is_empty ml) then ([mkIConst 0 pos], [])
+                if (Gen.is_empty ml) then (ml, [])
                 else
                 (* Termination: If there are logical variables or 
                  * consts in the first place of the measures,
