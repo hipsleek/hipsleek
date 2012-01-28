@@ -931,6 +931,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         in*)
           let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
           let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+          let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
           let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
 (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
             (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])

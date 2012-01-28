@@ -987,7 +987,7 @@ cexp_w :
 	  | `HASH -> let _ = hash_count := !hash_count + 1 in 
 				 Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
 
-      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN -> (* print_string("here"); *)
+      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
 			(* AnHoa: relation constraint, for instance, given the relation 
 			 * s(a,b,c) == c = a + b.
 			 * After this definition, we can have the relation constraint like
