@@ -19,8 +19,8 @@ void loop1(int y, int x)
  case {
      x>0 & y>0 ->
    case {
-       x=y-1 -> requires Term[p1,x] ensures true; /* intensional bug */
-       x=y-2 -> requires Term[p2,x] ensures true; /* intensional bug */
+       x=y-1 -> requires Term[p1,x] ensures true;
+       x=y-2 -> requires Term[p2,x] ensures true;
        ((x!=y-1) & (x!=y-2)) -> requires Term[p3,x+y] ensures true;
       }
   x<=0 | y<=0 -> requires Term[] ensures true;

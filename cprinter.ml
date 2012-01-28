@@ -475,14 +475,15 @@ let string_of_typed_spec_var x =
     | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
 
 let string_of_spec_var x = 
-(* string_of_typed_spec_var x *)
+  (* string_of_typed_spec_var x *)
   match x with
     | P.SpecVar (t, id, p) ->
-    	(* An Hoa : handle printing of holes *)
-    	let real_id = if (id.[0] = '#') then "#" else id in
-    real_id (* ^":"^(string_of_typ t) *) ^ (match p with
-        | Primed -> "'"
-        | Unprimed -> "" )
+    	  (* An Hoa : handle printing of holes *)
+          let ts = if !print_type then ":"^(string_of_typ t) else "" in
+    	  let real_id = if (id.[0] = '#') then "#" else id
+          in (real_id ^(match p with
+            | Primed -> "'"
+            | Unprimed -> "" )^ts)
 
 let string_of_imm imm = match imm with
   | ConstAnn(Imm) -> "@I"
@@ -1309,7 +1310,7 @@ and pr_ext_formula  (e:ext_formula) =
       formula_inf_continuation = cont;} ->
           let ps =if (lvars==[] && postf) then "@post " else "" in
       fmt_open_vbox 2;
-      fmt_string ("EInfer "^ps^"["^string_of_spec_var_list lvars^"]");
+      fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();
       wrap_box ("B",0) pr_ext_formula cont;
       fmt_close();

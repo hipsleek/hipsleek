@@ -408,6 +408,8 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
+let print_type = ref false
+
 (* let enable_sat_statistics = ref false *)
 
 let wrap_exists_implicit_explicit = ref false

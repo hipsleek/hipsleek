@@ -887,13 +887,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
            
                 (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
-                  let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
-                    (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
-                        (CF.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
                   (* Termination: The logical vars should not be renamed *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
-                    pre_free_vars prog.Cast.prog_logical_vars in 
+                    (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
+                        (CF.struc_post_fv stripped_spec(*org_spec*))) (farg_spec_vars@prog.Cast.prog_logical_vars) in
+                  (* let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var *)
+                  (*   pre_free_vars prog.Cast.prog_logical_vars in  *)
                   (* free vars get to be substituted by fresh vars *)
+                  (* removing ranking var and unknown predicate from renaming *)
+                  let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
+                  (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
                     if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
