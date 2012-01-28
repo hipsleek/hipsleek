@@ -268,30 +268,28 @@ let rec collect_output chn accumulated_output : string list =
 (* read the output stream of SPASS prover, return (conclusion * reason)    *)
 (* TODO: this function need to be optimized                                *)
 let get_prover_result (output : string list) : validity_t =
-  (*debug*)
-  let _ = print_endline "** In functin get_prover_result:" in
+  (* debug *)
+  (* let _ = print_endline "** In functin get_prover_result:" in *)
   (* List.iter (fun x -> print_endline x) output; *)
   let rec is_start_with (subtext: string) (text: string) : bool =
   (
     let len = String.length subtext in
-    try
+    try 
       if (String.sub text 0 len = subtext) then true
       else false
     with _ -> false
   ) in
-  let conclusion_line =
-    try
-      List.find (is_start_with "SPASS beiseite:") output
-      with Not_found -> "Unknown" in
-    (* debug *)
-  let _ = print_endline ("-- get_prover_result: " ^ conclusion_line) in
+  let conclusion_line = try List.find (is_start_with "SPASS beiseite:") output
+                        with Not_found -> "Unknown" in
+  (* debug *)
+  (* let _ = print_endline ("-- get_prover_result: " ^ conclusion_line) in *)
   let validity =
     if (conclusion_line = "SPASS beiseite: Completion found.") then
       Invalid
     else if (conclusion_line = "SPASS beiseite: Proof found.") then
       Valid
     else
-      Unknown in
+      Unknown in 
   validity
 
 let get_answer (chn: in_channel) (input: string) : prover_output_t =
@@ -335,10 +333,10 @@ let set_process (proc: Globals.prover_process_t) =
 (* Runs the specified prover and returns output *)
 let check_problem (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  let _ = print_endline "** In function Spass.check_problem" in
-  let current_time = Unix.time () in
-  let infile = "/tmp/in" ^ (string_of_float (current_time)) ^ ".spass" in
-  (*let _ = print_endline ("-- input: \n" ^ input) in*)
+  (* let _ = print_endline "** In function Spass.check_problem" in *)
+  let file_suffix = Random.int 1000000 in
+  let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".spass" in
+  (* let _ = print_endline ("-- input: \n" ^ input) in *)
   let out_stream = open_out infile in
   output_string out_stream input;
   close_out out_stream;
@@ -427,7 +425,7 @@ let to_spass_dfg (ante: Cpure.formula)
 
 let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
-  let _ = print_endline "** In function to_spass:" in
+  (* let _ = print_endline "** In function to_spass:" in *)
   let conseq = match conseq with
     (* We don't have conseq part in is_sat checking *)
     | None -> Cpure.mkFalse no_pos
@@ -441,9 +439,9 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   let conseq_fv = Cpure.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_spass_dfg ante conseq all_fv in
-  let _ = print_endline ("-- Input problem in DFG format:\n" ^ res) in
+  (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ res) in *)
   (* debug: print formula in Omega format *)
-  let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
+  (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
   let omega_ante = Omega.omega_of_formula ante in
   let omega_conseq = Omega.omega_of_formula conseq in
   let omega_pvars = Omega.get_vars_formula omega_temp_f in
@@ -452,7 +450,7 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   let omega_temp_str = Omega.omega_of_formula omega_temp_f in
   let omega_temp_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_temp_str ^ ")}" ^ ";" ^ Gen.new_line_str in
   let _ = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
-  let _ = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in
+  let _ = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
   res;
 
 (***************************************************************
@@ -605,7 +603,7 @@ and gen_induction_formulas (ante : Cpure.formula) (conseq : Cpure.formula) (indv
 *)
 and spass_imply_with_induction (ante : Cpure.formula) (conseq : Cpure.formula) : bool =
   (* debug *)
-  let _ = "** In function Spass.spass_imply_with_induction" in
+  (* let _ = "** In function Spass.spass_imply_with_induction" in *)
   (* let _ = print_string (" :: smt_imply_with_induction : ante = " ^      *)
   (* (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in  *)
   let vals = collect_induction_value_candidates ante (Cpure.mkAnd ante conseq no_pos) in
@@ -633,19 +631,19 @@ and spass_imply_with_induction (ante : Cpure.formula) (conseq : Cpure.formula) :
 *)
 
 and spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  let _ = "** In function Spass.spass_imply" in
+  (* let _ = "** In function Spass.spass_imply" in *)
   let pr = !print_pure in
   let result = 
     Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
     (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
-  let omega_result = Omega.imply ante conseq "" timeout in
+  (* let omega_result = Omega.imply ante conseq "" timeout in
   let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
-  let _ = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in
+  let _ = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result;
     
 
 and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  let _ = "** In function Spass.spass_imply_x" in
+  (* let _ = "** In function Spass.spass_imply_x" in *)
   let res, should_run_spass =
     if (has_exists conseq) then
       try
@@ -680,17 +678,17 @@ and has_exists conseq = match conseq with
   | _ -> false
 
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
-  let _ = print_endline "** In function Spass.imply:" in
+  (* let _ = print_endline "** In function Spass.imply:" in *)
   let result = spass_imply ante conseq timeout in
-  let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in
+  (* let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
   result
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
-  let _ = print_endline "** In function Spass.imply_with_check:" in
+  (* let _ = print_endline "** In function Spass.imply_with_check:" in *)
   Cpure.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  let _ = print_endline "** In function Spass.imply:" in
+  (* let _ = print_endline "** In function Spass.imply:" in *)
   try
     let result = imply ante conseq timeout in
     result
@@ -703,7 +701,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  let _ = print_endline "** In function Spass.imply:" in
+  (* let _ = print_endline "** In function Spass.imply:" in *)
   Debug.no_1_loop "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
@@ -714,12 +712,12 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* debug *)
-  let _ = print_endline "** In function Spass.spass_is_sat:" in
+  (* let _ = print_endline "** In function Spass.spass_is_sat:" in *)
   (* anything that SPASS counldn't handle will be transfer to Omega *)
   let res, should_run_spass =
     if ((*the condition must be don't have arithemtic*)Cpure.contains_exists f) then
       try
-        let _ = print_endline "-- use Omega.is_sat..." in
+        (* let _ = print_endline "-- use Omega.is_sat..." in *)
         let optr = (Omega.is_sat_with_check f sat_no) in
         match optr with
         | Some r -> (r, false)
@@ -727,8 +725,8 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       with _ -> (true, false)
     else (false, true) in
   if (should_run_spass) then
-    let _ = print_endline "-- use Spass.run..." in
-    (* to check the sat of f, spass check the validity of negative(f) ~~ (f => None) *)
+    (* let _ = print_endline "-- use Spass.check_problem..." in *)
+    (* to check sat of f, spass check the validity of negative(f) or (f => None) *)
     let spass_input = to_spass f None in
     let validity = check_problem spass_input timeout in
     let res =
@@ -749,17 +747,17 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = !print_pure in
   let result = Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
-  let omega_result = Omega.is_sat f sat_no in
+  (* let omega_result = Omega.is_sat f sat_no in
   let _ = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
-  let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in
+  let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result
 
 (* see imply *)
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
-  let _ = print_endline "** In function Spass.is_sat: " in
+  (* let _ = print_endline "** In function Spass.is_sat: " in *)
   let result = spass_is_sat f sat_no in
-  let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in
+  (* let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
   result
 
 let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
@@ -769,7 +767,7 @@ let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
 (* string_of_bool is_sat f sat_no                                          *)
 
 let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
-  let _ = print_endline "** In function Spass.is_sat: " in
+  (* let _ = print_endline "** In function Spass.is_sat: " in *)
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
@@ -784,7 +782,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 *)
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
-  let _ = print_endline "** In function Spass.simplify" in
+  (* let _ = print_endline "** In function Spass.simplify" in *)
   try (Omega.simplify f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =
