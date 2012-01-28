@@ -2,5 +2,11 @@ ranking term_r(int x, int y).
 
 //infer [] x>y & x1=x-y & y1=y |- y1>=y.
 
-infer [term_r] x<y & x1=x & y1=y-x |- term_r(x,y)>term_r(x1,y1).
+infer [term_r] x>0 & y>0 |-  term_r(x,y)>=0.
+print residue.
+
+infer [term_r] x>0 & y>0 & x>y & x1=x-y & y1=y & Term[term_r(x,y)] |-  Term[term_r(x1,y1)].
+print residue.
+
+infer [term_r] x>0 & y>0 & x<y & x1=x & y1=y-x & Term[term_r(x,y)] |-  Term[term_r(x1,y1)].
 print residue.

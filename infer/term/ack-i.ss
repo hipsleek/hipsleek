@@ -1,14 +1,4 @@
-/*
-case {
- 	m<0 -> ensures false;
- 	m=0 -> ensures res=n+1;
- 	m>0 -> case
-         	{ 
-			n<0 -> ensures false;
-           		n>=0 -> ensures res>0;
-         	}
-}
-*/
+
 ranking term_r(int m, int n). // = (m,n).
 int Ack(int m, int n)
    infer[term_r]
