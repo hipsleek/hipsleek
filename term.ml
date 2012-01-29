@@ -838,15 +838,15 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
   (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
-  let _ = Debug.trace_pprint s_msg no_pos in
+  let _ = Debug.info_pprint s_msg no_pos in
   let l = 
     try 
       let r = rank_gt_phase_constr cl in
       let _ = 
         begin
-          Debug.trace_hprint (add_str "Inferred phase constraints"
+          Debug.info_hprint (add_str "Inferred phase constraints"
             (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
-          Debug.trace_hprint (add_str "Phase Numbering"
+          Debug.info_hprint (add_str "Phase Numbering"
             (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos;
         end
       in 

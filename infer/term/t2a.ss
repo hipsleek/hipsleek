@@ -3,6 +3,7 @@
 //Termination: Contradiction in Phase Constraints.
 //Termination checking result:
 // Please use the same phase!
+logical int p1,p2,p3,p4;
 
 bool rand()
   requires Term[]
@@ -32,23 +33,3 @@ void loop1(int y, int x)
   }
 }
 
-/*
-(x,y) 
- -> (x-1,x)
-     -> (x-2,x-1)
-     -> (x-2,x)
-         --> (x-3,x-2)
-         --> (x-2,x-1)
-
- -> (y-2,x+1)
-     -> (y-3,y-2)
-         -> (y-4,y-3)
-         -> (y-4,y-2)
-     -> (x-1,y-1)
-
-
- (x-1,x) 
-   --> (x-2,x-1)
-   --> (x-2,x)
-
-*/

@@ -7148,9 +7148,10 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
         (match t_ann with
           | Term ->
               (* Termination: Do not add phase variables for base cases *)
+                (* some base cases are actually intermediate points *)
               let v_ml, pv =
-                if (Gen.is_empty ml) then (ml, [])
-                else
+                (* if (Gen.is_empty ml) then (ml, []) *)
+                (* else *)
                 (* Termination: If there are logical variables or 
                  * consts in the first place of the measures,
                  * it is no need to add phase variables *)
@@ -7164,8 +7165,9 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                   let log_var = Gen.BList.intersect_eq eq_spec_var mfv log_vars in
                   let has_log_var = not (Gen.is_empty log_var) in
                   if has_log_var then 
-                    if (List.length ml) == 1 then ([mkIConst 0 pos], [])
-                    else (ml, log_var)
+                    (* if (List.length ml) == 1 then ([mkIConst 0 pos], []) *)
+                    (* else  *)
+                      (ml, log_var)
                   else match phase_var with
                   | None -> (ml, [])
                   | Some pv -> ((mkVar pv pos)::ml, [pv])
