@@ -7147,9 +7147,9 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar (t_ann, ml, il, pos) ->
         (match t_ann with
           | Term ->
-              (* Termination: Do not add phase variables for base cases *)
-                (* some base cases are actually intermediate points *)
               let v_ml, pv =
+                (* Termination: Do not add phase variables for base cases *)
+                (* some base cases are actually intermediate points *)
                 (* if (Gen.is_empty ml) then (ml, []) *)
                 (* else *)
                 (* Termination: If there are logical variables or 

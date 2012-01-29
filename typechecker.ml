@@ -207,7 +207,7 @@ and check_bounded_term_x prog ctx post_pos =
   (ctx, List.concat (List.map Inf.collect_rel_list_context rs_lst))
 
 and check_bounded_term_opt prog ctx post_pos =
-  if not !Globals.dis_term_chk then 
+  if (not !Globals.dis_term_chk) && (not !Globals.dis_bnd_chk) then 
     check_bounded_term_x prog ctx post_pos
   else (ctx,[])
 
@@ -558,6 +558,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  Tpdispatcher.unsuppress_imply_output ();
           	end in
           begin
+            if !Globals.dis_ass_chk then ctx else
 	        let _ = proving_loc#set pos in
 	        let s1 = snd post_start_label in
             (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
@@ -1092,6 +1093,7 @@ and pr_spec = Cprinter.string_of_struc_formula
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
+  if !Globals.dis_post_chk then ctx else 
   let _ = if !print_proof then
 	begin
 	  Prooftracer.push_post ();
@@ -1102,7 +1104,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	  (* print_endline "VERIFYING POST-CONDITION" *)
 	end in
   (* Termination: Poststate of Loop must be unreachable (soundness) *)
-  let b = if !Globals.dis_term_chk then true 
+  let b = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
     else Term.check_loop_safety prog proc ctx post pos pid in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in

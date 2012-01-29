@@ -23,7 +23,7 @@ void loop1(int y, int x)
        x=y-2 -> requires Term[p2,x] ensures true;
        ((x!=y-1) & (x!=y-2)) -> requires Term[p3,x+y] ensures true;
       }
-  x<=0 | y<=0 -> requires Term[] ensures true;
+  x<=0 | y<=0 -> requires Term[p4] ensures true;
   }
 {
   if (x>0 && y>0) {

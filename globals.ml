@@ -485,6 +485,10 @@ let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
 let term_reverify = ref false
+let dis_bnd_chk = ref false
+let dis_term_msg = ref false
+let dis_post_chk = ref false
+let dis_ass_chk = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false

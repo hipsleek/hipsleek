@@ -487,7 +487,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if not !Globals.dis_term_chk then
+  if (not !Globals.dis_term_chk) then
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
   else
     (* Remove LexVar in RHS *)
@@ -696,6 +696,8 @@ let fv_of_phase_constr (c: phase_constr) =
   | P_Gte (v1, v2) -> [v1; v2]
   | P_Gt (v1, v2) -> [v1; v2]
 
+(* Old phase inference mechanism - To be removed *)
+(*
 module PComp = 
 struct
   type t = CP.spec_var list
@@ -791,13 +793,61 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     raise Invalid_Phase_Constr
   else
     let n, f_scc = PGC.scc g in
-    PG.fold_vertex (fun l a -> (f_scc l, l)::a) g [] 
+    PG.fold_vertex (fun l a -> (f_scc l, l)::a) g []
 
 let value_of_vars (v: CP.spec_var) l : int =
   try
     let (i, _) = List.find (fun (i, vl) -> 
       Gen.BList.mem_eq CP.eq_spec_var v vl
     ) l in i
+  with _ -> raise Invalid_Phase_Constr
+*)
+
+module PComp = 
+struct
+  type t = CP.spec_var
+  let compare = fun v1 v2 -> 
+    if (CP.eq_spec_var v1 v2) then 0
+    else 
+      let pr = !CP.print_sv in
+      String.compare (pr v1) (pr v2)
+  let hash = Hashtbl.hash
+  let equal = CP.eq_spec_var
+end
+
+module PG = Graph.Persistent.Digraph.Concrete(PComp)
+module PGO = Graph.Oper.P(PG)
+module PGN = Graph.Oper.Neighbourhood(PG)
+module PGC = Graph.Components.Make(PG)
+module PGP = Graph.Path.Check(PG)
+module PGT = Graph.Traverse.Dfs(PG)
+
+(* Build phase constraint graph based on the 
+ * list of inferred phase constraints 
+ * P_Gt/P_Gte (v1, v2) -> v1 --> v2 *)
+let build_phase_constr_graph (cl: phase_constr list) = 
+  let g = PG.empty in
+  let g = List.fold_left (fun g c ->
+    let s, d = match c with
+      | P_Gt (v1, v2) -> v1, v2
+      | P_Gte (v1, v2) -> v1, v2
+    in 
+    let ng1 = PG.add_vertex g s in
+    let ng2 = PG.add_vertex ng1 d in
+    let ng3 = PG.add_edge ng2 s d in
+    ng3
+  ) g cl in
+  g
+
+(* Assign a unique integer for each scc group 
+ * of phase variables *)  
+let rank_phase_constr (cl: phase_constr list) =
+  let g = build_phase_constr_graph cl in
+  let n, f_scc = PGC.scc g in
+  PG.fold_vertex (fun v a -> (v, f_scc v)::a) g []
+
+let value_of_var (v: CP.spec_var) l : int =
+  try List.assoc v l
   with _ -> raise Invalid_Phase_Constr
 
 (* let phase_num_infer () = *)
@@ -841,13 +891,15 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let _ = Debug.info_pprint s_msg no_pos in
   let l = 
     try 
-      let r = rank_gt_phase_constr cl in
+      (* let r = rank_gt_phase_constr cl in *)
+      let r = rank_phase_constr cl in
       let _ = 
         begin
           Debug.info_hprint (add_str "Inferred phase constraints"
             (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
           Debug.info_hprint (add_str "Phase Numbering"
-            (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos;
+            (* (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos; *)
+            (pr_list (pr_pair !CP.print_sv string_of_int))) r no_pos;
         end
       in 
 
@@ -856,7 +908,7 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
         Some (r, fv)
       else Some (r, [])
     with _ -> 
-      fmt_string ("\nTermination: Contradiction in Phase Constraints."^"\n"^s_msg); None 
+      fmt_string ("\nTermination: Error in Phase Inference." ^ "\n" ^ s_msg); None 
   in
   l
 
@@ -999,8 +1051,11 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
         | Some (inf_num, fv) ->
           begin
             if not (Gen.is_empty inf_num) then
-              List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
-            else (* The inferred graph has only one vertex *)
+              (* List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num) *)
+              inf_num
+            else
+              (* The inferred graph has only one vertex *)
+              (* All of phase variables will be assigned by 0 *)
               (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
               let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
               List.map (fun v -> (v, 0)) fv
@@ -1040,9 +1095,10 @@ let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (pro
 
 (* Main function of the termination checker *)
 let term_check_output stk =
-  fmt_string "\nTermination checking result:\n";
-  pr_term_res_stk (stk # get_stk);
-  fmt_print_newline ()
+  if not !Globals.dis_term_msg then
+    (fmt_string "\nTermination checking result:\n";
+    pr_term_res_stk (stk # get_stk);
+    fmt_print_newline ())
 
 let term_check_output stk =
   let pr = fun _ -> "" in

@@ -246,6 +246,10 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify, 
     "enable re-verification for inferred termination specifications");
+  ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
+  ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
+  ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
