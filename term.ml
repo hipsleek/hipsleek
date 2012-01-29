@@ -862,7 +862,8 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  let pr2 = (add_str "Phase Ctr" (pr_list !CP.print_formula)) in
+  Debug.no_1 "phase_num_infer_one_scc" pr2 pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
 (* Currently, this method is redundant because we do
@@ -879,6 +880,8 @@ let phase_num_infer_by_scc () =
   let pr = fun _ -> "" in
   Debug.no_1 "phase_num_infer_by_scc" pr pr phase_num_infer_by_scc ()
 
+(* this method adds phase constraint into a table indexed by call number *)
+(* it seems to be done on a per-call basis *)
 let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
   let index = proc.Cast.proc_call_order in
   let pname = proc.Cast.proc_name in
@@ -887,6 +890,11 @@ let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
     let cons = Hashtbl.find phase_constr_tbl index in
     Hashtbl.replace phase_constr_tbl index (con::cons)
   with Not_found -> Hashtbl.add phase_constr_tbl index [con]
+
+let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
+  let pr = fun _ -> "" in
+  let pr1 = add_str "phase ctr added" (pr_list !CP.print_formula) in
+  Debug.no_1 "add_phase_constr_by_scc" pr1 pr (add_phase_constr_by_scc proc) lp
 
 let subst_phase_num_exp subst exp = 
   match exp with

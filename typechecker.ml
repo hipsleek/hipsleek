@@ -154,8 +154,9 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
-  let pr2 s = "nothing" in
-  let pr3 = pr_quad pr1 pr2 pr2 string_of_bool in
+  let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
+  let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
+  let pr3 = pr_quad pr1 pr2a pr2 string_of_bool in
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0 do_infer) spec_list
 
@@ -1157,6 +1158,15 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     end
   end
 
+(* process each scc set of mutual-rec procedures *)
+(* to be used for inferring phase constraints *)
+(* replacing each spec with new spec with phase constraints *)
+and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl -> proc_decl -> unit) =
+  let rec helper lst = 
+    match lst with
+      | [] -> ()
+      | p::ps -> (fn prog p); helper ps 
+  in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
@@ -1243,9 +1253,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
                         let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in
-                        Debug.devel_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                        Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                         Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                        Debug.info_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                        Debug.ninfo_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                         Debug.info_hprint (add_str "NEW RANK" (pr_list Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                         let f = if f && !reverify_flag then 
                           let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
@@ -1271,7 +1281,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	      		result
 		      end
 	end else true
-
 
 let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let pr p = pr_id (name_of_proc p)  in
