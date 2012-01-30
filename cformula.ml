@@ -3430,6 +3430,18 @@ let gen_lor (m1,n1,e1) (m2,n2,e2)=
   in
   Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
 
+let cmb_lor m1 m2: failure_kind = match m1,m2 with
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]")
+  | Failure_Bot _, _ ->  m2
+  | _, Failure_Bot _ -> m1
+  | Failure_May m1, Failure_May m2 -> Failure_May ("lor["^m1^","^m2^"]")
+  | Failure_May m, _ -> Failure_May m
+  | _, Failure_May m -> Failure_May m
+  | Failure_Must m1, Failure_Must m2 ->
+      Failure_Must ("lor["^m1^","^m2^"]")
+  | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"))
+  | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"))
+  | Failure_Valid, x  -> m2
 
 (*gen_ror*)
 (*
@@ -3622,39 +3634,42 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
-let rec get_failure_list_partial_context (ls:list_partial_context): (string)=
+let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
     (*may use lor to combine the list first*)
-    let los= List.map get_failure_partial_context ls in
+  (*return failure of 1 lemma is enough*)
+    let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
-    combine_helper "UNION\n" los ""
+    (combine_helper "UNION\n" [List.hd los] "", List.hd fk)
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
      let spt = !print_path_trace pt in
       match  (get_failure_ft ft) with
-        | Failure_Must m -> Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (must) cause: " ^m)
-        | Failure_May m -> Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (may) cause: " ^m)
-        | Failure_Valid -> None
-        | Failure_Bot m -> Some ("  path trace: " ^spt^"\n   unreachable: "^m)
+        | Failure_Must m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (must) cause: " ^m),  Failure_Must m)
+        | Failure_May m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n   (may) cause: " ^m),  Failure_May m)
+        | Failure_Valid -> (None, Failure_Valid)
+        | Failure_Bot m -> (Some ("  path trace: " ^spt^"\n   unreachable: "^m), Failure_Bot m)
     in
     match bfl with
-      | [] -> None
-      | fl -> let los= List.map helper fl in
+      | [] -> (None, Failure_Valid)
+      | fl -> let los, fks= List.split (List.map helper fl) in
               ( match (combine_helper "lor\n" los "") with
-                | "" -> None
-                | s -> Some s
+                | "" -> None, Failure_Valid
+                | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks)
               )
 
-and get_failure_partial_context ((bfl:branch_fail list), _): (string option)=
+and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind)=
    get_failure_branch bfl
 
-let rec get_failure_list_failesc_context (ls:list_failesc_context): (string)=
+let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
     (*may use rand to combine the list first*)
-    let los= List.map get_failure_failesc_context ls in
+    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
     (*los contains path traces*)
-    combine_helper "UNION\n" los ""
+    (*combine_helper "UNION\n" los ""*)
+     (*return failure of 1 lemma is enough*)
+   (combine_helper "UNION\n" [(List.hd los)] "", List.hd fks)
 
-and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option)=
+and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
   get_failure_branch bfl
 
 let get_bot_status (ft:list_context) =

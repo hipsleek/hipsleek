@@ -367,7 +367,23 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       (*       else CF.Star {CF.h_formula_star_h1=a; CF.h_formula_star_h2=b; CF.h_formula_star_pos=no_pos}) CF.HTrue lh in *)
                       (*   let pf = CP.conj_of_list lp no_pos in *)
                       (*   (CF.mk_ebase_inferred_pre hf pf [spec],r) *)
-	            with _ as e ->
+	            with
+                  | Err.Ppf (e, ifk) ->
+                      let fl = CF.flow_formula_of_formula post_cond in
+                      (match ifk with
+                        | 1 -> if CF.subsume_flow_f !error_flow_int fl then
+                              (spec, [], true) else
+                              let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                              (Err.report_error1 e "Proving precond failed")
+                        | 3 ->
+                            if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
+                              (spec, [], true) else
+                              let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                              (Err.report_error1 e "Proving precond failed")
+                        | _ -> let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                               (Err.report_error1 e "Proving precond failed")
+                      )
+                  |_ as e ->
 	                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in helper spec
 
@@ -861,7 +877,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
                     let _ =
                       if not !Globals.disable_failure_explaining then
-                        let s= CF.get_failure_list_failesc_context res
+                        let s,fk= CF.get_failure_list_failesc_context res
           (*match CF.get_must_failure_list_partial_context rs with
             | Some s -> "(must) cause:\n"^s
             | None -> (match CF.get_may_failure_list_partial_context rs with
@@ -871,12 +887,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*should check bot with is_bot_status*)
                         in
                         if (String.length s) >  0 then
-                          let _ = print_string (to_print ^s^"\n") in
-                          Err.report_error {
-                                Err.error_loc = pos;
-                                Err.error_text = Printf.sprintf
-                                    "Proving precondition in method failed."
-                            }
+                          (* let _ = print_string (to_print ^s^"\n") in *)
+                          (* Err.report_error { *)
+                          (*       Err.error_loc = pos; *)
+                          (*       Err.error_text = Printf.sprintf *)
+                          (*           "Proving precondition in method failed." *)
+                          (*   } *)
+                          raise (Err.Ppf ({
+                              Err.error_loc = pos;
+                              Err.error_text = (to_print ^s)
+                          }, match fk with
+                            | CF.Failure_Bot _ -> 0
+                            | CF.Failure_Must _ -> 1
+                            | CF.Failure_Valid -> 2
+                            | CF.Failure_May _ -> 3))
                         else ()
                       else
                         begin
@@ -1061,7 +1085,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
       in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let s= CF.get_failure_list_partial_context rs
+          let s,fk= CF.get_failure_list_partial_context rs
             (*match CF.get_must_failure_list_partial_context rs with
               | Some s -> "(must) cause:\n"^s
               | None -> (match CF.get_may_failure_list_partial_context rs with
