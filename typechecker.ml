@@ -16,6 +16,8 @@ module LP = Lemproving
 module Inf = Infer
 module AS = Astsimp
 
+let phase_infer_ind = ref false
+
 let log_spec = ref ""
   (* checking expression *)
 let flow_store = ref ([] : CF.flow_store list)
@@ -165,9 +167,10 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
 and check_bounded_term_x prog ctx post_pos =
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx,[])
+  else 
   let ctx = Term.strip_lexvar_lhs ctx in
   let l_term_measures = CF.collect_term_measures_context ctx in
-  
   let _ = Debug.trace_hprint (add_str "Measures" 
       (pr_list (pr_list !CP.print_exp))) l_term_measures no_pos in
   let _ = Debug.trace_hprint (add_str "Orig context" 
@@ -192,7 +195,7 @@ and check_bounded_term_x prog ctx post_pos =
     if (CF.isFailCtx rs) then 
       let term_pos = (m_pos, no_pos) in
       let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
-      let _ = Term.term_res_stk # push term_res in
+      let _ = Term.add_term_res_stk term_res in
       rs
     else rs
   in
@@ -206,16 +209,12 @@ and check_bounded_term_x prog ctx post_pos =
   let rs_lst = List.map (fun m -> check_bounded_one_measures m) l_term_measures in
   (ctx, List.concat (List.map Inf.collect_rel_list_context rs_lst))
 
-and check_bounded_term_opt prog ctx post_pos =
-  if (not !Globals.dis_term_chk) && (not !Globals.dis_bnd_chk) then 
-    check_bounded_term_x prog ctx post_pos
-  else (ctx,[])
 
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
   let pr1 = pr_pair !CF.print_context (pr_list Cprinter.string_of_lhs_rhs) in
   Debug.no_1 "check_bounded_term" pr pr1
-      (fun _ -> check_bounded_term_opt prog ctx post_pos) ctx
+      (fun _ -> check_bounded_term_x prog ctx post_pos) ctx
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
@@ -1186,7 +1185,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
 		      begin
-                let pr_flag = not(!Globals.dis_post_chk) in
+                let pr_flag = not(!phase_infer_ind) in
 			    if !Globals.print_proc && pr_flag then 
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			    if pr_flag then
@@ -1472,6 +1471,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
 
 let stk_tmp_checks = new Gen.stack 
 
+
 let drop_phase_infer_checks() =
   stk_tmp_checks # push !dis_bnd_chk;
   stk_tmp_checks # push !dis_term_chk;
@@ -1480,9 +1480,11 @@ let drop_phase_infer_checks() =
   dis_bnd_chk := true;
   dis_term_msg := true;
   dis_post_chk := true;
-  dis_ass_chk := true
+  dis_ass_chk := true;
+  phase_infer_ind := true
 
 let restore_phase_infer_checks() =
+  phase_infer_ind := false;
   dis_ass_chk := stk_tmp_checks # pop_top;
   dis_post_chk := stk_tmp_checks # pop_top;
   dis_term_msg := stk_tmp_checks # pop_top;
@@ -1547,6 +1549,7 @@ let check_prog (prog : prog_decl) =
   let _ = Debug.ninfo_hprint (add_str "sorted_proc_main"
       (pr_list Astsimp.pr_proc_call_order)
   ) sorted_proc_main no_pos in
+  (* this computes a list of scc mutual-recursive methods for processing *)
   let proc_scc = List.fold_left (fun a x -> match a with
     | [] -> [[x]]
     | xs::xss -> 
@@ -1556,22 +1559,25 @@ let check_prog (prog : prog_decl) =
   ) [] sorted_proc_main in
   let proc_scc = List.rev proc_scc in
   let () = Debug.ninfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
+  (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
-  let verify_proc prog proc =
-    let b = check_proc_wrapper prog proc in () 
-  in
   let prog = List.fold_left (fun prog scc -> 
       let prog =
         let call_order = (List.hd scc).proc_call_order in
-        if not(skip_pre_phase) && (scc_with_phases # mem call_order) then 
+        (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
+        if not(skip_pre_phase) && (stk_scc_with_phases # mem call_order) then 
           begin
+            Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
+            Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
             proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc));
             restore_phase_infer_checks();
+            (* the message here should be empty *)
+            (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
         else prog in
-      let _ = proc_mutual_scc prog scc verify_proc in
+      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc)) in
       prog
   ) prog proc_scc 
   in 
