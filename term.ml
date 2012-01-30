@@ -846,6 +846,11 @@ let rank_phase_constr (cl: phase_constr list) =
   let n, f_scc = PGC.scc g in
   PG.fold_vertex (fun v a -> (v, f_scc v)::a) g []
 
+let rank_phase_constr (cl: phase_constr list) =
+  let pr = pr_list string_of_phase_constr in
+  let pr2 = pr_list (pr_pair !CP.print_sv  string_of_int) in
+  Debug.no_1 "rank_phase_constr" pr pr2 rank_phase_constr cl
+
 let value_of_var (v: CP.spec_var) l : int =
   try List.assoc v l
   with _ -> raise Invalid_Phase_Constr
@@ -888,16 +893,16 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
   (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
-  let _ = Debug.info_pprint s_msg no_pos in
+  let _ = Debug.trace_pprint s_msg no_pos in
   let l = 
     try 
       (* let r = rank_gt_phase_constr cl in *)
       let r = rank_phase_constr cl in
       let _ = 
         begin
-          Debug.info_hprint (add_str "Inferred phase constraints"
+          Debug.trace_hprint (add_str "Inferred phase constraints"
             (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
-          Debug.info_hprint (add_str "Phase Numbering"
+          Debug.trace_hprint (add_str "Phase Numbering"
             (* (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos; *)
             (pr_list (pr_pair !CP.print_sv string_of_int))) r no_pos;
         end
@@ -1011,10 +1016,12 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   n_struc
 
 let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
-  let pr = fun _ -> "" in
-  Debug.no_1 (* (fun _ -> not (Gen.is_empty struc)) *) 
-  "subst_phase_num_struc" pr pr 
-  (subst_phase_num_struc rp subst) struc
+  let pr = !print_struc_formula in
+  let pr0 = !CP.print_svl in
+  let pr1 = pr_list (pr_pair !CP.print_sv string_of_int) in
+  Debug.no_3 (* (fun _ -> not (Gen.is_empty struc)) *) 
+  "subst_phase_num_struc" pr0 pr1 pr pr 
+  (subst_phase_num_struc) rp subst struc
 
 (* let subst_phase_num_struc subst (struc: struc_formula) : struc_formula = *)
 (*   if struc==[] then struc *)
@@ -1028,70 +1035,135 @@ let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
       Cast.proc_static_specs = s_specs;
       Cast.proc_dynamic_specs = d_specs; }
 
-let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) : Cast.prog_decl =
-  let index = proc.Cast.proc_call_order in
-  try
-    let cons = Hashtbl.find phase_constr_tbl index in
-    let grp = fst (List.split cons) in
-    let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
+(* let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) : Cast.prog_decl = *)
+(*   let index = proc.Cast.proc_call_order in *)
+(*   try *)
+(*     let cons = Hashtbl.find phase_constr_tbl index in *)
+(*     let grp = fst (List.split cons) in *)
+(*     let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in *)
 
-    Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
-    Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
+(*     Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos; *)
+(*     Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos; *)
 
-    (* Trigger phase number inference when 
-     * all needed information is collected *)
-    if is_full_grp then
-      let cl = List.concat (snd (List.split cons)) in
-      let inf_num = phase_num_infer_one_scc cl in
-      Debug.trace_hprint (add_str "list of ctr" 
-        (pr_list !CP.print_formula)) cl no_pos;
-      let subst =
-        match inf_num with
-        | None -> []
-        | Some (inf_num, fv) ->
+(*     (\* Trigger phase number inference when  *)
+(*      * all needed information is collected *\) *)
+(*     if is_full_grp then *)
+(*       let cl = List.concat (snd (List.split cons)) in *)
+(*       let inf_num = phase_num_infer_one_scc cl in *)
+(*       Debug.trace_hprint (add_str "list of ctr"  *)
+(*         (pr_list !CP.print_formula)) cl no_pos; *)
+(*       let subst = *)
+(*         match inf_num with *)
+(*         | None -> [] *)
+(*         | Some (inf_num, fv) -> *)
+(*           begin *)
+(*             if not (Gen.is_empty inf_num) then *)
+(*               (\* List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num) *\) *)
+(*               inf_num *)
+(*             else *)
+(*               (\* The inferred graph has only one vertex *\) *)
+(*               (\* All of phase variables will be assigned by 0 *\) *)
+(*               (\* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*\) *)
+(*               let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in *)
+(*               List.map (fun v -> (v, 0)) fv *)
+(*           end *)
+(*       in *)
+(*       (\* Termination: Add the inferred phase numbers  *)
+(*        * into specifications of functions in mutual group *\) *)
+(*       if subst==[] then prog *)
+(*       else  *)
+(*         (\* all_zero is set if subs is only of form [v1->0,..,vn->0] *)
+(*            in this scenario, there is no need for phase vars at all *\) *)
+(*         begin *)
+(*         Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos; *)
+(*         let all_zero = List.for_all (fun (_,i) -> i==0) subst in *)
+(*         let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in *)
+(*         if all_zero then *)
+(*           Debug.info_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos *)
+(*         else begin *)
+(*           Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos;  *)
+(*           Debug.info_hprint (add_str "Phase Numbering" *)
+(*             (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos *)
+(*         end; *)
+(*         let n_tbl = Cast.proc_decls_map (fun proc -> *)
+(*           if (List.mem proc.Cast.proc_name mutual_grp)  *)
+(*           then subst_phase_num_proc rp subst proc *)
+(*           else proc *)
+(*         ) prog.Cast.new_proc_decls in   *)
+(*         { prog with Cast.new_proc_decls = n_tbl } *)
+(*         end *)
+(*     else prog *)
+(*   with Not_found -> prog *)
+
+(* let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) = *)
+(*   let pr = Cprinter.string_of_proc_decl in *)
+(*   Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr_no *)
+(*     (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp *)
+
+let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
+  let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
+  match proc_lst with
+    | [] -> print_endline "ERROR : empty SCC prog_lst!"; prog
+    | proc::_ ->
           begin
-            if not (Gen.is_empty inf_num) then
-              (* List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num) *)
-              inf_num
-            else
-              (* The inferred graph has only one vertex *)
-              (* All of phase variables will be assigned by 0 *)
-              (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
-              let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
-              List.map (fun v -> (v, 0)) fv
+            let index = proc.Cast.proc_call_order in
+            try
+              let cons = Hashtbl.find phase_constr_tbl index in
+              (* let grp = fst (List.split cons) in *)
+              (* let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in *)
+              let is_full_grp = true in
+              Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
+              Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
+              (* Trigger phase number inference when 
+               * all needed information is collected *)
+              if is_full_grp then
+                let cl = List.concat (snd (List.split cons)) in
+                let inf_num = phase_num_infer_one_scc cl in
+                Debug.trace_hprint (add_str "list of ctr" 
+                    (pr_list !CP.print_formula)) cl no_pos;
+                let subst =
+                  match inf_num with
+                    | None -> []
+                    | Some (inf_num, fv) ->
+                          begin
+                            if not (Gen.is_empty inf_num) then
+                              (* List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num) *)
+                              inf_num
+                            else
+                              (* The inferred graph has only one vertex *)
+                              (* All of phase variables will be assigned by 0 *)
+                              (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
+                              let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
+                              List.map (fun v -> (v, 0)) fv
+                          end
+                in
+                (* Termination: Add the inferred phase numbers 
+                 * into specifications of functions in mutual group *)
+                if subst==[] then prog
+                else 
+                  (* all_zero is set if subs is only of form [v1->0,..,vn->0]
+                     in this scenario, there is no need for phase vars at all *)
+                  begin
+                    Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
+                    let all_zero = List.for_all (fun (_,i) -> i==0) subst in
+                    let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
+                    if all_zero then
+                      Debug.trace_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
+                    else begin
+                      Debug.trace_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      Debug.trace_hprint (add_str "Phase Numbering"
+                          (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
+                    end;
+                    let n_tbl = Cast.proc_decls_map (fun proc ->
+                        if (List.mem proc.Cast.proc_name mutual_grp) 
+                        then subst_phase_num_proc rp subst proc
+                        else proc
+                    ) prog.Cast.new_proc_decls in  
+                    { prog with Cast.new_proc_decls = n_tbl }
+                  end
+              else prog
+            with Not_found -> prog
           end
-      in
-      (* Termination: Add the inferred phase numbers 
-       * into specifications of functions in mutual group *)
-      if subst==[] then prog
-      else 
-        (* all_zero is set if subs is only of form [v1->0,..,vn->0]
-           in this scenario, there is no need for phase vars at all *)
-        begin
-        Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
-        let all_zero = List.for_all (fun (_,i) -> i==0) subst in
-        let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
-        if all_zero then
-          Debug.info_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
-        else begin
-          Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-          Debug.info_hprint (add_str "Phase Numbering"
-            (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
-        end;
-        let n_tbl = Cast.proc_decls_map (fun proc ->
-          if (List.mem proc.Cast.proc_name mutual_grp) 
-          then subst_phase_num_proc rp subst proc
-          else proc
-        ) prog.Cast.new_proc_decls in  
-        { prog with Cast.new_proc_decls = n_tbl }
-        end
-    else prog
-  with Not_found -> prog
-
-let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
-  let pr = Cprinter.string_of_proc_decl in
-  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr_no
-    (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
 
 (* Main function of the termination checker *)
 let term_check_output stk =

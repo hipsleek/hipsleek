@@ -389,6 +389,10 @@ class ['a] stack  =
        | [] -> print_string "ERROR : popping empty stack"; 
                raise Stack_Error
        | x::xs -> stk <- xs
+     method pop_top = match stk with 
+       | [] -> print_string "ERROR : popping empty stack"; 
+               raise Stack_Error
+       | x::xs -> stk <- xs; x
      method top : 'a = match stk with 
        | [] -> print_string "ERROR : top of empty stack"; 
                raise Stack_Error
