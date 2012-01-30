@@ -424,7 +424,7 @@ let is_valid (pe : formula) timeout: bool =
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");
-                    true
+                    false
                 | exc ->
                     begin
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
