@@ -192,12 +192,16 @@ and check_bounded_term_x prog ctx post_pos =
     let rs, _ = heap_entail_one_context prog false ctx bnd_formula post_pos in
     let _ = Debug.trace_hprint (add_str "Result context" 
         !CF.print_list_context) rs no_pos in
-    if (CF.isFailCtx rs) then 
-      let term_pos = (m_pos, no_pos) in
-      let term_res = (term_pos, None, None, Term.MayTerm_S Term.Not_Bounded_Measure) in
-      let _ = Term.add_term_res_stk term_res in
-      rs
-    else rs
+    let term_pos = (m_pos, no_pos) in
+    let term_res =
+      let f_ctx = CF.formula_of_context ctx in
+      if (CF.isFailCtx rs) then 
+        (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m))
+      else 
+        (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure)
+    in 
+    let _ = Term.add_term_res_stk term_res in
+    rs
   in
 
   let check_bounded_one_measures m =
@@ -208,7 +212,6 @@ and check_bounded_term_x prog ctx post_pos =
 
   let rs_lst = List.map (fun m -> check_bounded_one_measures m) l_term_measures in
   (ctx, List.concat (List.map Inf.collect_rel_list_context rs_lst))
-
 
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in

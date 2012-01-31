@@ -21,11 +21,11 @@ type term_trans_loc = loc * loc
 
 type term_reason =
   (* The variance is not well-founded *)
-  | Not_Decreasing_Measure     
-  | Not_Bounded_Measure
+  | Not_Decreasing_Measure of term_ann_trans option   
+  | Not_Bounded_Measure of CP.exp list
   (* The variance is well-founded *)
   | Valid_Measure  
-  | Decreasing_Measure
+  | Decreasing_Measure of term_ann_trans option
   | Bounded_Measure
   (* Reachability *)
   | Base_Case_Reached
@@ -85,7 +85,8 @@ let pr_phase_trans (trans: phase_trans) =
 let string_of_phase_trans (trans: phase_trans) = 
   poly_string_of_pr pr_phase_trans trans
 
-let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
+let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) =
+  (*
   let str_ctx =
     match ctx with
     | None -> ""
@@ -111,7 +112,7 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
           in 
           str_h ^ str_p
   in 
-  
+  *)
   fmt_open_hbox();
   (*(if str_ctx == "" then () else fmt_string (str_ctx ^ " & "));*)
   fmt_string (string_of_term_ann ann_s);
@@ -121,26 +122,42 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
   pr_seq "" pr_formula_exp m_d;
   fmt_close_box()
 
-let string_of_term_ann_trans ctx = poly_string_of_pr (pr_term_ann_trans ctx)
+let string_of_term_ann_trans = poly_string_of_pr pr_term_ann_trans
 
 let pr_term_reason = function
-  | Not_Decreasing_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
-  | Not_Bounded_Measure -> fmt_string "The variance is not well-founded (not bounded)."
+  | Not_Decreasing_Measure _ -> fmt_string "The variance is not well-founded (not decreasing)."
+  | Not_Bounded_Measure _ -> fmt_string "The variance is not well-founded (not bounded)."
   | Valid_Measure -> fmt_string "The given variance is well-founded."
-  | Decreasing_Measure -> fmt_string "The variance is decreasing."
+  | Decreasing_Measure _ -> fmt_string "The variance is decreasing."
   | Bounded_Measure -> fmt_string "The variance is bounded."
   | Base_Case_Reached -> fmt_string "The base case is reached."
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
   | Invalid_Status_Trans trans -> 
-      pr_term_ann_trans trans None;
+      pr_term_ann_trans trans;
       fmt_string " transition is invalid."
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
 			
 let pr_term_reason_short = function
-	| Not_Decreasing_Measure -> fmt_string "not decreasing"
-	| Not_Bounded_Measure -> fmt_string "not bounded"
+	| Not_Decreasing_Measure ann_trans -> 
+      fmt_string "not decreasing)";
+      (match ann_trans with
+        | None -> ()
+        | Some trans ->  
+          fmt_string " ";
+          pr_term_ann_trans trans)
+  | Decreasing_Measure ann_trans -> 
+      fmt_string "decreasing)";
+      (match ann_trans with
+        | None -> ()
+        | Some trans ->  
+          fmt_string " ";
+          pr_term_ann_trans trans)
+	| Not_Bounded_Measure le -> 
+      fmt_string "not bounded)";
+      pr_seq "" pr_formula_exp le;
+  | Bounded_Measure -> fmt_string "bounded)"
 	| _ -> ()
 
 let string_of_term_reason (reason: term_reason) =
@@ -155,12 +172,15 @@ let pr_term_status = function
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
 let pr_term_status_short = function
-  | Term_S _ -> fmt_string "(OK)"
+  | Term_S r -> 
+      fmt_string "(OK: ";
+      pr_term_reason_short r;
+      (* fmt_string ")" *)
   | Unreachable -> fmt_string "(UNR)"
   | MayTerm_S r -> 
       fmt_string "(ERR: ";
       pr_term_reason_short r;
-      fmt_string ")"
+      (* fmt_string ")" *)
   | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
   | _ -> fmt_string "(ERR)"
 
@@ -188,19 +208,14 @@ let pr_term_trans_loc (src, dst) =
     (fmt_string ("->");
     fmt_string ("(" ^ (string_of_int dst_line) ^ ")"))
 
-let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
+let pr_term_res pr_ctx (pos, trans, ctx, status) =
   pr_term_trans_loc pos;
   fmt_string " ";
   pr_term_status_short status;
-  fmt_string " ";
-  (match ann_trans with
-  | None -> ()
-  | Some trans ->  
-      pr_term_ann_trans trans ctx);
   (match ctx with
   | None -> ();
   | Some c -> 
-      if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
+      if pr_ctx then (fmt_string ":\n"; pr_term_ctx c) else (););
   (*
   if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
@@ -346,12 +361,13 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let term_measures, term_res, term_stack =
             if res then (* The measures are decreasing *)
               Some (t_ann, ml, il), (* Residue of termination *)
-              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               estate.es_var_stack
             else 
               Some (Fail TermErr_May, ml, il),
-              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
-              (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.es_var_stack 
+              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
+              (string_of_term_res (term_pos, t_ann_trans, None, 
+                TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack 
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
@@ -392,14 +408,15 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let term_measures, term_res, term_stack, rank_formula =
             if entail_res then (* Decreasing *) 
               Some (t_ann, ml, il), 
-              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               estate.es_var_stack, 
               None
             else
               if Inf.no_infer_all estate then (* No inference at all*)
                 Some (Fail TermErr_May, ml, il),
-                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
-                (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.es_var_stack,
+                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
+                (string_of_term_res (term_pos, t_ann_trans, None, 
+                  TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack,
                 None
               else
                 (* Inference: the es_var_measures will be
@@ -409,7 +426,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * MayTerm_S -> Term_S *)
 								(* Assumming Inference will be successed *)
                 Some (t_ann, ml, il),
-                (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+                (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 estate.es_var_stack, 
                 Some rank_formula  
           in 
