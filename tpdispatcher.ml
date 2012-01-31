@@ -32,6 +32,7 @@ type tp_type =
   | OZ (* Omega and Z3 *)
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
+  | SPASS
 
 let test_db = false
 
@@ -79,6 +80,7 @@ let string_of_prover prover = match prover with
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
+  | SPASS -> "SPASS"
 
 
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
@@ -428,6 +430,8 @@ let set_tp tp_str =
     )
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
+  else if tp_str = "spass" then
+    (tp := SPASS; prover_str := "z3"::!prover_str;)
   else
 	();
   check_prover_existence !prover_str
@@ -452,6 +456,7 @@ let string_of_tp tp = match tp with
   | OZ -> "oz"
    | AUTO -> "auto"
   | DP -> "dp"
+  | SPASS -> "spass"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -473,6 +478,7 @@ let name_of_tp tp = match tp with
   | OZ -> "Omega, Z3"
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
+  | SPASS -> "SPASS"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -879,6 +885,10 @@ let disj_cnt a c s =
   else ()
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
+(*  print_endline "==== in function tp_is_sat_no_cache ====";*)
+(*  print_string "f: "; Cpure.print_formula f;*)
+(*  print_string ("sat_no: " ^ sat_no); *)
+  
   let vrs = Cpure.fv f in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let f = Cpure.add_ann_constraints imm_vrs f in
@@ -998,6 +1008,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Mona.is_sat f sat_no
       else
 		Smtsolver.is_sat f sat_no
+    | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
 
@@ -1453,6 +1464,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Smtsolver.imply ante conseq timeout
+  | SPASS -> Smtsolver.imply ante conseq timeout
   in
 	let _ = if should_output () then
 			begin

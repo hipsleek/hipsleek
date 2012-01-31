@@ -5261,8 +5261,7 @@ and is_relative_identical (eqctr : CP.formula) (exp1 : CP.exp) (exp2 : CP.exp) :
     over the free variables in lhs.
     RETURN : a formula
 *)
-
-and pure_match_mix (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_formula) : CP.formula =
+and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_formula) : CP.formula =
   let lhs = MCP.fold_mix_lst_to_lst lhs true true true in
   let rhs = MCP.fold_mix_lst_to_lst rhs true true true in
   let rl = List.concat (List.map extract_relations lhs) in (* Relations in LHS *)
@@ -5337,13 +5336,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 			let _ = Smtsolver.suppress_all_output () in
 			let _ = Tpdispatcher.push_suppress_imply_output_state () in
 	 		let _ = Tpdispatcher.suppress_imply_output () in
-	 		let inst = pure_match_mix evarstoi lhs_p rhs_p in (* Do matching! *)
-	 		let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
+	 		let inst = pure_match evarstoi lhs_p rhs_p in (* Do matching! *)
+            let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
 			(* Unsuppress the printing *)
 	 		let _ = Smtsolver.unsuppress_all_output ()  in
 	 		let _ = Tpdispatcher.restore_suppress_imply_output_state () in
  	 		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
-	 		lhs_p  in
+	 		lhs_p
+  in
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
@@ -8946,7 +8946,6 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	              formula_ext_exists = b.formula_ext_exists @ d.formula_ext_exists;
 	              formula_ext_base = normalize_combine b.formula_ext_base d.formula_ext_base b.formula_ext_pos ;
 	              formula_ext_continuation = combine_struc b.formula_ext_continuation d.formula_ext_continuation;
-                  (*formula_ext_complete = b.formula_ext_complete;*)
 	              formula_ext_pos = b.formula_ext_pos
 	          }
 	    | EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
