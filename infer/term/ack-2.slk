@@ -1,0 +1,19 @@
+ranking r1(int n).
+
+infer [r1] m1=m & n1+1=n & Term[0,m,r1(n)] |- Term[0,m1,r1(n1)].
+
+infer [r1] m1=m & n1+1=n & Term[m,r1(n)] |- Term[m,r1(n1)].
+
+infer [r1] m1=m & n1+1=n & Term[m,r1(n)] |- Term[m1,r1(n1)].
+
+infer [r1] m1=m & n1+1=n & Term[m,r1(n)] |- Term[m1,r1(n1)].
+
+infer [r1] m1=m & n1+1=n & Term[r1(n)] |- m=m1 & Term[r1(n1)].
+
+
+infer [r1] m1=m & n1+1=n & Term[r1(n)] |- m=m1 & r1(n)>r1(n1).
+
+infer [r1] m1=m & n1+1=n & Term[r1(n)] |- 0>0 | (m=m1 & r1(n)>r1(n1)).
+
+infer [r1] m1=m & n1+1=n & Term[r1(n)] |- m>n or m=m1 & r1(n)>r1(n1).
+

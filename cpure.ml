@@ -65,7 +65,6 @@ and lex_info = {
     lex_loc : loc; (* location of LexVar *)
 }
 
-
 and p_formula =
   | LexVar of lex_info_old
   | BConst of (bool * loc)
