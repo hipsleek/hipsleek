@@ -55,8 +55,19 @@ and bf_annot = (bool * int * (exp list))
 (* Boolean constraints *)
 and b_formula = p_formula * (bf_annot option)
 	
+and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
+
+(* should migrate to form below *)
+and lex_info = {
+    lex_ann : term_ann;
+    lex_exp : exp list; (* current lexicographic measures *)
+    lex_tmp : exp list; (* for temporary storage of measures *)
+    lex_loc : loc; (* location of LexVar *)
+}
+
+
 and p_formula =
-  | LexVar of (term_ann * (exp list) * (exp list) * loc)
+  | LexVar of lex_info_old
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
