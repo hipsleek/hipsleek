@@ -8,3 +8,4 @@
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
 <sw/*>: not_hygienic
+<lp-ex/*>: not_hygienic
