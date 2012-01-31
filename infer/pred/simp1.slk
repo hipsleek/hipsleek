@@ -1,0 +1,19 @@
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll1<n,S> == self =  null & S={} & n=0
+	or self::node<v, r> * r::ll1<n-1, S1>  & S = union(S1, {v})
+  inv n>=0.
+
+lemma self::ll1<n,S> -> self::ll<n>.
+
+//1.
+//checkentail x::ll<n> & n =1  |- x::node<_,_>.
+
+//2.
+checkentail x::ll1<n,_> & n =1  |- x::node<_,null>.
+
