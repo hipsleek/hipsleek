@@ -824,9 +824,25 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
   else 
     let ivs = estate.es_infer_vars_rel in
     let rhs_p_n = MCP.pure_of_mix rhs_p in
-    let rhs_ls = CP.split_conjunctions rhs_p_n in
+    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)
+    (* Suppose rhs_p_n is in DNF *)
+    (* Need to assure that later *)
+    let rhs_disjs = CP.list_of_disjs rhs_p_n in
+    let (rhs_disjs_rel, rhs_disjs_wo_rel) = 
+      List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
+    let rhs_disjs_wo_rel_new = 
+      let lhs_cond = MCP.pure_of_mix lhs_p_orig in
+      List.filter (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel 
+    in
+    (* DD.devel_hprint (add_str "LHS pure" !CP.print_formula) (MCP.pure_of_mix lhs_p_orig) pos; *)
+    (* DD.devel_hprint (add_str "RHS Disj List" (pr_list !CP.print_formula)) rhs_disjs_wo_rel_new pos; *)
+    let rhs_p_n_new = CP.disj_of_list (rhs_disjs_rel @ rhs_disjs_wo_rel_new) pos in
+    let rhs_ls = CP.split_conjunctions rhs_p_n_new in
     let (rel_rhs,other_rhs) = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in 
     if rel_rhs==[] then (
+      (* DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; *)
+      (* DD.devel_pprint "no relation in rhs" pos; *)
+      (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
       if !unable_to_fold_rhs_heap = false then
@@ -979,7 +995,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 

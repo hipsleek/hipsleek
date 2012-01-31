@@ -5252,9 +5252,15 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* rhs_wf = None --> measure succeeded *)
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
-and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+and heap_infer_decreasing_wf_x prog estate rank is_folding lhs rhs_p_br pos =
   let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
   in CF.estate_opt_of_list_context lctx
+
+and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+  let pr = !CP.print_formula in
+  Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
+      (fun _ -> heap_infer_decreasing_wf_x prog estate rank is_folding lhs rhs_p_br pos) rank
+
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in

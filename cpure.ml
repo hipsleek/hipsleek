@@ -6758,6 +6758,18 @@ let get_rank_bnd_id_list (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
+let is_Rank (f:formula) = match f with
+  | BForm _ -> (List.length (get_rank_dec_id_list f)) + (List.length (get_rank_bnd_id_list f)) > 0
+  | _ -> false
+
+let rec get_Rank pf = match pf with
+  | BForm (bf,_) -> if is_Rank pf then [pf] else []
+  | And (f1,f2,_) -> get_Rank f1 @ get_Rank f2
+  | Or (f1,f2,_,_) -> get_Rank f1 @ get_Rank f2
+  | Not (f,_,_) -> get_Rank f
+  | Forall (_,f,_,_) -> get_Rank f
+  | Exists (_,f,_,_) -> get_Rank f
+
 let get_rel_id (f:formula) 
       = match f with
         | BForm (bf,_) ->
