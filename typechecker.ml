@@ -1041,27 +1041,38 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	end in
   let fn_state=
     if (!Globals.disable_failure_explaining) then
-  let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
-    proc.proc_args in
-  let r = proc.proc_by_name_params in
-  let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
+      let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
+        proc.proc_args in
+      let r = proc.proc_by_name_params in
+      let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
-  let final_state_prim = CF.push_exists_list_partial_context w ctx in
+      let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
-  let final_state = 
-    if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
+      let final_state =
+        if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
   (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
   (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
   (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
- Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n")) pos;
+      Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n")) pos;
       let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
       Debug.devel_pprint to_print pos;
-       final_state
+      final_state
     else ctx
-      in
+  in
+  let f1 = CF.formula_is_eq_flow post !error_flow_int in
+  (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
   (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) fn_state)) in*)
-  let rs, prf = heap_entail_list_partial_context_init prog false fn_state post pos (Some pid) in
+  let rs, prf =
+    if f1 then
+      begin
+          let post = (CF.formula_subst_flow post (CF.mkNormalFlow())) in
+           let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state post pos (Some pid) in
+           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans,prf)
+      end
+    else
+      heap_entail_list_partial_context_init prog false fn_state post pos (Some pid)
+  in
   let _ = PTracer.log_proof prf in
   let _ = if !print_proof then
     begin
@@ -1071,8 +1082,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
       Prooftracer.pop_div ();
 	  (* print_endline "DONE!" *)
 	end in
-  if (CF.isSuccessListPartialCtx_new rs) then 
-  (*  let _ = print_endline ("\nlocle3:") in*)
+  if (CF.isSuccessListPartialCtx_new rs) then
     rs
   else begin
    (*   let _ = print_endline ("\nlocle4:") in*)

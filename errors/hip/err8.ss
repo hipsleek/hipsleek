@@ -18,3 +18,13 @@ int foo2(int x)
   if (x==0) return 0;
   else return 1;
 }
+
+int foo3(int x)
+ case {
+  x = 0 -> ensures res>0 & flow __Error;
+  x !=0 -> ensures res=1 & flow __Error;
+}
+{
+  if (x==0) return 0;
+  else return 1;
+}

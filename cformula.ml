@@ -3093,17 +3093,17 @@ and steps = string list
         | Or_Continuation of (fail_type * fail_type)
 
 (* Fail | List of Successes *)
-and list_context = 
-  | FailCtx of fail_type 
+and list_context =
+  | FailCtx of fail_type
   | SuccCtx of context list
-      
+
 and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
 
 (* disjunction of state with failures and partial success *)
 (* a state is successful if it has empty branch_fail *)
-and partial_context = (branch_fail list) * (branch_ctx list)  
+and partial_context = (branch_fail list) * (branch_ctx list)
     (* disjunct of failures and success *)
 
 (* successful partial states that have escaped through exceptions *)
@@ -4027,6 +4027,48 @@ let invert_outcome (l:list_context) : list_context =
   | FailCtx ft -> l
   | SuccCtx ls -> SuccCtx (invert ls)
 
+let invert_fail_branch_must_fail (pt, ft):(branch_fail list * branch_ctx list)=
+  let fk,eso = get_failure_es_ft ft in
+   match (fk) with
+     | Failure_Must _ ->
+         begin
+             match eso with
+               | Some es -> ([],[(pt, Ctx es)])
+               | None -> failwith "Cformula.invert_branch_must_fail: something is wrong"
+         end
+     | _ -> ([(pt,ft)], [])
+
+let invert_ctx_branch_must_fail (pt, ctx):(branch_fail)=
+  let foo es =
+    let fc_template = {
+		fc_message = "INCONSISTENCY : expected failure but success instead";
+		fc_current_lhs  =  empty_es (mkTrueFlow ()) no_pos;
+		fc_prior_steps = [];
+		fc_orig_conseq  = es.es_orig_conseq;
+		fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
+		fc_failure_pts =  []} in
+    (Basic_Reason (fc_template,
+                   mk_failure_must "INCONSISTENCY : expected failure but success instead" "")) in
+  match ctx with
+    | Ctx es -> (pt, foo es)
+    | _ -> report_error no_pos "not sure how to invert_outcome"
+
+let invert_partial_context_outcome fnc_ctx_invert fnc_fail_invert (fs, bctxs):(branch_fail list * branch_ctx list)=
+  let rec helper fs rs ctxs=
+    match fs with
+      | [] -> rs, ctxs
+      | bf::bs -> let r1,r2 = fnc_fail_invert bf in
+                  helper bs (rs@r1) (ctxs@r2)
+  in
+  match fs with
+    | [] ->(*if fs = empty ==> invert Valid => must failure*)
+        (fs@(List.map fnc_ctx_invert bctxs),[])
+    | _ -> (*otherwises*)
+        let fb, cb = helper fs [] bctxs in (fb,cb)
+
+let invert_list_partial_context_outcome fnc_ctx_invert fnc_fail_invert cl=
+  List.map (invert_partial_context_outcome fnc_ctx_invert fnc_fail_invert) cl
+
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
 let false_ctx flowt pos = 
@@ -4356,11 +4398,11 @@ let isSuccessPartialCtx (fs,ss) =
 if (Gen.is_empty fs) then true else false
 
 let isSuccessBranchFail (_,ft) =
-   match  (get_failure_ft ft) with
-        | Failure_Must _ -> false
-        | Failure_May _ -> false
-        | Failure_Valid -> true
-        | Failure_Bot _ -> true
+   match (get_failure_ft ft) with
+     | Failure_Must _ -> false
+     | Failure_May _ -> false
+     | Failure_Valid -> true
+     | Failure_Bot _ -> true
 
 let isSuccessPartialCtx_new (fs,_) =
  List.for_all isSuccessBranchFail fs
@@ -4390,7 +4432,7 @@ let isSuccessListFailescCtx cl =
   Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
 
 let isSuccessListFailescCtx_new cl =
-  cl==[] || List.exists isSuccessFailescCtx_new cl 
+  cl==[] || List.exists isSuccessFailescCtx_new cl
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl

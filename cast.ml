@@ -1302,7 +1302,7 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let rec check_proper_return cret_type exc_list f = 
+let rec check_proper_return cret_type exc_list f =
   let overlap_flow_type fl res_t = match res_t with 
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
@@ -1310,7 +1310,8 @@ let rec check_proper_return cret_type exc_list f =
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		  if b_rez then
+		  if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
+            & not(F.equal_flow_interval !top_flow_int fl_int) then
 			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
