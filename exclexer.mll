@@ -29,7 +29,7 @@
 	 ("bool", BOOL);
 	 ("break", BREAK);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("conseq", CONSEQ);
 	 ("const", CONST);
 	 ("continue", CONTINUE);
@@ -54,6 +54,7 @@
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+     ("lemma", LEMMA);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);

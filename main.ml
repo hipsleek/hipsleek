@@ -15,6 +15,13 @@ let set_source_file arg =
 
 let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg
 
+let print_version () =
+  print_endline ("HIP: A Verifier for Heap Manipulating Programs");
+  print_endline ("Version 1.0");
+  print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
+  print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
+  print_endline ("Copyright @ PLS2 @ NUS")
+
 (******************************************)
 (* main function                          *)
 (******************************************)
@@ -25,7 +32,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      print_string "Parsing...\n"; flush stdout;
+      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
@@ -38,7 +45,7 @@ let parse_file_full file_name =
 		(*let _ = print_endline "Primitive relations : " in
 		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
 
-			prog 
+			prog
     with
 		End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
@@ -52,13 +59,14 @@ let rec process_primitives (file_list: string list) : Iast.prog_decl list =
   | hd::tl ->
         let header_filename = String.sub hd 1 ((String.length hd) - 2) in
         let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
+        (* let _ = print_string ("\n WN : prelude here"^new_filename^"\n") in *)
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Gen.Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
+  Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -84,9 +92,9 @@ let process_source_full source =
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in
+  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in
+  let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
 
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
@@ -114,30 +122,20 @@ let process_source_full source =
     let iprims = Iast.append_iprims_list_head iprims_list in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-	(*let _ = print_string ("\nmain: intermediate_prog (1): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
-    (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
-	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
-	(*let _ = print_string ("\nmain: intermediate_prog (2): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
-	(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
-    (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
-    let _ = print_string ("Translating to core language...\n"); flush stdout in
-    (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
+    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
-	(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations and " ^ (string_of_int (List.length cprog.Cast.prog_axiom_decls)) ^ " axioms in cprog.\n") in *)
 	(* Forward axioms and relations declarations to SMT solver module *)
-	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) cprog.Cast.prog_rel_decls in
-	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) cprog.Cast.prog_axiom_decls in
-
+	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
-	(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
-    let _ = if (!Globals.print_core) then print_string ("START"^(Cprinter.string_of_program cprog)^"STARTEND") else () in
+    let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
       if !Globals.verify_callees then begin
 	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -173,12 +171,14 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
+    
+    (* An Hoa : initialize html *)
+    let _ = Prooftracer.initialize_html source in
+    
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-		(* An Hoa *)
-		(*print_endline "START VERIFICATION PROCESS!";*)
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog cprog prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -186,6 +186,15 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
+    
+    (* An Hoa : export the proof to html *)
+    let _ = if !Globals.print_proof then
+    		begin 
+    			print_string "\nExport proof to HTML file ... ";
+    			Prooftracer.write_html_output ();
+    			print_endline "done!" 
+    		end
+    in
     
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
@@ -202,7 +211,6 @@ let process_source_full source =
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
-	  
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
@@ -224,9 +232,11 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
-
+  if !Globals.print_version_flag then begin
+	print_version ()
+  end else
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
-  let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
@@ -241,7 +251,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

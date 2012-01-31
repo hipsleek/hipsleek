@@ -1,5 +1,6 @@
 {
 open Globals
+open Exc.ETABLE_NFLOW
 
 open Token
 (** A signature for specialized tokens. *)
@@ -121,7 +122,7 @@ module Make (Token : SleekTokenS)
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
    ("combine", COMBINE);
 	 ("const", CONST);
@@ -146,6 +147,7 @@ module Make (Token : SleekTokenS)
    ("ho_pred",HPRED);
    ("if", IF);
 	 ("in", IN_T);
+   ("infer", INFER);
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
@@ -195,7 +197,7 @@ module Make (Token : SleekTokenS)
    ("variance", VARIANCE);
 	 ("while", WHILE);
    ("with", WITH);
-	 (flow, FLOW Globals.flow);]
+	 (flow, FLOW flow);]
 }
   
   
@@ -259,6 +261,11 @@ rule tokenizer file_name = parse
   | "&&" { ANDAND }
   | "@" { AT }
   | "@I" {IMM}
+  | "@L" {LEND}
+  | "@D" { DERV }
+  | "@M" { MUT }
+  | "@pre" { PRE }
+  | "@post" { POST }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -303,6 +310,7 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | "<:" { SUBANN }
   | '/' { DIV }
   | ident as idstr 
 	  {

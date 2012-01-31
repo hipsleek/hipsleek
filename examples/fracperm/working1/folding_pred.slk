@@ -1,0 +1,67 @@
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+//(1)
+checkentail x::cellp(f1)<v1> |- x::cell(f2)<v2>.
+print residue. //valid
+
+//(2)
+checkentail x::cellp<v1> |- x::cell(f2)<v2>.
+print residue. //valid
+
+//(3)
+checkentail x::cellp<v1> |- x::cell(0.5)<v2>.
+print residue. //fail
+
+//(4)
+checkentail x::cellp(0.5)<v1> |- x::cell(f2)<v2>.
+print residue. //valid
+
+//(5)
+checkentail x::lseg<n, p> & n>0 |- x!=null.
+// valid
+
+//(6)
+checkentail x::lseg(f)<n, p> & n>2 |- x::node(f1)<_,r> * r::node(f2)<_,r1> * r1::lseg(f3)<m,p>.
+print residue. // valid
+
+//(7)
+checkentail x::lseg(f)<n, p> & n>2 |- x::node(f1)<_,r> * r::node(f2)<_,r1> * r1::lseg(0.5)<m,p>.
+// fail
+
+//(8)
+checkentail x::lseg<n, p> & n>2 |- x::node(f1)<_,r> * r::node(f2)<_,r1> * r1::lseg(0.5)<m,p>.
+// fail
+
+//(9)
+checkentail x=p |-  x::lseg(f)<n, p>.
+print residue.// valid
+
+//(10)
+checkentail x::node<_,r1> * r1::lseg<m,p> |- x::lseg<n, p>.
+print residue. // valid
+
+
+
+//(11)
+checkentail x::node<_,r> * r::node<_,r1> * r1::lseg(f2)<m,p> & f2=1.0 |- x::lseg(f)<n, p>.
+print residue. // valid
+
+
+//(12)
+checkentail x::node<_,r> * r::node<_,r1> * r1::lseg<m,p>  |- x::lseg(f)<n, p>.
+print residue. // valid
+
+//(13)
+checkentail x::node<_,r> * r::node<_,r1> * r1::lseg<m,p>  |- x::lseg(0.5)<n, p>.
+print residue. // fail

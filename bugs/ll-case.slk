@@ -1,0 +1,64 @@
+data node {
+	int val;
+	node next;
+}.
+
+// why unstructured form has nn & r as Ex rather than Expl,Impl?
+
+pred ll_c<n> == case {
+ (n=0) -> [] self=null ; 
+ (n!=0) -> [] (exists nn : self::node<_, r> * r::ll_c<nn> & nn=n-1);
+  }
+	inv n > 0.
+
+/*
+pred ll<n> == 
+  self=null & n=0
+  or self::node<_, r> * r::ll<nn> & nn=n-1
+	inv n>=0.
+*/
+
+// UNSOUND BUG
+// ERROR : invariant does not hold but --eps option allowed it!
+
+
+/*
+checkentail x::node<_,null>
+  |- x::ll<n>.
+print residue.
+*/
+
+/*
+checkentail x::node<_,null> |- x::ll_c<n>.
+print residue.
+*/
+/*
+
+ x::node<_,null> |- x::ll_c<n>
+
+*/
+
+
+/*
+checkentail x::node<_,y>*y::node<_,null>
+  |- x::ll<n>.
+print residue.
+
+*/
+// below fails due to case-spec
+// why is case-spec used instead of unstructured since
+// n does not appear on LHS
+/*
+checkentail x::node<_,y>*y::node<_,null> 
+  |- x::ll_c<n>.
+print residue.
+*/
+/*
+checkentail x::node<_,null> 
+  |- x::ll_c<n>.
+*/
+/*
+checkentail x::node<_,y> * y::node<_,z> * z::node<_,null> & n=3
+  |- x::ll_c<n>.
+print residue.
+*/

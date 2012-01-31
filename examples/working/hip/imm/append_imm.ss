@@ -20,7 +20,7 @@ ensures x::lseg<y, n>;
 requires x::ll<n> & y=x & n>0
 ensures x::clist<n>;*/
 
-requires x::lseg<p,n>@I * p::node<v,null>  //& x!=null
+requires x::lseg<p,n>@L *  p::node<v,null>  //& x!=null
 ensures p::node<v,y>;
 
 //ensures x::lseg<y, n+1>@I;
@@ -29,11 +29,12 @@ ensures p::node<v,y>;
 	node tmp = x.next;
 	bool fl = tmp != null;
 	if (fl) {
-		append(x.next, y);
+		dprint; 
+		append(x.next, y); 
 		return;
 	}
 	else {
-                dprint;
+                //dprint;
 		x.next = y;
 		return;
 	}

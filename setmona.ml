@@ -116,6 +116,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 					(* Arithmetic *)
 				  | Lt (e1, e2, _)
 				  | Lte (e1, e2, _)
+				  | SubAnn (e1, e2, _)
 				  | Gt (e1, e2, _)
 				  | Gte (e1, e2, _)
 					(* Equality and disequality *)
@@ -232,7 +233,7 @@ and to_fo (svs : spec_var list) var_map : bool =
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
-  | IConst _ -> false
+  | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Add (e1, e2, _)
@@ -425,7 +426,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 		  else helper2 mkEq e1 e2 pos
 	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
-	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
+	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
 	  | ListIn _
@@ -497,8 +498,8 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 	| [] -> failwith ("flatten_list: es0 should be nonempty.")
 	| [e] -> (e, mkTrue no_pos, [])
 	| e1 :: e2 :: rest -> begin
-		if is_zero e1 then flatten_list (e2 :: rest)
-		else if is_zero e2 then flatten_list (e1 :: rest)  
+		if is_zero_int e1 then flatten_list (e2 :: rest)
+		else if is_zero_int e2 then flatten_list (e1 :: rest)  
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in

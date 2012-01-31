@@ -48,9 +48,15 @@ int div4(int a, int b)
   requires b != 0 
   ensures true;
 
-int mod(int a, int b) case {
+int mod___(int a, int b) case {
   a >= 0 -> case {
-    b >= 1 -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+	b >= 1 -> case {
+	  a < b -> ensures res = a;
+	  a >= b -> case {
+		a < 2*b -> ensures res = a - b;
+		a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+	  }
+	}
     b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
@@ -76,7 +82,7 @@ float mult___(float a, float b)
   requires true 
   ensures res = a * b;
 
-float div___(float a, float b) 
+float div___(float a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
@@ -189,7 +195,13 @@ relation induce(int value) == true.
 
 relation dom(int[] a, int low, int high).
 
+relation domb(bool[] a, int low, int high).
+
 axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+
+axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
+
+relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).
 
@@ -223,11 +235,36 @@ int array_get_elm_at___1d(int[] a, int i)
 				& ahalb <= i 
 				& i <= ahaub
 	ensures res = a[i];
+	
+bool array_get_elm_at___1d(bool[] a, int i) 
+	requires [ahalb,ahaub]
+				domb(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures res = a[i];
 
 // 2D array access
 int array_get_elm_at___2d(int[,] a, int i, int j) 
 	requires true
 	ensures res = a[i,j];
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
+/* data tid{ */
+/* } */
+
+/* void fork(tid id) */
+/*   requires true */
+/*   ensures id::tid<>; */
+
+/* void join1(tid id) */
+/*   requires id::tid<> */
+/*   ensures true; */
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
 
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
@@ -247,6 +284,11 @@ int[] update___1d(int v, int[] a, int i)
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
 				& update_array_1d(a,res,v,i);
+				
+				
+bool[] update___1d(bool v, bool[] a, int i)
+	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
+	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);
 
 int[,] update___2d(int v, int[,] a, int i, int j)
 	requires true

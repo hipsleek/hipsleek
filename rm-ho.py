@@ -1,9 +1,17 @@
 #!/usr/bin/python
 import glob
 import subprocess
-
+import sys
 import os
-dirList=glob.glob('*.ml')
+
+#target directory
+dirDest=""
+if len(sys.argv) > 1 :
+    dirDest=sys.argv[1]
+
+fileType='ml'
+dirList=glob.glob(dirDest + '*.' + fileType)
+
 to_modify_files = []
 temp_file="tmp"
 

@@ -36,8 +36,11 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
-	"Print implication for debugging");
+	("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
+	(*("--sdp", Arg.Set Cprinter.simplify_dprint,
+    "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
+	("-wpf", Arg.Set Globals.print_proof,
+	"Print all the verification conditions, the input to external prover and its output.");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
 	("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -68,8 +71,10 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-coercions", Arg.Clear Globals.check_coercions,
-	"Check coercion validity");
+	("--dlp", Arg.Clear Globals.check_coercions,
+	"Disable Lemma Proving");
+	("--elp", Arg.Set Globals.check_coercions,
+	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
 	("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
@@ -78,9 +83,9 @@ let common_arguments = [
     "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
 	"Hull precondition invariant at call sites");
-	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+	("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
 	"Timeout for sat checking");
-	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
@@ -106,7 +111,9 @@ let common_arguments = [
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
+	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
@@ -119,6 +126,10 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
+	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
+    "Allow Depth of Unfold/Fold Self Search");
+	("--enable-self-fold-search", Arg.Set Globals.self_fold_search_flag,
+    "Enable Limited Search with Self Unfold/Fold");
 	("-parse", Arg.Set parse_only,"Parse only");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
 	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
@@ -128,9 +139,11 @@ let common_arguments = [
 	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";  "oc-2.1.6";"co"; "isabelle"; "coq"; "mona"; "monah"; "z3";"z3-3.2"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm";"dp" ], Tpdispatcher.set_tp),
-	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA. \n\tdp: Dedicated prover for eq/ineq");
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	("-perm", Arg.Symbol (["fperm"; "cperm"; "none"], Perm.set_perm),
+	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
@@ -152,7 +165,7 @@ let common_arguments = [
 	("--ep-stat", Arg.Set Globals.profiling, 
 	"enable profiling statistics");
     ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-	("--e-stat", (Arg.Set Globals.profiling; Arg.Set Globals.enable_counters), 
+	("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]), 
 	"enable all statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
 	"use only syntactic base case detection");
@@ -164,6 +177,8 @@ let common_arguments = [
 	"print input representation");
 	("--no-cache", Arg.Set Globals.no_cache_formula,
     "Do not cache result of satisfiability and validity checking");
+	("--enable-cache", Arg.Clear Globals.no_cache_formula,
+    "Cache result of satisfiability and validity checking");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
@@ -172,14 +187,14 @@ let common_arguments = [
 	"<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
 	("--decrprio",Arg.Set Tpdispatcher.decr_priority , 
 	"use a decreasing priority scheme");
-	("--rl-no-pseudo-ops", Arg.Set Redlog.no_pseudo_ops, 
+	("--rl-no-pseudo-ops", Arg.Clear Redlog.no_pseudo_ops, 
 	"Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
 	"Do not try to eliminate existential quantifier with Redlog");
     ("--rl-no-simplify", Arg.Set Redlog.no_simplify,
     "Do not try to simplify non-linear formulas with Redlog");
-    ("--rl-no-cache", Arg.Set Redlog.no_cache,
-    "Do not use cache for unsatisfiability and implication's checking with Redlog");
+    ("--rl-cache", Arg.Clear Redlog.no_cache,
+    "Use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
@@ -190,6 +205,7 @@ let common_arguments = [
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+    ("-version", Arg.Set Globals.print_version_flag,"current version of software");
     ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
     ("--refine-error", Arg.Set Globals.simplify_error,
 	"Simplify the error");
@@ -221,7 +237,8 @@ let common_arguments = [
 
   (* Termination options *)
   ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
-  (* slicing *)
+
+  (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
   ("--slc-opt-ineq", Arg.Set Globals.opt_ineq, "Enable optimal SAT checking with inequalities for forced slicing");

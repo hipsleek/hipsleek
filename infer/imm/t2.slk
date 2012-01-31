@@ -1,0 +1,8 @@
+// TODO fix by bounding 0<=v<=2
+// (5)
+//checkentail v<:@M & v<:w &v<:@L & r>7 |- v=@M & r>6.
+//print residue.
+
+// (6)
+checkentail v<:@M & v!=@M |- false.
+print residue.

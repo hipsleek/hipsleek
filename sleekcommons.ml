@@ -41,6 +41,7 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
+  | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | Time of (bool*string*loc)
@@ -78,7 +79,8 @@ let string_of_command c = match c with
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
-  | EntailCheck _ -> "EntailCheck" 
+  | EntailCheck _ -> "EntailCheck"
+  | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
   | Time _ -> "Time"

@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|hip_imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -41,9 +41,9 @@ else
 	}
 
 if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc', 'oc-2.1.6' => 'oc-2.1.6',
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-3.2' => 'z3-3.2', 'zm' => 'zm');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
@@ -165,38 +165,41 @@ if($timings){
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip ";
+# TODO : check if hip is n-hip, as b-hip is too slow
+# please use make native
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
+# files are searched in the subdirectory with the same name as the list name, in examples/working/hip directory (ex. hip/array for "array" list)
 %hip_files=(
 	# AN HOA : ADDED ARRAY TESTING EXAMPLES
-	"hip_array"=>[
-		["array/arr_at.java",1,"","main","SUCCESS"],
-		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
-		["array/arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
-		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
-		["array/arr_bubblesort_perm.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
-		["array/arr_double.java",1,"","doublearr","SUCCESS"],
-		["array/arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
-		["array/arr_init.java",1,"","zinit","SUCCESS"],
-		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
-		["array/arr_insertsort_perm.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
-		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
-		["array/arr_max.java",1,"","max_value_of_array","SUCCESS"],
-		["array/arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
-		["array/arr_new_exp.java",1,"","main","SUCCESS"],
-		["array/arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
-		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
-		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
-		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["array/arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["array/arr_sparse.java",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
-		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
+	"array"=>[
+		["arr_at.java",1,"","main","SUCCESS"],
+		["arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
+		["arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_bubblesort_perm.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_double.java",1,"","doublearr","SUCCESS"],
+		["arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
+		["arr_init.java",1,"","zinit","SUCCESS"],
+		["arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_insertsort_perm.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["arr_max.java",1,"","max_value_of_array","SUCCESS"],
+		["arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["arr_new_exp.java",1,"","main","SUCCESS"],
+		["arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["arr_rev.java",1,"","arrayrev","SUCCESS"],
+		["arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_sparse.java",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
+		["arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-    "hip_imm" =>[ 
-        ["imm/bigint.ss",17, "",
+    "imm" =>[ 
+        ["bigint.ss",17,  " --imm ",
 		 "clone", "SUCCESS",
 		 "int_value", "SUCCESS",
 		 "bigint_of", "SUCCESS",
@@ -216,7 +219,7 @@ $output_file = "log";
          "compare", "SUCCESS", #loop?
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint_imm.ss",18, "",
+        ["bigint_imm.ss",18,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -236,7 +239,7 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint_imm-star.ss",17, "",
+        ["bigint_imm-star.ss",17,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -256,7 +259,7 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight.ss",17, "",
+        ["bigint-tight.ss",17,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -276,7 +279,7 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight-imm.ss",18, "",
+        ["bigint-tight-imm.ss",18,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -296,7 +299,7 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight-imm-star.ss",17, "",
+        ["bigint-tight-imm-star.ss",17,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -316,14 +319,11 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/append_imm.ss", 1, "", "append", "SUCCESS"],
-        ["imm/kara.ss",1, "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-imm.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-imm-star.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight-imm.ss",1, "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight-imm-star.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/ll_imm.ss", 6, "", "length", "SUCCESS",
+        ["append_imm.ss", 1,  " --imm ", "append", "SUCCESS"],
+        ["kara.ss",1,  " --imm ", "karatsuba_mult","SUCCESS"],
+        ["kara-imm-star.ss",1,  " --imm " , "karatsuba_mult","SUCCESS"],
+        ["kara-imm-conj.ss",1,  "--imm", "karatsuba_mult","SUCCESS"],
+        ["ll_imm.ss", 6,  " --imm ", "length", "SUCCESS",
          "append", "SUCCESS",
          "get_next", "SUCCESS",
          "set_next", "SUCCESS",
@@ -596,50 +596,49 @@ $output_file = "log";
         ["merge3.ss", 1, "", "merge", "SUCCESS"],
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
+    ],
+    "lemmas"=>[["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
+               ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
+               ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
+               ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
+               ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
     ]
     );
 
 # list of file, string with result of each entailment&lemma....
+# the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 %sleek_files=(
-    "sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-                      ["sleek1.slk","Fail."],
-                      ["sleek10.slk","Valid.Fail."],
-                      ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-                      ["sleek3.slk","Valid.Valid.Fail.Valid."],
-                      ["sleek4.slk","Valid.Valid."],
-                      ["sleek6.slk","Valid.Valid."],
-                      ["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+    "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk", "", "", "Fail."],
+                      ["sleek10.slk", "", "", "Valid.Fail."],
+                      ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek4.slk", "", "", "Valid.Valid."],
+                      ["sleek6.slk", "", "", "Valid.Valid."],
+                      ["sleek7.slk", "", "Valid.", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                       # slow in sleek8.slk due to search
-                      ["sleek8.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["sleek9.slk","Valid.Valid.Valid.Fail.Valid.Valid."],
-                      ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-                      #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk","Valid.Fail."],
-                      ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "sleek_wo_lemma_check"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-              ["sleek1.slk","Fail."],
-              ["sleek10.slk","Valid.Fail."],
-              ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-              ["sleek3.slk","Valid.Fail.Valid."],
-              ["sleek4.slk","Valid.Valid."],
-              ["sleek6.slk","Valid.Valid."],
-              ["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-              # slow in sleek8.slk due to search
-              ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["sleek9.slk","Valid.Fail.Valid.Valid."],
-              ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-              #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-              ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-              ["imm/imm4.slk","Valid.Fail."],
-              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "lemmas"=>[["lemmas/lemma_check01.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check02.slk", "Fail.Valid."],
-              ["lemmas/lemma_check03.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check04.slk", "Valid.Fail.Fail."],
-              ["lemmas/lemma_check06.slk", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+                      ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+                      ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
+                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "infer"=>[["infer1.slk", "", "", "Valid."]],
+    "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
+              ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
+              ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
+              ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
+              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
+			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+			   ["err6.slk","","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
 
     );
 
@@ -721,18 +720,14 @@ sub log_one_line_of_timings{
 sub hip_process_file {
     foreach $param (@param_list)
     {
+        my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
+        if ("$param" =~ "lemmas") { $procedure = "Entailing lemma"; }
         if ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
-        }elsif("$param" =~ "bags") {
-            $exempl_path_full = "$exempl_path/bags";
-            print "Starting bags tests:\n";
-        }elsif ("$param" =~ "term") {
-            $exempl_path_full = "$exempl_path/term";
-            print "Starting term tests:\n";
-        }elsif ("$param" =~ "lists") {
-            $exempl_path_full = "$exempl_path/list_examples";
-            print "Starting term tests:\n";
+        } else {
+            $exempl_path_full = "$exempl_path/hip/$param";
+            print "Starting hip-$param tests:\n";
         }
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
@@ -751,7 +746,7 @@ sub hip_process_file {
 			#print "\nbegin"."$output"."end\n";
 			for($i = 3; $i<$limit;$i+=2)
 			{
-				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
+				if($output !~ /$procedure $test->[$i].* $test->[$i+1]/)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
@@ -770,53 +765,71 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      $exempl_path_full = "$exempl_path/sleek";
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $err = 0;
+      if ("$param" =~ "musterr") {
+          print "Starting sleek must/may errors tests:\n";
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
+      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+#      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
+      
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
-      }
-      if ($script_arguments=~"--disable-check-coercions"){
-          $param =~ s/sleek/sleek_wo_lemma_check/;
+          $exempl_path_full = "$exempl_path/sleek";
+      }else {
+          $exempl_path_full = "$exempl_path_full/$param";
+          print "Starting sleek-$param tests:\n";
       }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
-			print "Checking $test->[0]\n";
-			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
+            my $extra_options = $test->[1];
+            if ("$extra_options" eq "") {
+                print "Checking $test->[0]\n";
+            } else {
+                print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+            }
+            $script_args = $script_arguments.$extra_options;
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
-			$pos = 0;
-			$r = "";
-			while($pos >= 0)
-			{
-				$i = index($output, "Valid",$pos);
-				$j = index($output, "Fail",$pos);
-				if ($i==-1 && $j == -1)
-					{$pos = -1;}
-				else
-				{
-					if(($i<$j || $j==-1)&& ($i>=0))
-					{
-						$pos=$i+3;
-						$r = $r ."Valid.";
-					}
-					else
-					{
-						$pos=$j+3;
-						$r = $r ."Fail.";
-					}
-				}
-				if ($pos >=length($output)) 
-				{$pos = -1;}
-			}
-			if($r !~ /^$test->[1]$/)
+            my $lemmas_results = "";
+            my $entail_results = "";
+            my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+                if($line =~ m/Entailing lemma/){
+                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
+                }elsif($line =~ m/Entail/){
+                    if( $err == 1) {
+                        $i = index($line, "Valid. (bot)",0);
+                        $h = index($line, "Valid.",0);
+                        $j = index($line, "Fail.(must)",0);
+                        $k = index($line, "Fail.(may)",0);
+                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                        if($i >= 0) { $r = $r ."bot."; }
+                        elsif($h >= 0) { $r = $r ."Valid."; }
+                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                        elsif($k >= 0)  { $r = $r ."may.";}
+                    }
+                    else {
+                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    }
+                }
+            }
+			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
+			}
             if($timings) {
                # log_one_line_of_timings ($test->[0],$output);
-            }  
+            }
 		}
 	}
 }
+

@@ -145,6 +145,8 @@ node mult_c(node x, int d, int c)
       // ans = ans%10;
     }
     node rest = mult_c(x.next, d, carry);
+    dprint;
+    //assume false; 
     return new node(ans, rest);
   }
 }

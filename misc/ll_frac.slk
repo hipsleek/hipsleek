@@ -1,0 +1,31 @@
+data node { int val ; node next }.
+
+
+pred lf<n,f> == (self = null & n=0 & 0.0<f<=1.0 )
+	or self::node<next = r> * r::lf<n - 1,f>
+	inv n >= 0 & 0.0<f<=1.0 .
+/*
+pred lf<n,f> == self = null & n=0 & 0.1<f<=1.0
+	or self::node<next = r> * r::lf<n - 1,f>
+	inv n >= 0 & 0.1<f<=1.0 .
+*/
+
+checkentail x::lf<n,f> |- x::lf<_,g>.
+print residue.
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & g>0.0 .
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & 0.0<g<=1.0 .
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & g=1.0 .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & g=1.0 .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & 0.0<g .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & 0.0<g<=1.0.
+
+/*
+//type error
+//checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & g>0.
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & g>0.0 .
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & 0.0<g<=1.0 .
+checkentail x::lf<n,f> & f=1.0 |- x::lf<_,g> & g=1.0 .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & g=1.0 .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & 0.0<g .
+checkentail x::lf<n,f> & 0.0<f<=1.0 |- x::lf<_,g> & 0.0<g<=1.0.
+*/

@@ -1,4 +1,7 @@
-s/Gen.Debug.ho_\([1-9]\)/Gen.Debug.no_\1/
-s/Gen.Debug.ho_eff_\([1-9]\)/Gen.Debug.no_eff_\1/
-s/Gen.Debug.ho_\([1-9]\)_opt/Gen.Debug.no_\1_opt/
-s/Gen.Debug.loop_\([1-9]\) /Gen.Debug.loop_\1_no /
+s/Debug.ho_\([1-9]\)/Debug.no_\1/
+s/Debug.ho_eff_\([1-9]\)/Debug.no_eff_\1/
+s/Debug.ho_\([1-9]\)_opt/Debug.no_\1_opt/
+s/Debug.ho_\([1-9]\)_cmp/Debug.no_\1_cmp/
+s/Debug.ho_\([1-9]\)_num/Debug.no_\1_num/
+s/Debug.ho_\([1-9]\)_loop/Debug.no_\1_loop/
+s/Debug.to_\([1-9]\)/Debug.no_\1/

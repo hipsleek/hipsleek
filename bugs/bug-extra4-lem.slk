@@ -1,0 +1,39 @@
+data node { int val ; node next }.
+
+pred lseg<p> == self = p 
+         or self::node<next = r> * r::lseg<p> 
+         inv true.
+
+
+checkentail  self::node<next = r2> * r2::lseg<p> |- self::lseg<rr> & rr=p.
+
+//checkentail  x::lseg<p> |- x::lseg<rr> .
+print residue.
+
+
+/*
+checkentail  self::node<next = r2> * r2::lseg<p> |- 
+                (exists r: self=r & r=p) 
+             or self::node<_,r3>*r3::lseg<r> & r=p.
+
+print residue.
+*/
+
+//checkentail  self::node<next = r2> * r2::lseg<p> |- self=p.
+
+//checkentail  self::node<next = r2> * r2::lseg<p> |- self::node<_,r>*r::lseg<p>.
+//print residue.
+
+/*
+WHY does folding (1) above result in two solutions,
+when the unfolded equivalents (2) and (3) gave only 
+one solution?
+
+Entail (1): Valid.
+ true & r_54=r2 & {FLOW,(27,27)=__norm}
+ true & r2=p & r_74=r2 & {FLOW,(27,27)=__norm}
+ or true & r_87=r2 & {FLOW,(27,27)=__norm}
+Entail (2): Fail. (may) cause:213  self=2 & (r2=p | r2!=null) |-  self=p (may-bug).
+Entail (3): Valid.
+ true & r=r2 & {FLOW,(27,27)=__norm}
+*/

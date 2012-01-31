@@ -627,12 +627,13 @@ $output_file = "log";
               ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail.", ""],
               ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
     "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
-			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.Valid."],
-			   ["err5.slk","","may.must.Valid.may.Valid.must.must.must.must.may.Valid.may.must."], #operators
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
 			   ["err6.slk","","must.Valid.may.may.must.Valid."],
-			   ["err7.slk","","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."]]
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
     );
 
 if($timings){
@@ -803,7 +804,7 @@ sub sleek_process_file  {
 		}
 	}
 }
-
+#./run-fast-tests.pl sleek --errors
 sub sleek_errors_process_file  {
 	print "must/may errors tests:\n";
   foreach $param (@param_list)
@@ -829,9 +830,13 @@ sub sleek_errors_process_file  {
             foreach my $line (@lines) { 
 				#print $line . " locle\n";
                 if($line =~ m/Entail/){
+                    $i = index($line, "Valid. (bot)",0);
+                    $h = index($line, "Valid.",0);
 					$j = index($line, "Fail.(must)",0);
 				    $k = index($line, "Fail.(may)",0);
-                    if($line =~ m/Valid/) { $r = $r ."Valid."; }
+                  #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                    if($i >= 0) { $r = $r ."bot."; }
+                    elsif($h >= 0) { $r = $r ."Valid."; }
                     elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
 					elsif($k >= 0)  { $r = $r ."may.";}
                 }

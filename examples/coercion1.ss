@@ -29,7 +29,7 @@ lseg2<p, n> == self=p & n=0
 	inv n>=0;
 
 /*
-coercion self::ll1<n> <-> self::ll2<n>;
+lemma self::ll1<n> <-> self::ll2<n>;
 
 void test1(node x) 
 	requires x::ll1<n>
@@ -40,7 +40,7 @@ void test1(node x)
 }
 */
 
-//coercion self::ll_tail<tx> <-> self::lseg2<tx,_> * tx::node<_,null>;
+//lemma self::ll_tail<tx> <-> self::lseg2<tx,_> * tx::node<_,null>;
 
 void test2(node x, node tx)
 	requires x::ll_tail<tx>
@@ -49,25 +49,25 @@ void test2(node x, node tx)
 	tx.val = 1;
 }
 
-// coercion "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
+// lemma "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
 
-//coercion "lsegll" self::lseg<null> <- self::lseg<q> * q::lseg<null>;
+//lemma "lsegll" self::lseg<null> <- self::lseg<q> * q::lseg<null>;
 
-// coercion "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
+// lemma "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
 
-//coercion "lseg21" self::lseg2<p, n> & n > 0 -> self::lseg2<r, n1> * r::node<_, q> * q::lseg2<p, n2> & n=n1+n2+1;
+//lemma "lseg21" self::lseg2<p, n> & n > 0 -> self::lseg2<r, n1> * r::node<_, q> * q::lseg2<p, n2> & n=n1+n2+1;
 
-//coercion "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
+//lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
 
-//coercion self::lseg2<p, n> & n > 0 -> self::lseg2<q, n-1> * q::node<_, p>;
+//lemma self::lseg2<p, n> & n > 0 -> self::lseg2<q, n-1> * q::node<_, p>;
 
-//coercion self::lseg<p> & self != p -> self::lseg<q> * q::node<_, p>;
+//lemma self::lseg<p> & self != p -> self::lseg<q> * q::node<_, p>;
 
-//coercion "lsegbreakmerge" self::lseg<p> <- self::lseg<q> * q::lseg<p>;
+//lemma "lsegbreakmerge" self::lseg<p> <- self::lseg<q> * q::lseg<p>;
 
-//coercion "lltail2lseg" self::ll_tail<t> <-> self::lseg<t> * t::node<_, null>;
+//lemma "lltail2lseg" self::ll_tail<t> <-> self::lseg<t> * t::node<_, null>;
 
-coercion "univ" self::lseg2<p, n> & n=a+b -> self::lseg2<q, a> * q::lseg2<p, b>;
+lemma "univ" self::lseg2<p, n> & n=a+b -> self::lseg2<q, a> * q::lseg2<p, b>;
 /*
 {
 //	split a == 0;

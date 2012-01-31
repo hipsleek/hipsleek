@@ -6,6 +6,10 @@
 
 open Globals
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.GTable
+type n
+
 
 module F = Cformula
 module P = Cpure
@@ -48,6 +52,7 @@ and view_decl = {
     view_name : ident; 
     view_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
+    view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : branch_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
@@ -64,6 +69,7 @@ and view_decl = {
     view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
+    view_pt_by_self : ident list;
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
@@ -98,11 +104,15 @@ and axiom_decl = {
 and proc_decl = { 
     proc_name : ident;
     proc_args : typed_ident list;
-				  proc_return : typ;
+		proc_return : typ;
+	mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
-    proc_static_specs_with_pre : Cformula.struc_formula;
+    (* proc_static_specs_with_pre : Cformula.struc_formula; *)
+    (* this puts invariant of pre into the post-condition *)
     proc_dynamic_specs : Cformula.struc_formula;
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+    (* stack of static specs inferred *)
+    proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     proc_file : string;
@@ -112,6 +122,11 @@ and proc_decl = {
   would this help with lemma folding later? *)
 
 (* TODO : coercion type ->, <-, <-> just added *)
+and coercion_case =
+  | Simple
+  | Complex
+  | Normalize
+
 and coercion_decl = { 
     coercion_type : coercion_type;
     coercion_name : ident;
@@ -128,7 +143,8 @@ and coercion_decl = {
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *)
     coercion_mater_vars : mater_property list;
-    coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
+    (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
+    coercion_case : coercion_case; (*Simple or Complex*)
 }
 
 and coercion_type = Iast.coercion_type
@@ -136,14 +152,16 @@ and coercion_type = Iast.coercion_type
     (* | Equiv *)
     (* | Right *)
     
+
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
-  | Sharp_v of ident
+  | Sharp_id of ident
+
         
 and sharp_val = 
-  | Sharp_no_val 
-  | Sharp_finally of ident
-  | Sharp_prog_var of typed_ident
+  | Sharp_no_val (* captures flow without a value *)
+  | Sharp_flow of ident   (* capture flow explicitly and a value*)
+  | Sharp_var of typed_ident (* captures flow through a var *)
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
@@ -176,7 +194,8 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : bool;
+    exp_bind_imm : heap_ann;
+    exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
 
@@ -254,7 +273,7 @@ and exp_sharp = {
 }
     
 and exp_catch = { 
-    exp_catch_flow_type : nflow ;
+    exp_catch_flow_type : nflow (* nflow *) ;
     exp_catch_flow_var : ident option;
     exp_catch_var : typed_ident option;
     exp_catch_body : exp;			
@@ -355,16 +374,30 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+
+let get_sharp_flow sf = match sf with
+  | Sharp_ct ff -> ff.F.formula_flow_interval
+  | Sharp_id id -> exlist # get_hash id
+
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
 let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
+let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+(*single node -> simple (true), otherwise -> complex (false*)
+(* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
+let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -374,7 +407,6 @@ let get_field_name f = snd f
 
 (** An Hoa [22/08/2011] End **)
 
-let is_simple_formula x = true
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =
@@ -400,12 +432,13 @@ let merge_mater_props_x x y =
 
 let merge_mater_props x y =
   let pr = !print_mater_prop in
-  Gen.Debug.no_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
+  Debug.no_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
   
 let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
 let subst_mater_list fr t l = 
   let lsv = List.combine fr t in
+  (* let _ = print_string "subst_mater_list: inside \n" in (\*LDK*\) *)
   List.map (fun c-> 
       {c with mater_var = P.subs_one lsv c.mater_var
               (* ; mater_var = P.subs_one lsv c.mater_var *)
@@ -413,7 +446,11 @@ let subst_mater_list fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Gen.Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+  Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+
+let subst_mater_list_nth i fr t l = 
+  let pr_svl = !print_svl in
+  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -711,7 +748,7 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
 let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Gen.Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
@@ -727,7 +764,7 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
 	Error.error_text = name ^ " is not a view definition"}
 
 let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
-  Gen.Debug.no_1_num i "look_up_view_def" pr_id pr_no 
+  Debug.no_1_num i "look_up_view_def" pr_id pr_no 
       (fun _ -> look_up_view_def pos defs name) name
 
 let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
@@ -742,14 +779,14 @@ let collect_rhs_view (n:ident) (f:F.struc_formula) : (ident * ident list) =
   let id x = x in
   let pr1 x = x in
   let pr2 = pr_pair id (pr_list id) in 
-  Gen.Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
+  Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
   let  (_,ns) = collect_rhs_view lhs rhs in
   List.mem lhs ns
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
-  Gen.Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
+  Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
 
 (* pre: name exists as a view in prog *)
 let is_rec_view_def prog (name : ident) : bool = 
@@ -757,16 +794,18 @@ let is_rec_view_def prog (name : ident) : bool =
    (* let _ = collect_rhs_view vdef in *)
    vdef.view_is_rec
 
+let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
+
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
-  let from_svs = P.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  (* let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
+  let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
@@ -860,11 +899,45 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
+(*a coercion can be simple, complex or normalizing*)
+let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let lhs_length = 
+    match lhs with
+      | Cformula.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | Cformula.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  let rhs_length = 
+    match rhs with
+      | F.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | F.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  if (lhs_length=1) then Simple
+  else (**)
+    if (rhs_length<=lhs_length) then Normalize
+    else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
-  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
+    List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
 
-
+let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
+  let pr1 = pr_list !print_coercion in
+  Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
+    (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
+    
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
   let pdef = look_up_proc_def_no_mingling no_pos prog.prog_proc_decls name in
   let callees = 
@@ -1030,9 +1103,13 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
+							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
+							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							   F.h_formula_data_original = subnode.F.h_formula_data_original;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
-						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+	                           F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
                  F.h_formula_data_pruning_conditions = [];
@@ -1046,7 +1123,11 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 			  if Gen.is_empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
@@ -1063,7 +1144,11 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
@@ -1133,8 +1218,7 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 (*   end *)
 (*   |  _ -> t1 = t2 *)
 
-let sub_type (t1 : typ) (t2 : typ) = 
-  Globals.sub_type t1 t2
+let sub_type (t1 : typ) (t2 : typ) = sub_type t1 t2
 
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _
@@ -1214,37 +1298,41 @@ let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
   
-  
-let rec check_proper_return cret_type exc_list f = 
+(* let get_catch_of_exp e = *)
+(*   let pr = !print_prog_exp in *)
+(*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
+
+let rec check_proper_return cret_type exc_list f =
   let overlap_flow_type fl res_t = match res_t with 
-	| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
+	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		  if b_rez then
-			if (F.equal_flow_interval !n_flow_int fl_int) then 
+		  if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
+            & not(F.equal_flow_interval !top_flow_int fl_int) then
+			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
 			else if not (List.exists (fun c-> 
-                let _ =print_endline "XX" in F.subsume_flow c fl_int) exc_list) then
+                (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
 			else if not(overlap_flow_type fl_int res_t) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 			else ()			
 		  else 
-			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()
 	| F.Exists b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !n_flow_int fl_int) then 
+			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
@@ -1255,9 +1343,9 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
 			  else ()			
 		  else 
-			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
@@ -1266,6 +1354,7 @@ let rec check_proper_return cret_type exc_list f =
 	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
 	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 	| F.EVariance b -> ()
+ | F.EInfer b -> ()
   in
   List.iter helper f
 
@@ -1274,7 +1363,7 @@ let rec check_proper_return cret_type exc_list f =
 let check_proper_return cret_type exc_list f = 
   let pr1 = pr_list pr_no in
   let pr2 = !print_struc_formula in
-  Gen.Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
+  Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
 (* TODO : res must be consistent with flow outcome *)
 
 let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
@@ -1296,7 +1385,7 @@ let vdef_fold_use_bc prog ln2  =
   let pr2 x = match x with
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
-  Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+  Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
 
 let get_xpure_one vdef rm_br  =
@@ -1310,7 +1399,7 @@ let get_xpure_one vdef rm_br  =
 
 let get_xpure_one vdef rm_br  =
   let pr (mf,_) = !print_mix_formula mf in
-  Gen.Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
+  Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 
   let ff e = match e with
@@ -1330,4 +1419,145 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 
 let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
-  Gen.Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+  Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+
+(*find and add uni_vars to view*)
+(*if the view is recursive, only consider its view_vars
+otherwise, go into its heap node and 
+find all possible uni_vars*)
+let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_decl) : view_decl =
+  let view_vars = view.view_vars in
+  let look_up_one_x (coer:coercion_decl) (view:view_decl): P.spec_var list =
+    let coer_uni_vars = coer.coercion_univ_vars in
+    if (coer_uni_vars=[]) then []
+    else
+      let rec process_h_formula (h_f:F.h_formula):P.spec_var list = 
+        match h_f with
+          | F.ViewNode vn ->
+              (* let _ = print_string "\n process_h_formula: F.ViewNode \n" in *)
+              (* let _ = print_string ("\n process_h_formula:" *)
+              (*                       ^"\n ### vn = " ^ (Cprinter.string_of_ident vn.F.h_formula_view_name) *)
+              (*                       ^"\n ### view.view_name = " ^ (Cprinter.string_of_ident view.view_name) *)
+              (*                       ^ "\n\n") in *)
+              if ((String.compare vn.F.h_formula_view_name view.view_name)!=0) then []
+              else
+                let args = vn.F.h_formula_view_arguments in
+                (* let _ = print_string ("\n process_h_formula:" *)
+                (*                       ^"\n ### coer_uni_vars = " ^ (Cprinter.string_of_spec_var_list coer_uni_vars) *)
+                (*                       ^"\n ### args = " ^ (Cprinter.string_of_spec_var_list args) *)
+                (*                       ^"\n ### view_vars = " ^ (Cprinter.string_of_spec_var_list view_vars) *)
+                (* ^ "\n\n") in *)
+            (*at this point |view_vars| = |args|*)
+                let rec helper args view_vars =
+                  match args, view_vars with
+                    | arg::argvs, var::vars ->
+                        let res = helper argvs vars in
+                        if (List.mem arg coer_uni_vars) then var::res
+                        else res
+                    | _ -> []
+                in
+                helper args view_vars
+          | F.Star {  F.h_formula_star_h1 = h1;
+                       F.h_formula_star_h2 = h2}
+              -> 
+              (* let _ = print_string "\n process_h_formula: F.Star \n" in *)
+              let vars1 =  process_h_formula h1 in
+              let vars2 =  process_h_formula h2 in
+              P.remove_dups_svl vars1@vars2
+              
+          | _ -> 
+              (* let _ = print_string "\n process_h_formula: [] \n" in *)
+              []
+      in
+      let body = coer.coercion_body in
+      match body with
+        | F.Base {F.formula_base_heap = h}
+        | F.Exists {F.formula_exists_heap = h} ->
+            (* let _ = print_string "\n process_h_formula: F.Exists \n" in *)
+            process_h_formula h
+        | _ -> []
+  in 
+  let look_up_one (coer:coercion_decl) (view:view_decl): P.spec_var list =
+    Debug.no_2 "look_up_one"
+        !print_coercion
+        !print_view_decl
+        !print_svl
+        look_up_one_x coer view
+  in
+  let res = List.map (fun coer -> look_up_one coer view) l2r_coers in
+  let res1 = List.flatten res in
+  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
+  (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
+  (*                       ^ "\n\n") in *)
+  let uni_vars = P.remove_dups_svl res1 in
+  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
+  (*                       ^"\n ### uni_vars = " ^ (Cprinter.string_of_spec_var_list uni_vars) *)
+  (*                       ^ "\n\n") in *)
+  if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
+  else
+    let rec process_struc_formula (f:F.struc_formula):P.spec_var list =
+      let rec process_ext_formula (f:F.ext_formula):P.spec_var list =
+        match f with
+          | F.EBase e ->
+            (*find all possible universal vars from a h_formula*)
+              let rec process_h_formula (h_f:F.h_formula):P.spec_var list = 
+                match h_f with
+                  | F.ViewNode vn ->
+                      if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
+                      else
+                        let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
+                        let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
+                        let vdef_uni_vars = vdef.view_uni_vars in
+                        let fr = vdef.view_vars in
+                        let t = vn.F.h_formula_view_arguments in
+                        let vdef_uni_vars = P.subst_var_list_avoid_capture fr t vdef_uni_vars in
+                        vdef_uni_vars
+                  | F.Star {  F.h_formula_star_h1 = h1;
+                               F.h_formula_star_h2 = h2}
+                      -> 
+                      let vars1 =  process_h_formula h1 in
+                      let vars2 =  process_h_formula h2 in
+                      P.remove_dups_svl vars1@vars2
+                  | _ -> []
+              in
+              let vars1 = 
+                match e.F.formula_ext_base with
+                  | F.Base {F.formula_base_heap = h;
+                             F.formula_base_pure = p}
+                  | F.Exists {F.formula_exists_heap = h;
+                               F.formula_exists_pure = p} ->
+                      let vars = process_h_formula h in
+                      (match vars with
+                        | [] -> []
+                        | v::vs -> 
+                            let xs = MP.find_closure_mix_formula v p in
+                            let xs = Gen.BList.intersect_eq P.eq_spec_var xs view_vars in xs)
+                (*vars is the set of all possible uni_vars in all nodes*)
+                  | _ -> []
+              in
+              let vars2 = process_struc_formula e.F.formula_ext_continuation in
+              let vars = vars1@vars2 in
+              let vars = P.remove_dups_svl vars in
+              vars
+          | _ ->
+              let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
+              []
+      in
+      let xs = List.map process_ext_formula f in
+      let xs = List.flatten xs in
+      let xs = P.remove_dups_svl xs in
+      xs
+
+    in
+    let vars = process_struc_formula view.view_formula in
+    let vars = vars@uni_vars in
+    let vars = P.remove_dups_svl vars in
+    {view with view_uni_vars = vars}
+
+(*find and add uni_vars to view*)
+let add_uni_vars_to_view cprog (l2r_coers:coercion_decl list) (view:view_decl) : view_decl =
+  Debug.no_2 "add_uni_vars_to_view"
+      !print_coerc_decl_list
+      !print_view_decl
+      !print_view_decl
+      (fun _ _ -> add_uni_vars_to_view_x cprog l2r_coers view) l2r_coers view

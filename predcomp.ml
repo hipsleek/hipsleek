@@ -111,6 +111,7 @@ and aug_class_name (t : typ) = match t with
         Error.error_text = "unexpected UNKNOWN type"}
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | AnnT -> "AnnAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
   | NUM -> "NUMAug"
@@ -1687,6 +1688,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_constructor = false;
 					proc_args = [cur_color pos; new_color pos];
 					proc_return = Bool;
+                (*    proc_important_vars = [];*)
 					proc_static_specs = [];
 					proc_dynamic_specs = [];
 					proc_exceptions = [];
@@ -1800,6 +1802,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_constructor = false;
 					 proc_args = [cur_color pos; new_color pos];
 					 proc_return = Bool;
+                 (*    proc_important_vars = [];*)
 					 proc_static_specs = [];
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;

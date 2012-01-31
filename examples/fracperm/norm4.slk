@@ -1,0 +1,31 @@
+/*
+ * LDK
+ * Explicit normalization with complex LHS in the presence of frac perms
+ * Note: normalization lemmas are used
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//lemma "simple" self::ll(f1)<n1> -> self::ll(f1+f2)<n1> & n1=n2.
+
+lemma "split_ll" self::ll(f)<n> & f=f1+f2 & f1>0.0 & f2>0.0 -> self::ll(f1)<n> * self::ll(f2)<n> & 0.0<f<=1.0 .
+
+lemma "complex_lemma" self::ll(f1)<n1> * self::ll(f2)<n2> -> self::ll(f1+f2)<n1> & n1=n2.
+
+lemma "complex_lemma2" self::ll(f1)<n1> * self::ll(f2)<n2> * self::ll(f3)<n3> -> self::ll(f1+f2+f3)<n1> & n1=n2&n1=n3.
+
+//(1)
+checkentail x::ll(0.7)<n1> |- x::ll(0.6)<n1>.
+//valid
+
+//(2)
+checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> |- x::ll(0.6)<n1>.
+//print residue.// Valid
+
+//(3)
+checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> * x::ll(0.2)<n1>|- x::ll(0.8)<n1>.
+//print residue.// valid
