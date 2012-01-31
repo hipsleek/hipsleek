@@ -10,6 +10,8 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+
+
 void append(node x, node y)
   infer [r1,r2]
   requires x::ll<n>*y::ll<m> & n>0 & Term[r1(n)]
@@ -29,7 +31,6 @@ void app2(node x, node y)
     append(x.next,y);
   }
 }
-
 
 /*
 (24)->(29) (OK: decreasing) Term[0; r2(n)] -> Term[0; r1(n_637)]:
