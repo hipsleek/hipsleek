@@ -8,14 +8,14 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 void append(node x, node y)
-  requires x::ll<n>*y::ll<m> & n>0 & Term[-3+2*n+1]
+  requires x::ll<n>*y::ll<m> & n>0 & Term[2*n+1]
   ensures x::ll<z> & z=m+n;
 {
   app2(x,y);
 }
 
 void app2(node x, node y)
-  requires x::ll<n>*y::ll<m> & x!=null & Term[-3+2*n]
+  requires x::ll<n>*y::ll<m> & x!=null & Term[2*n]
   ensures x::ll<z> & z=m+n;
 {
   if (x.next==null) {

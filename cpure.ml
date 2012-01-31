@@ -7147,7 +7147,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar (t_ann, ml, il, pos) ->
         (match t_ann with
           | Term ->
-              let v_ml, pv =
+              let v_ml, v_il, pv =
                 (* Termination: Do not add phase variables for base cases *)
                 (* some base cases are actually intermediate points *)
                 (* if (Gen.is_empty ml) then (ml, []) *)
@@ -7159,7 +7159,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                  try is_int (List.hd ml)
                  with _ -> false
                 in 
-                if has_phase_num then (ml, [])
+                if has_phase_num then (ml, ml, [])
                 else
                   let mfv = List.fold_left (fun acc m -> acc @ (afv m)) [] ml in
                   let log_var = Gen.BList.intersect_eq eq_spec_var mfv log_vars in
@@ -7167,18 +7167,24 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                   if has_log_var then 
                     (* if (List.length ml) == 1 then ([mkIConst 0 pos], []) *)
                     (* else  *)
-                      (ml, log_var)
+                      (ml, ml, log_var)  (* existing phase logical vars here *)
                   else match phase_var with
-                  | None -> (ml, [])
-                  | Some pv -> ((mkVar pv pos)::ml, [pv])
+                  | None -> (ml, ml, []) (* no phase numbering here *)
+                  | Some pv -> let nv = mkVar pv pos
+                    in ([nv], nv::ml, [pv])
               in 
-              let n_ml = match call_num with
-                | None -> v_ml
-                | Some i -> (mkIConst i pos)::v_ml
-              in (LexVar (t_ann, n_ml, il, pos), pv)
+              let n_ml,n_il = match call_num with
+                | None -> (v_ml,v_il)
+                | Some i -> let c=(mkIConst i pos) in
+                  (c::v_ml,c::v_il)
+              in (LexVar (t_ann, n_ml, n_il, pos), pv)
           | _ -> (pf, []))
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
+
+let  add_term_nums_pure  bf log_vars call_num phase_var =
+  Debug.no_2 "add_term_nums_pure" (pr_option string_of_int) (pr_option !print_sv) (pr_pair !print_formula !print_svl)
+      (fun _ _ -> add_term_nums_pure bf log_vars call_num phase_var) call_num phase_var
 
 let rec count_term_pure f = 
   match f with

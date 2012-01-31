@@ -1477,7 +1477,7 @@ let stk_tmp_checks = new Gen.stack
 
 let drop_phase_infer_checks() =
   stk_tmp_checks # push !dis_bnd_chk;
-  stk_tmp_checks # push !dis_term_chk;
+  stk_tmp_checks # push !dis_term_msg;
   stk_tmp_checks # push !dis_post_chk;
   stk_tmp_checks # push !dis_ass_chk;
   dis_bnd_chk := true;

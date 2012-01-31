@@ -119,6 +119,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc; }
 
@@ -1744,11 +1745,12 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
 
       end;
     let pvs = List.map (fun (n, procs) ->
+        let mn = List.hd procs in
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-          ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1) 
+          ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1 & mn.proc_is_recursive) 
         in (match pv with 
           | [] -> ()
-          | x::_ -> stk_scc_with_phases # push (List.hd procs).proc_call_order); pv
+          | x::_ -> stk_scc_with_phases # push mn.proc_call_order); pv
     ) mutual_grps
     in
     let () = Debug.dinfo_hprint (add_str "Mutual Grps with Phases" 
@@ -1786,6 +1788,7 @@ and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool)
   Debug.no_1 "add_term_nums_proc_scc" pr !P.print_svl
       (fun _ -> add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool)) procs
 
+(* adding call number and phase variables into spec *)
 and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
   if not (proc.proc_is_main) then (proc, [])
   else if (not add_call) && (not add_phase) then (proc, [])
