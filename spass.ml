@@ -124,120 +124,80 @@ let rec spass_of_formula f =
 
 let spass_of_formula f =
   Debug.no_1 "spass_of_formula" !print_pure pr_id spass_of_formula f
-(***************************************************************
-FORMULA INFORMATION
-**************************************************************)
 
-(* Default info, returned in most cases *)
-let default_formula_info = {
-  is_linear = false;
-  is_quantifier_free = true;
-  contains_array = false;
-  relations = [];
-  axioms = []; }
+(*************************************************************)
+(* Check whether spass can handle the expression, formula... *)
+let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
+  match exp with
+  | Null _         -> true
+  | Var _          -> true
+  | IConst _       -> false
+  | FConst _       -> false
+  | AConst _       -> false
+  (* arithmetic expressions *)
+  | Add _
+  | Subtract _
+  | Mult _
+  | Div _
+  | Max _
+  | Min _          -> false
+  (* bag expressions *)
+  | Bag _
+  | BagUnion _
+  | BagIntersect _
+  | BagDiff _      -> false
+  (* list expressions *)
+  | List _
+  | ListCons _
+  | ListHead _
+  | ListTail _
+  | ListLength _
+  | ListAppend _
+  | ListReverse _
+  | ArrayAt _      -> false
+  | _              -> illegal_format ("[spass.ml] Other exp type is not supported.")
 
-(* Collect information about a formula f or combined information about 2   *)
-(* formulas                                                                *)
-let rec collect_formula_info (f: Cpure.formula) : formula_info =
-  let info = collect_formula_info_raw f in
-  let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) !global_rel_defs) in
-  let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
-  let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
-  let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
-  { info with relations = all_relations; axioms = all_axioms;}
+and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
+  match pf with
+  | BConst _             -> true
+  | BVar _               -> true
+  | Lt _                 -> false
+  | Lte _                -> false
+  | Gt _                 -> false
+  | Gte _                -> false
+  | SubAnn (ex1, ex2, _) -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
+  | Eq (ex1, ex2, _)     -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
+  | Neq (ex1, ex2, _)    -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
+  | EqMax _              -> false
+  | EqMin _              -> false
+  (* bag formulars *)
+  | BagIn _
+  | BagNotIn _
+  | BagSub _
+  | BagMin _
+  | BagMax _             -> false
+  (* list formulas *)
+  | ListIn _
+  | ListNotIn _
+  | ListAllN _
+  | ListPerm _
+  | RelForm _            -> false
+  | _                    -> illegal_format ("[spass.ml] Other p_formula type is not supported.")
 
-and collect_combine_formula_info (f1: Cpure.formula) (f2: Cpure.formula) : formula_info =
-  compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
+and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
+  match bf with
+  | (pf, _) -> can_spass_handle_p_formula pf
+  | _       -> illegal_format ("[spass.ml] Other b_formula type is not supported.")
 
-(* Recursively collect the information based on the structure of * the     *)
-(* formula. This information might not be complete due to cross reference. *)
-(* * For instance, a relation definition might refers to other relations.  *)
-(* This * function is only used mainly in pre-computing information of     *)
-(* relation and * axiom definition. * The information is to be corrected   *)
-(* by the function collect_formula_info.                                   *)
-and collect_formula_info_raw (f: Cpure.formula) : formula_info = match f with
-  | Cpure.BForm ((b, _), _) -> collect_bformula_info b
-  | Cpure.And (f1, f2, _) | Cpure.Or (f1, f2, _, _) ->
-      collect_combine_formula_info_raw f1 f2
-  | Cpure.Not (f1, _, _) -> collect_formula_info_raw f1
-  | Cpure.Forall (svs, f1, _, _) | Cpure.Exists (svs, f1, _, _) ->
-      let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
-
-and collect_combine_formula_info_raw f1 f2 =
-  combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
-
-and collect_bformula_info b = match b with
-  | Cpure.BConst _ | Cpure.BVar _ -> default_formula_info
-  | Cpure.Lt (e1, e2, _) | Cpure.Lte (e1, e2, _) | Cpure.SubAnn (e1, e2, _) | Cpure.Gt (e1, e2, _)
-  | Cpure.Gte (e1, e2, _) | Cpure.Eq (e1, e2, _) | Cpure.Neq (e1, e2, _) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      combine_formula_info ef1 ef2
-  | Cpure.EqMax (e1, e2, e3, _) | Cpure.EqMin (e1, e2, e3, _) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      let ef3 = collect_exp_info e3 in
-      combine_formula_info (combine_formula_info ef1 ef2) ef3
-  | Cpure.BagIn _
-  | Cpure.BagNotIn _
-  | Cpure.BagSub _
-  | Cpure.BagMin _
-  | Cpure.BagMax _
-  | Cpure.ListIn _
-  | Cpure.ListNotIn _
-  | Cpure.ListAllN _
-  | Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-  | Cpure.RelForm (r, args, _) ->
-      if r = "update_array" then
-        default_formula_info
-      else let rinfo = { default_formula_info with relations = [r]; } in
-        let args_infos = List.map collect_exp_info args in
-        combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
-
-and collect_exp_info e = match e with
-  | Cpure.Null _ | Cpure.Var _ | Cpure.AConst _ | Cpure.IConst _ | Cpure.FConst _ -> default_formula_info
-  | Cpure.Add (e1, e2, _) | Cpure.Subtract (e1, e2, _) | Cpure.Max (e1, e2, _) | Cpure.Min (e1, e2, _) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      combine_formula_info ef1 ef2
-  | Cpure.Mult (e1, e2, _) | Cpure.Div (e1, e2, _) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      let result = combine_formula_info ef1 ef2 in
-      { result with is_linear = false; }
-  | Cpure.Bag _
-  | Cpure.BagUnion _
-  | Cpure.BagIntersect _
-  | Cpure.BagDiff _
-  | Cpure.List _
-  | Cpure.ListCons _
-  | Cpure.ListHead _
-  | Cpure.ListTail _
-  | Cpure.ListLength _
-  | Cpure.ListAppend _
-  | Cpure.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-  | Cpure.ArrayAt (_, i, _) -> combine_formula_info_list (List.map collect_exp_info i)
-
-and combine_formula_info if1 if2 =
-  { is_linear = if1.is_linear && if2.is_linear;
-    is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
-    contains_array = if1.contains_array || if2.contains_array;
-    relations = List.append if1.relations if2.relations;
-    axioms = List.append if1.axioms if2.axioms;}
-
-and combine_formula_info_list infos =
-  { is_linear = List.fold_left (&&) true
-        (List.map (fun x -> x.is_linear) infos);
-    is_quantifier_free = List.fold_left (fun x y -> x && y) true
-        (List.map (fun x -> x.is_quantifier_free) infos);
-    contains_array = List.fold_left (fun x y -> x || y) false
-        (List.map (fun x -> x.contains_array) infos);
-    relations = List.flatten (List.map (fun x -> x.relations) infos);
-    axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
-
-and compact_formula_info info =
-  { info with relations = Gen.BList.remove_dups_eq (=) info.relations;
-    axioms = Gen.BList.remove_dups_eq (=) info.axioms; }
+and can_spass_handle_formula (f: Cpure.formula) : bool =
+  match f with
+  | BForm (bf, _)       -> can_spass_handle_b_formula bf
+  | And (f1, f2, _)     -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
+  | Or (f1, f2, _, _)   -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
+  | Not (f, _, _)       -> can_spass_handle_formula f
+  | Forall (_, f, _, _) -> can_spass_handle_formula f
+  | Exists (_, f, _, _) -> can_spass_handle_formula f
+  | _                   -> illegal_format ("[spass.ml] Other formula type is not supported.")
 
 (***************************************************************
 INTERACTION
@@ -293,7 +253,11 @@ let get_prover_result (output : string list) : validity_t =
   validity
 
 let get_answer (chn: in_channel) (input: string) : prover_output_t =
+  (* debug *)
+  (* let _ = print_endline "** In function get_answer" in *)
   let output = collect_output chn [] in
+  (* let _ = print_endline "-- spass output: " in
+  List.iter (fun x -> print_endline x) output; *)
   let prover_output = {
     original_output_text = output;
     validity_result = get_prover_result output;
@@ -411,6 +375,8 @@ let to_spass_dfg (ante: Cpure.formula)
     ( "list_of_settings(SPASS).\n"
       ^ "{*\n"
       ^ "  set_flag(DocProof,0).\n"
+      ^ "  set_flag(PProblem, 0).\n"
+      ^ "  set_flag(PStatistic, 0).\n"
       ^ "*}\n"
       ^ "end_of_list.\n\n") in
   let result =
@@ -428,19 +394,15 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* let _ = print_endline "** In function to_spass:" in *)
   let conseq = match conseq with
     (* We don't have conseq part in is_sat checking *)
-    | None -> Cpure.mkFalse no_pos
+    | None   -> Cpure.mkFalse no_pos
     | Some f -> f
   in
-  let conseq_info = collect_formula_info conseq in
-  (* remove occurences of dom in ante if conseq has nothing to do with dom *)
-  let ante = if (not (List.mem "dom" conseq_info.relations)) then Cpure.remove_primitive (fun x -> match x with | Cpure.RelForm ("dom", _ , _) -> true | _ -> false) ante else ante in
-  let ante_info = collect_formula_info ante in
   let ante_fv = Cpure.fv ante in
   let conseq_fv = Cpure.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_spass_dfg ante conseq all_fv in
   (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ res) in *)
-  (* debug: print formula in Omega format *)
+  (* use for debug: print formula in Omega format *)
   (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
   let omega_ante = Omega.omega_of_formula ante in
   let omega_conseq = Omega.omega_of_formula conseq in
@@ -645,16 +607,23 @@ and spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
 and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
   (* let _ = "** In function Spass.spass_imply_x" in *)
   let res, should_run_spass =
-    if (has_exists conseq) then
+    if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
+      (* for debug *)
+      (* let fomega_ante = Omega.omega_of_formula ante in
+      let _ = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
+              (if (can_spass_handle_formula ante) then "true" else "false")) in
+      let fomega_conseq = Omega.omega_of_formula conseq in
+      let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
+              (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
-        let _ = "-- use Omega.imply_..." in
+        let _ = print_endline "-- use Omega.imply_..." in
         match (Omega.imply_with_check ante conseq "" timeout) with
         | None -> (false, true)
         | Some r -> (r, false)
-      with _ -> (false, true)
+      with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
-    let _ = "-- use Spass.run" in
+    (* let _ = print_endline "-- use Spass.check_problem" in *)
     let spass_input = to_spass ante (Some conseq) in
     let _ = !set_generated_prover_input input in
     let validity = check_problem spass_input timeout in
@@ -715,14 +684,18 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* let _ = print_endline "** In function Spass.spass_is_sat:" in *)
   (* anything that SPASS counldn't handle will be transfer to Omega *)
   let res, should_run_spass =
-    if ((*the condition must be don't have arithemtic*)Cpure.contains_exists f) then
+    if not (can_spass_handle_formula f) then
+      (* for debug *)
+      (* let fomega = Omega.omega_of_formula f in
+      let _ = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
+              (if (can_spass_handle_formula f) then "true" else "false")) in
+      let _ = print_endline "-- use Omega.is_sat..." in *)
       try
-        (* let _ = print_endline "-- use Omega.is_sat..." in *)
         let optr = (Omega.is_sat_with_check f sat_no) in
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)
-      with _ -> (true, false)
+      with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in exception case? It should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem..." in *)
@@ -746,7 +719,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 (* spass *)
 let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = !print_pure in
-  let result = Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
+  let result = Debug.no_1 "spass_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
   let _ = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
   let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
