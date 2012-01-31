@@ -1,0 +1,18 @@
+simp1.slk
+
+/*
+todo:
+Step1: assume that all preds and lemmas are provided.
+ - collect props used => unused props
+ - choose pred "abstract" and precise enough
+ - choose lemma
+ - simplify the entailment
+ - check new entailment
+-----------------
+Step2:
+ - infer new pred: prune unsed props
+ - infer lemma
+ - prove lemma
+ - simplify the entailment
+ - check new entailment
+*/
