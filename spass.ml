@@ -4,38 +4,7 @@ open Cpure
 
 module StringSet = Set.Make(String)
 
-let set_generated_prover_input = ref (fun _ -> ())
-let set_prover_original_output = ref (fun _ -> ())
-
 (* Pure formula printing function, to be intialized by cprinter module *)
-
-let print_pure = ref (fun (c: Cpure.formula) -> " printing not initialized")
-let print_ty_sv = ref (fun (c: Cpure.spec_var) -> " printing not initialized")
-
-(***************************************************************
-GLOBAL VARIABLES & TYPES
-**************************************************************)
-
-(* Types for relations and axioms *)
-type rel_def = {
-  rel_name : ident;
-  rel_vars : Cpure.spec_var list;
-  related_rels : ident list;
-  related_axioms : int list;
-  rel_cache_smt_declare_fun : string;
-}
-
-(* TODO use hash table for fast retrieval *)
-let global_rel_defs = ref ([] : rel_def list)
-
-(* Record of information on a formula *)
-type formula_info = {
-  is_linear : bool;
-  is_quantifier_free : bool;
-  contains_array : bool;
-  relations : ident list; (* list of relations that the formula mentions *)
-  axioms : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
-}
 
 let print_pure = ref (fun (c: Cpure.formula) -> " printing not initialized")
 
@@ -43,84 +12,75 @@ let print_pure = ref (fun (c: Cpure.formula) -> " printing not initialized")
 TRANSLATE CPURE FORMULA TO SMT FORMULA
 **************************************************************)
 
-(* Construct [f(1) ... f(n)] *)
-let rec generate_list n f =
-  if (n = 0) then []
-  else (generate_list (n -1) f) @ [f n]
-
-(* Compute the n-th element of the sequence f0, f1, ..., fn defined by f0  *)
-(* = b and f_n = f(f_{n-1})                                                *)
-let rec compute f n b = if (n = 0) then b else f (compute f (n -1) b)
-
-let rec spass_of_typ (t: Globals.typ): string =
-  match t with
-  | Globals.Bool          -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
-  | Globals.Float         -> "Int" (* Currently, do not support real arithmetic! *)
-  | Globals.Int           -> "Int"
-  | Globals.AnnT          -> "Int"
-  | Globals.UNK           ->  illegal_format "spass.spass_of_typ: unexpected UNKNOWN type"
-  | Globals.NUM           -> "Int" (* Use default Int for NUM *)
-  | Globals.Void
-  | Globals.BagT _
-  | Globals.TVar _
-  | Globals.List _        -> illegal_format "spass.spass_of_typ: spec not supported for Spass"
-  | Globals.Named _       -> "Int" (* objects and records are just pointers *)
-  | Globals.Array (et, d) -> compute (fun x -> "(Array Int " ^ x ^ ")") d (spass_of_typ et)
-
 let spass_of_spec_var sv =
   (Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")
-
-let spass_of_typed_spec_var sv =
-  try
-    "(" ^ (spass_of_spec_var sv) ^ " " ^ (spass_of_typ (Cpure.type_of_spec_var sv)) ^ ")"
-  with _ ->
-    illegal_format ("spass.spass_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
 let rec spass_of_exp (e0 : Cpure.exp) : string =
   match e0 with
   | Cpure.Null _      -> "NULL"
   | Cpure.Var (sv, _) -> spass_of_spec_var sv
-  | Cpure.IConst _    -> illegal_format "[spass.ml] IConst exp is not supported by SPASS"
-  | Cpure.FConst _    -> illegal_format "[spass.ml] FConst exp is not supported by SPASS"
-  | Cpure.AConst _    -> illegal_format "[spass.ml] AConst exp is not supported by SPASS"
-  | Cpure.Add _
-  | Cpure.Subtract _
-  | Cpure.Mult _
-  | Cpure.Div _       -> illegal_format "[spass.ml] Arithmetic expression is not supported by SPASS"
-  | Cpure.Max _
-  | Cpure.Min _       -> illegal_format "[spass.ml] Min, max is not supported by SPASS"
-  | _                 -> illegal_format ("[spass.ml] Other exp type is not supported by SPASS")
+  | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
+  | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
+  | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+  | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
+  | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
+  | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
+  | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
+  | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
+    (* bag expressions *)
+  | Cpure.Bag _
+  | Cpure.BagUnion _
+  | Cpure.BagIntersect _
+  | Cpure.BagDiff _    -> illegal_format "SPASS don't support Bag expresion"
+  (* list expressions *)
+  | Cpure.List _
+  | Cpure.ListCons _
+  | Cpure.ListHead _
+  | Cpure.ListTail _
+  | Cpure.ListLength _
+  | Cpure.ListAppend _
+  | Cpure.ListReverse _
+  | Cpure.ArrayAt _    -> illegal_format "SPASS don't support List/Array expresion"
 
-let rec spass_of_b_formula (b : Cpure.b_formula) : string =
-  let (pf, _) = b in
+and spass_of_b_formula (bf : Cpure.b_formula) : string =
+  match bf with
+  | (pf, _) -> spass_of_p_formula pf
+
+and spass_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
   | BConst (c, _)   -> if c then "true" else "false"
-  | BVar _          -> illegal_format "Bvar"
-  | Lt _            -> illegal_format "Lt"
-  | Lte _           -> illegal_format "Lte"
-  | Gt _            -> illegal_format "Gt"
-  | Gte _           -> illegal_format "Gte"
-  | SubAnn _        -> illegal_format "SubAnn"
-  | Eq (a1, a2, _)  -> let s1 = spass_of_exp a1 in
-                       let s2 = spass_of_exp a2 in
-                       "equal(" ^ s1 ^ "," ^ s2 ^ ")"
-  | Neq (a1, a2, _) -> let s1 = spass_of_exp a1 in
-                       let s2 = spass_of_exp a2 in
-                       "not(equal(" ^ s1 ^ "," ^ s2 ^ "))"
-  | EqMax _         -> illegal_format "EqMax"
-  | EqMin _         -> illegal_format "EqMin"
-  | _               -> illegal_format "Other b_formula"
+  | BVar (sv, _)    -> spass_of_spec_var sv
+  | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
+  | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
+  | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
+  | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
+  | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
+  | Eq (e1, e2, _)  -> "equal(" ^ (spass_of_exp e1) ^ "," ^ (spass_of_exp e2) ^ ")"
+  | Neq (e1, e2, _) -> "not(equal(" ^ (spass_of_exp e1) ^ "," ^ (spass_of_exp e2) ^ "))"
+  | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
+  | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
+  (* bag formulas *)
+  | BagIn _
+  | BagNotIn _
+  | BagSub _
+  | BagMin _
+  | BagMax _        -> illegal_format "SPASS don't support Bag p_formula"
+  (* list formulas *)
+  | ListIn _
+  | ListNotIn _
+  | ListAllN _
+  | ListPerm _
+  | RelForm _       -> illegal_format "SPASS don't support List p_formula"
 
-let rec spass_of_formula f =
-  let rec helper f =
-    match f with
-    | BForm (b, _)         -> spass_of_b_formula b
-    | And (p1, p2, _)      -> "and(" ^ (helper p1) ^ ", " ^ (helper p2) ^ ")"
-    | Or (p1, p2, _, _)    -> "or(" ^ (helper p1) ^ ", " ^ (helper p2) ^ ")"
-    | Not (p, _, _)        -> "not(" ^ (helper p) ^ ")"
-    | Forall (sv, p, _, _) -> "forall([" ^ (spass_of_spec_var sv) ^ "]," ^ (helper p) ^ ")"
-    | Exists (sv, p, _, _) -> "exists([" ^ (spass_of_spec_var sv) ^ "]," ^ (helper p) ^ ")"
-  in helper f
+and spass_of_formula f =
+  match f with
+  | BForm (b, _)         -> spass_of_b_formula b
+  | And (f1, f2, _)      -> "and(" ^ (spass_of_formula f1) ^ ", " ^ (spass_of_formula f2) ^ ")"
+  | Or (f1, f2, _, _)    -> "or(" ^ (spass_of_formula f1) ^ ", " ^ (spass_of_formula f2) ^ ")"
+  | Not (f, _, _)        -> "not(" ^ (spass_of_formula f) ^ ")"
+  | Forall (sv, f, _, _) -> "forall([" ^ (spass_of_spec_var sv) ^ "]," ^ (spass_of_formula f) ^ ")"
+  | Exists (sv, f, _, _) -> "exists([" ^ (spass_of_spec_var sv) ^ "]," ^ (spass_of_formula f) ^ ")"
 
 let spass_of_formula f =
   Debug.no_1 "spass_of_formula" !print_pure pr_id spass_of_formula f
@@ -155,7 +115,6 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | ListAppend _
   | ListReverse _
   | ArrayAt _      -> false
-  | _              -> illegal_format ("[spass.ml] Other exp type is not supported.")
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
@@ -182,12 +141,10 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListAllN _
   | ListPerm _
   | RelForm _            -> false
-  | _                    -> illegal_format ("[spass.ml] Other p_formula type is not supported.")
 
 and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with
   | (pf, _) -> can_spass_handle_p_formula pf
-  | _       -> illegal_format ("[spass.ml] Other b_formula type is not supported.")
 
 and can_spass_handle_formula (f: Cpure.formula) : bool =
   match f with
@@ -197,7 +154,6 @@ and can_spass_handle_formula (f: Cpure.formula) : bool =
   | Not (f, _, _)       -> can_spass_handle_formula f
   | Forall (_, f, _, _) -> can_spass_handle_formula f
   | Exists (_, f, _, _) -> can_spass_handle_formula f
-  | _                   -> illegal_format ("[spass.ml] Other formula type is not supported.")
 
 (***************************************************************
 INTERACTION
@@ -269,8 +225,7 @@ let remove_file filename =
   with e -> ignore e
 
 (* Global settings *)
-let spass_timeout_limit = 2.0
-let prover_pid = ref 0
+let spass_timeout_limit = 15.0
 let prover_process = ref { name = "SPASS";
                            pid = 0;
                            inchannel = stdin;
@@ -278,18 +233,12 @@ let prover_process = ref { name = "SPASS";
                            errchannel = stdin 
                           }
 
-let spass_call_count: int ref = ref 0
-let is_spass_running = ref false
-let debug_mode = false
-
 (***********)
-let test_number = ref 0
-let last_test_number = ref 0
 let log_all_flag = ref false
 
 let log_file = open_out ("allinput.spass")
 let path_to_spass = "SPASS"
-let prover_name = ref ("SPASS": string)
+let prover_name = "SPASS"
 
 let set_process (proc: Globals.prover_process_t) =
   prover_process := proc
@@ -300,13 +249,13 @@ let check_problem (input: string) (timeout: float) : prover_output_t =
   (* let _ = print_endline "** In function Spass.check_problem" in *)
   let file_suffix = Random.int 1000000 in
   let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".spass" in
-  (* let _ = print_endline ("-- input: \n" ^ input) in *)
+  let _ = print_endline ("-- input: \n" ^ input) in 
   let out_stream = open_out infile in
   output_string out_stream input;
   close_out out_stream;
   let set_process proc = prover_process := proc in
   let fnc () =
-    let _ = Procutils.PrvComms.start false stdout (!prover_name, !prover_name, [|!prover_name; infile|]) set_process (fun () -> ()) in
+    let _ = Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; infile|]) set_process (fun () -> ()) in
     get_answer !prover_process.inchannel input in
   let res =
     try
@@ -339,10 +288,7 @@ GENERATE SMT INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 
 (* spass: output for dfg format *)
-let to_spass_dfg (ante: Cpure.formula)
-    (conseq: Cpure.formula)
-    (fvars: Cpure.spec_var list)
-    : string =
+let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spec_var list) : string =
   let dfg_description =
     ( "list_of_descriptions.\n"
       ^ "  name({*sleek-problem*}).\n"
@@ -413,175 +359,11 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   let omega_temp_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_temp_str ^ ")}" ^ ";" ^ Gen.new_line_str in
   let _ = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
   let _ = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
-  res;
-
-(***************************************************************
-CONSOLE OUTPUT
-**************************************************************)
-
-type output_configuration = {
-  print_input : bool ref; (* print generated SMT input *)
-  print_original_solver_output : bool ref; (* print solver original output *)
-  print_implication : bool ref; (* print the implication problems sent to this smt_imply *)
-  suppress_print_implication : bool ref; (* temporary suppress all printing *)
-}
-
-(* Global collection of printing control switches, set by scriptarguments *)
-let outconfig = {
-  print_input = ref false;
-  print_original_solver_output = ref false;
-  print_implication = ref false;
-  suppress_print_implication = ref false;
-}
-
-(* Function to suppress and unsuppress all output of this modules *)
-
-(* TrungTQ: may be bugs, will consider later *)
-let process_stdout_print ante conseq input output res =
-  if (not !(outconfig.suppress_print_implication)) then
-    begin
-    if !(outconfig.print_implication) then
-      print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
-    if !(outconfig.print_input) then
-      begin
-      print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
-      flush stdout;
-      end;
-    if !(outconfig.print_original_solver_output) then
-      begin
-      print_endline (">>> SPASS OUTPUT RECEIVED:\n" ^ (string_of_spass_output output));
-      print_endline (match output.validity_result with
-          | Valid -> ">>> VERDICT: UNSAT/VALID!"
-          | Invalid -> ">>> VERDICT: FAILED!"
-          | Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
-          | Aborted -> ">>> VERDICT: ABORTED! CONSIDERED AS FAILED.");
-      flush stdout;
-      end;
-    if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
-      print_string "\n";
-    end
+  res
 
 (**************************************************************
 MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 *************************************************************)
-
-let try_induction = ref false
-let max_induction_level = ref 0
-
-(**
-* Select the candidates to do induction on. Just find all
-* relation dom(_, low, high) that appears and collect the
-* { high - low } such that ante |- low <= high.
-*)
-let rec collect_induction_value_candidates (ante : Cpure.formula) (conseq : Cpure.formula) : (Cpure.exp list) =
-  (* let _ = print_string ("collect_induction_value_candidates :: ante = " *)
-  (* ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n")   *)
-  (* in                                                                    *)
-  match conseq with
-  | Cpure.BForm (b, _) -> (let (p, _) = b in match p with
-        | Cpure.RelForm ("induce",[value], _) -> [value]
-        (* | Cpure.RelForm ("dom",[_;low;high],_) -> (* check if we can    *)
-        (* prove ante |- low <= high? *) [Cpure.mkSubtract high low        *)
-        (* no_pos]                                                         *)
-        | _ -> [])
-  | Cpure.And (f1, f2, _) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
-  | Cpure.Or (f1, f2, _, _) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
-  | Cpure.Not (f, _, _) -> (collect_induction_value_candidates ante f)
-  | Cpure.Forall _ | Cpure.Exists _ -> []
-
-(**
-* Select the value to do induction on.
-* A simple approach : induct on the length of an array.
-*)
-and choose_induction_value (ante : Cpure.formula) (conseq : Cpure.formula) (vals : Cpure.exp list) : Cpure.exp =
-  (* TODO Implement the main heuristic here! *)
-  List.hd vals
-
-(**
-* Create a variable totally different from the ones in vlist.
-*)
-and create_induction_var (vlist : Cpure.spec_var list) : Cpure.spec_var =
-  (* let _ = print_string "create_induction_var\n" in We select the        *)
-  (* appropriate variable with name "omg_i" with i minimal natural number  *)
-  (* such that omg_i is not in vlist                                       *)
-  let rec create_induction_var_helper vlist i = match vlist with
-    | [] -> i
-    | hd :: tl ->
-        let v = Cpure.SpecVar (Int,"omg_" ^ (string_of_int i), Unprimed) in
-        if List.mem v vlist then
-          create_induction_var_helper tl (i +1)
-        else
-          create_induction_var_helper tl i
-  in let i = create_induction_var_helper vlist 0 in
-  Cpure.SpecVar (Int,"omg_" ^ (string_of_int i), Unprimed)
-
-(**
-* Generate the base case, induction hypothesis and induction case
-* for a formula phi(v, v_1, v_2,...) with new induction variable v.
-* v = expression of v_1, v_2,...
-*)
-(* and gen_induction_formulas (f : formula) (indval : exp) : (formula *    *)
-(* formula * formula) = let p = fv f in collect free variables in f let v  *)
-(* = create_induction_var p in create induction variable let fv = mkAnd f  *)
-(* (mkEqExp (mkVar v no_pos) indval no_pos) no_pos in fv(v) = f /\ (v =    *)
-(* indval) let f0 = apply_one_term (v, mkIConst 0 no_pos) fv in base case  *)
-(* fv[v/0] let fhyp = mkForall p fv None no_pos in induction hypothesis,   *)
-(* add universal quantifiers to all free variables in f let fvp1 =         *)
-(* apply_one_term (v, mkAdd (mkVar v no_pos) (mkIConst 1 no_pos) no_pos)   *)
-(* fv in inductive case fv[v/v+1], we try to prove fhyp --> fv[v/v+1] (f0, *)
-(* fhyp, fvp1)                                                             *)
-
-(**
-* Generate the base case, induction hypothesis and induction case
-* for Ante -> Conseq
-*)
-and gen_induction_formulas (ante : Cpure.formula) (conseq : Cpure.formula) (indval : Cpure.exp) :
-((Cpure.formula * Cpure.formula) * (Cpure.formula * Cpure.formula)) =
-  (* let _ = print_string "gen_induction_formulas\n" in *)
-  let p = Cpure.fv ante @ Cpure.fv conseq in
-  let v = create_induction_var p in
-  (* let _ = print_string ("Inductiom variable = " ^                       *)
-  (* (Cpure.string_of_spec_var v) ^ "\n") in                               *)
-  let ante = Cpure.mkAnd (Cpure.mkEqExp (Cpure.mkVar v no_pos) indval no_pos) ante no_pos in
-  (* base case ante /\ v = 0 --> conseq *)
-  let ante0 = Cpure.apply_one_term (v, Cpure.mkIConst 0 no_pos) ante in
-  (* let _ = print_string ("Base case: ante = " ^ (!print_pure ante0) ^    *)
-  (* "\nconseq = " ^ (!print_pure conseq) ^ "\n") in ante --> conseq       *)
-  let aimpc = (Cpure.mkOr (Cpure.mkNot ante None no_pos) conseq None no_pos) in
-  (* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
-  let indhyp = Cpure.mkForall p aimpc None no_pos in
-  (* let _ = print_string ("Induction hypothesis: ante = " ^ (!print_pure  *)
-  (* indhyp) ^ "\n") in                                                    *)
-  let vp1 = Cpure.mkAdd (Cpure.mkVar v no_pos) (Cpure.mkIConst 1 no_pos) no_pos in
-  (* induction case: induction hypothesis /\ ante(v+1) --> conseq(v+1) *)
-  let ante1 = Cpure.mkAnd indhyp (Cpure.apply_one_term (v, vp1) ante) no_pos in
-  let conseq1 = Cpure.apply_one_term (v, vp1) conseq in
-  (* let _ = print_string ("Inductive case: ante = " ^ (!print_pure ante1) *)
-  (* ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in                    *)
-  ((ante0, conseq), (ante1, conseq1))
-
-(**
-* Check implication with induction heuristic.
-*)
-and spass_imply_with_induction (ante : Cpure.formula) (conseq : Cpure.formula) : bool =
-  (* debug *)
-  (* let _ = "** In function Spass.spass_imply_with_induction" in *)
-  (* let _ = print_string (" :: smt_imply_with_induction : ante = " ^      *)
-  (* (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in  *)
-  let vals = collect_induction_value_candidates ante (Cpure.mkAnd ante conseq no_pos) in
-  if (vals = []) then false (* No possible value to do induction on *)
-  else
-    let indval = choose_induction_value ante conseq vals in
-    let bc, ic = gen_induction_formulas ante conseq indval in
-    let a0 = fst bc in
-    let c0 = snd bc in
-    (* check the base case first *)
-    let bcv = spass_imply a0 c0 15.0 in
-    if bcv then (* base case is valid *)
-    let a1 = fst ic in
-    let c1 = snd ic in
-    spass_imply a1 c1 15.0 (* check induction case *)
-    else false
 
 (**
 * Test for validity
@@ -592,7 +374,7 @@ and spass_imply_with_induction (ante : Cpure.formula) (conseq : Cpure.formula) :
 * We also consider unknown is the same as sat
 *)
 
-and spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
+let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
   (* let _ = "** In function Spass.spass_imply" in *)
   let pr = !print_pure in
   let result = 
@@ -625,26 +407,19 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem" in *)
     let spass_input = to_spass ante (Some conseq) in
-    let _ = !set_generated_prover_input input in
     let validity = check_problem spass_input timeout in
     (* let prover_output = String.concat "\n" output.original_output_text in *)
     (* debug let _ = print_endline ("** prover output:" ^              *)
     (* prover_output) in                                               *)
-    let _ = !set_prover_original_output (String.concat "\n" validity.original_output_text) in
     let res =
       match validity.validity_result with (* TrungTQ: may be bugs here *)
       | Valid -> true
       | Invalid -> false
       | Unknown -> false
       | Aborted -> false in
-    let _ = process_stdout_print ante conseq spass_input validity res in
     res
   else
     res
-
-and has_exists conseq = match conseq with
-  | Cpure.Exists _ -> true
-  | _ -> false
 
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function Spass.imply:" in *)
@@ -707,7 +482,6 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       | Invalid -> true      (* if neg(f) invalid ==> f sat *) 
       | Valid   -> false     (* if neg(f) valid   ==> f unsat *)
       | _       -> false in  (* other, consider f unsat *)
-    let _ = process_stdout_print f (Cpure.mkFalse no_pos) spass_input validity res in
     res
   else
     res
