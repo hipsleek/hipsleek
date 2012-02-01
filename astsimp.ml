@@ -4487,9 +4487,13 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let pe1 = List.map (fun e -> trans_pure_exp e stab) ls1 in
-          let pe2 = List.map (fun e -> trans_pure_exp e stab) ls2 in
-          CP.LexVar(t_ann, pe1, pe2, pos)
+          let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
+          let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
+          CP.LexVar {
+					  CP.lex_ann = t_ann;
+						CP.lex_exp = cle;
+						CP.lex_tmp = clt;
+						CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos

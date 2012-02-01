@@ -694,9 +694,9 @@ let rec pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   match pf with
-    | P.LexVar (t_ann, ls1,ls2, l)        -> 
-        fmt_string (string_of_term_ann t_ann);
-        pr_s "" pr_formula_exp ls1
+    | P.LexVar t_info -> 
+        fmt_string (string_of_term_ann t_info.CP.lex_ann);
+        pr_s "" pr_formula_exp t_info.CP.lex_exp
         (* ;if ls2!=[] then *)
         (*   pr_set pr_formula_exp ls2 *)
         (* else () *)
@@ -2348,7 +2348,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
-    | P.LexVar (t_ann, e1, e2, l) -> "LexVar(to be implemented)"
+    | P.LexVar _ -> "LexVar(to be implemented)"
   (* | P.Lexvar (ls1,ls2, l)        ->  *)
   (*       let opt = if ls2==[] then "" else *)
   (*         "{"^(pr_list html_of_formula_exp ls2)^"}" *)
