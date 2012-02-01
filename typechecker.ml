@@ -417,9 +417,11 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                           DD.ninfo_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                         let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
-                      (* collecting rel before post-condition checking? *)
+                      (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       let rel1 =  Inf.collect_rel_list_partial_context res_ctx in
+                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
+                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;
                       let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in
                       let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
