@@ -817,6 +817,41 @@ let delete_present_in i_pure compared_pure_list =
   let i_pure_list = List.filter (fun p -> not (present_in compared_pure_list p)) i_pure_list in
   CP.join_conjunctions i_pure_list
 
+let check_rank_dec rank_fml lhs_cond = match rank_fml with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Gt (Func (_,args1,_), Func (_,args2,_),_),_) ->
+      if List.length args1 = List.length args2 then
+        let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkGtExp e1 e2 no_pos) args1 args2) no_pos in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
+      else rank_fml
+    | (Lt (Func (_,args1,_), Func (_,args2,_),_),_) -> 
+      if List.length args1 = List.length args2 then
+        let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkLtExp e1 e2 no_pos) args1 args2) no_pos in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
+      else rank_fml
+    | _ -> rank_fml)    
+  | _ -> rank_fml
+    
+let check_rank_const rank_fml lhs_cond = match rank_fml with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Func (_,args1,_), Func (_,args2,_),_),_) ->
+      if List.length args1 = List.length args2 then
+        let fml = CP.join_conjunctions (List.map2 (fun e1 e2 -> CP.mkEqExp e1 e2 no_pos) args1 args2) in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else CP.mkTrue no_pos
+      else CP.mkTrue no_pos
+    | _ -> CP.mkTrue no_pos)
+  | _ -> CP.mkTrue no_pos
+
+(* Assume fml is conjs *)
+let filter_rank fml lhs_cond =
+  let (rank, others) = List.partition (fun p -> CP.is_Rank_Dec p || CP.is_Rank_Const p) (CP.split_conjunctions fml) in
+  let (rank_dec, rank_const) = List.partition (fun p -> CP.is_Rank_Dec p) rank in
+  let rank_dec = List.map (fun r -> check_rank_dec r lhs_cond) rank_dec in
+  let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
+  CP.join_conjunctions (rank_dec@rank_const@others)
+
 let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p rhs_p_br 
   heap_entail_build_mix_formula_check pos =
   (* TODO : need to handle pure_branches in future ? *)
@@ -830,13 +865,14 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let rhs_disjs = CP.list_of_disjs rhs_p_n in
     let (rhs_disjs_rel, rhs_disjs_wo_rel) = 
       List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
-    let rhs_disjs_wo_rel_new = 
-      let lhs_cond = MCP.pure_of_mix lhs_p_orig in
-      List.filter (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel 
-    in
+    let (rhs_disjs_rank, rhs_disjs_rel) = List.partition (fun d -> CP.get_Rank d != []) rhs_disjs_rel in
+    let lhs_cond = MCP.pure_of_mix lhs_p_orig in
+    let rhs_disjs_rank = List.map (fun d -> filter_rank d lhs_cond) rhs_disjs_rank in
+    let rhs_disjs_wo_rel_new, other_disjs = List.partition (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel in
+    let other_disjs = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd lhs_cond d no_pos)) other_disjs in
     (* DD.devel_hprint (add_str "LHS pure" !CP.print_formula) (MCP.pure_of_mix lhs_p_orig) pos; *)
-    (* DD.devel_hprint (add_str "RHS Disj List" (pr_list !CP.print_formula)) rhs_disjs_wo_rel_new pos; *)
-    let rhs_p_n_new = CP.disj_of_list (rhs_disjs_rel @ rhs_disjs_wo_rel_new) pos in
+    (* DD.devel_hprint (add_str "RHS Disj List" (pr_list !CP.print_formula)) rhs_disjs pos; *)
+    let rhs_p_n_new = CP.disj_of_list (rhs_disjs_rank @ rhs_disjs_rel @ rhs_disjs_wo_rel_new) pos in
     let rhs_ls = CP.split_conjunctions rhs_p_n_new in
     let (rel_rhs,other_rhs) = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in 
     if rel_rhs==[] then (
@@ -893,7 +929,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (*let pr = !CP.print_formula_br in*)
       (* let _ = print_endline (pr rhs_p_br) in *)
       (*let ranks = List.filter CP.has_func rel_rhs in*)
-      let rhs_p_2 = CP.join_conjunctions (*(ranks @ other_rhs)*) other_rhs in
+      let rhs_p_2 = CP.disj_of_list ((CP.join_conjunctions other_rhs)::other_disjs) no_pos in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
 
       (* Eliminate relations whose recursive calls are not defined *)

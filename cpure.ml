@@ -1065,6 +1065,24 @@ and mkOr f1 f2 lbl pos=
   else if (isConstTrue f2) then f2
   else Or (f1, f2, lbl ,pos)
 
+and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
+  match (ae1, ae2) with
+    | (Var v1, Var v2) ->
+          if eq_spec_var (fst v1) (fst v2) then
+            mkFalse pos 
+          else
+            BForm ((Gt (ae1, ae2, pos), None),None)
+    | _ ->  BForm ((Gt (ae1, ae2, pos), None),None)
+
+and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
+  match (ae1, ae2) with
+    | (Var v1, Var v2) ->
+          if eq_spec_var (fst v1) (fst v2) then
+            mkFalse pos 
+          else
+            BForm ((Lt (ae1, ae2, pos), None),None)
+    | _ ->  BForm ((Lt (ae1, ae2, pos), None),None)
+
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
@@ -6768,6 +6786,13 @@ let get_rank_dec_id_list (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
+let get_rank_const_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Func (id1,_,_), Func (id2,_,_),_),_) -> [id1;id2]
+    | _ -> [])
+  | _ -> []
+
 let get_rank_bnd_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -6777,7 +6802,15 @@ let get_rank_bnd_id_list (f:formula) = match f with
   | _ -> []
 
 let is_Rank (f:formula) = match f with
-  | BForm _ -> (List.length (get_rank_dec_id_list f)) + (List.length (get_rank_bnd_id_list f)) > 0
+  | BForm _ -> (get_rank_dec_id_list f) != [] || (get_rank_bnd_id_list f) != []
+  | _ -> false
+
+let is_Rank_Dec (f:formula) = match f with
+  | BForm _ -> (get_rank_dec_id_list f) != []
+  | _ -> false
+
+let is_Rank_Const (f:formula) = match f with
+  | BForm _ -> (get_rank_const_id_list f) != []
   | _ -> false
 
 let rec get_Rank pf = match pf with
