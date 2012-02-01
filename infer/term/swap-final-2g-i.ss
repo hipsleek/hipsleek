@@ -7,24 +7,25 @@ ranking r3(int x,int y).
 relation b1(int x, int y, int z).
 relation b2(int x, int y, int z).
 relation b3(int x, int y, int z).
-relation ans(int x, int y, int z).
+relation ans1(int x, int y, int z).
 relation ans2(int x, int y, int z).
+relation ans3(int x, int y, int z).
 
 int swap (int x, int y)
-  infer @pre [r1,r2,r3,ans,ans2,b1,b2,b3]
+  infer @pre [r1,r2,r3,ans1,ans2,ans3,b1,b2,b3]
  case {
   x=0 -> requires Term[] ensures b1(x,y,res);
   x<0 -> 
    case {
     y<0 -> requires Loop[] ensures false;
     y=0 -> requires Term[] ensures b2(x,y,res) ; /* res=y */
-    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures ans2(x,y,res); /* res=x-(y+1) */
+    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures ans1(x,y,res); /* res=x-(y+1) */
     }
    x>0 ->
      case {
      y<0 -> requires Term[r2(x,y) /* 2*x */] ensures ans2(x,y,res); /* res=y-x */
      y=0 -> requires Term[] ensures b3(x,y,res); /* res=x-1 */
-     y>0 -> requires Term[r3(x,y) /* x+y */] ensures ans(x,y,res); /* x+y */
+     y>0 -> requires Term[r3(x,y) /* x+y */] ensures ans3(x,y,res); /* x+y */
   }
  }
 {
@@ -68,15 +69,22 @@ USE LP to solve for a,b,c,z1-3.
  r3(x,y) = bx+cx+z3
 
 
-!!! NEW RELS:[ 
-( v_int_29_482'=res & v_int_29_713=x - 1 & x<=(0 - 1) & 1<=y & 
-ans2(y,v_int_29_713,v_int_29_482')) -->  ans2(x,y,res), 
-( x=1 & y<=(0 - 1)) -->  ans2(x,y,res), ( v_int_29_482'=res & v_int_29_739=x - 1 & y<=(0 - 1) & 2<=x & 
-ans2(y,v_int_29_739,v_int_29_482')) -->  ans2(x,y,res), 
+( x=0 & res=y) -->  b1(x,y,res),
+( y=0 & v_int_33_493'=res & x=v_int_33_700+1 & v_int_33_700<=(0 - 2) & 
+  b1(y,v_int_33_700,v_int_33_493')) -->  b2(x,y,res),
+( y=0 & v_int_33_493'=res & x=v_int_33_772+1 & 0<=v_int_33_772 & 
+     b1(y,v_int_33_772,v_int_33_493')) -->  b3(x,y,res),
 
-( x=1 & 1<=y) -->  ans(x,y,res), 
-( v_int_29_482'=res & v_int_29_784=x - 1 & 2<=x & 1<=y & 
-ans(y,v_int_29_784,v_int_29_482')) -->  ans(x,y,res)]
+( x=1 & v_int_33_493'=res & y<=(0 - 1) & b2(y,0,v_int_33_493')) -->  ans2(x,y,res),
+( v_int_33_493'=res & v_int_33_723=x - 1 & x<=(0 - 1) & 1<=y & 
+   ans2(y,v_int_33_723,v_int_33_493')) -->  ans1(x,y,res),
+( v_int_33_493'=res & v_int_33_749=x - 1 & y<=(0 - 1) & 2<=x & 
+     ans1(y,v_int_33_749,v_int_33_493')) -->  ans2(x,y,res),
+
+( x=1 & v_int_33_493'=res & 1<=y & b3(y,0,v_int_33_493')) -->  ans3(x,y,res),
+( v_int_33_493'=res & v_int_33_798=x - 1 & 2<=x & 1<=y & 
+     ans3(y,v_int_33_798,v_int_33_493')) -->  ans3(x,y,res)]
+
 
 !!! NEW RELS:[ 
 
@@ -90,13 +98,11 @@ BASE CASES
 
 REC CASES
 ---------
-( x=1 & v_int_32_490'=res & y<=(0 - 1) & b2(y,0,v_int_32_490')) 
-  -->  ans2(x,y,res), 
-
-( v_int_32_490'=res & v_int_32_720=x - 1 & x<=(0 - 1) & 1<=y & 
-  ans2(y,v_int_32_720,v_int_32_490')) -->  ans2(x,y,res), 
-( v_int_32_490'=res & v_int_32_746=x - 1 & y<=(0 - 1) & 2<=x & 
-  ans2(y,v_int_32_746,v_int_32_490')) -->  ans2(x,y,res) 
+( x=1 & v_int_33_493'=res & y<=(0 - 1) & b2(y,0,v_int_33_493')) -->  ans2(x,y,res),
+( v_int_33_493'=res & v_int_33_723=x - 1 & x<=(0 - 1) & 1<=y & 
+     ans2(y,v_int_33_723,v_int_33_493')) -->  ans1(x,y,res),
+( v_int_33_493'=res & v_int_33_749=x - 1 & y<=(0 - 1) & 2<=x & 
+     ans1(y,v_int_33_749,v_int_33_493')) -->  ans2(x,y,res),
 
 REC CASES
 ---------

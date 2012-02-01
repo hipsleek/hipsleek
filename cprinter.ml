@@ -1148,15 +1148,19 @@ let pr_lhs_rhs ((cat,lhs,rhs) as rel) =
   (* pr_pure_formula rhs; *)
   (* fmt_close() *)
 
-let string_of_lhs_rhs (e) : string =  poly_string_of_pr  pr_lhs_rhs e
+let string_of_lhs_rhs (e) : string =  
+  (* CP.print_only_lhs_rhs e *)
+  poly_string_of_pr  pr_lhs_rhs e
 
 let pr_only_lhs_rhs ((lhs,rhs) as rel) = 
-  fmt_string (CP.print_only_lhs_rhs rel)
-  (* fmt_open_box 1; *)
-  (* pr_pure_formula lhs; *)
-  (* fmt_string "-->"; *)
-  (* pr_pure_formula rhs; *)
-  (* fmt_close() *)
+  (* fmt_string (CP.print_only_lhs_rhs rel) *)
+  fmt_open_box 1;
+  fmt_string "(";
+  pr_pure_formula lhs;
+  fmt_string ")";
+  fmt_string " --> ";
+  pr_pure_formula rhs;
+  fmt_close()
 
 let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
 
