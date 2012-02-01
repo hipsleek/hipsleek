@@ -867,7 +867,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
     let (rhs_disjs_rank, rhs_disjs_rel) = List.partition (fun d -> CP.get_Rank d != []) rhs_disjs_rel in
     let lhs_cond = MCP.pure_of_mix lhs_p_orig in
-    let rhs_disjs_rank = List.map (fun d -> filter_rank d lhs_cond) rhs_disjs_rank in
+    let rhs_disjs_rank = if List.length rhs_disjs_rank > 1 then 
+        List.map (fun d -> filter_rank d lhs_cond) rhs_disjs_rank
+      else rhs_disjs_rank
+    in
     let rhs_disjs_wo_rel_new, other_disjs = List.partition (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel in
     let other_disjs = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd lhs_cond d no_pos)) other_disjs in
     (* DD.devel_hprint (add_str "LHS pure" !CP.print_formula) (MCP.pure_of_mix lhs_p_orig) pos; *)
