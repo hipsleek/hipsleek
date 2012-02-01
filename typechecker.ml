@@ -1253,6 +1253,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                                 (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars = CP.remove_dups_svl posts in
+                            try 
+                              begin
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
                                 let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in
@@ -1262,6 +1264,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                 print_endline ("POST: "^Cprinter.string_of_pure_formula post);
                                 print_endline ("PRE : "^Cprinter.string_of_pure_formula pre)) triples in
                             fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
+                              end
+                            with _ -> 
+                                begin
+                                  Debug.info_pprint "IGNORING PROBLEM of fix-point calculation" no_pos;
+                                  new_spec
+                                end
                         in
                         Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
                         let new_spec = AS.add_pre prog new_spec in
@@ -1275,9 +1283,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
-                            Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            Debug.dinfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                             Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            Debug.ninfo_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.info_hprint (add_str "NEW RELS" (pr_list Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
