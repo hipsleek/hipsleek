@@ -820,13 +820,13 @@ let delete_present_in i_pure compared_pure_list =
 let check_rank_dec rank_fml lhs_cond = match rank_fml with
   | BForm (bf,_) ->
     (match bf with
-    | (Gt (Func (_,args1,_), Func (_,args2,_),_),_) ->
-      if List.length args1 = List.length args2 then
+    | (Gt (Func (id1,args1,_), Func (id2,args2,_),_),_) ->
+      if id1 = id2 && List.length args1 = List.length args2 then
         let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkGtExp e1 e2 no_pos) args1 args2) no_pos in
         if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
       else rank_fml
-    | (Lt (Func (_,args1,_), Func (_,args2,_),_),_) -> 
-      if List.length args1 = List.length args2 then
+    | (Lt (Func (id1,args1,_), Func (id2,args2,_),_),_) -> 
+      if id1 = id2 && List.length args1 = List.length args2 then
         let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkLtExp e1 e2 no_pos) args1 args2) no_pos in
         if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
       else rank_fml
@@ -836,8 +836,8 @@ let check_rank_dec rank_fml lhs_cond = match rank_fml with
 let check_rank_const rank_fml lhs_cond = match rank_fml with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq (Func (_,args1,_), Func (_,args2,_),_),_) ->
-      if List.length args1 = List.length args2 then
+    | (Eq (Func (id1,args1,_), Func (id2,args2,_),_),_) ->
+      if id1 = id2 && List.length args1 = List.length args2 then
         let fml = CP.join_conjunctions (List.map2 (fun e1 e2 -> CP.mkEqExp e1 e2 no_pos) args1 args2) in
         if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else CP.mkTrue no_pos
       else CP.mkTrue no_pos
@@ -867,10 +867,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
     let (rhs_disjs_rank, rhs_disjs_rel) = List.partition (fun d -> CP.get_Rank d != []) rhs_disjs_rel in
     let lhs_cond = MCP.pure_of_mix lhs_p_orig in
-    let rhs_disjs_rank = if List.length rhs_disjs_rank > 1 then 
-        List.map (fun d -> filter_rank d lhs_cond) rhs_disjs_rank
-      else rhs_disjs_rank
-    in
+    let rhs_disjs_rank = List.map (fun d -> filter_rank d lhs_cond) rhs_disjs_rank in
     let rhs_disjs_wo_rel_new, other_disjs = List.partition (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel in
     let other_disjs = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd lhs_cond d no_pos)) other_disjs in
     (* DD.devel_hprint (add_str "LHS pure" !CP.print_formula) (MCP.pure_of_mix lhs_p_orig) pos; *)
