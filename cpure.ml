@@ -6786,6 +6786,16 @@ let get_rank_dec_id_list (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
+let rec get_rank_dec_and_const_id_list (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Gt (Func (id1,_,_), Func (id2,_,_),_),_) -> [id1;id2]
+    | (Lt (Func (id1,_,_), Func (id2,_,_),_),_) -> [id1;id2]
+    | _ -> [])
+  | And _ -> 
+    List.concat (List.map (fun p -> get_rank_dec_and_const_id_list p) (list_of_conjs f))
+  | _ -> []
+
 let get_rank_const_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with

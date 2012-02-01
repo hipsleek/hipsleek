@@ -1237,7 +1237,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
-                    Debug.trace_hprint (add_str "SPECS (after simplify_ann" pr_spec) new_spec no_pos;
+                    (*let _ = Ranking.do_nothing in*)
+                    Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
                     if (pre_ctr # get> 0) 
                     then
                       begin
