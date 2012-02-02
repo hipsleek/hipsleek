@@ -57,14 +57,18 @@ struct
   let pr_triple f1 f2 f3 (x,y,z) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^")"
 
   let pr_quad f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^")"
+  let pr_penta f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^")"
+  let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^")"
 
-  let pr_penta f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^","^(f5 z3)^")"
+  let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
+  let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
+  let pr_hexa_ln f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^")"
 
-  let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^","^(f5 z3)^","^(f6 z4)^")"
+  let pr_lst s f xs = String.concat s (List.map f xs)
 
-  let pr_lst f xs = String.concat "," (List.map f xs)
+ let pr_list f xs = "["^(pr_lst "," f xs)^"]"
+ let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
 
- let pr_list f xs = "["^(pr_lst f xs)^"]"
  let map_opt f x = match x with 
    | None -> None
    | Some v -> Some (f v)
@@ -389,6 +393,10 @@ class ['a] stack  =
        | [] -> print_string "ERROR : popping empty stack"; 
                raise Stack_Error
        | x::xs -> stk <- xs
+     method pop_top = match stk with 
+       | [] -> print_string "ERROR : popping empty stack"; 
+               raise Stack_Error
+       | x::xs -> stk <- xs; x
      method top : 'a = match stk with 
        | [] -> print_string "ERROR : top of empty stack"; 
                raise Stack_Error
@@ -399,28 +407,51 @@ class ['a] stack  =
      method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
-     method exists (i:'a) = List.mem i stk 
-     method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     method mem (i:'a) = List.mem i stk 
+     method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     (* method exists (i:'a) = List.mem i stk  *)
+     (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
+     method exists f = List.exists f stk 
      method push_list (ls:'a list) =  stk <- ls@stk
+   end;;
+
+class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
+   object 
+     inherit ['a] stack
+     val elem_pr = epr 
+     val elem_eq = eq 
+     method string_of = Basic.pr_list elem_pr stk
+     method mem (i:'a) = List.exists (elem_eq i) stk
+     method overlap (ls:'a list) = 
+	   if (ls == []) then false
+	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
    end;;
 
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
    object 
-     inherit ['a] stack
+     inherit ['a] stack_pr epr eq
      val emp_val = x_init
-     val elem_pr = epr 
-     val elem_eq = eq 
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
-     method string_of = Basic.pr_list elem_pr stk
-     method exists (i:'a) = List.exists (elem_eq i) stk
-     method overlap (ls:'a list) = 
-	   if (ls == []) then false
-	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-(* Gen.BList.overlap_eq elem_eq ls stk *)
    end;;
 
+(* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
+(*    object  *)
+(*      inherit ['a] stack *)
+(*      val emp_val = x_init *)
+(*      val elem_pr = epr  *)
+(*      val elem_eq = eq  *)
+(*      method top_no_exc : 'a = match stk with  *)
+(*        | [] ->  emp_val *)
+(*        | x::xs -> x *)
+(*      method string_of = Basic.pr_list elem_pr stk *)
+(*      method mem (i:'a) = List.exists (elem_eq i) stk *)
+(*      method overlap (ls:'a list) =  *)
+(* 	   if (ls == []) then false *)
+(* 	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk *)
+(* (\* Gen.BList.overlap_eq elem_eq ls stk *\) *)
+(*    end;; *)
 
 class counter x_init =
    object 

@@ -1,0 +1,42 @@
+
+//(1)
+infer [p1] n=m+1 & LexVar[0,p1,n] |- n>m.
+
+//(2)
+infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- n>m & LexVar[0,p2,m].
+//print residue.
+
+//(3)
+checkentail n=m+1 & p1=p2 & LexVar[0,p1,n] |- LexVar[0,p2,m].
+//infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- LexVar[0,p2,m] .
+
+//(4)
+// translate LexVar[0,p2,m]
+infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- p1>p2 | p1=p2 & n>m.
+print residue.
+//inferred pure: [p2<p1 | p1=p2]
+
+//(5)
+// translate LexVar[0,p2,m]
+infer [p1,p2] LexVar[0,p1,n] |- p1>p2 | p1=p2 & n>m.
+print residue.
+//inferred pure: [p2<p1]
+
+//(6)
+infer [p1,p2] n=m+1 & LexVar[0,p1,n]{} |- LexVar[0,p2,m]{} .
+print residue.
+
+//(7)
+infer [p1,p2] n=m+1 & LexVar[0,p1]{n,m} |- LexVar[0,p2]{n,m}.
+print residue.
+
+//(8)
+infer [p1,p2,p3]  n=m+1 & LexVar[0,p1,n] 
+               or n=m+2 & LexVar[0,p2,m] |- LexVar[0,p3,m].
+
+//(9)
+checkentail (n=m+1 & LexVar[0,p1,n]) |- LexVar[0,p3,m].
+
+
+
+

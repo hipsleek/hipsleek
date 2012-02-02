@@ -30,6 +30,7 @@ let rec mona_of_typ = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | AnnT          -> "AnnT"
+  | RelT          -> "RelT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
@@ -48,8 +49,8 @@ let rec mkEq l = match l with
   | _ -> assert false
 
 let rec mkEx l f = match l with
- | [] -> f
- | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
+  | [] -> f
+  | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
 
 (*
 
@@ -71,45 +72,45 @@ and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) =
     let (e1, constr1, ev1) = preprocess_exp a1 in
     let (e2, constr2, ev2) = preprocess_exp a2 in
     ((f e1 e2 l), (CP.mkAnd constr1 constr2 l), ev1@ev2)
-   in   
+  in   
   match e0 with
     | CP.Add(CP.Var(CP.SpecVar(t1, _, _), l1), CP.Var(CP.SpecVar(_, _, _), _), l3) 
     | CP.Add(CP.IConst(_, _), CP.Var(CP.SpecVar(t1, _, _), l1) , l3)
     | CP.Add( CP.Var(CP.SpecVar(t1, _, _), l1), CP.IConst(_, _), l3) ->
-        let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
-	let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), e0, l3), None), None) in
-	(CP.Var(new_evar, l3), additional_constr, [new_evar])
-  | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
-        let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
-	let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None) in
-	(CP.Var(new_evar, l3), additional_constr, [new_evar])
-  | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), l2), CP.IConst(i1, l1), l3) ->
-        let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
-	let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
-	(CP.Var(new_evar, l3), additional_constr, [new_evar])
-  | CP.Subtract( CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
-        let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
-	let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), l2), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
-	(CP.Var(new_evar, l3), additional_constr, [new_evar])
-  | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> (CP.IConst(i1+12, l3), CP.BForm((CP.BConst (true, l3), None), None), [])
-  | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
-        let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
-	let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
-	(CP.Var(new_evar, l3), additional_constr, [new_evar])
-  | CP.Add (a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
-  | CP.Subtract(a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Subtract(e1, e2, l)) l1
-  | CP.Min (a1, a2, l1) ->  
-    reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Min(e1, e2, l)) l1
-  | CP.Max (a1, a2, l1) ->  
-    reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Max(e1, e2, l)) l1
-  | _ -> (e0,CP.BForm((CP.BConst (true, no_pos), None), None), [])
+          let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), e0, l3), None), None) in
+	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+    | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
+          let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None) in
+	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+    | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), l2), CP.IConst(i1, l1), l3) ->
+          let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
+	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+    | CP.Subtract( CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
+          let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), l2), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
+	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+    | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> (CP.IConst(i1+12, l3), CP.BForm((CP.BConst (true, l3), None), None), [])
+    | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
+          let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
+	      let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
+	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+    | CP.Add (a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
+    | CP.Subtract(a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Subtract(e1, e2, l)) l1
+    | CP.Min (a1, a2, l1) ->  
+          reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Min(e1, e2, l)) l1
+    | CP.Max (a1, a2, l1) ->  
+          reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Max(e1, e2, l)) l1
+    | _ -> (e0,CP.BForm((CP.BConst (true, no_pos), None), None), [])
 
 
 (* 
@@ -120,7 +121,7 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
     let (e1, constr1, ev1) = preprocess_exp a1 in
     let (e2, constr2, ev2) = preprocess_exp a2 in
     ((f e1 e2 l), (CP.mkAnd constr1 constr2 l), ev1@ev2)
-   in   
+  in   
   let reconstr_3arg a1 a2 a3 f l =
     let (e1, constr1, ev1) = preprocess_exp a1 in
     let (e2, constr2, ev2) = preprocess_exp a2 in
@@ -129,50 +130,55 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
   in    
   let (pf,il) = b in
   let (npf, constr, ev)  = match pf with
-  | CP.Lt (a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Lt(e1, e2, l1)) l1
-  | CP.Lte (a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Lte(e1, e2, l1)) l1
-  | CP.Gt (a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Gt(e1, e2, l1)) l1
-  | CP.Gte (a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Gte(e1, e2, l1)) l1
-  | CP.Eq(a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Eq(e1, e2, l1)) l1
-  | CP.Neq(a1, a2, l1) -> 
-    reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Neq(e1, e2, l1)) l1
-  | CP.EqMin (a1, a2, a3, l1) -> 
-    reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMin(e1, e2, e3, l1)) l1
-  | CP.EqMax (a1, a2, a3, l1) -> 
-    reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMax(e1, e2, e3, l1)) l1
-  | _ -> (pf, CP.BForm((CP.BConst (true, no_pos), None), None), []) 
+    | CP.Lt (a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Lt(e1, e2, l1)) l1
+    | CP.Lte (a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Lte(e1, e2, l1)) l1
+    | CP.Gt (a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Gt(e1, e2, l1)) l1
+    | CP.Gte (a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Gte(e1, e2, l1)) l1
+    | CP.Eq(a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Eq(e1, e2, l1)) l1
+    | CP.Neq(a1, a2, l1) -> 
+          reconstr_2arg a1 a2 (fun e1 e2 l1 -> CP.Neq(e1, e2, l1)) l1
+    | CP.EqMin (a1, a2, a3, l1) -> 
+          reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMin(e1, e2, e3, l1)) l1
+    | CP.EqMax (a1, a2, a3, l1) -> 
+          reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMax(e1, e2, e3, l1)) l1
+    | _ -> (pf, CP.BForm((CP.BConst (true, no_pos), None), None), []) 
   in 
-     ((npf,il), constr, ev)
+  ((npf,il), constr, ev)
 
-  
+      
 (* 
    Preprocessing formulae 
 *)
-and preprocess_formula (f : CP.formula) : CP.formula =
-  match f with
-  | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (preprocess_formula p1) (preprocess_formula p2) lbl l1)
-  | CP.And (p1, p2, l1) -> (CP.mkAnd (preprocess_formula p1) (preprocess_formula p2) l1)
-  | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula p1),lbl, l1)
-  | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (preprocess_formula p1),lbl, l1)
-  | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (preprocess_formula p1),lbl, l1)
-  
-  | CP.BForm (b,lbl) -> 
-    let (bf, constr, ev) = preprocess_b_formula b in
-    (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl)) constr no_pos))
-
+and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+  let rec helper f = 
+    match f with
+      | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
+      | CP.And (p1, p2, l1) -> (CP.mkAnd (helper p1) (helper p2) l1)
+      | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, l1)
+      | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (helper p1),lbl, l1)
+      | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (helper p1),lbl, l1)
+      | CP.BForm ((b,_) as bf,lbl) -> 		
+            begin
+              match (pr_w b) with
+                | None -> 
+                      let (bf, constr, ev) = preprocess_b_formula bf in
+                      (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl)) constr no_pos))
+                | Some f -> helper f
+            end
+  in helper f
 
 (* 
 
    HASH TABLE CONSTRUCTION:
    This hash table maps each var to:
-     0 - unknown (unconstrained)
-     1 - first order
-     2 - second order
+   0 - unknown (unconstrained)
+   1 - first order
+   2 - second order
 
 *)
 
@@ -183,7 +189,7 @@ and find_order (f : CP.formula) vs =
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
   | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) || (find_order_formula f2 vs))
-(* make sure everything is renamed *)
+        (* make sure everything is renamed *)
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
   | CP.Not(f1, _,_) -> (find_order_formula f1 vs)
@@ -193,22 +199,22 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
       | CP.Var(sv, l) ->
-	begin
-	try
-	  Hashtbl.find vs sv
-	with
-	  | Not_found -> 0
-	end
+	        begin
+	          try
+	            Hashtbl.find vs sv
+	          with
+	            | Not_found -> 0
+	        end
       | CP.Add (e1, e2, l1) 
       | CP.Subtract (e1, e2, l1) ->
-	let r1 = exp_order e1 vs in
-	let r2 = exp_order e2 vs in
-	if (r1 == 0) then r2
-	else 
-	  if(r2 == 0) then r1
-	  else 
-	    if (r1 != r2) then Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure \n")}
-	    else r1
+	        let r1 = exp_order e1 vs in
+	        let r2 = exp_order e2 vs in
+	        if (r1 == 0) then r2
+	        else 
+	          if(r2 == 0) then r1
+	          else 
+	            if (r1 != r2) then Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure \n")}
+	            else r1
       | CP.Mult _
       | CP.Max _
       | CP.Min _
@@ -224,50 +230,50 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
   match pf with
     | CP.BagNotIn(sv1, e1, l1)
     | CP.BagIn(sv1, e1, l1) ->
-      let rsv1 = 
-	try
-	  let r = Hashtbl.find vs sv1 in
-	  if (r == 2) then 
-	    Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
-	  else 
-	    begin
-	    if (r == 0) then
-	      ((Hashtbl.replace vs sv1 1); true)
-	    else false
-	    end
-	with
-	  | Not_found -> ((Hashtbl.add vs sv1 1); true)
-	  | _ -> false
-      in
-	rsv1 || (find_order_exp e1 2 vs)
+          let rsv1 = 
+	        try
+	          let r = Hashtbl.find vs sv1 in
+	          if (r == 2) then 
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	          else 
+	            begin
+	              if (r == 0) then
+	                ((Hashtbl.replace vs sv1 1); true)
+	              else false
+	            end
+	        with
+	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
+	          | _ -> false
+          in
+	      rsv1 || (find_order_exp e1 2 vs)
     | CP.BagMax(sv1, sv2, l1) 
     | CP.BagMin(sv1, sv2, l1) ->
-      let r1 = 
-	try
-	   let r = Hashtbl.find vs sv1 in
-	   if (r == 2) then 
-	     Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
-	   else 
-	     if (r == 0) then
-	       ((Hashtbl.replace vs sv1 1); true)
-	     else false
-	 with
-	   | Not_found -> ((Hashtbl.add vs sv1 1); true)
-      in
-      let r2 = 
-      try
-	let r = Hashtbl.find vs sv2 in
-	if (r == 1) then 
-	  Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "\n")}
-	else 
-	  if(r == 0) then
-	    ((Hashtbl.replace vs sv1 2); true)
-	  else
-	    false
-      with
-	| Not_found -> ((Hashtbl.add vs sv1 2); true)
-      in
-      (r1 || r2)
+          let r1 = 
+	        try
+	          let r = Hashtbl.find vs sv1 in
+	          if (r == 2) then 
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	          else 
+	            if (r == 0) then
+	              ((Hashtbl.replace vs sv1 1); true)
+	            else false
+	        with
+	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
+          in
+          let r2 = 
+            try
+	          let r = Hashtbl.find vs sv2 in
+	          if (r == 1) then 
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "\n")}
+	          else 
+	            if(r == 0) then
+	              ((Hashtbl.replace vs sv1 2); true)
+	            else
+	              false
+            with
+	          | Not_found -> ((Hashtbl.add vs sv1 2); true)
+          in
+          (r1 || r2)
     | CP.BagSub(e1, e2, _) ->  ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
     | CP.ListIn(e1, e2, _)
     | CP.ListNotIn(e1, e2, _) 
@@ -277,79 +283,79 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
     | CP.Lte(e1, e2, _) 
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
-      (* let _ = print_string("find_order_exp for " ^ (Cprinter.string_of_formula_exp e1) ^ " and "  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
-      	let r1 = exp_order e1 vs in 
-	let r2 = exp_order e2 vs in
-	  if (r1 == 1 || r2 == 1) then
-	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
-	  else
-	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
+          (* let _ = print_string("find_order_exp for " ^ (Cprinter.string_of_formula_exp e1) ^ " and "  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+      	  let r1 = exp_order e1 vs in 
+	      let r2 = exp_order e2 vs in
+	      if (r1 == 1 || r2 == 1) then
+	        ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
+	      else
+	        ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
-        let r1 = exp_order e1 vs in
-	let r2 = exp_order e2 vs in
-	let r3 = exp_order e3 vs in
-	  if (r1 == 1 || r2 == 1 || r3 == 1) then
-	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs) || (find_order_exp e3 1 vs)) 
-	  else
-	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs) || (find_order_exp e3 0 vs)) 
+          let r1 = exp_order e1 vs in
+	      let r2 = exp_order e2 vs in
+	      let r3 = exp_order e3 vs in
+	      if (r1 == 1 || r2 == 1 || r3 == 1) then
+	        ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs) || (find_order_exp e3 1 vs)) 
+	      else
+	        ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs) || (find_order_exp e3 0 vs)) 
     | CP.BVar(sv1, l1) -> 
-      begin
-      try 
-	let r = Hashtbl.find vs sv1 in
-	if(r == 1) then
-	  Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
-	else
-	  if(r == 0) then
-	    (Hashtbl.replace vs sv1 2; true)
-	  else false
-      with
-	| Not_found -> (Hashtbl.replace vs sv1 2; true)
-      end
+          begin
+            try 
+	          let r = Hashtbl.find vs sv1 in
+	          if(r == 1) then
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	          else
+	            if(r == 0) then
+	              (Hashtbl.replace vs sv1 2; true)
+	            else false
+            with
+	          | Not_found -> (Hashtbl.replace vs sv1 2; true)
+          end
     | CP.Eq(e1, e2, _)
     | CP.Neq(e1, e2, _) ->
-      	let r1 = exp_order e1 vs in
-	let r2 = exp_order e2 vs in
-	if (CP.is_bag e1) || (CP.is_bag e2) || (r1 == 2) || (r2 == 2) then
-	  ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
-	else 
-	  if (r1 == 1 || r2 == 1) then
-	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
-	  else
-	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
+      	  let r1 = exp_order e1 vs in
+	      let r2 = exp_order e2 vs in
+	      if (CP.is_bag e1) || (CP.is_bag e2) || (r1 == 2) || (r2 == 2) then
+	        ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
+	      else 
+	        if (r1 == 1 || r2 == 1) then
+	          ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
+	        else
+	          ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
     | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 0 vs)) false el
     | _ -> false
 
 
 (*
   order = 0 --> unknown
-        = 1 --> inside bag
-        = 2 --> bag
+  = 1 --> inside bag
+  = 2 --> bag
 *)
 and find_order_exp (e : CP.exp) order vs = match e with
   | CP.Var(sv1, l1) -> 
-    begin
-      try
-	let r = Hashtbl.find vs sv1 in 
-	if (r == 0 && order != 0) then
-	      ((Hashtbl.replace vs sv1 order); true) 
-	else
-	  if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
-	    Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
-	  else false
-      with
-	| Not_found -> ((Hashtbl.add vs sv1 order); true)
-    end
+        begin
+          try
+	        let r = Hashtbl.find vs sv1 in 
+	        if (r == 0 && order != 0) then
+	          ((Hashtbl.replace vs sv1 order); true) 
+	        else
+	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	          else false
+          with
+	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
+        end
   | CP.Bag(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 1 vs)) false el
   | CP.BagIntersect(el, l) 
   | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 2 vs)) false el
   | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))    
   | CP.Add(e1, e2, l) ->
-    (* let _ = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
-    if (CP.exp_contains_spec_var e1) && (CP.exp_contains_spec_var e2) then (* non-monadic formula ==> need second order *)
-      ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))
-    else
-      ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
+        (* let _ = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+        if (CP.exp_contains_spec_var e1) && (CP.exp_contains_spec_var e2) then (* non-monadic formula ==> need second order *)
+          ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))
+        else
+          ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
   | CP.Subtract(e1, e2, l)
   | CP.Mult(e1, e2, l)
   | CP.Div(e1, e2, l)
@@ -377,14 +383,14 @@ and is_firstorder_mem e vs =
 and is_firstorder_mem_a e vs =
   match e with
     | CP.Var(sv1, l1) ->
-      begin
-          try 
-	    let r = Hashtbl.find vs sv1 in 
-	    if (r == 1) then true
-	    else false
-          with 
-	    | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
-      end
+          begin
+            try 
+	          let r = Hashtbl.find vs sv1 in 
+	          if (r == 1) then true
+	          else false
+            with 
+	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+          end
     | CP.IConst _ 
     | CP.Null _ -> true
     | _ -> false
@@ -409,8 +415,8 @@ and mona_of_exp e0 f =
 and mona_of_exp_x e0 f = 
   let rec helper e0 =
     match e0 with
-        | CP.Null _ -> " 0 "
-      (* | CP.Null _ -> "pconst(0)" *)
+      | CP.Null _ -> " 0 "
+            (* | CP.Null _ -> "pconst(0)" *)
       | CP.Var (sv, _) -> mona_of_spec_var sv
       | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
             (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
@@ -550,13 +556,13 @@ and mona_of_b_formula_x b f vs =
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
       | CP.Neq (a, CP.Null _, _) 
       | CP.Neq (CP.Null _, a, _) ->
-           if (is_firstorder_mem a vs) then
+            if (is_firstorder_mem a vs) then
               "(" ^ (mona_of_exp a f) ^ " > 0)"
-           else
-             " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))"
+            else
+              " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))"
       | CP.Neq (a1, a2, _) ->
 	        if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
-	                "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
+	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
             else
               let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
               str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
@@ -575,22 +581,22 @@ and mona_of_b_formula_x b f vs =
               str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str
       | CP.Eq (CP.IConst(i, _), a1, _)
       | CP.Eq (a1, CP.IConst(i, _), _) ->
-          if (is_firstorder_mem a1 vs) then
-	        "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
-          else
-	        "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
+            if (is_firstorder_mem a1 vs) then
+	          "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
+            else
+	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
       | CP.Eq (a1, CP.Null _, _) 
       | CP.Eq (CP.Null _, a1, _) ->
-          if (is_firstorder_mem a1 vs) then
-	        "(" ^ (mona_of_exp a1 f) ^ " = 0)"
-          else
-	        "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
+            if (is_firstorder_mem a1 vs) then
+	          "(" ^ (mona_of_exp a1 f) ^ " = 0)"
+            else
+	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
       | CP.Eq (a1, a2, _) -> 
-          if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
-            "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
-          else	 
-            let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
-            str ^ " " ^ a1name ^ " = " ^ a2name ^ " " ^ end_str
+            if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
+              "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
+            else	 
+              let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
+              str ^ " " ^ a1name ^ " = " ^ a2name ^ " " ^ end_str
       | CP.EqMin (a1, a2, a3, _) ->
 	        if (is_firstorder_mem a1 vs) && (is_firstorder_mem a2 vs) && (is_firstorder_mem a3 vs) then
               let a1str = mona_of_exp a1 f in
@@ -636,13 +642,14 @@ and mona_of_b_formula_x b f vs =
       | CP.ListNotIn _
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
-	| CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
+      | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
 
 and equation a1 a2 f sec_order_symbol first_order_symbol vs =
    Debug.no_2 "equation" Cprinter.string_of_formula_exp Cprinter.string_of_formula_exp (fun x -> x)
-   (fun a1 a2 -> equation_a a1 a2 f sec_order_symbol first_order_symbol vs) a1 a2
+      (fun a1 a2 -> equation_a a1 a2 f sec_order_symbol first_order_symbol vs) a1 a2
 
 and equation_a a1 a2 f sec_order_symbol first_order_symbol vs =
   if (is_firstorder_mem a1 vs && is_firstorder_mem a2 vs) then begin
@@ -735,6 +742,7 @@ and print_b_formula b f = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
+  | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
 
 let rec get_answer chn : string =
@@ -905,9 +913,9 @@ let maybe_restart_mona () : unit =
     if num_tasks >=(!mona_cycle) then restart "upper limit reached"
   end
 
-let prepare_formula_for_mona (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
+let prepare_formula_for_mona pr_w pr_s (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
   let simp_f = CP.arith_simplify 8 f in
-  let simp_f = (preprocess_formula simp_f) in
+  let simp_f = (preprocess_formula pr_w pr_s simp_f) in
   let f_fv = CP.fv simp_f in
   let rename_spec_vars_fnct sv = 
     let new_name = ((CP.name_of_spec_var sv)^"_r"^(string_of_int test_no)) in
@@ -1036,13 +1044,13 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc
 
-let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
-  let (ante_fv, ante) = prepare_formula_for_mona ante !test_number in
-  let (conseq_fv, conseq) = prepare_formula_for_mona conseq !test_number in
+  let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
+  let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
@@ -1051,18 +1059,18 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   else
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs
 
-let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
-  imply ante conseq imp_no
+  (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
-let is_sat (f : CP.formula) (sat_no :  string) : bool =
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   incr test_number;
-  let (f_fv, f) = prepare_formula_for_mona f !test_number in
+  let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
   let sat = 

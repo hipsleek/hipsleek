@@ -142,7 +142,9 @@ module Make (Token : SleekTokenS)
    ("finally", FINALLY);
 	 ("float", FLOAT);
 	 ("forall", FORALL);
+   ("ranking", FUNC);
    ("global",GLOBAL);
+   ("logical", LOGICAL);
 	 ("head",HEAD);
    ("ho_pred",HPRED);
    ("if", IF);
@@ -181,6 +183,10 @@ module Make (Token : SleekTokenS)
 	 ("self", SELFT "self");
    ("set",SET);
 	 ("split", SPLIT);
+	 ("LexVar", LEXVAR);
+   ("Term", TERM);
+   ("Loop", LOOP);
+   ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -194,7 +200,7 @@ module Make (Token : SleekTokenS)
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
 	 ("void", VOID);
-   ("variance", VARIANCE);
+   (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
 	 (flow, FLOW flow);]

@@ -32,6 +32,7 @@ and p_formula =
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
 	  (* bags and bag formulae *)
+  | LexVar of (term_ann * (exp list) * (exp list) * loc)
   | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -74,6 +75,7 @@ and exp =
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
+  | Func of (ident * (exp list) * loc)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -152,6 +154,9 @@ and bfv (bf : b_formula) =
   | RelForm (_,args,_) -> (* An Hoa *)
 		let args_fv = List.concat (List.map afv args) in
 		Gen.BList.remove_dups_eq (=) args_fv
+  | LexVar (_, args1, args2, _) ->
+		let args_fv = List.concat (List.map afv (args1@args2)) in
+		Gen.BList.remove_dups_eq (=) args_fv
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -186,6 +191,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
+  | Func (a, i, _) -> 
+    let ifv = List.flatten (List.map afv i) in
+    Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
   | ArrayAt (a, i, _) -> 
 	let ifv = List.flatten (List.map afv i) in
 	Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
@@ -435,7 +443,7 @@ and pos_of_formula (f : formula) = match f with
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-		  | RelForm (_,_,p) -> p
+		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -464,6 +472,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | ListReverse (_, p) -> p
+  | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   
 	
@@ -546,6 +555,10 @@ and b_apply_one (fr, t) bf =
   | RelForm (r, args, pos) -> 
           (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
           RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos)
+  | LexVar (t_ann, args1, args2, pos) -> 
+        let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
+        let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
+          LexVar (t_ann, args1,args2,pos)
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -579,6 +592,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one p a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one p a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one p a1, pos)
+  | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one_list p ind), pos) (* An Hoa *)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
@@ -596,6 +610,9 @@ and subst_list_of_pair sst ls = match sst with
   | [] -> ls
   | s::rest -> subst_list_of_pair rest (e_apply_one_list_of_pair s ls)
 			 						
+and subst_list_of_exp sst ls = match sst with
+	| [] -> ls
+	| s::rest -> subst_list_of_exp rest (e_apply_one_list s ls)
 
 and look_for_anonymous_exp_list (args : exp list) :
   (ident * primed) list =
@@ -658,7 +675,13 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
-  | RelForm _ -> [] (* An Hoa : TODO implement *)
+  | LexVar (_,args1, args2, _) -> 
+        let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
+        vs
+  | RelForm (_,args,_) -> 
+        let vs = List.concat (List.map look_for_anonymous_exp (args)) in
+        vs
+
   
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -701,6 +724,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -729,6 +753,7 @@ and find_lexp_exp (e: exp) ls =
 	| ListLength (e, _) -> find_lexp_exp e ls
 	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ListReverse (e, _) -> find_lexp_exp e ls
+  | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 ;;
 
@@ -766,6 +791,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListLength (exp, _) -> contain_vars_exp exp
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
+  | Func _ -> true
   | ArrayAt _ -> true 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
@@ -912,6 +938,14 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | ListReverse (e, l) -> 
 		let ne1, np1 = float_out_exp_min_max e in
 		(ListReverse (ne1, l), np1)
+  | Func (a, i, l) ->
+    let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+    let r = List.fold_left (fun a c -> match (a, c) with
+      | None, None -> None
+      | Some p, None -> Some p
+      | None, Some p -> Some p
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+    (Func (a, ne1, l), r)
 	        (* An Hoa : get rid of min/max in a[i] *)
   | ArrayAt (a, i, l) ->
   		let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
@@ -952,8 +986,8 @@ and float_out_pure_min_max (p : formula) : formula =
   let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
 	let (pf,il) = b in
 	match pf with
-	  | BConst _ -> BForm (b,lbl)
-	  | BVar _ -> BForm (b,lbl)
+	  | BConst _ | BVar _ 
+	  | LexVar _ -> BForm (b,lbl)
 	  | Lt (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

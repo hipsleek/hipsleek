@@ -24,7 +24,7 @@ let log_file = open_out "allinput.rl"
 let is_reduce_running = ref false
 
 (* cache *)
-let sat_cache = ref (Hashtbl.create 100)
+(* let sat_cache = ref (Hashtbl.create 100) *)
 let impl_cache = ref (Hashtbl.create 100)
 (* threshold for caching *)
 let cache_threshold = 0.001 (* 1ms *)
@@ -299,14 +299,21 @@ let rl_of_b_formula b =
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
   | _ -> failwith "redlog: bags is not supported"
 
-let rec rl_of_formula f0 = 
-  match f0 with
-  | CP.BForm (b,_) -> rl_of_b_formula b 
-  | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula f) ^ ")"
-  | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
-  | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
-  | CP.And (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " and " ^ (rl_of_formula f2) ^ ")"
-  | CP.Or (f1, f2, _, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
+let rec rl_of_formula pr_w pr_s f0 =
+  let rec helper f0 =
+    match f0 with
+      | CP.BForm ((b,_) as bf,_) -> 
+            begin
+              match (pr_w b) with
+                | None -> "(" ^ (rl_of_b_formula bf) ^ ")"
+                | Some f -> helper f
+            end
+      | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
+      | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
+      | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
+  in helper f0
 
 (***********************************
  pretty printer for pure formula
@@ -827,9 +834,9 @@ let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   in
   CP.map_formula f0 (f_f, somef, somef)
 
-let rec elim_exists_with_eq f0 = 
+let rec elim_exists_with_eq_x f0 = 
   let core qvar qf lbl pos =
-    let qf = elim_exists_with_eq qf in
+    let qf = elim_exists_with_eq_x qf in
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
     let conjs = CP.list_of_conjs bare_f in
@@ -844,7 +851,7 @@ let rec elim_exists_with_eq f0 =
     if not (Gen.is_empty st) then
       let new_qf = CP.subst_term st pp1 in
       let new_qf = CP.mkExists qvars0 new_qf lbl pos in
-      let tmp3 = elim_exists_with_eq new_qf in
+      let tmp3 = elim_exists_with_eq_x new_qf in
       let tmp4 = CP.mkAnd no_qvars tmp3 pos in
       tmp4
     else (* if qvar is not equated to any variables, try the next one *)
@@ -852,6 +859,10 @@ let rec elim_exists_with_eq f0 =
       let tmp2 = CP.mkExists [qvar] tmp1 lbl pos in
       tmp2
   in elim_exists_helper core f0
+
+and elim_exists_with_eq f0 =
+  let pr = !CP.print_formula in
+  Debug.no_1 "elim_exists_with_eq" pr pr elim_exists_with_eq_x f0
 
 and elim_exists_min f0 =
   let core qvar qf lbl pos =
@@ -1006,14 +1017,14 @@ let options_to_bool opts default =
       in res
   | None -> default
 
-let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
+let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
     then f 
     else strengthen_formula f in
-    let frl = rl_of_formula sf in
+    let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
@@ -1022,46 +1033,60 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
 
-let is_sat_no_cache f sat_no =
+let is_sat_no_cache_ops pr_w pr_s f sat_no =
   Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
       (fun (b,_) -> string_of_bool b)
-      (fun _ -> is_sat_no_cache f sat_no) f 
+      (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
+
+let is_sat_ops pr_w pr_s f sat_no =
+  fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
 
 let is_sat f sat_no =
-  let sf = simplify_var_name (normalize_formula f) in
-  let fstring = string_of_formula sf in
-  log DEBUG ("\n#is_sat " ^ sat_no);
-  log DEBUG fstring;
-  let res = 
-    if !no_cache then
-      fst (is_sat_no_cache f sat_no)
-    else
-      try
-        (*Be careful: incorrect fstring can result in errors because of caching*)
-        let res = Hashtbl.find !sat_cache fstring in
-        incr cached_count;
-        log DEBUG "Cached.";
-        res
-      with Not_found -> 
-        let res, time = is_sat_no_cache f sat_no in
-        let _ = if time > cache_threshold then
-              let _ = log DEBUG "Caching."in
-              Hashtbl.add !sat_cache fstring res 
-        in res
-  in
-  log DEBUG (if res then "SAT" else "UNSAT");
-  res
+  let (pr_w,pr_s) = CP.drop_complex_ops in
+  is_sat_ops pr_w pr_s f sat_no
 
-let is_sat f sat_no =
+  let is_sat f sat_no =
   Debug.no_2 "[Redlog] is_sat"
       string_of_formula
       (fun c -> c)
       string_of_bool
       is_sat f sat_no
 
-let is_valid f imp_no =
+(* let is_sat f sat_no = *)
+(*   let sf = simplify_var_name (normalize_formula f) in *)
+(*   let fstring = string_of_formula sf in *)
+(*   log DEBUG ("\n#is_sat " ^ sat_no); *)
+(*   log DEBUG fstring; *)
+(*   let res =  *)
+(*     if !no_cache then *)
+(*       fst (is_sat_no_cache_ops f sat_no) *)
+(*     else *)
+(*       try *)
+(*         (\*Be careful: incorrect fstring can result in errors because of caching*\) *)
+(*         let res = Hashtbl.find !sat_cache fstring in *)
+(*         incr cached_count; *)
+(*         log DEBUG "Cached."; *)
+(*         res *)
+(*       with Not_found ->  *)
+(*         let res, time = is_sat_no_cache f sat_no in *)
+(*         let _ = if time > cache_threshold then *)
+(*               let _ = log DEBUG "Caching."in *)
+(*               Hashtbl.add !sat_cache fstring res  *)
+(*         in res *)
+(*   in *)
+(*   log DEBUG (if res then "SAT" else "UNSAT"); *)
+(*   res *)
+
+(* let is_sat f sat_no = *)
+(*   Debug.no_2 "[Redlog] is_sat" *)
+(*       string_of_formula *)
+(*       (fun c -> c) *)
+(*       string_of_bool *)
+(*       is_sat f sat_no *)
+
+let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
-  let frl = rl_of_formula f in
+  let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
@@ -1070,11 +1095,11 @@ let is_valid f imp_no =
   let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
 
-let is_valid f imp_no =
+let is_valid_ops pr_w pr_s f imp_no =
   Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
-       is_valid f imp_no
+       (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
-let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
+let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
   let has_eq_int f = has_existential_quantifier_of_int f false in
   let elim_eq f =
@@ -1082,11 +1107,11 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   let valid f = 
     let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
-    is_valid wf imp_no
+    is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.is_valid_with_default f !timeout))
+      call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
     (* (is_valid f imp_no) *)
     else
       if has_eq f then
@@ -1106,12 +1131,14 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   res
 
-let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
+let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
   Debug.no_2 "[Redlog] imply_no_cache" 
       (add_str "formula" string_of_formula)
-      (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+      (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+      (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
-let imply ante conseq imp_no =
+
+let imply_ops pr_w pr_s ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
@@ -1119,9 +1146,9 @@ let imply ante conseq imp_no =
   log DEBUG ("\n#imply " ^ imp_no);
   log DEBUG ("ante: " ^ (string_of_formula ante));
   log DEBUG ("conseq: " ^ (string_of_formula conseq));
-  let res = 
+  let res =
     if !no_cache then
-      fst (imply_no_cache f imp_no)
+      fst (imply_no_cache_ops pr_w pr_s f imp_no)
     else
       try
         (*Be careful: incorrect fstring can result in errors because of caching*)
@@ -1130,7 +1157,7 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
-          let res, time = imply_no_cache f imp_no in
+          let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
           let _ = if time > cache_threshold then
                 let _ = log DEBUG "Caching."in
                 Hashtbl.add !impl_cache fstring res
@@ -1139,20 +1166,32 @@ let imply ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
-let imply ante conseq imp_no =
+let imply f imp_no =
+  let (pr_w,pr_s) = CP.drop_complex_ops in
+   imply_ops pr_w pr_s f imp_no
+
+   let imply ante conseq imp_no =
   Debug.no_3 "[Redlog] imply" 
       (add_str "ante" string_of_formula) 
       (add_str "conseq" string_of_formula)
       (add_str "imp_no" (fun c -> c)) 
       string_of_bool imply ante conseq imp_no
 
+(* let imply ante conseq imp_no = *)
+(*   Debug.no_3 "[Redlog] imply"  *)
+(*       (add_str "ante" string_of_formula)  *)
+(*       (add_str "conseq" string_of_formula) *)
+(*       (add_str "imp_no" (fun c -> c))  *)
+(*       string_of_bool imply ante conseq imp_no *)
+
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  let pr_n x = None in
   if (CP.is_float_formula f) then
     (* do a manual existential elimination *)
     elim_exist_quantifier f
   else 
-    let rlf = rl_of_formula (normalize_formula f) in
+    let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
     let _ = send_cmd "rlset pasf" in
     let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
     let _ = send_cmd "rlset ofsf" in
@@ -1308,7 +1347,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
 		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
-		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
+		(* let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in *)
 		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
 		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in

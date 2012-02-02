@@ -1,0 +1,64 @@
+data node {
+  int val;
+  node next;
+}
+
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
+
+relation R(int res, int n).
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,R] x::ll<n>@L & x=null & res=0 |- R(res,n).
+
+// ==> res=1+r & n=1+m & R(r,m) --> R(res,n)
+infer [n,R] x::node<_,q>@L * q::ll<m>@L & x!=null & 
+   res=1+r & m=n-1 & R(r,m)  |- R(res,n).
+
+/*
+int foo(node x)
+  infer [n,F]
+  requires x::ll<n>@L
+  ensures F(res,n);  
+  // R(res,n) = res=0
+{
+  if (x==null) return 0;
+  else {
+    int m = foo(x.next);
+    return m;
+  }
+}
+*/
+
+relation F(int res, int n).
+
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,F] x::ll<n>@L & x=null & res=0 |- F(res,n).
+
+
+// ==> res=1+r & n=1+m & R(r,m) --> R(res,n)
+infer [n,F] x::node<_,q>@L * q::ll<m>@L & x!=null & 
+   res=r & m=n-1 & F(r,m)  |- F(res,n).
+
+/*
+void append(node x, node y)
+  infer [n,A]
+  requires x::ll<n>*y::ll<m> 
+  ensures x::ll<z> & A(n,m,z);
+{
+  if (x.next==null) {
+    x.next=y; 
+  } else {
+    append(x.next,y);
+  }
+}
+*/
+
+relation A(int n, int m, int z).
+
+//  ==> A(n,m,z) <- n=1 & z =1+m
+infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+
+// ==> A(n,m,z) <- n=n2+1 & z=1+z1 & A(n2,m,z1)
+infer [n,A] x::node<_,q> * q::ll<z1> & n2=n-1 & A(n2,m,z1)  
+  |- x::ll<z> & A(n,m,z).

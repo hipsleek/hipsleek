@@ -1,0 +1,5 @@
+//Constraints from hip/infer-1.ss
+
+//(4)
+infer[p2,p1] Term[p2,x] |- Term[p1].
+print residue.

@@ -13,7 +13,7 @@ ll<n> == self = null & n = 0
 
 /* append two singly linked lists */
 void hd(node x)
-  infer [n1] 
+  infer [n1,m] 
   // @ post[m]?
   requires x::ll<n1>
   ensures x::ll<m> ; 

@@ -1,58 +1,52 @@
 
 Processing file "t2-i.ss"
 Parsing t2-i.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure hd0$node... 
-Inferred Heap:[ x::node<inf_val_20_542,inf_next_20_543>@L[Orig], inf_next_20_543::node<inf_val_21_548,inf_next_21_549>@L[Orig]]
+Checking procedure hd0$node... infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_542,inf_val_20_543,inf_next_20_544,x]
+infer_heap_nodes
+infer var: [inf_ann_542,inf_val_20_543,inf_next_20_544,x]
+new infer var: [inf_ann_549,inf_val_21_550,inf_next_21_551,inf_ann_542,inf_val_20_543,inf_next_20_544,x]
+
+Inferred Heap:[ x::node<inf_val_20_543,inf_next_20_544>@inf_ann_542[Orig], inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@inf_ann_549[Orig]]
 Inferred Pure:[]
-Pre Vars :[inf_val_21_548,inf_next_21_549,inf_val_20_542,inf_next_20_543,x]
-Exists Post Vars :[v_int_21_531']
-Initial Residual Post : [ true & x'=inf_next_20_543 & v_int_21_531'=inf_val_21_548 & 
-res=v_int_21_531' & {FLOW,(20,21)=__norm}]
-Final Residual Post :  true & inf_next_20_543=x' & res=inf_val_21_548 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 1::ref [x]
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_20_542,inf_next_20_543>@L[Orig] * 
-       inf_next_20_543::node<inf_val_21_548,inf_next_21_549>@L[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_20_543,inf_next_20_544>@L[Orig] * 
+       inf_next_20_544::node<inf_val_21_550,inf_next_21_551>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 1::ref [x]
-           true & inf_next_20_543=x' & res=inf_val_21_548 &
+           true & inf_next_20_544=x' & res=inf_val_21_550 &
            {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd0$node SUCCESS
-Checking procedure hd1$node... 
-Inferred Heap:[ x::node<inf_val_33_554,inf_next_33_555>@L[Orig]]
+Checking procedure hd1$node... infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_556,inf_val_33_557,inf_next_33_558,x]
+
+Inferred Heap:[ x::node<inf_val_33_557,inf_next_33_558>@inf_ann_556[Orig]]
 Inferred Pure:[]
-Pre Vars :[inf_val_33_554,inf_next_33_555,x]
-Exists Post Vars :[v_int_33_523']
-Initial Residual Post : [ true & v_int_33_523'=inf_val_33_554 & res=v_int_33_523' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  true & res=inf_val_33_554 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 3::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_33_554,inf_next_33_555>@L[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_33_557,inf_next_33_558>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 3::
-           true & res=inf_val_33_554 & {FLOW,(20,21)=__norm}
+           true & res=inf_val_33_557 & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd1$node SUCCESS
 Checking procedure hd2$node... 
 Inferred Heap:[]
 Inferred Pure:[ x!=null]
-Pre Vars :[n,x]
-Exists Post Vars :[v_int_46_517']
-Initial Residual Post : [ x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-flted_8_573+1=n & v_int_46_517'=Anon_574 & res=v_int_46_517' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-n=flted_8_573+1 & res=Anon_574 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [x]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
          {FLOW,(20,21)=__norm}
@@ -61,20 +55,14 @@ OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-           n=flted_8_573+1 & res=Anon_574 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_575,q_576>@M[Orig] * q_576::ll<flted_8_574>@M[Orig] &
+           n=flted_8_574+1 & res=Anon_575 & 0<=n & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd2$node SUCCESS
 Checking procedure hd3$node... 
 Inferred Heap:[]
 Inferred Pure:[ n!=0]
-Pre Vars :[x,n]
-Exists Post Vars :[v_int_58_510']
-Initial Residual Post : [ x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-flted_8_593+1=n & v_int_58_510'=Anon_594 & res=v_int_58_510' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-n=flted_8_593+1 & res=Anon_594 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [n]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
          {FLOW,(20,21)=__norm}
@@ -83,15 +71,16 @@ OLD SPECS:  EInfer [n]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & n!=0 &
        {FLOW,(20,21)=__norm}
          EAssume 5::
-           x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-           n=flted_8_593+1 & res=Anon_594 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_593,q_594>@M[Orig] * q_594::ll<flted_8_592>@M[Orig] &
+           n=flted_8_592+1 & res=Anon_593 & 0<=n & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd3$node SUCCESS
 Checking procedure hd4$node... 
-( ) :t2-i.ss:70: 9: bind: node  x'::node<val_70_501',next_70_502'>@L[Orig] cannot be derived from context
+( ) :t2-i.ss:71: 9: bind: node  x'::node<val_71_501',next_71_502'>@L[Orig] cannot be derived from context
 
 
-(Cause of Bind Failure):t2-i.ss:70: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
+(Cause of Bind Failure):t2-i.ss:71: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
 Failed States:
 [
  Label: 
@@ -118,11 +107,12 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
        {FLOW,(20,21)=__norm}
          EAssume 6::
            true & 0<=n & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 73 invocations 
+Stop Omega... 70 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.080004 second(s)
-	Time spent in main process: 0.056003 second(s)
-	Time spent in child processes: 0.024001 second(s)
+Total verification time: 0.25 second(s)
+	Time spent in main process: 0.23 second(s)
+	Time spent in child processes: 0.02 second(s)
