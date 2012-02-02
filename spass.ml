@@ -4,21 +4,39 @@ open Cpure
 
 module StringSet = Set.Make(String)
 
+(* Global settings *)
+let spass_timeout_limit = 15.0
+let prover_process = ref { name = "SPASS";
+                           pid = 0;
+                           inchannel = stdin;
+                           outchannel = stdout;
+                           errchannel = stdin 
+                          }
+
+let log_all_flag = ref false
+let spass_call_count: int ref = ref 0
+let log_file = open_out ("allinput.spass")
+let path_to_spass = "SPASS"
+let prover_name = "SPASS"
+let spass_input_format = "tptp"   (* valid value is: "dfg" or "tptp" *)
+let spass_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
+
+
 (* Pure formula printing function, to be intialized by cprinter module *)
 
 let print_pure = ref (fun (c: Cpure.formula) -> " printing not initialized")
 
 (***************************************************************
-TRANSLATE CPURE FORMULA TO SMT FORMULA
+TRANSLATE CPURE FORMULA TO PROBLEM IN DFG FORMAT
 **************************************************************)
 
-let spass_of_spec_var sv =
+let spass_dfg_of_spec_var sv =
   (Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")
 
-let rec spass_of_exp (e0 : Cpure.exp) : string =
+let rec spass_dfg_of_exp (e0 : Cpure.exp) : string =
   match e0 with
   | Cpure.Null _      -> "NULL"
-  | Cpure.Var (sv, _) -> spass_of_spec_var sv
+  | Cpure.Var (sv, _) -> spass_dfg_of_spec_var sv
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
@@ -43,21 +61,21 @@ let rec spass_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ListReverse _
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support List/Array expresion"
 
-and spass_of_b_formula (bf : Cpure.b_formula) : string =
+and spass_dfg_of_b_formula (bf : Cpure.b_formula) : string =
   match bf with
-  | (pf, _) -> spass_of_p_formula pf
+  | (pf, _) -> spass_dfg_of_p_formula pf
 
-and spass_of_p_formula (pf : Cpure.p_formula) : string =
+and spass_dfg_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
   | BConst (c, _)   -> if c then "true" else "false"
-  | BVar (sv, _)    -> spass_of_spec_var sv
+  | BVar (sv, _)    -> spass_dfg_of_spec_var sv
   | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
   | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
   | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
   | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
   | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
-  | Eq (e1, e2, _)  -> "equal(" ^ (spass_of_exp e1) ^ "," ^ (spass_of_exp e2) ^ ")"
-  | Neq (e1, e2, _) -> "not(equal(" ^ (spass_of_exp e1) ^ "," ^ (spass_of_exp e2) ^ "))"
+  | Eq (e1, e2, _)  -> "equal(" ^ (spass_dfg_of_exp e1) ^ "," ^ (spass_dfg_of_exp e2) ^ ")"
+  | Neq (e1, e2, _) -> "not(equal(" ^ (spass_dfg_of_exp e1) ^ "," ^ (spass_dfg_of_exp e2) ^ "))"
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
   (* bag formulas *)
@@ -73,17 +91,94 @@ and spass_of_p_formula (pf : Cpure.p_formula) : string =
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
 
-and spass_of_formula f =
+and spass_dfg_of_formula f =
   match f with
-  | BForm (b, _)         -> spass_of_b_formula b
-  | And (f1, f2, _)      -> "and(" ^ (spass_of_formula f1) ^ ", " ^ (spass_of_formula f2) ^ ")"
-  | Or (f1, f2, _, _)    -> "or(" ^ (spass_of_formula f1) ^ ", " ^ (spass_of_formula f2) ^ ")"
-  | Not (f, _, _)        -> "not(" ^ (spass_of_formula f) ^ ")"
-  | Forall (sv, f, _, _) -> "forall([" ^ (spass_of_spec_var sv) ^ "]," ^ (spass_of_formula f) ^ ")"
-  | Exists (sv, f, _, _) -> "exists([" ^ (spass_of_spec_var sv) ^ "]," ^ (spass_of_formula f) ^ ")"
+  | BForm (b, _)         -> spass_dfg_of_b_formula b
+  | And (f1, f2, _)      -> "and(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
+  | Or (f1, f2, _, _)    -> "or(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
+  | Not (f, _, _)        -> "not(" ^ (spass_dfg_of_formula f) ^ ")"
+  | Forall (sv, f, _, _) -> "forall([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
+  | Exists (sv, f, _, _) -> "exists([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
 
-let spass_of_formula f =
-  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_of_formula f
+let spass_dfg_of_formula f =
+  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_dfg_of_formula f
+
+(***************************************************************
+TRANSLATE CPURE FORMULA TO PROBLEM IN TPTP FORMAT
+**************************************************************)
+
+let spass_tptp_of_spec_var sv =
+  (Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")
+
+let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
+  match e0 with
+  | Cpure.Null _      -> "ssNULL"
+  | Cpure.Var (sv, _) -> spass_tptp_of_spec_var sv
+  | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
+  | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
+  | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+  | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
+  | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
+  | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
+  | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
+  | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
+    (* bag expressions *)
+  | Cpure.Bag _
+  | Cpure.BagUnion _
+  | Cpure.BagIntersect _
+  | Cpure.BagDiff _    -> illegal_format "SPASS don't support Bag expresion"
+  (* list expressions *)
+  | Cpure.List _
+  | Cpure.ListCons _
+  | Cpure.ListHead _
+  | Cpure.ListTail _
+  | Cpure.ListLength _
+  | Cpure.ListAppend _
+  | Cpure.ListReverse _
+  | Cpure.ArrayAt _    -> illegal_format "SPASS don't support List/Array expresion"
+
+and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
+  match bf with
+  | (pf, _) -> spass_tptp_of_p_formula pf
+
+and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
+  match pf with
+  | BConst (c, _)   -> if c then "$true" else "$false"
+  | BVar (sv, _)    -> spass_tptp_of_spec_var sv
+  | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
+  | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
+  | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
+  | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
+  | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
+  | Eq (e1, e2, _)  -> "(" ^ (spass_tptp_of_exp e1) ^ " = " ^ (spass_tptp_of_exp e2) ^ ")"
+  | Neq (e1, e2, _) -> "(" ^ (spass_tptp_of_exp e1) ^ " != " ^ (spass_tptp_of_exp e2) ^ ")"
+  | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
+  | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
+  (* bag formulas *)
+  | BagIn _
+  | BagNotIn _
+  | BagSub _
+  | BagMin _
+  | BagMax _        -> illegal_format "SPASS don't support Bag p_formula"
+  (* list formulas *)
+  | ListIn _
+  | ListNotIn _
+  | ListAllN _
+  | ListPerm _
+  | RelForm _       -> illegal_format "SPASS don't support List p_formula"
+
+and spass_tptp_of_formula f =
+  match f with
+  | BForm (b, _)         -> spass_tptp_of_b_formula b
+  | And (f1, f2, _)      -> "(" ^ (spass_tptp_of_formula f1) ^ " & " ^ (spass_tptp_of_formula f2) ^ ")"
+  | Or (f1, f2, _, _)    -> "(" ^ (spass_tptp_of_formula f1) ^ " | " ^ (spass_tptp_of_formula f2) ^ ")"
+  | Not (f, _, _)        -> "~ " ^ (spass_tptp_of_formula f)
+  | Forall (sv, f, _, _) -> "( ! [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
+  | Exists (sv, f, _, _) -> "( ? [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
+
+let spass_tptp_of_formula f =
+  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_tptp_of_formula f
 
 (*************************************************************)
 (* Check whether spass can handle the expression, formula... *)
@@ -224,39 +319,38 @@ let remove_file filename =
   try Sys.remove filename;
   with e -> ignore e
 
-(* Global settings *)
-let spass_timeout_limit = 15.0
-let prover_process = ref { name = "SPASS";
-                           pid = 0;
-                           inchannel = stdin;
-                           outchannel = stdout;
-                           errchannel = stdin 
-                          }
-
-(***********)
-let log_all_flag = ref false
-
-let log_file = open_out ("allinput.spass")
-let path_to_spass = "SPASS"
-let prover_name = "SPASS"
 
 let set_process (proc: Globals.prover_process_t) =
   prover_process := proc
 
+let stop () =
+  print_string ("Stop SPASS... "^(string_of_int !spass_call_count)^" invocations "); 
+  flush stdout
+
+
 (* Runs the specified prover and returns output *)
-let check_problem (input: string) (timeout: float) : prover_output_t =
+let check_problem_through_file (input: string) (timeout: float) : prover_output_t =
   (* debug *)
   (* let _ = print_endline "** In function Spass.check_problem" in *)
   let file_suffix = Random.int 1000000 in
   let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".spass" in
-  let _ = print_endline ("-- input: \n" ^ input) in 
+  (* let _ = print_endline ("-- input: \n" ^ input) in *) 
   let out_stream = open_out infile in
   output_string out_stream input;
   close_out out_stream;
   let set_process proc = prover_process := proc in
   let fnc () =
-    let _ = Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; infile|]) set_process (fun () -> ()) in
-    get_answer !prover_process.inchannel input in
+    if (spass_input_format = "dfg") then (
+      Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; infile|]) set_process (fun () -> ());
+      spass_call_count := !spass_call_count + 1;
+      get_answer !prover_process.inchannel input
+    )
+    else if (spass_input_format = "tptp") then (
+      Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; "-TPTP"; "-DocProof=0"; "-PProblem=0"; "-PStatistic=0"; infile|]) set_process (fun () -> ());
+      spass_call_count := !spass_call_count + 1;
+      get_answer !prover_process.inchannel input
+    )
+    else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
   let res =
     try
       Procutils.PrvComms.maybe_raise_timeout fnc () timeout
@@ -269,6 +363,41 @@ let check_problem (input: string) (timeout: float) : prover_output_t =
     ) in
   let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   remove_file infile;
+  res
+
+(* Runs the specified prover and returns output *)
+let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
+  (* debug *)
+  (* let _ = print_endline "** In function Spass.check_problem" in *)
+  (* let _ = print_endline ("  -- input: \n" ^ input) in *)
+  let set_process proc = prover_process := proc in
+  let fnc () =
+    if (spass_input_format = "dfg") then (
+      Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; "-Stdin=1"|]) set_process (fun () -> ());
+      output_string !prover_process.outchannel (input ^ "\n");
+      flush (!prover_process.outchannel);
+      spass_call_count := !spass_call_count + 1;
+      get_answer !prover_process.inchannel input
+    )
+    else if (spass_input_format = "tptp") then (
+      Procutils.PrvComms.start false stdout (prover_name, path_to_spass, [|path_to_spass; "-TPTP"; "-DocProof=0"; "-PProblem=0"; "-PStatistic=0"; "-Stdin=1"|]) set_process (fun () -> ());
+      output_string !prover_process.outchannel (input ^ "\n");
+      flush (!prover_process.outchannel);
+      spass_call_count := !spass_call_count + 1;
+      get_answer !prover_process.inchannel input
+    )
+    else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
+  let res =
+    try
+      Procutils.PrvComms.maybe_raise_timeout fnc () timeout
+    with _ -> ((* exception : return the safe result to ensure soundness *)
+      Printexc.print_backtrace stdout;
+      print_endline ("WARNING: Restarting prover due to timeout");
+      Unix.kill !prover_process.pid 9;
+      ignore (Unix.waitpid [] !prover_process.pid);
+      { original_output_text = []; validity_result = Aborted; }
+    ) in
+  let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   res
 
 (* prelulde is used to log the input file of the prover *)
@@ -298,7 +427,7 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "end_of_list.\n\n") in
   let dfg_symbols =
     let create_constant (fvar : Cpure.spec_var) =
-      "(" ^ (spass_of_spec_var fvar) ^ ", 0)" in
+      "(" ^ (spass_dfg_of_spec_var fvar) ^ ", 0)" in
     let constants_list = List.map create_constant fvars in
     let constants_list = constants_list @ ["(NULL, 0)"] in
     let dfg_constants = String.concat ", " constants_list in
@@ -306,13 +435,13 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "  functions[" ^ dfg_constants ^ "].\n"
       ^ "end_of_list.\n\n") in
   let dfg_formulae_axioms =
-    let ante_str = spass_of_formula ante in
+    let ante_str = spass_dfg_of_formula ante in
     let axiom_label = "axiom1" in
     ( "list_of_formulae(axioms).\n"
       ^ "  formula(" ^ ante_str ^ ", " ^ axiom_label ^ ").\n"
       ^ "end_of_list.\n\n") in
   let dfg_formulae_conjectures =
-    let conseq_str = spass_of_formula conseq in
+    let conseq_str = spass_dfg_of_formula conseq in
     let conseq_label = "conjecture1" in
     ( "list_of_formulae(conjectures).\n"
       ^ "  formula(" ^ conseq_str ^ ", " ^ conseq_label ^ ").\n"
@@ -335,6 +464,12 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "end_problem.") in
   result
 
+let to_spass_tptp (ante: Cpure.formula) (conseq: Cpure.formula) : string =
+  let fof_ante = "fof(ante, axiom, (" ^ (spass_tptp_of_formula ante) ^ ") ).\n" in
+  let fof_conseq = "fof(conseq, conjecture, (" ^ (spass_tptp_of_formula conseq) ^ ") ).\n" in
+  let result = fof_ante ^ "\n" ^ fof_conseq in
+  result
+
 let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
   (* let _ = print_endline "** In function to_spass:" in *)
@@ -343,11 +478,24 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
     | None   -> Cpure.mkFalse no_pos
     | Some f -> f
   in
-  let ante_fv = Cpure.fv ante in
-  let conseq_fv = Cpure.fv conseq in
-  let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
-  let res = to_spass_dfg ante conseq all_fv in
-  (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ res) in *)
+  let res = 
+    if (spass_input_format = "dfg") then (
+	    (* if sending problem in DFG format to SPASS *)
+	    let ante_fv = Cpure.fv ante in
+	    let conseq_fv = Cpure.fv conseq in
+	    let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
+	    let dfg_res = to_spass_dfg ante conseq all_fv
+      (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
+      in dfg_res
+    ) 
+    else if (spass_input_format = "tptp") then (
+      (* if sending problem in TPTP format to SPASS *)
+      let tptp_res = to_spass_tptp ante conseq in
+      (* let _ = print_endline ("-- Input problem in TPTP format:\n" ^ tptp_res) in *)
+      tptp_res
+    ) 
+    else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
+
   (* use for debug: print formula in Omega format *)
   (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
   let omega_ante = Omega.omega_of_formula ante in
@@ -407,7 +555,12 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem" in *)
     let spass_input = to_spass ante (Some conseq) in
-    let validity = check_problem spass_input timeout in
+    let validity =
+      if (spass_input_mode = "file") then
+        check_problem_through_file spass_input timeout
+      else if (spass_input_mode = "stdin") then
+        check_problem_through_stdin spass_input timeout
+      else illegal_format "[spass.ml] The value of spass_input_mode is invalid!" in
     (* let prover_output = String.concat "\n" output.original_output_text in *)
     (* debug let _ = print_endline ("** prover output:" ^              *)
     (* prover_output) in                                               *)
@@ -470,13 +623,19 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)
-      with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in exception case? It should return UNKNOWN *)
+      with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem..." in *)
     (* to check sat of f, spass check the validity of negative(f) or (f => None) *)
     let spass_input = to_spass f None in
-    let validity = check_problem spass_input timeout in
+    let validity =
+      if (spass_input_mode = "file") then
+        check_problem_through_file spass_input timeout
+      else if (spass_input_mode = "stdin") then
+        check_problem_through_stdin spass_input timeout
+      else illegal_format "[spass.ml] The value of spass_input_mode is invalid!" in
+    (* let validity = check_problem_through_file spass_input timeout in *)
     let res =
       match validity.validity_result with
       | Invalid -> true      (* if neg(f) invalid ==> f sat *) 
