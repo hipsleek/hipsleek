@@ -1,0 +1,18 @@
+B:={[n,a] -> [res] -> []: (((a=1 && 1+res=n) && 2<=n) || exists(v_int_14_539,v_int_14_540,v_int_14_544:(((((1<=v_int_14_540 || v_int_14_540<=-1) 
+#&& v_int_14_539>=2 # inferred pre for recursive call
+&& B(v_int_14_539,v_int_14_540,v_int_14_544)) && -1+res=v_int_14_544) && -1+a=v_int_14_540) && -1+n=v_int_14_539) && 0<=v_int_14_539))
+};
+
+# place res as output
+# make existential vars ..
+
+Fix1:=bottomup(B,1,SimHeur);
+Fix1;
+Fix2:=topdown(B,2,SimHeur);
+Fix2;
+
+# result of Fix2
+# ((RECn >= 0 && n >= 1 + RECn) && n + RECa = a + RECn)
+
+# result of Fix2 with 2 disjs (need to use this!)
+# ((((RECn >= 0 && n >= 1 + RECn) && RECn + a >= 1 + n) && RECn + a = RECa + n) || (((RECn >= 0 && n >= 1 + RECn) && 0 >= a) && RECn + a = RECa + n))

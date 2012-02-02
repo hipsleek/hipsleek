@@ -19,7 +19,7 @@ module IF = Iformula
 module IP = Ipure
 module LP = Lemproving
 module AS = Astsimp
-
+module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
 
@@ -37,9 +37,12 @@ let iobj_def = { I.data_name = "Object";
 
 let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_global_var_decls = [];
+			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
+        I.prog_func_decls = [];
         I.prog_rel_decls = [];
+        I.prog_rel_ids = [];
         I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
@@ -54,9 +57,12 @@ let cobj_def = { C.data_name = "Object";
 
 let cprog = ref { C.prog_data_decls = [];
 			  C.prog_view_decls = [];
+			  C.prog_logical_vars = [];
+(*				C.prog_func_decls = [];*)
 				C.prog_rel_decls = []; (* An Hoa *)
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-			  C.prog_proc_decls = [];
+			  (*C.old_proc_decls = [];*)
+			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
@@ -101,7 +107,14 @@ let check_data_pred_name name : bool =
 			  		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
 						false
 					with
-			  		| Not_found -> true
+			  		| Not_found -> 
+              begin
+					      try
+			        		let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
+						      false
+					      with
+			        		| Not_found -> true
+		        	end
 		  	end
 	  end
 
@@ -217,6 +230,19 @@ let convert_pred_to_cast () =
 
 let convert_pred_to_cast () = 
   Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+
+(* TODO: *)
+let process_func_def fdef =
+  if check_data_pred_name fdef.I.func_name then
+	let tmp = iprog.I.prog_func_decls in
+	  try
+			iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
+			(*let cfdef = AS.trans_func iprog fdef in !cprog.C.prog_func_decls <- (cfdef :: !cprog.C.prog_func_decls);*)
+			(*Smtsolver.add_function cfdef.C.func_name cfdef.C.func_vars cfdef.C.func_formula;*)
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
+  else
+		print_string (fdef.I.func_name ^ " is already defined.\n")
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
@@ -492,7 +518,11 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
-  let ctx = Inf.init_vars ctx vars orig_vars in
+  let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT(*  ||  *)
+              (* CP.type_of_spec_var v == FuncT *)) vars in
+  (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+  (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
+  let ctx = Inf.init_vars ctx iv vrel orig_vars in
 
   let _ = if !Globals.print_core 
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -534,6 +564,14 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  (* Termination: SLEEK result printing *)
+  let term_res = CF.collect_term_ann_and_msg_list_context residue in
+  let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
+  let (_, term_output) = List.fold_left (fun (no,a) (b,m) ->
+    if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
+    else (no+1, a)) (1,"") term_res 
+  in
   if not valid then
     begin
       let s =
@@ -547,7 +585,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
         (*should check bot with is_bot_status*)
         else ""
       in
-      print_string (num_id^": Fail."^s^"\n")
+      print_string (num_id^": Fail."^s^"\n"^term_output^"\n");
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
@@ -560,33 +598,22 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
             | false -> (*expect normal (OK) here*) ""
         else ""
         in
-        print_string (num_id^": Valid. "^s^"\n")
+        if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
+        else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n")
         (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
     end
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
-let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
-  let _ = print_entail_result valid residue num_id in
-  let rs = residue in
-  if (valid && Inf.is_inferred_pre_list_context rs) then
-    begin
-      let lh = Inf.collect_pre_heap_list_context rs in
-      let lp = Inf.collect_pre_pure_list_context rs in
-      print_endline ("Inferred Heap:"^(pr_list Cprinter.string_of_h_formula lh));    
-      print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
-    end
-    (* let pr = Inf.extract_pre_list_context residue in *)
-    (* match pr with *)
-    (*   | None -> () (\* No precondition inferred *\) *)
-    (*   | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f)) *)
-     
+let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let pr = !CF.print_list_context in
+  DD.no_1 "print_entail_result" pr (fun _ -> "") 
+    (fun _ -> print_entail_result valid residue num_id) residue
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
   print_string ("exception in " ^ check_id ^ " check\n")
-
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try 
@@ -598,7 +625,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result_with_pre valid rs num_id
+    print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =

@@ -1102,6 +1102,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
 		  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
+    | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
 	| ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (String.concat "," (List.map get_head i)) ^ "]" (* An Hoa *)    
   in
   
@@ -1126,7 +1127,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	      (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | AConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
-	| ArrayAt _ -> ([e],[]) (* An Hoa *) in
+	| ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
     | Null _ | Var _ | IConst _ | FConst _ | AConst _ -> e
@@ -1151,6 +1152,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListLength (e,l)-> ListLength(norm_expr e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_expr e), l)    
     | ListReverse (e,l)-> ListReverse(norm_expr e, l)
+    | Func (a,i,l) -> Func (a, List.map norm_expr i, l)
 	| ArrayAt (a,i,l) -> ArrayAt (a, List.map norm_expr i, l) (* An Hoa *)
 	      
   and cons_lsts (e:exp) (disc:int) cons1 cons2 (nel:exp) : exp=     
@@ -1434,12 +1436,14 @@ let elim_redundant impl (f:memo_pure): memo_pure =
     r)
   else f
   
-let elim_redundant_debug impl (f:memo_pure) : memo_pure  = 
-  let r1,r2 = elim_redundant_aux impl f in
-  print_string ("eliminate_redundant input: "^(!print_mp_f f)^"\n");
-  print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n");
-  print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n");
-  r1
+let elim_redundant impl (f:memo_pure) : memo_pure  =
+  let pr = !print_mp_f in
+  Debug.no_1 "elim_redundant" pr pr (fun _ -> elim_redundant impl f) f
+  (* let r1,r2 = elim_redundant_aux impl f in *)
+  (* print_string ("eliminate_redundant input: "^(!print_mp_f f)^"\n"); *)
+  (* print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n"); *)
+  (* print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n"); *)
+  (* r1 *)
 
 (* wrapper for fast_imply*)
 let rec fast_memo_imply (g:memoised_group) (f:b_formula):int =
@@ -1795,6 +1799,8 @@ let pure_of_mix f = match f with
   | MemoF f -> fold_mem_lst (mkTrue no_pos) false true f 
   
 let mkMFalse_no_mix = mkMFalse
+
+let mkMTrue_no_mix = mkMTrue
   
 let mkMTrue pos = 
     if (!Globals.allow_pred_spec or !Globals.do_slicing) then  MemoF (mkMTrue pos)
@@ -1865,9 +1871,10 @@ let merge_mems_debug f1 f2 slice_dup =
   | MemoF f -> MemoF (replace_memo_pure_label lb f)
   | OnePF f -> OnePF (replace_pure_formula_label lb f)
 	
-let transform_mix_formula f_p_t f = match f with
-  | MemoF f -> MemoF (transform_memo_formula f_p_t f)
-  | OnePF f -> OnePF (transform_formula f_p_t f)
+let transform_mix_formula f_p_t f = 
+  match f with
+    | MemoF f -> MemoF (transform_memo_formula f_p_t f)
+    | OnePF f -> OnePF (transform_formula f_p_t f)
 	
 let memo_pure_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
@@ -1918,6 +1925,8 @@ let fold_mem_lst init_f with_dupl with_inv f =
 	!print_p_f_f !print_mix_f !print_p_f_f
 	(fun _ _ -> fold_mem_lst init_f with_dupl with_inv f) init_f f
 *)
+let memoise_add_pure_N_m = memoise_add_pure_N
+
 let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
   | MemoF f -> MemoF (memoise_add_pure_N f pf)
   | OnePF f -> OnePF (mkAnd f pf no_pos)
@@ -2023,7 +2032,25 @@ let drop_triv_grps f = match f with
 let drop_pf f = match f with
   | MemoF f -> f
   | OnePF _ -> []
-    
+
+let memo_group_drop_rel f =
+  let mc = f.memo_group_cons in
+  let ms = f.memo_group_slice in
+  let mc = List.filter (fun bf -> match bf.memo_formula with (RelForm _,_) -> false | _ -> true) mc in
+  let ms = List.map (Cpure.drop_rel_formula) ms in
+  { f with memo_group_cons = mc; memo_group_slice = ms}
+
+(* drop unknown rel constraint from f *)
+let memo_drop_rel f = List.map (memo_group_drop_rel) f
+
+let memo_drop_rel f =
+  let pr = !print_mp_f in
+  Debug.no_1 "memo_drop_rel" pr pr memo_drop_rel f
+
+let mix_drop_rel f = match f with
+  | MemoF f -> MemoF (memo_drop_rel f)
+  | OnePF f -> OnePF (drop_rel_formula f)
+
 let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula * 'b) = 
   let mf,pf = f in
   let ma,pa = f_arg in

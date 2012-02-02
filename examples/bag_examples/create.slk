@@ -20,15 +20,14 @@ pred lseg<p, n, S> == self=p & n=0 & S={}
 //checkentail x::node<17,null> |- x::ll<n,S> & forall (b : (b notin S | b=17)). 
 
 // Valid
-// checkentail x::node<2,y>*y::ll<m,S1> & forall (b1 : (b1 notin S1 | b1=2)) |- x::ll<n,S> & forall (b : (b notin S | b=2)). 
+checkentail x::node<2,y>*y::ll<m,S1> & forall (b1 : (b1 notin S1 | b1=2)) |- x::ll<n,S> & forall (b : (b notin S | b=2)). 
 
 // VALID
 // checkentail x::node<7,p> |- x::lseg<p,n,S> & forall (b : (b notin S | b=7)). 
 
-checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false. 
+//checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false. 
 
-checkentail true & forall (b : (b in union(S,{v}) | b=7)) 
-|- false.
+//checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false.
 
 //print residue.
 

@@ -1,7 +1,7 @@
 
 Processing file "ll-a2.ss"
 Parsing ll-a2.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -17,13 +17,14 @@ OLD SPECS:  EInfer [n1]
 NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] * 
        y::ll<n2>@M[Orig][LHSCase] & n1!=0 & {FLOW,(20,21)=__norm}
          EAssume 1::
-           EXISTS(m_591: x::ll<m_591>@M[Orig][LHSCase] & m_591=n2+n1 & 
+           EXISTS(m_587: x::ll<m_587>@M[Orig][LHSCase] & m_587=n2+n1 & 
            0<=n1 & 0<=n2 & {FLOW,(20,21)=__norm})
+NEW RELS: []
 
 Procedure append2$node~node SUCCESS
-Stop Omega... 76 invocations 
+Stop Omega... 80 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.108005 second(s)
-	Time spent in main process: 0.076004 second(s)
-	Time spent in child processes: 0.032001 second(s)
+Total verification time: 0.36 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.02 second(s)

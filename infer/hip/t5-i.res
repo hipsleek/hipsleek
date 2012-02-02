@@ -1,72 +1,71 @@
 
 Processing file "t5-i.ss"
 Parsing t5-i.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
 Checking procedure hd$node... 
-Inferred Heap:[ x::node<inf_val_16_510,inf_next_16_511>@L[Orig]]
-Inferred Pure:[]
-Pre Vars :[inf_val_16_510,inf_next_16_511,x]
-Exists Post Vars :[v_int_16_499']
-Initial Residual Post : [ true & v_int_16_499'=inf_val_16_510 & res=v_int_16_499' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  true & res=inf_val_16_510 & {FLOW,(20,21)=__norm}
+Inferred Heap:[]
+Inferred Pure:[ x!=null]
 OLD SPECS:  EInfer [x]
-   EBase true & true & {FLOW,(20,21)=__norm}
+   EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
+         {FLOW,(20,21)=__norm}
            EAssume 1::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_16_510,inf_next_16_511>@L[Orig] & true &
+NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null &
        {FLOW,(20,21)=__norm}
          EAssume 1::
-           true & res=inf_val_16_510 & {FLOW,(20,21)=__norm}
+           x::node<Anon_535,q_536>@M[Orig] * q_536::ll<flted_7_534>@M[Orig] &
+           n=flted_7_534+1 & res=Anon_535 & 0<=n & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hd$node SUCCESS
-Checking procedure tl$node... 
-Inferred Heap:[ x::node<inf_val_33_516,inf_next_33_517>@L[Orig]]
+Checking procedure tl$node... infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_541,inf_val_38_542,inf_next_38_543,x]
+
+Inferred Heap:[ x::node<inf_val_38_542,inf_next_38_543>@inf_ann_541[Orig]]
 Inferred Pure:[]
-Pre Vars :[inf_val_33_516,inf_next_33_517,x]
-Exists Post Vars :[t_22',v_node_34_489']
-Initial Residual Post : [ true & t_22'=inf_next_33_517 & v_node_34_489'=t_22' & res=v_node_34_489' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  true & res=inf_next_33_517 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 4::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_33_516,inf_next_33_517>@L[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_38_542,inf_next_38_543>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           true & res=inf_next_33_517 & {FLOW,(20,21)=__norm}
+           true & res=inf_next_38_543 & {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure tl$node SUCCESS
-Checking procedure hdtl$node... 
-Inferred Heap:[ x::node<inf_inf_val_33_525,inf_inf_next_33_526>@L[Orig], inf_inf_next_33_526::node<inf_inf_val_16_533,inf_inf_next_16_534>@L[Orig]]
-Inferred Pure:[]
-Pre Vars :[inf_inf_val_16_533,inf_inf_next_16_534,inf_inf_val_33_525,inf_inf_next_33_526,x]
-Exists Post Vars :[inf_val_33_522,inf_next_33_517,inf_next_16_530,inf_val_16_510,v_int_25_493']
-Initial Residual Post : [ true & inf_val_33_522=inf_inf_val_33_525 & 
-inf_next_33_517=inf_inf_next_33_526 & x'=inf_next_33_517 & 
-inf_val_16_510=inf_inf_val_16_533 & inf_next_16_530=inf_inf_next_16_534 & 
-v_int_25_493'=inf_val_16_510 & res=v_int_25_493' & {FLOW,(20,21)=__norm}]
-Final Residual Post :  true & x'=inf_inf_next_33_526 & res=inf_inf_val_16_533 &
-{FLOW,(20,21)=__norm}
+Checking procedure hdtl$node... infer_heap_nodes
+infer var: [x]
+new infer var: [inf_ann_551,inf_inf_val_38_552,inf_inf_next_38_553,x]
+infer_heap_nodes
+infer var: [inf_ann_551,inf_inf_val_38_552,inf_inf_next_38_553,x]
+new infer var: [inf_ann_558,inf_n_559,inf_ann_551,inf_inf_val_38_552,inf_inf_next_38_553,x]
+
+Inferred Heap:[ x::node<inf_inf_val_38_552,inf_inf_next_38_553>@inf_ann_551[Orig], inf_inf_next_38_553::ll<inf_n_559>@inf_ann_558[Orig][LHSCase]]
+Inferred Pure:[ inf_ann_558<=0 & x!=null, inf_inf_next_38_553!=null]
 OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 2::ref [x]
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_inf_val_33_525,inf_inf_next_33_526>@L[Orig] * 
-       inf_inf_next_33_526::node<inf_inf_val_16_533,inf_inf_next_16_534>@L[Orig] &
-       true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase x::node<inf_inf_val_38_552,inf_inf_next_38_553>@L[Orig] * 
+       inf_inf_next_38_553::ll<inf_n_559>@L[Orig][LHSCase] &
+       inf_inf_next_38_553!=null & {FLOW,(20,21)=__norm}
          EAssume 2::ref [x]
-           true & x'=inf_inf_next_33_526 & res=inf_inf_val_16_533 &
+           x'::node<Anon_535,q_536>@M[Orig] * 
+           q_536::ll<flted_7_534>@M[Orig] & inf_ann_558<=0 & 
+           inf_inf_next_38_553=x' & flted_7_534=inf_n_559 - 1 & 
+           res=Anon_535 & x!=null & x'!=null & 0<=inf_n_559 & 0<=inf_n_559 &
            {FLOW,(20,21)=__norm}
+NEW RELS: []
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 47 invocations 
+Stop Omega... 91 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.072003 second(s)
-	Time spent in main process: 0.048002 second(s)
-	Time spent in child processes: 0.024001 second(s)
+Total verification time: 0.24 second(s)
+	Time spent in main process: 0.22 second(s)
+	Time spent in child processes: 0.02 second(s)

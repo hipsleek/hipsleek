@@ -1,0 +1,19 @@
+A:={[p1,p2,p3]: p2=p1 | (1+p1)<=p2};
+B:={[p1,p2,p3]: (1+p2)<=p3};
+C:={[0,0,1]: 1=1};
+C subset A;
+C subset B;
+
+D:={[x,y]: 1<=x & (1+y)<=(2*x) & (1+x)<=y & (1+x)<=(2*y) & (1+y)<=x & 1<=y};
+D;
+E:={[x,y]: x>0 & y>0};
+D subset E;
+E subset D;
+
+F:={[x,y]: (1+y)<=x & 1<=y & (1+x)<=y & 1<=x};
+F;
+F subset E;
+E subset F;
+
+
+
