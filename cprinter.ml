@@ -196,7 +196,7 @@ let pr_op_sep_gen sep op =
   else fmt_string op (* assume sep="" *)
 
 (** print op and a break after *)
-let pr_cut_after op = pr_op_sep_gen "SA" op
+let pr_cut_after op = pr_op_sep_gen "A" op
   (* fmt_string (" "^op); fmt_space()  *)
 
   (** print op and a break after *)
