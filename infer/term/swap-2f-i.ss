@@ -8,7 +8,7 @@ relation ans(int x,int y, int res).
 relation ans2(int x,int y, int res).
 
 int swap (int x, int y)
- infer[r1,r2,r3]
+  infer[r1,r2,r3,ans,ans2]
  case {
   x=0 -> requires Term[] ensures res=y;
   x<0 -> 

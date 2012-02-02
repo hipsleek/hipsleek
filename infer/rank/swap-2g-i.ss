@@ -14,18 +14,19 @@ relation ans3(int x, int y, int z).
 int swap (int x, int y)
   infer @pre [r1,r2,r3,ans1,ans2,ans3,b1,b2,b3]
  case {
-  x=0 -> requires Term[] ensures b1(x,y,res); /* res=y */
+  x=0 -> requires Term[] ensures res=y;
   x<0 -> 
    case {
     y<0 -> requires Loop[] ensures false;
-    y=0 -> requires Term[] ensures b2(x,y,res) ; /* res=y */
-    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures ans1(x,y,res); /* res=x-(y+1) */
+    y=0 -> requires Term[] ensures res=x-1;
+    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures res=x-(y+1);
     }
    x>0 ->
      case {
-     y<0 -> requires Term[r2(x,y) /* 2*x */] ensures ans2(x,y,res); /* res=y-x */
-     y=0 -> requires Term[] ensures b3(x,y,res); /* res=x-1 */
-     y>0 -> requires Term[r3(x,y) /* x+y */] ensures ans3(x,y,res); /* x+y */
+     y<0 -> requires Term[r2(x,y) /* 2*x */] ensures res=y-x ;
+     y=0 -> requires Term[] ensures res=x-1;
+     y>0 -> requires Term[r3(x,y) /* x+y */] 
+            ensures x>y & res=x-y-1 | x<=y & res=y-x;
   }
  }
 {
@@ -36,6 +37,10 @@ int swap (int x, int y)
 }
 
 /*
+swap(1,y)->(y,1-1)->(0,y-1)
+swap(x,1)->(1,x-1)->(x-1,0)->(0,x-2)
+swap(1,1)->(1,0)->(0,0)
+
 FIXPOINT computation may be delayed?
 
 BOUNDED
