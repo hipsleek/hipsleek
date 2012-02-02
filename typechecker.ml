@@ -1239,7 +1239,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
-                    (*let _ = Ranking.do_nothing in*)
+                    let lst_input = List.filter (fun (lhs,rhs) -> CP.is_Rank_Dec rhs) lst_rank in
+                    let _ = List.iter (fun (lhs,rhs) -> match rhs with
+                          | CP.BForm (bf,_) ->
+                            (match bf with
+                            | (CP.Gt (CP.Func (_,args1,_), CP.Func (_,args2,_),_),_)
+                            | (CP.Lt (CP.Func (_,args1,_), CP.Func (_,args2,_),_),_) -> let _ = Rank.compute_rel (List.hd args1) (List.hd args2) lhs in ()
+                            | _ -> ())
+                          | _ -> ()) lst_input in
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
                     if (pre_ctr # get> 0) 
                     then
