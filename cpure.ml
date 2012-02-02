@@ -933,6 +933,8 @@ and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
+and mkRel_sv n = SpecVar (RelT, n, Unprimed)
+
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
