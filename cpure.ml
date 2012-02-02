@@ -6787,6 +6787,14 @@ let is_eq_fml (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_const (f:formula) vars = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (sv,_), IConst _, _),_)
+    | (Eq (IConst _, Var (sv,_), _),_) -> mem sv vars
+    | _ -> false)
+  | _ -> false
+
 let get_rank_dec_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
