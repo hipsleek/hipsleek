@@ -22,6 +22,7 @@ module AS = Astsimp
 module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
+module IS = Infers
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -211,7 +212,7 @@ let process_pred_def_4_iast pdef =
   Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
 
 
-let convert_pred_to_cast () = 
+let convert_pred_to_cast () =
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
@@ -475,7 +476,101 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 (*   in *)
 (*   (res, rs) *)
 
-let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let rec simp_entail ante conseq prog=
+  let pr_f = !CF.print_formula in
+   Debug.no_1 "simp_entail" (add_str "ante " pr_f) (pr_list pr_f)
+       (fun _ ->simp_entail_x ante conseq prog) ante
+
+and simp_entail_x ante conseq prog:(CF.formula list)=
+  let h_f, mf,_,_,_ = CF.split_components ante in
+  let p = Mcpure.pure_of_mix mf in
+  let psv= CP.fv p in
+  let _ = DD.trace_hprint (add_str "used args in pure: " (pr_list (Cprinter.string_of_spec_var))) psv no_pos in
+  let antes =
+    (match h_f with
+      | CF.DataNode h_d ->
+          let _ = DD.devel_pprint  "heap: Data" no_pos in
+           let _ = DD.trace_hprint (add_str "all args: " (pr_list (Cprinter.string_of_spec_var))) h_d.CF.h_formula_data_arguments no_pos in [ante]
+           (* h_d.CF.h_formula_data_arguments *)
+      | CF.Conj _ ->
+           let _ = DD.trace_hprint (add_str "heap: " (fun s -> s)) "Conj" no_pos in
+           [ante]
+      | CF.ViewNode hv ->
+          let _ = DD.devel_pprint  "heap: View" no_pos in
+          let _ = DD.trace_hprint (add_str "all args: " (pr_list (Cprinter.string_of_spec_var))) hv.CF.h_formula_view_arguments no_pos in
+          let upsv = hv.CF.h_formula_view_arguments in
+          let npsv = List.filter (fun x -> not(List.mem x psv)) upsv in
+          let inuse_psv = (hv.CF.h_formula_view_node::(List.filter (fun x -> (List.mem x psv)) upsv)) in
+          let _ = DD.trace_hprint (add_str "unsued: " (pr_list (Cprinter.string_of_spec_var))) npsv no_pos in
+          let _ = DD.trace_hprint (add_str "insued: " (pr_list (Cprinter.string_of_spec_var))) inuse_psv no_pos in
+         let _ = DD.trace_hprint (add_str "pred: " (fun s -> s)) hv.CF.h_formula_view_name no_pos in
+         (*easier case:
+           - lookup all others preds. for each pred pp
+           - check consistent args num. generate a weakennning lemma pred -> pp
+           - prove lemma. if successs, use pp for simplifying the entailment
+           - until entailment succeeds or no more pred => synthesize one as simp_view_decl
+         *)
+          let view_def = C.look_up_view_def_raw prog.C.prog_view_decls hv.CF.h_formula_view_name in
+          let cand_vdfs = IS.look_up_simpler_view prog.C.prog_view_decls view_def prog.C.prog_left_coercions (List.length npsv) in
+          (*sub ante*)
+          let antes = List.map (IS.subs_entailcheck ante conseq view_def.C.view_name inuse_psv) cand_vdfs in
+          antes
+      (* hv.CF.h_formula_view_arguments *)
+      | _ -> let _ = DD.trace_hprint (add_str "heap: " (fun s -> s)) "Others" no_pos in
+             [ante]
+    )
+  in antes
+
+let rec run_infer_one_pass_helper_x (ivars: ident list) ante conseq=
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n")) no_pos in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  (* List of vars appearing in original formula *)
+  let orig_vars = CF.fv ante @ CF.struc_fv conseq in
+  (* List of vars needed for abduction process *)
+  let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
+  (* Init context with infer_vars and orig_vars *)
+  let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT(*  ||  *)
+              (* CP.type_of_spec_var v == FuncT *)) vars in
+  (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+  (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
+  let ctx = Inf.init_vars ctx iv vrel orig_vars in
+
+  let _ = if !Globals.print_core 
+    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
+        ^" "^(pr_list pr_id ivars)
+      ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
+    else () 
+  in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+  let rs1, _ =
+    if not !Globals.disable_failure_explaining then
+      Solver.heap_entail_struc_init_bug_inv !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+    else
+      Solver.heap_entail_struc_init !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+  in
+  (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
+  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+  residues := Some rs;
+  flush stdout;
+  let res =
+    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    else ((not (CF.isFailCtx rs))) in 
+  (res, rs)
+
+and run_infer_one_pass_helper (ivars: ident list) ante conseq=
+  let pr_f = !CF.print_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Debug.no_1 "run_infer_one_pass_helper" pr_f pr_2
+      (fun _ -> run_infer_one_pass_helper_x ivars ante conseq) ante
+
+and run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in
@@ -507,6 +602,57 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^"\n\n")) no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+
+  let antes = simp_entail ante conseq !cprog in
+  let antes =
+    if List.length antes = 0 then [ante] else antes
+  in
+  (*call check entailment for each until either end up or success*)
+  let rec helper antes conseq rs=
+    (match antes with
+      | [] -> (List.hd rs)
+      | a::ans -> let res,prf=run_infer_one_pass_helper ivars a conseq in
+                  if res then (res,prf) else
+                    helper ans conseq (rs@[(res,prf)])
+    ) in
+   (* let _ = IS.simp_view_decl view_def [1] in; *)
+   helper antes conseq []
+
+let run_infer_one_pass_old (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let ante = meta_to_formula iante0 false [] stab in
+  let ante = Solver.prune_preds !cprog true ante in
+  let ante =
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante;
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in
+  let vk = AS.fresh_proc_var_kind stab Float in
+  let _ = H.add stab (full_perm_name ()) vk in
+(*  let _ = flush stdout in*)
+  (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
+  (* let conseq_fvs = CF.fv csq_extra in *)
+  (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
+  let fvs = CF.fv ante in
+  (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
+  (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
+  (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
+                        ^"\n ### ivars = "^(pr_list pr_id ivars)
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n")) no_pos in
+  let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
+  let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+
+  let _ = simp_entail ante conseq !cprog in
+
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -531,7 +677,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     else () 
   in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
-  let rs1, _ = 
+  let rs1, _ =
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None

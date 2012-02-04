@@ -1908,7 +1908,7 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   let f1 = subst_one_by_one st1 f in
   let f2 = subst_one_by_one st2 f1 in
   f2
-      
+
 and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
   Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
       (fun _ _ _ -> subst_avoid_capture_h_x fr t f) fr t f
@@ -6922,6 +6922,60 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 	let nh = h_subst sst h in
 	let np = MCP.simplify_mix_formula (MCP.memo_subst sst p) in
 		(nh, np, strrep)
+
+let rec filter_struc_formula sf bv filtered_bvs=
+  List.map (fun x -> filter_ext_formula x bv filtered_bvs) sf
+
+and filter_ext_formula ef bv filtered_bvs=
+  match ef with
+    | EBase ebf -> EBase {ebf with
+        (* formula_ext_explicit_inst = List.filter (fun x -> (List.mem x bv)) ebf.formula_ext_explicit_inst; *)
+        (* formula_ext_implicit_inst = List.filter (fun x -> (List.mem x bv)) ebf.formula_ext_implicit_inst; *)
+        formula_ext_exists = List.filter (fun x -> not (List.mem x filtered_bvs)) ebf.formula_ext_exists;
+        formula_ext_base = filter_formula ebf.formula_ext_base bv filtered_bvs}
+    | _ -> ef
+
+and filter_formula f bv filtered_bvs=
+  match f with
+    | Base f ->
+        let p = MCP.pure_of_mix f.formula_base_pure in
+        let np = CP.filter_var p bv in
+        Base {f with formula_base_pure = MCP.mix_of_pure np;}
+    | Or ff -> Or {ff with formula_or_f1 = filter_formula ff.formula_or_f1 bv filtered_bvs;
+            formula_or_f2 = filter_formula ff.formula_or_f2 bv filtered_bvs;}
+    | Exists fe ->
+        let p = MCP.pure_of_mix fe.formula_exists_pure in
+        let np = CP.filter_var p bv in
+        Exists { fe with
+            formula_exists_qvars = List.filter (fun x -> not (List.mem x filtered_bvs)) fe.formula_exists_qvars;
+            formula_exists_pure = MCP.mix_of_pure np;
+        }
+
+let rec hsubs_formula f old_hv_name inuse_psv new_hvf=
+   match f with
+    | Base f -> Base {f with formula_base_heap = hsubs_h_formula f.formula_base_heap
+                     old_hv_name inuse_psv new_hvf}
+    | Or ff -> Or {ff with formula_or_f1 = hsubs_formula ff.formula_or_f1 old_hv_name inuse_psv new_hvf;
+            formula_or_f2 = hsubs_formula ff.formula_or_f2 old_hv_name inuse_psv new_hvf;}
+    | Exists fe -> Exists {fe with formula_exists_heap = hsubs_h_formula fe.formula_exists_heap
+                         old_hv_name inuse_psv new_hvf}
+
+and hsubs_h_formula hf old_hv_name inuse_psv (new_hvf, from_vars)=
+  match hf with
+  | Star hs -> Star {hs with h_formula_star_h1 = hsubs_h_formula hs.h_formula_star_h1 old_hv_name inuse_psv (new_hvf, from_vars);
+                       h_formula_star_h2 = hsubs_h_formula hs.h_formula_star_h2 old_hv_name inuse_psv (new_hvf, from_vars);}
+  | Conj hc -> Conj {hc with h_formula_conj_h1 = hsubs_h_formula hc.h_formula_conj_h1 old_hv_name inuse_psv (new_hvf, from_vars);
+                       h_formula_conj_h2 = hsubs_h_formula hc.h_formula_conj_h2 old_hv_name inuse_psv (new_hvf, from_vars);}
+  | Phase hp -> Phase {hp with h_formula_phase_rd = hsubs_h_formula hp.h_formula_phase_rd old_hv_name inuse_psv (new_hvf, from_vars);
+      h_formula_phase_rw = hsubs_h_formula hp.h_formula_phase_rw old_hv_name inuse_psv (new_hvf, from_vars);}
+  | ViewNode hv -> if (hv.h_formula_view_name = old_hv_name) then
+        (*rewrite_coercion*)
+        (*ins self*)
+        let  new_hvf = subst_avoid_capture from_vars inuse_psv  new_hvf in
+        (* List.hd (heap_of (normalize_replace new_hvf (formula_of_heap hf hv.h_formula_view_pos) hv.h_formula_view_pos)) *)
+         List.hd (heap_of new_hvf)
+      else hf
+  | _ -> hf
 
 (** An Hoa : SECTION PARTIAL STRUCTURE **)
 
