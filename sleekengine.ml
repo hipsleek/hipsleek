@@ -511,7 +511,7 @@ and simp_entail_x ante conseq prog:(CF.formula list)=
            - until entailment succeeds or no more pred => synthesize one as simp_view_decl
          *)
           let view_def = C.look_up_view_def_raw prog.C.prog_view_decls hv.CF.h_formula_view_name in
-          let cand_vdfs = IS.look_up_simpler_view prog.C.prog_view_decls view_def prog.C.prog_left_coercions (List.length npsv) in
+          let cand_vdfs = IS.look_up_simpler_view iprog cprog prog.C.prog_view_decls view_def prog.C.prog_left_coercions (List.length npsv) in
           (*sub ante*)
           let antes = List.map (IS.subs_entailcheck ante conseq view_def.C.view_name inuse_psv) cand_vdfs in
           antes
@@ -567,7 +567,7 @@ let rec run_infer_one_pass_helper_x (ivars: ident list) ante conseq=
 and run_infer_one_pass_helper (ivars: ident list) ante conseq=
   let pr_f = !CF.print_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Debug.no_1 "run_infer_one_pass_helper" pr_f pr_2
+  Debug.to_1 "run_infer_one_pass_helper" pr_f pr_2
       (fun _ -> run_infer_one_pass_helper_x ivars ante conseq) ante
 
 and run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -602,7 +602,8 @@ and run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^"\n\n")) no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
-
+  let _ = print_endline ("orig ante" ^ (Cprinter.string_of_formula ante)) in
+  let _ = print_endline ("orig conseq" ^ (Cprinter.string_of_struc_formula conseq)) in
   let antes = simp_entail ante conseq !cprog in
   let antes =
     if List.length antes = 0 then [ante] else antes

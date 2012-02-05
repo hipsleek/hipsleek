@@ -189,6 +189,36 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     Some residues
   else None
 
+let verify_lemma_new (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
+    let helper coercs check_coerc = match coercs with
+      | None -> (true, None)
+      | Some coerc -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
+    in
+    let valid_l2r, rs_l2r = helper l2r check_left_coercion in
+    let valid_r2l, rs_r2l = helper r2l check_right_coercion in
+    let num_id = "\nEntailing lemma "^ lemma_name ^"" in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "empty residue" Globals.lemma_error)) in
+    let (rs1, rs2) = match (rs_l2r, rs_r2l) with
+      | (None, None) -> (empty_resid, empty_resid)
+      | (None, Some rsr) -> (empty_resid, rsr)
+      | (Some rsl, None) -> (rsl, empty_resid)
+      | (Some rsl_, Some rsr_) -> (rsl_, rsr_) in
+    let res,residues = match lemma_type with
+      | I.Equiv -> 
+            let residue = CF.list_context_union rs1 rs2 in
+            let valid = valid_l2r && valid_r2l in
+            let _ = if valid then print_entail_result valid residue num_id
+            else 
+              let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+              let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+              print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
+            in
+            (valid,residue)
+      | I.Left -> let _ = print_entail_result valid_l2r rs1 num_id in (valid_l2r, rs1)
+      | I.Right  -> let _ = print_entail_result valid_r2l rs2 num_id in (valid_r2l,rs2)
+    in
+    (res,residues)
+
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr c = match c with 
     | Some coerc -> Cprinter.string_of_coercion coerc
