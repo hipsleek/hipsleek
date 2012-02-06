@@ -18,12 +18,16 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type bformula_label = int
 and branch_label = string	(*formula branches*)
+
+type spec_label =  string list
+
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
+let empty_spec_label = []
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
 let combine_lbl (i1,s1)(i2,s2) = match s1 with 

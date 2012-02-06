@@ -45,7 +45,7 @@ t_formula_and_f2 : t_formula }
 
 and struc_formula = 
   | EOr of  struc_or_formula
-  | EList of (formula_label*struc_formula) list 
+  | EList of (spec_label*struc_formula) list 
   | ECase of struc_case_formula
   | EBase of struc_base_formula
   | EAssume of ((Cpure.spec_var list) * formula * formula_label)
@@ -6868,7 +6868,7 @@ let conseq_group_filter ctx conseq =
 
 let set_rec_group_label sctx b = 
   let rec rec_set_ctx c = match c with 
-    | Ctx es -> Ctx {es with es_group_lbl= (fst es.es_group_lbl, b)}
+    | Ctx es -> Ctx {es with es_group_lbl = (fst es.es_group_lbl, b)}
     | OCtx (c1,c2) -> OCtx (rec_set_ctx c1,rec_set_ctx c2) in
   let rec_set (c1,c2) = (c1,rec_set_ctx c2) in
   List.map (fun (c1,c2,c3)-> (c1,c2,List.map rec_set c3)) sctx

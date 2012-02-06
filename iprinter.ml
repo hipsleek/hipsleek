@@ -75,6 +75,8 @@ let string_of_label = function
 ;;
 
 let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_spec_label l = pr_list pr_id l
+
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
@@ -391,8 +393,8 @@ let rec string_of_struc_formula c = match c with
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
 	| F.EOr b-> (string_of_struc_formula b.F.formula_struc_or_f1) ^ "\nEOr" ^ (string_of_struc_formula b.F.formula_struc_or_f2)
-	| F.EList b ->   List.fold_left  (fun a ((l1,l2),c)-> 
-		let l_s = if l1=0 && l2="" then "" else (string_of_formula_label (l1,l2) "") ^": " in
+	| F.EList b ->   List.fold_left  (fun a (l,c)-> 
+		let l_s = (string_of_spec_label l) ^": " in
 		a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
 		(*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 		
