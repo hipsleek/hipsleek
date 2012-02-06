@@ -430,7 +430,7 @@ let set_tp tp_str =
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
-    (tp := SPASS; prover_str:= "SPASS"::!prover_str)
+    (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -2612,7 +2612,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
-  | SPASS -> (); (* Don't start SPASS here! It need to start only when check_formula *)
+  | SPASS -> Spass.start();
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2648,7 +2648,7 @@ let stop_prover () =
 	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
-    | SPASS -> ();
+    | SPASS -> Spass.stop();
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
