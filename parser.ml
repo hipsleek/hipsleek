@@ -118,17 +118,28 @@ let rec remove_spec_qualifier (_, pre, post) = (pre, post)
 (*             (a1+1, a2@ngrp) ) (1,[]) lgrp in *)
 (*         F.EList lgr *)
 
-let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) :F.struc_formula= 
+let label_struc_list (lgrp:(spec_label_def*F.struc_formula) list list) : (spec_label_def*F.struc_formula) list = 
+  List.concat lgrp
+
+let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+  F.EList (label_struc_list lgrp)
+
+let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
   let fl = List.concat lgrp in
   let all_unlab = List.for_all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
-  if n<=1 || not(all_unlab) then F.EList fl 
+  if n<=1 || not(all_unlab) then fl 
   else 
     (* automatically insert numeric label if spec is completely unlabelled *)
     let _,lgr = List.fold_left (fun (a1,a2) c ->
             let ngrp = List.map (fun ((_,s),d)-> ((Some a1,[]),d)) c in
             ((a1+1), a2@ngrp) ) (1,[]) lgrp 
-    in F.EList lgr
+    in lgr
+
+(* auto insertion of numeric if unlabelled *)
+let label_struc_groups_auto (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+  F.EList (label_struc_list_auto lgrp)
+
 
 let un_option s d = match s with
   | Some v -> v
@@ -1427,17 +1438,28 @@ enumerator:
 (****Specs *******)
 opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
  
-opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups t]];
+opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
+spec_list_only : [[t= LIST1 spec_list_grp -> label_struc_list t ]];
+
 spec_list : [[t= LIST1 spec_list_grp -> label_struc_groups t ]];
+
+spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 
 spec_list_grp:
   [[
-      c=spec-> [(empty_spec_label_def,c)]
-    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 spec SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
+      c=spec -> [(empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; 
+          t = spec_list_only 
+          (* LIST0 spec SEP `ORWORD *)
+      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,id::l),c)) t
+    | `OSQUARE; 
+          t = spec_list_only
+      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
+  ]];
 
 spec: 
-  [[ 
+  [[
     `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
      F.EInfer {
        F.formula_inf_post = postf; 
@@ -1445,7 +1467,7 @@ spec:
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
-  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+    | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 F.EBase {
 			 F.formula_struc_explicit_inst =cl;
 			 F.formula_struc_implicit_inst = [];
@@ -1464,7 +1486,8 @@ spec:
        
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
-	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }]];
+	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
@@ -1483,7 +1506,7 @@ proc_decl:
    | h=proc_header -> h]];
   
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
      mkProc id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
      
@@ -1679,7 +1702,7 @@ while_statement:
             exp_while_f_name = "";
             exp_while_wrappings = None;
             exp_while_pos = get_pos_camlp4 _loc 1 }
-   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list; es=embedded_statement ->
+   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list_outer; es=embedded_statement ->
         While { exp_while_condition = bc;
           exp_while_body = es;
           exp_while_specs = sl;(*List.map remove_spec_qualifier $5;*)
