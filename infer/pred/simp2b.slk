@@ -1,0 +1,36 @@
+/*
+ - look up simpler pred
+ - loop up corresp. lemma ==> FAILED. synthesize one and prove it.
+ - simplify entailment check
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll1<n,S> == self =  null & S={} & n=0
+	or self::node<v, r> * r::ll1<m, S1> & m=n-1 & S = union(S1, {v})
+  inv n>=0.
+
+pred lseg<n,p> == self = p & n=0
+	or self::node<v, r> * r::lseg<m, p> & m=n-1
+  inv n>=0.
+
+//weakenning pred: will be infered
+//lemma self::ll1<n,S> -> self::ll<n>.
+lemma self::lseg<m,null> -> self::ll<m>. //should not be chosen
+
+//how about post: still be sound with the same algo.
+//Ituitively, we can slice away irrelevant formulas in cons
+
+
+//1. inferred entailment for 2
+//checkentail x::ll<n> & n =1  |- x::node<_,_>.
+
+//2. view in LHS
+checkentail x::ll1<n,_> & n =1  |- x::node<_,null>.
+
+//3. view in LHS, RHS
+//checkentail x::ll1<n,_> & n >1  |- x::ll1<m,_>.
