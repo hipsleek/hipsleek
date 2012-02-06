@@ -39,7 +39,7 @@ let rec coq_of_typ = function
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
-  | UNK | NUM | TVar _ | Named _ | Array _ ->
+  | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -187,6 +187,7 @@ and coq_of_b_formula b =
 	| CP.RelForm _ -> 
           (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
 			illegal_format "coq_of_exp : relation cannot be handled"
+    | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
 
 (* pretty printing for formulas *)
 and coq_of_formula f =

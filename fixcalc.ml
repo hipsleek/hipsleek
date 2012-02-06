@@ -342,7 +342,7 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
   | None -> pfs
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in
-    let or_post = get_or_post specs (CP.get_rel_id_list rel) in
+    let or_post = get_or_post (CP.get_rel_id_list rel) specs in
     let bcases = 
       begin
       match or_post with

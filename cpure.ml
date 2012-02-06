@@ -6760,8 +6760,8 @@ type infer_state =
   }
 
 let create_infer_state vs =
-  let prf = !print_formula in
-  let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in 
+(*  let prf = !print_formula in*)
+(*  let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in *)
   { 
       infer_state_vars = vs;
       infer_state_rel = new Gen.stack;
@@ -7232,7 +7232,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar t_info ->
 		    let t_ann = t_info.lex_ann in
 				let ml = t_info.lex_exp in
-				let il = t_info.lex_tmp in
+(*				let il = t_info.lex_tmp in*)
 				let pos = t_info.lex_loc in
         (match t_ann with
           | Term ->

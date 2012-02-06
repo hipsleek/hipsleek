@@ -73,6 +73,18 @@ struct
    | None -> None
    | Some v -> Some (f v)
 
+ let map_opt_res f x = match x with 
+   | None -> (None,[])
+   | Some v -> let r1,r2 = f v in (Some r1,r2)
+   
+ let fold_opt f x = match x with 
+   | None -> []
+   | Some v -> (f v)
+
+ let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
+ let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
+ let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
+ 
  let add_str s f xs = s^":"^(f xs)
 
   let opt_to_list o = match o with

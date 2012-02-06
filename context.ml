@@ -515,8 +515,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
-                  let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
-                  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in
+                 (* let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
+                  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in*)
                   let flag = 
                     if !ann_derv 
                     then (not(dl_data_derv) && not(dr_data_derv)) 

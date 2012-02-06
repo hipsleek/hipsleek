@@ -79,6 +79,7 @@ let rec smt_of_typ t =
 			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+        | RelT -> illegal_format "z3.smt_of_typ: relt not supported for SMT"
 
 let smt_of_spec_var sv =
 	(Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")
@@ -116,6 +117,7 @@ let rec smt_of_exp a =
 	| Cpure.ListLength _
 	| Cpure.ListAppend _
 	| Cpure.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+	| Cpure.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| Cpure.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -161,6 +163,8 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
 	| Cpure.ListIn _ | Cpure.ListNotIn _ | Cpure.ListAllN _ | Cpure.ListPerm _ -> 
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+	| Cpure.LexVar _ -> 
+			illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
 	| Cpure.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -262,6 +266,7 @@ and collect_bformula_info b = match b with
 	| Cpure.ListNotIn _
 	| Cpure.ListAllN _
 	| Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+	| Cpure.LexVar _ -> default_formula_info
 	| Cpure.RelForm (r,args,_) ->
           let r = CP.name_of_spec_var r in
 		if r = "update_array" then
@@ -292,6 +297,7 @@ and collect_exp_info e = match e with
 	| Cpure.ListLength _
 	| Cpure.ListAppend _
 	| Cpure.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+	| Cpure.Func _ -> default_formula_info
 	| Cpure.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
@@ -507,6 +513,7 @@ let command_for prover =
   (match !smtsolver_name with
     | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | _ -> failwith ("unexpected z3 version in spass.ml command_for")
     )
 (*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
@@ -758,10 +765,10 @@ let to_smt (ante : Cpure.formula) (conseq : Cpure.formula option) (prover: smtpr
 
 (* trungtq: function convert from cpure to DFG format *)
 let to_dfg (ante: Cpure.formula) (conseq: Cpure.formula option) : string =
-  let conseq = match conseq with
+  (*let conseq = match conseq with
     | None   -> Cpure.mkFalse no_pos
     | Some f -> f
-  in
+  in*)
   ""
 	
 	

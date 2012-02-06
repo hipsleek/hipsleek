@@ -199,7 +199,7 @@ let pr_term_ctx (ctx: formula) =
 let string_of_term_ctx = poly_string_of_pr pr_term_ctx
 
 let pr_term_trans_loc (src, dst) =
-  let fname = src.start_pos.Lexing.pos_fname in
+(*  let fname = src.start_pos.Lexing.pos_fname in*)
   let src_line = src.start_pos.Lexing.pos_lnum in
   let dst_line = dst.start_pos.Lexing.pos_lnum in
   (* fmt_string (fname ^ " "); *)
@@ -485,6 +485,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
+            | Term -> failwith "unexpected term in check term rhs"
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
@@ -909,8 +910,8 @@ let value_of_var (v: CP.spec_var) l : int =
  * + Some _ *)
 let phase_num_infer_one_scc (pl : CP.formula list) =
   (* Phase Numbering *) 
-  let pr_v = !CP.print_sv in
-  let pr_vl = pr_list pr_v in
+ (* let pr_v = !CP.print_sv in*)
+(*  let pr_vl = pr_list pr_v in*)
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
   (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
@@ -1020,7 +1021,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
       let lv = fst (List.split subst) in
       let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
-      let n_cont = transform_ext_formula e_f cont in
+      let n_cont = transform_struc_formula e_f cont in
       if Gen.is_empty n_iv then Some n_cont
       else Some (EInfer { e with 
         formula_inf_vars = n_iv;
