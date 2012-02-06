@@ -3280,7 +3280,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		| EList b -> 
 			if (List.length b) > 0 then	
 				let ctx = CF.add_to_context_num 2 ctx11 "para OR on conseq" in
-				let conseq = CF.conseq_group_filter ctx b in
+				let conseq = b (*CF.conseq_group_filter ctx b*) in
 				if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
 				else 
 					let l1,l2 = List.split (List.map (fun c-> helper_inner_x 10 ctx (snd c)) conseq) in
