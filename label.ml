@@ -1,86 +1,8 @@
 open Gen
 open Globals
+open Label_only
 module CF = Cformula
 module CP = Cpure
-
-module type LABEL_TYPE =
-    sig
-      type t
-      val unlabelled : t 
-      val is_unlabelled : t -> bool (* is this unlabelled *)
-      val norm : t -> t (* sort a label *)
-      val is_compatible : t -> t -> bool
-      (* val comb_identical : t -> t -> t (\* combine two identical labels *\) *)
-      val comb_norm : t -> t -> t (* combine two normalised labels *)
-      val string_of : t -> string
-      val compare : t -> t -> int
-    end;;
-
-module Lab_List  =
-struct
-  type t = string list
-  let unlabelled = []
-  let is_unlabelled l = (l==[])
-  let string_of x = pr_list pr_id x
-
-  let rec overlap xs ys = match xs,ys with
-      | [],ys -> false
-      | x::xs1,[]-> false
-      | x::xs1,y::ys1 ->
-            let v = String.compare x y in
-            if v==0 then true
-            else if v<0 then overlap xs1 ys
-            else overlap xs ys1
-
-  (* assumes that xs and ys are normalized *)
-  (* returns true if they overlap in some ways *)
-  let is_compatible xs ys =
-    if (is_unlabelled xs) || (is_unlabelled ys) then true
-    else overlap xs ys
-
-  (* assumes that xs is sorted *)
-  let remove_dups xs =
-    let rec helper l xs = match xs with
-      | [] -> [l]
-      | x::xs1 -> if l=x then helper l xs1
-        else l::(helper x xs1)
-    in match xs with
-      | [] -> []
-      | x::xs -> helper x xs
-
-  let norm t =
-    let r = List.sort (String.compare) t in
-    remove_dups r
-
-  (* assumes that xs and ys are normalized *)
-  (* returns 0 if two labels are considered identical *)
-  let rec compare xs ys =
-    match xs,ys with
-      | [],[] -> 0
-      | [],y::_ -> -1
-      | x::_,[] -> 1
-      | x::xs1,y::ys1 -> 
-            let v = String.compare x y in
-            if v==0 then compare xs1 ys1
-            else v
-
-  (* assumes that xs and ys are normalized *)
-  (* combine two labels that are considered identical *)
-  (* let comb_identical xs ys = xs *)
-
-  (* combine two labels that may not be identical *)
-  let comb_norm xs ys = 
-    let rec helper xs ys =
-    match xs,ys with
-      | [],ys -> ys
-      | (x::xs1),[] ->  xs
-      | (x::xs1),y::ys1 ->
-            let v = String.compare x y in
-            if v==0 then x::(helper xs1 ys1)
-            else if v<0 then x::(helper xs1 ys)
-            else y::(helper xs ys1)
-    in helper xs ys
-end;;
 
 (* this labelling is for outermost disjuncts only *)
 module Lab2_List  =

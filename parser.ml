@@ -7,6 +7,7 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
+open Label_only
 
 open Perm
 
@@ -104,31 +105,29 @@ let rec split_members mbrs = match mbrs with
   
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
-(* let label_struc_groups (lgrp:(formula_label*F.struc_formula) list list) :F.struc_formula=  *)
-(*   match (List.length lgrp) with  *)
+(* older version using formula_label *)
+(* let label_struc_groups (lgrp:(formula_label*F.struc_formula) list list) :F.struc_formula= *)
+(*   match (List.length lgrp) with *)
 (*     | 0 -> F.mkEFalseF () *)
-(*     | 1 -> (match List.hd lgrp with  *)
+(*     | 1 -> (match List.hd lgrp with *)
 (* 				| ((i,""),x)::[] -> x *)
 (* 				| _ as b -> F.EList b) *)
-(*     | _ ->  *)
-(*         let _,lgr = List.fold_left (fun (a1,a2) c ->  *)
+(*     | _ -> *)
+(*         let _,lgr = List.fold_left (fun (a1,a2) c -> *)
 (*             let ngrp = List.map (fun ((_,s),d)-> ((a1,s),d)) c in *)
 (*             (a1+1, a2@ngrp) ) (1,[]) lgrp in *)
 (*         F.EList lgr *)
 
-let label_struc_groups (lgrp:(spec_label*F.struc_formula) list list) :F.struc_formula= F.mkEFalseF ()
-  (* TODO WN : how to change below? *)
-  (* match (List.length lgrp) with  *)
-  (* why is [] the same as False?? *)
-  (*   | 0 -> F.mkEFalseF () *)
-  (*   | 1 -> (match List.hd lgrp with  *)
-  (*   			| ([],x)::[] -> x *)
-  (*   			| _ as b -> F.EList b) *)
-  (*   | _ ->  *)
-  (*       let _,lgr = List.fold_left (fun (a1,a2) c ->  *)
-  (*           let ngrp = List.map (fun ((_,s),d)-> ((a1,s),d)) c in *)
-  (*           (a1+1, a2@ngrp) ) (1,[]) lgrp in *)
-  (*       F.EList lgr *)
+let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) :F.struc_formula= 
+  let n = List.length lgrp in
+  let fl = List.concat lgrp in
+  let g = List.exists (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
+  if n<=1 || g then F.EList fl 
+  else 
+    let _,lgr = List.fold_left (fun (a1,a2) c ->
+            let ngrp = List.map (fun ((_,s),d)-> ((Some a1,[]),d)) c in
+            ((a1+1), a2@ngrp) ) (1,[]) lgrp 
+    in F.EList lgr
 
 let un_option s d = match s with
   | Some v -> v
@@ -705,8 +704,8 @@ extended_l:
    | h=extended_constr_grp -> label_struc_groups [h]]];
    
 extended_constr_grp:
-   [[ c=extended_constr -> [(empty_spec_label,c)]
-    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> ([id],c)) t]];
+   [[ c=extended_constr -> [(empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
 
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
@@ -1433,8 +1432,8 @@ spec_list : [[t= LIST1 spec_list_grp -> label_struc_groups t ]];
 
 spec_list_grp:
   [[
-      c=spec-> [(empty_spec_label,c)]
-    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 spec SEP `ORWORD; `CSQUARE -> List.map (fun c-> ([id],c)) t]];
+      c=spec-> [(empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 spec SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
 
 spec: 
   [[ 

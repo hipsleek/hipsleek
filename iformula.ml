@@ -7,6 +7,8 @@
 open Globals
 open Exc.GTable
 open Perm
+open Label_only
+
 module P = Ipure
 
 let top_flow = top_flow
@@ -19,7 +21,7 @@ and struc_formula =
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
  (* spec feature to induce inference *)
 	| EInfer of struc_infer_formula
-	| EList of (spec_label*struc_formula) list 
+	| EList of (spec_label_def*struc_formula) list 
 	| EOr of  struc_or_formula
 
 and struc_or_formula = 

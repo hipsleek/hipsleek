@@ -7,6 +7,7 @@ open Cast
 open Gen.Basic
 open Perm
 
+module Lb = Label
 module CF = Cformula
 module CP = Cpure
 module TP = Tpdispatcher

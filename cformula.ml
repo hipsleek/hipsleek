@@ -9,6 +9,7 @@ open Globals
 open Gen
 open Exc.GTable
 open Perm
+open Label_only
 
 module Err = Error
 module CP = Cpure
@@ -45,7 +46,7 @@ t_formula_and_f2 : t_formula }
 
 and struc_formula = 
   | EOr of  struc_or_formula
-  | EList of (spec_label*struc_formula) list 
+  | EList of (spec_label_def * struc_formula) list 
   | ECase of struc_case_formula
   | EBase of struc_base_formula
   | EAssume of ((Cpure.spec_var list) * formula * formula_label)

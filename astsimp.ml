@@ -7,6 +7,7 @@ open Gen.BList
 open Perm
 open Mcpure_D
 open Mcpure
+open Label_only
   
 module C = Cast
 module E = Env
@@ -1135,7 +1136,7 @@ and sat_warnings cprog =
 		| CF.EList b-> CF.EList (List.concat (List.map (fun (l,c)-> List.map (fun c-> (l,c)) (test c)) b))
 		| _ -> (match test c.Cast.view_formula with 
 					| x::[] -> x
-					| _ as l-> CF.EList (List.map (fun c-> (empty_spec_label,c)) l)) in
+					| _ as l-> CF.EList (List.map (fun c-> (empty_spec_label_def,c)) l)) in
 (*		List.fold_left (fun a c-> match (snd c) with
         | CF.EBase b -> if ((List.length b.CF.formula_ext_continuation)>0) then c::a
           else 

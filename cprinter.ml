@@ -9,6 +9,7 @@ open Cast
 open Cformula
 open Mcpure_D
 open Gen.Basic 
+open Label_only
 
 module P = Cpure
 module MP = Mcpure
@@ -770,7 +771,8 @@ let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
 let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
 
-let pr_spec_label l  = fmt_string (pr_list pr_id l)
+let pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
+let pr_spec_label l  = fmt_string (Lab_List.string_of l)
 
 (** print a pure formula to formatter *)
 let rec pr_pure_formula  (e:P.formula) = 
@@ -1297,7 +1299,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       fmt_cut();
       wrap_box ("B",0) pr_struc_formula cont;
       fmt_close();
-	| EList b ->  if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_struc_formula)) b
+	| EList b ->  if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def pr_struc_formula)) b
 	| EOr b -> 
 	      let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
           let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
