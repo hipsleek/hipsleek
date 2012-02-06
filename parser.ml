@@ -121,7 +121,7 @@ let rec remove_spec_qualifier (_, pre, post) = (pre, post)
 let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) :F.struc_formula= 
   let n = List.length lgrp in
   let fl = List.concat lgrp in
-  let all_unlab = List.all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
+  let all_unlab = List.for_all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
   if n<=1 || not(all_unlab) then F.EList fl 
   else 
     (* automatically insert numeric label if spec is completely unlabelled *)

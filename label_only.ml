@@ -10,6 +10,7 @@ module type LABEL_TYPE =
       val is_unlabelled : t -> bool (* is this unlabelled *)
       val norm : t -> t (* sort a label *)
       val is_compatible : t -> t -> bool
+      val is_compatible_aux : t -> t -> bool
       (* val comb_identical : t -> t -> t (\* combine two identical labels *\) *)
       val comb_norm : t -> t -> t (* combine two normalised labels *)
       val string_of : t -> string
@@ -38,6 +39,8 @@ struct
   let is_compatible xs ys =
     if (is_unlabelled xs) || (is_unlabelled ys) then true
     else overlap xs ys
+
+  let is_compatible_aux = is_compatible
 
   (* assumes that xs is sorted *)
   let remove_dups xs =
@@ -89,7 +92,7 @@ struct
   type t = (int option * string list)
       (* int replaces __i and may be used to label pre/post *)
   let unlabelled = (None, [])
-  let is_unlabelled (_,l) = (l==[])
+  let is_unlabelled (n,l) = n==None && l==[]
   let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_id)
   let singleton s = (None,[s])
   let is_comp_opt lx ly = match lx,ly with
@@ -100,6 +103,10 @@ struct
 
   let is_compatible (lx,xs) (ly,ys) =
     if (xs==[] || ys=[]) then is_comp_opt lx ly
+    else Lab_List.overlap xs ys
+
+  let is_compatible_aux (lx,xs) (ly,ys) =
+    if (xs==[] || ys=[]) then true
     else Lab_List.overlap xs ys
 
   let norm (opt,t) = (opt,Lab_List.norm t)

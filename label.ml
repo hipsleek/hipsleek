@@ -4,40 +4,6 @@ open Label_only
 module CF = Cformula
 module CP = Cpure
 
-(* this labelling is for outermost disjuncts only *)
-module Lab2_List  =
-struct
-  type t = (int option * string list)
-      (* int replaces __i and may be used to label pre/post *)
-  let unlabelled = (None, [])
-  let is_unlabelled (_,l) = (l==[])
-  let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_id)
-
-  let is_comp_opt lx ly = match lx,ly with
-                           | Some x1,Some y1 -> x1==y1
-                           | Some _, None -> true
-                           | None, Some _ -> true (* not possible *)
-                           | None, None -> true
-
-  let is_compatible (lx,xs) (ly,ys) =
-    if (xs==[] || ys=[]) then is_comp_opt lx ly
-    else Lab_List.overlap xs ys
-
-  let norm (opt,t) = (opt,Lab_List.norm t)
-
-  (* assumes that xs and ys are normalized *)
-  (* let comb_identical(opt1,xs) (opt2,ys) = *)
-  (*   (opt1,Lab_List.comb_identical xs ys) *)
-
-  let comb_norm (opt1,xs) (opt2,ys) =
-    (opt1,Lab_List.comb_norm xs ys)
-
-  (* assumes that xs and ys are normalized *)
-  let compare (opt1,xs) (opt2,ys) =
-    match opt1,opt2 with
-      | Some(i),Some(j) -> if i=j then 0 else if i<j then -1 else 1
-      | _,_ -> Lab_List.compare xs ys
-end;;
 
 module type EXPR_TYPE =
     sig
@@ -130,6 +96,12 @@ struct
   let filter_label (fid:lab_type) (xs:label_list) :  (label_list) = 
     if Lbl.is_unlabelled fid then xs
     else List.filter (fun (l,_) -> Lbl.is_compatible fid l) xs
+
+  (* return a list of formula that are compatible with label *)
+      (* to be used for aux calls *)
+  let filter_label_aux (fid:lab_type) (xs:label_list) :  (label_list) = 
+    if Lbl.is_unlabelled fid then xs
+    else List.filter (fun (l,_) -> Lbl.is_compatible_aux fid l) xs
 
 
   let rec comb_tgt l x ys =
