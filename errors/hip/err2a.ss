@@ -21,7 +21,7 @@ node get_next(node x)
 }
 */
 int foo(node x)
-  requires x::node<v,q> & q = null
+  requires x::node<v,q> 
   ensures x::node<v,q>;
 {
   int a;
