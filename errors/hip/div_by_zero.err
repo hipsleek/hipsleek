@@ -17,7 +17,7 @@ Proving precondition in method div___$int~int Failed.
 ====>
 
 (may) cause: 
- lor[must_err:(__DivByZeroErr) LOCS:[30;33],valid]
+ OrR[must_err:(__DivByZeroErr) LOCS:[30;33],valid]
 
 ========================================================================
 

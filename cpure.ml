@@ -6147,6 +6147,41 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
 (* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
 (* slice_formula@22 EXIT out :[([z,x],[ z<x, 0<=x]),([y],[ 0<=y])] *)
 
+let elim_equi_var f qvar=
+  let st, pp1 = get_subst_equation_formula f qvar false in
+  if not (Gen.is_empty st) then
+	subst_term st pp1
+  else f
+
+let rec get_equi_vars (f : formula) : (spec_var list) = match f with
+	| BForm ((b,a),l) -> get_equi_vars_b b
+	| And (f1,f2,l) ->
+		let g1 = get_equi_vars f1 in
+		let g2 = get_equi_vars f2 in
+			g1@g2
+	| Or (f1,f2,l,p) ->
+        	let g1 = get_equi_vars f1 in
+		    let g2 = get_equi_vars f2 in
+			g1@g2
+    | Not (nf,_,_) -> get_equi_vars nf
+	| _ -> []
+
+and get_equi_vars_b f =
+  let helper e=
+    match e with
+      | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
+      | _ -> []
+  in
+  match f with
+	| Eq (e1,e2,_) -> (helper e1)@(helper e2)
+	| _ -> []
+
+let elim_equi_ante ante cons=
+  let cv = fv cons in
+  let eav_all = get_equi_vars ante in
+  let eav = List.filter (fun v -> not(List.mem v cv)) eav_all in
+  List.fold_left elim_equi_var ante eav
+
 let slice_formula (fl : formula list) : (spec_var list * formula list) list =
   let repart ac f = 
     let vs = fv f in
@@ -6689,6 +6724,7 @@ let remove_primitive should_elim e =
 		match r with
 			| None -> mkTrue no_pos
 			| Some f -> f
+
 
 (** An Hoa : SIMPLIFY PURE FORMULAE **)
 (* An Hoa : remove redundant identity constraints. *)
