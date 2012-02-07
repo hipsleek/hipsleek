@@ -6864,7 +6864,7 @@ and count_term_formula f = match f with
 let add_term_nums_struc struc_f log_vars call_num add_phase =
   let pr = !print_struc_formula in
   let pr2 = pr_pair pr !CP.print_svl in
-  Debug.ho_1 "add_term_nums_struc" 
+  Debug.no_1 "add_term_nums_struc" 
       pr pr2 (fun _ -> add_term_nums_struc struc_f log_vars call_num add_phase) struc_f
 
 (* let conseq_group_filter ctx conseq =  *)

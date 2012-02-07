@@ -1448,7 +1448,8 @@ spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 
 spec_list_grp:
   [[
-      c=spec -> [(empty_spec_label_def,c)]
+      (* c=spec -> [(empty_spec_label_def,c)] *)
+     t= LIST1 spec -> List.map (fun c -> (empty_spec_label_def,c)) t
     | `IDENTIFIER id; `COLON; `OSQUARE; 
           t = spec_list_only 
           (* LIST0 spec SEP `ORWORD *)
