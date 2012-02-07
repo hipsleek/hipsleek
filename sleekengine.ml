@@ -504,14 +504,21 @@ and simp_entail_x ante conseq prog:(CF.formula list)=
           let _ = DD.trace_hprint (add_str "unsued: " (pr_list (Cprinter.string_of_spec_var))) npsv no_pos in
           let _ = DD.trace_hprint (add_str "insued: " (pr_list (Cprinter.string_of_spec_var))) inuse_psv no_pos in
          let _ = DD.trace_hprint (add_str "pred: " (fun s -> s)) hv.CF.h_formula_view_name no_pos in
-         (*easier case:
+          let view_def = C.look_up_view_def_raw prog.C.prog_view_decls hv.CF.h_formula_view_name in
+          (*easier case:
            - lookup all others preds. for each pred pp
            - check consistent args num. generate a weakennning lemma pred -> pp
            - prove lemma. if successs, use pp for simplifying the entailment
            - until entailment succeeds or no more pred => synthesize one as simp_view_decl
          *)
-          let view_def = C.look_up_view_def_raw prog.C.prog_view_decls hv.CF.h_formula_view_name in
           let cand_vdfs = IS.look_up_simpler_view iprog cprog prog.C.prog_view_decls view_def prog.C.prog_left_coercions (List.length npsv) in
+          (*if not exists one vd, synthesize one*)
+          let cand_vdfs =
+            if (List.length cand_vdfs)=0 then
+              let syn_vd = IS.simp_view_decl view_def [1] in (*todo:*)
+              IS.synthesize_coerc iprog cprog view_def syn_vd
+            else cand_vdfs
+          in
           (*sub ante*)
           let antes = List.map (IS.subs_entailcheck ante conseq view_def.C.view_name inuse_psv) cand_vdfs in
           antes
@@ -616,7 +623,6 @@ and run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                   if res then (res,prf) else
                     helper ans conseq (rs@[(res,prf)])
     ) in
-   (* let _ = IS.simp_view_decl view_def [1] in; *)
    helper antes conseq []
 
 let run_infer_one_pass_old (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
