@@ -282,7 +282,7 @@ let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * 
 let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list) =
   let (pf, _) = bf in
   match pf with
-  | CP.LexVar (t_ann, el, il, _) -> (t_ann, el, il)
+  | CP.LexVar t_info -> (t_info.CP.lex_ann, t_info.CP.lex_exp, t_info.CP.lex_tmp)
   | _ -> raise LexVar_Not_found
 
 let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list) =
@@ -995,8 +995,11 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   let f_bf bf =
     let (pf, sl) = bf in
     match pf with
-    (* restoring  ml from the 3rd argument *)
-    | CP.LexVar (t_ann, _, ml, pos) ->
+    (* restoring ml from the 3rd argument *)
+    | CP.LexVar t_info ->
+		    let t_ann = t_info.CP.lex_ann in
+		    let ml = t_info.CP.lex_tmp in
+				let pos = t_info.CP.lex_loc in 
         let n_ml =
           if rem_phase == [] then
             (* replace the phase var with integer *)

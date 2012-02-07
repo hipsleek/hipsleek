@@ -57,14 +57,18 @@ struct
   let pr_triple f1 f2 f3 (x,y,z) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^")"
 
   let pr_quad f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^")"
+  let pr_penta f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^")"
+  let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^")"
 
-  let pr_penta f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^","^(f5 z3)^")"
+  let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
+  let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
+  let pr_hexa_ln f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^")"
 
-  let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^","^(f5 z3)^","^(f6 z4)^")"
+  let pr_lst s f xs = String.concat s (List.map f xs)
 
-  let pr_lst f xs = String.concat "," (List.map f xs)
+ let pr_list f xs = "["^(pr_lst "," f xs)^"]"
+ let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
 
- let pr_list f xs = "["^(pr_lst f xs)^"]"
  let map_opt f x = match x with 
    | None -> None
    | Some v -> Some (f v)
