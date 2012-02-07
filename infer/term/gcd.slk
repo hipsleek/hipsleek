@@ -1,0 +1,14 @@
+ranking term_r(int x, int y).
+ranking tr(int x, int y).
+
+//infer [] x>y & x1=x-y & y1=y |- y1>=y.
+
+infer [tr] x>0 & y>0 |-  tr(x,y)>=0.
+//infer [tr] x>0 & y>0 |-  r(x,y).
+print residue.
+
+infer [term_r] x>0 & y>0 & x>y & x1=x-y & y1=y & Term[term_r(x,y)] |-  Term[term_r(x1,y1)].
+print residue.
+
+infer [term_r] x>0 & y>0 & x<y & x1=x & y1=y-x & Term[term_r(x,y)] |-  Term[term_r(x1,y1)].
+print residue.

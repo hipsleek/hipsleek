@@ -71,6 +71,14 @@ let devel_hprint (pr:'a->string) (m:'a) (pos:loc) =
 let devel_zprint msg (pos:loc) =
 	ho_print !devel_debug_on (fun m -> (prior_msg pos)^(Lazy.force m)) msg
 
+let dinfo_zprint m p = devel_zprint m p
+let dinfo_hprint pr m p  = devel_hprint pr m p
+let dinfo_pprint m p = devel_pprint m p
+
+let ninfo_zprint m p = ()
+let ninfo_hprint pr m p  = ()
+let ninfo_pprint m p = ()
+
 let trace_pprint (msg:string) (pos:loc) : unit = 
 	ho_print false (fun a -> " "^a) msg
 
@@ -80,6 +88,14 @@ let trace_hprint (pr:'a->string) (m:'a) (pos:loc) =
 let trace_zprint m (pos:loc) = 
 	ho_print false (fun x -> Lazy.force x) m
 
+let info_pprint (msg:string) (pos:loc) : unit = 
+	ho_print true (fun a -> " "^a) msg
+
+let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+	ho_print true (fun x -> " "^(pr x)) m
+
+let info_zprint m (pos:loc) = 
+	ho_print true (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
 (* 	lazy_print (prior_msg pos) msg *)
@@ -290,6 +306,13 @@ let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str
 let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
 let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
 let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
+
+let to_1_opt f = ho_1_opt_aux true [] false f None
+let to_2_opt f = ho_2_opt_aux true [] false f None
+let to_3_opt f = ho_3_opt_aux true [] false f None
+let to_4_opt f = ho_4_opt_aux true [] false f None
+let to_5_opt f = ho_5_opt_aux true [] false f None
+let to_6_opt f = ho_6_opt_aux true [] false f None
 
 let to_1_loop s = ho_1_opt_aux true [] true (fun _ -> true) None s
 let to_2_loop s = ho_2_opt_aux true [] true (fun _ -> true) None s

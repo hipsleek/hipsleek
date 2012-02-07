@@ -1,0 +1,23 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+relation A(int n, int m, int z).
+//  ==> A(n,m,z) <- n=1 & z =1+m
+//infer [n] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+
+//infer [n] x::node<_,y> * y::ll<m> & n=1 |- x=null .
+print residue.
+
+// TODO BUG : fixed at list_contex_union to elim false with pre
+/*
+Entail  (1): Valid. 
+<1>true & n=1 & Anon_34=Anon_12 & q_35=y & m+1=z & {FLOW,(17,18)=__norm}
+inferred rel: [( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z)]
+*/

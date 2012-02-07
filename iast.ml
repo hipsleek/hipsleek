@@ -20,9 +20,12 @@ type typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
+                   prog_logical_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
                    mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_rel_ids : (typ * ident) list; 
                    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
@@ -53,6 +56,9 @@ and view_decl = { view_name : ident;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
+
+and func_decl = { func_name : ident; 
+			func_typed_vars : (typ * ident) list;}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
@@ -142,6 +148,7 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
+          proc_is_main : bool;
           proc_file : string;
 				  proc_loc : loc }
 
@@ -642,6 +649,7 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_static_specs = ss;
 		  proc_dynamic_specs = ds;
 		  proc_loc = pos;
+    proc_is_main = true;
       proc_file = !input_file_name;
 		  proc_body = bd }	
 
@@ -907,6 +915,10 @@ and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
 
+and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
+  | [] -> raise Not_found
+
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
@@ -1002,7 +1014,7 @@ and collect_ext (f:Iformula.ext_formula):ident list = match f with
   | Iformula.EAssume (b,_) -> collect_formula b
   | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
   | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
-  | Iformula.EVariance b -> collect_struc b.F.formula_var_continuation
+  (*| Iformula.EVariance b -> collect_ext b.F.formula_var_continuation*)
   | Iformula.EInfer b -> collect_ext b.F.formula_inf_continuation
 
 and collect_formula (f0 : F.formula) : ident list = 
@@ -1226,7 +1238,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formu
 	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view_x  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])
-	| Iformula.EVariance b -> data_name_of_view view_decls b.F.formula_var_continuation
+	(*| Iformula.EVariance b -> data_name_in_ext b.F.formula_var_continuation*)
  | Iformula.EInfer b -> data_name_in_ext b.F.formula_inf_continuation
   in
   handle_list_res (List.map data_name_in_ext f0) 
@@ -1354,6 +1366,12 @@ and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
 and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
 							  exp_var_decl_decls = d;
 							  exp_var_decl_pos = p }
+
+and mkLogicalVarDecl t d p = {
+  exp_var_decl_type = t;
+	exp_var_decl_decls = d;
+	exp_var_decl_pos = p 
+}
 
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2
@@ -1752,15 +1770,16 @@ let rec label_exp e = match e with
 			exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some s-> Some (label_exp s);}  
 *)
 	
-let label_proc proc = {proc with
+let label_proc keep proc = {proc with 
+ proc_is_main = if keep then proc.proc_is_main else false;
 	proc_body = 
 		match proc.proc_body with  
 			| None -> None 
 			| Some s -> Some (label_exp s);}
 
-let label_procs_prog prog = {prog with
-	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
-	prog_proc_decls = List.map label_proc prog.prog_proc_decls;
+let label_procs_prog prog keep = {prog with
+	prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
+	prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls;
 	}
 (************************************************************************************
  * Use to support pragma declaration in system
@@ -1786,10 +1805,13 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | hd::tl ->
         let new_iprims = {
                 prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
+                prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+                prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
@@ -1802,9 +1824,12 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
         let new_prims = {
                 prog_data_decls = [];
                 prog_global_var_decls = [];
+                prog_logical_var_decls = [];
                 prog_enum_decls = [];
                 prog_view_decls = [];
+                prog_func_decls = [];
                 prog_rel_decls = [];
+                prog_rel_ids = [];
                 prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];

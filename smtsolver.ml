@@ -79,6 +79,8 @@ let rec smt_of_typ t =
 			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+    (* TODO *)
+    | RelT -> "Int"
 
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -161,10 +163,13 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
 	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+  | CP.LexVar _ ->
+      illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
-		if is_update_array_relation r then
+        let rn = CP.name_of_spec_var r in
+		if is_update_array_relation rn then
 			let orig_array = List.nth smt_args 0 in
 			let new_array = List.nth smt_args 1 in
 			let value = List.nth smt_args 2 in
@@ -177,9 +182,10 @@ let rec smt_of_b_formula b =
 			let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
 				"(= " ^ new_array ^ " " ^ result ^ ")"
 		else
-			"(" ^ r ^ " " ^ (String.concat " " smt_args) ^ ")"
+			"(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 			
-and is_update_array_relation r = 
+and is_update_array_relation (r:string) = 
+  (* match r with CP.SpecVar(_,r,_) -> *)
 	let udrel = "update_array" in
 	let udl = String.length udrel in
 		(String.length r) >= udl && (String.sub r 0 udl) = udrel
@@ -212,15 +218,15 @@ let default_formula_info = {
 
 (* Collect information about a formula f or combined information about 2 formulas *)
 let rec collect_formula_info f = 
-	let info = collect_formula_info_raw f in
-	let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) !global_rel_defs) in
-	let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
-	let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
-	let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
-		{info with relations = all_relations; axioms = all_axioms;}
+  let info = collect_formula_info_raw f in
+  let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) !global_rel_defs) in
+  let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
+  let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
+  let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
+  {info with relations = all_relations; axioms = all_axioms;}
 
 and collect_combine_formula_info f1 f2 = 
-	compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
+  compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
 
 (* Recursively collect the information based on the structure of 
  * the formula. This information might not be complete due to cross reference.
@@ -230,88 +236,91 @@ and collect_combine_formula_info f1 f2 =
  * The information is to be corrected by the function collect_formula_info.
  *)
 and collect_formula_info_raw f = match f with
-	| CP.BForm ((b,_),_) -> collect_bformula_info b
-	| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
+  | CP.BForm ((b,_),_) -> collect_bformula_info b
+  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
-	| CP.Not (f1,_,_) -> collect_formula_info_raw f1
-	| CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
+  | CP.Not (f1,_,_) -> collect_formula_info_raw f1
+  | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
 		let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
 
 and collect_combine_formula_info_raw f1 f2 = 
-	combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
+  combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
 
 and collect_bformula_info b = match b with
-	| CP.BConst _ | CP.BVar _ -> default_formula_info
-	| CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
-	| CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 
+  | CP.LexVar _ -> default_formula_info
+  | CP.BConst _ | CP.BVar _ -> default_formula_info
+  | CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
+  | CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2
-	| CP.EqMax (e1,e2,e3,_) | CP.EqMin (e1,e2,e3,_) ->
+		combine_formula_info ef1 ef2
+  | CP.EqMax (e1,e2,e3,_) | CP.EqMin (e1,e2,e3,_) ->
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 		let ef3 = collect_exp_info e3 in
-			combine_formula_info (combine_formula_info ef1 ef2) ef3
-	| CP.BagIn _ 
-	| CP.BagNotIn _ 
-	| CP.BagSub _
-	| CP.BagMin _
-	| CP.BagMax _ 
-	| CP.ListIn _
-	| CP.ListNotIn _
-	| CP.ListAllN _
-	| CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-	| CP.RelForm (r,args,_) ->
+		combine_formula_info (combine_formula_info ef1 ef2) ef3
+  | CP.BagIn _ 
+  | CP.BagNotIn _ 
+  | CP.BagSub _
+  | CP.BagMin _
+  | CP.BagMax _ 
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+  | CP.RelForm (r,args,_) -> 
+        let r = CP.name_of_spec_var r in
 		if r = "update_array" then
-			default_formula_info 
+		  default_formula_info 
 		else let rinfo = { default_formula_info with relations = [r]; } in
-			let args_infos = List.map collect_exp_info args in
-				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
+		let args_infos = List.map collect_exp_info args in
+		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
-	| CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
-	| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
+  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
+  | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2
-	| CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) ->
+		combine_formula_info ef1 ef2
+  | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) ->
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 		let result = combine_formula_info ef1 ef2 in
-			{ result with is_linear = false; }
-	| CP.Bag _
-	| CP.BagUnion _
-	| CP.BagIntersect _
-	| CP.BagDiff _
-	| CP.List _
-	| CP.ListCons _
-	| CP.ListHead _
-	| CP.ListTail _
-	| CP.ListLength _
-	| CP.ListAppend _
-	| CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
+		{ result with is_linear = false; }
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+  | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
+  | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
-	{is_linear = if1.is_linear && if2.is_linear;
-	is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
-	contains_array = if1.contains_array || if2.contains_array;
-	relations = List.append if1.relations if2.relations;
-	axioms = List.append if1.axioms if2.axioms;}
+  {is_linear = if1.is_linear && if2.is_linear;
+  is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
+  contains_array = if1.contains_array || if2.contains_array;
+  relations = List.append if1.relations if2.relations;
+  axioms = List.append if1.axioms if2.axioms;}
 
 and combine_formula_info_list infos =
-	{is_linear = List.fold_left (&&) true 
-								(List.map (fun x -> x.is_linear) infos);
-	is_quantifier_free = List.fold_left (fun x y -> x && y) true 
-								(List.map (fun x -> x.is_quantifier_free) infos);
-	contains_array = List.fold_left (fun x y -> x || y) false 
-								(List.map (fun x -> x.contains_array) infos);
-	relations = List.flatten (List.map (fun x -> x.relations) infos);
-	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
+  {is_linear = List.fold_left (&&) true 
+		  (List.map (fun x -> x.is_linear) infos);
+  is_quantifier_free = List.fold_left (fun x y -> x && y) true 
+		  (List.map (fun x -> x.is_quantifier_free) infos);
+  contains_array = List.fold_left (fun x y -> x || y) false 
+		  (List.map (fun x -> x.contains_array) infos);
+  relations = List.flatten (List.map (fun x -> x.relations) infos);
+  axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
 
 and compact_formula_info info =
-	{ info with relations = Gen.BList.remove_dups_eq (=) info.relations;
-	            axioms = Gen.BList.remove_dups_eq (=) info.axioms; }
+  { info with relations = Gen.BList.remove_dups_eq (=) info.relations;
+	  axioms = Gen.BList.remove_dups_eq (=) info.axioms; }
 
 
 (***************************************************************
@@ -343,6 +352,8 @@ let add_axiom h dir c =
 			else x) !global_rel_defs;
 		(* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
 		let params = List.append (CP.fv h) (CP.fv c) in
+        let rel_ids = List.map (fun r -> CP.SpecVar(RelT,r.rel_name,Unprimed)) !global_rel_defs in
+        let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
 		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
 		let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
 		let op = match dir with 
@@ -363,27 +374,29 @@ let add_axiom h dir c =
 	end
 
 (* Interface function to add a new relation *)
-let add_relation rname rargs rform =
-	if (is_update_array_relation rname) then () else
+let add_relation (rname1:string) rargs rform =
+  let rname = CP.SpecVar(RelT,rname1,Unprimed) in
+  if (is_update_array_relation rname1) then () else
+    (* let rname1 = CP.name_of_spec_var rname in *)
 	(* Cache the declaration for this relation *)
 	let cache_smt_input = 
-		let signature = List.map CP.type_of_spec_var rargs in
-		let smt_signature = String.concat " " (List.map smt_of_typ signature) in
-		(* Declare the relation in form of a function --> Bool *)
-		"(declare-fun " ^ rname ^ " (" ^ smt_signature ^ ") Bool)\n" in
-	let rdef = { rel_name = rname; 
-				rel_vars = rargs;
-				related_rels = []; (* to be filled up by add_axiom *)
-				related_axioms = []; (* to be filled up by add_axiom *)
-				rel_cache_smt_declare_fun = cache_smt_input; } in
+	  let signature = List.map CP.type_of_spec_var rargs in
+	  let smt_signature = String.concat " " (List.map smt_of_typ signature) in
+	  (* Declare the relation in form of a function --> Bool *)
+	  "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n" in
+	let rdef = { rel_name = rname1; 
+	rel_vars = rargs;
+	related_rels = []; (* to be filled up by add_axiom *)
+	related_axioms = []; (* to be filled up by add_axiom *)
+	rel_cache_smt_declare_fun = cache_smt_input; } in
 	begin
-		global_rel_defs := !global_rel_defs @ [rdef];
-		(* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
-		match rform with
+	  global_rel_defs := !global_rel_defs @ [rdef];
+	  (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
+	  match rform with
 		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
-			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
-				add_axiom h IFF rform;
+			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+			  add_axiom h IFF rform;
 	end
 	
 
@@ -735,7 +748,8 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 	in
 	let conseq_info = collect_formula_info conseq in
 	(* remove occurences of dom in ante if conseq has nothing to do with dom *)
-	let ante = if (not (List.mem "dom" conseq_info.relations)) then CP.remove_primitive (fun x -> match x with | CP.RelForm ("dom", _ , _) -> true | _ -> false) ante else ante in
+	let ante = if (not (List.mem "dom" conseq_info.relations)) 
+    then CP.remove_primitive (fun x -> match x with | CP.RelForm (r, _ , _) -> CP.name_of_spec_var r = "dom" | _ -> false) ante else ante in
 	let ante_info = collect_formula_info ante in
 	let info = combine_formula_info ante_info conseq_info in
 	let ante_fv = CP.fv ante in
@@ -813,7 +827,9 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
   (*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
   match conseq with
 	| CP.BForm (b,_) -> (let (p, _) = b in match p with
-		| CP.RelForm ("induce",[value],_) -> [value]
+		| CP.RelForm (r,[value],_) -> 
+              if (CP.name_of_spec_var r) ="induce" then [value]
+              else []
 			  (* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)

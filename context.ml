@@ -746,16 +746,15 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
   match l with
     | [] -> 
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-          (*locle:temporal comment for performance*)
-        (*  let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in *)
-      if (is_view rhs_node) && (get_view_original rhs_node) then
-        let r = (2, M_base_case_fold { 
-            match_res_lhs_node = HTrue; 
-            match_res_lhs_rest = lhs_h; 
-            match_res_holes = [];
-            match_res_type = Root;
-            match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest;}) in 
+          let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+            let r = (2, M_base_case_fold {
+                match_res_lhs_node = HTrue;
+                match_res_lhs_rest = lhs_h;
+                match_res_holes = [];
+                match_res_type = Root;
+                match_res_rhs_node = rhs_node;
+                match_res_rhs_rest = rhs_rest;}) in 
         (* WN : why do we need to have a fold following a base-case fold?*)
         (* changing to no_match found *)
         (*(-1, Search_action [r])*)
@@ -769,9 +768,8 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
 
-        (*locle:temporal comment for performance*)
-       (-1, (Cond_action [(* ri;*) r; r0]))
-      else (-1, Cond_action [ (*ri;*) r0])
+       (-1, (Cond_action [ ri; r; r0]))
+      else (-1, Cond_action [ ri; r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
     | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
@@ -829,7 +827,7 @@ and sort_wt_x (ys: action_wt list) : action list =
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
         ->
         (*drop ummatched actions if possible*)
-        let l = drop_unmatched_action l in
+        (* let l = drop_unmatched_action l in *)
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
         (rw,Cond_action l)

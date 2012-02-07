@@ -10,6 +10,7 @@ let pred_to_compile = ref ([] : string list)
 
 let print_version_flag = ref false
 
+
 let inter = ref false
 
 let enable_gui = ref false
@@ -67,9 +68,9 @@ let common_arguments = [
 	"Disallow anonymous variables in the precondition to be existential");
 	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
 	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
-	("-noee", Arg.Clear Tpdispatcher.elim_exists_flag,
+	("-noee", Arg.Clear Globals.elim_exists_flag,
 	"No eleminate existential quantifiers before calling TP.");
-	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
+	("-nofilter", Arg.Clear Globals.filtering_flag,
 	"No assumption filtering.");
 	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
@@ -113,6 +114,7 @@ let common_arguments = [
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
@@ -133,6 +135,7 @@ let common_arguments = [
 	("-parse", Arg.Set parse_only,"Parse only");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
 	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
+	("--print-type", Arg.Set Globals.print_type,"Print type info");
 	("--print-x-inv", Arg.Set Globals.print_x_inv,
 	"Print computed view invariants");
 	("-stop", Arg.Clear Globals.check_all,
@@ -236,7 +239,17 @@ let common_arguments = [
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* Termination options *)
-  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
+  ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
+  ("--term-verbose", Arg.Set_int Globals.term_verbosity,
+      "level of detail in termination printing 0-verbose 1-standard(default)");
+  ("--dis-call-num", Arg.Set Globals.dis_call_num, "turn off the automatic call numbering");
+  ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
+  ("--term-reverify", Arg.Set Globals.term_reverify, 
+    "enable re-verification for inferred termination specifications");
+  ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
+  ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
+  ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
@@ -245,6 +258,9 @@ let common_arguments = [
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+
+  (* abduce pre from post *)
+  ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
 
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
@@ -299,5 +315,11 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
 ;;
+
+let check_option_consistency () =
+  if !Globals.allow_imm && Perm.allow_perm() then
+    begin
+    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at same time"
+    end
 
 Astsimp.inter := !inter;;

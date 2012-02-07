@@ -74,7 +74,7 @@ let rec process_intermediate_prims prims_list =
   | [] -> []
   | hd::tl ->
         let iprims = Globalvars.trans_global_to_param hd in
-        let iprims = Iast.label_procs_prog iprims in
+        let iprims = Iast.label_procs_prog iprims false in
                 iprims :: (process_intermediate_prims tl)
 
 (* Process prelude pragma *)
@@ -122,7 +122,7 @@ let process_source_full source =
     let iprims = Iast.append_iprims_list_head iprims_list in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-    let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+    let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
@@ -131,8 +131,10 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
+
 	(* Forward axioms and relations declarations to SMT solver module *)
-	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+	let _ = List.map (fun crdef -> 
+        Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
 	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
@@ -178,7 +180,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog prog);
+       ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -232,6 +234,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else

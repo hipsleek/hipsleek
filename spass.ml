@@ -177,9 +177,10 @@ let rec smt_of_b_formula b =
 			let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
 				"(= " ^ new_array ^ " " ^ result ^ ")"
 		else
-			"(" ^ r ^ " " ^ (String.concat " " smt_args) ^ ")"
+			"(" ^ (!CP.print_sv r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 			
-and is_update_array_relation r = 
+and is_update_array_relation r =
+   let r = CP.name_of_spec_var r in
 	let udrel = "update_array" in
 	let udl = String.length udrel in
 		(String.length r) >= udl && (String.sub r 0 udl) = udrel
@@ -262,6 +263,7 @@ and collect_bformula_info b = match b with
 	| Cpure.ListAllN _
 	| Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| Cpure.RelForm (r,args,_) ->
+          let r = CP.name_of_spec_var r in
 		if r = "update_array" then
 			default_formula_info 
 		else let rinfo = { default_formula_info with relations = [r]; } in
@@ -363,27 +365,28 @@ let add_axiom h dir c =
 	end
 
 (* Interface function to add a new relation *)
-let add_relation rname rargs rform =
-	if (is_update_array_relation rname) then () else
+let add_relation rname_sv rargs rform =
+  if (is_update_array_relation rname_sv) then () else
 	(* Cache the declaration for this relation *)
+    let rname = CP.name_of_spec_var rname_sv in
 	let cache_smt_input = 
-		let signature = List.map Cpure.type_of_spec_var rargs in
-		let smt_signature = String.concat " " (List.map smt_of_typ signature) in
-		(* Declare the relation in form of a function --> Bool *)
-		"(declare-fun " ^ rname ^ " (" ^ smt_signature ^ ") Bool)\n" in
+	  let signature = List.map Cpure.type_of_spec_var rargs in
+	  let smt_signature = String.concat " " (List.map smt_of_typ signature) in
+	  (* Declare the relation in form of a function --> Bool *)
+	  "(declare-fun " ^ rname ^ " (" ^ smt_signature ^ ") Bool)\n" in
 	let rdef = { rel_name = rname; 
-				rel_vars = rargs;
-				related_rels = []; (* to be filled up by add_axiom *)
-				related_axioms = []; (* to be filled up by add_axiom *)
-				rel_cache_smt_declare_fun = cache_smt_input; } in
+	rel_vars = rargs;
+	related_rels = []; (* to be filled up by add_axiom *)
+	related_axioms = []; (* to be filled up by add_axiom *)
+	rel_cache_smt_declare_fun = cache_smt_input; } in
 	begin
-		global_rel_defs := !global_rel_defs @ [rdef];
-		(* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
-		match rform with
+	  global_rel_defs := !global_rel_defs @ [rdef];
+	  (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
+	  match rform with
 		| Cpure.BForm ((Cpure.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
-			let h = Cpure.BForm ((Cpure.RelForm (rname, List.map (fun x -> Cpure.mkVar x no_pos) rargs, no_pos), None), None) in
-				add_axiom h IFF rform;
+			  let h = Cpure.BForm ((Cpure.RelForm (rname_sv, List.map (fun x -> Cpure.mkVar x no_pos) rargs, no_pos), None), None) in
+			  add_axiom h IFF rform;
 	end
 	
 
@@ -735,7 +738,10 @@ let to_smt (ante : Cpure.formula) (conseq : Cpure.formula option) (prover: smtpr
 	in
 	let conseq_info = collect_formula_info conseq in
 	(* remove occurences of dom in ante if conseq has nothing to do with dom *)
-	let ante = if (not (List.mem "dom" conseq_info.relations)) then Cpure.remove_primitive (fun x -> match x with | Cpure.RelForm ("dom", _ , _) -> true | _ -> false) ante else ante in
+	let ante = if (not (List.mem "dom" conseq_info.relations)) then Cpure.remove_primitive (fun x -> 
+        match x with 
+          | Cpure.RelForm (v, _ , _) -> (CP.name_of_spec_var v = "dom")
+          | _ -> false) ante else ante in
 	let ante_info = collect_formula_info ante in
 	let info = combine_formula_info ante_info conseq_info in
 	let ante_fv = Cpure.fv ante in
@@ -825,7 +831,8 @@ let rec collect_induction_value_candidates (ante : Cpure.formula) (conseq : Cpur
   (*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
   match conseq with
 	| Cpure.BForm (b,_) -> (let (p, _) = b in match p with
-		| Cpure.RelForm ("induce",[value],_) -> [value]
+		| Cpure.RelForm (v,[value],_) -> 
+              if "induce"=CP.name_of_spec_var v then [value] else []
 			  (* | Cpure.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [Cpure.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| Cpure.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)

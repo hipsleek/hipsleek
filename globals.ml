@@ -1,10 +1,15 @@
 (* global types and utility functions *)
 
+type ('a,'b) twoAns = 
+  | FstAns of 'a
+  | SndAns of 'b
 
 type ident = string
 type constant_flow = string
 
 exception Illegal_Prover_Format of string
+
+let reverify_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
@@ -36,6 +41,16 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
+and term_ann = 
+  | Term    (* definitely terminates *)
+  | Loop    (* definitely loops *)
+  | MayLoop (* don't know *)
+  | Fail of term_fail    (* failed because of invalid trans *)
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -60,6 +75,9 @@ type typ =
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
+  | RelT (* relation type *)
+  (* | FuncT (\* function type *\) *)
+
 
 (*
   Data types for code gen
@@ -102,6 +120,15 @@ let int_of_heap_ann a =
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
+
+let string_of_term_ann a =
+  match a with
+  | Term -> "Term"
+  | Loop -> "Loop"
+  | MayLoop -> "MayLoop"
+  | Fail f -> match f with
+    | TermErr_May -> "TermErr_May"
+    | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -176,6 +203,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
+  | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -196,6 +224,7 @@ let rec string_of_typ_alpha = function
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
+  | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -360,6 +389,10 @@ let enable_norm_simp = ref false
 
 let print_version_flag = ref false
 
+let elim_exists_flag = ref true
+
+let filtering_flag = ref true
+
 let n_xpure = ref 1
 
 let check_coercions = ref false
@@ -375,6 +408,8 @@ let trace_failure = ref false
 let trace_all = ref false
 
 let print_mvars = ref false
+
+let print_type = ref false
 
 (* let enable_sat_statistics = ref false *)
 
@@ -446,7 +481,15 @@ let disable_multiple_specs =ref false
   let do_sat_slice = ref false
 
 (* for Termination *)
-  let term_auto_number = ref false
+let dis_term_chk = ref false
+let term_verbosity = ref 1
+let dis_call_num = ref false
+let dis_phase_num = ref false
+let term_reverify = ref false
+let dis_bnd_chk = ref false
+let dis_term_msg = ref false
+let dis_post_chk = ref false
+let dis_ass_chk = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false
@@ -459,8 +502,14 @@ let is_sat_slicing = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 
+(* Options for abduction *)
+let do_abd_from_post = ref false
+
+(* Flag of being unable to fold rhs_heap *)
+let unable_to_fold_rhs_heap = ref false
+
 (* Inference *)
-let call_graph : ((string list) list) ref = ref [[]]
+(*let call_graph : ((string list) list) ref = ref [[]]*)
 
 let add_count (t: int ref) = 
 	t := !t+1

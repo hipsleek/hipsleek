@@ -1,0 +1,32 @@
+data node {
+	int val;
+	node next; 
+}.
+
+
+/* view for binary search trees */
+pred sll <sm, lg> == self = null & sm <= lg 
+    or self::node<sm, p> * p::sll<s2, lg> & sm<=s2
+	inv sm <= lg.
+
+
+relation B(int x, int y, int a, int b).
+
+infer [B] x::sll<sm,lg>  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+infer [B] x=null & sm<=lg  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+checkentail sm<=lg & s<=l  |- sm<=s & l<=lg.
+checkentail sm=s & lg=l & sm<=lg  |- sm<=s & l<=lg.
+// sm=s & lg=l & sm<=lg -> B(sm,s,l,lg)
+
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
+    |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+// folding against x::sll<s,l> failed as it required post-cond from B
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2<=s3 & l3<=lg & 
+  B(s2,s3,l3,lg)  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
