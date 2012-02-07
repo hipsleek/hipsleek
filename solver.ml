@@ -421,7 +421,7 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_la
 (* xpure approximation with memory enumeration *)
 and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
   (*use different xpure functions*)
-  let xpure_h = if (Perm.allow_perm ()) then xpure_heap_perm else xpure_heap_mem_enum in
+  (* let xpure_h = if (Perm.allow_perm ()) then xpure_heap_perm else xpure_heap_mem_enum in *)
   let mset = formula_2_mem f0 prog in 
   let rec xpure_helper  (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list) = 
     match f0 with
@@ -2271,7 +2271,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               in
               (* vs may contain non-existential free vars! *)
               (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
-              let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in 
+              (* let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in  *)
               (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
               let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)} in
               (* let new_es = estate in *)
@@ -3359,8 +3359,10 @@ and heap_entail_conjunct_lhs_struc_x
                   if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
                     let es, ll = helper ctx postcond in
                     let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
-                    let err_msg = "32. proving precondtition: error scenarios (" ^ err_name ^
-                     ")\n    locs: [" ^ (Cprinter.string_of_list_int ll) ^ "]" in
+                    (* let err_msg = "32. proving precondtition: error scenarios (" ^ err_name ^ *)
+                    (*  ")\n    locs: [" ^ (Cprinter.string_of_list_int ll) ^ "]" in *)
+                    let err_msg = "may_err (" ^ err_name ^
+                     ") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_may err_msg Globals.fnc_error in
                     FailCtx (Basic_Reason ({fc_message =err_msg;
                                             fc_current_lhs  = es;
@@ -3371,8 +3373,10 @@ and heap_entail_conjunct_lhs_struc_x
                   else if CF.subsume_flow_f !error_flow_int fl then
                      let es, ll = helper ctx postcond in
                      let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
-                    let err_msg = "32. proving precondtition: error scenarios (" ^ err_name ^
-                     ")\n    locs: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
+                    (* let err_msg = "32. proving precondtition: error scenarios (" ^ err_name ^ *)
+                    (*  ")\n    LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in *)
+                     let err_msg = "must_err (" ^ err_name ^
+                     ") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_must err_msg Globals.fnc_error in
                     FailCtx (Basic_Reason ({fc_message =err_msg;
                                             fc_current_lhs  = es;
@@ -5184,8 +5188,11 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
         (*let _ = print_endline (Cprinter.string_of_list_loc ll) in*)
         let lli = CF.get_lines ll in
+        (*possible to eliminate unnecessary intermediate that are defined by equality.*)
+        (*not sure it is better*)
+        let ante = CP.elim_equi_ante ante cons in
         ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-        (Cprinter.string_of_pure_formula cons) ^ "\n    locs: [" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in
+        (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in
       match failure_list with
         | [] -> None
         | _ ->
@@ -5198,8 +5205,13 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
             in
             (*shoudl use ll in future*)
            (* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*)
-              let msg = "(failure_code="^failure_code ^ ") And_Reason[" ^
-                (String.concat "; " strs) ^ " ("  ^ failure_string ^ ").]" in
+              let msg =
+                match strs with
+                  | [] -> ""
+                  | [s] -> s ^ " ("  ^ failure_string ^ ")"
+                  | _ -> (* "(failure_code="^failure_code ^ ") AndR[" ^ *)
+                      "AndR[" ^ (String.concat "; " strs) ^ " ("  ^ failure_string ^ ").]"
+              in
               let fe = match fk with
                 |  Failure_May _ -> mk_failure_may msg failure_name
                 | Failure_Must _ -> (mk_failure_must msg failure_name)
@@ -5384,7 +5396,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
-  let estate = estate_orig in
+  (* let estate = estate_orig in *)
   let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 
     lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
   (* Termination *)
