@@ -1862,7 +1862,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
-let merge_mems_debug f1 f2 slice_dup = 
+let merge_mems f1 f2 slice_dup = 
   Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
@@ -1976,7 +1976,17 @@ let subst_avoid_capture_memo from t f = match f with
 let memo_subst s f = match f with
   | MemoF f -> MemoF (memo_subst s f)
   | OnePF f -> OnePF (subst s f)  
- 
+
+let list_pos_of_mix_formula mf=
+  match mf with
+  | MemoF f -> []
+  | OnePF f -> (Cpure.list_pos_of_formula f [])
+
+let subst_pos_mix_formula p mf=
+ match mf with
+  | MemoF f -> mf
+  | OnePF f -> OnePF (Cpure.subst_pos_formula p f)
+
 let elim_redundant sf f = match f with
   | MemoF f -> MemoF (elim_redundant sf f)
   | OnePF _ -> f

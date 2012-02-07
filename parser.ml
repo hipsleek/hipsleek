@@ -682,7 +682,7 @@ extended_constr:
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc (un_option rc [])(get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc (un_option rc []) true (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -1416,6 +1416,7 @@ spec:
 			 F.formula_ext_exists = [];
 			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
 			 F.formula_ext_continuation = [s];
+            (* F.formula_ext_complete = false;*)
 			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
 	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
 	    	F.EBase {
@@ -1425,8 +1426,28 @@ spec:
 	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
 	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
 	    																					else sl;
+            (* F.formula_ext_complete = false;*)
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
-       
+   (*  | `REQUIRESC; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+		 F.EBase {
+			 F.formula_ext_explicit_inst =cl;
+			 F.formula_ext_implicit_inst = [];
+			 F.formula_ext_exists = [];
+			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
+			 F.formula_ext_continuation = [s];
+             F.formula_ext_complete = false;
+			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+	 | `REQUIRESC; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
+	    	F.EBase {
+	    	 F.formula_ext_explicit_inst =cl;
+	    	 F.formula_ext_implicit_inst = [];
+	    	 F.formula_ext_exists = [];
+	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
+	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
+	    																					else sl;
+             F.formula_ext_complete = true;
+	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+  *)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->

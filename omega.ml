@@ -455,7 +455,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");
-                    true
+                    false
                 | exc ->
                     begin
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);

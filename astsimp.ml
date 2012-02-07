@@ -1239,7 +1239,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
   let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
 	let ctx =
-      CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+      CF.build_context (CF.empty_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
     let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
 
 
@@ -1263,8 +1263,9 @@ let _ = if not(CF.isFailCtx rs)
       Err.report_error
           {
               Err.error_loc = pos;
-              Err.error_text = "view formula does not entail supplied invariant\n";} in ()
-                                                                                            (* print_string ("\nAstsimp.ml: bef error") *)
+              Err.error_text = "view formula does not entail supplied invariant\n";
+          } in ()
+    (* print_string ("\nAstsimp.ml: bef error") *)
     )
   else ();
   if !Globals.print_x_inv && (n = 0)
@@ -1956,7 +1957,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
 	let r_int = exlist # get_hash abnormal_flow in
-	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
+    (*annotated may and must error in specs*)
+    (* let t_int = exlist # get_hash top_flow in *)
+    (* let e_int = exlist # get_hash error_flow in *)
+    (* let exc_list = exc_list@[t_int;e_int] in *)
+	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then
 	  Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
 	else ()) ;
 	let _ = Cast.check_proper_return cret_type exc_list (dynamic_specs_list@static_specs_list) in
@@ -2009,7 +2014,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_args = args;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
-		  C.proc_important_vars = imp_vars; (* An Hoa *)
+		  C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
           (* C.proc_static_specs_with_pre =  []; *)
@@ -2503,7 +2508,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_assign_lhs = v;
                                     C.exp_assign_rhs = ce2;
                                     C.exp_assign_pos = pos;} in
-                                if C.is_var ce1 then (assign_e, C.void_type)
+                                if C.is_var ce1 then
+	                              (* let vsv = CP.SpecVar (te1, v, Primed) in
+                                  let _ = proc.I.proc_important_vars <- proc.I.proc_important_vars @ [vsv] in*)
+                                  (assign_e, C.void_type)
                                 else
                                   (let seq_e = C.Seq{
                                       C.exp_seq_type = C.void_type;
@@ -2751,7 +2759,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
-		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
+		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
@@ -3264,6 +3272,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_constructor = false;
                 I.proc_args = w_formal_args;
                 I.proc_return = I.void_type;
+               (* I.proc_important_vars= [];*)
                 I.proc_static_specs = prepost;
                 I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
                 I.proc_dynamic_specs = [];
@@ -4043,6 +4052,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                 CF.formula_ext_exists = ext_exis;
                 CF.formula_ext_base = nb;
                 CF.formula_ext_continuation = nc;
+               (* CF.formula_ext_complete = b.IF.formula_ext_complete;*)
                 CF.formula_ext_pos = b.IF.formula_ext_pos}
 	  (*| IF.EVariance b -> CF.EVariance {
         CF.formula_var_measures = List.map (fun (expr, bound) -> 
@@ -5762,9 +5772,9 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
   let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
   if (Gen.is_empty vt_u)
   then
-    let pr_exp = pr_list Iprinter.string_of_formula_exp in
-    let pr_ty = pr_list (pr_pair string_of_typ pr_id) in
-    let pr_out = pr_list (pr_pair string_of_spec_var_kind pr_id) in
+   (* let pr_exp = pr_list Iprinter.string_of_formula_exp in *)
+   (* let pr_ty = pr_list (pr_pair string_of_typ pr_id) in *)
+   (* let pr_out = pr_list (pr_pair string_of_spec_var_kind pr_id) in *)
     (* let helper e t = Debug.no_2 "WN-helper1" pr_exp pr_ty pr_out helper e t in *)
     let _ = (List.map (fun (t, n) -> gather_type_info_var n stab (t) pos) tmp_r) in
     ()
@@ -6305,6 +6315,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
                 IF.formula_ext_explicit_inst = all_expl;
                 IF.formula_ext_exists = [];
                 IF.formula_ext_continuation = nc;
+               (* IF.formula_ext_complete = b.IF.formula_ext_complete;*)
                 IF.formula_ext_pos = b.IF.formula_ext_pos}),(Gen.BList.remove_dups_eq (=) (h2@h3)))in
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r
