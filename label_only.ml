@@ -5,20 +5,24 @@ open Gen
 
 module type LABEL_TYPE =
     sig
-      type t
+      type a
+      type t 
       val unlabelled : t 
       val is_unlabelled : t -> bool (* is this unlabelled *)
       val norm : t -> t (* sort a label *)
       val is_compatible : t -> t -> bool
-      val is_compatible_aux : t -> t -> bool
+      val is_compatible_rec : t -> t -> bool
       (* val comb_identical : t -> t -> t (\* combine two identical labels *\) *)
       val comb_norm : t -> t -> t (* combine two normalised labels *)
       val string_of : t -> string
       val compare : t -> t -> int
+      val singleton : a -> t
     end;;
 
 module Lab_List  =
 struct
+  (* type a = string *)
+  type a = string
   type t = string list
   let unlabelled = []
   let is_unlabelled l = (l==[])
@@ -40,7 +44,7 @@ struct
     if (is_unlabelled xs) || (is_unlabelled ys) then true
     else overlap xs ys
 
-  let is_compatible_aux = is_compatible
+  let is_compatible_rec = is_compatible
 
   (* assumes that xs is sorted *)
   let remove_dups xs =
@@ -89,6 +93,7 @@ end;;
 (* this labelling is for outermost disjuncts only *)
 module Lab2_List  =
 struct
+  type a = string
   type t = (int option * string list)
       (* int replaces __i and may be used to label pre/post *)
   let unlabelled = (None, [])
@@ -101,11 +106,11 @@ struct
                            | None, Some _ -> true (* not possible *)
                            | None, None -> true
 
-  let is_compatible (lx,xs) (ly,ys) =
+  let is_compatible_rec (lx,xs) (ly,ys) =
     if (xs==[] || ys=[]) then is_comp_opt lx ly
     else Lab_List.overlap xs ys
 
-  let is_compatible_aux (lx,xs) (ly,ys) =
+  let is_compatible (lx,xs) (ly,ys) =
     if (xs==[] || ys=[]) then true
     else Lab_List.overlap xs ys
 

@@ -189,6 +189,23 @@ class prog_loc =
        | Some l -> (string_of_pos l.start_pos)
    end;;
 
+class ['a] store (x_init:'a) (epr:'a->string) =
+   object 
+     val emp_val = x_init
+     val mutable lc = None
+     method is_avail : bool = match lc with
+       | None -> false
+       | Some _ -> true
+     method set (nl:'a) = lc <- Some nl
+     method get :'a = match lc with
+       | None -> emp_val
+       | Some p -> p
+     method reset = lc <- None
+     method string_of : string = match lc with
+       | None -> "None"
+       | Some l -> (epr l)
+   end;;
+
 let proving_loc  = new prog_loc
 
 let post_pos = new prog_loc
@@ -371,6 +388,8 @@ let ann_derv = ref false
 let print_proc = ref false
 
 let check_all = ref true
+
+let auto_number = ref true
 
 let use_field = ref false
 

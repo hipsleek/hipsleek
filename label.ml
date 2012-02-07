@@ -92,17 +92,22 @@ struct
   let get_labels (xs:label_list) : lab_type list =
     List.map fst xs
 
+  let filter_aux  f (fid:lab_type) (xs:label_list) :  (label_list) = 
+    let pr_len xs= string_of_int (List.length xs) in
+    let rs = List.filter (fun (l,_) -> f fid l) xs in
+    Debug.info_zprint (lazy (("Filter Label ==> Orig:"^(pr_len xs))^(" Filtered:"^(pr_len rs)))) no_pos;
+    rs
+
   (* return a list of formula that are compatible with label *)
   let filter_label (fid:lab_type) (xs:label_list) :  (label_list) = 
     if Lbl.is_unlabelled fid then xs
-    else List.filter (fun (l,_) -> Lbl.is_compatible fid l) xs
+    else filter_aux Lbl.is_compatible fid xs 
 
   (* return a list of formula that are compatible with label *)
       (* to be used for aux calls *)
-  let filter_label_aux (fid:lab_type) (xs:label_list) :  (label_list) = 
+  let filter_label_rec (fid:lab_type) (xs:label_list) :  (label_list) = 
     if Lbl.is_unlabelled fid then xs
-    else List.filter (fun (l,_) -> Lbl.is_compatible_aux fid l) xs
-
+    else filter_aux Lbl.is_compatible_rec fid xs 
 
   let rec comb_tgt l x ys =
       match ys with
@@ -181,5 +186,17 @@ struct
     }
   let string_of = !CF.print_h_formula
 end;;
-module X1 = LabelExpr(Lab_List)(Exp_Pure);; 
-module X2 = LabelExpr(Lab2_List)(Exp_Heap);;
+
+module Exp_Spec =
+struct 
+  type e = CF.struc_formula
+  let comb x y = CF.EOr 
+    { CF.formula_struc_or_f1 = x;
+    CF.formula_struc_or_f2 = y;
+    CF.formula_struc_or_pos = no_pos
+    }
+  let string_of = !CF.print_struc_formula
+end;;
+module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
+module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;

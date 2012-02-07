@@ -6,8 +6,8 @@ open Solver
 open Cast
 open Gen.Basic
 open Perm
-
-module Lb = Label
+open Label_only
+open Label
 module CF = Cformula
 module CP = Cpure
 module TP = Tpdispatcher
@@ -16,6 +16,8 @@ module I = Iast
 module LP = Lemproving
 module Inf = Infer
 module AS = Astsimp
+
+let store_label = new store Lab2_List.unlabelled Lab2_List.string_of
 
 let phase_infer_ind = ref false
 
@@ -285,7 +287,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (new_c,[],rel,f)
 	  | CF.EList b -> 
 			let (sl,pl,rl,bl) = List.fold_left (fun (a1,a2,a3,a4) (l,c) -> 
-				let (b1,b2,b3,b4) = helper ctx c in
+				let (b1,b2,b3,b4) = 
+                  store_label # set l;
+                  helper (CF.update_ctx_label ctx l) c in
 				(a1@[(l,b1)],a2@b2,a3@b3,a4@[b4])) ([],[],[],[]) b in
 			Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
 			(CF.norm_specs (CF.EList sl), pl, rl, List.for_all pr_id bl) 
@@ -824,8 +828,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* Termination: Stripping the "variance" feature from 
                    * org_spec if the call is not a recursive call *)
                   (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
-                  let stripped_spec = org_spec in 
-                  
+                  let lbl_ctx = store_label # get in
+                  let org_spec2 = 
+                    if ir && !auto_number then match org_spec with
+                      | CF.EList b -> 
+                            let l = Label_Spec.filter_label_rec lbl_ctx b in
+                            CF.EList l
+                      | _ -> org_spec 
+                    else org_spec in
+                  let stripped_spec = org_spec2 in 
                   (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
                   (* Termination: The logical vars should not be renamed *)
@@ -1141,7 +1152,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
 			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
 			    let init_form = nox in
-			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) (empty_label,false) proc.proc_loc in
+			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled  proc.proc_loc in
                 (*add default full permission = 1.0 to ante; 
                   need to add type of full perm to stab
                 *)

@@ -272,7 +272,6 @@ let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
-let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
@@ -2888,7 +2887,7 @@ think it is used to instantiate when folding.
      a FALSE is being inferred
   *)
      es_infer_pure_thus : CP.formula; 
-     es_group_lbl: formula_label*bool;
+     es_group_lbl: spec_label_def;
 }
 
 and context = 
@@ -3413,7 +3412,7 @@ let get_must_es_msg_ft ft =
   (* let msg = get_must_failure_ft ft in *)
   match es,msg with
     | Some es, Failure_Must msg -> Some (es,msg)
-    | None, Failure_Must msg -> Some (empty_es ( mkTrueFlow ()) (empty_label,false) no_pos,msg) (*may be Trivial fail*)
+    | None, Failure_Must msg -> Some (empty_es ( mkTrueFlow ()) Lab2_List.unlabelled no_pos,msg) (*may be Trivial fail*)
     (*report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"*)
     | _, _ -> None
  
@@ -3842,7 +3841,7 @@ let mk_not_a_failure =
   Basic_Reason ({
       fc_prior_steps = [];
       fc_message = "Success";
-      fc_current_lhs =  empty_es (mkTrueFlow ()) (empty_label,false) no_pos;
+      fc_current_lhs =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos;
       fc_orig_conseq =  mkETrue  (mkTrueFlow ()) no_pos;
       fc_failure_pts = [];
       fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
@@ -3856,7 +3855,7 @@ let invert ls =
   let foo es =
             let fc_template = {
 		        fc_message = "INCONSISTENCY : expected failure but success instead";
-		        fc_current_lhs  =  empty_es (mkTrueFlow ()) (empty_label,false) no_pos;
+		        fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos;
 		        fc_prior_steps = [];
 		        fc_orig_conseq  = es.es_orig_conseq;
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
@@ -3883,7 +3882,7 @@ let empty_ctx flowt g_lbl pos = Ctx (empty_es flowt g_lbl pos)
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
 	let new_f = mkFalse flowt pos in
-    {(empty_es flowt (empty_label,false) pos) with es_formula = new_f ; es_orig_ante = Some f; 
+    {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_dead = es.es_infer_vars_dead;
@@ -3893,7 +3892,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_assumed_pure = es.es_assumed_pure;
         es_var_measures = es.es_var_measures;
-        es_group_lbl = es. es_group_lbl;
+        es_group_lbl = es.es_group_lbl;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -4512,7 +4511,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
         begin
             let fc_template = {
 		        fc_message = "INCONSISTENCY : expected failure but success instead";
-		        fc_current_lhs  =  empty_es (mkTrueFlow ()) (empty_label, false) no_pos;
+		        fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
 		        fc_prior_steps = [];
 		        fc_orig_conseq  = conseq;
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
@@ -6860,11 +6859,12 @@ and count_term_formula f = match f with
   | Exists b -> CP.count_term_pure (MCP.pure_of_mix b.formula_exists_pure)
   | Or b -> (count_term_formula b.formula_or_f1) + (count_term_formula b.formula_or_f2)
 
-let conseq_group_filter ctx conseq = 
-  let ((int_lbl,str_lbl),rec_call) = match ctx with | Ctx es -> es.es_group_lbl | _ -> failwith "conseq_group_filter: unexpected disjunctive context" in
-  if rec_call then List.filter (fun ((l,_),_)-> l=int_lbl || l=0) conseq 
-  else if (String.compare str_lbl "")=0 then conseq
-  else List.filter (fun ((_,s),_)-> (String.compare s "")=0 || (String.compare str_lbl s)=0) conseq 
+(* let conseq_group_filter ctx conseq =  *)
+(*   let ((int_lbl,str_lbl),rec_call) =  *)
+(*     match ctx with | Ctx es -> es.es_group_lbl | _ -> failwith "conseq_group_filter: unexpected disjunctive context" in *)
+(*   if rec_call then List.filter (fun ((l,_),_)-> l=int_lbl || l=0) conseq  *)
+(*   else if (String.compare str_lbl "")=0 then conseq *)
+(*   else List.filter (fun ((_,s),_)-> (String.compare s "")=0 || (String.compare str_lbl s)=0) conseq  *)
 
 
 let set_rec_group_label sctx b = 
@@ -6874,7 +6874,20 @@ let set_rec_group_label sctx b =
   let rec_set (c1,c2) = (c1,rec_set_ctx c2) in
   List.map (fun (c1,c2,c3)-> (c1,c2,List.map rec_set c3)) sctx
 
-  
+let get_ctx_label sctx =
+  let rec helper c = match c with 
+    | Ctx es -> es.es_group_lbl
+    | OCtx (c1,c2) -> helper c1 
+  in helper sctx
+
+let update_ctx_label sctx l =
+  let rec helper c = match c with 
+    | Ctx es -> Ctx {es with es_group_lbl = l}
+    | OCtx (c1,c2) -> OCtx (helper c1,helper c2) 
+  in 
+  if Lab2_List.is_unlabelled l then sctx
+  else helper sctx
+
 let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula = 
 	let rec helper sp pre = match sp with
 		| ECase b -> report_error b.formula_case_pos ("Not supported nested case analysis")

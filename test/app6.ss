@@ -22,6 +22,26 @@ void append(node x, node y)
      ensures x::clist<n>;
   ]
   [
+    requires x::ll<n> & x!=null //& n>0
+    ensures x::lseg<y, n>;
+     requires x::ll<n> & y=x & n>0
+     ensures x::clist<n>;
+  ]
+  [
+    requires x::ll<n> & x!=null //& n>0
+    ensures x::lseg<y, n>;
+     requires x::ll<n> & y=x & n>0
+     ensures x::clist<n>;
+  ]
+  [
+    requires x::ll<n> & x!=null //& n>0
+    ensures x::lseg<y, n>;
+     [
+       requires x::ll<n> & y=x & n>0
+       ensures x::clist<n>;
+     ]
+  ]
+  [
     requires x::ll<n> * y::ll<m> & n>0
     ensures x::ll<e>& e=n+m;
   ]
