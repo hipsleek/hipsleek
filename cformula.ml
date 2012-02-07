@@ -150,11 +150,12 @@ and flow_treatment =
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   | Conj of h_formula_conj
+  | StarList of (spec_label * h_formula_star) list
   | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   (* | Mem of [[Var]] *)
-  | Hole of int    
+  | Hole of int
   | HTrue
   | HFalse
           

@@ -9,6 +9,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
+open Label_only
 
 
 (* spec var *)
@@ -40,6 +41,7 @@ type rel_cat =
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
+  | AndList of (spec_label * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)

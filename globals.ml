@@ -170,24 +170,25 @@ let string_of_loc_by_char_num (l : loc) =
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
 
-class prog_loc =
-   object 
-     val mutable lc = None
-     method is_avail : bool = match lc with
-       | None -> false
-       | Some _ -> true
-     method set (nl:loc) = lc <- Some nl
-     method get :loc = match lc with
-       | None -> no_pos
-       | Some p -> p
-     method reset = lc <- None
-     method string_of : string = match lc with
-       | None -> "None"
-       | Some l -> (string_of_loc l)
-     method string_of_pos : string = match lc with
-       | None -> "None"
-       | Some l -> (string_of_pos l.start_pos)
-   end;;
+(* class prog_loc = *)
+(*    object  *)
+(*      val mutable lc = None *)
+(*      method is_avail : bool = match lc with *)
+(*        | None -> false *)
+(*        | Some _ -> true *)
+(*      method set (nl:loc) = lc <- Some nl *)
+(*      method get :loc = match lc with *)
+(*        | None -> no_pos *)
+(*        | Some p -> p *)
+(*      method reset = lc <- None *)
+(*      method string_of : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_loc l) *)
+(*      method string_of_pos : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_pos l.start_pos) *)
+(*    end;; *)
+
 
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
@@ -205,6 +206,14 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | None -> "None"
        | Some l -> (epr l)
    end;;
+
+class prog_loc =
+object
+  inherit [loc] store no_pos string_of_loc
+     method string_of_pos : string = match lc with
+       | None -> "None"
+       | Some l -> (string_of_pos l.start_pos)
+end;;
 
 let proving_loc  = new prog_loc
 
