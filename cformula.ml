@@ -6860,6 +6860,13 @@ and count_term_formula f = match f with
   | Exists b -> CP.count_term_pure (MCP.pure_of_mix b.formula_exists_pure)
   | Or b -> (count_term_formula b.formula_or_f1) + (count_term_formula b.formula_or_f2)
 
+
+let add_term_nums_struc struc_f log_vars call_num add_phase =
+  let pr = !print_struc_formula in
+  let pr2 = pr_pair pr !CP.print_svl in
+  Debug.ho_1 "add_term_nums_struc" 
+      pr pr2 (fun _ -> add_term_nums_struc struc_f log_vars call_num add_phase) struc_f
+
 (* let conseq_group_filter ctx conseq =  *)
 (*   let ((int_lbl,str_lbl),rec_call) =  *)
 (*     match ctx with | Ctx es -> es.es_group_lbl | _ -> failwith "conseq_group_filter: unexpected disjunctive context" in *)
