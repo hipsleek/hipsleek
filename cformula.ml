@@ -2889,6 +2889,14 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
+
+     (* this should store first termination error detected *)
+     (* in case an error has already been detected *)
+     (* we will not do any further termination checking *)
+     (* from this context *)
+     (* please change to an appropriate type here *)
+      es_term_err: string option;
+
 }
 
 and context = 
@@ -3058,6 +3066,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_assumed_pure = [];
   es_group_lbl = grp_lbl;
+  es_term_err = None;
   (*es_infer_invs = [];*)
 }
 
@@ -3894,6 +3903,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_assumed_pure = es.es_assumed_pure;
         es_var_measures = es.es_var_measures;
         es_group_lbl = es.es_group_lbl;
+        es_term_err = es.es_term_err;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -5831,12 +5841,15 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_path_label = es.es_path_label;
       es_prior_steps = es.es_prior_steps;
       es_var_measures = es.es_var_measures;
+      (* WN : what is the purpose of es_var_stack?*)
       es_var_stack = es.es_var_stack;
       es_infer_vars = es.es_infer_vars;
       es_infer_vars_rel = es.es_infer_vars_rel;
       es_infer_heap = es.es_infer_heap;
       es_infer_pure = es.es_infer_pure;
       es_infer_rel = es.es_infer_rel;
+        es_group_lbl = es.es_group_lbl;
+        es_term_err = es.es_term_err;
   }
 
 let clear_entailment_history xp (ctx : context) : context =  

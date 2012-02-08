@@ -178,11 +178,11 @@ let pr_term_status_short = function
       (* fmt_string ")" *)
   | Unreachable -> fmt_string "(UNR)"
   | MayTerm_S r -> 
-      fmt_string "(ERR: ";
+      fmt_string "(MayTerm ERR: ";
       pr_term_reason_short r;
       (* fmt_string ")" *)
   | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
-  | _ -> fmt_string "(ERR)"
+  | TermErr reason -> fmt_string "(TERM ERR - )"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 

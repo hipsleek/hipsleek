@@ -2380,6 +2380,8 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_assumed_pure = fold_es.es_assumed_pure;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
+              es_group_lbl = fold_es.es_group_lbl;
+              es_term_err = fold_es.es_term_err;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
         Debug.devel_zprint (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
@@ -5670,6 +5672,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
+              es_group_lbl = estate.es_group_lbl;
+              es_term_err = estate.es_term_err;
     } in
     let na,prf = match lhs_vd.view_base_case with
       | None ->  Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
@@ -5793,6 +5797,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                     here *)
                  es_var_measures = estate.es_var_measures;
                  es_var_stack = estate.es_var_stack;
+              es_group_lbl = estate.es_group_lbl;
+              es_term_err = estate.es_term_err;
 		         } in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
