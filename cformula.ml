@@ -2824,10 +2824,15 @@ think it is used to instantiate when folding.
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
-  (* For VARIANCE checking *)
+  (* For Termination checking *)
   (* Term ann with Lexical ordering *)
   es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
   es_var_stack :  string list; 
+  (* this should store first termination error detected *)
+  (* in case an error has already been detected *)
+  (* we will not do any further termination checking *)
+  (* from this context *)
+  es_term_err: string option;
 
 
   (* for IMMUTABILITY *)
@@ -2889,14 +2894,6 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
-
-     (* this should store first termination error detected *)
-     (* in case an error has already been detected *)
-     (* we will not do any further termination checking *)
-     (* from this context *)
-     (* please change to an appropriate type here *)
-      es_term_err: string option;
-
 }
 
 and context = 
@@ -3641,6 +3638,14 @@ let es_simplify (e1:entail_state):entail_state =
 let es_simplify e1 = 
   let pr  = !print_entail_state in
   Debug.no_1 "es_simplify" pr pr es_simplify e1
+
+let rec collect_term_err ctx =
+  match ctx with
+  | Ctx estate ->
+    (match estate.es_term_err with
+      | None -> []
+      | Some msg -> [msg])
+  | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
 
 let rec collect_pre_pure ctx = 
   match ctx with
