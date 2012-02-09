@@ -3647,6 +3647,10 @@ let rec collect_term_err ctx =
       | Some msg -> [msg])
   | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
 
+let collect_term_err_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_term_err c) cl))  ctx in
+  List.concat r
+
 let rec collect_pre_pure ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_pure 

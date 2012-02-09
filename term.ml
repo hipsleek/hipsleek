@@ -62,9 +62,16 @@ type phase_constr =
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
 
+(* Using stack to store term error messages *)
+let term_err_stk : string Gen.stack = new Gen.stack
+
 let add_term_res_stk m = 
   if !Globals.dis_term_msg then ()
   else term_res_stk # push m
+
+let add_term_err_stk m =
+  if !Globals.dis_term_msg then ()
+  else term_err_stk # push m
 
 (* Using stack to store inferred phase
  * transition constraints by inference *)
@@ -244,6 +251,9 @@ let pr_term_res_stk stk =
   List.iter (fun r -> 
     pr_term_res (!Globals.term_verbosity == 0) r; 
     fmt_print_newline ();) stk
+
+let pr_term_err_stk stk =
+  List.iter (fun m -> fmt_string m; fmt_print_newline ()) stk
 
 let pr_phase_constr = function
   | P_Gt (v1, v2) -> 
@@ -1154,15 +1164,12 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
   Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
-let term_check_output stk =
+let term_check_output () =
   (* if not !Globals.dis_term_msg then *)
     (fmt_string "\nTermination checking result:\n";
-    pr_term_res_stk (stk # get_stk);
+    (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
+    else pr_term_err_stk (term_err_stk # get_stk));
     fmt_print_newline ())
-
-let term_check_output stk =
-  let pr = fun _ -> "" in
-  Debug.no_1 "term_check_output" pr pr term_check_output stk
 
 let rec get_loop_ctx c =
   match c with

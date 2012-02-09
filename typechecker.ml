@@ -382,6 +382,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;
+                      (* Termination: collect error messages from successful states *)
+                      let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
+                      let _ = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
                       let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in
                       let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
@@ -1464,7 +1467,7 @@ let check_prog (prog : prog_decl) =
   in 
   ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
-  Term.term_check_output Term.term_res_stk
+  Term.term_check_output ()
 	    
 let check_prog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
