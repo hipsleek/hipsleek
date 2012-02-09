@@ -1024,7 +1024,7 @@ cexp_w :
 	  | "pure_base"
 		  [ `TRUE                             -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
 		  | `FALSE                            -> Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
-		  | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
+		  | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc = SELF; `CPAREN      
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
 		  | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
