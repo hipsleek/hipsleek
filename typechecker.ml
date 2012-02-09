@@ -369,8 +369,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* Why? Bug cll-count-base.ss *)
                       (* no abductive inference for post-condition *)
-                      let res_ctx = if !do_abd_from_post then res_ctx else 
-                          Inf.remove_infer_vars_all_list_partial_context res_ctx in
+                      (* let res_ctx = if !do_abd_from_post then res_ctx else 
+                          Inf.remove_infer_vars_all_list_partial_context res_ctx in*)
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
                        let (impl_vs,post_cond) =
@@ -414,15 +414,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
                       let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
-                      let lp = if not !do_abd_from_post then lp else (
+                      let lp = (* if not !do_abd_from_post then lp else ( *)
                         Debug.devel_zprint (lazy ("TMP CTX: " ^ (Cprinter.string_of_list_partial_context tmp_ctx) ^ "\n")) no_pos;
                         let lp_new = Inf.collect_pre_pure_list_partial_context tmp_ctx in
                         (*let old_lp = CP.conj_of_list lp no_pos in*)
                         (*DD.devel_pprint ("Old inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
                         DD.devel_pprint ("New inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp_new)) pos;*)
                         let lp_new = List.filter (fun p -> (*not(TP.imply_raw p old_lp) && *)not(CP.include_specific_val p)) lp_new in
-                        lp@lp_new
-                      ) in
+                        lp@lp_new (* ) *) 
+                      in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
                       let infer_post_flag = postf in

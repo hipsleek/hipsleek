@@ -339,7 +339,7 @@ let rec get_other_branches or_fml args = match or_fml with
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
 let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
-  | None -> pfs
+  | None -> (pfs,1)
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in
     let or_post = get_or_post specs (CP.get_rel_id_list rel) in
@@ -355,24 +355,30 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
       | _ -> bcases
       end
     in
+    let no_of_disjs = List.map (fun b -> let disjs = CP.list_of_disjs b in
+        let cond = List.exists (fun d -> let conjs = CP.list_of_conjs d in
+            List.exists (fun c -> CP.is_eq_const c) conjs) disjs in
+        if cond then 1 else List.length disjs) bcases in
+    (*let no_of_disjs = List.map (fun b -> CP.no_of_disjs b) bcases in*)
+    let no_of_disjs = List.fold_left (fun a b -> max a b) 1 no_of_disjs in
     match bcases with
-    | [bcase] -> [bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel ante_vars) rcases)
-    | _ -> bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)
+    | [bcase] -> ([bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)
+    | _ -> (bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases), no_of_disjs)
 (*      let new_bcases = remove_weaker_bcase bcases in
       new_bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)*)
 
 let helper input_pairs rel ante_vars specs = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
-  let pfs = propagate_rec pfs rel ante_vars specs in
+  let pfs,no = propagate_rec pfs rel ante_vars specs in
   let pfs = List.map (fun p -> let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in 
       CP.mkExists exists_vars p None no_pos) pfs in
   match pfs with
   | [] -> []
-  | [hd] -> [(rel,hd)]
-  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs))]
+  | [hd] -> [(rel,hd,no)]
+  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs), no)]
 
-let compute_fixpoint_aux rel_fml pf ante_vars = 
+let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars = 
   if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos, CP.mkFalse no_pos)
   else (
     let (name,vars) = match rel_fml with
@@ -381,10 +387,11 @@ let compute_fixpoint_aux rel_fml pf ante_vars =
     in
     let pre_vars, post_vars = List.partition (fun v -> List.mem v ante_vars) vars in
     try
-      let rhs = fixcalc_of_pure_formula pf in 
+      let rhs = fixcalc_of_pure_formula pf in
+      let no = string_of_int no_of_disjs in
       let input_fixcalc =  name ^ ":={[" ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> "
         ^ "[" ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: " 
-        ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
+        ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ "," ^ no ^ ",SimHeur);\nFix1;\n"
         ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
       in
       (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
@@ -418,14 +425,14 @@ let compute_fixpoint input_pairs ante_vars specs =
   let pairs = match rels with
     | [] -> report_error no_pos "Error in compute_fixpoint"
     | [hd] -> 
-      let pfs = propagate_rec pfs hd ante_vars specs in
+      let pfs,no = propagate_rec pfs hd ante_vars specs in
       let pfs = List.map (fun p -> let exists_vars = CP.diff_svl (CP.fv p) (CP.fv hd) in 
           CP.mkExists exists_vars p None no_pos) pfs in
-      let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in [(hd,pf)]
+      let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in [(hd,pf,no)]
     | _ -> List.concat (List.map (fun r -> helper input_pairs r ante_vars specs) rels)
   in
   DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-  List.map (fun (rel_fml,pf) -> compute_fixpoint_aux rel_fml pf ante_vars) pairs
+  List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars) pairs
 
 
 (*

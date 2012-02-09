@@ -9535,7 +9535,7 @@ let rec simplify_pre pre_fml = match pre_fml with
   | _ ->
     let h, p, fl, b, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
+    let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 		
 let simplify_pre pre_fml =

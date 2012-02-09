@@ -2435,6 +2435,16 @@ and list_of_disjs (f0 : formula) : formula list =
   in
   helper f0 []
 
+and no_of_disjs (f0 : formula) : int =
+  let rec helper f no = match f with
+    | Or (f1, f2,_,_) ->
+          let tmp1 = helper f2 no in
+          let tmp2 = helper f1 tmp1 in
+          tmp2
+    | _ -> 1+no
+  in
+  helper f0 0
+
 (* 
    WARNING : this should not be used!
    deeper split of disjuncts (seems an explosion)
@@ -6676,6 +6686,14 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 (* add lhs -> rhs to infer state is *)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
+
+let is_eq_const (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), IConst _, _),_)
+    | (Eq (IConst _, Var (_,_), _),_) -> true
+    | _ -> false)
+  | _ -> false
 
 let get_rel_id (f:formula) 
       = match f with

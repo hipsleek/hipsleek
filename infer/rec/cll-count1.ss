@@ -20,21 +20,24 @@ relation A(int x, int y).
 
 
 /* functions to count the number of nodes in a circular list */
-int count_rest(node rest, node h)
-    infer @pre[A]
-    requires rest::cll<p, n> & h = p 
-    ensures rest::cll<p, n> & A(res,n); //res = n; 
+int count(node x, node h)
+    infer @pre[h,p]
+    requires x::cll<p, n>
+    ensures x::cll<p, n> & res = n; 
 
 {
 	int n;
 	
-	if (rest == h)
+	if (x == h){
+    dprint;
 		return 0; 
+  }
 	else
 	{
-		n = count_rest(rest.next, h);
+    assume false;
+		n = count(x.next, h);
 		n = n + 1;
-
+    dprint;
 		return n;
 	}
 }

@@ -825,6 +825,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let rhs_ls = CP.split_conjunctions rhs_p_n in
     let (rel_rhs,other_rhs) = List.partition (CP.is_rel_in_vars ivs) rhs_ls in 
     if rel_rhs==[] then (
+(*      DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;*)
+(*      DD.devel_pprint "no rel on rhs" pos;*)
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
       if !unable_to_fold_rhs_heap = false then
@@ -918,6 +920,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         in*)
           let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
           let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+          let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
           let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
 (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
             (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])
