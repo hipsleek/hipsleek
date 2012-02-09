@@ -14,6 +14,10 @@ lseg<p, n> == self=p & n=0
 clist<n> == self::node<_,p> * p::lseg<self,n-1>
 	inv n>=1;
 
+// TODO : why does the spec for this method succeeds 
+// but not that for app7-t.ss which is just a subset of 
+// the specs here?.
+
 void append(node x, node y)
   [
     requires x::ll<n> & Term[n] & x!=null //& n>0
