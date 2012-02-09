@@ -615,17 +615,26 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       (*      else                                                      *)
       let args = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      let new_p = TP.simplify_raw (CP.mkForall quan_var 
-          (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
-      let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
-      let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
-      let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
-      let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
-      let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
-      let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
-      (* TODO : simplify_raw seems to undo pairwisecheck *)
-      let new_p = TP.pairwisecheck_raw new_p in
-      let _ = DD.trace_hprint (add_str "new_p2 (pairwisecheck): " !CP.print_formula) new_p pos in
+      let is_bag_cnt = match !TP.tp with
+        | TP.Mona | TP.MonaH -> if TP.is_bag_constraint fml then true else false
+        | _ -> false
+      in
+      let new_p = 
+        if is_bag_cnt then mkTrue no_pos
+        else
+          let new_p = TP.simplify_raw (CP.mkForall quan_var 
+            (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+          let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
+          let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
+          let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
+          let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
+          let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
+          let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
+          (* TODO : simplify_raw seems to undo pairwisecheck *)
+          let new_p = TP.pairwisecheck_raw new_p in
+          let _ = DD.trace_hprint (add_str "new_p2 (pairwisecheck): " !CP.print_formula) new_p pos in
+          new_p
+      in
       let args = CP.fv new_p in
       let new_p =
         if CP.intersect args iv == [] && quan_var != [] then

@@ -1058,6 +1058,10 @@ let tp_is_sat f sat_no do_cache =
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
+
+let is_sat_raw (f: CP.formula) =
+  (* let f = drop_rel_formula f in *)
+  tp_is_sat_no_cache f "999"
     
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
@@ -1169,11 +1173,22 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* such a simplifier loses information *)
 let simplify_raw (f: CP.formula) = 
-  let rels = CP.get_RelForm f in
-  let ids = List.concat (List.map get_rel_id_list rels) in
-  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-  let res_memo = simplify f_memo in
-  CP.restore_memo_formula subs bvars res_memo
+  let is_bag_cnt = 
+    match !tp with
+    | Mona | MonaH -> if is_bag_constraint f then true else false
+    | _ -> false
+  in
+  if is_bag_cnt then
+    let new_f = trans_dnf f in
+    let disjs = list_of_disjs new_f in
+    let disjs = List.filter (fun d -> is_sat_raw d) disjs in
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  else
+    let rels = CP.get_RelForm f in
+    let ids = List.concat (List.map get_rel_id_list rels) in
+    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+    let res_memo = simplify f_memo in
+    CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = simplify f
 	
@@ -2643,10 +2658,4 @@ let change_prover prover =
 
 let imply_raw ante conseq  =
   tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
-
-let is_sat_raw (f: CP.formula) =
-  (* let f = drop_rel_formula f in *)
-  tp_is_sat_no_cache f "999"
-
-
 
