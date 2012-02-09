@@ -1,0 +1,48 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+
+// (28)
+//infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+//print residue.
+/*
+Inferred Heap:[ y::node<inf_351,inf_352>[Orig], b::ll<inf_m_356>[Orig][LHSCase]]
+Inferred Pure:[ b=inf_352, a=inf_351 & b=inf_352 & inf_m_356=0 - 1 & m=0 - 1]
+<1>true & m+1=0 & a=inf_351 & b=inf_352 & a=inf_351 & b=inf_352 & 
+inf_m_356=0 - 1 & m=0 - 1 &
+{FLOW,(17,18)=__norm}
+*/
+
+
+// (29)
+//infer [y,b] true |- y::node<a,b> * b::ll<m>.
+//print residue.
+
+
+/*
+inferred pure: [
+  1<=inf_ann_36 | 1<=inf_ann_33 | inf_m_37<=0; 
+  inf_m_37!=0 | 1<=inf_ann_36 | 1<=inf_ann_33; 
+  inf_ann_33<=0; inf_ann_36<=0]
+*/
+// (27)
+
+//infer [y] true |- y::ll<m> & m=-1.
+//print residue.
+
+//infer [y] true |- y::node<_,_>* y::node<_,_>.
+
+//infer [y,b] true |- y::node<_,b>*b::node<_,_>.
+
+// bad
+infer [y] true |- y::node<a,b> * b::ll<m> & m=-1.
+
+
+print residue.

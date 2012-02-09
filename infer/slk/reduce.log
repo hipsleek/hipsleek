@@ -1,0 +1,21 @@
++++ Transcript to reduce.log started at Sat Feb  4 13:36:41 2012 +++
+Reduce (Free CSL version), 12-Jan-11 ...
+
+off nat;
+
+linelength 10000;
+t$
+
+
+load_package redlog;
+
+rlset ofsf;
+{}$
+
+
+on rlnzden;
+
+off varopt;
+
+off arbvars;
+
