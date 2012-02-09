@@ -13,7 +13,6 @@ ll2<n> == self=null & n=0
 
 
 ranking rk(int a, int b).
-
 relation A(int a, int b, int c).
 
 node append1(node x, node y)
@@ -24,11 +23,15 @@ node append1(node x, node y)
 	if (x==null) return y;
     r = x.next;
     r = append1(r,y);
-	if (x.next==null) {
+    node d = x.next;
+	if (d==null) {
       x.next = r;
-      return x;
 	}
-    else return x;
+    else {
+      // no guarantee that x.next=r here!
+      assume false;
+    }
+    return x;
 }
 
 

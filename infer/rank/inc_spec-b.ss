@@ -15,6 +15,10 @@ ll3<n,S> == self=null & n=0 & S={}
 	or self::node<v, q> * q::ll3<n-1,S1> & S=union(S1,{v})
 	inv n>=0;
 
+ll4<S> == self=null & S={}
+	or self::node<v, q> * q::ll4<S1> & S=union(S1,{v})
+	inv true;
+
 sll1<S> == self=null & S = {}
 	or self::node<v2, r> * r::sll1<S1>
 	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x));
@@ -23,6 +27,7 @@ sll2<n,S> == self=null & n=0 & S={}
 	or self::node<v2, r> * r::sll2<n-1,S1> 
 	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x))
   inv n>=0;
+
 /*
 sll1<S> == self::node<v1, null> & S = {v1}
 	or self::node<v2, r> * r::sll1<S1> & r != null 
@@ -90,8 +95,22 @@ node append3(node x, node y)
 }
 */
 
+node append3(node x, node y)
+  requires x::ll4<S1>*y::ll4<S2> 
+  ensures res::ll4<S3> & S3=union(S1,S2);
+{
+    node r;
+	if (x==null) return y;
+    else {
+     r = x.next;
+     r = append3(r,y);
+     x.next = r;
+     return x;
+    }
+}
+
 node append4(node x, node y)
-  requires x::ll3<n,S1>*y::ll3<m,S2> & Term[n]
+  requires x::ll3<n,S1>*y::ll3<m,S2> 
   ensures res::ll3<n+m,S3> & S3=union(S1,S2);
 {
     node r;
