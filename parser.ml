@@ -1126,6 +1126,7 @@ non_array_type:
   [[ `INT                -> int_type
    | `FLOAT              -> float_type 
    | `BOOL               -> bool_type
+   | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:

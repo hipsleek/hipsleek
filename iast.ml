@@ -407,6 +407,8 @@ let float_type = Float
 
 let bool_type = Bool
 
+let bag_type = BagT Int
+
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")

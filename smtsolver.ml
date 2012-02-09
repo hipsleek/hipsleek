@@ -75,6 +75,7 @@ let rec smt_of_typ t =
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
+    | BagT _ -> "Int"
 		| Void | (BagT _) | (TVar _) | List _ ->
 			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)

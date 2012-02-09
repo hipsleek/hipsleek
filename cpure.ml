@@ -419,6 +419,8 @@ let float_type = Float
 
 let void_type = Void
 
+let bag_type = BagT Int
+
 (* free variables *)
 
 let null_var = SpecVar (Named "", "null", Unprimed)

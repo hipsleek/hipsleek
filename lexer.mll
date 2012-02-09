@@ -114,6 +114,7 @@ module Make (Token : SleekTokenS)
    ("app", APPEND);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
+   ("bag", BAG);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);

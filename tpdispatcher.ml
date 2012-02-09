@@ -1190,7 +1190,18 @@ let simplify_raw (f: CP.formula) =
     let res_memo = simplify f_memo in
     CP.restore_memo_formula subs bvars res_memo
 
-let simplify_raw_w_rel (f: CP.formula) = simplify f
+let simplify_raw_w_rel (f: CP.formula) = 
+  let is_bag_cnt = 
+    match !tp with
+    | Mona | MonaH -> if is_bag_constraint f then true else false
+    | _ -> false
+  in
+  if is_bag_cnt then
+    let new_f = trans_dnf f in
+    let disjs = list_of_disjs new_f in
+    let disjs = List.filter (fun d -> is_sat_raw d) disjs in
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  else simplify f
 	
 let simplify_raw f =
 	let pr = !CP.print_formula in
