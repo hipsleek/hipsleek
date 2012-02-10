@@ -1,12 +1,15 @@
-// infer: should support array
+
+relation dom(int[] a, int x, int y) == true.
+
+// infer: should support array]
 void initialize(ref int[] arr)
-  infer [arr]
-  requires dom(arr, 0, 0)
-  ensures true;// dom(arr', 0, 0) & arr'[0]=400
+//infer [arr]
+  requires dom(arr, 0, 3)
+  ensures  dom(arr', 0, 3) & arr'[0]=400;
 {
   arr[0] = 400;
 }
-
+               /*
 void initialize1(ref int[] arr)
   infer [arr]
   requires dom(arr, 0, 3)
@@ -16,3 +19,4 @@ void initialize1(ref int[] arr)
   arr[1] = 600;
 }
 
+               */

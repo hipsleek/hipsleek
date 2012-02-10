@@ -874,14 +874,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
               (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
               (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)
-                
-                (* Internal function to check pre/post condition of the function call. *)        
+
+                (* Internal function to check pre/post condition of the function call. *)
 	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
-                (* Termination: Stripping the "variance" feature from 
+                (* Termination: Stripping the "variance" feature from
                  * org_spec if the call is not a recursive call *)
                 (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
-                let stripped_spec = org_spec in 
-           
+                let stripped_spec = org_spec in
+
                 (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var

@@ -138,7 +138,8 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
-let type_of_spec_var (sv : spec_var) : typ = match sv with
+let type_of_spec_var (sv : spec_var) : typ =
+  match sv with
   | SpecVar (t, _, _) -> t
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
@@ -5151,15 +5152,24 @@ let rec replace_pure_formula_label nl f = match f with
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
 
-let rec imply_disj_orig ante_disj conseq t_imply imp_no =
+let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
+  Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
+  Debug.devel_hprint (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
     | h :: rest ->
+        Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
+        Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
 	    if r1 then
 	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
+
+and imply_disj_orig ante_disj conseq t_imply imp_no =
+  let pr = !print_formula in
+  Debug.no_2 "imply_disj_orig" (pr_list pr) pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj conseq -> imply_disj_orig_x ante_disj conseq t_imply imp_no) ante_disj conseq
 
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
@@ -5183,6 +5193,14 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
     (xp01,xp02,xp03)
 
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
+   : bool * (Globals.formula_label option * Globals.formula_label option) list *
+   Globals.formula_label option=
+  let pr = pr_list !print_formula in
+  Debug.no_2 "imply_conj_orig" pr pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj0 ante_disj1 -> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
+      ante_disj0 ante_disj1
+
+and imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   match conseq_conj with
