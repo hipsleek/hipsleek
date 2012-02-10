@@ -75,6 +75,7 @@ and exp =
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
+  | Func of (ident * (exp list) * loc)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -190,6 +191,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
+  | Func (a, i, _) -> 
+    let ifv = List.flatten (List.map afv i) in
+    Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
   | ArrayAt (a, i, _) -> 
 	let ifv = List.flatten (List.map afv i) in
 	Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
@@ -468,6 +472,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | ListReverse (_, p) -> p
+  | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   
 	
@@ -587,6 +592,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one p a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one p a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one p a1, pos)
+  | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one_list p ind), pos) (* An Hoa *)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
@@ -747,6 +753,7 @@ and find_lexp_exp (e: exp) ls =
 	| ListLength (e, _) -> find_lexp_exp e ls
 	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ListReverse (e, _) -> find_lexp_exp e ls
+  | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 ;;
 
@@ -784,6 +791,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListLength (exp, _) -> contain_vars_exp exp
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
+  | Func _ -> true
   | ArrayAt _ -> true 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
@@ -930,6 +938,14 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | ListReverse (e, l) -> 
 		let ne1, np1 = float_out_exp_min_max e in
 		(ListReverse (ne1, l), np1)
+  | Func (a, i, l) ->
+    let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+    let r = List.fold_left (fun a c -> match (a, c) with
+      | None, None -> None
+      | Some p, None -> Some p
+      | None, Some p -> Some p
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+    (Func (a, ne1, l), r)
 	        (* An Hoa : get rid of min/max in a[i] *)
   | ArrayAt (a, i, l) ->
   		let ne1, np1 = List.split (List.map float_out_exp_min_max i) in

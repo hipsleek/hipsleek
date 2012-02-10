@@ -3060,7 +3060,19 @@ think it is used to instantiate when folding.
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
   (* output : post inferred relation lhs --> rhs *)
-  es_infer_rel : (CP.formula * CP.formula) list; 
+
+  (*  (i) defn for relation:
+          lhs -> p(...); 
+     (ii) proof obligation for unknown relation
+          p(...) -> ctr
+     (ii) term measures:
+          lhs -> r(..)>=0
+          lhs -> r(..)-r(..)>0
+  RelCat = RelDef (rid) | RelAssume(rid) 
+     | RankDec [rid] | RankBounded id
+  *)
+  (* es_infer_rel : (CP.formula * CP.formula) list; *)
+  es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
   (* output : pre pure assumed to infer relation *)
   es_assumed_pure : CP.formula list; 
   (* es_infer_pures : CP.formula list; *)
@@ -3942,7 +3954,7 @@ let add_infer_heap_to_ctx cp ctx =
     match ctx with
       | Ctx es -> 
         let new_cp = List.filter (fun c -> not (Gen.BList.mem_eq (*CP.equalFormula*) (=) c es.es_infer_heap)) cp in
-        Ctx {es with es_infer_heap = cp@es.es_infer_heap;}
+        Ctx {es with es_infer_heap = new_cp@es.es_infer_heap;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -7318,6 +7330,13 @@ let rec get_vars_without_rel pre_vars f = match f with
     let aset = CP.EMapSV.build_eset alias in
     let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
     CP.diff_svl res evars_to_del
+
+let rec partition_triple fun1 fun2 lst = match lst with
+  | [] -> ([],[],[])
+  | l::ls -> 
+    let (tail1,tail2,tail3) = partition_triple fun1 fun2 ls in
+    if fun1 l then (l::tail1,tail2,tail3) else
+    if fun2 l then (tail1,l::tail2,tail3) else (tail1,tail2,l::tail3)
 
 let split_triple lst = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) lst
 

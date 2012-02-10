@@ -25,7 +25,7 @@ and prog_decl = {
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
   (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
-  new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
+    new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
@@ -119,6 +119,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc; }
 
@@ -1719,6 +1720,11 @@ let count_term_scc (procs: proc_decl list) : int =
   List.fold_left (fun acc p -> 
     acc + (F.count_term_struc p.proc_static_specs)) 0 procs
 
+(* Mutual groups with logical phase variables added *)
+(* those with logical variables explicitly added will
+   not have a re-numbering done *)
+let stk_scc_with_phases = new Gen.stack 
+
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
  * --dis-call-num and --dis-phase-num are not enabled (default) *)
@@ -1736,12 +1742,21 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
         Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
         Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
         Debug.devel_pprint "\n" no_pos
-            
+
       end;
     let pvs = List.map (fun (n, procs) ->
-      add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-      ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1)) mutual_grps
+        let mn = List.hd procs in
+        let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
+          ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1 & mn.proc_is_recursive) 
+        in (match pv with 
+          | [] -> ()
+          | x::_ -> stk_scc_with_phases # push mn.proc_call_order); pv
+    ) mutual_grps
     in
+    let () = Debug.dinfo_hprint (add_str "Mutual Grps with Phases" 
+        (pr_list (string_of_int))) (stk_scc_with_phases # get_stk) no_pos in
+    let () = Debug.dinfo_hprint (add_str "Mutual Grps" (pr_list (pr_pair string_of_int (pr_list (fun p -> p.proc_name))))) mutual_grps no_pos in
+    let () = Debug.dinfo_hprint (add_str "Phase Vars Added" (pr_list (pr_list !P.print_sv))) pvs no_pos in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
       ((List.concat pvs) @ log_vars) in
     { cp with prog_logical_vars = pvl } 
@@ -1750,7 +1765,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
  * into the specification of a primitive call. 
  * The return value contains a list of new 
  * added spec_var *)   
-and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
+and add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
   let n_procs, pvs = List.split (List.map (fun proc -> 
     add_term_nums_proc proc log_vars add_call add_phase
   ) procs) in 
@@ -1768,6 +1783,12 @@ and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool)
   ) n_procs in 
   pvs
 
+and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
+  let pr ps = pr_list (fun p -> p.proc_name) ps in
+  Debug.no_1 "add_term_nums_proc_scc" pr !P.print_svl
+      (fun _ -> add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool)) procs
+
+(* adding call number and phase variables into spec *)
 and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
   if not (proc.proc_is_main) then (proc, [])
   else if (not add_call) && (not add_phase) then (proc, [])

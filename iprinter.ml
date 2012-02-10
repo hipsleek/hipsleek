@@ -133,6 +133,8 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Func (a, i, _)     ->  
+        a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
         (* An Hoa : print the array access *)
         a ^ (match p with 

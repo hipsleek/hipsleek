@@ -5253,9 +5253,15 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* rhs_wf = None --> measure succeeded *)
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
-and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+and heap_infer_decreasing_wf_x prog estate rank is_folding lhs rhs_p_br pos =
   let lctx, _ = heap_entail_empty_rhs_heap prog is_folding estate lhs (MCP.mix_of_pure rank) rhs_p_br pos 
   in CF.estate_opt_of_list_context lctx
+
+and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
+  let pr = !CP.print_formula in
+  Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
+      (fun _ -> heap_infer_decreasing_wf_x prog estate rank is_folding lhs rhs_p_br pos) rank
+
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -5318,9 +5324,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
               let term_measures, term_res, term_stack =
                 Some (Fail TermErr_May, ml, il),
-                (term_pos, t_ann_trans, orig_ante, Term.MayTerm_S Term.Not_Decreasing_Measure),
+                (term_pos, t_ann_trans, orig_ante, 
+                  Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                 (Term.string_of_term_res (term_pos, t_ann_trans, None, 
-                  Term.TermErr Term.Not_Decreasing_Measure))::estate.CF.es_var_stack
+                  Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))::estate.CF.es_var_stack
               in
               Term.term_res_stk # pop;
               Term.term_res_stk # push term_res;
@@ -6468,7 +6475,7 @@ and inst_before_fold_x estate rhs_p case_vars =
 			  | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
 			  | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 			  | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
-			  | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ -> false in
+			  | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
 			((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
 				((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
 				    (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in

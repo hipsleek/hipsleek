@@ -2,6 +2,7 @@ module CP = Cpure
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
+module Inf = Infer
 
 open Gen.Basic
 open Globals
@@ -20,11 +21,11 @@ type term_trans_loc = loc * loc
 
 type term_reason =
   (* The variance is not well-founded *)
-  | Not_Decreasing_Measure     
-  | Not_Bounded_Measure
+  | Not_Decreasing_Measure of term_ann_trans option   
+  | Not_Bounded_Measure of CP.exp list
   (* The variance is well-founded *)
   | Valid_Measure  
-  | Decreasing_Measure
+  | Decreasing_Measure of term_ann_trans option
   | Bounded_Measure
   (* Reachability *)
   | Base_Case_Reached
@@ -61,6 +62,10 @@ type phase_constr =
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
 
+let add_term_res_stk m = 
+  if !Globals.dis_term_msg then ()
+  else term_res_stk # push m
+
 (* Using stack to store inferred phase
  * transition constraints by inference *)
 let phase_constr_stk : CP.formula Gen.stack = new Gen.stack
@@ -80,7 +85,8 @@ let pr_phase_trans (trans: phase_trans) =
 let string_of_phase_trans (trans: phase_trans) = 
   poly_string_of_pr pr_phase_trans trans
 
-let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
+let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) =
+  (*
   let str_ctx =
     match ctx with
     | None -> ""
@@ -106,7 +112,7 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
           in 
           str_h ^ str_p
   in 
-  
+  *)
   fmt_open_hbox();
   (*(if str_ctx == "" then () else fmt_string (str_ctx ^ " & "));*)
   fmt_string (string_of_term_ann ann_s);
@@ -116,26 +122,42 @@ let pr_term_ann_trans ((ann_s, m_s), (ann_d, m_d)) ctx =
   pr_seq "" pr_formula_exp m_d;
   fmt_close_box()
 
-let string_of_term_ann_trans ctx = poly_string_of_pr (pr_term_ann_trans ctx)
+let string_of_term_ann_trans = poly_string_of_pr pr_term_ann_trans
 
 let pr_term_reason = function
-  | Not_Decreasing_Measure -> fmt_string "The variance is not well-founded (not decreasing)."
-  | Not_Bounded_Measure -> fmt_string "The variance is not well-founded (not bounded)."
+  | Not_Decreasing_Measure _ -> fmt_string "The variance is not well-founded (not decreasing)."
+  | Not_Bounded_Measure _ -> fmt_string "The variance is not well-founded (not bounded)."
   | Valid_Measure -> fmt_string "The given variance is well-founded."
-  | Decreasing_Measure -> fmt_string "The variance is decreasing."
+  | Decreasing_Measure _ -> fmt_string "The variance is decreasing."
   | Bounded_Measure -> fmt_string "The variance is bounded."
   | Base_Case_Reached -> fmt_string "The base case is reached."
   | Non_Term_Reached -> fmt_string "A non-terminating state is reached."
   | Invalid_Phase_Trans -> fmt_string "The phase transition number is invalid."
   | Invalid_Status_Trans trans -> 
-      pr_term_ann_trans trans None;
+      pr_term_ann_trans trans;
       fmt_string " transition is invalid."
   | Variance_Not_Given -> 
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
 			
 let pr_term_reason_short = function
-	| Not_Decreasing_Measure -> fmt_string "not decreasing"
-	| Not_Bounded_Measure -> fmt_string "not bounded"
+	| Not_Decreasing_Measure ann_trans -> 
+      fmt_string "not decreasing)";
+      (match ann_trans with
+        | None -> ()
+        | Some trans ->  
+          fmt_string " ";
+          pr_term_ann_trans trans)
+  | Decreasing_Measure ann_trans -> 
+      fmt_string "decreasing)";
+      (match ann_trans with
+        | None -> ()
+        | Some trans ->  
+          fmt_string " ";
+          pr_term_ann_trans trans)
+	| Not_Bounded_Measure le -> 
+      fmt_string "not bounded)";
+      pr_seq "" pr_formula_exp le;
+  | Bounded_Measure -> fmt_string "bounded)"
 	| _ -> ()
 
 let string_of_term_reason (reason: term_reason) =
@@ -150,12 +172,15 @@ let pr_term_status = function
   | TermErr reason -> fmt_string "Error: "; pr_term_reason reason
 
 let pr_term_status_short = function
-  | Term_S _ -> fmt_string "(OK)"
+  | Term_S r -> 
+      fmt_string "(OK: ";
+      pr_term_reason_short r;
+      (* fmt_string ")" *)
   | Unreachable -> fmt_string "(UNR)"
   | MayTerm_S r -> 
       fmt_string "(ERR: ";
       pr_term_reason_short r;
-      fmt_string ")"
+      (* fmt_string ")" *)
   | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
   | _ -> fmt_string "(ERR)"
 
@@ -183,19 +208,14 @@ let pr_term_trans_loc (src, dst) =
     (fmt_string ("->");
     fmt_string ("(" ^ (string_of_int dst_line) ^ ")"))
 
-let pr_term_res pr_ctx (pos, ann_trans, ctx, status) =
+let pr_term_res pr_ctx (pos, trans, ctx, status) =
   pr_term_trans_loc pos;
   fmt_string " ";
   pr_term_status_short status;
-  fmt_string " ";
-  (match ann_trans with
-  | None -> ()
-  | Some trans ->  
-      pr_term_ann_trans trans ctx);
   (match ctx with
   | None -> ();
   | Some c -> 
-      if pr_ctx then (fmt_string ": "; pr_term_ctx c) else (););
+      if pr_ctx then (fmt_string ":\n"; pr_term_ctx c) else (););
   (*
   if pr_ctx then fmt_string ">>>>> " else fmt_string ": ";
   pr_term_status status;
@@ -262,7 +282,7 @@ let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * 
 let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list) =
   let (pf, _) = bf in
   match pf with
-  | CP.LexVar (t_ann, el, il, _) -> (t_ann, el, il)
+  | CP.LexVar t_info -> (t_info.CP.lex_ann, t_info.CP.lex_exp, t_info.CP.lex_tmp)
   | _ -> raise LexVar_Not_found
 
 let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list) =
@@ -341,18 +361,19 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let term_measures, term_res, term_stack =
             if res then (* The measures are decreasing *)
               Some (t_ann, ml, il), (* Residue of termination *)
-              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               estate.es_var_stack
             else 
               Some (Fail TermErr_May, ml, il),
-              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
-              (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.es_var_stack 
+              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
+              (string_of_term_res (term_pos, t_ann_trans, None, 
+                TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack 
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
             es_var_stack = term_stack 
           } in
-          term_res_stk # push term_res;
+          add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, None)
         else
           (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
@@ -367,6 +388,11 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+          DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
+          (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check pos & rank_formula(I,O) *)
+          (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
+            lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
+          let rank_formula = MCP.pure_of_mix rank_formula in*)
           let entail_res, _, _ = TP.imply lhs rank_formula "" false None in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
@@ -382,14 +408,15 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let term_measures, term_res, term_stack, rank_formula =
             if entail_res then (* Decreasing *) 
               Some (t_ann, ml, il), 
-              (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               estate.es_var_stack, 
               None
             else
-              if estate.es_infer_vars = [] then (* No inference *)
+              if Inf.no_infer_all estate then (* No inference at all*)
                 Some (Fail TermErr_May, ml, il),
-                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S Not_Decreasing_Measure),
-                (string_of_term_res (term_pos, t_ann_trans, None, TermErr Not_Decreasing_Measure))::estate.es_var_stack,
+                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
+                (string_of_term_res (term_pos, t_ann_trans, None, 
+                  TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack,
                 None
               else
                 (* Inference: the es_var_measures will be
@@ -399,7 +426,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * MayTerm_S -> Term_S *)
 								(* Assumming Inference will be successed *)
                 Some (t_ann, ml, il),
-                (term_pos, t_ann_trans, Some orig_ante, Term_S Valid_Measure),
+                (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 estate.es_var_stack, 
                 Some rank_formula  
           in 
@@ -407,8 +434,26 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             es_var_measures = term_measures;
             es_var_stack = term_stack; 
           } in
-          term_res_stk # push term_res;
+          add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
+
+let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+  let pr = !print_mix_formula in
+  let pr1 = !CP.print_formula in
+  let pr2 = !print_entail_state in
+  let pr3 = pr_list !CP.print_exp in
+  Debug.no_5 "check_term_measures" pr2 
+      (add_str "lhs_p" pr) 
+      (add_str "rhs_p" pr) 
+      (add_str "src_lv" pr3) 
+      (add_str "src_rv" pr3)
+    (fun (es, lhs, rhs, rank_fml) -> 
+        pr_quad pr2 (add_str "lhs" pr) 
+            (add_str "rhs" pr) 
+            (add_str "rank_fml" (pr_option pr1)) 
+            (es, lhs, rhs, rank_fml))  
+      (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+        estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
@@ -434,7 +479,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Fail TermErr_May, _) -> 
           let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,
             TermErr (Invalid_Status_Trans t_ann_trans)) in
-          term_res_stk # push term_res;
+          add_term_res_stk term_res;
           let term_measures = match t_ann_d with
             | Loop 
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
@@ -463,7 +508,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if not !Globals.dis_term_chk then
+  if (not !Globals.dis_term_chk) then
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
   else
     (* Remove LexVar in RHS *)
@@ -512,7 +557,7 @@ let strip_lexvar_lhs (ctx: context) : context =
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
   let err = (pos, None, Some ctx, TermErr reason) in
-  term_res_stk # push err;
+  add_term_res_stk err;
   err
 
 let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
@@ -527,76 +572,76 @@ let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   let orig_ante_l = List.concat (List.map collect_orig_ante succ_ctx) in
   let orig_ante = formula_of_disjuncts orig_ante_l in
   let term_res = (term_pos, None, Some orig_ante, Unreachable) in
-  term_res_stk # push term_res;
+  add_term_res_stk term_res;
   term_res
 
 (*
-let get_phase_num (measure: ext_variance_formula) : int =
-  let phase_num = fst (List.nth measure.formula_var_measures 1) in
-  if (CP.is_num phase_num) then CP.to_int_const phase_num CP.Floor 
-  else raise Invalid_Phase_Num 
+(* let get_phase_num (measure: ext_variance_formula) : int = *)
+(*   let phase_num = fst (List.nth measure.formula_var_measures 1) in *)
+(*   if (CP.is_num phase_num) then CP.to_int_const phase_num CP.Floor  *)
+(*   else raise Invalid_Phase_Num  *)
 *)
 
 (*  
-let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res =
-  let orig_ante = formula_of_context ctx in
-  try
-    let phase_num = get_phase_num measure in
-    let term_res =
-      if (phase_num < 0) then
-        (pos, orig_ante, NonTerm Non_Term_Reached)
-      else if (phase_num = 0) then
-        (pos, orig_ante, Term Base_Case_Reached)
-      else
-        let lv = lexvar_of_evariance measure in 
-        match lv with
-        | None -> report_term_error orig_ante Variance_Not_Given pos
-        | Some m -> 
-            let lv = formula_of_pure_formula m pos in
-            let res = f ctx lv pos in (* check decreasing *)
-            if (isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure)
-            else
-              (* The default lower bound is zero *)
-              let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.formula_var_measures in       
-              let bnd = formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in
-              let res = f ctx bnd pos in (* check boundedness *)
-              if (isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure)
-              else (pos, orig_ante, Term Valid_Measure)
-    in term_res_stk # push term_res; term_res
-  with 
-  | Invalid_Phase_Num
-  | Failure "nth" -> report_term_error orig_ante Invalid_Phase_Trans pos
+(* let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res = *)
+(*   let orig_ante = formula_of_context ctx in *)
+(*   try *)
+(*     let phase_num = get_phase_num measure in *)
+(*     let term_res = *)
+(*       if (phase_num < 0) then *)
+(*         (pos, orig_ante, NonTerm Non_Term_Reached) *)
+(*       else if (phase_num = 0) then *)
+(*         (pos, orig_ante, Term Base_Case_Reached) *)
+(*       else *)
+(*         let lv = lexvar_of_evariance measure in  *)
+(*         match lv with *)
+(*         | None -> report_term_error orig_ante Variance_Not_Given pos *)
+(*         | Some m ->  *)
+(*             let lv = formula_of_pure_formula m pos in *)
+(*             let res = f ctx lv pos in (\* check decreasing *\) *)
+(*             if (isFailCtx res) then (pos, orig_ante, MayTerm Not_Decrease_Measure) *)
+(*             else *)
+(*               (\* The default lower bound is zero *\) *)
+(*               let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.formula_var_measures in        *)
+(*               let bnd = formula_of_pure_formula (CP.mkPure (CP.mkLexVar zero [] pos)) pos in *)
+(*               let res = f ctx bnd pos in (\* check boundedness *\) *)
+(*               if (isFailCtx res) then (pos, orig_ante, MayTerm Not_Bounded_Measure) *)
+(*               else (pos, orig_ante, Term Valid_Measure) *)
+(*     in term_res_stk # push term_res; term_res *)
+(*   with  *)
+(*   | Invalid_Phase_Num *)
+(*   | Failure "nth" -> report_term_error orig_ante Invalid_Phase_Trans pos *)
 *)
 (*
-let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res =
-  let orig_ante = formula_of_context ctx in
-  let lv = lexvar_of_evariance measure in
-  match lv with
-  | None -> report_term_error orig_ante Variance_Not_Given pos
-  | Some m -> 
-      let lv = formula_of_pure_formula m pos in
-      let res = f ctx lv pos in (* check decreasing *)
-      let term_res =
-        if (isFailCtx res) then 
-          (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure)
-        else
-          (* The default lower bound is zero *)
-          let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.formula_var_measures in       
-          let bnd = formula_of_pure_formula (CP.mkPure (CP.mkLexVar Term zero [] pos)) pos in
-          let res = f ctx bnd pos in (* check boundedness *)
-          if (isFailCtx res) then (pos, Some orig_ante, MayTerm_S Not_Bounded_Measure)
-          else (pos, Some orig_ante, Term_S Valid_Measure)
-      in term_res_stk # push term_res; 
-      term_res 
+(* let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res = *)
+(*   let orig_ante = formula_of_context ctx in *)
+(*   let lv = lexvar_of_evariance measure in *)
+(*   match lv with *)
+(*   | None -> report_term_error orig_ante Variance_Not_Given pos *)
+(*   | Some m ->  *)
+(*       let lv = formula_of_pure_formula m pos in *)
+(*       let res = f ctx lv pos in (\* check decreasing *\) *)
+(*       let term_res = *)
+(*         if (isFailCtx res) then  *)
+(*           (pos, Some orig_ante, MayTerm_S Not_Decreasing_Measure) *)
+(*         else *)
+(*           (\* The default lower bound is zero *\) *)
+(*           let zero = List.map (fun _ -> CP.mkIConst 0 pos) measure.formula_var_measures in        *)
+(*           let bnd = formula_of_pure_formula (CP.mkPure (CP.mkLexVar Term zero [] pos)) pos in *)
+(*           let res = f ctx bnd pos in (\* check boundedness *\) *)
+(*           if (isFailCtx res) then (pos, Some orig_ante, MayTerm_S Not_Bounded_Measure) *)
+(*           else (pos, Some orig_ante, Term_S Valid_Measure) *)
+(*       in term_res_stk # push term_res;  *)
+(*       term_res  *)
 
-let check_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res =
-  if (isAnyFalseCtx ctx) then
-    let orig_ante = formula_of_disjuncts (collect_orig_ante ctx) in
-    let term_res = (pos, Some orig_ante, Unreachable) in
-    term_res_stk # push term_res;
-    term_res
-  else
-    check_reachable_term_measure f ctx measure pos
+(* let check_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res = *)
+(*   if (isAnyFalseCtx ctx) then *)
+(*     let orig_ante = formula_of_disjuncts (collect_orig_ante ctx) in *)
+(*     let term_res = (pos, Some orig_ante, Unreachable) in *)
+(*     term_res_stk # push term_res; *)
+(*     term_res *)
+(*   else *)
+(*     check_reachable_term_measure f ctx measure pos *)
 *)
 
 (*****************************************)
@@ -672,6 +717,8 @@ let fv_of_phase_constr (c: phase_constr) =
   | P_Gte (v1, v2) -> [v1; v2]
   | P_Gt (v1, v2) -> [v1; v2]
 
+(* Old phase inference mechanism - To be removed *)
+(*
 module PComp = 
 struct
   type t = CP.spec_var list
@@ -740,7 +787,7 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     try List.find (fun e -> Gen.BList.mem_eq CP.eq_spec_var v e) l
     with _ -> [v]
   in 
-
+  (*
   let gt_l = List.map (fun (v1, v2) -> 
     let g_v1 = find_group v1 eq_l in
     let g_v2 = find_group v2 eq_l in
@@ -749,6 +796,15 @@ let rank_gt_phase_constr (cl: phase_constr list) =
       raise Invalid_Phase_Constr
     else (g_v1, g_v2)
   ) gt_l in
+  *)
+
+  let gt_l = List.fold_left (fun acc (v1, v2) ->
+    let g_v1 = find_group v1 eq_l in
+    let g_v2 = find_group v2 eq_l in
+    (* Get rid of p2>p1 and p2>=p1 *)
+    if (Gen.BList.overlap_eq CP.eq_spec_var g_v1 g_v2) then acc
+    else (g_v1, g_v2)::acc
+  ) [] gt_l in
 
   (*let _ = print_endline ("\n1. gt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in*)
 
@@ -758,13 +814,66 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     raise Invalid_Phase_Constr
   else
     let n, f_scc = PGC.scc g in
-    PG.fold_vertex (fun l a -> (f_scc l, l)::a) g [] 
+    PG.fold_vertex (fun l a -> (f_scc l, l)::a) g []
 
 let value_of_vars (v: CP.spec_var) l : int =
   try
     let (i, _) = List.find (fun (i, vl) -> 
       Gen.BList.mem_eq CP.eq_spec_var v vl
     ) l in i
+  with _ -> raise Invalid_Phase_Constr
+*)
+
+module PComp = 
+struct
+  type t = CP.spec_var
+  let compare = fun v1 v2 -> 
+    if (CP.eq_spec_var v1 v2) then 0
+    else 
+      let pr = !CP.print_sv in
+      String.compare (pr v1) (pr v2)
+  let hash = Hashtbl.hash
+  let equal = CP.eq_spec_var
+end
+
+module PG = Graph.Persistent.Digraph.Concrete(PComp)
+module PGO = Graph.Oper.P(PG)
+module PGN = Graph.Oper.Neighbourhood(PG)
+module PGC = Graph.Components.Make(PG)
+module PGP = Graph.Path.Check(PG)
+module PGT = Graph.Traverse.Dfs(PG)
+
+(* Build phase constraint graph based on the 
+ * list of inferred phase constraints 
+ * P_Gt/P_Gte (v1, v2) -> v1 --> v2 *)
+let build_phase_constr_graph (cl: phase_constr list) = 
+  let g = PG.empty in
+  let g = List.fold_left (fun g c ->
+    let s, d = match c with
+      | P_Gt (v1, v2) -> v1, v2
+      | P_Gte (v1, v2) -> v1, v2
+    in 
+    let ng1 = PG.add_vertex g s in
+    let ng2 = PG.add_vertex ng1 d in
+    let ng3 = PG.add_edge ng2 s d in
+    ng3
+  ) g cl in
+  g
+
+(* Assign a unique integer for each scc group 
+ * of phase variables *)  
+let rank_phase_constr (cl: phase_constr list) =
+  let g = build_phase_constr_graph cl in
+  let n, f_scc = PGC.scc g in
+  PG.fold_vertex (fun v a -> (v, f_scc v)::a) g []
+
+let rank_phase_constr (cl: phase_constr list) =
+  let pr = pr_list string_of_phase_constr in
+  let pr2 = pr_list (pr_pair !CP.print_sv  string_of_int) in
+  Debug.no_1 "rank_phase_constr" pr pr2 rank_phase_constr cl
+
+let value_of_var (v: CP.spec_var) l : int =
+  try List.assoc v l
   with _ -> raise Invalid_Phase_Constr
 
 (* let phase_num_infer () = *)
@@ -803,16 +912,20 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   let pr_v = !CP.print_sv in
   let pr_vl = pr_list pr_v in
   let cl = phase_constr_of_formula_list pl in
-  let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in
+  let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
+  (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+  let _ = Debug.trace_pprint s_msg no_pos in
   let l = 
     try 
-      let r = rank_gt_phase_constr cl in
+      (* let r = rank_gt_phase_constr cl in *)
+      let r = rank_phase_constr cl in
       let _ = 
         begin
           Debug.trace_hprint (add_str "Inferred phase constraints"
             (pr_list !CP.print_formula)) (phase_constr_stk # get_stk) no_pos;
           Debug.trace_hprint (add_str "Phase Numbering"
-            (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos;
+            (* (pr_list (pr_pair string_of_int (pr_list !CP.print_sv)))) r no_pos; *)
+            (pr_list (pr_pair !CP.print_sv string_of_int))) r no_pos;
         end
       in 
 
@@ -821,13 +934,14 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
         Some (r, fv)
       else Some (r, [])
     with _ -> 
-      fmt_string ("Termination: Contradiction in Phase Constraints."); None 
+      fmt_string ("\nTermination: Error in Phase Inference." ^ "\n" ^ s_msg); None 
   in
   l
 
 let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  Debug.no_1 "phase_num_infer_one_scc" pr pr phase_num_infer_one_scc pl
+  let pr2 = (add_str "Phase Ctr" (pr_list !CP.print_formula)) in
+  Debug.no_1 "phase_num_infer_one_scc" pr2 pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
 (* Currently, this method is redundant because we do
@@ -844,6 +958,8 @@ let phase_num_infer_by_scc () =
   let pr = fun _ -> "" in
   Debug.no_1 "phase_num_infer_by_scc" pr pr phase_num_infer_by_scc ()
 
+(* this method adds phase constraint into a table indexed by call number *)
+(* it seems to be done on a per-call basis *)
 let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
   let index = proc.Cast.proc_call_order in
   let pname = proc.Cast.proc_name in
@@ -852,6 +968,11 @@ let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
     let cons = Hashtbl.find phase_constr_tbl index in
     Hashtbl.replace phase_constr_tbl index (con::cons)
   with Not_found -> Hashtbl.add phase_constr_tbl index [con]
+
+let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
+  let pr = fun _ -> "" in
+  let pr1 = add_str "phase ctr added" (pr_list !CP.print_formula) in
+  Debug.no_1 "add_phase_constr_by_scc" pr1 pr (add_phase_constr_by_scc proc) lp
 
 let subst_phase_num_exp subst exp = 
   match exp with
@@ -874,7 +995,11 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   let f_bf bf =
     let (pf, sl) = bf in
     match pf with
-    | CP.LexVar (t_ann, ml, il, pos) ->
+    (* restoring ml from the 3rd argument *)
+    | CP.LexVar t_info ->
+		    let t_ann = t_info.CP.lex_ann in
+		    let ml = t_info.CP.lex_tmp in
+				let pos = t_info.CP.lex_loc in 
         let n_ml =
           if rem_phase == [] then
             (* replace the phase var with integer *)
@@ -884,7 +1009,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
             List.filter (fun e -> match CP.get_var_opt e with
               | None -> true
               | Some v -> not(CP.mem_svl v rem_phase)) ml
-        in Some (CP.mkLexVar t_ann n_ml il pos, sl)
+        in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
     | _ -> None
   in
   let f_pe _ = None in
@@ -916,10 +1041,12 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   n_struc
 
 let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
-  let pr = fun _ -> "" in
-  Debug.no_1 (* (fun _ -> not (Gen.is_empty struc)) *) 
-  "subst_phase_num_struc" pr pr 
-  (subst_phase_num_struc rp subst) struc
+  let pr = !print_struc_formula in
+  let pr0 = !CP.print_svl in
+  let pr1 = pr_list (pr_pair !CP.print_sv string_of_int) in
+  Debug.no_3 (* (fun _ -> not (Gen.is_empty struc)) *) 
+  "subst_phase_num_struc" pr0 pr1 pr pr 
+  (subst_phase_num_struc) rp subst struc
 
 (* let subst_phase_num_struc subst (struc: struc_formula) : struc_formula = *)
 (*   if struc==[] then struc *)
@@ -933,73 +1060,83 @@ let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
       Cast.proc_static_specs = s_specs;
       Cast.proc_dynamic_specs = d_specs; }
 
-let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) : Cast.prog_decl =
-  let index = proc.Cast.proc_call_order in
-  try
-    let cons = Hashtbl.find phase_constr_tbl index in
-    let grp = fst (List.split cons) in
-    let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in
 
-    Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
-    Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
-
-    (* Trigger phase number inference when 
-     * all needed information is collected *)
-    if is_full_grp then
-      let cl = List.concat (snd (List.split cons)) in
-      let inf_num = phase_num_infer_one_scc cl in
-      Debug.trace_hprint (add_str "list of ctr" 
-        (pr_list !CP.print_formula)) cl no_pos;
-      let subst =
-        match inf_num with
-        | None -> []
-        | Some (inf_num, fv) ->
+let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
+  let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
+  match proc_lst with
+    | [] -> print_endline "ERROR : empty SCC prog_lst!"; prog
+    | proc::_ ->
           begin
-            if not (Gen.is_empty inf_num) then
-              List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num)
-            else (* The inferred graph has only one vertex *)
-              (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
-              let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
-              List.map (fun v -> (v, 0)) fv
+            let index = proc.Cast.proc_call_order in
+            try
+              let cons = Hashtbl.find phase_constr_tbl index in
+              (* let grp = fst (List.split cons) in *)
+              (* let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in *)
+              let is_full_grp = true in
+              Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
+              Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
+              (* Trigger phase number inference when 
+               * all needed information is collected *)
+              if is_full_grp then
+                let cl = List.concat (snd (List.split cons)) in
+                let inf_num = phase_num_infer_one_scc cl in
+                Debug.trace_hprint (add_str "list of ctr" 
+                    (pr_list !CP.print_formula)) cl no_pos;
+                let subst =
+                  match inf_num with
+                    | None -> []
+                    | Some (inf_num, fv) ->
+                          begin
+                            if not (Gen.is_empty inf_num) then
+                              (* List.concat (List.map (fun (i, l) -> List.map (fun v -> (v, i)) l) inf_num) *)
+                              inf_num
+                            else
+                              (* The inferred graph has only one vertex *)
+                              (* All of phase variables will be assigned by 0 *)
+                              (* let fv = List.concat (List.map (fun f -> CP.fv f) cl) in*)
+                              let fv = Gen.BList.remove_dups_eq CP.eq_spec_var fv in
+                              List.map (fun v -> (v, 0)) fv
+                          end
+                in
+                (* Termination: Add the inferred phase numbers 
+                 * into specifications of functions in mutual group *)
+                if subst==[] then prog
+                else 
+                  (* all_zero is set if subs is only of form [v1->0,..,vn->0]
+                     in this scenario, there is no need for phase vars at all *)
+                  begin
+                    Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
+                    let all_zero = List.for_all (fun (_,i) -> i==0) subst in
+                    let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
+                    if all_zero then
+                      Debug.trace_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
+                    else begin
+                      Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      Debug.info_hprint (add_str "Phase Numbering"
+                          (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
+                    end;
+                    let n_tbl = Cast.proc_decls_map (fun proc ->
+                        if (List.mem proc.Cast.proc_name mutual_grp) 
+                        then subst_phase_num_proc rp subst proc
+                        else proc
+                    ) prog.Cast.new_proc_decls in  
+                    { prog with Cast.new_proc_decls = n_tbl }
+                  end
+              else prog
+            with Not_found -> prog
           end
-      in
-      (* Termination: Add the inferred phase numbers 
-       * into specifications of functions in mutual group *)
-      if subst==[] then prog
-      else 
-        (* all_zero is set if subs is only of form [v1->0,..,vn->0]
-           in this scenario, there is no need for phase vars at all *)
-        begin
-        Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
-        let all_zero = List.for_all (fun (_,i) -> i==0) subst in
-        let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
-        if all_zero then
-          Debug.info_hprint (add_str ("Phase to remove") !CP.print_svl) rp no_pos
-        else begin
-          Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-          Debug.info_hprint (add_str "Phase Numbering"
-            (pr_list (pr_pair !CP.print_sv string_of_int))) subst no_pos
-        end;
-        let n_tbl = Cast.proc_decls_map (fun proc ->
-          if (List.mem proc.Cast.proc_name mutual_grp) 
-          then subst_phase_num_proc rp subst proc
-          else proc
-        ) prog.Cast.new_proc_decls in  
-        { prog with Cast.new_proc_decls = n_tbl }
-        end
-    else prog
-  with Not_found -> prog
 
-let phase_num_infer_scc_grp (mutual_grp: ident list) (prog: Cast.prog_decl) (proc: Cast.proc_decl) =
-  let pr = Cprinter.string_of_proc_decl in
-  Debug.no_1 "phase_num_infer_scc_grp" (pr_list pr_id) pr_no
-    (fun _ -> phase_num_infer_scc_grp mutual_grp prog proc) mutual_grp
+let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
+  let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
+  let pr _ = pr_list pr_id mutual_grp in
+  Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
 let term_check_output stk =
-  fmt_string "\nTermination checking result:\n";
-  pr_term_res_stk (stk # get_stk);
-  fmt_print_newline ()
+  (* if not !Globals.dis_term_msg then *)
+    (fmt_string "\nTermination checking result:\n";
+    pr_term_res_stk (stk # get_stk);
+    fmt_print_newline ())
 
 let term_check_output stk =
   let pr = fun _ -> "" in
@@ -1020,7 +1157,7 @@ let get_loop_only sl =
 let add_unsound_ctx (es: entail_state) pos = 
   let term_pos = (post_pos # get, no_pos) in
   let term_res = (term_pos, None, Some es.es_formula, UnsoundLoop) in
-  term_res_stk # push term_res
+  add_term_res_stk term_res
 
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =

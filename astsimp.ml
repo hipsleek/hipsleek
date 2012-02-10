@@ -2019,6 +2019,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_logical_vars = [];
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
+          C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
@@ -4064,9 +4065,13 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                   | CP.SpecVar(t,id,pr) ->
                         if t==UNK then
                           try
-                            let d = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+                            let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
                             CP.SpecVar(RelT,id,pr)
-                          with _ -> v
+                          with _ -> 
+                            try
+                              let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+                              CP.SpecVar(RelT,id,pr)
+                            with _ -> v
                         else v
             ) ivs in
             (* TODO : any warning below should be fixed *)
@@ -4482,9 +4487,13 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let pe1 = List.map (fun e -> trans_pure_exp e stab) ls1 in
-          let pe2 = List.map (fun e -> trans_pure_exp e stab) ls2 in
-          CP.LexVar(t_ann, pe1, pe2, pos)
+          let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
+          let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
+          CP.LexVar {
+					  CP.lex_ann = t_ann;
+						CP.lex_exp = cle;
+						CP.lex_tmp = clt;
+						CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -4580,6 +4589,9 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e stab, pos)
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
+    | IP.Func (id, es, pos) ->
+		  let es = List.map (fun e -> trans_pure_exp e stab) es in
+		  CP.Func (CP.SpecVar (RelT, id, Unprimed), es, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
 		  let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
 		  let dim = List.length ind in (* currently only support int type array *)
@@ -4977,6 +4989,10 @@ and gather_type_info_exp_x a0 stab et =
           let el_t = fresh_tvar stab in
           let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
           BagT t
+    | IP.Func (id, es, pos) -> 
+          let t = I.int_type in
+          let _ = must_unify_expect t et stab pos in
+          t
     | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
           (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
 		  (* and hence, accessing the element at position i, we get the value of expected_type *)
@@ -7862,56 +7878,81 @@ and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_
   }
 
 and irf_traverse_proc (cp: C.prog_decl) (proc: C.proc_decl) (scc: C.IG.V.t list) : C.proc_decl =
-  {proc with
-	  C.proc_body = match proc.C.proc_body with
-			| None -> None
-			| Some body -> Some (irf_traverse_exp cp body scc)
-  }
+  let marked_rec_body, call_list = match proc.C.proc_body with
+    | None -> None, []
+    | Some b -> 
+        let body, cl = irf_traverse_exp cp b scc in
+        Some body, cl
+  in let is_rec =
+    if (List.length scc) > 1 then true (* Mutual recursive function *)
+    else List.exists (fun mn -> mn = proc.C.proc_name) call_list
+  in { proc with
+    C.proc_body = marked_rec_body;
+    C.proc_is_recursive = is_rec }
 
-and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : C.exp =
+and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.exp * ident list) =
   match exp with
-	| C.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp cp e.Cast.exp_label_exp scc)}
-	| C.CheckRef e -> Cast.CheckRef e
-	| C.Java e -> Cast.Java e
-	| C.Assert e -> Cast.Assert e
-	      (* An Hoa MARKED *)
-	      (*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
-	      (*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
-	      (* An Hoa END *)
-	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp cp e.Cast.exp_assign_rhs scc)}
-	| Cast.BConst e -> Cast.BConst e
-	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp cp e.Cast.exp_bind_body scc)}
-	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp cp e.Cast.exp_block_body scc)}
-	| Cast.Cond e -> Cast.Cond {e with
-		Cast.exp_cond_then_arm = (irf_traverse_exp cp e.Cast.exp_cond_then_arm scc);
-		Cast.exp_cond_else_arm = (irf_traverse_exp cp e.Cast.exp_cond_else_arm scc)}
-	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp cp e.Cast.exp_cast_body scc)}
-	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp cp e.Cast.exp_catch_body scc)}
-	| Cast.Debug e -> Cast.Debug e
-	| Cast.Dprint e -> Cast.Dprint e
-	| Cast.FConst e -> Cast.FConst e
-	| Cast.IConst e -> Cast.IConst e
-	      (*| Cast.ArrayAlloc e -> Cast.ArrayAlloc e*)
-	| Cast.New e -> Cast.New e
-	| Cast.Null e -> Cast.Null e
-	| Cast.EmptyArray e -> Cast.EmptyArray e (* An Hoa *)
-	| Cast.Print e -> Cast.Print e
-	| Cast.Seq e -> Cast.Seq {e with
-		Cast.exp_seq_exp1 = (irf_traverse_exp cp e.Cast.exp_seq_exp1 scc);
-		Cast.exp_seq_exp2 = (irf_traverse_exp cp e.Cast.exp_seq_exp2 scc)}
-	| Cast.This e -> Cast.This e
-	| Cast.Time e -> Cast.Time e
-	| Cast.Var e -> Cast.Var e
-	| Cast.VarDecl e -> Cast.VarDecl e
-	| Cast.Unfold e -> Cast.Unfold e
-	| Cast.Unit e -> Cast.Unit e
-	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp cp e.Cast.exp_while_body scc)}
-	| Cast.Sharp e -> Cast.Sharp e
-	| Cast.Try e -> Cast.Try {e with
-		Cast.exp_try_body = (irf_traverse_exp cp e.Cast.exp_try_body scc);
-		Cast.exp_catch_clause = (irf_traverse_exp cp e.Cast.exp_catch_clause scc)}
-	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found cp e.Cast.exp_icall_method_name scc)}
-	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found cp e.Cast.exp_scall_method_name scc)}
+  | C.Label e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_label_exp scc in
+      (C.Label {e with C.exp_label_exp = ex}, il)
+  | C.CheckRef _ 
+  | C.Java _
+  | C.Assert _ -> (exp, [])
+  | C.Assign e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_assign_rhs scc in
+      (C.Assign {e with C.exp_assign_rhs = ex}, il)
+  | C.BConst e -> (exp, [])
+  | C.Bind e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_bind_body scc in
+      (C.Bind {e with Cast.exp_bind_body = ex}, il)
+  | C.Block e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_block_body scc in
+      (C.Block {e with C.exp_block_body = ex}, il)
+  | C.Cond e -> 
+      let ex1, il1 = irf_traverse_exp cp e.C.exp_cond_then_arm scc in
+      let ex2, il2 = irf_traverse_exp cp e.C.exp_cond_else_arm scc in
+      (C.Cond {e with
+        C.exp_cond_then_arm = ex1; C.exp_cond_else_arm = ex2}, il1@il2)
+  | C.Cast e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_cast_body scc in
+      (C.Cast {e with C.exp_cast_body = ex}, il)
+  | C.Catch e -> 
+      let ex, il = irf_traverse_exp cp e.C.exp_catch_body scc in
+      (C.Catch {e with C.exp_catch_body = ex}, il)
+  | C.Debug _
+  | C.Dprint _
+  | C.FConst _ 
+  | C.IConst _
+  | C.New _
+  | C.Null _ 
+  | C.EmptyArray _ 
+  | C.Print _ -> (exp, [])
+  | C.Seq e -> 
+      let ex1, il1 = irf_traverse_exp cp e.C.exp_seq_exp1 scc in
+      let ex2, il2 = irf_traverse_exp cp e.C.exp_seq_exp2 scc in
+      (C.Seq {e with
+        C.exp_seq_exp1 = ex1; C.exp_seq_exp2 = ex2}, il1@il2)
+  | C.This _
+  | C.Time _
+  | C.Var _
+  | C.VarDecl _
+  | C.Unfold _
+  | C.Unit _ -> (exp, [])
+  | C.While e ->
+      let ex, il = irf_traverse_exp cp e.C.exp_while_body scc in
+      (C.While {e with C.exp_while_body = ex}, il)
+  | C.Sharp _ -> (exp, [])
+  | C.Try e -> 
+      let ex1, il1 = irf_traverse_exp cp e.C.exp_try_body scc in
+      let ex2, il2 = irf_traverse_exp cp e.C.exp_catch_clause scc in
+      (C.Try {e with
+        C.exp_try_body = ex1; C.exp_catch_clause = ex2}, il1@il2)
+  | C.ICall e -> 
+      (C.ICall {e with C.exp_icall_is_rec = (is_found cp e.C.exp_icall_method_name scc)}, 
+      [e.C.exp_icall_method_name])
+  | C.SCall e -> 
+      (C.SCall {e with C.exp_scall_is_rec = (is_found cp e.C.exp_scall_method_name scc)},
+      [e.C.exp_scall_method_name])
 		  
 
 (* Build call graph of the program *)

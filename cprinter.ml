@@ -196,7 +196,7 @@ let pr_op_sep_gen sep op =
   else fmt_string op (* assume sep="" *)
 
 (** print op and a break after *)
-let pr_cut_after op = pr_op_sep_gen "SA" op
+let pr_cut_after op = pr_op_sep_gen "A" op
   (* fmt_string (" "^op); fmt_space()  *)
 
   (** print op and a break after *)
@@ -472,17 +472,18 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 
 let string_of_typed_spec_var x = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ (string_of_typ t)
+    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
 
 let string_of_spec_var x = 
-(* string_of_typed_spec_var x *)
+  (* string_of_typed_spec_var x *)
   match x with
     | P.SpecVar (t, id, p) ->
-		(* An Hoa : handle printing of holes *)
-		let real_id = if (id.[0] = '#') then "#" else id in
-	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
-        | Primed -> "'"
-        | Unprimed -> "" )
+    	  (* An Hoa : handle printing of holes *)
+          let ts = if !print_type then ":"^(string_of_typ t) else "" in
+    	  let real_id = if (id.[0] = '#') then "#" else id
+          in (real_id ^(match p with
+            | Primed -> "'"
+            | Unprimed -> "" )^ts)
 
 let string_of_imm imm = match imm with
   | ConstAnn(Imm) -> "@I"
@@ -653,6 +654,12 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+		| P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
+		(match i with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+		in fmt_string  (")"))
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()
@@ -687,12 +694,12 @@ let rec pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   match pf with
-    | P.LexVar (t_ann, ls1,ls2, l)        -> 
-        fmt_string (string_of_term_ann t_ann);
-        pr_s "" pr_formula_exp ls1;
-        if ls2!=[] then
-          pr_set pr_formula_exp ls2
-        else ()
+    | P.LexVar t_info -> 
+        fmt_string (string_of_term_ann t_info.CP.lex_ann);
+        pr_s "" pr_formula_exp t_info.CP.lex_exp
+        (* ;if ls2!=[] then *)
+        (*   pr_set pr_formula_exp ls2 *)
+        (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -1133,7 +1140,7 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let pr_lhs_rhs ((lhs,rhs) as rel) = 
+let pr_lhs_rhs ((cat,lhs,rhs) as rel) = 
   fmt_string (CP.print_lhs_rhs rel)
   (* fmt_open_box 1; *)
   (* pr_pure_formula lhs; *)
@@ -1141,7 +1148,21 @@ let pr_lhs_rhs ((lhs,rhs) as rel) =
   (* pr_pure_formula rhs; *)
   (* fmt_close() *)
 
-let string_of_lhs_rhs (e) : string =  poly_string_of_pr  pr_lhs_rhs e
+let string_of_lhs_rhs (e) : string =  
+  (* CP.print_only_lhs_rhs e *)
+  poly_string_of_pr  pr_lhs_rhs e
+
+let pr_only_lhs_rhs ((lhs,rhs) as rel) = 
+  (* fmt_string (CP.print_only_lhs_rhs rel) *)
+  fmt_open_box 1;
+  fmt_string "(";
+  pr_pure_formula lhs;
+  fmt_string ")";
+  fmt_string " --> ";
+  pr_pure_formula rhs;
+  fmt_close()
+
+let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
@@ -1221,6 +1242,17 @@ let pr_case_guard c =
   pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
   fmt_string "}"
 
+(* pretty printing for a spec_var list *)
+let rec string_of_spec_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_spec_var h 
+  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
+;;
+
+let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+
+let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
+
 let rec pr_struc_formula (e:struc_formula) =
   if e==[] then fmt_string "[]" 
   else pr_list_op_none "|| " (wrap_box ("B",0) pr_ext_formula) e
@@ -1282,7 +1314,7 @@ and pr_ext_formula  (e:ext_formula) =
       formula_inf_continuation = cont;} ->
           let ps =if (lvars==[] && postf) then "@post " else "" in
       fmt_open_vbox 2;
-      fmt_string ("EInfer "^ps^"["^string_of_spec_var_list lvars^"]");
+      fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();
       wrap_box ("B",0) pr_ext_formula cont;
       fmt_close();
@@ -1863,16 +1895,6 @@ let rec string_of_formulae_list l = match l with
 
 
 
-(* pretty printing for a spec_var list *)
-let rec string_of_spec_var_list_noparen l = match l with 
-  | [] -> ""
-  | h::[] -> string_of_spec_var h 
-  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
-;;
-
-let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
-
-let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
 (*
 let rec string_of_spec = function
@@ -2115,7 +2137,8 @@ let rec string_of_coerc_list l = match l with
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
   let locstr = (string_of_full_loc p.proc_loc)  
-  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
+  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
+      ^ (if p.proc_is_recursive then " rec" else "") ^ "\n"
       ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
       ^ (if Gen.is_empty p.proc_by_name_params then "" 
@@ -2320,6 +2343,7 @@ let rec html_of_formula_exp e =
     | P.ListTail (e, l) -> "<b>tail</b>(" ^ (html_of_formula_exp e) ^ ")"
     | P.ListLength (e, l) -> "<b>len</b>(" ^ (html_of_formula_exp e) ^ ")"
     | P.ListReverse (e, l)  -> "<b>rev</b>(" ^ (html_of_formula_exp e) ^ ")"
+    | P.Func (a, i, l) -> (html_of_spec_var a) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ ")"
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 
 let rec html_of_pure_b_formula f = match f with
@@ -2328,7 +2352,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
-    | P.LexVar (t_ann, e1, e2, l) -> "LexVar(to be implemented)"
+    | P.LexVar _ -> "LexVar(to be implemented)"
   (* | P.Lexvar (ls1,ls2, l)        ->  *)
   (*       let opt = if ls2==[] then "" else *)
   (*         "{"^(pr_list html_of_formula_exp ls2)^"}" *)

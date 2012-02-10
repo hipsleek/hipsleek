@@ -143,6 +143,7 @@ module Make (Token : SleekTokenS)
    ("finally", FINALLY);
 	 ("float", FLOAT);
 	 ("forall", FORALL);
+   ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
 	 ("head",HEAD);

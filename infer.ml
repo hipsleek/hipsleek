@@ -16,6 +16,8 @@ module TP = Tpdispatcher
 let no_infer estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
+
+let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
  
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
@@ -824,6 +826,41 @@ let delete_present_in i_pure compared_pure_list =
   let i_pure_list = List.filter (fun p -> not (present_in compared_pure_list p)) i_pure_list in
   CP.join_conjunctions i_pure_list
 
+(*let check_rank_dec rank_fml lhs_cond = match rank_fml with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Gt (Func (id1,args1,_), Func (id2,args2,_),_),_) ->
+      if id1 = id2 && List.length args1 = List.length args2 then
+        let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkNeqExp e1 e2 no_pos) args1 args2) no_pos in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
+      else rank_fml
+    | (Lt (Func (id1,args1,_), Func (id2,args2,_),_),_) -> 
+      if id1 = id2 && List.length args1 = List.length args2 then
+        let fml = CP.disj_of_list (List.map2 (fun e1 e2 -> CP.mkNeqExp e1 e2 no_pos) args1 args2) no_pos in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else rank_fml
+      else rank_fml
+    | _ -> rank_fml)    
+  | _ -> rank_fml
+    
+let check_rank_const rank_fml lhs_cond = match rank_fml with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Func (id1,args1,_), Func (id2,args2,_),_),_) ->
+      if id1 = id2 && List.length args1 = List.length args2 then
+        let fml = CP.join_conjunctions (List.map2 (fun e1 e2 -> CP.mkEqExp e1 e2 no_pos) args1 args2) in
+        if not(TP.is_sat_raw (CP.mkAnd lhs_cond fml no_pos)) then CP.mkFalse no_pos else CP.mkTrue no_pos
+      else CP.mkTrue no_pos
+    | _ -> CP.mkTrue no_pos)
+  | _ -> CP.mkTrue no_pos*)
+
+(* Assume fml is conjs *)
+(*let filter_rank fml lhs_cond =
+  let (rank, others) = List.partition (fun p -> CP.is_Rank_Dec p || CP.is_Rank_Const p) (CP.split_conjunctions fml) in
+  let (rank_dec, rank_const) = List.partition (fun p -> CP.is_Rank_Dec p) rank in
+  let rank_dec = List.map (fun r -> check_rank_dec r lhs_cond) rank_dec in
+  let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
+  CP.join_conjunctions (rank_dec@rank_const@others) *)
+
 let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p rhs_p_br 
   heap_entail_build_mix_formula_check pos =
   (* TODO : need to handle pure_branches in future ? *)
@@ -831,11 +868,29 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
   else 
     let ivs = estate.es_infer_vars_rel in
     let rhs_p_n = MCP.pure_of_mix rhs_p in
-    let rhs_ls = CP.split_conjunctions rhs_p_n in
-    let (rel_rhs,other_rhs) = List.partition (CP.is_rel_in_vars ivs) rhs_ls in 
+    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)
+    (* Suppose rhs_p_n is in DNF *)
+    (* Need to assure that later *)
+    let rhs_disjs = CP.list_of_disjs rhs_p_n in
+    let (rhs_disjs_rel, rhs_disjs_wo_rel) = 
+      List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
+    let lhs_cond = MCP.pure_of_mix lhs_p_orig in
+    let rhs_disjs_wo_rel_new, other_disjs = List.partition (fun d -> TP.imply_raw lhs_cond d) rhs_disjs_wo_rel in
+    let other_disjs = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd lhs_cond d no_pos)) other_disjs in
+    (* DD.devel_hprint (add_str "LHS pure" !CP.print_formula) (MCP.pure_of_mix lhs_p_orig) pos; *)
+    (* DD.devel_hprint (add_str "RHS Disj List" (pr_list !CP.print_formula)) rhs_disjs pos; *)
+    let pairs = List.map (fun pure ->
+        let rhs_ls = CP.split_conjunctions pure in
+        let rels, others = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in
+        let rels = if List.exists (fun p -> CP.is_Rank_Const p) rels then [CP.conj_of_list rels no_pos] else rels in
+        rels, others)
+      (rhs_disjs_rel @ rhs_disjs_wo_rel_new) in
+    let rel_rhs_ls, other_rhs_ls = List.split pairs in
+    let rel_rhs = List.concat rel_rhs_ls in
     if rel_rhs==[] then (
-(*      DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;*)
-(*      DD.devel_pprint "no rel on rhs" pos;*)
+      (* DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; *)
+      (* DD.devel_pprint "no relation in rhs" pos; *)
+      (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
       if !unable_to_fold_rhs_heap = false then
@@ -883,9 +938,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       let rel_vars = List.concat (List.map CP.fv rel_lhs) in
       (* End  : To keep vars of rel_form in lhs *)
 
-      let pr = !CP.print_formula_br in
+      (*let pr = !CP.print_formula_br in*)
       (* let _ = print_endline (pr rhs_p_br) in *)
-      let rhs_p_2 = CP.join_conjunctions other_rhs in
+      (*let ranks = List.filter CP.has_func rel_rhs in*)
+      let rhs_p_2 = CP.disj_of_list ((List.map (fun other_rhs -> CP.join_conjunctions other_rhs) other_rhs_ls)@other_disjs) no_pos in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
 
       (* Eliminate relations whose recursive calls are not defined *)
@@ -931,17 +987,30 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
           let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
           let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
+          let rel_def_id = CP.get_rel_id_list rhs in
+          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in
+          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in
+          let rel_cat = 
+            if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) else 
+            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else
+            if rank_dec_id != [] then CP.RankDecr rank_dec_id else
+            report_error pos "Relation belongs to unexpected category"
+          in
 (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
             (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])
           else*)
-          if CP.isConstTrue new_lhs then [] else [(new_lhs,rhs)] in
+          if CP.isConstTrue new_lhs then [] else [(rel_cat,new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
         let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
-        DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+        DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
 (*        let inf_rel_ls = List.map wrap_exists inf_rel_ls in*)
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
-        let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
+        (* TODO: Change corresponding vars for assumed pure *)
+        let assume_rel_ls = List.map (fun ass_pure -> 
+            let rel_cat_fml = List.hd rel_rhs in
+            (CP.RelAssume (List.hd (CP.get_rel_id_list rel_cat_fml)), rel_cat_fml, ass_pure)) estate.es_assumed_pure in
+        let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel)@assume_rel_ls } in
         if inf_rel_ls != [] then
           begin
             DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;

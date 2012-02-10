@@ -1102,6 +1102,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
 		  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
+    | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
 	| ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (String.concat "," (List.map get_head i)) ^ "]" (* An Hoa *)    
   in
   
@@ -1126,7 +1127,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	      (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | AConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
-	| ArrayAt _ -> ([e],[]) (* An Hoa *) in
+	| ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
     | Null _ | Var _ | IConst _ | FConst _ | AConst _ -> e
@@ -1151,6 +1152,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListLength (e,l)-> ListLength(norm_expr e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_expr e), l)    
     | ListReverse (e,l)-> ListReverse(norm_expr e, l)
+    | Func (a,i,l) -> Func (a, List.map norm_expr i, l)
 	| ArrayAt (a,i,l) -> ArrayAt (a, List.map norm_expr i, l) (* An Hoa *)
 	      
   and cons_lsts (e:exp) (disc:int) cons1 cons2 (nel:exp) : exp=     

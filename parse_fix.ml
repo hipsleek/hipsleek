@@ -29,7 +29,6 @@ let get_var var stab = if is_substr "PRI" var
 
 let change_name var name = match var with
   | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)
-  | _ -> report_error no_pos "Error in change_name"
 
 let is_node var = match var with 
   | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id

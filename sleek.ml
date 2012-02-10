@@ -96,6 +96,7 @@ let parse_file (parse) (source_file : string) =
     match c with
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
+	  | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
@@ -112,6 +113,7 @@ let parse_file (parse) (source_file : string) =
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _
 	  | PredDef _
+	  | FuncDef _
       | RelDef _
       | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _
@@ -135,6 +137,7 @@ let parse_file (parse) (source_file : string) =
             else Gen.Profiling.pop_time s
 	  | DataDef _
 	  | PredDef _
+	  | FuncDef _
       | RelDef _
       | AxiomDef _ (* An Hoa *)
 	  | LemmaDef _
@@ -166,6 +169,7 @@ let main () =
                 I.prog_logical_var_decls = [];
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
+                I.prog_func_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -204,6 +208,7 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
+                     | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq

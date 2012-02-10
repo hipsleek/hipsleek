@@ -135,6 +135,7 @@ let common_arguments = [
 	("-parse", Arg.Set parse_only,"Parse only");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
 	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
+	("--print-type", Arg.Set Globals.print_type,"Print type info");
 	("--print-x-inv", Arg.Set Globals.print_x_inv,
 	"Print computed view invariants");
 	("-stop", Arg.Clear Globals.check_all,
@@ -142,7 +143,7 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "auto" ], Tpdispatcher.set_tp),
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("-perm", Arg.Symbol (["fperm"; "cperm"; "none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
@@ -245,6 +246,10 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify, 
     "enable re-verification for inferred termination specifications");
+  ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
+  ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
+  ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");

@@ -71,6 +71,14 @@ let devel_hprint (pr:'a->string) (m:'a) (pos:loc) =
 let devel_zprint msg (pos:loc) =
 	ho_print !devel_debug_on (fun m -> (prior_msg pos)^(Lazy.force m)) msg
 
+let dinfo_zprint m p = devel_zprint m p
+let dinfo_hprint pr m p  = devel_hprint pr m p
+let dinfo_pprint m p = devel_pprint m p
+
+let ninfo_zprint m p = ()
+let ninfo_hprint pr m p  = ()
+let ninfo_pprint m p = ()
+
 let trace_pprint (msg:string) (pos:loc) : unit = 
 	ho_print false (fun a -> " "^a) msg
 

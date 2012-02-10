@@ -77,7 +77,7 @@ let rec omega_of_exp e0 = match e0 with
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
-  (* | Func _ -> "0" (\* TODO: Need to handle *\) *)
+  | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint")
 (*
 (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
@@ -603,7 +603,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
       | None -> pe
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos; *)
-           omega_subst_lst := [];
+          omega_subst_lst := [];
             let vars_list = get_vars_formula pe in
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)

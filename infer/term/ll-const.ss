@@ -8,13 +8,9 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 
-relation F(int n, int m).
-
 int foo(node x)
-  infer @pre [F]
-  requires x::ll<n>@L
-  ensures F(res,n);  
-  // R(res,n) = res=0
+  requires x::ll<n>@L & Term[n]
+  ensures res=0;  
 {
   if (x==null) return 0;
   else {
