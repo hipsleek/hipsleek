@@ -5,6 +5,7 @@ todo: disable the default logging for omega
 *)
 
 open Globals
+module DD = Debug
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Cast
@@ -5353,8 +5354,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
 
 	    (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
-	    (* "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
-	    (* "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
+	    (*                              "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
+	    (*                              "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
 
 
 	    (* 26.03.2009 simplify the pure part *)
@@ -5404,6 +5405,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    (* 	  (\* added by cezary  for branches *\) *)
 	    (*       let res1,res2,re3 =  *)
 	    (* ======= *)
+        DD.devel_pprint ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
+        DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
+        DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
         let i_res1,i_res2,i_res3 = 
           if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
@@ -5757,7 +5761,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
-          begin
+        begin
+             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
             if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
@@ -5766,13 +5771,13 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            (*print_endline "imply_mix_formula first: second";*)
-	        CP.imply_conj_orig 
-                (CP.split_disjunctions a0) 
-                (CP.split_disjunctions a1) 
-                (CP.split_conjunctions c) 
-	            TP.imply 
-	            imp_no
+              DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+	          CP.imply_conj_orig
+                  (CP.split_disjunctions a0) 
+                  (CP.split_disjunctions a1) 
+                  (CP.split_conjunctions c) 
+	              TP.imply
+	              imp_no
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
@@ -9542,7 +9547,7 @@ let rec simplify_pre pre_fml = match pre_fml with
   | _ ->
     let h, p, fl, b, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
+    let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 		
 let simplify_pre pre_fml =

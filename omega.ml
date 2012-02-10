@@ -332,10 +332,11 @@ let rec send_and_receive f timeout=
           else
             f *)
         in
+        (* let _ = print_endline ("before omega: " ^ new_f) in *)
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
 	    let str = read_from_in_channel (!process.inchannel) in
-	    
+	    (* let _ = print_endline ("string from omega: " ^ str) in *)
         let lex_buf = Lexing.from_string str in
 	  (*print_string (line^"\n"); flush stdout;*)
         let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
@@ -425,8 +426,8 @@ let is_sat_weaken (pe : formula)  (sat_no : string): bool =
   let pe = drop_rel_formula pe in
   is_sat pe sat_no
 
-let is_sat_with_check (pe : formula) sat_no : bool option =
-  do_with_check "" (fun x -> is_sat x sat_no) pe 
+let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
+  do_with_check "" (fun x -> is_sat_ops pr_weak pr_strong x sat_no) pe 
 
 let is_sat (pe : formula) sat_no : bool =
   try
@@ -527,8 +528,8 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
   imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
-let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
-  do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
+let imply_with_check pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "" (fun a c -> imply_ops pr_weak pr_strong a c imp_no timeout) ante conseq
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
   try
@@ -589,7 +590,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
-  (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
+  (* let _ = print_string ("\nomega_simplify: f before"^(!print_formula pe)) in *)
   begin
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
@@ -622,6 +623,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 	                try
                       begin
 	                    let rel = send_and_receive fomega !in_timeout (* 0.0  *)in
+                        (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
 	                    match_vars (fv pe) rel
 	                  end
 	                with
@@ -740,7 +742,7 @@ let simplify (pe : formula) : formula =
     | Some f -> f
 
 let pairwisecheck (pe : formula) : formula =
-  (*print_endline "LOCLE: pairwisecheck";*)
+  (* print_endline "LOCLE: pairwisecheck"; *)
   begin
 	omega_subst_lst := [];
     match (omega_of_formula_old pe) with
