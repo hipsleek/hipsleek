@@ -1027,37 +1027,52 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   let f_bf bf =
     let (pf, sl) = bf in
     match pf with
-    (* restoring ml from the 3rd argument *)
-    | CP.LexVar t_info ->
+        (* restoring ml from the 3rd argument *)
+      | CP.LexVar t_info ->
 		    let t_ann = t_info.CP.lex_ann in
 		    let ml = t_info.CP.lex_tmp in
-				let pos = t_info.CP.lex_loc in 
-        let n_ml =
-          if rem_phase == [] then
-            (* replace the phase var with integer *)
-             List.map (fun m -> subst_phase_num_exp subst m) ml 
-          else 
-            (* to remove phase vars in rem_phase *)
-            List.filter (fun e -> match CP.get_var_opt e with
-              | None -> true
-              | Some v -> not(CP.mem_svl v rem_phase)) ml
-        in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
-    | _ -> None
+			let pos = t_info.CP.lex_loc in
+            Debug.dinfo_hprint (add_str "lex_tmp" (pr_list !CP.print_exp)) ml no_pos;
+            let subs_extra = match ml with
+              | _::e::_ -> begin
+                  match CP.get_var_opt e with
+                    | None -> []
+                    | Some v -> 
+                          if (List.exists (fun (v2,_) -> CP.eq_spec_var v v2) subst) then [] 
+                          else 
+                            begin
+                            Debug.info_hprint (add_str "var -> 0 " !CP.print_sv) v no_pos;
+                            [(v,0)]
+                            end
+                end
+              | _ -> [] 
+            in
+            let n_ml =
+              if rem_phase == [] then
+                (* replace the phase var with integer *)
+                List.map (fun m -> subst_phase_num_exp (subs_extra@subst) m) ml 
+              else 
+                (* to remove phase vars in rem_phase *)
+                List.filter (fun e -> match CP.get_var_opt e with
+                  | None -> true
+                  | Some v -> not(CP.mem_svl v rem_phase)) ml
+            in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
+      | _ -> None
   in
   let f_pe _ = None in
   let e_f = f_e, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
 
   (* Remove inferred variables from EInfer *)
   let f_ext ext = match ext with
-  | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
-      let lv = fst (List.split subst) in
-      let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
-      let n_cont = transform_struc_formula e_f cont in
-      if Gen.is_empty n_iv then Some n_cont
-      else Some (EInfer { e with 
-        formula_inf_vars = n_iv;
-        formula_inf_continuation = n_cont })
-  | _ -> None
+    | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
+          let lv = fst (List.split subst) in
+          let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
+          let n_cont = transform_struc_formula e_f cont in
+          if Gen.is_empty n_iv then Some n_cont
+          else Some (EInfer { e with 
+              formula_inf_vars = n_iv;
+              formula_inf_continuation = n_cont })
+    | _ -> None
   in
   
   let s_f = f_ext, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
@@ -1132,13 +1147,13 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 in
                 (* Termination: Add the inferred phase numbers 
                  * into specifications of functions in mutual group *)
-                if subst==[] then 
-                  begin
-                    Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-                    Debug.info_pprint "Phase Subst is EMPTY" no_pos;
-                    prog
-                  end
-                else 
+                (* if subst==[] then  *)
+                (*   begin *)
+                (*     Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos;  *)
+                (*     Debug.info_pprint "Phase Subst is EMPTY" no_pos; *)
+                (*     prog *)
+                (*   end *)
+                (* else  *)
                   (* all_zero is set if subs is only of form [v1->0,..,vn->0]
                      in this scenario, there is no need for phase vars at all *)
                   begin
@@ -1166,7 +1181,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
   let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
   let pr _ = pr_list pr_id mutual_grp in
-  Debug.to_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
+  Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
 let term_check_output () =
