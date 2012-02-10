@@ -602,12 +602,12 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
       | None -> pe
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos; *)
+          omega_subst_lst := [];
             let vars_list = get_vars_formula pe in
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)
             begin
               try
-                omega_subst_lst := [];
                   let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	              (*test*)
