@@ -11,10 +11,14 @@ ll2<n> == self=null & n=0
 	or self::node<_, q> * q::ll2<n-1>
 	inv n>=0;
 
+ll3<n,s,l> == self=null & n=0 & s<=l
+    or self::node<s, q> * q::ll3<n-1,s1,l> & s<=s1
+	inv n>=0 & s<=l;
 
 ranking rk(int a, int b).
 
 relation A(int a, int b, int c).
+relation P(int a, int b).
 
 void append1(node x, node y)
   requires x::ll1<>*y::ll1<> & x!=null 
@@ -38,6 +42,19 @@ void append2(node x, node y)
      x.next=y;
    } else {
       append2(x.next,y);
+   }
+}
+
+void append3(node x, node y)
+  infer [l1,s2]
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null //& l1<=s2
+  ensures x::ll3<n+m,s1,l2>  ;
+{
+   if (x.next==null) {
+     //assume false;
+     x.next=y;
+   } else {
+      append3(x.next,y);
    }
 }
 
