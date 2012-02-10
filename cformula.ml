@@ -10,6 +10,7 @@ open Gen
 open Exc.GTable
 open Perm
 open Label_only
+open Label 
 
 module Err = Error
 module CP = Cpure
@@ -150,7 +151,7 @@ and flow_treatment =
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   | Conj of h_formula_conj
-  | StarList of (spec_label * h_formula_star) list
+  (*| StarList of (spec_label * h_formula_star) list*)
   | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
@@ -225,6 +226,49 @@ approx_disj_or_d2 : approx_disj }
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
+
+let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
+let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
+let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
+let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
+let print_mix_formula = print_mix_f
+let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
+let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
+let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
+let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
+let print_spec_var = print_sv
+let print_spec_var_list = print_svl
+let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
+let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+
+module Exp_Heap =
+struct 
+  type e = h_formula
+  let comb x y = Star 
+    { h_formula_star_h1 = x;
+	  h_formula_star_h2 = y;
+      h_formula_star_pos = no_pos
+    }
+  let string_of = !print_h_formula
+end;;
+
+module Exp_Spec =
+struct 
+  type e = struc_formula
+  let comb x y = EOr 
+    { formula_struc_or_f1 = x;
+    formula_struc_or_f2 = y;
+    formula_struc_or_pos = no_pos
+    }
+  let string_of = !print_struc_formula
+end;;
+
+module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
+module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;
+
+
 (* utility functions *)
 
 
@@ -262,23 +306,6 @@ let get_ptr_from_data h =
     | DataNode f -> f.h_formula_data_node
     | ViewNode f -> f.h_formula_view_node
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
-
-let print_formula = ref(fun (c:formula) -> "printer not initialized")
-let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
-let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
-let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
-let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
-let print_mix_formula = print_mix_f
-let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
-let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
-let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
-let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
-let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
-let print_spec_var = print_sv
-let print_spec_var_list = print_svl
-let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
-let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
-
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -5145,14 +5172,6 @@ let rec replace_heap_formula_label nl f = match f with
   | HFalse 
   | Hole _ -> f
 	
-and replace_pure_formula_label nl f = match f with
-  | CP.BForm (bf,_) -> CP.BForm (bf,(nl()))
-  | CP.And (b1,b2,b3) -> CP.And ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),b3)
-  | CP.Or (b1,b2,b3,b4) -> CP.Or ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),(nl()),b4)
-  | CP.Not (b1,b2,b3) -> CP.Not ((replace_pure_formula_label nl b1),(nl()),b3)
-  | CP.Forall (b1,b2,b3,b4) -> CP.Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
-  | CP.Exists (b1,b2,b3,b4) -> CP.Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
-    	
 and replace_formula_label1 nl f = match f with
 	| Base b->Base {b with 
 			formula_base_heap = replace_heap_formula_label nl b.formula_base_heap ;
@@ -5328,51 +5347,6 @@ let transform_formula_w_perm (f:formula -> formula option) (e:formula) (permvar:
   Debug.no_3 "transform_formula_w_perm" 
       (fun _ -> "f") pr !print_spec_var pr 
       transform_formula_w_perm_x f e permvar
-
-
-(* let rec transform_formula f (e:formula):formula = *)
-(* 	let (_, f_f, f_h_f, f_p_t) = f in *)
-(* 	let r =  f_f e in  *)
-(* 	match r with *)
-(* 	| Some e1 -> e1 *)
-(* 	| None  ->  *)
-
-(*         let _ = print_string ("\n [Debug] transform_formula, e = " ^ (!print_formula e)) in  *)
-
-(*         match e with	  *)
-(* 		| Base b ->  *)
-
-(*         let _ = print_string ("\n [Debug] transform_formula, base b = " ^ "\n") in *)
-
-(*       Base{b with  *)
-(*               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap; *)
-(*               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure; *)
-(*               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;} *)
-(* 		| Or o ->  *)
-
-(*         let _ = print_string ("\n [Debug] transform_formula, Or o = ") in  *)
-
-(* Or {o with  *)
-(*                     formula_or_f1 = transform_formula f o.formula_or_f1; *)
-(*                     formula_or_f2 = transform_formula f o.formula_or_f2;} *)
-(* 		| Exists e ->  *)
-
-(*         let _ = print_string ("\n [Debug] transform_h_formula,before, Exists e = " ^(!print_h_formula e.formula_exists_heap)) in  *)
-(*         let feh = transform_h_formula f_h_f e.formula_exists_heap in *)
-(*         let _ = print_string ("\n [Debug] transform_h_formula,after, Exists e = " ^(!print_h_formula feh) ^ "\n") in  *)
-
-(*         let fep = e.formula_exists_pure in *)
-(*         let _ = print_string ("\n [Debug] transform_mix_formula,before, Exists e = " ^(!print_mix_f fep)) in *)
-(*         let fep = MCP.transform_mix_formula f_p_t fep in *)
-(*         let _ = print_string ("\n [Debug] transform_mix_formula,after, Exists e = " ^(!print_mix_f fep) ^ "\n") in         *)
-
-(*       Exists {e with *)
-(*                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap; *)
-(*                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure; *)
-(*                 formula_exists_branches =  *)
-(*                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;} *)
-
-
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm_var):formula =
 	let r =  f e in 
@@ -5658,7 +5632,8 @@ let rename_labels transformer e =
 	let f_p_f e = 
 		match e with
 		| CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
-		| CP.And (e1,e2,l) -> None
+		| CP.And _
+		| CP. AndList _ -> None
 		| CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
 		| CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
 		| CP.Forall (v,e1,f_l, l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),l)))
@@ -6867,27 +6842,13 @@ let add_term_nums_struc struc_f log_vars call_num add_phase =
   Debug.no_1 "add_term_nums_struc" 
       pr pr2 (fun _ -> add_term_nums_struc struc_f log_vars call_num add_phase) struc_f
 
-(* let conseq_group_filter ctx conseq =  *)
-(*   let ((int_lbl,str_lbl),rec_call) =  *)
-(*     match ctx with | Ctx es -> es.es_group_lbl | _ -> failwith "conseq_group_filter: unexpected disjunctive context" in *)
-(*   if rec_call then List.filter (fun ((l,_),_)-> l=int_lbl || l=0) conseq  *)
-(*   else if (String.compare str_lbl "")=0 then conseq *)
-(*   else List.filter (fun ((_,s),_)-> (String.compare s "")=0 || (String.compare str_lbl s)=0) conseq  *)
-
-
-let set_rec_group_label sctx b = 
-  let rec rec_set_ctx c = match c with 
-    | Ctx es -> Ctx {es with es_group_lbl = (fst es.es_group_lbl, b)}
-    | OCtx (c1,c2) -> OCtx (rec_set_ctx c1,rec_set_ctx c2) in
-  let rec_set (c1,c2) = (c1,rec_set_ctx c2) in
-  List.map (fun (c1,c2,c3)-> (c1,c2,List.map rec_set c3)) sctx
-
+  
 let get_ctx_label sctx =
   let rec helper c = match c with 
     | Ctx es -> es.es_group_lbl
     | OCtx (c1,c2) -> helper c1 
   in helper sctx
-
+  
 let update_ctx_label sctx l =
   let rec helper c = match c with 
     | Ctx es -> Ctx {es with es_group_lbl = l}

@@ -3172,15 +3172,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
               if (d==[] && case_vs!=[]) then
                 begin
                   (* place to add case LHS to infer_pure *)
-	              (* let _ = print_endline ("WN ECase IVars:"^(Cprinter.string_of_spec_var_list ivs)) in *)
-	              (* let _ = print_endline ("WN ECase CVars:"^(Cprinter.string_of_spec_var_list case_vs)) in *)
-                  (*
-                    for each (c1,c2) from case_brs
-                    (i) add c1 into ctx11 & also infer_pure & perform unsat
-                    filter away those that are false
-                    perform entail against each c2
-                    combine result as union
-                  *)
+                  (* for each (c1,c2) from case_brs
+                    (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
+                    perform entail against each c2 combine result as union *)
                   let rs = List.map (fun (c1,c2) ->	
                     (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
                   (* remove away false context : need to keep at least one? *)
@@ -3197,8 +3191,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	              (rez1, (mkCaseStep ctx f rez2))
                 end
               else
-	            (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
-                (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
 	            if (List.length b.formula_case_exists)>0 then 
 	              let ws = CP.fresh_spec_vars b.formula_case_exists in
 	              let st = List.combine b.formula_case_exists ws in
@@ -3212,8 +3204,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                | [] -> None
 	                | (p,e)::t -> 
 		                  let tt = (syn_imply ctx p) in
-		                  (*print_string ("\n -------------:\n"^(Cprinter.string_of_context ctx)^"\n\n"^
-		                    (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
 		                  if tt then Some (p,e) else helper t in
 			      (* Find the branch whose condition is satisfied by the current context *)
 			      (* Because these conditions are disjoint, the context can only satisfy at most one condition *)
@@ -3280,7 +3270,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		| EList b -> 
 			if (List.length b) > 0 then	
 				let ctx = CF.add_to_context_num 2 ctx11 "para OR on conseq" in
-				let conseq = b (*CF.conseq_group_filter ctx b*) in
+				let conseq = CF.Label_Spec.filter_label_rec (get_ctx_label ctx) b in
 				if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
 				else 
 					let l1,l2 = List.split (List.map (fun c-> helper_inner_x 10 ctx (snd c)) conseq) in
@@ -8239,6 +8229,7 @@ and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
 
 and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
   | CP.And (f1, f2, pos) -> CP.mkAnd (simpl_pure_formula f1) (simpl_pure_formula f2) pos
+  | CP.AndList b -> CP.AndList (map_l_snd simpl_pure_formula b)
   | CP.Or (f1, f2, lbl, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) lbl pos
   | CP.Not (f1, lbl, pos) -> CP.mkNot (simpl_pure_formula f1) lbl pos
   | CP.Forall (sv, f1, lbl, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl pos

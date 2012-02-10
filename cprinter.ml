@@ -785,6 +785,8 @@ let rec pr_pure_formula  (e:P.formula) =
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
           pr_list_op op_and f_b args
+    | P.AndList b -> 
+		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b
     | P.Or (f1, f2, lbl,l) -> 
           pr_formula_label_opt lbl; 
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
@@ -2377,6 +2379,7 @@ let rec html_of_pure_formula f =
 		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
 		let args = arg1@arg2 in
 			"(" ^ (String.concat html_op_and (List.map html_of_pure_formula args)) ^ ")"
+	| P.AndList b -> if b==[] then "[]" else String.concat " && " (List.map (fun c-> html_of_pure_formula (snd c))b)
     | P.Or (f1, f2, lbl,l) -> 
 		let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in

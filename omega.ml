@@ -123,17 +123,6 @@ and omega_of_b_formula b =
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
-(* and omega_of_formula f  = *)
-(*   let rec helper f =  *)
-(*     match f with *)
-(*   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")" *)
-(*   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")" *)
-(*   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")" *)
-(*   | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	 *)
-(*   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   in helper f *)
-
 and omega_of_formula_old f  =
   let (pr_w,pr_s) = no_drop_ops in
   omega_of_formula pr_w pr_s f
@@ -147,6 +136,7 @@ and omega_of_formula pr_w pr_s f  =
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
             | Some f -> helper f
         end
+  | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	

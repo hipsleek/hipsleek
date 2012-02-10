@@ -241,6 +241,9 @@ let concat_string_list_string strings =
 let rec string_of_pure_formula = function 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
+  | P.AndList b -> List.fold_left  (fun a (l,c)-> 
+		let l_s = (string_of_spec_label l) ^": " in
+		a ^ "\n" ^ (if a = "" then "" else " && ") ^ "\n" ^ l_s^(string_of_pure_formula c)) "" b
   | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
   | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
   | P.Forall (x, f,lbl, l)            -> "all " ^ (string_of_id x)

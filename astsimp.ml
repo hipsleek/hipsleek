@@ -4407,6 +4407,7 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
+	| IP.AndList b -> CP.AndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
     | IP.Or (f1, f2,lbl, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl pos
@@ -4710,26 +4711,7 @@ and repl_tvar_in_x unify flag stab i k =
 and unify_var_kind_x (k1 : spec_var_kind) (k2 : spec_var_kind) :
       spec_var_kind option =
   unify_type k1 k2 !type_table
-      (* match k1 with *)
-      (*   | Unknown -> Some k2 *)
-      (*   | Known t1 -> (match k2 with *)
-      (*   	| Unknown -> Some k1 *)
-      (*   	| Known t2 -> (match t1 with *)
-      (*   		| Named c1 -> (match t2 with *)
-      (*   			| Named c2 ->  *)
-      (*   				  if c1 = "" then Some k2 *)
-      (*   				  else if c2 = "" then Some k1 *)
-      (*   				  else if c1 = c2 then Some k1 *)
-      (*   				  else if sub_type t1 t2 then Some k2 (\* use more general type *\) *)
-      (*   				  else if sub_type t2 t1 then Some k1  *)
-      (*   				  else None *)
-      (*   			| _ -> None) (\* An Hoa *\) *)
-      (*   		| Array et1 -> (match t2 with (\* An Hoa *\) *)
-      (*   			| Array et2 -> if (et1 = et2) then Some k1 else None *)
-      (*   			| _ -> None) *)
-      (*           | _ -> if sub_type t1 t2 then Some k2 *)
-      (*             else if sub_type t2 t1 then Some k1 *)
-      (*             else None)) *)
+   
 	  
 and unify_var_kind (k1 : spec_var_kind) (k2 : spec_var_kind) =
   let pr = string_of_spec_var_kind in
@@ -4756,47 +4738,12 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
     | (Some a1) , (Some a2) -> (a1.sv_info_kind <-k ; 
 	  let a2_keys = Hashtbl.fold (fun i v a-> if (v.id = a2.id) then i::a else a) stab [] in
 	  let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
-													                             (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
-                                                                                 (* and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos = *)
-                                                                                 (*   Debug.no_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "()") *)
-                                                                                 (*       (fun _ _ _ -> collect_type_info_var_x var stab var_kind pos) var stab var_kind *)
 
-(* and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos = *)
-(*   (\* let _ = gather_type_info_var var stab var_kind pos in *\) *)
-(*   (\* () *\) *)
-(*   begin *)
-(*     try *)
-(*       let k = H.find stab var in *)
-(*       let tmp = unify_var_kind k.sv_info_kind var_kind *)
-(*       in *)
-(*       match tmp with *)
-(*         | Some tmp_k -> k.sv_info_kind <- tmp_k *)
-(*         | None -> *)
-(*               ((print_stab stab); *)
-(*               report_error pos (var ^ " is used inconsistently: "^(string_of_spec_var_kind k.sv_info_kind)^" "^(string_of_spec_var_kind var_kind)^"\n")) *)
-(*     with | Not_found -> (H.add stab var { sv_info_kind = var_kind; id = fresh_int ()} *)
-(*         (\* ;print_endline ("added an entry "^var^"\n"); flush stdout *\) *)
-(*     ) *)
-(*       | _ -> print_endline "collect_type_info_var : unexpected exception" *)
-(*   end *)
 
 and gather_type_info_var (var : ident) stab (ex_t : typ) pos : typ =
   let pr = string_of_typ in
   Debug.no_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab pr pr 
       (fun _ _ _ -> gather_type_info_var_x var stab ex_t pos) var stab ex_t
-
-(* TODO WN : this method should be moved to Globals *)
-(* and is_dont_care_var id = *)
-(*   let n = String.length id in *)
-(*   if n>=1 then *)
-(*     let s = String.sub id 0 1 in *)
-(*     if (s="#") then true *)
-(*     else if n>=5 then *)
-(*       let s = String.sub id 0 5 in *)
-(*       if (s="Anon_") then true *)
-(*       else false *)
-(*     else false *)
-(*   else false *)
 
 
 and get_spec_var_ident stab (var : ident) p =
@@ -4997,6 +4944,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : uni
     | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
           (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
+	| IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
     | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) then
@@ -6742,23 +6690,21 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     | CF.Exists _ -> [f]
     | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
   
-  let rec get_pure_conj_list (f:CP.formula):((bool*CP.b_formula) list* CP.formula) = match f with
-    | CP.BForm (l,_) -> ([(true,l)],CP.mkTrue no_pos )
+  let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
+    | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])
     | CP.And (f1,f2,_ )-> 
           let l1,l2 = (get_pure_conj_list f1) in
           let r1,r2 = (get_pure_conj_list f2) in
-          (l1@r1, CP.mkAnd l2 r2 no_pos)
-    | CP.Or _ -> ([],f)
+          (CP.mkAnd l1 r1 no_pos, l2@r2)
+	| CP.AndList b-> 
+		  let l1,l2 = map_l_snd_res get_pure_conj_list b in
+		  (CP.AndList l1, List.concat l2) 
+    | CP.Or _ -> (f,[])
     | CP.Not (nf,_,_) -> (match nf with
-        |CP.BForm (l,_) ->([(false,l)],CP.mkTrue no_pos) 
-        |_ ->([],f))
-          (*let l1,l2 = get_pure_conj_list f in
-            ((match l1 with
-            | (b,l)::[] -> [(not b, l)]
-            | _ -> []     ),[])*)
+        |CP.BForm (l,_) ->(CP.mkTrue no_pos, [(false,l)]) 
+        |_ ->(f,[]))
     | CP.Forall (_,ff,_,_) 
-    | CP.Exists (_,ff,_,_) -> ([],f) 
-          (*(get_pure_conj_list f)*) in
+    | CP.Exists (_,ff,_,_) -> (f,[]) in
   
 
   let filter_pure_conj_list pc  =
@@ -6935,7 +6881,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
     let xp = fold_mem_lst fbr true true cm in
     let all_p = fold_mem_lst xp true true p in
-    let split_p = filter_pure_conj_list (fst (get_pure_conj_list all_p)) in
+    let split_p = filter_pure_conj_list (snd (get_pure_conj_list all_p)) in
     let r = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq CP.eq_spec_var (CP.bfv c) vl) split_p in		  
 	
 
@@ -6992,7 +6938,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         ((formula_label * (CP.spec_var list * CP.b_formula list)) list * ((formula_label * CP.b_formula list) list)
         * ((formula_label * CP.formula) list)) =
 	let uinvc = fold_mem_lst (CP.mkTrue no_pos) true true (MemoF uinv) in	 
-	let uinvl = filter_pure_conj_list (fst (get_pure_conj_list uinvc)) in
+	let uinvl = filter_pure_conj_list (snd (get_pure_conj_list uinvc)) in
     let split_br = List.map (split_one_branch vl uinvl) lst  in 
     let p_ls = List.map (fun (f,(l,_,_)) ->  (l,f)) split_br in
     let neg_br = List.concat (List.map (fun (_,(lbl,_,bl)) -> neg_b_list lbl bl) split_br) in
