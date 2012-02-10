@@ -30,7 +30,7 @@ Successful States:
 
 INF-POST-FLAG: false
 REL :  B(s,sm)
-POST:  true & s=sm
+POST:  s=sm
 PRE :  true
 OLD SPECS:  EInfer [B]
    EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase] &
@@ -54,6 +54,6 @@ Termination checking result:
 Stop Omega... 414 invocations 
 0 false contexts at: ()
 
-Total verification time: 2. second(s)
-	Time spent in main process: 0.89 second(s)
-	Time spent in child processes: 1.11 second(s)
+Total verification time: 2.03 second(s)
+	Time spent in main process: 0.91 second(s)
+	Time spent in child processes: 1.12 second(s)
