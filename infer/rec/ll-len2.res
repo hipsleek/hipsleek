@@ -11,41 +11,41 @@ REL :  R(n,res)
 POST:  res>=0 & res=n
 PRE :  0<=n
 OLD SPECS:  EInfer [R]
-   EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase] & true &
+   EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
          {FLOW,(20,21)=__norm}
            ECase case {
-                  n=0 -> EBase true & MayLoop & {FLOW,(1,23)=__flow}
+                  n=0 -> EBase true&MayLoop&{FLOW,(1,23)=__flow}
                                  EAssume 1::
-                                   true & R(n,res) & {FLOW,(20,21)=__norm}
+                                   true&R(n,res)&{FLOW,(20,21)=__norm}
                   ;
-                  n!=0 -> EBase true & MayLoop & {FLOW,(1,23)=__flow}
+                  n!=0 -> EBase true&MayLoop&{FLOW,(1,23)=__flow}
                                   EAssume 2::
-                                    true & R(n,res) & {FLOW,(20,21)=__norm}
+                                    true&R(n,res)&{FLOW,(20,21)=__norm}
                   
                   }
-NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase] & true &
+NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
        {FLOW,(20,21)=__norm}
          ECase case {
-                n=0 -> EBase true & 0<=n & MayLoop & {FLOW,(1,23)=__flow}
+                n=0 -> EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                                EAssume 1::
-                                 true & res>=0 & res=n & n=0 & 0<=n &
+                                 true&res>=0 & res=n & n=0 & 0<=n&
                                  {FLOW,(20,21)=__norm}
                 ;
-                n!=0 -> EBase true & 0<=n & MayLoop & {FLOW,(1,23)=__flow}
+                n!=0 -> EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                                 EAssume 2::
-                                  true & res>=0 & res=n & n!=0 & 0<=n &
+                                  true&res>=0 & res=n & n!=0 & 0<=n&
                                   {FLOW,(20,21)=__norm}
                 
                 }
-NEW RELS: [ ( n=0 & res=0) -->  R(n,res), ( n_557=0 & n=1 & res=r_24'+1 & R(n_557,r_24')) -->  R(n,res), ( res=r_24'+1 & n_557=n - 1 & 2<=n & R(n_557,r_24')) -->  R(n,res)]
+NEW RELS: [ (n=0 & res=0) --> R(n,res), (n_557=0 & n=1 & res=r_24'+1 & R(n_557,r_24')) --> R(n,res), (res=r_24'+1 & n_557=n-1 & 2<=n & R(n_557,r_24')) --> R(n,res)]
 
 Procedure length$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 101 invocations 
+Stop Omega... 123 invocations 
 9 false contexts at: ( (21,15)  (21,22)  (24,4)  (24,11)  (24,11)  (23,12)  (23,19)  (23,8)  (23,4) )
 
-Total verification time: 0.21 second(s)
-	Time spent in main process: 0.16 second(s)
-	Time spent in child processes: 0.05 second(s)
+Total verification time: 0.24 second(s)
+	Time spent in main process: 0.18 second(s)
+	Time spent in child processes: 0.06 second(s)

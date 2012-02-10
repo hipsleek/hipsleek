@@ -11,7 +11,7 @@ dprint: todo.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:true & 1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i & {FLOW,(20,21)=__norm}
+ State:true&1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i&{FLOW,(20,21)=__norm}
        es_var_measures: MayLoop
  ]
 
@@ -22,6 +22,6 @@ Termination checking result:
 Stop Omega... 32 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.14 second(s)
-	Time spent in main process: 0.13 second(s)
+Total verification time: 0.13 second(s)
+	Time spent in main process: 0.12 second(s)
 	Time spent in child processes: 0.01 second(s)

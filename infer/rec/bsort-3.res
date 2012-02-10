@@ -11,35 +11,35 @@ REL :  B(res)
 POST:  res
 PRE :  true
 OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase] & xs!=null &
+   EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&xs!=null&
          {FLOW,(20,21)=__norm}
-           EBase true & MayLoop & {FLOW,(1,23)=__flow}
+           EBase true&MayLoop&{FLOW,(1,23)=__flow}
                    EAssume 1::
                      
-                     EXISTS(n_38,s,l: xs::sll<n_38,s,l>@M[Orig][LHSCase] &
-                     !(res) & n_38=n & {FLOW,(20,21)=__norm})
-                     or EXISTS(n_39: xs::ll<n_39>@M[Orig][LHSCase] &
-                        B(res) & n_39=n & {FLOW,(20,21)=__norm})
+                     EXISTS(n_38,s,l: xs::sll<n_38,s,l>@M[Orig][LHSCase]&
+                     !(res) & n_38=n&{FLOW,(20,21)=__norm})
+                     or EXISTS(n_39: xs::ll<n_39>@M[Orig][LHSCase]&B(res) & 
+                        n_39=n&{FLOW,(20,21)=__norm})
                      
-NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase] & xs!=null &
+NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&xs!=null&
        {FLOW,(20,21)=__norm}
-         EBase true & MayLoop & {FLOW,(1,23)=__flow}
+         EBase true&MayLoop&{FLOW,(1,23)=__flow}
                  EAssume 1::
                    
-                   xs::sll<n_38,s,l>@M[Orig][LHSCase] & !(res) & n_38=n & 
-                   0<=n & {FLOW,(20,21)=__norm}
-                   or xs::ll<n_39>@M[Orig][LHSCase] & B(res) & n_39=n & 
-                      0<=n & {FLOW,(20,21)=__norm}
+                   xs::sll<n_38,s,l>@M[Orig][LHSCase]&!(res) & n_38=n & 0<=n&
+                   {FLOW,(20,21)=__norm}
+                   or xs::ll<n_39>@M[Orig][LHSCase]&B(res) & n_39=n & 0<=n&
+                      {FLOW,(20,21)=__norm}
                    
-NEW RELS: [ ( res<=0) -->  B(res), ( 1<=res & tmp_42' & B(tmp_42')) -->  B(res), ( res<=0 & !(tmp_42') & B(tmp_42')) -->  B(res), ( 1<=res) -->  B(res)]
+NEW RELS: [ (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (1<=res & tmp_42' & B(tmp_42')) --> B(res), (res<=0 & !(tmp_42') & B(tmp_42')) --> B(res), (1<=res) --> B(res), (1<=res) --> B(res)]
 
 Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 328 invocations 
+Stop Omega... 616 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.81 second(s)
-	Time spent in main process: 0.72 second(s)
-	Time spent in child processes: 0.09 second(s)
+Total verification time: 1.21 second(s)
+	Time spent in main process: 0.82 second(s)
+	Time spent in child processes: 0.39 second(s)
