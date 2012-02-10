@@ -1132,7 +1132,12 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 in
                 (* Termination: Add the inferred phase numbers 
                  * into specifications of functions in mutual group *)
-                if subst==[] then prog
+                if subst==[] then 
+                  begin
+                    Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                    Debug.info_pprint "Phase Subst is EMPTY" no_pos;
+                    prog
+                  end
                 else 
                   (* all_zero is set if subs is only of form [v1->0,..,vn->0]
                      in this scenario, there is no need for phase vars at all *)
@@ -1161,7 +1166,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
   let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
   let pr _ = pr_list pr_id mutual_grp in
-  Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
+  Debug.to_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
 let term_check_output () =

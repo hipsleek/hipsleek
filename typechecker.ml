@@ -1470,5 +1470,5 @@ let check_prog (prog : prog_decl) =
   Term.term_check_output ()
 	    
 let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+  Debug.to_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)
