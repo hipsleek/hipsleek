@@ -18,11 +18,11 @@ logical int p1, p2;
 
 void append(node x, node y)
   [
-   requires x::ll<n> * y::ll<m> & Term[n] & n>0
+   requires x::ll<n> * y::ll<m> & Term[p1, n] & n>0
     ensures x::ll<e>& e=n+m;
   ]
   [
-   requires x::lseg<r, n> * r::node<b,null> & Term[n]
+   requires x::lseg<r, n> * r::node<b,null> & Term[p2, n]
     ensures x::lseg<r,n> * r::node<b,y>;
   ]
 {

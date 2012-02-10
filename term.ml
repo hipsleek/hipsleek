@@ -941,8 +941,8 @@ let value_of_var (v: CP.spec_var) l : int =
  * + Some _ *)
 let phase_num_infer_one_scc (pl : CP.formula list) =
   (* Phase Numbering *) 
- (* let pr_v = !CP.print_sv in*)
-(*  let pr_vl = pr_list pr_v in*)
+  (* let pr_v = !CP.print_sv in *)
+  (* let pr_vl = pr_list pr_v in *)
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
   (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
