@@ -58,13 +58,13 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 
   or_formula:
   [ "or_formula" LEFTA
-    [ x = SELF; "||"; y = SELF -> Or (x, y, None, loc) 
+    [ x = SELF; "||"; y = SELF -> mkOr x y None loc
     | x = formula -> x ]
   ];
 
   formula:
   [ "formula" LEFTA
-    [ x = SELF; "&&"; y = SELF -> And (x, y, loc)
+    [ x = SELF; "&&"; y = SELF -> mkAnd x y loc
     | x = pformula -> x (*BForm ((x, None), None)*) ]
   ];
 

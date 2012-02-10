@@ -1216,7 +1216,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let post_vars = CP.remove_dups_svl posts in
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
-                                let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in
+                                let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
+                                let pre_new = TP.simplify_exists_raw (CP.mkExists exist_vars post None no_pos) pre_vars in
                                 (rel,post,pre_new)) triples in
                             let _ = List.iter (fun (rel,post,pre) ->
                               print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
