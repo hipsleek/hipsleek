@@ -7047,14 +7047,24 @@ let no_drop_ops =
   let pr x = None in
   (pr,pr)
 
+let is_update_array_relation (r:string) = 
+  (* match r with CP.SpecVar(_,r,_) -> *)
+	let udrel = "update_array" in
+	let udl = String.length udrel in
+		(String.length r) >= udl && (String.sub r 0 udl) = udrel
+
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkTrue p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkFalse p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
 

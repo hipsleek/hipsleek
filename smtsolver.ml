@@ -170,7 +170,7 @@ let rec smt_of_b_formula b =
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
         let rn = CP.name_of_spec_var r in
-		if is_update_array_relation rn then
+		if Cpure.is_update_array_relation rn then
 			let orig_array = List.nth smt_args 0 in
 			let new_array = List.nth smt_args 1 in
 			let value = List.nth smt_args 2 in
@@ -184,12 +184,6 @@ let rec smt_of_b_formula b =
 				"(= " ^ new_array ^ " " ^ result ^ ")"
 		else
 			"(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
-			
-and is_update_array_relation (r:string) = 
-  (* match r with CP.SpecVar(_,r,_) -> *)
-	let udrel = "update_array" in
-	let udl = String.length udrel in
-		(String.length r) >= udl && (String.sub r 0 udl) = udrel
 		
 let rec smt_of_formula pr_w pr_s f =
   let rec helper f=
@@ -397,7 +391,7 @@ let add_axiom h dir c =
 (* Interface function to add a new relation *)
 let add_relation (rname1:string) rargs rform =
   let rname = CP.SpecVar(RelT,rname1,Unprimed) in
-  if (is_update_array_relation rname1) then () else
+  if (Cpure.is_update_array_relation rname1) then () else
     (* let rname1 = CP.name_of_spec_var rname in *)
 	(* Cache the declaration for this relation *)
 	let cache_smt_input = 
@@ -965,8 +959,8 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.no_3_loop "smt_imply"  pr pr string_of_float string_of_bool
-      (fun _ _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) ante conseq timeout
+  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+      (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)

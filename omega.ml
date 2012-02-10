@@ -440,7 +440,7 @@ let is_sat (pe : formula) sat_no : bool =
         failwith s
       end
 
-let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
+let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
       let pvars = get_vars_formula pe in
@@ -468,7 +468,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");
-                    true
+                    false
                 | exc ->
                     begin
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
@@ -488,9 +488,9 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 (*   let pr x = None in *)
 (*   is_valid_ops pr pr pe timeout *)
 
-(* let is_valid (pe : formula) timeout: bool = *)
-(*   let pf = !print_pure in *)
-(*   Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
 
 let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
