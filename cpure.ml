@@ -7026,7 +7026,8 @@ let memo_complex_ops stk bool_vars is_complex =
     | BVar(v,_) -> bool_vars # push v; None
     | _ ->
           if (is_complex b) then
-            let id = fresh_old_name "memo_rel_hole_" in
+            (* TODO : Loc : orig memo_rel_hole but cause bug with bug-ic-app-a.ss *)
+            let id = fresh_old_name "mrel_hole_" in
             let v = SpecVar(Bool,id,Unprimed) in
             let rel_f = BForm ((b,None),None) in
             stk # push (v,rel_f);
