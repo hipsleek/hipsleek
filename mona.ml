@@ -461,6 +461,8 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
+  | CP.AConst (i, _) -> ([], ("pconst(" ^ (string_of_int (int_of_heap_ann i))
+                              ^ ")"), "")
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
