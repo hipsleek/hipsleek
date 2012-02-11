@@ -8,9 +8,8 @@ Translating global variables to procedure parameters...
 Checking procedure insert$node2~int... 
 INF-POST-FLAG: false
 REL :  C(mi,sm,ma,lg,a,res)
-POST:  a>=(sm+1) & lg>=a & res!=null & sm=mi & lg=ma | lg>=sm & ma>=(1+lg) & 
-res!=null & ma=a & sm=mi | sm>=mi & lg>=sm & res!=null & mi=a & lg=ma
-PRE :  sm<a & a<=lg | sm<=lg & lg<a | a<=sm & sm<=lg
+POST:  ma>=lg & sm>=mi & (lg+a)>=(ma+mi) & (ma+mi)>=(sm+a) & res!=null
+PRE :  sm<=lg
 OLD SPECS:  EInfer [C]
    EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
          {FLOW,(20,21)=__norm}
@@ -41,6 +40,6 @@ Termination checking result:
 Stop Omega... 367 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.53 second(s)
-	Time spent in main process: 0.48 second(s)
-	Time spent in child processes: 1.05 second(s)
+Total verification time: 1.43 second(s)
+	Time spent in main process: 0.46 second(s)
+	Time spent in child processes: 0.97 second(s)

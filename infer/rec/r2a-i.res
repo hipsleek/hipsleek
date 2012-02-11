@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 Checking procedure length$node... 
 INF-POST-FLAG: false
 REL :  R(res,n)
-POST:  res>=0 & res=n
+POST:  n>=0 & n=res
 PRE :  0<=n
 OLD SPECS:  EInfer [R]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
@@ -46,6 +46,6 @@ Termination checking result:
 Stop Omega... 114 invocations 
 9 false contexts at: ( (21,15)  (21,22)  (24,4)  (24,11)  (24,11)  (23,12)  (23,19)  (23,8)  (23,4) )
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.18 second(s)
+Total verification time: 0.22 second(s)
+	Time spent in main process: 0.16 second(s)
 	Time spent in child processes: 0.06 second(s)

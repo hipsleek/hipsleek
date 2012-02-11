@@ -338,6 +338,7 @@ let rec get_other_branches or_fml args = match or_fml with
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
+(* TODO: Default number of disjs is 1 *)
 let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
   | None -> (pfs(*,1*))
   | Some ivs ->
@@ -432,7 +433,7 @@ and compute_fixpoint_aux rel =
       (* 	  | _ -> report_error no_pos "Error") *)
       (* | _ -> report_error no_pos "Expecting a pair of pre-post" *)
      
-      let fixpoint_rel = List.combine fixpoint rel in
+      let fixpoint_rel = try List.combine fixpoint rel with _ -> report_error no_pos "Error in compute_fixpoint_aux" in
       	List.map (fun x ->
       	  match x with
             | (post, (rel,_,_)) -> (rel, post, CP.mkTrue no_pos)
