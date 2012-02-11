@@ -1198,7 +1198,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			    if pr_flag then
                   begin
-                    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+                    print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 			        Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 			        Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                   end;
@@ -1248,7 +1248,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           if rels = [] then new_spec
                           else
                             let inf_post_flag = post_ctr # get > 0 in
-                            print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);
+                            Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
                             let pres, posts, inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                                 (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
@@ -1261,9 +1261,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                 let pre_new = TP.simplify_exists_raw (CP.mkExists exist_vars post None no_pos) pre_vars in
                                 (rel,post,pre_new)) triples in
                             let _ = List.iter (fun (rel,post,pre) ->
-                                print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
-                                print_endline ("POST: "^Cprinter.string_of_pure_formula post);
-                                print_endline ("PRE : "^Cprinter.string_of_pure_formula pre)) triples in
+                                Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
+                                Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
+                                Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
                             fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
                               end
                             with _ -> 

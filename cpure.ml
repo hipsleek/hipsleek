@@ -161,6 +161,8 @@ let type_of_spec_var (sv : spec_var) : typ =
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+let is_rel_var (sv : spec_var) : bool = (type_of_spec_var sv)==RelT
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 
