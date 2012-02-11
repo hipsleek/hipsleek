@@ -124,7 +124,7 @@ let rec fixcalc_of_formula e = match e with
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
 
-let fixcalc = "./fixcalc"
+let fixcalc = "fixcalc"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
