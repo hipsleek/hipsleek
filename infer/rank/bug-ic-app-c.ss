@@ -38,7 +38,7 @@ If this is conjoined with new_p1, we would obtain:
 
 {[s1,s2,l1,l2]: s1 <= s2 <= l2 && s1 <= l1}
 
-After removing the invariant, we would have
+After removing the invariant (using gist), we would have
 the correct outcome, namely:
 
 {[s1,s2,l1,l2]: s1 <= l2 }

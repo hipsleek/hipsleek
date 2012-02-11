@@ -626,7 +626,11 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
         else
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
             (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+          let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
+          let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in
           let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
+          let _ = DD.trace_hprint (add_str "fml2: " !CP.print_formula) fml2 pos in
+          let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p2 pos in
           let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
           let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
           let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
@@ -757,7 +761,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos =
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.to_4 "infer_pure_m" 
+      Debug.no_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "lhs xpure0 " pr1)
