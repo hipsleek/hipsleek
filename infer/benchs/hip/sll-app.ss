@@ -4,7 +4,7 @@ data node {
 }
 
 sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
-  or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql = lg & sm = qmin )
+  or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin )
   inv n >= 0 & sm <= lg;
 
 relation D(int a, int b, int c, int m, int n, int p, int q).

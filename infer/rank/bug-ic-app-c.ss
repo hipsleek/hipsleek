@@ -5,7 +5,7 @@ data node {
 
 
 ll3<n,s,l> == self=null & n=0 & s<=l
-    or self::node<s, q> * q::ll3<n-1,s1,l> & s<=s1
+    or (exists s1: self::node<s, q> * q::ll3<n-1,s1,l> & s<=s1)
 	inv n>=0 & s<=l;
 
 ranking rk(int a, int b).
@@ -47,9 +47,9 @@ the correct outcome, namely:
 */
 
 void append3(node x, node y)
-  infer [x,D]
+  infer [l1,n,s2]
   requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2> 
-  ensures x::ll3<n+m,s1,l2> & D(l1,s2,s1,l2)  ;
+  ensures x::ll3<n+m,s1,l2>  ;
 {
    if (x.next==null) {
      //assume false;
