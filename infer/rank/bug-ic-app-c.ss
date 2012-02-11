@@ -43,9 +43,14 @@ the correct outcome, namely:
 
 {[s1,s2,l1,l2]: s1 <= l2 }
 
+
+@4! rhs_xpure: : s_576<=s1_616
+
+
 */
 
 void append3(node x, node y)
+  //infer [l1,s2]
   infer [l1,s2,s1,l2]
   requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null
   ensures x::ll3<n+m,s1,l2>   ;

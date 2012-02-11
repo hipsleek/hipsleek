@@ -628,6 +628,8 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
             (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
           let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
           let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in
+          let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
+          let _ = DD.trace_hprint (add_str "rhs_xpure: " !CP.print_formula) rhs_xpure pos  in
           let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
           let _ = DD.trace_hprint (add_str "fml2: " !CP.print_formula) fml2 pos in
           let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p2 pos in
