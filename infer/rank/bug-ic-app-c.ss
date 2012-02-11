@@ -11,7 +11,6 @@ ll3<n,s,l> == self=null & n=0 & s<=l
 ranking rk(int a, int b).
 relation A(int a, int b, int c).
 relation P(int a, int b).
-relation D(int a, int b, int c, int d).
 
 /*
 This example wrongly inferred pre with [l1,l2,s1,s2]
@@ -39,7 +38,7 @@ If this is conjoined with new_p1, we would obtain:
 
 {[s1,s2,l1,l2]: s1 <= s2 <= l2 && s1 <= l1}
 
-After removing the invariant, we would have
+After removing the invariant (using gist), we would have
 the correct outcome, namely:
 
 {[s1,s2,l1,l2]: s1 <= l2 }
@@ -47,9 +46,9 @@ the correct outcome, namely:
 */
 
 void append3(node x, node y)
-  infer [l1,s2]
-  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2> & x!=null
-  ensures x::ll3<n+m,s1,l2>  ;
+  infer [l1,s2,s1,l2]
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null
+  ensures x::ll3<n+m,s1,l2>   ;
 {
    if (x.next==null) {
      //assume false;
