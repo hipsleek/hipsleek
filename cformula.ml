@@ -3051,6 +3051,7 @@ think it is used to instantiate when folding.
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
+  es_infer_vars_rel_wargs : (CP.spec_var * CP.spec_var list) list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
@@ -3246,6 +3247,7 @@ let empty_es flowt pos =
   es_infer_vars = [];
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
+  es_infer_vars_rel_wargs = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
@@ -4138,6 +4140,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
+        es_infer_vars_rel_wargs = es.es_infer_vars_rel_wargs;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_assumed_pure = es.es_assumed_pure;
         es_var_measures = es.es_var_measures;
@@ -6297,6 +6300,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_var_stack = es.es_var_stack;
       es_infer_vars = es.es_infer_vars;
       es_infer_vars_rel = es.es_infer_vars_rel;
+      es_infer_vars_rel_wargs = es.es_infer_vars_rel_wargs;
       es_infer_heap = es.es_infer_heap;
       es_infer_pure = es.es_infer_pure;
       es_infer_rel = es.es_infer_rel;
@@ -7589,3 +7593,19 @@ and count_term_formula f =
       let n_f1 = count_term_formula f1 in
       let n_f2 = count_term_formula f2 in
       n_f1 + n_f2
+
+let rec get_rel_args_fml rel_var fml = match fml with
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } -> 
+    (get_rel_args_fml rel_var f1) @ (get_rel_args_fml rel_var f1)
+  | _ -> 
+    let _,pure,_,_,_ = split_components fml in
+    CP.get_rel_args_pure rel_var (MCP.pure_of_mix pure)
+
+let rec get_rel_args rel_var spec = match spec with
+  | ECase c -> List.concat (List.map (fun (p,cb) -> List.concat (List.map (fun c1 -> get_rel_args rel_var c1) cb)) c.formula_case_branches)
+  | EBase b -> List.concat (List.map (fun cont -> get_rel_args rel_var cont) b.formula_ext_continuation)
+  | EAssume (_, fml, _) -> get_rel_args_fml rel_var fml
+  | EInfer i -> get_rel_args rel_var i.formula_inf_continuation
+
+
+

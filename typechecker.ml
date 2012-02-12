@@ -313,6 +313,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
+                    CF.es_infer_vars_rel_wargs = es.CF.es_infer_vars_rel_wargs @ (List.concat (List.map (fun r -> CF.get_rel_args r b.CF.formula_inf_continuation) vars_rel));
                     CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
             let (c,pre,rel,f) = do_spec_verify_infer prog proc nctx e0 do_infer b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)

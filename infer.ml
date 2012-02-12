@@ -909,13 +909,15 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let rel_rhs_ls, other_rhs_ls = List.split pairs in
     let rel_rhs = List.concat rel_rhs_ls in
     if rel_rhs==[] then (
-      (* DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; *)
-      (* DD.devel_pprint "no relation in rhs" pos; *)
-      (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
+       DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
+       DD.devel_pprint "no relation in rhs" pos; 
+       DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos;
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
       if !unable_to_fold_rhs_heap = false then
-        (estate,lhs_p_orig,rhs_p,rhs_p_br)
+        (DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+        DD.devel_pprint "able to fold rhs_heap because of relations" pos;
+        (estate,lhs_p_orig,rhs_p,rhs_p_br))
       else (
         unable_to_fold_rhs_heap := false;
         let lhs_xpure = MCP.merge_mems xpure_lhs_h1 lhs_p_orig true in
@@ -923,9 +925,18 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         let _, new_rhs_p = heap_entail_build_mix_formula_check evars lhs_p_orig rhs_p pos in
         let lhs_p = MCP.pure_of_mix lhs_p_orig in
         let rel_lhs = CP.get_RelForm lhs_p in
-        let infer_vars = CP.remove_dups_svl (List.concat (List.map CP.get_rel_args rel_lhs)) in
+        let infer_vars = if rel_lhs = [] then
+            let rel_args = List.concat (List.map (fun (id,args) -> args) estate.es_infer_vars_rel_wargs) in
+            CP.remove_dups_svl rel_args
+          else CP.remove_dups_svl (List.concat (List.map CP.get_rel_args rel_lhs)) in
+        DD.devel_hprint (add_str "Infer Rel Vars with args" (pr_list (pr_pair !print_spec_var !print_svl))) estate.es_infer_vars_rel_wargs pos;
         let new_estate = {estate with es_infer_vars = infer_vars} in
-        let inferred_pure = infer_pure_m new_estate lhs_xpure lhs_xpure lhs_xpure new_rhs_p pos in
+(*        DD.devel_pprint ">>>>>> before pure_m <<<<<<" pos;*)
+(*        DD.devel_hprint (add_str "Entail state" !print_entail_state) new_estate pos;*)
+(*        DD.devel_hprint (add_str "LHS pure" !print_mix_formula) lhs_xpure pos;*)
+(*        DD.devel_hprint (add_str "OLD RHS pure" !print_mix_formula) rhs_p pos;*)
+(*        DD.devel_hprint (add_str "RHS pure" !print_mix_formula) new_rhs_p pos;*)
+        let inferred_pure = infer_pure_m new_estate lhs_xpure lhs_xpure lhs_p_orig new_rhs_p pos in
         let (estate, lhs_p) = begin
           match inferred_pure with
           | (None, Some p) ->
@@ -934,7 +945,9 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
               (DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
               DD.devel_pprint "unable to fold rhs_heap because of relations" pos;
               ({estate with es_assumed_pure = estate.es_assumed_pure @ [p]}, CP.mkAnd lhs_p p pos))
-          | _ -> (estate, lhs_p)
+          | _ -> (DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+              DD.devel_pprint "unable to fold rhs_heap because of relations but inferred nothing" pos;
+              (estate, lhs_p))
           end
         in
         (estate,MCP.mix_of_pure lhs_p,rhs_p,rhs_p_br)
