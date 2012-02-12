@@ -658,8 +658,8 @@ sub hip_process_file {
       if ($output !~ "ERR") {}
 			else {
 				$error_count++;
-				$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-				print "error at: $test->[0] $test->[$i]\n";
+				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+				print "term error at: $test->[0] $test->[$i]\n";
 			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
