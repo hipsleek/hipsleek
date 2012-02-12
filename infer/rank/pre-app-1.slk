@@ -1,0 +1,19 @@
+relation P(int s1, int s2, int l1, int l2).
+
+
+// expecting: P(s1,s2,l1,l2) -> l1<=s2
+infer [P] s1<=l1 & P(s1,s2,l1,l2)  |- s1<=s2.
+print residue.
+
+// need to convert to:
+// infer [s1,s2,l1,l2] s1<=l1  |- s1<=s2.
+//   ==> l1<=s2
+// then add P(s1,s2,l1,l2) -> l1<=s2
+
+
+// expecting: s1<=l1 & l1<=s2 -> P(s1,s2,l1,l2) 
+// got: s1<=l1 -> P(s1,s2,l1,l2) 
+infer [l1,s2,P] s1<=l1  |- P(s1,s2,l1,l2) & s1<=s2.
+print residue.
+
+
