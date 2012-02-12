@@ -579,7 +579,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   List.exists (fun fml -> TP.imply_raw fml new_pre) orig_ls
 
 
-let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
+let infer_pure_m estate lhs_xpure_orig lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   if no_infer estate then (None,None)
   else
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
@@ -615,9 +615,18 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
-      let vars_lhs = CP.fv lhs_xpure in (* var on lhs *)
+      let lhs_wo_heap = MCP.pure_of_mix lhs_wo_heap in
+      let lhs_wo_ptr_eqs = List.filter (fun x -> not (MCP.is_pure_ptr_equations x)) (list_of_conjs lhs_wo_heap) in
+      let vars_lhs = List.concat (List.map fv lhs_wo_ptr_eqs) in (* var on lhs *)
       let vars_rhs = CP.fv rhs_xpure in (* var on lhs *)
-      let total_sub_flag =  (CP.diff_svl vars_rhs iv == []) in
+      let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure) in
+      let lhs_aset = build_var_aset lhs_als in
+      let total_sub_flag = List.for_all (fun r ->
+        let alias = r::(CP.EMapSV.find_equiv_all r lhs_aset) in
+        CP.intersect alias iv != []) vars_rhs in
+(*      let total_sub_flag =  (CP.diff_svl vars_rhs iv == []) in*)
+      Debug.trace_hprint (add_str "total_sub_flag" string_of_bool) total_sub_flag no_pos;
+      let vars_rhs = List.concat (List.map (fun r -> r::(CP.EMapSV.find_equiv_all r lhs_aset)) vars_rhs) in
       let vars_overlap =  if total_sub_flag then (CP.intersect_svl vars_lhs vars_rhs) else [] in
       Debug.trace_hprint (add_str "vars overlap" !CP.print_svl) vars_overlap no_pos;
       let args = CP.fv fml in (* var on lhs *)
@@ -763,7 +772,7 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
-let infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos =
+let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
@@ -775,7 +784,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos =
           (add_str "lhs xpure0 " pr1)
           (add_str "rhs xpure " pr1)
           (add_str "(new es,inf pure) " (pr_pair (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p)))
-      (fun _ _ _ _ -> infer_pure_m estate lhs_xpure lhs_xpure0 rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
+      (fun _ _ _ _ -> infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
 
 let remove_contra_disjs f1s f2 =
   let helper c1 c2 = 
@@ -916,7 +925,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         let rel_lhs = CP.get_RelForm lhs_p in
         let infer_vars = CP.remove_dups_svl (List.concat (List.map CP.get_rel_args rel_lhs)) in
         let new_estate = {estate with es_infer_vars = infer_vars} in
-        let inferred_pure = infer_pure_m new_estate lhs_xpure lhs_xpure new_rhs_p pos in
+        let inferred_pure = infer_pure_m new_estate lhs_xpure lhs_xpure lhs_xpure new_rhs_p pos in
         let (estate, lhs_p) = begin
           match inferred_pure with
           | (None, Some p) ->

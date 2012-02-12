@@ -249,6 +249,16 @@ and b_f_ptr_equations_aux with_null f =
 
 and b_f_ptr_equations f = b_f_ptr_equations_aux true f
 
+and is_bf_ptr_equations bf =
+  let (pf,_) = bf in
+  match pf with
+  | Eq (e1, e2, _) -> can_be_aliased_aux false e1 && can_be_aliased_aux false e2
+  | _ -> false
+
+and is_pure_ptr_equations f = match f with
+  | BForm (bf,_) -> is_bf_ptr_equations bf
+  | _ -> false
+
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
   pure_ptr_equations_aux true f
 
