@@ -6890,17 +6890,6 @@ let get_rel_id_list (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
-let rec get_rel_args_pure rel_var (f:formula) = match f with
-  | BForm (bf,_) ->
-    (match bf with
-    | (RelForm(id,args,_),_) -> if id=rel_var then [id,List.concat (List.map afv args)] else []
-    | _ -> [])
-  | And (f1,f2,_) -> get_rel_args_pure rel_var f1 @ get_rel_args_pure rel_var f2
-  | Or (f1,f2,_,_) -> get_rel_args_pure rel_var f1 @ get_rel_args_pure rel_var f2
-  | Not (f,_,_) -> get_rel_args_pure rel_var f
-  | Forall (_,f,_,_) -> get_rel_args_pure rel_var f
-  | Exists (_,f,_,_) -> get_rel_args_pure rel_var f
-
 let get_rel_args (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
