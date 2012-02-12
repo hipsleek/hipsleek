@@ -16,10 +16,10 @@ ensures true;
 					x<=0 -> requires Term ensures true;
 					x>0 -> case {
 						x<y -> requires Term[x] ensures true;
-						x>=y -> requires Term[x, x-y] ensures true;
+						x>=y -> requires Term[x-r] ensures true;
 					}
 				}
-				y=0 -> requires Term[1] ensures true;
+				y=0 -> requires Term[x-r] ensures true;
 			}
 			y<0 -> requires Term ensures true; 
 		}

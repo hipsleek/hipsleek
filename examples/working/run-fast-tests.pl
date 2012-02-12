@@ -1000,6 +1000,13 @@ sub hip_process_file {
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
+			#Termination checking result
+      if ($output !~ "ERR") {}
+			else {
+				$error_count++;
+				$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+				print "error at: $test->[0] $test->[$i]\n";
+			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
             }

@@ -12,8 +12,8 @@ ensures false;
 		int j = 0;
 		while (j < 1)
 		case {
-			j>=1 -> requires Term ensures true;
-			j<1 -> requires Term[1-j] ensures false;
+			j>=1 -> requires Term ensures i'=i;
+			j<1 -> requires Term[1-j] ensures i'=i;
 		}
 		{
 			j = j + 1;

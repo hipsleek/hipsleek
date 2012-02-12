@@ -3,11 +3,11 @@ case {
 	x>1 -> requires Term[x] ensures true;
 	x=0 -> case {
 		y>2 -> requires Term[x+y, x] ensures true;
-		y<=2 -> requires Term[0] ensures true;
+		y<=2 -> requires Term ensures true;
 	}
 	x=1 -> case {
 		y>1 -> requires Term[x+y, x] ensures true;
-		y<=1 -> requires Term[1] ensures true;
+		y<=1 -> requires Term ensures true;
 	}
 	x<0 -> case {
 		y<=2 -> requires Term ensures true;
