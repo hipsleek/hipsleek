@@ -591,8 +591,8 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       (* let rhs_vars = CP.fv rhs_xpure in *)
       (* below will help greatly reduce the redundant information inferred from state *)
       (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
-      let _ = DD.trace_hprint (add_str "lhs: " !CP.print_formula) lhs_xpure pos in
-      let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+      let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure pos in
+      let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
       let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in
       let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
       let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
@@ -615,8 +615,14 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 rhs_xpure pos =
       (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
-      let args = CP.fv fml in
+      let vars_lhs = CP.fv lhs_xpure in (* var on lhs *)
+      let vars_rhs = CP.fv rhs_xpure in (* var on lhs *)
+      let total_sub_flag =  (CP.diff_svl vars_rhs iv == []) in
+      let vars_overlap =  if total_sub_flag then (CP.intersect_svl vars_lhs vars_rhs) else [] in
+      Debug.trace_hprint (add_str "vars overlap" !CP.print_svl) vars_overlap no_pos;
+      let args = CP.fv fml in (* var on lhs *)
       let quan_var = CP.diff_svl args iv in
+      let quan_var = quan_var@vars_overlap in
       let is_bag_cnt = match !TP.tp with
         | TP.Mona | TP.MonaH -> if TP.is_bag_constraint fml then true else false
         | _ -> false
