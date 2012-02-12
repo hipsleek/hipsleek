@@ -3583,7 +3583,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   in (* End of function collect_data_view *)
 
   (** [Internal] Generate the action based on the list of node and its tail **)
-  let rec generate_action_x nodes eset = match nodes with
+  let rec generate_action_x nodes eset =
+    match nodes with
 	| [] 
 	| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
 	| x::t ->
@@ -3603,7 +3604,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		    else generate_action t eset
 		  *)
 		  try
-			let y = List.find (fun e -> (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
+			let y = List.find (fun e -> 
+        (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
+      
+			(*let _ = print_string ("\ngenerate_action: x: " ^ (Cprinter.string_of_h_formula x) ^ "\n") in
+			let _ = print_string ("\ngenerate_action: y: " ^ (Cprinter.string_of_h_formula y) ^ "\n") in*)
+			
 			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
 			Context.match_res_lhs_rest = x;
 			Context.match_res_holes = [] ;
@@ -3614,7 +3620,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
             } in
 			Context.M_unfold (mr,1)
 		  with
-			| Not_found -> generate_action t eset
+      | Not_found -> generate_action t eset
 		          
 			      
   and generate_action nodes eset = 
@@ -3707,7 +3713,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	let res = process_action 0 prog es conseq b b action [] is_folding pos in
 	(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
 	   let _ = print_endline (PR.string_of_entail_state es) in
-	   let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
+	   let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in
+     let lctx, _ = res in
 	   let _ = print_endline (PR.string_of_list_context lctx) in *)
 	(res, match action with
 	  | Context.M_Nothing_to_do _ -> false
@@ -7519,7 +7526,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) (* ^ "\n Proof: " ^ (Prooftracer.string_of_proof (snd x)) *) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Debug.no_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Debug.ho_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a
           rhs_h_matched_set is_folding pos) caller a estate conseq
 
