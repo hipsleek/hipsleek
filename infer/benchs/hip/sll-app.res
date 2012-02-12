@@ -38,9 +38,9 @@ Procedure append_sll$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 269 invocations 
+Stop Omega... 273 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.63 second(s)
-	Time spent in main process: 0.34 second(s)
-	Time spent in child processes: 0.29 second(s)
+Total verification time: 0.76 second(s)
+	Time spent in main process: 0.45 second(s)
+	Time spent in child processes: 0.31 second(s)

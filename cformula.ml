@@ -3925,6 +3925,11 @@ let add_infer_pure_thus_estate cp es =
   {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
   }
 
+let add_infer_rel_to_estate cp es =
+  let old_cp = es.es_infer_rel in
+  let new_cp = cp@old_cp in
+  {es with es_infer_rel = new_cp;}
+
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
@@ -3936,6 +3941,13 @@ let add_infer_pure_to_estate cp es =
       (* add inferred pre to pure_this too *)
                es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
   }
+
+let add_infer_rel_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx (add_infer_rel_to_estate cp es)
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
 
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =

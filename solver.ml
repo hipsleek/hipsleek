@@ -5342,6 +5342,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
+  let stk_rel_ass = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
@@ -5419,7 +5420,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
           else 
-            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
+            let (ip1,ip2,relass) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
             begin
               match ip1 with
                 | Some(es,p) -> 
@@ -5431,7 +5432,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         match ip2 with
                           | None -> i_res1,i_res2,i_res3
                           | Some pf ->
-                                stk_inf_pure # push pf;
+                                (match relass with
+                                  | [] -> stk_inf_pure # push pf
+                                  | h::_ -> stk_rel_ass # push h);
                                 let new_pf = MCP.mix_of_pure pf in
                                 let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                 let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
@@ -5509,6 +5512,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     else
       let inf_p = (stk_inf_pure # get_stk) in
       let estate = add_infer_pure_to_estate inf_p estate in
+      let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
 	  let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in

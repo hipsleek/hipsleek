@@ -70,4 +70,4 @@ Entail  (16): Valid.
 <1>true&2<m & 5<=m & m<p&{FLOW,(17,18)=__norm}
 inferred pure: [(1+m)<=p; 5<=m]
 
-Stop Omega... 180 invocations 
+Stop Omega... 195 invocations 

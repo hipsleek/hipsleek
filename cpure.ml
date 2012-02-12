@@ -33,7 +33,7 @@ let is_res_spec_var sv = match sv with
 
 type rel_cat = 
   | RelDefn of spec_var
-  | RelAssume of spec_var
+  | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
 
@@ -398,7 +398,7 @@ let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized"
 let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
-  | RelAssume v -> "RELASS " ^ (!print_sv v)
+  | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
