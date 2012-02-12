@@ -1027,36 +1027,36 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   let f_bf bf =
     let (pf, sl) = bf in
     match pf with
-        (* restoring ml from the 3rd argument *)
-      | CP.LexVar t_info ->
+    (* restoring ml from the 3rd argument *)
+    | CP.LexVar t_info ->
 		    let t_ann = t_info.CP.lex_ann in
 		    let ml = t_info.CP.lex_tmp in
-			let pos = t_info.CP.lex_loc in
-            Debug.dinfo_hprint (add_str "lex_tmp" (pr_list !CP.print_exp)) ml no_pos;
-            let subs_extra = match ml with
-              | _::e::_ -> begin
-                  match CP.get_var_opt e with
-                    | None -> []
-                    | Some v -> 
-                          if (List.exists (fun (v2,_) -> CP.eq_spec_var v v2) subst) then [] 
-                          else 
-                            begin
-                            Debug.info_hprint (add_str "var -> 0 " !CP.print_sv) v no_pos;
-                            [(v,0)]
-                            end
+			  let pos = t_info.CP.lex_loc in
+        Debug.dinfo_hprint (add_str "lex_tmp" (pr_list !CP.print_exp)) ml no_pos;
+        let subs_extra = match ml with
+          | _::e::_ -> begin
+            match CP.get_var_opt e with
+            | None -> []
+            | Some v -> 
+                if (List.exists (fun (v2,_) -> CP.eq_spec_var v v2) subst) then [] 
+                else 
+                  begin
+                    Debug.info_hprint (add_str "var -> 0" !CP.print_sv) v no_pos;
+                    [(v,0)]
+                  end
                 end
-              | _ -> [] 
-            in
-            let n_ml =
-              if rem_phase == [] then
-                (* replace the phase var with integer *)
-                List.map (fun m -> subst_phase_num_exp (subs_extra@subst) m) ml 
-              else 
-                (* to remove phase vars in rem_phase *)
-                List.filter (fun e -> match CP.get_var_opt e with
-                  | None -> true
-                  | Some v -> not(CP.mem_svl v rem_phase)) ml
-            in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
+          | _ -> [] 
+        in
+        let n_ml =
+          if rem_phase == [] then
+            (* replace the phase var with integer *)
+            List.map (fun m -> subst_phase_num_exp (subs_extra@subst) m) ml 
+          else 
+            (* to remove phase vars in rem_phase *)
+            List.filter (fun e -> match CP.get_var_opt e with
+              | None -> true
+              | Some v -> not(CP.mem_svl v rem_phase)) ml
+        in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
       | _ -> None
   in
   let f_pe _ = None in
@@ -1106,7 +1106,6 @@ let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
   { proc with
       Cast.proc_static_specs = s_specs;
       Cast.proc_dynamic_specs = d_specs; }
-
 
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
   let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in

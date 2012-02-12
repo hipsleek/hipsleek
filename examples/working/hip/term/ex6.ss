@@ -10,8 +10,7 @@ case {
          	}
 }
 */
-	requires n>=0 & m>=0
-	variance [0,1,m,n]
+	requires n>=0 & m>=0 & Term[m,n]
 	ensures res>0;
 
 { 

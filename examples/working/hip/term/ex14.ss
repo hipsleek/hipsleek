@@ -3,21 +3,21 @@
 void loop(ref int x, ref int y, int k, int N, bool b)
 requires k>0
 case {
-	x>N -> variance [0,0] ensures "l1":x'=x & y'=y;
+	x>N -> requires Term ensures "l1":x'=x & y'=y;
 	x<=N -> case {
 				//l3 -> l2 -> l1
 				b -> case {
-						y>N+1 -> //variance N-x
-								 variance [0,1,N-x]
+						y>N+1 -> 
+								 requires Term[N-x]
 								 ensures "l2":true;
-						y<=N+1 -> //variance (N+1)-y
-	                variance [0,2,(N+1)-y]
+						y<=N+1 ->
+	                requires Term[(N+1)-y]
 								  ensures "l3":true;
 					 }
 
 				//l2 -> l1
-				!b -> //variance N-x
-            variance [0,3,N-x]
+				!b -> 
+            requires Term[N-x]
 					  ensures "l2":true;
 			}
 }
@@ -52,10 +52,10 @@ bool randBool()
 
 //update (x,y) to (x',y') which 2*x'>=x+y-1 /\ y'=y+k
 void  update1(ref int x, ref int y, int k)
-requires true
+requires Term
 ensures 2*x'>=x+y-1 & y'=y+k;
 
 //update (x,y) to (x',y') which x'=x+1 /\ y'>=y
 void update2(ref int x, ref int y)
-requires true
+requires Term
 ensures x'=x+1 & y'>=y;
