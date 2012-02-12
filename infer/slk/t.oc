@@ -1,0 +1,30 @@
+A:={[a3,a6,m]: (1<=a6 | 1<=a3 | m<=0) &
+  (m!=0 | 1<=a6 | 1<=a3) & 
+  a3<=0 & a6<=0};
+A;
+
+B:={[a,m]: (1<=a | m<=0) & (m!=0 | 1<=a) & a<=0}; 
+B;
+
+E:={[y,m,i6,i3,b]: i6>=0 & i6<=2 & i3>=0 & i3<=2};
+C:={[y,m,i6,i3,b]:(m!=0 | i6>0 | i3>0 | b!=0 | y=0) & (i6>0 | i3>0 | y=0 | b=0 | 1>m)};
+D:={[y,m,i6,i3,b]:y!=0 & 0<=m & i6<=0 & i3<=0 & i6<=0 & i3<=0 & i6<=0};
+F:=C intersection D;
+F intersection E;
+
+G := {[i9,i6,m]:(1<=i9 | 1<=i6 | m<=0) & (m!=0 | 1<=i9 | 1<=i6) & i6<=0 & i9<=0 & m>=0} ;
+G;
+
+H := {[m,i8,i5,m9]: (m!=-1 | 1<=i8 | 1<=i5 | m9<=0) & 
+   (m!=-1 | m9!=0 | 1<=i5 | 1<=i8) & i5<=0 & i8<=0 & m=m9 & 0<=i8<=2 & 0<=i5<=2};
+PairWiseCheck H ;
+
+
+# (y=null & im=0 | y!=null & 1<=im) & m=im |- 2+m=0
+
+J := {[y,im]:forall(m:not((y=0 & im=0 | y!=0 & 1<=im) & m=im & im>=0) | (2+m=0 & m>=0))};
+J := {[y,im]:forall(m:not(m=im & im>=0) | (2+m=0))};
+J;
+
+K :={[y]:not(y=0 | y=5) | y>4};
+K;PairWiseCheck K;

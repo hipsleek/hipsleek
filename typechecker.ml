@@ -335,8 +335,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* Why? Bug cll-count-base.ss *)
                       (* no abductive inference for post-condition *)
-                      let res_ctx = if !do_abd_from_post then res_ctx else 
-                        Inf.remove_infer_vars_all_list_partial_context res_ctx in
+                      (* let res_ctx = if !do_abd_from_post then res_ctx else 
+                          Inf.remove_infer_vars_all_list_partial_context res_ctx in*)
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
                       let (impl_vs,post_cond) =
@@ -388,15 +388,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in
                       let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
-                      let lp = if not !do_abd_from_post then lp else (
+                      let lp = (* if not !do_abd_from_post then lp else ( *)
                           Debug.devel_zprint (lazy ("TMP CTX: " ^ (Cprinter.string_of_list_partial_context tmp_ctx) ^ "\n")) no_pos;
                           let lp_new = Inf.collect_pre_pure_list_partial_context tmp_ctx in
                           (*let old_lp = CP.conj_of_list lp no_pos in*)
                           (*DD.devel_pprint ("Old inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
                             DD.devel_pprint ("New inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp_new)) pos;*)
                           let lp_new = List.filter (fun p -> (*not(TP.imply_raw p old_lp) && *)not(CP.include_specific_val p)) lp_new in
-                          lp@lp_new
-                      ) in
+                        lp@lp_new (* ) *) 
+                      in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
                       let infer_post_flag = postf in
@@ -406,9 +406,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
                           let i_pre =
                             if infer_pre_flag then (
-                                DD.devel_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
-                                DD.devel_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) pos;
-                                DD.devel_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
+                                DD.info_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
+                                DD.info_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) pos;
+                                DD.info_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
                                 (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
                                 (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
@@ -825,10 +825,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
                 (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
                 (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)
-                
-                (* Internal function to check pre/post condition of the function call. *)        
+
+                (* Internal function to check pre/post condition of the function call. *)
 	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
-                  (* Termination: Stripping the "variance" feature from 
+                (* Termination: Stripping the "variance" feature from
                    * org_spec if the call is not a recursive call *)
                   (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
                   let lbl_ctx = store_label # get in
@@ -1146,7 +1146,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			    if pr_flag then
                   begin
-                    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+                    print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 			        Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 			        Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                   end;
@@ -1196,7 +1196,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           if rels = [] then new_spec
                           else
                             let inf_post_flag = post_ctr # get > 0 in
-                            print_endline ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag);
+                            Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
                             let pres, posts, inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                                 (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
@@ -1205,12 +1205,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                               begin
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
-                                let pre_new = TP.simplify_raw (CP.mkExists (CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*)) post None no_pos) in
+                                let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
+                                let pre_new = TP.simplify_exists_raw (CP.mkExists exist_vars post None no_pos) pre_vars in
                                 (rel,post,pre_new)) triples in
                             let _ = List.iter (fun (rel,post,pre) ->
-                                print_endline ("REL : "^Cprinter.string_of_pure_formula rel);
-                                print_endline ("POST: "^Cprinter.string_of_pure_formula post);
-                                print_endline ("PRE : "^Cprinter.string_of_pure_formula pre)) triples in
+                                Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
+                                Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
+                                Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
                             fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
                               end
                             with _ -> 
@@ -1231,8 +1232,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
-                            Debug.dinfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            Debug.dinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                            Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             let f = if f && !reverify_flag then 

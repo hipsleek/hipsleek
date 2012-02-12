@@ -5,6 +5,7 @@ todo: disable the default logging for omega
 *)
 
 open Globals
+module DD = Debug
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Cast
@@ -5146,8 +5147,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   (*let estate = estate_orig in*)
+  (* TODO : can infer_collect_rel be made after infer_pure_m? *)
   let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 
     lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
+  let infer_rel = estate.es_infer_rel in
+  Debug.info_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
   (* Termination: Try to prove rhs_wf with inference *)
@@ -5183,6 +5187,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
+  let stk_rel_ass = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
@@ -5198,8 +5203,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
 
 	    (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
-	    (* "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
-	    (* "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
+	    (*                              "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
+	    (*                              "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
 
 
 	    (* 26.03.2009 simplify the pure part *)
@@ -5233,6 +5238,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
         let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
         let split_ante1 = new_ante1 in
+        DD.devel_pprint ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
+        DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
+        DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
         let i_res1,i_res2,i_res3 = 
           if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
@@ -5241,7 +5249,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
           else 
-            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_ante0 split_conseq pos in
+            let (ip1,ip2,relass) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
             begin
               match ip1 with
                 | Some(es,p) -> 
@@ -5253,7 +5261,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         match ip2 with
                           | None -> i_res1,i_res2,i_res3
                           | Some pf ->
-                                stk_inf_pure # push pf;
+                                (match relass with
+                                  | [] -> stk_inf_pure # push pf
+                                  | h::_ -> stk_rel_ass # push h);
                                 let new_pf = MCP.mix_of_pure pf in
                                 let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                 let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
@@ -5322,6 +5332,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     else
       let inf_p = (stk_inf_pure # get_stk) in
       let estate = add_infer_pure_to_estate inf_p estate in
+      let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
 	  let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
@@ -5577,7 +5588,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
-          begin
+        begin
+             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
             if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
@@ -5586,13 +5598,13 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            (*print_endline "imply_mix_formula first: second";*)
-	        CP.imply_conj_orig 
-                (CP.split_disjunctions a0) 
-                (CP.split_disjunctions a1) 
-                (CP.split_conjunctions c) 
-	            TP.imply 
-	            imp_no
+              DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+	          CP.imply_conj_orig
+                  (CP.split_disjunctions a0) 
+                  (CP.split_disjunctions a1) 
+                  (CP.split_conjunctions c) 
+	              TP.imply
+	              imp_no
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
@@ -8570,7 +8582,7 @@ let rec simplify_pre pre_fml = match pre_fml with
   | _ ->
     let h, p, fl, b, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
+    let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 		
 let simplify_pre pre_fml =

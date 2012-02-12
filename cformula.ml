@@ -3750,6 +3750,11 @@ let add_infer_pure_thus_estate cp es =
   {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
   }
 
+let add_infer_rel_to_estate cp es =
+  let old_cp = es.es_infer_rel in
+  let new_cp = cp@old_cp in
+  {es with es_infer_rel = new_cp;}
+
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
@@ -3761,6 +3766,13 @@ let add_infer_pure_to_estate cp es =
       (* add inferred pre to pure_this too *)
                es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
   }
+
+let add_infer_rel_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx (add_infer_rel_to_estate cp es)
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
 
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
@@ -6764,7 +6776,7 @@ and get_or_post sp rel_id =
   let pr2 = !print_svl in
   let pr3 = pr_list !print_formula in
   Debug.no_2 "get_or_post" pr1 pr2 pr3
-    (fun _ _ -> get_or_post_x sp rel_id) sp rel_id
+    (fun _ _ -> get_or_post_x rel_id sp) sp rel_id
 
 let unwrap_exists f =
   let helper f =
