@@ -76,4 +76,4 @@ Entail  (18): Valid.
 <1>EXISTS(flted_7_170: b::ll<flted_7_170>@M[Orig]&flted_7_170+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0 | x!=null]
 
-Stop Omega... 259 invocations 
+Stop Omega... 283 invocations 

@@ -616,9 +616,9 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 lhs_wo_heap rhs_xpure pos =
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
       let lhs_wo_heap = MCP.pure_of_mix lhs_wo_heap in
-      let lhs_wo_ptr_eqs = List.filter (fun x -> not (MCP.is_pure_ptr_equations x)) (list_of_conjs lhs_wo_heap) in
-      let vars_lhs = List.concat (List.map fv lhs_wo_ptr_eqs) in (* var on lhs *)
-      let vars_rhs = CP.fv rhs_xpure in (* var on lhs *)
+      let lhs_wo_ptr_eqs = MCP.remove_ptr_equations lhs_wo_heap false in
+      let vars_lhs = fv lhs_wo_ptr_eqs in (* var on lhs *)
+      let vars_rhs = fv (MCP.remove_ptr_equations rhs_xpure false) in (* var on lhs *)
       let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure) in
       let lhs_aset = build_var_aset lhs_als in
       let total_sub_flag = List.for_all (fun r ->

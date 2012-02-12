@@ -1,7 +1,7 @@
 
-Processing file "infer/rec/bsort-4.ss"
-Parsing infer/rec/bsort-4.ss ...
-Parsing ./prelude.ss ...
+Processing file "bsort-4.ss"
+Parsing bsort-4.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -37,9 +37,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 661 invocations 
+Stop Omega... 677 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.44 second(s)
-	Time spent in main process: 0.97 second(s)
-	Time spent in child processes: 0.47 second(s)
+Total verification time: 2.35 second(s)
+	Time spent in main process: 1.53 second(s)
+	Time spent in child processes: 0.82 second(s)

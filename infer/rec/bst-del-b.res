@@ -46,16 +46,16 @@ NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&
                    x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & l<=lg & 
                    B(sm,s,l,lg) & sm<=lg&{FLOW,(20,21)=__norm}
 NEW RELS: [ (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (sm=s & l=lg & s<=lg) --> B(sm,s,l,lg), (s=sm & l=l_895 & lg_623=lg & sm<=sm_622 & sm_622<=s_894 & s_894<=l_895 & 
-  l_895<=lg & B(sm_622,s_894,l_895,lg_623)) --> B(sm,s,l,lg), (sm_642=sm & s=s_955 & l=lg & sm<=s_955 & s_955<=l_956 & l_956<=lg_643 & 
-  lg_643<=lg & B(sm_642,s_955,l_956,lg_643)) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg)]
+  l_895<=lg & B(sm_622,s_894,l_895,lg_623)) --> B(sm,s,l,lg), (sm_642=sm & s=s_957 & l=lg & sm<=s_957 & s_957<=l_958 & l_958<=lg_643 & 
+  lg_643<=lg & B(sm_642,s_957,l_958,lg_643)) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg)]
 
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 625 invocations 
+Stop Omega... 633 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.74 second(s)
-	Time spent in main process: 0.96 second(s)
-	Time spent in child processes: 0.78 second(s)
+Total verification time: 2.67 second(s)
+	Time spent in main process: 1.56 second(s)
+	Time spent in child processes: 1.11 second(s)
