@@ -48,10 +48,6 @@ type formula =
   | Forall of (spec_var * formula * (formula_label option) * loc)
   | Exists of (spec_var * formula * (formula_label option) * loc)
 
-and formula_branch = (branch_label * formula )
-
-and formula_branches = (branch_label * formula ) list
-
 and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
@@ -147,7 +143,6 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
-let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | RelAssume v -> "RELASS " ^ (!print_sv v)
@@ -1074,6 +1069,8 @@ and mkAnd f1 f2 pos =
   else if (isConstTrue f2) then f1
   else match f1,f2 with 
    | AndList b1, AndList b2 ->  AndList (Label_Pure.merge b1 b2)
+   | AndList b, f 
+   | f, AndList b -> AndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
    | _ -> And (f1, f2, pos)
   
 and and_list_to_and l = match l with
@@ -1214,8 +1211,7 @@ and mkExists (vs : spec_var list) (f : formula) lbl pos = match vs with
         else
           ef
 
-and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos = 
-  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f
+(*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
 and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
   | [] -> f
@@ -3188,20 +3184,6 @@ let combine_branch b (f, l) =
   | "" -> f
   | s -> try And (f, List.assoc b l, no_pos) with Not_found -> f
 ;;
-(*
-let merge_branches_with_common l1 l2 cf =
-  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
-  let map_fun branch =
-    try 
-      let l1 = List.assoc branch l1 in
-      try
-        let l2 = List.assoc branch l2 in
-        (branch, mkAnd cf (mkAnd l1 l2 no_pos) no_pos)
-      with Not_found -> (branch, mkAnd cf l1 no_pos)
-    with Not_found -> (branch, mkAnd cf (List.assoc branch l2) no_pos)
-  in
-  List.map map_fun branches
-;;*)
 
 let wrap_exists_svl f evars = mkExists evars f None no_pos
 

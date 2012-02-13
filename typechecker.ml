@@ -639,10 +639,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 if (read_only)
                 then
                   let read_f = mkPermInv fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) pos
                 else
                   let write_f = mkPermWrite fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) pos
               else
                 vheap
             in
@@ -795,7 +795,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) pos in
             let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res

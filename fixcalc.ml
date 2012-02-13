@@ -112,18 +112,17 @@ let rec fixcalc_of_h_formula f = match f with
   | HFalse -> "False"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
-let fixcalc_of_mix_formula (f,l) = match f with
+let fixcalc_of_mix_formula f = match f with
   | MCP.MemoF _ -> ""
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
   | Or _ -> illegal_format ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
-  | Base {formula_base_heap = h; formula_base_pure = p; formula_base_branches = b} ->
-    "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
-  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; 
-    formula_exists_pure = p; formula_exists_branches = b} ->     
+  | Base {formula_base_heap = h; formula_base_pure = p} ->
+    "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
+  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; formula_exists_pure = p} ->     
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
-    fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
+    fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
 
 let fixcalc = "fixcalc_mod"
 
@@ -278,24 +277,14 @@ let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
     let pf = List.concat (List.map (fun b -> List.concat 
         (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) (CP.list_of_conjs bcase)) in
     CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos
-  (*  print_endline ("PURE: " ^ Cprinter.string_of_pure_formula rcase);*)
-  (*  print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula bcase);*)
-  (*  print_endline ("PURE3: " ^ Cprinter.string_of_pure_formula pf);*)
   with _ -> rcase_orig
-
-(*let rec remove_weaker_bcase bcases = match bcases with
-  | [] -> []
-  | b::bs ->
-    if List.exists (fun fml -> TP.imply_raw fml b) bs then remove_weaker_bcase bs
-    else
-      b::(remove_weaker_bcase (List.filter (fun fml -> not(TP.imply_raw b fml)) bs))*)
 
 (* TODO: Need to handle computed relation in the future *)
 let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
     (get_other_branches fml.formula_or_f1 args) @ (get_other_branches fml.formula_or_f2 args)
   | _ ->
-    let _,p,_,_,_ = split_components or_fml in
+    let _,p,_,_ = split_components or_fml in
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 

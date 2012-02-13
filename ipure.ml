@@ -85,6 +85,17 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   |	BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
 
+let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+
+module Exp_Pure =
+struct 
+  type e = formula
+  let comb x y = And (x,y,no_pos)
+  let string_of = !print_formula
+end;;
+
+module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+
 let linking_exp_list = ref (Hashtbl.create 100)
 let _ = let zero = IConst (0, no_pos)
 		in Hashtbl.add !linking_exp_list zero 0
@@ -325,7 +336,11 @@ and mkAnd f1 f2 pos = match f1 with
   | _ -> match f2 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
-      | _ -> And (f1, f2, pos)
+      | _ -> match f1,f2 with 
+		| AndList b1, AndList b2 ->  AndList (Label_Pure.merge b1 b2)
+		| AndList b, f 
+		| f, AndList b -> AndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+		| _ -> And (f1, f2, pos)
 
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2

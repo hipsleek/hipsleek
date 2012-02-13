@@ -603,7 +603,7 @@ let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant)                    (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
@@ -739,4 +739,5 @@ Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
+Ipure.print_formula :=string_of_pure_formula;
 
