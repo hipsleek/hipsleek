@@ -1045,13 +1045,13 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = Redlog.elim_exists_with_eq new_lhs in
           DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
-(*          let new_lhs = CP.arith_simplify_new new_lhs in
-          (new_lhs,rhs) 
+          let new_lhs = CP.arith_simplify_new new_lhs in
+(*          (new_lhs,rhs) 
         in*)
-          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in
-          let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
-          let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
-          let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in
+(*          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in*)
+(*          let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in*)
+(*          let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in*)
+(*          let new_lhs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) new_lhs_drop_rel rel_lhs in*)
           let rel_def_id = CP.get_rel_id_list rhs in
           let rank_bnd_id = CP.get_rank_bnd_id_list rhs in
           let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in
@@ -1064,7 +1064,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
             (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])
           else*)
-          if CP.isConstTrue new_lhs then [] else [(rel_cat,new_lhs,rhs)] in
+          (*if CP.isConstTrue new_lhs then [] else *)[(rel_cat,new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
         let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
