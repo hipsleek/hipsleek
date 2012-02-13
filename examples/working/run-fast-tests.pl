@@ -569,7 +569,7 @@ $output_file = "log";
 				["benchs/lit/dijkstra76-1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/dijkstra76-2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/dijkstra76-3.ss", 1, "", "loop", "SUCCESS"],
-				["benchs/lit/leaf-year-bug-zune.ss", 2, "", "ConvertDays", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/leap-year-bug-zune.ss", 2, "-tp z3", "ConvertDays", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/lit/pldi06-1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/pldi06-2.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
 				["benchs/lit/pldi06-3.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
