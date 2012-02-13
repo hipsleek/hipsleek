@@ -45,15 +45,15 @@ NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&
                  EAssume 2::ref [x]
                    x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & B(l,lg) & sm<=lg&
                    {FLOW,(20,21)=__norm}
-NEW RELS: [ (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (lg_620=lg & l=l_892 & B(l_892,lg_620)) --> B(l,lg), (l=lg & l_953<=lg_640 & lg_640<=lg & B(l_953,lg_640)) --> B(l,lg), (l=lg) --> B(l,lg)]
+NEW RELS: [ (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (lg_620=lg & l=l_892 & B(l_892,lg_620)) --> B(l,lg), (l=lg & l_954<=lg_640 & lg_640<=lg & B(l_954,lg_640)) --> B(l,lg), (l=lg) --> B(l,lg)]
 
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 546 invocations 
+Stop Omega... 554 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.18 second(s)
-	Time spent in main process: 0.99 second(s)
-	Time spent in child processes: 1.19 second(s)
+Total verification time: 2.83 second(s)
+	Time spent in main process: 1.47 second(s)
+	Time spent in child processes: 1.36 second(s)

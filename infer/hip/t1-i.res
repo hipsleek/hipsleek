@@ -82,7 +82,7 @@ Procedure foo2a$int result FAIL-1
 
 Termination checking result:
 
-Stop Omega... 81 invocations 
+Stop Omega... 85 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.17 second(s)

@@ -11,6 +11,7 @@ ll2<n> == self=null & n=0
 	or self::node<_, q> * q::ll2<n-1>
 	inv n>=0;
 
+/*
 ll3<n,S> == self=null & n=0 & S={}
 	or self::node<v, q> * q::ll3<n-1,S1> & S=union(S1,{v})
 	inv n>=0;
@@ -23,6 +24,7 @@ sll2<n,S> == self=null & n=0 & S={}
 	or self::node<v2, r> * r::sll2<n-1,S1> 
 	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x))
   inv n>=0;
+*/
 /*
 sll1<S> == self::node<v1, null> & S = {v1}
 	or self::node<v2, r> * r::sll1<S1> & r != null 
@@ -32,10 +34,9 @@ sll2<n,S> == self::node<v1, null> & S = {v1} & n=1
 	or self::node<v2, r> * r::sll2<n-1,S1> & r != null 
 	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x));
 */
-
 relation A(int a, int b, int c).
 
-/*
+
 node append1(node x, node y)
   requires x::ll1<>*y::ll1<> 
   ensures res::ll1<>;
@@ -54,8 +55,9 @@ node append1(node x, node y)
 }
 
 node append2(node x, node y)
+  infer [A]
   requires x::ll2<n>*y::ll2<m> 
-  ensures res::ll2<n+m>;
+  ensures res::ll2<t> & A(t,m,n);
 {
         node r;
 	if (x==null) return y;
@@ -88,7 +90,8 @@ node append3(node x, node y)
 		return r;
 	}
 }
-*/
+
+/*
 
 node append4(node x, node y)
   requires x::ll3<n,S1>*y::ll3<m,S2> & Term[n]
@@ -137,3 +140,4 @@ node append6(node x, node y)
      return x;
     }
 }
+*/

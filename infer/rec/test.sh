@@ -26,6 +26,7 @@
 ../../hip bug-num-del.ss > bug-num-del.res
 ../../hip bsort-1.ss > bsort-1.res
 ../../hip bsort-3.ss > bsort-3.res
+../../hip bsort-4.ss > bsort-4.res
 ../../hip bst-del.ss > bst-del.res
 ../../hip bst-del-a.ss > bst-del-a.res
 ../../hip bst-del-b.ss > bst-del-b.res

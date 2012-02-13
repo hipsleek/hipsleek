@@ -161,6 +161,8 @@ let type_of_spec_var (sv : spec_var) : typ =
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+let is_rel_var (sv : spec_var) : bool = (type_of_spec_var sv)==RelT
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 
@@ -1498,6 +1500,8 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem_x fun_eq sv svs2) svs1
+
+and intersect_svl x y = intersect x y
 
 and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
@@ -7047,14 +7051,24 @@ let no_drop_ops =
   let pr x = None in
   (pr,pr)
 
+let is_update_array_relation (r:string) = 
+  (* match r with CP.SpecVar(_,r,_) -> *)
+	let udrel = "update_array" in
+	let udl = String.length udrel in
+		(String.length r) >= udl && (String.sub r 0 udl) = udrel
+
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkTrue p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkFalse p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
 

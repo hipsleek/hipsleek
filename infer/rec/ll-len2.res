@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 Checking procedure length$node... 
 INF-POST-FLAG: true
 REL :  R(n,res)
-POST:  res>=0 & res=n
+POST:  n>=0 & n=res
 PRE :  0<=n
 OLD SPECS:  EInfer [R]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
@@ -28,12 +28,12 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
          ECase case {
                 n=0 -> EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                                EAssume 1::
-                                 true&res>=0 & res=n & n=0 & 0<=n&
+                                 true&n>=0 & n=res & n=0 & 0<=n&
                                  {FLOW,(20,21)=__norm}
                 ;
                 n!=0 -> EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                                 EAssume 2::
-                                  true&res>=0 & res=n & n!=0 & 0<=n&
+                                  true&n>=0 & n=res & n!=0 & 0<=n&
                                   {FLOW,(20,21)=__norm}
                 
                 }
@@ -46,6 +46,6 @@ Termination checking result:
 Stop Omega... 123 invocations 
 9 false contexts at: ( (21,15)  (21,22)  (24,4)  (24,11)  (24,11)  (23,12)  (23,19)  (23,8)  (23,4) )
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.18 second(s)
-	Time spent in child processes: 0.06 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.08 second(s)
