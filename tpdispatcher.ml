@@ -259,20 +259,6 @@ module Netprover = struct
     | ServerTimeout -> trace "pmap" "\npmap timed out."; Unknown
     | e -> trace "pmap" (Printexc.to_string e); Unknown
   
-	
-
-    (* replaced with dileep's version above
-	let call_prover (data : prove_type) =
-    
-	  try
-		let _ = if !webserver then 
-		          Net.IO.write_job_web !out_ch 0 !prover_arg data !priority 
-		        else Net.IO.write_job !out_ch 0 !prover_arg data 
-		in
-		let _ = if !decr_priority then decr priority else () in
-		let seq, result = Net.IO.read_result !in_ch in
-			Net.IO.from_string result 
-	  with e -> print_endline "callprover error"; raise e *)
   let call_prover ( f : prove_type) = 
     (** send message to external prover to get the result. *)
     try
@@ -289,15 +275,10 @@ end
 
 (* class used for keeping prover's functions needed for the incremental proving*)
 class incremMethods : [CP.formula] Globals.incremMethodsType = object
-
-  (*keeps track of the number of saved states of the current process*)
-  val push_no = ref 0
-    (*variable used to archives all the assumptions send to the current process *)
-  val process_context = ref []
-    (*variable used to archive all the declared variables in the current process context *)
-  val declarations = ref [] (* (stack_no * var_name * var_type) list*)
-    (* prover process *)
-  val process = ref None
+  val push_no = ref 0 (*keeps track of the number of saved states of the current process*) 
+  val process_context = ref [] (*variable used to archives all the assumptions send to the current process *)
+  val declarations = ref [] (*variable used to archive all the declared variables in the current process context *) (* (stack_no * var_name * var_type) list*)
+  val process = ref None (* prover process *)
 
   (*creates a new proving process *)
   method start_p () : Globals.prover_process_t =
@@ -714,10 +695,8 @@ let elim_exists (f : CP.formula) : CP.formula =
 
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =
-	if (nlv1 = [] && nlv2 = []) then
-	  (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
-	else
-	  (Gen.BList.overlap_eq CP.eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
+	if (nlv1 = [] && nlv2 = []) then (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
+	else (Gen.BList.overlap_eq CP.eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
   in
   
   let rec group_conj l = match l with
@@ -778,15 +757,9 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
 	   
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
-  if !do_slicing && !multi_provers then
-	assumption_filter_slicing ante cons
-  else
-	CP.assumption_filter ante cons
+  if !do_slicing && !multi_provers then assumption_filter_slicing ante cons
+  else CP.assumption_filter ante cons
 
-(* let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) *)
-(*   let pr = Cprinter.string_of_pure_formula in *)
-(*   Debug.no_2 "filter" pr pr (fun (l, _) -> pr l) *)
-(* 	assumption_filter ante cons *)
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)

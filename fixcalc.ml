@@ -82,7 +82,8 @@ let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
-  | CP.AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+  | CP.AndList b -> (match b with | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) | (_,x)::t -> 
+	fixcalc_of_pure_formula (List.fold_left (fun a (_,c)->CP.mkAnd a c no_pos) x t))
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.Not (p,_ , _) -> 
@@ -179,7 +180,7 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
-  | CP.AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+  | CP.AndList b -> exists_l_snd is_rec b
   | CP.Or (f1,f2,_,_) -> is_rec f1 || is_rec f2
   | CP.Not (f,_,_) -> is_rec f
   | CP.Forall (_,f,_,_) -> is_rec f
@@ -188,7 +189,7 @@ let rec is_rec pf = match pf with
 let rec get_rel_vars pf = match pf with
   | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
-  | CP.AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+  | CP.AndList b -> fold_l_snd get_rel_vars b
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.Not (f,_,_) -> get_rel_vars f
   | CP.Forall (_,f,_,_) -> get_rel_vars f

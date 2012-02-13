@@ -1068,10 +1068,12 @@ and mkAnd f1 f2 pos =
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
   else match f1,f2 with 
-   | AndList b1, AndList b2 ->  AndList (Label_Pure.merge b1 b2)
+   | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
    | AndList b, f 
-   | f, AndList b -> AndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+   | f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
    | _ -> And (f1, f2, pos)
+  
+and mkAndList b = AndList b
   
 and and_list_to_and l = match l with
 	| [] -> mkTrue no_pos

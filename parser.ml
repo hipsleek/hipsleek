@@ -606,7 +606,7 @@ ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
 
 opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
-branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.AndList b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
 
 one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
 

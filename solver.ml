@@ -1526,6 +1526,7 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
           let app1, cpp1 = split f1 in
           let app2, cpp2 = split f2 in
           (CP.mkAnd app1 app2 pos, CP.mkAnd cpp1 cpp2 pos)
+    | CP.AndList b -> let l1,l2 = List.split (List.map (fun (l,c)-> let l1,l2 = split c in ((l,l1),(l,l2))) b) in (CP.mkAndList l1, CP.mkAndList l2)
     | _ ->
           let fvars = CP.fv f in
           if CP.disjoint fvars vvars then
@@ -1648,18 +1649,12 @@ and remove_conj_new (f : CP.formula list) (conj : CP.formula) pos : (bool * CP.f
 and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
   | CP.Or (f1, f2, lbl, p) ->
         let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
-	    (*
-	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: f1: " ^ (Cprinter.string_of_pure_formula f1) ^ "\n")) in
-	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: f2: " ^ (Cprinter.string_of_pure_formula f2) ^ "\n")) in
-	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: Conj: " ^ (Cprinter.string_of_pure_formula conj) ^ "\n")) in
-	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: disj1: " ^ (Cprinter.string_of_pure_formula disj1) ^ "\n")) in
-	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: disj2: " ^ (Cprinter.string_of_pure_formula disj2) ^ "\n")) in
-	    *)
         (CP.mkAnd conj (CP.mkOr disj1 disj2 lbl p) p)
   | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
   | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF f1 p, lbl ,p)
   | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl ,p)
   | CP.Exists (sp, f1, lbl, p) -> CP.Exists(sp, normalize_to_CNF f1 p, lbl ,p)
+  | CP.AndList b-> CP.AndList (map_l_snd (fun c-> normalize_to_CNF c no_pos) b)
   | _ -> f
 
 (* take two formulas f1 and f2 and returns:
@@ -1675,12 +1670,6 @@ and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP
 	        (f1, (CP.mkTrue pos), (remove_conj f2 f1 pos))
           end
         else
-	      (*
-	        let _ = (print_string ("\n[cpure.ml, find_common_conjs]: no common conj between: \n")) in
-	        let _ = (print_string ("\t\t " ^ (Cprinter.string_of_pure_formula f1) ^ "\n")) in
-	        let _ = (print_string ("\t\t " ^ (Cprinter.string_of_pure_formula f2) ^ "\n")) in
-	        let _ = (print_string ("\n[cpure.ml, find_common_conjs]: list of conj for f2: " ^ (Cprinter.string_of_pure_formula_list (CP.list_of_conjs f2)) ^ "\n")) in
-	      *)
           ((CP.mkTrue pos), f1, f2)
   | CP.And(f11, f12, p) ->
         let outer_conj, new_f1, new_f2 = (find_common_conjs f11 f2 p) in
@@ -1702,8 +1691,8 @@ and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f 
 	             else f
 	        | _ -> f
         end
-  | CP.And(f1, f2, p) ->
-        (CP.mkAnd (remove_conj f1 conj p) (remove_conj f2 conj p) p)
+  | CP.And(f1, f2, p) -> (CP.mkAnd (remove_conj f1 conj p) (remove_conj f2 conj p) p)
+  | CP.AndList b -> CP.AndList (map_l_snd (fun c-> remove_conj c conj no_pos) b)
   | CP.Not(f1, lbl, p) -> CP.Not((remove_conj f1 conj p), lbl, p)
   | _ -> f
 
@@ -1728,6 +1717,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
         if CP.disjoint (CP.fv f) vvars then (CP.mkTrue no_pos)
         else f
   | CP.And(f1, f2, l) -> CP.mkAnd (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) l
+  | CP.AndList b -> CP.AndList (map_l_snd (fun c-> discard_uninteresting_constraint c vvars) b)
   | CP.Or(f1, f2, lbl, l) -> CP.mkOr (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) lbl  l
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
@@ -2234,11 +2224,11 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) 
 	      if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
 	        (rest_left_eqns,rest_right_eqns,(fr, t)::s_list)
 	      else if (CP.mem fr struc_expl_inst) then
-	        let tmp = CP.AndList [(br_label,CP.mkEqVar fr t pos)] in
+	        let tmp = if (Label_only.Lab_List.is_unlabelled br_label) then CP.mkEqVar fr t pos else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
 		      let res = CP.mkAnd tmp rest_right_eqns pos in
 		      (rest_left_eqns,res,s_list)
 	      else
-	        let tmp = CP.AndList [(br_label,CP.mkEqVar fr t pos)] in
+	        let tmp = if (Label_only.Lab_List.is_unlabelled br_label) then CP.mkEqVar fr t pos else  CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
 		      let res = CP.mkAnd tmp rest_left_eqns pos in
 		      (res,rest_right_eqns,s_list)
     | [] -> (CP.mkTrue pos,CP.mkTrue pos,[])
