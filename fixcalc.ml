@@ -382,7 +382,7 @@ and compute_fixpoint_x input_pairs ante_vars specs =
     | TP.Mona | TP.MonaH -> true
     | _ -> false
   in
-  if is_bag_cnt then Fixbag.compute_fixpoint 3 input_pairs ante_vars specs
+  if is_bag_cnt then Fixbag.compute_fixpoint 3 input_pairs ante_vars
   else
     let (pfs, rels) = List.split input_pairs in
     let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in

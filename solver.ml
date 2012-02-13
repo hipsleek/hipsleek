@@ -9514,7 +9514,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
             then [(a3,a2)] else []) triples)) in
           let post = CP.conj_of_list posts no_pos in
           let pre = CP.conj_of_list pres no_pos in
-          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_raw (CP.mkExists post_vars p None no_pos)) no_pos) in
+          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_exists_raw post_vars p) no_pos) in
           (p,[pre])
         else
           let rels = CP.get_RelForm p in

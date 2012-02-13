@@ -27,27 +27,27 @@ let get_var var stab = if is_substr "PRI" var
   then AS.get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
   else AS.get_spec_var_ident stab var Unprimed
 
-let change_name var name = match var with
-  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)
-  | _ -> report_error no_pos "Error in change_name"
+(*let change_name var name = match var with*)
+(*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)
+(*  | _ -> report_error no_pos "Error in change_name"*)
 
-let is_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id
-  | _ -> false
+(*let is_node var = match var with *)
+(*  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id*)
+(*  | _ -> false*)
 
-let get_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> String.sub id 3 (String.length id - 3)
-  | _ -> report_error no_pos "Expecting node var"
+(*let get_node var = match var with *)
+(*  | Var (SpecVar (_,id,_), _) -> String.sub id 3 (String.length id - 3)*)
+(*  | _ -> report_error no_pos "Expecting node var"*)
 
-let is_rec_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> is_substr "RECNOD" id
-  | _ -> false
+(*let is_rec_node var = match var with *)
+(*  | Var (SpecVar (_,id,_), _) -> is_substr "RECNOD" id*)
+(*  | _ -> false*)
 
-let get_rec_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> String.sub id 6 (String.length id - 6)
-  | _ -> report_error no_pos "Expecting rec node var"
+(*let get_rec_node var = match var with *)
+(*  | Var (SpecVar (_,id,_), _) -> String.sub id 6 (String.length id - 6)*)
+(*  | _ -> report_error no_pos "Expecting rec node var"*)
 
-let is_int c = '0' <= c && c <= '9'
+(*let is_int c = '0' <= c && c <= '9'*)
 
 EXTEND Gram
 GLOBAL: expression or_formula formula pformula exp specvar;
@@ -81,7 +81,8 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> BagUnion([x; y], loc)
     | x = specvar -> Var (x,loc)
-    | "|"; x = specvar; "|" -> Var (x,loc)
+    | "|"; x = specvar; "|" -> Var (x,loc) (* Do not care, return anything *)
+    | "{"; x = LIST0 exp SEP ","; "}" -> Bag (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 
     ]
   ]; 
@@ -89,6 +90,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   specvar:
   [ "specvar" NONA
     [ x = UIDENT -> get_var x !stab
+    | x = LIDENT -> get_var x !stab
     ]
   ]; 
 
