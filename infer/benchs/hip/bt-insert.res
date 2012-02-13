@@ -25,8 +25,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n; h](ex)x::bt<n,h>@M[Orig][LHSCase]&true&
          EBase true&1<=h & 1<=n & MayLoop&{FLOW,(1,23)=__flow}
                  EAssume 1::
                    x::bt<m,k>@M[Orig][LHSCase]&(h+1)>=k & k>=h & (k+n)>=(2+
-                   h) & k>=2 & n+1=m & (k=2 | 3<=k) & 0<=n & 0<=h&
-                   {FLOW,(20,21)=__norm}
+                   h) & k>=2 & n+1=m & 0<=n & 0<=h&{FLOW,(20,21)=__norm}
 NEW RELS: [ (k=2 & h=1 & n=1 & m=2 | h=k & m=n+1 & 2<=n & 2<=k) --> A(n,h,m,k), (k=h & m=n+1 & 2<=h & 2<=n) --> A(n,h,m,k), ((k=k_857+1 & m_856=(n_657-n)+m & h_658=h-1 & 0<=n_657 & n_657<=(n-2) & 
   n<(n_657+m) & 1<=k_857 & 2<=h | k=h & m_856=(n_657+m)-n & 1<=k_857 & 
   k_857<=(h-2) & 0<=n_657 & n_657<=(n-2) & 0<=h_658 & h_658<=(h-2) & 
@@ -48,6 +47,6 @@ Termination checking result:
 Stop Omega... 515 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.44 second(s)
-	Time spent in main process: 1.27 second(s)
+Total verification time: 2.43 second(s)
+	Time spent in main process: 1.26 second(s)
 	Time spent in child processes: 1.17 second(s)
