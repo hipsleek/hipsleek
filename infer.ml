@@ -821,7 +821,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr_p = !CP.print_formula in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) (fun l -> (string_of_int (List.length l))) in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.to_4 "infer_pure_m" 
+      Debug.no_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "lhs xpure0 " pr1)
@@ -1109,7 +1109,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 

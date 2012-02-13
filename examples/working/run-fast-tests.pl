@@ -745,7 +745,7 @@ sub hip_process_file {
 			#print "\nbegin"."$output"."end\n";
 			for($i = 3; $i<$limit;$i+=2)
 			{
-				if($output !~ /$procedure $test->[$i].* $test->[$i+1]/)
+                if($output !~ /$procedure $test->[$i].* $test->[$i+1]/)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";

@@ -107,7 +107,7 @@ void merge_sort(ref int[] a, int i, int j)
 		// are currently not related to each other i.e. the information
 		// [i..m] and [m+1..j] are DISJOINT is not captured!
 		//assert upperbnd(a',i,m',u') & upperbnd(a',m'+1,j,u');		
-		assume upperbnd(a',i,m',u') & upperbnd(a',m'+1,j,u');
+		assume upperbnd(a',i,m',u') & upperbnd(a',m'+1,j,u');//'
 		
 		merge_sorted_arrays(a,i,m-i+1,a,m+1,j-m,c);
 		copy_array(c,0,j-i,a,i);
