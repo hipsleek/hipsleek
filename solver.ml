@@ -394,7 +394,7 @@ and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * C
 
 and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
       (*= Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) *)
-      = Debug.ho_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,svl,m) -> pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m)) 
+      = Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,svl,m) -> pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m)) 
   (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
@@ -485,7 +485,8 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_
   (pf, pb, mset)
 
 
-and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Debug.no_2 "xpure_heap_mem_enum" Cprinter.string_of_h_formula string_of_int (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  
+  Debug.no_2 "xpure_heap_mem_enum" Cprinter.string_of_h_formula string_of_int (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
     ^(Cprinter.string_of_mem_formula a3)) (fun _ _ -> xpure_heap_mem_enum_x prog h0 which_xpure) h0 which_xpure 
 
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
@@ -1729,7 +1730,7 @@ and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.s
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
-  Debug.ho_4_num n "unfold" string_of_bool prs pr pr2 pr 
+  Debug.no_4_num n "unfold" string_of_bool prs pr pr2 pr 
       (fun _ _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f prog
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = match f with
@@ -2582,7 +2583,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.ho_1 "unsat_base_nth" 
+  Debug.no_1 "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
@@ -2630,7 +2631,7 @@ and elim_unsat_for_unfold_x (prog : prog_decl) (f : formula) : formula = match f
   | _ -> f
 
 and elim_unsat_all prog (f : formula): formula = 
-  Debug.ho_1 "elim_unsat_all" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
+  Debug.no_1 "elim_unsat_all" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
 	  (fun f -> elim_unsat_all_x prog f) f	
 	  
 and elim_unsat_all_x prog (f : formula): formula = match f with
@@ -7207,6 +7208,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
                   | Ctx es -> Ctx ({es with es_formula = prune_preds prog true es.es_formula})
               in
+        (* TODO: prune_helper slows down the spaguetti benchmark *)
 			  let res_rs, prf1 = heap_entail_one_context prog is_folding (* (prune_helper ctx1) *) ctx1 conseq pos in
 			  let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
 			  (res_rs, prf)
@@ -7544,7 +7546,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) (* ^ "\n Proof: " ^ (Prooftracer.string_of_proof (snd x)) *) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Debug.to_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Debug.no_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a
           rhs_h_matched_set is_folding pos) caller a estate conseq
 
