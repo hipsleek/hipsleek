@@ -1205,7 +1205,8 @@ let get_loop_only sl =
 let add_unsound_ctx (es: entail_state) pos = 
   let term_pos = (post_pos # get, no_pos) in
   let term_res = (term_pos, None, Some es.es_formula, UnsoundLoop) in
-  add_term_res_stk term_res
+  add_term_res_stk term_res;
+  add_term_err_stk (string_of_term_res term_res)
 
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =

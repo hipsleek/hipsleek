@@ -1,8 +1,7 @@
 void loop(ref int x)
- requires Term[x]
  case {
-	x>11 -> ensures x'=10; //'
-  x<=11 -> ensures x'=x-1; //'
+	x>11 -> requires Term[x] ensures x'=10; //'
+  x<=11 -> requires Term ensures x'=x-1; //'
  }
  {
  int xinit=x;

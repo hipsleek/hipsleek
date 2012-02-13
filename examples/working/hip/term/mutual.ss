@@ -3,7 +3,7 @@ case {
 	x > 10 -> requires Term[x] ensures true;
 	x <= 10 -> case {
 					x < 0 -> requires Term ensures true;
-					x >= 0 -> requires Term[2*x] ensures true;
+					x >= 0 -> requires Term[2*x+3] ensures true;
 			   }
 }
 {
@@ -18,10 +18,10 @@ case {
 
 int g (int x)
 case {
-	x > 5 -> requires Term[2*x-3] ensures true;
+	x > 5 -> requires Term[2*x] ensures true;
 	x <= 5 -> case {
 					x < 0 -> requires Term ensures true;
-					x >= 0 -> requires Term[2*x-3] ensures true;
+					x >= 0 -> requires Term[2*x] ensures true;
 			   }
 }
 {

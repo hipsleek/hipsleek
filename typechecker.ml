@@ -170,16 +170,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
 and check_bounded_term_x prog ctx post_pos =
-  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx,[])
-  else 
-  let ctx = Term.strip_lexvar_lhs ctx in
-  let l_term_measures = CF.collect_term_measures_context ctx in
-  let _ = Debug.trace_hprint (add_str "Measures" 
-      (pr_list (pr_list !CP.print_exp))) l_term_measures no_pos in
-  let _ = Debug.trace_hprint (add_str "Orig context" 
-      !CF.print_context) ctx no_pos in
-
-  let check_bounded_one_measures m =
+  let check_bounded_one_measures m es =
     (* Termination: filter the exp of phase variables 
      * (their value non-negative numbers in default) *)
     let m = List.filter (fun e -> 
@@ -188,6 +179,7 @@ and check_bounded_term_x prog ctx post_pos =
       | [] -> no_pos
       | e::_ -> CP.pos_of_exp e 
     in
+    let ctx = CF.Ctx es in
     let bnd_formula_l = List.map (fun e ->
         CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
     let bnd_formula = CF.formula_of_pure_formula
@@ -196,25 +188,46 @@ and check_bounded_term_x prog ctx post_pos =
     let _ = Debug.trace_hprint (add_str "Result context" 
         !CF.print_list_context) rs no_pos in
     let term_pos = (m_pos, no_pos) in
-    let term_res =
+    let term_res, n_es =
       let f_ctx = CF.formula_of_context ctx in
       if (CF.isFailCtx rs) then 
-        (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m))
+        let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m)) in
+        let err_msg = Term.string_of_term_res tr in
+        let _ = Term.add_term_err_stk err_msg in
+        tr, { es with CF.es_term_err = Some err_msg }
       else 
-        (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure)
-    in 
-    let _ = Term.add_term_res_stk term_res in
-    rs
+        (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
+        es
+    in
+    let _ = Debug.trace_hprint (add_str "New es" !CF.print_entail_state) n_es no_pos in
+    let _ = Term.add_term_res_stk term_res in 
+    n_es, rs
   in
-
-  let check_bounded_one_measures m =
+  let check_bounded_one_measures m es =
     Debug.no_1 "check_bounded_one_measures"
-        (pr_list !CP.print_exp) (fun _ -> "")
-        check_bounded_one_measures m
+      (pr_list !CP.print_exp) (fun _ -> "")
+      (fun _ -> check_bounded_one_measures m es) m
   in 
-
-  let rs_lst = List.map (fun m -> check_bounded_one_measures m) l_term_measures in
-  (ctx, List.concat (List.map Inf.collect_rel_list_context rs_lst))
+  
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx, [])
+  else 
+    let ctx = Term.strip_lexvar_lhs ctx in
+    match ctx with
+      | CF.Ctx es ->  
+          let m = match es.CF.es_var_measures with
+            | None -> []
+            | Some (_, ml, _) -> ml
+          in 
+          let _ = Debug.trace_hprint (add_str "Measures" 
+            (pr_list !CP.print_exp)) m no_pos in
+          let _ = Debug.trace_hprint (add_str "Orig context" 
+            !CF.print_context) ctx no_pos in
+          let n_es, rs = check_bounded_one_measures m es in
+          (CF.Ctx n_es, Inf.collect_rel_list_context rs)
+      | CF.OCtx (ctx1, ctx2) ->
+          let n_ctx1, rl1 = check_bounded_term prog ctx1 post_pos in
+          let n_ctx2, rl2 = check_bounded_term prog ctx2 post_pos in
+          (CF.OCtx (n_ctx1, n_ctx2), rl1 @ rl2)
 
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
@@ -321,9 +334,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
-                    let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in 
+                    let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
 	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
-	                (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
+	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
                     let pos = CF.pos_of_formula post_cond in
@@ -1060,7 +1073,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	  end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-    else Term.check_loop_safety prog proc ctx post pos pid in
+      else Term.check_loop_safety prog proc ctx post pos pid in
     let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
       proc.proc_args in
     let r = proc.proc_by_name_params in
