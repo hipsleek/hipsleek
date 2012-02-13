@@ -1342,7 +1342,7 @@ struct
 
   (* checks s |- x!=y *)
   let is_disj (eq:'a->'a->bool) (s: dpart)  (x:ptr) (y:ptr) : bool =
-    if (eq x y) then false 
+    if (eq x y) then false
     else
       let l1 = find_diff eq s x in
       let l2 = find_diff eq s y in

@@ -412,6 +412,21 @@ let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
   (CP.DisjSetSV.is_sat_dset d)
 
+(* returns all the disjoint pairs from a mem formula *)
+let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) list  =
+  let m = mf.mem_formula_mset in
+  let rec helper l =
+  match l with
+    | h::r -> 
+      if (r!=[]) then
+      (List.fold_left 
+	(fun x y -> (h,y)::x) [] r) @ (helper r)
+      else []
+    | [] -> []
+  in
+  List.fold_left 
+    (fun x y -> x@(helper y)) [] m
+
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
 
