@@ -5722,9 +5722,21 @@ and detect_false (ante : MCP.mix_formula) (memset : CF.mem_formula) : bool =
        
   in
 	let eqset = CP.EMapSV.build_eset eqset in
-	let neq_pairs = CF.generate_disj_pairs_from_memf memset in 
-	List.fold_left
-	  (fun x y -> x || (CP.EMapSV.is_equiv eqset (fst y) (snd y))) false neq_pairs
+	(* let neq_pairs = CF.generate_disj_pairs_from_memf memset in  *)
+	(* List.fold_left *)
+	(*   (fun x y -> x || (CP.EMapSV.is_equiv eqset (fst y) (snd y))) false neq_pairs *)
+	let m = memset.mem_formula_mset in
+	let rec helper l =
+	  match l with
+	    | h::r -> 
+	      if (r!=[]) then
+		(List.fold_left 
+		   (fun x y -> x || CP.EMapSV.is_equiv eqset h y) false r) || (helper r)
+	      else false
+	    | [] -> false
+	in
+	List.fold_left 
+	  (fun x y -> x || (helper y)) false m
 
 and solve_ineq a m c = 
   Debug.no_3 "solve_ineq "
