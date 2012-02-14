@@ -400,6 +400,7 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_subs () = pr_list (pr_pair !print_sv !print_sv)
 let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
@@ -1865,7 +1866,12 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
 
-and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
+and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
+
+and e_apply_subs_list sst alist = 
+  let pr = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = pr_list !print_exp in
+  Debug.no_2 "e_apply_subs_list" pr pr2 pr2 e_apply_subs_list_x sst alist
 
 (* TODO : these methods must be made obsolete *)
 and b_apply_one s bf = b_apply_subs [s] bf
@@ -7363,6 +7369,41 @@ and count_term_b_formula bf =
         | _ -> 0)
   | _ -> 0
 
+let order_var v1 v2 vs =
+  if List.exists (eq_spec_var_nop v1) vs then
+    if List.exists (eq_spec_var_nop v2) vs then None
+    else Some (v2,v1)
+  else if List.exists (eq_spec_var_nop v2) vs then Some (v1,v2)
+  else None 
 
+let rec extr_subs xs vs subs rest = match xs with 
+  | [] -> (vs,subs,rest)
+  | ((v1,v2) as p)::xs1 -> let m = order_var v1 v2 vs in
+    (match m with
+      | None -> extr_subs xs1 vs subs (p::rest)  
+      | Some ((fr,t) as p2) -> extr_subs xs1 (fr::vs) (p2::subs) rest) 
 
+let extr_subs xs vs subs rest = 
+  let pr_vars = !print_svl in
+  let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
+  let pr_res = pr_triple pr_vars pr_subs pr_subs in
+  Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs 
+
+let rec simplify_subs xs vs ans = 
+  let (vs1,subs,rest) = extr_subs xs vs [] [] in
+  if subs==[] then (ans,xs)
+  else simplify_subs rest vs1 (subs@ans)
+
+let apply_subs_sv s t =
+  try
+    let (fr,nt) = List.find (fun (f1,_) -> eq_spec_var f1 t) s in
+    nt
+  with _ -> t
+
+let rec norm_subs subs =
+  match subs with
+    | [] -> []
+    | (fr,t)::xs -> 
+          let new_s = norm_subs xs in
+          (fr,apply_subs_sv new_s t)::new_s
 

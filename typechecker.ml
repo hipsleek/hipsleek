@@ -1301,6 +1301,33 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
+                            let vars = stk_vars # get_stk in
+                            (* let order_var v1 v2 vs = *)
+                            (*   if List.exists (CP.eq_spec_var_nop v1) vs then *)
+                            (*     if List.exists (CP.eq_spec_var_nop v2) vs then None *)
+                            (*     else Some (v2,v1) *)
+                            (*   else if List.exists (CP.eq_spec_var_nop v2) vs then Some (v1,v2) *)
+                            (*   else None in *)
+                            (* let rec extr_subs xs vs subs rest = match xs with  *)
+                            (*   | [] -> (vs,subs,rest) *)
+                            (*   | ((v1,v2) as p)::xs1 -> let m = order_var v1 v2 vs in *)
+                            (*     (match m with *)
+                            (*       | None -> extr_subs xs1 vs subs (p::rest)   *)
+                            (*       | Some ((fr,t) as p2) -> extr_subs xs1 (fr::vs) (p2::subs) rest) in *)
+                            (* let extr_subs xs vs subs rest =  *)
+                            (*   let pr_vars = !CP.print_svl in *)
+                            (*   let pr_subs = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+                            (*   let pr_res = pr_triple pr_vars pr_subs pr_subs in *)
+                            (*   Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs in *)
+                            (* let rec simplify_subs xs vs ans =  *)
+                            (*   let (vs1,subs,rest) = extr_subs xs vs [] [] in *)
+                            (*    if subs==[] then ans *)
+                            (*    else simplify_subs_f rest vs1 (subs@ans) *)
+                            (* in  *)
+                            (* let ra = List.map (fun (l,r) -> MCP.pure_ptr_equations l) lst_assume in *)
+                            (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
+                            (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
+                            (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
                             Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                             Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
