@@ -8,3 +8,8 @@ checkentail
 x1::node<_,_> * x8::node<_,_> & 
 x8=x1 & x10=x8 |- false.
 
+checkentail 
+x1::node<_,_> * x8::node<_,_> & 
+1=x1 & 2=x8 |- false.
+
+
