@@ -743,15 +743,31 @@ sub hip_process_file {
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
 			#print "\nbegin"."$output"."end\n";
-			for($i = 3; $i<$limit;$i+=2)
-			{
-                if($output !~ /$procedure $test->[$i].* $test->[$i+1]/)
-				{
-			 		$error_count++;
-					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-					print "error at: $test->[0] $test->[$i]\n";
-				}
-			}
+            my @lines = split /\n/, $output;
+            @results = [];
+            foreach my $line (@lines) {
+                for($i = 3; $i<$limit;$i+=2)
+                {
+                    #print $line . "\n";
+                    if($line =~ /$procedure $test->[$i]/ && $line =~ m/SUCCESS/){
+                        @results[$i] = "SUCCESS";
+                    }
+                    elsif($line =~ /$procedure $test->[$i]/  && $line =~ m/FAIL/ ){
+                        @results[$i] = "FAIL";
+                    }
+                }
+            }
+            for ($i = 3; $i<$limit;$i+=2) {
+                #print $test->[$i] ."\n";
+                #print @results[$i] ."\n";
+                #print $test->[$i+1] ."\n";
+                if(@results[$i] ne $test->[$i+1])
+                {
+                    $error_count++;
+                    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+                    print "error at: $test->[0] $test->[$i]\n";
+                }
+            }
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
             }

@@ -3041,7 +3041,7 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 		  done
 	  done;
 	  begin
-		let rele_conjs = List.map fst !reles in
+		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
 		  filtered_f
 	  end
