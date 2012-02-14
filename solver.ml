@@ -5723,10 +5723,9 @@ and detect_false (ante : MCP.mix_formula) (memset : CF.mem_formula) : bool =
         pure_ptr_equations at 
   in
 	let eqset = CP.EMapSV.build_eset eqset in
-  (* let _ = print_endline ("eqset: " ^ (P.EMapSV.string_of eqset)) in *)
-	(* let neq_pairs = CF.generate_disj_pairs_from_memf memset in  *)
+	(* let neq_pairs = CF.generate_disj_pairs_from_memf memset in *)
 	(* List.fold_left *)
-	(*   (fun x y -> x || (CP.EMapSV.is_equiv eqset (fst y) (snd y))) false neq_pairs *)
+	(*    (fun x y -> x || (CP.EMapSV.is_equiv eqset (fst y) (snd y))) false neq_pairs *)
 	let m = memset.mem_formula_mset in
 	let rec helper l =
 	  match l with
