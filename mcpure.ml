@@ -1483,9 +1483,9 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
+  let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
+  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
 
-  let _ = print_endline ("ante: " ^ (!Cpure.print_formula r)) in
-  let _ = print_endline ("conseq: " ^ (!Cpure.print_formula conseq)) in
   (Gen.Profiling.push_time str_time;
   let r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
