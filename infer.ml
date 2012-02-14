@@ -952,12 +952,13 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let rel_rhs_ls, other_rhs_ls = List.split pairs in
     let rel_rhs = List.concat rel_rhs_ls in
     if rel_rhs==[] then (
-      (* DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; *)
-      (* DD.devel_pprint "no relation in rhs" pos; *)
+      DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
+      DD.devel_pprint "no relation in rhs" pos; 
+      (estate,lhs_p_orig,rhs_p,rhs_p_br)
       (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
-      if !unable_to_fold_rhs_heap = false then
+(*      if !unable_to_fold_rhs_heap = false then
         (estate,lhs_p_orig,rhs_p,rhs_p_br)
       else (
         unable_to_fold_rhs_heap := false;
@@ -985,7 +986,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           end
         in
         (estate,MCP.mix_of_pure lhs_p,rhs_p,rhs_p_br)
-      )
+      )*)
     )
     else 
       (* TODO: Check if inferred rel can imply es_assumed_pure in the end *)
