@@ -821,7 +821,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr_p = !CP.print_formula in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) (fun l -> (string_of_int (List.length l))) in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.no_4 "infer_pure_m" 
+      Debug.ho_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "lhs xpure0 " pr1)
@@ -973,10 +973,13 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           match inferred_pure with
           (* TODO : how to handle rel_ass ?? *)
           | (None, Some p, rel_ass) ->
-            if CP.subset (CP.fv p) estate.es_infer_vars then (estate, lhs_p)
+                let vl =  estate.es_infer_vars in
+            if CP.subset (CP.fv p) vl then (estate, lhs_p)
             else
               (DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
               DD.devel_pprint "unable to fold rhs_heap because of relations" pos;
+              DD.trace_hprint (add_str "infer pure" !CP.print_formula) p no_pos;
+              DD.trace_hprint (add_str "ivars" !CP.print_svl) vl no_pos;
               ({estate with es_assumed_pure = estate.es_assumed_pure @ [p]}, CP.mkAnd lhs_p p pos))
           | _ -> (estate, lhs_p)
           end
@@ -1072,9 +1075,14 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 (*        let inf_rel_ls = List.map wrap_exists inf_rel_ls in*)
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
         (* TODO: Change corresponding vars for assumed pure *)
+        let rel_cat_fml = List.hd rel_rhs in
+        let assume_p  = estate.es_assumed_pure in
         let assume_rel_ls = List.map (fun ass_pure -> 
-            let rel_cat_fml = List.hd rel_rhs in
-            (CP.RelAssume (CP.get_rel_id_list rel_cat_fml), rel_cat_fml, ass_pure)) estate.es_assumed_pure in
+            (CP.RelAssume (CP.get_rel_id_list rel_cat_fml), rel_cat_fml, ass_pure)) assume_p in
+        DD.trace_hprint (add_str "Assume Pure :" (pr_list !CP.print_formula)) assume_p pos;
+        DD.trace_hprint (add_str "rel_rhs :" (pr_list !CP.print_formula)) rel_rhs pos;
+        DD.trace_hprint (add_str "rel_cat_fml :" (!CP.print_formula)) rel_cat_fml pos;
+        DD.trace_hprint (add_str "Rel Assume :" (pr_list (fun (_,a,b)->print_only_lhs_rhs (a,b)))) assume_rel_ls pos;
         let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel)@assume_rel_ls } in
         if inf_rel_ls != [] then
           begin
@@ -1109,7 +1117,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 

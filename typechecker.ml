@@ -1277,9 +1277,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         (* TODO WN : what happen to the old MayLoop? *)
                         (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
-                        let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
-                        let new_sp = Cprinter.string_of_struc_formula new_spec in
-                        let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in
+                        (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
+                        (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
+                        (* let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in *)
                         if !dis_post_chk then
                           (f,None)
                         else 
@@ -1287,6 +1287,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                             Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_assume no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid

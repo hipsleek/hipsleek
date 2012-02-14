@@ -13,6 +13,9 @@ print residue.
 //infer [l1,s2,s1] s1<=l1 & s2a=s2 & s1a=s1  |- s1a<=s2a.
 //print residue.
 
+infer [l1,s2,l2] s1<=l1 & s2<=l2  |- s1<=s2.
+print residue.
+
 
 /*
 Given:

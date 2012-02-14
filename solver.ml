@@ -5310,7 +5310,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 
     lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
   let infer_rel = estate.es_infer_rel in
-  Debug.info_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
+  if infer_rel!=[] then Debug.info_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
   (* Termination: Try to prove rhs_wf with inference *)
