@@ -16,20 +16,20 @@ relation sorted(bool[] A, int i, int j) ==
 relation permutation(bool[] A, bool[] B, int i, int j).
 
 // empty arrays
-axiom i > j ==> permutation(A,B,i,j).
+axiom i > j |- permutation(A,B,i,j).
 
 // reflexivity
-axiom forall(k : k < i | k > j | A[k] = B[k]) ==> permutation(A,B,i,j).
+axiom forall(k : k < i | k > j | A[k] = B[k]) |- permutation(A,B,i,j).
 
 // extensionality
-axiom permutation(A,B,i+1,j) & A[i] = B[i] ==> permutation(A,B,i,j).
-axiom permutation(A,B,i,j-1) & A[j] = B[j] ==> permutation(A,B,i,j).
+axiom permutation(A,B,i+1,j) & A[i] = B[i] |- permutation(A,B,i,j).
+axiom permutation(A,B,i,j-1) & A[j] = B[j] |- permutation(A,B,i,j).
 
 // transposition
-axiom permutation(A,B,i+1,j-1) & A[i] = B[j] & A[j] = B[i] ==> permutation(A,B,i,j).
+axiom permutation(A,B,i+1,j-1) & A[i] = B[j] & A[j] = B[i] |- permutation(A,B,i,j).
 
 // transitivity
-axiom permutation(A,B,i,j) & permutation(B,C,i,j) ==> permutation(A,C,i,j).
+axiom permutation(A,B,i,j) & permutation(B,C,i,j) |- permutation(A,C,i,j).
 
 void two_way_sort(ref bool[] a, int n)
 	requires domb(a,0,n-1)

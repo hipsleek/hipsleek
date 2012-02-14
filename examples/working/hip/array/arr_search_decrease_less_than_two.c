@@ -22,13 +22,12 @@ relation unitdec2(int[] a, int i, int j) ==
 	forall(k, t: k < i | k > j | t < i | t > j | k > t | 
 			a[t] >= a[k] - (t - k)).
 
-checkentail unitdec1(a,i,i) |- unitdec2(a,i,i).
+//checkentail unitdec1(a,i,i) |- unitdec2(a,i,i).
 
-checkentail !(unitdec1(a,i,j)) |- !(unitdec1(a,i,j+1)).
+//checkentail !(unitdec1(a,i,j)) |- !(unitdec1(a,i,j+1)).
 
-checkentail (!(unitdec1(a,i,j)) | unitdec2(a,i,j)) & unitdec1(a,i,j+1) |- unitdec2(a,i,j+1).
+//checkentail (!(unitdec1(a,i,j)) | unitdec2(a,i,j)) & unitdec1(a,i,j+1) |- unitdec2(a,i,j+1).
 
-/*
 bool searchzero(int[] a, int i, int j, ref int k)
 	requires [al,ah] dom(a,al,ah) & al <= i & j <= ah 
 				& unitdec1(a, i, j)
@@ -41,8 +40,8 @@ bool searchzero(int[] a, int i, int j, ref int k)
 			return true;
 		} 
 		else if (a[i] > 0) {
-            assert unitdec2(a, i, j);
-            assume unitdec2(a, i, j);
+      //      assert unitdec2(a, i, j);
+      //      assume unitdec2(a, i, j);
 			return searchzero(a, i + a[i], j, k);
         }
 		else 
@@ -50,4 +49,3 @@ bool searchzero(int[] a, int i, int j, ref int k)
 	} else
 		return false;
 }
-*/

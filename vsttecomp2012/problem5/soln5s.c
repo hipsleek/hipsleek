@@ -7,7 +7,7 @@ relation has_path(int[,] A, int n, int s, int t) ==
 	exists(d : 0 <= d & hemp(A,n,n,s,t,d)).
 
 // well-ordering of integers
-axiom has_path(A,n,s,t) ==> exists(d : msd(A,n,n,s,t,d)).
+axiom has_path(A,n,s,t) |- exists(d : msd(A,n,n,s,t,d)).
 
 // there is a m-path from s to t of length exactly d
 relation hemp(int[,] A, int n, int m, int s, int t, int d) ==
@@ -39,22 +39,22 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 /* NON-TRIVIAL THEOREMS */
 
 // To prove precondition in case v is not in C in bfs_loop2
-axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) ==> allsd(A,n,v+1,s,S,0,n,d+1).
+axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) |- allsd(A,n,v+1,s,S,0,n,d+1).
 
 // expanded to the pair of theorems
 
-//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v,s,t,d+1) |- msd(A,n,v+1,s,t,d+1).
 
-//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v+1,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v+1,s,t,d+1) |- msd(A,n,v+1,s,t,d+1).
 
 // To prove post-condition of bfs_loop2; intuitively, 
 // it says that there is no 0-path of non-zero length.
-axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
+axiom reach(A,n,n,s,S,0,n,d) |- reach(A,n,0,s,S,0,n,d+1).
 
 // To prove pre-condition of recursive call in bfs_loop3 
 // when the right-above if-condition is true. Intuitively,
 // this axiom is due to the fact any m-path is an n-paths.
-axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
+axiom !(hbmp(A,n,n,s,t,d)) |- !(hbmp(A,n,m,s,t,d)).
 
 /* ALGORITHM & SPECIFICATION */
 

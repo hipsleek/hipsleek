@@ -35,22 +35,22 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 
 /* NON-TRIVIAL THEOREMS */
 
-axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) ==> allsd(A,n,v+1,s,S,0,n,d+1).
+axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) |- allsd(A,n,v+1,s,S,0,n,d+1).
 
-axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
+axiom reach(A,n,n,s,S,0,n,d) |- reach(A,n,0,s,S,0,n,d+1).
 
-axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
+axiom !(hbmp(A,n,n,s,t,d)) |- !(hbmp(A,n,m,s,t,d)).
 
 /* NON-TRIVIAL THEOREM TO PROVE COMPLETENESS */
 
 // proof requires induction!
-axiom k >= d & forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) ==> forall(u : u < 0 | u >= n | !(msd(A,n,n,s,u,k))).
+axiom k >= d & forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) |- forall(u : u < 0 | u >= n | !(msd(A,n,n,s,u,k))).
 
 // follows from the above and defn of has_path
-axiom forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) & has_path(A,n,s,t) ==> hbmp(A,n,n,s,t,d).
+axiom forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) & has_path(A,n,s,t) |- hbmp(A,n,n,s,t,d).
 
 // follows from the well-ordering of integers
-axiom has_path(A,n,s,t) ==> exists(d : d >= 0 & msd(A,n,n,s,t,d)).
+axiom has_path(A,n,s,t) |- exists(d : d >= 0 & msd(A,n,n,s,t,d)).
 
 /* ALGORITHM & SPECIFICATION */
 
