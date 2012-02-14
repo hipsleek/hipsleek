@@ -722,8 +722,13 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
         (* if CP.isConstTrue new_p || CP.isConstFalse new_p then (None,None) *)
         (* else *)
           begin
+            let lhs_fil = CP.filter_ante lhs_xpure rhs_xpure in
+            let lhs_simps = CP.simplify_filter_ante TP.simplify_always lhs_xpure rhs_xpure in
             DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+            DD.devel_pprint ">>>>>> rel assume <<<<<<" pos;
             DD.devel_hprint (add_str "LHS" !CP.print_formula) lhs_xpure pos;               
+            DD.devel_hprint (add_str "LHS filter" !CP.print_formula) lhs_fil pos;               
+            DD.devel_hprint (add_str "LHS simpl" !CP.print_formula) lhs_simps pos;               
             DD.devel_hprint (add_str "RHS" !CP.print_formula) rhs_xpure pos;
             DD.devel_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels pos;
             DD.devel_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig pos;
@@ -742,7 +747,8 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                       if (CP.diff_svl (CP.fv new_p_good) iv_orig)==[] then ans,[] 
                       else 
                         let vs = List.filter CP.is_rel_var (CP.fv f) in
-                        ans,[(RelAssume vs,f,new_p_good)]
+                        (* ans,[(RelAssume vs,f,new_p_good)] *)
+                        ans,[(RelAssume vs,lhs_xpure,rhs_xpure)]
             in (None,ans,rel_ass)
           end
               (* Thai: Should check if the precondition overlaps with the orig ante *)

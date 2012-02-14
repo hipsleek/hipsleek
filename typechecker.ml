@@ -1231,8 +1231,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let pp, exc = 
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
-                    let (new_spec,_,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                    let (new_spec,fm,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
+                    Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                     let new_spec = CF.simplify_ann new_spec in
                     let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -1284,8 +1285,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
-                            Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                            Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_assume no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
