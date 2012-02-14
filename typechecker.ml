@@ -1,5 +1,6 @@
 module DD = Debug
 open Globals
+open Global_var
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Solver
@@ -266,6 +267,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
             (new_spec,[],rel,br)
 	  | CF.EBase b ->
+            let vs = b.CF.formula_ext_explicit_inst @ b.CF.formula_ext_implicit_inst in
+            stk_vars # push_list vs;
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
 	        let nctx = 
 	          if !Globals.max_renaming 
@@ -273,6 +276,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	          else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in
 			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
 	        let (c,pre,rels,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 do_infer in
+            stk_vars # pop_list vs;
 	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             (*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
             let base = b.CF.formula_ext_base in
@@ -335,6 +339,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             in
             (new_c,[],rel,f)
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
+            let curr_vars = stk_vars # get_stk in
+            Debug.info_hprint (!CP.print_svl) curr_vars no_pos;
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
 	              {Error.error_loc = pos_spec;
@@ -649,6 +655,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_pos = pos}) -> begin
             (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	        let _ = proving_loc#set pos in
+            let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
 	        let field_types, vs = List.split lvars in
 	        let v_prim = CP.SpecVar (v_t, v, Primed) in
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
@@ -731,7 +738,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 end
               else 
                 begin
+                  stk_vars # push_list lsv;
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
+                  stk_vars # pop_list lsv;
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
 		          (* let _ = print_string ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1) *)
                   (*   ^ "\n") in *)
@@ -759,7 +768,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_body = e;
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
+            let vss = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) local_vars in
+            stk_vars # push_list vss;
 	        let ctx1 = check_exp prog proc ctx e post_start_label in
+            stk_vars # pop_list vss;
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
@@ -1193,6 +1205,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
 		      begin
+                stk_vars # reset;
+                (* push proc.proc_args *)
+                let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
+                stk_vars # push_list args;
                 let pr_flag = not(!phase_infer_ind) in
 			    if !Globals.print_proc && pr_flag then 
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
