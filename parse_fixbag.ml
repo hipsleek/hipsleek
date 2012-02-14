@@ -53,13 +53,16 @@ EXTEND Gram
 GLOBAL: expression or_formula formula pformula exp specvar;
   expression:
   [ "expression" NONA
-    [ x = LIST1 or_formula -> x ]
+    [ x = LIST1 or_formula -> x
+    ]
   ];
 
   or_formula:
   [ "or_formula" LEFTA
     [ x = SELF; "||"; y = SELF -> mkOr x y None loc
-    | x = formula -> x ]
+    | x = formula -> x
+    | "true" -> mkTrue loc 
+    ]
   ];
 
   formula:

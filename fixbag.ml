@@ -304,7 +304,7 @@ let arr_args rcase_orig rel ante_vars =
 (*      (fun _ _ -> propagate_fml rcase bcase) rcase bcase*)
 
 let pre_process vars fmls =
-  List.filter (fun f -> let vs = List.filter (fun x -> CP.type_of_spec_var x != Int) (CP.fv f) 
+  List.filter (fun f -> let vs = List.filter (fun x -> CP.is_bag_typ x) (CP.fv f) 
     in CP.subset vs vars) fmls
 
 let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
@@ -380,7 +380,7 @@ let helper input_pairs rel ante_vars =
   let pfs,no = propagate_rec pfs rel ante_vars in
   let pfs = List.map (fun p -> 
     let exists_vars = CP.diff_svl (List.filter 
-      (fun x -> CP.type_of_spec_var x == Int) (CP.fv p)) (CP.fv rel) in 
+      (fun x -> not(CP.is_bag_typ x || CP.is_rel_typ x)) (CP.fv p)) (CP.fv rel) in 
     CP.mkExists exists_vars p None no_pos) pfs in
   match pfs with
   | [] -> []
@@ -435,8 +435,10 @@ let compute_fixpoint input_pairs ante_vars =
     | [hd] -> 
       let pfs,no = propagate_rec pfs hd ante_vars in
       let pfs = List.map (fun p -> 
+        let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
+        let p = CP.remove_cnts exists_node_vars p in
         let exists_vars = CP.diff_svl (List.filter 
-          (fun x -> CP.type_of_spec_var x == Int) (CP.fv p)) (CP.fv hd) in 
+          (fun x -> not(CP.is_bag_typ x || CP.is_rel_typ x)) (CP.fv p)) (CP.fv hd) in 
         CP.mkExists exists_vars p None no_pos) pfs in
       let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in [(hd,pf,no)]
     | _ -> List.concat (List.map (fun r -> helper input_pairs r ante_vars) rels)
