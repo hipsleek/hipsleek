@@ -105,7 +105,7 @@ and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
 		proc_return : typ;
-		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
+	mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
     (* this puts invariant of pre into the post-condition *)
@@ -1412,7 +1412,7 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let rec check_proper_return cret_type exc_list f = 
+let rec check_proper_return cret_type exc_list f =
   let overlap_flow_type fl res_t = match res_t with 
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
@@ -1420,7 +1420,8 @@ let rec check_proper_return cret_type exc_list f =
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		  if b_rez then
+		  if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
+            & not(F.equal_flow_interval !top_flow_int fl_int) then
 			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}

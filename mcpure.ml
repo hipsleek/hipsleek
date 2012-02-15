@@ -1477,15 +1477,17 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in
-  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
+  let n_ante = if n_ante == [] then ante_disj else n_ante in
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
+  let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
+  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
 
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
+  let r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
   r)
 
@@ -1667,7 +1669,7 @@ let mimply_one_conj ante_memo0 conseq t_imply imp_no =
     else (Gen.Profiling.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
   else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
-let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
+let mimply_one_conj ante_memo0 conseq_conj t_imply imp_no = 
   Debug.no_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
@@ -1693,7 +1695,7 @@ let mimply_conj ante_memo0 conseq_conj t_imply imp_no =
       (fun _ _ -> mimply_conj ante_memo0 conseq_conj t_imply imp_no) ante_memo0 conseq_conj
 
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Debug.no_2 "imply_memo" (!print_mp_f)
+ Debug.no_2 "imply_memo 1" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1738,7 +1740,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   imply_memo ante_memo0 conseq_memo t_imply imp_no
 
 let imply_memo ante_memo0 conseq_memo t_imply imp_no=
- Debug.no_2 "imply_memo" (!print_mp_f)
+ Debug.no_2 "imply_memo 2" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1862,7 +1864,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
-let merge_mems_debug f1 f2 slice_dup = 
+let merge_mems f1 f2 slice_dup = 
   Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
@@ -1976,7 +1978,17 @@ let subst_avoid_capture_memo from t f = match f with
 let memo_subst s f = match f with
   | MemoF f -> MemoF (memo_subst s f)
   | OnePF f -> OnePF (subst s f)  
- 
+
+let list_pos_of_mix_formula mf=
+  match mf with
+  | MemoF f -> []
+  | OnePF f -> (Cpure.list_pos_of_formula f [])
+
+let subst_pos_mix_formula p mf=
+ match mf with
+  | MemoF f -> mf
+  | OnePF f -> OnePF (Cpure.subst_pos_formula p f)
+
 let elim_redundant sf f = match f with
   | MemoF f -> MemoF (elim_redundant sf f)
   | OnePF _ -> f

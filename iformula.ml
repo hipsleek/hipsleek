@@ -42,6 +42,7 @@ and ext_base_formula =
 		 formula_ext_exists :  (ident * primed) list;
 		 formula_ext_base : formula;
 		 formula_ext_continuation : struc_formula;
+        (* formula_ext_complete: bool;*)
 		 formula_ext_pos : loc
 	}
 (*  
@@ -265,6 +266,7 @@ and mkETrue flow pos = [EBase {
 		 formula_ext_exists = [];
 		 formula_ext_base = mkTrue flow pos;
 		 formula_ext_continuation = [];
+         (*formula_ext_complete = true;*)
 		 formula_ext_pos = pos	}]
 
 and mkEFalse flow pos =[EBase {
@@ -273,6 +275,7 @@ and mkEFalse flow pos =[EBase {
 		 formula_ext_exists = [];
 		 formula_ext_base = mkFalse flow pos;
 		 formula_ext_continuation = [];
+        (* formula_ext_complete = true;*)
 		 formula_ext_pos = pos	}]
 																				
 and mkEOr f1 f2 pos = 
@@ -282,12 +285,13 @@ and mkEOr f1 f2 pos =
   else if isEConstFalse f2 then f1
   else List.rev_append f1 f2
 
-and mkEBase ei ii e b c l= EBase {
+and mkEBase ei ii e b c com l= EBase {
 						 	formula_ext_explicit_inst = ei;
 						 	formula_ext_implicit_inst = ii;
 							formula_ext_exists = e;
 						 	formula_ext_base = b;				
 						 	formula_ext_continuation = c;
+                            (*formula_ext_complete = com;*)
 						 	formula_ext_pos = l;}
   
 and mkOr f1 f2 pos =
@@ -638,6 +642,7 @@ let formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
+                    (*formula_ext_complete = true;*)
 		 			formula_ext_pos = b.formula_base_pos})]
 		| Exists b-> [EBase ({
 			 		formula_ext_explicit_inst =[];
@@ -645,6 +650,7 @@ let formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
+                    (*formula_ext_complete = true;*)
 		 			formula_ext_pos = b.formula_exists_pos})]
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
 	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
@@ -843,6 +849,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			  formula_ext_exists = s_exist;
 			  formula_ext_base = sb;
 			  formula_ext_continuation = sc;
+             (* formula_ext_complete = b.formula_ext_complete;*)
 			  formula_ext_pos = b.formula_ext_pos	})
 	(*| EVariance b ->
 		  (* let subst_list_of_pair sst ls = match sst with
@@ -1009,6 +1016,7 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 				 formula_ext_exists = b.formula_ext_exists ;
 				 formula_ext_base = float_out_exps_from_heap b.formula_ext_base;
 				 formula_ext_continuation = float_out_exps_from_heap_struc b.formula_ext_continuation;
+                (* formula_ext_complete = b.formula_ext_complete;*)
 				 formula_ext_pos = b.formula_ext_pos			
 				})
 		(*| EVariance b -> EVariance ({ b with

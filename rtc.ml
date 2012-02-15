@@ -226,6 +226,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
 					   I.proc_return = Bool;
+                   (*    I.proc_important_vars = [];*)
 					   I.proc_static_specs = [];
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
@@ -296,6 +297,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
 					   I.proc_return = Bool;
+                      (* I.proc_important_vars = [];*)
 					   I.proc_static_specs = [];
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;

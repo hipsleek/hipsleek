@@ -1561,10 +1561,10 @@ and pos_of_exp (e : exp) = match e with
 
 and pos_of_b_formula (b: b_formula) = 
 	let (p, _) = b in
-	match p with
-	| LexVar l_info -> l_info.lex_loc
-	| SubAnn (_, _, p) -> p
-	| BConst (_, p) -> p
+ match p with
+  | LexVar l_info -> l_info.lex_loc
+  | SubAnn (_, _, p) -> p
+  | BConst (_, p) -> p
   | BVar (_, p) -> p
   | Lt (_, _, p) -> p
   | Lte (_, _, p) -> p
@@ -1588,13 +1588,59 @@ and pos_of_b_formula (b: b_formula) =
   | RelForm (_, _, p) -> p
 
 and pos_of_formula (f: formula) =
-	match f with
-	| BForm (b, _) -> pos_of_b_formula b
+  match f with
+  | BForm (b, _) -> pos_of_b_formula b
   | And (_, _, p) -> p
   | Or (_, _, _, p) -> p
   | Not (_, _, p) -> p
   | Forall (_, _, _, p) -> p
   | Exists (_, _, _, p) -> p
+
+(*used by error explanation*)    
+and list_pos_of_formula f rs: loc list=
+  match f with
+    | BForm (bf , _) -> rs @ [pos_of_b_formula bf]
+    | And (f1, f2, l) -> let rs1 = (list_pos_of_formula f1 rs) in
+                         (list_pos_of_formula f2 rs1)
+    | Or (f1, f2, _, l)-> let rs1 = (list_pos_of_formula f1 rs) in
+                         (list_pos_of_formula f2 rs1)
+    | Not (f,_, l) -> rs @ [l]
+    | Forall (_, f,_, l) -> rs @ [l]
+    | Exists (_, f,_, l) -> rs @ [l]
+
+and subst_pos_pformula p pf= match pf with
+  | LexVar l_info -> LexVar {l_info with lex_loc=p}
+  | SubAnn (e1, e2, _) -> SubAnn (e1, e2, p)
+  | BConst (b,_) -> BConst (b,p)
+  | BVar (sv, _) -> BVar (sv, p)
+  | Lt (e1, e2, _) -> Lt (e1, e2, p)
+  | Lte (e1, e2, _) -> Lte (e1, e2, p)
+  | Gt (e1, e2, _) -> Gt (e1, e2, p)
+  | Gte (e1, e2, _) -> Gte (e1, e2, p)
+  | Eq (e1, e2, _) -> Eq (e1, e2, p)
+  | Neq (e1, e2, _) -> Neq (e1, e2, p)
+  | EqMax (e1, e2,e3, _) -> EqMax (e1, e2,e3, p)
+  | EqMin (e1, e2,e3, _) -> EqMin (e1, e2,e3, p)
+  | BagIn (sv, e, _) -> BagIn (sv, e, p)
+  | BagNotIn (sv, e, _) -> BagNotIn (sv, e, p)
+  | BagSub(e1, e2, _) -> BagSub (e1, e2, p)
+  | BagMin (sv1, sv2, _) -> BagMin (sv1, sv2, p)
+  | BagMax (sv1, sv2, _) -> BagMax (sv1, sv2, p)
+  | ListIn (e1, e2, _) -> ListIn (e1, e2, p)
+  | ListNotIn (e1, e2, _) -> ListNotIn (e1, e2, p)
+  | ListAllN (e1, e2, _) -> ListAllN (e1, e2, p)
+  | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
+  | RelForm (id, el, _) -> RelForm (id, el, p)
+
+and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
+
+and subst_pos_formula p f = match f with
+  | BForm (bf, ofl) -> BForm (subst_pos_bformula p bf, ofl)
+  | And (f1, f2, _) ->  And (subst_pos_formula p f1, subst_pos_formula p f2, p)
+  | Or (f1, f2, ofl, _) ->  Or (subst_pos_formula p f1, subst_pos_formula p f2, ofl, p)
+  | Not (f, ofl, _) ->  Not (subst_pos_formula p f, ofl, p)
+  | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
+  | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
@@ -1617,7 +1663,7 @@ and fresh_old_name_x (s: string):string =
 
 and fresh_old_name s =
   Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
-      
+
 and fresh_spec_var (sv : spec_var) =
   let old_name = name_of_spec_var sv in
   let name = fresh_old_name old_name in
@@ -2868,7 +2914,12 @@ let fv_var_aset (e:var_aset) = EMapSV.get_elems e
 
 let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> EMapSV.is_equiv aset sv1 sv2 
-        
+
+let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) =
+  let pr = !print_sv in
+  let pr1 = string_of_bool in
+  Debug.no_2 "eq_spec_var_aset" pr pr pr1 
+  (fun _ _ -> eq_spec_var_aset aset sv1 sv2) sv1 sv2
 
 let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
   
@@ -2980,13 +3031,13 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	let tmp2 = List.fold_left (fun s1 -> fun s2 -> SVarSet.union s1 s2) rele_var_set tmp1 in
 	  tmp2
   in
-	(*
+(*
 	  let _ = print_var_set rele_var_set in
 	  let _ = List.map
 	  (fun ffv -> (print_string ("\nrelevants0: f\n" ^ (mona_of_formula (fst ffv)) ^ "\n")); print_var_set (snd ffv))
 	  relevants0
 	  in
-	*)
+*)
 	(*
 	  Perform a fixpoint to select all relevant formulas.
 	*)
@@ -6091,15 +6142,50 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
-let filter_ante (ante : formula) (conseq : formula) : formula =
+let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
 	let new_ante = filter_var ante fvar in
-	  new_ante
+    new_ante
 
 (* automatic slicing of variables *)
 
 (* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
 (* slice_formula@22 EXIT out :[([z,x],[ z<x, 0<=x]),([y],[ 0<=y])] *)
+
+let elim_equi_var f qvar=
+  let st, pp1 = get_subst_equation_formula f qvar false in
+  if not (Gen.is_empty st) then
+	subst_term st pp1
+  else f
+
+let rec get_equi_vars (f : formula) : (spec_var list) = match f with
+	| BForm ((b,a),l) -> get_equi_vars_b b
+	| And (f1,f2,l) ->
+		let g1 = get_equi_vars f1 in
+		let g2 = get_equi_vars f2 in
+			g1@g2
+	| Or (f1,f2,l,p) ->
+        	let g1 = get_equi_vars f1 in
+		    let g2 = get_equi_vars f2 in
+			g1@g2
+    | Not (nf,_,_) -> get_equi_vars nf
+	| _ -> []
+
+and get_equi_vars_b f =
+  let helper e=
+    match e with
+      | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
+      | _ -> []
+  in
+  match f with
+	| Eq (e1,e2,_) -> (helper e1)@(helper e2)
+	| _ -> []
+
+let elim_equi_ante ante cons=
+  let cv = fv cons in
+  let eav_all = get_equi_vars ante in
+  let eav = List.filter (fun v -> not(List.mem v cv)) eav_all in
+  List.fold_left elim_equi_var ante eav
 
 let slice_formula (fl : formula list) : (spec_var list * formula list) list =
   let repart ac f = 
@@ -6194,11 +6280,29 @@ let find_may_failures imply pairs =
   let pairs = List.concat pairs in
   List.filter (fun (a,c) ->  not(imply a c)) pairs
 
+let remove_redundant (f:formula):formula =
+  let l_conj = split_conjunctions f in
+  let rec helper ls rs=
+    match ls with
+      | [] -> rs
+      | f::fs -> if List.exists (equalFormula f) fs then
+            helper fs rs
+          else (match f with
+            | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+                  helper fs rs
+                else helper fs rs@[f]
+            | _ -> helper fs rs@[f]
+          )
+  in
+  let prun_l = helper l_conj [] in
+  join_conjunctions prun_l
+
 let find_all_failures is_sat ante cons =
 
   (* let _ = print_string ("find_all_failures: before is_sat" *)
   (*                       ^ "\n\n") in *)
-
+  (*remove duplicate, a=a*)
+  let ante = (*remove_dup_constraints*) remove_redundant ante in
   let cs= split_conjunctions cons in
   let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
   let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
@@ -6248,7 +6352,7 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
     simpl ante
   else ante 
   in
-  filter_ante n_a conseq
+   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
@@ -6585,6 +6689,7 @@ let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
 
+
 (* An Hoa : REMOVE PRIMITIVE CONSTRAINTS IF should_elim EVALUATE TO true *)
 let remove_primitive should_elim e =
 	let rec elim_formula f = match f with
@@ -6625,8 +6730,8 @@ let remove_primitive should_elim e =
 			| None -> mkTrue no_pos
 			| Some f -> f
 
+
 (** An Hoa : SIMPLIFY PURE FORMULAE **)
-	
 (* An Hoa : remove redundant identity constraints. *)
 let rec remove_redundant_constraints (f : formula) : formula = match f with
 	| BForm ((b,a),l) -> BForm ((remove_redundant_constraints_b b,a),l)
@@ -6665,7 +6770,6 @@ let rec reduce_pure (f : formula) (bv : spec_var list) =
 	(* Solve the equation to find the substitution *)
 	let sst,strrep = !solve_equations eqns bv in
 		(sst,strrep)
-
 
 let compute_instantiations_x pure_f v_of_int avail_v =
   let ldisj = list_of_conjs pure_f in
