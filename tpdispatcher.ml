@@ -889,10 +889,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = Cpure.add_ann_constraints imm_vrs f in
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
+  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
+  let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
   let res = 
   match !tp with
@@ -919,7 +921,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               | _ -> Cvc3.is_sat f sat_no
                     (* Cvc3.is_sat f sat_no *)
           end
-    | Z3 -> Smtsolver.is_sat f sat_no
+    | Z3 -> z3_is_sat f
     | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq -> (*Coq.is_sat f sat_no*)
           if (is_list_constraint wf) then
@@ -1072,6 +1074,10 @@ let tp_is_sat f sat_no do_cache =
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
+
+let is_sat_raw (f: CP.formula) =
+  (* let f = drop_rel_formula f in *)
+  tp_is_sat_no_cache f "999"
     
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
@@ -1183,18 +1189,72 @@ let simplify (f : CP.formula) : CP.formula =
       with | _ -> f)
 
 (* such a simplifier loses information *)
-let simplify_raw (f: CP.formula) = 
-  let rels = CP.get_RelForm f in
-  let ids = List.concat (List.map get_rel_id_list rels) in
-  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-  let res_memo = simplify f_memo in
-  CP.restore_memo_formula subs bvars res_memo
+let rec simplify_raw (f: CP.formula) = 
+  let is_bag_cnt = 
+    match !tp with
+    | Mona | MonaH -> if is_bag_constraint f then true else false
+    | _ -> false
+  in
+  if is_bag_cnt then
+    let new_f = trans_dnf f in
+    let disjs = list_of_disjs new_f in
+    let disjs = List.map (fun disj -> 
+        let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+        let others = simplify_raw (conj_of_list others no_pos) in
+        conj_of_list (others::bag_cnts) no_pos
+      ) disjs in
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  else
+    let rels = CP.get_RelForm f in
+    let ids = List.concat (List.map get_rel_id_list rels) in
+    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+    let res_memo = simplify f_memo in
+    CP.restore_memo_formula subs bvars res_memo
 
-let simplify_raw_w_rel (f: CP.formula) = simplify f
+let simplify_raw_w_rel (f: CP.formula) = 
+  let is_bag_cnt = 
+    match !tp with
+    | Mona | MonaH -> if is_bag_constraint f then true else false
+    | _ -> false
+  in
+  if is_bag_cnt then
+    let new_f = trans_dnf f in
+    let disjs = list_of_disjs new_f in
+    let disjs = List.map (fun disj -> 
+        let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+        let others = simplify (conj_of_list others no_pos) in
+        conj_of_list (others::bag_cnts) no_pos
+      ) disjs in
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  else simplify f
 	
 let simplify_raw f =
 	let pr = !CP.print_formula in
 	Debug.no_1 "simplify_raw" pr pr simplify_raw f
+
+(* such a simplifier loses information *)
+let simplify_exists_raw (f: CP.formula) pre_vars = 
+  let is_bag_cnt = 
+    match !tp with
+    | Mona | MonaH -> if is_bag_constraint f then true else false
+    | _ -> false
+  in
+  if is_bag_cnt then
+    let new_f = trans_dnf f in
+    let disjs = list_of_disjs new_f in
+    let disjs = List.map (fun disj -> 
+        let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+        let others = simplify (conj_of_list others no_pos) in
+        let bag_cnts = List.filter (fun b -> CP.subset (CP.fv b) pre_vars) bag_cnts in
+        conj_of_list (others::bag_cnts) no_pos
+      ) disjs in
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  else
+    let rels = CP.get_RelForm f in
+    let ids = List.concat (List.map get_rel_id_list rels) in
+    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+    let res_memo = simplify f_memo in
+    CP.restore_memo_formula subs bvars res_memo
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
@@ -1399,11 +1459,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante_w = CP.drop_rel_formula ante  in *)
   (* let conseq_s = CP.strong_drop_rel_formula conseq in *)
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
+  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
+  let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
@@ -1425,7 +1487,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
                 (* Cvc3.imply ante conseq imp_no *)
       end
-  | Z3 -> Smtsolver.imply ante conseq timeout
+  | Z3 -> z3_imply ante conseq
   | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
@@ -1777,9 +1839,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let conseq = elim_exists conseq in
 	    (* let _ = print_string ("imply_timeout: [Imply] " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
 		let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> 
-            let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+		let pairs = List.map (fun cons ->
+            let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
+            let (ante,cons) = simpl_pair false (requant ante, requant cons) in
+            let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
             let ante = CP.remove_dup_constraints ante in
+            let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
             match process with
               | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
               | _ -> assumption_filter ante cons) split_conseq in
@@ -1823,7 +1888,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
 
 
@@ -2663,10 +2728,4 @@ let change_prover prover =
 
 let imply_raw ante conseq  =
   tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
-
-let is_sat_raw (f: CP.formula) =
-  (* let f = drop_rel_formula f in *)
-  tp_is_sat_no_cache f "999"
-
-
 

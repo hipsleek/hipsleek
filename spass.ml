@@ -589,9 +589,10 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
       let fomega_conseq = Omega.omega_of_formula conseq in
       let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
+      let (pr_w,pr_s) = Cpure.drop_complex_ops in
       try
         let _ = print_endline "-- use Omega.imply_..." in
-        match (Omega.imply_with_check ante conseq "" timeout) with
+        match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
         | None -> (false, true)
         | Some r -> (r, false)
       with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
@@ -662,8 +663,9 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       let _ = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
               (if (can_spass_handle_formula f) then "true" else "false")) in
       let _ = print_endline "-- use Omega.is_sat..." in *)
+      let (pr_w,pr_s) = Cpure.drop_complex_ops in
       try
-        let optr = (Omega.is_sat_with_check f sat_no) in
+        let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)
