@@ -14,15 +14,29 @@ module MCP = Mcpure
 module CF = Cformula
 module TP = Tpdispatcher
 
+let keep_dist f = match f with
+  | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2)
+  | _ -> true
+
+(* TODO Cristina : can remove duplicates too ;
+   remove x=x*)
+let simplify_conjs f =
+  let ls = split_conjunctions f in
+  let ls = List.filter keep_dist ls in
+  join_conjunctions ls
+
+let simplify_conjs f =
+  Debug.ho_1 "simplify_conjs" (!CP.print_formula) (!CP.print_formula) simplify_conjs f 
+
 let no_infer estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
 let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
- 
+  
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
-   ({estate with es_infer_vars=[];}, iv) 
+  ({estate with es_infer_vars=[];}, iv) 
 
 let remove_infer_vars_partial estate rt =
   let iv = estate.es_infer_vars in
@@ -37,18 +51,18 @@ let remove_infer_vars_partial estate rt =
 
 let rec remove_infer_vars_all_ctx ctx =
   match ctx with
-  | Ctx estate -> 
-        let (es,_) = remove_infer_vars_all estate in
-        Ctx es
-  | OCtx (ctx1, ctx2) -> OCtx (remove_infer_vars_all_ctx ctx1, remove_infer_vars_all_ctx ctx2)
+    | Ctx estate -> 
+          let (es,_) = remove_infer_vars_all estate in
+          Ctx es
+    | OCtx (ctx1, ctx2) -> OCtx (remove_infer_vars_all_ctx ctx1, remove_infer_vars_all_ctx ctx2)
 
 let remove_infer_vars_all_partial_context (a,pc) = 
   (a,List.map (fun (b,c) -> (b,remove_infer_vars_all_ctx c)) pc)
 
 let remove_infer_vars_all_list_context ctx = 
   match ctx with
-  | FailCtx _ -> ctx
-  | SuccCtx lst -> SuccCtx (List.map remove_infer_vars_all_ctx lst)
+    | FailCtx _ -> ctx
+    | SuccCtx lst -> SuccCtx (List.map remove_infer_vars_all_ctx lst)
 
 let remove_infer_vars_all_list_partial_context lpc = 
   List.map remove_infer_vars_all_partial_context lpc
@@ -745,16 +759,16 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
               match lhs_rels with
                 | None -> ans,[]
                 | Some f ->
-                      let keep_dist f = match f with
-                        | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2)
-                        | _ -> true
-                      in
-                      (* TODO Cristina : can remove duplicates too ; remove x=x*)
-                      let simplify_conjs f =
-                        let ls = split_conjunctions f in
-                        let ls = List.filter keep_dist ls in
-                        join_conjunctions lse
-                      in
+                      (* let keep_dist f = match f with *)
+                      (*   | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2) *)
+                      (*   | _ -> true *)
+                      (* in *)
+                      (* (\* TODO Cristina : can remove duplicates too ; remove x=x*\) *)
+                      (* let simplify_conjs f = *)
+                      (*   let ls = split_conjunctions f in *)
+                      (*   let ls = List.filter keep_dist ls in *)
+                      (*   join_conjunctions ls *)
+                      (* in *)
                       if (CP.diff_svl (CP.fv new_p_good) iv_orig)==[] then ans,[] 
                       else 
                         let vars = stk_vars # get_stk in

@@ -1304,8 +1304,12 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
             | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq v1 w1)&& (eq v2 w2)
             | _ -> false
           *)
-          
+
 and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
+  Debug.no_2 "eqExp_f" !print_exp !print_exp string_of_bool (eqExp_f_x eq) e1 e2 
+
+and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
+  let rec helper e1 e2 =
   match (e1, e2) with
     | (Null(_), Null(_)) -> true
     | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
@@ -1314,23 +1318,24 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (Subtract(e11, e12, _), Subtract(e21, e22, _))
     | (Max(e11, e12, _), Max(e21, e22, _))
     | (Min(e11, e12, _), Min(e21, e22, _))
-    | (Add(e11, e12, _), Add(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
-    | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
-    | (Div(e11, e12, _), Div(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
+    | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
+    | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
+    | (Div(e11, e12, _), Div(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
     | (Bag(e1, _), Bag(e2, _))
     | (BagUnion(e1, _), BagUnion(e2, _))
     | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_list_f eq e1 e2)
-    | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+    | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (helper e1 e3) & (helper e2 e4)
     | (List (l1, _), List (l2, _))
-    | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp_f eq a b)) l1 l2 
+    | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (helper a b)) l1 l2 
       else false
-    | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
+    | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (helper e1 d1) && (helper e2 d2)
     | (ListHead (e1, _), ListHead (e2, _))
     | (ListTail (e1, _), ListTail (e2, _))
     | (ListLength (e1, _), ListLength (e2, _))
-    | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
+    | (ListReverse (e1, _), ListReverse (e2, _)) -> (helper e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
+  in helper e1 e2
 
 and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
@@ -7263,7 +7268,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Debug.ho_1 "simplify_disj_new" pr pr simplify_disj_new f
+  Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
 
 let fv_wo_rel (f:formula) =
   let vs = fv f in

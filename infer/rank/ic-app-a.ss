@@ -28,6 +28,7 @@ void append1(node x, node y)
 {
    if (x.next==null) {
      x.next=y;
+
    } else {
       append1(x.next,y);
    }
@@ -46,11 +47,11 @@ void append2(node x, node y)
 }
 
 void append3(node x, node y)
-  infer [l1,s2]//,s1,l2]
-  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null 
+  //infer [l1,s2]//,s1,l2]
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & l1<=s2
      //& s1<=s2 
      //& l1<=s2
-  ensures x::ll3<n+m,s1,l2>  ;
+  ensures x::ll3<n+m,s3,l2> & s1<=s3; 
 {
    if (x.next==null) {
      //assume false;
