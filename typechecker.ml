@@ -340,7 +340,11 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             (new_c,[],rel,f)
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
             let curr_vars = stk_vars # get_stk in
-            Debug.info_hprint (!CP.print_svl) curr_vars no_pos;
+            let ovars = fv post_cond in
+            let ov = diff_svl ovars curr_vars in
+            out_vars # set ov ;
+            Debug.info_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
+            Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos;
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
 	              {Error.error_loc = pos_spec;
