@@ -744,13 +744,22 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
               let ans =Some new_p_good in
               match lhs_rels with
                 | None -> ans,[]
-                | Some f -> 
+                | Some f ->
+                      let keep_dist f = match f with
+                        | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2)
+                        | _ -> true
+                      in
+                      let simplify_conjs f =
+                        let ls = split_conjunctions f in
+                        let ls = List.filter keep_dist ls in
+                        join_conjunctions ls
+                      in
                       if (CP.diff_svl (CP.fv new_p_good) iv_orig)==[] then ans,[] 
                       else 
                         let vars = stk_vars # get_stk in
                         let ra = MCP.pure_ptr_equations lhs_xpure in
                         let (subs,rest) = CP.simplify_subs ra vars [] in
-                        let nsubs = CP.norm_subs subs in
+                        let nsubs = CP.norm_subs (rest@subs) in
                         let asubs = rest@nsubs in
                         Debug.info_hprint (add_str "alias" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ra no_pos;
                         Debug.info_hprint (add_str "rest" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rest no_pos;
@@ -758,7 +767,9 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                         Debug.info_hprint (add_str "nsubs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) nsubs no_pos;
                         let vs = List.filter CP.is_rel_var (CP.fv f) in
                         let n_rhs = (CP.subst asubs rhs_xpure) in
-                        let n_lhs = CP.filter_ante (CP.subst asubs lhs_xpure) n_rhs in
+                        let lhs = (CP.subst asubs lhs_xpure) in
+                        let lhs = simplify_conjs lhs in
+                        let n_lhs = CP.filter_ante lhs n_rhs in
                         (* ans,[(RelAssume vs,f,new_p_good)] *)
                         ans,[(RelAssume vs,n_lhs,n_rhs)]
             in (None,ans,rel_ass)
