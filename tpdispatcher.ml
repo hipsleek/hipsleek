@@ -895,6 +895,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
+  let spass_is_sat f = Spass.is_sat_ops pr_weak pr_strong f sat_no in
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
   let res = 
   match !tp with
@@ -1019,7 +1020,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         mona_is_sat wf
       else
 		Smtsolver.is_sat f sat_no
-    | SPASS -> Spass.is_sat f sat_no
+    | SPASS -> spass_is_sat f
 
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1466,6 +1467,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
+  let spass_imply a c = Spass.imply_ops pr_weak pr_strong ante conseq timeout in
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in

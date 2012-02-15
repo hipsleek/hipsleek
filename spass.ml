@@ -106,17 +106,23 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : string =
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
 
-and spass_dfg_of_formula f =
+and spass_dfg_of_formula pr_w pr_s f =
   match f with
-  | BForm (b, _)         -> spass_dfg_of_b_formula b
-  | And (f1, f2, _)      -> "and(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
-  | Or (f1, f2, _, _)    -> "or(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
-  | Not (f, _, _)        -> "not(" ^ (spass_dfg_of_formula f) ^ ")"
-  | Forall (sv, f, _, _) -> "forall([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
-  | Exists (sv, f, _, _) -> "exists([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
+  | BForm ((p, _) as bf, _) -> 
+      begin
+        match (pr_w p) with
+        | None -> spass_dfg_of_b_formula bf
+        | Some f -> spass_dfg_of_formula pr_w pr_s f
+      end
+  | And (f1, f2, _)      -> "and(" ^ (spass_dfg_of_formula pr_w pr_s f1) ^ ", " ^ (spass_dfg_of_formula pr_w pr_s f2) ^ ")"
+  | Or (f1, f2, _, _)    -> "or(" ^ (spass_dfg_of_formula pr_w pr_s f1) ^ ", " ^ (spass_dfg_of_formula pr_w pr_s f2) ^ ")"
+  | Not (f, _, _)        -> "not(" ^ (spass_dfg_of_formula pr_w pr_s f) ^ ")"
+  | Forall (sv, f, _, _) -> "forall([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula pr_w pr_s f) ^ ")"
+  | Exists (sv, f, _, _) -> "exists([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula pr_w pr_s f) ^ ")"
 
-let spass_dfg_of_formula f =
-  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_dfg_of_formula f
+let spass_dfg_of_formula pr_w pr_s f =
+  Debug.no_1 "spass_of_formula" !print_pure pr_id 
+    (fun _ -> spass_dfg_of_formula pr_w pr_s f) f
 
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN TPTP FORMAT
@@ -192,14 +198,19 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
 
-and spass_tptp_of_formula f =
+and spass_tptp_of_formula pr_w pr_s f =
   match f with
-  | BForm (b, _)         -> spass_tptp_of_b_formula b
-  | And (f1, f2, _)      -> "(" ^ (spass_tptp_of_formula f1) ^ " & " ^ (spass_tptp_of_formula f2) ^ ")"
-  | Or (f1, f2, _, _)    -> "(" ^ (spass_tptp_of_formula f1) ^ " | " ^ (spass_tptp_of_formula f2) ^ ")"
-  | Not (f, _, _)        -> "~ " ^ (spass_tptp_of_formula f)
-  | Forall (sv, f, _, _) -> "( ! [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
-  | Exists (sv, f, _, _) -> "( ? [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
+  | BForm ((p, _) as bf, _) -> 
+      begin
+        match (pr_w p) with
+        | None -> spass_tptp_of_b_formula bf
+        | Some f -> spass_tptp_of_formula pr_w pr_s f
+      end
+  | And (f1, f2, _)      -> "(" ^ (spass_tptp_of_formula pr_w pr_s f1) ^ " & " ^ (spass_tptp_of_formula pr_w pr_s f2) ^ ")"
+  | Or (f1, f2, _, _)    -> "(" ^ (spass_tptp_of_formula pr_w pr_s f1) ^ " | " ^ (spass_tptp_of_formula pr_w pr_s f2) ^ ")"
+  | Not (f, _, _)        -> "~ " ^ (spass_tptp_of_formula pr_w pr_s f)
+  | Forall (sv, f, _, _) -> "( ! [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula pr_w pr_s f) ^ ")"
+  | Exists (sv, f, _, _) -> "( ? [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula pr_w pr_s f) ^ ")"
 
 let spass_tptp_of_formula f =
   Debug.no_1 "spass_of_formula" !print_pure pr_id spass_tptp_of_formula f
@@ -461,7 +472,7 @@ GENERATE SMT INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 
 (* spass: output for dfg format *)
-let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spec_var list) : string =
+let to_spass_dfg pr_w pr_s (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spec_var list) : string =
   let dfg_description =
     ( "list_of_descriptions.\n"
       ^ "  name({*sleek-problem*}).\n"
@@ -479,13 +490,13 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "  functions[" ^ dfg_constants ^ "].\n"
       ^ "end_of_list.\n\n") in
   let dfg_formulae_axioms =
-    let ante_str = spass_dfg_of_formula ante in
+    let ante_str = spass_dfg_of_formula pr_w pr_s ante in
     let axiom_label = "axiom1" in
     ( "list_of_formulae(axioms).\n"
       ^ "  formula(" ^ ante_str ^ ", " ^ axiom_label ^ ").\n"
       ^ "end_of_list.\n\n") in
   let dfg_formulae_conjectures =
-    let conseq_str = spass_dfg_of_formula conseq in
+    let conseq_str = spass_dfg_of_formula pr_w pr_s conseq in
     let conseq_label = "conjecture1" in
     ( "list_of_formulae(conjectures).\n"
       ^ "  formula(" ^ conseq_str ^ ", " ^ conseq_label ^ ").\n"
@@ -508,13 +519,13 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "end_problem.\n\n") in
   result
 
-let to_spass_tptp (ante: Cpure.formula) (conseq: Cpure.formula) : string =
-  let fof_ante = "fof(ante, axiom, (" ^ (spass_tptp_of_formula ante) ^ ") ).\n" in
-  let fof_conseq = "fof(conseq, conjecture, (" ^ (spass_tptp_of_formula conseq) ^ ") ).\n" in
+let to_spass_tptp pr_w pr_s (ante: Cpure.formula) (conseq: Cpure.formula) : string =
+  let fof_ante = "fof(ante, axiom, (" ^ (spass_tptp_of_formula pr_w pr_s ante) ^ ") ).\n" in
+  let fof_conseq = "fof(conseq, conjecture, (" ^ (spass_tptp_of_formula pr_w pr_s conseq) ^ ") ).\n" in
   let result = fof_ante ^ "\n" ^ fof_conseq in
   result
 
-let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
+let to_spass pr_w pr_s (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
   (* let _ = print_endline "** In function to_spass:" in *)
   let conseq = match conseq with
@@ -528,13 +539,13 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
 	    let ante_fv = Cpure.fv ante in
 	    let conseq_fv = Cpure.fv conseq in
 	    let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
-	    let dfg_res = to_spass_dfg ante conseq all_fv
+	    let dfg_res = to_spass_dfg pr_w pr_s ante conseq all_fv
       (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
       in dfg_res
     ) 
     else if (spass_input_format = "tptp") then (
       (* if sending problem in TPTP format to SPASS *)
-      let tptp_res = to_spass_tptp ante conseq in
+      let tptp_res = to_spass_tptp pr_w pr_s ante conseq in
       (* let _ = print_endline ("-- Input problem in TPTP format:\n" ^ tptp_res) in *)
       tptp_res
     ) 
@@ -566,19 +577,19 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 * We also consider unknown is the same as sat
 *)
 
-let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
+let rec spass_imply pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
   (* let _ = "** In function Spass.spass_imply" in *)
   let pr = !print_pure in
   let result = 
     Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
-    (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
+    (fun _ _ -> spass_imply_x pr_weak pr_strong ante conseq timeout) (ante, conseq) timeout in
   (* let omega_result = Omega.imply ante conseq "" timeout in
   let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
   let _ = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result;
     
 
-and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
+and spass_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
   let _ = "** In function Spass.spass_imply_x" in
   let res, should_run_spass =
     if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
@@ -589,17 +600,16 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
       let fomega_conseq = Omega.omega_of_formula conseq in
       let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
-      let (pr_w,pr_s) = Cpure.drop_complex_ops in
       try
         let _ = print_endline "-- use Omega.imply_..." in
-        match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
+        match (Omega.imply_with_check pr_weak pr_strong ante conseq "" timeout) with
         | None -> (false, true)
         | Some r -> (r, false)
       with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem" in *)
-    let spass_input = to_spass ante (Some conseq) in
+    let spass_input = to_spass pr_weak pr_strong ante (Some conseq) in
     let validity =
       if (spass_input_mode = "file") then
         check_problem_through_file spass_input timeout
@@ -619,9 +629,13 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
   else
     res
 
+let imply_ops pr_weak pr_strong ante conseq timeout =
+  spass_imply pr_weak pr_strong ante conseq timeout
+
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
+  let (pr_w, pr_s) = Cpure.drop_complex_ops in
   (* let _ = print_endline "** In function Spass.imply:" in *)
-  let result = spass_imply ante conseq timeout in
+  let result = spass_imply pr_w pr_s ante conseq timeout in
   (* let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
   result
 
@@ -636,7 +650,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
     result
   with Illegal_Prover_Format s -> (
     print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+    print_endline ("Apply Spass.imply on ante Formula :"^(!print_pure ante));
     print_endline ("and conseq Formula :"^(!print_pure conseq));
     flush stdout;
     failwith s
@@ -644,7 +658,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function Spass.imply:" in *)
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1_loop "spass.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -652,7 +666,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 * We also consider unknown is the same as sat
 *)
 
-let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
+let spass_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* debug *)
   (* let _ = print_endline "** In function Spass.spass_is_sat:" in *)
   (* anything that SPASS counldn't handle will be transfer to Omega *)
@@ -663,9 +677,8 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       let _ = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
               (if (can_spass_handle_formula f) then "true" else "false")) in
       let _ = print_endline "-- use Omega.is_sat..." in *)
-      let (pr_w,pr_s) = Cpure.drop_complex_ops in
       try
-        let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
+        let optr = (Omega.is_sat_with_check pr_weak pr_strong f sat_no) in
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)
@@ -674,7 +687,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem..." in *)
     (* to check sat of f, spass check the validity of negative(f) or (f => None) *)
-    let spass_input = to_spass f None in
+    let spass_input = to_spass pr_weak pr_strong f None in
     let validity =
       if (spass_input_mode = "file") then
         check_problem_through_file spass_input timeout
@@ -691,12 +704,16 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   else
     res
 
-(* spass *)
-let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
-  spass_is_sat f sat_no spass_timeout_limit
+let is_sat_ops pr_weak pr_strong f sat_no =
+  spass_is_sat pr_weak pr_strong f sat_no spass_timeout_limit
 
 (* spass *)
 let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
+  let (pr_w, pr_s) = Cpure.drop_complex_ops in
+  spass_is_sat pr_w pr_s f sat_no spass_timeout_limit
+
+(* spass *)
+let spass_is_sat pr_w pr_s (f : Cpure.formula) (sat_no : string) : bool =
   let pr = !print_pure in
   let result = Debug.no_1 "spass_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
@@ -708,7 +725,8 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
   (* let _ = print_endline "** In function Spass.is_sat: " in *)
-  let result = spass_is_sat f sat_no in
+  let (pr_w, pr_s) = Cpure.drop_complex_ops in
+  let result = spass_is_sat pr_w pr_s f sat_no in
   (* let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
   result
 
