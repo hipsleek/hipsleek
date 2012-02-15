@@ -111,7 +111,7 @@ and formula_base = {  formula_base_heap : h_formula;
 
 
 and mem_formula = { 
-  mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)
+  mem_formula_mset : CP.DisjSetMV.dpart ; (* list of disjoint vars *)
 }
 
 and formula_or = {  formula_or_f1 : formula;
@@ -357,7 +357,7 @@ let is_eq_view_spec a b =
 (* returns false if unsatisfiable *)
 let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
-  (CP.DisjSetSV.is_sat_dset d)
+  (CP.DisjSetMV.is_sat_dset d)
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos

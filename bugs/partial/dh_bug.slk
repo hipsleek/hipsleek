@@ -6,6 +6,7 @@ data node {
 	node f5;
 }.
 
+/*
 // NOT WORKING
 checkentail  x::node<m,n,#,a,b> * y::node<m,n,#,#,#> 
   |- x::node<m1,#,#,#,#> & a!=b & m=n.
@@ -13,6 +14,7 @@ print residue. //should fail but VALID
 // BUG: why ante = false
 // REASON: consumed heap after MATCHING is not correct.
 // memset should be modifed to support partial fields
+*/
 
 /*
 xpure_heap_mem_enum@3

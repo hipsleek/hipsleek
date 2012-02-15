@@ -308,7 +308,7 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
 	    formula_or_pos = pos}) ->
 	        let m1 = helper f1  in
 	        let m2 = helper f2  in 
-	        {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
+	        {mem_formula_mset = (CP.DisjSetMV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
   in helper f
 
 and formula_2_mem (f : formula) prog : CF.mem_formula = 
@@ -331,7 +331,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	    h_formula_star_pos = pos}) -> 
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
-	        let m = (CP.DisjSetSV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
+	        let m = (CP.DisjSetMV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	        let res = {mem_formula_mset = m;} in
 	        res
       | Phase ({h_formula_phase_rd = h1;
@@ -342,13 +342,15 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	    h_formula_conj_pos = pos}) ->
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
-	        let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
+	        let m = (CP.DisjSetMV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	        {mem_formula_mset = m;}
       | DataNode ({h_formula_data_node = p;
+                   h_formula_data_holes = holes;
 	    h_formula_data_pos = pos}) ->
+            let part = if (holes!=[]) then Some holes else None in
 	        let new_mset = 
-	          if List.mem p evars then CP.DisjSetSV.mkEmpty
-	          else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) in
+	          if List.mem p evars then CP.DisjSetMV.mkEmpty
+	          else CP.DisjSetMV.singleton_dset (p, part) in
 	        {mem_formula_mset = new_mset;}
       | ViewNode ({ h_formula_view_node = p;
         h_formula_view_name = c;
@@ -362,26 +364,26 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
  	        let new_mset = 
               (match lbl_lst with
                 |None ->
-                      if List.mem p evars then CP.BagaSV.mkEmpty
+                      if List.mem p evars then CP.BagaMV.mkEmpty
 	                    else ba 
                 | Some ls -> 
                    lookup_view_baga_with_subs ls vdef from_svs to_svs) in
-	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
+	        {mem_formula_mset = CP.DisjSetMV.one_list_dset new_mset;} 
       | Hole _
       | HTrue
       | HFalse ->
          (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
-         {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+         {mem_formula_mset = CP.DisjSetMV.mkEmpty;}
   in helper f
   
-let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) =
   Debug.no_1 "xpure"
 	  Cprinter.string_of_formula
 	  (fun (r1, _, _, r4) ->
 	      (Cprinter.string_of_mix_formula r1) ^ "#" ^ (Cprinter.string_of_mem_formula r4))
 	  (fun f0 -> xpure_x prog f0) f0
       
-and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
   if (!Globals.allow_imm) then xpure_symbolic prog f0
   else
@@ -395,11 +397,13 @@ and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * (branch_label * C
 (*       Cprinter.string_of_formula pr *)
 (*       (fun _ -> xpure_x prog f0) f0 *)
 
-and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
+and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula)
       = Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
   (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
 
-and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+(*TO CHECK: merge_partial_heaps before xpure*)
+and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) =
+  let h0 = PF.merge_partial_h_formula h0 in (*TO DO: check whether this is correct*)
   if (!Globals.allow_imm) then 
     if (Perm.allow_perm ()) then 
       xpure_heap_symbolic_perm prog h0 which_xpure
@@ -561,9 +565,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
   else (MCP.mkMFalse no_pos, pb, memset)  
 
 (* Return a CF.formula instead of a flatten MCP formula, the heap parts is not complex *)	
-and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) =
   let mset = formula_2_mem f0 prog in 
-  let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.spec_var list) =
+  let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.mem_var list) =
 	match f0 with
       | Or ({ formula_or_f1 = f1;
 	    formula_or_f2 = f2;
@@ -593,8 +597,8 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branc
 			formula_exists_branches = fbr;
 			formula_exists_pos = pos}) = e in 
             let pqh, br, addrs', _ = xpure_heap_symbolic prog qh 1 in
-            let sqvars = (* List.map CP.to_int_var *) qvars in
-            let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' sqvars in
+            let sqvars = List.map (fun v -> (v,None)) qvars in
+            let addrs = Gen.BList.difference_eq CP.eq_mem_var addrs' sqvars in
 
             let n_qp = MCP.merge_mems qp pqh true in
             (*let res_form = MCP.memo_arith_simplify (MCP.memo_pure_push_exists sqvars tmp1) in
@@ -604,7 +608,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branc
 	        
             let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_qp) in
 
-            let rb = CP.merge_branches_with_common br fbr cf sqvars in   
+            let rb = CP.merge_branches_with_common br fbr cf qvars in   
             (n_f0, rb, addrs)
   in
   let pf, pb, pa = xpure_symbolic_helper prog f0 in
@@ -725,19 +729,19 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
       (*   (ph, pb,  memset) *)
       (* else (MCP.mkMFalse no_pos, pb, memset)   *)
 
-and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) = 
   Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
-      (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
+      (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_mem_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
       (fun h0 -> xpure_symbolic_orig prog h0) h0
 	  
 (* xpure approximation without memory enumeration *)
 and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : 
-      (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+      (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) =
   (*use different xpure functions*)
   let xpure_h = if (Perm.allow_perm ()) then xpure_heap_symbolic_perm else xpure_heap_symbolic in
   let mset = formula_2_mem f0 prog in 
-  let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = match f0 with
+  let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list) = match f0 with
     | Or ({ formula_or_f1 = f1;
 	  formula_or_f2 = f2;
 	  formula_or_pos = pos}) ->
@@ -779,17 +783,17 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
 	  formula_exists_branches = fbr;
 	  formula_exists_pos = pos}) ->
           let pqh, br, addrs', _ = xpure_h prog qh 1 in
-          let sqvars = (* List.map CP.to_int_var *) qvars in
-          let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' sqvars in
+          let sqvars = List.map (fun v -> (v,None)) qvars in
+          let addrs = Gen.BList.difference_eq CP.eq_mem_var addrs' sqvars in
 
 		  (*let _ = print_string ("\nxpure_symbolic: qp: " ^ (Cprinter.string_of_mix_formula qp) ^ "\n") in
 		    let _ = print_string ("\nxpure_symbolic: pqh: " ^ (Cprinter.string_of_mix_formula pqh) ^ "\n") in*)
 		  
           let tmp1 = MCP.merge_mems qp pqh true in
-          let res_form = MCP.memo_pure_push_exists sqvars tmp1 in
+          let res_form = MCP.memo_pure_push_exists qvars tmp1 in
           let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true tmp1) in
           (* let n_br = CP.merge_branches br fbr in  *)     
-          let rb = CP.merge_branches_with_common br fbr cf sqvars in   
+          let rb = CP.merge_branches_with_common br fbr cf qvars in   
           (* let wrap_exists f = *)
           (*   let fv = CP.fv f in *)
           (*   let sqvars = List.filter (fun sv -> List.mem sv fv) sqvars in *)
@@ -804,7 +808,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
   let pf, pb, pa = xpure_symbolic_helper prog f0 in
   (pf, pb, pa, mset)
 
-and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) = 
   (*Debug.no_1_opt 
     (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
     "xpure_heap_symbolic" Cprinter.string_of_h_formula 
@@ -813,11 +817,11 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
     (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0*)
   Debug.no_1 
       "xpure_heap_symbolic" Cprinter.string_of_h_formula 
-      (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
+      (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_mem_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
       (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
 
-and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
   if (is_sat_mem_formula memset) then 
@@ -826,15 +830,15 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 
 (* xpure heap symbolic in the presence of permissions *)
 (* similar to xpure_heap_symbolic *)
-and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) = 
   Debug.no_1 
       "xpure_heap_symbolic_perm" Cprinter.string_of_h_formula 
-      (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
+      (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_mem_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
       (fun h0 -> xpure_heap_symbolic_perm_x prog h0 which_xpure) h0
 
 (*xpure heap in the presence of imm and permissions*)
-and xpure_heap_symbolic_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_perm_i prog h0 which_xpure in
   (* (ph, pb, pa, memset) *)
@@ -843,9 +847,12 @@ and xpure_heap_symbolic_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure 
     (ph, pb, pa, memset)
   else (MCP.mkMFalse no_pos, pb, pa, memset)
 
-and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
+and heap_baga (prog : prog_decl) (h0 : h_formula): CP.mem_var list = 
   let rec helper h0 = match h0 with
-    | DataNode ({ h_formula_data_node = p;}) ->[p]
+    | DataNode ({ h_formula_data_node = p; 
+                  h_formula_data_holes = holes;
+                }) ->
+        if (holes!=[]) then [(p, Some holes)] else [(p,None)]
     | ViewNode ({ h_formula_view_node = p;
       h_formula_view_name = c;
       h_formula_view_arguments = vs;
@@ -864,18 +871,20 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | HTrue | Hole _ | HFalse -> [] in
   helper h0
 
-and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
   Debug.no_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
       (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
 
-and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
+      h_formula_data_holes = holes;
 	  h_formula_data_pos = pos}) ->
+          let part = if (holes!=[]) then Some holes else None in
           let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
-          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p])
+          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [(p,part)])
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
 	  h_formula_view_arguments = vs;
@@ -942,26 +951,28 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
   helper h0
 
 (*xpure heap in the presence of imm and permissions*)
-and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
   Debug.no_1 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula pr
       (fun h0 -> xpure_heap_symbolic_perm_i_x prog h0 i) h0
 
-and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.mem_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
+                  h_formula_data_holes = holes;
       h_formula_data_perm = frac;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
+        let part = if (holes !=[]) then Some holes else None in
           let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)
           (match frac with
             | None ->
-	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [],[p])
+	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [],[(p,part)])
             | Some f ->
                   let frac_inv = mkPermInv f in
                   let res = CP.mkAnd non_zero frac_inv no_pos in
-	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [], [p])
+	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [], [(p,part)])
           )
               (* | DataNode ({ h_formula_data_node = p; *)
 	          (*   h_formula_data_label = lbl; *)
@@ -1348,6 +1359,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
               ) ([],[], old_mem) prun_cond in
             
             let l_prune' = 
+              let ba_vars,ba_part = List.split ba_crt in (*TO CHECK*)
+              let ba_crt = ba_vars in (*TO CHECK*)
               let aliases = MCP.memo_get_asets ba_crt new_mem2 in
               let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
               let n_l = List.filter (fun c-> 
@@ -5538,10 +5551,14 @@ and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_
       (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
 
 and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  let eqset = CP.EMapSV.build_eset (MCP.pure_ptr_equations ante) in
+  let eqset = 
+    let vars = (MCP.pure_ptr_equations ante) in
+    let vars = List.map (fun (v1,v2) -> ((v1,None),(v2,None))) vars in
+    CP.EMapMV.build_eset vars
+  in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
-      | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f
+      | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapMV.is_equiv eqset x y) memset f
       | Cpure.And (f1, f2, pos) -> Cpure.And((helper f1), (helper f2), pos)  
       | Cpure.Or (f1, f2, l, pos) -> Cpure.Or((helper f1), (helper f2), l, pos)
             (* | Cpure.Not (f, l, pos) -> Cpure.Not((helper f), l, pos) *)
@@ -5552,8 +5569,12 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
   helper conseq
 
 and solve_ineq_memo_formula (ante : memo_pure) (memset : Cformula.mem_formula) (conseq : memo_pure) : memo_pure =
-  let eqset = CP.EMapSV.build_eset (MCP.ptr_equations_aux_mp false ante) in
-  let eq x y = CP.EMapSV.is_equiv eqset x y in
+  let eqset = 
+    let vars = (MCP.ptr_equations_aux_mp false ante) in
+    let vars = List.map (fun (v1,v2) -> ((v1,None),(v2,None))) vars in (*TO CHECK*)
+    CP.EMapMV.build_eset vars
+  in
+  let eq x y = CP.EMapMV.is_equiv eqset x y in
   let f_memo x = None in
   let f_aset x = None in
   let f_formula x = None in
@@ -5563,7 +5584,10 @@ and solve_ineq_memo_formula (ante : memo_pure) (memset : Cformula.mem_formula) (
       | CP.Neq (e1,e2,_) -> 	if (CP.is_var e1) && (CP.is_var e2) then
 	      let v1 = CP.to_var e1 in
 	      let v2 = CP.to_var e2 in
-	      let discharge = CP.DisjSetSV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
+          let v1 = (v1,None) in
+          let v2 = (v2,None) in
+          let memset = memset.Cformula.mem_formula_mset in
+	      let discharge = CP.DisjSetMV.is_disj eq memset v1 v2 in
 	      let ans = (if discharge then (CP.BConst(true,no_pos),il) else e) in 
           Some ans 
         else None
@@ -5600,7 +5624,9 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
 	        let eq = (fun x y -> sem_eq x y) in
 	        let v1 = CP.to_var e1 in
 	        let v2 = CP.to_var e2 in
-	        let discharge = CP.DisjSetSV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
+            let v1 = (v1,None) in
+            let v2 = (v2,None) in
+	        let discharge = CP.DisjSetMV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
 	        if discharge then 
 		      (* remove the diseq from the conseq *)
 		      CP.mkTrue no_pos
@@ -6194,9 +6220,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
+
+            let consumed_h =  (match rem_l_node with
+		      | HTrue | HFalse -> 
+                  l_node
+              | _ -> 
+                  (*TO DO: this may not be correct because we may also
+                  have to update the holes*)
+                  subst_one_by_one_h rho_0 r_node)
+            in
+              (*TO DO: CAN NOT consume the entire l_node, only comsume it partially*)
               let new_consumed = 
                 if not(isLend (get_imm r_node))
-                then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) mkStarH l_node estate.es_heap pos 
+                then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) 
+                  mkStarH consumed_h estate.es_heap pos 
                 else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		          (*match rem_l_node with 
 		            | HTrue -> let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in mkStarH l_node estate.es_heap pos 
@@ -6553,6 +6590,7 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
         - add disjoint pointers into LHS pure formula
         - for example if RHS contains {x,y}, the constraint x!=y will be added to LHS pure formula
       *)
+      let rsvl,_ = List.split rsvl in (*TO CHECK*)
       let rhs_disj_set_p = CP.mklsPtrNeqEqn
         (rsvl @ (Gen.BList.remove_dups_eq (CP.eq_spec_var) rhs_h_matched_set)) no_pos in
       (*use global information here*)
@@ -6896,6 +6934,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                   - add disjoint pointers into LHS pure formula
                   - for example if RHS contains {x,y}, the constraint x!=y will be added to LHS pure formula
                 *)
+                let rsvl, _  = List.split rsvl in (*TO CHECK*)
                 let rhs_disj_set_p = CP.mklsPtrNeqEqn
                   (rsvl @ (Gen.BList.remove_dups_eq (CP.eq_spec_var) rhs_h_matched_set)) no_pos in
                 (*use global information here*)

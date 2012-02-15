@@ -235,3 +235,97 @@ let hole_abs_of_h_formula (h:h_formula) =
   match h with
     | DataNode hd -> hole_abs_of_h_formula_data hd 
     | _ -> report_error (pos_of_h_formula h) "hole_abs_of_h_formula : data expected"
+
+module DisjSet =
+    functor (Elt : PTR_TYPE) ->
+struct
+  type ptr = Elt.t
+
+  (* disjointness structures*)
+  type dlist = (ptr list) 
+  type dpart = dlist list
+      (* module BG = Baga(Elt) *)
+  let eq = Elt.eq
+  let intersect = Elt.intersect
+
+  module BL_EQ = BListEQ(Elt)
+  open BL_EQ
+
+  (* let is_dupl_baga _ = true *)
+
+  (* an empty difference set *)
+  let mkEmpty : dpart = []
+
+  (* an empty difference set *)
+  let is_empty (d:dpart) : bool = (d==[])
+
+  (* one list difference set *)
+  let one_list_dset (e:dlist) : dpart = [e]
+
+  (* a singleton difference set *)
+  let singleton_dset (e:ptr) : dpart = [[e]]
+
+  let is_dupl_dset (xs:dpart) : bool = 
+    List.exists (check_dups) xs
+
+  (* returns a list of difference sets for element e *)
+  let find_diff (eq:'a->'a->bool) (s: dpart) (e:ptr) : dpart =
+    (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
+
+  (* returns checks if l1/\l2 !=null based on physical equality *)
+  let overlap_q l1 l2 = 
+    List.exists (fun x -> (List.memq x l2)) l1
+
+  (* checks s |- x!=y *)
+  let is_disj (eq:'a->'a->bool) (s: dpart)  (x:ptr) (y:ptr) : bool =
+    if (eq x y) then false 
+    else
+      let l1 = find_diff eq s x in
+      let l2 = find_diff eq s y in
+      (overlap_q l1 l2)
+
+  (* returns s1/\s2 *)
+  let merge_disj_set (s1: dpart) (s2: dpart): dpart =
+    s1@s2
+
+  (*  returns d1*d2 *)
+  let star_disj_set (d1: dpart) (d2: dpart): dpart = (* d1@d2 *)
+    let helper d1 d2 = List.concat (List.map (fun x -> List.map (fun y -> x@y) d2 ) d1) in
+    match d1,d2 with
+      | [],[] -> []
+      | [],d2 -> d2
+      | d1,[] -> d1
+      | d1,d2 -> helper d1 d2
+
+  (* returns d1/\d2 *)
+  let conj_disj_set (d1: dpart) (d2: dpart): dpart = d1@d2
+
+  (*  returns d1\/d2 *)
+  let or_disj_set (d1: dpart) (d2: dpart): dpart = 
+    List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) d2) d1) 
+
+  (* returns s1*s2 *)
+  let star_disj_set (s1: dpart) (s2: dpart): dpart =
+    if is_empty s1 then s2
+    else if is_empty s2 then s1
+    else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
+
+  (* check if there was a conflict in a difference list *)
+  let  is_conflict_list (l:dlist) :bool =
+    let rec helper l =
+      match l with
+        | [] -> false
+        | x::xs -> let b=List.exists (eq x) xs in
+          if b then true
+          else helper xs
+    in helper l
+
+  (* check if there was a conflict in a set of difference lists *)
+  let is_conflict (s: dpart) : bool =
+    List.exists (is_conflict_list) s
+
+  (* false result denotes contradiction *)
+  let is_sat_dset (xs:dpart) : bool = 
+    not(is_dupl_dset xs)
+
+end;;

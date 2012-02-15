@@ -485,9 +485,17 @@ let string_of_derv dr =
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
+let string_of_mem_var ((sv1,part1) as mem1) =
+  let pr_part = pr_option (pr_list string_of_int) in
+  pr_pair string_of_spec_var  pr_part (sv1,part1)
+
+let pr_mem_var x = fmt_string (string_of_mem_var x)
+
 let pr_typed_spec_var x = fmt_string (string_of_spec_var x) (*(string_of_typed_spec_var x)*)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
+
+let pr_list_of_mem_var xs = pr_list_none pr_mem_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
 
@@ -818,9 +826,14 @@ let pr_prunning_conditions cnd pcond = match cnd with
                     "( " ; pr_b_formula c; fmt_string" )->"; pr_formula_label_list c2;)
                     pcond;fmt_string "]") pcond *)
 
-let string_of_ms (m:(P.spec_var list) list) : string =
+(* let string_of_ms (m:(P.spec_var list) list) : string = *)
+(*   let wrap s1 = "["^s1^"]" in *)
+(*   let ls = List.map (fun l -> wrap (String.concat "," (List.map string_of_spec_var l))) m in *)
+(*   wrap (String.concat ";" ls) *)
+
+let string_of_ms (m:((P.spec_var * (int list option)) list) list) : string =
   let wrap s1 = "["^s1^"]" in
-  let ls = List.map (fun l -> wrap (String.concat "," (List.map string_of_spec_var l))) m in
+  let ls = List.map (fun l -> wrap (String.concat "," (List.map CP.string_of_mem_var l))) m in
   wrap (String.concat ";" ls)
 
 let pr_mem_formula  (e : mem_formula) = 
@@ -892,6 +905,7 @@ let rec pr_h_formula h =
           pr_angle (c^perm_str) pr_spec_var svs ;
 	      pr_imm imm;
 	      pr_derv dr;
+          if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
@@ -1623,9 +1637,18 @@ let pr_mater_prop_list (l: mater_property list) : unit =  pr_seq "" pr_mater_pro
 
 let string_of_mater_prop_list l : string = poly_string_of_pr pr_mater_prop_list l
 
+(* pretty printing for a mem_var list *)
+let rec string_of_mem_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_mem_var h 
+  | h::t -> (string_of_mem_var h) ^ "," ^ (string_of_mem_var_list_noparen t)
+;;
+
+let string_of_mem_var_list l = "["^(string_of_mem_var_list_noparen l)^"]" ;;
+
 let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
-      let b = string_of_spec_var_list ba in
+      let b = string_of_mem_var_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in
       fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) l
 
@@ -1660,7 +1683,7 @@ let pr_view_decl v =
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
   pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
   pr_vwrap  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
-  pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
+  pr_vwrap  "bag of addr: " pr_list_of_mem_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
@@ -1752,8 +1775,6 @@ let rec string_of_formulae_list l = match l with
   | (f1, f2)::[] -> "\nrequires " ^ (string_of_formula f1) ^ "\nensures " ^ (string_of_formula f2)  
   | (f1, f2)::t -> "\nrequires " ^ (string_of_formula f1) ^ "\nensures " ^ (string_of_formula f2) ^ (string_of_formulae_list t)
 ;;
-
-
 
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list_noparen l = match l with 
@@ -2443,6 +2464,7 @@ Cast.print_formula := string_of_pure_formula;;
 (* Cast.print_pure_formula := string_of_pure_formula;; *)
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
+Cast.print_mvl := string_of_mem_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;

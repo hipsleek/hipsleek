@@ -1177,7 +1177,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 
 		 let (sxform', sxform_b, saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in
 		 let sxform = trans_exists_to_base sxform' in
-		 
+		 let saddr_vars', _ = List.split saddr_vars' in (*TO CHECK*)
 		 let addr_vars = CP.remove_dups_svl saddr_vars' in
 		 let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
 		 let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) sxform pos in
@@ -1198,6 +1198,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	   else
 		 let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
 		 
+         let addr_vars', _ = List.split addr_vars' in
 		 let addr_vars = CP.remove_dups_svl addr_vars' in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
@@ -6967,8 +6968,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
                 else (c1::a1, (CP.BagaSV.or_baga b1 b2, combine_pures c2 a2))) ([],(CP.BagaSV.mkEmpty,[])) pure_list
       else ((fst (List.split pure_list)),
       (u_baga,List.concat (List.map (fun c->List.map (fun c-> c.memo_formula) c.memo_group_cons)u_inv))) in
-    (* Globals.formula_label list * (CP.BagaSV.baga * CP.b_formula list) *)
-    (* (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list *)
+    (* Globals.formula_label list * (CP.BagaMV.baga * CP.b_formula list) *)
+    (* (formula_label list * (Gen.Baga(P.PtrMV).baga * P.b_formula list)) list *)
     (* let _ = print_endline ("all: "^(Cprinter.string_of_prune_invariants [all])) in *)
     let rec comp i (crt_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) (last_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) =
       if i>l then [all] (* crt_lst   *)(* in case l=1, we just return one answer; not twice*)
@@ -7066,6 +7067,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
     let h,p,_,b,_ = CF.split_components b0 in
     let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in
+    let ba,_ = List.split ba in (*TO CHECK*)
     let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
     let xp = fold_mem_lst fbr true true cm in
     let all_p = fold_mem_lst xp true true p in

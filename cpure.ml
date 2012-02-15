@@ -15,6 +15,8 @@ open Exc.GTable
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+type mem_var = spec_var * (int list option)
+
 let is_hole_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n.[0] = '#'
 
@@ -2581,6 +2583,36 @@ struct
   let string_of = string_of_spec_var
 end;;
 
+let string_of_mem_var ((sv1,part1) as mem1) =
+  let pr_part = pr_option (pr_list string_of_int) in
+  pr_pair string_of_spec_var  pr_part (sv1,part1)
+
+let eq_mem_var ((sv1,part1) as mem1) ((sv2,part2) as mem2) =
+  if not (eq_spec_var sv1 sv2) then false
+  else
+    (match part1 , part2 with
+      | Some ls1 , None -> false
+      | None , Some ls2 -> false
+      | None,None -> true
+      | Some ls1 , Some ls2 ->
+          if (List.length ls1) != (List.length ls2) then false
+          else 
+          let rec helper ls1 ls2 =
+            (match ls1,ls2 with
+              | [],[] -> true
+              | x1::xs1,x2::xs2 ->
+                  let rs = (helper xs1 xs2) in
+                  (x1=x2) && rs)
+          in helper ls1 ls2)
+
+(*mem var*)
+module MV =
+struct 
+  type t = spec_var * ((int list) option)
+  let eq = eq_mem_var
+  let string_of = string_of_mem_var
+end;;
+
 module Ptr =
     functor (Elt:Gen.EQ_TYPE) ->
 struct
@@ -2615,7 +2647,12 @@ module PtrSV = Ptr(SV);;
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
- 
+
+module EMapMV = Gen.EqMap(MV);;
+module PtrMV = Ptr(MV);;
+module BagaMV = Gen.Baga(PtrMV);;
+module DisjSetMV = Gen.DisjSet(PtrMV);;
+
 type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap

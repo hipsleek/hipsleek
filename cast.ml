@@ -61,7 +61,7 @@ and view_decl = {
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
-    mutable view_baga : Gen.Baga(P.PtrSV).baga;
+    mutable view_baga : Gen.Baga(P.PtrMV).baga;
     mutable view_addr_vars : P.spec_var list;
     (* if view has only a single eqn, then place complex subpart into complex_inv *)  
     view_complex_inv : (MP.mix_formula * (branch_label * P.formula) list) option; (*COMPLEX INV for --eps option*)
@@ -72,7 +72,7 @@ and view_decl = {
     view_pt_by_self : ident list;
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
-    view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
+    view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrMV).baga * P.b_formula list )) list ;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
@@ -388,6 +388,7 @@ let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initia
 let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
+let print_mvl = ref (fun (c:P.mem_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -796,16 +797,18 @@ let is_rec_view_def prog (name : ident) : bool =
 
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
-let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : ((P.spec_var * (int list option)) list) = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
   (* let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
-  P.subst_var_list_avoid_capture from_svs to_svs ba
+  let ba_vars,ba_parts = List.split ba in
+  let ba_vars = P.subst_var_list_avoid_capture from_svs to_svs ba_vars in
+  (List.combine ba_vars ba_parts)
 
-let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.mem_var list = 
+      Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_mvl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
@@ -886,7 +889,9 @@ let lookup_view_invs_with_subs rem_br v_def zip  =
 let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
   try 
     let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
-    P.subst_var_list_avoid_capture from_v to_v v
+    let ba_vars,ba_parts = List.split v in
+    let ba_vars = P.subst_var_list_avoid_capture from_v to_v ba_vars in
+    (List.combine ba_vars ba_parts)
   with | Not_found -> []
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
