@@ -5434,7 +5434,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                           | Some pf ->
                                 (match relass with
                                   | [] -> stk_inf_pure # push pf
-                                  | h::_ -> stk_inf_pure # push pf;
+                                  | h::_ -> (* stk_inf_pure # push pf; *)
                                         stk_rel_ass # push h);
                                 let new_pf = MCP.mix_of_pure pf in
                                 let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 

@@ -374,7 +374,7 @@ let rec compute_fixpoint (i:int) input_pairs pre_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  DD.ho_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
       (fun _ _ -> compute_fixpoint_x input_pairs pre_vars specs) input_pairs pre_vars
 
 and compute_fixpoint_x input_pairs ante_vars specs =
@@ -410,7 +410,7 @@ and helper input_pairs rel ante_vars specs =
 (*let compute_fixpoint_aux rel_fml pf ante_vars = *)
 and compute_fixpoint_aux rel = 
   let input_fixcalc = (List.fold_left (fun x y -> x ^ (compute_fixpoint_one y)) "" rel) ^ (compute_bottomup_inp rel) in 
-       DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
+       DD.info_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
       (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
       DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
       DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;

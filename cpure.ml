@@ -219,6 +219,11 @@ let is_null_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
   (is_null_str n) 
 
+(* is string a constant?  *)
+let is_null_const_exp (e:exp) : bool = match e with
+  | Var(v,_) -> is_null_const v
+  | _ -> false
+
 (* is string an int constant?  *)
 let is_int_const (s:spec_var) : bool = 
   let n = name_of_spec_var s in
