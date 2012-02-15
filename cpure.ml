@@ -7263,7 +7263,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
+  Debug.ho_1 "simplify_disj_new" pr pr simplify_disj_new f
 
 let fv_wo_rel (f:formula) =
   let vs = fv f in

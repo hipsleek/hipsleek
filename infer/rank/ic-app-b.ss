@@ -23,6 +23,21 @@ void append3(node x, node y)
 }
 /*
 
+!!! REL INFERRED:[RELASS [R]: ( 0<=m & 0<=flted_7_579 & 0<=flted_7_579 & 0<=m & flted_7_579+1=n & 
+flted_7_579=flted_7_579 & m=m & l1=l1 & s2=s2 & l2=l2 & s2<=l2 & 
+s1_581<=l1 & s1_581<=l1 & s1_581=s1_581 & q_580=q_580 & flted_15_662=m+
+flted_7_579 & q_580!=null & q_580!=null & l1=l1 & s2<=l2 & s1<=s1_581 & 
+(q_580=null & flted_15_662=0 & s3_663<=l2 | q_580!=null & s3_663<=l2 & 
+1<=flted_15_662) & R(s3_663,l3_664,s1_581,l1,s2,l2) & s1=s1 & s3_663=s3_663) -->  s1<=s3_663]
+
+!!! REL INFERRED:[RELASS [R]: ( 0<=m & 0<=flted_7_579 & 0<=flted_7_579 & 0<=m & flted_7_579+1=n & s2<=l2 & 
+s1_581<=l1 & s1_581<=l1 & flted_15_662=m+flted_7_579 & q_580!=null & 
+q_580!=null & s2<=l2 & s1<=s1_581 & (q_580=null & flted_15_662=0 & 
+s3_663<=l2 | q_580!=null & s3_663<=l2 & 1<=flted_15_662) & 
+R(s3_663,l3_664,s1_581,l1,s2,l2)) -->  s1<=s3_663]
+
+
+
 !!! REL INFERRED:[RELASS [R]: ( 
 0<=m & 0<=flted_7_579 & flted_7_579+1=n &  
 s1_581<=l1 & flted_15_662=m+flted_7_579 

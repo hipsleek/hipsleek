@@ -749,10 +749,11 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                         | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2)
                         | _ -> true
                       in
+                      (* TODO Cristina : can remove duplicates too ; remove x=x*)
                       let simplify_conjs f =
                         let ls = split_conjunctions f in
                         let ls = List.filter keep_dist ls in
-                        join_conjunctions ls
+                        join_conjunctions lse
                       in
                       if (CP.diff_svl (CP.fv new_p_good) iv_orig)==[] then ans,[] 
                       else 
@@ -766,6 +767,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                         Debug.info_hprint (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) subs no_pos;
                         Debug.info_hprint (add_str "nsubs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) nsubs no_pos;
                         let vs = List.filter CP.is_rel_var (CP.fv f) in
+                        (* this is supposed to be // subs but seem very inefficient *)
                         let n_rhs = (CP.subst asubs rhs_xpure) in
                         let lhs = (CP.subst asubs lhs_xpure) in
                         let lhs = simplify_conjs lhs in
