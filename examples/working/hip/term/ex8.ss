@@ -1,19 +1,13 @@
 void loop(ref int x)
 case {
-  x<0 -> variance [0,0] // base case
-         ensures "r1": x'=x;
+  x<0 -> requires Term ensures "r1": x'=x;
   x>=0 -> case {
-		x>5 -> variance [0,1] // -> x'<0
-           ensures "r2": x'<0;
-		x<=2 -> variance [0,2] // -> x'>5
-            ensures "r3":x'<0;
-		x=3 -> variance [0,4] // -> x'=4
-					 ensures "r4": x'<0;
-		4<=x<=5 -> variance [0,3] // -> x'<=2
-							 ensures "r8":x'<0;
+		x>5 -> requires Term ensures "r2": x'<0;
+		x<=2 -> requires Term ensures "r3":x'<0;
+		x=3 -> requires Term ensures "r4": x'<0;
+		4<=x<=5 -> requires Term ensures "r8":x'<0;
    }
 }
-/* needs -tp redlog */
 {
 	if (x >= 0) {
 		//x = -2*x + 10;
@@ -31,13 +25,12 @@ case {
 
 void loop2(ref int x)
 case {
-	x<0 -> variance [0,0] ensures "r1": x'=x;
+	x<0 -> requires Term ensures "r1": x'=x;
  	x>=0 -> case {
-		x>10 -> variance [0,1] // -> x'<0
-            ensures "r2": x'<0;
-    x<=10 -> variance [0,-1] // Non-terminating 
-						 ensures "r3":false;
- }}
+		x>10 -> requires Term ensures "r2": x'<0;
+    x<=10 -> requires Loop ensures "r3":false;
+ }
+}
 
 {
 	if (x >= 0) {

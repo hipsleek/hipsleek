@@ -74,6 +74,8 @@ let common_arguments = [
 	"No assumption filtering.");
 	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
+	("--dis-auto-num", Arg.Clear Globals.auto_number,
+	"Disable Auto Numbering");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,

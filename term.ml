@@ -40,10 +40,10 @@ type term_reason =
 type term_status =
   | Term_S of term_reason
   | NonTerm_S of term_reason
-  | MayTerm_S of term_reason
+  | MayTerm_S of term_reason (* used for not decreasing or not bounded measures *)
   | Unreachable
-  | UnsoundLoop
-  | TermErr of term_reason
+  | UnsoundLoop 
+  | TermErr of term_reason (* used for invalid status transition *)
 
 (* Location of the transition (from spec to call),
  * Termination Annotation transition,
@@ -62,9 +62,16 @@ type phase_constr =
 (* Using stack to store term_res *)
 let term_res_stk : term_res Gen.stack = new Gen.stack
 
+(* Using stack to store term error messages *)
+let term_err_stk : string Gen.stack = new Gen.stack
+
 let add_term_res_stk m = 
   if !Globals.dis_term_msg then ()
   else term_res_stk # push m
+
+let add_term_err_stk m =
+  if !Globals.dis_term_msg then ()
+  else term_err_stk # push m
 
 (* Using stack to store inferred phase
  * transition constraints by inference *)
@@ -140,7 +147,7 @@ let pr_term_reason = function
       fmt_string "The recursive case needs a given/inferred variance for termination proof."
 			
 let pr_term_reason_short = function
-	| Not_Decreasing_Measure ann_trans -> 
+  | Not_Decreasing_Measure ann_trans -> 
       fmt_string "not decreasing)";
       (match ann_trans with
         | None -> ()
@@ -154,11 +161,15 @@ let pr_term_reason_short = function
         | Some trans ->  
           fmt_string " ";
           pr_term_ann_trans trans)
-	| Not_Bounded_Measure le -> 
+  | Not_Bounded_Measure le -> 
       fmt_string "not bounded)";
       pr_seq "" pr_formula_exp le;
   | Bounded_Measure -> fmt_string "bounded)"
-	| _ -> ()
+  | Invalid_Status_Trans ann_trans ->
+      fmt_string "invalid transition)";
+      fmt_string " ";
+      pr_term_ann_trans ann_trans
+  | _ -> ()
 
 let string_of_term_reason (reason: term_reason) =
   poly_string_of_pr pr_term_reason reason
@@ -178,11 +189,13 @@ let pr_term_status_short = function
       (* fmt_string ")" *)
   | Unreachable -> fmt_string "(UNR)"
   | MayTerm_S r -> 
-      fmt_string "(ERR: ";
+      fmt_string "(MayTerm ERR: ";
       pr_term_reason_short r;
       (* fmt_string ")" *)
   | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
-  | _ -> fmt_string "(ERR)"
+  | TermErr r -> 
+      fmt_string "(ERR: ";
+      pr_term_reason_short r
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 
@@ -199,7 +212,7 @@ let pr_term_ctx (ctx: formula) =
 let string_of_term_ctx = poly_string_of_pr pr_term_ctx
 
 let pr_term_trans_loc (src, dst) =
-  let fname = src.start_pos.Lexing.pos_fname in
+(*  let fname = src.start_pos.Lexing.pos_fname in*)
   let src_line = src.start_pos.Lexing.pos_lnum in
   let dst_line = dst.start_pos.Lexing.pos_lnum in
   (* fmt_string (fname ^ " "); *)
@@ -238,6 +251,9 @@ let pr_term_res_stk stk =
   List.iter (fun r -> 
     pr_term_res (!Globals.term_verbosity == 0) r; 
     fmt_print_newline ();) stk
+
+let pr_term_err_stk stk =
+  List.iter (fun m -> fmt_string m; fmt_print_newline ()) stk
 
 let pr_phase_constr = function
   | P_Gt (v1, v2) -> 
@@ -279,13 +295,13 @@ let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * 
 	let vi = v.formula_var_infer in
   (Term, vm, vi)
 *)
-let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list) =
+let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list * loc) =
   let (pf, _) = bf in
   match pf with
-  | CP.LexVar t_info -> (t_info.CP.lex_ann, t_info.CP.lex_exp, t_info.CP.lex_tmp)
+  | CP.LexVar t_info -> (t_info.CP.lex_ann, t_info.CP.lex_exp, t_info.CP.lex_tmp, t_info.CP.lex_loc)
   | _ -> raise LexVar_Not_found
 
-let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list) =
+let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list * loc) =
   match f with
   | CP.BForm (bf, _) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) ->
@@ -337,7 +353,9 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
-  let term_pos = (post_pos # get, proving_loc # get) in
+  let l_pos = post_pos # get in
+  let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
+  let term_pos = (l_pos, proving_loc # get) in
   match ans with
       (* From primitive calls - 
        * Do not need to add messages to stack *)
@@ -356,22 +374,28 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
         if bnd_measures = [] then 
           let t_ann, ml, il = find_lexvar_es estate in
           (* Residue of the termination,
-           * The termination checking result - For HIP (stored in term_res_stk)
-           * The stack of error - For SLEEK *)
-          let term_measures, term_res, term_stack =
+           * The termination checking result - 
+           * For HIP: stored in term_res_stk
+           * For SLEEK: stored in the stack of error msg (es_var_stack) 
+           * and update es_term_err *)
+          let term_measures, term_res, term_err_msg =
             if res then (* The measures are decreasing *)
               Some (t_ann, ml, il), (* Residue of termination *)
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
-              estate.es_var_stack
+              None
             else 
               Some (Fail TermErr_May, ml, il),
               (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
-              (string_of_term_res (term_pos, t_ann_trans, None, 
-                TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack 
+              Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))) 
+          in
+          let term_stack = match term_err_msg with
+            | None -> estate.es_var_stack
+            | Some msg -> msg::estate.es_var_stack 
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
-            es_var_stack = term_stack 
+            es_var_stack = term_stack;
+            es_term_err = term_err_msg;
           } in
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, None)
@@ -382,9 +406,9 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
           let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
             let f = 
-		          if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-			        else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
-                (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
+              if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
+              else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+              (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
@@ -405,18 +429,17 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
           end;
           let t_ann, ml, il = find_lexvar_es estate in
-          let term_measures, term_res, term_stack, rank_formula =
+          let term_measures, term_res, term_err_msg, rank_formula =
             if entail_res then (* Decreasing *) 
               Some (t_ann, ml, il), 
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
-              estate.es_var_stack, 
+              None, 
               None
             else
               if Inf.no_infer_all estate then (* No inference at all*)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
-                (string_of_term_res (term_pos, t_ann_trans, None, 
-                  TermErr (Not_Decreasing_Measure t_ann_trans)))::estate.es_var_stack,
+                Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
                 None
               else
                 (* Inference: the es_var_measures will be
@@ -424,15 +447,20 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * The term_res_stk and es_var_stack 
                  * should be updated based on this result: 
                  * MayTerm_S -> Term_S *)
-								(* Assumming Inference will be successed *)
+		(* Assumming Inference will be successed *)
                 Some (t_ann, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
-                estate.es_var_stack, 
+                None, 
                 Some rank_formula  
           in 
+          let term_stack = match term_err_msg with
+            | None -> estate.es_var_stack
+            | Some msg -> msg::estate.es_var_stack
+          in
           let n_estate = { estate with
             es_var_measures = term_measures;
             es_var_stack = term_stack; 
+            es_term_err = term_err_msg
           } in
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
@@ -461,20 +489,22 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
-      let term_pos = (post_pos # get, proving_loc # get) in
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, _ = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let rhs_p = MCP.mix_of_pure rhs_p in
+      let p_pos = post_pos # get in
+      let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
+      let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
           check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
-            src_lv dst_lv t_ann_trans_opt pos
+            src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
           let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,
@@ -485,10 +515,12 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
+            | Term -> failwith "unexpected Term in check_term_rhs"
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
-            es_var_stack = (string_of_term_res term_res)::estate.es_var_stack
+            es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
+            es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
@@ -508,7 +540,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if (not !Globals.dis_term_chk) then
+  if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
   else
     (* Remove LexVar in RHS *)
@@ -539,7 +571,7 @@ let strip_lexvar_lhs (ctx: context) : context =
     match lexvar with
     | [] -> Ctx es
     | lv::[] -> 
-        let t_ann, ml, il = find_lexvar_formula lv in 
+        let t_ann, ml, il, _ = find_lexvar_formula lv in 
         Ctx { es with 
           es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
           es_var_measures = Some (t_ann, ml, il); 
@@ -909,8 +941,8 @@ let value_of_var (v: CP.spec_var) l : int =
  * + Some _ *)
 let phase_num_infer_one_scc (pl : CP.formula list) =
   (* Phase Numbering *) 
-  let pr_v = !CP.print_sv in
-  let pr_vl = pr_list pr_v in
+  (* let pr_v = !CP.print_sv in *)
+  (* let pr_vl = pr_list pr_v in *)
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
   (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
@@ -999,33 +1031,48 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
     | CP.LexVar t_info ->
 		    let t_ann = t_info.CP.lex_ann in
 		    let ml = t_info.CP.lex_tmp in
-				let pos = t_info.CP.lex_loc in 
+			  let pos = t_info.CP.lex_loc in
+        Debug.dinfo_hprint (add_str "lex_tmp" (pr_list !CP.print_exp)) ml no_pos;
+        let subs_extra = match ml with
+          | _::e::_ -> begin
+            match CP.get_var_opt e with
+            | None -> []
+            | Some v -> 
+                if (List.exists (fun (v2,_) -> CP.eq_spec_var v v2) subst) then [] 
+                else 
+                  begin
+                    Debug.info_hprint (add_str "var -> 0" !CP.print_sv) v no_pos;
+                    [(v,0)]
+                  end
+                end
+          | _ -> [] 
+        in
         let n_ml =
           if rem_phase == [] then
             (* replace the phase var with integer *)
-             List.map (fun m -> subst_phase_num_exp subst m) ml 
+            List.map (fun m -> subst_phase_num_exp (subs_extra@subst) m) ml 
           else 
             (* to remove phase vars in rem_phase *)
             List.filter (fun e -> match CP.get_var_opt e with
               | None -> true
               | Some v -> not(CP.mem_svl v rem_phase)) ml
         in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
-    | _ -> None
+      | _ -> None
   in
   let f_pe _ = None in
   let e_f = f_e, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
 
   (* Remove inferred variables from EInfer *)
   let f_ext ext = match ext with
-  | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
-      let lv = fst (List.split subst) in
-      let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
-      let n_cont = transform_ext_formula e_f cont in
-      if Gen.is_empty n_iv then Some n_cont
-      else Some (EInfer { e with 
-        formula_inf_vars = n_iv;
-        formula_inf_continuation = n_cont })
-  | _ -> None
+    | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
+          let lv = fst (List.split subst) in
+          let n_iv = Gen.BList.difference_eq CP.eq_spec_var iv lv in
+          let n_cont = transform_struc_formula e_f cont in
+          if Gen.is_empty n_iv then Some n_cont
+          else Some (EInfer { e with 
+              formula_inf_vars = n_iv;
+              formula_inf_continuation = n_cont })
+    | _ -> None
   in
   
   let s_f = f_ext, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
@@ -1059,7 +1106,6 @@ let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
   { proc with
       Cast.proc_static_specs = s_specs;
       Cast.proc_dynamic_specs = d_specs; }
-
 
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
   let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
@@ -1100,8 +1146,13 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 in
                 (* Termination: Add the inferred phase numbers 
                  * into specifications of functions in mutual group *)
-                if subst==[] then prog
-                else 
+                (* if subst==[] then  *)
+                (*   begin *)
+                (*     Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos;  *)
+                (*     Debug.info_pprint "Phase Subst is EMPTY" no_pos; *)
+                (*     prog *)
+                (*   end *)
+                (* else  *)
                   (* all_zero is set if subs is only of form [v1->0,..,vn->0]
                      in this scenario, there is no need for phase vars at all *)
                   begin
@@ -1132,15 +1183,12 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
   Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
-let term_check_output stk =
+let term_check_output () =
   (* if not !Globals.dis_term_msg then *)
     (fmt_string "\nTermination checking result:\n";
-    pr_term_res_stk (stk # get_stk);
+    (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
+    else pr_term_err_stk (term_err_stk # get_stk));
     fmt_print_newline ())
-
-let term_check_output stk =
-  let pr = fun _ -> "" in
-  Debug.no_1 "term_check_output" pr pr term_check_output stk
 
 let rec get_loop_ctx c =
   match c with
@@ -1157,7 +1205,8 @@ let get_loop_only sl =
 let add_unsound_ctx (es: entail_state) pos = 
   let term_pos = (post_pos # get, no_pos) in
   let term_res = (term_pos, None, Some es.es_formula, UnsoundLoop) in
-  add_term_res_stk term_res
+  add_term_res_stk term_res;
+  add_term_err_stk (string_of_term_res term_res)
 
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =

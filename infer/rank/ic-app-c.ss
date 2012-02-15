@@ -14,6 +14,15 @@ void append3(node x, node y)
   infer [R,P]
   requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & P(s2,l1)
   ensures x::ll3<n+m,s3,l2> & R(s3,l3,s1,l1,s2,l2)   ;
+  /*
+
+   existential wrap s3,l3 causes problem?
+
+   !!! curr vars:[n,s1,l1,m,s2,l2,x,y]
+!!! fv post:[x,m,n,R,s1,l1,s2,l2]
+!
+   */
+
 {
    if (x.next==null) {
      //assume false;

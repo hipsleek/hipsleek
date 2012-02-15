@@ -120,6 +120,7 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+    | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -537,6 +538,7 @@ let command_for prover =
   (match !smtsolver_name with
     | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
     )
 (*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])

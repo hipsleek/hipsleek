@@ -9,8 +9,7 @@ ll<n> == self = null & n = 0
 	inv n >= 0;
 
 node app2(node x, node y)
- requires x::ll<n> * y::ll<m> & n  >= 0
- variance [0,0,n]
+ requires x::ll<n> * y::ll<m> & n >= 0 & Term[n]
  ensures res::ll<n+m>;
 {
  if (x==null) return y;
@@ -26,8 +25,8 @@ node app2(node x, node y)
 int length (node xs)
  requires xs::ll<n>
  case {
-  xs=null -> variance [0,0] ensures n=0 & res=0; // fails without n=0!
-  xs!=null -> variance [0,1,n] ensures xs::ll<n> & res=n;
+  xs=null -> requires Term ensures n=0 & res=0; // fails without n=0!
+  xs!=null -> requires Term[n] ensures xs::ll<n> & res=n;
  }
 {
   if (xs==null) return 0;

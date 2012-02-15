@@ -706,8 +706,8 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s = (-1,s)
-let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))]
-let mkEAssume_norm pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))]
+let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))
+let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -1412,7 +1412,7 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let rec check_proper_return cret_type exc_list f = 
+let check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
@@ -1458,14 +1458,14 @@ let rec check_proper_return cret_type exc_list f =
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
-  let helper f0 = match f0 with 
-	| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
-	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
+  let rec helper f0 = match f0 with 
+	| F.EBase b-> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
+	| F.ECase b-> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
 	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-	(*| F.EVariance b -> ()*)
- | F.EInfer b -> ()
-  in
-  List.iter helper f
+	| F.EInfer b -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
+	| F.EList b -> List.iter (fun c-> helper(snd c)) b 
+	| F.EOr b -> (helper b.F.formula_struc_or_f1; helper b.F.formula_struc_or_f2)in
+  helper f
 
  
 (* type: Globals.typ -> Globals.nflow list -> F.struc_formula -> unit *)
@@ -1604,37 +1604,29 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
   (*                       ^ "\n\n") in *)
   if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
   else
-    let rec process_struc_formula (f:F.struc_formula):P.spec_var list =
-      let rec process_ext_formula (f:F.ext_formula):P.spec_var list =
-        match f with
+	let rec process_h_formula (h_f:F.h_formula):P.spec_var list = match h_f with
+		| F.ViewNode vn ->
+            if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
+			else
+				let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
+				let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
+				let vdef_uni_vars = vdef.view_uni_vars in
+				let fr = vdef.view_vars in
+				let t = vn.F.h_formula_view_arguments in
+				let vdef_uni_vars = P.subst_var_list_avoid_capture fr t vdef_uni_vars in
+				vdef_uni_vars
+        | F.Star {  F.h_formula_star_h1 = h1;
+					F.h_formula_star_h2 = h2} -> 
+				let vars1 =  process_h_formula h1 in
+                let vars2 =  process_h_formula h2 in
+                P.remove_dups_svl vars1@vars2
+        | _ -> [] in
+    let rec process_struc_formula (f:F.struc_formula):P.spec_var list = match f with
           | F.EBase e ->
             (*find all possible universal vars from a h_formula*)
-              let rec process_h_formula (h_f:F.h_formula):P.spec_var list = 
-                match h_f with
-                  | F.ViewNode vn ->
-                      if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
-                      else
-                        let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
-                        let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
-                        let vdef_uni_vars = vdef.view_uni_vars in
-                        let fr = vdef.view_vars in
-                        let t = vn.F.h_formula_view_arguments in
-                        let vdef_uni_vars = P.subst_var_list_avoid_capture fr t vdef_uni_vars in
-                        vdef_uni_vars
-                  | F.Star {  F.h_formula_star_h1 = h1;
-                               F.h_formula_star_h2 = h2}
-                      -> 
-                      let vars1 =  process_h_formula h1 in
-                      let vars2 =  process_h_formula h2 in
-                      P.remove_dups_svl vars1@vars2
-                  | _ -> []
-              in
-              let vars1 = 
-                match e.F.formula_ext_base with
-                  | F.Base {F.formula_base_heap = h;
-                             F.formula_base_pure = p}
-                  | F.Exists {F.formula_exists_heap = h;
-                               F.formula_exists_pure = p} ->
+              let vars1 = match e.F.formula_struc_base with
+                  | F.Base {F.formula_base_heap = h;F.formula_base_pure = p}
+                  | F.Exists {F.formula_exists_heap = h;F.formula_exists_pure = p} ->
                       let vars = process_h_formula h in
                       (match vars with
                         | [] -> []
@@ -1644,20 +1636,17 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
                 (*vars is the set of all possible uni_vars in all nodes*)
                   | _ -> []
               in
-              let vars2 = process_struc_formula e.F.formula_ext_continuation in
-              let vars = vars1@vars2 in
-              let vars = P.remove_dups_svl vars in
-              vars
+              let vars2 = match e.F.formula_struc_continuation with | None -> [] | Some l -> process_struc_formula l in
+              P.remove_dups_svl (vars1@vars2)
+		  | F.EList b -> P.remove_dups_svl (List.flatten (List.map (fun c-> process_struc_formula (snd c)) b))
+		  | F.EOr b -> 
+				let r1 = process_struc_formula b.F.formula_struc_or_f1 in
+				let r2 = process_struc_formula b.F.formula_struc_or_f2 in
+				P.remove_dups_svl (List.flatten [r1;r2])
           | _ ->
               let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
               []
       in
-      let xs = List.map process_ext_formula f in
-      let xs = List.flatten xs in
-      let xs = P.remove_dups_svl xs in
-      xs
-
-    in
     let vars = process_struc_formula view.view_formula in
     let vars = vars@uni_vars in
     let vars = P.remove_dups_svl vars in
