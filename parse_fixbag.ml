@@ -74,12 +74,41 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 
   pformula:
   [ "pformula" LEFTA
-    [ x = exp; "<="; y = exp -> mkTrue loc
-    | x = exp; ">="; y = exp -> mkTrue loc
+    [ x = exp; "<="; y = exp -> 
+      begin
+      match (x,y) with
+        | (Var _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
+        | _ -> mkTrue loc
+      end
+    | x = exp; ">="; y = exp -> 
+      begin
+      match (x,y) with
+        | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
+        | _ -> mkTrue loc
+      end
     | x = exp; "="; y = exp -> BForm ((Eq (x, y, loc), None), None)
+    | x = exp; "!="; y = exp -> BForm ((Neq (x, y, loc), None), None)
+    | "forall"; x = exp; "in"; y = exp; ":"; z = pformula ->
+      let res = begin
+      match (x,z) with
+        | (Var (v1,_), BForm ((Neq(Var(v2,_),Var(v3,_),_),_),_)) -> 
+          if eq_spec_var v1 v2 then BagNotIn (v3,y,loc) else
+          if eq_spec_var v1 v3 then BagNotIn (v2,y,loc) else BConst(true,loc)
+        | _ -> BConst(true,loc)
+      end
+      in BForm ((res,None),None)
+    | "exists"; x = exp; "in"; y = exp; ":"; z = pformula ->
+      let res = begin
+      match (x,z) with
+        | (Var (v1,_), BForm ((Eq(Var(v2,_),Var(v3,_),_),_),_)) -> 
+          if eq_spec_var v1 v2 then BagIn (v3,y,loc) else
+          if eq_spec_var v1 v3 then BagIn (v2,y,loc) else BConst(true,loc)
+        | _ -> BConst(true,loc)
+      end
+      in BForm ((res,None),None)
     ]
   ]; 
-      
+
   exp:
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> BagUnion([x; y], loc)

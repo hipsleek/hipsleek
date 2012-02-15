@@ -36,6 +36,6 @@ Termination checking result:
 Stop Omega... 194 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.79 second(s)
-	Time spent in main process: 0.39 second(s)
-	Time spent in child processes: 0.4 second(s)
+Total verification time: 0.74 second(s)
+	Time spent in main process: 0.37 second(s)
+	Time spent in child processes: 0.37 second(s)

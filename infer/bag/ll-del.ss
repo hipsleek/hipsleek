@@ -14,7 +14,7 @@ relation A(int a, bag b, bag c).
 
 /* function to delete the a-th node in a singly linked list */
 node delete1(node x, int a)
-  infer @pre [A]
+  infer [A]
 	requires x::ll<S>  
 	ensures res::ll<S1> & A(a,S,S1);//& (a notin S & S = S1 | S=union(S1, {a}));
 {

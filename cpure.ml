@@ -43,6 +43,14 @@ let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
 
+let is_bool_typ sv = match sv with
+  | SpecVar (Bool,_,_) -> true
+  | _ -> false
+
+let is_int_typ sv = match sv with
+  | SpecVar (Int,_,_) -> true
+  | _ -> false
+
 type rel_cat = 
   | RelDefn of spec_var
   | RelAssume of spec_var
