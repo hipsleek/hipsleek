@@ -142,7 +142,10 @@ and omega_of_formula pr_w pr_s f  =
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  in helper f
+  in 
+  try
+	helper f
+  with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)
 
 let omegacalc = ref ("oc":string)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)

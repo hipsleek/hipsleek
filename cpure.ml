@@ -874,6 +874,8 @@ and is_object_type (t : typ) = match t with
   | _ -> false
 
 and should_simplify (f : formula) = match f with
+  | Or (f1,f2,_,_)-> should_simplify f1 || should_simplify f2
+  | AndList b -> exists_l_snd should_simplify b
   | Exists _ -> true
   | _ -> false
         (* | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true *)
@@ -1062,30 +1064,63 @@ and mkEq a1 a2 pos : p_formula=
   else
     Eq (a1, a2, pos)
 
-and mkAnd f1 f2 pos = 
+and mkAnd_x f1 f2 pos = 
   if (isConstFalse f1) then f1
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
-  else match f1,f2 with 
+  else match f1,f2 with
+   | Or _, _ 
+   | _, Or _ ->  
+		let lf1 = split_disjunctions f1 in
+		let lf2 = split_disjunctions f2 in
+		let lrd = List.map (fun c-> List.map (fun d->mkAnd d c pos) lf1) lf2 in
+		let lrd = List.concat lrd in
+		List.fold_left (fun a c-> mkOr a c None pos) (List.hd lrd) (List.tl lrd) 
    | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
-   | AndList b, f 
-   | f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+   | AndList b, f
+   | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
    | _ -> And (f1, f2, pos)
   
-and mkAndList b = AndList b
+and mkAnd f1 f2 pos = Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
+  
+and mkAndList_x b = 
+	if (exists_l_snd isConstFalse b) then mkFalse no_pos
+	else AndList (List.filter (fun (_,c)-> not (isConstTrue c)) b)
+	
+and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
   
 and and_list_to_and l = match l with
 	| [] -> mkTrue no_pos
 	| (_,x)::t -> List.fold_left (fun a (_,c)-> mkAnd a c no_pos) x t
 
-and mkOr f1 f2 lbl pos= 
+	
+and or_branches l1 l2 lbl pos=
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let map_fun branch =
+    try 
+      let l1 = List.assoc branch l1 in
+      try
+        let l2 = List.assoc branch l2 in
+        (branch, mkOr l1 l2 lbl pos)
+      with Not_found -> (branch, mkTrue pos)
+    with Not_found -> (branch, mkTrue pos )
+  in
+  Label_Pure.norm  (List.map map_fun branches)
+	
+and mkOr_x f1 f2 lbl pos= 
   if (isConstFalse f1) then f2
   else if (isConstTrue f1) then f1
   else if (isConstFalse f2) then f1
   else if (isConstTrue f2) then f2
-  else Or (f1, f2, lbl ,pos)
+  else (*match f1, f2 with 
+	| AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
+	| AndList l, f
+	| f, AndList l -> AndList (or_branches l [(empty_spec_label,f)] lbl pos)
+	| _ -> *)Or (f1, f2, lbl ,pos)
 
+and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+	
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
@@ -1123,7 +1158,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 
 and mkNot_s f :formula = mkNot f None no_pos
 
-and mkNot f lbl1 pos0 :formula= match f with
+and mkNot_x f lbl1 pos0 :formula= match f with
   | BForm (bf,lbl) -> begin
       let (pf,il) = bf in
 	  match pf with
@@ -1138,8 +1173,18 @@ and mkNot f lbl1 pos0 :formula= match f with
 		| BagNotIn e -> BForm (((BagIn e), il),lbl)
         | _ -> Not (f, lbl, pos0)
 	end
+  | AndList b -> 
+		let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
+		(match l with 
+			| []-> report_error pos0 "cpure mkNot, empty AndList list"
+			| x::t-> List.fold_left (fun a c-> mkOr a c lbl1 pos0) x t)
+  | Or _ -> 
+		let l = List.map (fun c-> mkNot_x c lbl1 pos0) (split_disjunctions f) in
+		List.fold_left (fun a c-> mkAnd a c pos0) (List.hd l) (List.tl l)
   | _ -> Not (f, lbl1,pos0)
         
+and mkNot f lbl1 pos0 = Debug.no_1 "mkNot" !print_formula !print_formula (fun _-> mkNot_x f lbl1 pos0) f
+		
 and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkTrue pos
@@ -1162,33 +1207,6 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)
 
 
-(*
-  and mkEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
-  | (AVar (SVar sv1), AVar (SVar sv2)) ->
-  if sv1 = sv2 then
-  mkTrue
-  else
-  BForm (AEq (ae1, ae2))
-  | _ ->  BForm (AEq (ae1, ae2))
-
-  and mkNEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
-  | (AVar (SVar sv1), AVar (SVar sv2)) ->
-  if sv1 = sv2 then
-  mkTrue
-  else
-  BForm (ANeq (ae1, ae2))
-  | _ ->  BForm (ANeq (ae1, ae2))
-
-  and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) =
-  if sv1 = sv2 then
-  mkFalse
-  else
-  BForm (ANeq (AVar (force_to_svar sv1), AVar (force_to_svar sv2)))
-
-  and mkNEqualVarInt (sv : spec_var) (i : int) =
-  BForm (ANeq (AVar (force_to_svar sv), IConst i))
-*)
-
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
@@ -1204,15 +1222,39 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
     simpl r
   else r
 
-and mkExists (vs : spec_var list) (f : formula) lbl pos = match vs with
-  | [] -> f
-  | v :: rest ->
-        let ef = mkExists rest f lbl pos in
-        if mem v (fv ef) then
-          Exists (v, ef, lbl, pos)
-        else
-          ef
+and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
+	| AndList b ->
+		let pusher v lf lrest= 	
+			let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (Lab_List.comb_norm al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+					(rl,vl, Exists (v,rf,lbel,pos))::lrest in
+		let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
+		let lst1 = List.fold_left (fun lbl v-> 
+			let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
+			if l1=[] then l2 
+			else  pusher v l1 l2 				
+				(*let lul, ll = List.partition (fun (lb,_,_)-> Lab_List.is_unlabelled lb) l1 in
+				if lul=[] || ll=[] then pusher v l1 l2 				
+				else
+					let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
+					let lrel,lunrel = List.partition (fun c->List.mem v (fv c)) lrel in
+					let lrelf = join_conjunctions lrel in
+					let lunrelf = join_conjunctions lunrel in
+					let lrel = ((fun (l,_,_)-> l)(List.hd ll),fv lrelf, lrelf) in
+					let lunrel = (Lab_List.unlabelled, fv lunrelf, lunrelf) in
+					pusher v (lrel::ll) (lunrel::l2) *)
+					)lst vs in
+		let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
+		AndList (Label_Pure.norm l)
+	| Or (f1,f2,lbl,pos) -> 
+		Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
+	| _ ->
+		let fvs = fv f in
+		let to_push = List.filter (fun c-> mem c fvs) vs in
+		List.fold_left (fun a v-> Exists (v,a,lbel,pos)) f to_push 
 
+and mkExists vs f lbel pos = 
+	Debug.no_1 "pure_mkExists" !print_formula !print_formula (fun _ -> mkExists_x vs f lbel pos) f
+		
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
 and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
@@ -1225,15 +1267,40 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
           ef
 
 (* same of list_of_conjs *)
-and split_conjunctions f = list_of_conjs f
-  (*
-    function
+and split_conjunctions =  function
     | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
     | z -> [z]
-  *)
   
 and join_conjunctions fl = conj_of_list fl no_pos
 
+(******************)
+(* 
+   Make a formula from a list of conjuncts, namely
+   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
+*)
+and conj_of_list (fs : formula list) pos : formula =
+  match fs with
+    | [] -> mkTrue pos
+    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
+          (*
+            let helper f1 f2 = mkAnd f1 f2 pos in
+            List.fold_left helper (mkTrue pos) fs
+          *)
+
+(* 
+   Get a list of disjuncts, namely
+   F1 or F2 or .. or Fn ==> [F1,F2,..,FN] 
+*)
+(* 16.04.09 *)	
+and list_of_disjs (f0 : formula) : formula list =split_disjunctions f0
+        
+and disj_of_list (xs : formula list) pos : formula = 
+  let rec helper xs r = match xs with
+    | [] -> r
+    | x::xs -> mkOr x (helper xs r) None pos in
+  match xs with
+    | [] -> mkTrue pos
+    | x::xs -> helper xs x
 
 and is_member_pure (f:formula) (p:formula):bool = 
   let y = split_conjunctions p in
@@ -2310,16 +2377,25 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
    TODO : push exists inside where possible..
 *)
-and list_of_conjs (f0 : formula) : formula list =
-  let rec helper f conjs = match f with
+and list_of_conjs (f0 : formula) : formula list = split_conjunctions f0
+  (*let rec helper f conjs = match f with
     | And (f1, f2, pos) ->
           let tmp1 = helper f2 conjs in
           let tmp2 = helper f1 tmp1 in
           tmp2
     | _ -> f :: conjs
   in
-  helper f0 []
+  helper f0 []*)
 
+  
+and split_disjunctions = 
+(* split_disjuncts *)
+function
+  | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
+  | z -> [z]
+
+and join_disjunctions xs = disj_of_list xs no_pos
+  
 (******************)
 (*collect all bformula of f0*)
 and list_of_bformula (f0:formula): formula list = match f0 with
@@ -2403,72 +2479,6 @@ and filter_redundant_x ante cons =
   let new_ante = elim_of_bformula ante ls_irr in
   (* let _ = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
   new_ante
-
-(******************)
-(* 
-   Make a formula from a list of conjuncts, namely
-   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
-*)
-and conj_of_list (fs : formula list) pos : formula =
-  match fs with
-    | [] -> mkTrue pos
-    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
-          (*
-            let helper f1 f2 = mkAnd f1 f2 pos in
-            List.fold_left helper (mkTrue pos) fs
-          *)
-
-(* 
-   Get a list of disjuncts, namely
-   F1 or F2 or .. or Fn ==> [F1,F2,..,FN] 
-*)
-(* 16.04.09 *)	
-and list_of_disjs (f0 : formula) : formula list =
-  let rec helper f disjs = match f with
-    | Or (f1, f2,_,_) ->
-          let tmp1 = helper f2 disjs in
-          let tmp2 = helper f1 tmp1 in
-          tmp2
-    | _ -> f :: disjs
-  in
-  helper f0 []
-
-(* 
-   WARNING : this should not be used!
-   deeper split of disjuncts (seems an explosion)
-*)
-(* and split_disjuncts (f0 : formula): formula list = match f0 with *)
-(*   | BForm _ -> [f0] *)
-(*   | And (f1,f2,_) ->  *)
-(*         let l1 = split_disjuncts f1 in *)
-(*         let l2 = split_disjuncts f2 in *)
-(*         List.concat (List.map (fun f-> List.map (fun d-> mkAnd d f no_pos) l1) l2) *)
-(*   | Or (f1,f2,_,_) ->  *)
-(*         let l1 = split_disjuncts f1 in *)
-(*         let l2 = split_disjuncts f2 in *)
-(*         l1@l2 *)
-(*   | Not _ -> [f0]  *)
-(*   | Forall _ -> [f0] *)
-(*   | Exists (v,f,_,_) -> List.map (fun f-> mkExists [v] f None no_pos) (split_disjuncts f) *)
-        
-(*	
-	and disj_of_list (fs : formula list) pos : formula =
-	let helper f1 f2 = mkOr f1 f2 pos in
-	List.fold_left helper (mkTrue pos) fs
-*)
-        
-and disj_of_list (xs : formula list) pos : formula = 
-  let rec helper xs r = match xs with
-    | [] -> r
-    | x::xs -> mkOr x (helper xs r) None pos in
-  match xs with
-    | [] -> mkTrue pos
-    | x::xs -> helper xs x
-  (* match disj_list with *)
-  (*   | [] -> mkTrue pos *)
-  (*   | h :: [] -> h *)
-  (*   | h :: rest -> mkOr h (disj_of_list rest pos) None pos *)
-          (* 16.04.09 *)
 
 and find_bound v f0 =
   match f0 with
@@ -5972,7 +5982,7 @@ let part_must_failures is_sat pairs = List.partition (fun (a,c) ->not(is_sat (mk
 
 let part_must_failures is_sat pairs = List.partition (fun (a,c) -> not(is_sat (mkAnd a c no_pos))) pairs
 
-let imply is_sat a c = not (is_sat (mkAnd a (mkNot_s c) no_pos))
+let imply is_sat a c = not (is_sat (mkAnd a (mkNot c None no_pos) no_pos))
 
 let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
   let cs = split_conjunctions conseq in
@@ -6716,35 +6726,9 @@ let rec get_Neg_RelForm pf = match pf with
   | Forall (_,f,_,_) -> get_Neg_RelForm f
   | Exists (_,f,_,_) -> get_Neg_RelForm f
 
-(* let rec split_conjunctions = function *)
-(*   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y) *)
-(*   | z -> [z] *)
-(* ;; *)
-
-let rec split_disjunctions = 
-(* split_disjuncts *)
-function
-  | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
-  | z -> [z]
-
-let join_disjunctions xs = disj_of_list xs no_pos
-  (* let rec helper xs r = match xs with *)
-  (*   | [] -> r *)
-  (*   | x::xs -> mkOr x (helper xs r) None no_pos in *)
-  (* match xs with *)
-  (*   | [] -> mkTrue no_pos *)
-  (*   | x::xs -> helper xs x *)
-
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
-  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
-  if !filtering_flag (*&& (not !allow_pred_spec)*) then
-    (filter_ante ante conseq, conseq)
-	(* let fvar = CP.fv conseq in *)
-	(* let new_ante = CP.filter_var ante fvar in *)
-	(*   (new_ante, conseq) *)
-  else
-    (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
-	(ante, conseq)
+  if !filtering_flag (*&& (not !allow_pred_spec)*) then (filter_ante ante conseq, conseq)
+  else(ante, conseq)
 
 (* need unsat checking for disjunctive LHS *)
 let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (formula * formula) =
@@ -6755,14 +6739,8 @@ let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (f
     else 
       let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
       let ante = join_disjunctions ante_ls in
-      (* let _ = print_endline ("Splitted Disj:"^(pr_list !print_formula ante_ls)) in *)
       (ante, conseq)
-	      (* let fvar = CP.fv conseq in *)
-	      (* let new_ante = CP.filter_var ante fvar in *)
-	      (*   (new_ante, conseq) *)
-  else
-    (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
-	(ante, conseq)
+  else (ante, conseq)
 
 
 let assumption_filter_aggressive_incomplete (ante : formula) (conseq : formula) : (formula * formula) =
@@ -7138,5 +7116,19 @@ and count_term_b_formula bf =
   | _ -> 0
 
 
-
-
+let rec no_andl f = match f with 
+		| BForm _ -> true
+		| Or (f1,f2,_,_) | And (f1,f2,_) -> no_andl f1 && no_andl f2
+		| Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_) -> no_andl f
+		| AndList _ -> false 
+		
+let rec andl_to_and f = match f with
+	| BForm _ -> f
+	| Or (f1,f2,l,p)-> Or (andl_to_and f1, andl_to_and f2, l, p)
+	| And (f1,f2,p) -> And (andl_to_and f1, andl_to_and f2, p)
+	| Not (f,l,p) -> Not (andl_to_and f, l, p)
+	| Forall (v,f,l,p) -> Forall (v,andl_to_and f, l, p)
+	| Exists (v,f,l,p) -> Exists (v, andl_to_and f, l, p)
+	| AndList b ->
+		let l = List.map (fun (_,c)-> andl_to_and c) b in
+		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 

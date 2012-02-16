@@ -1557,7 +1557,7 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
   let conseq_fv = CP.fv to_conseq in
   (*TO CHECK: should include impl_inst_vars or not*)
   let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) conseq_fv in
-  let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f,None, pos)) to_conseq instantiate in
+  let wrapped_to_conseq = CP.mkExists instantiate to_conseq None pos in
   let to_ante =
     if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
   in
@@ -1653,7 +1653,7 @@ and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
   | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
   | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF f1 p, lbl ,p)
   | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl ,p)
-  | CP.Exists (sp, f1, lbl, p) -> CP.Exists(sp, normalize_to_CNF f1 p, lbl ,p)
+  | CP.Exists (sp, f1, lbl, p) -> CP.mkExists [sp] (normalize_to_CNF f1 p)  lbl p
   | CP.AndList b-> CP.AndList (map_l_snd (fun c-> normalize_to_CNF c no_pos) b)
   | _ -> f
 
@@ -4453,8 +4453,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) (rhs_p:MCP.mix_formula) =
 	begin
-      if (is_ok = false) then (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) 
-      else
         let m_lhs = lhs_new in
         let tmp2 = MCP.merge_mems m_lhs xpure_lhs_h0 true in
         let tmp3 = MCP.merge_mems m_lhs xpure_lhs_h1 true in
@@ -4644,12 +4642,8 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
     match conseq with
       | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f
       | Cpure.And (f1, f2, pos) -> Cpure.And((helper f1), (helper f2), pos)  
-      | Cpure.Or (f1, f2, l, pos) -> Cpure.Or((helper f1), (helper f2), l, pos)
-            (* | Cpure.Not (f, l, pos) -> Cpure.Not((helper f), l, pos) *)
-	        (* todo: think about it *)
-      | _ -> conseq
-	        (*| Forall of (spec_var * formula * (formula_label option) * loc)
-	          | Exists of (spec_var * formula * (formula_label option) * loc)*) in
+      | Cpure.Or (f1, f2, l, pos) -> Cpure.mkOr (helper f1) (helper f2) l pos
+      | _ -> conseq in
   helper conseq
 
 and solve_ineq_memo_formula (ante : memo_pure) (memset : Cformula.mem_formula) (conseq : memo_pure) : memo_pure =
@@ -4686,12 +4680,12 @@ and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpu
 		                  then 
 			                s_ineq  (CP.BForm ((CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), il1), label1))
 		                  else
-			                Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
+			                Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
 		            | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 	              )
-	        | _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
+	        | _, _ -> Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
 	      )
-    | _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
+    | _, _ -> Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
 
 and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
   let (pf,il) = conseq in

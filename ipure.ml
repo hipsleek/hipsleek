@@ -342,7 +342,7 @@ and mkAnd f1 f2 pos = match f1 with
 		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
 		| _ -> And (f1, f2, pos)
 
-and mkAndList b = print_string "ipure_list_gen:"; AndList b
+and mkAndList b = print_string "ipure_list_gen\n"; AndList b
 		
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
