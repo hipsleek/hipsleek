@@ -12,7 +12,6 @@ case {
 	loop(x, c);
 	return x;
 }
-
     /*
       case {
       x>100 -> requires MayLoop ensures x'=91 & c'=0 ;
@@ -22,10 +21,10 @@ case {
 void loop (ref int x, ref int c)
 
 case {
-	c<=0 -> requires Term[] ensures x'=x & c'=c ;
+  c<=0 -> requires Term[] ensures  x'=x & c'=c ;
     c=1 ->
       case {
-		x>100 -> requires Term[] ensures x'=x-10 & c'=0 ;
+      x>100 -> requires Term[] ensures  x'=x-10 & c'=0 ;
 
 		x<=100 -> requires Term[200+21*c-2*x]  ensures x'=91 & c'=0 ;
         }

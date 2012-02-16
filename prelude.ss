@@ -75,7 +75,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
-/*
+
 float add___(float a, float b) 
   requires true 
   ensures res = a + b;
@@ -93,10 +93,11 @@ float div___(float a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
- }
+}
+
 // requires b!=0.0
 // ensures ensures res = a / b;
-*/
+
 bool eq___(int a, int b) 
   case {
     a = b -> ensures res;
@@ -120,43 +121,42 @@ bool neq___(int a, int b)
 bool neq___(bool a, bool b) case {
     a = b -> ensures !res;
     a != b -> ensures res;}
-/*
+
 bool neq___(float a, float b) case {
     a = b -> ensures !res;
     a != b -> ensures res;}
-*/
+
 bool lt___(int a, int b) case {
     a <  b -> ensures  res;
     a >= b -> ensures !res;}
-/*
+
 bool lt___(float a, float b) case {
     a <  b -> ensures  res;
     a >= b -> ensures !res;}
-*/
+
 bool lte___(int a, int b) case {
     a <= b -> ensures  res;
     a >  b -> ensures !res;}
-/*
 bool lte___(float a, float b) case {
     a <= b -> ensures  res;
     a >  b -> ensures !res;}
-*/
+
 bool gt___(int a, int b) case {
     a >  b -> ensures  res;
     a <= b -> ensures !res;}
-/*
+
 bool gt___(float a, float b) case {
     a >  b -> ensures  res;
     a <= b -> ensures !res;}
-*/
+
 bool gte___(int a, int b) case {
     a >= b -> ensures  res;
     a <  b -> ensures !res;}
-/*
+
 bool gte___(float a, float b) case {
     a >= b -> ensures  res;
     a <  b -> ensures !res;}
-*/
+
 bool land___(bool a, bool b) case {
   a -> case { b -> ensures res; 
               !b -> ensures !res;}
