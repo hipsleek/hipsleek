@@ -11,8 +11,8 @@ relation R(int s3, int l3, int s2, int l2, int s1, int l1).
 relation P(int s2, int l1).
  
 void append3(node x, node y)
-  infer [R,P]
-  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & P(s2,l1)
+  infer [R]
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & l1<=s2
   ensures x::ll3<n+m,s3,l2> & R(s3,l3,s1,l1,s2,l2)   ;
   /*
 
@@ -43,6 +43,12 @@ void append3(node x, node y)
 
 !!! NEW ASSUME:[ 
 
+!! REL INFERRED:[RELASS [P,R]: 
+
+
+RELDEFN P: ( P(s2,l1) & s2=s2_601 & l1_599=l1 & exists(l2:exists(s1_583:s2_601<=l2 & 
+exists(s1:s1_583<=l1 & s1<=s1_583)))) -->  P(s2_601,l1_599)]
+
  (flted_7_581+1=n & null=null & null=null & 
   (null=null & flted_7_581=0 & 
   s1_583<=l1 | null!=null & s1_583<=l1 & 1<=flted_7_581)
@@ -52,6 +58,10 @@ void append3(node x, node y)
   ) 
    --> s1<=s2,
  
+
+( s2<=l2 & s1_583<=l1 & s1_583<=l1 & s2<=l2 & P(s2,l1) & s1<=s1_583 & 
+s3_667<=l2 & R(s3_667,l3_668,s1_583,l1,s2,l2)) -->  s1<=s3_667,
+
  (0<=m & 0<=flted_7_581 & 0<=flted_7_581 & 0<=m & flted_7_581+1=n & s2<=l2 & 
   s1_583<=l1 & s1_583<=l1 & flted_16_666=m+flted_7_581 & q_582!=null & 
   q_582!=null & s2<=l2 & 
