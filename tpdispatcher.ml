@@ -839,7 +839,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
         CP.And (nf1, nf2, l)
-	| CP.AndList b -> simplify (and_list_to_and b) vnames
+	| CP.AndList b -> CP.AndList (map_l_snd (fun c -> simplify c vnames) b)
     | CP.Or (f1, f2, lbl, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
@@ -1426,6 +1426,7 @@ let tp_imply ante conseq imp_no timeout process =
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
+  | CP.AndList b -> CP.AndList (map_l_snd requant b)
   | CP.Or (f, g, lbl, l) -> CP.Or (requant f, requant g, lbl, l)
   | CP.Not (f, lbl, l) -> CP.Not (requant f, lbl, l)
   | CP.Forall (v, f, lbl, l) ->
@@ -1452,6 +1453,11 @@ let rec rewrite_in_and_tree rid formula rform =
       let (x, fx) = rewrite_in_and_tree rid x rform in
       let (y, fy) = rewrite_in_and_tree rid y rform in
       (CP.And (x, y, l), (fun e -> fx (fy e)))
+  | CP.AndList b -> 
+		let r1,r2 = List.fold_left (fun (a, f) (l,c)-> 
+		let r1,r2 = rewrite_in_and_tree rid c rform in
+		(l,r1)::a, (fun e -> r2 (f e))) ([],(fun c-> c)) b in
+		(AndList r1, r2)
   | x ->
       let subst_fun =
         match rform with
@@ -1474,6 +1480,7 @@ let rec get_rid_of_eq = function
       if is_irrelevant x then (get_rid_of_eq y) else
       if is_irrelevant y then (get_rid_of_eq x) else
       CP.And (get_rid_of_eq x, get_rid_of_eq y, l)
+  | CP.AndList b -> AndList (map_l_snd get_rid_of_eq b)
   | z -> z
 ;;
 
@@ -1498,6 +1505,7 @@ let rec simpl_in_quant formula negated rid =
           let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
           let nformula = get_rid_of_eq nformula in
           nformula
+	  | CP.AndList b -> AndList (map_l_snd (fun c-> simpl_in_quant c negated rid) b)
       | x -> x
       end
   | false ->
@@ -1506,6 +1514,7 @@ let rec simpl_in_quant formula negated rid =
       | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
       | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
       | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
+	  | CP.AndList b -> AndList (map_l_snd (fun c-> simpl_in_quant c negated rid) b)
       | x -> x
       end
 ;;
@@ -1568,6 +1577,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
+		(*let _ = print_string ("ante0: "^(!print_formula ante0)^"\n"^ "ante "^(!print_formula ante)^"\n"^"conseq0 "^(!print_formula conseq0)^"\n"^"conseq "^(!print_formula conseq)^"\n") in*)
 		let acpairs = impl_label_filter ante conseq in
 		let pairs = List.map (fun (ante,conseq) -> 
 			let cons = split_conjunctions conseq in

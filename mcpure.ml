@@ -2010,10 +2010,10 @@ let mix_cons_filter f fct =
   let pr = !print_mix_f in
   Debug.no_1 "mix_cons_filter" pr pr 
       (fun _ -> mix_cons_filter f fct) f
-
+(*
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
   | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
-  | OnePF pf -> OnePF (combine_branch s (pf,snd f))
+  | OnePF pf -> OnePF (combine_branch s (pf,snd f))*)
  (*
  match f with
   | MemoF f -> 

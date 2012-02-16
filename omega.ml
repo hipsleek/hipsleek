@@ -285,7 +285,7 @@ let check_formula f timeout =
         !result
       in
       let fail_with_timeout () = 
-        restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+        restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
       let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
       res
@@ -493,7 +493,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     not (is_valid tmp2)
    *)
   
-  let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in
   	
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
@@ -549,7 +549,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
         let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-        let tmp2 = mkAnd tmp1 restf no_pos in
+        let tmp2 = mkAnd_dumb tmp1 restf no_pos in
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then

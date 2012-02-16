@@ -1064,6 +1064,13 @@ and mkEq a1 a2 pos : p_formula=
   else
     Eq (a1, a2, pos)
 
+and mkAnd_dumb f1 f2 pos = 
+	if (isConstFalse f1) then f1
+	else if (isConstTrue f1) then f2
+	else if (isConstFalse f2) then f2
+	else if (isConstTrue f2) then f1
+	else And (f1, f2, pos)
+	
 and mkAnd_x f1 f2 pos = 
   if (isConstFalse f1) then f1
   else if (isConstTrue f1) then f2
@@ -1158,7 +1165,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 
 and mkNot_s f :formula = mkNot f None no_pos
 
-and mkNot_x f lbl1 pos0 :formula= match f with
+and mkNot_dumb f lbl1 pos0:formula =  match f with
   | BForm (bf,lbl) -> begin
       let (pf,il) = bf in
 	  match pf with
@@ -1173,6 +1180,10 @@ and mkNot_x f lbl1 pos0 :formula= match f with
 		| BagNotIn e -> BForm (((BagIn e), il),lbl)
         | _ -> Not (f, lbl, pos0)
 	end
+	| _ -> Not (f, lbl1,pos0)
+
+and mkNot_x f lbl1 pos0 :formula= match f with
+  | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
   | AndList b -> 
 		let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
 		(match l with 
@@ -1181,7 +1192,7 @@ and mkNot_x f lbl1 pos0 :formula= match f with
   | Or _ -> 
 		let l = List.map (fun c-> mkNot_x c lbl1 pos0) (split_disjunctions f) in
 		List.fold_left (fun a c-> mkAnd a c pos0) (List.hd l) (List.tl l)
-  | _ -> Not (f, lbl1,pos0)
+  | _ -> mkNot_dumb f lbl1 pos0
         
 and mkNot f lbl1 pos0 = Debug.no_1 "mkNot" !print_formula !print_formula (fun _-> mkNot_x f lbl1 pos0) f
 		
@@ -1319,6 +1330,10 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bo
     | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula_f eq b1 b2
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
     | (And(f1, f2, _), And(f3, f4, _)) ->  (equalFormula_f eq f1 f3) & (equalFormula_f eq f2 f4)
+	| AndList b1, AndList b2 -> 
+		if (List.length b1)= List.length b2 
+			then List.for_all2 (fun (l1,c1)(l2,c2)-> Lab_List.compare l1 l2 = 0 && equalFormula_f eq c1 c2) b1 b2 
+			else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
     | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (equalFormula_f eq f1 f2)
     | _ -> false
@@ -2298,6 +2313,7 @@ and rename_top_level_bound_vars (f : formula) = match f with
         let rf2 = rename_top_level_bound_vars f2 in
         let resform = mkAnd rf1 rf2 pos in
         resform
+  | AndList b -> AndList (map_l_snd rename_top_level_bound_vars b)
   | Exists (qvar, qf, lbl, pos) ->
         let renamed_f = rename_top_level_bound_vars qf in
         let new_qvar = fresh_spec_var qvar in
@@ -2347,6 +2363,14 @@ and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_v
         else
           let st2, rf2 = get_subst_equation_formula f2 v only_vars in
           (st2, mkAnd f1 rf2 pos)
+  | AndList b -> 
+			let r1,r2 = List.fold_left (fun (a1,b1) c-> 
+				if Gen.is_empty a1 then 
+					let a, b = get_subst_equation_formula (snd c) v only_vars in
+					(a,b1@[(fst c, b)])
+				else (a1, b1@[c]) 
+			  ) ([],[]) b in
+			(r1, AndList r2)
   | BForm (bf,lbl) -> get_subst_equation_b_formula bf v lbl only_vars
   | _ -> ([], f0)
         
@@ -3190,15 +3214,15 @@ and elim_idents_b_formula (f : b_formula) : b_formula =
   | _ -> pf
   in (npf,il)
 
-
+(*
 let combine_branch b (f, l) =
   match b with 
   | "" -> f
   | s -> try And (f, List.assoc b l, no_pos) with Not_found -> f
-;;
+;;*)
 
 let wrap_exists_svl f evars = mkExists evars f None no_pos
-
+(*
 let merge_branches_with_common l1 l2 cf evars =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let wrap_exists (l,f) = (l, mkExists evars f None no_pos) in 
@@ -3262,7 +3286,7 @@ let add_to_branches label form branches =
     (label, (And (form, List.assoc label branches, no_pos))) :: (List.remove_assoc label branches) 
   with Not_found -> (label, form) :: branches
 ;;
- 
+ *)
 let rec drop_disjunct (f:formula) : formula = 
   match f with
 	| BForm _ -> f
@@ -3279,7 +3303,11 @@ and float_out_quantif f = match f with
 		let l1,l2,l3 = float_out_quantif b1 in
 		let q1,q2,q3 = float_out_quantif b2 in
 		((mkAnd l1 q1 l), l2@q2, l3@q3)
-  | AndList b-> (f,[],[])
+  | AndList b-> 
+		let (b1,l1,l2) = List.fold_left (fun (a1,a2,a3) (l,c)-> 
+				let l1,l2,l3 = float_out_quantif c in
+				(l,c)::a1,l2@a2,l3@a3)  ([],[],[]) b in
+		(AndList b1, l1, l2)
   | Or (b1,b2,lbl,l) ->
 		let l1,l2,l3 = float_out_quantif b1 in
 		let q1,q2,q3 = float_out_quantif b2 in
@@ -6411,7 +6439,7 @@ let rec dnf_to_list f =
 	  let l_f2 = dnf_to_list f2 in
 	  l_f1 @ l_f2
 	| _ -> [dnf_f]
-  	
+  	(*
 let rec partition_dnf_lhs f =
   match f with
 	| BForm (bf, _) -> [[bf]]
@@ -6420,7 +6448,7 @@ let rec partition_dnf_lhs f =
 	| Not _ -> report_error no_pos "do not allow Forall, Exists, Not"
 	| Or (f1, f2, _, _) -> (partition_dnf_lhs f1) @ (partition_dnf_lhs f2)
 	| And (f1, f2, _) -> [List.flatten ((partition_dnf_lhs f1) @ (partition_dnf_lhs f2))]
-	| AndList b -> fold_l_snd partition_dnf_lhs b
+	| AndList b -> fold_l_snd partition_dnf_lhs b*)
 
 let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
