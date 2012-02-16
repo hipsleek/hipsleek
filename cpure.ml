@@ -140,9 +140,19 @@ and rounding_func =
   | Ceil
   | Floor
 
+let exp_to_spec_var e = 
+  match e with
+    | Var (sv, _) -> sv
+    | _ -> report_error no_pos ("Not a spec var\n")
+
 let is_self_var = function
   | Var (x,_) -> is_self_spec_var x
   | _ -> false
+
+let name_of_rel_form r = 
+  match r with 
+    | BForm ((RelForm (name,args,_),_),_) -> name
+    | _ -> raise Not_found
 
 let is_res_var = function
   | Var (x,_) -> is_res_spec_var x

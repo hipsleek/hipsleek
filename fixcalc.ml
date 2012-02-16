@@ -374,7 +374,7 @@ let rec compute_fixpoint (i:int) input_pairs pre_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  DD.ho_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
       (fun _ _ -> compute_fixpoint_x input_pairs pre_vars specs) input_pairs pre_vars
 
 and compute_fixpoint_x input_pairs ante_vars specs =
@@ -387,9 +387,30 @@ and compute_fixpoint_x input_pairs ante_vars specs =
     let (pfs, rels) = List.split input_pairs in
     let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
     let pairs = List.concat (List.map (fun r -> helper input_pairs r ante_vars specs) rels) in 
-    DD.devel_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+    let pairs = preprocess_rels pairs in
+    DD.ninfo_pprint ("input_pairs: " ^ (pr_list (pr_pair !CP.print_formula !CP.print_formula)  input_pairs))  no_pos;
+    
     let rel = List.map (fun (x,y) -> (x,y,ante_vars)) pairs in
     compute_fixpoint_aux rel
+
+and preprocess_rels rels =
+  match rels with
+      | rel::r -> 
+	let same_rels, diff_rels = List.partition (fun (x,y) -> CP.eq_spec_var (CP.name_of_rel_form x) (CP.name_of_rel_form (fst rel))) r in
+	(unify_rels rel same_rels)@(preprocess_rels diff_rels)
+      | [] -> []
+
+and unify_rels rel same_rels =
+    match rel, same_rels with
+      | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), (CP.BForm ((CP.RelForm (name2,args2,_),_),_), f2)::r ->
+	let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) (List.map CP.exp_to_spec_var args1) in
+	let f2 = CP.subst subst_arg f2 in
+	let new_f = CP.Or(f1,f2,None,no_pos) in
+	DD.ninfo_pprint ("new rel = " ^ (!CP.print_formula new_f))  no_pos;
+	(CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), new_f)::(unify_rels rel r)
+      | (CP.BForm ((CP.RelForm (name1,args1,_),_),_), f1), [] -> [rel]
+      | _ -> report_error no_pos ("Unexpected format\n") 
+	    
 
 and helper input_pairs rel ante_vars specs = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
@@ -410,8 +431,7 @@ and helper input_pairs rel ante_vars specs =
 (*let compute_fixpoint_aux rel_fml pf ante_vars = *)
 and compute_fixpoint_aux rel = 
   let input_fixcalc = (List.fold_left (fun x y -> x ^ (compute_fixpoint_one y)) "" rel) ^ (compute_bottomup_inp rel) in 
-       DD.info_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
-      (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
+      DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
       DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
       DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
       let output_of_sleek = "fixcalc.inf" in
