@@ -1076,20 +1076,28 @@ and mkAnd_x f1 f2 pos =
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
-  else if no_andl f1 && no_andl f2 then And (f1, f2, pos)
-  else match f1,f2 with
-   | Or _, _ 
-   | _, Or _ ->  
-		let lf1 = split_disjunctions f1 in
-		let lf2 = split_disjunctions f2 in
-		let lrd = List.map (fun c-> List.map (fun d->mkAnd d c pos) lf1) lf2 in
-		let lrd = List.concat lrd in
-		List.fold_left (fun a c-> mkOr a c None pos) (List.hd lrd) (List.tl lrd) 
-   | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
-   | AndList b, f
-   | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
-   | _ -> And (f1, f2, pos)
-  
+  else 
+	let rec helper fal fnl = match fal with 
+		| Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal))
+		| AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)])
+		| _ -> And (fal,fnl, pos) in
+	match no_andl f1 , no_andl f2 with 
+		| true, true -> And (f1, f2, pos)
+		| true, false -> helper f2 f1
+		| false, true -> helper f1 f2
+		| false, false ->
+		   match f1,f2 with
+		   | Or _, _ 
+		   | _, Or _ ->  
+				let lf1 = split_disjunctions f1 in
+				let lf2 = split_disjunctions f2 in
+				let lrd = List.map (fun c-> List.map (fun d->mkAnd_x d c pos) lf1) lf2 in
+				join_disjunctions (List.concat lrd)
+		   | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
+		   | AndList b, f
+		   | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
+		   | _ -> And (f1, f2, pos)
+	  
 and mkAnd f1 f2 pos = Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
   
 and mkAndList_x b = 
