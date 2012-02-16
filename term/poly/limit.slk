@@ -1,0 +1,26 @@
+checkentail x>0.0 & x1=x/2.0 |- x1>0.0 & x>x1 .
+
+checkentail x>=-1.0 & x1=x/2.0 |- (exists c: c>=0.0 & x1>=-1.0+c).
+
+checkentail x> -10.0 & x1=x/2.0 |- x1> -10.0 .
+checkentail x< -10.0 & x1=x/2.0 |- x1< -10.0 .
+
+
+checkentail x>0.0 & x1=x/2.0 |- x1>0.0  .
+
+checkentail x=-1.0 & x1=x/2.0 |- x1=-1.0  .
+
+checkentail x=-1.0 & x1=x/2.0 |- x1=-0.5  .
+
+checkentail x>c & x1=x+0.01 |- x1>c  .
+
+
+
+checkentail x=0.0 & x1=x/2.0 |- x1=0.0  . // fix point test for limit...
+
+checkentail x>0.0 & x1=x/2.0 |- x1>0.0  . // test for limit...
+checkentail x<0.0 & x1=x/2.0 |- x1<0.0  .
+
+checkentail x=0.0 & x1=0.0 |- x1=0.0  . // fix point test for limit...
+
+checkentail x>0.0 & x1=0.0 |- x1>0.0  . // test for limit...
