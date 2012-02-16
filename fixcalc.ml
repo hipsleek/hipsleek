@@ -397,7 +397,8 @@ and preprocess_rels rels =
   match rels with
       | rel::r -> 
 	let same_rels, diff_rels = List.partition (fun (x,y) -> CP.eq_spec_var (CP.name_of_rel_form x) (CP.name_of_rel_form (fst rel))) r in
-	(unify_rels rel same_rels)@(preprocess_rels diff_rels)
+	let new_rels = if(same_rels==[]) then [rel] else (unify_rels rel same_rels) in 
+	new_rels@(preprocess_rels diff_rels)
       | [] -> []
 
 and unify_rels rel same_rels =
@@ -408,7 +409,7 @@ and unify_rels rel same_rels =
 	let new_f = CP.Or(f1,f2,None,no_pos) in
 	DD.ninfo_pprint ("new rel = " ^ (!CP.print_formula new_f))  no_pos;
 	(CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), new_f)::(unify_rels rel r)
-      | (CP.BForm ((CP.RelForm (name1,args1,_),_),_), f1), [] -> [rel]
+      | (CP.BForm ((CP.RelForm (name1,args1,_),_),_), f1), [] -> []
       | _ -> report_error no_pos ("Unexpected format\n") 
 	    
 
