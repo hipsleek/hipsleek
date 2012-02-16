@@ -464,6 +464,8 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
         end
   end
 
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
+	Debug.no_1 "Omega:is_valid_ops " !print_formula string_of_bool (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe
 (* let is_valid (pe : formula) timeout: bool = *)
 (*   let pr x = None in *)
 (*   is_valid_ops pr pr pe timeout *)

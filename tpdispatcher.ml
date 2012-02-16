@@ -707,7 +707,7 @@ let sat_label_filter fct f =
   
 let sat_label_filter fct f =  Debug.no_1 "sat_label_filter" !print_formula string_of_bool (fun _ -> sat_label_filter fct f) f
   
-let impl_label_filter ante conseq = 
+let imply_label_filter ante conseq = 
 	(*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
 	match ante,conseq with
 	| Or _,_  
@@ -1418,7 +1418,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.no_2 "tp_imply" 
+  Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -1569,6 +1569,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
+    let _ = print_string ("gigi1: "^(!print_formula ante0) ^ "|-"^ (!print_formula conseq0)) in
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
 	if CP.isConstTrue conseq then (true, [],None)
 	else
@@ -1577,8 +1578,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
-		(*let _ = print_string ("ante0: "^(!print_formula ante0)^"\n"^ "ante "^(!print_formula ante)^"\n"^"conseq0 "^(!print_formula conseq0)^"\n"^"conseq "^(!print_formula conseq)^"\n") in*)
-		let acpairs = impl_label_filter ante conseq in
+		let _ = print_string ("ante0: "^(!print_formula ante0)^"\n"^ "ante "^(!print_formula ante)^"\n"^"conseq0 "^(!print_formula conseq0)^"\n"^"conseq "^(!print_formula conseq)^"\n") in
+		let acpairs = imply_label_filter ante conseq in
 		let pairs = List.map (fun (ante,conseq) -> 
 			let cons = split_conjunctions conseq in
 			List.map (fun cons-> 
@@ -1591,6 +1592,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
+		let _ = print_string ("gigi: "^(String.concat "\n" (List.map (fun (a,c)-> (!print_formula a) ^ "|-"^ (!print_formula c))pairs))) in
 		let fold_fun (res1,res2,res3) (ante, conseq) =
 		  (incr imp_sub_no;
 		  if res1 then 
@@ -1620,7 +1622,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.ho_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 
@@ -2304,7 +2306,7 @@ let change_prover prover =
   start_prover ();;
 
 let imply_raw ante conseq  = 
-	List.for_all (fun (a,c)-> tp_imply a c "999" (!imply_timeout_limit) None) (impl_label_filter ante conseq)
+	List.for_all (fun (a,c)-> tp_imply a c "999" (!imply_timeout_limit) None) (imply_label_filter ante conseq)
 
 let is_sat_raw (f: CP.formula) = sat_label_filter (fun c-> tp_is_sat c "999") f
 

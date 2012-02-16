@@ -4276,6 +4276,7 @@ and extract_relations (f : CP.formula) : (CP.b_formula list) =
 		| CP.RelForm _ -> [b]
 		| _ -> [])
 	| CP.And (f1, f2,_) -> (extract_relations f1) @ (extract_relations f2)
+	| CP.AndList b -> []
 	| _ -> [] (* Or, Not, Exists, Forall contains "negative" information! *)
 
 (** An Hoa : Extract equalities in a formula so that we can check identity latter.
@@ -4380,7 +4381,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.ho_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -4642,6 +4643,7 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
     match conseq with
       | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f
       | Cpure.And (f1, f2, pos) -> Cpure.And((helper f1), (helper f2), pos)  
+	  | Cpure.AndList b -> Cpure.AndList (map_l_snd helper b)
       | Cpure.Or (f1, f2, l, pos) -> Cpure.mkOr (helper f1) (helper f2) l pos
       | _ -> conseq in
   helper conseq
@@ -4709,7 +4711,7 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
 (************************************* 
                                        - methods for implication discharging
 ***************************************)
-
+(*
 and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(formula_label option * formula_label option) list * formula_label option =
   (* let _ = print_string ("\nSolver.ml: imply_mix_formula " ^ (string_of_int !imp_no)) in *)
@@ -4728,9 +4730,9 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
               increm_funct
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
-
+*)
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -4754,13 +4756,14 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            (*print_endline "imply_mix_formula first: second";*)
-	        CP.imply_conj_orig 
-                (CP.split_disjunctions a0) 
-                (CP.split_disjunctions a1) 
-                (CP.split_conjunctions c) 
-	            TP.imply 
-	            imp_no
+			let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
+				else 
+				 let r = ref (-8999) in
+				 let is_sat f = TP.is_sat_sub_no f r in
+				 let a0l = List.filter is_sat (CP.split_disjunctions a0) in
+				 let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
+				 (a0l,a1l) in
+	        CP.imply_conj_orig a0l a1l (CP.split_conjunctions c) TP.imply imp_no
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 

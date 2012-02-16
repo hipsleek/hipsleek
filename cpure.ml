@@ -1076,6 +1076,7 @@ and mkAnd_x f1 f2 pos =
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
+  else if no_andl f1 && no_andl f2 then And (f1, f2, pos)
   else match f1,f2 with
    | Or _, _ 
    | _, Or _ ->  
@@ -1102,7 +1103,7 @@ and and_list_to_and l = match l with
 	| (_,x)::t -> List.fold_left (fun a (_,c)-> mkAnd a c no_pos) x t
 
 	
-and or_branches l1 l2 lbl pos=
+(*and or_branches l1 l2 lbl pos=
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
@@ -1113,7 +1114,7 @@ and or_branches l1 l2 lbl pos=
       with Not_found -> (branch, mkTrue pos)
     with Not_found -> (branch, mkTrue pos )
   in
-  Label_Pure.norm  (List.map map_fun branches)
+  Label_Pure.norm  (List.map map_fun branches)*)
 	
 and mkOr_x f1 f2 lbl pos= 
   if (isConstFalse f1) then f2
@@ -1182,17 +1183,20 @@ and mkNot_dumb f lbl1 pos0:formula =  match f with
 	end
 	| _ -> Not (f, lbl1,pos0)
 
-and mkNot_x f lbl1 pos0 :formula= match f with
-  | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
-  | AndList b -> 
-		let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
-		(match l with 
-			| []-> report_error pos0 "cpure mkNot, empty AndList list"
-			| x::t-> List.fold_left (fun a c-> mkOr a c lbl1 pos0) x t)
-  | Or _ -> 
-		let l = List.map (fun c-> mkNot_x c lbl1 pos0) (split_disjunctions f) in
-		List.fold_left (fun a c-> mkAnd a c pos0) (List.hd l) (List.tl l)
-  | _ -> mkNot_dumb f lbl1 pos0
+and mkNot_x f lbl1 pos0 :formula= 
+	if no_andl f then mkNot_dumb f lbl1 pos0
+	else 
+	 match f with
+	  | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
+	  | AndList b -> 
+			let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
+			(match l with 
+				| []-> report_error pos0 "cpure mkNot, empty AndList list"
+				| x::t-> List.fold_left (fun a c-> mkOr a c lbl1 pos0) x t)
+	  | Or _ -> 
+			let l = List.map (fun c-> mkNot_x c lbl1 pos0) (split_disjunctions f) in
+			List.fold_left (fun a c-> mkAnd a c pos0) (List.hd l) (List.tl l)
+	  | _ -> mkNot_dumb f lbl1 pos0
         
 and mkNot f lbl1 pos0 = Debug.no_1 "mkNot" !print_formula !print_formula (fun _-> mkNot_x f lbl1 pos0) f
 		
@@ -1313,6 +1317,14 @@ and disj_of_list (xs : formula list) pos : formula =
     | [] -> mkTrue pos
     | x::xs -> helper xs x
 
+	
+and no_andl  = function
+		| BForm _ -> true
+		| Or (f1,f2,_,_) | And (f1,f2,_) -> no_andl f1 && no_andl f2
+		| Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_) -> no_andl f
+		| AndList _ -> false 
+	
+	
 and is_member_pure (f:formula) (p:formula):bool = 
   let y = split_conjunctions p in
   List.exists (fun c-> equalFormula f c) y
@@ -5098,8 +5110,6 @@ let check_eq_bform eq lhs rhs failval =
 *)
 (* TODO: Can slicing be applied here? *)
 let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
-  (*let _ = print_string "\n fast_imply \n" in*)
-  (* let _ = Gen.Profiling.push_time "fast_imply" in *)
   (*normalize lhs and rhs*)
   let simp e = conv_exp_to_exp_eq aset e in
   let normsimp lhs rhs =
@@ -5136,7 +5146,6 @@ let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
 
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let pr1 = !print_b_formula in
-(*    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in*)
   Debug.no_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
   
 
@@ -5160,25 +5169,13 @@ let rec imply_disj_orig ante_disj conseq t_imply imp_no =
     | [] -> (true,[],None)
 
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
-  (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
-  (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
-  if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
+  if not(xp01) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
-    (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
-    
-    (* (\*LDK*\) *)
-    (* let _ = print_string ("imply_one_conj_orig:  (not(xp01) \n") in *)
-    
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	(xp11,xp12,xp13)
-  else 
-
-    (* (\*LDK*\) *)
-    (* let _ = print_string ("imply_one_conj_orig:  NOT(not(xp01) \n") in *)
-    
-    (xp01,xp02,xp03)
+  else (xp01,xp02,xp03)
 
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
@@ -5193,7 +5190,7 @@ let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
     | [] -> (true,[],None)
  (*###############################################################################  incremental_testing*)
 (*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
-let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
+(*let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
   (* let _ = print_string("\nCpure.ml: imply_conj") in *)
   match conseq_conj with
     | h :: rest ->
@@ -5247,7 +5244,7 @@ let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula
         (* let _ = print_string("\nCpure.ml: stop process") in  *)
       | (_, _, _) -> () in
   (* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
-  r
+  r*)
 
 (*###############################################################################  *)
     
@@ -7142,14 +7139,7 @@ and count_term_b_formula bf =
         | Term -> 1
         | _ -> 0)
   | _ -> 0
-
-
-let rec no_andl f = match f with 
-		| BForm _ -> true
-		| Or (f1,f2,_,_) | And (f1,f2,_) -> no_andl f1 && no_andl f2
-		| Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_) -> no_andl f
-		| AndList _ -> false 
-		
+	
 let rec andl_to_and f = match f with
 	| BForm _ -> f
 	| Or (f1,f2,l,p)-> Or (andl_to_and f1, andl_to_and f2, l, p)
