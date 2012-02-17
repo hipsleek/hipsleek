@@ -13,10 +13,6 @@ void dispose(node x)
 
 /* view for a singly linked list */
 
-ll<n> == self = null & n = 0
-	or self::node<_, q> * q::ll<n-1>
-  inv n >= 0;
-
 ll1<> == self = null
 	or self::node<_, q> * q::ll1<>
   inv true;
