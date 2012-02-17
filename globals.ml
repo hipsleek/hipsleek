@@ -493,6 +493,7 @@ let dis_ass_chk = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false
+let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false
 let infer_slicing = ref false
