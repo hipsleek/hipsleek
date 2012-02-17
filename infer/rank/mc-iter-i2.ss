@@ -75,4 +75,13 @@ Analysis:
  3: r2(x,c)->r2(x',c') [r2[1]->r2[1]:INC(10); r2[1]->r2[1]:DEC(1)] 
  4: r2(x,c)->r1(x',c') [r2[1]->r1[1]:DEC(11); r2[2]->r1[2]:INC(1)]
 
+   P(w*) -> C2
+
+   infer[w*] D |- C. 
+             x<y & P(y,z)  |- x < z
+   infer[y,z] x<y |- x<z.
+
+   D & P(..) --> C
+
+
 */
