@@ -661,7 +661,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
         | Some f -> List.filter (fun x -> not(is_rel_var x)) (CP.fv f) in
       Debug.trace_hprint (add_str "iv_orig" !CP.print_svl) iv_orig no_pos;
       Debug.trace_hprint (add_str "iv_lhs_rel" !CP.print_svl) iv_lhs_rel no_pos;
-      let iv = iv_orig@iv_lhs_rel in
+      let iv = iv_orig(* @iv_lhs_rel *) in
       let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
       let check_sat = TP.is_sat_raw fml in
       if not(check_sat) then
