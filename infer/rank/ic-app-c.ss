@@ -11,8 +11,8 @@ relation R(int s3, int l3, int s2, int l2, int s1, int l1).
 relation P(int s2, int l1).
  
 void append3(node x, node y)
-  infer [R]
-  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & l1<=s2
+  infer [R,P]
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & P(s2,l1)
   ensures x::ll3<n+m,s3,l2> & R(s3,l3,s1,l1,s2,l2)   ;
   /*
 
