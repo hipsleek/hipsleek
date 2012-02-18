@@ -8434,6 +8434,23 @@ let verify_pre_is_sat prog fml =
   Debug.no_1 "verify_pre_is_sat" pr pr_no 
       (fun _ -> verify_pre_is_sat prog fml) fml
 
+let rec eqHeap h1 h2 = match (h1,h2) with
+  | (Star _, Star _) -> 
+    let lst1 = CF.split_star_conjunctions h1 in
+    let lst2 = CF.split_star_conjunctions h2 in
+    List.for_all (fun x -> Gen.BList.mem_eq eqHeap x lst2) lst1 
+    && List.for_all (fun x -> Gen.BList.mem_eq eqHeap x lst1) lst2
+  | _ -> h1 = h2
+
+let eqFormula f1 f2 = match (f1,f2) with
+  | (Base _, Base _) | (Exists _, Exists _) -> 
+    let h1,p1,fl1,b1,t1 = split_components f1 in
+    let h2,p2,fl2,b2,t2 = split_components f2 in
+    let p1 = MCP.pure_of_mix p1 in
+    let p2 = MCP.pure_of_mix p2 in
+    eqHeap h1 h2 && TP.imply_raw p1 p2 && TP.imply_raw p2 p1 && fl1=fl2 && b1=b2 && t1=t2
+  | _ -> f1=f2
+
 let rec simplify_heap_x h p prog : CF.h_formula = match h with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
@@ -8476,10 +8493,14 @@ and simplify_heap h p prog =
 (* TODO : problematic with other kinds of constraints *)
 
 let rec simplify_post_heap_only fml prog = match fml with
-  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
-    Or {formula_or_f1 = simplify_post_heap_only f1 prog; 
-        formula_or_f2 = simplify_post_heap_only f2 prog; 
-        formula_or_pos = pos}
+  | Or _ -> 
+    let disjs = CF.list_of_disjs fml in
+    let res = List.map (fun f -> simplify_post_heap_only f prog) disjs in
+    let res = Gen.BList.remove_dups_eq eqFormula res in
+    CF.disj_of_list res no_pos
+(*    Or {formula_or_f1 = simplify_post_heap_only f1 prog; *)
+(*        formula_or_f2 = simplify_post_heap_only f2 prog; *)
+(*        formula_or_pos = pos}*)
   | _ -> 
     let h, p, fl, b, t = split_components fml in
     let p = MCP.pure_of_mix p in
@@ -8525,22 +8546,18 @@ let rec elim_heap h p pre_vars heap_vars = match h with
     if cond then HTrue else h
   | _ -> h
 
-let eqFormula f1 f2 = match (f1,f2) with
-  | (Base _, Base _) 
-  | (Exists _, Exists _) -> 
-    let h1,p1,fl1,b1,t1 = split_components f1 in
-    let h2,p2,fl2,b2,t2 = split_components f2 in
-    let p1 = MCP.pure_of_mix p1 in
-    let p2 = MCP.pure_of_mix p2 in
-    h1 = h2 && TP.imply_raw p1 p2 && TP.imply_raw p2 p1 && fl1=fl2 && b1=b2 && t1=t2
-  | _ -> f1=f2
-
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = match post_fml with
-  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
-    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml pre_vars inf_post in
-    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml pre_vars inf_post in
-    if eqFormula f1 f2 then (f1,pres1)
-    else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)
+  | Or _ ->
+    let disjs = CF.list_of_disjs post_fml in
+    let res = List.map (fun f -> simplify_post f post_vars prog subst_fml pre_vars inf_post) disjs in
+    let res = Gen.BList.remove_dups_eq (fun (f1,pre1) (f2,pre2) -> eqFormula f1 f2) res in
+    Debug.info_hprint (add_str "RESLLLL" (pr_list (pr_pair !print_formula pr_no))) res no_pos;
+    let fs,pres = List.split res in
+    (CF.disj_of_list fs no_pos, List.concat pres)
+(*    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml pre_vars inf_post in*)
+(*    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml pre_vars inf_post in*)
+(*    if eqFormula f1 f2 then (f1,pres1)*)
+(*    else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)*)
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
@@ -8557,7 +8574,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
             then [(a3,a2)] else []) triples)) in
           let post = CP.conj_of_list posts no_pos in
           let pre = CP.conj_of_list pres no_pos in
-          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_raw (CP.mkExists post_vars p None no_pos)) no_pos) in
+          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_exists_raw post_vars p) no_pos) in
           (p,[pre])
         else
           let rels = CP.get_RelForm p in
@@ -8577,11 +8594,15 @@ let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post =
       (fun _ _ -> simplify_post post_fml post_vars prog subst_fml pre_vars inf_post) post_fml post_vars
 
 let rec simplify_pre pre_fml = match pre_fml with
-  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
-    let f1 = simplify_pre f1 in
-    let f2 = simplify_pre f2 in
-    if f1 = f2 then f1
-    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}
+  | Or _ ->
+    let disjs = CF.list_of_disjs pre_fml in
+    let res = List.map (fun f -> simplify_pre f) disjs in
+    let res = Gen.BList.remove_dups_eq eqFormula res in
+    CF.disj_of_list res no_pos
+(*    let f1 = simplify_pre f1 in*)
+(*    let f2 = simplify_pre f2 in*)
+(*    if f1 = f2 then f1*)
+(*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
     let h, p, fl, b, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in

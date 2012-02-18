@@ -1185,7 +1185,6 @@ let simplify (f : CP.formula) : CP.formula =
 	    else r
       with | _ -> f)
 
-(* such a simplifier loses information *)
 let rec simplify_raw (f: CP.formula) = 
   let is_bag_cnt = 
     match !tp with
@@ -1229,8 +1228,7 @@ let simplify_raw f =
 	let pr = !CP.print_formula in
 	Debug.no_1 "simplify_raw" pr pr simplify_raw f
 
-(* such a simplifier loses information *)
-let simplify_exists_raw (f: CP.formula) pre_vars = 
+let simplify_exists_raw exist_vars (f: CP.formula) = 
   let is_bag_cnt = 
     match !tp with
     | Mona | MonaH -> if is_bag_constraint f then true else false
@@ -1241,17 +1239,13 @@ let simplify_exists_raw (f: CP.formula) pre_vars =
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
-        let others = simplify (conj_of_list others no_pos) in
-        let bag_cnts = List.filter (fun b -> CP.subset (CP.fv b) pre_vars) bag_cnts in
+        let others = simplify (CP.mkExists exist_vars (conj_of_list others no_pos) None no_pos) in
+        let bag_cnts = List.filter (fun b -> CP.intersect (CP.fv b) exist_vars = []) bag_cnts in
         conj_of_list (others::bag_cnts) no_pos
       ) disjs in
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
-    let rels = CP.get_RelForm f in
-    let ids = List.concat (List.map get_rel_id_list rels) in
-    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-    let res_memo = simplify f_memo in
-    CP.restore_memo_formula subs bvars res_memo
+    simplify (CP.mkExists exist_vars f None no_pos)
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
