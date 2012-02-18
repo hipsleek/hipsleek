@@ -86,7 +86,13 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
         | _ -> mkTrue loc
       end
-    | x = exp; "="; y = exp -> BForm ((Eq (x, y, loc), None), None)
+    | x = exp; "="; y = exp -> 
+      begin
+      match (x,y) with
+        | (FConst _, _) -> mkTrue loc
+        | (_, FConst _) -> mkTrue loc
+        | _ -> BForm ((Eq (x, y, loc), None), None)
+      end
     | x = exp; "!="; y = exp -> BForm ((Neq (x, y, loc), None), None)
     | "forall"; x = exp; "in"; y = exp; ":"; z = pformula ->
       let res = begin
@@ -113,7 +119,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> BagUnion([x; y], loc)
     | x = specvar -> Var (x,loc)
-    | "|"; x = specvar; "|" -> Var (x,loc) (* Do not care, return anything *)
+    | "|"; x = specvar; "|" -> FConst (0.0,loc) (* Do not care, return anything *)
     | "{"; x = LIST0 exp SEP ","; "}" -> Bag (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 
     ]

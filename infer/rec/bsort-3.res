@@ -26,10 +26,10 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&xs!=null&
          EBase true&MayLoop&{FLOW,(1,23)=__flow}
                  EAssume 1::
                    
-                   xs::sll<n_38,s,l>@M[Orig][LHSCase]&!(res) & n_38=n & 0<=n&
+                   xs::ll<n_39>@M[Orig][LHSCase]&B(res) & n_39=n & 0<=n&
                    {FLOW,(20,21)=__norm}
-                   or xs::ll<n_39>@M[Orig][LHSCase]&B(res) & n_39=n & 0<=n&
-                      {FLOW,(20,21)=__norm}
+                   or xs::sll<n_38,s,l>@M[Orig][LHSCase]&!(res) & n_38=n & 
+                      0<=n&{FLOW,(20,21)=__norm}
                    
 NEW RELS: [ (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (1<=res & tmp_42' & B(tmp_42')) --> B(res), (res<=0 & !(tmp_42') & B(tmp_42')) --> B(res), (1<=res) --> B(res), (1<=res) --> B(res)]
 
@@ -40,6 +40,6 @@ Termination checking result:
 Stop Omega... 634 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.03 second(s)
-	Time spent in main process: 1.33 second(s)
-	Time spent in child processes: 0.7 second(s)
+Total verification time: 1.87 second(s)
+	Time spent in main process: 1.23 second(s)
+	Time spent in child processes: 0.64 second(s)
