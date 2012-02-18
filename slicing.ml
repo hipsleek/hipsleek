@@ -476,7 +476,7 @@ struct
   module MF_S           = Memo_Formula(Label)
 
   let regroup_memo_group (lst: memo_pure) : memo_pure =
-    if !f_1_slice then 
+    if !f_1_slice || !dis_slicing then 
       (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
@@ -484,7 +484,7 @@ struct
       MF_S.memo_pure_of_mg_slice sl None
 
   let group_mem_by_fv (lst: memo_pure) : memo_pure =
-    if !f_1_slice then
+    if !f_1_slice || !dis_slicing then
       (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
@@ -493,7 +493,7 @@ struct
 
   let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
     let r = 
-      if !f_1_slice then 
+      if !f_1_slice  || !dis_slicing then 
 		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
         let h1, h2 = (List.hd l1, List.hd l2) in
 		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
@@ -526,7 +526,7 @@ struct
     let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
     let sl =
       let l = l1 @ l2 in
-      if !f_1_slice then (* No slicing *)
+      if !f_1_slice  || !dis_slicing then (* No slicing *)
         let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
         let lbl = Pure_Label.label_of_fv (Gen.BList.remove_dups_eq eq_spec_var v) in
         [(Some lbl, l)] 
@@ -538,7 +538,7 @@ struct
     MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
 
   let split_mem_grp (g : memoised_group) : memo_pure = 
-    if !f_1_slice then [g]
+    if !f_1_slice  || !dis_slicing then [g]
     else
       let l =  Memo_Constr.memo_constr_of_memo_group g in
       let n_l = Memo_Constr_S.constr_of_atom_list l in 

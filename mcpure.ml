@@ -1723,7 +1723,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
   else
   let ante_memo0 = 
-    if !f_2_slice (* Use one slice for proving (sat, imply) *)
+    if !f_2_slice  || !dis_slicing (* Use one slice for proving (sat, imply) *)
 	then
 	  match ante_memo0 with
        | [] -> []
