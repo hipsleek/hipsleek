@@ -72,6 +72,7 @@ and cvc3_of_exp a = match a with
 	| CP.Func _ -> failwith ("Functions are not supported in cvc3")
 	| CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
+    | CP.AConst _ -> failwith ("aconst not supported in cvc3")
 
 and cvc3_of_b_formula b =
   let (pf,_) = b in
@@ -119,6 +120,8 @@ and cvc3_of_b_formula b =
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
+    | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
+     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
 	    
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

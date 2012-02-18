@@ -270,8 +270,8 @@ $output_file = "log";
 		["aprove/Aprove_09/GCD.ss", 2, "-tp redlog", "main", "SUCCESS", "gcd", "SUCCESS"],
 		["aprove/Aprove_09/LogAG.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
 		["aprove/Aprove_09/LogBuiltIn.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
-		["aprove/Aprove_09/LogIterative.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
-		["aprove/Aprove_09/LogMult.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
+		["aprove/Aprove_09/LogIterative.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
+		["aprove/Aprove_09/LogMult.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
 		["aprove/Aprove_09/Log.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
 		["aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop
 		["aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
@@ -341,7 +341,7 @@ $output_file = "log";
 		["/aprove/Costa_Julia_09-recursive/Hanoi.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
 		###############################################(3)
 		["/aprove/Julia_10_Iterative/NonPeriodic.ss", 1, "", "main", "SUCCESS"],
-		["/aprove/Julia_10_Iterative/Test11.ss", 1, "", "main", "SUCCESS"],
+		["/aprove/Julia_10_Iterative/Test11.ss", 1, "-tp redlog", "main", "SUCCESS"],
 		["/aprove/Julia_10_Iterative/Test2.ss", 3, "", "main", "SUCCESS", "iter", "SUCCESS", "add", "SUCCESS"],
 		###############################################(8)
 		["/aprove/Julia_10_Recursive/AckR.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
@@ -653,7 +653,13 @@ sub hip_process_file {
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
 					print "error at: $test->[0] $test->[$i]\n";
 				}
-				#Termination checking result
+			}
+			#Termination checking result
+      if ($output !~ "ERR") {}
+			else {
+				$error_count++;
+				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+				print "term error at: $test->[0] $test->[$i]\n";
 			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);

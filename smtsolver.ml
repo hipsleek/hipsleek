@@ -120,6 +120,7 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+    | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -186,13 +187,14 @@ let rec smt_of_b_formula b =
 			"(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 		
 let rec smt_of_formula pr_w pr_s f =
+  let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f=
 	match f with
 	| CP.BForm ((b,_) as bf,_) ->
          begin
           match (pr_w b) with
-            | None -> (smt_of_b_formula bf)
-            | Some f -> helper f
+            | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
+            | Some f -> let _ = Debug.devel_pprint ("SOME #") no_pos in helper f
         end
 	| CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
@@ -203,6 +205,10 @@ let rec smt_of_formula pr_w pr_s f =
 		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
   in
   helper f
+
+let smt_of_formula pr_w pr_s f =
+  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s ->s)
+      (fun _ -> smt_of_formula pr_w pr_s f) f
 
 (* let rec smt_of_formula f = *)
 (* 	match f with *)
@@ -373,7 +379,7 @@ let add_axiom h dir c =
 		let op = match dir with 
 					| IMPLIES -> "=>" 
 					| IFF -> "=" in
-        let (pr_w,pr_s) = CP.drop_complex_ops in
+        let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
 		let cache_smt_input = "(assert " ^ 
 				(if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
 				"\t(" ^ op ^ " " ^ (smt_of_formula pr_w pr_s h) ^ 
@@ -532,6 +538,7 @@ let command_for prover =
   (match !smtsolver_name with
     | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
     )
 (*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
@@ -965,7 +972,8 @@ and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula)
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
-	try (match (Omega.imply_with_check pr_weak pr_strong ante conseq "" timeout) with
+        let (pr_w,pr_s) = CP.drop_complex_ops in
+	try (match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
 	  | None -> (false, true)
 	  | Some r -> (r, false)
 	)
@@ -1038,7 +1046,9 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	 (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try let optr= (Omega.is_sat_with_check pr_weak pr_strong f sat_no) in
+		try
+            let (pr_w,pr_s) = CP.drop_complex_ops in
+            let optr= (Omega.is_sat_with_check pr_w pr_s f sat_no) in
         ( match optr with
           | Some r -> (r, false)
           | None -> (true, false)

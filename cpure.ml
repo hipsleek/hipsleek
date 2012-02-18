@@ -9,6 +9,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
+open Label_only
 
 
 (* spec var *)
@@ -53,13 +54,14 @@ let is_int_typ sv = match sv with
 
 type rel_cat = 
   | RelDefn of spec_var
-  | RelAssume of spec_var
+  | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
 
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
+  | AndList of (spec_label * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)
@@ -158,9 +160,19 @@ and rounding_func =
   | Ceil
   | Floor
 
+let exp_to_spec_var e = 
+  match e with
+    | Var (sv, _) -> sv
+    | _ -> report_error no_pos ("Not a spec var\n")
+
 let is_self_var = function
   | Var (x,_) -> is_self_spec_var x
   | _ -> false
+
+let name_of_rel_form r = 
+  match r with 
+    | BForm ((RelForm (name,args,_),_),_) -> name
+    | _ -> raise Not_found
 
 let is_res_var = function
   | Var (x,_) -> is_res_spec_var x
@@ -239,6 +251,11 @@ let is_null_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
   (is_null_str n) 
 
+(* is string a constant?  *)
+let is_null_const_exp (e:exp) : bool = match e with
+  | Var(v,_) -> is_null_const v
+  | _ -> false
+
 (* is string an int constant?  *)
 let is_int_const (s:spec_var) : bool = 
   let n = name_of_spec_var s in
@@ -300,6 +317,11 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
+let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2 
 
 let eq_spec_var_x (sv1 : spec_var) (sv2 : spec_var) = 
   (* ignore primedness *)
@@ -415,10 +437,11 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_subs () = pr_list (pr_pair !print_sv !print_sv)
 let print_formula_br = ref (fun (c:formula_branches) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
-  | RelAssume v -> "RELASS " ^ (!print_sv v)
+  | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
@@ -1318,8 +1341,12 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
             | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq v1 w1)&& (eq v2 w2)
             | _ -> false
           *)
-          
+
 and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
+  Debug.no_2 "eqExp_f" !print_exp !print_exp string_of_bool (eqExp_f_x eq) e1 e2 
+
+and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
+  let rec helper e1 e2 =
   match (e1, e2) with
     | (Null(_), Null(_)) -> true
     | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
@@ -1328,23 +1355,24 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (Subtract(e11, e12, _), Subtract(e21, e22, _))
     | (Max(e11, e12, _), Max(e21, e22, _))
     | (Min(e11, e12, _), Min(e21, e22, _))
-    | (Add(e11, e12, _), Add(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
-    | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
-    | (Div(e11, e12, _), Div(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
+    | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
+    | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
+    | (Div(e11, e12, _), Div(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
     | (Bag(e1, _), Bag(e2, _))
     | (BagUnion(e1, _), BagUnion(e2, _))
     | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_list_f eq e1 e2)
-    | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+    | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (helper e1 e3) & (helper e2 e4)
     | (List (l1, _), List (l2, _))
-    | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp_f eq a b)) l1 l2 
+    | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (helper a b)) l1 l2 
       else false
-    | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
+    | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (helper e1 d1) && (helper e2 d2)
     | (ListHead (e1, _), ListHead (e2, _))
     | (ListTail (e1, _), ListTail (e2, _))
     | (ListLength (e1, _), ListLength (e2, _))
-    | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
+    | (ListReverse (e1, _), ListReverse (e2, _)) -> (helper e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
+  in helper e1 e2
 
 and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
@@ -1880,7 +1908,12 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
 
-and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
+and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
+
+and e_apply_subs_list sst alist = 
+  let pr = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = pr_list !print_exp in
+  Debug.no_2 "e_apply_subs_list" pr pr2 pr2 e_apply_subs_list_x sst alist
 
 (* TODO : these methods must be made obsolete *)
 and b_apply_one s bf = b_apply_subs [s] bf
@@ -3061,7 +3094,7 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 		  done
 	  done;
 	  begin
-		let rele_conjs = List.map fst !reles in
+		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
 		  filtered_f
 	  end
@@ -6814,8 +6847,8 @@ type infer_state =
   }
 
 let create_infer_state vs =
-  let prf = !print_formula in
-  let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in 
+(*  let prf = !print_formula in*)
+(*  let pr (lhs,rhs) = (prf lhs)^" --> "^(prf rhs) in *)
   { 
       infer_state_vars = vs;
       infer_state_rel = new Gen.stack;
@@ -7081,17 +7114,27 @@ let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
-            if (v="dom") or (is_update_array_relation v) then None
+            (*provers which can not handle relation => throw exception*)
+            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
-            if (v="dom") or (is_update_array_relation v) then None
+            (*provers which can not handle relation => throw exception*)
+            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
 
+let drop_complex_ops_z3 =
+  let pr_weak b = match b with
+        | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | _ -> None in
+  let pr_strong b = match b with
+        | LexVar t_info -> Some (mkFalse t_info.lex_loc)
+        | _ -> None in
+  (pr_weak,pr_strong)
 
 let memo_complex_ops stk bool_vars is_complex =
   let pr b = match b with
@@ -7304,7 +7347,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar t_info ->
 		    let t_ann = t_info.lex_ann in
 				let ml = t_info.lex_exp in
-				let il = t_info.lex_tmp in
+(*				let il = t_info.lex_tmp in*)
 				let pos = t_info.lex_loc in
         (match t_ann with
           | Term ->
@@ -7376,6 +7419,41 @@ let rec remove_cnts exist_vars f = match f with
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
 
+let order_var v1 v2 vs =
+  if List.exists (eq_spec_var_nop v1) vs then
+    if List.exists (eq_spec_var_nop v2) vs then None
+    else Some (v2,v1)
+  else if List.exists (eq_spec_var_nop v2) vs then Some (v1,v2)
+  else None 
 
+let rec extr_subs xs vs subs rest = match xs with 
+  | [] -> (vs,subs,rest)
+  | ((v1,v2) as p)::xs1 -> let m = order_var v1 v2 vs in
+    (match m with
+      | None -> extr_subs xs1 vs subs (p::rest)  
+      | Some ((fr,t) as p2) -> extr_subs xs1 (fr::vs) (p2::subs) rest) 
 
+let extr_subs xs vs subs rest = 
+  let pr_vars = !print_svl in
+  let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
+  let pr_res = pr_triple pr_vars pr_subs pr_subs in
+  Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs 
+
+let rec simplify_subs xs vs ans = 
+  let (vs1,subs,rest) = extr_subs xs vs [] [] in
+  if subs==[] then (ans,xs)
+  else simplify_subs rest vs1 (subs@ans)
+
+let apply_subs_sv s t =
+  try
+    let (fr,nt) = List.find (fun (f1,_) -> eq_spec_var f1 t) s in
+    nt
+  with _ -> t
+
+let rec norm_subs subs =
+  match subs with
+    | [] -> []
+    | (fr,t)::xs -> 
+          let new_s = norm_subs xs in
+          (fr,apply_subs_sv new_s t)::new_s
 

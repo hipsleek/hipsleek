@@ -1,4 +1,6 @@
 (* global types and utility functions *)
+(* module Lb = Label_only *)
+    (* circular with Lb *)
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -18,12 +20,24 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type bformula_label = int
 and branch_label = string	(*formula branches*)
+
+
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
+
+
+let empty_label = (0,"")
+let app_e_l c = (empty_label, c)
+let combine_lbl (i1,s1)(i2,s2) = match s1 with 
+  | "" -> (match s2 with 
+            | "" -> (i1,s1)
+            | _ -> (i2,s2))
+  | _ -> (i1,s1)
+
 
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
 
@@ -156,24 +170,50 @@ let string_of_loc_by_char_num (l : loc) =
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
 
-class prog_loc =
+(* class prog_loc = *)
+(*    object  *)
+(*      val mutable lc = None *)
+(*      method is_avail : bool = match lc with *)
+(*        | None -> false *)
+(*        | Some _ -> true *)
+(*      method set (nl:loc) = lc <- Some nl *)
+(*      method get :loc = match lc with *)
+(*        | None -> no_pos *)
+(*        | Some p -> p *)
+(*      method reset = lc <- None *)
+(*      method string_of : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_loc l) *)
+(*      method string_of_pos : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_pos l.start_pos) *)
+(*    end;; *)
+
+
+class ['a] store (x_init:'a) (epr:'a->string) =
    object 
+     val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
        | None -> false
        | Some _ -> true
-     method set (nl:loc) = lc <- Some nl
-     method get :loc = match lc with
-       | None -> no_pos
+     method set (nl:'a) = lc <- Some nl
+     method get :'a = match lc with
+       | None -> emp_val
        | Some p -> p
      method reset = lc <- None
      method string_of : string = match lc with
        | None -> "None"
-       | Some l -> (string_of_loc l)
+       | Some l -> (epr l)
+   end;;
+
+class prog_loc =
+object
+  inherit [loc] store no_pos string_of_loc
      method string_of_pos : string = match lc with
        | None -> "None"
        | Some l -> (string_of_pos l.start_pos)
-   end;;
+end;;
 
 let proving_loc  = new prog_loc
 
@@ -357,6 +397,8 @@ let ann_derv = ref false
 let print_proc = ref false
 
 let check_all = ref true
+
+let auto_number = ref true
 
 let use_field = ref false
 

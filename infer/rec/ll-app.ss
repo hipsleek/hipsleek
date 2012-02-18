@@ -53,10 +53,10 @@ For precondition we get:
 // inferred pre : (n!=0 | m<=0) 
 
 void append(node x, node y)
-  infer [n,m,A]
+  infer [n,m,B]
 //infer [n,A]
   requires x::ll<n>*y::ll<m> & n>=0 & m>=0
-  ensures x::ll<z> & A(z,m,n);
+  ensures x::ll<z> & B(z,m);
 
 //  requires x::ll<n>*y::ll<m> 
 //  ensures x::ll<z> & A(n,m,z);

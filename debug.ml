@@ -88,6 +88,10 @@ let trace_hprint (pr:'a->string) (m:'a) (pos:loc) =
 let trace_zprint m (pos:loc) = 
 	ho_print false (fun x -> Lazy.force x) m
 
+let tinfo_zprint m p = trace_zprint m p
+let tinfo_hprint pr m p  = trace_hprint pr m p
+let tinfo_pprint m p = trace_pprint m p
+
 let info_pprint (msg:string) (pos:loc) : unit = 
 	ho_print true (fun a -> " "^a) msg
 

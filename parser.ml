@@ -7,6 +7,7 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
+open Label_only
 
 open Perm
 
@@ -104,6 +105,42 @@ let rec split_members mbrs = match mbrs with
   
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
+(* older version using formula_label *)
+(* let label_struc_groups (lgrp:(formula_label*F.struc_formula) list list) :F.struc_formula= *)
+(*   match (List.length lgrp) with *)
+(*     | 0 -> F.mkEFalseF () *)
+(*     | 1 -> (match List.hd lgrp with *)
+(* 				| ((i,""),x)::[] -> x *)
+(* 				| _ as b -> F.EList b) *)
+(*     | _ -> *)
+(*         let _,lgr = List.fold_left (fun (a1,a2) c -> *)
+(*             let ngrp = List.map (fun ((_,s),d)-> ((a1,s),d)) c in *)
+(*             (a1+1, a2@ngrp) ) (1,[]) lgrp in *)
+(*         F.EList lgr *)
+
+let label_struc_list (lgrp:(spec_label_def*F.struc_formula) list list) : (spec_label_def*F.struc_formula) list = 
+  List.concat lgrp
+
+let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+  F.EList (label_struc_list lgrp)
+
+let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  = 
+  let n = List.length lgrp in
+  let fl = List.concat lgrp in
+  let all_unlab = List.for_all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
+  if n<=1 || not(all_unlab) then fl 
+  else 
+    (* automatically insert numeric label if spec is completely unlabelled *)
+    let _,lgr = List.fold_left (fun (a1,a2) c ->
+            let ngrp = List.map (fun ((_,s),d)-> ((Some a1,[]),d)) c in
+            ((a1+1), a2@ngrp) ) (1,[]) lgrp 
+    in lgr
+
+(* auto insertion of numeric if unlabelled *)
+let label_struc_groups_auto (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+  F.EList (label_struc_list_auto lgrp)
+
+
 let un_option s d = match s with
   | Some v -> v
   | None -> d
@@ -631,7 +668,7 @@ cid:
 
 view_body:
   [[ t = formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
-   | `FINALIZE; t = split_combine -> ([],false) 
+   | `FINALIZE; t = split_combine -> (F.mkEFalseF (),false) 
   ]];
   
   
@@ -674,15 +711,20 @@ formulas:
 	 | dc=disjunctive_constr  -> ((F.formula_to_struc_formula dc),true)]];
    
 extended_l:
-  [[ peek_extended; `OSQUARE; h=extended_constr ; `ORWORD; t=LIST1 extended_constr SEP `ORWORD; `CSQUARE -> h::t 
-   | h=extended_constr -> [h]]];
+  [[ peek_extended; `OSQUARE; h=extended_constr_grp ; `ORWORD; t=LIST1 extended_constr_grp SEP `ORWORD; `CSQUARE -> 
+     label_struc_groups (h::t)
+   | h=extended_constr_grp -> label_struc_groups [h]]];
    
+extended_constr_grp:
+   [[ c=extended_constr -> [(empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
+
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc (un_option rc [])(get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc(get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -1397,12 +1439,29 @@ enumerator:
 (****Specs *******)
 opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
  
-opt_spec_list: [[t = LIST0 spec -> t]];
+opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
-spec_list : [[t= LIST1 spec -> t ]];
+spec_list_only : [[t= LIST1 spec_list_grp -> label_struc_list t ]];
+
+spec_list : [[t= LIST1 spec_list_grp -> label_struc_groups t ]];
+
+spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
+
+spec_list_grp:
+  [[
+      (* c=spec -> [(empty_spec_label_def,c)] *)
+     t= LIST1 spec -> List.map (fun c -> (empty_spec_label_def,c)) t
+    | `IDENTIFIER id; `COLON; `OSQUARE; 
+          t = spec_list_only 
+          (* LIST0 spec SEP `ORWORD *)
+      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,id::l),c)) t
+    | `OSQUARE; 
+          t = spec_list_only
+      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
+  ]];
 
 spec: 
-  [[ 
+  [[
     `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
      F.EInfer {
        F.formula_inf_post = postf; 
@@ -1410,51 +1469,30 @@ spec:
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
-  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+    | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 F.EBase {
-			 F.formula_ext_explicit_inst =cl;
-			 F.formula_ext_implicit_inst = [];
-			 F.formula_ext_exists = [];
-			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
-			 F.formula_ext_continuation = [s];
-			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+			 F.formula_struc_explicit_inst =cl;
+			 F.formula_struc_implicit_inst = [];
+			 F.formula_struc_exists = [];
+			 F.formula_struc_base = (F.subst_stub_flow n_flow dc);
+			 F.formula_struc_continuation = Some s;
+			 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
 	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
 	    	F.EBase {
-	    	 F.formula_ext_explicit_inst =cl;
-	    	 F.formula_ext_implicit_inst = [];
-	    	 F.formula_ext_exists = [];
-	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
-	    																					else sl;
-	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+	    	 F.formula_struc_explicit_inst =cl;
+	    	 F.formula_struc_implicit_inst = [];
+	    	 F.formula_struc_exists = [];
+	    	 F.formula_struc_base =  (F.subst_stub_flow n_flow dc);
+	    	 F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
+	    	 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
        
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
-	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
-			F.ECase {
-						F.formula_case_branches = bl; 
-            F.formula_case_pos = get_pos_camlp4 _loc 1; }]];
-	 (*| `VARIANCE; m=opt_measures; i=opt_measures_seq; s=SELF ->
-			F.EVariance {
-					F.formula_var_measures = m;
-          F.formula_var_infer = i;
-					F.formula_var_continuation = s;
-					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];*)
+	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
-(*
-opt_measures: [[t=OPT measures -> un_option t []]];
 
-measures: [[`OSQUARE; vl=variance_list; `CSQUARE -> vl]];
-
-variance_list: [[t=LIST1 cexp_with_bound SEP `COMMA -> t]];
-
-cexp_with_bound: 
-  [[ t=cexp -> (t, None)
-	 | t1=cexp; `AT; t2=cexp -> (t1, Some t2)]];
-
-condition_list: [[t=pure_constr ->[t]]];
-*)  
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
 spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
@@ -1470,13 +1508,13 @@ proc_decl:
    | h=proc_header -> h]];
   
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None
+     mkProc id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl [] (get_pos_camlp4 _loc 1) None]];
+    mkProc id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -1486,7 +1524,7 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc id "" None true ot fpl (Named id) osl [] (get_pos_camlp4 _loc 1) None
+      mkProc id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -1666,7 +1704,7 @@ while_statement:
             exp_while_f_name = "";
             exp_while_wrappings = None;
             exp_while_pos = get_pos_camlp4 _loc 1 }
-   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list; es=embedded_statement ->
+   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list_outer; es=embedded_statement ->
         While { exp_while_condition = bc;
           exp_while_body = es;
           exp_while_specs = sl;(*List.map remove_spec_qualifier $5;*)

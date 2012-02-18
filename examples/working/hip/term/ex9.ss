@@ -1,8 +1,7 @@
 void loop(ref int x, ref int y, int N)
 case {
-  x>N -> variance [0,0] ensures "l1": x'=x & y'=y;
-  x<=N -> requires x+y>0
-          variance [0,1,N-x]
+  x>N -> requires Term ensures "l1": x'=x & y'=y;
+  x<=N -> requires x+y>0 & Term[N-x]
           ensures "l2": N-x'<0;
 }
 {
@@ -19,23 +18,23 @@ case {
       loop(x,y,N);
     } else {
       //assume x'>=x+1;
-	  //assume y'=y;
-	  update2(x);
+	    //assume y'=y;
+	    update2(x);
       loop(x,y,N);
     }
   }
 }
 
 bool randBool()
-  requires true
+  requires Term
   ensures true;
   
 // update x,y to x'>=2*x+y & y'>=y+1;
 void update1(ref int x, ref int y)
-  requires true
+  requires Term
   ensures x'>=2*x+y & y'>=y+1;
 
 // update x to x'>=x+1;
 void update2(ref int x)
-  requires true
+  requires Term
   ensures x'>=x+1;

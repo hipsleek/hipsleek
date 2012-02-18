@@ -41,8 +41,9 @@ print residue.
 infer [n] x::ll<n> & n>0 |- x::node<_,null>.
 print residue.
 
+// TODO : n<=0 ??
 // (8)
-infer [n] x::ll<n> & n>0 |- x=null.
+infer [n] x::ll<n> & n>0  |- x=null.
 print residue.
 
 // (9)
