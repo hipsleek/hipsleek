@@ -4882,6 +4882,25 @@ let rec struc_to_formula_gen (f:struc_formula):(formula*formula_label option lis
 (* let struc_to_formula f0 :formula = formula_of_disjuncts (fst (List.split (struc_to_formula_gen f0))) *)
 (* TO-CHECK : why is above overridden *)
 
+let list_of_disjs (f0 : formula) : formula list =
+  let rec helper f disjs = match f with
+    | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
+      let tmp1 = helper f2 disjs in
+      let tmp2 = helper f1 tmp1 in
+      tmp2
+    | _ -> f :: disjs
+  in
+  helper f0 []
+
+let disj_of_list (xs : formula list) pos : formula = 
+  let rec helper xs r = match xs with
+    | [] -> r
+    | x::xs -> mkOr x (helper xs r) pos
+  in
+  match xs with
+  | [] -> mkTrue (mkTrueFlow ()) pos
+  | x::xs -> helper xs x
+
 let rec split_conjuncts (f:formula):formula list = match f with 
   | Or b -> (split_conjuncts b.formula_or_f1)@(split_conjuncts b.formula_or_f2)
   | _ -> [f] 

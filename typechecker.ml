@@ -464,9 +464,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
+                                let heap_vars_init = List.filter (fun r -> CP.type_of_spec_var r = BagT Int) (CF.fv_heap_of post_cond) in
                                 (* ref parameters *)
                                 let vr = List.map CP.to_primed var_ref in
-                                let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@vr) in
+                                let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@heap_vars_init@vr) in
                                 (* filter out res *)
                                 let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
                                 let post_vars = CP.remove_dups_svl post_vars in
@@ -1241,7 +1242,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
                                 let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
-                                let pre_new = TP.simplify_exists_raw (CP.mkExists exist_vars post None no_pos) pre_vars in
+                                let pre_new = TP.simplify_exists_raw exist_vars post in
                                 (rel,post,pre_new)) triples in
                             let _ = List.iter (fun (rel,post,pre) ->
                                 Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;

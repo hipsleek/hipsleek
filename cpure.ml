@@ -32,6 +32,26 @@ let is_self_spec_var sv = match sv with
 let is_res_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = res_name
 
+let is_bag_typ sv = match sv with
+  | SpecVar (BagT _,_,_) -> true
+  | _ -> false
+
+let is_rel_typ sv = match sv with
+  | SpecVar (RelT,_,_) -> true
+  | _ -> false
+
+let is_node_typ sv = match sv with
+  | SpecVar (Named _,_,_) -> true
+  | _ -> false
+
+let is_bool_typ sv = match sv with
+  | SpecVar (Bool,_,_) -> true
+  | _ -> false
+
+let is_int_typ sv = match sv with
+  | SpecVar (Int,_,_) -> true
+  | _ -> false
+
 type rel_cat = 
   | RelDefn of spec_var
   | RelAssume of spec_var list
@@ -7390,6 +7410,14 @@ and count_term_b_formula bf =
         | Term -> 1
         | _ -> 0)
   | _ -> 0
+
+let rec remove_cnts exist_vars f = match f with
+  | BForm (bf,_) -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
+  | And (f1,f2,_) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) no_pos
+  | Or (f1,f2,_,_) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) None no_pos
+  | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
+  | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
 
 let order_var v1 v2 vs =
   if List.exists (eq_spec_var_nop v1) vs then
