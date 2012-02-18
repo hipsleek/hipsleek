@@ -319,7 +319,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
             in_vars # set curr_vars ;
-            Debug.info_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
+            Debug.tinfo_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
             (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
             (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
 	        if(Immutable.is_lend post_cond) then
