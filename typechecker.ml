@@ -464,7 +464,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
-                                let heap_vars_init = List.filter (fun r -> CP.type_of_spec_var r = BagT Int) (CF.fv_heap_of post_cond) in
+                                let heap_vars_init = CF.fv_heap_of post_cond in
                                 (* ref parameters *)
                                 let vr = List.map CP.to_primed var_ref in
                                 let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@heap_vars_init@vr) in

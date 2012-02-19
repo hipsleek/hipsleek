@@ -8450,14 +8450,18 @@ let rec eqHeap h1 h2 = match (h1,h2) with
     && List.for_all (fun x -> Gen.BList.mem_eq eqHeap x lst1) lst2
   | _ -> h1 = h2
 
-let eqFormula f1 f2 = match (f1,f2) with
+let rev_imply_formula f1 f2 = match (f1,f2) with
   | (Base _, Base _) | (Exists _, Exists _) -> 
     let h1,p1,fl1,b1,t1 = split_components f1 in
     let h2,p2,fl2,b2,t2 = split_components f2 in
     let p1 = MCP.pure_of_mix p1 in
     let p2 = MCP.pure_of_mix p2 in
-    eqHeap h1 h2 && TP.imply_raw p1 p2 && TP.imply_raw p2 p1 && fl1=fl2 && b1=b2 && t1=t2
+    eqHeap h1 h2 && TP.imply_raw p1 p2 && fl1=fl2 && b1=b2 && t1=t2
   | _ -> f1=f2
+
+let remove_dups_imply imply lst =
+  let res = Gen.BList.remove_dups_eq imply lst in
+  Gen.BList.remove_dups_eq imply (List.rev res)
 
 let rec simplify_heap_x h p prog : CF.h_formula = match h with
   | Star {h_formula_star_h1 = h1;
@@ -8504,7 +8508,7 @@ let rec simplify_post_heap_only fml prog = match fml with
   | Or _ -> 
     let disjs = CF.list_of_disjs fml in
     let res = List.map (fun f -> simplify_post_heap_only f prog) disjs in
-    let res = Gen.BList.remove_dups_eq eqFormula res in
+    let res = remove_dups_imply rev_imply_formula res in
     CF.disj_of_list res no_pos
 (*    Or {formula_or_f1 = simplify_post_heap_only f1 prog; *)
 (*        formula_or_f2 = simplify_post_heap_only f2 prog; *)
@@ -8558,13 +8562,13 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
   | Or _ ->
     let disjs = CF.list_of_disjs post_fml in
     let res = List.map (fun f -> simplify_post f post_vars prog subst_fml pre_vars inf_post) disjs in
-    let res = Gen.BList.remove_dups_eq (fun (f1,pre1) (f2,pre2) -> eqFormula f1 f2) res in
+    let res = remove_dups_imply (fun (f1,pre1) (f2,pre2) -> rev_imply_formula f1 f2) res in
     Debug.tinfo_hprint (add_str "RES (simplified post)" (pr_list (pr_pair !print_formula pr_no))) res no_pos;
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
 (*    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml pre_vars inf_post in*)
 (*    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml pre_vars inf_post in*)
-(*    if eqFormula f1 f2 then (f1,pres1)*)
+(*    if rev_imply_formula f1 f2 then (f1,pres1)*)
 (*    else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)*)
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
@@ -8605,7 +8609,7 @@ let rec simplify_pre pre_fml = match pre_fml with
   | Or _ ->
     let disjs = CF.list_of_disjs pre_fml in
     let res = List.map (fun f -> simplify_pre f) disjs in
-    let res = Gen.BList.remove_dups_eq eqFormula res in
+    let res = remove_dups_imply rev_imply_formula res in
     CF.disj_of_list res no_pos
 (*    let f1 = simplify_pre f1 in*)
 (*    let f2 = simplify_pre f2 in*)
