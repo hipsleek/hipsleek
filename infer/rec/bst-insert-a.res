@@ -1,44 +1,89 @@
 
 Processing file "bst-insert-a.ss"
 Parsing bst-insert-a.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home2/loris/hg/sl_infer/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure insert$node2~int... 
-INF-POST-FLAG: false
-REL :  C(mi,sm,ma,lg,a)
-POST:  ma>=lg & sm>=mi & (lg+a)>=(ma+mi) & (ma+mi)>=(sm+a)
-PRE :  sm<=lg
-OLD SPECS:  EInfer [C]
-   EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 1::
-                     EXISTS(mi,ma: res::bst<mi,ma>@M[Orig][LHSCase]&
-                     res!=null & C(mi,sm,ma,lg,a)&{FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 1::
-                   res::bst<mi,ma>@M[Orig][LHSCase]&res!=null & 
-                   C(mi,sm,ma,lg,a) & sm<=lg&{FLOW,(20,21)=__norm}
-NEW RELS: [ (a=mi & ma=lg & mi<=sm & sm<=lg | mi=sm & ma=a & sm<=lg & lg<a | mi=sm & 
-  ma=lg & sm<a & a<=lg) --> C(mi,sm,ma,lg,a), ((mi_649=mi & lg=ma & sm=sm_621 & mi<=ma_650 & ma_650<=a & a<=ma & 
-  sm_621<=lg_622 & lg_622<=ma | mi_649=mi & lg=ma & sm=sm_621 & mi<=ma_650 & 
-  (a+1)<=ma_650 & ma_650<=lg_622 & lg_622<=ma & sm_621<=lg_622) & 
-  C(mi_649,sm_621,ma_650,lg_622,a)) --> C(mi,sm,ma,lg,a), ((sm=mi & ma_685=ma & lg=lg_657 & mi<a & a<=(mi_684+1) & mi<=sm_656 & 
-  sm_656<=lg_657 & mi_684<=ma | sm=mi & ma_685=ma & lg=lg_657 & mi<=sm_656 & 
-  sm_656<=mi_684 & mi_684<=ma & mi_684<=(a-2) & sm_656<=lg_657) & 
-  C(mi_684,sm_656,ma_685,lg_657,a)) --> C(mi,sm,ma,lg,a)]
 
-Procedure insert$node2~int SUCCESS
+Checking procedure insert$node2~int... 
+( [(64::,0 ); (64::,0 ); (63::,1 ); (63::,1 )]) :bst-insert-a.ss:24: 10: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):bst-insert-a.ss:24: 10:  List of Partial Context: [PC(2, 0)]
+Failed States:
+[
+ Label: [(64::,0 ); (64::,0 ); (63::,1 ); (63::,1 )]
+ State:
+        
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    (failure_code=213)  x!=null & x!=null & x!=null & v_node2_51_555'=x & res=v_node2_51_555' |-  res=null (must-bug).
+                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
+       FAIL_UNION 
+        
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    (failure_code=213)  sm_602=sm & sm_602<=pl_604 & pl_604<=v_606 & lg_603=lg & a<=v_606 & 
+a<=v_606 & sm_621=sm_602 & lg_622=pl_604 & v_node2_43_716!=null & 
+sm_621<=lg_622 & p_718=v_node2_43_716 & q_719=q_608 & v_606<=qs_605 & 
+C(mi_649,sm_621,ma_650,lg_622,a) & v_717=v_606 & (q_608=null & 
+qs_605<=lg_603 | q_608!=null & qs_605<=lg_603) & (v_node2_43_716=null & 
+mi_649<=ma_650 | v_node2_43_716!=null & mi_649<=ma_650) |-  ma_650<=v_717 (may-bug).
+                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
+       FAIL_UNION 
+         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
+       ;
+ Label: [(64::,1 ); (64::,1 ); (63::,1 ); (63::,1 )]
+ State:
+        
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    (failure_code=213)  x!=null & x!=null & x!=null & v_node2_51_555'=x & res=v_node2_51_555' |-  res=null (must-bug).
+                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
+       FAIL_UNION 
+        
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    (failure_code=213)  lg_603=lg & qs_605<=lg_603 & v_606<=qs_605 & sm_602=sm & v_606<a & 
+v_606<a & sm_656=qs_605 & lg_657=lg_603 & v_node2_48_758!=null & 
+sm_656<=lg_657 & p_760=p_607 & q_761=v_node2_48_758 & pl_604<=v_606 & 
+C(mi_684,sm_656,ma_685,lg_657,a) & v_759=v_606 & (v_node2_48_758=null & 
+mi_684<=ma_685 | v_node2_48_758!=null & mi_684<=ma_685) & (p_607=null & 
+sm_602<=pl_604 | p_607!=null & sm_602<=pl_604) |-  v_759<=mi_684 (may-bug).
+                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
+       FAIL_UNION 
+         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
+       
+ ]
+Successful States:
+
+
+Context of Verification Failure: File "bst-insert-a.ss",Line:24,Col:10
+Last Proving Location: File "bst-insert-a.ss",Line:48,Col:3
+
+ERROR: at bst-insert-a.ss_24_10 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure insert$node2~int FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+
+Error(s) detected when checking procedure insert$node2~int
 
 Termination checking result:
 
-Stop Omega... 348 invocations 
+Stop Omega... 275 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.44 second(s)
-	Time spent in main process: 0.62 second(s)
-	Time spent in child processes: 0.82 second(s)
+Total verification time: 1.332082 second(s)
+	Time spent in main process: 0.096005 second(s)
+	Time spent in child processes: 1.236077 second(s)

@@ -1,45 +1,32 @@
 
 Processing file "bsort-3.ss"
 Parsing bsort-3.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home2/loris/hg/sl_infer/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure bubble$node... 
-INF-POST-FLAG: false
-REL :  B(res)
-POST:  res
-PRE :  true
-OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&xs!=null&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 1::
-                     
-                     EXISTS(n_38,s,l: xs::sll<n_38,s,l>@M[Orig][LHSCase]&
-                     !(res) & n_38=n&{FLOW,(20,21)=__norm})
-                     or EXISTS(n_39: xs::ll<n_39>@M[Orig][LHSCase]&B(res) & 
-                        n_39=n&{FLOW,(20,21)=__norm})
-                     
-NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&xs!=null&
-       {FLOW,(20,21)=__norm}
-         EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 1::
-                   
-                   xs::ll<n_39>@M[Orig][LHSCase]&B(res) & n_39=n & 0<=n&
-                   {FLOW,(20,21)=__norm}
-                   or xs::sll<n_38,s,l>@M[Orig][LHSCase]&!(res) & n_38=n & 
-                      0<=n&{FLOW,(20,21)=__norm}
-                   
-NEW RELS: [ (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (res<=0) --> B(res), (1<=res & tmp_42' & B(tmp_42')) --> B(res), (res<=0 & !(tmp_42') & B(tmp_42')) --> B(res), (1<=res) --> B(res), (1<=res) --> B(res)]
 
+Checking procedure bubble$node... 
+!!! REL :  B(res)
+!!! POST:  res
+!!! PRE :  true
+!!! NEW RELS:[ (res<=0) --> B(res),
+ (res<=0) --> B(res),
+ (res<=0) --> B(res),
+ (res<=0) --> B(res),
+ (B(tmp_42') & 1<=res & tmp_42') --> B(res),
+ (B(tmp_42') & res<=0 & !(tmp_42')) --> B(res),
+ (1<=res) --> B(res),
+ (1<=res) --> B(res)]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
 Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 634 invocations 
+Stop Omega... 516 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.87 second(s)
-	Time spent in main process: 1.23 second(s)
-	Time spent in child processes: 0.64 second(s)
+Total verification time: 0.808049 second(s)
+	Time spent in main process: 0.216013 second(s)
+	Time spent in child processes: 0.592036 second(s)

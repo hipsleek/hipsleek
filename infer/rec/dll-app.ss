@@ -19,7 +19,7 @@ relation C(int x, int y, int z).
 node2 append(node2 x, node2 y)
       infer @pre[C]
       requires x::dll<q, m> * y::dll<p, n>
-      ensures res::dll<_, t> & C(t,m,n);
+  ensures res::dll<_, t> & t=m+n ;//C(t,m,n);
 
 {
 	node2 tmp;

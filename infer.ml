@@ -728,16 +728,16 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
       (* TODO WN : Is below really needed?? *)
       let args = CP.fv new_p in
       let new_p =
-        if CP.intersect args iv == [] && quan_var != [] then
-          let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in
-          let _ = DD.trace_hprint (add_str "new_p3: " !CP.print_formula) new_p pos in
-          let new_p = simplify new_p iv in
-          let _ = DD.trace_hprint (add_str "new_p4: " !CP.print_formula) new_p pos in
-          (*let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*)
-          let args = CP.fv new_p in
-          let quan_var = CP.diff_svl args iv in
-          TP.simplify_raw (CP.mkExists quan_var new_p None pos)
-        else
+        (* if CP.intersect args iv == [] && quan_var != [] then *)
+        (*   let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in *)
+        (*   let _ = DD.trace_hprint (add_str "new_p3: " !CP.print_formula) new_p pos in *)
+        (*   let new_p = simplify new_p iv in *)
+        (*   let _ = DD.trace_hprint (add_str "new_p4: " !CP.print_formula) new_p pos in *)
+        (*   (\*let new_p = simplify (CP.mkAnd new_p invariants pos) iv in*\) *)
+        (*   let args = CP.fv new_p in *)
+        (*   let quan_var = CP.diff_svl args iv in *)
+        (*   TP.simplify_raw (CP.mkExists quan_var new_p None pos) *)
+        (* else *)
           simplify new_p iv
       in
       (* abstract common terms from disj into conjunctive form *)
@@ -767,7 +767,8 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                   if ((List.length vs_rel)>1) then 
                     let vars = stk_vars # get_stk in
 			        let (_,n_lhs,n_rhs) = simp_lhs_rhs vars (0,lhs_xpure,rhs_xpure) in
-                    (None,None,[(RelAssume vs_rel,n_lhs,n_rhs)])
+                    (* (None,None,[]) *)
+                    (None,None,[ (* (RelAssume vs_rel,n_lhs,n_rhs) *) ])
                   else
                     begin
                   let n_lhs2 = CP.drop_rel_formula n_lhs in
@@ -786,8 +787,8 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                   trace (add_str "rhs" !print_formula) n_rhs no_pos;
                   trace (add_str "new_p (rel_ass)" !print_formula) new_p no_pos;
                   if (CP.fv new_p == []) then (None,None,[])
-                  else (None,None,[(RelAssume vs_rel,f,new_p)])
-                    end
+                  else (None,None, [ (* (RelAssume vs_rel,f,new_p)  *)] )
+                  end
         end
       else
         let new_p_good = CP.simplify_disj_new new_p in
@@ -821,23 +822,23 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
         (* else *)
           begin
             (* TODO WN : Is rel assume still needed here?? *)
-            let lhs_fil = CP.filter_ante lhs_xpure rhs_xpure in
-            let lhs_simps = CP.simplify_filter_ante TP.simplify_always lhs_xpure rhs_xpure in
-            DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
-            DD.devel_pprint ">>>>>> rel assume <<<<<<" pos;
-            DD.devel_hprint (add_str "LHS" !CP.print_formula) lhs_xpure pos;               
-            DD.devel_hprint (add_str "LHS filter" !CP.print_formula) lhs_fil pos;               
-            DD.devel_hprint (add_str "LHS simpl" !CP.print_formula) lhs_simps pos;               
-            DD.devel_hprint (add_str "RHS" !CP.print_formula) rhs_xpure pos;
-            DD.devel_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels pos;
-            DD.devel_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig pos;
-            (* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos; *)
-            if red_pre!=[] then DD.devel_hprint (add_str "already in LHS: " (pr_list !CP.print_formula)) red_pre pos;
-            DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p_good pos;
-            (*DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos;
-            if b then
-              (DD.devel_pprint "contradiction in inferred pre!" pos; (None,None))
-            else*)
+            (* let lhs_fil = CP.filter_ante lhs_xpure rhs_xpure in *)
+            (* let lhs_simps = CP.simplify_filter_ante TP.simplify_always lhs_xpure rhs_xpure in *)
+            (* DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos; *)
+            (* DD.devel_pprint ">>>>>> rel assume <<<<<<" pos; *)
+            (* DD.devel_hprint (add_str "LHS" !CP.print_formula) lhs_xpure pos;                *)
+            (* DD.devel_hprint (add_str "LHS filter" !CP.print_formula) lhs_fil pos;                *)
+            (* DD.devel_hprint (add_str "LHS simpl" !CP.print_formula) lhs_simps pos;                *)
+            (* DD.devel_hprint (add_str "RHS" !CP.print_formula) rhs_xpure pos; *)
+            (* DD.devel_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels pos; *)
+            (* DD.devel_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig pos; *)
+            (* (\* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos; *\) *)
+            (* if red_pre!=[] then DD.devel_hprint (add_str "already in LHS: " (pr_list !CP.print_formula)) red_pre pos; *)
+            (* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p_good pos; *)
+            (* DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos; *)
+            (* if b then *)
+            (*   (DD.devel_pprint "contradiction in inferred pre!" pos; (None,None)) *)
+            (* else *)
             (None,Some new_p_good,[])
             (* let ans,rel_ass =  *)
             (*   let ans =Some new_p_good in *)
