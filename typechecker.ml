@@ -1204,7 +1204,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                 (* Termination: Add the set of logical variables into the initial context *)
                 let init_ctx = 
                   if !Globals.dis_term_chk then init_ctx
-                  else Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
+                  else Inf.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
                 let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
 			    let _ = if !print_proof then begin 
 				  Prooftracer.push_proc proc;

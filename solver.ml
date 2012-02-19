@@ -2330,14 +2330,14 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               report_error no_pos ("fold: second parameter is not a view\n") 
 	              (*([], Failure)*)
 
-and process_fold_result ivars prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
+and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pr1 = Cprinter.string_of_list_context_short in
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
-  Debug.no_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
+  Debug.no_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       fold_rs0 (p2::vs2) base2
-and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
+and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
   let type2 = base2.formula_base_type in
@@ -2392,7 +2392,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
 	      Debug.devel_zprint (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
 	      Debug.devel_zprint (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
           (* WN : we need to restore es_infer_vars here *)
-          let new_ctx = Inf.restore_infer_vars_ctx ivars new_ctx in
+          let new_ctx = Inf.restore_infer_vars_ctx ivars ivars_rel new_ctx in
 	      let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx new_conseq pos
 	      in
 	      Debug.devel_zprint (lazy ("process_fold_result: context at end fold: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_list_context rest_rs))) pos;
@@ -6222,7 +6222,7 @@ and inst_before_fold_x estate rhs_p case_vars =
 and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos = 
   let pr2 x = match x with
     | None -> "None"
-    | Some (iv,f) -> Cprinter.string_of_struc_formula f.view_formula in
+    | Some (iv,ivr,f) -> Cprinter.string_of_struc_formula f.view_formula in
   let pr (x,_) = Cprinter.string_of_list_context_short x in
   let pr1 (conseq, rhs_node, vd ,rhs_rest,rhs_b) =
     ("\n conseq = "^(Cprinter.string_of_formula conseq)
@@ -6255,9 +6255,9 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
 
 *)
 and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding pos =
-  let (ivars,vd) = match vd with 
-    | None -> ([],None)
-    | Some (iv,f) -> (iv, Some f) in
+  let (ivars,ivars_rel,vd) = match vd with 
+    | None -> ([],[],None)
+    | Some (iv,ivr,f) -> (iv,ivr, Some f) in
   let var_to_fold = get_node_var ln2 in
   let ctx0 = Ctx estate in
   let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
@@ -6340,7 +6340,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       else []
     in
     (*add permission vars if applicable*)
-    let tmp, tmp_prf = process_fold_result ivars prog is_folding estate fold_rs p2 (perms@v2) b pos in
+    let tmp, tmp_prf = process_fold_result (ivars,ivars_rel) prog is_folding estate fold_rs p2 (perms@v2) b pos in
 	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
 	(tmp, prf)
   else begin
@@ -6518,7 +6518,7 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
 
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
-  let (estate,iv) = Inf.remove_infer_vars_all estate (* rt *)in
+  let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
   let vd = (vdef_fold_use_bc prog rhs_node) in
   let (cl,prf) = 
     match vd with
@@ -6527,7 +6527,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
             CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
       | Some vd ->
-            do_fold prog (Some (iv,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+            do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
   in  ((* Inf.restore_infer_vars iv  *)cl,prf)
 
 

@@ -75,23 +75,29 @@ let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_re
   
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
-  ({estate with es_infer_vars=[];}, iv) 
+  let ivr = estate.es_infer_vars_rel in
+  ({estate with es_infer_vars=[];es_infer_vars_rel=[];}, iv, ivr) 
 
 let remove_infer_vars_partial estate rt =
   let iv = estate.es_infer_vars in
-  if (iv==[]) then (estate,iv)
-  else ({estate with es_infer_vars=CP.diff_svl iv rt;}, iv) 
+  let ivr = estate.es_infer_vars_rel in
+  if (iv==[] && ivr==[]) then (estate,iv,ivr)
+  else 
+    let r_iv = CP.diff_svl iv rt in
+    let r_ivr = CP.diff_svl ivr rt in
+    ({estate with es_infer_vars=r_iv;
+        es_infer_vars_rel=r_ivr;}, iv,ivr) 
 
 let remove_infer_vars_partial estate rt =
   let pr1 = !print_entail_state in
   let pr2 = !print_svl in
-  Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
+  Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_triple pr1 pr2 pr2) 
       remove_infer_vars_partial estate rt 
 
 let rec remove_infer_vars_all_ctx ctx =
   match ctx with
     | Ctx estate -> 
-          let (es,_) = remove_infer_vars_all estate in
+          let (es,_,_) = remove_infer_vars_all estate in
           Ctx es
     | OCtx (ctx1, ctx2) -> OCtx (remove_infer_vars_all_ctx ctx1, remove_infer_vars_all_ctx ctx2)
 
@@ -110,12 +116,15 @@ let remove_infer_vars_all_list_partial_context lpc =
 (*   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in *)
 (*   List.concat r *)
 
-let rec restore_infer_vars_ctx iv ctx = 
-  match ctx with
-  | Ctx estate -> 
-        if iv==[] then ctx
-        else Ctx {estate with es_infer_vars=iv;}
-  | OCtx (ctx1, ctx2) -> OCtx (restore_infer_vars_ctx iv ctx1, restore_infer_vars_ctx iv ctx2)
+let restore_infer_vars_ctx iv ivr ctx = 
+  let rec helper ctx =
+    match ctx with
+      | Ctx estate ->
+            let n_iv = if iv==[] then  estate.es_infer_vars else iv in
+            let n_ivr = if ivr==[] then  estate.es_infer_vars_rel else ivr 
+            in Ctx {estate with es_infer_vars=n_iv; es_infer_vars_rel=n_ivr;}
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
 
 let rec add_infer_vars_ctx iv ctx = 
   match ctx with
@@ -135,14 +144,14 @@ let add_impl_expl_vars_ctx iv ev ctx =
 let add_impl_expl_vars_list_partial_context iv ev (ctx:list_partial_context) =
   List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t,add_impl_expl_vars_ctx iv ev b)) bl)) ctx
 
-let restore_infer_vars_list_partial_context iv (ctx:list_partial_context) =
-  List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t, restore_infer_vars_ctx iv b)) bl)) ctx
+(* let restore_infer_vars_list_partial_context iv ivr (ctx:list_partial_context) = *)
+(*   List.map (fun (fl,bl) -> (fl, List.map (fun (t,b) -> (t, restore_infer_vars_ctx iv ivr b)) bl)) ctx *)
 
-let restore_infer_vars iv cl =
-  if (iv==[]) then cl
-  else match cl with
-    | FailCtx _ -> cl
-    | SuccCtx lst -> SuccCtx (List.map (restore_infer_vars_ctx iv) lst)
+(* let restore_infer_vars iv cl = *)
+(*   if (iv==[]) then cl *)
+(*   else match cl with *)
+(*     | FailCtx _ -> cl *)
+(*     | SuccCtx lst -> SuccCtx (List.map (restore_infer_vars_ctx iv) lst) *)
 
 let rec get_all_args alias_of_root heap = match heap with
   | ViewNode h -> h.h_formula_view_arguments
@@ -768,7 +777,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                     let vars = stk_vars # get_stk in
 			        let (_,n_lhs,n_rhs) = simp_lhs_rhs vars (0,lhs_xpure,rhs_xpure) in
                     (* (None,None,[]) *)
-                    (None,None,[ (* (RelAssume vs_rel,n_lhs,n_rhs) *) ])
+                    (None,None,[ (RelAssume vs_rel,n_lhs,n_rhs) ])
                   else
                     begin
                   let n_lhs2 = CP.drop_rel_formula n_lhs in
@@ -787,7 +796,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                   trace (add_str "rhs" !print_formula) n_rhs no_pos;
                   trace (add_str "new_p (rel_ass)" !print_formula) new_p no_pos;
                   if (CP.fv new_p == []) then (None,None,[])
-                  else (None,None, [ (* (RelAssume vs_rel,f,new_p)  *)] )
+                  else (None,None, [ (RelAssume vs_rel,f,new_p)] )
                   end
         end
       else

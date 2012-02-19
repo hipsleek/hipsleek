@@ -44,7 +44,7 @@ Procedure length$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 259 invocations 
+Stop Omega... 245 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.276016 second(s)

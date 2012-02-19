@@ -29,388 +29,45 @@ Successful States:
        es_var_measures: MayLoop
  ]
 
-( [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]) :bst-del-a.ss:31: 12: Postcondition cannot be derived from context
-
-
-(Cause of PostCond Failure):bst-del-a.ss:31: 12:  List of Partial Context: [PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0)]
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-,
-Failed States:
-[
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:
-        
-         fe_kind: MUST
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  x'=x & x'!=null & x'!=null & x'!=null |-  x'=null (must-bug).
-                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
-       FAIL_UNION 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 
-                    (failure_code=213)  sm_583=sm & sm_639=sm_583 & sm_583<=pl_585 & pl_585<=v_587 & lg_584=lg & 
-v_587!=a & v_587!=a & a<=v_587 & a<=v_587 & lg_640=pl_585 & sm_639<=s_946 & 
-sm_639<=lg_640 & p_950=xleft_948 & q_951=q_589 & v_587<=qs_586 & 
-B(l_947,lg_640) & v_949=v_587 & (q_589=null & qs_586<=lg_584 | q_589!=null & 
-qs_586<=lg_584) & (xleft_948=null & s_946<=l_947 | xleft_948!=null & 
-s_946<=l_947) |-  l_947<=v_949 (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       FAIL_UNION 
-         Trivial fail : MUSTno lemma found in both LHS and RHS nodes (do coercion)
-       
- ]
-Successful States:
-
-
-Context of Verification Failure: File "bst-del-a.ss",Line:31,Col:12
-Last Proving Location: File "bst-del-a.ss",Line:69,Col:6
-
-ERROR: at bst-del-a.ss_31_12 
-Message: Post condition cannot be derived by the system.
- 
-Procedure delete$node2~int FAIL-2
-
-Exception Failure("Post condition cannot be derived by the system.") Occurred!
-
-Error(s) detected when checking procedure delete$node2~int
+!!! REL :  B(l,lg)
+!!! POST:  lg>=l
+!!! PRE :  true
+!!! NEW RELS:[ (exists(qs_586:exists(sm_583:sm_583<=l & qs_586<=lg & exists(a:a<=qs_586 & 
+  l<=a)))) --> B(l,lg),
+ (exists(qs_586:exists(qs_717:exists(pl_716:exists(s:exists(sm_714:exists(v_718:qs_717<=l & 
+  qs_586<=lg & exists(sm_583:v_718<=qs_717 & pl_716<=v_718 & 
+  exists(a:s<=pl_716 & sm_714=s & sm_583=s & l<=a & 
+  a<=qs_586))))))))) --> B(l,lg),
+ (exists(qs_675:exists(qs_717:exists(pl_716:exists(s:qs_675<=lg & 
+  qs_717<=l & l<=qs_675 & s<=pl_716 & exists(v_718:v_718<=qs_717 & 
+  pl_716<=v_718)))))) --> B(l,lg),
+ (exists(qs_675:exists(qs_717:exists(pl_716:exists(s:qs_675<=lg & 
+  qs_717<=l & l<=qs_675 & s<=pl_716 & exists(v_718:v_718<=qs_717 & 
+  pl_716<=v_718)))))) --> B(l,lg),
+ (exists(sm_583:exists(qs_675:qs_675<=lg & l<=qs_675) & 
+  sm_583<=l)) --> B(l,lg),
+ (exists(s:l=lg & s<=lg)) --> B(l,lg),
+ (exists(sm_583:exists(qs_675:qs_675<=lg & l<=qs_675) & 
+  sm_583<=l)) --> B(l,lg),
+ (l=lg & exists(s1_838:exists(s:s1_838<=lg & 
+  exists(tmp_31':tmp_31'<=s1_838 & s<=tmp_31')))) --> B(l,lg),
+ (B(l_892,lg_620) & l=l_892 & lg_620=lg & 
+  exists(sm_619:exists(s_891:exists(a:exists(pl_585:exists(s:exists(sm_583:sm_619<=lg & 
+  sm_619<=s_891 & s_891<=l_892 & exists(v_587:s<=pl_585 & sm_583=s & 
+  v_587<=sm_619 & (1+v_587)<=a & pl_585<=v_587)))))))) --> B(l,lg),
+ (B(l_947,lg_640) & l=lg & exists(qs_586:exists(a:exists(s:qs_586<=lg & 
+  exists(v_587:s<=l_947 & exists(sm_639:lg_640<=v_587 & v_587<=qs_586 & (1+
+  a)<=v_587 & sm_639<=lg_640 & sm_639<=s)))))) --> B(l,lg),
+ (exists(s:l=lg & s<=lg)) --> B(l,lg)]
+!!! NEW ASSUME:[ RELASS [B]: ( B(l_947,lg_640)) -->  l_947<=lg_640]
+!!! NEW RANK:[]
+Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 521 invocations 
+Stop Omega... 436 invocations 
 0 false contexts at: ()
 
-Total verification time: 4.028249 second(s)
+Total verification time: 1.740107 second(s)
 	Time spent in main process: 0.228013 second(s)
-	Time spent in child processes: 3.800236 second(s)
+	Time spent in child processes: 1.512094 second(s)

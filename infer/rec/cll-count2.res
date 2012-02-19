@@ -46,9 +46,9 @@ Procedure count$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 430 invocations 
+Stop Omega... 386 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.608037 second(s)
-	Time spent in main process: 0.152009 second(s)
-	Time spent in child processes: 0.456028 second(s)
+Total verification time: 0.552033 second(s)
+	Time spent in main process: 0.144008 second(s)
+	Time spent in child processes: 0.408025 second(s)
