@@ -33,9 +33,10 @@ Entail  (7): Valid.
 <1>EXISTS(q_146,flted_7_144: q_146::ll<flted_7_144>@M[Orig]&flted_7_144+1=n & 0<n & n=1&{FLOW,(17,18)=__norm})
 inferred pure: [n=1]
 
-Entail  (8): Fail.(must) cause:(failure_code=213)  0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null (must-bug).
+Entail  (8): Valid. 
 
-<1>x::ll<n>@M[Orig][LHSCase]&0<n&{FLOW,(1,2)=__Error}
+<1>false&false&{FLOW,(17,18)=__norm}
+inferred pure: [n<=0]
 
 Entail  (9): Fail.(must) cause:(failure_code=213)  0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null (must-bug).
 
@@ -48,4 +49,4 @@ inferred heap: [x::node<inf_a_169,inf_q_170>@inf_ann_168[Orig];
                inf_q_170::node<inf_b_172,inf_c_173>@inf_ann_171[Orig]]
 inferred pure: [inf_ann_168<=0; inf_ann_171<=0]
 
-Stop Omega... 133 invocations 
+Stop Omega... 132 invocations 

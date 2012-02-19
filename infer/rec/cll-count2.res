@@ -1,7 +1,7 @@
 
 Processing file "cll-count2.ss"
 Parsing cll-count2.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -49,6 +49,6 @@ Termination checking result:
 Stop Omega... 386 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.552033 second(s)
-	Time spent in main process: 0.144008 second(s)
-	Time spent in child processes: 0.408025 second(s)
+Total verification time: 1.45 second(s)
+	Time spent in main process: 0.98 second(s)
+	Time spent in child processes: 0.47 second(s)

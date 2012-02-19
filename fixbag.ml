@@ -495,7 +495,8 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 let helper input_pairs rel ante_vars = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
-  let pfs = List.map (fun p -> 
+  let pfs = List.map (fun p ->
+    let p = TP.simplify_raw p in 
     let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
     CP.remove_cnts exists_node_vars p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in

@@ -1,7 +1,7 @@
 
 Processing file "dll-insert.ss"
 Parsing dll-insert.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -24,6 +24,6 @@ Termination checking result:
 Stop Omega... 137 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.152008 second(s)
-	Time spent in main process: 0.056003 second(s)
-	Time spent in child processes: 0.096005 second(s)
+Total verification time: 0.28 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.07 second(s)

@@ -48,8 +48,8 @@ node2 append(node2 x, node2 y)
 relation D(int x, int y, int z, node2 m, node2 n, node2 p).
 
 void append2(node2 x, node2 y)
-  infer @pre [m,D]
-	requires x::dll<q, m> * y::dll<p, n>
+  infer @pre [D]
+	requires x::dll<q, m> * y::dll<p, n> & m>=1
 	ensures x::dll<r, t> & D(t,m,n,r,p,q);
 
 {

@@ -10,7 +10,7 @@ Entail  (2): Valid.
 <1>false&false&{FLOW,(17,18)=__norm}
 inferred pure: [n!=0]
 
-Entail  (3): Fail.(may) cause:(failure_code=213)  true |-  inf_b_70=b;  true |-  inf_flted_19_74=null (may-bug).
+Entail  (3): Fail.(may) cause:(failure_code=213)  b!=null |-  inf_b_70=b;  true |-  inf_flted_19_74=null (may-bug).
 
 
 Entail  (4): Valid. 
@@ -26,4 +26,4 @@ ERROR: at _0_0
 Message: y is not found in both sides
  exception in Entail  (5) check
 : no residue 
-Stop Omega... 124 invocations 
+Stop Omega... 121 invocations 

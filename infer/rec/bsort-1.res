@@ -1,7 +1,7 @@
 
 Processing file "bsort-1.ss"
 Parsing bsort-1.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -35,6 +35,6 @@ Termination checking result:
 Stop Omega... 769 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.368084 second(s)
-	Time spent in main process: 0.288017 second(s)
-	Time spent in child processes: 1.080067 second(s)
+Total verification time: 2.49 second(s)
+	Time spent in main process: 1.52 second(s)
+	Time spent in child processes: 0.97 second(s)

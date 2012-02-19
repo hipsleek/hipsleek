@@ -1,7 +1,7 @@
 
 Processing file "num-del.ss"
 Parsing num-del.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -26,6 +26,6 @@ Termination checking result:
 Stop Omega... 114 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.136008 second(s)
-	Time spent in main process: 0.048003 second(s)
-	Time spent in child processes: 0.088005 second(s)
+Total verification time: 0.25 second(s)
+	Time spent in main process: 0.18 second(s)
+	Time spent in child processes: 0.07 second(s)

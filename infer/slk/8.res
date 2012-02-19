@@ -26,10 +26,10 @@ inferred pure: [inf_ann_100<=0]
 
 Entail  (5): Valid. 
 
-<1>true&q_115=z & inf_ann_120<=0 & inf_p_121=null & x!=inf_p_121 & inf_ann_127<=0 & (inf_flted_31_128=null & y!=null | y=null) & z=null&{FLOW,(17,18)=__norm}
-inferred heap: [y::lseg<inf_flted_31_128>@inf_ann_127[Orig][LHSCase]; 
+<1>true&q_115=z & inf_ann_120<=0 & inf_p_121=null & x!=inf_p_121 & inf_ann_134<=0 & (inf_flted_31_135=null & y!=null | y=null) & z=null&{FLOW,(17,18)=__norm}
+inferred heap: [y::lseg<inf_flted_31_135>@inf_ann_134[Orig][LHSCase]; 
                z::lseg<inf_p_121>@inf_ann_120[Orig]]
-inferred pure: [z=null; inf_flted_31_128=null & y!=null | y=null; 
-               inf_ann_127<=0; inf_p_121=null; inf_ann_120<=0]
+inferred pure: [z=null; inf_flted_31_135=null & y!=null | y=null; 
+               inf_ann_134<=0; inf_p_121=null; inf_ann_120<=0]
 
-Stop Omega... 262 invocations 
+Stop Omega... 237 invocations 

@@ -711,7 +711,14 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
         | _ -> false
       in
       let new_p,new_p_ass = 
-        if is_bag_cnt then (mkTrue no_pos,mkFalse no_pos)
+        if is_bag_cnt then           
+           let new_p = fml in 
+           let _ = DD.trace_hprint (add_str "new_p3: " !CP.print_formula) new_p pos in 
+           let new_p = simplify new_p iv in 
+           let _ = DD.trace_hprint (add_str "new_p4: " !CP.print_formula) new_p pos in 
+           let args = CP.fv new_p in 
+           let quan_var = CP.diff_svl args iv in 
+           (TP.simplify_raw (CP.mkExists quan_var new_p None pos), mkFalse no_pos)
         else
           let lhs_xpure = CP.drop_rel_formula lhs_xpure in
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
@@ -735,7 +742,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
           (new_p,new_p_for_assume)
       in
       (* TODO WN : Is below really needed?? *)
-      let args = CP.fv new_p in
+(*      let args = CP.fv new_p in*)
       let new_p =
         (* if CP.intersect args iv == [] && quan_var != [] then *)
         (*   let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in *)

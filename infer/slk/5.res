@@ -30,31 +30,30 @@ Entail  (6): Valid.
 <1>false&false&{FLOW,(17,18)=__norm}
 inferred pure: [n!=1]
 
-Entail  (7): Valid. 
+Entail  (7): Fail.(may) cause:(failure_code=213)  0<n & m<n |-  3<n (may-bug).
 
-<1>true&0<n & m<n & 4<=n&{FLOW,(17,18)=__norm}
-inferred pure: [4<=n]
 
-Entail  (8): Valid. 
+Entail  (8): Fail.(may) cause:(failure_code=213)  4<m & 0<n & m<n |-  8<n (may-bug).
 
-<1>true&0<n & m<n & 4<m & 9<=n&{FLOW,(17,18)=__norm}
-inferred pure: [9<=n]
 
-Entail  (9): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+Entail  (9): Valid. 
 
-<1>true&0<n & m<n&{FLOW,(1,2)=__Error}
+<1>false&false&{FLOW,(17,18)=__norm}
+inferred pure: [n<=0]
 
-Entail  (10): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+Entail  (10): Valid. 
 
-<1>true&0<n & m<n&{FLOW,(1,2)=__Error}
+<1>false&false&{FLOW,(17,18)=__norm}
+inferred pure: [n<=m | n<=0]
 
 Entail  (11): Fail.(must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
 
 <1>true&true&{FLOW,(1,2)=__Error}
 
-Entail  (12): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+Entail  (12): Valid. 
 
-<1>true&0<n & m=2&{FLOW,(1,2)=__Error}
+<1>false&false&{FLOW,(17,18)=__norm}
+inferred pure: [m!=2 | n<=0]
 
 Entail  (13): Fail.(may) cause:(failure_code=213)  2<m & a=p |-  m<a (may-bug).
 
@@ -65,9 +64,7 @@ Entail  (14): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (ma
 Entail  (15): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
 
 
-Entail  (16): Valid. 
+Entail  (16): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
 
-<1>true&2<m & 5<=m & m<p&{FLOW,(17,18)=__norm}
-inferred pure: [(1+m)<=p; 5<=m]
 
-Stop Omega... 195 invocations 
+Stop Omega... 187 invocations 

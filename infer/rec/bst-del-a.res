@@ -1,7 +1,7 @@
 
 Processing file "bst-del-a.ss"
 Parsing bst-del-a.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -68,6 +68,6 @@ Termination checking result:
 Stop Omega... 436 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.740107 second(s)
-	Time spent in main process: 0.228013 second(s)
-	Time spent in child processes: 1.512094 second(s)
+Total verification time: 2.32 second(s)
+	Time spent in main process: 1.4 second(s)
+	Time spent in child processes: 0.92 second(s)
