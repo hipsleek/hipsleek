@@ -3009,8 +3009,8 @@ let print_var_set vset =
 (*
   filter from f0 conjuncts that mention variables related to rele_vars.
 *)
+(* Assumption: f0 is SAT *)
 let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
-  if (rele_vars0 == []) then f0 else
   let is_relevant (fv, fvset) rele_var_set =
 	not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
   let rele_var_set = set_of_list rele_vars0 in

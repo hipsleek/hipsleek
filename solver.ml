@@ -3504,7 +3504,13 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
           (* else if isAnyFalseCtx ctx then *)
           (*   (SuccCtx [ctx], UnsatAnte) *)
     else
-      heap_entail_after_sat prog is_folding  ctx conseq pos ([])
+      (* UNSAT check *)
+      let ctx = elim_unsat_ctx prog (ref 1) ctx in
+      let ctx = set_unsat_flag ctx true in 
+      if isAnyFalseCtx ctx then
+        (SuccCtx [ctx], UnsatAnte)
+      else
+        heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -5846,7 +5852,7 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
 	      (* todo: could actually solve more types of b_formulae *)
 
 (************************************* 
-                                       - methods for implication discharging
+ methods for implication discharging
 ***************************************)
 
 and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset 
@@ -7217,7 +7223,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             else
               let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
               let ctx1 = build_context (Ctx estate) delta1 pos in
-			  let ctx1 = set_unsat_flag ctx1 true in
+              (* let ctx1 = elim_unsat_ctx_now prog (ref 1) ctx1 in
+			        let ctx1 = set_unsat_flag ctx1 true in *)
               let rec prune_helper c =
                 match c with
                   | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)

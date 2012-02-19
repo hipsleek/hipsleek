@@ -1,4 +1,4 @@
-for (( i = 10; i <= 20; i++ ))
+for (( i = 10; i <= 10; i++ ))
 do
 	grep Fail spaguetti-$i.z3.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > z3.eps
 	grep Fail spaguetti-$i.z3.slc.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > z3.slc.eps

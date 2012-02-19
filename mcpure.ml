@@ -1477,7 +1477,8 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in
-  let n_ante = if n_ante == [] then ante_disj else n_ante in
+  (* Assumption: ante_disj is SAT *)
+  (* let n_ante = if n_ante == [] then ante_disj else n_ante in *)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
