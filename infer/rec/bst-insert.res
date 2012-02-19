@@ -10,6 +10,23 @@ Checking procedure insert$node2~int...
 !!! REL :  C(mi,sm,ma,lg,a,res)
 !!! POST:  sm>=mi & lg>=sm & ma>=lg & a>=mi & ma>=a & res!=null
 !!! PRE :  sm<=lg
+!!! OLD SPECS: ((None,[]),EInfer [C]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                EXISTS(mi,
+                                ma: res::bst<mi,ma>@M[Orig][LHSCase]&
+                                C(mi,sm,ma,lg,a,res)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              res::bst<mi,ma>@M[Orig][LHSCase]&
+                              C(mi,sm,ma,lg,a,res) & sm<=lg&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ ((lg=ma & mi=a & a<=sm & sm<=ma | ma=a & sm=mi & mi<=lg & (1+lg)<=a | 
   lg=ma & sm=mi & (1+mi)<=a & a<=ma) & res!=null) --> C(mi,sm,ma,lg,a,res),
  (C(mi_649,sm_621,ma_650,lg_622,a,v_node2_43_716) & ma=lg & mi=mi_649 & 
@@ -34,6 +51,6 @@ Termination checking result:
 Stop Omega... 246 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.83 second(s)
-	Time spent in main process: 0.54 second(s)
+Total verification time: 1.91 second(s)
+	Time spent in main process: 0.62 second(s)
 	Time spent in child processes: 1.29 second(s)

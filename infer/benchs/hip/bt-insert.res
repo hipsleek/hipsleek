@@ -13,6 +13,20 @@ Checking procedure insert$node3...
 !!! REL :  A(n,h,m,k)
 !!! POST:  k>=2 & k>=h & (h+1)>=k & (k+m)>=(3+h) & m=n+1
 !!! PRE :  1<=n & 1<=h
+!!! OLD SPECS: ((None,[]),EInfer [A,n,h]
+              EBase exists (Expl)(Impl)[n; h](ex)x::bt<n,h>@M[Orig][LHSCase]&
+                    true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                EXISTS(m,k: x::bt<m,k>@M[Orig][LHSCase]&
+                                A(n,h,m,k)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; h](ex)x::bt<n,h>@M[Orig][LHSCase]&
+                  true&{FLOW,(20,21)=__norm}
+                    EBase true&1<=n & 1<=h & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              x::bt<m,k>@M[Orig][LHSCase]&k>=2 & k>=h & (h+
+                              1)>=k & (k+m)>=(3+h) & m=n+1 & 0<=n & 0<=h&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(hq_693:k=2 & m=2 & n=1 & h=1 | 1+n=m & 3<=m & -1+k=hq_693 & -1+
   h=hq_693 & 2<=hq_693 | k=2 & h=2 & 1+n=m & 3<=m)) --> A(n,h,m,k),
  (-1+m=n & k=h & 2<=h & 2<=n) --> A(n,h,m,k),
@@ -40,9 +54,9 @@ Procedure insert$node3 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 333 invocations 
+Stop Omega... 336 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.5 second(s)
-	Time spent in main process: 0.79 second(s)
-	Time spent in child processes: 0.71 second(s)
+Total verification time: 2.04 second(s)
+	Time spent in main process: 1.12 second(s)
+	Time spent in child processes: 0.92 second(s)

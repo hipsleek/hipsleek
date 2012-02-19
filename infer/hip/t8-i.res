@@ -10,6 +10,14 @@ Checking procedure foo1$int...
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 1<=i]
+!!! OLD SPECS: ((None,[]),EInfer [i]
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&1<=i & MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 1::ref [i]
+                      true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -19,12 +27,29 @@ Checking procedure foo1a$int...
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 1<=i]
+!!! OLD SPECS: ((None,[]),EInfer [i]
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 4::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&1<=i & MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 4::ref [i]
+                      true&true&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure foo1a$int SUCCESS
 
 Checking procedure foo1b$int... 
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase true&0<i&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 7::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&0<i&{FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 7::ref [i]
+                              true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

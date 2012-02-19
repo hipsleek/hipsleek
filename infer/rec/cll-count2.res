@@ -10,6 +10,19 @@ Checking procedure count$node...
 !!! REL :  A(res,n)
 !!! POST:  res>=0 & res=n
 !!! PRE :  0<=n
+!!! OLD SPECS: ((None,[]),EInfer [A]
+              EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::
+                                EXISTS(n_29: x::hd<n_29>@M[Orig][LHSCase]&
+                                A(res,n) & n_29=n&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::
+                              x::hd<n_29>@M[Orig][LHSCase]&A(res,n) & 
+                              n_29=n & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (res=0 & n=0) --> A(res,n),
  (res=0 & n=0) --> A(res,n),
  (exists(n_585:res=1 & n=1 | -1+res=n_585 & -1+n=n_585 & 
@@ -49,6 +62,6 @@ Termination checking result:
 Stop Omega... 386 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.45 second(s)
-	Time spent in main process: 0.98 second(s)
-	Time spent in child processes: 0.47 second(s)
+Total verification time: 1.39 second(s)
+	Time spent in main process: 0.95 second(s)
+	Time spent in child processes: 0.44 second(s)

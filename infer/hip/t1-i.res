@@ -10,18 +10,44 @@ Checking procedure foo1$int...
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 1<=i]
+!!! OLD SPECS: ((None,[]),EInfer [i]
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&1<=i & MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 1::ref [i]
+                      true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure foo1$int SUCCESS
 
 Checking procedure foo1a$int... 
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase true&0<i&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 4::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&0<i&{FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 4::ref [i]
+                              true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure foo1a$int SUCCESS
 
 Checking procedure foo1b$int... 
+!!! OLD SPECS: ((None,[]),EInfer [i]
+              EBase true&0<i&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 7::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&0<i&{FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 7::ref [i]
+                              true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -31,6 +57,14 @@ Checking procedure foo2$int...
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 2<=i]
+!!! OLD SPECS: ((None,[]),EInfer [i]
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 10::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&2<=i & MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 10::ref [i]
+                      true&(i-2)<=i' & i'<i & 2<=i&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -48,6 +82,14 @@ Current States: [ true&1<=r_24' & r_24'<=2 & i'+r_24'=i&{FLOW,(20,21)=__norm}
  es_var_measures: MayLoop] has failed 
 
 
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 13::ref [i]
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 13::ref [i]
+                      true&true&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

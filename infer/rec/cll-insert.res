@@ -13,6 +13,19 @@ Checking procedure insert$node~int...
 !!! REL :  A(m,n)
 !!! POST:  m>=2 & m=n+1
 !!! PRE :  1<=n
+!!! OLD SPECS: ((None,[]),EInfer [n,A]
+              EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                EXISTS(m: x::hd<m>@M[Orig][LHSCase]&A(m,n)&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              x::hd<m>@M[Orig][LHSCase]&A(m,n) & 0<=n&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=2 & n=1 | 1+n=m & 3<=m) --> A(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -23,6 +36,6 @@ Termination checking result:
 Stop Omega... 138 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.42 second(s)
+Total verification time: 0.45 second(s)
 	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.2 second(s)
+	Time spent in child processes: 0.23 second(s)

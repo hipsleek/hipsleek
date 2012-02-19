@@ -13,6 +13,19 @@ Checking procedure append$node~node...
 !!! REL :  A(z,m,n)
 !!! POST:  m>=0 & z>=(1+m) & z=n+m
 !!! PRE :  0<=m & 1<=n
+!!! OLD SPECS: ((None,[]),EInfer [n,A]
+              EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
+                    y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                EXISTS(z: x::ll<z>@M[Orig][LHSCase]&A(z,m,n)&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
+                  y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+                    EBase true&0<=m & 1<=n & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              x::ll<z>@M[Orig][LHSCase]&m>=0 & z>=(1+m) & 
+                              z=n+m & 0<=n & 0<=m&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (1+m=z & 1<=z & n=1) --> A(z,m,n),
  (1<=z_580 & 1+n_557=n & m_558=m & -1+z=z_580 & 0<=m & 1<=n & 
   A(z_580,m_558,n_557)) --> A(z,m,n)]
@@ -25,6 +38,6 @@ Termination checking result:
 Stop Omega... 140 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.26 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.07 second(s)
+Total verification time: 0.36 second(s)
+	Time spent in main process: 0.26 second(s)
+	Time spent in child processes: 0.1 second(s)
