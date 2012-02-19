@@ -1835,7 +1835,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             match process with
               | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
               | _ -> assumption_filter ante cons) split_conseq in
-    let _ = print_endline ("pairs: " ^ (pr_list (pr_pair !print_formula !print_formula) pairs)) in
+    (* let _ = print_endline ("pairs: " ^ (pr_list (pr_pair !print_formula !print_formula) pairs)) in *)
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
