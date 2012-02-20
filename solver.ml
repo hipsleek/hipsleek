@@ -1569,20 +1569,23 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
   else Ctx {es with es_formula = r1;}
   else Ctx {es with es_formula = r1;}
 
+(*
 and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
   let r = transform_list_context ((combine_es_and prog f true),(fun c->c)) ctx in
   let r = transform_list_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r
-
+*)
 and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
   let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) ctx in
   TP.incr_sat_no () ; r
 
+(*
 and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
   (* let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in *)
   let r = transform_list_partial_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) ctx in
   let r = remove_dupl_false_pc_list r in
   TP.incr_sat_no () ; r
+*)
 
 and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) ctx in
@@ -1601,12 +1604,12 @@ and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : c
   let r = transform_context (elim_unsat_es_now prog (ref 1)) r in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
-
+(*
 and context_and_unsat_now prog (ctx : context)  : context = 
   let r = transform_context (elim_unsat_es prog (ref 1)) ctx in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
-
+*)
 and expand_all_preds prog f0 do_unsat: formula = 
   match f0 with
     | Or (({formula_or_f1 = f1;
@@ -2613,7 +2616,8 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
-  if not b then Ctx{es with es_unsat_flag = true } else 
+  let es = { es with es_unsat_flag = true } in
+  if not b then Ctx es else 
 	false_ctx_with_orig_ante es f no_pos
 
 and elim_unsat_ctx_now (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
