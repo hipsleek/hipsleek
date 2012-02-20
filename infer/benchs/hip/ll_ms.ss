@@ -33,6 +33,103 @@ void delete_list(node x)
 /*ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
+//true if the container size is 0, false otherwise.
+relation EMPT1(bool a).
+relation EMPT2(bool a).
+bool empty(node x)
+  infer[EMPT1,EMPT2]
+  requires x::ll<n>
+ case {n = 0 -> ensures EMPT1(res);//res
+  n!= 0 -> ensures EMPT2(res);//!(res)
+}
+{
+  if (x == null) return true;
+  else return false;
+}
+
+//The number of elements that conform the list's content.
+relation SIZEH(int a, int b, int c).
+int size_helper(node x, ref int n)
+  infer[SIZEH]
+  requires x::ll<m> //0<=m
+  ensures SIZEH(res,m,n);//res=m+n & m>=0
+{
+  if (x==null) return n;
+  else {
+    n = n+ 1;
+    return size_helper(x.next, n);
+  }
+}
+relation SIZE(int a, int b).
+int size(node x)
+  infer[SIZE]
+  requires x::ll<n> //0<=n
+  ensures SIZE(res,n);//n>=0 & n=res
+{
+  int m = 0;
+  return size_helper(x, m);
+}
+
+//(val)A reference to the first element in the list container.
+//dll
+relation FRONT(int a, int b).
+int front(node x)
+  infer[FRONT]
+  requires x::node<v,p>*p::ll<m>
+  ensures FRONT(res,v);//res=v
+{
+  return x.val;
+}
+//(val)A reference to the first element in the list container.
+int back(node x)
+  requires x::ll<n>
+  ensures true;
+
+relation SWAP(int a, int b, int c, int d).
+void swap(ref node x, ref node y)
+  infer[SWAP]
+  requires x::ll<n>*y::ll<m> //0<=n & 0<=m
+  ensures x'::ll<m1>*y'::ll<n1> & SWAP(m,n,m1,n1);//n1>=0 & m1>=0 & n1=n & m1=m
+{
+  node tmp = x;
+  x = y;
+  y = tmp;
+}
+/*
+drop current contend, and add n element with v value
+ */
+relation ASS(int a, int b, int c).
+void assign(ref node x, int n, int v)
+  infer[ASS]
+  requires x::ll<m>//0<=m & 0<=n
+  ensures x'::ll<n1> & ASS(n,n1,m);//' m>=0 & n1>=0 & n1=n
+{
+  x =  create_list(n, v);
+}
+
+relation PUF(int a, int b).
+void push_front(ref node x, int v)
+  infer[PUF]
+ requires x::ll<n>
+  ensures x'::ll<m> & PUF(m,n);//'m=n+1
+{
+  node tmp = new node(v,x);
+  x = tmp;
+}
+
+//pop and return first ele
+relation PF(int a, int b).
+node pop_front(ref node x)
+  infer[PF]
+  requires x::ll<m> & x!=null//m>=1
+  ensures x'::ll<n> & PF(n,m);//'m>=1 & m=n+1
+{
+  node tmp = x;
+  x = x.next;
+  tmp.next=null;
+  return tmp;
+}
+
 //Inferred Pure :[ n1!=0, n1!=0]
 /* append two singly linked lists */
 relation A(int m, int n1, int n2).
@@ -137,22 +234,37 @@ void delete(node x, int a)
   }
 }
 
+relation DEL2(int m, int n).
+/* function to delete the a-th node in a singly linked list */
+node delete2(node x, int a)
+  infer[DEL2]
+  requires x::ll<n> //& 0<=n
+  ensures res::ll<m> & DEL2(m,n);//m>=0 & (m+1)>=n & n>=m ==> n=m | n=m+1
+{
+	if (x == null)
+		return x;
+	else {
+		if (x.val == a) return x.next;
+		else return new node(x.val, delete2(x.next, a));
+	}
+}
+
 //NEW RANK:[ (true) --> 0<=(r2(a))]
 /* function to create a singly linked list with a nodes */
 //ranking r2(int n).
-node create_list(int a)
+node create_list(int n, int v)
 //infer[r2]
   requires true//Term[r2(a)]//a >= 0
-  ensures res::ll<a>;
+  ensures res::ll<n>;
 {
   node tmp;
-  if (a == 0) {
+  if (n == 0) {
     return null;
   }
   else {
-    a  = a - 1;
-    tmp = create_list(a);
-    return new node (0, tmp);
+    n  = n - 1;
+    tmp = create_list(n, v);
+    return new node (v, tmp);
   }
 }
 

@@ -31,6 +31,92 @@ void delete_list(ref node x)
 /*ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
+bool empty(node x)
+  requires x::ll2<n,S>
+ case {n = 0 -> ensures res;//res
+  n!= 0 -> ensures !res;//!(res)
+}
+{
+  if (x == null) return true;
+  else return false;
+}
+
+//The number of elements that conform the list's content.
+int size_helper(node x, ref int n)
+  requires x::ll2<m,S> & 0<=m
+  ensures res=m+n & m>=0;
+{
+  if (x==null) return n;
+  else {
+    n = n+ 1;
+    return size_helper(x.next, n);
+  }
+}
+int size(node x)
+  requires x::ll2<n,_> & 0<=n
+  ensures res=n;
+{
+  int m = 0;
+  return size_helper(x, m);
+}
+
+//(val)A reference to the first element in the list container.
+//dll
+int front(node x)
+  requires x::node<v,p>*p::ll2<m,_>
+  ensures res=v;
+{
+  return x.val;
+}
+//(val)A reference to the first element in the list container.
+int back(node x)
+  requires x::ll2<n,_>
+  ensures true;
+
+relation SWAP(bag a, bag b, bag c, bag d).
+void swap(ref node x, ref node y)
+  infer[SWAP]
+  requires x::ll2<n,S1>*y::ll2<m,S2> & 0<=n & 0<=m
+  ensures x'::ll2<m,S3>*y'::ll2<n,S4> & SWAP(S1,S2,S3,S4);//S1=S4 & S2=S3
+{
+  node tmp = x;
+  x = y;
+  y = tmp;
+}
+/*
+drop current contend, and add n element with v value
+ */
+relation ASS(bag a, int b).
+void assign(ref node x, int n, int v)
+  infer[ASS]
+  requires x::ll2<m,S>
+  ensures x'::ll2<n,S1> & ASS(S1,v);//'S1={v}
+{
+  x =  create_list(n, v);
+}
+//relation PUF(bag a, bag b, int b).
+void push_front(ref node x, int v)
+  //infer[PUF]
+  requires x::ll2<n,S>
+  ensures x'::ll2<n+1,S1> ;//& PUF(S1,S,v);//'
+{
+  node tmp = new node(v,x);
+  x = tmp;
+}
+
+//pop and return first ele
+relation PF(bag a, bag b).
+node pop_front(ref node x)
+  infer[PF]
+  requires x::ll2<m,S1> & x!=null//m>=1
+  ensures x'::ll2<m-1,S2> & PF(S1,S2);//'S2 subset S1
+{
+  node tmp = x;
+  x = x.next;
+  tmp.next=null;
+  return tmp;
+}
+
 /* append two singly linked lists */
 //fail with eps
 relation APP(bag a, bag b, bag c).
@@ -140,22 +226,43 @@ void delete( node x, int a)
   }
 }
 
+relation DEL2(int a, bag b, bag c).
+/* function to delete the a-th node in a singly linked list */
+node delete2(node x, int a)
+  infer [DEL2]
+  requires x::ll2<n,S>
+  ensures res::ll2<m,S1> & m<=n & DEL2(a,S,S1);//& (a notin S & S = S1 | S=union(S1, {a}));
+{
+	if (x == null)
+		return x;
+	else {
+		if (x.val == a) return x.next;
+		else return new node(x.val, delete2(x.next, a));
+	}
+}
+
 /* function to create a singly linked list with a nodes */
 //fail
-relation CL(bag a).
-node create_list(int a)
+relation CL(bag a, int b).
+  node create_list(int n, int v)
   infer[CL]
-  requires a >= 0
-  ensures res::ll2<a,S> ;//& CL(S);
+  requires n>=0
+  ensures res::ll2<n,S> ;
+/*
+ case {
+  n = 0 -> ensures res=null;
+  n > 0 ->  ensures res::ll2<n,S> ;//& CL(S,v);//& S={v};
+  n<0 -> ensures true;
+  }*/
 {
   node tmp;
-  if (a == 0) {
+  if (n == 0) {
     return null;
   }
   else {
-    a  = a - 1;
-    tmp = create_list(a);
-    return new node (0, tmp);
+    n  = n - 1;
+    tmp = create_list(n,v);
+    return new node (v, tmp);
   }
 }
 
