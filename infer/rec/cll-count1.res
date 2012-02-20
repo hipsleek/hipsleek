@@ -30,24 +30,6 @@ Successful States:
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ p=h, p=h]
-!!! OLD SPECS: ((None,[]),EInfer [h,p]
-              EBase exists (Expl)(Impl)[p; 
-                    n](ex)x::cll<p,n>@M[Orig][LHSCase]&true&
-                    {FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 1::
-                                EXISTS(p_30,
-                                n_31: x::cll<p_30,n_31>@M[Orig][LHSCase]&
-                                res=n & p_30=p & n_31=n&
-                                {FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[p; n](ex)x::cll<p,n>@M[Orig][LHSCase]&
-                  true&{FLOW,(20,21)=__norm}
-                    EBase true&p=h & MayLoop&{FLOW,(1,23)=__flow}
-                            EAssume 1::
-                              EXISTS(p_575,
-                              n_576: x::cll<p_575,n_576>@M[Orig][LHSCase]&
-                              res=n & p_575=p & n_576=n & 0<=n&
-                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

@@ -7412,12 +7412,35 @@ and count_term_b_formula bf =
   | _ -> 0
 
 let rec remove_cnts exist_vars f = match f with
-  | BForm (bf,_) -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,_) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) no_pos
-  | Or (f1,f2,_,_) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) None no_pos
+  | BForm _ -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) p
+  | Or (f1,f2,o,p) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) o p
   | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+
+let rec is_num_dom_exp e = match e with
+  | IConst _ -> true
+  | Add (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
+(*  | Subtract (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2*)
+  | _ -> false
+
+let is_num_dom pf = match pf with
+  | Lt (e1,e2,_)
+  | Lte (e1,e2,_)
+  | Gt (e1,e2,_)
+  | Gte (e1,e2,_)
+  | Eq (e1,e2,_)
+  | Neq (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
+  | _ -> false
+
+let rec get_num_dom f = match f with
+  | BForm ((pf,_),_) -> if is_num_dom pf then fv f else []
+  | And (f1,f2,_) -> (get_num_dom f1) @ (get_num_dom f2)
+  | Or (f1,f2,_,_) -> (get_num_dom f1) @ (get_num_dom f2)
+  | Not (f,_,_) -> get_num_dom f
+  | Forall (_,f,_,_) -> get_num_dom f
+  | Exists (_,f,_,_) -> get_num_dom f
 
 let order_var v1 v2 vs =
   if List.exists (eq_spec_var_nop v1) vs then

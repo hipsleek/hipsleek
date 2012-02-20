@@ -10,21 +10,6 @@ Checking procedure reverse$node~node...
 !!! REL :  A(xs',m,n,t)
 !!! POST:  m>=0 & t>=m & xs'=null & t=n+m
 !!! PRE :  0<=m & 0<=n
-!!! OLD SPECS: ((None,[]),EInfer [A]
-              EBase exists (Expl)(Impl)[n; 
-                    m](ex)xs::ll<n>@M[Orig][LHSCase] * 
-                    ys::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 1::ref [xs;ys]
-                                EXISTS(t: ys'::ll<t>@M[Orig][LHSCase]&
-                                A(xs',m,n,t)&{FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; m](ex)xs::ll<n>@M[Orig][LHSCase] * 
-                  ys::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&0<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
-                            EAssume 1::ref [xs;ys]
-                              ys'::ll<t>@M[Orig][LHSCase]&m>=0 & t>=m & t=n+
-                              m & xs'=null & 0<=n & 0<=m&
-                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(xs:t=t_573 & 0<=t_573 & A(xs',m_551,n_550,t_573) & 1<=n & 0<=m & 
   xs!=null & -1+m_551=m & 1+n_550=n)) --> A(xs',m,n,t),
  (t=m & 0<=m & n=0 & xs'=null) --> A(xs',m,n,t)]
@@ -37,6 +22,6 @@ Termination checking result:
 Stop Omega... 127 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.34 second(s)
-	Time spent in main process: 0.25 second(s)
+Total verification time: 0.33 second(s)
+	Time spent in main process: 0.24 second(s)
 	Time spent in child processes: 0.09 second(s)

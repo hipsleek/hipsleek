@@ -805,6 +805,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
                   if (CP.fv new_p == []) then (None,None,[])
                   else (None,None, [ (RelAssume vs_rel,f,new_p)] )
                   end
+            | None -> (None,None,[])
         end
       else
         let new_p_good = CP.simplify_disj_new new_p in
@@ -1170,6 +1171,10 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
           CP.join_conjunctions lst
         in
+        let is_bag_cnt = match !TP.tp with
+          | TP.Mona | TP.MonaH -> if TP.is_bag_constraint lhs then true else false
+          | _ -> false
+        in
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
@@ -1177,7 +1182,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           DD.devel_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
           DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
-          let new_lhs = Redlog.elim_exists_with_eq new_lhs in
+          let new_lhs = if is_bag_cnt then new_lhs else Redlog.elim_exists_with_eq new_lhs in
           DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = CP.arith_simplify_new new_lhs in
 	  (*          (new_lhs,rhs) 

@@ -29,6 +29,7 @@ node delete1(node x, int a)
 	}
 }
 
+/*
 relation DEL2(int a, bag b, bag c).
 /* function to delete the a-th node in a singly linked list */
 node delete2(node x, int a)
@@ -42,4 +43,4 @@ node delete2(node x, int a)
 		if (x.val == a) return x.next;
 		else return new node(x.val, delete2(x.next, a));
 	}
-}
+}*/

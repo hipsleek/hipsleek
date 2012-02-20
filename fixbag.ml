@@ -309,14 +309,23 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
   | (Gt (Var (v1,p1), Var (v2,p2), p), Gt (Var (v3,_), Var (v4,_), _)) -> 
     let res = eq_spec_var v1 v4 && eq_spec_var v2 v3 in
     if res then (true, [Neq  (Var (v1,p1), Var (v2,p2), p)]) else (false,[])
-  | (Eq (Var (b1,_), Bag ([],_), _), Eq (Var (b2,_), BagUnion (es,_), _))
-  | (Eq (Var (b1,_), Bag ([],_), _), Eq (BagUnion (es,_), Var (b2,_), _))
-  | (Eq (Bag ([],_), Var (b1,_), _), Eq (Var (b2,_), BagUnion (es,_), _))
-  | (Eq (Bag ([],_), Var (b1,_), _), Eq (BagUnion (es,_), Var (b2,_), _))
-  | (Eq (Var (b2,_), BagUnion (es,_), _), Eq (Var (b1,_), Bag ([],_), _)) 
-  | (Eq (Var (b2,_), BagUnion (es,_), _), Eq (Bag ([],_), Var (b1,_), _)) 
-  | (Eq (BagUnion (es,_), Var (b2,_), _), Eq (Var (b1,_), Bag ([],_), _)) 
-  | (Eq (BagUnion (es,_), Var (b2,_), _), Eq (Bag ([],_), Var (b1,_), _)) -> (eq_spec_var b1 b2 && es != [],[])
+  | (Eq (v1, Bag ([],_), _), Eq (v2, BagUnion (es,_), _))
+  | (Eq (v1, Bag ([],_), _), Eq (BagUnion (es,_), v2, _))
+  | (Eq (Bag ([],_), v1, _), Eq (v2, BagUnion (es,_), _))
+  | (Eq (Bag ([],_), v1, _), Eq (BagUnion (es,_), v2, _))
+  | (Eq (v2, BagUnion (es,_), _), Eq (v1, Bag ([],_), _)) 
+  | (Eq (v2, BagUnion (es,_), _), Eq (Bag ([],_), v1, _)) 
+  | (Eq (BagUnion (es,_), v2, _), Eq (v1, Bag ([],_), _)) 
+  | (Eq (BagUnion (es,_), v2, _), Eq (Bag ([],_), v1, _)) -> 
+    begin
+      match (v1,v2) with
+      | (Var (b1,_), Var (b2,_))
+      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Var (b2,_))
+      | (Var (b1,_), Subtract (_, Subtract (_,Var (b2,_),_),_))
+      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Subtract (_, Subtract (_,Var (b2,_),_),_))
+      -> (eq_spec_var b1 b2 && es != [],[])
+      | _ -> (false,[])
+    end
   | _ -> (false,[])
 
 let matching f1 f2 = match (f1,f2) with
@@ -430,24 +439,39 @@ let propagate_rec_helper rcase_orig rel ante_vars =
 (*    let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in*)
 (*    List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs*)
 
-let transform fml v_synch = match fml with
-  | BForm ((Eq (Var (b1,_), BagUnion ([b2;Bag([Var (v,_)],_)],_), _), _),_)
-  | BForm ((Eq (Var (b1,_), BagUnion ([Bag([Var (v,_)],_);b2],_), _), _),_)
-  | BForm ((Eq (BagUnion ([Bag([Var (v,_)],_);b2],_), Var (b1,_), _), _),_)
-  | BForm ((Eq (BagUnion ([b2;Bag([Var (v,_)],_)],_), Var (b1,_), _), _),_) -> 
-    let vars = afv b2 in
-    let v_synch = List.filter (fun x -> not (eq_spec_var x v)) v_synch in
+let transform fml v_synch rel = match fml with
+  | BForm ((Eq (v1, BagUnion ([b2;Bag([Var (v,_)],_)],_), _), _),_)
+  | BForm ((Eq (v1, BagUnion ([Bag([Var (v,_)],_);b2],_), _), _),_)
+  | BForm ((Eq (BagUnion ([Bag([Var (v,_)],_);b2],_), v1, _), _),_)
+  | BForm ((Eq (BagUnion ([b2;Bag([Var (v,_)],_)],_), v1, _), _),_) -> 
     begin
-      match (vars,v_synch) with
-      | ([hd],[v_s]) ->
-        let v_new = v_s in
-        let b2_new = CP.fresh_spec_var_prefix "FB" hd in
-        let als1 = CP.mkEqVar v v_new no_pos in
-        let als2 = CP.mkEqVar hd b2_new no_pos in
-        let f_new = mkEqExp (mkVar b1 no_pos) (BagUnion([mkVar b2_new no_pos;Bag([mkVar v_new no_pos],no_pos)],no_pos)) no_pos in
-        conj_of_list [als1;als2;f_new] no_pos
-      | _ -> fml
+    match v1 with
+    | Var (b1,_)
+    | Subtract (_, Subtract (_,Var (b1,_),_),_) ->
+      let vars = afv b2 in
+      let v_synch = List.filter (fun x -> not (eq_spec_var x v)) v_synch in
+      begin
+        match (vars,v_synch) with
+        | ([hd],[v_s]) ->
+          let v_new = v_s in
+          let b2_new = CP.fresh_spec_var_prefix "FB" hd in
+          let als1 = CP.mkEqVar v v_new no_pos in
+          let als2 = CP.mkEqVar hd b2_new no_pos in
+          let f_new = mkEqExp (mkVar b1 no_pos) (BagUnion([mkVar b2_new no_pos;Bag([mkVar v_new no_pos],no_pos)],no_pos)) no_pos in
+          conj_of_list [als1;als2;f_new] no_pos
+        | _ -> fml
+      end
+    | _ -> fml
     end
+  | And _ -> 
+    let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch (CP.fv rel)) in
+    let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) (CP.fv rel)) in
+(*    DD.devel_hprint (add_str "VSYNCH: " (!print_svl)) v_synch no_pos;*)
+(*    DD.devel_hprint (add_str "VSUBST: " (!print_svl)) v_subst no_pos;*)
+    (match (v_subst, v_synch) with
+      | ([hd],[v_s]) -> CP.subst [(hd,v_s)] fml
+      | _ -> fml
+    )
   | _ -> fml
 
 let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
@@ -483,7 +507,8 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
-    let bcases = List.map (fun x -> transform x v_synch) bcases in
+(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    let bcases = List.map (fun x -> transform x v_synch rel) bcases in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
 (*    match bcases with*)
@@ -492,13 +517,25 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*      let new_bcases = remove_weaker_bcase bcases in
       new_bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)*)
 
+let rec no_of_cnts f = match f with
+  | BForm _ -> 1
+  | And (f1,f2,_) -> (no_of_cnts f1) + (no_of_cnts f2)
+  | Or (f1,f2,_,_) -> (no_of_cnts f1) + (no_of_cnts f2)
+  | Not (f,_,_) -> no_of_cnts f
+  | Forall (_,f,_,_) -> no_of_cnts f
+  | Exists (_,f,_,_) -> no_of_cnts f
+
 let helper input_pairs rel ante_vars = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
   let pfs = List.map (fun p ->
+    let noc = no_of_cnts p in
+(*    DD.info_hprint (add_str "NO: " string_of_int) noc no_pos;*)
+    let p = if noc > 20 then p else Redlog.elim_exists_with_eq p in
     let p = TP.simplify_raw p in 
     let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
-    CP.remove_cnts exists_node_vars p) pfs in
+    let num_vars = get_num_dom p in
+    CP.remove_cnts (exists_node_vars@num_vars) p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in
   let pfs = List.map (fun p -> 
     let exists_vars = CP.diff_svl (List.filter 
