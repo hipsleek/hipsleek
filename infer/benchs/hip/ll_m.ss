@@ -33,6 +33,87 @@ void delete_list(node x)
 /*ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
+//true if the container size is 0, false otherwise.
+bool empty(node x)
+  requires x::ll1<>
+  ensures true;
+{
+  if (x == null) return true;
+  else return false;
+}
+
+//The number of elements that conform the list's content.
+int size_helper(node x, ref int n)
+  requires x::ll1<>
+  ensures true;
+{
+  if (x==null) return n;
+  else {
+    n = n+ 1;
+    return size_helper(x.next, n);
+  }
+}
+int size(node x)
+  requires x::ll1<>
+  ensures true;
+{
+  int n = 0;
+  return  size_helper(x, n);
+}
+
+//(val)A reference to the first element in the list container.
+//dll
+int front(node x)
+  infer[p]
+  requires x::node<v,p>*p::ll1<>
+  ensures res=v;
+{
+  return x.val;
+}
+//(val)A reference to the first element in the list container.
+int back(node x)
+  requires x::ll1<>
+  ensures true;
+
+void swap(ref node x, ref node y)
+  requires x::ll1<>*y::ll1<>
+  ensures x'::ll1<>*y'::ll1<>;
+{
+  node tmp = x;
+  x = y;
+  y = tmp;
+}
+/*
+drop current contend, and add n element with v value
+ */
+void assign(node x, int n, int v)
+ requires x::ll1<>
+  ensures true;
+{
+  x =  create_list(n, v);
+}
+
+void push_front(ref node x, int v)
+ requires x::ll1<>
+  ensures x'::node<v,p>*p::ll1<>;//'
+{
+  node tmp = new node(v,x);
+  x = tmp;
+}
+
+//pop and return first ele
+node pop_front(ref node x)
+  infer[x]
+  requires x::ll1<>//x!=null
+  ensures x'::ll1<>;//'
+{
+  node tmp = x;
+  tmp.next=null;
+  x = x.next;
+  return tmp;
+}
+
+
 // Inferred Pure :[ x!=null, x!=null]
 /* append two singly linked lists */
 void append(node x, node y)
@@ -134,18 +215,18 @@ void delete(node x, int a)
 }
 
 /* function to create a singly linked list with a nodes */
-node create_list(int a)
+node create_list(int n, int v)
   requires true //a >= 0
   ensures res::ll1<>;
 {
   node tmp;
-  if (a == 0) {
+  if (n == 0) {
     return null;
   }
   else {
-    a  = a - 1;
-    tmp = create_list(a);
-    return new node (0, tmp);
+    n  = n - 1;
+    tmp = create_list(n, v);
+    return new node (v, tmp);
   }
 }
 

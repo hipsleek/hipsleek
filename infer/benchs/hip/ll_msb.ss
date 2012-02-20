@@ -12,10 +12,6 @@ void dispose(node x)
 
 /* view for a singly linked list */
 
-ll<n> == self = null & n = 0
-	or self::node<_, q> * q::ll<n-1>
-  inv n >= 0;
-
 ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});
 
@@ -103,12 +99,12 @@ void set_null(ref node x)
 }
 
 /* function to get the third element of a list */
-//fail to compute GNN
+//ok: compute GNN
 relation GNN(bag a, bag b).
 node get_next_next(node x)
-//infer[GNN]
+  infer[GNN]
   requires x::ll2<n,S> & n > 1
-  ensures res::ll2<n-2,S2> & S2 subset S;//GNN(S,S2);//S2 subset S;
+  ensures res::ll2<n-2,S2> & GNN(S,S2);//S2 subset S;
 {
   return x.next.next;
 }
@@ -129,12 +125,12 @@ void insert(node x, int a)
 }
 
 /* function to delete the a-th node in a singly linked list */
-//fail
+//ok
 relation DEL(bag a, bag b).
 void delete( node x, int a)
-//infer @pre [DEL]
+  infer @pre [DEL]
   requires x::ll2<n,S> & n > a & a > 0
-  ensures x::ll2<m,S1> & S1 subset S;//  & DEL(S,S1);//'
+  ensures x::ll2<m,S1> & DEL(S,S1);//'S1 subset S
 {
   if (a == 1){
     x.next = x.next.next;
@@ -150,7 +146,7 @@ relation CL(bag a).
 node create_list(int a)
   infer[CL]
   requires a >= 0
-  ensures res::ll2<a,S>;//CL(S);
+  ensures res::ll2<a,S> ;//& CL(S);
 {
   node tmp;
   if (a == 0) {
@@ -235,7 +231,7 @@ relation RMV2(bag a, bag b).
 node list_remove2(node x, int v)
 //infer[RMV2]
   requires x::ll2<n,S> & n >= 0
-  ensures res::ll2<m,S2> & m <= n & S2 subset S;//RMV2(S,S2);
+  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& RMV2(S,S2);//S2 subset S;
 {
   node tmp;
   if(x != null) {
@@ -256,7 +252,7 @@ node list_remove2(node x, int v)
 relation FIL(bag a, bag b).
 //fail to compute FIL
 node list_filter2(node x, int v)
-//infer[FIL]
+//infer @pre [FIL]
   requires x::ll2<n,S> & n >= 0
   ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
 {
@@ -284,7 +280,7 @@ relation FGE(bag a, int b).
 node find_ge(node x, int v)
 //infer[FGE]
   requires x::ll2<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m > v & m in S;//FGE(S,m);
+  ensures res = null or res::node<m,_> & m > v & m in S;//FGE(S,m);//m in S;
 {
   if(x == null)
     return null;
