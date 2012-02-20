@@ -73,7 +73,7 @@ void merge_sorted_arrays(int[] a, int ia, int n,
 void copy_array(int[] a, int s, int e, ref int[] b, int i)
 	requires [la,ha,lb,hb] dom(a,la,ha) & la <= s & e <= ha & 
 	                       dom(b,lb,hb) & lb <= i & i + e - s <= hb
-	ensures idbtwn(a,s,e,b',i,i+e-s) & amodr(b',b,i,i+e-s);
+	ensures dom(b',lb,hb) & idbtwn(a,s,e,b',i,i+e-s) & amodr(b',b,i,i+e-s);
 {
 	if (e >= s) {
 		b[i] = a[s];
@@ -96,6 +96,7 @@ void merge_sort(ref int[] a, int i, int j)
 		merge_sort(a,i,m);
 		merge_sort(a,m+1,j);
 		int[] c = new int[j-i+1];	
+		assume i <= m' & m' < j;
 
 		/* NOTE: This variable is NOT used in the program.
 		         It is used solely to support existential
@@ -111,6 +112,12 @@ void merge_sort(ref int[] a, int i, int j)
 		
 		merge_sorted_arrays(a,i,m-i+1,a,m+1,j-m,c);
 		copy_array(c,0,j-i,a,i);
+		
+		//dprint;
+		
+		//assert dom(a',la,ha);
+		//assert sorted(a',i,j);
+		//assert amodr(a,a',i,j);
 	}
 }
 
