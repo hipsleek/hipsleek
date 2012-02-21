@@ -10,6 +10,21 @@ Checking procedure append2$node2~node2...
 !!! REL :  D(t,m,n,r,p,q)
 !!! POST:  m>=1 & n>=0 & q=r & m+n=t
 !!! PRE :  1<=m & 0<=n
+!!! OLD SPECS: ((None,[]),EInfer [D]
+              EBase exists (Expl)(Impl)[q; m; p; 
+                    n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
+                    y::dll<p,n>@M[Orig][LHSCase]&1<=m&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                EXISTS(t,r: x::dll<r,t>@M[Orig][LHSCase]&
+                                D(t,m,n,r,p,q)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[q; m; p; 
+                  n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
+                  y::dll<p,n>@M[Orig][LHSCase]&1<=m&{FLOW,(20,21)=__norm}
+                    EBase true&1<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              x::dll<r,t>@M[Orig][LHSCase]&D(t,m,n,r,p,q) & 
+                              0<=m & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
  (exists(flted_12_623:(t=2 & n=1 | 2+flted_12_623=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
@@ -26,6 +41,6 @@ Termination checking result:
 Stop Omega... 191 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.64 second(s)
-	Time spent in main process: 0.42 second(s)
-	Time spent in child processes: 0.22 second(s)
+Total verification time: 0.5 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.17 second(s)

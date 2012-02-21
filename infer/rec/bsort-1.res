@@ -13,6 +13,28 @@ Checking procedure bubble$node...
 !!! REL :  B(res)
 !!! POST:  true
 !!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [xs,A,B]
+              EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&
+                    xs!=null&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                
+                                EXISTS(n_38,s,
+                                l: xs::sll<n_38,s,l>@M[Orig][LHSCase]&
+                                A(res) & n_38=n&{FLOW,(20,21)=__norm})
+                                or EXISTS(n_39: xs::ll<n_39>@M[Orig][LHSCase]&
+                                   B(res) & n_39=n&{FLOW,(20,21)=__norm})
+                                )
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)xs::ll<n>@M[Orig][LHSCase]&
+                  xs!=null&{FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 1::
+                              
+                              xs::sll<n_38,s,l>@M[Orig][LHSCase]&A(res) & 
+                              n_38=n & 0<=n&{FLOW,(20,21)=__norm}
+                              or xs::ll<n_39>@M[Orig][LHSCase]&B(res) & 
+                                 n_39=n & 0<=n&{FLOW,(20,21)=__norm}
+                              )
 !!! NEW RELS:[ (res<=0) --> A(res),
  (res<=0) --> B(res),
  (tmp_42' & 1<=res & A(tmp_42')) --> A(res),
@@ -35,6 +57,6 @@ Termination checking result:
 Stop Omega... 769 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.97 second(s)
-	Time spent in main process: 1.85 second(s)
-	Time spent in child processes: 1.12 second(s)
+Total verification time: 1.89 second(s)
+	Time spent in main process: 1.17 second(s)
+	Time spent in child processes: 0.72 second(s)

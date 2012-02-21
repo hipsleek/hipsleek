@@ -32,6 +32,21 @@ Successful States:
 !!! REL :  B(s,sm)
 !!! POST:  sm=s
 !!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::ref [x]
+                                EXISTS(l,s: x'::bst<s,l>@M[Orig][LHSCase]&
+                                l<=lg & B(s,sm)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::ref [x]
+                              x'::bst<s,l>@M[Orig][LHSCase]&l<=lg & 
+                              B(s,sm) & sm<=lg&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(lg:exists(a:s=sm & exists(qs_586:qs_586<=lg & 
   exists(pl_585:a<=qs_586 & pl_585<=a & sm<=pl_585))))) --> B(s,sm),
  (s=sm & 
@@ -69,6 +84,6 @@ Termination checking result:
 Stop Omega... 437 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.16 second(s)
-	Time spent in main process: 1.27 second(s)
-	Time spent in child processes: 0.89 second(s)
+Total verification time: 2.37 second(s)
+	Time spent in main process: 1.42 second(s)
+	Time spent in child processes: 0.95 second(s)

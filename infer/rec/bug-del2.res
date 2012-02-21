@@ -21,6 +21,14 @@ Successful States:
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 2<=n, 1<=n]
+!!! OLD SPECS: ((None,[]),EInfer [n]
+              EBase true&true&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 1::
+                                true&true&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase true&2<=n & MayLoop&{FLOW,(1,23)=__flow}
+                    EAssume 1::
+                      true&2<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -31,6 +39,6 @@ Termination checking result:
 Stop Omega... 67 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.17 second(s)
-	Time spent in main process: 0.15 second(s)
+Total verification time: 0.16 second(s)
+	Time spent in main process: 0.14 second(s)
 	Time spent in child processes: 0.02 second(s)

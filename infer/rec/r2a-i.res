@@ -10,6 +10,41 @@ Checking procedure length$node...
 !!! REL :  R(res,n)
 !!! POST:  n>=0 & n=res
 !!! PRE :  0<=n
+!!! OLD SPECS: ((None,[]),EInfer [R]
+              EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      ECase case {
+                             n=0 -> ((None,[]),EBase true&MayLoop&
+                                                     {FLOW,(1,23)=__flow}
+                                                       EAssume 1::
+                                                         true&R(res,n)&
+                                                         {FLOW,(20,21)=__norm})
+                             ;
+                             n!=0 -> ((None,[]),EBase true&MayLoop&
+                                                      {FLOW,(1,23)=__flow}
+                                                        EAssume 2::
+                                                          true&R(res,n)&
+                                                          {FLOW,(20,21)=__norm})
+                             
+                             })
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::ll<n>@L[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    ECase case {
+                           n=0 -> ((None,[]),EBase true&0<=n & MayLoop&
+                                                   {FLOW,(1,23)=__flow}
+                                                     EAssume 1::
+                                                       true&R(res,n) & n=0 & 
+                                                       0<=n&
+                                                       {FLOW,(20,21)=__norm})
+                           ;
+                           n!=0 -> ((None,[]),EBase true&0<=n & MayLoop&
+                                                    {FLOW,(1,23)=__flow}
+                                                      EAssume 2::
+                                                        true&R(res,n) & 
+                                                        n!=0 & 0<=n&
+                                                        {FLOW,(20,21)=__norm})
+                           
+                           })
 !!! NEW RELS:[ (n=0 & res=0) --> R(res,n),
  (n_556=0 & n=1 & -1+res=r_24' & R(r_24',n_556)) --> R(res,n),
  (1+n_556=n & -1+res=r_24' & 2<=n & R(r_24',n_556)) --> R(res,n)]

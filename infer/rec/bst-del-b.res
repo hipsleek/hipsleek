@@ -32,6 +32,22 @@ Successful States:
 !!! REL :  B(sm,s,l,lg)
 !!! POST:  l>=sm & lg>=l & sm=s
 !!! PRE :  sm<=lg
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::ref [x]
+                                EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&
+                                sm<=s & l<=lg & B(sm,s,l,lg)&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::ref [x]
+                              x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & l<=lg & 
+                              B(sm,s,l,lg) & sm<=lg&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(qs_589:exists(a:s=sm & sm<=l & a<=qs_589 & l<=a & 
   qs_589<=lg))) --> B(sm,s,l,lg),
  (s=sm & exists(lg_718:exists(pl_719:exists(qs_720:sm<=pl_719 & 
@@ -67,6 +83,6 @@ Termination checking result:
 Stop Omega... 434 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.63 second(s)
-	Time spent in main process: 1.24 second(s)
-	Time spent in child processes: 0.39 second(s)
+Total verification time: 1.67 second(s)
+	Time spent in main process: 1.23 second(s)
+	Time spent in child processes: 0.44 second(s)
