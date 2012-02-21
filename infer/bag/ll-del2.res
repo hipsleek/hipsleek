@@ -27,9 +27,9 @@ Starting Omega...oc
                     EBase true&(a <notin> S  | a <in> S ) & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
-                              res::ll2<m,S1>@M[Orig][LHSCase]&(S1=S & 
-                              a <notin> S  | S1<subset> S  & a <in> S ) & 
-                              m<=n&{FLOW,(20,21)=__norm})
+                              res::ll2<m,S1>@M[Orig][LHSCase]&m<=n & (S1=S & 
+                              a <notin> S  | S1<subset> S  & a <in> S )&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (S1= & S= & S1=S) --> A(a,S,S1),
  (S1=S & S= & S1=) --> A(a,S,S1),
  (exists(S1_725:exists(v_723:exists(S1_593:exists(v_590:(S1_593= | 
@@ -64,6 +64,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.85 second(s)
-	Time spent in main process: 0.36 second(s)
-	Time spent in child processes: 0.49 second(s)
+Total verification time: 0.89 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.5 second(s)
