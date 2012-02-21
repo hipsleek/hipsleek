@@ -6965,4 +6965,33 @@ let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula =
 		| EList b-> (try EList (List.map2 (fun (l,e) a ->(l,helper e a)) b pre) with _ -> sp)
 		| EOr b -> report_error no_pos "Do not expect EOr at merge_struc_pre"
 		| _ -> (match pre with | x::[] -> helper sp x | _ -> sp)
-	
+
+let rec list_of_posts (sp:struc_formula) = match sp with
+	| ECase b -> List.concat (List.map (fun (p,c) -> let res = list_of_posts c in
+      List.map (fun (pures,post) -> ([p]@pures,post)) res) b.formula_case_branches)
+	| EBase b ->
+    (match b.formula_struc_continuation with
+      | None -> []
+      | Some f -> list_of_posts f)
+	| EAssume(_,f,_) -> [([],f)]
+	| EInfer b -> list_of_posts b.formula_inf_continuation
+	| EList b -> List.concat (List.map (fun (_,e) -> list_of_posts e) b)
+	| EOr b -> list_of_posts b.formula_struc_or_f1 @ list_of_posts b.formula_struc_or_f2
+
+let rec transform_spec (sp:struc_formula) pairs = match sp with
+	| ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) -> 
+      let new_pairs = List.concat (List.map (fun (x,y) -> if List.hd x == p then [(List.tl x,y)] else []) pairs) in
+      (p,transform_spec c new_pairs)) b.formula_case_branches)}
+	| EBase b -> EBase {b with formula_struc_continuation =
+    (match b.formula_struc_continuation with
+      | None -> None
+      | Some f -> Some (transform_spec f pairs))}
+	| EAssume(svl,f,fl) -> (match pairs with 
+      | [([],p2)] -> EAssume(svl,p2,fl)
+      | _ -> report_error no_pos "Error in transforming spec")
+	| EInfer b -> EInfer {b with formula_inf_continuation = transform_spec b.formula_inf_continuation pairs}
+	| EList b -> EList (List.map (fun (l,e) ->(l,transform_spec e pairs)) b)
+	| EOr b -> EOr {b with formula_struc_or_f1 = transform_spec b.formula_struc_or_f1 pairs;
+                         formula_struc_or_f2 = transform_spec b.formula_struc_or_f2 pairs}
+
+

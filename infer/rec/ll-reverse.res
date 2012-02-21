@@ -34,7 +34,7 @@ Procedure reverse$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 129 invocations 
+Stop Omega... 127 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.27 second(s)

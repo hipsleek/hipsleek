@@ -24,7 +24,7 @@ Checking procedure delete$node2~int...
                     EBase true&2<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               x::dll<p_28,m>@M[Orig][LHSCase]&m>=1 & m+1=n & 
-                              0<=n&{FLOW,(20,21)=__norm})
+                              p=p_28 & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(flted_12_600:m=2 & n=3 | -1+n=m & flted_12_600=m & 3<=m)) --> B(m,n),
  (n=2 & m=1) --> B(m,n),
  (1+m_800=m & 1<=m & B(m_800,n_734) & 1+n_734=n & exists(a:(1+a)<=n & 
@@ -35,9 +35,9 @@ Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 193 invocations 
+Stop Omega... 189 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.63 second(s)
-	Time spent in main process: 0.47 second(s)
-	Time spent in child processes: 0.16 second(s)
+Total verification time: 0.48 second(s)
+	Time spent in main process: 0.37 second(s)
+	Time spent in child processes: 0.11 second(s)

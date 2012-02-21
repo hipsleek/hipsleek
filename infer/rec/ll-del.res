@@ -37,9 +37,9 @@ Procedure delete$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 156 invocations 
+Stop Omega... 154 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.3 second(s)
+Total verification time: 0.31 second(s)
 	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.1 second(s)
+	Time spent in child processes: 0.11 second(s)
