@@ -6798,12 +6798,15 @@ and get_or_post sp rel_id =
     (fun _ _ -> get_or_post_x rel_id sp) sp rel_id
 
 let unwrap_exists f =
-  let helper f =
+  let rec helper f =
     match f with
       | Base b -> ([],[],f)
       | Exists b -> (b.formula_exists_qvars, 
         h_fv b.formula_exists_heap, Exists {b with formula_exists_qvars=[]} )
-      | _ -> ([],[],f)
+      | Or b -> 
+        let (e1,h1,f1) = helper b.formula_or_f1 in
+        let (e2,h2,f2) = helper b.formula_or_f2 in
+        (e1@e2,h1@h2,mkOr f1 f2 b.formula_or_pos)
   in helper f
 
 let add_exists vs f =

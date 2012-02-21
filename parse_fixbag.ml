@@ -78,12 +78,14 @@ GLOBAL: expression or_formula formula pformula exp specvar;
       begin
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
+        | (Bag _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
         | _ -> mkTrue loc
       end
     | x = exp; ">="; y = exp -> 
       begin
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
+        | (Var _, Bag _) -> BForm ((BagSub (y, x, loc), None), None)
         | _ -> mkTrue loc
       end
     | x = exp; "="; y = exp -> 
