@@ -7,9 +7,9 @@ data node {
 	node next;
 }
 
-void dispose(node x)
+void dispose(ref node x)
   requires x::node<_,_>
-  ensures x=null;
+  ensures x'=null;//'
 
 /* view for a singly linked list */
 
@@ -17,9 +17,9 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1>
   inv n >= 0;
 
-void delete_list(node x)
+void delete_list(ref node x)
    requires x::ll<n>
-   ensures x=null;
+  ensures x'=null;//'
 {
   if (x!=null) {
     delete_list(x.next);
@@ -284,6 +284,33 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
+
+/* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
+relation SPLIT(int a, int b, int c).
+node split1(ref node x, int a)
+  infer[SPLIT]
+        requires x::ll<n> & a > 0 & n > a //2<=n
+  ensures x'::ll<n1> * res::ll<n2> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a & SPLIT(n,n1,n2);//'n2>=1 & n>=(1+n2) & n=n1+n2
+{
+	node tmp;
+
+	if (a == 1)
+	{
+		tmp = x.next; 
+		x.next = null;
+		return tmp;
+	}
+	else
+	{
+		a = a - 1;
+		node tmp;
+		bind x to (_, xnext) in {
+			tmp = split1(xnext, a);
+		}
+		return tmp;
+	}
+}
+
 /*****************************************/
 /*********SMALLROOT EXAMPLES*************/
 relation TRAV(int k, int m).
@@ -336,16 +363,16 @@ void list_remove(node x, int v)
 /*function to remove the first node which has value v in nullable singly linked list*/
 relation RMV2(int k, int m).
 node list_remove2(node x, int v)
-  infer[RMV2]
-  requires x::ll<n> & x!=null
-  ensures res::ll<m> & RMV2(m,n);//m <= n;
+        infer[RMV2]
+        requires x::ll<n> //n>=0
+        ensures res::ll<m> & RMV2(m,n);//m+1)>=n & m>=0 & n>=m
 {
   node tmp;
   if(x != null) {
     if(x.val == v) {
       tmp = x;
       x = x.next;
-      dispose(tmp);
+      //dispose(tmp);
     }
     else {
       tmp = list_remove2(x.next, v);
