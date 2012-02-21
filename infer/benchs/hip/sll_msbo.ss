@@ -12,7 +12,7 @@ void dispose(node x)
 
 /* view for a singly linked list */
 sll2<n, S, sm, lg> == self = null & n = 0 & sm <= lg & S = {}
-	or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin
+  or (exists qs,ql: self::node<qmin, q> * q::sll2<n-1, S1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin
         & S = union(S1, {qmin}))
 	inv n >= 0 & sm <= lg;
 
@@ -80,8 +80,8 @@ int back(node x)
 //relation SWAP(bag a, bag b, bag c, bag d).
 void swap(ref node x, ref node y)
 //infer[SWAP]
-  requires x::sll2<n,S1, sm1, lg1>*y::sll2<m,S2,, sm2, lg2> & 0<=n & 0<=m
-  ensures x'::sll2<m,S2, sm2, lg2>*y'::sll2<n,S1, sm1, lg1> ;//& SWAP(S1,S2,S3,S4);//S1=S4 & S2=S3
+  requires x::sll2<n,S1, sm1, lg1>*y::sll2<m,S2, sm2, lg2> & 0<=n & 0<=m
+  ensures x'::sll2<m,S2, sm2, lg2>*y'::sll2<n,S1, sm1, lg1> ;
 {
   node tmp = x;
   x = y;
@@ -90,11 +90,11 @@ void swap(ref node x, ref node y)
 /*
 drop current contend, and add n element with v value
  */
-relation ASS(int a, int b, int c).
+//relation ASS(int a, int b, int c).
 void assign(ref node x, int n, int v)
-  infer[ASS]
+//infer[ASS]
   requires x::sll2<m,S, sm, lg>
-  ensures x'::sll2<n,S1, sm1, lg1> & ASS(sm1,lg1,v);//'S1={v}
+  ensures x'::sll2<n,S1, sm1, lg1> & sm1<=v & v<=lg1; //& ASS(sm1,lg1,v);//'sm1<=v<=lg
 {
   x =  create_list(n, v);
 }
@@ -109,11 +109,11 @@ void push_front(ref node x, int v)
 }
 
 //pop and return first ele
-relation PF(bag a, bag b).
+relation PF(int a, int b, int c, int d).
 node pop_front(ref node x)
-  infer[PF]
-  requires x::ll2<m,S1> & x!=null//m>=1
-  ensures x'::ll2<m-1,S2> & PF(S1,S2);//'S2 subset S1
+//infer[PF]
+  requires x::sll2<m,S1, sm1, lg1> & x!=null//m>=1
+  ensures x'::sll2<m-1,S2, sm2, lg2> & sm1<=sm2 & lg2<=lg1;//& PF(sm1,sm2,lg1,lg2);//& sm1<=sm2 & lg2<=lg1
 {
   node tmp = x;
   x = x.next;
@@ -247,17 +247,15 @@ node delete2(node x, int a)
 
 /* function to create a singly linked list with a nodes */
 //fail
-relation CL(bag a, int b).
+//relation CL(int a, int b, int c).
   node create_list(int n, int v)
-  infer[CL]
+//infer[CL]
   requires n>=0
-  ensures res::ll2<n,S> ;
-/*
- case {
+   case {
   n = 0 -> ensures res=null;
-  n > 0 ->  ensures res::ll2<n,S> ;//& CL(S,v);//& S={v};
-  n<0 -> ensures true;
-  }*/
+  n > 0 -> ensures res::sll2<n,S, sm, lg>  & sm=v & v=lg;//& CL(sm,lg,v);//sm=v & v=lg
+  n<0 -> ensures false;
+}
 {
   node tmp;
   if (n == 0) {
