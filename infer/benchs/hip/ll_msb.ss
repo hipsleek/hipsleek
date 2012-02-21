@@ -25,12 +25,6 @@ void delete_list(ref node x)
   }
 }
 
-/*ll1<S> == self = null & S = {}
-	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
-
-/*ll2<n, S> == self=null & n=0 & S={}
-	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
-
 bool empty(node x)
   requires x::ll2<n,S>
  case {n = 0 -> ensures res;//res
@@ -94,11 +88,11 @@ void assign(ref node x, int n, int v)
 {
   x =  create_list(n, v);
 }
-//relation PUF(bag a, bag b, int b).
+relation PUF(bag a, bag b, int b).
 void push_front(ref node x, int v)
-  //infer[PUF]
+  infer[PUF]
   requires x::ll2<n,S>
-  ensures x'::ll2<n+1,S1> ;//& PUF(S1,S,v);//'
+  ensures x'::ll2<n+1,S1> & PUF(S1,S,v);//'
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -185,7 +179,6 @@ void set_null(ref node x)
 }
 
 /* function to get the third element of a list */
-//ok: compute GNN
 relation GNN(bag a, bag b).
 node get_next_next(node x)
   infer[GNN]
@@ -242,18 +235,16 @@ node delete2(node x, int a)
 }
 
 /* function to create a singly linked list with a nodes */
-//fail
-relation CL(bag a, int b).
-  node create_list(int n, int v)
-  infer[CL]
+//relation CL(bag a, int b).
+node create_list(int n, int v)
+//infer[CL]
   requires n>=0
-  ensures res::ll2<n,S> ;
-/*
+//ensures res::ll2<n,S> ;
  case {
   n = 0 -> ensures res=null;
-  n > 0 ->  ensures res::ll2<n,S> ;//& CL(S,v);//& S={v};
+  n > 0 ->  ensures res::ll2<n,S> & S={v};//CL(S,v);//& S={v};
   n<0 -> ensures true;
-  }*/
+  }
 {
   node tmp;
   if (n == 0) {
@@ -314,7 +305,7 @@ node split1(ref node x, int a)
 //ok
 relation TRAV(bag a, bag b).
   void list_traverse(node x)
-  infer  [TRAV]
+  infer [TRAV]
   requires x::ll2<n,S1>
   ensures x::ll2<n,S2> & TRAV(S1,S2);//S1=S2
 {
@@ -328,7 +319,7 @@ relation TRAV(bag a, bag b).
 //ok
 relation CPY(bag a, bag b).
 node list_copy(node x)
-   infer  [CPY]
+   infer [CPY]
   requires x::ll2<n,S>
   ensures x::ll2<n,S> * res::ll2<n,S2> &  CPY(S,S2);//S2=S
 {

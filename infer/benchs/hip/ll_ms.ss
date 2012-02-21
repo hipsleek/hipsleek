@@ -80,10 +80,6 @@ int front(node x)
 {
   return x.val;
 }
-//(val)A reference to the first element in the list container.
-int back(node x)
-  requires x::ll<n>
-  ensures true;
 
 relation SWAP(int a, int b, int c, int d).
 void swap(ref node x, ref node y)
@@ -290,7 +286,7 @@ relation SPLIT(int a, int b, int c).
 node split1(ref node x, int a)
   infer[SPLIT]
         requires x::ll<n> & a > 0 & n > a //2<=n
-  ensures x'::ll<n1> * res::ll<n2> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a & SPLIT(n,n1,n2);//'n2>=1 & n>=(1+n2) & n=n1+n2
+  ensures x'::ll<n1> * res::ll<n2> & SPLIT(n,n1,n2);//'n2>=1 & n>=(1+n2) & n=n1+n2
 {
 	node tmp;
 
@@ -385,9 +381,9 @@ node list_remove2(node x, int v)
 /*function to remove all nodes which have value v in nullable singly linked list*/
 relation FIL(int k, int m).
 node list_filter2(ref node x, int v)
-        infer[FIL]
+  infer[FIL]
   requires x::ll<n>
-        ensures res::ll<m> & FIL(m,n);//m <= n;n>=0 & n=m //not very good
+  ensures res::ll<m> & FIL(m,n);//m <= n;n>=0 & n=m//not very good
 {
   node tmp;
   if(x != null) {
