@@ -40,9 +40,9 @@ Procedure remove_min$node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 148 invocations 
+Stop Omega... 150 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.46 second(s)
-	Time spent in main process: 0.36 second(s)
+Total verification time: 0.43 second(s)
+	Time spent in main process: 0.33 second(s)
 	Time spent in child processes: 0.1 second(s)

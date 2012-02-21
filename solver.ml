@@ -8456,7 +8456,14 @@ let rev_imply_formula f1 f2 = match (f1,f2) with
     let h2,p2,fl2,b2,t2 = split_components f2 in
     let p1 = MCP.pure_of_mix p1 in
     let p2 = MCP.pure_of_mix p2 in
-    eqHeap h1 h2 && TP.imply_raw p1 p2 && fl1=fl2 && b1=b2 && t1=t2
+    let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
+    let res1 = TP.imply_raw p1 p2 in
+    if res then
+      if res1 then true
+      else
+        let p_hull = TP.hull (CP.mkOr p1 p2 None no_pos) in
+        CP.no_of_disjs p_hull == 1
+    else false
   | _ -> f1=f2
 
 let remove_dups_imply imply lst =
