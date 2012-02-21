@@ -2300,7 +2300,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 	  is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Debug.ho_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Debug.no_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
