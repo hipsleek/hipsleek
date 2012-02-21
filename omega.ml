@@ -393,7 +393,6 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
             with
               | End_of_file ->
                   (*let _ = print_endline "SAT: End_of_file" in*)
-                  let _ = print_endline (!Cpure.print_formula pe) in
                   restart ("End_of_file when checking #SAT \n");
                   true
               | exc ->
@@ -420,7 +419,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
-  Debug.no_1_loop "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+  Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
 
 let is_sat_weaken (pe : formula)  (sat_no : string): bool =
   let pe = drop_rel_formula pe in
@@ -431,7 +430,7 @@ let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
 
 let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
   let pf = !print_pure in
-  Debug.no_1_loop "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
   (fun _ -> is_sat_with_check pr_weak pr_strong pe sat_no) pe
 
 let is_sat (pe : formula) sat_no : bool =

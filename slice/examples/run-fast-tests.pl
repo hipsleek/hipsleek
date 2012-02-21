@@ -2174,7 +2174,7 @@ sub hip_process_file {
             $exempl_path_full = "$exempl_path/pldi_benchs/pmona";
             print "Starting automatic slicing experiment for PLDI paper with Mona:\n";
 		}elsif ("$param" =~ "plink") {
-            $exempl_path_full = "$exempl_path/pldi_benchs/link";
+            $exempl_path_full = "$exempl_path/pldi_benchs/plink";
             print "Starting annotated slicing experiment for PLDI paper:\n";
 		}
 		$t_list = $hip_files{$param};
