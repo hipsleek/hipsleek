@@ -1,0 +1,14 @@
+
+checkentail x1 = x/2.0 & x>0.0 |- x1 > 0.0 . // LOOP
+
+
+checkentail x1 = x/2.0 & x>=0.01 |- x1 >= 0.01. //?
+
+
+checkentail true |- (exists x: (x1 = x/2.0 & x>=0.01) | (x1<0.01)). 
+
+
+checkentail true |- (exists x: (x1 = x/2.0 & x>0.0) | (x1<=0.0)). 
+
+
+checkentail x1 = x/2.0 & x>=0.01 |- (x1<0.01). 
