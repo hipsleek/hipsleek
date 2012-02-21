@@ -11,16 +11,20 @@ void dispose(node x)
   ensures x=null;
 
 /* view for a singly linked list */
-sll2<n, S, sm, lg> == self = null & n = 0 & sm <= lg & S = {}
-  or (exists qs,ql: self::node<qmin, q> * q::sll2<n-1, S1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin
-        & S = union(S1, {qmin}))
+//sll2<n, S> == self::node<v, q> & n = 0 & S = {}
+//  or (self::node<qmin, q> * q::sll2<n-1, S1, emax> & qmin<=emax & forall (x: (x notin S1 | v <= x))
+//        & S = union(S1, {qmin}))
+//	inv n >= 0;
+
+sll2<n, sm, lg> == self = null & n = 0 & sm <= lg
+  or (exists qs,ql: self::node<qmin, q> * q::sll2<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
 	inv n >= 0 & sm <= lg;
 
 ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});
 
 void delete_list(ref node x)
-  requires x::sll2<n,S, sm, lg>
+  requires x::sll2<n, sm, lg>
   ensures x'=null;//'
 {
   if (x!=null) {
@@ -36,7 +40,7 @@ void delete_list(ref node x)
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
 bool empty(node x)
-  requires x::sll2<n,S, sm, lg>
+  requires x::sll2<n, sm, lg>
  case {n = 0 -> ensures res;//res
   n!= 0 -> ensures !res;//!(res)
 }
@@ -47,7 +51,7 @@ bool empty(node x)
 
 //The number of elements that conform the list's content.
 int size_helper(node x, ref int n)
-  requires x::sll2<m,S, sm, lg> & 0<=m
+  requires x::sll2<m, sm, lg> & 0<=m
   ensures res=m+n & m>=0;
 {
   if (x==null) return n;
@@ -57,7 +61,7 @@ int size_helper(node x, ref int n)
   }
 }
 int size(node x)
-  requires x::sll2<n,_, sm, lg> & 0<=n
+  requires x::sll2<n, sm, lg> & 0<=n
   ensures res=n;
 {
   int m = 0;
@@ -67,21 +71,21 @@ int size(node x)
 //(val)A reference to the first element in the list container.
 //dll
 int front(node x)
-  requires x::node<v,p>*p::sll2<m,_, sm, lg>
+  requires x::node<v,p>*p::sll2<m, sm, lg>
   ensures res=v;
 {
   return x.val;
 }
 //(val)A reference to the first element in the list container.
 int back(node x)
-  requires x::sll2<n,_, sm, lg>
+  requires x::sll2<n, sm, lg>
   ensures true;
 
 //relation SWAP(bag a, bag b, bag c, bag d).
 void swap(ref node x, ref node y)
 //infer[SWAP]
-  requires x::sll2<n,S1, sm1, lg1>*y::sll2<m,S2, sm2, lg2> & 0<=n & 0<=m
-  ensures x'::sll2<m,S2, sm2, lg2>*y'::sll2<n,S1, sm1, lg1> ;
+  requires x::sll2<n,sm1, lg1>*y::sll2<m,sm2, lg2> & 0<=n & 0<=m
+  ensures x'::sll2<m,sm2, lg2>*y'::sll2<n, sm1, lg1> ;
 {
   node tmp = x;
   x = y;
@@ -89,31 +93,33 @@ void swap(ref node x, ref node y)
 }
 /*
 drop current contend, and add n element with v value
+waiting for fix
  */
 //relation ASS(int a, int b, int c).
 void assign(ref node x, int n, int v)
 //infer[ASS]
-  requires x::sll2<m,S, sm, lg>
-  ensures x'::sll2<n,S1, sm1, lg1> & sm1<=v & v<=lg1; //& ASS(sm1,lg1,v);//'sm1<=v<=lg
+  requires x::sll2<m,sm, lg>
+ ensures x'::sll2<n, sm1, lg1>;//ASS(sm1,lg1,v);//'sm1<=v<=lg & sm1<=v & v<=lg1
 {
   x =  create_list(n, v);
 }
 relation PUF(int a, int b).
 void push_front(ref node x, int v)
   infer[PUF]
-  requires x::sll2<n,S, sm, lg>
-  ensures x'::sll2<n+1,S1, v, lg1>  & PUF(v,sm);//'v<=sm
+  requires x::sll2<n, sm, lg>
+  ensures x'::sll2<n+1, v, lg1>  & PUF(v,sm);//'v<=sm
 {
   node tmp = new node(v,x);
   x = tmp;
 }
 
 //pop and return first ele
+//waiting for fix
 relation PF(int a, int b, int c, int d).
 node pop_front(ref node x)
-//infer[PF]
-  requires x::sll2<m,S1, sm1, lg1> & x!=null//m>=1
-  ensures x'::sll2<m-1,S2, sm2, lg2> & sm1<=sm2 & lg2<=lg1;//& PF(sm1,sm2,lg1,lg2);//& sm1<=sm2 & lg2<=lg1
+  infer[PF]
+  requires x::sll2<m, sm1, lg1> & x!=null//m>=1 & sm1<=lg1
+  ensures x'::sll2<m-1, sm2, lg2> & PF(sm1,sm2,lg1,lg2);//'& PF(sm1,sm2,lg1,lg2);//& sm1<=sm2 & lg2<=lg1
 {
   node tmp = x;
   x = x.next;
@@ -137,22 +143,26 @@ void append(node x, node y)
 
 /* return the first element of a singly linked list */
 //ok
-relation RF(bag a, bag b).
 node ret_first(node x)
-  infer [RF]
-  requires x::ll2<n,S1>
-  ensures x::ll2<n,S2> & RF(S1,S2);//S2=S1
+//infer [RF]
+  requires x::sll2<n, sm1, lg1>
+  ensures sx::sll2<n, sm1, lg1> ;//
 {
   return x;
 }
 
 /* return the tail of a singly linked list */
 //fail with eps
-relation GN(bag a, bag b, bag c).
+relation GN(int a, int b, int c, int d).
 node get_next(ref node x)
   infer[GN]
+  requires x::sll2<n, xs, xl> & x != null
+  ensures x'::node<v,null>*res::sll2<n-1, sres, lres> & GN(sres,xs,lres,xl) & //sres >= xs & lres <= xl;//'
+  xs<=v & v<=sres;
+/*  infer[GN]
   requires x::ll2<n,S> & x!=null
   ensures x'::ll2<1,S1> * res::ll2<n-1,S2> & GN(S,S1,S2);//S  = union(S1, S2)//'
+*/
 {
   node tmp = x.next;
   x.next = null;
@@ -161,18 +171,23 @@ node get_next(ref node x)
 
 /* function to set the tail of a list */
 //fail with eps
-relation SN(bag a, bag b, int c).
+//relation SN(bag a, bag b, int c).
  void set_next(ref node x, node y)
-   infer[SN]
-   requires x::node<v,t>*t::ll2<_,_> * y::ll2<j,S>& x!=null
-   ensures x::ll2<k,S2> & k>=1 & k=j+1 & SN(S,S2,v);
+//infer[SN]
+  requires x::node<v,t>*t::sll2<_,sm1, lg1> * y::sll2<j,sm2, lg2>& x!=null
+   ensures x::sll2<k, sm3, lg3> & k>=1 & k=j+1 &
+   sm3=min(sm2,v) & lg3=max(sm2,v);//SN(S,S2,v);
 {
-	x.next = y;
+  node tmp = x;
+  tmp.next = null;
+  x = insert2(y, tmp);
 }
 
+relation SNULL2(int a, int b, int c).
 void set_null2(ref node x)
-  requires x::ll2<i,_> & x!=null
-  ensures x'::ll2<1,_>;//'
+  infer[SNULL2]
+  requires x::sll2<n, xs, xl> & x != null
+  ensures x'::node<v,null> & SNULL2(xs,v, sl);//xs<=v & v<=xl;//'
 {
   if (4>3)
     x.next = null;
@@ -180,47 +195,85 @@ void set_null2(ref node x)
     x.next = null;
 }
 
+/* get the tail of a sorted list */
+relation GT(int a, int b, int c, int d).
+node get_tail(node x)
+  infer[GT]
+  requires x::sll2<n, xs, xl> & x != null //xs<=xl & 0<=xl
+  ensures res::sll2<n-1, sres, lres> & GT(sres,xs,lres,xl);//sres >= xs & lres <= xl;sres>=0 & 
+{
+	return x.next;
+}
+
 /* function to set null the tail of a list */
+relation SNULL(int a, int b, int c).
 void set_null(ref node x)
-  requires x::ll2<i,S> & x!=null
-   ensures x'::node<_,null>;//'
+  infer[SNULL]
+  requires x::sll2<n, xs, xl> & x != null
+  ensures x'::node<v,null> & SNULL(xs,v, sl);//xs<=v & v<=xl;//'
 {
   x.next = null;
 }
 
 /* function to get the third element of a list */
 //ok: compute GNN
-relation GNN(bag a, bag b).
+relation GNN(int a, int b, int c, int d).
 node get_next_next(node x)
-  infer[GNN]
-  requires x::ll2<n,S> & n > 1
-  ensures res::ll2<n-2,S2> & GNN(S,S2);//S2 subset S;
+  infer[n,GNN]
+  requires x::sll2<n, sm1, lg1> & x != null
+  ensures res::sll2<n-2,sm2, lg2> & GNN(sm1, lg1,sm2, lg2);//sm2>=0 & sm2>=sm1 & lg2>=sm2 & lg1>=lg2
 {
   return x.next.next;
 }
 
-/* function to insert a node in a singly linked list */
-//fail with eps
-relation INS(bag a, bag b, int a).
-void insert(node x, int a)
-  infer @pre [INS]
-  requires x::ll2<n,S> & n > 0
-  ensures x::ll2<n+1,S1> & INS(S,S1,a);//S=1 & S1=2 & S1=2
+/* insert an element in a sorted list */
+node insert(node x, int v)
+	requires x::sll2<n, sm, lg>
+	ensures res::sll2<n + 1, mi, ma> & mi = min(v, sm) & ma = max(v, lg);
 {
-  node tmp = null;
-  if (x.next == null)
-    x.next = new node(a, tmp);
-  else
-    insert(x.next, a);
+	node tmp;
+
+	if (x == null)
+		return new node(v, null);
+	else
+	{
+		if (v <= x.val)
+			return new node(v, x);
+		else
+		{
+			tmp = x.next;
+			x.next = insert(tmp, v);
+			return x;
+		}
+	}
+}
+//relation INS2(int a, int b, int c).
+node insert2(node x, node vn)
+//infer[INS2]
+  requires x::sll2<n, sm, lg> *  vn::node<v, _>
+  ensures res::sll2<n+1, mi, ma> & mi=min(v, sm) & ma=max(v, lg);// ma=max(v, lg)
+{
+	if (x==null) {
+		vn.next = null;
+		return vn;
+	}
+	else if (vn.val <= x.val) {
+		vn.next = x;
+		return vn;
+	}
+	else {
+		x.next = insert2(x.next, vn);
+		return x;
+	}
 }
 
 /* function to delete the a-th node in a singly linked list */
 //ok
-relation DEL(bag a, bag b).
-void delete( node x, int a)
-  infer @pre [DEL]
-  requires x::ll2<n,S> & n > a & a > 0
-  ensures x::ll2<m,S1> & DEL(S,S1);//'S1 subset S
+//relation DEL(bag a, bag b).
+void delete(node x, int a)
+//infer @pre [DEL]
+  requires x::sll2<n,xs, xl> & n > a & a > 0
+  ensures x::sll2<nres, sres, lres> & nres = n-1 & sres >= xs & lres <= xl;//'
 {
   if (a == 1){
     x.next = x.next.next;
@@ -230,30 +283,42 @@ void delete( node x, int a)
   }
 }
 
-relation DEL2(int a, bag b, bag c).
 /* function to delete the a-th node in a singly linked list */
-node delete2(node x, int a)
-  infer [DEL2]
-  requires x::ll2<n,S>
-  ensures res::ll2<m,S1> & m<=n & DEL2(a,S,S1);//& (a notin S & S = S1 | S=union(S1, {a}));
+//ok
+//relation DEL2(int a, int b, int c, int d).
+node delete2(node x, int v)
+//infer[DEL2]
+  requires x::sll2<n, xs, xl> //xs<=xl
+  ensures res::sll2<nres, sres, lres> & n-1 <= nres <= n & sres >= xs & lres <= xl;
+//DEL2(sres,xs,lres,xl);//& sres >= xs & lres <= xl
 {
-	if (x == null)
-		return x;
-	else {
-		if (x.val == a) return x.next;
-		else return new node(x.val, delete2(x.next, a));
-	}
+	node tmp;
+
+	if (x != null)
+      if (v < x.val)
+        return x;
+      else
+        if (v == x.val)
+          return x.next;
+        else
+          {
+            tmp = x.next;
+            x.next = delete2(tmp, v);
+            return x;
+          }
+	else
+      return null;
 }
 
 /* function to create a singly linked list with a nodes */
 //fail
-//relation CL(int a, int b, int c).
+relation CL(int a, int b, int c).
   node create_list(int n, int v)
-//infer[CL]
-  requires n>=0
+  infer[CL]
+  requires n>=0 //0<=v
    case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll2<n,S, sm, lg>  & sm=v & v=lg;//& CL(sm,lg,v);//sm=v & v=lg
+  n > 0 -> ensures res::sll2<n, sm, lg>  & CL(sm,lg,v);//sm=v & v=lg, v>=sm & lg>=v
   n<0 -> ensures false;
 }
 {
@@ -268,31 +333,14 @@ node delete2(node x, int a)
   }
 }
 
-/* function to reverse a singly linked list */
-//fail with eps
-relation REV(bag a, bag b, bag c).
-void reverse(ref node xs, ref node ys)
-  infer [REV]//
-  requires xs::ll2<n,S1> * ys::ll2<m,S2>
-  ensures ys'::ll2<n+m,S> & xs' = null & REV(S,S1,S2);//S=union(S1,S2)
-{
-  if (xs != null) {
-    node tmp;
-    tmp = xs.next;
-    xs.next = ys;
-    ys = xs;
-    xs = tmp;
-    reverse(xs, ys);
-  }
-}
 /*****************************************/
 /*********SMALLROOT EXAMPLES*************/
 //ok
-relation TRAV(bag a, bag b).
+//relation TRAV(bag a, bag b).
   void list_traverse(node x)
-  infer @pre [TRAV]
-  requires x::ll2<n,S1>
-  ensures x::ll2<n,S2> & TRAV(S1,S2);//S1=S2
+//infer @pre [TRAV]
+  requires x::sll2<n,sm1, lg1>
+    ensures x::sll2<n,sm1, lg1> ;//& TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
 {
   node t;
   if(x != null) {
@@ -302,11 +350,11 @@ relation TRAV(bag a, bag b).
   }
 }
 //ok
-relation CPY(bag a, bag b).
+//relation CPY(int a, int b, int c, int d).
 node list_copy(node x)
-   infer @pre [CPY]
-  requires x::ll2<n,S>
-  ensures x::ll2<n,S> * res::ll2<n,S2> &  CPY(S,S2);//S2=S
+//infer [CPY]
+  requires x::sll2<n,sm1, lg1>
+  ensures x::sll2<n,sm1, lg1> * res::sll2<n,sm2, lg2> & sm2=sm1 & lg2=lg1; //CPY(sm1, lg1,sm2, lg2);//
 {
   node tmp;
   if (x != null) {
@@ -317,53 +365,15 @@ node list_copy(node x)
     return null;
 }
 
-/*function to remove the first node which has value v in singly linked list*/
-void list_remove(node x, int v)
-  requires x::ll2<n,S> & n > 0// & x.val != v
-  ensures x::ll2<m,S2> & m <= n;
-{
-  if(x.next != null) {
-    if(x.next.val == v) {
-      node tmp = x.next;
-      x.next = x.next.next;
-      dispose(tmp);
-    }
-    else {
-      list_remove(x.next, v);
-    }
-  }
-}
-
-/*function to remove the first node which has value v in nullable singly linked list*/
-//fail to compute RMV2
-relation RMV2(bag a, bag b).
-node list_remove2(node x, int v)
-//infer[RMV2]
-  requires x::ll2<n,S> & n >= 0
-  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& RMV2(S,S2);//S2 subset S;
-{
-  node tmp;
-  if(x != null) {
-    if(x.val == v) {
-      tmp = x;
-      x = x.next;
-      dispose(tmp);
-    }
-    else {
-      tmp = list_remove2(x.next, v);
-      x.next = tmp;
-    }
-  }
-  return x;
-}
-
 /*function to remove all nodes which have value v in nullable singly linked list*/
-relation FIL(bag a, bag b).
-//fail to compute FIL
+//relation FIL(bag a, bag b).
+relation FIL(int a, int b, int c, int d).
 node list_filter2(node x, int v)
-//infer @pre [FIL]
-  requires x::ll2<n,S> & n >= 0
-  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
+  infer @pre [FIL]
+  requires x::sll2<n, xs, xl>
+  ensures res::sll2<nres, sres, lres> & sres >= xs & lres <= xl & nres <= n;
+//requires x::ll2<n,S> & n >= 0
+//  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
 {
   node tmp;
   if(x != null) {

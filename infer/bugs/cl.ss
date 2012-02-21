@@ -15,7 +15,7 @@ relation CL(int a, int b, int c).
 //  ensures res::sll2<n,S, sm, lg> & CL(sm,lg,v);
  case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll2<n,S, sm, lg> & CL(sm,lg,v);//& sm=v & v=lg;
+  n > 0 -> ensures res::sll2<n,S,sm, lg> & CL(sm,lg,v);//& sm=v & v=lg;
   n<0 -> ensures false;
 }
 {
@@ -33,8 +33,8 @@ relation CL(int a, int b, int c).
 relation PF(int a, int b, int c, int d).
 node pop_front(ref node x)
 infer[PF]
-  requires x::sll2<m,S1, sm1, lg1> & x!=null//m>=1
-  ensures x'::sll2<m-1,S2, sm2, lg2> & PF(sm1,sm2,lg1,lg2);// & sm1<=sm2 & lg2<=lg1;//'
+  requires x::sll2<m, S1, sm1, lg1> & x!=null//m>=1
+  ensures x'::sll2<m-1, S2, sm2, lg2> & PF(sm1,sm2,lg1,lg2);// & sm1<=sm2 & lg2<=lg1;//'
 {
   node tmp = x;
   x = x.next;

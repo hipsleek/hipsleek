@@ -17,3 +17,20 @@ node get_next(ref node x)
   x.next = null;
   return tmp;
 }
+
+//fail to compute FGE
+relation FGE(bag a, int b).
+node find_ge(node x, int v)
+  infer[FGE]
+  requires x::ll2<n,S> & n >= 0
+  ensures res = null or res::node<m,_> & m > v & FGE(S,m);//m in S;//FGE(S,m);//m in S;
+{
+  if(x == null)
+    return null;
+  else {
+    if(x.val > v)
+      return x;
+    else
+      return find_ge(x.next, v);
+  }
+}

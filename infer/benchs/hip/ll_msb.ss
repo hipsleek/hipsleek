@@ -6,9 +6,9 @@ data node {
 	node next;
 }
 
-void dispose(node x)
+void dispose(ref node x)
   requires x::node<_,_>
-  ensures x=null;
+  ensures x'=null;//'
 
 /* view for a singly linked list */
 
@@ -333,12 +333,11 @@ void list_remove(node x, int v)
 }
 
 /*function to remove the first node which has value v in nullable singly linked list*/
-//fail to compute RMV2
 relation RMV2(bag a, bag b).
 node list_remove2(node x, int v)
-//infer[RMV2]
+  infer[RMV2]
   requires x::ll2<n,S> & n >= 0
-  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& RMV2(S,S2);//S2 subset S;
+  ensures res::ll2<m,S2> & m <= n & RMV2(S,S2);//& RMV2(S,S2);//S2 subset S;
 {
   node tmp;
   if(x != null) {
@@ -346,6 +345,7 @@ node list_remove2(node x, int v)
       tmp = x;
       x = x.next;
       dispose(tmp);
+      //tmp = null;
     }
     else {
       tmp = list_remove2(x.next, v);
@@ -357,17 +357,17 @@ node list_remove2(node x, int v)
 
 /*function to remove all nodes which have value v in nullable singly linked list*/
 relation FIL(bag a, bag b).
-//fail to compute FIL
 node list_filter2(node x, int v)
-//infer @pre [FIL]
+  infer @pre [FIL]
   requires x::ll2<n,S> & n >= 0
-  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
+  ensures res::ll2<m,S2> & m <= n & FIL(S,S2);//S2 subset S;//& FIL(S,S2);
 {
   node tmp;
   if(x != null) {
     if(x.val == v){
       tmp = x.next;
       dispose(x);
+      //x = null;
       x = tmp;
       x = list_filter2(x,v);
     }
@@ -383,11 +383,11 @@ node list_filter2(node x, int v)
 
 /* function to return the first node being greater than v*/
 //fail to compute FGE
-relation FGE(bag a, int b).
+//relation FGE(bag a, int b).
 node find_ge(node x, int v)
 //infer[FGE]
   requires x::ll2<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m > v & m in S;//FGE(S,m);//m in S;
+  ensures res = null or res::node<m,_> & m > v & m in S;//m in S;//FGE(S,m);//m in S;
 {
   if(x == null)
     return null;
