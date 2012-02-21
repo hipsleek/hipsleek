@@ -1015,9 +1015,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             redlog_is_sat wf
   | ZM ->
 	  if (is_bag_constraint wf) then
-        mona_is_sat wf
-      else
-		Smtsolver.is_sat f sat_no
+      mona_is_sat wf
+    else
+		  z3_is_sat f
     | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1065,10 +1065,6 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     tp_is_sat f sat_no
 ;;
 
-let tp_is_sat f sat_no do_cache =
-  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
-    (fun f -> tp_is_sat f sat_no do_cache) f
-
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
@@ -1076,6 +1072,11 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
 let is_sat_raw (f: CP.formula) =
   (* let f = drop_rel_formula f in *)
   tp_is_sat_no_cache f "999"
+
+let is_sat_raw (f: CP.formula) =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "is_sat_raw" pr string_of_bool
+  (fun _ -> is_sat_raw f) f
     
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
@@ -2292,30 +2293,43 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   (*is_sat_sub_no_c f sat_subno false*)
   if !is_sat_slicing then
-	is_sat_sub_no_slicing f sat_subno
+	  is_sat_sub_no_slicing f sat_subno
   else if !do_slicing && !multi_provers then
-	is_sat_sub_no_slicing f sat_subno
+	  is_sat_sub_no_slicing f sat_subno
   else
-	is_sat_sub_no_c f sat_subno false
+	  is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Debug.no_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Debug.ho_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
   if !f_2_slice then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else
-	(*not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)*)
-	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
+	  (*not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)*)
+	  not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
+
+let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
+  Debug.no_1 "is_sat_memo_sub_no_orig"
+  Cprinter.string_of_memo_pure_formula
+	string_of_bool
+  (fun _ -> is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv) f
 
 let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
+  (* not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv) *)
   if (not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv)) then (* One slice is UNSAT *)
-	false
-  else
-	let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
-	(*List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l*)
-	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
+	  false
+  else (* Improve completeness of SAT checking *)
+	  let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
+	  (*List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l*)
+	  not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
+
+let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
+  Debug.no_1 "is_sat_memo_sub_no_slicing"
+  Cprinter.string_of_memo_pure_formula
+	string_of_bool
+  (fun _ -> is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv) f
 	  
 let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
@@ -2466,11 +2480,11 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl wit
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
   if !do_slicing && !multi_provers then
-	is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
+	  is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
   else if !do_slicing & !opt_ineq then
-	is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
+	  is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
   else
-	is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
+	  is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no"

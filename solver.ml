@@ -2522,7 +2522,7 @@ and elim_ante_evars (es:entail_state) : context =
   Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 (*used for finding the unsat in the original pred defs formulas*)
-and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =  
   let sat_subno = ref 1 in 
   match f with
     | Base _ | Exists _ ->
@@ -2546,8 +2546,14 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      let nf2,nf2n = find_unsat prog f2 in
 	      (nf1@nf2,nf1n@nf2n)
 
+and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+  let pr1 = !CF.print_formula in
+  let pr2 = fun _ -> "" in
+  Debug.ho_1 "find_unsat" pr1 pr2
+  (fun _ -> find_unsat_x prog f) f
+
 and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
-  Debug.no_2 "is_unsat_with_branches" 
+  Debug.ho_2 "is_unsat_with_branches" 
       (fun h -> 
           "\n hf = "  ^ (Cprinter.string_of_h_formula h)
           ^"\n xpure_f hf = " ^ Cprinter.string_of_mix_formula(fst( xpure_f hf)))
@@ -3509,11 +3515,11 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
           (*   (SuccCtx [ctx], UnsatAnte) *)
     else
       (* UNSAT check *)
-      let ctx = elim_unsat_ctx prog (ref 1) ctx in
+      (* let ctx = elim_unsat_ctx prog (ref 1) ctx in
       let ctx = set_unsat_flag ctx true in 
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
-      else
+      else *)
         heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
@@ -5154,7 +5160,7 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
-  Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
+  Debug.ho_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
 (*maximising must bug with RAND (error information)*)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
@@ -7017,7 +7023,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               CF.mk_failure_must ("Cannot infer heap and pure 2") sl_error)), NoAlias) 
     end
 
-and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
  (* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in*)
 
  (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
@@ -7117,6 +7123,12 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                     CF.mk_failure_may s logical_error), NoAlias)
               end
           end
+
+and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+  let pr = fun _ -> "" in
+  Debug.ho_1 "do_unmatched_rhs" pr pr 
+  (fun _ -> do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b
+  a rhs_h_matched_set is_folding pos) conseq 
 
 and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in
@@ -9184,7 +9196,7 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
 	      let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	    simpl_f
 
-and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
+and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   let sat_subno = ref 0 in
   let rec combine_ext_struc (f1:ext_formula)(f2:ext_formula):ext_formula = match f1 with
     | ECase b -> let r = match f2 with
@@ -9250,6 +9262,10 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
   in
   List.fold_left (fun b c1->b@(List.map (fun c2->(combine_ext_struc c1 c2)) f2)) [] f1
 
+and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
+  let pr = fun _ -> "" in
+  Debug.ho_2 "combine_struc" pr pr pr
+  combine_struc_x f1 f2
 
 and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.spec_var list) (pos : loc) =
   let rs = CP.fresh_spec_vars x in

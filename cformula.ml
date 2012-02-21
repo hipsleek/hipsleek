@@ -2113,7 +2113,7 @@ and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formul
 and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula =
   let rec helper (f:ext_formula):(ext_formula) = match f with
 	| ECase b ->
-        let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for ECase not added \n") in
+        (* let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for ECase not added \n") in *)
         f
 	| EBase b ->
         let ext_base = b.formula_ext_base in
@@ -2147,7 +2147,7 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
         in res_f
 
 	| EAssume (x,b,y)->
-                let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for EAssume not added \n") in
+                (* let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for EAssume not added \n") in *)
                 f
 	(*| EVariance b ->
       let cont = helper b.formula_var_continuation in
