@@ -10,12 +10,12 @@ sll2<n, S, sm, lg> == self = null & n = 0 & sm <= lg & S = {}
 
 relation CL(int a, int b, int c).
   node create_list(int n, int v)
-//infer[CL]
+  infer[CL]
   requires n>=0
 //  ensures res::sll2<n,S, sm, lg> & CL(sm,lg,v);
  case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll2<n,S, sm, lg> & sm=v & v=lg;//sm<=v & v<=lg
+  n > 0 -> ensures res::sll2<n,S, sm, lg> & CL(sm,lg,v);//& sm=v & v=lg;
   n<0 -> ensures false;
 }
 {
