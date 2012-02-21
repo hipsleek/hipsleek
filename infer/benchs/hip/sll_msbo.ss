@@ -131,7 +131,7 @@ node pop_front(ref node x)
 //fail with eps
 relation APP(bag a, bag b, bag c).
 void append(node x, node y)
-  infer @pre [APP]
+  infer  [APP]
   requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null//S1=1
   ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2);//S=union(S1,S2) & S1=1
 {
@@ -271,7 +271,7 @@ node insert2(node x, node vn)
 //ok
 //relation DEL(bag a, bag b).
 void delete(node x, int a)
-//infer @pre [DEL]
+//infer  [DEL]
   requires x::sll2<n,xs, xl> & n > a & a > 0
   ensures x::sll2<nres, sres, lres> & nres = n-1 & sres >= xs & lres <= xl;//'
 {
@@ -338,7 +338,7 @@ relation CL(int a, int b, int c).
 //ok
 //relation TRAV(bag a, bag b).
   void list_traverse(node x)
-//infer @pre [TRAV]
+//infer  [TRAV]
   requires x::sll2<n,sm1, lg1>
     ensures x::sll2<n,sm1, lg1> ;//& TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
 {
@@ -369,7 +369,7 @@ node list_copy(node x)
 //relation FIL(bag a, bag b).
 relation FIL(int a, int b, int c, int d).
 node list_filter2(node x, int v)
-  infer @pre [FIL]
+  infer  [FIL]
   requires x::sll2<n, xs, xl>
   ensures res::sll2<nres, sres, lres> & sres >= xs & lres <= xl & nres <= n;
 //requires x::ll2<n,S> & n >= 0

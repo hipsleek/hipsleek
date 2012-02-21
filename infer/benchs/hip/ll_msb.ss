@@ -121,7 +121,7 @@ node pop_front(ref node x)
 //fail with eps
 relation APP(bag a, bag b, bag c).
 void append(node x, node y)
-  infer @pre [APP]
+  infer  [APP]
   requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null//S1=1
   ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2);//S=union(S1,S2) & S1=1
 {
@@ -199,7 +199,7 @@ node get_next_next(node x)
 //fail with eps
 relation INS(bag a, bag b, int a).
 void insert(node x, int a)
-  infer @pre [INS]
+  infer  [INS]
   requires x::ll2<n,S> & n > 0
   ensures x::ll2<n+1,S1> & INS(S,S1,a);//S=1 & S1=2 & S1=2
 {
@@ -214,7 +214,7 @@ void insert(node x, int a)
 //ok
 relation DEL(bag a, bag b).
 void delete( node x, int a)
-  infer @pre [DEL]
+  infer  [DEL]
   requires x::ll2<n,S> & n > a & a > 0
   ensures x::ll2<m,S1> & DEL(S,S1);//'S1 subset S
 {
@@ -288,7 +288,7 @@ void reverse(ref node xs, ref node ys)
 //ok
 relation TRAV(bag a, bag b).
   void list_traverse(node x)
-  infer @pre [TRAV]
+  infer  [TRAV]
   requires x::ll2<n,S1>
   ensures x::ll2<n,S2> & TRAV(S1,S2);//S1=S2
 {
@@ -302,7 +302,7 @@ relation TRAV(bag a, bag b).
 //ok
 relation CPY(bag a, bag b).
 node list_copy(node x)
-   infer @pre [CPY]
+   infer  [CPY]
   requires x::ll2<n,S>
   ensures x::ll2<n,S> * res::ll2<n,S2> &  CPY(S,S2);//S2=S
 {
@@ -358,7 +358,7 @@ node list_remove2(node x, int v)
 /*function to remove all nodes which have value v in nullable singly linked list*/
 relation FIL(bag a, bag b).
 node list_filter2(node x, int v)
-  infer @pre [FIL]
+  infer  [FIL]
   requires x::ll2<n,S> & n >= 0
   ensures res::ll2<m,S2> & m <= n & FIL(S,S2);//S2 subset S;//& FIL(S,S2);
 {

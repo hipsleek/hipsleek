@@ -161,7 +161,7 @@ node create_list(int a)
 /* function to reverse a singly linked list */
 //relation REV(node p1, node p2).
 void reverse(ref node xs, ref node ys)
-//infer @pre [REV]
+//infer  [REV]
   requires xs::lseg<null> * ys::lseg<p1>
   ensures ys'::lseg<p2> & xs' = null ;//& REV(p1,p2);
 {
@@ -179,7 +179,7 @@ void reverse(ref node xs, ref node ys)
 //fail TRA
 relation TRA(node p).
 void list_traverse(node x)
-  infer @pre [TRA]
+  infer  [TRA]
   requires x::lseg<null>
   ensures x::lseg<p2> & TRA(p2);//p2=null
 {
