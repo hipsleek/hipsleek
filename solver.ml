@@ -8581,16 +8581,20 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
       | Some triples (*(rel, post, pre)*) ->
         if inf_post then
           let rels = CP.get_RelForm p in
-          let p = CP.drop_rel_formula p in        
-          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> if Gen.BList.mem_eq CP.equalFormula a1 rels
+          let p = CP.drop_rel_formula p in
+          let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
+          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+            if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
-          let post = CP.conj_of_list posts no_pos in
+          let post = CP.conj_of_list (ps@posts) no_pos in
           let pre = CP.conj_of_list pres no_pos in
-          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_exists_raw post_vars p) no_pos) in
-          (p,[pre])
+(*          let p = CP.mkAnd post p no_pos in*)
+(*          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_exists_raw post_vars p) no_pos) in*)
+          (post,[pre])
         else
           let rels = CP.get_RelForm p in
-          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> if Gen.BList.mem_eq CP.equalFormula a1 rels
+          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+            if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
           let pre = CP.conj_of_list pres no_pos in
           (p,[pre])

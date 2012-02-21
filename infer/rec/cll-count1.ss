@@ -21,7 +21,7 @@ relation A(int x, int y).
 
 /* functions to count the number of nodes in a circular list */
 int count(node x, node h)
-    infer @pre[h,p]
+    infer [h,p]
     requires x::cll<p, n>
     ensures x::cll<p, n> & res = n; 
 

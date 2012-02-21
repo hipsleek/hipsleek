@@ -17,7 +17,7 @@ relation C(int x, int y, int z).
 
 /* append 2 doubly linked lists */
 node2 append(node2 x, node2 y)
-  infer @pre[C]
+  infer [C]
   requires x::dll<q, m> * y::dll<p, n>
   ensures res::dll<_, t> & C(t,m,n);
 
@@ -48,7 +48,7 @@ node2 append(node2 x, node2 y)
 relation D(int x, int y, int z, node2 m, node2 n, node2 p).
 
 void append2(node2 x, node2 y)
-  infer @pre [D]
+  infer  [D]
 	requires x::dll<q, m> * y::dll<p, n> & m>=1
 	ensures x::dll<r, t> & D(t,m,n,r,p,q);
 

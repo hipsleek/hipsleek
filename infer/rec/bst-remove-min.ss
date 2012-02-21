@@ -16,7 +16,7 @@ bst <sm, lg> == self = null & sm <= lg
 relation A(int x, int y, int z).
 
 int remove_min(ref node2 x)
-        infer @pre[x,A]
+        infer [x,A]
 	requires x::bst<s, b> //& x != null 
 	ensures x'::bst<s1, b> & A(s,res,s1); //s <= res <= s1;
 

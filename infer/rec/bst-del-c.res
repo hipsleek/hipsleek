@@ -45,8 +45,8 @@ Successful States:
                   {FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 2::ref [x]
-                              x'::bst<s,l>@M[Orig][LHSCase]&l<=lg & 
-                              B(s,sm) & sm<=lg&{FLOW,(20,21)=__norm})
+                              x'::bst<s,l>@M[Orig][LHSCase]&l<=lg & sm=s & 
+                              sm<=lg&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(lg:exists(a:s=sm & exists(qs_586:qs_586<=lg & 
   exists(pl_585:a<=qs_586 & pl_585<=a & sm<=pl_585))))) --> B(s,sm),
  (s=sm & 
@@ -81,9 +81,9 @@ Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 437 invocations 
+Stop Omega... 550 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.29 second(s)
-	Time spent in main process: 1.34 second(s)
-	Time spent in child processes: 0.95 second(s)
+Total verification time: 2.4 second(s)
+	Time spent in main process: 1.41 second(s)
+	Time spent in child processes: 0.99 second(s)

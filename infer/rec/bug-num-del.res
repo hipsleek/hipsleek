@@ -31,9 +31,9 @@ Procedure del$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 139 invocations 
+Stop Omega... 138 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.28 second(s)
-	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.08 second(s)
+Total verification time: 0.3 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.09 second(s)

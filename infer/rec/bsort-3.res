@@ -29,8 +29,8 @@ Checking procedure bubble$node...
                               
                               xs::sll<n_38,s,l>@M[Orig][LHSCase]&!(res) & 
                               n_38=n & 0<=n&{FLOW,(20,21)=__norm}
-                              or xs::ll<n_39>@M[Orig][LHSCase]&B(res) & 
-                                 n_39=n & 0<=n&{FLOW,(20,21)=__norm}
+                              or xs::ll<n_39>@M[Orig][LHSCase]&n_39=n & 
+                                 res & 0<=n&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[ (res<=0) --> B(res),
  (res<=0) --> B(res),
@@ -46,9 +46,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 494 invocations 
+Stop Omega... 685 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.93 second(s)
-	Time spent in main process: 1.3 second(s)
-	Time spent in child processes: 0.63 second(s)
+Total verification time: 2.19 second(s)
+	Time spent in main process: 1.54 second(s)
+	Time spent in child processes: 0.65 second(s)

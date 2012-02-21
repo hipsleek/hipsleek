@@ -27,8 +27,8 @@ Checking procedure bubble$node...
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               
-                              xs::sll<n_38,s,l>@M[Orig][LHSCase]&A(res) & 
-                              n_38=n & 0<=n&{FLOW,(20,21)=__norm}
+                              xs::sll<n_38,s,l>@M[Orig][LHSCase]&n_38=n & 
+                              !(res) & 0<=n&{FLOW,(20,21)=__norm}
                               or xs::ll<n_39>@M[Orig][LHSCase]&res & 
                                  n_39=n & 0<=n&{FLOW,(20,21)=__norm}
                               )
@@ -43,9 +43,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 547 invocations 
+Stop Omega... 742 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.26 second(s)
-	Time spent in main process: 1.52 second(s)
-	Time spent in child processes: 0.74 second(s)
+Total verification time: 2.68 second(s)
+	Time spent in main process: 1.86 second(s)
+	Time spent in child processes: 0.82 second(s)

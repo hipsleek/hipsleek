@@ -26,7 +26,7 @@ Checking procedure insert$node2~int...
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               res::bst<mi,ma>@M[Orig][LHSCase]&res!=null & 
-                              A(mi,sm,a) & ma=max(lg,a) & sm<=lg&
+                              ma=max(lg,a) & a>=mi & sm>=mi & sm<=lg&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(lg:mi=a & a<=sm & sm<=lg | sm=mi & mi<=lg & (1+lg)<=a | sm=mi & (1+
   mi)<=a & a<=lg)) --> A(mi,sm,a),
@@ -46,9 +46,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 233 invocations 
+Stop Omega... 244 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.41 second(s)
+Total verification time: 1.42 second(s)
 	Time spent in main process: 0.6 second(s)
-	Time spent in child processes: 0.81 second(s)
+	Time spent in child processes: 0.82 second(s)

@@ -1248,8 +1248,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                 Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
                                 Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
                                 Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
-                            if triples = [] then
-                              fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
+                            if triples = [] then fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
                             else fst (Solver.simplify_relation (CF.transform_spec new_spec (CF.list_of_posts proc.proc_static_specs)) 
                               (Some triples) pre_vars post_vars prog inf_post_flag)
                               end

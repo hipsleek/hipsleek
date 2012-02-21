@@ -44,10 +44,9 @@ Successful States:
                   true&{FLOW,(20,21)=__norm}
                     EBase true&p=h & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              EXISTS(p_575,
-                              n_576: x::cll<p_575,n_576>@M[Orig][LHSCase]&
-                              res=n & p_575=p & n_576=n & 0<=n&
-                              {FLOW,(20,21)=__norm}))
+                              x::cll<p_30,n_31>@M[Orig][LHSCase]&x=h & 
+                              res=0 & p_30=h & p=h & n_31=0 & n=0 & 0<=n&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -55,9 +54,9 @@ Procedure count$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 100 invocations 
+Stop Omega... 105 invocations 
 8 false contexts at: ( (41,2)  (41,9)  (39,6)  (39,10)  (39,2)  (38,6)  (38,12)  (38,2) )
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.16 second(s)
-	Time spent in child processes: 0.04 second(s)
+Total verification time: 0.25 second(s)
+	Time spent in main process: 0.19 second(s)
+	Time spent in child processes: 0.06 second(s)
