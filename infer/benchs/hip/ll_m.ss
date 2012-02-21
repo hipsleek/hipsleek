@@ -7,9 +7,9 @@ data node {
 	node next;
 }
 
-void dispose(node x)
+void dispose(ref node x)
   requires x::node<_,_>
-  ensures x=null;
+  ensures x'=null;//'
 
 /* view for a singly linked list */
 
@@ -17,9 +17,9 @@ ll1<> == self = null
 	or self::node<_, q> * q::ll1<>
   inv true;
 
-void delete_list(node x)
+void delete_list(ref node x)
    requires x::ll1<>
-   ensures x=null;
+  ensures x'=null;//'
 {
   if (x!=null) {
     delete_list(x.next);
@@ -257,6 +257,32 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
+
+/* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
+node split1(ref node x, int a)
+  infer[x,res]
+  requires x::ll1<> & a > 0 //x!=null
+  ensures x'::ll1<> * res::ll1<>;//'
+{
+	node tmp;
+
+	if (a == 1)
+	{
+		tmp = x.next; 
+		x.next = null;
+		return tmp;
+	}
+	else
+	{
+		a = a - 1;
+		node tmp;
+		bind x to (_, xnext) in {
+			tmp = split1(xnext, a);
+		}
+		return tmp;
+	}
+}
+
 /*****************************************/
 /*********SMALLROOT EXAMPLES*************/
 void list_traverse(node x)

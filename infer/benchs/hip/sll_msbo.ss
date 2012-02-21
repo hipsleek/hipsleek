@@ -129,16 +129,29 @@ node pop_front(ref node x)
 
 /* append two singly linked lists */
 //fail with eps
-relation APP(bag a, bag b, bag c).
-void append(node x, node y)
-  infer  [APP]
-  requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null//S1=1
-  ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2);//S=union(S1,S2) & S1=1
+relation MRG(int a, int b, int c, int d, int e, int f).
+node merge1(node x1, node x2)
+//infer[MRG]
+  requires x1::sll2<n1,sm1, lg1> * x2::sll2<n2, sm2, lg2>
+  ensures res::sll2<n1+n2, sm3, lg3> ;//& MRG(sm1,sm2,sm3,lg1,lg2,lg3);//sm3=min(sm1,sm2) & lg3=max(lg1,lg2);//MRG(sm1,sm2,sm3,lg1,lg2,lg3)
+//requires x1::sll1<n1, S1> * x2::sll1<n2, S2>
+//  ensures res::sll1<n1+n2, S3> & S3 = union(S1, S2);
 {
-  if (x.next == null)
-    x.next = y;
-  else
-    append(x.next, y);
+	if (x2 == null)
+		return x1; 
+	else
+	{
+		if (x1 == null)
+			return x2;
+		else
+		{
+			x1 = insert(x1, x2.val);
+			if (x2.next != null)
+				return merge1(x1, x2.next);
+			else
+				return x1;
+		}
+	}
 }
 
 /* return the first element of a singly linked list */
@@ -371,7 +384,9 @@ relation FIL(int a, int b, int c, int d).
 node list_filter2(node x, int v)
   infer  [FIL]
   requires x::sll2<n, xs, xl>
-  ensures res::sll2<nres, sres, lres> & sres >= xs & lres <= xl & nres <= n;
+  ensures res::sll2<nres, sres, lres> &  nres <= n & FIL(xs,xl,sres,lres);//lres <= xl & sres >= xs;
+//xl>=xs & lres>=xs & lres>=sres & xl>=sres
+
 //requires x::ll2<n,S> & n >= 0
 //  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
 {
@@ -395,36 +410,42 @@ node list_filter2(node x, int v)
 
 /* function to return the first node being greater than v*/
 //fail to compute FGE
-relation FGE(bag a, int b).
+//relation FGE(int a, int b).
 node find_ge(node x, int v)
 //infer[FGE]
-  requires x::ll2<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m > v & m in S;//FGE(S,m);//m in S;
+  requires x::sll2<n,sm,sl> & n >= 0
+  ensures res = null or res::node<m,p>*p::sll2<k,sm2,sl2> & m >= v & m<=sl2;//FGE(S,m);//m in S;m in S
 {
   if(x == null)
     return null;
   else {
-    if(x.val > v)
+    if(x.val >= v)
       return x;
     else
       return find_ge(x.next, v);
   }
 }
 
-/*function to splice 2 linked list*/
-void splice (ref node x, node y)
-  requires x::ll2<n,S1> * y::ll2<m,S2>
-  ensures x'::ll2<m+n,S>;//'
+relation SPLIT(int a, int b, int c, int d, int e, int f).
+node split1(ref node x, int a)
+  infer[SPLIT]
+  requires x::sll2<n, sm,sl> & a > 0 & n > a
+  ensures x'::sll2<n1, sm1,sl1> * res::sll2<n2, sm2,sl2> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a &
+ SPLIT(sm,sl,sm1,sl1,sm2,sl2);//'sm2>=sm1 & sm2>=sm & sm2>=0 & sl2>=sm2 & sl>=sl2 & sl1>=sm1 & sl1>=sm & sl1>=0
 {
-  if(x == null)
-    x = y;
-  else {
-    if(y != null){
-      node nx = x.next;
-      node ny = y.next;
-      x.next = y;
-      splice(nx, ny);
-      y.next = nx;
+  node tmp;
+
+  if (a == 1)	{
+    tmp = x.next;
+    x.next = null;
+    return tmp;
+  }
+  else{
+    a = a - 1;
+    node tmp;
+    bind x to (_, xnext) in {
+      tmp = split1(xnext, a);
     }
+    return tmp;
   }
 }

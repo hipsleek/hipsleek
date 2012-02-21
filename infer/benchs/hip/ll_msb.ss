@@ -283,6 +283,32 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
+
+/* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
+relation SPLIT(bag a, bag b, bag c).
+node split1(ref node x, int a)
+  infer[SPLIT]
+  requires x::ll2<n, S> & a > 0 & n > a
+  ensures x'::ll2<n1, S1> * res::ll2<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a & SPLIT(S,S1,S2);//S = union(S1, S2);//'
+{
+	node tmp;
+
+	if (a == 1)
+	{
+		tmp = x.next; 
+		x.next = null;
+		return tmp;
+	}
+	else
+	{
+		a = a - 1;
+		node tmp;
+		bind x to (_, xnext) in {
+			tmp = split1(xnext, a);
+		}
+		return tmp;
+	}
+}
 /*****************************************/
 /*********SMALLROOT EXAMPLES*************/
 //ok
@@ -383,11 +409,11 @@ node list_filter2(node x, int v)
 
 /* function to return the first node being greater than v*/
 //fail to compute FGE
-//relation FGE(bag a, int b).
+relation FGE(bag a, int b).//{m}<subset> S
 node find_ge(node x, int v)
-//infer[FGE]
+  infer[FGE]
   requires x::ll2<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m > v & m in S;//m in S;//FGE(S,m);//m in S;
+  ensures res = null or res::node<m,_> & m > v & FGE(S,m);//FGE(S,m);//m in S;
 {
   if(x == null)
     return null;
@@ -400,9 +426,11 @@ node find_ge(node x, int v)
 }
 
 /*function to splice 2 linked list*/
+relation SPI(bag S1, bag S2, bag S3).
 void splice (ref node x, node y)
+//infer[SPI]
   requires x::ll2<n,S1> * y::ll2<m,S2>
-  ensures x'::ll2<m+n,S>;//'
+  ensures x'::ll2<m+n,S> & S=union(S1,S2);//SPI(S,S1,S2);//'
 {
   if(x == null)
     x = y;

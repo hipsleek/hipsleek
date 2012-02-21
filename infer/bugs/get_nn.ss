@@ -23,7 +23,11 @@ relation FGE(bag a, int b).
 node find_ge(node x, int v)
   infer[FGE]
   requires x::ll2<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m > v & FGE(S,m);//m in S;//FGE(S,m);//m in S;
+/* case {
+  n=0 -> ensures res=null;
+  n!=0 -> ensures res::node<m,_> & m > v & m in S;
+  }*/
+  ensures res = null  or res::node<m,_> & m > v & FGE(S,m);//m in S;//FGE(S,m);//m in S;
 {
   if(x == null)
     return null;
