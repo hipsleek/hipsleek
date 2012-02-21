@@ -8508,18 +8508,12 @@ and simplify_heap h p prog =
   Debug.no_2 "simplify_heap" pr pr2 pr
       (fun _ _ -> simplify_heap_x h p prog) h p
 
-(* TODO : simplification here relies too much on Omega.simplify *)
-(* TODO : problematic with other kinds of constraints *)
-
 let rec simplify_post_heap_only fml prog = match fml with
   | Or _ -> 
     let disjs = CF.list_of_disjs fml in
     let res = List.map (fun f -> simplify_post_heap_only f prog) disjs in
     let res = remove_dups_imply rev_imply_formula res in
     CF.disj_of_list res no_pos
-(*    Or {formula_or_f1 = simplify_post_heap_only f1 prog; *)
-(*        formula_or_f2 = simplify_post_heap_only f2 prog; *)
-(*        formula_or_pos = pos}*)
   | _ -> 
     let h, p, fl, b, t = split_components fml in
     let p = MCP.pure_of_mix p in
@@ -8552,8 +8546,7 @@ let rec elim_heap h p pre_vars heap_vars = match h with
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
       && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var v.h_formula_view_node)
-    in
-    if cond then HTrue else h
+    in if cond then HTrue else h
   | DataNode d ->
     let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
     let node_aset = CP.EMapSV.build_eset node_als in
@@ -8561,8 +8554,7 @@ let rec elim_heap h p pre_vars heap_vars = match h with
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
       && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var d.h_formula_data_node)
-    in
-    if cond then HTrue else h
+    in if cond then HTrue else h
   | _ -> h
 
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = match post_fml with
@@ -8573,10 +8565,6 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
     Debug.tinfo_hprint (add_str "RES (simplified post)" (pr_list (pr_pair !print_formula pr_no))) res no_pos;
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
-(*    let (f1,pres1) = simplify_post f1 post_vars prog subst_fml pre_vars inf_post in*)
-(*    let (f2,pres2) = simplify_post f2 post_vars prog subst_fml pre_vars inf_post in*)
-(*    if rev_imply_formula f1 f2 then (f1,pres1)*)
-(*    else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)*)
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
