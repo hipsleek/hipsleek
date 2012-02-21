@@ -578,7 +578,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars =
       match fixpoint with
         | [post] -> (rel_fml, post, CP.mkTrue no_pos)
         | _ -> report_error no_pos "Expecting a post"
-    with _ -> report_error no_pos "Unexpected error in computing fixpoint")
+    with _ -> report_error no_pos "Unexpected error in computing fixpoint by FixBag")
 
 let compute_fixpoint input_pairs ante_vars =
   let (pfs, rels) = List.split input_pairs in

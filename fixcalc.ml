@@ -378,20 +378,23 @@ let rec compute_fixpoint (i:int) input_pairs pre_vars specs =
       (fun _ _ -> compute_fixpoint_x input_pairs pre_vars specs) input_pairs pre_vars
 
 and compute_fixpoint_x input_pairs ante_vars specs =
-  let is_bag_cnt = match !TP.tp with
-    | TP.Mona | TP.MonaH -> true
-    | _ -> false
+  let is_bag_cnt rel =
+    let bag_vars = List.filter CP.is_bag_typ (CP.fv rel) in
+    bag_vars != []
   in
-  if is_bag_cnt then Fixbag.compute_fixpoint 3 input_pairs ante_vars
-  else
-    let (pfs, rels) = List.split input_pairs in
-    let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
-    let pairs = List.concat (List.map (fun r -> helper input_pairs r ante_vars specs) rels) in 
-    let pairs = preprocess_rels pairs in
-    DD.ninfo_pprint ("input_pairs: " ^ (pr_list (pr_pair !CP.print_formula !CP.print_formula)  input_pairs))  no_pos;
-    
-    let rel = List.map (fun (x,y) -> (x,y,ante_vars)) pairs in
-    compute_fixpoint_aux rel
+  let input_pairs_bag, input_pairs_num = List.partition (fun (p,r) -> is_bag_cnt r) input_pairs in
+  let bag_res = if input_pairs_bag = [] then [] else Fixbag.compute_fixpoint 3 input_pairs_bag ante_vars in
+  let num_res =
+    if input_pairs_num = [] then []
+    else
+      let (pfs, rels) = List.split input_pairs_num in
+      let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
+      let pairs = List.concat (List.map (fun r -> helper input_pairs_num r ante_vars specs) rels) in 
+      let pairs = preprocess_rels pairs in
+      DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
+      let rel = List.map (fun (x,y) -> (x,y,ante_vars)) pairs in
+      compute_fixpoint_aux rel
+  in bag_res @ num_res
 
 and preprocess_rels rels =
   match rels with
@@ -416,6 +419,19 @@ and unify_rels rel same_rels =
 and helper input_pairs rel ante_vars specs = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
+  Debug.ninfo_hprint (add_str "pfs:" (pr_list !CP.print_formula)) pfs no_pos;
+  let is_mona = match !TP.tp with
+    | TP.Mona | TP.MonaH -> true
+    | _ -> false
+  in
+  let pfs = if is_mona then 
+    List.map (fun p -> 
+      let p = TP.simplify_raw p in
+      let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in
+      CP.remove_cnts bag_vars p) pfs
+    else pfs
+  in
+  Debug.ninfo_hprint (add_str "pfs:" (pr_list !CP.print_formula)) pfs no_pos;
   let pfs(*,no*) = propagate_rec pfs rel ante_vars specs in
   let pfs = List.map (fun p -> 
     let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in 
@@ -430,7 +446,6 @@ and helper input_pairs rel ante_vars specs =
   | [hd] -> [(rel,hd(*,no*))]
   | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs)(*, no*))]
 
-(*let compute_fixpoint_aux rel_fml pf ante_vars = *)
 and compute_fixpoint_aux rel = 
   let input_fixcalc = (List.fold_left (fun x y -> x ^ (compute_fixpoint_one y)) "" rel) ^ (compute_bottomup_inp rel) in 
   DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
