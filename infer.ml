@@ -706,10 +706,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
       let args = CP.fv fml in (* var on lhs *)
       let quan_var = CP.diff_svl args iv in
       let quan_var = quan_var@vars_overlap in
-      let is_bag_cnt = match !TP.tp with
-        | TP.Mona | TP.MonaH -> if TP.is_bag_constraint fml then true else false
-        | _ -> false
-      in
+      let is_bag_cnt = TP.is_bag_constraint fml in
       let new_p,new_p_ass = 
         if is_bag_cnt then           
            let new_p = fml in 
@@ -1162,6 +1159,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         DD.trace_hprint (add_str "lhs (after lhs_simplifier):" (!CP.print_formula)) lhs pos;
         let lhs_2 = CP.restore_memo_formula subs bvars lhs in
         DD.trace_hprint (add_str "lhs_2 (b4 filter ass):" (!CP.print_formula)) lhs_2 pos;
+        (* TODO: Need a faster filter_assumption *)
         let filter_ass lhs rhs = 
           let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
           (simplify_disj_new lhs,rhs) in      
@@ -1171,10 +1169,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
           CP.join_conjunctions lst
         in
-        let is_bag_cnt = match !TP.tp with
-          | TP.Mona | TP.MonaH -> if TP.is_bag_constraint lhs then true else false
-          | _ -> false
-        in
+        let is_bag_cnt = TP.is_bag_constraint lhs in
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in

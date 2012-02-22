@@ -420,10 +420,7 @@ and helper input_pairs rel ante_vars specs =
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
   Debug.ninfo_hprint (add_str "pfs:" (pr_list !CP.print_formula)) pfs no_pos;
-  let is_mona = match !TP.tp with
-    | TP.Mona | TP.MonaH -> true
-    | _ -> false
-  in
+  let is_mona = TP.is_bag_constraint (List.hd pfs) in
   let pfs = if is_mona then 
     List.map (fun p -> 
       let p = TP.simplify_raw p in

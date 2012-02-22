@@ -1186,11 +1186,7 @@ let simplify (f : CP.formula) : CP.formula =
       with | _ -> f)
 
 let rec simplify_raw (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -1210,11 +1206,7 @@ let rec simplify_raw (f: CP.formula) =
     CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -1231,11 +1223,7 @@ let simplify_raw f =
 	Debug.no_1 "simplify_raw" pr pr simplify_raw f
 
 let simplify_exists_raw exist_vars (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in

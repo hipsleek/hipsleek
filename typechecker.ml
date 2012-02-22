@@ -402,15 +402,16 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
-                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in
-                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;
+(*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
+(*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
-                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;
+(*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
                       let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
                       let _ = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
-                      let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in
-                      let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in
+(*                      let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in*)
+(*                      let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in*)
+                      let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let lp = (* if not !do_abd_from_post then lp else ( *)
                           Debug.devel_zprint (lazy ("TMP CTX: " ^ (Cprinter.string_of_list_partial_context tmp_ctx) ^ "\n")) no_pos;
