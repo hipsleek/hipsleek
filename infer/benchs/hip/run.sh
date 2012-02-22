@@ -5,5 +5,5 @@
 ../../../hip sll_msb.ss -tp mona --eps > res/sll_msb.res
 ../../../hip sll_mso.ss --eps > res/sll_mso.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
-../../../hip complete_msh.ss.ss --eps > res/complete_msh.res
+../../../hip complete_msh.ss --eps > res/complete_msh.res
 
