@@ -31,7 +31,7 @@ void insert(node2 x, int a)
 
 // DLL without size property
 relation APP(bag a, bag b, bag c).
-node2 append(node2 x, node2 y)
+node2 append0(node2 x, node2 y)
   infer [APP]
 	requires x::dll2<q, S1> * y::dll2<p, S2>
 	ensures res::dll2<_, S> & APP(S,S1,S2); // S=union(S1,S2)
@@ -43,7 +43,7 @@ node2 append(node2 x, node2 y)
 	else
 	{ 	
 		tmp = x.next;
-		tmp = append(tmp, y);
+		tmp = append0(tmp, y);
 		if (tmp != null)
 		{
 			x.next = tmp; 
