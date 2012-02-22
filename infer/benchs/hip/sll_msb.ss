@@ -17,10 +17,6 @@ sll1<n, S> == self = null & n = 0 & S={}
   // & forall (x: (x notin S1 | v <= x))
   inv n >= 0;
 
-sll2<n, sm, lg> == self = null & n = 0 & sm <= lg
-  or (exists qs,ql: self::node<qmin, q> * q::sll2<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
-	inv n >= 0 & sm <= lg;
-
 void delete_list(ref node x)
   requires x::sll1<n, S>
   ensures x'=null;//'
@@ -154,8 +150,8 @@ void set_next(ref node x, node y)
 }
 
 void set_null2(ref node x)
-  requires x::sll1<n, xs, xl> & x != null
-  ensures x'::node<v,null> & SNULL2(xs,v, sl);//xs<=v & v<=xl;//'
+  requires x::sll1<n, S> & x != null
+  ensures x'::node<v,null>;//'
 {
   if (4>3)
     x.next = null;
@@ -218,7 +214,7 @@ relation INS2(bag a, bag b, int a).
 node insert2(node x, node vn)
   infer[INS2]
   requires x::sll1<n, S> *  vn::node<v, _>
-  ensures res::sll1<n+1, S2> & & INS2(S,S1,a);//S1=union(S,{v})
+  ensures res::sll1<n+1, S2> & INS2(S,S1,a);//S1=union(S,{v})
 {
 	if (x==null) {
 		vn.next = null;
@@ -279,11 +275,11 @@ node delete2(node x, int v)
 node create_list(int n, int v)
 //infer[CL]
   requires n>=0 //0<=v
-   case {
+  case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll1<n, S> & S={v} //& CL(S,v);//& S={v};
+  n > 0 -> ensures res::sll1<n, S> & v in S;//CL(S,v); //& CL(S,v);//& S={v};
   n<0 -> ensures true;
-}
+  }
 {
   node tmp;
   if (n == 0) {
@@ -302,7 +298,7 @@ relation TRAV(bag a, bag b).
 void list_traverse(node x)
   infer [TRAV]
   requires x::sll1<n,S1>
-    ensures x::sll2<n,S2> & TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
+    ensures x::sll1<n,S2> & TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
 {
   node t;
   if(x != null) {
@@ -315,8 +311,8 @@ void list_traverse(node x)
 relation CPY(bag a, bag b).
 node list_copy(node x)
   infer [CPY]
-  requires x::sll2<n,S>
-  ensures x::sll2<n,S> * res::sll2<n,S1> & CPY(S,S2);//
+  requires x::sll1<n,S>
+  ensures x::sll1<n,S> * res::sll1<n,S1> & CPY(S,S2);//
 {
   node tmp;
   if (x != null) {
@@ -373,7 +369,7 @@ relation SPLIT(bag a, bag b, bag c).
 node split1(ref node x, int a)
   infer[SPLIT]
   requires x::sll1<n, S> & a > 0 & n > a
-  ensures x'::sll2<n1, S1> * res::sll2<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 &
+  ensures x'::sll1<n1, S1> * res::sll1<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 &
  SPLIT(S,S1,S2);//S = union(S1, S2);//'
 {
   node tmp;

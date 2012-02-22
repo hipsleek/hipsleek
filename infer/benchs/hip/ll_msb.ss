@@ -13,7 +13,8 @@ void dispose(ref node x)
 /* view for a singly linked list */
 
 ll2<n, S> == self=null & n=0 & S={}
-	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});
+	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v})
+  inv n>=0;
 
 void delete_list(ref node x)
   requires x::ll2<n,S>
