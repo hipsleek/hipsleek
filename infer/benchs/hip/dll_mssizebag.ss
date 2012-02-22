@@ -14,10 +14,11 @@ dll<p,n,S> == self = null & n = 0 & S={}
 
 
 relation INSERT(bag a, bag b, int c).
+relation INSERTNUM(int d, int e).
 void insert(node2 x, int a)
-  infer [INSERT]
+  infer [INSERT,INSERTNUM]
   requires x::dll<p, n, S> & x!=null
-  ensures x::dll<p, m, S1> & m=n+1 & INSERT(S,S1,a); //& S1=S+{a}
+  ensures x::dll<p, m, S1> & INSERTNUM(m,n) & INSERT(S,S1,a); //& S1=S+{a}
 {
   if (x.next == null)
     x.next = new node2(a, x, null);
