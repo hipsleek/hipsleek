@@ -16,7 +16,7 @@ pred clist<n> == self::node<_,p> * p::lseg<self,n-1>
 
 checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
   |- q::ll<m> & Term[m+1 /*m*/] & m>0.
-print residue.
+//print residue.
 
 /*
 Entail (1): Fail. 
@@ -32,6 +32,6 @@ print residue.
 
 checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
   |- Term[n-1] or Term[n].
-print residue.
+//print residue.
 
 
