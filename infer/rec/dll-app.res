@@ -39,8 +39,8 @@ Procedure append$node2~node2 SUCCESS
 
 Checking procedure append2$node2~node2... 
 !!! REL :  D(t,m,n,r,p,q)
-!!! POST:  m>=1 & n>=0 & q=r & m+n=t
-!!! PRE :  1<=m & 0<=n
+!!! POST:  n>=0 & t>=(1+n) & q=r & t=m+n
+!!! PRE :  0<=n & 1<=m
 !!! OLD SPECS: ((None,[]),EInfer [D]
               EBase exists (Expl)(Impl)[q; m; p; 
                     n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
@@ -52,12 +52,11 @@ Checking procedure append2$node2~node2...
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[q; m; p; 
                   n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
                   y::dll<p,n>@M[Orig][LHSCase]&1<=m&{FLOW,(20,21)=__norm}
-                    EBase true&1<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&0<=n & 1<=m & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 9::
-                              x::dll<r,t>@M[Orig][LHSCase]&m>=1 & n>=0 & 
-                              q=r & m+n=t & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
- (exists(flted_12_834:(t=2 & n=1 | 2+flted_12_834=t & 1+n=t & 3<=t) & r=q & 
+                              x::dll<r,t>@M[Orig][LHSCase]&n>=0 & t>=(1+n) & 
+                              q=r & t=m+n & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (exists(flted_12_834:(t=2 & n=1 | 2+flted_12_834=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
  (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
  (1<=t_920 & p=p_845 & 1+m_844=m & n_846=n & -1+t=t_920 & r=q & 1<=m & 
@@ -72,6 +71,6 @@ Termination checking result:
 Stop Omega... 349 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.95 second(s)
-	Time spent in main process: 0.63 second(s)
-	Time spent in child processes: 0.32 second(s)
+Total verification time: 1.25 second(s)
+	Time spent in main process: 0.84 second(s)
+	Time spent in child processes: 0.41 second(s)

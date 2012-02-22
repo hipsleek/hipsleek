@@ -56,11 +56,6 @@ Successful States:
  (exists(qs_675:exists(qs_717:exists(pl_716:exists(s:qs_675<=lg & 
   qs_717<=l & l<=qs_675 & s<=pl_716 & exists(v_718:v_718<=qs_717 & 
   pl_716<=v_718)))))) --> B(l,lg),
- (exists(qs_675:exists(qs_717:exists(pl_716:exists(s:qs_675<=lg & 
-  qs_717<=l & l<=qs_675 & s<=pl_716 & exists(v_718:v_718<=qs_717 & 
-  pl_716<=v_718)))))) --> B(l,lg),
- (exists(sm_583:exists(qs_675:qs_675<=lg & l<=qs_675) & 
-  sm_583<=l)) --> B(l,lg),
  (exists(s:l=lg & s<=lg)) --> B(l,lg),
  (exists(sm_583:exists(qs_675:qs_675<=lg & l<=qs_675) & 
   sm_583<=l)) --> B(l,lg),
@@ -83,6 +78,6 @@ Termination checking result:
 Stop Omega... 585 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.52 second(s)
-	Time spent in main process: 1.53 second(s)
-	Time spent in child processes: 0.99 second(s)
+Total verification time: 2.13 second(s)
+	Time spent in main process: 1.25 second(s)
+	Time spent in child processes: 0.88 second(s)

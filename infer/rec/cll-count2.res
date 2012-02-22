@@ -23,34 +23,8 @@ Checking procedure count$node...
                             EAssume 2::
                               x::hd<n_29>@M[Orig][LHSCase]&n_29=n & res>=0 & 
                               res=n & 0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (res=0 & n=0) --> A(res,n),
- (res=0 & n=0) --> A(res,n),
- (exists(n_585:res=1 & n=1 | -1+res=n_585 & -1+n=n_585 & 
+!!! NEW RELS:[ (exists(n_585:res=1 & n=1 | -1+res=n_585 & -1+n=n_585 & 
   1<=n_585)) --> A(res,n),
- (res=0 & n=0) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
- (n=1 & res=1) --> A(res,n),
  (res=0 & n=0) --> A(res,n),
  (n=1 & res=1) --> A(res,n)]
 !!! NEW ASSUME:[]
@@ -62,6 +36,6 @@ Termination checking result:
 Stop Omega... 992 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.39 second(s)
-	Time spent in main process: 0.92 second(s)
-	Time spent in child processes: 0.47 second(s)
+Total verification time: 1.98 second(s)
+	Time spent in main process: 1.32 second(s)
+	Time spent in child processes: 0.66 second(s)

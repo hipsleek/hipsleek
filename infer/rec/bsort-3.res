@@ -35,7 +35,6 @@ Checking procedure bubble$node...
 !!! NEW RELS:[ (res<=0) --> B(res),
  (res<=0) --> B(res),
  (res<=0) --> B(res),
- (res<=0) --> B(res),
  (B(tmp_42') & 1<=res & tmp_42') --> B(res),
  (B(tmp_42') & res<=0 & !(tmp_42')) --> B(res),
  (1<=res) --> B(res),
@@ -46,9 +45,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 810 invocations 
+Stop Omega... 809 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.02 second(s)
-	Time spent in main process: 1.43 second(s)
-	Time spent in child processes: 0.59 second(s)
+Total verification time: 2.4 second(s)
+	Time spent in main process: 1.63 second(s)
+	Time spent in child processes: 0.77 second(s)

@@ -55,32 +55,23 @@ Successful States:
                               x::cll<p_30,n_31>@M[Orig][LHSCase]&p_30=p & 
                               n_31=n & n>=0 & n=res & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (res=0 & n=0) --> A(res,n),
- (exists(flted_11_572:exists(n_31:(n_578=0 & n=1 | 1+n_578=n_31 & 1+
+!!! NEW RELS:[ (exists(flted_11_572:exists(n_31:(n_578=0 & n=1 | 1+n_578=n_31 & 1+
   flted_11_572=n_31 & n=n_31 & 2<=n_31) & A(n_611,n_578) & -1+
   res=n_611))) --> A(res,n),
- (res=0 & n=0) --> A(res,n),
  (exists(flted_11_572:exists(flted_11_620:(n_578=0 & n=1 | 
   n_578=flted_11_620 & flted_11_572=flted_11_620 & -1+n=flted_11_620 & 
   1<=flted_11_620) & A(n_611,n_578) & -1+res=n_611))) --> A(res,n),
  (res=0 & n=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n),
- (res=0 & n=0) --> A(res,n),
  (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n)]
-!!! NEW ASSUME:[ RELASS [A]: ( A(n_611,n_578)) -->  n_578<=0,
- RELASS [A]: ( A(n_611,n_578)) -->  n_578<=0]
+!!! NEW ASSUME:[ RELASS [A]: ( A(n_611,n_578)) -->  n_578<=0]
 !!! NEW RANK:[]
 Procedure count$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 428 invocations 
+Stop Omega... 426 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.23 second(s)
-	Time spent in main process: 0.62 second(s)
-	Time spent in child processes: 1.61 second(s)
+Total verification time: 2.43 second(s)
+	Time spent in main process: 0.76 second(s)
+	Time spent in child processes: 1.67 second(s)

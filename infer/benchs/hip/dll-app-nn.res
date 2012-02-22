@@ -8,8 +8,8 @@ Translating global variables to procedure parameters...
 
 Checking procedure append2$node2~node2... 
 !!! REL :  D(t,m,n,r,p,q)
-!!! POST:  m>=1 & n>=0 & q=r & m+n=t
-!!! PRE :  1<=m & 0<=n
+!!! POST:  n>=0 & t>=(1+n) & q=r & t=m+n
+!!! PRE :  0<=n & 1<=m
 !!! OLD SPECS: ((None,[]),EInfer [D]
               EBase exists (Expl)(Impl)[q; m; p; 
                     n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
@@ -21,12 +21,11 @@ Checking procedure append2$node2~node2...
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[q; m; p; 
                   n](ex)x::dll<q,m>@M[Orig][LHSCase] * 
                   y::dll<p,n>@M[Orig][LHSCase]&1<=m&{FLOW,(20,21)=__norm}
-                    EBase true&1<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&0<=n & 1<=m & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::dll<r,t>@M[Orig][LHSCase]&m>=1 & n>=0 & 
-                              q=r & m+n=t & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
- (exists(flted_12_623:(t=2 & n=1 | 2+flted_12_623=t & 1+n=t & 3<=t) & r=q & 
+                              x::dll<r,t>@M[Orig][LHSCase]&n>=0 & t>=(1+n) & 
+                              q=r & t=m+n & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (exists(flted_12_623:(t=2 & n=1 | 2+flted_12_623=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
  (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
  (1<=t_709 & p=p_634 & 1+m_633=m & n_635=n & -1+t=t_709 & r=q & 1<=m & 
@@ -41,6 +40,6 @@ Termination checking result:
 Stop Omega... 217 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.75 second(s)
-	Time spent in main process: 0.5 second(s)
-	Time spent in child processes: 0.25 second(s)
+Total verification time: 0.52 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.18 second(s)
