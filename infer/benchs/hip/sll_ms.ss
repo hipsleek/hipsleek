@@ -66,9 +66,9 @@ int size(node x)
 //dll
 relation FRONT(int a, int b).
 int front(node x)
-  infer[x,FRONT]
-  requires x::sll<m>//x!=null
-  ensures FRONT(res,v);
+  infer[x,res]
+  requires x::sll<m> //&x!=null
+  ensures true;//res=Anon_1027 
 {
   return x.val;
 }
@@ -171,7 +171,7 @@ void set_null2(ref node x)
 }
 
 /* get the tail of a sorted list */
-relation GT(int a, int b, int c, int d).
+relation GT(int a, int b).
 node get_tail(node x)
   infer[x,GT]
   requires x::sll<n> //& x != null & n>=1
