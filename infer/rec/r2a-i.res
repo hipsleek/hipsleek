@@ -46,17 +46,17 @@ Checking procedure length$node...
                            
                            })
 !!! NEW RELS:[ (n=0 & res=0) --> R(res,n),
- (n_557=0 & n=1 & -1+res=r_24' & R(r_24',n_557)) --> R(res,n),
- (1+n_557=n & -1+res=r_24' & 2<=n & R(r_24',n_557)) --> R(res,n)]
+ (n_556=0 & n=1 & -1+res=r_24' & R(r_24',n_556)) --> R(res,n),
+ (1+n_556=n & -1+res=r_24' & 2<=n & R(r_24',n_556)) --> R(res,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure length$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 110 invocations 
+Stop Omega... 85 invocations 
 9 false contexts at: ( (21,15)  (21,22)  (24,4)  (24,11)  (24,11)  (23,12)  (23,19)  (23,8)  (23,4) )
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.18 second(s)
-	Time spent in child processes: 0.06 second(s)
+Total verification time: 0.28 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.07 second(s)

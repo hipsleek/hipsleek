@@ -6,10 +6,10 @@ Parsing ../../prelude.ss ...
 Starting Reduce... 
 Translating global variables to procedure parameters...
 
-Checking procedure delete1$node~int... 
+Checking procedure delete1$node~int... Starting Omega...oc
+
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
-Starting Omega...oc
 
 !!! REL :  A(a,S,S1)
 !!! POST:  S1=S & a <notin> S  | S1<subset> S  & a <in> S 
@@ -58,6 +58,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.55 second(s)
-	Time spent in main process: 0.29 second(s)
-	Time spent in child processes: 0.26 second(s)
+Total verification time: 0.66 second(s)
+	Time spent in main process: 0.37 second(s)
+	Time spent in child processes: 0.29 second(s)

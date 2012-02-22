@@ -1063,7 +1063,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)
     (* Suppose rhs_p_n is in DNF *)
     (* Need to assure that later *)
-    let rhs_disjs = CP.list_of_disjs rhs_p_n in
+(*    let rhs_disjs = CP.list_of_disjs rhs_p_n in
     let (rhs_disjs_rel, rhs_disjs_wo_rel) = 
       List.partition (fun d -> CP.get_RelForm d != [] || CP.get_Rank d != []) rhs_disjs in
     let lhs_cond = MCP.pure_of_mix lhs_p_orig in
@@ -1076,7 +1076,11 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       let rels, others = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in
       let rels = if List.exists (fun p -> CP.is_Rank_Const p) rels then [CP.conj_of_list rels no_pos] else rels in
       rels, others)
-      (rhs_disjs_rel @ rhs_disjs_wo_rel_new) in
+      (rhs_disjs_rel @ rhs_disjs_wo_rel_new) in*)
+    let pairs = List.map (fun pure ->
+      let rhs_ls = CP.split_conjunctions pure in
+      let rels, others = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in
+      rels, others) (CP.list_of_disjs rhs_p_n) in
     let rel_rhs_ls, other_rhs_ls = List.split pairs in
     let rel_rhs = List.concat rel_rhs_ls in
     if rel_rhs==[] then (
@@ -1138,7 +1142,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (*let pr = !CP.print_formula_br in*)
       (* let _ = print_endline (pr rhs_p_br) in *)
       (*let ranks = List.filter CP.has_func rel_rhs in*)
-      let rhs_p_2 = CP.disj_of_list ((List.map (fun other_rhs -> CP.join_conjunctions other_rhs) other_rhs_ls)@other_disjs) no_pos in
+(*      let rhs_p_2 = CP.disj_of_list ((List.map (fun other_rhs -> CP.join_conjunctions other_rhs) other_rhs_ls)@other_disjs) no_pos in*)
+      let rhs_p_2 = CP.disj_of_list ((List.map (fun other_rhs -> CP.join_conjunctions other_rhs) other_rhs_ls)(*@other_disjs*)) no_pos in
       let rhs_p_new = MCP.mix_of_pure rhs_p_2 in
 
       (* Eliminate relations whose recursive calls are not defined *)

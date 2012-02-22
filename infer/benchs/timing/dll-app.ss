@@ -1,5 +1,3 @@
-/* TODO: Need a faster filter_assumption */
-
 /* doubly linked lists */
 
 /* representation of a node */

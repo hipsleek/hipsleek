@@ -449,6 +449,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let i_post =
                             if not(infer_post_flag) then spec
                             else
+                            if rels!=[] then let _ = post_ctr # inc in spec
+                            else
                               begin
                                 let _ = post_ctr # inc in
                                 let pre_vars = CF.context_fv ctx in

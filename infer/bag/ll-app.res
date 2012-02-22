@@ -8,9 +8,6 @@ Translating global variables to procedure parameters...
 
 Checking procedure append$node~node... Starting Omega...oc
 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null]
@@ -48,6 +45,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.56 second(s)
-	Time spent in main process: 0.28 second(s)
-	Time spent in child processes: 0.28 second(s)
+Total verification time: 0.63 second(s)
+	Time spent in main process: 0.32 second(s)
+	Time spent in child processes: 0.31 second(s)

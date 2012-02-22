@@ -56,21 +56,21 @@ Checking procedure append2$node2~node2...
                             EAssume 9::
                               x::dll<r,t>@M[Orig][LHSCase]&n>=0 & t>=(1+n) & 
                               q=r & t=m+n & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(flted_12_834:(t=2 & n=1 | 2+flted_12_834=t & 1+n=t & 3<=t) & r=q & 
+!!! NEW RELS:[ (exists(flted_12_829:(t=2 & n=1 | 2+flted_12_829=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
  (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
- (1<=t_920 & p=p_845 & 1+m_844=m & n_846=n & -1+t=t_920 & r=q & 1<=m & 
-  0<=n & D(t_920,m_844,n_846,r_921,p_845,q_843) & 
-  q_843!=null) --> D(t,m,n,r,p,q)]
-!!! NEW ASSUME:[ RELASS [D]: ( D(t_920,m_844,n_846,r_921,p_845,q_843)) -->  r_921=q_843 | (r_921+1)<=q_843 & q_843=null | q_843<=(r_921-1) & q_843=null]
+ (1<=t_915 & p=p_840 & 1+m_839=m & n_841=n & -1+t=t_915 & r=q & 1<=m & 
+  0<=n & D(t_915,m_839,n_841,r_916,p_840,q_838) & 
+  q_838!=null) --> D(t,m,n,r,p,q)]
+!!! NEW ASSUME:[ RELASS [D]: ( D(t_915,m_839,n_841,r_916,p_840,q_838)) -->  r_916=q_838 | (r_916+1)<=q_838 & q_838=null | q_838<=(r_916-1) & q_838=null]
 !!! NEW RANK:[]
 Procedure append2$node2~node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 349 invocations 
+Stop Omega... 211 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.25 second(s)
-	Time spent in main process: 0.84 second(s)
-	Time spent in child processes: 0.41 second(s)
+Total verification time: 0.84 second(s)
+	Time spent in main process: 0.59 second(s)
+	Time spent in child processes: 0.25 second(s)
