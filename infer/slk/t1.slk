@@ -1,0 +1,12 @@
+// (1) 5.slk (9) lhs & rhs -> false
+// TODO : should drop m
+// --> not(exists m: m<n & n>m)
+infer [n] n>0 & n>m  |- false.
+print residue.
+// WHY inferred nothing!!
+/*
+Infer  (1): Valid. 
+<1>false & false &
+{FLOW,(17,18)=__norm}
+*/
+

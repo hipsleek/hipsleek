@@ -5,6 +5,7 @@ todo: disable the default logging for omega
 *)
 
 open Globals
+module DD = Debug
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Cast
@@ -1958,6 +1959,8 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_assumed_pure = fold_es.es_assumed_pure;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
+              es_group_lbl = fold_es.es_group_lbl;
+              es_term_err = fold_es.es_term_err;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
         Debug.devel_zprint (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
@@ -4381,7 +4384,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.ho_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -4414,9 +4417,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let xpure_lhs_h1, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
-  let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
+  DD.tinfo_hprint (add_str "xpure_lhs_h1" !Cast.print_mix_formula) xpure_lhs_h1 no_pos;
+  (* let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in *)
+  (* DD.tinfo_hprint (add_str "xpure_lhs_h1(2)" !Cast.print_mix_formula) xpure_lhs_h1 no_pos; *)
   (*let estate = estate_orig in*)
+  (* TODO : can infer_collect_rel be made after infer_pure_m? *)
   let (estate,lhs_new,rhs_p) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 lhs_p rhs_p heap_entail_build_mix_formula_check pos in
+  let infer_rel = estate.es_infer_rel in
+  Debug.trace_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
   (* Termination: Try to prove rhs_wf with inference *)
@@ -4431,23 +4439,28 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           | None ->     
               let t_ann, ml, il = Term.find_lexvar_es estate in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-              let term_measures, term_res, term_stack =
+              let term_measures, term_res, term_err_msg =
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                (Term.string_of_term_res (term_pos, t_ann_trans, None, 
-                  Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))::estate.CF.es_var_stack
+                Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+              in
+              let term_stack = match term_err_msg with
+                | None -> estate.CF.es_var_stack
+                | Some msg -> msg::estate.CF.es_var_stack
               in
               Term.term_res_stk # pop;
               Term.term_res_stk # push term_res;
               { estate with 
                  CF.es_var_measures = term_measures;
                  CF.es_var_stack = term_stack; 
+                 CF.es_term_err = term_err_msg;
               }
           | Some es -> es
       end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
+  let stk_rel_ass = new Gen.stack in (* of xpure *)
   let stk_estate = new Gen.stack in (* of estate *)
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
@@ -4460,6 +4473,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
         let split_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
         let split_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
+	    (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
+	    (*                              "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
+	    (*                              "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 	    (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
@@ -4467,6 +4483,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	      if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
 		  then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos
 	      else new_conseq0 in
+        DD.devel_pprint ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
+        DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
+        DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
         let i_res1,i_res2,i_res3 = 
           if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
@@ -4475,7 +4494,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
           else 
-            let (ip1,ip2) = Inf.infer_pure_m estate split_ante1 split_ante0 split_conseq pos in
+            let (ip1,ip2,relass) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
             begin
               match ip1 with
                 | Some(es,p) -> 
@@ -4487,7 +4506,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         match ip2 with
                           | None -> i_res1,i_res2,i_res3
                           | Some pf ->
-                                stk_inf_pure # push pf;
+                                (match relass with
+                                  | [] -> stk_inf_pure # push pf
+                                  | h::_ -> stk_rel_ass # push h);
                                 let new_pf = MCP.mix_of_pure pf in
                                 let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                 let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
@@ -4527,6 +4548,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     else
       let inf_p = (stk_inf_pure # get_stk) in
       let estate = add_infer_pure_to_estate inf_p estate in
+      let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
 	  let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl no_pos in
@@ -4732,7 +4754,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 *)
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -4747,7 +4769,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
-          begin
+        begin
+             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
             if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
@@ -4756,14 +4779,24 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-			let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
-				else 
+          DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+				let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
+    				else 
 				 let r = ref (-8999) in
 				 let is_sat f = TP.is_sat_sub_no f r in
 				 let a0l = List.filter is_sat (CP.split_disjunctions a0) in
 				 let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 				 (a0l,a1l) in
 	        CP.imply_conj_orig a0l a1l (CP.split_conjunctions c) TP.imply imp_no
+                 (* original code	        
+	                  CP.imply_conj_orig
+                  (CP.split_disjunctions a0) 
+                  (CP.split_disjunctions a1) 
+                  (CP.split_conjunctions c) 
+	              TP.imply
+	              imp_no
+	              *)
+
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
@@ -4847,6 +4880,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
+              es_group_lbl = estate.es_group_lbl;
+              es_term_err = estate.es_term_err;
     } in
     let na,prf = match lhs_vd.view_base_case with
       | None ->  Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
@@ -4956,6 +4991,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                     here *)
                  es_var_measures = estate.es_var_measures;
                  es_var_stack = estate.es_var_stack;
+              es_group_lbl = estate.es_group_lbl;
+              es_term_err = estate.es_term_err;
 		         } in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
@@ -7532,7 +7569,7 @@ let rec simplify_pre pre_fml = match pre_fml with
   | _ ->
     let h, p, fl, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
+    let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     mkBase h (MCP.mix_of_pure p) t fl no_pos
 		
 let simplify_pre pre_fml =

@@ -2740,10 +2740,15 @@ think it is used to instantiate when folding.
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
-  (* For VARIANCE checking *)
+  (* For Termination checking *)
   (* Term ann with Lexical ordering *)
   es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
   es_var_stack :  string list; 
+  (* this should store first termination error detected *)
+  (* in case an error has already been detected *)
+  (* we will not do any further termination checking *)
+  (* from this context *)
+  es_term_err: string option;
 
 
   (* for IMMUTABILITY *)
@@ -2974,6 +2979,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_assumed_pure = [];
   es_group_lbl = grp_lbl;
+  es_term_err = None;
   (*es_infer_invs = [];*)
 }
 
@@ -3519,6 +3525,18 @@ let remove_dupl_false_fe_list (fs_list:list_failesc_context) =
   if ns==[] then [List.hd fs_list]
   else ns
 
+let rec collect_term_err ctx =
+  match ctx with
+  | Ctx estate ->
+    (match estate.es_term_err with
+      | None -> []
+      | Some msg -> [msg])
+  | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
+
+let collect_term_err_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_term_err c) cl))  ctx in
+  List.concat r
+
 let rec collect_pre_pure ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_pure 
@@ -3618,6 +3636,11 @@ let add_infer_pure_thus_estate cp es =
   {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
   }
 
+let add_infer_rel_to_estate cp es =
+  let old_cp = es.es_infer_rel in
+  let new_cp = cp@old_cp in
+  {es with es_infer_rel = new_cp;}
+
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
@@ -3629,6 +3652,13 @@ let add_infer_pure_to_estate cp es =
       (* add inferred pre to pure_this too *)
                es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
   }
+
+let add_infer_rel_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx (add_infer_rel_to_estate cp es)
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
 
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
@@ -3765,6 +3795,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_assumed_pure = es.es_assumed_pure;
         es_var_measures = es.es_var_measures;
         es_group_lbl = es.es_group_lbl;
+        es_term_err = es.es_term_err;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -5591,12 +5622,15 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_path_label = es.es_path_label;
       es_prior_steps = es.es_prior_steps;
       es_var_measures = es.es_var_measures;
+      (* WN : what is the purpose of es_var_stack?*)
       es_var_stack = es.es_var_stack;
       es_infer_vars = es.es_infer_vars;
       es_infer_vars_rel = es.es_infer_vars_rel;
       es_infer_heap = es.es_infer_heap;
       es_infer_pure = es.es_infer_pure;
       es_infer_rel = es.es_infer_rel;
+        es_group_lbl = es.es_group_lbl;
+        es_term_err = es.es_term_err;
   }
 
 let clear_entailment_history xp (ctx : context) : context =  
@@ -6500,7 +6534,7 @@ and get_or_post sp rel_id =
   let pr2 = !print_svl in
   let pr3 = pr_list !print_formula in
   Debug.no_2 "get_or_post" pr1 pr2 pr3
-    (fun _ _ -> get_or_post_x sp rel_id) sp rel_id
+    (fun _ _ -> get_or_post_x rel_id sp) sp rel_id
 
 let unwrap_exists f =
   let helper f =

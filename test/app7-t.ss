@@ -14,6 +14,8 @@ lseg<p, n> == self=p & n=0
 clist<n> == self::node<_,p> * p::lseg<self,n-1>
 	inv n>=1;
 
+logical int p1, p2;
+
 void append(node x, node y)
    requires x::ll<n> * y::ll<m> & Term[n] & n>0
     ensures x::ll<e>& e=n+m;

@@ -35,7 +35,7 @@ let is_res_spec_var sv = match sv with
 
 type rel_cat = 
   | RelDefn of spec_var
-  | RelAssume of spec_var
+  | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
 
@@ -145,7 +145,7 @@ let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initia
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
-  | RelAssume v -> "RELASS " ^ (!print_sv v)
+  | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
@@ -177,10 +177,13 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
-let type_of_spec_var (sv : spec_var) : typ = match sv with
+let type_of_spec_var (sv : spec_var) : typ =
+  match sv with
   | SpecVar (t, _, _) -> t
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
+
+let is_rel_var (sv : spec_var) : bool = (type_of_spec_var sv)==RelT
 
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
@@ -451,6 +454,8 @@ let ann_type = AnnT
 let float_type = Float
 
 let void_type = Void
+
+let bag_type = BagT Int
 
 (* free variables *)
 
@@ -1616,6 +1621,8 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
 and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem_x fun_eq sv svs2) svs1
 
+and intersect_svl x y = intersect x y
+
 and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
 
@@ -2523,6 +2530,16 @@ and filter_redundant_x ante cons =
   let new_ante = elim_of_bformula ante ls_irr in
   (* let _ = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
   new_ante
+
+and no_of_disjs (f0 : formula) : int =
+  let rec helper f no = match f with
+    | Or (f1, f2,_,_) ->
+          let tmp1 = helper f2 no in
+          let tmp2 = helper f1 tmp1 in
+          tmp2
+    | _ -> 1+no
+  in
+  helper f0 0
 
 and find_bound v f0 =
   match f0 with
@@ -5166,15 +5183,24 @@ let rec replace_pure_formula_label nl f = match f with
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   
-let rec imply_disj_orig ante_disj conseq t_imply imp_no =
+let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
+  Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
+  Debug.devel_hprint (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
     | h :: rest ->
+        Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
+        Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
 	    if r1 then
 	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
+
+and imply_disj_orig ante_disj conseq t_imply imp_no =
+  let pr = !print_formula in
+  Debug.no_2 "imply_disj_orig" (pr_list pr) pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj conseq -> imply_disj_orig_x ante_disj conseq t_imply imp_no) ante_disj conseq
 
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
@@ -5186,6 +5212,14 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   else (xp01,xp02,xp03)
 
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
+   : bool * (Globals.formula_label option * Globals.formula_label option) list *
+   Globals.formula_label option=
+  let pr = pr_list !print_formula in
+  Debug.no_2 "imply_conj_orig" pr pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj0 ante_disj1 -> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
+      ante_disj0 ante_disj1
+
+and imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   match conseq_conj with
@@ -6656,6 +6690,14 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
 
+let is_eq_const (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), IConst _, _),_)
+    | (Eq (IConst _, Var (_,_), _),_) -> true
+    | _ -> false)
+  | _ -> false
+
 let get_rank_dec_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -6858,14 +6900,24 @@ let no_drop_ops =
   let pr x = None in
   (pr,pr)
 
+let is_update_array_relation (r:string) = 
+  (* match r with CP.SpecVar(_,r,_) -> *)
+	let udrel = "update_array" in
+	let udl = String.length udrel in
+		(String.length r) >= udl && (String.sub r 0 udl) = udrel
+
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkTrue p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkFalse p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            if (v="dom") or (is_update_array_relation v) then None
+            else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
 

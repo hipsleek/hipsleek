@@ -955,7 +955,8 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
-	try (match (Omega.imply_with_check ante conseq "" timeout) with
+        let (pr_w,pr_s) = Cpure.drop_complex_ops in
+	try (match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
 	  | None -> (false, true)
 	  | Some r -> (r, false)
 	)
@@ -1023,7 +1024,9 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout: bool =
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try let optr= (Omega.is_sat_with_check f sat_no) in
+		try
+             let (pr_w,pr_s) = Cpure.drop_complex_ops in
+            let optr= (Omega.is_sat_with_check pr_w pr_s f sat_no) in
         ( match optr with
           | Some r -> (r, false)
           | None -> (true, false)

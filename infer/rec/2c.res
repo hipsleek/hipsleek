@@ -1,11 +1,17 @@
 Starting Reduce... 
 Starting Omega...oc
 Entail  (1): Valid. 
-<1>true & n=1 & Anon_35=Anon_12 & q_36=y & m+1=z & {FLOW,(17,18)=__norm}
-inferred rel: [( (m=0 | 1<=m) & 1+m=z & n=1) -->  A(n,m,z)]
+
+<1>true&A(n,m,z)&{FLOW,(17,18)=__norm}
 
 Entail  (2): Valid. 
-<1>true & y!=null & A(n1,m,z1) & n=1+n1 & 1<=n & Anon_58=Anon_13 & q_59=y & z1+1=z & {FLOW,(17,18)=__norm}
-inferred rel: [( 1<=z1 & A(n1,m,z1) & -1+n=n1 & 1<=n & 1+z1=z) -->  A(n,m,z)]
 
-Stop Omega... 42 invocations 
+<1>true&n=1 & Anon_40=Anon_12 & q_41=y & m+1=z&{FLOW,(17,18)=__norm}
+inferred rel: [RELDEFN A: ( n=1 & m=z-1 & 1<=z) -->  A(n,m,z)]
+
+Entail  (3): Valid. 
+
+<1>true&y!=null & A(n1,m,z1) & n=1+n1 & 1<=n & Anon_63=Anon_13 & q_64=y & z1+1=z&{FLOW,(17,18)=__norm}
+inferred rel: [RELDEFN A: ( z=z1+1 & n=n1+1 & 1<=z1 & 0<=n1 & A(n1,m,z1)) -->  A(n,m,z)]
+
+Stop Omega... 77 invocations 
