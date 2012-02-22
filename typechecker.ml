@@ -655,10 +655,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 if (read_only)
                 then
                   let read_f = mkPermInv fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) pos
                 else
                   let write_f = mkPermWrite fresh_frac in
-                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) pos
               else
                 vheap
             in
@@ -811,7 +811,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) pos in
             let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res
@@ -848,7 +848,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let org_spec2 = 
                     if ir && !auto_number then match org_spec with
                       | CF.EList b -> 
-                            let l = Label_Spec.filter_label_rec lbl_ctx b in
+                            let l = CF.Label_Spec.filter_label_rec lbl_ctx b in
                             CF.EList l
                       | _ -> org_spec 
                     else org_spec in
@@ -902,10 +902,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
-                  (*let sctx = CF.set_rec_group_label sctx ir in*)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
-                  (*let rs = CF.set_rec_group_label rs false in*)
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in

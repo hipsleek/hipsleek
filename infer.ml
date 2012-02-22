@@ -253,7 +253,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, b, t) = split_components f in
+  let (h, p, fl, t) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -352,7 +352,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)  *)
                 (*   (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in *)
                 (* let new_p = (CP.mkTrue no_pos) in *)
-                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
+                let lhs_h,_,_,_ = CF.split_components es.es_formula in
                 (* why is orig_ante being used?????? *)
                 (* let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in *)
                 (* let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in *)
@@ -932,10 +932,9 @@ let check_rank_const rank_fml lhs_cond = match rank_fml with
   let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
   CP.join_conjunctions (rank_dec@rank_const@others) *)
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p rhs_p_br 
-  heap_entail_build_mix_formula_check pos =
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p heap_entail_build_mix_formula_check pos =
   (* TODO : need to handle pure_branches in future ? *)
-  if no_infer_rel estate then (estate,lhs_p_orig,rhs_p,rhs_p_br) 
+  if no_infer_rel estate then (estate,lhs_p_orig,rhs_p) 
   else 
     let ivs = estate.es_infer_vars_rel in
     let rhs_p_n = MCP.pure_of_mix rhs_p in
@@ -965,7 +964,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
       (* Check if it is related to being unable to fold rhs_heap *)
       if !unable_to_fold_rhs_heap = false then
-        (estate,lhs_p_orig,rhs_p,rhs_p_br)
+        (estate,lhs_p_orig,rhs_p)
       else (
         unable_to_fold_rhs_heap := false;
         let lhs_xpure = MCP.merge_mems xpure_lhs_h1 lhs_p_orig true in
@@ -988,7 +987,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           | _ -> (estate, lhs_p)
           end
         in
-        (estate,MCP.mix_of_pure lhs_p,rhs_p,rhs_p_br)
+        (estate,MCP.mix_of_pure lhs_p,rhs_p)
       )
     )
     else 
@@ -1022,7 +1021,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       let lhs_rec_vars = CP.fv lhs_p_memo in
       if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
         DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
-        (estate,lhs_p_orig,rhs_p_new,rhs_p_br))
+        (estate,lhs_p_orig,rhs_p_new))
       else
         let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
         (* let lhs = lhs_simplifier lhs_h lhs_p_memo in *)
@@ -1093,7 +1092,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
             DD.devel_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
             DD.devel_hprint (add_str "Rel Inferred" (pr_list print_lhs_rhs)) inf_rel_ls pos
           end;
-        (estate,lhs_p_orig,rhs_p_new,rhs_p_br)
+        (estate,lhs_p_orig,rhs_p_new)
 (*
 Given:
 infer vars:[n,R]
@@ -1111,14 +1110,14 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br 
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p 
   heap_entail_build_mix_formula_check pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
       Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
-      rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
+      rhs_p heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate

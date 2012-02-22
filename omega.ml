@@ -123,17 +123,6 @@ and omega_of_b_formula b =
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
-(* and omega_of_formula f  = *)
-(*   let rec helper f =  *)
-(*     match f with *)
-(*   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")" *)
-(*   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")" *)
-(*   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")" *)
-(*   | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	 *)
-(*   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   in helper f *)
-
 and omega_of_formula_old f  =
   let (pr_w,pr_s) = no_drop_ops in
   try 
@@ -149,12 +138,16 @@ and omega_of_formula pr_w pr_s f  =
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
             | Some f -> helper f
         end
+  | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  in helper f
+  in 
+  try
+	helper f
+  with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)
 
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
@@ -304,7 +297,7 @@ let check_formula f timeout =
         !result
       in
       let fail_with_timeout () = 
-        restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+        restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
       let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
       res
@@ -440,7 +433,7 @@ let is_sat (pe : formula) sat_no : bool =
         failwith s
       end
 
-let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
       let pvars = get_vars_formula pe in
@@ -484,13 +477,15 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
         end
   end
 
-(* let is_valid (pe : formula) timeout: bool = *)
-(*   let pr x = None in *)
-(*   is_valid_ops pr pr pe timeout *)
+(* let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool = *)
+(* 	Debug.no_1 "Omega:is_valid_ops " !print_formula string_of_bool (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe *)
+(* (\* let is_valid (pe : formula) timeout: bool = *\) *)
+(* (\*   let pr x = None in *\) *)
+(* (\*   is_valid_ops pr pr pe timeout *\) *)
 
 let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   let pf = !print_pure in
-  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
+  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe
 
 let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
@@ -513,7 +508,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     not (is_valid tmp2)
    *)
   
-  let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in
   	
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
@@ -571,7 +566,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
         let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-        let tmp2 = mkAnd tmp1 restf no_pos in
+        let tmp2 = mkAnd_dumb tmp1 restf no_pos in
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then

@@ -195,6 +195,7 @@ let rec smt_of_formula pr_w pr_s f =
             | None -> (smt_of_b_formula bf)
             | Some f -> helper f
         end
+	| CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
@@ -254,6 +255,7 @@ and collect_formula_info_raw f = match f with
   | CP.BForm ((b,_),_) -> collect_bformula_info b
   | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
+  | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
   | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
 		let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
@@ -856,6 +858,7 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
 			  (* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 	| CP.Forall _ | CP.Exists _ -> []

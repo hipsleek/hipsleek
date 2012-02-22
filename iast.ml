@@ -48,10 +48,10 @@ and view_decl = { view_name : ident;
 		  mutable view_data_name : ident;
           (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
 		  view_vars : ident list;
-		  view_labels : branch_label list;
+		  view_labels : Label_only.spec_label list;
 		  view_modes : mode list;
 		  mutable view_typed_vars : (typ * ident) list;
-		  view_invariant : (P.formula * (branch_label * P.formula) list);
+		  view_invariant : P.formula;
 		  view_formula : Iformula.struc_formula;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
@@ -76,13 +76,13 @@ and axiom_decl = {
 		  }
 
 and hopred_decl = { hopred_name : ident;
-          hopred_mode : branch_label;
+          hopred_mode : ho_branch_label;
           hopred_mode_headers : ident list;
           hopred_typed_vars: (typ * ident) list;
           mutable hopred_typed_args : (typ * ident) list;
           hopred_fct_args : ident list;
           hopred_shape    : Iformula.struc_formula list;
-          hopred_invariant :(P.formula * (branch_label * P.formula) list)
+          hopred_invariant :P.formula
 }
 
 and enum_decl = { enum_name : ident;
@@ -1202,55 +1202,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 and contains_field_ho (e:exp) : bool =
   let helper e = match e with | Member _ -> Some true | _ -> None in
   fold_exp e (helper) (List.exists (fun b -> b)) false
-(*
-and contains_field2 (e0 : exp) : bool = match e0 with
-  | Assert _ -> false
-  | Assign _ -> false
-  | Binary e -> (contains_field2 e.exp_binary_oper1) || (contains_field2 e.exp_binary_oper2)
-  | Bind e -> contains_field2 e.exp_bind_body
-  | Block e -> contains_field2 e.exp_block_body
-  | BoolLit _ -> false
-  | Break _ -> false
-  | CallRecv e -> 
-	    contains_field2 e.exp_call_recv_receiver 
-	    || (List.exists contains_field2 e.exp_call_recv_arguments)
-  | CallNRecv e -> List.exists contains_field2 e.exp_call_nrecv_arguments
-  | Cast e -> contains_field2 e.exp_cast_body
-  | Catch e -> contains_field2 e.exp_catch_body
-  | Cond e ->
-	    let e1 = e.exp_cond_condition in
-	    let e2 = e.exp_cond_then_arm in
-	    let e3 = e.exp_cond_else_arm in
-		(contains_field2 e1) || (contains_field2 e2) || (contains_field2 e3)
-  | ConstDecl _ -> false
-  | Continue _ -> false
-  | Debug _ -> false
-  | Dprint _ -> false
-  | Empty _ -> false
-  | FloatLit _ -> false
-  | Finally e -> contains_field2 e.exp_finally_body
-  | IntLit _ -> false
-  | Java _ -> false
-  | Label (_,e)-> contains_field2 e
-  | Member _ -> true
-  | New e -> List.exists contains_field2 e.exp_new_arguments
-  | Null _ -> false
-  | Return e -> 
-	    let ret_val = e.exp_return_val in
-		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
-  | Seq e -> (contains_field2 e.exp_seq_exp1) || (contains_field2 e.exp_seq_exp2)
-  | This e -> false
-  | Unary e -> contains_field2 e.exp_unary_exp
-  | Var _ -> false
-  | VarDecl _ -> false (* this can't happen on RHS anyway *)
-  | While e -> (contains_field2 e.exp_while_condition) || (contains_field2 e.exp_while_body)
-  | Unfold _ -> false
-  | Raise e -> begin match e.exp_raise_val with | None -> false | Some e -> contains_field2 e end
-  | Try e -> (contains_field2 e.exp_try_block) ||
-		(List.exists contains_field2 e.exp_catch_clauses)||
-			(List.exists contains_field2 e.exp_finally_clause)
-  | Time _ -> false
-*)
+
  
 (* smart constructors *)
 

@@ -82,6 +82,8 @@ let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
+  | CP.AndList b -> (match b with | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) | (_,x)::t -> 
+	fixcalc_of_pure_formula (List.fold_left (fun a (_,c)->CP.mkAnd a c no_pos) x t))
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.Not (p,_ , _) -> 
@@ -111,18 +113,17 @@ let rec fixcalc_of_h_formula f = match f with
   | HFalse -> "False"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
-let fixcalc_of_mix_formula (f,l) = match f with
+let fixcalc_of_mix_formula f = match f with
   | MCP.MemoF _ -> ""
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
   | Or _ -> illegal_format ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
-  | Base {formula_base_heap = h; formula_base_pure = p; formula_base_branches = b} ->
-    "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
-  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; 
-    formula_exists_pure = p; formula_exists_branches = b} ->     
+  | Base {formula_base_heap = h; formula_base_pure = p} ->
+    "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
+  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; formula_exists_pure = p} ->     
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
-    fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula (p,b) ^ ")"
+    fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
 
 let fixcalc = "fixcalc"
 
@@ -175,52 +176,11 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
-(*let compute_fixpoint input_pairs =
-  let (pfs, rels) = List.split input_pairs in
-  let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
-  let rel_fml = match rels with
-    | [] -> report_error no_pos "Error in compute_fixpoint"
-    | [hd] -> hd
-    | _ -> report_error no_pos "Fixcalc.ml: More than one input relation"
-  in
-  let (name,vars) = match rel_fml with
-    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
-    | _ -> report_error no_pos "Wrong format"
-  in
-  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in  
-  try
-    let rhs = fixcalc_of_pure_formula pf in 
-    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") 
-      ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
-      ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
-    in
-    (*print_endline ("\nINPUT: " ^ input_fixcalc);*)
-    DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-    DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
-    let output_of_sleek = "fixcalc.inf" in
-    let oc = open_out output_of_sleek in
-    Printf.fprintf oc "%s" input_fixcalc;
-    flush oc;
-    close_out oc;
-    let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-    let res = remove_paren res (String.length res) in
-    (*print_endline ("RES: " ^ res);*)
-    DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
-    let fixpoint = Parse_fix.parse_fix res in
-    DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
-    let fixpoint = List.map (fun f -> 
-        let args = CP.fv f in 
-        let quan_vars = CP.diff_svl args vars in
-        TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
-    match fixpoint with
-      | [pre;post] -> (rel_fml, pre, post)
-      | _ -> report_error no_pos "Expecting a pair of pre-post"
-  with _ -> report_error no_pos "Unexpected error in computing fixpoint"*)
 
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
+  | CP.AndList b -> exists_l_snd is_rec b
   | CP.Or (f1,f2,_,_) -> is_rec f1 || is_rec f2
   | CP.Not (f,_,_) -> is_rec f
   | CP.Forall (_,f,_,_) -> is_rec f
@@ -229,6 +189,7 @@ let rec is_rec pf = match pf with
 let rec get_rel_vars pf = match pf with
   | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
+  | CP.AndList b -> fold_l_snd get_rel_vars b
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.Not (f,_,_) -> get_rel_vars f
   | CP.Forall (_,f,_,_) -> get_rel_vars f
@@ -317,24 +278,14 @@ let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
     let pf = List.concat (List.map (fun b -> List.concat 
         (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) (CP.list_of_conjs bcase)) in
     CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos
-  (*  print_endline ("PURE: " ^ Cprinter.string_of_pure_formula rcase);*)
-  (*  print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula bcase);*)
-  (*  print_endline ("PURE3: " ^ Cprinter.string_of_pure_formula pf);*)
   with _ -> rcase_orig
-
-(*let rec remove_weaker_bcase bcases = match bcases with
-  | [] -> []
-  | b::bs ->
-    if List.exists (fun fml -> TP.imply_raw fml b) bs then remove_weaker_bcase bs
-    else
-      b::(remove_weaker_bcase (List.filter (fun fml -> not(TP.imply_raw b fml)) bs))*)
 
 (* TODO: Need to handle computed relation in the future *)
 let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
     (get_other_branches fml.formula_or_f1 args) @ (get_other_branches fml.formula_or_f2 args)
   | _ ->
-    let _,p,_,_,_ = split_components or_fml in
+    let _,p,_,_ = split_components or_fml in
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 

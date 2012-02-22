@@ -193,6 +193,7 @@ let rec smt_of_formula f =
 	match f with
 	| Cpure.BForm (b,_) -> (smt_of_b_formula b)
 	| Cpure.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| Cpure.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")"
 	| Cpure.Forall (sv, p, _,_) ->
@@ -236,6 +237,7 @@ and collect_combine_formula_info f1 f2 =
  *)
 and collect_formula_info_raw f = match f with
 	| Cpure.BForm ((b,_),_) -> collect_bformula_info b
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.And (f1,f2,_) | Cpure.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
 	| Cpure.Not (f1,_,_) -> collect_formula_info_raw f1
@@ -843,6 +845,7 @@ let rec collect_induction_value_candidates (ante : Cpure.formula) (conseq : Cpur
 			  (* | Cpure.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [Cpure.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| Cpure.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| Cpure.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 	| Cpure.Forall _ | Cpure.Exists _ -> []

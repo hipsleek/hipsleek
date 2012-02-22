@@ -277,6 +277,7 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
+	| AndList b -> fold_l_snd prep_f b
     | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
     | _ -> [] in 
   prep_f f
@@ -2031,10 +2032,10 @@ let mix_cons_filter f fct =
   let pr = !print_mix_f in
   Debug.no_1 "mix_cons_filter" pr pr 
       (fun _ -> mix_cons_filter f fct) f
-
+(*
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
   | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
-  | OnePF pf -> OnePF (combine_branch s (pf,snd f))
+  | OnePF pf -> OnePF (combine_branch s (pf,snd f))*)
  (*
  match f with
   | MemoF f -> 

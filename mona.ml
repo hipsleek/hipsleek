@@ -159,6 +159,7 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
     match f with
       | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
       | CP.And (p1, p2, l1) -> (CP.mkAnd (helper p1) (helper p2) l1)
+	  | CP.AndList b -> CP.AndList (Gen.map_l_snd helper b)
       | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, l1)
       | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (helper p1),lbl, l1)
       | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (helper p1),lbl, l1)
@@ -193,6 +194,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
   | CP.Not(f1, _,_) -> (find_order_formula f1 vs)
+  | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
@@ -699,6 +701,7 @@ and mona_of_formula_x f initial_f vs =
     match f with
       | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
       | CP.And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2) ^ ")"
+	  | CP.AndList _ -> Gen.report_error no_pos "mona.ml: encountered AndList, should have been already handled"
       | CP.Or (p1, p2, _,_) -> "(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
       | CP.Not (p, _,_) ->
             begin

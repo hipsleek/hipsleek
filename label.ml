@@ -1,9 +1,6 @@
 open Gen
 open Globals
 open Label_only
-module CF = Cformula
-module CP = Cpure
-
 
 module type EXPR_TYPE =
     sig
@@ -142,61 +139,4 @@ struct
     if tx>ty then norm_aux xs ys
     else norm_aux ys xs
 
-  (* (\* take two sorted lists of labelled expression and combine those with compatible labels tgt *\) *)
-  (* let merge_compatible (xs:label_list) (ys:label_list) : label_list = *)
-  (*   let rec helper xs ys = *)
-  (*     match xs,ys with *)
-  (*       | [],zs  *)
-  (*       | zs,[] -> zs *)
-  (*       | ((lx,x) as p1)::xs1,((ly,y) as p2)::ys1 ->  *)
-  (*             begin *)
-  (*               let v = Lbl.compare lx ly in *)
-  (*               if v<0 then mc lx x xs1 ys *)
-  (*               else if v>0 then mc ly y ys1 xs *)
-  (*               else mc lx (Exp.comb x y) xs1 ys1 *)
-  (*             end *)
-  (*   and mg l x ys = *)
-  (*     match ys with *)
-  (*       | [] -> (l,x) *)
-  (*       | (ly,y)::ys1 -> mg (Lbl.comb_norm l ly) (Exp.comb x y) ys1 *)
-  (*   and mc l x xs ys = *)
-  (*     let (ys_l,ys_nl) = List.partition (fun (l2,_) -> Lbl.is_compatible l l2) ys in *)
-  (*     match ys_l with *)
-  (*       | [] -> (l,x)::(helper xs ys) *)
-  (*       | _ -> (mg l x ys_l)::(helper xs ys_nl)  *)
-  (*   in helper xs ys *)
-
 end;;
-
-
-module Exp_Pure =
-struct 
-  type e = Cpure.formula
-  let comb x y = Cpure.And (x,y,no_pos)
-  let string_of = !CP.print_formula
-end;;
-
-module Exp_Heap =
-struct 
-  type e = CF.h_formula
-  let comb x y = CF.Star 
-    { CF.h_formula_star_h1 = x;
-    CF.h_formula_star_h2 = y;
-    CF.h_formula_star_pos = no_pos
-    }
-  let string_of = !CF.print_h_formula
-end;;
-
-module Exp_Spec =
-struct 
-  type e = CF.struc_formula
-  let comb x y = CF.EOr 
-    { CF.formula_struc_or_f1 = x;
-    CF.formula_struc_or_f2 = y;
-    CF.formula_struc_or_pos = no_pos
-    }
-  let string_of = !CF.print_struc_formula
-end;;
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
-module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
-module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;
