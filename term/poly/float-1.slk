@@ -1,0 +1,51 @@
+/*
+- if lim x(n)  -> L in both side then the termination entailment is:
+	checkentail true |- (exists e: (e > 0) & forall (x: ((x > L - e) & (x < L + e)) -> Terminate(x))))
+	==
+	checkentail true |- (exists e: (e > 0) & forall (x: (not(x > L - e) | not(x < L + e) | Terminate(x)))))
+
+- if lim x(n)  -> L+   (it means x(n) > L) then the termination entailment is:
+	checkentail true |- (exists e: (e > 0) & forall (x: ((x > L) & (x < L + e)) -> Terminate(x))))
+	==
+	checkentail true |- (exists e: (e > 0) & forall (x: (not(x > L) | not(x < L + e) | Terminate(x))))
+	
+- if lim x(n)  -> L-   (it means x(n) < L) then the termination entailment is:
+	checkentail true |- (exists e: (e > 0) & forall (x: ((x < L) & (x > L - e)) -> Terminate(x))))
+	==
+	checkentail true |- (exists e: (e > 0) & forall (x: (not(x < L) | not(x > L - e) | Terminate(x))))
+*/
+
+
+/*
+EXAMPL2:
+	x > 0;
+	while (x > 0)
+		x = x/2;
+		
+analysis:
+	x(n) > 0; lim x(n) -> 0+;
+	
+*/
+
+// check loop; loop condition is (x > 0)
+checkentail x > 0.0 |- x > 0.0 . // if valid then LOOP
+
+// check termination; termination condition is (x <= 0)
+checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.0))).
+
+/*
+EXAMPLE 2:
+	x > 0;
+	while (x > 0.001)
+		x = x/2;
+		
+analysis:
+	x(n) > 0; lim x(n) -> 0+;
+	
+*/
+
+// check LOOP; loop condition is (x > 0)
+checkentail x > 0.0 |- x > 0.001. // if valid then LOOP
+
+// check TERMINATION; termination condition is (x <= 0.001)
+checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.001))).
