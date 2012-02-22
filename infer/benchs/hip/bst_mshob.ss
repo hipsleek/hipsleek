@@ -1,0 +1,219 @@
+/* trees & binary search trees */
+
+/* representation of a node */
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}
+/* binary search trees */
+/* view for binary search trees */
+bst2 <n,h, sm, lg> == self = null & sm <= lg & n = 0 & h = 0
+  or (exists pl,qs: self::node2<v, p, q> * p::bst2<n1,h1,sm, pl> *
+      q::bst2<n2,h2,qs, lg> & pl <= v & qs >= v & n=n1+n2+1 & h=1+max(h1,h2))
+	inv h >= 0 & n >= 0 & sm <= lg;
+
+bst3 <n,h, sm, lg,S> == self = null & sm <= lg & n = 0 & h = 0 & S={}
+  or (exists pl,qs: self::node2<v, p, q> * p::bst3<n1,h1,sm, pl,S1> *
+      q::bst3<n2,h2,qs, lg,S2> & pl <= v & qs >= v & n=n1+n2+1 & h=1+max(h1,h2)
+      & S=union(S1,S2,{v}))
+	inv h >= 0 & n >= 0 & sm <= lg;
+
+/* view for a doubly linked list with size */
+dll<p, n,S> == self = null & n = 0 & S={}
+  or self::node2<v, p, q> * q::dll<self, n1,S1> & n = n1+1 & S=union(S1,{v})
+	inv n >= 0;
+
+/* function to append 2 doubly linked lists */
+node2 append(node2 x, node2 y)
+  requires x::dll<_, m,S1> * y::dll<_, n,S2>
+  ensures res::dll<r, m+n,S> & S=union(S1,S2);
+{
+	node2 z;
+
+	if (x == null)
+		return y;
+	else
+	{
+		z = append(x.right, y);
+		x.right = z;
+		if (z != null)
+			z.left = x;
+
+		return x;
+	}
+}
+
+/* function to count the number of nodes in a tree */
+int count(node2 z)
+  requires z::bst3<n,h,sm, lg,S>
+  ensures z::bst3<n,h,sm, lg,S> & res =n;
+{
+	int cleft, cright;
+
+	if (z == null)
+		return 0;
+	else
+	{
+		cleft = count(z.left);
+		cright = count(z.right);
+		return (1 + cleft + cright);
+	}
+}
+
+void flatten(node2 x)
+  requires x::bst3<n,h,sm, lg,S1>
+  ensures (exists q : x::dll<q, n,S2> & q=null & S1=S2);
+{
+  node2 tmp;
+  if (x != null)
+	{
+      flatten(x.left);
+      flatten(x.right);
+      tmp = append(x.left, x.right);
+      x.left = null;
+      x.right = tmp;
+      if (tmp != null)
+        tmp.left = x;
+	}
+}
+
+/* insert a node in a bst */
+//mona fails
+node2 insert(node2 x, int a)
+  requires x::bst3<n,h,sm, lg,S1>
+  ensures res::bst3<n+1,h1,mi, ma,S2> & h1>=h
+  & res != null & mi = min(sm, a) & ma = max(lg, a);//& S2=union(S1,{a})
+{
+	node2 tmp;
+    node2 tmp_null = null;
+
+	if (x == null)
+      return new node2(a, null, null);
+	else
+	{
+      if (a <= x.val)
+		{
+          tmp = x.left;
+          x.left = insert(tmp, a);
+		}
+      else
+		{
+          //tmp = x.right;
+          x.right = insert(x.right, a);
+		}
+
+      return x;
+	}
+}
+
+/* delete a node from a bst */
+
+int remove_min(ref node2 x)
+  requires x::bst3<n,h,s, b,S1> & x != null
+  ensures x'::bst3<n-1,h1,s1, b,S2> & h1<=h & s <= res <= s1 & S2 subset S1;//'
+{
+  int tmp, a;
+
+  if (x.left == null)
+	{
+      tmp = x.val;
+      x = x.right;
+
+      return tmp;
+	}
+  else {
+    int tmp;
+    bind x to (_, xleft, _) in {
+      tmp = remove_min(xleft);
+    }
+    return tmp;
+  }
+}
+
+void delete(ref node2 x, int a)
+  requires x::bst3<n,h,sm, lg,S1>
+  ensures x'::bst3<n1,h1,s, l,S2> & n1<=n & h1<=h & sm <= s & l <= lg;
+   // & S2 subset S1;//'
+{
+	int tmp;
+
+	if (x != null)
+	{
+      bind x to (xval, xleft, xright) in
+		{
+          if (xval == a)
+			{
+              if (xright == null) {
+                assert true;
+                x = xleft;
+              }
+              else
+				{
+                  tmp = remove_min(xright);
+                  xval = tmp;
+				}
+			}
+          else
+			{
+              if (xval < a)
+                delete(xright, a);
+              else
+                delete(xleft, a);
+			}
+		}
+	}
+}
+
+/*
+Traversals
+- depth-first traversal
+- breadth-first traversal
+
+There are three different types of depth-first traversals, :
+- PreOrder traversal - visit the parent first and then left and right children;
+- InOrder traversal - visit the left child, then the parent and the right child;
+- PostOrder traversal - visit left child, then the right child and then the parent;
+*/
+//DFS
+void traverse(node2 x)
+  requires x::bst3<n, h,sm, lg,S>
+  ensures x::bst3<n, h,sm, lg,S>;//'
+{
+  if (x != null){
+    bind x to (xval, xleft, xright) in
+    {
+      //process xval
+      traverse(xleft);
+      traverse(xright);
+    }
+  }
+}
+
+//Searching
+bool search(node2 x, int a)
+  requires x::bst3<n, h,sm, lg,S>
+  ensures x::bst3<n, h,sm, lg,S> & (res & sm<=a<=lg & a in S| !res );//'
+{
+	int tmp;
+
+	if (x != null)
+	{
+      bind x to (xval, xleft, xright) in
+      {
+        if (xval == a)
+          return true;
+        else {
+            if (xval < a)
+              search(xright, a);
+            else
+              search(xleft, a);
+        }
+      }
+      return false;
+	}
+    else return false;
+}
+
+/*************************************************************/
+
