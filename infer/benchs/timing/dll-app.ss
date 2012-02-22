@@ -1,3 +1,5 @@
+/* TODO: Need a faster filter_assumption */
+
 /* doubly linked lists */
 
 /* representation of a node */
@@ -37,8 +39,3 @@ node2 append(node2 x, node2 y)
 		return x; 
 	}
 }
-
-
-/*
-(* TODO: Change corresponding vars for assumed pure *)
-*/
