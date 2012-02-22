@@ -390,7 +390,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
 (*  DD.devel_hprint (add_str "After: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = CP.drop_rel_formula rcase_orig in
   let all_rel_vars = rel_vars @ (CP.fv rel) in
-  let als = MCP.ptr_equations_without_null (MCP.mix_of_pure rcase) in
+  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure rcase) in
   let aset = CP.EMapSV.build_eset als in
   let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv rcase_orig) in
   let alias = create_alias_tbl (rel_vars@other_vars) aset (CP.fv rel) in
@@ -406,12 +406,15 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let rcase = CP.subst subst_lst rcase in
 (*  let rcase = MCP.remove_ptr_equations rcase false in*)
   let rcase = CP.remove_redundant_constraints rcase in
-  let rcase = CP.conj_of_list (pre_process all_rel_vars (CP.list_of_conjs rcase)) no_pos in
-  let rels = CP.get_RelForm rcase_orig in
-  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
-(*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
-(*  let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in*)
-  CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos
+  let rcase_conjs = CP.list_of_conjs rcase in
+  if List.exists (fun conj -> is_emp_bag conj rel_vars) rcase_conjs then CP.mkFalse no_pos
+  else
+    let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
+    let rels = CP.get_RelForm rcase_orig in
+    let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
+  (*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
+  (*  let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in*)
+    CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos
 (*  try*)
 (*    let pairs = List.combine (CP.fv rel) rel_vars in*)
 (*    let bcase = CP.subst pairs bcase_orig in*)
@@ -506,6 +509,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let rcases = simplify rcases in
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
+(*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> transform x v_synch rel) bcases in

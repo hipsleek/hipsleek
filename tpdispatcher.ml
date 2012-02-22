@@ -1195,9 +1195,11 @@ let rec simplify_raw (f: CP.formula) =
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
+        let rels = CP.get_RelForm disj in
+        let disj = CP.drop_rel_formula disj in
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
         let others = simplify_raw (conj_of_list others no_pos) in
-        conj_of_list (others::bag_cnts) no_pos
+        conj_of_list ([others]@bag_cnts@rels) no_pos
       ) disjs in
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
