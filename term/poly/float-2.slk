@@ -1,14 +1,13 @@
 /*
 - if lim x(n)  -> +oo
-	checkentail true |- (exists e: (e > 0) & forall (x: (x > e) -> Terminate(x))))
+	checkentail true |- (exists e: forall (x: (x > e) -> Terminate(x))))
 	==
-	checkentail true |- (exists e: (e > 0) & forall (x: (x <= e) | Terminate(x)))))
+	checkentail true |- (exists e: forall (x: (x <= e) | Terminate(x)))))
 
 - if lim x(n)  -> -oo
-	checkentail true |- (exists e: (e < 0) & forall (x: (x < e) -> Terminate(x))))
+	checkentail true |- (exists e: forall (x: (x < e) -> Terminate(x))))
 	==
-	checkentail true |- (exists e: (e < 0) & forall (x: (x >= e) | Terminate(x))))
-
+	checkentail true |- (exists e: forall (x: (x >= e) | Terminate(x))))
 */
 
 
@@ -27,7 +26,7 @@ analysis:
 checkentail x > 0.0 |- 1/x > 0.0 . // if valid then LOOP				// expect: Valid
 
 // check TERMINATION; termination condition is (x <= 0)
-checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= e) | (1/x <= 0.0))).	// expect: Fail
+checkentail true |- (exists e: forall (x: (x <= e) | (1/x <= 0.0))).	// expect: Fail
 
 /*
 EXAMPLE 2:
@@ -44,4 +43,4 @@ analysis:
 checkentail x > 0.0 |- 1/x > 0.001. // if valid then LOOP				// expect: Fail
 
 // check TERMINATION; termination condition is (x <= 0.001)
-checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= e) | (1/x <= 0.001))).	// expect: Valid
+checkentail true |- (exists e: forall (x: (x <= e) | (1/x <= 0.001))).	// expect: Valid
