@@ -504,7 +504,7 @@ let string_of_cperm perm =
 let string_of_derv dr = 
   if dr then "@D" else ""
 
-let pr_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
+let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
