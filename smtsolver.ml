@@ -77,11 +77,15 @@ let rec smt_of_typ t =
 		| NUM -> "Int" (* Use default Int for NUM *)
         | TVar _ -> "Int"
 		| Void | (BagT _) | (*(TVar _) |*) List _ ->
-			illegal_format "z3.smt_of_typ: spec not supported for SMT"
+			illegal_format ("z3.smt_of_typ: " ^ (string_of_typ t) ^ " not supported for SMT")
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
     (* TODO *)
     | RelT -> "Int"
+
+let smt_of_typ t =
+  Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
+  smt_of_typ t
 
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -206,8 +210,8 @@ let rec smt_of_formula pr_w pr_s f =
   helper f
 
 let smt_of_formula pr_w pr_s f =
-  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s ->s)
-      (fun _ -> smt_of_formula pr_w pr_s f) f
+  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
+    (fun _ -> smt_of_formula pr_w pr_s f) f
 
 (* let rec smt_of_formula f = *)
 (* 	match f with *)

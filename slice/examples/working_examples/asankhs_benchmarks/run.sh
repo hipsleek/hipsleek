@@ -1,4 +1,4 @@
-for (( i = 10; i <= 20; i++ ))
+for (( i = 10; i <= 10; i++ ))
 do
 	# echo "[z3][.imm.eps] spaguetti-$i"
 	# time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps > spaguetti-$i.z3.imm.eps

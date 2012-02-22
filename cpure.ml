@@ -3622,8 +3622,12 @@ and b_form_list f: b_formula list = match f with
   | Not _ -> []
   | Forall (_,f,_,_)
   | Exists (_,f,_,_) -> (b_form_list f)
-        
-and simp_mult (e : exp) :  exp =
+  
+and simp_mult (e: exp) : exp =
+  let pr = !print_exp in
+  Debug.no_1 "simp_mult" pr pr simp_mult_x e 
+
+and simp_mult_x (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
     match x with
       |  Add (e1, e2, l) ->
@@ -3687,16 +3691,22 @@ and simp_mult (e : exp) :  exp =
   in acc_mult None e
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
+  let pr1 = pr_opt !print_exp in
+  Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1)
+  split_sums_x e
+
+and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   match e with
     |  Null _ 
     |  Var _ 
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
-           if v > 0 then 
+           if v >= 0 then 
              ((Some e), None)
-           else if v < 0 then 
+           else 
+             (* if v < 0 then *)
              (None, (Some ( IConst (- v, l))))
-           else (None, None)
+           (* else (None, None) *)
     | FConst (v, l) ->
           if v >= 0.0 then
             ((Some e), None)
@@ -3825,8 +3835,12 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
     | Some e -> e::ll,e::rl in
   (add lhs ll, add rhs rl, add qhs ql)
 
+and purge_mult (e: exp) : exp =
+  let pr = !print_exp in
+  Debug.no_1 "purge_mult" pr pr purge_mult_x e
+
 (* TODO : must elim some multiply for MONA *)
-and purge_mult (e :  exp):  exp = match e with
+and purge_mult_x (e :  exp):  exp = match e with
   |  Null _ 
   |  Var _ 
   |  IConst _ 
@@ -3958,16 +3972,18 @@ and b_form_simplify (pf : b_formula) :  b_formula =
 
 and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
-	let t1 = simp_mult e1 in
+	  let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
+    let t1 = purge_mult t1 in
+    let t2 = purge_mult t2 in
     let (lhs, lsm) = split_sums t1 in
     let (rhs, rsm) = split_sums t2 in
     let (lh, rh) = move_lr lhs lsm rhs rsm l in
-	let lh = purge_mult lh in
-	let rh = purge_mult rh in
-	(lh, rh) in
+	  (* let lh = purge_mult lh in *)
+	  (* let rh = purge_mult rh in *)
+	  (lh, rh) in
   let do_all3 e1 e2 e3 l =
-	let t1 = simp_mult e1 in
+	  let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
     let t3 = simp_mult e3 in
     let (lhs, lsm) = split_sums t1 in
