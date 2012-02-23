@@ -6,10 +6,10 @@ Parsing ../../../prelude.ss ...
 Starting Reduce... 
 Translating global variables to procedure parameters...
 
-Checking procedure append$node2~node2... 
+Checking procedure append$node2~node2... Starting Omega...oc
+
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
-Starting Omega...oc
 
 !!! REL :  APP(S,S1,S2)
 !!! POST:  S=union(S1,S2)
@@ -32,26 +32,23 @@ Starting Omega...oc
                               res::dll<Anon_12,t,S>@M[Orig][LHSCase]&t=n+m & 
                               S=union(S1,S2) & 0<=m & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_1055:exists(v_1054:(S2= | S2=union(S1_1055,{v_1054})) & S1= & 
+!!! NEW RELS:[ (exists(S1_1023:exists(v_1022:(S2= | S2=union(S1_1023,{v_1022})) & S1= & 
   S2=S))) --> APP(S,S1,S2),
- (exists(S1_1199:exists(v_1198:exists(S1_833:exists(v_831:exists(v_1071:exists(S1_1073:exists(S1_1010:exists(S1_1096:exists(v_1008:exists(v_1094:(S1_1010= | 
-  S1_1010=union(S1_1199,{v_1198})) & S=union(S1_1073,{v_1071}) & 
-  S1=union(S1_833,{v_831}) & APP(S_938,S1_841,S2_844) & S2=S2_844 & 
-  S1_833=S1_841 & v_831=v_1071 & S_938=union(S1_1010,{v_1008}) & 
-  S1_1073=union(S1_1096,{v_1094}) & S1_1073=union(S1_1096,{v_1094}) & 
-  S1_1010=S1_1096 & v_1008=v_1094))))))))))) --> APP(S,S1,S2),
- (exists(S1_833:exists(v_831:exists(S1_1221:exists(v_1219:S1_1221= & 
-  S1_1221= & S_920= & v_831=v_1219 & S1_833=S1_841 & S2=S2_844 & 
-  APP(S_920,S1_841,S2_844) & S1=union(S1_833,{v_831}) & S=union(S1_1221,
-  {v_1219})))))) --> APP(S,S1,S2)]
+ (exists(S1_1121:exists(v_1120:exists(S1_833:exists(v_831:exists(v_1039:exists(S1_1041:exists(S1_988:exists(S1_1058:exists(v_986:exists(v_1056:(S1_988= | 
+  S1_988=union(S1_1121,{v_1120})) & S=union(S1_1041,{v_1039}) & 
+  S1=union(S1_833,{v_831}) & APP(S_926,S1_839,S2_842) & S2=S2_842 & 
+  S1_833=S1_839 & v_831=v_1039 & S_926=union(S1_988,{v_986}) & 
+  S1_1041=union(S1_1058,{v_1056}) & S1_1041=union(S1_1058,{v_1056}) & 
+  S1_988=S1_1058 & v_986=v_1056))))))))))) --> APP(S,S1,S2),
+ (exists(S1_833:exists(v_831:exists(S1_1143:exists(v_1141:S1_1143= & 
+  S1_1143= & S_914= & v_831=v_1141 & S1_833=S1_839 & S2=S2_842 & 
+  APP(S_914,S1_839,S2_842) & S1=union(S1_833,{v_831}) & S=union(S1_1143,
+  {v_1141})))))) --> APP(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append$node2~node2 SUCCESS
 
 Checking procedure append0$node2~node2... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
 
@@ -74,26 +71,23 @@ Restarting Mona ...
                             EAssume 4::
                               res::dll2<Anon_11,S>@M[Orig][LHSCase]&
                               S=union(S1,S2)&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_1516:exists(v_1515:(S2= | S2=union(S1_1516,{v_1515})) & S1= & 
+!!! NEW RELS:[ (exists(S1_1341:exists(v_1340:(S2= | S2=union(S1_1341,{v_1340})) & S1= & 
   S2=S))) --> APP(S,S1,S2),
- (exists(S1_1561:exists(v_1560:exists(S1_1409:exists(v_1407:exists(v_1519:exists(S1_1521:exists(S1_1492:exists(S1_1534:exists(v_1490:exists(v_1532:(S1_1492= | 
-  S1_1492=union(S1_1561,{v_1560})) & S=union(S1_1521,{v_1519}) & 
-  S1=union(S1_1409,{v_1407}) & APP(S_1457,S1_1414,S2_1416) & S2=S2_1416 & 
-  S1_1409=S1_1414 & v_1407=v_1519 & S_1457=union(S1_1492,{v_1490}) & 
-  S1_1521=union(S1_1534,{v_1532}) & S1_1521=union(S1_1534,{v_1532}) & 
-  S1_1492=S1_1534 & v_1490=v_1532))))))))))) --> APP(S,S1,S2),
- (exists(S1_1409:exists(v_1407:exists(S1_1564:exists(v_1562:S1_1564= & 
-  S1_1564= & S_1453= & v_1407=v_1562 & S1_1409=S1_1414 & S2=S2_1416 & 
-  APP(S_1453,S1_1414,S2_1416) & S1=union(S1_1409,{v_1407}) & S=union(S1_1564,
-  {v_1562})))))) --> APP(S,S1,S2)]
+ (exists(S1_1386:exists(v_1385:exists(S1_1234:exists(v_1232:exists(v_1344:exists(S1_1346:exists(S1_1317:exists(S1_1359:exists(v_1315:exists(v_1357:(S1_1317= | 
+  S1_1317=union(S1_1386,{v_1385})) & S=union(S1_1346,{v_1344}) & 
+  S1=union(S1_1234,{v_1232}) & APP(S_1282,S1_1239,S2_1241) & S2=S2_1241 & 
+  S1_1234=S1_1239 & v_1232=v_1344 & S_1282=union(S1_1317,{v_1315}) & 
+  S1_1346=union(S1_1359,{v_1357}) & S1_1346=union(S1_1359,{v_1357}) & 
+  S1_1317=S1_1359 & v_1315=v_1357))))))))))) --> APP(S,S1,S2),
+ (exists(S1_1234:exists(v_1232:exists(S1_1389:exists(v_1387:S1_1389= & 
+  S1_1389= & S_1278= & v_1232=v_1387 & S1_1234=S1_1239 & S2=S2_1241 & 
+  APP(S_1278,S1_1239,S2_1241) & S1=union(S1_1234,{v_1232}) & S=union(S1_1389,
+  {v_1387})))))) --> APP(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append0$node2~node2 SUCCESS
 
 Checking procedure append1$node2~node2... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  APP1(S,S1,S2)
 !!! POST:  S=union(S1,S2)
 !!! PRE :  true
@@ -115,22 +109,22 @@ Restarting Mona ...
                               res::dll<Anon_13,t,S>@M[Orig][LHSCase]&t=n+m & 
                               S=union(S1,S2) & 0<=m & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_1713:exists(v_1711:exists(v_2095:exists(S1_2097:S=union(S1_2097,
-  {v_2095}) & S1=union(S1_1713,{v_1711}) & APP1(S_1800,S1_1721,S2_1724) & 
-  S2=S2_1724 & S1_1713=S1_1721 & v_1711=v_2095 & S1_2097=S_1800 & S_1800= & 
-  S1_2097= & S1_2097=))))) --> APP1(S,S1,S2),
- (exists(S1_1932:exists(v_1931:(S2= | S2=union(S1_1932,{v_1931})) & S1= & 
+!!! NEW RELS:[ (exists(S1_1492:exists(v_1490:exists(v_1794:exists(S1_1796:S=union(S1_1796,
+  {v_1794}) & S1=union(S1_1492,{v_1490}) & APP1(S_1573,S1_1498,S2_1501) & 
+  S2=S2_1501 & S1_1492=S1_1498 & v_1490=v_1794 & S1_1796=S_1573 & S_1573= & 
+  S1_1796= & S1_1796=))))) --> APP1(S,S1,S2),
+ (exists(S1_1677:exists(v_1676:(S2= | S2=union(S1_1677,{v_1676})) & S1= & 
   S2=S))) --> APP1(S,S1,S2),
- (exists(S1_2075:exists(v_2074:exists(S1_1713:exists(v_1711:exists(v_1947:exists(S1_1949:exists(S1_1883:exists(S1_1972:exists(v_1881:exists(v_1970:(S1_1883= | 
-  S1_1883=union(S1_2075,{v_2074})) & S=union(S1_1949,{v_1947}) & 
-  S1=union(S1_1713,{v_1711}) & APP1(S_1818,S1_1721,S2_1724) & S2=S2_1724 & 
-  S1_1713=S1_1721 & v_1711=v_1947 & S_1818=union(S1_1883,{v_1881}) & 
-  S1_1949=union(S1_1972,{v_1970}) & S1_1949=union(S1_1972,{v_1970}) & 
-  S1_1883=S1_1972 & v_1881=v_1970))))))))))) --> APP1(S,S1,S2),
- (exists(S1_1713:exists(v_1711:exists(S1_2097:exists(v_2095:S1_2097= & 
-  S1_2097= & S_1800= & S1_2097=S_1800 & v_1711=v_2095 & S1_1713=S1_1721 & 
-  S2=S2_1724 & APP1(S_1800,S1_1721,S2_1724) & S1=union(S1_1713,{v_1711}) & 
-  S=union(S1_2097,{v_2095})))))) --> APP1(S,S1,S2)]
+ (exists(S1_1774:exists(v_1773:exists(S1_1492:exists(v_1490:exists(v_1692:exists(S1_1694:exists(S1_1644:exists(S1_1711:exists(v_1642:exists(v_1709:(S1_1644= | 
+  S1_1644=union(S1_1774,{v_1773})) & S=union(S1_1694,{v_1692}) & 
+  S1=union(S1_1492,{v_1490}) & APP1(S_1585,S1_1498,S2_1501) & S2=S2_1501 & 
+  S1_1492=S1_1498 & v_1490=v_1692 & S_1585=union(S1_1644,{v_1642}) & 
+  S1_1694=union(S1_1711,{v_1709}) & S1_1694=union(S1_1711,{v_1709}) & 
+  S1_1644=S1_1711 & v_1642=v_1709))))))))))) --> APP1(S,S1,S2),
+ (exists(S1_1492:exists(v_1490:exists(S1_1796:exists(v_1794:S1_1796= & 
+  S1_1796= & S_1573= & S1_1796=S_1573 & v_1490=v_1794 & S1_1492=S1_1498 & 
+  S2=S2_1501 & APP1(S_1573,S1_1498,S2_1501) & S1=union(S1_1492,{v_1490}) & 
+  S=union(S1_1796,{v_1794})))))) --> APP1(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append1$node2~node2 SUCCESS
@@ -167,29 +161,26 @@ Restarting Mona ...
                               x::dll<q_43,t,S>@M[Orig][LHSCase]&t=n+m & 
                               q_43=q & S=union(S1,S2) & 0<=m & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(v_2350:exists(v_2733:exists(S1_2352:exists(S1_2735:S=union(S1_2735,
-  {v_2733}) & S1=union(S1_2352,{v_2350}) & S2= & S1_2735=S2 & 
-  v_2350=v_2733 & S1_2352= & S1_2735= & S1_2735=))))) --> APP2(S,S1,S2),
- (exists(S1_2681:exists(v_2680:exists(v_2350:exists(v_2554:exists(v_2476:exists(S1_2478:exists(S1_2352:exists(S1_2556:exists(S1_2584:exists(v_2582:(S1_2478= | 
-  S1_2478=union(S1_2681,{v_2680})) & S=union(S1_2556,{v_2554}) & 
-  S1=union(S1_2352,{v_2350}) & S2=union(S1_2478,{v_2476}) & v_2350=v_2554 & 
-  v_2476=v_2582 & S1_2478=S1_2584 & S1_2352= & S1_2556=union(S1_2584,
-  {v_2582}) & S1_2556=union(S1_2584,{v_2582})))))))))))) --> APP2(S,S1,S2),
- (exists(S1_2352:exists(v_2350:exists(S1_2735:exists(v_2733:S1_2735= & 
-  S1_2735= & S1_2352= & v_2350=v_2733 & S1_2735=S2 & S2= & S1=union(S1_2352,
-  {v_2350}) & S=union(S1_2735,{v_2733})))))) --> APP2(S,S1,S2),
- (exists(S1_2939:exists(v_2938:exists(S1_2352:exists(v_2350:exists(S1_2866:exists(v_2864:S_2863=union(S1_2939,
-  {v_2938}) & S_2863=S1_2866 & v_2350=v_2864 & S1_2352=S1_2493 & 
-  S2=S2_2496 & APP2(S_2863,S1_2493,S2_2496) & S1=union(S1_2352,{v_2350}) & 
-  S=union(S1_2866,{v_2864})))))))) --> APP2(S,S1,S2)]
+!!! NEW RELS:[ (exists(v_1902:exists(v_2221:exists(S1_1904:exists(S1_2223:S=union(S1_2223,
+  {v_2221}) & S1=union(S1_1904,{v_1902}) & S2= & S1_2223=S2 & 
+  v_1902=v_2221 & S1_1904= & S1_2223= & S1_2223=))))) --> APP2(S,S1,S2),
+ (exists(S1_2169:exists(v_2168:exists(v_1902:exists(v_2080:exists(v_2012:exists(S1_2014:exists(S1_1904:exists(S1_2082:exists(S1_2106:exists(v_2104:(S1_2014= | 
+  S1_2014=union(S1_2169,{v_2168})) & S=union(S1_2082,{v_2080}) & 
+  S1=union(S1_1904,{v_1902}) & S2=union(S1_2014,{v_2012}) & v_1902=v_2080 & 
+  v_2012=v_2104 & S1_2014=S1_2106 & S1_1904= & S1_2082=union(S1_2106,
+  {v_2104}) & S1_2082=union(S1_2106,{v_2104})))))))))))) --> APP2(S,S1,S2),
+ (exists(S1_1904:exists(v_1902:exists(S1_2223:exists(v_2221:S1_2223= & 
+  S1_2223= & S1_1904= & v_1902=v_2221 & S1_2223=S2 & S2= & S1=union(S1_1904,
+  {v_1902}) & S=union(S1_2223,{v_2221})))))) --> APP2(S,S1,S2),
+ (exists(S1_2389:exists(v_2388:exists(S1_1904:exists(v_1902:exists(S1_2336:exists(v_2334:S_2333=union(S1_2389,
+  {v_2388}) & S_2333=S1_2336 & v_1902=v_2334 & S1_1904=S1_2023 & 
+  S2=S2_2026 & APP2(S_2333,S1_2023,S2_2026) & S1=union(S1_1904,{v_1902}) & 
+  S=union(S1_2336,{v_2334})))))))) --> APP2(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append2$node2~node2 SUCCESS
 
 Checking procedure insert$node2~int... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  INSERT(S,S1,a)
 !!! POST:  S1=union(S,{a})
 !!! PRE :  true
@@ -211,14 +202,14 @@ Restarting Mona ...
                               x::dll<p_48,m,S1>@M[Orig][LHSCase]&m=1+n & 
                               p_48=p & S1=union(S,{a}) & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_3241:exists(v_3239:exists(S1_3135:exists(v_3133:exists(S1_3222:exists(v_3220:S1_3241= & 
-  S1_3222=union(S1_3241,{v_3239}) & S1_3222=union(S1_3241,{v_3239}) & 
-  S1_3135= & v_3133=v_3220 & a=v_3239 & S=union(S1_3135,{v_3133}) & 
-  S1=union(S1_3222,{v_3220})))))))) --> INSERT(S,S1,a),
- (exists(S1_3378:exists(v_3377:exists(S1_3135:exists(v_3133:exists(S1_3309:exists(v_3307:S1_3306=union(S1_3378,
-  {v_3377}) & S1_3306=S1_3309 & v_3133=v_3307 & S1_3135=S_3187 & 
-  INSERT(S_3187,S1_3306,a) & S=union(S1_3135,{v_3133}) & S1=union(S1_3309,
-  {v_3307})))))))) --> INSERT(S,S1,a)]
+!!! NEW RELS:[ (exists(S1_2534:exists(v_2532:exists(S1_2446:exists(v_2444:exists(S1_2517:exists(v_2515:S1_2534= & 
+  S1_2517=union(S1_2534,{v_2532}) & S1_2517=union(S1_2534,{v_2532}) & 
+  S1_2446= & v_2444=v_2515 & a=v_2532 & S=union(S1_2446,{v_2444}) & 
+  S1=union(S1_2517,{v_2515})))))))) --> INSERT(S,S1,a),
+ (exists(S1_2635:exists(v_2634:exists(S1_2446:exists(v_2444:exists(S1_2586:exists(v_2584:S1_2583=union(S1_2635,
+  {v_2634}) & S1_2583=S1_2586 & v_2444=v_2584 & S1_2446=S_2486 & 
+  INSERT(S_2486,S1_2583,a) & S=union(S1_2446,{v_2444}) & S1=union(S1_2586,
+  {v_2584})))))))) --> INSERT(S,S1,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node2~int SUCCESS
@@ -228,6 +219,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 31.61 second(s)
-	Time spent in main process: 3.76 second(s)
-	Time spent in child processes: 27.85 second(s)
+Total verification time: 18.93 second(s)
+	Time spent in main process: 2.58 second(s)
+	Time spent in child processes: 16.35 second(s)

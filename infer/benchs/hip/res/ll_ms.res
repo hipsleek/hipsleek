@@ -90,8 +90,8 @@ Checking procedure delete$node~int...
                               ([0<=m & 0<=n & -1+n=m & 2<=n]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (-1+n=m & 1<=m) --> DEL(m,n),
- (DEL(m_1296,n_1275) & 1<=m & 1+m_1296=m & -1+n=n_1275 & 
-  0<=n_1275) --> DEL(m,n)]
+ (DEL(m_1292,n_1271) & 1<=m & 1+m_1292=m & -1+n=n_1271 & 
+  0<=n_1271) --> DEL(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
@@ -116,8 +116,8 @@ Checking procedure delete2$node~int...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & n=0) --> DEL2(m,n),
  (-1+n=m & 0<=m) --> DEL2(m,n),
- (DEL2(m_1373,n_1354) & 1<=m & 1+m_1373=m & -1+n=n_1354 & 
-  0<=n_1354) --> DEL2(m,n)]
+ (DEL2(m_1366,n_1347) & 1<=m & 1+m_1366=m & -1+n=n_1347 & 
+  0<=n_1347) --> DEL2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete2$node~int SUCCESS
@@ -203,7 +203,7 @@ Checking procedure find_ge$node~int...
                                  {FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[ ((1+v)<=m) --> FGE(m,v),
- (exists(Anon_1453:m=m_1488 & Anon_1453<=v & FGE(m_1488,v))) --> FGE(m,v)]
+ (exists(Anon_1440:m=m_1475 & Anon_1440<=v & FGE(m_1475,v))) --> FGE(m,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -306,7 +306,7 @@ Checking procedure insert$node~int...
                               ([0<=m & 0<=n & -1+m=n & 2<=m]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=2 & n=1) --> INS(m,n),
- (1<=n_1599 & 1+m_1624=m & -1+n=n_1599 & INS(m_1624,n_1599) & 
+ (1<=n_1578 & 1+m_1603=m & -1+n=n_1578 & INS(m_1603,n_1578) & 
   2<=m) --> INS(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -314,7 +314,7 @@ Procedure insert$node~int SUCCESS
 
 Checking procedure list_copy$node... 
 !!! REL :  CPY(m,n)
-!!! POST:  m>=0 & m=n
+!!! POST:  n>=0 & n=m
 !!! PRE :  0<=n
 !!! OLD SPECS: ((None,[]),EInfer [CPY]
               EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase]@ rem br[{402,401}]&
@@ -332,10 +332,9 @@ Checking procedure list_copy$node...
                             EAssume 69::
                               x::ll<n_91>@M[Orig][LHSCase]@ rem br[{402,401}] * 
                               res::ll<m>@M[Orig][LHSCase]@ rem br[{402,401}]&
-                              (([n=m & n=n_91 & 0<=n]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m=0 & n=0) --> CPY(m,n),
- (0<=n_1662 & 1+m_1675=m & -1+n=n_1662 & 1<=m & 
-  CPY(m_1675,n_1662)) --> CPY(m,n),
+                              (([m=n & m=n_91 & 0<=n]))&{FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (0<=n_1638 & 1+m_1651=m & -1+n=n_1638 & 1<=m & 
+  CPY(m_1651,n_1638)) --> CPY(m,n),
  (m=0 & n=0) --> CPY(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -358,10 +357,10 @@ Checking procedure list_filter2$node~int...
                             EAssume 83::ref [x]
                               res::ll<m>@M[Orig][LHSCase]@ rem br[{402,401}]&
                               (([m<=n & 0<=n & 0<=m]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (0<=n_1751 & m_1788=m & -1+n=n_1751 & FIL(m_1788,n_1751) & 
+!!! NEW RELS:[ (0<=n_1723 & m_1760=m & -1+n=n_1723 & FIL(m_1760,n_1723) & 
   0<=m) --> FIL(m,n),
- (1<=m & FIL(m_1781,n_1766) & -1+n=n_1766 & 1+m_1781=m & 
-  0<=n_1766) --> FIL(m,n),
+ (1<=m & FIL(m_1753,n_1738) & -1+n=n_1738 & 1+m_1753=m & 
+  0<=n_1738) --> FIL(m,n),
  (m=0 & n=0) --> FIL(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -389,8 +388,8 @@ Checking procedure list_remove2$node~int...
                               (([m<=n & 0<=n & (-1+n)<=m & 0<=m]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (-1+n=m & 0<=m) --> RMV2(m,n),
- (RMV2(m_1991,n_1977) & 1<=m & -1+n=n_1977 & 1+m_1991=m & 
-  0<=n_1977) --> RMV2(m,n),
+ (RMV2(m_1958,n_1944) & 1<=m & -1+n=n_1944 & 1+m_1958=m & 
+  0<=n_1944) --> RMV2(m,n),
  (m=0 & n=0) --> RMV2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -414,7 +413,7 @@ Checking procedure list_traverse$node...
                               x::ll<m>@M[Orig][LHSCase]@ rem br[{402,401}]&(
                               ([n=m & 0<=n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & n=0) --> TRAV(m,n),
- (0<=n_2039 & 1+m_2046=m & -1+n=n_2039 & TRAV(m_2046,n_2039) & 
+ (0<=n_2002 & 1+m_2009=m & -1+n=n_2002 & TRAV(m_2009,n_2002) & 
   1<=m) --> TRAV(m,n),
  (n=0 & m=0) --> TRAV(m,n)]
 !!! NEW ASSUME:[]
@@ -515,11 +514,11 @@ Checking procedure reverse$node~node...
                               ys'::ll<k>@M[Orig][LHSCase]@ rem br[{402,401}]&
                               (([0<=k & 0<=n & k=m+n & 0<=m & m<=k]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (0<=n_2142 & -1+m_2143=m & k_2165=k & -1+n=n_2142 & 0<=m & 
-  REV(k_2165,m_2143,n_2142) & 0<=k) --> REV(k,m,n),
+!!! NEW RELS:[ (0<=n_2098 & -1+m_2099=m & k_2121=k & -1+n=n_2098 & 0<=m & 
+  REV(k_2121,m_2099,n_2098) & 0<=k) --> REV(k,m,n),
  (m=k & n=0 & 0<=k) --> REV(k,m,n),
- (0<=n_2142 & -1+m_2143=m & k_2172=k & -1+n=n_2142 & 0<=m & 
-  REV(k_2172,m_2143,n_2142) & 0<=k) --> REV(k,m,n)]
+ (0<=n_2098 & -1+m_2099=m & k_2128=k & -1+n=n_2098 & 0<=m & 
+  REV(k_2128,m_2099,n_2098) & 0<=k) --> REV(k,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure reverse$node~node SUCCESS
@@ -574,8 +573,8 @@ Checking procedure size_helper$node~int...
                             EAssume 7::ref [n]
                               true&(([0<=m & res=m+n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & res=n) --> SIZEH(res,m,n),
- (0<=m_2305 & res=v_int_60_1018' & -1+m=m_2305 & 
-  SIZEH(v_int_60_1018',m_2305,n--1)) --> SIZEH(res,m,n)]
+ (0<=m_2255 & res=v_int_60_1018' & -1+m=m_2255 & 
+  SIZEH(v_int_60_1018',m_2255,n--1)) --> SIZEH(res,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure size_helper$node~int SUCCESS
@@ -629,9 +628,9 @@ Checking procedure split1$node~int...
                                ))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (n1=1 & -1+n=n2 & 1<=n2) --> SPLIT(n,n1,n2),
- (exists(a:n2_2515=n2 & 1+n1_2514=n1 & -1+n=n_2483 & 
-  SPLIT(n_2483,n1_2514,n2_2515) & 0<=n2 & 1<=n1 & 2<=a & 
-  a<=n_2483)) --> SPLIT(n,n1,n2)]
+ (exists(a:n2_2461=n2 & 1+n1_2460=n1 & -1+n=n_2429 & 
+  SPLIT(n_2429,n1_2460,n2_2461) & 0<=n2 & 1<=n1 & 2<=a & 
+  a<=n_2429)) --> SPLIT(n,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -669,9 +668,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1847 invocations 
+Stop Omega... 1321 invocations 
 9 false contexts at: ( (182,13)  (182,4)  (274,2)  (276,4)  (275,4)  (46,17)  (46,24)  (47,7)  (47,14) )
 
-Total verification time: 4.42 second(s)
-	Time spent in main process: 2.96 second(s)
-	Time spent in child processes: 1.46 second(s)
+Total verification time: 3.18 second(s)
+	Time spent in main process: 2.14 second(s)
+	Time spent in child processes: 1.04 second(s)

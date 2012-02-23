@@ -111,7 +111,7 @@ Checking procedure delete2$node~int...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (n=m & 1<=m) --> DEL2(m,n),
  (-1+n=m & 0<=m) --> DEL2(m,n),
- (0<=n_1240 & 1+m_1254=m & -1+n=n_1240 & DEL2(m_1254,n_1240) & 
+ (0<=n_1236 & 1+m_1250=m & -1+n=n_1236 & DEL2(m_1250,n_1236) & 
   1<=m) --> DEL2(m,n),
  (m=0 & n=0) --> DEL2(m,n)]
 !!! NEW ASSUME:[]
@@ -151,7 +151,7 @@ Checking procedure find_ge$node~int...
                                  {FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[ (v<=m) --> FGE(v,m),
- (exists(Anon_1352:m=m_1387 & (1+Anon_1352)<=v & FGE(v,m_1387))) --> FGE(v,m)]
+ (exists(Anon_1343:m=m_1378 & (1+Anon_1343)<=v & FGE(v,m_1378))) --> FGE(v,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -170,8 +170,8 @@ Checking procedure front$node...
                   (([0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([x!=null][MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              x::node<Anon_1408,q_1409>@M[Orig][]&(
-                              ([1<=m & 0<=m][x!=null][Anon_1408=res]))&
+                              x::node<Anon_1394,q_1395>@M[Orig][]&(
+                              ([1<=m & 0<=m][x!=null][Anon_1394=res]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -286,7 +286,7 @@ Checking procedure insert$node~int...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=1 & n=0) --> INS(m,n),
  (1+n=m & 2<=m) --> INS(m,n),
- (0<=n_1537 & 1+m_1551=m & -1+n=n_1537 & INS(m_1551,n_1537) & 
+ (0<=n_1520 & 1+m_1534=m & -1+n=n_1520 & INS(m_1534,n_1520) & 
   1<=m) --> INS(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -316,7 +316,7 @@ Checking procedure insert2$node~node...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=1 & n=0) --> INS2(m,n),
  (1+n=m & 2<=m) --> INS2(m,n),
- (0<=n_1648 & 1+m_1664=m & -1+n=n_1648 & INS2(m_1664,n_1648) & 
+ (0<=n_1627 & 1+m_1643=m & -1+n=n_1627 & INS2(m_1643,n_1627) & 
   1<=m) --> INS2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -324,7 +324,7 @@ Procedure insert2$node~node SUCCESS
 
 Checking procedure list_copy$node... 
 !!! REL :  CPY(m,n)
-!!! POST:  m>=0 & m=n
+!!! POST:  n>=0 & n=m
 !!! PRE :  0<=n
 !!! OLD SPECS: ((None,[]),EInfer [CPY]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{384,383}]&
@@ -342,10 +342,9 @@ Checking procedure list_copy$node...
                             EAssume 70::
                               x::sll<n_83>@M[Orig][LHSCase]@ rem br[{384,383}] * 
                               res::sll<m>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                              (([n=m & n=n_83 & 0<=n]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m=0 & n=0) --> CPY(m,n),
- (0<=n_1733 & 1+m_1746=m & -1+n=n_1733 & 1<=m & 
-  CPY(m_1746,n_1733)) --> CPY(m,n),
+                              (([m=n & m=n_83 & 0<=n]))&{FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (0<=n_1708 & 1+m_1721=m & -1+n=n_1708 & 1<=m & 
+  CPY(m_1721,n_1708)) --> CPY(m,n),
  (m=0 & n=0) --> CPY(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -368,8 +367,8 @@ Checking procedure list_filter2$node~int...
                             EAssume 73::
                               res::sll<m>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (([m=n & 0<=n]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (FIL(m_1844,n_1830) & 1<=m & -1+n=n_1830 & 1+m_1844=m & 
-  0<=n_1830) --> FIL(m,n),
+!!! NEW RELS:[ (FIL(m_1815,n_1801) & 1<=m & -1+n=n_1801 & 1+m_1815=m & 
+  0<=n_1801) --> FIL(m,n),
  (m=0 & n=0) --> FIL(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -393,7 +392,7 @@ Checking procedure list_traverse$node...
                               x::sll<m>@M[Orig][LHSCase]@ rem br[{384,383}]&(
                               ([n=m & 0<=n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & n=0) --> TRAV(m,n),
- (0<=n_1888 & 1+m_1895=m & -1+n=n_1888 & TRAV(m_1895,n_1888) & 
+ (0<=n_1856 & 1+m_1863=m & -1+n=n_1856 & TRAV(m_1863,n_1856) & 
   1<=m) --> TRAV(m,n),
  (n=0 & m=0) --> TRAV(m,n)]
 !!! NEW ASSUME:[]
@@ -426,8 +425,8 @@ Checking procedure merge1$node~node...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (n1=m & n2=0 & 0<=m) --> MRG(m,n1,n2),
  (n2=m & n1=0 & 1<=m) --> MRG(m,n1,n2),
- (2<=n1_1966 & 1<=n2_1967 & m_1986=n1_1966 & m=n1_1966 & -1+n2=n2_1967 & 1+
-  n1=n1_1966 & MRG(m_1986,n1_1966,n2_1967)) --> MRG(m,n1,n2)]
+ (2<=n1_1930 & 1<=n2_1931 & m_1950=n1_1930 & m=n1_1930 & -1+n2=n2_1931 & 1+
+  n1=n1_1930 & MRG(m_1950,n1_1930,n2_1931)) --> MRG(m,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure merge1$node~node SUCCESS
@@ -582,7 +581,7 @@ Checking procedure size_helper$node~int...
                             EAssume 7::ref [n]
                               true&(([0<=m & res=m+n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & res=n) --> SIZEH(res,m,n),
- (0<=m_2146 & res=v_int_50_951' & -1+m=m_2146 & SIZEH(v_int_50_951',m_2146,n-
+ (0<=m_2103 & res=v_int_50_951' & -1+m=m_2103 & SIZEH(v_int_50_951',m_2103,n-
   -1)) --> SIZEH(res,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -634,9 +633,9 @@ Checking procedure split1$node~int...
                                ))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (n1=1 & -1+n=n2 & 1<=n2) --> SPLIT(n,n1,n2),
- (exists(a:n2_2254=n2 & 1+n1_2253=n1 & -1+n=n_2222 & 
-  SPLIT(n_2222,n1_2253,n2_2254) & 0<=n2 & 1<=n1 & 2<=a & 
-  a<=n_2222)) --> SPLIT(n,n1,n2)]
+ (exists(a:n2_2207=n2 & 1+n1_2206=n1 & -1+n=n_2175 & 
+  SPLIT(n_2175,n1_2206,n2_2207) & 0<=n2 & 1<=n1 & 2<=a & 
+  a<=n_2175)) --> SPLIT(n,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -674,9 +673,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1794 invocations 
+Stop Omega... 1238 invocations 
 20 false contexts at: ( (170,13)  (170,4)  (351,10)  (351,6)  (350,10)  (350,6)  (36,17)  (36,24)  (37,7)  (37,14)  (298,4)  (298,11)  (303,4)  (303,11)  (302,10)  (302,4)  (301,9)  (301,13)  (301,4)  (301,4) )
 
-Total verification time: 4.31 second(s)
-	Time spent in main process: 2.89 second(s)
-	Time spent in child processes: 1.42 second(s)
+Total verification time: 2.9 second(s)
+	Time spent in main process: 1.99 second(s)
+	Time spent in child processes: 0.91 second(s)

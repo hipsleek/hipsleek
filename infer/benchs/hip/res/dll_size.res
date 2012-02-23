@@ -63,13 +63,13 @@ Checking procedure append1$node2~node2...
                               res::dll<Anon_13,t>@M[Orig][LHSCase]@ rem br[{221,220}]&
                               (([0<=t & t=m+n & 0<=n & 0<=m & m<=t]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (0<=m_963 & t_986=0 & t=1 & n_965=n & -1+m=m_963 & 0<=n & 
-  APP1(t_986,m_963,n_965)) --> APP1(t,m,n),
+!!! NEW RELS:[ (0<=m_958 & t_981=0 & t=1 & n_960=n & -1+m=m_958 & 0<=n & 
+  APP1(t_981,m_958,n_960)) --> APP1(t,m,n),
  (m=0 & n=t & 0<=t) --> APP1(t,m,n),
- (0<=m_963 & -1+m=m_963 & 1+t_990=t & n_965=n & 2<=t & 
-  APP1(t_990,m_963,n_965) & 0<=n) --> APP1(t,m,n),
- (0<=m_963 & t_986=0 & t=1 & n_965=n & -1+m=m_963 & 0<=n & 
-  APP1(t_986,m_963,n_965)) --> APP1(t,m,n)]
+ (0<=m_958 & -1+m=m_958 & 1+t_985=t & n_960=n & 2<=t & 
+  APP1(t_985,m_958,n_960) & 0<=n) --> APP1(t,m,n),
+ (0<=m_958 & t_981=0 & t=1 & n_960=n & -1+m=m_958 & 0<=n & 
+  APP1(t_981,m_958,n_960)) --> APP1(t,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append1$node2~node2 SUCCESS
@@ -103,8 +103,8 @@ Checking procedure append2$node2~node2...
 !!! NEW RELS:[ (t=1 & n=0 & m=1) --> APP2(t,n,m),
  (m=1 & 1+n=t & 2<=t) --> APP2(t,n,m),
  (t=1 & m=1 & n=0) --> APP2(t,n,m),
- (n_1193=n & 1+t_1266=t & 0<=n & 2<=t & APP2(t_1266,n_1193,m_1191) & 
-  1<=m_1191 & -1+m=m_1191) --> APP2(t,n,m)]
+ (n_1181=n & 1+t_1254=t & 0<=n & 2<=t & APP2(t_1254,n_1181,m_1179) & 
+  1<=m_1179 & -1+m=m_1179) --> APP2(t,n,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append2$node2~node2 SUCCESS
@@ -138,9 +138,9 @@ Checking procedure delete$node2~int...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (a=1 & 2<=m & -1+n=m) --> DEL(n,a,m),
  (m=1 & n=2 & a=1) --> DEL(n,a,m),
- ((1<=v_int_51_1532 | v_int_51_1532<=-1) & 
-  DEL(n_1460,v_int_51_1532,m_1531) & 1<=m & -1+n=n_1460 & 1+m_1531=m & -1+
-  a=v_int_51_1532 & 0<=n_1460) --> DEL(n,a,m)]
+ ((1<=v_int_51_1515 | v_int_51_1515<=-1) & 
+  DEL(n_1443,v_int_51_1515,m_1514) & 1<=m & -1+n=n_1443 & 1+m_1514=m & -1+
+  a=v_int_51_1515 & 0<=n_1443) --> DEL(n,a,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
@@ -175,9 +175,9 @@ Checking procedure delete1$node2~int...
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (a=1 & -1+n=m & 2<=m) --> DEL1(n,m,a),
  (m=1 & n=2 & a=1) --> DEL1(n,m,a),
- ((1<=v_int_73_1773 | v_int_73_1773<=-1) & 
-  DEL1(n_1703,m_1772,v_int_73_1773) & 1<=m & -1+n=n_1703 & 1+m_1772=m & -1+
-  a=v_int_73_1773 & 0<=n_1703) --> DEL1(n,m,a)]
+ ((1<=v_int_73_1752 | v_int_73_1752<=-1) & 
+  DEL1(n_1682,m_1751,v_int_73_1752) & 1<=m & -1+n=n_1682 & 1+m_1751=m & -1+
+  a=v_int_73_1752 & 0<=n_1682) --> DEL1(n,m,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete1$node2~int SUCCESS
@@ -205,7 +205,7 @@ Checking procedure insert$node2~int...
                               (([0<=m & 0<=n & -1+m=n & 2<=m][p_54=p]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=2 & n=1) --> INSERT(m,n),
- (1<=n_1849 & -1+n=n_1849 & 1+m_1893=m & INSERT(m_1893,n_1849) & 
+ (1<=n_1824 & -1+n=n_1824 & 1+m_1868=m & INSERT(m_1868,n_1824) & 
   2<=m) --> INSERT(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -213,9 +213,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1116 invocations 
+Stop Omega... 732 invocations 
 0 false contexts at: ()
 
-Total verification time: 3.48 second(s)
-	Time spent in main process: 2.3 second(s)
-	Time spent in child processes: 1.18 second(s)
+Total verification time: 1.65 second(s)
+	Time spent in main process: 1.22 second(s)
+	Time spent in child processes: 0.43 second(s)

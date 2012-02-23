@@ -67,6 +67,7 @@ int count(node2 t)
 	}
 }
 
+// Need to use imm
 relation HGT(bag a, bag b).
 int height(node2 t)
   infer[HGT]

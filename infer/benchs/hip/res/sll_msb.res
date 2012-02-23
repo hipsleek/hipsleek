@@ -20,9 +20,6 @@ Restarting Mona ...
 Procedure create_list$int~int SUCCESS
 
 Checking procedure delete$node~int... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 Context of Verification Failure: File "sll_msb.ss",Line:238,Col:10
 Last Proving Location: File "sll_msb.ss",Line:244,Col:4
 
@@ -45,72 +42,24 @@ Message: Unexpected error in computing fixpoint by FixBag
                   ([S!=()][null!=x][1<=a & (1+a)<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 50::
-                              
-                              r_1386::node<v_1422,r_1423>@M[Orig][] * 
-                              x::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                              (
-                              ([a=1][r_1423=r_1537_1647]
-                               [m_1538_1641=m_1424_1640 & -1+m=m_1424_1640 & 
-                                 0<=n & -1+m_1387_1639=m_1424_1640 & -2+
-                                 n=m_1424_1640 & 0<=m_1424_1640]
-                               [x!=null][r_1386!=null]
-                               [S1_1425_1645=S1_1539_1646 & 
-                                 v_1536_1643=v_1385_1644 & 
-                                 S=union(S1_1388_1642,{v_1385_1644}) & 
-                                 S1_1388_1642!=() & S1=union(S1_1539_1646,
-                                 {v_1536_1643}) & S!=() & DEL(S,S1) & 
-                                 S1_1388_1642=union(S1_1425_1645,{v_1422})]
-                               [v_bool_240_832_1649']))&
-                              {FLOW,(20,21)=__norm}
-                              or x::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([(m_1587_1650+1=0 & m=0 & m_1592_1651+
-                                    1=0 & n=1+m_1470_1653 & a=1+
-                                    v_int_244_1589_1652 & 
-                                    n_1493_1654=m_1470_1653 & 
-                                    S1_1593_1660=S1_1588_1661 & 
-                                    v_1468_1658=v_1590_1659 & 
-                                    S_1494_1656=S1_1471_1657 & 
-                                    r_1469_1662=r_1591_1663 & 
-                                    1<=v_int_244_1589_1652 & 
-                                    v_int_244_1589_1652<m_1470_1653 & 
-                                    !(v_bool_240_832_1664') & 
-                                    r_1591_1663!=null & x!=null | m=1+
-                                    m_1587_1650 & m_1592_1651=m_1587_1650 & 
-                                    n=1+m_1470_1653 & a=1+
-                                    v_int_244_1589_1652 & 
-                                    n_1493_1654=m_1470_1653 & 
-                                    S1_1593_1660=S1_1588_1661 & 
-                                    v_1468_1658=v_1590_1659 & 
-                                    S_1494_1656=S1_1471_1657 & 
-                                    r_1469_1662=r_1591_1663 & 
-                                    1<=v_int_244_1589_1652 & 
-                                    v_int_244_1589_1652<m_1470_1653 & 
-                                    !(v_bool_240_832_1664') & 
-                                    1<=m_1587_1650 & x!=null & 
-                                    r_1591_1663!=null) & S!=() & 0<=n & 
-                                    S1=union(S1_1593_1660,{v_1590_1659}) & 
-                                    DEL(S,S1) & 
-                                    DEL(S_1494_1656,S1_1588_1661) & 
-                                    S1_1471_1657!=() & S1_1588_1661!=() & 
-                                    S=union(S1_1471_1657,{v_1468_1658})]
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[ (exists(v_1422:exists(S1_1425:exists(S1_1388:exists(v_1385:exists(S1_1539:exists(v_1536:S1_1388!=() & 
-  S1_1388=union(S1_1425,{v_1422}) & S1_1539=S1_1425 & v_1385=v_1536 & 
-  S=union(S1_1388,{v_1385}) & S1=union(S1_1539,{v_1536}) & 
+                              EXISTS(m_1569,
+                              S1_1570: x::sll1<m_1569,S1_1570>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                              (([DEL(S,S1_1570)][0<=n]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(v_1414:exists(S1_1417:exists(S1_1384:exists(v_1381:exists(S1_1496:exists(v_1493:S1_1384!=() & 
+  S1_1384=union(S1_1417,{v_1414}) & S1_1496=S1_1417 & v_1381=v_1493 & 
+  S=union(S1_1384,{v_1381}) & S1=union(S1_1496,{v_1493}) & 
   S!=()))))))) --> DEL(S,S1),
- (exists(r_1469:exists(m_1470:exists(n_1493:exists(a:exists(m_1592:exists(m_1587:exists(v_int_244_1589:exists(n:exists(v_bool_240_832':exists(x:exists(r_1591:exists(m:exists(S1_1593:exists(v_1590:exists(S1_1471:exists(v_1468:S1_1471!=() & 
-  S1_1588!=() & (r_1469=r_1591 & S1_1588=S1_1593 & S1_1471=S_1494 & 
-  v_1590=v_1468 & 1+m_1470=n & 1+n_1493=n & -1+a=v_int_244_1589 & m=0 & 
-  m_1592=-1 & m_1587=-1 & 1<=v_int_244_1589 & (2+v_int_244_1589)<=n & 
-  !(v_bool_240_832') & x!=null & r_1591!=null & DEL(S_1494,S1_1588) | 
-  r_1469=r_1591 & S1_1588=S1_1593 & S1_1471=S_1494 & v_1590=v_1468 & 1+
-  m_1470=n & 1+n_1493=n & -1+a=v_int_244_1589 & 1+m_1592=m & 1+m_1587=m & 
-  1<=v_int_244_1589 & (2+v_int_244_1589)<=n & !(v_bool_240_832') & x!=null & 
-  r_1591!=null & DEL(S_1494,S1_1588) & 2<=m) & S!=() & S1=union(S1_1593,
-  {v_1590}) & S=union(S1_1471,{v_1468})))))))))))))))))) --> DEL(S,S1)]
+ (exists(r_1449:exists(m_1450:exists(n_1463:exists(a:exists(m_1526:exists(m_1521:exists(v_int_244_1523:exists(n:exists(v_bool_240_832':exists(x:exists(r_1525:exists(m:exists(S1_1527:exists(v_1524:exists(S1_1451:exists(v_1448:S1_1451!=() & 
+  S1_1522!=() & (r_1449=r_1525 & S1_1522=S1_1527 & S1_1451=S_1464 & 
+  v_1524=v_1448 & 1+m_1450=n & 1+n_1463=n & -1+a=v_int_244_1523 & m=0 & 
+  m_1526=-1 & m_1521=-1 & 1<=v_int_244_1523 & (2+v_int_244_1523)<=n & 
+  !(v_bool_240_832') & x!=null & r_1525!=null & DEL(S_1464,S1_1522) | 
+  r_1449=r_1525 & S1_1522=S1_1527 & S1_1451=S_1464 & v_1524=v_1448 & 1+
+  m_1450=n & 1+n_1463=n & -1+a=v_int_244_1523 & 1+m_1526=m & 1+m_1521=m & 
+  1<=v_int_244_1523 & (2+v_int_244_1523)<=n & !(v_bool_240_832') & x!=null & 
+  r_1525!=null & DEL(S_1464,S1_1522) & 2<=m) & S!=() & S1=union(S1_1527,
+  {v_1524}) & S=union(S1_1451,{v_1448})))))))))))))))))) --> DEL(S,S1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
@@ -144,91 +93,28 @@ Message: Unexpected error in computing fixpoint by FixBag
                   ())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 54::
-                              
-                              res::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                              EXISTS(m_1774,a_1775,
+                              S1_1776: res::sll1<m_1774,S1_1776>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (
-                              ([r_1728=tmp_92_1983']
-                               [v_node_266_1896_1984=r_1899_1985]
-                               [n_1784_1981=m_1729_1982 & 1+m_1900_1980=m & 
-                                 0<=n & 0<=m_1729_1982 & (-1+
-                                 m)<=m_1729_1982 & m_1729_1982<=m & 1+
-                                 m_1823_1979=m & -1+n=m_1729_1982]
-                               [v_node_267_803_1971'=x & 
-                                 v_node_267_803_1971'=res & x!=null]
-                               [v_1727=v_1898_1974 & 
-                                 S1_1901_1975=S1_1825_1976 & 
-                                 S_1785_1977=S1_1730_1978 & (1+
-                                 v_1898_1974)<=v & DEL2(a_1952,S,S1) & 
-                                 S!=() & S=union(S1_1730_1978,{v_1727}) & 
-                                 DEL2(a_1824_1973,S_1785_1977,S1_1825_1976) & 
-                                 S1=union(S1_1901_1975,{v_1898_1974})]
-                               [v_bool_257_807_1988']
-                               [!(v_bool_261_804_1987')]
-                               [!(v_bool_258_805_1986')]))&
-                              {FLOW,(20,21)=__norm}
-                              or x::node<v_1727,r_1728>@M[Orig][] * 
-                                 res::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([(r_1728=v_node_262_797_1964' & 
-                                    res=v_node_262_797_1964' & 
-                                    m=m_1729_1967 & n=1+m_1729_1967 & 
-                                    S1_1730_1966=S1 & v=v_1727 & 
-                                    !(v_bool_258_805_1968') & (m_1729_1967+
-                                    2)<=0 & v_bool_257_807_1970' & 
-                                    v_bool_261_804_1969' & x!=null | 
-                                    r_1728=v_node_262_797_1964' & 
-                                    res=v_node_262_797_1964' & 
-                                    m=m_1729_1967 & n=1+m_1729_1967 & 
-                                    S1_1730_1966=S1 & v=v_1727 & 
-                                    !(v_bool_258_805_1968') & 
-                                    v_bool_257_807_1970' & 
-                                    v_bool_261_804_1969' & x!=null & 
-                                    0<=m_1729_1967) & S=union(S1_1730_1966,
-                                    {v_1727}) & 0<=n & S!=() & 
-                                    DEL2(a_1951,S,S1)]
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([r_1728=r_1842_1958]
-                                  [m_1843_1954=m_1729_1961 & -1+
-                                    n=m_1729_1961 & 0<=n & -1+
-                                    m=m_1729_1961 & 0<=m_1729_1961]
-                                  [v_node_259_791_1957'=x & 
-                                    v_node_259_791_1957'=res & x!=null]
-                                  [S1_1730_1960=S1_1844_1956 & 
-                                    v_1727=v_1841_1955 & (1+
-                                    v)<=v_1841_1955 & S=union(S1_1730_1960,
-                                    {v_1727}) & S!=() & 
-                                    S1=union(S1_1844_1956,{v_1841_1955}) & 
-                                    DEL2(a_1950,S,S1)]
-                                  [v_bool_257_807_1963']
-                                  [v_bool_258_805_1962']))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<m,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([n=0 & 0<=n][m=0][x=null]
-                                  [v_null_270_806_1990'=null][res=null]
-                                  [S= & DEL2(a_1953,S,S1) & S1=]
-                                  [!(v_bool_257_807_1991')]))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[ (exists(v:exists(S1_1844:exists(v_1841:exists(S1_1730:exists(v_1727:(1+
-  v)<=v_1841 & v_1727=v_1841 & S1_1844=S1_1730 & S1=union(S1_1844,
-  {v_1841}) & S!=() & S=union(S1_1730,{v_1727}))))))) --> DEL2(a_1840,S,S1),
- (exists(v:exists(n:exists(r_1728:exists(res:exists(v_node_262_797':exists(m:exists(v_bool_258_805':exists(x:exists(v_bool_257_807':exists(v_bool_261_804':exists(m_1729:exists(S1_1730:exists(v_1727:(S1_1730=S1 & 
-  v_1727=v & -1+n=m_1729 & r_1728=v_node_262_797' & res=v_node_262_797' & 
-  m=m_1729 & v_bool_258_805'<=0 & m_1729<=-2 & x!=null & 
-  1<=v_bool_257_807' & 1<=v_bool_261_804' | S1_1730=S1 & v_1727=v & -1+
-  n=m_1729 & r_1728=v_node_262_797' & res=v_node_262_797' & m=m_1729 & 
+                              ([DEL2(a_1775,S,S1_1776)]
+                               [m_1774<=n & 0<=n & (-1+n)<=m_1774]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(v:exists(S1_1685:exists(v_1682:exists(S1_1597:exists(v_1594:(1+
+  v)<=v_1682 & v_1594=v_1682 & S1_1685=S1_1597 & S1=union(S1_1685,
+  {v_1682}) & S!=() & S=union(S1_1597,{v_1594}))))))) --> DEL2(a_1681,S,S1),
+ (exists(v:exists(n:exists(r_1595:exists(res:exists(v_node_262_797':exists(m:exists(v_bool_258_805':exists(x:exists(v_bool_257_807':exists(v_bool_261_804':exists(m_1596:exists(S1_1597:exists(v_1594:(S1_1597=S1 & 
+  v_1594=v & -1+n=m_1596 & r_1595=v_node_262_797' & res=v_node_262_797' & 
+  m=m_1596 & v_bool_258_805'<=0 & m_1596<=-2 & x!=null & 
+  1<=v_bool_257_807' & 1<=v_bool_261_804' | S1_1597=S1 & v_1594=v & -1+
+  n=m_1596 & r_1595=v_node_262_797' & res=v_node_262_797' & m=m_1596 & 
   v_bool_258_805'<=0 & x!=null & 1<=v_bool_257_807' & 1<=v_bool_261_804' & 
-  0<=m_1729) & S=union(S1_1730,{v_1727}) & 
-  S!=())))))))))))))) --> DEL2(a_1883,S,S1),
- (exists(v:exists(S1_1901:exists(v_1898:exists(S1_1730:exists(v_1727:(1+
-  v_1898)<=v & v_1727=v_1898 & S1_1730=S_1785 & S1_1825=S1_1901 & 
-  DEL2(a_1824,S_1785,S1_1825) & S1=union(S1_1901,{v_1898}) & S!=() & 
-  S=union(S1_1730,{v_1727}))))))) --> DEL2(a_1897,S,S1),
- (S1= & S=) --> DEL2(a_1946,S,S1)]
+  0<=m_1596) & S=union(S1_1597,{v_1594}) & 
+  S!=())))))))))))))) --> DEL2(a_1707,S,S1),
+ (exists(v:exists(S1_1724:exists(v_1721:exists(S1_1597:exists(v_1594:(1+
+  v_1721)<=v & v_1594=v_1721 & S1_1597=S_1634 & S1_1670=S1_1724 & 
+  DEL2(a_1669,S_1634,S1_1670) & S1=union(S1_1724,{v_1721}) & S!=() & 
+  S=union(S1_1597,{v_1594}))))))) --> DEL2(a_1720,S,S1),
+ (S1= & S=) --> DEL2(a_1752,S,S1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete2$node~int SUCCESS
@@ -240,9 +126,6 @@ Checking procedure empty$node...
 Procedure empty$node SUCCESS
 
 Checking procedure find_ge$node~int... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  FGE(S,m)
 !!! POST:  true
 !!! PRE :  true
@@ -270,20 +153,23 @@ Restarting Mona ...
                                  ([res!=null][v<=m][0<=n]))&
                                  {FLOW,(20,21)=__norm}
                               )
-!!! NEW RELS:[ (exists(res:exists(Anon_18:exists(r_2152:exists(v_node_362_695':exists(m_2153:exists(v:exists(v_bool_358_701':exists(x:exists(v_bool_361_700':exists(n:exists(S1_2154:exists(v_2151:(res=x & 
-  Anon_18=r_2152 & m=v_2151 & v_node_362_695'=x & 1+m_2153=n & n<=-1 & 
-  v<=v_2151 & v_bool_358_701'<=0 & x!=null & 1<=v_bool_361_700' | res=x & 
-  Anon_18=r_2152 & m=v_2151 & v_node_362_695'=x & 1+m_2153=n & v<=v_2151 & 
+!!! NEW RELS:[ (exists(res:exists(Anon_18:exists(r_1853:exists(v_node_362_695':exists(m_1854:exists(v:exists(v_bool_358_701':exists(x:exists(v_bool_361_700':exists(n:exists(S1_1855:exists(v_1852:(res=x & 
+  Anon_18=r_1853 & m=v_1852 & v_node_362_695'=x & 1+m_1854=n & n<=-1 & 
+  v<=v_1852 & v_bool_358_701'<=0 & x!=null & 1<=v_bool_361_700' | res=x & 
+  Anon_18=r_1853 & m=v_1852 & v_node_362_695'=x & 1+m_1854=n & v<=v_1852 & 
   v_bool_358_701'<=0 & x!=null & 1<=v_bool_361_700' & 1<=n) & S!=() & 
-  S=union(S1_2154,{v_2151})))))))))))))) --> FGE(S,m),
- (exists(v:exists(S1_2154:exists(v_2151:(1+v_2151)<=v & S1_2154=S_2191 & 
-  m_2237=m & v<=m & FGE(S_2191,m_2237) & S=union(S1_2154,{v_2151}) & 
+  S=union(S1_1855,{v_1852})))))))))))))) --> FGE(S,m),
+ (exists(v:exists(S1_1855:exists(v_1852:(1+v_1852)<=v & S1_1855=S_1880 & 
+  m_1909=m & v<=m & FGE(S_1880,m_1909) & S=union(S1_1855,{v_1852}) & 
   S!=())))) --> FGE(S,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
 
 Checking procedure front$node... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 Procedure front$node SUCCESS
 
 Checking procedure get_next$node... 
@@ -316,22 +202,19 @@ Checking procedure get_next$node...
                                [1+flted_132_109=n & 0<=n][flted_132_110=null]
                                ))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(tmp_111':exists(res:exists(r_2399:exists(v_node_136_990':exists(n:exists(flted_132_110:exists(x:exists(flted_132_109:exists(next_135_989':exists(x':exists(m_2400:exists(S1_2401:exists(v_2398:(tmp_111'=v_node_136_990' & 
-  res=v_node_136_990' & r_2399=v_node_136_990' & v=v_2398 & S1_2401=S2 & -1+
-  n=m_2400 & flted_132_110=next_135_989' & x=x' & flted_132_109=m_2400 & 
-  m_2400<=-2 & next_135_989'=null & x'!=null | tmp_111'=v_node_136_990' & 
-  res=v_node_136_990' & r_2399=v_node_136_990' & v=v_2398 & S1_2401=S2 & -1+
-  n=m_2400 & flted_132_110=next_135_989' & x=x' & flted_132_109=m_2400 & 
-  next_135_989'=null & x'!=null & 0<=m_2400) & S=union(S1_2401,{v_2398}) & 
+!!! NEW RELS:[ (exists(tmp_111':exists(res:exists(r_1951:exists(v_node_136_990':exists(n:exists(flted_132_110:exists(x:exists(flted_132_109:exists(next_135_989':exists(x':exists(m_1952:exists(S1_1953:exists(v_1950:(tmp_111'=v_node_136_990' & 
+  res=v_node_136_990' & r_1951=v_node_136_990' & v=v_1950 & S1_1953=S2 & -1+
+  n=m_1952 & flted_132_110=next_135_989' & x=x' & flted_132_109=m_1952 & 
+  m_1952<=-2 & next_135_989'=null & x'!=null | tmp_111'=v_node_136_990' & 
+  res=v_node_136_990' & r_1951=v_node_136_990' & v=v_1950 & S1_1953=S2 & -1+
+  n=m_1952 & flted_132_110=next_135_989' & x=x' & flted_132_109=m_1952 & 
+  next_135_989'=null & x'!=null & 0<=m_1952) & S=union(S1_1953,{v_1950}) & 
   S!=())))))))))))))) --> GN(S,S2,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next$node SUCCESS
 
 Checking procedure get_next_next$node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 ( ) :sll_msb.ss:187: 9: bind: node  v_node_187_906'::node<val_187_907',next_187_908'>@L[Orig] cannot be derived from context
 
 
@@ -345,7 +228,7 @@ Failed States:
          fe_name: separation entailment
          fe_locs: {
                    fc_message: 
-                    (failure_code=15.3)  v_node_187_906'=r_2465 & v_node_187_906'=null |-  v_node_187_906'!=null (must-bug).
+                    (failure_code=15.3)  v_node_187_906'=r_2005 & v_node_187_906'=null |-  v_node_187_906'!=null (must-bug).
                    fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
        FAIL_OR 
         
@@ -370,10 +253,10 @@ Failed States:
                   ([S!=()][0!=n][null!=x]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
-                              EXISTS(flted_185_2508,
-                              S2_2509: res::sll1<flted_185_2508,S2_2509>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                              EXISTS(flted_185_2042,
+                              S2_2043: res::sll1<flted_185_2042,S2_2043>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (
-                              ([GNN(S,S2_2509)][2+flted_185_2508=n & 0<=n]))&
+                              ([GNN(S,S2_2043)][2+flted_185_2042=n & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -403,11 +286,11 @@ Checking procedure get_tail$node...
                               res::sll1<flted_167_103,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (([1+flted_167_103=n & 0<=n][S1<subset> S ]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(r_2530:exists(res:exists(v_node_169_934':exists(n:exists(flted_167_103:exists(x:exists(m_2531:exists(S1_2532:exists(v_2529:(r_2530=v_node_169_934' & 
-  res=v_node_169_934' & S1_2532=S1 & -1+n=m_2531 & flted_167_103=m_2531 & 
-  m_2531<=-2 & x!=null | r_2530=v_node_169_934' & res=v_node_169_934' & 
-  S1_2532=S1 & -1+n=m_2531 & flted_167_103=m_2531 & x!=null & 0<=m_2531) & 
-  S!=() & S=union(S1_2532,{v_2529}))))))))))) --> GT(S,S1)]
+!!! NEW RELS:[ (exists(r_2064:exists(res:exists(v_node_169_934':exists(n:exists(flted_167_103:exists(x:exists(m_2065:exists(S1_2066:exists(v_2063:(r_2064=v_node_169_934' & 
+  res=v_node_169_934' & S1_2066=S1 & -1+n=m_2065 & flted_167_103=m_2065 & 
+  m_2065<=-2 & x!=null | r_2064=v_node_169_934' & res=v_node_169_934' & 
+  S1_2066=S1 & -1+n=m_2065 & flted_167_103=m_2065 & x!=null & 0<=m_2065) & 
+  S!=() & S=union(S1_2066,{v_2063}))))))))))) --> GT(S,S1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_tail$node SUCCESS
@@ -440,82 +323,28 @@ Message: Unexpected error in computing fixpoint by FixBag
                   ())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 39::
-                              
-                              res::sll1<flted_195_96,S1>@M[Orig][LHSCase]@ rem br[{383}]&
+                              EXISTS(flted_195_2268,S1_2269,
+                              a_2270: res::sll1<flted_195_2268,S1_2269>@M[Orig][LHSCase]@ rem br[{383}]&
                               (
-                              ([r_2588_2835=r_2702_2822]
-                               [res=v_node_204_885_2823' & 
-                                 v_node_204_885_2823'!=null]
-                               [x=r_2695_2824 & r_2695_2824!=null]
-                               [m_2696_2829=n & 1+m_2589_2834=n & 0<=n & 1+
-                                 m_2703_2830=n & -1+flted_195_96=n & 1<=n]
-                               [S1_2704_2828=S1_2590_2833 & v=v_2694_2827 & 
-                                 v_2587_2832=v_2701_2826 & S!=() & 
-                                 S=union(S1_2590_2833,{v_2587_2832}) & 
-                                 S1=union(S1_2697_2825,{v_2694_2827}) & 
-                                 S1!=() & INS(S,S1,a_2812) & 
-                                 v_2694_2827<=v_2701_2826 & 
-                                 S1_2697_2825=union(S1_2704_2828,
-                                 {v_2701_2826})]
-                               [v_bool_203_892_2837']
-                               [!(v_bool_199_893_2836')]))&
-                              {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_195_96,S1>@M[Orig][LHSCase]@ rem br[{383}]&
-                                 (
-                                 ([m_2680_2816=0][flted_195_96=1][n=0 & 0<=n]
-                                  [x=null][v_null_200_2676_2818=null]
-                                  [r_2679_2819=null]
-                                  [res=v_node_200_881_2817' & 
-                                    v_node_200_881_2817'!=null]
-                                  [v=v_2678_2815 & S1_2681_2814= & 
-                                    S1=union(S1_2681_2814,{v_2678_2815}) & 
-                                    S1!=() & S= & INS(S,S1,a_2811)]
-                                  [v_bool_199_893_2821']))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_195_96,S1>@M[Orig][LHSCase]@ rem br[{383}]&
-                                 (
-                                 ([r_2588_2853=tmp_97_2854']
-                                  [v_node_208_2759_2838=r_2762_2839 & 
-                                    r_2762_2839!=null]
-                                  [v_node_209_891_2840'=x & 
-                                    v_node_209_891_2840'=res & x!=null]
-                                  [1+m_2763_2852=flted_195_96 & 0<=n & 1+
-                                    n=flted_195_96 & 2+
-                                    m_2589_2850=flted_195_96 & 
-                                    2<=flted_195_96 & 1+
-                                    flted_195_2663_2851=flted_195_96 & 2+
-                                    n_2626_2849=flted_195_96]
-                                  [v_2587_2843=v_2761_2844 & 
-                                    S_2627_2845=S1_2590_2846 & 
-                                    S1_2764_2847=S1_2664_2848 & (1+
-                                    v_2761_2844)<=v & S1_2664_2848!=() & 
-                                    S1=union(S1_2764_2847,{v_2761_2844}) & 
-                                    INS(S,S1,a_2813) & 
-                                    INS(S_2627_2845,S1_2664_2848,a_2665_2842) & 
-                                    S!=() & S1!=() & S=union(S1_2590_2846,
-                                    {v_2587_2843})]
-                                  [!(v_bool_203_892_2856')]
-                                  [!(v_bool_199_893_2855')]))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[ (exists(v:exists(S1_2681:exists(v_2678:S1_2681= & v_2678=v & S= & 
-  S1=union(S1_2681,{v_2678}))))) --> INS(S,S1,a_2677),
- (exists(v_2701:exists(v:exists(S1_2704:exists(S1_2697:exists(v_2694:exists(S1_2590:exists(v_2587:S1_2697=union(S1_2704,
-  {v_2701}) & v_2694<=v_2701 & v_2587=v_2701 & v=v_2694 & S1_2590=S1_2704 & 
-  S1=union(S1_2697,{v_2694}) & S=union(S1_2590,{v_2587}) & 
-  S!=())))))))) --> INS(S,S1,a_2693),
- (exists(v:exists(S1_2590:exists(v_2587:exists(S1_2764:exists(v_2761:S1_2664!=() & 
-  (1+v_2761)<=v & v_2587=v_2761 & S1_2590=S_2627 & S1_2664=S1_2764 & 
-  INS(S_2627,S1_2664,a_2665) & S=union(S1_2590,{v_2587}) & S1=union(S1_2764,
-  {v_2761}) & S!=())))))) --> INS(S,S1,a_2760)]
+                              ([null!=res]
+                               [S1_2269!=() & INS(S,S1_2269,a_2270)]
+                               [-1+flted_195_2268=n & 0<=n]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(v:exists(S1_2183:exists(v_2180:S1_2183= & v_2180=v & S= & 
+  S1=union(S1_2183,{v_2180}))))) --> INS(S,S1,a_2179),
+ (exists(v_2198:exists(v:exists(S1_2201:exists(S1_2194:exists(v_2191:exists(S1_2118:exists(v_2115:S1_2194=union(S1_2201,
+  {v_2198}) & v_2191<=v_2198 & v_2115=v_2198 & v=v_2191 & S1_2118=S1_2201 & 
+  S1=union(S1_2194,{v_2191}) & S=union(S1_2118,{v_2115}) & 
+  S!=())))))))) --> INS(S,S1,a_2190),
+ (exists(v:exists(S1_2118:exists(v_2115:exists(S1_2234:exists(v_2231:S1_2172!=() & 
+  (1+v_2231)<=v & v_2115=v_2231 & S1_2118=S_2143 & S1_2172=S1_2234 & 
+  INS(S_2143,S1_2172,a_2173) & S=union(S1_2118,{v_2115}) & S1=union(S1_2234,
+  {v_2231}) & S!=())))))) --> INS(S,S1,a_2230)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node~int SUCCESS
 
 Checking procedure insert2$node~node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
 
@@ -545,98 +374,68 @@ Message: Unexpected error in computing fixpoint by FixBag
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 44::
-                              
-                              res::sll1<flted_217_94,S2>@M[Orig][LHSCase]@ rem br[{383}]&
+                              EXISTS(flted_217_2473,S2_2474,S1_2475,
+                              a_2476: res::sll1<flted_217_2473,S2_2474>@M[Orig][LHSCase]@ rem br[{383}]&
                               (
-                              ([r_2936_3185=r_3062_3186]
-                               [v_node_225_859_3187'=vn & 
-                                 v_node_225_859_3187'=res & vn!=null]
-                               [x=r_3055_3188 & r_3055_3188!=null]
-                               [m_3056_3193=n & 1+m_2937_3198=n & 0<=n & 1+
-                                 m_3063_3194=n & -1+flted_217_94=n & 1<=n]
-                               [S1_3064_3192=S1_2938_3197 & v=v_3054_3190 & 
-                                 v_2935_3195=v_3061_3191 & S2!=() & 
-                                 v_3054_3190<=v_3061_3191 & 
-                                 S2=union(S1_3057_3189,{v_3054_3190}) & 
-                                 S=union(S1_2938_3197,{v_2935_3195}) & 
-                                 S!=() & INS2(S,S1_3173,a_3174) & 
-                                 S1_3057_3189=union(S1_3064_3192,
-                                 {v_3061_3191})]
-                               [v_bool_223_867_3200']
-                               [!(v_bool_219_868_3199')]))&
-                              {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_217_94,S2>@M[Orig][LHSCase]@ rem br[{383}]&
-                                 (
-                                 ([m_3039_3179=0][flted_217_94=1][n=0 & 0<=n]
-                                  [r_3038_3181=null][x=null]
-                                  [next_220_849_3180'=null]
-                                  [vn=v_node_221_850_3182' & vn=res & 
-                                    v_node_221_850_3182'!=null]
-                                  [v=v_3037_3178 & S1_3040_3177= & 
-                                    S2=union(S1_3040_3177,{v_3037_3178}) & 
-                                    S2!=()]
-                                  [S= & INS2(S,S1_3171,a_3172)]
-                                  [v_bool_219_868_3184']))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_217_94,S2>@M[Orig][LHSCase]@ rem br[{383}]&
-                                 (
-                                 ([vn!=null]
-                                  [v_node_229_866_3201'=x & 
-                                    v_node_229_866_3201'=res & x!=null]
-                                  [1+m_3124_3215=flted_217_94 & 0<=n & 1+
-                                    n=flted_217_94 & 2+
-                                    m_2937_3213=flted_217_94 & 
-                                    2<=flted_217_94 & 1+
-                                    flted_217_3022_3214=flted_217_94 & 2+
-                                    n_2979_3212=flted_217_94]
-                                  [v_node_228_3119_3216=r_3123_3217 & 
-                                    r_3123_3217!=null]
-                                  [S1_3125_3204=S2_3023_3205 & 
-                                    v_2935_3203=v_3122_3202 & 
-                                    v=v_2981_3211 & 
-                                    S_2980_3209=S1_2938_3210 & S2!=() & 
-                                    INS2(S_2980_3209,S1_3024_3207,a_3025_3208) & 
-                                    S2_3023_3205!=() & 
-                                    INS2(S,S1_3175,a_3176) & (1+
-                                    v_3122_3202)<=v_2981_3211 & 
-                                    S=union(S1_2938_3210,{v_2935_3203}) & 
-                                    S2=union(S1_3125_3204,{v_3122_3202}) & 
-                                    S!=()]
-                                  [Anon_17=Anon_2982_3218]
-                                  [!(v_bool_223_867_3220')]
-                                  [!(v_bool_219_868_3219')]))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[ (S=) --> INS2(S,S1_3035,a_3036),
- (exists(v:exists(S2:exists(S1_3057:exists(v_3054:exists(v_3061:exists(S1_3064:exists(S1_2938:exists(v_2935:v=v_3054 & 
-  S1_3057=union(S1_3064,{v_3061}) & S2=union(S1_3057,{v_3054}) & 
-  v_3054<=v_3061 & v_2935=v_3061 & S1_2938=S1_3064 & S!=() & S=union(S1_2938,
-  {v_2935})))))))))) --> INS2(S,S1_3052,a_3053),
- (exists(S2_3023:exists(v:exists(S2:exists(S1_3125:exists(v_2981:exists(v_3122:exists(S1_2938:exists(v_2935:S2_3023!=() & 
-  S2_3023=S1_3125 & v=v_2981 & S2=union(S1_3125,{v_3122}) & (1+
-  v_3122)<=v_2981 & v_2935=v_3122 & S1_2938=S_2980 & 
-  INS2(S_2980,S1_3024,a_3025) & S=union(S1_2938,{v_2935}) & 
-  S!=()))))))))) --> INS2(S,S1_3120,a_3121)]
+                              ([S2_2474!=()][null!=res]
+                               [INS2(S,S1_2475,a_2476)]
+                               [-1+flted_217_2473=n & 0<=n]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (S=) --> INS2(S,S1_2379,a_2380),
+ (exists(v:exists(S2:exists(S1_2396:exists(v_2393:exists(v_2400:exists(S1_2403:exists(S1_2310:exists(v_2307:v=v_2393 & 
+  S1_2396=union(S1_2403,{v_2400}) & S2=union(S1_2396,{v_2393}) & 
+  v_2393<=v_2400 & v_2307=v_2400 & S1_2310=S1_2403 & S!=() & S=union(S1_2310,
+  {v_2307})))))))))) --> INS2(S,S1_2391,a_2392),
+ (exists(S2_2373:exists(v:exists(S2:exists(S1_2437:exists(v_2339:exists(v_2434:exists(S1_2310:exists(v_2307:S2_2373!=() & 
+  S2_2373=S1_2437 & v=v_2339 & S2=union(S1_2437,{v_2434}) & (1+
+  v_2434)<=v_2339 & v_2307=v_2434 & S1_2310=S_2338 & 
+  INS2(S_2338,S1_2374,a_2375) & S=union(S1_2310,{v_2307}) & 
+  S!=()))))))))) --> INS2(S,S1_2432,a_2433)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert2$node~node SUCCESS
 
 Checking procedure list_copy$node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 Context of Verification Failure: File "sll_msb.ss",Line:315,Col:10
 Last Proving Location: File "sll_msb.ss",Line:320,Col:21
 
 ERROR: at _0_0 
-Message:  Error during Mona translation for var S2_3449
-
+Message: Unexpected error in computing fixpoint by FixBag
  
-Procedure list_copy$node FAIL-2
-
-Exception Failure(" Error during Mona translation for var S2_3449\n") Occurred!
-
-Error(s) detected when checking procedure list_copy$node
+!!! IGNORING PROBLEM of fix-point calculation
+!!! OLD SPECS: ((None,[]),EInfer [CPY]
+              EBase exists (Expl)(Impl)[n; 
+                    S](ex)x::sll1<n,S>@M[Orig][LHSCase]@ rem br[{384,383}]&(
+                    ([true]))&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 70::
+                                EXISTS(n_84,S_85,n_86,S1,
+                                S2: x::sll1<n_84,S_85>@M[Orig][LHSCase]@ rem br[{384,383}] * 
+                                res::sll1<n_86,S1>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                                (([S=S_85 & CPY(S,S2)][n=n_86 & n=n_84]))&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; 
+                  S](ex)x::sll1<n,S>@M[Orig][LHSCase]@ rem br[{384,383}]&(
+                  ())&{FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
+                            EAssume 70::
+                              EXISTS(n_2617,S_2618,n_2619,S1_2620,
+                              S2_2621: x::sll1<n_2617,S_2618>@M[Orig][LHSCase]@ rem br[{384,383}] * 
+                              res::sll1<n_2619,S1_2620>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                              (
+                              ([n=n_2617 & n=n_2619 & 0<=n]
+                               [S=S_2618 & CPY(S,S2_2621)]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S_85:S_85=S & S_85=)) --> CPY(S,S2_2600),
+ (exists(S1_2531:exists(S_85:exists(S1:exists(S1_2554:exists(S1_2541:exists(v_2551:exists(v_2538:exists(S1_2503:exists(v_2500:S1_2531=S1_2554 & 
+  S_85=union(S1_2541,{v_2538}) & S1=union(S1_2554,{v_2551}) & 
+  S1_2541=S1_2503 & S_2507=S1_2503 & v_2551=v_2538 & v_2500=v_2538 & 
+  CPY(S_2507,S2_2532) & S=union(S1_2503,{v_2500}) & 
+  S!=())))))))))) --> CPY(S,S2_2537),
+ (exists(S_85:S_85= & S=S_85)) --> CPY(S,S2_2600)]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
+Procedure list_copy$node SUCCESS
 
 Checking procedure list_filter2$node~int... 
 [mona.ml]: Mona is preparing to restart because of upper limit reached
@@ -661,17 +460,17 @@ Restarting Mona ...
                             EAssume 73::
                               res::sll1<m,S2>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (([S2=S][m<=n & 0<=n]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(r_3571:exists(tmp_83':exists(x:exists(res:exists(m_3572:exists(m_3561:exists(n_3531:exists(n:exists(m:exists(v_bool_335_721':exists(v:exists(v_node_346_723':exists(v_bool_334_722':exists(m_3487:exists(S1_3488:exists(v_3485:exists(S1_3573:exists(v_3570:(r_3571=tmp_83' & 
-  x=v_node_346_723' & res=v_node_346_723' & S2_3562=S1_3573 & 
-  S1_3488=S_3532 & v_3485=v_3570 & 1+m_3572=m & 1+m_3561=m & n_3531=m_3487 & 
-  -1+n=m_3487 & 0<=m & (-1+m)<=m_3487 & !(v_bool_335_721') & (1+v)<=v_3570 & 
-  v_node_346_723'!=null & v_bool_334_722' & FIL(S_3532,S2_3562) & 
-  0<=m_3487 | r_3571=tmp_83' & x=v_node_346_723' & res=v_node_346_723' & 
-  S2_3562=S1_3573 & S1_3488=S_3532 & v_3485=v_3570 & 1+m_3572=m & 1+
-  m_3561=m & n_3531=m_3487 & -1+n=m_3487 & 0<=m & (-1+m)<=m_3487 & 
-  !(v_bool_335_721') & (1+v_3570)<=v & v_node_346_723'!=null & 
-  v_bool_334_722' & FIL(S_3532,S2_3562) & 0<=m_3487) & S=union(S1_3488,
-  {v_3485}) & S2=union(S1_3573,{v_3570}) & 
+!!! NEW RELS:[ (exists(r_2711:exists(tmp_83':exists(x:exists(res:exists(m_2712:exists(m_2703:exists(n_2677:exists(n:exists(m:exists(v_bool_335_721':exists(v:exists(v_node_346_723':exists(v_bool_334_722':exists(m_2647:exists(S1_2648:exists(v_2645:exists(S1_2713:exists(v_2710:(r_2711=tmp_83' & 
+  x=v_node_346_723' & res=v_node_346_723' & S2_2704=S1_2713 & 
+  S1_2648=S_2678 & v_2645=v_2710 & 1+m_2712=m & 1+m_2703=m & n_2677=m_2647 & 
+  -1+n=m_2647 & 0<=m & (-1+m)<=m_2647 & !(v_bool_335_721') & (1+v)<=v_2710 & 
+  v_node_346_723'!=null & v_bool_334_722' & FIL(S_2678,S2_2704) & 
+  0<=m_2647 | r_2711=tmp_83' & x=v_node_346_723' & res=v_node_346_723' & 
+  S2_2704=S1_2713 & S1_2648=S_2678 & v_2645=v_2710 & 1+m_2712=m & 1+
+  m_2703=m & n_2677=m_2647 & -1+n=m_2647 & 0<=m & (-1+m)<=m_2647 & 
+  !(v_bool_335_721') & (1+v_2710)<=v & v_node_346_723'!=null & 
+  v_bool_334_722' & FIL(S_2678,S2_2704) & 0<=m_2647) & S=union(S1_2648,
+  {v_2645}) & S2=union(S1_2713,{v_2710}) & 
   S!=()))))))))))))))))))) --> FIL(S,S2),
  (S2= & S=) --> FIL(S,S2)]
 !!! NEW ASSUME:[]
@@ -704,10 +503,10 @@ Restarting Mona ...
                               (([S2=S1][n_88=n & 0<=n]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (S2= & S2=S1) --> TRAV(S1,S2),
- (exists(S1_3720:exists(v_3717:exists(S1_3691:exists(v_3688:v_3717=v_3688 & 
-  S1_3691=S1_3697 & S2_3716=S1_3720 & TRAV(S1_3697,S2_3716) & 
-  S2=union(S1_3720,{v_3717}) & S1!=() & S1=union(S1_3691,
-  {v_3688})))))) --> TRAV(S1,S2),
+ (exists(S1_2808:exists(v_2805:exists(S1_2785:exists(v_2782:v_2805=v_2782 & 
+  S1_2785=S1_2789 & S2_2804=S1_2808 & TRAV(S1_2789,S2_2804) & 
+  S2=union(S1_2808,{v_2805}) & S1!=() & S1=union(S1_2785,
+  {v_2782})))))) --> TRAV(S1,S2),
  (S1=S2 & S2=) --> TRAV(S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -717,20 +516,8 @@ Checking procedure merge1$node~node...
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 [mona.ml]: Mona is preparing to restart because of mona aborted execution
 Restarting Mona ...
-
-[mona.ml]: Mona is preparing to restart because of mona aborted execution
-Restarting Mona ...
-Timeout when checking #simplify  Restarting Omega after ... 194 invocations Stop Omega... 194 invocations Starting Omega...oc
-Timeout when checking #simplify  Restarting Omega after ... 195 invocations Stop Omega... 195 invocations Starting Omega...oc
-Timeout when checking #simplify  Restarting Omega after ... 196 invocations Stop Omega... 196 invocations Starting Omega...oc
-Timeout when checking #simplify  Restarting Omega after ... 197 invocations Stop Omega... 197 invocations Starting Omega...oc
-Timeout when checking #simplify  Restarting Omega after ... 201 invocations Stop Omega... 201 invocations Starting Omega...oc
-Timeout when checking #simplify  Restarting Omega after ... 203 invocations Stop Omega... 203 invocations Starting Omega...oc
 
 Context of Verification Failure: File "sll_msb.ss",Line:107,Col:10
 Last Proving Location: File "sll_msb.ss",Line:119,Col:11
@@ -756,210 +543,12 @@ Message: Unexpected error in computing fixpoint by FixBag
                   ())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 21::
-                              
-                              x2::node<v_3835,r_3836>@M[Orig][] * 
-                              res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
+                              EXISTS(flted_107_3009,
+                              S3_3010: res::sll1<flted_107_3009,S3_3010>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (
-                              ([v_node_204_885_2823_4360'=v_node_121_1015_4378' & 
-                                 v_node_204_885_2823_4360'=res & 
-                                 v_node_204_885_2823_4360'!=null]
-                               [r_2702_2822_4362=r_2588_2835_4361]
-                               [m_3837_4382=0 & 
-                                 flted_195_96_4376=flted_107_113 & 
-                                 m_2696_2829_4365=n_4377 & 
-                                 m_2696_2829_4365=n1 & 0!=n1 & 0!=n2 & 
-                                 0<=n2 & 1+m_2703_2830_4363=n_4377 & 
-                                 flted_107_113=n1+n2 & -1+
-                                 flted_195_96_4376=n_4377 & -1+
-                                 n2=m_3837_4382 & 1<=n_4377 & 0<=n_4377 & 1+
-                                 m_2589_2834_4364=n_4377]
-                               [x1=r_2695_2824_4366 & null!=x1][x2!=null]
-                               [r_3836=null]
-                               [S1_2590_2833_4372=S1_2704_2828_4371 & 
-                                 S_4381=S1 & S_4381=S3 & 
-                                 v_3835=v_2694_2827_4373 & 
-                                 v_2701_2826_4370=v_2587_2832_4369 & 
-                                 S1_3838_4380= & S2=union(S1_3838_4380,
-                                 {v_3835}) & S1!=() & 
-                                 v_2694_2827_4373<=v_2701_2826_4370 & 
-                                 S2!=() & S1=union(S1_2697_2825_4368,
-                                 {v_2694_2827_4373}) & 
-                                 S_4381=union(S1_2590_2833_4372,
-                                 {v_2587_2832_4369}) & MRG(S3,S1,S2) & 
-                                 INS(S_4381,S1,a_2812_4367) & 
-                                 S1_2697_2825_4368=union(S1_2704_2828_4371,
-                                 {v_2701_2826_4370})]
-                               [v_bool_203_892_2837_4374']
-                               [!(v_bool_199_893_2836_4375')]
-                               [!(v_bool_113_1017_4383')]
-                               [!(v_bool_109_1018_4384')]
-                               [!(v_bool_118_1016_4385')]))&
-                              {FLOW,(20,21)=__norm}
-                              or x2::node<v_3835,r_3836>@M[Orig][] * 
-                                 res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([r_2762_2839_4332=v_node_208_2759_2838_4331 & 
-                                    r_2762_2839_4332!=null]
-                                  [tmp_97_2854_4334'=r_2588_2853_4333]
-                                  [x1=v_node_209_891_2840_4341' & null!=x1]
-                                  [x2!=null]
-                                  [flted_107_4187_4327=flted_107_113 & 
-                                    m_3837_4353=n2_4036_4329 & n1=n_4340 & 
-                                    n1_4034_4328=flted_195_96_4339 & -1+
-                                    n2=m_3837_4353 & 
-                                    0!=flted_107_4187_4327 & 0<=n2 & 
-                                    0<=n2_4036_4329 & 2+
-                                    m_2589_2850_4338=flted_195_96_4339 & 
-                                    0!=n2 & 0<=n1_4034_4328 & 2+
-                                    n_2626_2849_4336=flted_195_96_4339 & 1+
-                                    flted_195_2663_2851_4337=flted_195_96_4339 & 
-                                    0!=m_3837_4353 & 1+
-                                    m_2763_2852_4335=flted_195_96_4339 & 1+
-                                    n_4340=flted_195_96_4339 & 
-                                    flted_107_113=n1+n2 & 0<=n_4340 & 
-                                    0!=n1 & 2<=flted_195_96_4339 & 
-                                    flted_107_4187_4327=n1_4034_4328+
-                                    n2_4036_4329]
-                                  [null!=r_3836]
-                                  [res=v_node_119_1014_4330' & 
-                                    null!=v_node_119_1014_4330']
-                                  [v_2761_2844_4349=v_2587_2843_4348 & 
-                                    S1_2590_2846_4352=S_2627_2845_4351 & 
-                                    S1_2664_2848_4347=S1_2764_2847_4346 & 
-                                    S_4350=S1 & S_4350=S1_4035_4325 & 
-                                    S1_3838_4345=S2_4037_4326 & 
-                                    S3_4188_4324=S3 & (1+
-                                    v_2761_2844_4349)<=v_3835 & 
-                                    S2=union(S1_3838_4345,{v_3835}) & 
-                                    S1=union(S1_2764_2847_4346,
-                                    {v_2761_2844_4349}) & MRG(S3,S1,S2) & 
-                                    S1_2664_2848_4347!=() & 
-                                    INS(S_2627_2845_4351,S1_2664_2848_4347,a_2665_2842_4342) & 
-                                    S_4350=union(S1_2590_2846_4352,
-                                    {v_2587_2843_4348}) & S2!=() & 
-                                    S3_4188_4324!=() & 
-                                    INS(S_4350,S1,a_2813_4344) & 
-                                    S1_3838_4345!=() & S1!=() & 
-                                    MRG(S3_4188_4324,S1_4035_4325,S2_4037_4326)]
-                                  [v_bool_118_1016_4358']
-                                  [!(v_bool_199_893_2855_4354')]
-                                  [!(v_bool_203_892_2856_4355')]
-                                  [!(v_bool_113_1017_4356')]
-                                  [!(v_bool_109_1018_4357')]))&
-                                 {FLOW,(20,21)=__norm}
-                              or x2::node<v_3835,r_3836>@M[Orig][] * 
-                                 res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([v_node_204_885_2823_4298'!=null]
-                                  [r_2702_2822_4300=r_2588_2835_4299]
-                                  [x1=r_2695_2824_4304 & null!=x1][x2!=null]
-                                  [flted_107_4158_4291=flted_107_113 & 
-                                    m_3837_4319=n2_4036_4296 & 
-                                    m_2696_2829_4303=n_4315 & 
-                                    m_2696_2829_4303=n1 & 
-                                    flted_195_96_4314=n1_4034_4295 & 
-                                    0<=n1_4034_4295 & 
-                                    0!=flted_107_4158_4291 & 0<=n2 & -1+
-                                    flted_195_96_4314=n_4315 & 
-                                    0<=n2_4036_4296 & 0<=n_4315 & 
-                                    flted_107_113=n1+n2 & 1+
-                                    m_2589_2834_4302=n_4315 & 1+
-                                    m_2703_2830_4301=n_4315 & 1<=n_4315 & -1+
-                                    n2=m_3837_4319 & 
-                                    flted_107_4158_4291=n1_4034_4295+
-                                    n2_4036_4296 & 0!=m_3837_4319 & 0!=n2 & 
-                                    0!=n1]
-                                  [null!=r_3836]
-                                  [res=v_node_119_1014_4297' & 
-                                    null!=v_node_119_1014_4297']
-                                  [S1_3838_4317=S2_4037_4294 & 
-                                    S3_4159_4290=S3 & S_4318=S1 & 
-                                    S_4318=S1_4035_4293 & 
-                                    S1_2590_2833_4310=S1_2704_2828_4309 & 
-                                    v_2701_2826_4308=v_2587_2832_4307 & 
-                                    v_3835=v_2694_2827_4311 & 
-                                    S3_4159_4290!=() & 
-                                    v_2694_2827_4311<=v_2701_2826_4308 & 
-                                    S_4318=union(S1_2590_2833_4310,
-                                    {v_2587_2832_4307}) & S2!=() & 
-                                    INS(S_4318,S1,a_2812_4305) & 
-                                    S1_2697_2825_4306=union(S1_2704_2828_4309,
-                                    {v_2701_2826_4308}) & 
-                                    S1=union(S1_2697_2825_4306,
-                                    {v_2694_2827_4311}) & MRG(S3,S1,S2) & 
-                                    S1!=() & S2=union(S1_3838_4317,
-                                    {v_3835}) & S1_3838_4317!=() & 
-                                    MRG(S3_4159_4290,S1_4035_4293,S2_4037_4294)]
-                                  [v_bool_203_892_2837_4312']
-                                  [v_bool_118_1016_4322']
-                                  [!(v_bool_199_893_2836_4313')]
-                                  [!(v_bool_113_1017_4320')]
-                                  [!(v_bool_109_1018_4321')]))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([(n1=0 & n2=flted_107_113 & S2=S3 & 
-                                    v_node_114_1004_4286'=x2 & res=x2 & 
-                                    (flted_107_113+1)<=0 & 
-                                    !(v_bool_109_1018_4289') & x1=null & 
-                                    x2!=null & v_bool_113_1017_4288' | 
-                                    n1=0 & n2=flted_107_113 & S2=S3 & 
-                                    v_node_114_1004_4286'=x2 & res=x2 & 
-                                    !(v_bool_109_1018_4289') & x1=null & 
-                                    x2!=null & v_bool_113_1017_4288' & 
-                                    1<=flted_107_113) & S1= & 0<=n1 & 
-                                    S2!=() & 0<=n2 & MRG(S3,S1,S2)]
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              or res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([n1=flted_107_113 & 0<=n1][n2=0 & 0<=n2]
-                                  [res=v_node_110_1003_4283' & res=x1]
-                                  [x2=null][S1=S3 & S2= & MRG(S3,S1,S2)]
-                                  [v_bool_109_1018_4285']))&
-                                 {FLOW,(20,21)=__norm}
-                              or x2::node<v_3835,r_3836>@M[Orig][] * 
-                                 res::sll1<flted_107_113,S3>@M[Orig][LHSCase]@ rem br[{384,383}]&
-                                 (
-                                 ([r_2762_2839_4388=v_node_208_2759_2838_4387 & 
-                                    r_2762_2839_4388!=null]
-                                  [tmp_97_2854_4390'=r_2588_2853_4389]
-                                  [m_3837_4410=0 & n1=n_4396 & 
-                                    flted_107_113=flted_195_96_4395 & 
-                                    0!=n1 & 1+n_4396=flted_195_96_4395 & 
-                                    0<=n2 & 1+
-                                    flted_195_2663_2851_4393=flted_195_96_4395 & 
-                                    2+n_2626_2849_4392=flted_195_96_4395 & 
-                                    -1+n2=m_3837_4410 & 0<=n_4396 & 1+
-                                    m_2763_2852_4391=flted_195_96_4395 & 
-                                    flted_107_113=n1+n2 & 0!=n2 & 2+
-                                    m_2589_2850_4394=flted_195_96_4395 & 
-                                    2<=flted_195_96_4395]
-                                  [v_node_209_891_2840_4398'=x1 & 
-                                    v_node_209_891_2840_4398'=v_node_121_1015_4397' & 
-                                    v_node_209_891_2840_4398'=res & null!=x1]
-                                  [x2!=null][r_3836=null]
-                                  [v_2761_2844_4406=v_2587_2843_4405 & 
-                                    S1_2590_2846_4409=S_2627_2845_4408 & 
-                                    S1_2664_2848_4404=S1_2764_2847_4403 & 
-                                    S_4407=S1 & S_4407=S3 & S1_3838_4402= & 
-                                    MRG(S3,S1,S2) & 
-                                    S_4407=union(S1_2590_2846_4409,
-                                    {v_2587_2843_4405}) & S1!=() & (1+
-                                    v_2761_2844_4406)<=v_3835 & 
-                                    S1_2664_2848_4404!=() & 
-                                    S2=union(S1_3838_4402,{v_3835}) & 
-                                    S2!=() & INS(S_4407,S1,a_2813_4401) & 
-                                    INS(S_2627_2845_4408,S1_2664_2848_4404,a_2665_2842_4399) & 
-                                    S1=union(S1_2764_2847_4403,
-                                    {v_2761_2844_4406})]
-                                  [!(v_bool_199_893_2855_4411')]
-                                  [!(v_bool_203_892_2856_4412')]
-                                  [!(v_bool_113_1017_4413')]
-                                  [!(v_bool_109_1018_4414')]
-                                  [!(v_bool_118_1016_4415')]))&
-                                 {FLOW,(20,21)=__norm}
-                              )
+                              ([MRG(S3_3010,S1,S2)]
+                               [flted_107_3009=n1+n2 & 0<=n1 & 0<=n2]))&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S3=S1 & S2=) --> MRG(S3,S1,S2),
  (exists(res:exists(n1:exists(v_node_114_1004':exists(flted_107_113:exists(v_bool_109_1018':exists(x1:exists(x2:exists(v_bool_113_1017':exists(n2:(res=x2 & 
   S2=S3 & n1=0 & v_node_114_1004'=x2 & flted_107_113=n2 & n2<=-1 & 
@@ -967,32 +556,13 @@ Message: Unexpected error in computing fixpoint by FixBag
   S2=S3 & n1=0 & v_node_114_1004'=x2 & flted_107_113=n2 & 
   v_bool_109_1018'<=0 & x1=null & x2!=null & 1<=v_bool_113_1017' & 1<=n2) & 
   S2!=() & S1=)))))))))) --> MRG(S3,S1,S2),
- (exists(S1_2590_2833:exists(v_2587_2832:exists(S1_2704_2828:exists(v_2701_2826:exists(INS:exists(S:exists(a_2812:exists(S1_2697_2825:exists(v_2694_2827:exists(S1_3838:exists(v_3835:S1_2704_2828=S1_2590_2833 & 
-  v_2587_2832=v_2701_2826 & S3_4159!=() & S1_3838!=() & S=union(S1_2590_2833,
-  {v_2587_2832}) & S1_2697_2825=union(S1_2704_2828,{v_2701_2826}) & 
-  v_2694_2827<=v_2701_2826 & v_2694_2827=v_3835 & S=S1_4035 & 
-  S2_4037=S1_3838 & S3=S3_4159 & S=S1 & INS(S,S1,a_2812) & 
-  S1=union(S1_2697_2825,{v_2694_2827}) & S2!=() & S2=union(S1_3838,
-  {v_3835}) & S1!=())))))))))))) --> MRG(S3,S1,S2),
- (exists(S1_2590_2846:exists(S_2627_2845:exists(a_2665_2842:exists(S1_2664_2848:exists(v_2587_2843:exists(INS:exists(S:exists(a_2813:exists(S1_2764_2847:exists(v_2761_2844:exists(S1_3838:exists(v_3835:S_2627_2845=S1_2590_2846 & 
-  S1_2664_2848!=() & S3_4188!=() & S1_3838!=() & S=union(S1_2590_2846,
-  {v_2587_2843}) & INS(S_2627_2845,S1_2664_2848,a_2665_2842) & (1+
-  v_2761_2844)<=v_3835 & S1_2764_2847=S1_2664_2848 & 
-  v_2587_2843=v_2761_2844 & S=S1_4035 & S2_4037=S1_3838 & S3=S3_4188 & 
-  S=S1 & INS(S,S1,a_2813) & S1=union(S1_2764_2847,{v_2761_2844}) & S1!=() & 
-  S2!=() & S2=union(S1_3838,{v_3835})))))))))))))) --> MRG(S3,S1,S2),
- (exists(S1_2704_2828:exists(S1_2590_2833:exists(v_2587_2832:exists(v_2701_2826:exists(INS:exists(S:exists(a_2812:exists(S1_2697_2825:exists(v_2694_2827:exists(S1_3838:exists(v_3835:S1_2704_2828=S1_2590_2833 & 
-  v_2587_2832=v_2701_2826 & S1_3838= & S1_2697_2825=union(S1_2704_2828,
-  {v_2701_2826}) & S=union(S1_2590_2833,{v_2587_2832}) & 
-  v_2694_2827<=v_2701_2826 & v_2694_2827=v_3835 & S=S1 & S=S3 & 
-  INS(S,S1,a_2812) & S2!=() & S1=union(S1_2697_2825,{v_2694_2827}) & 
-  S2=union(S1_3838,{v_3835}) & S1!=())))))))))))) --> MRG(S3,S1,S2),
- (exists(S1_2590_2846:exists(S_2627_2845:exists(a_2665_2842:exists(S1_2664_2848:exists(v_2587_2843:exists(INS:exists(S:exists(a_2813:exists(S1_3838:exists(v_3835:exists(S1_2764_2847:exists(v_2761_2844:S_2627_2845=S1_2590_2846 & 
-  S=union(S1_2590_2846,{v_2587_2843}) & S1_3838= & S1_2664_2848!=() & 
-  INS(S_2627_2845,S1_2664_2848,a_2665_2842) & (1+v_2761_2844)<=v_3835 & 
-  S1_2764_2847=S1_2664_2848 & v_2587_2843=v_2761_2844 & S=S1 & S=S3 & 
-  INS(S,S1,a_2813) & S2=union(S1_3838,{v_3835}) & S1=union(S1_2764_2847,
-  {v_2761_2844}) & S2!=() & S1!=()))))))))))))) --> MRG(S3,S1,S2)]
+ (exists(INS:exists(S1_2910:exists(a_2911:exists(S:exists(S1_2880:exists(v_2877:S1_2910=S1_2928 & 
+  S3_2966!=() & S1_2910!=() & S1_2880!=() & INS(S,S1_2910,a_2911) & 
+  S2_2930=S1_2880 & S3=S3_2966 & S=S1 & S1!=() & S2=union(S1_2880,
+  {v_2877}) & S2!=()))))))) --> MRG(S3,S1,S2),
+ (exists(INS:exists(a_2911:exists(S:exists(S1_2910:exists(S1_2880:exists(v_2877:S1_2910!=() & 
+  S1_2880= & INS(S,S1_2910,a_2911) & S=S1 & S1_2910=S3 & S2=union(S1_2880,
+  {v_2877}) & S2!=() & S1!=()))))))) --> MRG(S3,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure merge1$node~node SUCCESS
@@ -1020,13 +590,13 @@ Checking procedure pop_front$node...
                               x'::sll1<flted_93_115,S2>@M[Orig][LHSCase]@ rem br[{384,383}]&
                               (([1+flted_93_115=m & 0<=m][S2<subset> S1 ]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(m:exists(res:exists(tmp_116':exists(r_4764:exists(x':exists(x:exists(flted_93_115:exists(next_97_1033':exists(v_node_98_1034':exists(m_4765:exists(S1_4766:exists(v_4763:(-1+
-  m=m_4765 & S1_4766=S2 & res=v_node_98_1034' & tmp_116'=v_node_98_1034' & 
-  r_4764=x' & x=v_node_98_1034' & flted_93_115=m_4765 & m_4765<=-2 & 
-  next_97_1033'=null & v_node_98_1034'!=null | -1+m=m_4765 & S1_4766=S2 & 
-  res=v_node_98_1034' & tmp_116'=v_node_98_1034' & r_4764=x' & 
-  x=v_node_98_1034' & flted_93_115=m_4765 & next_97_1033'=null & 
-  v_node_98_1034'!=null & 0<=m_4765) & S1=union(S1_4766,{v_4763}) & 
+!!! NEW RELS:[ (exists(m:exists(res:exists(tmp_116':exists(r_3032:exists(x':exists(x:exists(flted_93_115:exists(next_97_1033':exists(v_node_98_1034':exists(m_3033:exists(S1_3034:exists(v_3031:(-1+
+  m=m_3033 & S1_3034=S2 & res=v_node_98_1034' & tmp_116'=v_node_98_1034' & 
+  r_3032=x' & x=v_node_98_1034' & flted_93_115=m_3033 & m_3033<=-2 & 
+  next_97_1033'=null & v_node_98_1034'!=null | -1+m=m_3033 & S1_3034=S2 & 
+  res=v_node_98_1034' & tmp_116'=v_node_98_1034' & r_3032=x' & 
+  x=v_node_98_1034' & flted_93_115=m_3033 & next_97_1033'=null & 
+  v_node_98_1034'!=null & 0<=m_3033) & S1=union(S1_3034,{v_3031}) & 
   S1!=()))))))))))))) --> PF(S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -1058,29 +628,19 @@ Message: Unexpected error in computing fixpoint by FixBag
                   ([forall(a:a <notin> S  | v<=a)]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 16::ref [x]
-                              x'::sll1<flted_82_118,S1>@M[Orig][LHSCase]@ rem br[{383}]&
+                              EXISTS(flted_82_3083,
+                              S1_3084: x'::sll1<flted_82_3083,S1_3084>@M[Orig][LHSCase]@ rem br[{383}]&
                               (
-                              ([x=r_4809_4832]
-                               [x'=tmp_119_4829' & tmp_119_4829'!=null]
-                               [n=m_4810_4833 & -1+
-                                 flted_82_118=m_4810_4833 & 0<=n & 
-                                 -1<=m_4810_4833]
-                               [v_4808_4831=v & S=S1_4811_4830 & 
-                                 forall(a:a <notin> S  | v<=a) & 
-                                 S1=union(S1_4811_4830,{v_4808_4831}) & 
-                                 PUF(S1,S,v) & S1!=()]
-                               ))&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_4811:exists(v_4808:v=v_4808 & S1_4811=S & forall(a:a <notin> S
-   | v<=a) & S1=union(S1_4811,{v_4808})))) --> PUF(S1,S,v)]
+                              ([null!=x'][S1_3084!=() & PUF(S1_3084,S,v)]
+                               [-1+flted_82_3083=n & 0<=n]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_3070:exists(v_3067:v=v_3067 & S1_3070=S & forall(a:a <notin> S
+   | v<=a) & S1=union(S1_3070,{v_3067})))) --> PUF(S1,S,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure push_front$node~int SUCCESS
 
 Checking procedure set_next$node~node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 ( ) :sll_msb.ss:145: 10: Postcondition cannot be derived from context
 
 
@@ -1089,23 +649,11 @@ Failed States:
 [
  Label: 
  State:
-        
-         fe_kind: Valid
-         fe_name: 
-         fe_locs: Failure_Valid
-       FAIL_OR 
-        
-         fe_kind: Valid
-         fe_name: 
-         fe_locs: Failure_Valid
-       FAIL_OR 
-        
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: 15.4 no match for rhs data node: x (may-bug).
-                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
-       
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: 15.4 no match for rhs data node: x (may-bug).
+                  fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
  ]
 Successful States:
 
@@ -1129,18 +677,15 @@ Checking procedure set_null2$node...
 Procedure set_null2$node SUCCESS
 
 Checking procedure size_helper$node~int... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 Procedure size_helper$node~int SUCCESS
 
 Checking procedure size$node... 
 Procedure size$node SUCCESS
 
 Checking procedure split1$node~int... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
-[mona.ml]: Mona is preparing to restart because of mona aborted execution
-Restarting Mona ...
-
 !!! REL :  SPLIT(S,S1,S2)
 !!! POST:  union(S1,S2)=S
 !!! PRE :  true
@@ -1170,29 +715,29 @@ Restarting Mona ...
                               ([S1!=() & S2!=() & union(S1,S2)=S][null!=res]
                                [null!=x'][0!=n1 & 0<=n & n=n1+n2 & 0!=n2]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_5059:exists(v_5056:exists(S1_5171:exists(v_5168:S1_5059!=() & 
-  S1_5171= & v_5056=v_5168 & S2=S1_5059 & S=union(S1_5059,{v_5056}) & 
-  S1=union(S1_5171,{v_5168}) & S!=()))))) --> SPLIT(S,S1,S2),
- (exists(v_node_388_678':exists(tmp_78':exists(xnext_5216:exists(m_5220:exists(m_5108:exists(a:exists(n:exists(n_5116:exists(n1_5212:exists(n2_5213:exists(x':exists(v_bool_377_679':exists(x:exists(res:exists(r_5219:exists(r_5107:exists(a_5217:exists(n1:exists(n2:exists(S1_5221:exists(v_5218:exists(S1_5109:exists(v_5106:S1_5214!=() & 
-  S2_5215!=() & S1_5109!=() & (v_node_388_678'=res & tmp_78'=res & 
-  xnext_5216=r_5219 & 1+m_5220=n1 & m_5108=-1+n1+n2 & -1+a=a_5217 & n=n1+
-  n2 & n_5116=-1+n1+n2 & 1+n1_5212=n1 & n2_5213=n2 & S2_5215=S2 & 
-  S1_5214=S1_5221 & S1_5109=S_5117 & v_5218=v_5106 & x'=x & n2<=-1 & 
-  !(v_bool_377_679') & x!=null & res!=null & r_5219!=null & r_5107!=null & 
-  1<=a_5217 & a_5217<=(-2+n1+n2) & SPLIT(S_5117,S1_5214,S2_5215) | 
-  v_node_388_678'=res & tmp_78'=res & xnext_5216=r_5219 & n1=0 & m_5220=-1 & 
-  1+m_5108=n2 & -1+a=a_5217 & n=n2 & 1+n_5116=n2 & n1_5212=-1 & n2_5213=n2 & 
-  S2_5215=S2 & S1_5214=S1_5221 & S1_5109=S_5117 & v_5218=v_5106 & x'=x & 
-  1<=a_5217 & (2+a_5217)<=n2 & !(v_bool_377_679') & x!=null & res!=null & 
-  r_5219!=null & r_5107!=null & SPLIT(S_5117,S1_5214,S2_5215) | 
-  v_node_388_678'=res & tmp_78'=res & xnext_5216=r_5219 & 1+m_5220=n1 & 
-  m_5108=-1+n1+n2 & -1+a=a_5217 & n=n1+n2 & n_5116=-1+n1+n2 & 1+n1_5212=n1 & 
-  n2_5213=n2 & S2_5215=S2 & S1_5214=S1_5221 & S1_5109=S_5117 & 
-  v_5218=v_5106 & x'=x & !(v_bool_377_679') & x!=null & res!=null & 
-  r_5219!=null & r_5107!=null & 2<=n1 & 1<=a_5217 & a_5217<=(-2+n1+n2) & 
-  SPLIT(S_5117,S1_5214,S2_5215) & 1<=n2) & S!=() & S1=union(S1_5221,
-  {v_5218}) & S=union(S1_5109,
-  {v_5106}))))))))))))))))))))))))) --> SPLIT(S,S1,S2)]
+!!! NEW RELS:[ (exists(S1_3303:exists(v_3300:exists(S1_3385:exists(v_3382:S1_3303!=() & 
+  S1_3385= & v_3300=v_3382 & S2=S1_3303 & S=union(S1_3303,{v_3300}) & 
+  S1=union(S1_3385,{v_3382}) & S!=()))))) --> SPLIT(S,S1,S2),
+ (exists(v_node_388_678':exists(tmp_78':exists(xnext_3413:exists(m_3417:exists(m_3341:exists(a:exists(n:exists(n_3343:exists(n1_3409:exists(n2_3410:exists(x':exists(v_bool_377_679':exists(x:exists(res:exists(r_3416:exists(r_3340:exists(a_3414:exists(n1:exists(n2:exists(S1_3418:exists(v_3415:exists(S1_3342:exists(v_3339:S1_3411!=() & 
+  S2_3412!=() & S1_3342!=() & (v_node_388_678'=res & tmp_78'=res & 
+  xnext_3413=r_3416 & 1+m_3417=n1 & m_3341=-1+n1+n2 & -1+a=a_3414 & n=n1+
+  n2 & n_3343=-1+n1+n2 & 1+n1_3409=n1 & n2_3410=n2 & S2_3412=S2 & 
+  S1_3411=S1_3418 & S1_3342=S_3344 & v_3415=v_3339 & x'=x & n2<=-1 & 
+  !(v_bool_377_679') & x!=null & res!=null & r_3416!=null & r_3340!=null & 
+  1<=a_3414 & a_3414<=(-2+n1+n2) & SPLIT(S_3344,S1_3411,S2_3412) | 
+  v_node_388_678'=res & tmp_78'=res & xnext_3413=r_3416 & n1=0 & m_3417=-1 & 
+  1+m_3341=n2 & -1+a=a_3414 & n=n2 & 1+n_3343=n2 & n1_3409=-1 & n2_3410=n2 & 
+  S2_3412=S2 & S1_3411=S1_3418 & S1_3342=S_3344 & v_3415=v_3339 & x'=x & 
+  1<=a_3414 & (2+a_3414)<=n2 & !(v_bool_377_679') & x!=null & res!=null & 
+  r_3416!=null & r_3340!=null & SPLIT(S_3344,S1_3411,S2_3412) | 
+  v_node_388_678'=res & tmp_78'=res & xnext_3413=r_3416 & 1+m_3417=n1 & 
+  m_3341=-1+n1+n2 & -1+a=a_3414 & n=n1+n2 & n_3343=-1+n1+n2 & 1+n1_3409=n1 & 
+  n2_3410=n2 & S2_3412=S2 & S1_3411=S1_3418 & S1_3342=S_3344 & 
+  v_3415=v_3339 & x'=x & !(v_bool_377_679') & x!=null & res!=null & 
+  r_3416!=null & r_3340!=null & 2<=n1 & 1<=a_3414 & a_3414<=(-2+n1+n2) & 
+  SPLIT(S_3344,S1_3411,S2_3412) & 1<=n2) & S!=() & S1=union(S1_3418,
+  {v_3415}) & S=union(S1_3342,
+  {v_3339}))))))))))))))))))))))))) --> SPLIT(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -1235,6 +780,6 @@ Termination checking result:
 
 20 false contexts at: ( (159,13)  (159,4)  (339,10)  (339,6)  (338,10)  (338,6)  (36,17)  (36,24)  (37,7)  (37,14)  (286,4)  (286,11)  (291,4)  (291,11)  (290,10)  (290,4)  (289,9)  (289,13)  (289,4)  (289,4) )
 
-Total verification time: 86.56 second(s)
-	Time spent in main process: 6.14 second(s)
-	Time spent in child processes: 80.42 second(s)
+Total verification time: 14.02 second(s)
+	Time spent in main process: 2.38 second(s)
+	Time spent in child processes: 11.64 second(s)
