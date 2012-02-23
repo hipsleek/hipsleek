@@ -13,10 +13,6 @@ bst0<m> == self = null & m = 0
 	or self::node2<_, p, q> * p::bst0<m1> * q::bst0<m2> & m = 1 + m1 + m2
 	inv m >= 0;
 
-bst1<m, n> == self = null & m = 0 & n = 0
-	or self::node2<_, p, q> * p::bst1<m1, n1> * q::bst1<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
-	inv m >= 0 & n >= 0;
-
 /* view for a doubly linked list with size */
 dll<p, n> == self = null & n = 0
 	or self::node2<_, p, q> * q::dll<self, n1> & n = n1+1
