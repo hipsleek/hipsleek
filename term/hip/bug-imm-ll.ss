@@ -27,9 +27,14 @@ Proving precondition in method length$node for spec:
 Current States: [ x'::node<Anon_578,q_579>@L[Orig] * q_579::ls<flted_15_577,self_576>@L[Orig] & flted_15_577+1=Anon_15 & self_576=x' & x'=x & x'!=null & 133::!(v_bool_24_525') & x'!=null & !(v_bool_24_525') & v_int_27_523'=1 & v_node_27_521'
 */
 
+relation r(int n,int x).
+relation r2(int n,int x).
 int length(node x)
+  infer [r,r2]
   requires x::clist<_>@L & Loop
-  ensures false;
+  ensures r(n,res);
+  /* requires x::ls<n,null>@L & Term[n] */
+  /* ensures r2(res,n); */
 {
 	if (x == null)
       return 0;
