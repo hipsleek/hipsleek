@@ -93,9 +93,9 @@ int count(node2 z)
 //fail to compute fixpoint if use append
 relation FLAT(int a, int b).
 void flatten(node2 x)
-  infer[FLAT]
+//infer[FLAT]
   requires x::bst1<m, h>
-  ensures  x::dll<q, m1> & q=null &  FLAT(m1,m);//& q=null & FLAT(m1,m)
+  ensures  x::dll<q, m1> & q=null & S1=S2;//FLAT(m1,m);//& q=null & FLAT(m1,m)
 {
 	node2 tmp;
 	if (x != null)

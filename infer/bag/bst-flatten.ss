@@ -38,8 +38,27 @@ void flatten_ok(node2 x)
 	}
 }
 
+relation FLAT1(bag x, bag y).
+void flatten_fail1(node2 x)
+  infer[FLAT1]
+  requires x::bst3<n,h,sm, lg,S1>
+  ensures x::dll<q, n,S2> & q=null & S1=S2;//;FLAT(S1,S2);//S1=S2;
+{
+  node2 tmp;
+  if (x != null)
+	{
+      flatten_fail1(x.left);
+      flatten_fail1(x.right);
+      tmp = append1(x.left, x.right);
+      x.left = null;
+      x.right = tmp;
+      if (tmp != null)
+        tmp.left = x;
+	}
+}
+
 relation FLAT(bag x, bag y).
-void flatten(node2 x)
+void flatten_fail2(node2 x)
   infer[FLAT]
   requires x::bst3<n,h,sm, lg,S1>
   ensures x::dll<q, n,S2> & q=null & FLAT(S1,S2);//S1=S2;
@@ -47,8 +66,8 @@ void flatten(node2 x)
   node2 tmp;
   if (x != null)
 	{
-      flatten(x.left);
-      flatten(x.right);
+      flatten_fail2(x.left);
+      flatten_fail2(x.right);
       tmp = append1(x.left, x.right);
       x.left = null;
       x.right = tmp;

@@ -97,7 +97,7 @@ relation FLAT(bag x, bag y).
 void flatten(node2 x)
   infer[FLAT]
   requires x::bst3<n,h,sm, lg,S1>
-  ensures x::dll<q, n,S2> & q=null & FLAT(S1,S2);//S1=S2);
+  ensures x::dll<q, n,S2> & q=null & S1=S2;//S1=S2;FLAT(S1,S2)
 {
   node2 tmp;
   if (x != null)
