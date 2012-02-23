@@ -138,9 +138,10 @@ node ret_first(node x)
 node get_next(node x)
   infer[x]
   requires x::ll1<> // x!=null
-  ensures true; // x::node<Anon_933,q_934>@M[Orig] * q_934::ll1@M[Orig] & res=q_934
+  ensures true; // x::node<Anon_937,next_144_823'>@M[Orig] * q_938::ll1@M[Orig] & res=q_938 & next_144_823'=null
 {
   node tmp = x.next;
+  x.next = null;
   return tmp;
 }
 

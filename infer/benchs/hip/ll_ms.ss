@@ -1,14 +1,12 @@
 /* singly linked lists */
 
 /* representation of a node */
-
 data node {
 	int val;
 	node next;
 }
 
 /* view for a singly linked list */
-
 ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1>
   inv n >= 0;
@@ -17,11 +15,11 @@ ll<n> == self = null & n = 0
 
 void dispose(ref node x)
   requires x::node<_,_>
-  ensures x'=null;//'
+  ensures x'=null;
 
 void delete_list(ref node x)
-   requires x::ll<n>
-  ensures x'=null;//'
+  requires x::ll<n>
+  ensures x'=null;
 {
   if (x!=null) {
     delete_list(x.next);
@@ -67,8 +65,7 @@ int size(node x)
   return size_helper(x, m);
 }
 
-//(val)A reference to the first element in the list container.
-//dll
+//A reference to the first element in the list container.
 relation FRONT(int a, int b).
 int front(node x)
   infer[FRONT]
@@ -91,11 +88,11 @@ void swap(ref node x, ref node y)
 /*
 drop current contend, and add n element with v value
  */
-relation ASS(int a, int b, int c).
+relation ASSIGN(int a, int b, int c).
 void assign(ref node x, int n, int v)
-  infer[ASS]
+  infer[ASSIGN]
   requires x::ll<m>//0<=m & 0<=n
-  ensures x'::ll<n1> & ASS(n,n1,m);//' m>=0 & n1>=0 & n1=n
+  ensures x'::ll<n1> & ASSIGN(n,n1,m); // m>=0 & n1>=0 & n1=n
 {
   x =  create_list(n, v);
 }
@@ -103,19 +100,19 @@ void assign(ref node x, int n, int v)
 relation PUF(int a, int b).
 void push_front(ref node x, int v)
   infer[PUF]
- requires x::ll<n>
-  ensures x'::ll<m> & PUF(m,n);//'m=n+1
+  requires x::ll<n>
+  ensures x'::ll<m> & PUF(m,n); //m=n+1
 {
   node tmp = new node(v,x);
   x = tmp;
 }
 
-//pop and return first ele
+//pop and return first element
 relation PF(int a, int b).
 node pop_front(ref node x)
   infer[PF]
-  requires x::ll<m> & x!=null//m>=1
-  ensures x'::ll<n> & PF(n,m);//'m>=1 & m=n+1
+  requires x::ll<m> & x!=null // m>=1
+  ensures x'::ll<n> & PF(n,m); // m>=1 & m=n+1
 {
   node tmp = x;
   x = x.next;
@@ -123,12 +120,11 @@ node pop_front(ref node x)
   return tmp;
 }
 
-//Inferred Pure :[ n1!=0, n1!=0]
 /* append two singly linked lists */
 relation A(int m, int n1, int n2).
 void append(node x, node y)
-  infer[n1, n2, A]
-  requires x::ll<n1> * y::ll<n2> // & 1<=n1 & 0<=n2
+  infer[A]
+  requires x::ll<n1> * y::ll<n2> & x!=null
   ensures x::ll<m> & A(m,n1,n2);//n1>=1 & m>=n1 & m=n2+n1
 {
   if (x.next == null)
@@ -171,7 +167,7 @@ void set_next(node x, node y)
 
 void set_null2(ref node x)
   requires x::ll<i> & x!=null
-  ensures x'::node<_,null>;//'
+  ensures x'::node<_,null>;
 {
   if (4>3)
     x.next = null;
@@ -191,8 +187,8 @@ void set_null(node x)
 relation GNN(int m, int n).
 node get_next_next(node x)
   infer[n,GNN]
-  requires x::ll<n> & x!=null//2<=n
-  ensures res::ll<m> & GNN(m,n);//n>=2 & n=m+2
+  requires x::ll<n> & x!=null //2<=n
+  ensures res::ll<m> & GNN(m,n); //n>=2 & n=m+2
 {
   return x.next.next;
 }
@@ -213,11 +209,10 @@ void insert(node x, int a)
 
 /* function to delete the a-th node in a singly linked list */
 relation DEL(int m, int n).
-//ranking r1(int n).
 void delete(node x, int a)
   infer[n,DEL]
-  requires x::ll<n> //& Term[r1(a)]//& 2<=n
-  ensures x::ll<m> & DEL(m,n);//n>=2 & n=m+1
+  requires x::ll<n> //& 2<=n
+  ensures x::ll<m> & DEL(m,n); //n>=2 & n=m+1
 {
   if (a == 1){
     x.next = x.next.next;
@@ -227,12 +222,12 @@ void delete(node x, int a)
   }
 }
 
-relation DEL2(int m, int n).
 /* function to delete the a-th node in a singly linked list */
+relation DEL2(int m, int n).
 node delete2(node x, int a)
   infer[DEL2]
   requires x::ll<n> //& 0<=n
-  ensures res::ll<m> & DEL2(m,n);//m>=0 & (m+1)>=n & n>=m ==> n=m | n=m+1
+  ensures res::ll<m> & DEL2(m,n);// EXPLAIN: m>=0 & (m+1)>=n & n>=m ==> n=m | n=m+1
 {
 	if (x == null)
 		return x;
@@ -242,12 +237,9 @@ node delete2(node x, int a)
 	}
 }
 
-//NEW RANK:[ (true) --> 0<=(r2(a))]
 /* function to create a singly linked list with a nodes */
-//ranking r2(int n).
 node create_list(int n, int v)
-//infer[r2]
-  requires true//Term[r2(a)]//a >= 0
+  requires true
   ensures res::ll<n>;
 {
   node tmp;
@@ -262,11 +254,11 @@ node create_list(int n, int v)
 }
 
 /* function to reverse a singly linked list */
-relation REV(int k, int m, int n).
+relation REV(node x, int k, int m, int n).
 void reverse(ref node xs, ref node ys)
-  infer[REV, xs']//'
+  infer[REV]
   requires xs::ll<n> * ys::ll<m> //0<=m & 0<=n
-  ensures ys'::ll<k>  & REV(k,m,n);//& xs' = null, m>=0 & k>=m & k=n+m
+  ensures ys'::ll<k> & REV(xs',k,m,n);// xs' = null & m>=0 & k>=m & k=n+m
 {
   if (xs != null) {
     node tmp;
@@ -279,14 +271,13 @@ void reverse(ref node xs, ref node ys)
 }
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
-relation SPLIT(int a, int b, int c).
+relation SPLIT(int a, int b, int c, int d).
 node split1(ref node x, int a)
-  infer[SPLIT]
-        requires x::ll<n> & a > 0 & n > a //2<=n
-  ensures x'::ll<n1> * res::ll<n2> & SPLIT(n,n1,n2);//'n2>=1 & n>=(1+n2) & n=n1+n2
+  infer[SPLIT,n,a]
+  requires x::ll<n> // 1<=a & a<=n
+  ensures x'::ll<n1> * res::ll<n2> & SPLIT(n,a,n1,n2); // n2>=0 & n>=(1+n2) & n=n1+n2 & n=a+n2
 {
 	node tmp;
-
 	if (a == 1)
 	{
 		tmp = x.next; 
@@ -309,8 +300,8 @@ node split1(ref node x, int a)
 relation TRAV(int k, int m).
 void list_traverse(node x)
   infer[TRAV]
-  requires x::ll<n>//0<=n
-  ensures x::ll<m> & TRAV(m,n);//m>=0 & m=n
+  requires x::ll<n> //0<=n
+  ensures x::ll<m> & TRAV(m,n); //m>=0 & m=n
 {
   node t;
   if(x != null) {
@@ -319,11 +310,12 @@ void list_traverse(node x)
     list_traverse(x.next);
   }
 }
+
 relation CPY(int k, int m).
 node list_copy(node x)
   infer[CPY]
   requires x::ll<n> //0<=n
-  ensures x::ll<n> * res::ll<m> & CPY(m,n);//m>=0 & m=n
+  ensures x::ll<n> * res::ll<m> & CPY(m,n); //m>=0 & m=n
 {
   node tmp;
   if (x != null) {
@@ -335,11 +327,11 @@ node list_copy(node x)
 }
 
 /*function to remove the first node which has value v in singly linked list*/
-//relation RMV(int k, int m).
+relation RMV(int k, int m).
 void list_remove(node x, int v)
-        //infer[RMV]
-  requires x::ll<n> & x!=null
-  ensures x::ll<m>  & m <= n;//'
+  infer[RMV]
+  requires x::ll<n> & x!=null // 1<=n
+  ensures x::ll<m> & RMV(m,n); // m>=1 & (m+1)>=n & n>=m
 {
   if(x.next != null) {
     if(x.next.val == v) {
@@ -356,9 +348,9 @@ void list_remove(node x, int v)
 /*function to remove the first node which has value v in nullable singly linked list*/
 relation RMV2(int k, int m).
 node list_remove2(node x, int v)
-        infer[RMV2]
-        requires x::ll<n> //n>=0
-        ensures res::ll<m> & RMV2(m,n);//m+1)>=n & m>=0 & n>=m
+  infer[RMV2]
+  requires x::ll<n> //n>=0
+  ensures res::ll<m> & RMV2(m,n); //m+1)>=n & m>=0 & n>=m
 {
   node tmp;
   if(x != null) {
@@ -379,8 +371,8 @@ node list_remove2(node x, int v)
 relation FIL(int k, int m).
 node list_filter2(ref node x, int v)
   infer[FIL]
-  requires x::ll<n>
-  ensures res::ll<m> & FIL(m,n);//m <= n;n>=0 & n=m//not very good
+  requires x::ll<n> // n>=0
+  ensures res::ll<m> & FIL(m,n); //m>=0 & n>=m
 {
   node tmp;
   if(x != null) {
@@ -404,7 +396,7 @@ relation FGE(int k, int m).
 node find_ge(node x, int v)
   infer[FGE]
   requires x::ll<n>
-  ensures res = null or res::node<m,_> & FGE(m,v);//& m > v;Anon_936>=(1+v)
+  ensures res = null or res::node<m,_> & FGE(m,v); // m>=(1+v)
 {
   if(x == null)
     return null;
@@ -417,9 +409,11 @@ node find_ge(node x, int v)
 }
 
 /*function to splice 2 linked list*/
+relation SPLICE (int a, int b, int c).
 void splice (ref node x, node y)
-  requires x::ll<n> * y::ll<m>
-  ensures x'::ll<m+n>;//'
+  infer [SPLICE]
+  requires x::ll<n> * y::ll<m> // 0<=m & 0<=n
+  ensures x'::ll<t> & SPLICE(t,m,n); // m>=0 & t>=m & t=n+m
 {
   if(x == null)
     x = y;
