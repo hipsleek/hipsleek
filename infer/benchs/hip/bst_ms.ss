@@ -8,7 +8,11 @@ data node2 {
 }
 
 /* view for trees with number of nodes and depth */
-//size, height
+//size
+bst0<m> == self = null & m = 0
+	or self::node2<_, p, q> * p::bst0<m1> * q::bst0<m2> & m = 1 + m1 + m2
+	inv m >= 0;
+
 bst1<m, n> == self = null & m = 0 & n = 0
 	or self::node2<_, p, q> * p::bst1<m1, n1> * q::bst1<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
 	inv m >= 0 & n >= 0;
@@ -19,11 +23,11 @@ dll<p, n> == self = null & n = 0
 	inv n >= 0;
 
 /* function to append 2 doubly linked lists */
-//relation APP(int a, int b, int c).
+relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
-//infer[APP]
+   infer[APP]
    requires x::dll<_, m> * y::dll<_, n>
-  ensures res::dll<r, k> & k=n+ m;//m>=0 & k>=m & k=n+m APP(k,m,n)
+     ensures res::dll<r, k> & APP(k,m,n);//m>=0 & k>=m & k=n+m
 {
 	node2 z;
 
@@ -40,11 +44,11 @@ node2 append(node2 x, node2 y)
 	}
 }
 
-//relation C(int a, int b, int c).
+relation C(int a, int b, int c).
 node2 appendC(node2 x, node2 y)
-//infer [C]
+  infer [C]
   requires x::dll<q, m> * y::dll<p, n>
-  ensures res::dll<_, k> & k=m+n;//C(k,m,n);
+  ensures res::dll<_, k> & C(k,m,n);
 
 {
 	node2 tmp;
@@ -71,11 +75,11 @@ node2 appendC(node2 x, node2 y)
 }
 
 /* function to count the number of nodes in a tree */
-relation CNT(int a, int b).
+relation CNT(int a, int b, int c).
 int count(node2 z)
   infer[CNT]
-  requires z::bst1<n, h>
-  ensures  z::bst1<n, h1> & CNT(h,h1) & res = n;//h1=h;
+  requires z::bst0<n>
+  ensures  z::bst0<n1> & CNT(res,n,n1);//res = n & n>=0 & n=n1;
 {
 	int cleft, cright;
 
@@ -91,11 +95,11 @@ int count(node2 z)
 
 /* function to transform a tree in a doubly linked list */
 //fail to compute fixpoint if use append
-relation FLAT(int a, int b).
+//relation FLAT(int a, int b).
 void flatten(node2 x)
-//infer @post [x]
-  requires x::bst1<m, h>
-  ensures  x::dll<q, m1> & q=null & m1=m;//& q=null & FLAT(m1,m) & q=null
+  infer @post [x]
+  requires x::bst0<m>
+  ensures  x::dll<q, m1> ;//& q=null
 {
 	node2 tmp;
 	if (x != null)
@@ -112,18 +116,16 @@ void flatten(node2 x)
 
 /* insert a node in a bst */
 relation INS(int a, int b).
-//fail to compute fixpoint
 node2 insert(node2 x, int a)
-//infer[INS]
-  requires x::bst1<m, h>
-  ensures res::bst1<m+1, h1> & res != null & h1>=h;//INS(h,h1);
+  infer[INS]
+  requires x::bst0<m>
+  ensures res::bst0<m1> & res != null & INS(m,m1);//m>=0 & m+1=m1
 {
 	node2 tmp;
-    node2 tmp_null = null;
+        node2 tmp_null = null;
 
-    if (x == null){
+	if (x == null)
       return new node2(a, null, null);
-    }
 	else
 	{
 		if (a <= x.val)
@@ -143,11 +145,10 @@ node2 insert(node2 x, int a)
 
 /* delete a node from a bst */
 relation RMV_MIN(int a, int b).
-//fail to compute fixpoint
 int remove_min(ref node2 x)
-//infer[RMV_MIN]
-  requires x::bst1<n, h> & x != null
-  ensures x'::bst1<n-1, h1> & h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
+  infer[RMV_MIN,x]
+  requires x::bst0<n> //& x != null
+  ensures x'::bst0<n1> & RMV_MIN(n,n1);//n1=n-1;//'
 {
 	int tmp, a;
 
@@ -168,17 +169,22 @@ int remove_min(ref node2 x)
 	}
 }
 
+int remove_min1(ref node2 x)
+  requires x::bst0<n> & x != null
+  ensures x'::bst0<n-1>;//'
+
 relation DEL(int a, int b).
+//fail to compute fixpoint
 void delete(ref node2 x, int a)
   infer[DEL]
-  requires x::bst1<n, h>
-  ensures x'::bst1<n1, h1> & DEL(h,h1);//& n1<=n & h1<=h;//'
+  requires x::bst0<n>
+  ensures x'::bst0<n1> & n1<=n;//DEL(n,n1);//& n1<=n & h1<=h;//'
 {
 	int tmp;
 
 	if (x != null)
 	{
-      bind x to (xval, xleft, xright) in
+       bind x to (xval, xleft, xright) in
       {
         if (xval == a)
           {
@@ -188,7 +194,7 @@ void delete(ref node2 x, int a)
             }
             else
               {
-                tmp = remove_min(xright);
+                tmp = remove_min1(xright);
                 assert true;
                 xval = tmp;
               }
@@ -218,8 +224,8 @@ There are three different types of depth-first traversals, :
 relation TRAV(int a, int b).
 void traverse(node2 x)
   infer[TRAV]
-  requires x::bst1<n, h>//0<=h & h<=n
-  ensures x::bst1<n, h1>& TRAV(h,h1);//'h1>=0 & n1>=h1 & h1=h & n1=n
+  requires x::bst0<n>//0<=h & h<=n
+  ensures x::bst0<n1>& TRAV(n,n1);//'h1>=0 & n1>=h1 & h1=h & n1=n
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
@@ -235,8 +241,8 @@ void traverse(node2 x)
 relation SEA(int a, int b).
 bool search(node2 x, int a)
   infer[SEA]
-  requires x::bst1<n, h>
-  ensures x::bst1<n, h1> & (res | !res) & SEA(h,h1);//'n>=0 & h>=0 & n=n1 & h=h1
+  requires x::bst0<n>
+  ensures x::bst0<n1> & (res | !res) & SEA(n,n1);//'n>=0 & h>=0 & n=n1 & h=h1
 {
 	int tmp;
 

@@ -142,10 +142,12 @@ node2 insert(node2 x, int a)
 }
 
 /* delete a node from a bst */
-
+//mona fails while inferring
+relation RMVM(bag x, bag y).
 int remove_min(ref node2 x)
+//infer[RMVM]
   requires x::bst3<n,h,s, b,S1> & x != null
-  ensures x'::bst3<n-1,h1,s1, b,S2> & h1<=h & s <= res <= s1 & S2 subset S1;//'
+  ensures x'::bst3<n-1,h1,s1, b,S2> & h1<=h & s <= res <= s1 & S2 subset S1;//'RMVM(S1,S2);//
 {
   int tmp, a;
 
@@ -165,9 +167,11 @@ int remove_min(ref node2 x)
   }
 }
 
+relation DEL(bag x, bag y).
 void delete(ref node2 x, int a)
+//infer[DEL]
   requires x::bst3<n,h,sm, lg,S1>
-  ensures x'::bst3<n1,h1,s, l,S2> & n1<=n & h1<=h & sm <= s & l <= lg;
+  ensures x'::bst3<n1,h1,s, l,S2> & n1<=n & h1<=h & sm <= s & l <= lg;//DEL(S1,S2);
    // & S2 subset S1;//'
 {
 	int tmp;
@@ -210,9 +214,12 @@ There are three different types of depth-first traversals, :
 - PostOrder traversal - visit left child, then the right child and then the parent;
 */
 //DFS
+relation TRA(bag x, bag y).
+//fail to compute the fixpoint
 void traverse(node2 x)
-  requires x::bst3<n, h,sm, lg,S>
-  ensures x::bst3<n, h,sm, lg,S>;//'
+//infer[TRA]
+  requires x::bst3<n, h,sm, lg,S1>
+  ensures x::bst3<n, h,sm, lg,S1> ;//& TRA(S1,S2);//'
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
@@ -225,9 +232,12 @@ void traverse(node2 x)
 }
 
 //Searching
+relation SEA(bag x, int y).
+//fail
 bool search(node2 x, int a)
+//infer[SEA]
   requires x::bst3<n, h,sm, lg,S>
-  ensures x::bst3<n, h,sm, lg,S> & (res & sm<=a<=lg & a in S| !res );//'
+  ensures x::bst3<n, h,sm, lg,S> & (res & sm<=a<=lg & a in S | !res );//' a in S
 {
 	int tmp;
 

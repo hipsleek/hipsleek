@@ -84,8 +84,11 @@ node2 insert(node2 x, int a)
 	node2 tmp;
     node2 tmp_null = null;
 
-	if (x == null)
+	if (x == null){
+      assume mi=min(sm,a);
+      assume ma=max(lg,a);
       return new node2(a, null, null);
+    }
 	else
 	{
       if (a <= x.val)
