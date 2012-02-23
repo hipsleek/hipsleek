@@ -29,9 +29,15 @@ void delete_list(ref node x)
 }
 
 //true if the container size is 0, false otherwise.
+relation EMPT1(bool a).
+relation EMPT2(bool a).
 bool empty(node x)
+  infer[EMPT1,EMPT2]
   requires x::ll1<>
-  ensures true;
+  case {
+    x = null -> ensures EMPT1(res);//res
+    x != null -> ensures EMPT2(res);//!(res)
+  }
 {
   if (x == null) return true;
   else return false;

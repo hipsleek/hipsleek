@@ -7,15 +7,17 @@ data node {
 	node next;
 }
 
-void dispose(ref node x)
-  requires x::node<_,_>
-  ensures x'=null;//'
-
 /* view for a singly linked list */
 
 ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1>
   inv n >= 0;
+
+
+
+void dispose(ref node x)
+  requires x::node<_,_>
+  ensures x'=null;//'
 
 void delete_list(ref node x)
    requires x::ll<n>
@@ -27,21 +29,16 @@ void delete_list(ref node x)
   }
 }
 
-/*ll1<S> == self = null & S = {}
-	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
-
-/*ll2<n, S> == self=null & n=0 & S={}
-	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
-
 //true if the container size is 0, false otherwise.
 relation EMPT1(bool a).
 relation EMPT2(bool a).
 bool empty(node x)
   infer[EMPT1,EMPT2]
   requires x::ll<n>
- case {n = 0 -> ensures EMPT1(res);//res
-  n!= 0 -> ensures EMPT2(res);//!(res)
-}
+  case {
+    n = 0 -> ensures EMPT1(res);//res
+    n!= 0 -> ensures EMPT2(res);//!(res)
+  }
 {
   if (x == null) return true;
   else return false;
