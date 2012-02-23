@@ -1,0 +1,14 @@
+let binom(n,k);
+theorem n < k -> binom(n,k) = 0;
+theorem binom(n,n) = 1;
+theorem binom(n,1) = n;
+theorem fact(n) * fact(k) * binom(n+k,k) = fact(n + k);
+theorem binom(n,k) = 0 <-> n < k;
+theorem binom(1 + n, n) = 1 + n;
+theorem (n + 1 - k) * binom(n + 1,k) = (n + 1) * binom(n,k);
+theorem (k + 1) * binom(n,k + 1) = (n - k) * binom(n,k);
+//theorem (x + y) EXP n = nsum(0..n) (\k. binom(n,k) * x EXP k * y EXP (n - k));
+theorem (k + 1) * binom(p + 1,k + 1) = (p + 1) * binom(p,k);
+//theorem (k = 0 -> p = 0) -> k * binom(p,k) = p * binom(p - 1,k - 1);
+//theorem binom(n,k) = if k <= n then fact(n) DIV (fact(n - k) * fact(k)) else 0;
+theorem true

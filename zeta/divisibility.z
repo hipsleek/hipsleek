@@ -1,0 +1,86 @@
+//let [induction y] divides(x, y) := 
+//	exists {z} y = x * z.
+
+/*let [induction y] divides(x, y) 
+such that 
+forall {x,y} (divides(x,y) <-> exists {z} y = x * z).
+*/
+
+// Properties of divides relation
+// These properties can be used to 
+// provide an equivalence recursive
+// definition!
+
+/*theorem y = 0 -> divides(x,y).
+
+theorem 0 < y & y < x -> ! divides(x,y).
+
+theorem 0 < x & divides(x,y) -> divides(x,y+x).
+
+theorem 0 < x & divides(x,y) -> divides(x,y-x).
+
+theorem x < 0 & divides(0-x,y) -> divides(x,y).
+
+theorem x < 0 & divides(x,y) -> divides(0-x,y).
+
+theorem x = 0 & divides(x,y) -> y = 0.
+
+// Reflexivity of divide
+theorem divides(x, x).
+
+// Antisymmetric property of divide
+theorem 0 <= x & 0 <= y & divides(x,y) & 
+	divides(y,x) -> x = y.
+
+// Transitivity of divide relation
+theorem divides(m, n) & divides(n, p) -> 
+	divides(m, p).
+
+// Every integer is even or odd
+theorem divides(2,n) | divides(2,n+1).*/
+
+// Recursive definition for divides relation
+// and the analogous theorems on reflexivity,
+// antisymmetry and transitivity
+
+let [induction y] divrec(x, y)
+such that
+y = 0 -> divrec(x,y);
+0 < y & y < x -> ! divrec(x,y);
+0 < x & divrec(x,y) -> divrec(x,y+x);
+0 < x & divrec(x,y) -> divrec(x,y-x);
+x < 0 & divrec(0-x,y) -> divrec(x,y);
+x < 0 & divrec(x,y) -> divrec(0-x,y);
+x = 0 & divrec(x,y) -> y = 0;
+divrec(x,y) -> divrec(y,z) -> divrec(x,z).
+
+/*
+// Every integer is even or odd
+theorem divrec(2,n) | divrec(2,n+1).
+
+// Reflexivity of divide
+theorem divrec(x, x).
+
+// Antisymmetric property of divide
+theorem 0 <= x & 0 <= y & divrec(x,y) & divrec(y,x) -> x = y.
+
+// Transitivity of divide relation
+theorem divrec(m, n) & divrec(n, p) -> divrec(m, p).
+*/
+// Generalization of the above to get division algorithm
+//theorem 0 < x -> exists {z} (0 <= z & z < x & divides(x,y-z)).
+
+/*
+let [induction x] isprime(x)
+such that 
+forall {x} (isprime(x) <-> 
+x > 1 & forall {y} (1 < y & y < x -> ! divides(y,x))).
+*/
+
+let [induction x] isprime(x)
+such that 
+isprime(x) <-> x > 1 & forall {y} (1 < y & y < x -> ! divrec(y,x)).
+
+// Theorem of Eratosthenes
+//theorem p > 1 & forall {q} (1 < q & q < p & ! isprime(q) -> ! divides(q,p)) -> isprime(p).
+theorem p > 1 & forall {q} (1 < q & q < p & ! isprime(q) -> ! divrec(q,p)) -> isprime(p).

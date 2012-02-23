@@ -1,0 +1,12 @@
+let [induction n] fact(n);
+axiom n < 0 -> fact(n) = 0;
+axiom fact(0) = 1;
+axiom n > 0 -> fact(n) = n * fact(n-1);
+
+theorem n >= 0 -> fact(n) > 0;
+
+theorem 0 <= n & n <= m -> divides(fact(n),fact(m));
+
+theorem n != 2 -> ! isprime(fact(n));
+
+theorem true

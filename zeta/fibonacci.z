@@ -1,0 +1,17 @@
+let fib(x);
+
+axiom x < 0 	-> fib(x) = 0;
+axiom x = 0 | x = 1 -> fib(x) = 1;
+axiom x > 1 -> fib(x) = fib(x-1) + fib(x-2);
+
+theorem fib(n+k+1) = fib(k+1) * fib(n+1) + fib(k) * fib(n);
+theorem gcd(fib(n), fib(n+1)) = 1;
+theorem gcd(fib(m), fib(n + m)) = gcd(fib(m), fib(n));
+theorem m <= n -> gcd(fib(m), fib(n-m)) = gcd(fib(m), fib(n));
+theorem 0 < m -> gcd(fib(m), fib(n % m)) = gcd(fib (m), fib (n));
+theorem fib(gcd(m,n)) = gcd(fib(m), fib(n));
+theorem n > 0 -> fib(n) != 0;
+theorem n % 2 = 0 -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) - 1;
+theorem n % 2 != 0 -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) + 1;
+//theorem fib (n+1) * fib n = sum(k=1..n, fib(k) * fib(k))
+theorem true

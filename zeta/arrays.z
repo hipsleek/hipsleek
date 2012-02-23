@@ -1,0 +1,99 @@
+let sumar(a,i,j);
+axiom j > i -> sumar(a,i,j) = 0;
+axiom i <= j -> sumar(a,i,j) = a[i] + sumar(a,i+1,j);
+
+let sumal(a,i,j);
+axiom j > i -> sumal(a,i,j) = 0;
+axiom i <= j -> sumal(a,i,j) = sumal(a,i,j-1) + a[i];
+
+theorem sumar(a,i,j) = sumal(a,i,j);
+
+/* 
+// Identical arrays have the same sum
+checkentail idarr(a,b,i,j) & sumar(a,i,j,sa) & sumar(b,i,j,sb) |- sa = sb.
+
+Relations concerning array
+
+relation member(int[] a, int i, int j, int x) ==
+	exists(k : i <= k <= j & a[k] = x). //i <= j & (a[i] = x | member(a,i+1,j,x)).
+	
+relation alldistinct(int[] a, int i, int j) ==
+	forall(k, t : k < i | k >= t | t > j | a[k] != a[t]).
+
+relation sumar(int[] a, int i, int j, int s) induction j - i ==
+	(i > j & s = 0 | i <= j & sumar(a,i+1,j,s-a[i])).
+
+relation sumal(int[] a, int i, int j, int s) induction j - i ==
+	(i > j & s = 0 | i <= j & sumar(a,i,j-1,s-a[j])).
+
+relation freq(int[] a, int i, int j, int x, int f) induction j - i ==
+	(j > i & f = 0 |
+	j <= i & a[i] != x & freq(a,i,j,x,f) |
+	j <= i & a[i] = x & freq(a,i,j,x,f-1)).
+
+relation idarr(int[] a, int[] b, int i, int j) induction j - i ==
+	forall(k : k < i | k > j | a[k] = b[k]).
+
+relation upperbnd(int[] a, int i, int j, int u) induction j - i ==
+	forall(k : k < i | k > j | a[k] <= u).
+
+relation lowerbnd(int[] a, int i, int j, int u) induction j - i ==
+	forall(k : k < i | k > j | a[k] >= u).
+
+relation sorted(int[] a, int i, int j) induction j - i ==
+	forall(k : k < i | k >= j | a[k] <= a[k+1]).
+
+// recursive/constructive definition of permutation
+relation permutation(int[] a, int[] b, int i, int j) induction j - i ==
+	(i > j |	// base case : empty array
+	forall(k : k < i | k > j | a[k] = b[k]) // reflexivity
+	| permutation(a,b,i+1,j) & a[i] = b[i] 	// left extensionality
+	| permutation(a,b,i,j-1) & a[j] = b[j] 	// right extensionality
+	| permutation(a,b,i+1,j-1) & a[i] = b[j] & a[j] = b[i] // transposition
+	| exists(c : permutation(a,c,i,j) & permutation(c,b,i,j))). // transitivity
+
+// multiset definition: for any x, the number of occurences of x in a[i..j] and b[i..j] are identical
+relation permutation2(int[] a, int[] b, int i, int j) induction j - i ==
+	forall(x,fa,fb : !(freq(a,i,j,x,fa)) | !(freq(b,i,j,x,fb)) | fa = fb).
+
+// a[1..n] is a permutation of 1,2,...,n
+relation permutationstd(int[] a, int n) == true.
+
+// definition using bijection
+relation permutation3(int[] a, int n) == true.
+
+relation dotprod(int[] a, int[] b, int i, int j, int p) ==
+	(i > j & p = 0 | i <= j & dotprod(a,b,i+1,j,p-a[i]*b[i])).
+	
+relation mset(int[] a, int i, int j, int[] v, int[] f, int p) ==
+	alldistinct(v,0,p) &
+	forall(t : t < 0 | t > p | freq(a,i,j,v[t],f[t])) &	
+	forall(k : k < i | k > j | exists(u : 0 <=u <= p & v[u] = a[k])).
+
+// Sum = sum of two partitions
+checkentail i <= j <= k & sumar(a,i,j,s1) & sumar(a,j+1,k,s2) |- sumar(a,i,k,s1+s2).
+
+// Sum = dot product of values & counts vectors
+checkentail mset(a,i,j,v,f,p) & sum(a,i,j,f,s) |- dotprod(v,f,0,p,s).
+checkentail mset(a,i,j,v,f,p) & dotprod(v,f,0,p,s) |- sum(a,i,j,f,s).
+
+// Constructive definition of permutation implies content preservation
+checkentail permutation(a,b,i,j) |- permutation2(a,b,i,j).
+
+// And vice versa
+checkentail permutation2(a,b,i,j) |- permutation(a,b,i,j).
+
+// Sorted array with same content are identical
+
+// x is not a member ==> count = 0
+checkentail freq(a,i,j,x,0) |- !(member(a,i,j,x)).
+checkentail !(member(a,i,j,x)) |- freq(a,i,j,x,0).
+
+// If x < min{a} or x > max{a} then x does not occur in a i.e. x occurs in a for 0 time.
+checkentail upperbnd(a,i,j,y) & x > y |- freq(a,i,j,x,0).
+checkentail upperbnd(a,i,j,y) & x > y |- !(member(a,i,j,x)).
+
+//checkentail lowerbnd(a,i,j,y) & x < y |- freq(a,i,j,x,0).
+*/
+
+theorem true

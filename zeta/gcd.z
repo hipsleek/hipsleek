@@ -1,0 +1,23 @@
+let [induction y] divides(x,y) := exists {z} y = x * z;
+
+let gcd(x,y);
+axiom gcd(x,y) = d <-> (x = 0 & y = 0 -> d = 0)
+	| (x != 0 | y != 0 -> divides(d,x) & divides(d,y) & 
+	forall {e} (divides(e,x) & divides(e,y) -> e <= d));
+
+theorem gcd(x,y) >= 0;
+
+// gcd does not depends on sign
+theorem gcd(x,y) = gcd(0-x,y);
+theorem gcd(x,y) = gcd(x,0-y);
+
+// gcd is symmetric between x and y
+theorem gcd(x,y) = gcd(y,x);
+
+// gcd is a function
+//checkentail gcd(x,y,d) & gcd(x,y,e) |- d = e;
+
+// Euclid's main theorem on gcd
+theorem gcd(x,y) = gcd(x,y-x);
+
+theorem true
