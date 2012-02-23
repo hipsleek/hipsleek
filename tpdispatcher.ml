@@ -893,7 +893,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
   let f = Cpure.add_ann_constraints imm_vrs f in
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
-  let (pr_weak2,pr_strong2) = CP.drop_lexvar_ops in
+(*  let (pr_weak2,pr_strong2) = CP.drop_lexvar_ops in*)
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
@@ -1633,7 +1633,6 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
-    let _ = print_string ("gigi1: "^(!print_formula ante0) ^ "|-"^ (!print_formula conseq0)) in
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
 	if CP.isConstTrue conseq then (true, [],None)
 	else
@@ -1642,7 +1641,6 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
-		let _ = print_string ("ante0: "^(!print_formula ante0)^"\n"^ "ante "^(!print_formula ante)^"\n"^"conseq0 "^(!print_formula conseq0)^"\n"^"conseq "^(!print_formula conseq)^"\n") in
 		let acpairs = imply_label_filter ante conseq in
 		let pairs = List.map (fun (ante,conseq) -> 
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -1659,7 +1657,6 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
-		let _ = print_string ("gigi: "^(String.concat "\n" (List.map (fun (a,c)-> (!print_formula a) ^ "|-"^ (!print_formula c))pairs))) in
 		let fold_fun (res1,res2,res3) (ante, conseq) =
 		  (incr imp_sub_no;
 		  if res1 then 

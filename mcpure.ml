@@ -266,6 +266,7 @@ and remove_ptr_equations f is_or = match f with
       else mkTrue no_pos 
     else f
   | And (f1,f2,p) -> mkAnd (remove_ptr_equations f1 false) (remove_ptr_equations f2 false) p
+  | AndList b -> mkAndList (map_l_snd (fun c-> remove_ptr_equations c false) b)
   | Or (f1,f2,o,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o p
   | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p)

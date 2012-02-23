@@ -1332,9 +1332,8 @@ and disj_of_list (xs : formula list) pos : formula =
 
 	
 and no_andl  = function
-		| BForm _ -> true
-		| Or (f1,f2,_,_) | And (f1,f2,_) -> no_andl f1 && no_andl f2
-		| Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_) -> no_andl f
+		| BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
+		| Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
 		| AndList _ -> false 
 	
 	
