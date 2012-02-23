@@ -40,6 +40,36 @@ node2 append(node2 x, node2 y)
 	}
 }
 
+relation C(int a, int b, int c).
+node2 appendC(node2 x, node2 y)
+  infer [C]
+  requires x::dll<q, m> * y::dll<p, n>
+  ensures res::dll<_, k> & C(k,m,n);
+
+{
+	node2 tmp;
+
+	if (x == null)
+		return y;
+	else
+	{ 	
+
+		tmp = x.right;
+		tmp = appendC(tmp, y);
+
+		if (tmp != null)
+		{
+			x.right = tmp; 
+			tmp.left = x;
+		}
+		else {
+			x.right = null;
+		}
+
+		return x; 
+	}
+}
+
 /* function to count the number of nodes in a tree */
 relation CNT(int a, int b, int c).
 int count(node2 z)
@@ -60,12 +90,12 @@ int count(node2 z)
 }
 
 /* function to transform a tree in a doubly linked list */
-//fail to compute fixpoint
+//fail to compute fixpoint if use append
 relation FLAT(int a, int b).
 void flatten(node2 x)
   infer[FLAT]
-  requires x::bst1<m, n>
-  ensures  x::dll<q, m> & q=null & FLAT(n,m);//& q=null
+  requires x::bst1<m, h>
+  ensures  x::dll<q, m1> & q=null &  FLAT(m1,m);//& q=null & FLAT(m1,m)
 {
 	node2 tmp;
 	if (x != null)
@@ -80,20 +110,12 @@ void flatten(node2 x)
 	}
 }
 
-/* binary search trees */
-
-/* view for binary search trees */
-bst <sm, lg> == self = null & sm <= lg 
-	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
-	inv sm <= lg;
-
-
 /* insert a node in a bst */
-relation INS(int a, int b).
+relation INS(int a, int b,int c, int d).
 node2 insert(node2 x, int a)
   infer[INS]
   requires x::bst1<m, h>
-  ensures res::bst1<m+1, h1> & res != null & INS(h,h1);
+  ensures res::bst1<m1, h1> & res != null & INS(h,h1,m,m1);
 {
 	node2 tmp;
         node2 tmp_null = null;
@@ -118,34 +140,36 @@ node2 insert(node2 x, int a)
 }
 
 /* delete a node from a bst */
-
+relation RMV_MIN(int a, int b,int c, int d).
 int remove_min(ref node2 x)
-  infer[x]
-  requires x::bst1<n, h> & x != null
-  ensures x'::bst1<n-1, h1> & h1<=h;//'
+  infer[RMV_MIN,x]
+  requires x::bst1<n, h> //& x != null
+  ensures x'::bst1<n1, h1> & RMV_MIN(n,n1,h,h1);//h1<=h & n1=n-1;//'
 {
-	int tmp, a; 
+	int tmp, a;
 
 	if (x.left == null)
 	{
 		tmp = x.val;
 		x = x.right;
 
-		return tmp; 
+		return tmp;
 	}
 	else {
 		int tmp;
-		bind x to (_, xleft, _) in { 
+		bind x to (_, xleft, _) in {
 			tmp = remove_min(xleft);
-		}
+        }
 
 		return tmp;
 	}
 }
 
+relation DEL(int a, int b,int c, int d).
 void delete(ref node2 x, int a)
+  infer[DEL]
   requires x::bst1<n, h>
-  ensures x'::bst1<n1, h1> & n1<=n & h1<=h;//'
+  ensures x'::bst1<n1, h1> & DEL(n,n1,h,h1);//& n1<=n & h1<=h;//'
 {
 	int tmp;
 
@@ -188,9 +212,11 @@ There are three different types of depth-first traversals, :
 - PostOrder traversal - visit left child, then the right child and then the parent;
 */
 //DFS
+relation TRAV(int a, int b,int c, int d).
 void traverse(node2 x)
-  requires x::bst1<n, h>
-  ensures x::bst1<n, h>;//'
+  infer[TRAV]
+  requires x::bst1<n, h>//0<=h & h<=n
+  ensures x::bst1<n1, h1>& TRAV(n,n1,h,h1);//'h1>=0 & n1>=h1 & h1=h & n1=n
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
@@ -203,9 +229,11 @@ void traverse(node2 x)
 }
 
 //Searching
+relation SEA(int a, int b,int c, int d).
 bool search(node2 x, int a)
+  infer[SEA]
   requires x::bst1<n, h>
-  ensures x::bst1<n, h> & (res | !res);//'
+  ensures x::bst1<n1, h1> & (res | !res) & SEA(n,n1,h,h1);//'n>=0 & h>=0 & n=n1 & h=h1
 {
 	int tmp;
 

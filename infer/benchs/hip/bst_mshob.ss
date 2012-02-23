@@ -8,11 +8,7 @@ data node2 {
 }
 /* binary search trees */
 /* view for binary search trees */
-bst2 <n,h, sm, lg> == self = null & sm <= lg & n = 0 & h = 0
-  or (exists pl,qs: self::node2<v, p, q> * p::bst2<n1,h1,sm, pl> *
-      q::bst2<n2,h2,qs, lg> & pl <= v & qs >= v & n=n1+n2+1 & h=1+max(h1,h2))
-	inv h >= 0 & n >= 0 & sm <= lg;
-
+//size, height, sortedness, bag
 bst3 <n,h, sm, lg,S> == self = null & sm <= lg & n = 0 & h = 0 & S={}
   or (exists pl,qs: self::node2<v, p, q> * p::bst3<n1,h1,sm, pl,S1> *
       q::bst3<n2,h2,qs, lg,S2> & pl <= v & qs >= v & n=n1+n2+1 & h=1+max(h1,h2)
@@ -25,9 +21,12 @@ dll<p, n,S> == self = null & n = 0 & S={}
 	inv n >= 0;
 
 /* function to append 2 doubly linked lists */
+//wo --eps
+relation APP(bag a, bag b, bag c).
 node2 append(node2 x, node2 y)
+  infer[APP]
   requires x::dll<_, m,S1> * y::dll<_, n,S2>
-  ensures res::dll<r, m+n,S> & S=union(S1,S2);
+  ensures res::dll<r, m+n,S> & APP(S,S1,S2);//S=union(S1,S2);
 {
 	node2 z;
 
@@ -44,10 +43,43 @@ node2 append(node2 x, node2 y)
 	}
 }
 
+node2 append1(node2 x, node2 y)
+  requires x::dll<_, m,S1> * y::dll<_, n,S2>
+  ensures res::dll<r, m+n,S> & S=union(S1,S2);
+
+relation C(bag x, bag y, bag z).
+node2 appendC(node2 x, node2 y)
+  infer [C]
+  requires x::dll<q, m,S1> * y::dll<p, n,S2>
+  ensures res::dll<_, m+n,S> & C(S,S1,S2);
+
+{
+	node2 tmp;
+
+	if (x == null)
+		return y;
+	else
+	{ 	
+
+		tmp = x.right;
+		tmp = appendC(tmp, y);
+
+		if (tmp != null)
+		{
+			x.right = tmp; 
+			tmp.left = x;
+		}
+		else {
+			x.right = null;
+		}
+
+		return x; 
+	}
+}
 /* function to count the number of nodes in a tree */
 int count(node2 z)
-  requires z::bst3<n,h,sm, lg,S>
-  ensures z::bst3<n,h,sm, lg,S> & res =n;
+  requires z::bst3<n,h,sm, lg,S>@I
+  ensures res =n;
 {
 	int cleft, cright;
 
@@ -61,16 +93,18 @@ int count(node2 z)
 	}
 }
 
+relation FLAT(bag x, bag y).
 void flatten(node2 x)
+  infer[FLAT]
   requires x::bst3<n,h,sm, lg,S1>
-  ensures (exists q : x::dll<q, n,S2> & q=null & S1=S2);
+  ensures x::dll<q, n,S2> & q=null & FLAT(S1,S2);//S1=S2);
 {
   node2 tmp;
   if (x != null)
 	{
       flatten(x.left);
       flatten(x.right);
-      tmp = append(x.left, x.right);
+      tmp = append1(x.left, x.right);
       x.left = null;
       x.right = tmp;
       if (tmp != null)

@@ -27,8 +27,8 @@ node2 insert(node2 x, int a)
   node2 tmp;
 	if (x == null){
     // TODO:
-    assume mi=min(sm,a);
-    assume ma=max(lg,a);
+      // assume mi=min(sm,a);
+      //assume ma=max(lg,a);
     return new node2(a, null, null);
 /*    node2 n = new node2(a, null, null);
     dprint;

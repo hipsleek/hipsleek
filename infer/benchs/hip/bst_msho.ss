@@ -41,8 +41,8 @@ node2 append(node2 x, node2 y)
 
 /* function to count the number of nodes in a tree */
 int count(node2 z)
-  requires z::bst2<n,h,sm, lg>
-  ensures z::bst2<n,h,sm, lg> & res =n;
+  requires z::bst2<n,h,sm, lg>@I
+  ensures res =n;
 {
 	int cleft, cright;
 
@@ -74,10 +74,12 @@ void flatten(node2 x)
 }
 
 /* insert a node in a bst */
+relation C(int x, int y, int z, int a, int b).
 node2 insert(node2 x, int a)
+  infer [C]
   requires x::bst2<n,h,sm, lg>
   ensures res::bst2<n+1,h1,mi, ma> & h1>=h
-  & res != null & mi = min(sm, a) & ma = max(lg, a);
+  & res != null & C(mi,sm,lg,ma, a);//mi = min(sm, a) & ma = max(lg, a);a>=mi & ma>=a 
 {
 	node2 tmp;
     node2 tmp_null = null;
@@ -102,10 +104,11 @@ node2 insert(node2 x, int a)
 }
 
 /* delete a node from a bst */
-
+relation RMVM(int x, int y, int z).
 int remove_min(ref node2 x)
+  infer[RMVM]
   requires x::bst2<n,h,s, b> & x != null
-  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;//'
+  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & RMVM(s,res,s1);//s <= res <= s1;//'
 {
   int tmp, a;
 
@@ -125,9 +128,15 @@ int remove_min(ref node2 x)
   }
 }
 
+int remove_min1(ref node2 x)
+  requires x::bst2<n,h,s, b> & x != null
+  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;//'
+
+relation DEL(int x, int y, int z, int a, int b).
 void delete(ref node2 x, int a)
+  infer[DEL]
   requires x::bst2<n,h,sm, lg>
-  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & sm <= s & l <= lg;//'
+  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & DEL(sm,s,l,lg,a);//sm <= s & l <= lg;//'
 {
 	int tmp;
 
@@ -143,7 +152,7 @@ void delete(ref node2 x, int a)
               }
               else
 				{
-                  tmp = remove_min(xright);
+                  tmp = remove_min1(xright);
                   xval = tmp;
 				}
 			}
@@ -184,9 +193,11 @@ void traverse(node2 x)
 }
 
 //Searching
+relation SEA(int a, int b, int c).
 bool search(node2 x, int a)
+//infer[SEA]
   requires x::bst2<n, h,sm, lg>
-  ensures x::bst2<n, h,sm, lg> & (res & sm<=a<=lg| !res);//'
+  ensures x::bst2<n, h,sm, lg> & (res & sm<=a<=lg | !res);//'sm<=a<=lg SEA(sm,a,lg)
 {
 	int tmp;
 

@@ -117,8 +117,8 @@ node pop_front(ref node x)
 relation APP(bag a, bag b, bag c).
 void append(node x, node y)
   infer  [APP]
-  requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null//S1=1
-  ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2);//S=union(S1,S2) & S1=1
+  requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null//
+  ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2);//S=union(S1,S2)
 {
   if (x.next == null)
     x.next = y;
