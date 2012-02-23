@@ -640,12 +640,11 @@ and fold_mem_lst_to_lst_gen_for_sat_slicing (mem:memo_pure) with_R with_P with_s
   (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
   res
 	
-and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
-and fold_mem_lst_to_lst_debug mem with_dupl with_inv with_slice = 
-  let r = fold_mem_lst_to_lst mem with_dupl with_inv with_slice in
-  print_string ("fold_mem_lst_to_lst input: "^(!print_mp_f mem)^"\n");
-  print_string ("fold_mem_lst_to_lst output: "^(print_p_f_l r)^"\n");
-  r
+and fold_mem_lst_to_lst_x mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
+
+and fold_mem_lst_to_lst mem with_dupl with_inv with_slice =
+  Debug.no_1 "fold_mem_lst_to_lst" !print_mp_f print_p_f_l
+  (fun _ -> fold_mem_lst_to_lst_x mem with_dupl with_inv with_slice) mem
   
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
   let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in
@@ -1468,7 +1467,8 @@ let replace_memo_pure_label nl f =
 let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
  Debug.no_3 "mimply_process_ante" (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
- (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
+  (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) 
+    with_disj ante_disj conseq
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante = 
@@ -1477,15 +1477,18 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in
-  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
+  (* Assumption: ante_disj is SAT *)
+  (* let n_ante = if n_ante == [] then ante_disj else n_ante in *)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
+  let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
+  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
 
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
+  let r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
   r)
 
@@ -1667,7 +1670,7 @@ let mimply_one_conj ante_memo0 conseq t_imply imp_no =
     else (Gen.Profiling.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
   else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
-let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
+let mimply_one_conj ante_memo0 conseq_conj t_imply imp_no = 
   Debug.no_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
@@ -1693,7 +1696,7 @@ let mimply_conj ante_memo0 conseq_conj t_imply imp_no =
       (fun _ _ -> mimply_conj ante_memo0 conseq_conj t_imply imp_no) ante_memo0 conseq_conj
 
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Debug.no_2 "imply_memo" (!print_mp_f)
+ Debug.no_2 "imply_memo 1" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1721,7 +1724,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
   else
   let ante_memo0 = 
-    if !f_2_slice (* Use one slice for proving (sat, imply) *)
+    if !f_2_slice  || !dis_slicing (* Use one slice for proving (sat, imply) *)
 	then
 	  match ante_memo0 with
        | [] -> []
@@ -1738,7 +1741,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   imply_memo ante_memo0 conseq_memo t_imply imp_no
 
 let imply_memo ante_memo0 conseq_memo t_imply imp_no=
- Debug.no_2 "imply_memo" (!print_mp_f)
+ Debug.no_2 "imply_memo 2" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo

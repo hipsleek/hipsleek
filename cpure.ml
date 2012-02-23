@@ -2914,7 +2914,12 @@ let fv_var_aset (e:var_aset) = EMapSV.get_elems e
 
 let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> EMapSV.is_equiv aset sv1 sv2 
-        
+
+let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) =
+  let pr = !print_sv in
+  let pr1 = string_of_bool in
+  Debug.no_2 "eq_spec_var_aset" pr pr pr1 
+  (fun _ _ -> eq_spec_var_aset aset sv1 sv2) sv1 sv2
 
 let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
   
@@ -3004,6 +3009,7 @@ let print_var_set vset =
 (*
   filter from f0 conjuncts that mention variables related to rele_vars.
 *)
+(* Assumption: f0 is SAT *)
 let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   let is_relevant (fv, fvset) rele_var_set =
 	not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
@@ -3616,8 +3622,12 @@ and b_form_list f: b_formula list = match f with
   | Not _ -> []
   | Forall (_,f,_,_)
   | Exists (_,f,_,_) -> (b_form_list f)
-        
-and simp_mult (e : exp) :  exp =
+  
+and simp_mult (e: exp) : exp =
+  let pr = !print_exp in
+  Debug.no_1 "simp_mult" pr pr simp_mult_x e 
+
+and simp_mult_x (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
     match x with
       |  Add (e1, e2, l) ->
@@ -3681,16 +3691,22 @@ and simp_mult (e : exp) :  exp =
   in acc_mult None e
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
+  let pr1 = pr_opt !print_exp in
+  Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1)
+  split_sums_x e
+
+and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   match e with
     |  Null _ 
     |  Var _ 
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
-           if v > 0 then 
+           if v >= 0 then 
              ((Some e), None)
-           else if v < 0 then 
+           else 
+             (* if v < 0 then *)
              (None, (Some ( IConst (- v, l))))
-           else (None, None)
+           (* else (None, None) *)
     | FConst (v, l) ->
           if v >= 0.0 then
             ((Some e), None)
@@ -3819,8 +3835,12 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
     | Some e -> e::ll,e::rl in
   (add lhs ll, add rhs rl, add qhs ql)
 
+and purge_mult (e: exp) : exp =
+  let pr = !print_exp in
+  Debug.no_1 "purge_mult" pr pr purge_mult_x e
+
 (* TODO : must elim some multiply for MONA *)
-and purge_mult (e :  exp):  exp = match e with
+and purge_mult_x (e :  exp):  exp = match e with
   |  Null _ 
   |  Var _ 
   |  IConst _ 
@@ -3952,16 +3972,18 @@ and b_form_simplify (pf : b_formula) :  b_formula =
 
 and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
-	let t1 = simp_mult e1 in
+	  let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
+    let t1 = purge_mult t1 in
+    let t2 = purge_mult t2 in
     let (lhs, lsm) = split_sums t1 in
     let (rhs, rsm) = split_sums t2 in
     let (lh, rh) = move_lr lhs lsm rhs rsm l in
-	let lh = purge_mult lh in
-	let rh = purge_mult rh in
-	(lh, rh) in
+	  (* let lh = purge_mult lh in *)
+	  (* let rh = purge_mult rh in *)
+	  (lh, rh) in
   let do_all3 e1 e2 e3 l =
-	let t1 = simp_mult e1 in
+	  let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
     let t3 = simp_mult e3 in
     let (lhs, lsm) = split_sums t1 in
@@ -7108,17 +7130,37 @@ let no_drop_ops =
   let pr x = None in
   (pr,pr)
 
+let is_update_array_relation (r:string) = 
+  (* match r with CP.SpecVar(_,r,_) -> *)
+	let udrel = "update_array" in
+	let udl = String.length udrel in
+		(String.length r) >= udl && (String.sub r 0 udl) = udrel
+
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkTrue p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            (*provers which can not handle relation => throw exception*)
+            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
+            else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | RelForm (_,_,p) -> Some (mkFalse p)
+        | RelForm (SpecVar (_, v, _),_,p) ->
+            (*provers which can not handle relation => throw exception*)
+            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
+            else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
 
+let drop_complex_ops_z3 =
+  let pr_weak b = match b with
+        | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | _ -> None in
+  let pr_strong b = match b with
+        | LexVar t_info -> Some (mkFalse t_info.lex_loc)
+        | _ -> None in
+  (pr_weak,pr_strong)
 
 let memo_complex_ops stk bool_vars is_complex =
   let pr b = match b with

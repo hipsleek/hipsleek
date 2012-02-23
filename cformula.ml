@@ -412,6 +412,21 @@ let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
   (CP.DisjSetSV.is_sat_dset d)
 
+(* returns all the disjoint pairs from a mem formula *)
+let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) list  =
+  let m = mf.mem_formula_mset in
+  let rec helper l =
+  match l with
+    | h::r -> 
+      if (r!=[]) then
+      (List.fold_left 
+	(fun x y -> (h,y)::x) [] r) @ (helper r)
+      else []
+    | [] -> []
+  in
+  List.fold_left 
+    (fun x y -> x@(helper y)) [] m
+
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
 
@@ -2098,7 +2113,7 @@ and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formul
 and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula =
   let rec helper (f:ext_formula):(ext_formula) = match f with
 	| ECase b ->
-        let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for ECase not added \n") in
+        (* let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for ECase not added \n") in *)
         f
 	| EBase b ->
         let ext_base = b.formula_ext_base in
@@ -2132,7 +2147,7 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
         in res_f
 
 	| EAssume (x,b,y)->
-                let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for EAssume not added \n") in
+                (* let _ = print_string ("[add_perm_to_struc_formula] Warning: rhs_p for EAssume not added \n") in *)
                 f
 	(*| EVariance b ->
       let cont = helper b.formula_var_continuation in
