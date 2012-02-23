@@ -29,7 +29,12 @@ let unfold_duplicated_pointers = ref false
 (** An Hoa : to store the number of unfolding performed on duplicated pointers **)
 let num_unfold_on_dup = ref 0
 
-let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
+let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r   
+
+let simple_imply f1 f2 =
+  let pr = !CP.print_formula in
+  Debug.no_2 "simple_imply" pr pr string_of_bool
+  simple_imply f1 f2
 
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
