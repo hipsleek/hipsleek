@@ -78,16 +78,17 @@ void swap(ref node x, ref node y)
 // drop current content, and add n element with v value
 void assign(ref node x, int n, int v)
   infer @post []
-  requires x::ll2<m,S>
-  ensures x'::ll2<n,S1>; // S1={} | S1={v}
+  requires x::ll2<m,S3>
+  ensures x'::ll2<n,S4> ; // forall _x: _x notin S4 | _x = v;
 {
   x = create_list(n, v);
 }
 
+relation PUF(bag a, bag b, int b).
 void push_front(ref node x, int v)
-  infer @post []
+  infer[PUF]
   requires x::ll2<n,S>
-  ensures x'::ll2<n+1,S1>; // S1=S+{v}
+  ensures x'::ll2<n+1,S1> & PUF(S1,S,v);// S1=S+{v}
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -120,6 +121,7 @@ void append(node x, node y)
 }
 
 /* return the first element of a singly linked list */
+
 node ret_first(node x)
   infer @post []
   requires x::ll2<n,S1>
@@ -141,10 +143,11 @@ node get_next(ref node x)
 }
 
 /* function to set the tail of a list */
+relation SN(bag a, bag b, int c).
 void set_next(ref node x, node y)
-  infer @post []
-  requires x::node<v,t>*t::ll2<_,_>*y::ll2<j,S> & x!=null
-  ensures x::ll2<k,S2> & k>=1 & k=j+1; //S2 = S+{v}
+  infer[SN]
+  requires x::node<v,t>*t::ll2<_,_>*y::ll2<j,S>& x!=null
+  ensures x::ll2<k,S2> & k>=1 & k=j+1 & SN(S,S2,v);
 {
 	x.next = y;
 }
@@ -228,7 +231,7 @@ node create_list(int n, int v)
   requires n>=0
   case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::ll2<n,S> & CL(S,v);// forall _x: _x notin S | x = v;
+  n > 0 -> ensures res::ll2<n,S> & CL(S,v);// forall _x: _x notin S | _x = v;
   n < 0 -> ensures true;
   }
 {

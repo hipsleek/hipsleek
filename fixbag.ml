@@ -394,13 +394,8 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let aset = CP.EMapSV.build_eset als in
   let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv rcase_orig) in
   let alias = create_alias_tbl (rel_vars@other_vars) aset (CP.fv rel) in
-  let subst_lst = List.concat (List.map 
-      (fun vars -> 
-        if vars = [] then [] 
-        else 
-          let hd = List.hd vars in 
-          List.map (fun v -> (v,hd)) (List.tl vars)
-      ) alias) in
+  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
 (*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
 (*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = CP.subst subst_lst rcase in

@@ -8557,6 +8557,14 @@ let rec elim_heap h p pre_vars heap_vars = match h with
     in if cond then HTrue else h
   | _ -> h
 
+(*let rec create_alias_tbl vs aset = match vs with*)
+(*  | [] -> []*)
+(*  | [hd] -> [hd::(CP.EMapSV.find_equiv_all hd aset)]*)
+(*  | hd::tl ->*)
+(*    let res1 = [hd::(CP.EMapSV.find_equiv_all hd aset)] in*)
+(*    let tl = List.filter (fun x -> not(List.mem x (List.hd res1))) tl in*)
+(*    res1@(create_alias_tbl tl aset)*)
+
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = match post_fml with
   | Or _ ->
     let disjs = CF.list_of_disjs post_fml in
@@ -8572,7 +8580,18 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
     (*let post_vars = CP.diff_svl post_vars ((CF.h_fv h)@pre_vars) in*)
     let p,pre = begin
       match subst_fml with
-      | None -> (TP.simplify_raw (CP.mkExists post_vars p None no_pos),[])
+      | None -> 
+(*        let p = if TP.is_bag_constraint p then*)
+(*            let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure p) in*)
+(*            let aset = CP.EMapSV.build_eset als in*)
+(*            let alias = create_alias_tbl post_vars aset in*)
+(*            let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
+(*                let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in*)
+(*            let p = CP.subst subst_lst p in*)
+(*            TP.simplify_raw (CP.mkExists post_vars p None no_pos)*)
+(*          else TP.simplify_raw (CP.mkExists post_vars p None no_pos) in*)
+        let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
+        (p,[])
       | Some triples (*(rel, post, pre)*) ->
         if inf_post then
           let rels = CP.get_RelForm p in
