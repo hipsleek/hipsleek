@@ -414,7 +414,15 @@ let is_sat_weaken (pe : formula)  (sat_no : string): bool =
   is_sat pe sat_no
 
 let is_sat_with_check (pe : formula) sat_no : bool option =
-  do_with_check "" (fun x -> is_sat x sat_no) pe 
+  do_with_check "" (fun x -> is_sat x sat_no) pe
+
+let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
+  do_with_check "" (fun x -> is_sat_ops pr_weak pr_strong x sat_no) pe
+
+let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  (fun _ -> is_sat_with_check_ops pr_weak pr_strong pe sat_no) pe
 
 let is_sat (pe : formula) sat_no : bool =
   try
@@ -479,6 +487,9 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe *)
 
+let is_valid_with_check (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid_ops (fun _ -> None) (fun _ -> None) x timeout) pe
+
 let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
 
@@ -516,7 +527,10 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
 let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
-  do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
+  do_with_check2 "" (fun a c -> imply_ops (fun _ -> None) (fun _ -> None) a c imp_no timeout) ante conseq
+
+let imply_with_check_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "" (fun a c -> imply_ops pr_weak pr_strong a c imp_no timeout) ante conseq
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
   try

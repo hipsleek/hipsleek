@@ -888,17 +888,20 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = Cpure.add_ann_constraints imm_vrs f in
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
+  let (pr_weak2,pr_strong2) = CP.drop_lexvar_ops in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
+  let z3_is_sat f = Smtsolver.is_sat_ops pr_weak pr_strong f sat_no in 
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
   let res = 
   match !tp with
 	| DP -> 
 		let r = Dp.is_sat f sat_no in
 		if test_db then 
-			let r2 = Smtsolver.is_sat f sat_no in
+			(* let r2 = Smtsolver.is_sat f sat_no in *)
+			let r2 = z3_is_sat f in
 			if r=r2 then r 
 			else 
 				failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
@@ -918,7 +921,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               | _ -> Cvc3.is_sat f sat_no
                     (* Cvc3.is_sat f sat_no *)
           end
-    | Z3 -> Smtsolver.is_sat f sat_no
+    | Z3 -> z3_is_sat f (* Smtsolver.is_sat f sat_no *)
     | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq -> (*Coq.is_sat f sat_no*)
           if (is_list_constraint wf) then
@@ -973,7 +976,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         end
       else if (is_array_constraint f) then
         begin
-          (Smtsolver.is_sat f sat_no);
+          (z3_is_sat f (* Smtsolver.is_sat f sat_no *));
         end
       else
         begin
@@ -982,7 +985,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   | OZ ->
       if (is_array_constraint f) then
         begin
-          (Smtsolver.is_sat f sat_no);
+          (z3_is_sat f (* Smtsolver.is_sat f sat_no *));
         end
       else
         begin
@@ -1015,7 +1018,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 	  if (is_bag_constraint wf) then
         mona_is_sat wf
       else
-		Smtsolver.is_sat f sat_no
+		z3_is_sat f (* Smtsolver.is_sat f sat_no *)
     | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1394,16 +1397,18 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante_w = CP.drop_rel_formula ante  in *)
   (* let conseq_s = CP.strong_drop_rel_formula conseq in *)
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
+  let (pr_weak2,pr_strong2) = CP.drop_complex_ops_z3 in
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
+  let z3_imply a c = Smtsolver.imply_ops pr_weak2 pr_strong2 ante_w conseq_s timeout in
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
         if test_db then 
-          let r2 = Smtsolver.imply ante conseq (*(imp_no^"XX")*) timeout in
+          let r2 = z3_imply (* Smtsolver.imply *) ante conseq (*(imp_no^"XX")*) (* timeout *) in
           if r=r2 then r
           else 
             failwith ("dp-omega imply mismatch on: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^
@@ -1420,13 +1425,14 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
                 (* Cvc3.imply ante conseq imp_no *)
       end
-  | Z3 -> Smtsolver.imply ante conseq timeout
+  (* | Z3 -> Smtsolver.imply ante conseq timeout *)
+  | Z3 -> z3_imply ante conseq
   | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante_w conseq_s)
 	      else
-		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq timeout (*imp_no timeout*))
+		    (called_prover :="smtsolver " ; z3_imply ante conseq (* timeout *) (*imp_no timeout*))
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
@@ -1438,7 +1444,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         end
       else if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
-          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+          (called_prover :="smtsolver "; z3_imply (* Smtsolver.imply *) ante conseq (* timeout *))
         end
       else
         begin
@@ -1447,7 +1453,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | OZ ->
       if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
-          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+          (called_prover :="smtsolver "; z3_imply (* Smtsolver.imply *) ante conseq (* timeout *))
         end
       else
         begin
@@ -1498,8 +1504,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         mona_imply ante_w conseq_s
       else
-        Smtsolver.imply ante conseq timeout
-  | SPASS -> Smtsolver.imply ante conseq timeout
+        z3_imply (* Smtsolver.imply *) ante conseq (* timeout *)
+  | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
   in
 	let _ = if should_output () then
 			begin
