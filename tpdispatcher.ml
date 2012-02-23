@@ -529,9 +529,11 @@ let is_bag_constraint (e: CP.formula) : bool =
     | CP.BagDiff _ 
         -> Some true
     | CP.Var (CP.SpecVar (t, _, _), _) -> 
-        (match t with
+        (match !tp with
+        | ZM -> (match t with
           | BagT _ -> Some true
           | _ -> Some false)
+        | _ -> Some false)
     | _ -> Some false
   in
   let or_list = List.fold_left (||) false in

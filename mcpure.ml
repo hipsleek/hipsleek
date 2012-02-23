@@ -1492,6 +1492,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   Gen.Profiling.pop_time str_time;
   r)
 
+(*
 and pick_relevant_lhs_constraints choose_algo (nlv, lv) ante_disj =
   Debug.no_3 "pick_relevant_lhs_constraints"
 	string_of_int
@@ -1657,7 +1658,8 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
   let _ = Gen.Profiling.push_time "--opt-imply 3" in
   let r = exhaustive_collect_with_selection fv ante_with_ulv in
   let _ = Gen.Profiling.pop_time "--opt-imply 3" in r
-	
+*)
+
 let mimply_one_conj ante_memo0 conseq t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
     (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
@@ -1714,7 +1716,8 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 	      else (r1,r2,r3)
     | [] -> (true, [], None)
 
-(*and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
+(*
+and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
   let c_lv = conseq_mg.memo_group_linking_vars in
   let c_nlv = Gen.BList.difference_eq eq_spec_var conseq_mg.memo_group_fv c_lv in
   (true, [], None)
