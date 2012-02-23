@@ -92,7 +92,7 @@ void swap(ref node x, ref node y)
   y = tmp;
 }
 /*
-drop current contend, and add n element with v value
+drop current content, and add n element with v value
 waiting for fix
  */
 //relation ASS(int a, int b, int c).

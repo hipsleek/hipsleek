@@ -75,18 +75,17 @@ int front(node x)
   return x.val;
 }
 
-relation SWAP(int a, int b, int c, int d).
 void swap(ref node x, ref node y)
-  infer[SWAP]
-  requires x::ll<n>*y::ll<m> //0<=n & 0<=m
-  ensures x'::ll<m1>*y'::ll<n1> & SWAP(m,n,m1,n1);//n1>=0 & m1>=0 & n1=n & m1=m
+  infer @post []
+  requires x::ll<n>*y::ll<m> 
+  ensures x'::ll<m1>*y'::ll<n1>; // m=m1 & n=n1
 {
   node tmp = x;
   x = y;
   y = tmp;
 }
 /*
-drop current contend, and add n element with v value
+drop current content, and add n element with v value
  */
 relation ASSIGN(int a, int b, int c).
 void assign(ref node x, int n, int v)
@@ -94,7 +93,7 @@ void assign(ref node x, int n, int v)
   requires x::ll<m>//0<=m & 0<=n
   ensures x'::ll<n1> & ASSIGN(n,n1,m); // m>=0 & n1>=0 & n1=n
 {
-  x =  create_list(n, v);
+  x = create_list(n, v);
 }
 
 relation PUF(int a, int b).
