@@ -2029,9 +2029,9 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) =
   if !do_slicing && !multi_provers then
-	imply_timeout_slicing ante0 conseq0 imp_no timeout do_cache process
+	  imply_timeout_slicing ante0 conseq0 imp_no timeout do_cache process
   else
-	imply_timeout ante0 conseq0 imp_no timeout do_cache process
+	  imply_timeout ante0 conseq0 imp_no timeout do_cache process
 
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
@@ -2633,6 +2633,11 @@ let imply_sub_no ante0 conseq0 imp_no do_cache =
   (* imp_no := !imp_no+1;*)
   imply ante0 conseq0 imp_no do_cache
 
+let imply_sub_no ante0 conseq0 imp_no do_cache =
+  let pr = !CP.print_formula in
+  Debug.no_2 "imply_sub_no" pr pr (fun _ -> "")
+  (fun _ _ -> imply_sub_no ante0 conseq0 imp_no do_cache) ante0 conseq0
+
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let _ = Gen.Profiling.push_time prof_lbl in  
   let r = imply_sub_no ante0 conseq0 imp_no do_cache in
@@ -2736,4 +2741,10 @@ let change_prover prover =
 
 let imply_raw ante conseq  =
   tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
+
+let imply_raw ante conseq =
+  let pr = !CP.print_formula in 
+  Debug.no_2 "imply_raw" pr pr string_of_bool
+  imply_raw ante conseq
+  
 

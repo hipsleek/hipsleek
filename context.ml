@@ -623,10 +623,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  [] in
                   let l4 = 
                     (* TODO WN : what is original?? *)
-                    (* if get_view_original rhs_node then 
+                    (* Without it, run-fast-test of big imm runs faster while
+                     * still accurate. However, it fails with
+                     * imm/imm1.slk imm/imm3.slk *)
+                    if get_view_original rhs_node then 
                       [(2,M_base_case_fold c)] 
-                    else [] in *)
-                    [] in
+                    else [] in
+                    (* [] in *)
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
