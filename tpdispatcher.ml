@@ -898,6 +898,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
+  let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak pr_strong f sat_no in 
   let _ = Gen.Profiling.push_time "tp_is_sat" in
   let res = 
@@ -931,7 +932,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
     | Coq -> (*Coq.is_sat f sat_no*)
           if (is_list_constraint wf) then
             begin
-              (Coq.is_sat wf sat_no);
+              (coq_is_sat wf);
             end
           else
             begin
@@ -977,7 +978,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
         end
       else if (is_list_constraint wf) then
         begin
-          (Coq.is_sat wf sat_no);
+          (coq_is_sat wf);
         end
       else if (is_array_constraint f) then
         begin
@@ -1363,6 +1364,7 @@ let tp_imply ante conseq imp_no timeout process =
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
+  let coq_imply a c = Coq.imply_ops pr_weak pr_strong ante_w conseq_s in
   let z3_imply a c = Smtsolver.imply_ops pr_weak2 pr_strong2 ante_w conseq_s timeout in
   let r = match !tp with
     | DP ->
@@ -1390,7 +1392,7 @@ let tp_imply ante conseq imp_no timeout process =
   | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
-		    (called_prover :="coq " ; Coq.imply ante_w conseq_s)
+		    (called_prover :="coq " ; coq_imply ante_w conseq_s)
 	      else
 		    (called_prover :="smtsolver " ; z3_imply ante conseq (* timeout *) (*imp_no timeout*))
   | AUTO ->
@@ -1400,7 +1402,7 @@ let tp_imply ante conseq imp_no timeout process =
         end
       else if (is_list_constraint ante) || (is_list_constraint conseq) then
         begin
-          (called_prover :="Coq "; Coq.imply ante_w conseq_s);
+          (called_prover :="Coq "; coq_imply ante_w conseq_s);
         end
       else if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
