@@ -8,6 +8,7 @@ data node2 {
 }
 
 /* view for trees with number of nodes and depth */
+//size, height
 bst1<m, n> == self = null & m = 0 & n = 0
 	or self::node2<_, p, q> * p::bst1<m1, n1> * q::bst1<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
 	inv m >= 0 & n >= 0;
@@ -18,9 +19,11 @@ dll<p, n> == self = null & n = 0
 	inv n >= 0;
 
 /* function to append 2 doubly linked lists */
+relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
-     requires x::dll<_, m> * y::dll<_, n>
-     ensures res::dll<r, m+n>;
+   infer[APP]
+   requires x::dll<_, m> * y::dll<_, n>
+  ensures res::dll<r, k> & APP(k,m,n);//m>=0 & k>=m & k=n+m
 {
 	node2 z;
 
@@ -38,9 +41,11 @@ node2 append(node2 x, node2 y)
 }
 
 /* function to count the number of nodes in a tree */
+relation CNT(int a, int b, int c).
 int count(node2 z)
-	requires z::bst1<n, h>
-	ensures z::bst<n, h> & res = n & n>=0;
+  infer[CNT]
+  requires z::bst1<n, h>
+  ensures  z::bst1<n, h> & CNT(res,n,n1);//res = n & n>=0 & n=n1;
 {
 	int cleft, cright;
 
@@ -54,11 +59,13 @@ int count(node2 z)
 	}
 }
 
-
 /* function to transform a tree in a doubly linked list */
+//fail to compute fixpoint
+relation FLAT(int a, int b).
 void flatten(node2 x)
+  infer[FLAT]
   requires x::bst1<m, n>
-  ensures (exists q : x::dll<q, m> & q=null);
+  ensures  x::dll<q, m> & q=null & FLAT(n,m);//& q=null
 {
 	node2 tmp;
 	if (x != null)
