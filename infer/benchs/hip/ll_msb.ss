@@ -228,7 +228,7 @@ node create_list(int n, int v)
   requires n>=0
   case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::ll2<n,S> & CL(S,v);//& {v}<=S;
+  n > 0 -> ensures res::ll2<n,S> & CL(S,v);// forall _x: _x notin S | x = v;
   n < 0 -> ensures true;
   }
 {
@@ -407,7 +407,7 @@ relation SPI(bag S1, bag S2, bag S3).
 void splice (ref node x, node y)
   infer[SPI]
   requires x::ll2<n,S1> * y::ll2<m,S2>
-  ensures x'::ll2<m+n,S> & SPI(S,S1,S2);
+  ensures x'::ll2<m+n,S> & SPI(S,S1,S2); //S=union(S1,S2)
 {
   if(x == null)
     x = y;

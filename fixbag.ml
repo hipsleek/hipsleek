@@ -122,7 +122,7 @@ let rec fixbag_of_pure_formula f = match f with
 (*    " exists (" ^ (string_of_elems svs fixbag_of_spec_var ",") ^ ": " ^ *)
 (*    fixbag_of_h_formula h ^ op_and ^ fixbag_of_mix_formula (p,b) ^ ")"*)
 
-let fixbag = "fixbag2"
+let fixbag = "fixbag3"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
@@ -550,6 +550,14 @@ let helper input_pairs rel ante_vars =
 (*  | [hd] -> [(rel,hd,no)]*)
   | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs, no)]
 
+let simplify_res fixpoint =
+  let disjs = list_of_disjs fixpoint in
+  match disjs with
+  | [p1;p2] -> 
+    if TP.imply_raw p1 p2 then p2 else 
+    if TP.imply_raw p2 p1 then p1 else fixpoint
+  | _ -> fixpoint
+
 let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars = 
   if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos, CP.mkFalse no_pos)
   else (
@@ -580,7 +588,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars =
       let fixpoint = Parse_fixbag.parse_fix res in
       DD.devel_hprint (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
       match fixpoint with
-        | [post] -> (rel_fml, post, CP.mkTrue no_pos)
+        | [post] -> (rel_fml, simplify_res post, CP.mkTrue no_pos)
         | _ -> report_error no_pos "Expecting a post"
     with _ -> report_error no_pos "Unexpected error in computing fixpoint by FixBag")
 

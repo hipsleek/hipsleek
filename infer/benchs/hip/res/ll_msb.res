@@ -691,7 +691,7 @@ Checking procedure splice$node~node...
 Restarting Mona ...
 
 !!! REL :  SPI(S,S1,S2)
-!!! POST:  true
+!!! POST:  S=union(S1,S2)
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [SPI]
               EBase exists (Expl)(Impl)[n; S1; m; 
@@ -709,8 +709,8 @@ Restarting Mona ...
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 96::ref [x]
                               x'::ll2<flted_410_87,S>@M[Orig][LHSCase]&
-                              flted_410_87=n+m & 0<=n & 0<=m&
-                              {FLOW,(20,21)=__norm})
+                              flted_410_87=n+m & S=union(S1,S2) & 0<=n & 
+                              0<=m&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(S1_5043:exists(v_5041:(S2= | S2=union(S1_5043,{v_5041})) & S1= & 
   S2=S))) --> SPI(S,S1,S2),
  (exists(S1_5122:exists(v_5120:exists(S1_4896:exists(S1_4931:exists(v_4893:exists(v_5059:exists(v_4928:exists(S1_5062:exists(S1_5072:exists(v_5069:(S_5009= | 
@@ -794,6 +794,6 @@ Termination checking result:
 
 12 false contexts at: ( (159,13)  (159,4)  (237,4)  (237,11)  (242,4)  (242,11)  (241,10)  (241,4)  (240,8)  (240,12)  (240,4)  (240,4) )
 
-Total verification time: 25.05 second(s)
-	Time spent in main process: 2.6 second(s)
-	Time spent in child processes: 22.45 second(s)
+Total verification time: 25.36 second(s)
+	Time spent in main process: 2.64 second(s)
+	Time spent in child processes: 22.72 second(s)
