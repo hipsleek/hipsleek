@@ -18,19 +18,6 @@ let coq_channels = ref (stdin, stdout)
 
 let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
 
-(* pretty printing for primitive types *)
-(* let rec coq_of_prim_type = function *)
-(*   | Bool          -> "int" *)
-(*   | Float         -> "float"	(\* all types will be ints. *\) *)
-(*   | Int           -> "int" *)
-(*   | Void          -> "unit" 	(\* all types will be ints. *\) *)
-(*  | (TVar i)       ->   (\* type var not supported *\) *)
-(*         Error.report_error {Err.error_loc = no_pos;  *)
-(*         Err.error_text = "type var not supported for Coq"} *)
-(*    | BagT t		      -> "("^(coq_of_prim_type t) ^") set" *)
-(*   | List		  -> "list" *)
-(* ;; *)
-
 let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
@@ -204,6 +191,7 @@ and coq_of_formula f =
 	    " (exists " ^ (coq_of_spec_var sv) ^ ":"^(coq_type_of_spec_var sv) ^"," ^ (coq_of_formula p) ^ ") "
     | CP.And (p1, p2, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
+	| CP.AndList _ -> Gen.report_error no_pos "coq.ml: encountered AndList, should have been already handled"
     | CP.Or (p1, p2, _, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
 

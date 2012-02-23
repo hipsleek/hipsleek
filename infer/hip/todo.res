@@ -11,10 +11,14 @@ dprint: todo.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:true & 1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i & {FLOW,(20,21)=__norm}
+ State:true&1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i&{FLOW,(20,21)=__norm}
+       es_var_measures: MayLoop
  ]
 
 Procedure foo2$int SUCCESS
+
+Termination checking result:
+
 Stop Omega... 32 invocations 
 0 false contexts at: ()
 

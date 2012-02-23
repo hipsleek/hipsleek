@@ -1604,7 +1604,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0,_, branches, _ = split_components base in
+  let h, pure0,_, _ = split_components base in
   let pos = pos_of_formula disj in
 	(* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1614,7 +1614,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	*)
   let vmap = H.copy vmap0 in
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
-  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) (MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0 ) branches in
+  let pure0 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0  in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
 	(* compile *)

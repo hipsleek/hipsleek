@@ -30,7 +30,7 @@ and prog_decl = {
 	mutable prog_right_coercions : coercion_decl list; }
 	
 and prog_or_branches = (prog_decl * 
-    ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
+    ((MP.mix_formula * (ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
   data_name : ident;
@@ -53,20 +53,20 @@ and view_decl = {
     view_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : branch_label list;
+    view_labels : Label_only.spec_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
-    view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-    mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+    view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
     (* if view has only a single eqn, then place complex subpart into complex_inv *)  
-    view_complex_inv : (MP.mix_formula * (branch_label * P.formula) list) option; (*COMPLEX INV for --eps option*)
+    view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-    view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+    view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
     view_pt_by_self : ident list;
@@ -79,22 +79,7 @@ and view_decl = {
 and rel_decl = { 
     rel_name : ident; 
     rel_vars : P.spec_var list;
-    rel_formula : P.formula;
-    (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
-       rel_labels : branch_label list;
-       rel_modes : mode list;
-       mutable rel_partially_bound_vars : bool list;
-       mutable rel_materialized_vars : P.spec_var list; (* rel vars that can point to objects *)
-       rel_formula : F.struc_formula;
-       rel_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-       mutable rel_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
-       mutable rel_addr_vars : P.spec_var list;
-       rel_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-       rel_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
-       rel_prune_branches: formula_label list;
-       rel_prune_conditions: (P.b_formula * (formula_label list)) list;
-       rel_prune_invariants : (formula_label list * P.b_formula list) list ;
-       rel_raw_base_case: Cformula.formula option; *)}
+    rel_formula : P.formula;}
 
 (** An Hoa : axiom *)
 and axiom_decl = {
@@ -1507,7 +1492,7 @@ let get_xpure_one vdef rm_br  =
     | None -> Some vdef.view_x_formula 
 
 let get_xpure_one vdef rm_br  =
-  let pr (mf,_) = !print_mix_formula mf in
+  let pr mf = !print_mix_formula mf in
   Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 

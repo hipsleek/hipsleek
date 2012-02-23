@@ -105,18 +105,6 @@ let rec split_members mbrs = match mbrs with
   
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
-(* older version using formula_label *)
-(* let label_struc_groups (lgrp:(formula_label*F.struc_formula) list list) :F.struc_formula= *)
-(*   match (List.length lgrp) with *)
-(*     | 0 -> F.mkEFalseF () *)
-(*     | 1 -> (match List.hd lgrp with *)
-(* 				| ((i,""),x)::[] -> x *)
-(* 				| _ as b -> F.EList b) *)
-(*     | _ -> *)
-(*         let _,lgr = List.fold_left (fun (a1,a2) c -> *)
-(*             let ngrp = List.map (fun ((_,s),d)-> ((a1,s),d)) c in *)
-(*             (a1+1, a2@ngrp) ) (1,[]) lgrp in *)
-(*         F.EList lgr *)
 
 let label_struc_list (lgrp:(spec_label_def*F.struc_formula) list list) : (spec_label_def*F.struc_formula) list = 
   List.concat lgrp
@@ -150,6 +138,7 @@ let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p (
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
+		  | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
@@ -586,15 +575,15 @@ view_decl:
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv  
       -> { vh with view_formula = (fst vb); view_invariant = oi; try_case_inference = (snd vb) } ]];
 
-opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos, [])]];
+opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 
 derv : [[ `DERV -> true ]];
 
 inv: 
-  [[`INV; pc=pure_constr; ob=opt_branches -> (pc,ob)
-   |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
+  [[`INV; pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
+   |`INV; h=ho_fct_header -> (P.mkTrue no_pos)]];
 
 opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
@@ -615,15 +604,15 @@ ann_heap:
 
 ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
 
-opt_branches:[[t=OPT branches -> un_option t []]];
+opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
-branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
 
-one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,pc)]];
+one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
 
-opt_branch:[[t=OPT branch -> un_option t ""]];
+opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
 
-branch: [[ `STRING (_,id);`COLON -> id ]];
+branch: [[ `STRING (_,id);`COLON -> Lab_List.singleton id ]];
 
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
@@ -643,7 +632,7 @@ view_header:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          view_invariant = (P.mkTrue (get_pos_camlp4 _loc 1), []);
+          view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
 			}]];
       
@@ -743,16 +732,19 @@ disjunctive_constr:
 	  (match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
-               F.formula_base_flow = fl;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos_camlp4 _loc 1)
+               F.formula_base_flow = fl;}) -> F.mkExists ocl h p fl (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
       
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos_camlp4 _loc 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> 
+		let pos = (get_pos_camlp4 _loc 1) in
+		F.formula_of_pure_with_flow (P.mkAnd pc fb pos) fc pos
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   ->
+		let pos = (get_pos_camlp4 _loc 2) in 
+		F.mkBase hc (P.mkAnd pc fb pos) fc pos
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -1066,7 +1058,7 @@ cexp_w :
 	  | "pure_base"
 		  [ `TRUE                             -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
 		  | `FALSE                            -> Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
-		  | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
+		  | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc = SELF; `CPAREN      
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
 		  | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
@@ -1180,6 +1172,7 @@ non_array_type:
   [[ `INT                -> int_type
    | `FLOAT              -> float_type 
    | `BOOL               -> bool_type
+   | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:
@@ -1201,11 +1194,11 @@ id:[[`IDENTIFIER id-> id]];
 
 hopred_decl: 
   [[`HPRED; h=hpred_header; `EXTENDS; b=ext_form 
-      -> mkHoPred  (fst (fst h)) "extends" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])
+      -> mkHoPred  (fst (fst h)) "extends" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
 	| `HPRED; h=hpred_header; `REFINES;  b=ext_form
-      -> mkHoPred  (fst (fst h)) "refines" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])
+      -> mkHoPred  (fst (fst h)) "refines" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
   | `HPRED; h=hpred_header; `JOIN; s=split_combine 
-      -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])
+      -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos)
 	| `HPRED; h=hpred_header;  `EQEQ; s=shape; oi= opt_inv; `SEMICOLON 
       -> mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi]];
       

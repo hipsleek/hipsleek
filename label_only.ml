@@ -44,6 +44,11 @@ struct
     if (is_unlabelled xs) || (is_unlabelled ys) then true
     else overlap xs ys
 
+  let is_part_compatible xs ys =
+    if (is_unlabelled xs) then true
+    else overlap xs ys
+
+	
   let is_compatible_rec = is_compatible
 
   (* assumes that xs is sorted *)
@@ -78,8 +83,7 @@ struct
 
   (* combine two labels that may not be identical *)
   let comb_norm xs ys = 
-    let rec helper xs ys =
-    match xs,ys with
+    let rec helper xs ys = match xs,ys with
       | [],ys -> ys
       | (x::xs1),[] ->  xs
       | (x::xs1),y::ys1 ->

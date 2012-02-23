@@ -1,0 +1,63 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (28)
+//infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+//print residue.
+/*
+Inferred Heap:[ y::node<inf_351,inf_352>[Orig], b::ll<inf_m_356>[Orig][LHSCase]]
+Inferred Pure:[ b=inf_352, a=inf_351 & b=inf_352 & inf_m_356=0 - 1 & m=0 - 1]
+<1>true & m+1=0 & a=inf_351 & b=inf_352 & a=inf_351 & b=inf_352 & 
+inf_m_356=0 - 1 & m=0 - 1 &
+{FLOW,(17,18)=__norm}
+*/
+
+
+// (29)
+//infer [y,b] true |- y::node<a,b> * b::ll<m>.
+
+
+//infer [y] true |- y::node<a,b>.
+
+
+//infer [y,c] true |- y::node<a,b>*b::node<c,d>*d::node<e,f>.
+
+//infer [y,b] true |- y::node<a,b>*b::node<c,d>.
+
+//infer [b] true |- b::ll<n>.
+
+/*
+infer [y] true |- y::node<a,b>*b::ll<n>.
+inferred pure: [inf_b_30=b; inf_ann_28<=0 & inf_b_30=null & y!=null | 
+               inf_ann_31<=0 & inf_ann_28<=0 & inf_b_30!=null & 
+               1<=inf_n_32 & y!=null; inf_ann_31<=0 & inf_b_30=null | 
+               inf_ann_31<=0 & inf_b_30!=null & 1<=inf_n_32]
+infer [y,b] true |- y::node<a,b>*b::ll<n>.
+inferred pure: [inf_b_34=b & b=null & inf_ann_32<=0 & y!=null | inf_b_34=b & 
+               inf_ann_36<=0 & inf_ann_32<=0 & b!=null; inf_n_37=0 & 
+               inf_ann_32<=0 | inf_ann_36<=0 & inf_ann_32<=0 & 1<=inf_n_37 & 
+               b!=null & y!=null; inf_n_37=0 & inf_ann_36<=0 | 
+               inf_ann_36<=0 & 1<=inf_n_37 & b!=null & y!=null]
+*/
+
+//infer [y] y=x |- x::node<a,b>.
+//infer [y] y=x |- x::node<a,b>*b::node<c,d>.
+infer [y,b] y=x |- x::node<a,b>*b::node<c,d>.
+
+
+print residue.
+
+
+
+
+
+
+
+

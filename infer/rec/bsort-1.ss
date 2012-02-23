@@ -30,8 +30,8 @@ NEW RELS: [ ( res<=0) -->  A(res), ( res<=0) -->  B(res), ( tmp_42' & A(tmp_42')
 bool bubble(node xs)
      infer @pre[xs,A,B]
      requires xs::ll<n> & xs!=null
-     ensures xs::sll<n, s, l>  & A(res)  //&!res
-		or  xs::ll<n> /*& res*/ & B(res);
+     ensures xs::sll<n, s, l>  & A(res)//  &!res
+		or  xs::ll<n> & B(res);
 
 
 {
@@ -42,6 +42,7 @@ bool bubble(node xs)
 		return false;
 	}
 	else {    
+    //assume false;
 		tmp = bubble(xs.next);
     int xv = xs.val;
     int xnv = xs.next.val;

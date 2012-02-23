@@ -131,6 +131,7 @@ and cvc3_of_sv_type sv = match sv with
 and cvc3_of_formula f = match f with
   | CP.BForm (b,_) -> "(" ^ (cvc3_of_b_formula b) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (cvc3_of_formula p1) ^ " AND " ^ (cvc3_of_formula p2) ^ ")"
+  | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvc3_of_formula p1) ^ " OR " ^ (cvc3_of_formula p2) ^ ")"
   | CP.Not (p,_, _) ->
 	    begin
@@ -149,6 +150,7 @@ and remove_quantif f quant_list  = match f with
   | CP.BForm (b,_) -> 
 		(*let _ = print_string ("\n#### BForm: " ^ Cprinter.string_of_pure_formula f ) in*)
 		(f, quant_list)
+  | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"
   | CP.And (p1, p2, pos) -> 
 		begin
 		  let (tmp1, quant_list) = remove_quantif p1 quant_list in

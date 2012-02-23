@@ -19,11 +19,11 @@ int swap (int x, int y)
    case {
     y<0 -> requires Loop[] ensures false;
     y=0 -> requires Term[] ensures res=x-1;
-    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures res=x-(y+1);
+    y>0 -> requires Term[r1(x,y) /*2*y+1*/] ensures ans1(x,y,res); //res=x-(y+1);
     }
    x>0 ->
      case {
-     y<0 -> requires Term[r2(x,y) /* 2*x */] ensures res=y-x ;
+     y<0 -> requires Term[r2(x,y) /* 2*x */] ensures ans2(x,y,res); //res=y-x ;
      y=0 -> requires Term[] ensures res=x-1;
      y>0 -> requires Term[r3(x,y) /* x+y */] 
             ensures x>y & res=x-y-1 | x<=y & res=y-x;

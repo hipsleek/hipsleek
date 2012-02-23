@@ -193,6 +193,7 @@ let rec smt_of_formula f =
 	match f with
 	| Cpure.BForm (b,_) -> (smt_of_b_formula b)
 	| Cpure.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| Cpure.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")"
 	| Cpure.Forall (sv, p, _,_) ->
@@ -236,6 +237,7 @@ and collect_combine_formula_info f1 f2 =
  *)
 and collect_formula_info_raw f = match f with
 	| Cpure.BForm ((b,_),_) -> collect_bformula_info b
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.And (f1,f2,_) | Cpure.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
 	| Cpure.Not (f1,_,_) -> collect_formula_info_raw f1
@@ -843,6 +845,7 @@ let rec collect_induction_value_candidates (ante : Cpure.formula) (conseq : Cpur
 			  (* | Cpure.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [Cpure.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| Cpure.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| Cpure.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 	| Cpure.Forall _ | Cpure.Exists _ -> []
@@ -952,7 +955,8 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
-	try (match (Omega.imply_with_check ante conseq "" timeout) with
+        let (pr_w,pr_s) = Cpure.drop_complex_ops in
+	try (match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
 	  | None -> (false, true)
 	  | Some r -> (r, false)
 	)
@@ -1020,7 +1024,9 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout: bool =
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try let optr= (Omega.is_sat_with_check f sat_no) in
+		try
+             let (pr_w,pr_s) = Cpure.drop_complex_ops in
+            let optr= (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in
         ( match optr with
           | Some r -> (r, false)
           | None -> (true, false)

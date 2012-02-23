@@ -211,13 +211,6 @@ and isabelle_of_formula f =
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
     | CP.Not (p, _,_) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
-(*	begin
-	  if (is_bag_formula f) then
-	    match p with
-		| CP.BForm (CP.BVar (bv, _)) -> (isabelle_of_spec_var bv) ^ " = 0"
-		| _ -> 
-          else ""
-	end*)
     | CP.Forall (sv, p, _,_) ->
 	  if (is_bag_formula f) then
 	    " (ALL " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
@@ -226,6 +219,7 @@ and isabelle_of_formula f =
 	  if (is_bag_formula f) then
 	    " (EX " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
           else ""
+	| CP.AndList _ -> Gen.report_error no_pos "isabelle.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) ->
 	  if (is_bag_formula p1) & (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " & " ^ (isabelle_of_formula p2) ^ ")"

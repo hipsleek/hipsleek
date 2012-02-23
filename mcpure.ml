@@ -249,12 +249,35 @@ and b_f_ptr_equations_aux with_null f =
 
 and b_f_ptr_equations f = b_f_ptr_equations_aux true f
 
+and is_bf_ptr_equations bf =
+  let (pf,_) = bf in
+  match pf with
+  | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2
+  | _ -> false
+
+and is_pure_ptr_equations f = match f with
+  | BForm (bf,_) -> is_bf_ptr_equations bf
+  | _ -> false
+
+and remove_ptr_equations f is_or = match f with
+  | BForm (bf,_) -> 
+    if is_bf_ptr_equations bf then 
+      if is_or then mkFalse no_pos
+      else mkTrue no_pos 
+    else f
+  | And (f1,f2,p) -> mkAnd (remove_ptr_equations f1 false) (remove_ptr_equations f2 false) p
+  | Or (f1,f2,o,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o p
+  | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p)
+  | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
+
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
   pure_ptr_equations_aux true f
 
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
+	| AndList b -> fold_l_snd prep_f b
     | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
     | _ -> [] in 
   prep_f f
@@ -2009,10 +2032,10 @@ let mix_cons_filter f fct =
   let pr = !print_mix_f in
   Debug.no_1 "mix_cons_filter" pr pr 
       (fun _ -> mix_cons_filter f fct) f
-
+(*
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
   | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
-  | OnePF pf -> OnePF (combine_branch s (pf,snd f))
+  | OnePF pf -> OnePF (combine_branch s (pf,snd f))*)
  (*
  match f with
   | MemoF f -> 
