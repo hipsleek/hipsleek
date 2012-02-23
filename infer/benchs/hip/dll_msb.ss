@@ -103,8 +103,8 @@ node2 append1(node2 x, node2 y)
 
 relation APP2(bag a, bag b, bag c).
 void append2(node2 x, node2 y)
-  infer [m,APP2]
-	requires x::dll<q, m, S1> * y::dll<p, n, S2> //m>=1
+  infer [APP2]
+	requires x::dll<q, m, S1> * y::dll<p, n, S2> & m>=1
 	ensures x::dll<q, t, S> & t=m+n & APP2(S,S1,S2); //S=Union(S1,S2)
 {
 	node2 tmp;
