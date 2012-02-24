@@ -46,7 +46,7 @@ Checking procedure foo1b$int...
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 7::ref [i]
                                 true&true&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase true&0<i&{FLOW,(20,21)=__norm}
+!!! NEW SPECS: ((None,[]),EBase true&1<=i&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 7::ref [i]
                               true&i=i'+1 & 0<=i'&{FLOW,(20,21)=__norm})
@@ -57,9 +57,9 @@ Procedure foo1b$int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 71 invocations 
+Stop Omega... 82 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.17 second(s)
-	Time spent in main process: 0.15 second(s)
+Total verification time: 0.16 second(s)
+	Time spent in main process: 0.14 second(s)
 	Time spent in child processes: 0.02 second(s)

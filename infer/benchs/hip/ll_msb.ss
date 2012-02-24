@@ -195,6 +195,7 @@ void insert(node x, int a)
 }
 
 /* function to delete the a-th node in a singly linked list */
+// Long time due to fixbag
 relation DEL(bag a, bag b).
 void delete( node x, int a)
   infer [DEL]
@@ -406,6 +407,7 @@ node find_ge(node x, int v)
 }
 
 /*function to splice 2 linked list*/
+// Long time due to filter_var
 relation SPI(bag S1, bag S2, bag S3).
 void splice (ref node x, node y)
   infer[SPI]

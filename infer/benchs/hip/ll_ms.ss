@@ -213,11 +213,11 @@ void insert(node x, int a)
 }
 
 /* function to delete the a-th node in a singly linked list */
-relation DEL(int m, int n).
+relation DEL(int m, int n, int p).
 void delete(node x, int a)
   infer[n,DEL]
-  requires x::ll<n> //& 2<=n
-  ensures x::ll<m> & DEL(m,n); //n>=2 & n=m+1
+  requires x::ll<n> // 1<=a & a<n
+  ensures x::ll<m> & DEL(m,n,a); //a>=1 & m>=a & m+1=n
 {
   if (a == 1){
     x.next = x.next.next;

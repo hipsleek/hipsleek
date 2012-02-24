@@ -50,7 +50,7 @@ int size_helper(node x, ref int n)
 {
   if (x==null) return n;
   else {
-    n = n+ 1;
+    n = n+1;
     return size_helper(x.next, n);
   }
 }
@@ -141,15 +141,15 @@ node get_next(node x)
   ensures true; // x::node<Anon_937,next_144_823'>@M[Orig] * q_938::ll1@M[Orig] & res=q_938 & next_144_823'=null
 {
   node tmp = x.next;
-  x.next = null;
+  //x.next = null;
   return tmp;
 }
 
 /* function to set the tail of a list */
-void set_next(node x, node y)
+void set_next(ref node x, node y)
   infer[x]
   requires x::ll1<> * y::ll1<> // x!=null
-  ensures x::ll1<>;
+  ensures x'::ll1<>;
 {
 	x.next = y;
 }
@@ -202,7 +202,7 @@ void insert(node x, int a)
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
   infer[x]
-  requires x::ll1<> 
+  requires x::ll1<> & a > 0
   ensures x::ll1<>;
 {
   if (a == 1) {

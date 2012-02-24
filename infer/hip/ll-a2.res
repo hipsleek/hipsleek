@@ -33,7 +33,7 @@ Procedure append2$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 94 invocations 
+Stop Omega... 99 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.21 second(s)

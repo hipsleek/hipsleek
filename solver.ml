@@ -8520,10 +8520,11 @@ let rec simplify_post_heap_only fml prog = match fml with
     let h = simplify_heap h p prog in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 
-let rec elim_heap h p pre_vars heap_vars = match h with
+let rec elim_heap_x h p pre_vars heap_vars = match h with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} -> 
+    let heap_vars = CF.h_fv h1 @ CF.h_fv h2 in
     let h1 = elim_heap h1 p pre_vars heap_vars in
     let h2 = elim_heap h2 p pre_vars heap_vars in
     mkStarH h1 h2 pos
@@ -8544,18 +8545,25 @@ let rec elim_heap h p pre_vars heap_vars = match h with
     let node_aset = CP.EMapSV.build_eset node_als in
     let alias = (CP.EMapSV.find_equiv_all v.h_formula_view_node node_aset) @ [v.h_formula_view_node] in
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
-      && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var v.h_formula_view_node)
+      && List.length (List.filter (fun x -> x = v.h_formula_view_node) heap_vars) <= 1
     in if cond then HTrue else h
   | DataNode d ->
     let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
     let node_aset = CP.EMapSV.build_eset node_als in
     let alias = (CP.EMapSV.find_equiv_all d.h_formula_data_node node_aset) @ [d.h_formula_data_node] in
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
-      && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var d.h_formula_data_node)
+      && List.length (List.filter (fun x -> x = d.h_formula_data_node) heap_vars) <= 1
     in if cond then HTrue else h
   | _ -> h
+
+and elim_heap h p pre_vars heap_vars =
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_pure_formula in
+  let pr3 = !print_svl in
+  Debug.no_4 "elim_heap" pr pr2 pr3 pr3 pr
+      (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars) h p pre_vars heap_vars
 
 (*let rec create_alias_tbl vs aset = match vs with*)
 (*  | [] -> []*)
