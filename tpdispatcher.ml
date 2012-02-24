@@ -722,10 +722,10 @@ let elim_exists (f : CP.formula) : CP.formula =
 
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =
-	if (nlv1 = [] && nlv2 = []) then
-	  (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
-	else
-	  (Gen.BList.overlap_eq CP.eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
+    if (nlv1 = [] && nlv2 = []) then
+	    (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
+	  else
+	    (Gen.BList.overlap_eq CP.eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq CP.eq_spec_var lv1 lv2)
   in
   
   let rec group_conj l = match l with
@@ -787,9 +787,9 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
 	   
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   if !do_slicing && !multi_provers then
-	assumption_filter_slicing ante cons
+	  assumption_filter_slicing ante cons
   else
-	CP.assumption_filter ante cons
+	  CP.assumption_filter ante cons
 
 (* let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
