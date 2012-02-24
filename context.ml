@@ -623,10 +623,18 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  [] in
                   let l4 = 
                     (* TODO WN : what is original?? *)
-                    (* if get_view_original rhs_node then 
-                      [(2,M_base_case_fold c)] 
-                    else [] in *)
-                    [] in
+                    (* let fr =  get_view_original rhs_node in *)
+                    (* let fl =  get_view_original lhs_node in *)
+                    if vr_view_orig then
+                      begin
+                      Debug.dinfo_hprint (add_str "lhs_node" !print_h_formula ) lhs_node no_pos;
+                      Debug.dinfo_hprint (add_str "rhs_node" !print_h_formula ) rhs_node no_pos;
+                      Debug.dinfo_hprint (add_str "vl_view_orig" string_of_bool ) vl_view_orig no_pos;
+                      Debug.dinfo_hprint (add_str "vr_view_orig" string_of_bool ) vr_view_orig no_pos;
+                      [(3,M_base_case_fold c)]
+                      end
+                    else [] 
+                  in
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
