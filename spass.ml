@@ -27,10 +27,6 @@ let spass_input_format = "dfg"   (* valid value is: "dfg" or "tptp" *)
 let spass_input_mode = "stdin"    (* valid value is: "file" or "stdin" *) 
 
 
-(* Pure formula printing function, to be intialized by cprinter module *)
-
-let print_pure = ref (fun (c: Cpure.formula) -> " printing not initialized")
-
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN DFG FORMAT
 **************************************************************)
@@ -163,7 +159,7 @@ and spass_dfg_of_formula f : (string * string list * string list) =
     ) 
 
 let spass_dfg_of_formula f =
-  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_dfg_of_formula f
+  Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f
 
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN TPTP FORMAT
@@ -243,7 +239,7 @@ and spass_tptp_of_formula f =
   | Exists (sv, f, _, _) -> "( ? [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
 
 let spass_tptp_of_formula f =
-  Debug.no_1 "spass_of_formula" !print_pure pr_id spass_tptp_of_formula f
+  Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_tptp_of_formula f
 
 (*************************************************************)
 (* Check whether spass can handle the expression, formula... *)
@@ -417,7 +413,7 @@ let start () =
 let stop () =
   if !is_spass_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop SPASS... "^(string_of_int !spass_call_count)^" invocations "); flush stdout;
+    print_string ("Stop SPASS... " ^ (string_of_int !spass_call_count) ^ " invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
     is_spass_running := false;
   )
@@ -425,11 +421,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_spass_running then (
-    let _ = print_string (reason^" Restarting SPASS after ... "^(string_of_int !spass_call_count)^" invocations ") in
+    let _ = print_string (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_file reason "SPASS" start stop
   )
   else (
-    let _ = print_string (reason^" not restarting SPASS ... "^(string_of_int !spass_call_count)^" invocations ") in ()
+    let _ = print_string (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in ()
   )
     
 (* Runs the specified prover and returns output *)
@@ -635,7 +631,7 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 
 let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
   (* let _ = "** In function Spass.spass_imply" in *)
-  let pr = !print_pure in
+  let pr = Cprinter.string_of_pure_formula in
   let result = 
     Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
     (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
@@ -701,9 +697,9 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
     let result = imply ante conseq timeout in
     result
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply Spass.imply on ante Formula :"^(!print_pure ante));
-    print_endline ("and conseq Formula :"^(!print_pure conseq));
+    print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+    print_endline ("Apply Spass.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
+    print_endline ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
     flush stdout;
     failwith s
   )
@@ -762,7 +758,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 
 (* spass *)
 let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
-  let pr = !print_pure in
+  let pr = Cprinter.string_of_pure_formula in
   let result = Debug.no_1 "spass_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
   let _ = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
@@ -788,8 +784,8 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply Spass.is_sat on formula :"^(!print_pure pe));
+    print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+    print_endline ("Apply Spass.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
     flush stdout;
     failwith s
   )
