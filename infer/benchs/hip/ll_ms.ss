@@ -51,10 +51,11 @@ int size_helper(node x, ref int n)
 {
   if (x==null) return n;
   else {
-    n = n+ 1;
+    n = n+1;
     return size_helper(x.next, n);
   }
 }
+
 relation SIZE(int a, int b).
 int size(node x)
   infer[SIZE]
@@ -74,6 +75,11 @@ int front(node x)
 {
   return x.val;
 }
+
+// A reference to the first element in the list container.
+int back(node x)
+  requires x::ll<_>
+  ensures true;
 
 void swap(ref node x, ref node y)
   infer @post []
@@ -175,9 +181,9 @@ void set_null2(ref node x)
 }
 
 /* function to set null the tail of a list */
-void set_null(node x)
+void set_null(ref node x)
   requires x::ll<i> & x!=null
-  ensures x::node<_,null>;
+  ensures x'::node<_,null>;
 {
   x.next = null;
 }

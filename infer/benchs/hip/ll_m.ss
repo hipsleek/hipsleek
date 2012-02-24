@@ -154,10 +154,10 @@ void set_next(node x, node y)
 	x.next = y;
 }
 
-void set_null2(node x)
+void set_null2(ref node x)
   infer[x]
   requires x::ll1<> // x!=null
-  ensures x::node<_,null>;
+  ensures x'::node<_,null>;
 {
   if (4>3)
     x.next = null;
@@ -166,10 +166,10 @@ void set_null2(node x)
 }
 
 /* function to set null the tail of a list */
-void set_null(node x)
+void set_null(ref node x)
   infer[x]
   requires x::ll1<>  // x!=null
-  ensures x::node<_,null>;
+  ensures x'::node<_,null>;
 {
   x.next = null;
 }
@@ -180,7 +180,10 @@ node get_next_next(node x)
   requires x::ll1<> // x!=null
   ensures res::ll1<>;
 {
-  return x.next.next;
+  if (x.next!=null)
+    return x.next.next;
+  else 
+    return null;
 }
 
 /* function to insert a node in a singly linked list */
