@@ -79,6 +79,9 @@ let string_of_prover prover = match prover with
   | SPASS -> "SPASS"
 
 
+let sat_cache = ref (Hashtbl.create 200)
+let imply_cache = ref (Hashtbl.create 200)
+
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
 
 let generated_prover_input = ref "_input_not_set_"
@@ -887,7 +890,7 @@ let disj_cnt a c s =
     end
   else ()
 
-let tp_is_sat (f : CP.formula) (sat_no : string) = 
+let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
   let vrs = Cpure.fv f in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let f = Cpure.add_ann_constraints imm_vrs f in
@@ -1028,6 +1031,25 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat" 
   in res
+
+let tp_is_sat (f:CP.formula) (sat_no :string) = 
+  if !Globals.no_cache_formula then
+    tp_is_sat_no_cache f sat_no
+  else
+    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+    let sf = simplify_var_name f in
+    let fstring = Cprinter.string_of_pure_formula sf in
+    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+    let res =
+      try
+        Hashtbl.find !sat_cache fstring
+      with Not_found ->
+        let r = tp_is_sat_no_cache(*_debug*) f sat_no in
+        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+        let _ = Hashtbl.add !sat_cache fstring r in
+        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+        r
+    in res
 
 let tp_is_sat f sat_no =
   Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
@@ -1344,7 +1366,7 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
-let tp_imply ante conseq imp_no timeout process =
+let tp_imply_no_cache ante conseq imp_no timeout process =
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
@@ -1480,6 +1502,26 @@ let tp_imply ante conseq imp_no timeout process =
 		r
 ;;
 
+
+let tp_imply ante conseq imp_no timeout process =
+  if !Globals.no_cache_formula then
+    tp_imply_no_cache ante conseq imp_no timeout process
+  else
+    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+    let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
+    let sf = simplify_var_name f in
+    let fstring = Cprinter.string_of_pure_formula sf in
+    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+    let res = 
+      try
+        Hashtbl.find !imply_cache fstring
+      with Not_found ->
+        let r = tp_imply_no_cache ante conseq imp_no timeout process in
+        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+        let _ = Hashtbl.add !imply_cache fstring r in
+        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+        r
+    in res
 
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in

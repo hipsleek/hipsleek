@@ -507,7 +507,7 @@ let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let no_cache_formula = ref true
+let no_cache_formula = ref false
 
 let enable_incremental_proving = ref false
 
