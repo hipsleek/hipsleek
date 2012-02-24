@@ -11,6 +11,7 @@ do
 	# echo "[z3][.imm.slc.eps] spaguetti-$i"
 	# time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps --enable-slicing > spaguetti-$i.z3.imm.slc.eps
 
+
 	echo "[z3][.eps] spaguetti-$i"
 	echo "[z3][.eps] spaguetti-$i" >> time.out
 	(time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps --dis-imm) 1> spaguetti-$i.z3.eps 2>> time.out
@@ -35,5 +36,6 @@ do
 	# time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --enable-slicing --slc-opt-ineq --dis-imm > spaguetti-$i.z3.ineq
 	# echo "[z3][.slc] spaguetti-$i"
 	# time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --enable-slicing --dis-imm > spaguetti-$i.z3.slc
+
 done
 	
