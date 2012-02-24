@@ -38,10 +38,11 @@ TRANSLATE CPURE FORMULA TO PROBLEM IN DFG FORMAT
 let spass_dfg_of_spec_var sv =
   (Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")
 
-let rec spass_dfg_of_exp (e0 : Cpure.exp) : string =
+(* return exp in string * list of functions in string * list of predicates in string *)
+let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list) =
   match e0 with
-  | Cpure.Null _      -> "NULL"
-  | Cpure.Var (sv, _) -> spass_dfg_of_spec_var sv
+  | Cpure.Null _      -> ("NULL", ["NULL"], [])
+  | Cpure.Var (sv, _) -> let func = spass_dfg_of_spec_var sv in (func, [func], [])
                          (* illegal_format "SPASS don't support Var expresion" *)
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
@@ -67,30 +68,43 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ListReverse _
   | Cpure.ArrayAt _   -> illegal_format "SPASS don't support List/Array expresion"
   (* other *)
-  | Cpure.Func (sv, exp_list, _) -> (
-      let s1 = spass_dfg_of_spec_var sv in
-      let exp_str_list = List.map (fun e -> spass_dfg_of_exp e) exp_list in
-      let s2 = String.concat ", " exp_str_list in
-      s1 ^ "(" ^ s2 ^ ")" 
-    )
+  | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
                            
-
-and spass_dfg_of_b_formula (bf : Cpure.b_formula) : string =
+(* return b_formula in string * list of functions in string * list of predicates in string *)
+and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * string list) =
   match bf with
   | (pf, _) -> spass_dfg_of_p_formula pf
 
-and spass_dfg_of_p_formula (pf : Cpure.p_formula) : string =
+(* return p_formula in string * list of functions in string * list of predicates in string *)
+and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * string list) =
   match pf with
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
-  | BConst (c, _)   -> if c then "true" else "false"
-  | BVar (sv, _)    -> spass_dfg_of_spec_var sv
+  | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
+  | BVar (sv, _)    -> (
+      let pred = spass_dfg_of_spec_var sv in
+      (pred, [], [pred]) 
+    ) 
   | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
   | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
   | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
   | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
   | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
-  | Eq (e1, e2, _)  -> "equal(" ^ (spass_dfg_of_exp e1) ^ "," ^ (spass_dfg_of_exp e2) ^ ")"
-  | Neq (e1, e2, _) -> "not(equal(" ^ (spass_dfg_of_exp e1) ^ "," ^ (spass_dfg_of_exp e2) ^ "))"
+  | Eq (e1, e2, _)  -> (
+      let (s1, func_list1, pred_list1) = spass_dfg_of_exp e1 in
+      let (s2, func_list2, pred_list2) = spass_dfg_of_exp e2 in
+      let s = "equal(" ^ s1 ^ "," ^ s2 ^ ")" in 
+      let func_list = Gen.BList.remove_dups_eq (=) func_list1 @ func_list2 in
+      let pred_list = Gen.BList.remove_dups_eq (=) pred_list1 @ pred_list2 in
+      (s, func_list, pred_list)
+    )
+  | Neq (e1, e2, _) -> (
+      let (s1, func_list1, pred_list1) = spass_dfg_of_exp e1 in
+      let (s2, func_list2, pred_list2) = spass_dfg_of_exp e2 in
+      let s = "not(equal(" ^ s1 ^ "," ^ s2 ^ "))" in 
+      let func_list = Gen.BList.remove_dups_eq (=) func_list1 @ func_list2 in
+      let pred_list = Gen.BList.remove_dups_eq (=) pred_list1 @ pred_list2 in
+      (s, func_list, pred_list)
+    ) 
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
   (* bag formulas *)
@@ -106,14 +120,47 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : string =
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
 
-and spass_dfg_of_formula f =
+(* return formula in string * list of functions in string * list of predicates in string *)
+and spass_dfg_of_formula f : (string * string list * string list) =
   match f with
   | BForm (b, _)         -> spass_dfg_of_b_formula b
-  | And (f1, f2, _)      -> "and(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
-  | Or (f1, f2, _, _)    -> "or(" ^ (spass_dfg_of_formula f1) ^ ", " ^ (spass_dfg_of_formula f2) ^ ")"
-  | Not (f, _, _)        -> "not(" ^ (spass_dfg_of_formula f) ^ ")"
-  | Forall (sv, f, _, _) -> "forall([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
-  | Exists (sv, f, _, _) -> "exists([" ^ (spass_dfg_of_spec_var sv) ^ "]," ^ (spass_dfg_of_formula f) ^ ")"
+  | And (f1, f2, _)      -> (
+      let (s1, func_list1, pred_list1) = spass_dfg_of_formula f1 in
+      let (s2, func_list2, pred_list2) = spass_dfg_of_formula f2 in
+      let s = "and(" ^ s1 ^ ", " ^ s2 ^ ")" in
+      let func_list = Gen.BList.remove_dups_eq (=) func_list1 @ func_list2 in
+      let pred_list = Gen.BList.remove_dups_eq (=) pred_list1 @ pred_list2 in
+      (s, func_list, pred_list)
+    )
+  | Or (f1, f2, _, _)    -> (
+      let (s1, func_list1, pred_list1) = spass_dfg_of_formula f1 in
+      let (s2, func_list2, pred_list2) = spass_dfg_of_formula f2 in
+      let s = "or(" ^ s1 ^ ", " ^ s2 ^ ")" in
+      let func_list = Gen.BList.remove_dups_eq (=) func_list1 @ func_list2 in
+      let pred_list = Gen.BList.remove_dups_eq (=) pred_list1 @ pred_list2 in
+      (s, func_list, pred_list)
+    ) 
+  | Not (f, _, _)        -> (
+      let (s, func_list, pred_list) = spass_dfg_of_formula f in
+      let new_s = "not(" ^ s ^ ")" in 
+      (new_s, func_list, pred_list)
+    ) 
+  | Forall (sv, f, _, _) -> (
+      let (s, func_list, pred_list) = spass_dfg_of_formula f in
+      let local_sv = spass_dfg_of_spec_var sv in
+      let new_s = "forall([" ^ local_sv ^ "]," ^ s ^ ")" in
+      let new_func_list = Gen.BList.remove_elem_eq (=) local_sv func_list in 
+      let new_pred_list = Gen.BList.remove_elem_eq (=) local_sv pred_list in
+      (new_s, new_func_list, new_pred_list)
+    )
+  | Exists (sv, f, _, _) -> (
+      let (s, func_list, pred_list) = spass_dfg_of_formula f in
+      let local_sv = spass_dfg_of_spec_var sv in
+      let new_s = "exists([" ^ local_sv ^ "]," ^ s ^ ")" in
+      let new_func_list = Gen.BList.remove_elem_eq (=) local_sv func_list in 
+      let new_pred_list = Gen.BList.remove_elem_eq (=) local_sv pred_list in
+      (new_s, new_func_list, new_pred_list)
+    ) 
 
 let spass_dfg_of_formula f =
   Debug.no_1 "spass_of_formula" !print_pure pr_id spass_dfg_of_formula f
@@ -153,13 +200,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ListReverse _
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support List/Array expresion"
   (* other *)
-  | Cpure.Func (sv, exp_list, _) -> (
-      let s1 = spass_dfg_of_spec_var sv in
-      let exp_str_list = List.map (fun e -> spass_dfg_of_exp e) exp_list in
-      let s2 = String.concat ", " exp_str_list in
-      s1 ^ "(" ^ s2 ^ ")" 
-    )
-
+  | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
   match bf with
@@ -292,6 +333,13 @@ type prover_output_t = {
   validity_result: validity_t; (* validity information *)
 }
 
+let string_of_prover_validity_output (output: prover_output_t) =
+  match output.validity_result with
+  | Valid -> "Valid"
+  | Invalid -> "Invalid"
+  | Unknown -> "Unknown"
+  | Aborted -> "Aborted"
+
 let string_of_spass_output output =
   (String.concat "\n" output.original_output_text)
 
@@ -355,8 +403,14 @@ let start () =
     print_endline ("Starting SPASS... \n");
     last_test_number := !test_number;
     let prelude () = () in
-    let _ = Procutils.PrvComms.start !log_all_flag log_file (spass_name, spass_path, [|spass_path; "-Stdin=1"|]) set_process prelude in
-    is_spass_running := true;
+    if (spass_input_format = "dfg") then (
+      Procutils.PrvComms.start !log_all_flag log_file (spass_name, spass_path, [|spass_path; "-Stdin=1"|]) set_process prelude;
+      is_spass_running := true;
+    )
+    else (
+      Procutils.PrvComms.start !log_all_flag log_file (spass_name, spass_path, [|spass_path; "-Stdin=1"; "-TPTP"|]) set_process prelude;
+      is_spass_running := true;
+    )
   )
 
 (* stop SPASS system *)
@@ -420,21 +474,26 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
   remove_file infile;
   res
 
+let check_problem_through_file (input: string) (timeout: float) : prover_output_t =
+  Debug.no_1 "check_problem_through_file"
+    (fun s -> s) string_of_prover_validity_output
+    (fun f -> check_problem_through_file f timeout) input
+    
 (* Runs the specified prover and returns output *)
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.check_problem_through_stdin" in *) 
-  (* let _ = print_endline ("  -- input: \n" ^ input) in *)
+  (*let _ = print_endline "** In function Spass.check_problem_through_stdin" in 
+  let _ = print_endline ("  -- input: \n" ^ input) in*)
   if not !is_spass_running then (
-    (* let _ = print_endline "  -- start SPASS" in *)
+    (*let _ = print_endline "  -- start SPASS" in*)
     start ()
   )
   else if (!spass_call_count = !spass_restart_interval) then (
-    (* let _ = print_endline "  -- restart SPASS" in *)
-    restart("Regularly restart:1 ");
+    (*let _ = print_endline "  -- restart SPASS" in
+    restart("Regularly restart:1 ");*)
     spass_call_count := 0;
   );
-  (* let _ = print_endline (" -- spass_process_pid: " ^ string_of_int(!spass_process.pid)) in *)
+  (*let _ = print_endline (" -- spass_process_pid: " ^ string_of_int(!spass_process.pid)) in*)
   let fnc f =
     output_string (!spass_process.outchannel) f;
     flush (!spass_process.outchannel);
@@ -456,12 +515,21 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
       ) in
   res
 
+let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
+  Debug.no_1 "check_problem_through_stdin"
+    (fun s -> s) string_of_prover_validity_output
+    (fun f -> check_problem_through_stdin f timeout) input
+;;
 (***************************************************************
 GENERATE SMT INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 
 (* spass: output for dfg format *)
-let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spec_var list) : string =
+let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula): string =
+  let (ante_str, func_list1, pred_list1) = spass_dfg_of_formula ante in
+  let (conseq_str, func_list2, pred_list2) = spass_dfg_of_formula conseq in
+  let func_list = Gen.BList.remove_dups_eq (=) (func_list1 @ func_list2) in
+  let pred_list = Gen.BList.remove_dups_eq (=) (pred_list1 @ pred_list2) in
   let dfg_description =
     ( "list_of_descriptions.\n"
       ^ "  name({*sleek-problem*}).\n"
@@ -470,22 +538,21 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula) (fvars: Cpure.spe
       ^ "  description({*This is an problem generated by sleek prover.*}).\n"
       ^ "end_of_list.\n\n") in
   let dfg_symbols =
-    let create_constant (fvar : Cpure.spec_var) =
-      "(" ^ (spass_dfg_of_spec_var fvar) ^ ", 0)" in
-    let constants_list = List.map create_constant fvars in
-    let constants_list = constants_list @ ["(NULL, 0)"] in
-    let dfg_constants = String.concat ", " constants_list in
+    let create_symbol (sym : string) : string = "(" ^ sym ^ ", 0)" in
+    let func_list = List.map create_symbol func_list in
+    let dfg_func = String.concat ", " func_list in
+    let pred_list = List.map create_symbol pred_list in
+    let dfg_pred = String.concat ", " pred_list in
     ( "list_of_symbols.\n"
-      ^ "  functions[" ^ dfg_constants ^ "].\n"
+      ^ (if dfg_func <> "" then "  functions[" ^ dfg_func ^ "].\n" else "")
+      ^ (if dfg_pred <> "" then "  predicates[" ^ dfg_pred ^ "].\n" else "")
       ^ "end_of_list.\n\n") in
   let dfg_formulae_axioms =
-    let ante_str = spass_dfg_of_formula ante in
     let axiom_label = "axiom1" in
     ( "list_of_formulae(axioms).\n"
       ^ "  formula(" ^ ante_str ^ ", " ^ axiom_label ^ ").\n"
       ^ "end_of_list.\n\n") in
   let dfg_formulae_conjectures =
-    let conseq_str = spass_dfg_of_formula conseq in
     let conseq_label = "conjecture1" in
     ( "list_of_formulae(conjectures).\n"
       ^ "  formula(" ^ conseq_str ^ ", " ^ conseq_label ^ ").\n"
@@ -528,7 +595,7 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
 	    let ante_fv = Cpure.fv ante in
 	    let conseq_fv = Cpure.fv conseq in
 	    let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
-	    let dfg_res = to_spass_dfg ante conseq all_fv
+	    let dfg_res = to_spass_dfg ante conseq
       (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
       in dfg_res
     ) 
@@ -635,7 +702,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
     result
   with Illegal_Prover_Format s -> (
     print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+    print_endline ("Apply Spass.imply on ante Formula :"^(!print_pure ante));
     print_endline ("and conseq Formula :"^(!print_pure conseq));
     flush stdout;
     failwith s
