@@ -7547,6 +7547,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
                 , CF.mk_failure_must "sequential action - not handled" Globals.sl_error)), NoAlias)
       | Context.Cond_action l ->
+            Debug.ninfo_hprint (add_str "length of cactions" string_of_int) (List.length l) no_pos;
+            Debug.ninfo_hprint (add_str "cond action" Context.string_of_action_res_simpl_0) a no_pos;
             let rec helper l = match l with
               | [] ->           
                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
@@ -7558,6 +7560,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     else (r,prf)
             in helper l
       | Context.Search_action l ->
+            Debug.ninfo_hprint (add_str "length of sactions" string_of_int) (List.length l) no_pos;
+            Debug.ninfo_hprint (add_str "search action" Context.string_of_action_res_simpl) a no_pos;
             let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1
                 rhs_h_matched_set is_folding pos) l in
             let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in

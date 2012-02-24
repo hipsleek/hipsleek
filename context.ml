@@ -486,6 +486,11 @@ and norm_search_action ls = match ls with
   | [(_,a)] -> a
   | lst -> Search_action lst
 
+and cond_search_action ls = match ls with
+  | [] -> M_Nothing_to_do ("search action is empty")
+  | [(_,a)] -> a
+  | lst -> Cond_action lst
+
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
@@ -627,15 +632,23 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (* let fl =  get_view_original lhs_node in *)
                     if vr_view_orig then
                       begin
-                      Debug.dinfo_hprint (add_str "lhs_node" !print_h_formula ) lhs_node no_pos;
-                      Debug.dinfo_hprint (add_str "rhs_node" !print_h_formula ) rhs_node no_pos;
-                      Debug.dinfo_hprint (add_str "vl_view_orig" string_of_bool ) vl_view_orig no_pos;
-                      Debug.dinfo_hprint (add_str "vr_view_orig" string_of_bool ) vr_view_orig no_pos;
+                      let prd = Debug.ninfo_hprint in
+                      prd (add_str "lhs_node" !print_h_formula ) lhs_node no_pos;
+                      prd (add_str "rhs_node" !print_h_formula ) rhs_node no_pos;
+                      prd (add_str "vl_view_orig" string_of_bool ) vl_view_orig no_pos;
+                      prd (add_str "vr_view_orig" string_of_bool ) vr_view_orig no_pos;
+                      prd (add_str "len l2" string_of_int ) (List.length l2) no_pos;
+                      prd (add_str "len l3" string_of_int ) (List.length l3) no_pos;
+                      prd (add_str "l2" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) l2 no_pos;
                       [(3,M_base_case_fold c)]
                       end
                     else [] 
                   in
-                  let src = (-1,norm_search_action (l2@l3@l4)) in
+                  (* TODO : need to know examples where l4 with basecasefold is really needed! *)
+                  let src = (1,norm_search_action (l2@l3)) in
+                  (* let ac = cond_search_action (fst::l4) in *)
+                  (* let src = (-1,ac) in *)
+                  (* Debug.info_hprint (add_str "ac" (string_of_action_res_simpl)) ac no_pos; *)
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   let vr_name = vr.h_formula_view_name in
@@ -755,6 +768,7 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
   match l with
     | [] -> 
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+          (* TODO : infer heap may not be needed always *)
           let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (2, M_base_case_fold {
