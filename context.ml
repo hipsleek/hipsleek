@@ -645,7 +645,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     else [] 
                   in
                   (* TODO : need to know examples where l4 with basecasefold is really needed! *)
-                  let src = (1,norm_search_action (l2@l3)) in
+                  let l4 = if !enable_base_case_fold_search then l4 else [] in
+                  let src = (1,norm_search_action (l2@l3 @l4 )) in
                   (* let ac = cond_search_action (fst::l4) in *)
                   (* let src = (-1,ac) in *)
                   (* Debug.info_hprint (add_str "ac" (string_of_action_res_simpl)) ac no_pos; *)

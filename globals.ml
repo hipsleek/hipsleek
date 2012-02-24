@@ -351,6 +351,8 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
+let enable_base_case_fold_search = ref false
+
 let allow_imm = ref true
 
 let ann_derv = ref false

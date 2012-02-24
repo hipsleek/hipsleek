@@ -1,0 +1,39 @@
+data node { int val ; node next }.
+
+pred ls<p,n> == self = p & n = 0
+	or self::node<next = r> * r::ls<p,n-1> 
+	inv n >= 0.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+checkentail x::ls<p,n> |- x::ls<q,m>.
+print residue.
+
+/*
+without base-case-fold
+======================
+<1>true&q=p & m=n&{FLOW,(17,18)=__norm}
+
+
+with base-case-fold
+===================
+<1>true&q=p & m=n&{FLOW,(17,18)=__norm}
+<2>x::ls<p,n>@M[Orig][LHSCase]&x=q & m=0&{FLOW,(17,18)=__norm}
+*/
+
+checkentail x::ll<n> |- x::ll<m>.
+print residue.
+
+/*
+same outcome with our without base-case fold:
+<1>true&m=n&{FLOW,(17,18)=__norm}
+*/
+
+
+
+
+
+
+

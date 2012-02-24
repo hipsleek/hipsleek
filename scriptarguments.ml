@@ -76,6 +76,8 @@ let common_arguments = [
 	"Disable Lemma Proving");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
+	("--ebcf", Arg.Set Globals.enable_base_case_fold_search,
+	"Enable Base Case Folding Search");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
 	("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
