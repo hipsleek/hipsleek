@@ -8520,50 +8520,46 @@ let rec simplify_post_heap_only fml prog = match fml with
     let h = simplify_heap h p prog in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 
-let rec elim_heap_x h p pre_vars heap_vars = match h with
+let rec elim_heap_x h p pre_vars heap_vars aset = match h with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} -> 
     let heap_vars = CF.h_fv h1 @ CF.h_fv h2 in
-    let h1 = elim_heap h1 p pre_vars heap_vars in
-    let h2 = elim_heap h2 p pre_vars heap_vars in
+    let h1 = elim_heap h1 p pre_vars heap_vars aset in
+    let h2 = elim_heap h2 p pre_vars heap_vars aset in
     mkStarH h1 h2 pos
   | Conj {h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos} -> 
-    let h1 = elim_heap h1 p pre_vars heap_vars in
-    let h2 = elim_heap h2 p pre_vars heap_vars in
+    let h1 = elim_heap h1 p pre_vars heap_vars aset in
+    let h2 = elim_heap h2 p pre_vars heap_vars aset in
     mkConjH h1 h2 pos
   | Phase { h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos} -> 
-    let h1 = elim_heap h1 p pre_vars heap_vars in
-    let h2 = elim_heap h2 p pre_vars heap_vars in
+    let h1 = elim_heap h1 p pre_vars heap_vars aset in
+    let h2 = elim_heap h2 p pre_vars heap_vars aset in
     mkPhaseH h1 h2 pos
   | ViewNode v ->
-    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
-    let node_aset = CP.EMapSV.build_eset node_als in
-    let alias = (CP.EMapSV.find_equiv_all v.h_formula_view_node node_aset) @ [v.h_formula_view_node] in
+    let alias = (CP.EMapSV.find_equiv_all v.h_formula_view_node aset) @ [v.h_formula_view_node] in
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
       && not (CP.is_res_spec_var v.h_formula_view_node)
       && List.length (List.filter (fun x -> x = v.h_formula_view_node) heap_vars) <= 1
     in if cond then HTrue else h
   | DataNode d ->
-    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
-    let node_aset = CP.EMapSV.build_eset node_als in
-    let alias = (CP.EMapSV.find_equiv_all d.h_formula_data_node node_aset) @ [d.h_formula_data_node] in
+    let alias = (CP.EMapSV.find_equiv_all d.h_formula_data_node aset) @ [d.h_formula_data_node] in
     let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
       && not (CP.is_res_spec_var d.h_formula_data_node)
       && List.length (List.filter (fun x -> x = d.h_formula_data_node) heap_vars) <= 1
     in if cond then HTrue else h
   | _ -> h
 
-and elim_heap h p pre_vars heap_vars =
+and elim_heap h p pre_vars heap_vars aset =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_pure_formula in
   let pr3 = !print_svl in
   Debug.no_4 "elim_heap" pr pr2 pr3 pr3 pr
-      (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars) h p pre_vars heap_vars
+      (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars aset) h p pre_vars heap_vars
 
 (*let rec create_alias_tbl vs aset = match vs with*)
 (*  | [] -> []*)
@@ -8584,7 +8580,10 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
   | _ ->
     let h, p, fl, b, t = split_components post_fml in
     let p = MCP.pure_of_mix p in
-    let h = if pre_vars = [] || not(inf_post) then h else elim_heap h p pre_vars (CF.h_fv h) in
+    let h = if pre_vars = [] || not(inf_post) then h else 
+      let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
+      let node_aset = CP.EMapSV.build_eset node_als in
+      elim_heap h p pre_vars (CF.h_fv h) node_aset in
     (*let post_vars = CP.diff_svl post_vars ((CF.h_fv h)@pre_vars) in*)
     let p,pre = begin
       match subst_fml with
