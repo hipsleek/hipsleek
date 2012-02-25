@@ -1304,6 +1304,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+(*                            Debug.info_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;*)
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 

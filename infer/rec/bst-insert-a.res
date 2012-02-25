@@ -28,8 +28,8 @@ Checking procedure insert$node2~int...
                               res::bst<mi,ma>@M[Orig][LHSCase]&res!=null & 
                               sm>=mi & lg>=sm & ma>=lg & a>=mi & ma>=a & 
                               sm<=lg&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (lg=ma & mi=a & a<=sm & sm<=ma | ma=a & sm=mi & mi<=lg & (1+lg)<=a | 
-  lg=ma & sm=mi & (1+mi)<=a & a<=ma) --> C(mi,sm,ma,lg,a),
+!!! NEW RELS:[ (a=mi & ma=lg & mi<=sm & sm<=lg | mi=sm & ma=a & sm<=lg & lg<a | mi=sm & 
+  ma=lg & sm<a & a<=lg) --> C(mi,sm,ma,lg,a),
  (C(mi_649,sm_621,ma_650,lg_622,a) & ma=lg & mi=mi_649 & sm_621=sm & 
   mi_649<=ma_650 & sm<=lg_622 & exists(v_606:exists(qs_605:a<=v_606 & 
   qs_605<=lg & lg_622<=v_606 & v_606<=qs_605))) --> C(mi,sm,ma,lg,a),
@@ -47,9 +47,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 187 invocations 
+Stop Omega... 188 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.01 second(s)
-	Time spent in main process: 0.4 second(s)
-	Time spent in child processes: 0.61 second(s)
+Total verification time: 0.98 second(s)
+	Time spent in main process: 0.38 second(s)
+	Time spent in child processes: 0.6 second(s)

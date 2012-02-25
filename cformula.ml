@@ -6994,4 +6994,35 @@ let rec transform_spec (sp:struc_formula) pairs = match sp with
 	| EOr b -> EOr {b with formula_struc_or_f1 = transform_spec b.formula_struc_or_f1 pairs;
                          formula_struc_or_f2 = transform_spec b.formula_struc_or_f2 pairs}
 
+let sum_of_int_lst lst = List.fold_left (+) 0 lst
+
+let rec no_of_cnts_heap heap = match heap with
+  | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
+  | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
+  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)
+  | Phase h -> no_of_cnts_heap h.h_formula_phase_rd + no_of_cnts_heap h.h_formula_phase_rw
+  | DataNode _ -> 1
+  | ViewNode _ -> 1
+  | Hole _ -> 1
+  | HTrue -> 0
+  | HFalse -> 1
+
+let rec no_of_cnts_fml fml = match fml with
+  | Or f -> no_of_cnts_fml f.formula_or_f1 + no_of_cnts_fml f.formula_or_f2
+  | Base f -> no_of_cnts_heap f.formula_base_heap + CP.no_of_cnts (MCP.pure_of_mix f.formula_base_pure)
+  | Exists f -> no_of_cnts_heap f.formula_exists_heap  + CP.no_of_cnts (MCP.pure_of_mix f.formula_exists_pure)
+
+let rec no_of_cnts (sp:struc_formula) = match sp with
+	| ECase b -> 
+    let nums = List.map (fun (p,c) -> CP.no_of_cnts p + no_of_cnts c) b.formula_case_branches in
+    sum_of_int_lst nums
+	| EBase b -> no_of_cnts_fml b.formula_struc_base + 
+    (match b.formula_struc_continuation with | None -> 0 | Some x -> no_of_cnts x)
+	| EAssume(_,f,_) -> no_of_cnts_fml f
+	| EInfer b -> no_of_cnts b.formula_inf_continuation
+	| EList b -> 
+    let nums = List.map (fun (_,e) -> no_of_cnts e) b in
+    sum_of_int_lst nums
+	| EOr b -> no_of_cnts b.formula_struc_or_f1 + no_of_cnts b.formula_struc_or_f2
+
 

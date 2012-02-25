@@ -26,16 +26,16 @@ Checking procedure insert$node~int...
                             EAssume 1::
                               x::hd<m>@M[Orig][LHSCase]&m>=2 & m=n+1 & 0<=n&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m=2 & n=1 | 1+n=m & 3<=m) --> A(m,n)]
+!!! NEW RELS:[ (m=n+1 & 1<=n) --> A(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 114 invocations 
+Stop Omega... 115 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.32 second(s)
+Total verification time: 0.31 second(s)
 	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.13 second(s)
+	Time spent in child processes: 0.12 second(s)

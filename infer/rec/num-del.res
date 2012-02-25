@@ -22,7 +22,7 @@ Checking procedure del$int~int...
                     EAssume 1::
                       true&a>=1 & res>=a & res+1=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (a=1 & 1+res=n & 2<=n) --> B(n,a,res),
- ((1<=v_int_14_540 | v_int_14_540<=-1) & 
+ ((1<=v_int_14_540 | v_int_14_540<=(0-1)) & 
   B(v_int_14_539,v_int_14_540,v_int_14_544) & -1+res=v_int_14_544 & -1+
   a=v_int_14_540 & -1+n=v_int_14_539 & 0<=v_int_14_539) --> B(n,a,res)]
 !!! NEW ASSUME:[]
@@ -31,9 +31,9 @@ Procedure del$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 87 invocations 
+Stop Omega... 88 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.22 second(s)
-	Time spent in main process: 0.16 second(s)
-	Time spent in child processes: 0.06 second(s)
+Total verification time: 0.2 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.05 second(s)

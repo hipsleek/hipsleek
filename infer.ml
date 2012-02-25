@@ -1184,7 +1184,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs = if is_bag_cnt then new_lhs else Redlog.elim_exists_with_eq new_lhs in
           DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
-          let new_lhs = CP.arith_simplify_new new_lhs in
+          let new_lhs = pairwise_proc (CP.arith_simplify_new new_lhs) in
 	  (*          (new_lhs,rhs) 
 		      in*)
 	  (*          let new_lhs = TP.simplify_raw (CP.arith_simplify_new new_lhs) in*)
@@ -1196,9 +1196,9 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in
           let rel_cat = 
             if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) else 
-              if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else
-		if rank_dec_id != [] then CP.RankDecr rank_dec_id else
-		  report_error pos "Relation belongs to unexpected category"
+            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else
+            if rank_dec_id != [] then CP.RankDecr rank_dec_id else
+              report_error pos "Relation belongs to unexpected category"
           in
 	  (*          if CP.intersect (CP.fv new_lhs_drop_rel) rel_vars = [] && rel_lhs != [] then 
 		      (DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; [])

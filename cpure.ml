@@ -7508,4 +7508,17 @@ let is_emp_bag pf rel_vars = match pf with
     end
   | _ -> false
 
+let sum_of_int_lst lst = List.fold_left (+) 0 lst
+
+let rec no_of_cnts f = match f with
+  | BForm _ -> if isConstTrue f || is_RelForm f then 0 else 1
+  | And (f1,f2,_) -> no_of_cnts f1 + no_of_cnts f2
+  | Or (f1,f2,_,_) -> no_of_cnts f1 + no_of_cnts f2
+  | AndList fs -> sum_of_int_lst (List.map (fun (_,fml) -> no_of_cnts fml) fs)
+  | Not (f,_,_) -> no_of_cnts f
+  | Exists (_,f,_,_) -> no_of_cnts f
+  | Forall (_,f,_,_) -> no_of_cnts f
+
+
+
 

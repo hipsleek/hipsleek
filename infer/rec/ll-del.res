@@ -28,8 +28,8 @@ Checking procedure delete$node~int...
                               1=n & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (exists(flted_12_569:exists(flted_12_548:(m=1 & n=2 | -1+n=m & 1+
   flted_12_569=m & flted_12_548=m & 2<=m) & a=1))) --> B(n,a,m),
- ((1+m_622=m & 1<=m & 1<=v_int_46_623 | 1+m_622=m & v_int_46_623<=-1 & 
-  1<=m) & B(n_601,v_int_46_623,m_622) & 1<=n & 1+n_601=n & -1+
+ ((m=m_622+1 & 0<=m_622 & 1<=v_int_46_623 | m=m_622+1 & v_int_46_623<=(0-
+  1) & 0<=m_622) & B(n_601,v_int_46_623,m_622) & 1<=n & 1+n_601=n & -1+
   a=v_int_46_623) --> B(n,a,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -37,9 +37,9 @@ Procedure delete$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 120 invocations 
+Stop Omega... 121 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.3 second(s)
-	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.1 second(s)
+Total verification time: 0.28 second(s)
+	Time spent in main process: 0.19 second(s)
+	Time spent in child processes: 0.09 second(s)
