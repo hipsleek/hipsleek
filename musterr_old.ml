@@ -155,11 +155,11 @@ struct
 
   and mk_or_2list_of_context cl10 cl20 =
     let pr = !print_context_list_short in
-    Gen.Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> mk_or_2list_of_context_x cl10 cl20) cl10 cl20
+    Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> mk_or_2list_of_context_x cl10 cl20) cl10 cl20
 
   and or_list_context c1 c2 =
     let pr = !print_list_context_short in
-    Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
+    Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
 
   (*todo: sth is wrong here, why mk_or_2list_of_context?*)
   let and_list_context c1 c2= match c1,c2 with
@@ -190,7 +190,7 @@ struct
 
   and union_list_context c1 c2 =
     let pr = !print_list_context_short in
-    Gen.Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "union_list_context"
+    Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "union_list_context"
         pr pr pr
         union_list_context_x c1 c2
 
@@ -205,7 +205,7 @@ struct
   and fold_context_left c_l =
     let pr = !print_list_context_short in
     let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-    Gen.Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
+    Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
 
   and union_context_left c_l = match (List.length c_l) with
     | 0 ->  Err.report_error {Err.error_loc = no_pos;
@@ -272,7 +272,7 @@ let mkFailContext msg estate conseq pid pos = {
                        | None -> tmp
                        | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
     in
-    Gen.Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
+    Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
 
   and get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
     let rec helper ft =
@@ -341,7 +341,7 @@ let mkFailContext msg estate conseq pid pos = {
         | None -> tmp
         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
     in
-    Gen.Debug.no_2 "gen_rand" pr pr pr1 (fun x y -> gen_rand_x x y) (m1,n1,e1) (m2,n2,e2)
+    Debug.no_2 "gen_rand" pr pr pr1 (fun x y -> gen_rand_x x y) (m1,n1,e1) (m2,n2,e2)
 
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
@@ -374,7 +374,7 @@ let mkFailContext msg estate conseq pid pos = {
         | None -> tmp
         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
     in
-    Gen.Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
+    Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
 
 (*gen_ror*)
 (*
@@ -404,7 +404,7 @@ let mkFailContext msg estate conseq pid pos = {
         | None -> tmp
         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
     in
-    Gen.Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
+    Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
 
   let rec get_may_failure (f:list_context) =
     match f with
@@ -442,7 +442,7 @@ let mkFailContext msg estate conseq pid pos = {
 
   and convert_must_failure_to_value_orig (l:list_context): list_context =
      let pr = !print_list_context_short in
-     Gen.Debug.no_1 "convert_must_failure_to_value_orig" pr pr
+     Debug.no_1 "convert_must_failure_to_value_orig" pr pr
          (fun _ -> convert_must_failure_to_value_orig_x l) l
 
   and convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =

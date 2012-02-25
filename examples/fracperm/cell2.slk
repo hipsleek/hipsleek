@@ -1,0 +1,45 @@
+data Cell2{
+  int lck;
+  int val;
+}.
+
+pred cellInv2<> == self::Cell2<#,v> & v>=0
+  inv self!=null.
+
+pred LOCKB<> == self::Cell2<l,#>
+  inv self!=null
+  inv_lock self::cellInv2<>.
+
+/*
+checkentail x::Cell2<a,b> |- x::Cell2<x1,#> * x::Cell2<#,x2>.
+print residue. //valid
+
+//init
+checkentail x::Cell2<0,0> |- x::Cell2<_,#>.
+print residue. // valid
+
+checkentail l::Cell2<#,v> & v>=0 |- l::cellInv2<>.
+print residue.
+
+//acquire
+checkentail l::LOCKB<> |- l::LOCKB<>.
+print residue.
+//TO DO
+*/
+
+
+checkentail l::LOCKB<> * l::Cell2<#,v> & v>=0 |- l::LOCKB<>.
+print residue.
+
+
+/*
+//finalize
+checkentail l::LOCKB<> * l::cellInv2<> |- l::LOCKB<>.
+print residue.
+//TO DO: l::LOCKB<> == self::Cell2::<_,#>
+
+//release
+checkentail l::LOCKB<> * l::Cell2<#,v> & v>=0 |- l::LOCKB<> * l::cellInv<>.
+// how to entail this???
+*/
+

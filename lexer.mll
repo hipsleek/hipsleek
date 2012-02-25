@@ -155,7 +155,8 @@ module Make (Token : SleekTokenS)
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
-   ("join", JOIN);
+	 ("inv_lock", INVLOCK);
+   ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA);
    ("len", LENGTH);
 	 ("let", LET);
@@ -168,6 +169,7 @@ module Make (Token : SleekTokenS)
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
+	 ("and", ANDWORD);
    ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);
@@ -272,6 +274,10 @@ rule tokenizer file_name = parse
   | "@M" { MUT }
   | "@pre" { PRE }
   | "@post" { POST }
+  | "@zero" {PZERO}
+  | "@full" {PFULL}
+  | "@value" {PVALUE}
+  (* | "@p_ref" {PREF} *)
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }

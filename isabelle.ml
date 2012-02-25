@@ -197,6 +197,7 @@ and isabelle_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)

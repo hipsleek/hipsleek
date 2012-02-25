@@ -743,6 +743,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+  | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
 
 let rec get_answer chn : string =
@@ -848,7 +849,8 @@ let stop () =
 
 let restart reason =
   if !is_mona_running then
-	let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in
+	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
+	let _ = print_endline ("\nMona is running ... "); flush stdout; in
     Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let check_if_mona_is_alive () : bool = 
@@ -1045,10 +1047,13 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           stop(); raise exc
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
+  let ante = CP.drop_varperm_formula ante in
+  let conseq = CP.drop_varperm_formula conseq in
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
@@ -1065,14 +1070,17 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   incr test_number;
+  let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
+  (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
       write_to_file true f_fv f sat_no vs

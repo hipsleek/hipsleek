@@ -119,6 +119,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
@@ -373,6 +374,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
+    let pe = drop_varperm_formula pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
       begin
@@ -447,6 +449,7 @@ let is_sat (pe : formula) sat_no : bool =
 let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
+      let pe = drop_varperm_formula pe in
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
@@ -593,6 +596,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
   (* let _ = print_string ("\nomega_simplify: f before"^(!print_formula pe)) in *)
   begin
+    let pe = drop_varperm_formula pe in
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
       Some (omega_of_formula 8 pr_weak pr_strong pe)
@@ -746,6 +750,7 @@ let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
 	omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     match (omega_of_formula_old pe) with
       | None -> pe
       | Some fstr ->
@@ -769,6 +774,7 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     match omega_of_formula_old pe with
       | None -> pe
       | Some fstr ->
@@ -792,6 +798,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
 	omega_subst_lst := [];
+    let pe1 = drop_varperm_formula pe1 in
     let fstr1 = omega_of_formula_old pe1 in
     let fstr2 = omega_of_formula_old pe2 in
     match fstr1,fstr2 with

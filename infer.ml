@@ -253,7 +253,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, b, t) = split_components f in
+  let (h, p, fl, b, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -344,6 +344,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
+                
                 (* let _ = print_endline ("iv_alias:"^(!CP.print_svl iv_alias)) in *)
                 (* let _ = print_endline ("orig root:"^(!CP.print_sv orig_r)) in *)
                 (* let _ = print_endline ("new root:"^(!CP.print_sv new_r)) in *)

@@ -60,6 +60,7 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+    view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -101,7 +102,7 @@ and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
     
-and proc_decl = { 
+and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
 		proc_return : typ;
@@ -257,6 +258,7 @@ and exp_return = { exp_return_type : typ;
 (* static call *)
 and exp_scall = { exp_scall_type : typ;
    exp_scall_method_name : ident;
+   exp_scall_lock : ident option;
     exp_scall_arguments : ident list;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)

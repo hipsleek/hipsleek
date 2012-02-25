@@ -35,9 +35,10 @@ type tp_type =
 
 let test_db = false
 
-let tp = ref OmegaCalc
+(* let tp = ref OmegaCalc *)
 (* let tp = ref OZ *)
 (* let tp = ref Redlog *)
+let tp = ref AUTO
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -367,7 +368,9 @@ let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
     |[] -> ()
     | prover::rest -> 
-        let exit_code = Sys.command ("which "^prover) in
+        (* let exit_code = Sys.command ("which "^prover) in *)
+        (*Do not display system info in the website*)
+        let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
         if exit_code > 0 then
           let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
           exit 0
@@ -646,6 +649,7 @@ let is_array_b_formula (pf,_) = match pf with
     | CP.ListPerm _
         -> Some false
     | CP.RelForm _ -> Some true
+    | CP.VarPerm _ -> Some false
 
 let is_list_b_formula (pf,_) = match pf with
     | CP.BConst _ 
@@ -1859,6 +1863,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             (*>> for log - numbering *)
             (*<< test the pair for implication - implication result is saved in res1*)
 	        (* let _ = print_string ("imply_timeout: before tp_imply [Imply] :: " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+            (*DROP VarPerm formula before checking*)
+            let conseq = CP.drop_varperm_formula conseq in
+            let ante = CP.drop_varperm_formula ante in
 			let res1 =
 			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
 				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache process in
@@ -1935,7 +1942,9 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 
 			  (*let _ = print_string ("imply_timeout: imply_conj_lhs: ante: " ^ (Cprinter.string_of_pure_formula ante) ^ "\n") in*)
 			  (*let _ = print_string ("imply_timeout: imply_conj_lhs: cons: " ^ (Cprinter.string_of_pure_formula cons) ^ "\n") in*)
-			  
+              (*DROP VarPerm formula before checking*)
+			  let cons = CP.drop_varperm_formula cons in
+              let ante = CP.drop_varperm_formula ante in
 			  let res =
 				if (not (CP.is_formula_arith ante)) && (CP.is_formula_arith cons) then
 				  let res = tp_imply (CP.drop_bag_formula ante) cons imp_no timeout do_cache process in
@@ -2658,7 +2667,7 @@ let print_stats () =
 
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
-  Redlog.start ();
+  (* Redlog.start (); *)
   match !tp with
   | Coq -> begin
       Coq.start ();
@@ -2666,7 +2675,7 @@ let start_prover () =
 	 end
   | Redlog | RM -> 
       begin
-      (* Redlog.start (); *)
+      Redlog.start ();
 	  Omega.start ();
 	 end
   | Cvc3 -> 
@@ -2692,6 +2701,11 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
+  (* | AUTO -> *)
+  (*     Omega.start(); *)
+  (*     Mona.start(); *)
+  (*     Smtsolver.start(); *)
+  (*     Coq.start (); *)
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2727,6 +2741,11 @@ let stop_prover () =
 	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+    (* | AUTO -> *)
+	(*     Omega.stop(); *)
+    (*     (\* Mona.stop(); *\) *)
+    (*     (\* Smtsolver.stop(); *\) *)
+    (*     (\* Coq.stop(); *\) *)
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096

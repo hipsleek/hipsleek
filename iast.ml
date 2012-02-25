@@ -53,6 +53,7 @@ and view_decl = { view_name : ident;
 		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
+          view_inv_lock : F.formula option;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
@@ -248,6 +249,7 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 		     exp_bool_lit_pos : loc }
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
+               exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
 		       exp_call_nrecv_pos : loc }
@@ -1845,9 +1847,12 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
        (* let _ = print_endline ("1: " ^ data_name) in*)
        (* let _ = print_endline ("2: " ^ field_name) in *)
 		let ddef = look_up_data_def_raw ddefs data_name in
+        (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
-			field
+		field
+         with _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("field name " ^ field_name ^ " is not found");}
+        )
 	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
 
 

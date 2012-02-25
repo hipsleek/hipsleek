@@ -248,6 +248,8 @@ let peek_try =
      (fun strm ->
        match Stream.npeek 2 strm with
           | [_; OPAREN,_] -> ()
+          (* | [_; OBRACE,_] -> () *)
+          | [_; OSQUARE,_] -> ()
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -546,8 +548,16 @@ field_list2:[[
  (********** Views **********)
 
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv  
-      -> { vh with view_formula = (fst vb); view_invariant = oi; try_case_inference = (snd vb) } ]];
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
+      -> { vh with view_formula = (fst vb);
+          view_invariant = oi; 
+          view_inv_lock = li;
+          try_case_inference = (snd vb) } ]];
+
+opt_inv_lock: [[t=OPT inv_lock -> t]];
+
+inv_lock:
+  [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos, [])]];
 
@@ -606,6 +616,7 @@ view_header:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          view_inv_lock = None;
           view_invariant = (P.mkTrue (get_pos_camlp4 _loc 1), []);
           try_case_inference = false;
 			}]];
@@ -660,7 +671,14 @@ cid_typ:
 ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 opt_ann_list: [[t=LIST0 ann -> t]];
-  
+
+p_vp_ann:
+  [[ `PZERO -> VP_Zero
+    | `PFULL -> VP_Full
+    | `PVALUE -> VP_Value
+    (* | `PREF -> VP_Ref *)
+  ]];
+
 ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
@@ -693,24 +711,40 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 (* seem _loc 2 is empty *)
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]    
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]
+  |  [ dc=SELF; `ANDWORD; oc=SELF   -> dc]
   |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
-   [ cc=core_constr             -> cc
-   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr   -> 
+   [ cc=core_constr_and             -> cc
+   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and   -> 
 	  (match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos_camlp4 _loc 1)
+               F.formula_base_branches = b;
+               F.formula_base_and = a
+                }) -> F.mkExists ocl h p fl b a (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
-      
+
+core_constr_and : [[ ls=core_constr_conjunctions ->
+    let main = List.hd ls in
+    let formula_and = List.tl ls in
+    let formula_and = List.map (F.one_formula_of_formula) formula_and in
+    let main = F.add_formula_and formula_and main in
+    main
+ ]];
+
+core_constr_conjunctions: [ "core_constr_and" LEFTA
+                   [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
+                   | [f1 = core_constr -> [f1]]
+                  ];
+
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos_camlp4 _loc 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc [] (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb [] (get_pos_camlp4 _loc 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -814,8 +848,9 @@ simple_heap_constr:
 (*LDK: parse optional fractional permission, default = 1.0*)
 opt_perm: [[t = OPT perm -> t ]];
 
-(*LDK: for fractionlap permission, we expect cexp*)
+(*LDK: for fractionl permission, we expect cexp*)
 perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
+
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
 (*general_h_args:
@@ -928,6 +963,17 @@ cexp_w :
       | lc=SELF; `NOTINLIST; cl=SELF             ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
+      | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE
+            ->
+            let func t =
+              if  String.contains t '\'' then 
+                (* Remove the primed in the identifier *)
+				(Str.global_replace (Str.regexp "[']") "" t,Primed)
+			  else (t,Unprimed)
+            in
+            let ls = List.map func ls in
+	        let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
+	      set_slicing_utils_pure_double f false
       | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
 	  set_slicing_utils_pure_double f false
@@ -1154,7 +1200,7 @@ id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
 id:[[`IDENTIFIER id-> id]];
-  
+
 (********** Higher Order Preds *******)
 
 hopred_decl: 
@@ -1353,9 +1399,8 @@ logical_var_decl:
   ]];
 
 (**************** Class ******************)
-
 class_decl:
-  [[ `CLASS; `IDENTIFIER id; par=OPT extends; `OBRACE; ml=member_list_opt; `CBRACE ->
+  [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
@@ -1369,7 +1414,16 @@ class_decl:
 
 extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 
-member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
+class_body:
+      [[`OBRACE; fl=member_list; `CBRACE   ->  fl
+      | `OBRACE; `CBRACE                             -> []] ];
+
+one_member:
+ [[ m= member; `SEMICOLON -> m
+  | m = member -> m]];
+
+member_list: [[m = one_member; fl=member_list -> m::fl
+             | m=one_member -> [m]]];
 
 member:
  [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2) 
@@ -1641,7 +1695,7 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_ca
 
 expression_statement: [[(* t=statement_expression -> t *)
         t= invocation_expression -> t
-      | t=object_creation_expression -> t
+      | t= object_creation_expression -> t
       | t= post_increment_expression -> t
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
@@ -1916,11 +1970,19 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | `IDENTIFIER id; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
+                exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
                 exp_call_nrecv_path_id = None;
-                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }]];
+                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
+  ]];
+
+opt_lock_info: [[t = OPT lock_info -> t ]];
+
+(* lock_info: [[`OBRACE; t = id; `CBRACE -> t ]]; *)
+
+lock_info: [[`OSQUARE; t = id; `CSQUARE -> t ]];
 
 qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 

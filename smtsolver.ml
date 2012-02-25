@@ -166,6 +166,7 @@ let rec smt_of_b_formula b =
 	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
 	| CP.BagMax _ | CP.BagMin _ -> 
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+    | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
 	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
     | CP.LexVar _ ->
@@ -287,6 +288,7 @@ and collect_bformula_info b = match b with
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ 
+    | CP.VarPerm _
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
@@ -716,6 +718,10 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
   (* let _ = print_endline ("ante = " ^ (!print_pure ante)) in *)
   (* let _ = print_endline ("fvars: " ^ ((!CP.print_svl) fvars)) in *)
   (*let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
+    (*drop VarPerm beforehand*)
+    let conseq = CP.drop_varperm_formula conseq in
+    let ante = CP.drop_varperm_formula ante in
+    (*--------------------------------------*)
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v ->
         let tp = (CP.type_of_spec_var v)in
@@ -755,9 +761,13 @@ and to_smt_v1 ante conseq logic fvars =
 		| [] -> ""
 		| var::rest -> "(" ^ (smt_of_spec_var var) ^ " Int) " ^ (defvars rest)
 	in
+    (*drop VarPerm beforehand*)
+    let conseq = CP.drop_varperm_formula conseq in
+    let ante = CP.drop_varperm_formula ante in
     let (pr_w,pr_s) = CP.drop_complex_ops in
 	let ante = smt_of_formula pr_w pr_s ante in
 	let conseq = smt_of_formula pr_w pr_s conseq in
+    (*--------------------------------------*)
 	let extrafuns = 
 		if fvars = [] then "" 
 		else ":extrafuns (" ^ (defvars fvars) ^ ")\n"

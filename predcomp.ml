@@ -1130,6 +1130,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.max";
 						   exp_call_nrecv_arguments = [ce1; ce2];
+                           exp_call_nrecv_lock = None;
 						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
@@ -1138,6 +1139,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce1, p1 = gen_pure_exp e1 vmap unbound_vars in
 	  let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.min";
+                           exp_call_nrecv_lock = None;
 						   exp_call_nrecv_arguments = [ce1; ce2];
 						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_call_nrecv_pos = pos}) in
@@ -1416,6 +1418,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
 	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
+                             exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
@@ -1431,6 +1434,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
 	  let mine = CallNRecv ({exp_call_nrecv_method = "Math.min";
+                             exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
@@ -1604,7 +1608,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0,_, branches, _ = split_components base in
+  let h, pure0,_, branches, _, _ = split_components base in
   let pos = pos_of_formula disj in
 	(* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1711,10 +1715,12 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 	  let disj_res = Var ({exp_var_name = bvar_name;
 						   exp_var_pos = pos}) in
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
+                             exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
 	  let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
+                                   exp_call_nrecv_lock = None;
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 								  exp_call_nrecv_pos = pos}) in
