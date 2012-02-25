@@ -7030,6 +7030,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_infer_heap = es.es_infer_heap;
       es_infer_pure = es.es_infer_pure;
       es_infer_rel = es.es_infer_rel;
+      es_var_zero_perm = es.es_var_zero_perm;
   }
 
 let clear_entailment_history xp (ctx : context) : context =  
@@ -8557,6 +8558,21 @@ let rec has_lexvar_formula f =
       CP.has_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
+
+(*???*)
+let has_lexvar_formula_ext (ef: ext_formula) : bool =
+  match ef with
+  | ECase _ ->
+      (*assuming ECase does not have lexvar*)
+      false
+  | EBase {formula_ext_base = base;} ->
+      has_lexvar_formula base
+  | EAssume _ -> 
+      (*assuming not having lexvar*)
+      false
+  | EInfer { formula_inf_continuation = cont } ->
+      (*assuming not having lexvar*)
+      false
 
 let rec norm_struc_with_lexvar struc_f is_primitive =
   List.map (fun ef -> norm_ext_with_lexvar ef is_primitive) struc_f

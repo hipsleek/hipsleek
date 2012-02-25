@@ -367,7 +367,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************) 
-            let ctx,ext_base = if !Globals.ann_vp then
+            let ctx,ext_base = if (!Globals.ann_vp) && (not (CF.has_lexvar_formula b.CF.formula_ext_base)) then
                   check_varperm prog proc spec ctx b.CF.formula_ext_base pos_spec 
                 else (ctx,b.CF.formula_ext_base)
             in
