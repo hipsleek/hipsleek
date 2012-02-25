@@ -6670,8 +6670,18 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
   (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
   (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
   (* Thai: change back to Inf.infer_pure *)
+  let rhs_node = match rhs with
+    | DataNode n -> n.h_formula_data_node
+    | ViewNode n -> n.h_formula_view_node
+    | _ -> report_error pos "Expect a node"
+  in
+  let lhs_alias = MCP.ptr_equations_without_null lhs_xpure in
+  let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+  let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
   let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
-  let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
+  let r = if CP.intersect rhs_als estate.es_infer_vars = []
+      && List.exists CP.is_node_typ estate.es_infer_vars then None 
+    else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
   match r with
     | Some (new_estate,pf) ->
           (* explicitly force unsat checking to be done here *)

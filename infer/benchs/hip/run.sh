@@ -1,4 +1,4 @@
-../../../hip ll_m.ss --eps > res/ll_m.res
+../../../hip ll_m.ss > res/ll_m.res
 ../../../hip ll_ms.ss --eps > res/ll_ms.res
 ../../../hip ll_msb.ss -tp mona > res/ll_msb.res
 ../../../hip sll_ms.ss --eps > res/sll_ms.res

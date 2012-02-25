@@ -14,10 +14,8 @@ inferred heap: [y::node<inf_a_53,inf_b_54>@inf_ann_52[Orig];
                b::ll<inf_m_57>@inf_ann_56[Orig][LHSCase]]
 inferred pure: [b=inf_b_54; inf_ann_52<=0; inf_ann_56<=0]
 
-Entail  (4): Valid. 
+Entail  (4): Fail.(may) cause:(failure_code=15.3)  true |-  y!=null (may-bug).
 
-<1>false&false&{FLOW,(17,18)=__norm}
-inferred pure: [b=null]
 
 Entail  (5): Valid. 
 
@@ -29,4 +27,4 @@ Entail  (6): Valid.
 <1>EXISTS(flted_7_93: b::ll<flted_7_93>@M[Orig]&flted_7_93+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0 | x!=null]
 
-Stop Omega... 113 invocations 
+Stop Omega... 108 invocations 
