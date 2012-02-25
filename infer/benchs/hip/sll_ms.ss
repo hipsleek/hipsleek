@@ -33,8 +33,10 @@ bool empty(node x)
   n!= 0 -> ensures !res;//!(res)
 }
 {
-  if (x == null) return true;
-  else return false;
+  if (x == null)
+    return true;
+  else
+    return false;
 }
 
 //The number of elements that conform the list's content.
@@ -44,11 +46,13 @@ int size_helper(node x, ref int n)
   requires x::sll<m>
   ensures SIZEH(res,m,n);//res=m+n;
 {
-  if (x==null) return n;
-  else {
-    n = n+ 1;
-    return size_helper(x.next, n);
-  }
+  if (x==null)
+    return n;
+  else
+    {
+      n = n+ 1;
+      return size_helper(x.next, n);
+    }
 }
 
 //fail to compute fixpoint
@@ -232,11 +236,13 @@ node insert2(node x, node vn)
 		vn.next = null;
 		return vn;
 	}
-	else if (vn.val <= x.val) {
+	else
+      if (vn.val <= x.val) {
 		vn.next = x;
 		return vn;
 	}
-	else {
+      else
+        {
 		x.next = insert2(x.next, vn);
 		return x;
 	}
@@ -294,7 +300,8 @@ node create_list(int n, int v)
 }
 {
   node tmp;
-  if (n == 0) {
+  if (n == 0)
+    {
     return null;
   }
   else {

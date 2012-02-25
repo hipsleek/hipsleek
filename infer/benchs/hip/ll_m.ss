@@ -39,8 +39,10 @@ bool empty(node x)
     x != null -> ensures EMPT2(res);//!(res)
   }
 {
-  if (x == null) return true;
-  else return false;
+  if (x == null)
+    return true;
+  else
+    return false;
 }
 
 //The number of elements that conform the list's content.
@@ -48,11 +50,13 @@ int size_helper(node x, ref int n)
   requires x::ll1<>
   ensures true;
 {
-  if (x==null) return n;
-  else {
+  if (x==null)
+    return n;
+  else
+    {
     n = n+1;
-    return size_helper(x.next, n);
-  }
+      return size_helper(x.next, n);
+    }
 }
 
 int size(node x)
@@ -71,11 +75,6 @@ int front(node x)
 {
   return x.val;
 }
-
-// A reference to the first element in the list container.
-int back(node x)
-  requires x::ll1<>
-  ensures true;
 
 void swap(ref node x, ref node y)
   requires x::ll1<>*y::ll1<>
@@ -96,7 +95,7 @@ void assign(node x, int n, int v)
 
 void push_front(ref node x, int v)
   requires x::ll1<>
-  ensures x'::node<v,p>*p::ll1<>;
+  ensures x'::node<v,p>*p::ll1<>;//'
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -106,7 +105,7 @@ void push_front(ref node x, int v)
 node pop_front(ref node x)
   infer[x]
   requires x::ll1<>//x!=null
-  ensures x'::ll1<>;
+  ensures x'::ll1<>;//'
 {
   node tmp = x;
   x = x.next;
@@ -157,7 +156,7 @@ void set_next(ref node x, node y)
 void set_null2(ref node x)
   infer[x]
   requires x::ll1<> // x!=null
-  ensures x'::node<_,null>;
+  ensures x'::node<_,null>;//'
 {
   if (4>3)
     x.next = null;
@@ -169,7 +168,7 @@ void set_null2(ref node x)
 void set_null(ref node x)
   infer[x]
   requires x::ll1<>  // x!=null
-  ensures x'::node<_,null>;
+  ensures x'::node<_,null>;//'
 {
   x.next = null;
 }
@@ -205,12 +204,14 @@ void delete(node x, int a)
   requires x::ll1<> & a > 0
   ensures x::ll1<>;
 {
-  if (a == 1) {
-    x.next = x.next.next;
-  }
-  else {
-    delete(x.next, a-1);
-  }
+  if (a == 1)
+    {
+      x.next = x.next.next;
+    }
+  else
+    {
+      delete(x.next, a-1);
+    }
 }
 
 /* function to delete the a-th node in a singly linked list */
@@ -220,10 +221,13 @@ node delete2(node x, int a)
 {
 	if (x == null)
 		return x;
-	else {
-		if (x.val == a) return x.next;
-		else return new node(x.val, delete2(x.next, a));
-	}
+	else
+      {
+		if (x.val == a)
+          return x.next;
+		else
+          return new node(x.val, delete2(x.next, a));
+      }
 }
 
 /* function to create a singly linked list with a nodes */
@@ -232,14 +236,16 @@ node create_list(int n, int v)
   ensures res::ll1<>;
 {
   node tmp;
-  if (n == 0) {
-    return null;
-  }
-  else {
+  if (n == 0)
+    {
+      return null;
+    }
+  else
+    {
     n  = n - 1;
     tmp = create_list(n, v);
     return new node (v, tmp);
-  }
+    }
 }
 
 /* function to reverse a singly linked list */
@@ -263,7 +269,7 @@ void reverse(ref node xs, ref node ys)
 node split1(ref node x, int a)
   infer[x]
   requires x::ll1<> & a > 0 //x!=null
-  ensures x'::ll1<> * res::ll1<>;
+  ensures x'::ll1<> * res::ll1<>;//'
 {
 	node tmp;
 	if (a == 1)
@@ -276,8 +282,9 @@ node split1(ref node x, int a)
 	{
 		a = a - 1;
 		node tmp;
-		bind x to (_, xnext) in {
-			tmp = split1(xnext, a);
+		bind x to (_, xnext) in
+        {
+          tmp = split1(xnext, a);
 		}
 		return tmp;
 	}

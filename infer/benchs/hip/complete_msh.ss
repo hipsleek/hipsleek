@@ -149,16 +149,18 @@ int is_perfect(node2 t)
   requires t::complete<h, nmin>
   ensures t::complete<h, nmin> & (nmin != h | res = 1) & (nmin = h | res = 0);
 {
-	if(t == null)
-		return 1;
-	else {
-		if(height1(t.left) != height1(t.right))
-			return 0;
-		else {
-			if(is_perfect(t.left) == 1)
-				return is_perfect(t.right);
-			else
-				return 0;
+  if(t == null)
+    return 1;
+  else
+    {
+      if(height1(t.left) != height1(t.right))
+        return 0;
+      else
+        {
+          if(is_perfect(t.left) == 1)
+            return is_perfect(t.right);
+          else
+            return 0;
 		}
 	}
 }

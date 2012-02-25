@@ -40,8 +40,10 @@ bool empty(node x)
     x != null -> ensures EMPT2(res);//!(res)
   }
 {
-  if (x == null) return true;
-  else return false;
+  if (x == null)
+    return true;
+  else
+    return false;
 }
 
 //The number of elements that conform the list's content.
@@ -73,11 +75,6 @@ int front(node x)
   return x.val;
 }
 
-// A reference to the first element in the list container.
-int back(node x)
-  requires x::dll<_>
-  ensures true;
-
 void swap(ref node x, ref node y)
   requires x::dll<_>*y::dll<_>
   ensures x'::dll<_>*y'::dll<_>;
@@ -97,7 +94,7 @@ void assign(node x, int n, int v)
 
 void push_front(ref node x, int v)
   requires x::dll<_>
-  ensures x'::node<v,_,q>*q::dll<_>;
+  ensures x'::node<v,_,q>*q::dll<_>;//'
 {
   if (x==null) {
     node tmp = new node(v,null,x);
@@ -113,20 +110,22 @@ void push_front(ref node x, int v)
 node pop_front(ref node x)
   infer[x]
   requires x::dll<_>//x!=null
-  ensures x'::dll<_>;
+  ensures x'::dll<_>;//'
 {
   node tmp = x;
-  if (x.next == null) {
-    x = x.next;
-    tmp.next=null;
-    return tmp;
-  }
-  else {
-    x.next.prev = null;
-    x = x.next;
-    tmp.next = null;
-    return tmp;
-  }
+  if (x.next == null)
+    {
+      x = x.next;
+      tmp.next=null;
+      return tmp;
+    }
+  else
+    {
+      x.next.prev = null;
+      x = x.next;
+      tmp.next = null;
+      return tmp;
+    }
 }
 
 /* append 2 doubly linked lists */
@@ -136,15 +135,18 @@ void append2(node x, node y)
 	ensures x::dll<q>;
 {
 	node tmp;
-	if (x.next == null) {
+	if (x.next == null)
+      {
 		x.next = y;
-		if (y != null) {
+		if (y != null)
+          {
 			y.prev = x;
-		}		
-	}
-	else {
+          }
+      }
+	else
+      {
 		append2(x.next, y);
-	}
+      }
 }
 
 /* return the first element of a doubly linked list */
@@ -175,10 +177,11 @@ void set_next(node x, node y)
 {
   if (y==null) 
     x.next = y;
-  else {
-    x.next = y;
-    y.prev = x;
-  }
+  else
+    {
+      x.next = y;
+      y.prev = x;
+    }
 }
 
 void set_null2(node x)
@@ -233,20 +236,21 @@ void delete(node x, int a)
 	node tmp;
 	node tmp_null = null;
 
-	if (a == 1) 
+	if (a == 1)
 	{
-		if (x.next.next != null)
+      if (x.next.next != null)
 		{
-			x.next.next.prev = x;
-			tmp = x.next.next;
-			x.next = tmp;
+          x.next.next.prev = x;
+          tmp = x.next.next;
+          x.next = tmp;
 		}
-		else
-			x.next = tmp_null;
+      else
+        x.next = tmp_null;
 	}
-	else {
+	else
+      {
 		delete(x.next, a-1);
-	}
+      }
 }
 
 /* function to delete the a-th node in a doubly linked list */
@@ -282,20 +286,23 @@ node create_list(int n, int v)
   ensures res::dll<_>;
 {
   node tmp;
-  if (n == 0) {
-    return null;
-  }
-  else {
-    n = n - 1;
-    tmp = create_list(n, v);
-    node nn = new node (v, null, tmp);
-    if (tmp==null)
-      return nn;
-    else {
-      tmp.prev = nn;
-      return nn;
+  if (n == 0)
+    {
+      return null;
     }
-  }
+  else
+    {
+      n = n - 1;
+      tmp = create_list(n, v);
+      node nn = new node (v, null, tmp);
+      if (tmp==null)
+        return nn;
+      else
+        {
+          tmp.prev = nn;
+          return nn;
+        }
+    }
 }
 
 /* function to reverse a doubly linked list */
@@ -305,28 +312,29 @@ void reverse(ref node xs, ref node ys)
   requires xs::dll<p> * ys::dll<q>
   ensures ys'::dll<_> & REVERSE(xs'); // xs' = null
 {
-  if (xs != null) {
-    node tmp;
-    tmp = xs.next;
-    xs.next = ys;
-    if (ys!=null)
-      ys.prev = xs;
-    ys = xs;
-    xs = tmp;
-    reverse(xs, ys);
-  }
+  if (xs != null)
+    {
+      node tmp;
+      tmp = xs.next;
+      xs.next = ys;
+      if (ys!=null)
+        ys.prev = xs;
+      ys = xs;
+      xs = tmp;
+      reverse(xs, ys);
+    }
 }
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 node split1(ref node x, int a)
   infer[x]
   requires x::dll<p> & a > 0 //x!=null
-  ensures x'::dll<p> * res::dll<_>;
+  ensures x'::dll<p> * res::dll<_>;//'
 {
 	node tmp;
 	if (a == 1)
 	{
-		tmp = x.next; 
+		tmp = x.next;
 		x.next = null;
 		return tmp;
 	}
@@ -334,7 +342,8 @@ node split1(ref node x, int a)
 	{
 		a = a - 1;
 		node tmp;
-		bind x to (_, xprev, xnext) in {
+		bind x to (_, xprev, xnext) in
+        {
 			tmp = split1(xnext, a);
 		}
 		return tmp;
@@ -376,18 +385,21 @@ void list_remove(node x, int v)
   requires x::dll<p> // x!=null
   ensures x::dll<p>;
 {
-  if(x.next != null) {
-    if(x.next.val == v) {
-      node tmp = x.next;
-      if (x.next.next!=null)
-        x.next.next.prev = x;
-      x.next = x.next.next;
-      dispose(tmp);
+  if(x.next != null)
+    {
+    if(x.next.val == v)
+      {
+        node tmp = x.next;
+        if (x.next.next!=null)
+          x.next.next.prev = x;
+        x.next = x.next.next;
+        dispose(tmp);
+      }
+    else
+      {
+        list_remove(x.next, v);
+      }
     }
-    else {
-      list_remove(x.next, v);
-    }
-  }
 }
 
 /*function to remove the first node which has value v in nullable doubly linked list*/
@@ -396,21 +408,24 @@ node list_remove2(node x, int v)
   ensures res::dll<p> ;
 {
   node tmp;
-  if(x != null) {
-    if(x.val == v) {
-      tmp = x;
-      if (x.next!=null)
-        x.next.prev = x.prev;
-      x = x.next;
-      dispose(tmp);
+  if(x != null)
+    {
+      if(x.val == v)
+        {
+          tmp = x;
+          if (x.next!=null)
+            x.next.prev = x.prev;
+          x = x.next;
+          dispose(tmp);
+        }
+      else
+        {
+          tmp = list_remove2(x.next, v);
+          if (tmp!=null)
+            tmp.prev = x;
+          x.next = tmp;
+        }
     }
-    else {
-      tmp = list_remove2(x.next, v);
-      if (tmp!=null)
-        tmp.prev = x;
-      x.next = tmp;
-    }
-  }
   return x;
 }
 
@@ -420,20 +435,23 @@ node list_filter2(node x, int v)
   ensures res::dll<_>;
 {
   node tmp;
-  if(x != null) {
-    if(x.val == v){
-      tmp = x.next;
-      dispose(x);
-      x = tmp;
-      x = list_filter2(x,v);
+  if(x != null)
+    {
+      if(x.val == v)
+        {
+          tmp = x.next;
+          dispose(x);
+          x = tmp;
+          x = list_filter2(x,v);
+        }
+      else
+        {
+          tmp = list_filter2(x.next, v);
+          if (tmp!=null)
+            tmp.prev = x;
+          x.next = tmp;
+        }
     }
-    else{
-      tmp = list_filter2(x.next, v);
-      if (tmp!=null)
-        tmp.prev = x;
-      x.next = tmp;
-    }
-  }
   return x;
 }
 
@@ -457,7 +475,7 @@ node find_ge(node x, int v)
 /*function to splice 2 linked list*/
 void splice (ref node x, node y)
   requires x::dll<p> * y::dll<q>
-  ensures x'::dll<_>;
+  ensures x'::dll<_>;//'
 {
   if(x == null)
     x = y;
