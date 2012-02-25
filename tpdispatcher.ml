@@ -75,7 +75,7 @@ let string_of_prover prover = match prover with
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> ""
-	| ZM -> "Omega, z3"
+	| ZM -> "Z3, Mona"
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
@@ -784,12 +784,22 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
     (List.fold_left (fun acc f -> acc ^ "+++++++++\n" ^ (Cprinter.string_of_pure_formula f) ^ "\n") "" l_ante)) in*)
 
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
-	   
+
+(* Assumption filtering here is another 
+ * version of automatic slicing *)
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   if !do_slicing && !multi_provers then
-	  assumption_filter_slicing ante cons
+    assumption_filter_slicing ante cons
+  (* Always support MONA with assumption filtering *) 
+  else if !dis_slicing then
+    begin
+      if (is_bag_constraint ante) || (is_bag_constraint cons) then
+        CP.assumption_filter ante cons
+      else 
+        (ante, cons)
+    end
   else
-	  CP.assumption_filter ante cons
+    CP.assumption_filter ante cons
 
 (* let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -886,6 +896,12 @@ let disj_cnt a c s =
     end
   else ()
 
+let stat_tp cmd tp_name =
+  Gen.Profiling.push_time ("stat_" ^ tp_name);
+  let r = (Lazy.force cmd) in
+  Gen.Profiling.pop_time ("stat_" ^ tp_name);
+  r
+
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 (*  print_endline "==== in function tp_is_sat_no_cache ====";*)
 (*  print_string "f: "; Cpure.print_formula f;*)
@@ -918,7 +934,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           if (CP.is_float_formula wf) then (redlog_is_sat wf)
           else
             begin
-              (omega_is_sat f);
+              (* (omega_is_sat f); *)
+              stat_tp (lazy (omega_is_sat wf)) "oc"
             end
     | CvcLite -> Cvclite.is_sat f sat_no
   | Cvc3 -> 
@@ -928,7 +945,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               | _ -> Cvc3.is_sat f sat_no
                     (* Cvc3.is_sat f sat_no *)
           end
-    | Z3 -> z3_is_sat f
+    | Z3 -> 
+        (* z3_is_sat f *)
+        stat_tp (lazy (z3_is_sat f)) "z3"
     | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq -> (*Coq.is_sat f sat_no*)
           if (is_list_constraint wf) then
@@ -939,7 +958,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             begin
           (Smtsolver(*Omega*).is_sat f sat_no);
             end
-    | Mona | MonaH -> mona_is_sat wf
+    | Mona | MonaH -> 
+        (* mona_is_sat wf *)
+        stat_tp (lazy (mona_is_sat wf)) "mona"
     | CO -> 
           begin
             let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
@@ -965,11 +986,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           (* let f = CP.drop_rel_formula f in *)
           if (is_bag_constraint wf) then
             begin
-              (mona_is_sat wf);
+              (* (mona_is_sat wf); *)
+              stat_tp (lazy (mona_is_sat wf)) "mona"
             end
           else
             begin
-              (omega_is_sat f);
+              (* (omega_is_sat f); *)
+              stat_tp (lazy (omega_is_sat wf)) "oc"
             end
   | AUTO ->
       (* let f = CP.drop_rel_formula f in *)
@@ -1023,9 +1046,25 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             redlog_is_sat wf
   | ZM ->
 	  if (is_bag_constraint wf) then
-      mona_is_sat wf
+      begin
+        (* 
+        Gen.Profiling.push_time "Mona";
+        let r = mona_is_sat wf in
+        Gen.Profiling.pop_time "Mona";
+        r
+        *)
+        stat_tp (lazy (mona_is_sat wf)) "mona"
+      end
     else
-		  z3_is_sat wf
+      begin
+        (*
+        Gen.Profiling.push_time "Z3";
+        let r = z3_is_sat wf in
+        Gen.Profiling.pop_time "Z3";
+        r
+        *)
+        stat_tp (lazy (z3_is_sat wf)) "z3"
+      end
     | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1477,7 +1516,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | OmegaCalc -> 
           if (CP.is_float_formula ante) || (CP.is_float_formula conseq) 
           then  redlog_imply ante_w conseq_s
-          else  (omega_imply ante conseq)
+          else  
+            (* (omega_imply ante conseq) *)
+            stat_tp (lazy (omega_imply ante conseq)) "oc"
     | CvcLite -> Cvclite.imply ante_w conseq_s
     | Cvc3 -> begin
         match process with
@@ -1485,7 +1526,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
                 (* Cvc3.imply ante conseq imp_no *)
       end
-  | Z3 -> z3_imply ante conseq
+  | Z3 -> 
+      (* z3_imply ante conseq *)
+      stat_tp (lazy (z3_imply ante conseq)) "z3"
   | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
@@ -1518,7 +1561,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         begin
           (called_prover :="omega "; omega_imply ante conseq)
         end
-  | Mona | MonaH -> mona_imply ante_w conseq_s 
+  | Mona | MonaH -> 
+      (* mona_imply ante_w conseq_s *)
+      stat_tp (lazy (mona_imply ante_w conseq_s)) "mona"
   | CO -> 
       begin
         let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -1542,9 +1587,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           end
     | OM ->
 	      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		    (called_prover :="mona " ; mona_imply ante_w conseq_s)
+		      (called_prover := "mona "; 
+          (* mona_imply ante_w conseq_s) *)
+          stat_tp (lazy (mona_imply ante_w conseq_s)) "mona")
 	      else
-		    (called_prover :="omega " ; omega_imply ante conseq)
+		      (called_prover := "omega "; 
+          (* omega_imply ante conseq) *)
+          stat_tp (lazy (omega_imply ante conseq)) "oc")
     | OI ->
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             (Isabelle.imply ante_w conseq_s imp_no)
@@ -1561,9 +1610,23 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             redlog_imply ante_w conseq_s
   | ZM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        (called_prover := "mona "; mona_imply ante_w conseq_s)
+        begin
+          called_prover := "mona "; 
+          (* Gen.Profiling.push_time "Mona";
+          let r = mona_imply ante_w conseq_s in
+          Gen.Profiling.pop_time "Mona";
+          r*)
+          stat_tp (lazy (mona_imply ante_w conseq_s)) "mona"
+        end
       else
-        (called_prover := "z3 "; z3_imply ante conseq)
+        begin
+          called_prover := "z3 "; 
+          (* Gen.Profiling.push_time "Z3";
+          let r = z3_imply ante conseq in
+          Gen.Profiling.pop_time "Z3";
+          r*)
+          stat_tp (lazy (z3_imply ante conseq)) "z3"
+        end
   | SPASS -> Smtsolver.imply ante conseq timeout
   in
 	let _ = if should_output () then

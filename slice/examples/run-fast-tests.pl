@@ -17,15 +17,16 @@ GetOptions( "stop"  => \$stop,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
 			"copy-to-home21" => \$home21,
-            "log-timings" => \$timings,
-            "log-string=s" => \$str_log,
-            "bags" => \$bags,
-            "term" => \$term,
-            "lists" => \$lists,
+      "log-timings" => \$timings,
+      "log-string=s" => \$str_log,
+      "bags" => \$bags,
+      "term" => \$term,
+      "lists" => \$lists,
 			"slicing" => \$slicing,
 			"small" => \$small,
 			"pldi" => \$pldi,
-			"stat" => \$stat
+			"stat" => \$stat,
+			"stattp" => \$stattp
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -55,11 +56,11 @@ if($prover){
 	}
 }
 else{
-    if("$flags" =~ m/-tp (\w+)\b/ ){
-        $prover = "$1";
+    if("$flags" =~ m/-tp (\w+)\b/ ) {
+			$prover = "$1";
     }
     else{
-	$prover = "oc";
+			$prover = "oc";
     }
 }
 
@@ -1019,7 +1020,7 @@ $output_file = "log";
 		],
 		["heaps_size_maxelem.ss", 5, "",  
 			"deletemax", "SUCCESS",
-			# "ripple", "SUCCESS",
+			"ripple", "SUCCESS",
 		    "deleteone", "SUCCESS",
 		    "deleteoneel", "SUCCESS",
 		    "insert", "SUCCESS"
@@ -1041,7 +1042,7 @@ $output_file = "log";
 		],
 		["rb_size_height.ss", 19, "",
 		    "insert", "SUCCESS",
-		    # "del", "SUCCESS",
+		    "del", "SUCCESS",
 		    "remove_min", "SUCCESS",
 		    "del_2r", "SUCCESS",
 		    "del_2", "SUCCESS",
@@ -1530,8 +1531,8 @@ $output_file = "log";
 		    "maxim", "SUCCESS"
 		],
 		["heaps_size_maxelem.ss", 4, "",  
-			"deletemax", "SUCCESS",
-			#"ripple", "SUCCESS",
+				"deletemax", "SUCCESS",
+				"ripple", "SUCCESS",
 		    "deleteone", "SUCCESS",
 		    "deleteoneel", "SUCCESS",
 		    "insert", "SUCCESS"
@@ -1605,7 +1606,7 @@ $output_file = "log";
 		["qsort_size_sorted.ss", 3, "",  
 			"qsort1", "SUCCESS",
 			"append_bll", "SUCCESS",
-		    "partition1", "SUCCESS"
+		  "partition1", "SUCCESS"
 		],
 		["isort_size_sorted.ss", 2, "",  
 			"insertion_sort", "SUCCESS",
@@ -1614,21 +1615,21 @@ $output_file = "log";
 		["ssort_size_sorted.ss", 3, "",  
 			"selection_sort", "SUCCESS",
 			"delete_min", "SUCCESS",
-		    "find_min", "SUCCESS"
+		  "find_min", "SUCCESS"
 		],
 		["msort_size_sorted.ss", 5, "",  
 			"insert1", "SUCCESS",
 			"merge1", "SUCCESS",
-		    "merge_sort1", "SUCCESS",
-		    "split1", "SUCCESS",
-		    "count1", "SUCCESS"
+		  "merge_sort1", "SUCCESS",
+		  "split1", "SUCCESS",
+		  "count1", "SUCCESS"
 		],
 		["ll_size_interval.ss", 11, "",  
 			"reverse", "SUCCESS",
 			"delete", "SUCCESS",
-		    "insert", "SUCCESS",
-		    "get_next_next", "SUCCESS",
-		    "set_null", "SUCCESS",
+		  "insert", "SUCCESS",
+		  "get_next_next", "SUCCESS",
+		  "set_null", "SUCCESS",
 			"set_next", "SUCCESS",
 			"get_next", "SUCCESS",
 			"ret_first", "SUCCESS",
@@ -1639,51 +1640,51 @@ $output_file = "log";
 		["sll_size_sorted.ss", 6, "",  
 			"id", "SUCCESS",
 			"insertion_sort", "SUCCESS",
-		    "get_tail", "SUCCESS",
-		    "delete", "SUCCESS",
-		    "insert2", "SUCCESS",
+		  "get_tail", "SUCCESS",
+		  "delete", "SUCCESS",
+		  "insert2", "SUCCESS",
 			"insert", "SUCCESS"
 		],
 		["dll_size_interval.ss", 6, "",  
 			"append2", "SUCCESS",
 			"append1", "SUCCESS",
-		    "append", "SUCCESS",
-		    "delete1", "SUCCESS",
-		    "delete", "SUCCESS",
+		  "append", "SUCCESS",
+		  "delete1", "SUCCESS",
+		  "delete", "SUCCESS",
 			"insert", "SUCCESS"
 		],
 		["complete_size_minheight.ss", 5, "",  
 			"insert", "SUCCESS",
 			"min_height", "SUCCESS",
-		    "height", "SUCCESS",
-		    "minim", "SUCCESS",
-		    "maxim", "SUCCESS"
+		  "height", "SUCCESS",
+		  "minim", "SUCCESS",
+		  "maxim", "SUCCESS"
 		],
 		["heaps_size_maxelem.ss", 5, "",  
 			"deletemax", "SUCCESS",
-			# "ripple", "SUCCESS",
-		    "deleteone", "SUCCESS",
-		    "deleteoneel", "SUCCESS",
-		    "insert", "SUCCESS"
+			"ripple", "SUCCESS",
+		  "deleteone", "SUCCESS",
+		  "deleteoneel", "SUCCESS",
+		  "insert", "SUCCESS"
 		],
 		["bst_size_height.ss", 6, "",  
 			"delete", "SUCCESS",
 			"remove_min", "SUCCESS",
-		    "insert", "SUCCESS",
-		    "flatten", "SUCCESS",
-		    "count", "SUCCESS",
+		  "insert", "SUCCESS",
+		  "flatten", "SUCCESS",
+		  "count", "SUCCESS",
 			"append", "SUCCESS"
 		],
 		["perfect_size_height.ss", 5, "",  
 			"insert", "SUCCESS",
 			"height", "SUCCESS",
-		    "maxim", "SUCCESS",
-		    "create", "SUCCESS",
-		    "simple_insert", "SUCCESS"
+		  "maxim", "SUCCESS",
+		  "create", "SUCCESS",
+		  "simple_insert", "SUCCESS"
 		],
 		["rb_size_height.ss", 19, "",
 		    "insert", "SUCCESS",
-		    # "del", "SUCCESS",
+		    "del", "SUCCESS",
 		    "remove_min", "SUCCESS",
 		    "del_2r", "SUCCESS",
 		    "del_2", "SUCCESS",
@@ -2192,7 +2193,7 @@ sub hip_process_file {
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
-			#print "\nbegin"."$output"."end\n";
+			# print "\nbegin"."$output"."end\n";
 			for($i = 3; $i<$limit;$i+=2)
 			{
 				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
@@ -2202,20 +2203,25 @@ sub hip_process_file {
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
+      if($timings) {
+				log_one_line_of_timings ($test->[0],$output);
+      }
 			if($stat) {
 				open TMP, ">", "temp" or die ("Could not open temp.\n");
-				open STAT, ">", "$exempl_path_full/$test->[0].stat" or die ("Could not open stat file.\n");
+				open STAT, ">>", "$exempl_path_full/$test->[0].stat" or die ("Could not open stat file.\n");
+				open ALLSTAT, ">>", "$exempl_path_full/$test->[0].allstat" or die ("Could not open stat file.\n");
+				print ALLSTAT "$script_arguments $extra_options";
+				print STAT "$script_arguments $extra_options";
+				print ALLSTAT "$output";
 				print TMP "$output";
 				$stat_info = `grep stat_ < temp`;
 				print STAT $stat_info;
 				close (TMP);
 				close (STAT);
+				close (ALLSTAT);
 			}
-        }
     }
+  }
 }
 
 

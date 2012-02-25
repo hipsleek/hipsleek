@@ -3012,14 +3012,14 @@ let print_var_set vset =
 (* Assumption: f0 is SAT *)
 let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   let is_relevant (fv, fvset) rele_var_set =
-	not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
+	  not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
   let rele_var_set = set_of_list rele_vars0 in
   let conjs = list_of_conjs f0 in
   let fv_list = List.map fv conjs in
   let fv_set = List.map set_of_list fv_list in
   let f_fv_list = List.combine conjs fv_set in
   let relevants0, unknowns0 = List.partition
-	(fun f_fv -> is_relevant f_fv rele_var_set) f_fv_list in
+	  (fun f_fv -> is_relevant f_fv rele_var_set) f_fv_list in
 	(* now select more "relevant" conjuncts *)
 	(*
 	   return value:
@@ -3028,8 +3028,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	   - updated relevant variable set
 	*)
   let rele_var_set =
-	let tmp1 = List.map snd relevants0 in
-	let tmp2 = List.fold_left (fun s1 -> fun s2 -> SVarSet.union s1 s2) rele_var_set tmp1 in
+	  let tmp1 = List.map snd relevants0 in
+	  let tmp2 = List.fold_left (fun s1 -> fun s2 -> SVarSet.union s1 s2) rele_var_set tmp1 in
 	  tmp2
   in
 (*
@@ -3043,32 +3043,33 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  Perform a fixpoint to select all relevant formulas.
 	*)
   let rec select_relevants relevants unknowns rele_var_set =
-	let reles = ref relevants in
-	let unks = ref unknowns in
-	let unks_tmp = ref [] in
-	let rvars = ref rele_var_set in
-	let cont = ref true in
+	  let reles = ref relevants in
+	  let unks = ref unknowns in
+	  let unks_tmp = ref [] in
+	  let rvars = ref rele_var_set in
+	  let cont = ref true in
 	  while !cont do
-		cont := false; (* assume we're done, unless the inner loop says otherwise *)
-		let cont2 = ref true in
-		  while !cont2 do
-			match !unks with
+		  cont := false; (* assume we're done, unless the inner loop says otherwise *)
+		  let cont2 = ref true in
+		    while !cont2 do
+			  match !unks with
 			  | (unk :: rest) ->
-				  unks := rest;
-				  (*
-					print_var_set !rvars;
-					print_string ("\nunk:\n" ^ (mona_of_formula (fst unk)) ^ "\n");
-				  *)
-				  if is_relevant unk !rvars then begin
-					(* add variables from unk in as relevant vars *)
-					cont := true;
-					rvars := SVarSet.union (snd unk) !rvars;
-					reles := unk :: !reles
-					(*
-					  print_string ("\nadding: " ^ (mona_of_formula (fst unk)) ^ "\n")
-					*)
-				  end else
-					unks_tmp := unk :: !unks_tmp
+				    unks := rest;
+				    (*
+					  print_var_set !rvars;
+					  print_string ("\nunk:\n" ^ (mona_of_formula (fst unk)) ^ "\n");
+				    *)
+				    if is_relevant unk !rvars then begin
+					    (* add variables from unk in as relevant vars *)
+					    cont := true;
+					    rvars := SVarSet.union (snd unk) !rvars;
+					    reles := unk :: !reles
+					    (*
+					    print_string ("\nadding: " ^ (mona_of_formula (fst unk)) ^ "\n")
+					    *)
+				      end 
+            else
+					  unks_tmp := unk :: !unks_tmp
 			  | [] ->
 				  cont2 := false; (* terminate inner loop *)
 				  unks := !unks_tmp;
@@ -3076,8 +3077,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 		  done
 	  done;
 	  begin
-		let rele_conjs = List.map fst !reles in
-		let filtered_f = conj_of_list rele_conjs no_pos in
+		  let rele_conjs = List.map fst !reles in
+		  let filtered_f = conj_of_list rele_conjs no_pos in
 		  filtered_f
 	  end
   in
@@ -7022,7 +7023,7 @@ let join_disjunctions xs = disj_of_list xs no_pos
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
-  if !filtering_flag && (not !dis_slicing) (* && (not !allow_pred_spec) *) then
+  if !filtering_flag (* && (not !dis_slicing) *) (* && (not !allow_pred_spec) *) then
     (filter_ante ante conseq, conseq)
 	  (* let fvar = CP.fv conseq in *)
 	  (* let new_ante = CP.filter_var ante fvar in *)
@@ -7034,7 +7035,7 @@ let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) 
 (* need unsat checking for disjunctive LHS *)
 let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (formula * formula) =
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
-  if !filtering_flag && (not !dis_slicing) (* && (not !allow_pred_spec) *) then
+  if !filtering_flag (* && (not !dis_slicing) *) (* && (not !allow_pred_spec) *) then
     let ante_ls = List.filter is_sat (split_disjunctions ante) in
     if ante_ls==[] then (mkFalse no_pos,conseq)
     else 

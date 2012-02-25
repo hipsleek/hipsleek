@@ -10,7 +10,7 @@ let is_mona_running = ref false
 let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
-let timeout = ref 11.0 (* default timeout is 10 seconds *)
+let timeout = ref 10.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
 let log_all_flag = ref false
