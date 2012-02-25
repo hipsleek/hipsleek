@@ -64,11 +64,10 @@ int front(node x)
   return x.val;
 }
 
-relation SWAP(bag a, bag b, bag c, bag d).
 void swap(ref node x, ref node y)
-  infer[SWAP]
+  infer @post []
   requires x::sll1<n,S1>*y::sll1<m,S2> & 0<=n & 0<=m
-  ensures x'::sll1<m,S3>*y'::sll1<n, S4> & SWAP(S1,S2,S3,S4);//S1=S4 & S2=S3
+  ensures x'::sll1<m,S3>*y'::sll1<n, S4>;//S1=S4 & S2=S3
 {
   node tmp = x;
   x = y;
@@ -77,9 +76,9 @@ void swap(ref node x, ref node y)
 
 relation PUF(bag a, bag b, int b).
 void push_front(ref node x, int v)
-  infer[PUF]
+//  infer[PUF]
   requires x::sll1<n, S> & forall (a: (a notin S | v <= a))
-  ensures x'::sll1<n+1, S1> & PUF(S1,S,v);//'
+  ensures x'::sll1<n+1, S1> & forall (a2: (a2 notin S1 | v <= a2)); //PUF(S1,S,v);//'
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -102,9 +101,9 @@ node pop_front(ref node x)
 //fail with eps
 relation MRG(bag a, bag b, bag c).
 node merge1(node x1, node x2)
-  infer[MRG]
+//  infer[MRG]
   requires x1::sll1<n1,S1> * x2::sll1<n2, S2>
-  ensures res::sll1<n1+n2, S3> & MRG(S3,S1,S2);// S3 = union(S1, S2)
+  ensures res::sll1<n1+n2, S3> & S3 = union(S1, S2);//MRG(S3,S1,S2);// S3 = union(S1, S2)
 {
 	if (x2 == null)
 		return x1; 
@@ -145,8 +144,9 @@ void set_next(ref node x, node y)
   ensures x::sll1<k,S2> & k>=1 & k=j+1 & SN(S,S2,v);
 {
   node tmp = x;
-  tmp.next = null;
-  x = insert2(y, tmp);
+  //tmp.next = null;
+  //x = insert2(y, tmp);
+  x.next = y;
 }
 
 void set_null2(ref node x)
@@ -181,7 +181,7 @@ void set_null(ref node x)
 relation GNN(bag a, bag b).
 node get_next_next(node x)
   infer[GNN]
-  requires x::sll1<n, S> & x != null
+  requires x::sll1<n, S> & n>1
   ensures res::sll1<n-2,S2> & GNN(S, S2);//S2 subset S;
 {
   return x.next.next;
@@ -190,9 +190,9 @@ node get_next_next(node x)
 /* insert an element in a sorted list */
 relation INS(bag a, bag b, int a).
 node insert(node x, int v)
-  infer [INS]
+//  infer [INS]
   requires x::sll1<n, S>
-  ensures res::sll1<n + 1, S1> & INS(S,S1,a);//S1=union(S,{v})
+  ensures res::sll1<n + 1, S1> & S1=union(S,{v});//INS(S,S1,a);//S1=union(S,{v})
 {
 	node tmp;
 
@@ -212,9 +212,9 @@ node insert(node x, int v)
 }
 relation INS2(bag a, bag b, int a).
 node insert2(node x, node vn)
-  infer[INS2]
+//  infer[INS2]
   requires x::sll1<n, S> *  vn::node<v, _>
-  ensures res::sll1<n+1, S2> & INS2(S,S1,a);//S1=union(S,{v})
+  ensures res::sll1<n+1, S2> & S1=union(S,{v});//INS2(S,S1,a);//S1=union(S,{v})
 {
 	if (x==null) {
 		vn.next = null;
@@ -233,9 +233,9 @@ node insert2(node x, node vn)
 /* function to delete the a-th node in a singly linked list */
 relation DEL(bag a, bag b).
 void delete(node x, int a)
-  infer [DEL]
+//  infer [DEL]
   requires x::sll1<n,S> & n > a & a > 0
-  ensures x::sll1<m, S1> & DEL(S,S1);//'S1 subset S
+  ensures x::sll1<m, S1> & S1 subset S; //DEL(S,S1);//'S1 subset S
 {
   if (a == 1){
     x.next = x.next.next;
@@ -248,9 +248,9 @@ void delete(node x, int a)
 /* function to delete the a-th node in a singly linked list */
 relation DEL2(int a, bag b, bag c).
 node delete2(node x, int v)
-  infer[DEL2]
+//  infer[DEL2]
   requires x::sll1<n, S>
-  ensures res::sll1<m, S1> & n-1 <= m <= n & DEL2(a,S,S1);
+  ensures res::sll1<m, S1> & n-1 <= m <= n & (a notin S & S = S1 | S=union(S1, {a}));//DEL2(a,S,S1);
 {
 	node tmp;
 
@@ -312,7 +312,7 @@ relation CPY(bag a, bag b).
 node list_copy(node x)
   infer [CPY]
   requires x::sll1<n,S>
-  ensures x::sll1<n,S> * res::sll1<n,S1> & CPY(S,S2);//
+  ensures x::sll1<n,S> * res::sll1<n,S1> & CPY(S,S1);//
 {
   node tmp;
   if (x != null) {
@@ -349,11 +349,11 @@ node list_filter2(node x, int v)
 /**********************SLAYER (SLL) EXAMPLES***************************/
 
 /* function to return the first node being greater than v*/
-relation FGE(bag a, int b).//{m}<subset> S
+relation FGE(bag a, int b).
 node find_ge(node x, int v)
   infer[FGE]
   requires x::sll1<n,S> & n >= 0
-  ensures res = null or res::node<m,_> & m >= v & FGE(S,m);//m in S;m in S
+  ensures res = null or res::node<m,_> & m >= v & FGE(S,m);//& FGE(S,m);//{m}<subset> S
 {
   if(x == null)
     return null;

@@ -49,6 +49,8 @@ int minim(int a, int b)
 }
 
 /* function to count the number of nodes in a tree */
+// verification: 72.31s, 10.71s(eps)
+// inference:    Fail  , 44.52s(eps)
 relation CNT(bag a, bag b).
 int count(node2 t)
   infer[CNT]
@@ -68,6 +70,7 @@ int count(node2 t)
 }
 
 // Need to use imm
+// 43.23s
 relation HGT(bag a, bag b).
 int height(node2 t)
   infer[HGT]
@@ -78,12 +81,14 @@ int height(node2 t)
 		return maxim(height(t.left), height(t.right)) + 1;
 	else return 0;
 }
+
 //for multi specs
 int height1(node2 t)
   requires t::complete1<n, h, nmin,S>
   ensures t::complete1<n, h, nmin,S> & res=h;
 
 relation MHGT(bag a, bag b).
+// 44.22
 int min_height(node2 t)
   infer[MHGT]
   requires t::complete1<n, h, nmin,S1>
@@ -100,6 +105,7 @@ int min_height1(node2 t)
 
 //relation INS1(bag a, bag b, int c).
 //relation INS2(int a, int b, int c).
+//88.7
 void insert(ref node2 t, int v)
 //infer[INS1]
   requires t::complete1<n, h1, nmin,S1> & nmin < h1 // there is still place to insert

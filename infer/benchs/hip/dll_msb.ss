@@ -105,6 +105,7 @@ void push_front(ref node x, int v)
 }
 
 //pop and return first element
+//FAIL
 relation PF(bag a, bag b).
 node pop_front(ref node x)
   infer[PF]
@@ -268,11 +269,12 @@ void insert(node x, int a)
 }
 
 /* delete a node from a doubly linked list */
+// FAIL
 relation DEL(bag a, bag b).
 void delete( node x, int a)
-  infer [DEL]
+//  infer [DEL]
   requires x::dll<p,n,S> & n > a & a > 0
-  ensures x::dll<p,m,S1> & DEL(S,S1);//S1 subset S
+  ensures x::dll<p,m,S1> & S1 subset S; //DEL(S,S1);//S1 subset S
 {
 	node tmp;
 	node tmp_null = null;
@@ -297,9 +299,9 @@ void delete( node x, int a)
 // FAIL
 relation DEL2(int a, bag b, bag c).
 node delete2(ref node x, int a)
-  infer [DEL2]
+//  infer [DEL2]
   requires x::dll<_,n,S>
-  ensures res::dll<_,m,S1> & m<=n & DEL2(a,S,S1);//& (a notin S & S = S1 | S=union(S1, {a}));
+  ensures res::dll<_,m,S1> & m<=n & (a notin S & S = S1 | S=union(S1, {a}));//DEL2(a,S,S1);//& (a notin S & S = S1 | S=union(S1, {a}));
 {
 	if (x == null)
 		return x;
@@ -355,9 +357,9 @@ node create_list(int n, int v)
 // FAIL
 relation REV(bag a, bag b, bag c).
 void reverse(ref node xs, ref node ys)
-  infer [REV]
+//  infer [REV]
   requires xs::dll<_,n,S1> * ys::dll<_,m,S2>
-  ensures ys'::dll<_,n+m,S> & xs' = null & REV(S,S1,S2); //S=union(S1,S2)
+  ensures ys'::dll<_,n+m,S> & xs' = null & S=union(S1,S2); //REV(S,S1,S2); //S=union(S1,S2)
 {
   if (xs != null) {
     node tmp;
@@ -454,9 +456,9 @@ void list_remove(node x, int v)
 // FAIL
 relation RMV2(bag a, bag b).
 node list_remove2(node x, int v)
-  infer[RMV2]
+//  infer[RMV2]
   requires x::dll<p,n,S> & n >= 0
-  ensures res::dll<p,m,S2> & m <= n & RMV2(S,S2);//S2 subset S
+  ensures res::dll<p,m,S2> & m <= n & S2 subset S; //RMV2(S,S2);//S2 subset S
 {
   node tmp;
   if(x != null) {
@@ -481,9 +483,9 @@ node list_remove2(node x, int v)
 // FAIL
 relation FIL(bag a, bag b).
 node list_filter2(ref node x, int v)
-  infer [FIL]
+//  infer [FIL]
   requires x::dll<_,n,S> & n >= 0
-  ensures res::dll<_,m,S2> & m <= n & FIL(S,S2);//S2 subset S
+  ensures res::dll<_,m,S2> & m <= n & S2 subset S; //FIL(S,S2);//S2 subset S
 {
   node tmp;
   if(x != null) {
@@ -526,9 +528,9 @@ node find_ge(node x, int v)
 // FAIL
 relation SPI(bag S1, bag S2, bag S3).
 void splice (ref node x, node y)
-  infer[SPI]
+//  infer[SPI]
   requires x::dll<_,n,S1> * y::dll<_,m,S2>
-  ensures x'::dll<_,m+n,S> & SPI(S,S1,S2); //S=union(S1,S2)
+  ensures x'::dll<_,m+n,S> & S=union(S1,S2); //SPI(S,S1,S2); //S=union(S1,S2)
 {
   if(x == null)
     x = y;
