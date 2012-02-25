@@ -8470,9 +8470,9 @@ let rev_imply_formula f1 f2 = match (f1,f2) with
     let res1 = TP.imply_raw p1 p2 in
     if res then
       if res1 then true
-      else
-        let p_hull = TP.hull (CP.mkOr p1 p2 None no_pos) in
-        CP.no_of_disjs p_hull == 1
+      else false
+(*        let p_hull = TP.hull (CP.mkOr p1 p2 None no_pos) in*)
+(*        CP.no_of_disjs p_hull == 1*)
     else false
   | _ -> f1=f2
 
