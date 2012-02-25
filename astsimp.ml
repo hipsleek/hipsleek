@@ -4694,7 +4694,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } in 
 	      let nh,np,nt,nfl,nb,na = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl nb na pos 
 	          
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 

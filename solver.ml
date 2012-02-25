@@ -241,8 +241,8 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_path_label = es.es_path_label;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
-	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs;
+	(* es_var_label = es.es_var_label; *)
+	(* es_var_ctx_lhs = es.es_var_ctx_lhs; *)
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
@@ -2444,6 +2444,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
               es_assumed_pure = fold_es.es_assumed_pure;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
+              (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
         Debug.devel_zprint (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
 	      Debug.devel_zprint (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
@@ -2885,10 +2886,12 @@ and heap_entail_failesc_prefix_init i (prog : prog_decl) (is_folding : bool)  (h
   let pr = to_string in
   let pr2 = Cprinter.string_of_list_failesc_context in
   Debug.no_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
-      (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl conseq pos pid (rename_f,to_string,f))
+      (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl conseq tid pos pid (rename_f,to_string,f))
 	  cl conseq
 
 and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
+      (conseq : 'a) (tid: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
+	  (f: prog_decl->bool->bool->context->'a -> CP.spec_var option -> loc ->control_path_id->(list_context * proof))
 	  ) : (list_failesc_context * proof) =
   (* if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n") *)
   (* else *)
@@ -6171,7 +6174,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let estate = add_infer_pure_to_estate inf_p estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
 	  let lhs_p = MCP.merge_mems lhs_new to_add true in
-      let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
+      let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b lhs_a no_pos in
       (*    let lhs_xpure,_,_,_ = xpure prog res_delta in                                                              *)
       (*    let rhs_xpure = rhs_p in                                                                                   *)
       (*    let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in                                                   *)
@@ -6182,7 +6185,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (*        let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in*)
       (*        (r1,prf)                                                                                               *)
       (*      | None ->                                                                                                *)
-                                                                                                *)
 
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
@@ -7727,7 +7729,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               let new_estate = add_infer_pure_thus_estate inv_f new_estate in
               let ctx1 = (Ctx new_estate) in
 			  let ctx1 = set_unsat_flag ctx1 true in
-			  let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+			  let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
               (* let r1 = add_infer_pure_to_list_context new_p r1 in *)
               let r1 = add_infer_heap_to_list_context [new_rn] r1 in
               (r1,prf)
@@ -7952,7 +7954,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let estate =
               if Inf.no_infer_rel estate then estate
               else 
-                let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+                let lhs_h,lhs_p,_,_, _ , lhs_a= CF.split_components estate.es_formula in (*TO CHECK: lhs_a*)
                 let lhs_alias = MCP.ptr_equations_without_null lhs_p in
                 let lhs_aset = CP.EMapSV.build_eset lhs_alias in
                 (* Assumed lhs_h to be star or view_node or data_node *)
@@ -7992,7 +7994,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let estate =
               if Inf.no_infer_rel estate then estate
               else 
-                let lhs_h,lhs_p,_,_, _ = CF.split_components estate.es_formula in
+                let lhs_h,lhs_p,_,_, _, lhs_a = CF.split_components estate.es_formula in (*TO CHECK: lhs_a*)
                 let lhs_alias = MCP.ptr_equations_without_null lhs_p in
                 let lhs_aset = CP.EMapSV.build_eset lhs_alias in
                 (* Assumed lhs_h to be star or view_node or data_node *)
@@ -8013,7 +8015,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let estate =
               if Inf.no_infer_rel estate then estate
               else 
-                let lhs_h, lhs_p, _,_, _ = CF.split_components estate.es_formula in
+                let lhs_h, lhs_p, _,_, _ , lhs_a= CF.split_components estate.es_formula in (*TO CHECK: lhs_a*)
                 let lhs_alias = MCP.ptr_equations_without_null lhs_p in
                 let lhs_aset = CP.EMapSV.build_eset lhs_alias in
                 (* Assumed lhs_h to be star or view_node or data_node *)
@@ -8272,7 +8274,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 (* explicitly force unsat checking to be done here *)
                     let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
                 (* let ctx1 = set_unsat_flag ctx1 false in  *)
-                    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+                    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
                     let r1 = add_infer_pure_to_list_context [pf] r1 in
                     (r1,prf)
                 | None ->
@@ -10126,7 +10128,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
       (fun _ _ -> heap_entail_list_partial_context_init_x prog is_folding  cl conseq tid pos pid) cl conseq
 
 (*this does not have thread id*)
-let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
+let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
       (conseq:formula)  (tid: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   let _ = set_entail_pos pos in
   Debug.devel_zprint (lazy ("heap_entail_init list_failesc_context_init:"
@@ -10145,12 +10147,12 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
   end
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
-      (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) =
+      (conseq:formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   let pr2 = Cprinter.string_of_formula in
   let pr1 = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "heap_entail_list_failesc_context_init" 
       pr1 pr2 (fun (r,_)->pr1 r)
-      (fun _ _ -> heap_entail_list_failesc_context_init prog is_folding cl conseq pos pid) cl conseq
+      (fun _ _ -> heap_entail_list_failesc_context_init_x prog is_folding cl conseq tid pos pid) cl conseq (*TO CHECK: whether we have tid*)
 
 (* TODO : what is this verify_pre_is_sat verification for? *)
 let rec verify_pre_is_sat prog fml = match fml with
@@ -10255,10 +10257,10 @@ let rec simplify_post_heap_only fml prog = match fml with
         formula_or_f2 = simplify_post_heap_only f2 prog; 
         formula_or_pos = pos}
   | _ -> 
-    let h, p, fl, b, t = split_components fml in
+    let h, p, fl, b, t,a = split_components fml in (*TO CHECK: a*)
     let p = MCP.pure_of_mix p in
     let h = simplify_heap h p prog in
-    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+    mkBase h (MCP.mix_of_pure p) t fl b a no_pos
 
 let rec elim_heap h p pre_vars heap_vars = match h with
   | Star {h_formula_star_h1 = h1;
@@ -10302,8 +10304,8 @@ let rec elim_heap h p pre_vars heap_vars = match h with
 let eqFormula f1 f2 = match (f1,f2) with
   | (Base _, Base _) 
   | (Exists _, Exists _) -> 
-    let h1,p1,fl1,b1,t1 = split_components f1 in
-    let h2,p2,fl2,b2,t2 = split_components f2 in
+    let h1,p1,fl1,b1,t1,a1 = split_components f1 in
+    let h2,p2,fl2,b2,t2,a2 = split_components f2 in
     let p1 = MCP.pure_of_mix p1 in
     let p2 = MCP.pure_of_mix p2 in
     h1 = h2 && TP.imply_raw p1 p2 && TP.imply_raw p2 p1 && fl1=fl2 && b1=b2 && t1=t2
@@ -10316,7 +10318,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
     if eqFormula f1 f2 then (f1,pres1)
     else (Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos},pres1@pres2)
   | _ ->
-    let h, p, fl, b, t = split_components post_fml in
+    let h, p, fl, b, t, a = split_components post_fml in (*TO CHECK: a*)
     let p = MCP.pure_of_mix p in
     let h = if pre_vars = [] || not(inf_post) then h else elim_heap h p pre_vars (CF.h_fv h) in
     (*let post_vars = CP.diff_svl post_vars ((CF.h_fv h)@pre_vars) in*)
@@ -10347,7 +10349,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
       end
     in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
-    (mkBase h (MCP.mix_of_pure p) t fl b no_pos,pre)
+    (mkBase h (MCP.mix_of_pure p) t fl b a no_pos,pre) (*TO CHECK: a*)
 
 let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = 
   let pr = Cprinter.string_of_formula in
@@ -10362,10 +10364,10 @@ let rec simplify_pre pre_fml = match pre_fml with
     if f1 = f2 then f1
     else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}
   | _ ->
-    let h, p, fl, b, t = split_components pre_fml in
+    let h, p, fl, b, t, a = split_components pre_fml in (*TO CHECK: a*)
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = CP.mkAnd (Inf.simplify_helper (CP.conj_of_list p2 no_pos)) (CP.conj_of_list p1 no_pos) no_pos in
-    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+    mkBase h (MCP.mix_of_pure p) t fl b a no_pos (*TO CHECK: a*)
 		
 let simplify_pre pre_fml =
 	let pr = !CF.print_formula in

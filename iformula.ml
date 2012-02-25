@@ -1909,9 +1909,9 @@ let rec float_out_thread_struc_formula_x (f:struc_formula):struc_formula =
 				 formula_ext_base = float_out_thread b.formula_ext_base;
 				 formula_ext_continuation =  float_out_thread_struc_formula_x b.formula_ext_continuation;
 				}
-	| EVariance b -> EVariance { b with
-		formula_var_continuation = float_out_thread_struc_formula_x b.formula_var_continuation;
-	}
+	(* | EVariance b -> EVariance { b with *)
+	(* 	formula_var_continuation = float_out_thread_struc_formula_x b.formula_var_continuation; *)
+	(* } *)
     | EInfer b -> EInfer ({b with 
       formula_inf_continuation = helper b.formula_inf_continuation;})
 	in	

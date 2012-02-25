@@ -455,6 +455,8 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   List.fold_left 
     (fun x y -> x@(helper y)) [] m
 
+let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] [] pos
+and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] [] pos
 
 and struc_formula_of_heap h pos = [EBase { 
 	formula_ext_explicit_inst = [];	 
@@ -1859,6 +1861,7 @@ and subst_pos_formula (p:loc) (f: formula): formula=
               formula_base_type = bt;
 		      formula_base_flow = bff;
               formula_base_branches = bb;
+              formula_base_and = ba;
               formula_base_label = bl;
               formula_base_pos = _ }
         -> Base {  formula_base_heap = bhf;
@@ -1866,6 +1869,7 @@ and subst_pos_formula (p:loc) (f: formula): formula=
               formula_base_type = bt;
 		      formula_base_flow = bff;
               formula_base_branches = bb;
+              formula_base_and = ba;
               formula_base_label = bl;
               formula_base_pos = p }
     | Or ({formula_or_f1 = f1;
@@ -2237,13 +2241,13 @@ and apply_one_struc_pre_varperm  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f
 		  })
 	| EAssume (x,b,y)-> if (List.mem fr x) then f
 	  else EAssume (x, (apply_one_varperm s b),y)
-	| EVariance b -> EVariance ({ b with
-		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
-			| None -> ((CP.e_apply_one s expr), None)
-			| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures;
-		  formula_var_escape_clauses = List.map (fun f -> CP.apply_one_varperm s f) b.formula_var_escape_clauses;
-		  formula_var_continuation = apply_one_struc_pre_varperm s b.formula_var_continuation
-	  })
+	(* | EVariance b -> EVariance ({ b with *)
+	(* 	  formula_var_measures = List.map (fun (expr, bound) -> match bound with *)
+	(* 		| None -> ((CP.e_apply_one s expr), None) *)
+	(* 		| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures; *)
+	(* 	  formula_var_escape_clauses = List.map (fun f -> CP.apply_one_varperm s f) b.formula_var_escape_clauses; *)
+	(* 	  formula_var_continuation = apply_one_struc_pre_varperm s b.formula_var_continuation *)
+	(*   }) *)
  | EInfer b -> EInfer {b with
     formula_inf_continuation = helper b.formula_inf_continuation}
   in	
@@ -2291,13 +2295,13 @@ and apply_one_struc_varperm  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : s
 			  formula_ext_pos = b.formula_ext_pos	
 		  })
 	| EAssume (x,b,y)-> EAssume((subst_var_list [s] x),(apply_one_varperm s b),y)
-	| EVariance b -> EVariance ({ b with
-		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
-			| None -> ((CP.e_apply_one s expr), None)
-			| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures; (*TO CHECK: exp does not contain VarPerm*)
-		  formula_var_escape_clauses = List.map (fun f -> CP.apply_one_varperm s f) b.formula_var_escape_clauses;
-		  formula_var_continuation = apply_one_struc_varperm s b.formula_var_continuation;
-	  })
+	(* | EVariance b -> EVariance ({ b with *)
+	(* 	  formula_var_measures = List.map (fun (expr, bound) -> match bound with *)
+	(* 		| None -> ((CP.e_apply_one s expr), None) *)
+	(* 		| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures; (\*TO CHECK: exp does not contain VarPerm*\) *)
+	(* 	  formula_var_escape_clauses = List.map (fun f -> CP.apply_one_varperm s f) b.formula_var_escape_clauses; *)
+	(* 	  formula_var_continuation = apply_one_struc_varperm s b.formula_var_continuation; *)
+	(*   }) *)
     | EInfer b -> EInfer {b with
       (*formula_inf_vars = List.map (subst_var s) b.formula_inf_vars;*)
       formula_inf_continuation = helper b.formula_inf_continuation}
@@ -3017,7 +3021,7 @@ and split_components (f: formula) =
   split_components_x f 
 
 and split_components_x (f : formula) = 
-  if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse)
+  if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse, [])
   else match f with
     | Base ({formula_base_heap = h; 
 	  formula_base_pure = p; 
@@ -7381,7 +7385,7 @@ let mkEBase_with_cont (pf:CP.formula) cont loc : ext_formula =
 	formula_ext_implicit_inst = [];
 	formula_ext_exists = [];
 	(*formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
-	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] [] loc;
 	formula_ext_continuation = cont;
 	formula_ext_pos = loc;
   }	
@@ -7944,7 +7948,7 @@ let rec simplify_post post_fml post_vars = match post_fml with
         formula_or_pos = pos}
   | _ -> 
     let h, p, fl, b, t, a = split_components post_fml in
-    let p = CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
+    let p = CP.mkExists_with_simpl Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl b a no_pos in
     post_fml
 
@@ -8076,22 +8080,25 @@ let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->
     (get_vars_without_rel pre_vars f1) @ (get_vars_without_rel pre_vars f2)
   | Base _ -> 
-    let h, p, fl, b, t = split_components f in
-    (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p)))
+    let h, p, fl, b, t, a = split_components f in
+    let vars = CP.remove_dups_svl (List.concat (List.map one_formula_fv a)) in
+    (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) @ vars
   | Exists e ->
-    let h, p, fl, b, t = split_components f in
-    let res = (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) in
+    let h, p, fl, b, t, a = split_components f in
+    let vars = List.concat (List.map one_formula_fv a) in
+    let res = (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) @ vars in
     let alias = MCP.ptr_equations_without_null p in
     let aset = CP.EMapSV.build_eset alias in
     let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
     CP.diff_svl res evars_to_del
+
 (*=======split_pre_post ->  ========*)
 (*TO DO: ECase*)
 let rec split_pre_post_ext (spec:ext_formula) : (struc_formula * struc_formula) =
   match spec with
-    | EVariance e -> 
-        (*ignore EVariance*)
-        split_pre_post_struc e.formula_var_continuation
+    (* | EVariance e ->  *)
+    (*     (\*ignore EVariance*\) *)
+    (*     split_pre_post_struc e.formula_var_continuation *)
     | EBase b -> 
         (* let f = b.formula_ext_base in *)
         let pre,post = split_pre_post_struc b.formula_ext_continuation in
@@ -8546,7 +8553,7 @@ let rec has_lexvar_formula f =
   match f with
   | Base _
   | Exists _ ->
-      let _, pure_f, _, _, _ = split_components f in 
+      let _, pure_f, _, _, _, a  = split_components f in  (*TO CHECK: pure in a*)
       CP.has_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
@@ -8639,7 +8646,6 @@ and fresh_phase_var_opt add_phase =
   else None
 
 (* Termination: Add EInfer for logical variables into the specification *) 
-(*
 and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
   if Gen.is_empty vl then sf
   else
@@ -8657,6 +8663,7 @@ and add_infer_struc (vl: CP.spec_var list) (sf: struc_formula) : struc_formula =
       Debug.trace_hprint (add_str "TRANS_SPECS" !print_struc_formula) n_sf no_pos;
     end;
     n_sf
+
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
   let fresh_perm_name = Cpure.fresh_old_name "f" in
   let perm_t = cperm_typ () in
@@ -8805,7 +8812,7 @@ let add_infer_struc vl sf =
   let pr = !print_struc_formula in
   Debug.no_1 "add_infer_struc" pr pr
   (fun _ -> add_infer_struc vl sf) sf
-*)
+
 (* Termination: Count the number of Term in a specification *)  
 let rec count_term_struc (sf: struc_formula) : int =
   List.fold_left (fun acc ef -> acc + (count_term_ext ef)) 0 sf

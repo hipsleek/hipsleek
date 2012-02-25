@@ -285,7 +285,7 @@ and check_bounded_term_x prog ctx post_pos =
         CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) m_pos in
-    let rs, _ = heap_entail_one_context prog false ctx bnd_formula post_pos in
+    let rs, _ = heap_entail_one_context prog false ctx bnd_formula None post_pos in
     let _ = Debug.trace_hprint (add_str "Result context" 
         !CF.print_list_context) rs no_pos in
     let term_pos = (m_pos, no_pos) in
@@ -1083,7 +1083,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let fn = List.hd vs in
                   (* let _ = print_endline ("\ncheck_exp: SCall: vs = " ^ (string_of_ident_list vs)) in *)
                   let fargs = List.tl vs in
-                  let proc = look_up_proc_def pos prog.prog_proc_decls fn in
+                  let proc = look_up_proc_def pos prog.new_proc_decls fn in
 	              let farg_types, farg_names = List.split proc.proc_args in
 	              let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	              let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) fargs farg_types in
@@ -1098,7 +1098,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       let rec strip_variance ls = match ls with
                         | [] -> []
                         | spec::rest -> match spec with
-                              | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest)
+                              (* | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest) *)
                               | Cformula.EBase b -> (Cformula.EBase {b with Cformula.formula_ext_continuation = strip_variance b.Cformula.formula_ext_continuation})::(strip_variance rest)
                               | Cformula.ECase c -> (Cformula.ECase {c with Cformula.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
                               | _ -> spec::(strip_variance rest)

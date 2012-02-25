@@ -1249,10 +1249,13 @@ let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) lis
 let string_of_numbered_list_formula (e:list_formula) : string =  
    poly_string_of_pr (pr_numbered_list_formula 1) e
 
-let string_of_numbered_list_formula_trace (e: (context * (formula*formula_trace)) list) : string =  pr_numbered_list_formula_trace e 1
+let string_of_numbered_list_formula_trace (e: (context * (formula*formula_trace)) list) : string =  
+  poly_string_of_pr (pr_numbered_list_formula_trace e) 1
+  (* pr_numbered_list_formula_trace e 1 *)
 
 let string_of_numbered_list_formula_no_trace (e: (context * (formula*formula_trace)) list) : string =  
-  pr_numbered_list_formula_no_trace e 1
+  poly_string_of_pr (pr_numbered_list_formula_no_trace e) 1
+  (* pr_numbered_list_formula_no_trace e 1 *)
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"
@@ -1590,7 +1593,7 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures,e. es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,(* ac, *)iv,ih,ip,vm,vperms) =
     fmt_open_vbox 0;
@@ -1601,7 +1604,7 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_opt "es_var_measures: " pr_var_measures vm;
-    fmt_string "\n"
+    fmt_string "\n";
     fmt_close_box();
   in 
   let pr_disj ls = 
@@ -1634,8 +1637,8 @@ let pr_context_list_short (ctx : context list) =
   in 
   let lls = List.map f ctx in
   let pr_disj ls = 
-    if (List.length ls == 1) then pr_formula_vperm (List.hd ls)
-    else pr_seq "or" pr_formula_vperm_wrap ls 
+    if (List.length ls == 1) then pr (List.hd ls)
+    else pr_seq "or" pr ls 
   in
    pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
     

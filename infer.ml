@@ -353,7 +353,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)  *)
                 (*   (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in *)
                 (* let new_p = (CP.mkTrue no_pos) in *)
-                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
+                let lhs_h,_,_,_,_, _ = CF.split_components es.es_formula in
                 (* why is orig_ante being used?????? *)
                 (* let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in *)
                 (* let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in *)

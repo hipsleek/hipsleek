@@ -1818,6 +1818,7 @@ and pos_of_b_formula (b: b_formula) =
   | ListAllN (_, _, p) -> p
   | ListPerm (_, _, p) -> p
   | RelForm (_, _, p) -> p
+  | VarPerm (_,_,p) -> p
 
 and pos_of_formula (f: formula) =
   match f with
@@ -1863,6 +1864,7 @@ and subst_pos_pformula p pf= match pf with
   | ListAllN (e1, e2, _) -> ListAllN (e1, e2, p)
   | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
   | RelForm (id, el, _) -> RelForm (id, el, p)
+  | VarPerm (t,ls,_) -> VarPerm (t,ls,p)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
@@ -2166,6 +2168,10 @@ and b_apply_subs_varperm sst bf =
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
+  | LexVar t_info -> 
+      LexVar { t_info with
+		  lex_exp = e_apply_subs_list sst t_info.lex_exp;
+		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
