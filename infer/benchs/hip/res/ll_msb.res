@@ -106,8 +106,7 @@ Checking procedure create_list$int~int...
 !!! NEW RANK:[]
 Procedure create_list$int~int SUCCESS
 
-Checking procedure assign$node~int~int... Timeout when checking #simplify  Restarting Omega after ... 34 invocations Stop Omega... 34 invocations Starting Omega...oc
-
+Checking procedure assign$node~int~int... 
 !!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[m; 
                     S3](ex)x::ll2<m,S3>@M[Orig][LHSCase]&true&
@@ -126,10 +125,10 @@ Checking procedure assign$node~int~int... Timeout when checking #simplify  Resta
                               x'::ll2<n_131,S4>@M[Orig][LHSCase]&n_131=0 & 
                               n=0 & x'=null & S4= & 0<=m&
                               {FLOW,(20,21)=__norm}
-                              or x'::ll2<n_131,S4>@M[Orig][LHSCase]&
-                                 S_1670_1706_1707=S4 & n=n_131 & 1<=n_131 & 
-                                 534::forall(_x:_x <notin> S_1670_1706_1707
-                                  | _x=v) & 0<=m&{FLOW,(20,21)=__norm}
+                              or EXISTS(S_1707: x'::ll2<n_131,S4>@M[Orig][LHSCase]&
+                                 S4=S_1707 & n_131=n & 1<=n & 
+                                 534::forall(_x:_x <notin> S_1707  | _x=v) & 
+                                 0<=m&{FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -825,6 +824,6 @@ Termination checking result:
 
 12 false contexts at: ( (162,13)  (162,4)  (241,4)  (241,11)  (246,4)  (246,11)  (245,10)  (245,4)  (244,8)  (244,12)  (244,4)  (244,4) )
 
-Total verification time: 24.35 second(s)
-	Time spent in main process: 2.56 second(s)
-	Time spent in child processes: 21.79 second(s)
+Total verification time: 24.93 second(s)
+	Time spent in main process: 3.07 second(s)
+	Time spent in child processes: 21.86 second(s)

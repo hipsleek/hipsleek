@@ -8594,13 +8594,22 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
     let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
     let node_aset = CP.EMapSV.build_eset node_als in
     elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars in
-  let p,pre = begin
+  let p,pre,bag_vars = begin
     match subst_fml with
     | None -> 
       let post_vars = CP.remove_dups_svl (List.filter (fun x -> not (CP.is_res_spec_var x))
         (CP.diff_svl post_vars ((CF.h_fv h) @ pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars)))) in
+(*      let p = if TP.is_bag_constraint p && pre_vars!=[] then*)
+(*        let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure p) in*)
+(*        let aset = CP.EMapSV.build_eset als in*)
+(*        let alias = create_alias_tbl post_vars aset in*)
+(*        let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
+(*            let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in*)
+(*        CP.subst subst_lst p *)
+(*      else p in*)
+      let bag_vars, post_vars = List.partition CP.is_bag_typ post_vars in
       let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
-      (p,[])
+      (p,[],bag_vars)
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
         let rels = CP.get_RelForm p in
@@ -8611,17 +8620,17 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
           then [(a3,a2)] else []) triples)) in
         let post = CP.conj_of_list (ps@posts) no_pos in
         let pre = CP.conj_of_list pres no_pos in
-        (post,[pre])
+        (post,[pre],[])
       else
         let rels = CP.get_RelForm p in
         let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
           if Gen.BList.mem_eq CP.equalFormula a1 rels
           then [(a3,a2)] else []) triples)) in
         let pre = CP.conj_of_list pres no_pos in
-        (p,[pre])
+        (p,[pre],[])
     end
   in
-  (h, p, pre)
+  (h, p, pre, bag_vars)
 
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = match post_fml with
   | Or _ ->
@@ -8632,16 +8641,17 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
   | Exists e ->
-    let h,p,pre = helper e.formula_exists_heap e.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = helper e.formula_exists_heap e.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
-    (Exists {e with formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p},pre)
+    (Exists {e with formula_exists_qvars = e.formula_exists_qvars @ bag_vars;
+                    formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p},pre)
   | Base b ->
-    let h,p,pre = helper b.formula_base_heap b.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = helper b.formula_base_heap b.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
-    let fml = if evars = [] then
+    let fml = if bag_vars = [] then
       Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
     else
-      Exists {formula_exists_qvars = evars;
+      Exists {formula_exists_qvars = bag_vars;
               formula_exists_heap = h;
               formula_exists_pure = MCP.mix_of_pure p;
               formula_exists_type = b.formula_base_type;
