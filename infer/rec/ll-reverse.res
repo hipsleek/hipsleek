@@ -22,9 +22,9 @@ Checking procedure reverse$node~node...
                   ys::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
                     EBase true&0<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::ref [xs;ys]
-                              ys'::ll<t>@M[Orig][LHSCase]&xs'=null & m>=0 & 
-                              t>=m & t=n+m & 0<=n & 0<=m&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(t_579: ys'::ll<t_579>@M[Orig][LHSCase]&
+                              xs'=null & m>=0 & t_579>=m & t_579=n+m & 
+                              0<=n & 0<=m&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (t=t_573 & 0<=t_573 & A(m_551,n_550,t_573) & 1<=n & 0<=m & -1+m_551=m & 1+
   n_550=n) --> A(m,n,t),
  (t=m & 0<=m & n=0) --> A(m,n,t)]

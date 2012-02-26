@@ -45,8 +45,10 @@ Successful States:
                   {FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 2::ref [x]
-                              x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & lg>=l & 
-                              sm<=lg&{FLOW,(20,21)=__norm})
+                              EXISTS(s_1004,
+                              l_1005: x'::bst<s_1004,l_1005>@M[Orig][LHSCase]&
+                              sm<=s_1004 & lg>=l_1005 & sm<=lg&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(qs_586:exists(sm_583:sm_583<=l & qs_586<=lg & exists(a:a<=qs_586 & 
   l<=a)))) --> B(l,lg),
  (exists(qs_586:exists(qs_717:exists(pl_716:exists(s:exists(sm_714:exists(v_718:qs_717<=l & 
@@ -78,6 +80,6 @@ Termination checking result:
 Stop Omega... 341 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.59 second(s)
-	Time spent in main process: 0.91 second(s)
-	Time spent in child processes: 0.68 second(s)
+Total verification time: 1.69 second(s)
+	Time spent in main process: 0.97 second(s)
+	Time spent in child processes: 0.72 second(s)

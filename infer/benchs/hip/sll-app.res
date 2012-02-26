@@ -29,10 +29,11 @@ Checking procedure append_sll$node~node...
                     EBase true&xl<=ys & xs<=yl & 1<=xn & 0<=yn & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::sll<m,r,t>@M[Orig][LHSCase]&yl>=r & 
-                              yl>=xs & t>=yl & yn>=0 & m>=(1+yn) & m=xn+yn & 
-                              0<=xn & xs<=xl & 0<=yn & ys<=yl&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(r_685,t_686,
+                              m_687: x::sll<m_687,r_685,t_686>@M[Orig][LHSCase]&
+                              yl>=r_685 & yl>=xs & t_686>=yl & yn>=0 & 
+                              m_687>=(1+yn) & m_687=xn+yn & 0<=xn & xs<=xl & 
+                              0<=yn & ys<=yl&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(qmin_620:1+yn=m & 1<=m & yl<=t & xn=1 & 
   exists(qs_574:exists(ql_575:exists(xl:exists(ys:ys<=yl & r<=qmin_620 & 
   xs<=qmin_620 & qmin_620<=qs_574 & qs_574<=ql_575 & ql_575<=xl & 
@@ -53,6 +54,6 @@ Termination checking result:
 Stop Omega... 170 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.47 second(s)
-	Time spent in main process: 0.3 second(s)
-	Time spent in child processes: 0.17 second(s)
+Total verification time: 0.56 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.22 second(s)

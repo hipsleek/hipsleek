@@ -22,9 +22,9 @@ Checking procedure reverse$node~node...
                   ys::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
                     EBase true&0<=m & 0<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::ref [xs;ys]
-                              ys'::ll<t>@M[Orig][LHSCase]&m>=0 & t>=m & 
-                              xs'=null & t=n+m & 0<=n & 0<=m&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(t_579: ys'::ll<t_579>@M[Orig][LHSCase]&
+                              m>=0 & t_579>=m & xs'=null & t_579=n+m & 
+                              0<=n & 0<=m&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(xs:t=t_573 & 0<=t_573 & A(xs',m_551,n_550,t_573) & 1<=n & 0<=m & 
   xs!=null & -1+m_551=m & 1+n_550=n)) --> A(xs',m,n,t),
  (t=m & 0<=m & n=0 & xs'=null) --> A(xs',m,n,t)]
@@ -37,6 +37,6 @@ Termination checking result:
 Stop Omega... 97 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.18 second(s)
+Total verification time: 0.26 second(s)
+	Time spent in main process: 0.2 second(s)
 	Time spent in child processes: 0.06 second(s)

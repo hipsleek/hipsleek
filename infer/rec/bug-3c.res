@@ -25,8 +25,9 @@ Checking procedure append$node~node...
                   y::ll<m>@M[Orig][LHSCase]&0<=n & 0<=m&{FLOW,(20,21)=__norm}
                     EBase true&0<=m & 1<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::ll<z>@M[Orig][LHSCase]&m>=0 & z>=(1+m) & 
-                              z=n+m & 0<=n & 0<=m&{FLOW,(20,21)=__norm})
+                              EXISTS(z_593: x::ll<z_593>@M[Orig][LHSCase]&
+                              m>=0 & z_593>=(1+m) & z_593=n+m & 0<=n & 0<=m&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (1+m=z & 1<=z & n=1) --> A(n,m,z),
  (1<=z_580 & 1+n_557=n & m_558=m & -1+z=z_580 & 1<=n & 0<=m & 
   A(n_557,m_558,z_580)) --> A(n,m,z)]

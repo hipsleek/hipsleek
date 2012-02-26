@@ -53,10 +53,10 @@ int size_helper(node x, ref int n)
   if (x==null)
     return n;
   else
-    {
+  {
     n = n+1;
-      return size_helper(x.next, n);
-    }
+    return size_helper(x.next, n);
+  }
 }
 
 int size(node x)
@@ -86,7 +86,7 @@ void swap(ref node x, ref node y)
 }
 
 // drop current content, and add n element with v value
-void assign(node x, int n, int v)
+void assign(ref node x, int n, int v)
   requires x::ll1<>
   ensures true;
 {
@@ -105,7 +105,7 @@ void push_front(ref node x, int v)
 node pop_front(ref node x)
   infer[x]
   requires x::ll1<>//x!=null
-  ensures x'::ll1<>;//'
+  ensures x'::ll1<>;//res=x
 {
   node tmp = x;
   x = x.next;
@@ -145,18 +145,18 @@ node get_next(node x)
 }
 
 /* function to set the tail of a list */
-void set_next(ref node x, node y)
+void set_next(node x, node y)
   infer[x]
   requires x::ll1<> * y::ll1<> // x!=null
-  ensures x'::ll1<>;
+  ensures x::ll1<>;
 {
 	x.next = y;
 }
 
-void set_null2(ref node x)
+void set_null2(node x)
   infer[x]
   requires x::ll1<> // x!=null
-  ensures x'::node<_,null>;//'
+  ensures x::node<_,r>;//r=null
 {
   if (4>3)
     x.next = null;
@@ -165,10 +165,10 @@ void set_null2(ref node x)
 }
 
 /* function to set null the tail of a list */
-void set_null(ref node x)
+void set_null(node x)
   infer[x]
   requires x::ll1<>  // x!=null
-  ensures x'::node<_,null>;//'
+  ensures x::node<_,r>;//r=null
 {
   x.next = null;
 }
@@ -222,12 +222,12 @@ node delete2(node x, int a)
 	if (x == null)
 		return x;
 	else
-      {
+  {
 		if (x.val == a)
-          return x.next;
+      return x.next;
 		else
-          return new node(x.val, delete2(x.next, a));
-      }
+      return new node(x.val, delete2(x.next, a));
+  }
 }
 
 /* function to create a singly linked list with a nodes */
@@ -237,15 +237,15 @@ node create_list(int n, int v)
 {
   node tmp;
   if (n == 0)
-    {
-      return null;
-    }
+  {
+    return null;
+  }
   else
-    {
+  {
     n  = n - 1;
     tmp = create_list(n, v);
     return new node (v, tmp);
-    }
+  }
 }
 
 /* function to reverse a singly linked list */
@@ -266,10 +266,10 @@ void reverse(ref node xs, ref node ys)
 }
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
-node split1(ref node x, int a)
+node split1(node x, int a)
   infer[x]
   requires x::ll1<> & a > 0 //x!=null
-  ensures x'::ll1<> * res::ll1<>;//'
+  ensures x::ll1<> * res::ll1<>;//'
 {
 	node tmp;
 	if (a == 1)
@@ -283,8 +283,8 @@ node split1(ref node x, int a)
 		a = a - 1;
 		node tmp;
 		bind x to (_, xnext) in
-        {
-          tmp = split1(xnext, a);
+    {
+      tmp = split1(xnext, a);
 		}
 		return tmp;
 	}

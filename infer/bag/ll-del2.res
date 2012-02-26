@@ -27,9 +27,11 @@ Restarting Mona ...
                     EBase true&(a <notin> S  | a <in> S ) & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
-                              res::ll2<m,S1>@M[Orig][LHSCase]&m<=n & (S1=S & 
-                              a <notin> S  | S1<subset> S  & a <in> S )&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(m_796,
+                              S1_797: res::ll2<m_796,S1_797>@M[Orig][LHSCase]&
+                              m_796<=n & (S1_797=S & a <notin> S  | 
+                              S1_797<subset> S  & a <in> S )&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S1= & S= & S1=S) --> A(a,S,S1),
  (S1=S & S= & S1=) --> A(a,S,S1),
  (exists(S1_708:exists(v_706:exists(S1_593:exists(v_590:(S1_593= | 
@@ -64,6 +66,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.74 second(s)
-	Time spent in main process: 0.32 second(s)
-	Time spent in child processes: 0.42 second(s)
+Total verification time: 0.79 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.46 second(s)

@@ -27,8 +27,8 @@ Checking procedure append$node~node... Starting Omega...oc
                   y::ll<S2>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::ll<S>@M[Orig][LHSCase]&union(S1,S2)=S&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(S_640: x::ll<S_640>@M[Orig][LHSCase]&
+                              union(S1,S2)=S_640&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(S1_613:exists(v_612:exists(S1_595:exists(v_550:exists(v_593:exists(S1_552:(S2= | 
   S2=union(S1_613,{v_612})) & S=union(S1_595,{v_593}) & S1=union(S1_552,
   {v_550}) & S2=S1_595 & v_550=v_593 & S1_552=))))))) --> A(S1,S2,S),
@@ -45,6 +45,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.5 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.28 second(s)
+Total verification time: 0.52 second(s)
+	Time spent in main process: 0.25 second(s)
+	Time spent in child processes: 0.27 second(s)

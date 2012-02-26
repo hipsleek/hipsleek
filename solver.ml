@@ -8579,6 +8579,40 @@ and elim_heap h p pre_vars heap_vars aset =
 (*    let tl = List.filter (fun x -> not(List.mem x (List.hd res1))) tl in*)
 (*    res1@(create_alias_tbl tl aset)*)
 
+let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post =
+  let h, p, _, _, _ = split_components post_fml in
+  let p = MCP.pure_of_mix p in
+  let h = if pre_vars = [] || not(inf_post) then h else 
+    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
+    let node_aset = CP.EMapSV.build_eset node_als in
+    elim_heap h p pre_vars (CF.h_fv h) node_aset in
+  let p,pre = begin
+    match subst_fml with
+    | None -> 
+      let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
+      (p,[])
+    | Some triples (*(rel, post, pre)*) ->
+      if inf_post then
+        let rels = CP.get_RelForm p in
+        let p = CP.drop_rel_formula p in
+        let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
+        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+          if Gen.BList.mem_eq CP.equalFormula a1 rels
+          then [(a3,a2)] else []) triples)) in
+        let post = CP.conj_of_list (ps@posts) no_pos in
+        let pre = CP.conj_of_list pres no_pos in
+        (post,[pre])
+      else
+        let rels = CP.get_RelForm p in
+        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+          if Gen.BList.mem_eq CP.equalFormula a1 rels
+          then [(a3,a2)] else []) triples)) in
+        let pre = CP.conj_of_list pres no_pos in
+        (p,[pre])
+    end
+  in
+  (h, p, pre)
+
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = match post_fml with
   | Or _ ->
     let disjs = CF.list_of_disjs post_fml in
@@ -8587,52 +8621,14 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = matc
     Debug.tinfo_hprint (add_str "RES (simplified post)" (pr_list (pr_pair !print_formula pr_no))) res no_pos;
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
-  | _ ->
-    let h, p, fl, b, t = split_components post_fml in
-    let p = MCP.pure_of_mix p in
-    let h = if pre_vars = [] || not(inf_post) then h else 
-      let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
-      let node_aset = CP.EMapSV.build_eset node_als in
-      elim_heap h p pre_vars (CF.h_fv h) node_aset in
-    (*let post_vars = CP.diff_svl post_vars ((CF.h_fv h)@pre_vars) in*)
-    let p,pre = begin
-      match subst_fml with
-      | None -> 
-(*        let p = if TP.is_bag_constraint p then*)
-(*            let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure p) in*)
-(*            let aset = CP.EMapSV.build_eset als in*)
-(*            let alias = create_alias_tbl post_vars aset in*)
-(*            let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
-(*                let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in*)
-(*            let p = CP.subst subst_lst p in*)
-(*            TP.simplify_raw (CP.mkExists post_vars p None no_pos)*)
-(*          else TP.simplify_raw (CP.mkExists post_vars p None no_pos) in*)
-        let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
-        (p,[])
-      | Some triples (*(rel, post, pre)*) ->
-        if inf_post then
-          let rels = CP.get_RelForm p in
-          let p = CP.drop_rel_formula p in
-          let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
-          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
-            if Gen.BList.mem_eq CP.equalFormula a1 rels
-            then [(a3,a2)] else []) triples)) in
-          let post = CP.conj_of_list (ps@posts) no_pos in
-          let pre = CP.conj_of_list pres no_pos in
-(*          let p = CP.mkAnd post p no_pos in*)
-(*          let p = CP.remove_dup_constraints (CP.mkAnd post (TP.simplify_exists_raw post_vars p) no_pos) in*)
-          (post,[pre])
-        else
-          let rels = CP.get_RelForm p in
-          let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
-            if Gen.BList.mem_eq CP.equalFormula a1 rels
-            then [(a3,a2)] else []) triples)) in
-          let pre = CP.conj_of_list pres no_pos in
-          (p,[pre])
-      end
-    in
+  | Exists e ->
+    let h,p,pre = helper e.formula_exists_heap e.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
-    (mkBase h (MCP.mix_of_pure p) t fl b no_pos,pre)
+    (Exists {e with formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p},pre)
+  | Base b ->
+    let h,p,pre = helper b.formula_base_heap b.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post in
+    (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
+    (Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p},pre)
 
 let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post = 
   let pr = Cprinter.string_of_formula in

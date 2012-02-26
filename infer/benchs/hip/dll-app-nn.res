@@ -23,8 +23,10 @@ Checking procedure append2$node2~node2...
                   y::dll<p,n>@M[Orig][LHSCase]&1<=m&{FLOW,(20,21)=__norm}
                     EBase true&0<=n & 1<=m & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::dll<r,t>@M[Orig][LHSCase]&n>=0 & t>=(1+n) & 
-                              q=r & t=m+n & 0<=m & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(t_735,
+                              r_736: x::dll<r_736,t_735>@M[Orig][LHSCase]&
+                              n>=0 & t_735>=(1+n) & q=r_736 & t_735=m+n & 
+                              0<=m & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_12_623:(t=2 & n=1 | 2+flted_12_623=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
  (m=1 & n=0 & r=q & t=1) --> D(t,m,n,r,p,q),
@@ -40,6 +42,6 @@ Termination checking result:
 Stop Omega... 136 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.41 second(s)
-	Time spent in main process: 0.28 second(s)
+Total verification time: 0.43 second(s)
+	Time spent in main process: 0.3 second(s)
 	Time spent in child processes: 0.13 second(s)

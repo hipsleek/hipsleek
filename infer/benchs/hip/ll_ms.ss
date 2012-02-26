@@ -38,8 +38,10 @@ bool empty(node x)
     n!= 0 -> ensures EMPT2(res);//!(res)
   }
 {
-  if (x == null) return true;
-  else return false;
+  if (x == null) 
+    return true;
+  else 
+    return false;
 }
 
 //The number of elements that conform the list's content.
@@ -49,7 +51,8 @@ int size_helper(node x, ref int n)
   requires x::ll<m> //0<=m
   ensures SIZEH(res,m,n);//res=m+n & m>=0
 {
-  if (x==null) return n;
+  if (x==null) 
+    return n;
   else {
     n = n+1;
     return size_helper(x.next, n);
@@ -77,9 +80,9 @@ int front(node x)
 }
 
 // A reference to the first element in the list container.
-int back(node x)
-  requires x::ll<_>
-  ensures true;
+/*int back(node x)*/
+/*  requires x::ll<_>*/
+/*  ensures true;*/
 
 void swap(ref node x, ref node y)
   infer @post []
@@ -90,9 +93,9 @@ void swap(ref node x, ref node y)
   x = y;
   y = tmp;
 }
-/*
-drop current content, and add n element with v value
- */
+
+//drop current content, and add n element with v value
+
 relation ASSIGN(int a, int b, int c).
 void assign(ref node x, int n, int v)
   infer[ASSIGN]
@@ -362,7 +365,7 @@ node list_remove2(node x, int v)
     if(x.val == v) {
       tmp = x;
       x = x.next;
-      //dispose(tmp);
+      dispose(tmp);
     }
     else {
       tmp = list_remove2(x.next, v);

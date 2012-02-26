@@ -24,8 +24,9 @@ Checking procedure insert$node~int...
                   {FLOW,(20,21)=__norm}
                     EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::hd<m>@M[Orig][LHSCase]&m>=2 & m=n+1 & 0<=n&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(m_590: x::hd<m_590>@M[Orig][LHSCase]&
+                              m_590>=2 & m_590=n+1 & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=n+1 & 1<=n) --> A(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -36,6 +37,6 @@ Termination checking result:
 Stop Omega... 115 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.29 second(s)
-	Time spent in main process: 0.17 second(s)
+Total verification time: 0.31 second(s)
+	Time spent in main process: 0.19 second(s)
 	Time spent in child processes: 0.12 second(s)

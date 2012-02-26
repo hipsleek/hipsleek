@@ -21,8 +21,9 @@ Checking procedure count$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 2::
-                              x::hd<n_29>@M[Orig][LHSCase]&n_29=n & res>=0 & 
-                              res=n & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(n_1034: x::hd<n_1034>@M[Orig][LHSCase]&
+                              n_1034=n & res>=0 & res=n & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(n_585:res=1 & n=1 | -1+res=n_585 & -1+n=n_585 & 
   1<=n_585)) --> A(res,n),
  (res=0 & n=0) --> A(res,n),
@@ -36,6 +37,6 @@ Termination checking result:
 Stop Omega... 183 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.59 second(s)
-	Time spent in main process: 0.49 second(s)
+Total verification time: 0.6 second(s)
+	Time spent in main process: 0.5 second(s)
 	Time spent in child processes: 0.1 second(s)

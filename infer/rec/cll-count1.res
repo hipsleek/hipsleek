@@ -52,9 +52,10 @@ Successful States:
                   h=p&{FLOW,(20,21)=__norm}
                     EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::cll<p_30,n_31>@M[Orig][LHSCase]&p_30=p & 
-                              n_31=n & n>=0 & n=res & 0<=n&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(p_675,
+                              n_676: x::cll<p_675,n_676>@M[Orig][LHSCase]&
+                              p_675=p & n_676=n & n>=0 & n=res & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_11_572:exists(n_31:(n_578=0 & n=1 | 1+n_578=n_31 & 1+
   flted_11_572=n_31 & n=n_31 & 2<=n_31) & A(n_611,n_578) & -1+
   res=n_611))) --> A(res,n),
@@ -72,6 +73,6 @@ Termination checking result:
 Stop Omega... 197 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.45 second(s)
-	Time spent in main process: 0.42 second(s)
-	Time spent in child processes: 1.03 second(s)
+Total verification time: 1.7 second(s)
+	Time spent in main process: 0.49 second(s)
+	Time spent in child processes: 1.21 second(s)

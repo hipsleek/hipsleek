@@ -29,9 +29,10 @@ Restarting Mona ...
                   {FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 23::
-                              x::ll2<m,S>@M[Orig][LHSCase]&m=n2+n1 & 
-                              union(S1,S2)=S & 0<=n1 & 0<=n2&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(m_1508,
+                              S_1509: x::ll2<m_1508,S_1509>@M[Orig][LHSCase]&
+                              m_1508=n2+n1 & union(S1,S2)=S_1509 & 0<=n1 & 
+                              0<=n2&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(S1_1427:exists(v_1425:exists(S1_1393:exists(v_1295:exists(v_1390:exists(S1_1298:(S2= | 
   S2=union(S1_1427,{v_1425})) & S=union(S1_1393,{v_1390}) & S1=union(S1_1298,
   {v_1295}) & S2=S1_1393 & v_1295=v_1390 & S1_1298=))))))) --> APP(S,S1,S2),
@@ -82,11 +83,12 @@ Checking procedure create_list$int~int...
                            0<n -> ((None,[]),EBase true&MayLoop&
                                                    {FLOW,(1,23)=__flow}
                                                      EAssume 49::
-                                                       res::ll2<n_108,S>@M[Orig][LHSCase]&
-                                                       n_108=n & 
-                                                       forall(_x:_x <notin> S
+                                                       EXISTS(n_1622,
+                                                       S_1623: res::ll2<n_1622,S_1623>@M[Orig][LHSCase]&
+                                                       n_1622=n & 
+                                                       forall(_x:_x <notin> S_1623
                                                         | _x=v) & 0<n&
-                                                       {FLOW,(20,21)=__norm})
+                                                       {FLOW,(20,21)=__norm}))
                            ;
                            n<0 -> ((None,[]),EBase true&MayLoop&
                                                    {FLOW,(1,23)=__flow}
@@ -95,11 +97,11 @@ Checking procedure create_list$int~int...
                                                        {FLOW,(20,21)=__norm})
                            
                            })
-!!! NEW RELS:[ (exists(S1_1563:exists(v_1560:S1_1563= & S1_1563= & v=v_1560 & 
-  S=union(S1_1563,{v_1560})))) --> CL(S,v),
- (exists(S1_1610:exists(v_1608:exists(S1_1577:exists(v_1574:S_1572=union(S1_1610,
-  {v_1608}) & S_1572=S1_1577 & v=v_1574 & CL(S_1572,v) & S=union(S1_1577,
-  {v_1574})))))) --> CL(S,v)]
+!!! NEW RELS:[ (exists(S1_1565:exists(v_1562:S1_1565= & S1_1565= & v=v_1562 & 
+  S=union(S1_1565,{v_1562})))) --> CL(S,v),
+ (exists(S1_1612:exists(v_1610:exists(S1_1579:exists(v_1576:S_1574=union(S1_1612,
+  {v_1610}) & S_1574=S1_1579 & v=v_1576 & CL(S_1574,v) & S=union(S1_1579,
+  {v_1576})))))) --> CL(S,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure create_list$int~int SUCCESS
@@ -126,10 +128,9 @@ Checking procedure assign$node~int~int...
                               {FLOW,(20,21)=__norm}
                               or x::ll2<m,S3>@M[Orig][LHSCase] * 
                                  x'::ll2<n_131,S4>@M[Orig][LHSCase]&
-                                 S_1698=S4 & n_131=n_108_1697 & 
-                                 n=n_108_1697 & 1<=n_108_1697 & 
-                                 534::forall(_x:_x <notin> S_1698  | _x=v) & 
-                                 0<=m&{FLOW,(20,21)=__norm}
+                                 S_1670_1706=S4 & n=n_131 & 1<=n_131 & 
+                                 534::forall(_x:_x <notin> S_1670_1706  | 
+                                 _x=v) & 0<=m&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -155,16 +156,18 @@ Restarting Mona ...
                   1<=a & a<n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 41::
-                              x::ll2<m,S1>@M[Orig][LHSCase]&S1<subset> S  & 
-                              0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_1883:exists(v_1881:exists(v_1734:exists(v_1843:exists(S1_1846:exists(S1_1737:exists(S1_1767:exists(v_1764:(S1_1767= | 
-  S1_1767=union(S1_1883,{v_1881})) & S1=union(S1_1846,{v_1843}) & 
-  S=union(S1_1737,{v_1734}) & v_1734=v_1843 & S1_1767=S1_1846 & 
-  S1_1737=union(S1_1767,{v_1764})))))))))) --> DEL(S,S1),
- (exists(S1_1924:exists(v_1922:exists(S1_1795:exists(v_1792:exists(v_1895:exists(S1_1898:(S1_1893= | 
-  S1_1893=union(S1_1924,{v_1922})) & S1=union(S1_1898,{v_1895}) & 
-  S=union(S1_1795,{v_1792}) & DEL(S_1808,S1_1893) & S1_1795=S_1808 & 
-  v_1792=v_1895 & S1_1893=S1_1898))))))) --> DEL(S,S1)]
+                              EXISTS(m_1953,
+                              S1_1954: x::ll2<m_1953,S1_1954>@M[Orig][LHSCase]&
+                              S1_1954<subset> S  & 0<=n&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_1891:exists(v_1889:exists(v_1742:exists(v_1851:exists(S1_1854:exists(S1_1745:exists(S1_1775:exists(v_1772:(S1_1775= | 
+  S1_1775=union(S1_1891,{v_1889})) & S1=union(S1_1854,{v_1851}) & 
+  S=union(S1_1745,{v_1742}) & v_1742=v_1851 & S1_1775=S1_1854 & 
+  S1_1745=union(S1_1775,{v_1772})))))))))) --> DEL(S,S1),
+ (exists(S1_1932:exists(v_1930:exists(S1_1803:exists(v_1800:exists(v_1903:exists(S1_1906:(S1_1901= | 
+  S1_1901=union(S1_1932,{v_1930})) & S1=union(S1_1906,{v_1903}) & 
+  S=union(S1_1803,{v_1800}) & DEL(S_1816,S1_1901) & S1_1803=S_1816 & 
+  v_1800=v_1903 & S1_1901=S1_1906))))))) --> DEL(S,S1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
@@ -189,35 +192,37 @@ Restarting Mona ...
                     EBase true&(a <notin> S  | a <in> S ) & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 45::
-                              res::ll2<m,S1>@M[Orig][LHSCase]&m<=n & (S1=S & 
-                              a <notin> S  | S1<subset> S  & a <in> S ) & 
-                              0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(m_2194,
+                              S1_2195: res::ll2<m_2194,S1_2195>@M[Orig][LHSCase]&
+                              m_2194<=n & (S1_2195=S & a <notin> S  | 
+                              S1_2195<subset> S  & a <in> S ) & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S1= & S= & S1=S) --> DEL2(a,S,S1),
  (S1=S & S= & S1=) --> DEL2(a,S,S1),
- (exists(S1_2096:exists(v_2094:exists(S1_1981:exists(v_1978:(S1_1981= | 
-  S1_1981=union(S1_2096,{v_2094})) & S=union(S1_1981,{v_1978}) & 
-  S1_1981=S1 & a=v_1978))))) --> DEL2(a,S,S1),
- (exists(m_1980:exists(n_2018:exists(v_node_224_909':exists(v_node_224_2106:exists(m_2104:exists(m:exists(m_2109:exists(m_2141:exists(n:exists(v_bool_220_911':exists(v_bool_223_910':exists(x:exists(r_2108:exists(res:exists(S1_2142:exists(v_2140:exists(S1_2110:exists(v_2107:exists(S1_1981:exists(v_1978:(S1_2105= & 
-  (S1_1981=S_2019 & 1+m_1980=n & 1+n_2018=n & v_node_224_909'=res & 
-  v_1978=v_2107 & v_node_224_2106=r_2108 & m_2104=0 & S1_2105=S1_2110 & 
-  m=1 & m_2109=0 & !(v_bool_220_911') & (1+a)<=v_2107 & !(v_bool_223_910') & 
-  r_2108=null & x!=null & res!=null & 1<=n & DEL2(a,S_2019,S1_2105) | 
-  S1_1981=S_2019 & 1+m_1980=n & 1+n_2018=n & v_node_224_909'=res & 
-  v_1978=v_2107 & v_node_224_2106=r_2108 & m_2104=0 & S1_2105=S1_2110 & 
-  m=1 & m_2109=0 & !(v_bool_220_911') & !(v_bool_223_910') & r_2108=null & 
-  (1+v_2107)<=a & x!=null & res!=null & 1<=n & DEL2(a,S_2019,S1_2105)) | 
-  (S1_1981=S_2019 & 1+m_1980=n & 1+n_2018=n & v_node_224_909'=res & 
-  v_1978=v_2107 & v_node_224_2106=r_2108 & -1+m_2104=m_2141 & 
-  S1_2105=S1_2110 & -2+m=m_2141 & -1+m_2109=m_2141 & 0<=m_2141 & (2+
-  m_2141)<=n & !(v_bool_220_911') & (1+a)<=v_2107 & !(v_bool_223_910') & 
-  x!=null & r_2108!=null & res!=null & DEL2(a,S_2019,S1_2105) | 
-  S1_1981=S_2019 & 1+m_1980=n & 1+n_2018=n & v_node_224_909'=res & 
-  v_1978=v_2107 & v_node_224_2106=r_2108 & -1+m_2104=m_2141 & 
-  S1_2105=S1_2110 & -2+m=m_2141 & -1+m_2109=m_2141 & 0<=m_2141 & (2+
-  m_2141)<=n & !(v_bool_220_911') & !(v_bool_223_910') & (1+v_2107)<=a & 
-  x!=null & r_2108!=null & res!=null & DEL2(a,S_2019,S1_2105)) & 
-  S1_2105=union(S1_2142,{v_2140})) & S1=union(S1_2110,{v_2107}) & 
-  S=union(S1_1981,{v_1978})))))))))))))))))))))) --> DEL2(a,S,S1)]
+ (exists(S1_2106:exists(v_2104:exists(S1_1991:exists(v_1988:(S1_1991= | 
+  S1_1991=union(S1_2106,{v_2104})) & S=union(S1_1991,{v_1988}) & 
+  S1_1991=S1 & a=v_1988))))) --> DEL2(a,S,S1),
+ (exists(m_1990:exists(n_2028:exists(v_node_224_909':exists(v_node_224_2116:exists(m_2114:exists(m:exists(m_2119:exists(m_2151:exists(n:exists(v_bool_220_911':exists(v_bool_223_910':exists(x:exists(r_2118:exists(res:exists(S1_2152:exists(v_2150:exists(S1_2120:exists(v_2117:exists(S1_1991:exists(v_1988:(S1_2115= & 
+  (S1_1991=S_2029 & 1+m_1990=n & 1+n_2028=n & v_node_224_909'=res & 
+  v_1988=v_2117 & v_node_224_2116=r_2118 & m_2114=0 & S1_2115=S1_2120 & 
+  m=1 & m_2119=0 & !(v_bool_220_911') & (1+a)<=v_2117 & !(v_bool_223_910') & 
+  r_2118=null & x!=null & res!=null & 1<=n & DEL2(a,S_2029,S1_2115) | 
+  S1_1991=S_2029 & 1+m_1990=n & 1+n_2028=n & v_node_224_909'=res & 
+  v_1988=v_2117 & v_node_224_2116=r_2118 & m_2114=0 & S1_2115=S1_2120 & 
+  m=1 & m_2119=0 & !(v_bool_220_911') & !(v_bool_223_910') & r_2118=null & 
+  (1+v_2117)<=a & x!=null & res!=null & 1<=n & DEL2(a,S_2029,S1_2115)) | 
+  (S1_1991=S_2029 & 1+m_1990=n & 1+n_2028=n & v_node_224_909'=res & 
+  v_1988=v_2117 & v_node_224_2116=r_2118 & -1+m_2114=m_2151 & 
+  S1_2115=S1_2120 & -2+m=m_2151 & -1+m_2119=m_2151 & 0<=m_2151 & (2+
+  m_2151)<=n & !(v_bool_220_911') & (1+a)<=v_2117 & !(v_bool_223_910') & 
+  x!=null & r_2118!=null & res!=null & DEL2(a,S_2029,S1_2115) | 
+  S1_1991=S_2029 & 1+m_1990=n & 1+n_2028=n & v_node_224_909'=res & 
+  v_1988=v_2117 & v_node_224_2116=r_2118 & -1+m_2114=m_2151 & 
+  S1_2115=S1_2120 & -2+m=m_2151 & -1+m_2119=m_2151 & 0<=m_2151 & (2+
+  m_2151)<=n & !(v_bool_220_911') & !(v_bool_223_910') & (1+v_2117)<=a & 
+  x!=null & r_2118!=null & res!=null & DEL2(a,S_2029,S1_2115)) & 
+  S1_2115=union(S1_2152,{v_2150})) & S1=union(S1_2120,{v_2117}) & 
+  S=union(S1_1991,{v_1988})))))))))))))))))))))) --> DEL2(a,S,S1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete2$node~int SUCCESS
@@ -250,15 +255,17 @@ Checking procedure find_ge$node~int...
                             EAssume 93::
                               
                               true&res=null & 0<=n&{FLOW,(20,21)=__norm}
-                              or res::node<m,Anon_22>@M[Orig]&v<m & 
-                                 {m}<subset> S  & 0<=n&{FLOW,(20,21)=__norm}
+                              or EXISTS(Anon_2435,
+                                 m_2436: res::node<m_2436,Anon_2435>@M[Orig]&
+                                 v<m_2436 & {m_2436}<subset> S  & 0<=n&
+                                 {FLOW,(20,21)=__norm})
                               )
-!!! NEW RELS:[ (exists(S1_2403:exists(v_2401:exists(S1_2314:exists(v:exists(v_2311:(S1_2314= | 
-  S1_2314=union(S1_2403,{v_2401})) & S=union(S1_2314,{v_2311}) & (1+v)<=m & 
-  v_2311=m)))))) --> FGE(S,m),
- (exists(v:exists(S1_2314:exists(v_2311:v_2311<=v & S1_2314=S_2361 & 
-  m_2413=m & (1+v)<=m & FGE(S_2361,m_2413) & S=union(S1_2314,
-  {v_2311}))))) --> FGE(S,m)]
+!!! NEW RELS:[ (exists(S1_2415:exists(v_2413:exists(S1_2326:exists(v:exists(v_2323:(S1_2326= | 
+  S1_2326=union(S1_2415,{v_2413})) & S=union(S1_2326,{v_2323}) & (1+v)<=m & 
+  v_2323=m)))))) --> FGE(S,m),
+ (exists(v:exists(S1_2326:exists(v_2323:v_2323<=v & S1_2326=S_2373 & 
+  m_2425=m & (1+v)<=m & FGE(S_2373,m_2425) & S=union(S1_2326,
+  {v_2323}))))) --> FGE(S,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -288,14 +295,16 @@ Restarting Mona ...
                   x!=null&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 27::ref [x]
-                              x'::ll2<flted_138_122,S1>@M[Orig][LHSCase] * 
-                              res::ll2<flted_138_121,S2>@M[Orig][LHSCase]&
-                              flted_138_122=1 & flted_138_121+1=n & union(S1,
-                              S2)=S & 0<=n&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_2497:exists(v_2495:exists(S1_2455:exists(v_2452:exists(v_2463:exists(S1_2466:(S1_2455= | 
-  S1_2455=union(S1_2497,{v_2495})) & S1=union(S1_2466,{v_2463}) & 
-  S=union(S1_2455,{v_2452}) & S1_2455=S2 & v_2452=v_2463 & S1_2466= & 
-  S1_2466=))))))) --> GN(S,S1,S2)]
+                              EXISTS(flted_138_2520,flted_138_2521,S1_2522,
+                              S2_2523: x'::ll2<flted_138_2521,S1_2522>@M[Orig][LHSCase] * 
+                              res::ll2<flted_138_2520,S2_2523>@M[Orig][LHSCase]&
+                              flted_138_2521=1 & flted_138_2520+1=n & 
+                              union(S1_2522,S2_2523)=S & 0<=n&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_2511:exists(v_2509:exists(S1_2469:exists(v_2466:exists(v_2477:exists(S1_2480:(S1_2469= | 
+  S1_2469=union(S1_2511,{v_2509})) & S1=union(S1_2480,{v_2477}) & 
+  S=union(S1_2469,{v_2466}) & S1_2469=S2 & v_2466=v_2477 & S1_2480= & 
+  S1_2480=))))))) --> GN(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next$node SUCCESS
@@ -318,12 +327,13 @@ Checking procedure get_next_next$node...
                   2<=n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 37::
-                              res::ll2<flted_178_114,S2>@M[Orig][LHSCase]&
-                              flted_178_114+2=n & S2<subset> S  & 0<=n&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_2588:exists(v_2586:exists(v_2526:exists(S1_2529:exists(S1_2559:exists(v_2556:(S1_2559= | 
-  S1_2559=union(S1_2588,{v_2586})) & S=union(S1_2529,{v_2526}) & 
-  S1_2559=S2 & S1_2529=union(S1_2559,{v_2556})))))))) --> GNN(S,S2)]
+                              EXISTS(flted_178_2619,
+                              S2_2620: res::ll2<flted_178_2619,S2_2620>@M[Orig][LHSCase]&
+                              flted_178_2619+2=n & S2_2620<subset> S  & 0<=n&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_2606:exists(v_2604:exists(v_2544:exists(S1_2547:exists(S1_2577:exists(v_2574:(S1_2577= | 
+  S1_2577=union(S1_2606,{v_2604})) & S=union(S1_2547,{v_2544}) & 
+  S1_2577=S2 & S1_2547=union(S1_2577,{v_2574})))))))) --> GNN(S,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next_next$node SUCCESS
@@ -346,17 +356,18 @@ Checking procedure insert$node~int...
                   1<=n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 38::
-                              x::ll2<flted_188_111,S1>@M[Orig][LHSCase]&
-                              flted_188_111=1+n & S1=union(S,{a}) & 0<=n&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_2703:exists(v_2700:exists(S1_2625:exists(v_2622:exists(S1_2693:exists(v_2690:S1_2703= & 
-  S1_2703= & S1_2693=union(S1_2703,{v_2700}) & S1_2693=union(S1_2703,
-  {v_2700}) & S1_2625= & v_2622=v_2690 & a=v_2700 & S=union(S1_2625,
-  {v_2622}) & S1=union(S1_2693,{v_2690})))))))) --> INS(S,S1,a),
- (exists(S1_2767:exists(v_2765:exists(S1_2625:exists(v_2622:exists(S1_2735:exists(v_2732:S1_2731=union(S1_2767,
-  {v_2765}) & S1_2731=S1_2735 & v_2622=v_2732 & S1_2625=S_2657 & 
-  INS(S_2657,S1_2731,a) & S=union(S1_2625,{v_2622}) & S1=union(S1_2735,
-  {v_2732})))))))) --> INS(S,S1,a)]
+                              EXISTS(flted_188_2800,
+                              S1_2801: x::ll2<flted_188_2800,S1_2801>@M[Orig][LHSCase]&
+                              flted_188_2800=1+n & S1_2801=union(S,{a}) & 
+                              0<=n&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_2723:exists(v_2720:exists(S1_2645:exists(v_2642:exists(S1_2713:exists(v_2710:S1_2723= & 
+  S1_2723= & S1_2713=union(S1_2723,{v_2720}) & S1_2713=union(S1_2723,
+  {v_2720}) & S1_2645= & v_2642=v_2710 & a=v_2720 & S=union(S1_2645,
+  {v_2642}) & S1=union(S1_2713,{v_2710})))))))) --> INS(S,S1,a),
+ (exists(S1_2787:exists(v_2785:exists(S1_2645:exists(v_2642:exists(S1_2755:exists(v_2752:S1_2751=union(S1_2787,
+  {v_2785}) & S1_2751=S1_2755 & v_2642=v_2752 & S1_2645=S_2677 & 
+  INS(S_2677,S1_2751,a) & S=union(S1_2645,{v_2642}) & S1=union(S1_2755,
+  {v_2752})))))))) --> INS(S,S1,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node~int SUCCESS
@@ -383,17 +394,18 @@ Restarting Mona ...
                   true&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 71::
-                              x::ll2<n_93,S_94>@M[Orig][LHSCase] * 
-                              res::ll2<n_95,S2>@M[Orig][LHSCase]&n_93=n & 
-                              S_94=S & n_95=n & S2=S & 0<=n&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(n_3004,S_3005,n_3006,
+                              S2_3007: x::ll2<n_3004,S_3005>@M[Orig][LHSCase] * 
+                              res::ll2<n_3006,S2_3007>@M[Orig][LHSCase]&
+                              n_3004=n & S_3005=S & n_3006=n & S2_3007=S & 
+                              0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(S_94:S2= & S= & S_94=S & S_94= & S_94=)) --> CPY(S,S2),
- (exists(S1_2946:exists(v_2944:exists(S1_2943:exists(v_2941:exists(S1_2810:exists(v_2897:exists(v_2807:exists(S1_2900:exists(S_94:exists(S1_2857:exists(v_2854:(S_2814= & 
-  S2_2849= | S2_2849=union(S1_2946,{v_2944}) & S_2814=union(S1_2943,
-  {v_2941})) & S2=union(S1_2900,{v_2897}) & S=union(S1_2810,{v_2807}) & 
-  CPY(S_2814,S2_2849) & S1_2857=S1_2810 & S_2814=S1_2810 & v_2897=v_2854 & 
-  v_2807=v_2854 & S2_2849=S1_2900 & S_94=union(S1_2857,
-  {v_2854}))))))))))))) --> CPY(S,S2),
+ (exists(S1_2968:exists(v_2966:exists(S1_2965:exists(v_2963:exists(S1_2832:exists(v_2919:exists(v_2829:exists(S1_2922:exists(S_94:exists(S1_2879:exists(v_2876:(S_2836= & 
+  S2_2871= | S2_2871=union(S1_2968,{v_2966}) & S_2836=union(S1_2965,
+  {v_2963})) & S2=union(S1_2922,{v_2919}) & S=union(S1_2832,{v_2829}) & 
+  CPY(S_2836,S2_2871) & S1_2879=S1_2832 & S_2836=S1_2832 & v_2919=v_2876 & 
+  v_2829=v_2876 & S2_2871=S1_2922 & S_94=union(S1_2879,
+  {v_2876}))))))))))))) --> CPY(S,S2),
  (exists(S_94:S_94= & S_94=S & S= & S2=)) --> CPY(S,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -418,33 +430,35 @@ Restarting Mona ...
                   0<=n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 85::
-                              res::ll2<m,S2>@M[Orig][LHSCase]&m<=n & 
-                              S2<subset> S  & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(m_3345,
+                              S2_3346: res::ll2<m_3345,S2_3346>@M[Orig][LHSCase]&
+                              m_3345<=n & S2_3346<subset> S  & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S2= & S= & S2=S) --> FIL(S,S2),
- (exists(S1_3219:exists(v_3217:exists(v_3034:exists(S1_3037:exists(Anon_11:exists(v:(S2_3188= | 
-  S2_3188=union(S1_3219,{v_3217})) & S=union(S1_3037,{v_3034}) & 
-  FIL(S_3091,S2_3188) & S2_3188=S2 & v_3034=v & S1_3037=S_3091 & 
+ (exists(S1_3245:exists(v_3243:exists(v_3060:exists(S1_3063:exists(Anon_11:exists(v:(S2_3214= | 
+  S2_3214=union(S1_3245,{v_3243})) & S=union(S1_3063,{v_3060}) & 
+  FIL(S_3117,S2_3214) & S2_3214=S2 & v_3060=v & S1_3063=S_3117 & 
   Anon_11=v))))))) --> FIL(S,S2),
- (exists(m_3036:exists(n_3133:exists(res:exists(v_node_386_733':exists(tmp_90':exists(m_3177:exists(m:exists(m_3230:exists(m_3262:exists(n:exists(v_bool_373_731':exists(v:exists(r_3229:exists(x:exists(v_bool_372_732':exists(S1_3263:exists(v_3261:exists(S1_3231:exists(v_3228:exists(S1_3037:exists(v_3034:(S2_3178= & 
-  (S1_3037=S_3134 & 1+m_3036=n & 1+n_3133=n & res=x & v_node_386_733'=x & 
-  v_3034=v_3228 & tmp_90'=r_3229 & m_3177=0 & S2_3178=S1_3231 & m=1 & 
-  m_3230=0 & (1+v)<=v_3228 & !(v_bool_373_731') & r_3229=null & x!=null & 
-  1<=n & FIL(S_3134,S2_3178) & v_bool_372_732' | S1_3037=S_3134 & 1+
-  m_3036=n & 1+n_3133=n & res=x & v_node_386_733'=x & v_3034=v_3228 & 
-  tmp_90'=r_3229 & m_3177=0 & S2_3178=S1_3231 & m=1 & m_3230=0 & 
-  !(v_bool_373_731') & r_3229=null & (1+v_3228)<=v & x!=null & 1<=n & 
-  FIL(S_3134,S2_3178) & v_bool_372_732') | (S1_3037=S_3134 & 1+m_3036=n & 1+
-  n_3133=n & res=x & v_node_386_733'=x & v_3034=v_3228 & tmp_90'=r_3229 & -1+
-  m_3177=m_3262 & S2_3178=S1_3231 & -2+m=m_3262 & -1+m_3230=m_3262 & 
-  0<=m_3262 & (2+m_3262)<=n & (1+v)<=v_3228 & !(v_bool_373_731') & 
-  r_3229!=null & x!=null & FIL(S_3134,S2_3178) & v_bool_372_732' | 
-  S1_3037=S_3134 & 1+m_3036=n & 1+n_3133=n & res=x & v_node_386_733'=x & 
-  v_3034=v_3228 & tmp_90'=r_3229 & -1+m_3177=m_3262 & S2_3178=S1_3231 & -2+
-  m=m_3262 & -1+m_3230=m_3262 & 0<=m_3262 & (2+m_3262)<=n & 
-  !(v_bool_373_731') & (1+v_3228)<=v & r_3229!=null & x!=null & 
-  FIL(S_3134,S2_3178) & v_bool_372_732') & S2_3178=union(S1_3263,
-  {v_3261})) & S2=union(S1_3231,{v_3228}) & S=union(S1_3037,
-  {v_3034}))))))))))))))))))))))) --> FIL(S,S2),
+ (exists(m_3062:exists(n_3159:exists(res:exists(v_node_386_733':exists(tmp_90':exists(m_3203:exists(m:exists(m_3256:exists(m_3288:exists(n:exists(v_bool_373_731':exists(v:exists(r_3255:exists(x:exists(v_bool_372_732':exists(S1_3289:exists(v_3287:exists(S1_3257:exists(v_3254:exists(S1_3063:exists(v_3060:(S2_3204= & 
+  (S1_3063=S_3160 & 1+m_3062=n & 1+n_3159=n & res=x & v_node_386_733'=x & 
+  v_3060=v_3254 & tmp_90'=r_3255 & m_3203=0 & S2_3204=S1_3257 & m=1 & 
+  m_3256=0 & (1+v)<=v_3254 & !(v_bool_373_731') & r_3255=null & x!=null & 
+  1<=n & FIL(S_3160,S2_3204) & v_bool_372_732' | S1_3063=S_3160 & 1+
+  m_3062=n & 1+n_3159=n & res=x & v_node_386_733'=x & v_3060=v_3254 & 
+  tmp_90'=r_3255 & m_3203=0 & S2_3204=S1_3257 & m=1 & m_3256=0 & 
+  !(v_bool_373_731') & r_3255=null & (1+v_3254)<=v & x!=null & 1<=n & 
+  FIL(S_3160,S2_3204) & v_bool_372_732') | (S1_3063=S_3160 & 1+m_3062=n & 1+
+  n_3159=n & res=x & v_node_386_733'=x & v_3060=v_3254 & tmp_90'=r_3255 & -1+
+  m_3203=m_3288 & S2_3204=S1_3257 & -2+m=m_3288 & -1+m_3256=m_3288 & 
+  0<=m_3288 & (2+m_3288)<=n & (1+v)<=v_3254 & !(v_bool_373_731') & 
+  r_3255!=null & x!=null & FIL(S_3160,S2_3204) & v_bool_372_732' | 
+  S1_3063=S_3160 & 1+m_3062=n & 1+n_3159=n & res=x & v_node_386_733'=x & 
+  v_3060=v_3254 & tmp_90'=r_3255 & -1+m_3203=m_3288 & S2_3204=S1_3257 & -2+
+  m=m_3288 & -1+m_3256=m_3288 & 0<=m_3288 & (2+m_3288)<=n & 
+  !(v_bool_373_731') & (1+v_3254)<=v & r_3255!=null & x!=null & 
+  FIL(S_3160,S2_3204) & v_bool_372_732') & S2_3204=union(S1_3289,
+  {v_3287})) & S2=union(S1_3257,{v_3254}) & S=union(S1_3063,
+  {v_3060}))))))))))))))))))))))) --> FIL(S,S2),
  (S2=S & S= & S2=) --> FIL(S,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -472,32 +486,34 @@ Restarting Mona ...
                   0<=n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 78::
-                              res::ll2<m,S2>@M[Orig][LHSCase]&m<=n & 
-                              S2<subset> S  & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(m_3977,
+                              S2_3978: res::ll2<m_3977,S2_3978>@M[Orig][LHSCase]&
+                              m_3977<=n & S2_3978<subset> S  & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S2= & S= & S2=S) --> RMV2(S,S2),
- (exists(S1_3853:exists(v_3851:exists(S1_3716:exists(v_3713:exists(Anon_11:exists(v:(S1_3716= | 
-  S1_3716=union(S1_3853,{v_3851})) & S=union(S1_3716,{v_3713}) & 
-  S1_3716=S2 & v_3713=v & Anon_11=v))))))) --> RMV2(S,S2),
- (exists(m_3715:exists(n_3773:exists(res:exists(v_node_361_756':exists(tmp_91':exists(m_3818:exists(m:exists(m_3860:exists(m_3892:exists(n:exists(v_bool_350_754':exists(v:exists(r_3859:exists(x:exists(v_bool_349_755':exists(S1_3893:exists(v_3891:exists(S1_3861:exists(v_3858:exists(S1_3716:exists(v_3713:(S2_3819= & 
-  (S1_3716=S_3774 & 1+m_3715=n & 1+n_3773=n & res=x & v_node_361_756'=x & 
-  v_3713=v_3858 & tmp_91'=r_3859 & m_3818=0 & S2_3819=S1_3861 & m=1 & 
-  m_3860=0 & (1+v)<=v_3858 & !(v_bool_350_754') & r_3859=null & x!=null & 
-  1<=n & RMV2(S_3774,S2_3819) & v_bool_349_755' | S1_3716=S_3774 & 1+
-  m_3715=n & 1+n_3773=n & res=x & v_node_361_756'=x & v_3713=v_3858 & 
-  tmp_91'=r_3859 & m_3818=0 & S2_3819=S1_3861 & m=1 & m_3860=0 & 
-  !(v_bool_350_754') & r_3859=null & (1+v_3858)<=v & x!=null & 1<=n & 
-  RMV2(S_3774,S2_3819) & v_bool_349_755') | (S1_3716=S_3774 & 1+m_3715=n & 1+
-  n_3773=n & res=x & v_node_361_756'=x & v_3713=v_3858 & tmp_91'=r_3859 & -1+
-  m_3818=m_3892 & S2_3819=S1_3861 & -2+m=m_3892 & -1+m_3860=m_3892 & 
-  0<=m_3892 & (2+m_3892)<=n & (1+v)<=v_3858 & !(v_bool_350_754') & 
-  r_3859!=null & x!=null & RMV2(S_3774,S2_3819) & v_bool_349_755' | 
-  S1_3716=S_3774 & 1+m_3715=n & 1+n_3773=n & res=x & v_node_361_756'=x & 
-  v_3713=v_3858 & tmp_91'=r_3859 & -1+m_3818=m_3892 & S2_3819=S1_3861 & -2+
-  m=m_3892 & -1+m_3860=m_3892 & 0<=m_3892 & (2+m_3892)<=n & 
-  !(v_bool_350_754') & (1+v_3858)<=v & r_3859!=null & x!=null & 
-  RMV2(S_3774,S2_3819) & v_bool_349_755') & S2_3819=union(S1_3893,
-  {v_3891})) & S2=union(S1_3861,{v_3858}) & S=union(S1_3716,
-  {v_3713}))))))))))))))))))))))) --> RMV2(S,S2),
+ (exists(S1_3881:exists(v_3879:exists(S1_3744:exists(v_3741:exists(Anon_11:exists(v:(S1_3744= | 
+  S1_3744=union(S1_3881,{v_3879})) & S=union(S1_3744,{v_3741}) & 
+  S1_3744=S2 & v_3741=v & Anon_11=v))))))) --> RMV2(S,S2),
+ (exists(m_3743:exists(n_3801:exists(res:exists(v_node_361_756':exists(tmp_91':exists(m_3846:exists(m:exists(m_3888:exists(m_3920:exists(n:exists(v_bool_350_754':exists(v:exists(r_3887:exists(x:exists(v_bool_349_755':exists(S1_3921:exists(v_3919:exists(S1_3889:exists(v_3886:exists(S1_3744:exists(v_3741:(S2_3847= & 
+  (S1_3744=S_3802 & 1+m_3743=n & 1+n_3801=n & res=x & v_node_361_756'=x & 
+  v_3741=v_3886 & tmp_91'=r_3887 & m_3846=0 & S2_3847=S1_3889 & m=1 & 
+  m_3888=0 & (1+v)<=v_3886 & !(v_bool_350_754') & r_3887=null & x!=null & 
+  1<=n & RMV2(S_3802,S2_3847) & v_bool_349_755' | S1_3744=S_3802 & 1+
+  m_3743=n & 1+n_3801=n & res=x & v_node_361_756'=x & v_3741=v_3886 & 
+  tmp_91'=r_3887 & m_3846=0 & S2_3847=S1_3889 & m=1 & m_3888=0 & 
+  !(v_bool_350_754') & r_3887=null & (1+v_3886)<=v & x!=null & 1<=n & 
+  RMV2(S_3802,S2_3847) & v_bool_349_755') | (S1_3744=S_3802 & 1+m_3743=n & 1+
+  n_3801=n & res=x & v_node_361_756'=x & v_3741=v_3886 & tmp_91'=r_3887 & -1+
+  m_3846=m_3920 & S2_3847=S1_3889 & -2+m=m_3920 & -1+m_3888=m_3920 & 
+  0<=m_3920 & (2+m_3920)<=n & (1+v)<=v_3886 & !(v_bool_350_754') & 
+  r_3887!=null & x!=null & RMV2(S_3802,S2_3847) & v_bool_349_755' | 
+  S1_3744=S_3802 & 1+m_3743=n & 1+n_3801=n & res=x & v_node_361_756'=x & 
+  v_3741=v_3886 & tmp_91'=r_3887 & -1+m_3846=m_3920 & S2_3847=S1_3889 & -2+
+  m=m_3920 & -1+m_3888=m_3920 & 0<=m_3920 & (2+m_3920)<=n & 
+  !(v_bool_350_754') & (1+v_3886)<=v & r_3887!=null & x!=null & 
+  RMV2(S_3802,S2_3847) & v_bool_349_755') & S2_3847=union(S1_3921,
+  {v_3919})) & S2=union(S1_3889,{v_3886}) & S=union(S1_3744,
+  {v_3741}))))))))))))))))))))))) --> RMV2(S,S2),
  (S2=S & S= & S2=) --> RMV2(S,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -521,13 +537,15 @@ Checking procedure list_traverse$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 68::
-                              x::ll2<n_97,S2>@M[Orig][LHSCase]&n_97=n & 
-                              S1=S2 & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(n_4129,
+                              S2_4130: x::ll2<n_4129,S2_4130>@M[Orig][LHSCase]&
+                              n_4129=n & S1=S2_4130 & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S2= & S1= & S2=S1) --> TRAV(S1,S2),
- (exists(S1_4062:exists(v_4060:exists(S1_3998:exists(v_3995:exists(v_4030:exists(S1_4033:(S2_4029= | 
-  S2_4029=union(S1_4062,{v_4060})) & S2=union(S1_4033,{v_4030}) & 
-  S1=union(S1_3998,{v_3995}) & TRAV(S1_4002,S2_4029) & S1_3998=S1_4002 & 
-  v_3995=v_4030 & S2_4029=S1_4033))))))) --> TRAV(S1,S2),
+ (exists(S1_4092:exists(v_4090:exists(S1_4028:exists(v_4025:exists(v_4060:exists(S1_4063:(S2_4059= | 
+  S2_4059=union(S1_4092,{v_4090})) & S2=union(S1_4063,{v_4060}) & 
+  S1=union(S1_4028,{v_4025}) & TRAV(S1_4032,S2_4059) & S1_4028=S1_4032 & 
+  v_4025=v_4060 & S2_4059=S1_4063))))))) --> TRAV(S1,S2),
  (S2=S1 & S1= & S2=) --> TRAV(S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -555,12 +573,13 @@ Restarting Mona ...
                   {FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
-                              x'::ll2<flted_102_126,S2>@M[Orig][LHSCase]&
-                              flted_102_126+1=m & S2<subset> S1  & 0<=m&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_4154:exists(v_4152:exists(v_4122:exists(S1_4125:(S1_4125= | 
-  S1_4125=union(S1_4154,{v_4152})) & S1=union(S1_4125,{v_4122}) & 
-  S1_4125=S2))))) --> PF(S1,S2)]
+                              EXISTS(flted_102_4195,
+                              S2_4196: x'::ll2<flted_102_4195,S2_4196>@M[Orig][LHSCase]&
+                              flted_102_4195+1=m & S2_4196<subset> S1  & 
+                              0<=m&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_4186:exists(v_4184:exists(v_4154:exists(S1_4157:(S1_4157= | 
+  S1_4157=union(S1_4186,{v_4184})) & S1=union(S1_4157,{v_4154}) & 
+  S1_4157=S2))))) --> PF(S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure pop_front$node SUCCESS
@@ -583,12 +602,13 @@ Checking procedure push_front$node~int...
                   true&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 18::ref [x]
-                              x'::ll2<flted_91_129,S1>@M[Orig][LHSCase]&
-                              flted_91_129=1+n & S1=union(S,{v}) & 0<=n&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_4196:exists(v_4194:exists(S1_4171:exists(v_4168:(S= | 
-  S=union(S1_4196,{v_4194})) & S1=union(S1_4171,{v_4168}) & S=S1_4171 & 
-  v=v_4168))))) --> PUF(S1,S,v)]
+                              EXISTS(flted_91_4236,
+                              S1_4237: x'::ll2<flted_91_4236,S1_4237>@M[Orig][LHSCase]&
+                              flted_91_4236=1+n & S1_4237=union(S,{v}) & 
+                              0<=n&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_4230:exists(v_4228:exists(S1_4205:exists(v_4202:(S= | 
+  S=union(S1_4230,{v_4228})) & S1=union(S1_4205,{v_4202}) & S=S1_4205 & 
+  v=v_4202))))) --> PUF(S1,S,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure push_front$node~int SUCCESS
@@ -637,14 +657,16 @@ Restarting Mona ...
                   ys::ll2<m,S2>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 55::ref [xs;ys]
-                              ys'::ll2<flted_255_106,S>@M[Orig][LHSCase]&
-                              flted_255_106=m+n & xs'=null & S=union(S1,
-                              S2) & 0<=n & 0<=m&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_4447:exists(v_4445:exists(v_4330:exists(S1_4333:exists(S1_4301:exists(v_4298:S2_4316=union(S1_4333,
-  {v_4330}) & S_4410=union(S1_4447,{v_4445}) & v_4298=v_4330 & 
-  S1_4301=S1_4314 & S2=S1_4333 & S_4410=S & REV(S_4410,S1_4314,S2_4316) & 
-  S1=union(S1_4301,{v_4298})))))))) --> REV(S,S1,S2),
- (exists(S1_4493:exists(v_4491:(S2= | S2=union(S1_4493,{v_4491})) & S1= & 
+                              EXISTS(flted_255_4550,
+                              S_4551: ys'::ll2<flted_255_4550,S_4551>@M[Orig][LHSCase]&
+                              flted_255_4550=m+n & xs'=null & 
+                              S_4551=union(S1,S2) & 0<=n & 0<=m&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_4483:exists(v_4481:exists(v_4366:exists(S1_4369:exists(S1_4337:exists(v_4334:S2_4352=union(S1_4369,
+  {v_4366}) & S_4446=union(S1_4483,{v_4481}) & v_4334=v_4366 & 
+  S1_4337=S1_4350 & S2=S1_4369 & S_4446=S & REV(S_4446,S1_4350,S2_4352) & 
+  S1=union(S1_4337,{v_4334})))))))) --> REV(S,S1,S2),
+ (exists(S1_4529:exists(v_4527:(S2= | S2=union(S1_4529,{v_4527})) & S1= & 
   S2=S))) --> REV(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -671,12 +693,13 @@ Checking procedure set_next$node~node...
                   y::ll2<j,S>@M[Orig][LHSCase]&x!=null&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 29::ref [x]
-                              x::ll2<k,S2>@M[Orig][LHSCase]&1<=k & k=1+j & 
-                              S2=union(S,{v}) & 0<=Anon_16 & 0<=j&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_4556:exists(v_4554:exists(S1_4522:exists(v_4519:(S= | 
-  S=union(S1_4556,{v_4554}) | S= | S=union(S1_4556,{v_4554})) & 
-  S2=union(S1_4522,{v_4519}) & S=S1_4522 & v=v_4519))))) --> SN(S,S2,v)]
+                              EXISTS(k_4609,
+                              S2_4610: x::ll2<k_4609,S2_4610>@M[Orig][LHSCase]&
+                              1<=k_4609 & k_4609=1+j & S2_4610=union(S,
+                              {v}) & 0<=Anon_16 & 0<=j&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_4594:exists(v_4592:exists(S1_4560:exists(v_4557:(S= | 
+  S=union(S1_4594,{v_4592}) | S= | S=union(S1_4594,{v_4592})) & 
+  S2=union(S1_4560,{v_4557}) & S=S1_4560 & v=v_4557))))) --> SN(S,S2,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure set_next$node~node SUCCESS
@@ -715,19 +738,20 @@ Restarting Mona ...
                   y::ll2<m,S2>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 96::ref [x]
-                              x'::ll2<flted_415_87,S>@M[Orig][LHSCase]&
-                              flted_415_87=n+m & S=union(S1,S2) & 0<=n & 
-                              0<=m&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_5062:exists(v_5060:(S2= | S2=union(S1_5062,{v_5060})) & S1= & 
+                              EXISTS(flted_415_5253,
+                              S_5254: x'::ll2<flted_415_5253,S_5254>@M[Orig][LHSCase]&
+                              flted_415_5253=n+m & S_5254=union(S1,S2) & 
+                              0<=n & 0<=m&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_5102:exists(v_5100:(S2= | S2=union(S1_5102,{v_5100})) & S1= & 
   S2=S))) --> SPI(S,S1,S2),
- (exists(S1_5141:exists(v_5139:exists(S1_4915:exists(S1_4950:exists(v_4912:exists(v_5078:exists(v_4947:exists(S1_5081:exists(S1_5091:exists(v_5088:(S_5028= | 
-  S_5028=union(S1_5141,{v_5139})) & S=union(S1_5081,{v_5078}) & 
-  S1=union(S1_4915,{v_4912}) & S2=union(S1_4950,{v_4947}) & 
-  SPI(S_5028,S1_4957,S2_4959) & S1_4915=S1_4957 & S1_4950=S2_4959 & 
-  v_4912=v_5078 & v_4947=v_5088 & S_5028=S1_5091 & S1_5081=union(S1_5091,
-  {v_5088}) & S1_5081=union(S1_5091,{v_5088})))))))))))) --> SPI(S,S1,S2),
- (exists(S1_5186_5189:exists(v_5187:S1=S & S2= & S1=union(S1_5186_5189,
-  {v_5187})))) --> SPI(S,S1,S2)]
+ (exists(S1_5181:exists(v_5179:exists(S1_4955:exists(S1_4990:exists(v_4952:exists(v_5118:exists(v_4987:exists(S1_5121:exists(S1_5131:exists(v_5128:(S_5068= | 
+  S_5068=union(S1_5181,{v_5179})) & S=union(S1_5121,{v_5118}) & 
+  S1=union(S1_4955,{v_4952}) & S2=union(S1_4990,{v_4987}) & 
+  SPI(S_5068,S1_4997,S2_4999) & S1_4955=S1_4997 & S1_4990=S2_4999 & 
+  v_4952=v_5118 & v_4987=v_5128 & S_5068=S1_5131 & S1_5121=union(S1_5131,
+  {v_5128}) & S1_5121=union(S1_5131,{v_5128})))))))))))) --> SPI(S,S1,S2),
+ (exists(S1_5226_5229:exists(v_5227:S1=S & S2= & S1=union(S1_5226_5229,
+  {v_5227})))) --> SPI(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure splice$node~node SUCCESS
@@ -754,19 +778,21 @@ Restarting Mona ...
                   1<=a & a<n&{FLOW,(20,21)=__norm}
                     EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 61::ref [x]
-                              x'::ll2<n1,S1>@M[Orig][LHSCase] * 
-                              res::ll2<n2,S2>@M[Orig][LHSCase]&n=n2+n1 & 
-                              0<n1 & 0<n2 & n1=a & union(S1,S2)=S & 0<=n&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (exists(S1_5374:exists(v_5372:exists(S1_5251:exists(v_5248:exists(S1_5345:exists(v_5342:S1_5345= & 
-  S1_5345= & S1_5251=union(S1_5374,{v_5372}) & v_5248=v_5342 & S1_5251=S2 & 
-  S=union(S1_5251,{v_5248}) & S1=union(S1_5345,
-  {v_5342})))))))) --> SPLIT(S,S1,S2),
- (exists(S1_5477:exists(v_5475:exists(S1_5480:exists(v_5478:exists(S1_5291:exists(v_5288:exists(S1_5394:exists(v_5391:S1_5387=union(S1_5477,
-  {v_5475}) & S2_5388=union(S1_5480,{v_5478}) & S1_5387=S1_5394 & 
-  v_5288=v_5391 & S1_5291=S_5293 & S2_5388=S2 & 
-  SPLIT(S_5293,S1_5387,S2_5388) & S=union(S1_5291,{v_5288}) & 
-  S1=union(S1_5394,{v_5391})))))))))) --> SPLIT(S,S1,S2)]
+                              EXISTS(n2_5558,n1_5559,S1_5560,
+                              S2_5561: x'::ll2<n1_5559,S1_5560>@M[Orig][LHSCase] * 
+                              res::ll2<n2_5558,S2_5561>@M[Orig][LHSCase]&
+                              n=n2_5558+n1_5559 & 0<n1_5559 & 0<n2_5558 & 
+                              n1_5559=a & union(S1_5560,S2_5561)=S & 0<=n&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (exists(S1_5416:exists(v_5414:exists(S1_5293:exists(v_5290:exists(S1_5387:exists(v_5384:S1_5387= & 
+  S1_5387= & S1_5293=union(S1_5416,{v_5414}) & v_5290=v_5384 & S1_5293=S2 & 
+  S=union(S1_5293,{v_5290}) & S1=union(S1_5387,
+  {v_5384})))))))) --> SPLIT(S,S1,S2),
+ (exists(S1_5519:exists(v_5517:exists(S1_5522:exists(v_5520:exists(S1_5333:exists(v_5330:exists(S1_5436:exists(v_5433:S1_5429=union(S1_5519,
+  {v_5517}) & S2_5430=union(S1_5522,{v_5520}) & S1_5429=S1_5436 & 
+  v_5330=v_5433 & S1_5333=S_5335 & S2_5430=S2 & 
+  SPLIT(S_5335,S1_5429,S2_5430) & S=union(S1_5333,{v_5330}) & 
+  S1=union(S1_5436,{v_5433})))))))))) --> SPLIT(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -801,6 +827,6 @@ Termination checking result:
 
 12 false contexts at: ( (162,13)  (162,4)  (241,4)  (241,11)  (246,4)  (246,11)  (245,10)  (245,4)  (244,8)  (244,12)  (244,4)  (244,4) )
 
-Total verification time: 24.36 second(s)
-	Time spent in main process: 2.55 second(s)
-	Time spent in child processes: 21.81 second(s)
+Total verification time: 25.34 second(s)
+	Time spent in main process: 2.63 second(s)
+	Time spent in child processes: 22.71 second(s)
