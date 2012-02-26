@@ -21,8 +21,8 @@ Checking procedure hd$node...
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               x::node<Anon_535,q_536>@M[Orig] * 
-                              q_536::ll<flted_7_534>@M[Orig]&n=flted_7_534+
-                              1 & res=Anon_535 & 0<=n&{FLOW,(20,21)=__norm})
+                              q_536::ll<flted_7_534>@M[Orig]&flted_7_534=n-
+                              1 & Anon_535=res & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -40,7 +40,7 @@ Checking procedure tl$node...
 !!! NEW SPECS: ((None,[]),EBase x::node<inf_val_38_542,inf_next_38_543>@L[Orig]&MayLoop&
                   {FLOW,(1,23)=__flow}
                     EAssume 4::
-                      true&res=inf_next_38_543&{FLOW,(20,21)=__norm})
+                      true&inf_next_38_543=res&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -60,10 +60,10 @@ Checking procedure hdtl$node...
                   inf_inf_next_38_553!=null & MayLoop&{FLOW,(1,23)=__flow}
                     EAssume 2::ref [x]
                       x'::node<Anon_535,q_536>@M[Orig] * 
-                      q_536::ll<flted_7_534>@M[Orig]&inf_ann_558<=0 & 
-                      inf_inf_next_38_553=x' & flted_7_534=inf_n_559-1 & 
-                      res=Anon_535 & x'!=null & 0<=inf_n_559 & 0<=inf_n_559&
-                      {FLOW,(20,21)=__norm})
+                      q_536::ll<flted_7_534>@M[Orig]&Anon_535=res & 
+                      x'=inf_inf_next_38_553 & inf_n_559=flted_7_534+1 & 
+                      0<=(1+flted_7_534) & inf_inf_next_38_553!=null & 
+                      0<=inf_n_559&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

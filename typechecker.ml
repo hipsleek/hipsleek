@@ -376,6 +376,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             end;
                           (impl_vs,new_post)
                         else ([],post_cond) in
+(*                      stk_evars # push_list impl_vs;*)
                       (* TODO: Timing *)
                       let pres, posts, _ = CF.get_pre_post_vars [] proc.proc_static_specs in
                       let pre_vars = CP.remove_dups_svl (pres @ (List.map 
@@ -483,7 +484,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 else post_cond in
                                 (* TODO : What if we have multiple ensures in a spec? *)                                
                                 (* It may be too early to compute a fix-point. *)
-                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true in
+                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true [] [] in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
                                 DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
@@ -1246,13 +1247,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                 let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
                                 let pre_new = TP.simplify_exists_raw exist_vars post in
                                 (rel,post,pre_new)) triples in
+(*                            let evars = stk_evars # get_stk in*)
+                            let evars = [] in
                             let _ = List.iter (fun (rel,post,pre) ->
                                 Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
                                 Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
                                 Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
-                            if triples = [] then fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
+                            if triples = [] then fst (Solver.simplify_relation new_spec None pre_vars post_vars prog inf_post_flag evars)
                             else fst (Solver.simplify_relation (CF.transform_spec new_spec (CF.list_of_posts proc.proc_static_specs)) 
-                              (Some triples) pre_vars post_vars prog inf_post_flag)
+                              (Some triples) pre_vars post_vars prog inf_post_flag evars)
                               end
                             with _ -> 
                                 begin
@@ -1305,6 +1308,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
 (*                            Debug.info_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;*)
+(*                            stk_evars # reset;*)
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 

@@ -156,7 +156,7 @@ Checking procedure front$node...
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 12::
                               x::node<Anon_1221,q_1222>@M[Orig] * 
-                              q_1222::ll1@M[Orig]&res=Anon_1221&
+                              q_1222::ll1@M[Orig]&Anon_1221=res&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -176,7 +176,7 @@ Checking procedure get_next$node...
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 27::
                               x::node<Anon_1234,q_1235>@M[Orig] * 
-                              q_1235::ll1@M[Orig]&res=q_1235&
+                              q_1235::ll1@M[Orig]&q_1235=res&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -199,7 +199,7 @@ Checking procedure get_next_next$node...
                               
                               x::node<Anon_1248,q_1249>@M[Orig] * 
                               q_1249::node<Anon_1271,q_1272>@M[Orig] * 
-                              res::ll1@M[Orig][LHSCase]&res=q_1272 & 
+                              res::ll1@M[Orig][LHSCase]&q_1272=res & 
                               q_1249!=null&{FLOW,(20,21)=__norm}
                               or x::node<Anon_1248,q_1249>@M[Orig] * 
                                  res::ll1@M[Orig][LHSCase]&q_1249=null & 
@@ -276,8 +276,9 @@ Checking procedure pop_front$node...
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
                               tmp_98'::node<Anon_1600,next_112_846'>@M[Orig] * 
-                              x'::ll1@M[Orig][LHSCase]&tmp_98'=x & res=x & 
-                              next_112_846'=null&{FLOW,(20,21)=__norm})
+                              x'::ll1@M[Orig][LHSCase]&res=tmp_98' & 
+                              x=tmp_98' & next_112_846'=null&
+                              {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -414,9 +415,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 828 invocations 
+Stop Omega... 830 invocations 
 6 false contexts at: ( (164,13)  (164,4)  (43,4)  (43,11)  (45,4)  (45,11) )
 
-Total verification time: 1.07 second(s)
-	Time spent in main process: 0.89 second(s)
-	Time spent in child processes: 0.18 second(s)
+Total verification time: 1.05 second(s)
+	Time spent in main process: 0.88 second(s)
+	Time spent in child processes: 0.17 second(s)

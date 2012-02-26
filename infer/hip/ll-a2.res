@@ -25,10 +25,10 @@ Checking procedure append2$node~node...
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
                               
-                              x::ll<m>@M[Orig][LHSCase]&n2=m-1 & n1=1 & 
+                              x::ll<m>@M[Orig][LHSCase]&m=n2+1 & n1=1 & 
                               0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
-                              or x::ll<m>@M[Orig][LHSCase]&n1=m-n2 & 0<=n2 & 
-                                 n2<m & 0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
+                              or x::ll<m>@M[Orig][LHSCase]&m=n1+n2 & 0<=n2 & 
+                                 1<=n1 & 0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -37,9 +37,9 @@ Procedure append2$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 101 invocations 
+Stop Omega... 102 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.22 second(s)
-	Time spent in main process: 0.19 second(s)
+Total verification time: 0.21 second(s)
+	Time spent in main process: 0.18 second(s)
 	Time spent in child processes: 0.03 second(s)

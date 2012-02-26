@@ -24,7 +24,7 @@ Checking procedure hd$node...
                             EAssume 1::
                               x::node<v_530,q_532>@M[Orig] * 
                               q_532::llf<Anon_533,flted_8_531>@M[Orig]&
-                              n=flted_8_531+1 & v_530=v & res=v & 0<=n&
+                              flted_8_531=n-1 & res=v_530 & v=v_530 & 0<=n&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -36,6 +36,6 @@ Termination checking result:
 Stop Omega... 54 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.19 second(s)
-	Time spent in main process: 0.16 second(s)
-	Time spent in child processes: 0.03 second(s)
+Total verification time: 0.15 second(s)
+	Time spent in main process: 0.13 second(s)
+	Time spent in child processes: 0.02 second(s)

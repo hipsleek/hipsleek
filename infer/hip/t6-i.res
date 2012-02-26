@@ -25,7 +25,7 @@ Checking procedure hdtl$node...
                   x::node<inf_Anon_528,inf_b_529>@L[Orig]&MayLoop&
                   {FLOW,(1,23)=__flow}
                     EAssume 3::ref [x]
-                      true&x'=inf_b_529 & res=inf_a_535&{FLOW,(20,21)=__norm})
+                      true&inf_b_529=x' & inf_a_535=res&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -37,5 +37,5 @@ Stop Omega... 44 invocations
 0 false contexts at: ()
 
 Total verification time: 0.16 second(s)
-	Time spent in main process: 0.14 second(s)
-	Time spent in child processes: 0.02 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.01 second(s)

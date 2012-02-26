@@ -19,7 +19,7 @@ Checking procedure hd0$node...
                   x::node<inf_val_20_543,inf_next_20_544>@L[Orig]&MayLoop&
                   {FLOW,(1,23)=__flow}
                     EAssume 1::ref [x]
-                      true&inf_next_20_544=x' & res=inf_val_21_550&
+                      true&x'=inf_next_20_544 & inf_val_21_550=res&
                       {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -38,7 +38,7 @@ Checking procedure hd1$node...
 !!! NEW SPECS: ((None,[]),EBase x::node<inf_val_33_557,inf_next_33_558>@L[Orig]&MayLoop&
                   {FLOW,(1,23)=__flow}
                     EAssume 3::
-                      true&res=inf_val_33_557&{FLOW,(20,21)=__norm})
+                      true&inf_val_33_557=res&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -59,8 +59,8 @@ Checking procedure hd2$node...
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 4::
                               x::node<Anon_575,q_576>@M[Orig] * 
-                              q_576::ll<flted_8_574>@M[Orig]&n=flted_8_574+
-                              1 & res=Anon_575 & 0<=n&{FLOW,(20,21)=__norm})
+                              q_576::ll<flted_8_574>@M[Orig]&flted_8_574=n-
+                              1 & Anon_575=res & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -82,8 +82,8 @@ Checking procedure hd3$node...
                           {FLOW,(1,23)=__flow}
                             EAssume 5::
                               x::node<Anon_593,q_594>@M[Orig] * 
-                              q_594::ll<flted_8_592>@M[Orig]&n=flted_8_592+
-                              1 & res=Anon_593 & 0<=n&{FLOW,(20,21)=__norm})
+                              q_594::ll<flted_8_592>@M[Orig]&flted_8_592=n-
+                              1 & Anon_593=res & 0<=n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -133,6 +133,6 @@ Termination checking result:
 Stop Omega... 96 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.21 second(s)
-	Time spent in main process: 0.18 second(s)
-	Time spent in child processes: 0.03 second(s)
+Total verification time: 0.17 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.02 second(s)
