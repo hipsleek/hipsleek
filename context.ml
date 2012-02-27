@@ -651,7 +651,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       [(2,M_base_case_fold c)] 
                     else [] in
                     (* [] in *)
-                  let src = (-1,norm_search_action (l2@l3@l4)) in
+                  let src = (-1,norm_search_action (l2@l3(* @l4 *))) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   let vr_name = vr.h_formula_view_name in
