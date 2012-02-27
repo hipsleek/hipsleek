@@ -169,7 +169,8 @@ Checking procedure front$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              x::node<Anon_1220,q_1221>@M[Orig][]&(
+                              x::node<Anon_1220,q_1221>@M[Orig][] * 
+                              q_1221::ll1@M[Orig]@ rem br[{405,404}]&(
                               ([x!=null][res=Anon_1220]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
@@ -191,8 +192,9 @@ Checking procedure get_next$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 27::
-                              x::node<Anon_1233,q_1234>@M[Orig][]&(
-                              ([x!=null][q_1234=res]))&{FLOW,(20,21)=__norm})
+                              x::node<Anon_1233,q_1234>@M[Orig][] * 
+                              q_1234::ll1@M[Orig]@ rem br[{405,404}]&(
+                              ([x!=null][res=q_1234]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -217,11 +219,12 @@ Checking procedure get_next_next$node...
                               x::node<Anon_1247,q_1248>@M[Orig][] * 
                               q_1248::node<Anon_1270,q_1271>@M[Orig][] * 
                               res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
-                              ([x!=null][q_1248!=null][res=q_1271]))&
+                              ([q_1248!=null][x!=null][q_1271=res]))&
                               {FLOW,(20,21)=__norm}
                               or x::node<Anon_1247,q_1248>@M[Orig][] * 
+                                 q_1248::ll1@M[Orig]@ rem br[{405}] * 
                                  res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
-                                 (([x!=null][null=q_1248][null=res]))&
+                                 (([x!=null][null=res][null=q_1248]))&
                                  {FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
@@ -302,7 +305,7 @@ Checking procedure pop_front$node...
                             EAssume 20::ref [x]
                               tmp_98'::node<Anon_1597,next_112_846'>@M[Orig][] * 
                               x'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
-                              ([x=res & x=tmp_98' & x!=null]
+                              ([res=x & res=tmp_98' & res!=null]
                                [null=next_112_846']))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
@@ -441,7 +444,7 @@ Checking procedure split1$node~int...
                               ([x!=null][1=a]))&{FLOW,(20,21)=__norm}
                               or x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
                                  res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
-                                 (([2<=a][x!=null]))&{FLOW,(20,21)=__norm}
+                                 (([x!=null][2<=a]))&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -453,9 +456,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 695 invocations 
+Stop Omega... 691 invocations 
 6 false contexts at: ( (164,13)  (164,4)  (43,4)  (43,11)  (45,4)  (45,11) )
 
-Total verification time: 1.15 second(s)
-	Time spent in main process: 1.03 second(s)
+Total verification time: 1.16 second(s)
+	Time spent in main process: 1.04 second(s)
 	Time spent in child processes: 0.12 second(s)

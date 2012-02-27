@@ -8443,8 +8443,8 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
   | Base b -> 
-        let fml,_,_,_ = xpure prog fml 
-        in TP.is_sat_raw fml
+    let fml,_,_,_ = xpure prog fml 
+    in TP.is_sat_raw fml
   | Exists e ->
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
@@ -8483,55 +8483,55 @@ let remove_dups_imply imply lst =
   let res = Gen.BList.remove_dups_eq imply lst in
   Gen.BList.remove_dups_eq imply (List.rev res)
 
-let rec simplify_heap_x h p prog : CF.h_formula = match h with
-  | Star {h_formula_star_h1 = h1;
-    h_formula_star_h2 = h2;
-    h_formula_star_pos = pos} -> 
-    let h1 = simplify_heap h1 p prog in
-    let h2 = simplify_heap h2 p prog in
-    mkStarH h1 h2 pos
-  | Conj {h_formula_conj_h1 = h1;
-    h_formula_conj_h2 = h2;
-    h_formula_conj_pos = pos} -> 
-    let h1 = simplify_heap h1 p prog in
-    let h2 = simplify_heap h2 p prog in
-    mkConjH h1 h2 pos
-  | Phase { h_formula_phase_rd = h1;
-    h_formula_phase_rw = h2;
-    h_formula_phase_pos = pos} -> 
-    let h1 = simplify_heap h1 p prog in
-    let h2 = simplify_heap h2 p prog in
-    mkPhaseH h1 h2 pos
-  | ViewNode v ->
-    let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
-    let pure_h = MCP.pure_of_mix mix_h in
-    let disjs = CP.list_of_disjs pure_h in
-    let res = List.filter (fun d -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd d p no_pos))) disjs in
-    begin
-      match res with
-        | [] -> HFalse
-        | hd::[] -> HTrue
-        | _ -> h
-    end 
-  | _ -> h
+(*let rec simplify_heap_x h p prog : CF.h_formula = match h with*)
+(*  | Star {h_formula_star_h1 = h1;*)
+(*    h_formula_star_h2 = h2;*)
+(*    h_formula_star_pos = pos} -> *)
+(*    let h1 = simplify_heap h1 p prog in*)
+(*    let h2 = simplify_heap h2 p prog in*)
+(*    mkStarH h1 h2 pos*)
+(*  | Conj {h_formula_conj_h1 = h1;*)
+(*    h_formula_conj_h2 = h2;*)
+(*    h_formula_conj_pos = pos} -> *)
+(*    let h1 = simplify_heap h1 p prog in*)
+(*    let h2 = simplify_heap h2 p prog in*)
+(*    mkConjH h1 h2 pos*)
+(*  | Phase { h_formula_phase_rd = h1;*)
+(*    h_formula_phase_rw = h2;*)
+(*    h_formula_phase_pos = pos} -> *)
+(*    let h1 = simplify_heap h1 p prog in*)
+(*    let h2 = simplify_heap h2 p prog in*)
+(*    mkPhaseH h1 h2 pos*)
+(*  | ViewNode v ->*)
+(*    let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in*)
+(*    let pure_h = MCP.pure_of_mix mix_h in*)
+(*    let disjs = CP.list_of_disjs pure_h in*)
+(*    let res = List.filter (fun d -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd d p no_pos))) disjs in*)
+(*    begin*)
+(*      match res with*)
+(*        | [] -> HFalse*)
+(*        | hd::[] -> HTrue*)
+(*        | _ -> h*)
+(*    end *)
+(*  | _ -> h*)
 
-and simplify_heap h p prog =
-  let pr = Cprinter.string_of_h_formula in
-  let pr2 = Cprinter.string_of_pure_formula in
-  Debug.no_2 "simplify_heap" pr pr2 pr
-      (fun _ _ -> simplify_heap_x h p prog) h p
+(*and simplify_heap h p prog =*)
+(*  let pr = Cprinter.string_of_h_formula in*)
+(*  let pr2 = Cprinter.string_of_pure_formula in*)
+(*  Debug.no_2 "simplify_heap" pr pr2 pr*)
+(*      (fun _ _ -> simplify_heap_x h p prog) h p*)
 
-let rec simplify_post_heap_only fml prog = match fml with
-  | Or _ -> 
-    let disjs = CF.list_of_disjs fml in
-    let res = List.map (fun f -> simplify_post_heap_only f prog) disjs in
-    let res = remove_dups_imply rev_imply_formula res in
-    CF.disj_of_list res no_pos
-  | _ -> 
-    let h, p, fl, b, t = split_components fml in
-    let p = MCP.pure_of_mix p in
-    let h = simplify_heap h p prog in
-    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+(*let rec simplify_post_heap_only fml prog = match fml with*)
+(*  | Or _ -> *)
+(*    let disjs = CF.list_of_disjs fml in*)
+(*    let res = List.map (fun f -> simplify_post_heap_only f prog) disjs in*)
+(*    let res = remove_dups_imply rev_imply_formula res in*)
+(*    CF.disj_of_list res no_pos*)
+(*  | _ -> *)
+(*    let h, p, fl, b, t = split_components fml in*)
+(*    let p = MCP.pure_of_mix p in*)
+(*    let h = simplify_heap h p prog in*)
+(*    mkBase h (MCP.mix_of_pure p) t fl b no_pos*)
 
 let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
   | Star {h_formula_star_h1 = h1;
@@ -8558,11 +8558,11 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then HTrue
     else
       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
-      let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
-        && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
-        && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
-      in 
-      if cond then HTrue else h
+      if List.exists CP.is_null_const alias then HTrue else
+        let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+          && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+          && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
+        in if cond then HTrue else h
   | DataNode d ->
     let d_var = d.h_formula_data_node in
     if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then HTrue

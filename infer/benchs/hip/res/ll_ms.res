@@ -730,7 +730,7 @@ Checking procedure swap$node~node...
                             EAssume 13::ref [x;y]
                               x'::ll<m1>@M[Orig][LHSCase]@ rem br[{403,402}] * 
                               y'::ll<n1>@M[Orig][LHSCase]@ rem br[{403,402}]&
-                              (([m1=m & 0<=m][n1=n & 0<=n][x=y'][x'=y]))&
+                              (([n1=n & 0<=n][m1=m & 0<=m][y=x'][x=y']))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -742,6 +742,6 @@ Termination checking result:
 Stop Omega... 1365 invocations 
 6 false contexts at: ( (183,13)  (183,4)  (42,4)  (42,11)  (44,4)  (44,11) )
 
-Total verification time: 2.3 second(s)
-	Time spent in main process: 1.62 second(s)
-	Time spent in child processes: 0.68 second(s)
+Total verification time: 2.33 second(s)
+	Time spent in main process: 1.64 second(s)
+	Time spent in child processes: 0.69 second(s)

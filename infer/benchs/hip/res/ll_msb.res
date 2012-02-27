@@ -140,14 +140,14 @@ Checking procedure assign$node~int~int...
                             EAssume 16::ref [x]
                               
                               x'::ll2<n_131,S4>@M[Orig][LHSCase]@ rem br[{405,404}]&
-                              (([S4=][null=x'][0=n][0=n_131][0<=m]))&
+                              (([S4=][null=x'][0=n_131][0=n][0<=m]))&
                               {FLOW,(20,21)=__norm}
                               or EXISTS(S_1567: x'::ll2<n_131,S4>@M[Orig][LHSCase]@ rem br[{405,404}]&
                                  (
                                  ([S4=S_1567 & 
                                     490::forall(_x:_x <notin> S_1567  | 
                                     _x=v) & S_1567!=()]
-                                  [n=n_131 & 1<=n][x'!=null][0<=m]))&
+                                  [x'!=null][n=n_131 & 1<=n][0<=m]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -431,9 +431,6 @@ Restarting Mona ...
 Procedure insert$node~int SUCCESS
 
 Checking procedure list_copy$node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  CPY(S,S2)
 !!! POST:  S2=S
 !!! PRE :  true
@@ -471,6 +468,9 @@ Restarting Mona ...
 Procedure list_copy$node SUCCESS
 
 Checking procedure list_filter2$node~int... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 !!! REL :  FIL(S,S2)
 !!! POST:  S2<subset> S 
 !!! PRE :  true
@@ -691,7 +691,7 @@ Checking procedure ret_first$node...
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 26::
                               x::ll2<n_124,S2>@M[Orig][LHSCase]@ rem br[{405,404}]&
-                              (([x=res][S1=S2][n_124=n & 0<=n]))&
+                              (([n_124=n & 0<=n][S2=S1][res=x]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -781,12 +781,12 @@ Checking procedure size_helper$node~int...
 Procedure size_helper$node~int SUCCESS
 
 Checking procedure size$node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 Procedure size$node SUCCESS
 
 Checking procedure splice$node~node... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 !!! REL :  SPI(S,S1,S2)
 !!! POST:  S=union(S1,S2)
 !!! PRE :  true
@@ -899,8 +899,8 @@ Checking procedure swap$node~node...
                               x'::ll2<m_132,S3>@M[Orig][LHSCase]@ rem br[{405,404}] * 
                               y'::ll2<n_133,S4>@M[Orig][LHSCase]@ rem br[{405,404}]&
                               (
-                              ([x=y'][x'=y][S2=S3][S1=S4][n_133=n & 0<=n]
-                               [m_132=m & 0<=m]))&
+                              ([m_132=m & 0<=m][n_133=n & 0<=n][S4=S1][
+                               S3=S2][y=x'][x=y']))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -912,6 +912,6 @@ Termination checking result:
 
 12 false contexts at: ( (162,13)  (162,4)  (241,4)  (241,11)  (246,4)  (246,11)  (245,10)  (245,4)  (244,8)  (244,12)  (244,4)  (244,4) )
 
-Total verification time: 5.97 second(s)
-	Time spent in main process: 2.54 second(s)
-	Time spent in child processes: 3.43 second(s)
+Total verification time: 5.78 second(s)
+	Time spent in main process: 2.33 second(s)
+	Time spent in child processes: 3.45 second(s)

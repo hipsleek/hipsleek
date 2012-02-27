@@ -99,6 +99,7 @@ void push_front(ref node x, int v)
   if (x==null) {
     node tmp = new node(v,null,x);
     x = tmp;
+    //x = new node(v,null,null);
   }
   else {
     node tmp = new node(v,x.prev,x);
