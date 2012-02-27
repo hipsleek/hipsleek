@@ -61,8 +61,9 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.ListTail _
   | Cpure.ListLength _
   | Cpure.ListAppend _
-  | Cpure.ListReverse _
-  | Cpure.ArrayAt _   -> illegal_format "SPASS don't support List/Array expresion"
+  | Cpure.ListReverse _ -> illegal_format "SPASS don't support List expresion"
+  (* array expressions *)
+  | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
                            
@@ -193,8 +194,9 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ListTail _
   | Cpure.ListLength _
   | Cpure.ListAppend _
-  | Cpure.ListReverse _
-  | Cpure.ArrayAt _    -> illegal_format "SPASS don't support List/Array expresion"
+  | Cpure.ListReverse _ -> illegal_format "SPASS don't support List expresion"
+  (* array expressions *)
+  | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
 
@@ -269,7 +271,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ListTail _
   | Cpure.ListLength _
   | Cpure.ListAppend _
-  | Cpure.ListReverse _
+  | Cpure.ListReverse _  -> false
+  (* array expressions *)
   | Cpure.ArrayAt _      -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list; 
 
