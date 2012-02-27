@@ -1,38 +1,54 @@
-let sumar(a,i,j);
-axiom j > i -> sumar(a,i,j) = 0;
-axiom i <= j -> sumar(a,i,j) = a[i] + sumar(a,i+1,j);
+let [induction j-i] sumar(a,i,j)
+such that
+sumar(a,i,j)=s <-> 
+((i > j & s = 0) |
+(i <= j & sumar(a,i+1,j) = s - a[i])).
+//j > i -> sumar(a,i,j) = 0;
+//i <= j -> sumar(a,i,j) = a[i] + sumar(a,i+1,j).
 
-let sumal(a,i,j);
-axiom j > i -> sumal(a,i,j) = 0;
-axiom i <= j -> sumal(a,i,j) = sumal(a,i,j-1) + a[i];
+let [induction j-i] sumal(a,i,j) such that
+sumal(a,i,j)=s <-> 
+((i > j & s = 0) |
+(i <= j & sumal(a,i,j-1) = s - a[j])).
+//j > i -> sumal(a,i,j) = 0;
+//i <= j -> sumal(a,i,j) = sumal(a,i,j-1) + a[i].
 
-theorem sumar(a,i,j) = sumal(a,i,j);
+theorem sumar(a,i+1,i) = 0.
+
+theorem sumar(a,i,i) = a[i].
+
+/*theorem i <= j -> sumar(a,i,j) = sumal(a,i,j).
+
+// Sum = sum of two partitions
+theorem i <= j & j <= k -> sumar(a,i,k) = sumar(a,i,j) + sumar(a,j+1,k).
+
+let [induction j-i] relsumar(a,i,j,s) such that
+relsumar(a,i,j,s) <-> (j < i & s = 0 | j >= i & relsumar(a,i+1,j,s-a[i])).
+
+let [induction j-i] relsumal(a,i,j,s) such that
+relsumal(a,i,j,s) <-> (j < i & s = 0 | j >= i & relsumal(a,i,j-1,s-a[j])).
+
+theorem relsumar(a,i,j,s) -> relsumal(a,i,j,s).
+
+let member(a,i,j,x) such that
+member(a,i,j,x) <-> exists {k} (i <= k & k <= j & a[k] = x).
+
+let idarr(a,b,i,j) such that
+idarr(a,b,i,j) <-> forall {k} (i <= k & k <= j -> a[k] = b[k]).
+
+// Identical arrays have the same sum
+theorem idarr(a,b,i,j) -> sumar(a,i,j) = sumar(b,i,j).
+
+*/
 
 /* 
-// Identical arrays have the same sum
-checkentail idarr(a,b,i,j) & sumar(a,i,j,sa) & sumar(b,i,j,sb) |- sa = sb.
-
-Relations concerning array
-
-relation member(int[] a, int i, int j, int x) ==
-	exists(k : i <= k <= j & a[k] = x). //i <= j & (a[i] = x | member(a,i+1,j,x)).
-	
 relation alldistinct(int[] a, int i, int j) ==
 	forall(k, t : k < i | k >= t | t > j | a[k] != a[t]).
-
-relation sumar(int[] a, int i, int j, int s) induction j - i ==
-	(i > j & s = 0 | i <= j & sumar(a,i+1,j,s-a[i])).
-
-relation sumal(int[] a, int i, int j, int s) induction j - i ==
-	(i > j & s = 0 | i <= j & sumar(a,i,j-1,s-a[j])).
 
 relation freq(int[] a, int i, int j, int x, int f) induction j - i ==
 	(j > i & f = 0 |
 	j <= i & a[i] != x & freq(a,i,j,x,f) |
 	j <= i & a[i] = x & freq(a,i,j,x,f-1)).
-
-relation idarr(int[] a, int[] b, int i, int j) induction j - i ==
-	forall(k : k < i | k > j | a[k] = b[k]).
 
 relation upperbnd(int[] a, int i, int j, int u) induction j - i ==
 	forall(k : k < i | k > j | a[k] <= u).
@@ -70,8 +86,7 @@ relation mset(int[] a, int i, int j, int[] v, int[] f, int p) ==
 	forall(t : t < 0 | t > p | freq(a,i,j,v[t],f[t])) &	
 	forall(k : k < i | k > j | exists(u : 0 <=u <= p & v[u] = a[k])).
 
-// Sum = sum of two partitions
-checkentail i <= j <= k & sumar(a,i,j,s1) & sumar(a,j+1,k,s2) |- sumar(a,i,k,s1+s2).
+
 
 // Sum = dot product of values & counts vectors
 checkentail mset(a,i,j,v,f,p) & sum(a,i,j,f,s) |- dotprod(v,f,0,p,s).
@@ -95,5 +110,3 @@ checkentail upperbnd(a,i,j,y) & x > y |- !(member(a,i,j,x)).
 
 //checkentail lowerbnd(a,i,j,y) & x < y |- freq(a,i,j,x,0).
 */
-
-theorem true

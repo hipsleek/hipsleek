@@ -1,10 +1,28 @@
-let fib(x);
+let [induction x] fib(x) such that
+x < 0 -> fib(x) = 0;
+x = 0 | x = 1 -> fib(x) = 1;
+x > 1 -> fib(x) = fib(x-1) + fib(x-2).
 
-axiom x < 0 	-> fib(x) = 0;
-axiom x = 0 | x = 1 -> fib(x) = 1;
-axiom x > 1 -> fib(x) = fib(x-1) + fib(x-2);
+let [induction x] even(x) such that
+even(0);
+even(x) -> ! even(x+1);
+! even(x) -> even(x+1).
 
-theorem fib(n+k+1) = fib(k+1) * fib(n+1) + fib(k) * fib(n);
+theorem fib(2) = 2 & fib(3) = 3 & fib(4) = 5 & fib(5) = 8.
+
+//theorem even(x) | even(x+1).
+
+//theorem even(fib(n)) <-> exists {k} (n = 3*k | n = 3*k + 1).
+
+theorem n >= 0 -> fib(n) >= 1.
+
+//theorem fib(n+k+1) = fib(k+1) * fib(n+1) + fib(k) * fib(n).
+
+theorem n >= 0 & n = 2 * k -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) - 1.
+
+theorem n >= 0 & n = 2 * k + 1 -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) + 1.
+
+/*
 theorem gcd(fib(n), fib(n+1)) = 1;
 theorem gcd(fib(m), fib(n + m)) = gcd(fib(m), fib(n));
 theorem m <= n -> gcd(fib(m), fib(n-m)) = gcd(fib(m), fib(n));
@@ -15,3 +33,4 @@ theorem n % 2 = 0 -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) - 1;
 theorem n % 2 != 0 -> fib (n+2) * fib(n) = fib (n+1) * fib (n+1) + 1;
 //theorem fib (n+1) * fib n = sum(k=1..n, fib(k) * fib(k))
 theorem true
+*/
