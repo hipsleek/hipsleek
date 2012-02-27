@@ -58,9 +58,10 @@ Checking procedure hd2$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 4::
-                              x::node<Anon_575,q_576>@M[Orig] * 
-                              q_576::ll<flted_8_574>@M[Orig]&flted_8_574=n-
-                              1 & Anon_575=res & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(Anon_579,q_580,
+                              flted_8_581: x::node<Anon_579,q_580>@M[Orig] * 
+                              q_580::ll<flted_8_581>@M[Orig]&flted_8_581=n-
+                              1 & Anon_579=res & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -81,9 +82,10 @@ Checking procedure hd3$node...
                     EBase true&(1<=n | n<=(0-1)) & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 5::
-                              x::node<Anon_593,q_594>@M[Orig] * 
-                              q_594::ll<flted_8_592>@M[Orig]&flted_8_592=n-
-                              1 & Anon_593=res & 0<=n&{FLOW,(20,21)=__norm})
+                              EXISTS(Anon_600,q_601,
+                              flted_8_602: x::node<Anon_600,q_601>@M[Orig] * 
+                              q_601::ll<flted_8_602>@M[Orig]&flted_8_602=n-
+                              1 & Anon_600=res & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

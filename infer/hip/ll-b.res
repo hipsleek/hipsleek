@@ -22,12 +22,14 @@ Checking procedure appif$node~node...
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
                               
-                              x::node<Anon_527,y>@M[Orig]&0<=n1&
-                              {FLOW,(20,21)=__norm}
-                              or x::node<Anon_527,q_528>@M[Orig] * 
-                                 q_528::ll<flted_14_526>@M[Orig]&
-                                 flted_14_526=n1-1 & q_528!=null & 0<=n1&
-                                 {FLOW,(20,21)=__norm}
+                              EXISTS(f_538,
+                              Anon_539: x::node<Anon_539,y>@M[Orig]&0<=n1&
+                              {FLOW,(20,21)=__norm})
+                              or EXISTS(Anon_540,q_541,
+                                 flted_14_542: x::node<Anon_540,q_541>@M[Orig] * 
+                                 q_541::ll<flted_14_542>@M[Orig]&
+                                 flted_14_542=n1-1 & q_541!=null & 0<=n1&
+                                 {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -39,6 +41,6 @@ Termination checking result:
 Stop Omega... 65 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.16 second(s)
-	Time spent in main process: 0.14 second(s)
+Total verification time: 0.17 second(s)
+	Time spent in main process: 0.15 second(s)
 	Time spent in child processes: 0.02 second(s)

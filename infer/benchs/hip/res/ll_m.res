@@ -169,10 +169,11 @@ Checking procedure front$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              x::node<Anon_1220,q_1221>@M[Orig][] * 
-                              q_1221::ll1@M[Orig]@ rem br[{405,404}]&(
-                              ([x!=null][res=Anon_1220]))&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(Anon_1224,
+                              q_1225: x::node<Anon_1224,q_1225>@M[Orig][] * 
+                              q_1225::ll1@M[Orig]@ rem br[{405,404}]&(
+                              ([x!=null][res=Anon_1224]))&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -192,9 +193,10 @@ Checking procedure get_next$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 27::
-                              x::node<Anon_1233,q_1234>@M[Orig][] * 
-                              q_1234::ll1@M[Orig]@ rem br[{405,404}]&(
-                              ([x!=null][res=q_1234]))&{FLOW,(20,21)=__norm})
+                              EXISTS(Anon_1240,
+                              q_1241: x::node<Anon_1240,q_1241>@M[Orig][] * 
+                              q_1241::ll1@M[Orig]@ rem br[{405,404}]&(
+                              ([x!=null][res=q_1241]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -216,16 +218,16 @@ Checking procedure get_next_next$node...
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 36::
                               
-                              x::node<Anon_1247,q_1248>@M[Orig][] * 
-                              q_1248::node<Anon_1270,q_1271>@M[Orig][] * 
+                              EXISTS(Anon_1282,q_1283,Anon_1284,
+                              q_1285: x::node<Anon_1282,q_1283>@M[Orig][] * 
+                              q_1283::node<Anon_1284,q_1285>@M[Orig][] * 
                               res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
-                              ([q_1248!=null][x!=null][q_1271=res]))&
-                              {FLOW,(20,21)=__norm}
-                              or x::node<Anon_1247,q_1248>@M[Orig][] * 
-                                 q_1248::ll1@M[Orig]@ rem br[{405}] * 
-                                 res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
-                                 (([x!=null][null=res][null=q_1248]))&
-                                 {FLOW,(20,21)=__norm}
+                              ([q_1283!=null][x!=null][res=q_1285]))&
+                              {FLOW,(20,21)=__norm})
+                              or EXISTS(Anon_1286,
+                                 q_1287: x::node<Anon_1286,q_1287>@M[Orig][]&
+                                 (([x!=null][null=res][null=q_1287]))&
+                                 {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -303,11 +305,12 @@ Checking procedure pop_front$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
-                              tmp_98'::node<Anon_1597,next_112_846'>@M[Orig][] * 
+                              EXISTS(tmp_1617,f_1618,
+                              Anon_1619: tmp_1617::node<Anon_1619,next_112_846'>@M[Orig][] * 
                               x'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
-                              ([res=x & res=tmp_98' & res!=null]
+                              ([res=x & res=tmp_1617 & res!=null]
                                [null=next_112_846']))&
-                              {FLOW,(20,21)=__norm})
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -383,8 +386,10 @@ Checking procedure set_null$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 34::
-                              x::node<Anon_15,r>@M[Orig][]&(
-                              ([x!=null][null=r]))&{FLOW,(20,21)=__norm})
+                              EXISTS(Anon_1702,
+                              r_1703: x::node<Anon_1702,r_1703>@M[Orig][]&(
+                              ([x!=null][null=r_1703]))&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -406,8 +411,10 @@ Checking procedure set_null2$node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 30::
-                              x::node<Anon_14,r>@M[Orig][]&(
-                              ([x!=null][null=r]))&{FLOW,(20,21)=__norm})
+                              EXISTS(Anon_1728,
+                              r_1729: x::node<Anon_1728,r_1729>@M[Orig][]&(
+                              ([x!=null][null=r_1729]))&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -459,6 +466,6 @@ Termination checking result:
 Stop Omega... 691 invocations 
 6 false contexts at: ( (164,13)  (164,4)  (43,4)  (43,11)  (45,4)  (45,11) )
 
-Total verification time: 1.16 second(s)
-	Time spent in main process: 1.04 second(s)
+Total verification time: 1.17 second(s)
+	Time spent in main process: 1.05 second(s)
 	Time spent in child processes: 0.12 second(s)

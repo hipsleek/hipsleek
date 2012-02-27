@@ -22,10 +22,11 @@ Checking procedure hd$node...
                     EBase true&(1<=n | n<=(0-1)) & MayLoop&
                           {FLOW,(1,23)=__flow}
                             EAssume 1::
-                              x::node<v_530,q_532>@M[Orig] * 
-                              q_532::llf<Anon_533,flted_8_531>@M[Orig]&
-                              flted_8_531=n-1 & res=v_530 & v=v_530 & 0<=n&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(v_536,q_537,Anon_538,
+                              flted_8_539: x::node<v_536,q_537>@M[Orig] * 
+                              q_537::llf<Anon_538,flted_8_539>@M[Orig]&
+                              flted_8_539=n-1 & res=v_536 & v=v_536 & 0<=n&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

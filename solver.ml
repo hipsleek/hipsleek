@@ -8593,10 +8593,13 @@ and elim_heap h p pre_vars heap_vars aset ref_vars =
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
   let h, p, _, _, _ = split_components post_fml in
   let p = MCP.pure_of_mix p in
-  let h = if pre_vars = [] || not(inf_post) then h else 
-    let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
+  let h = if pre_vars = [] || not(inf_post) then h else (
+    enulalias := true;
+    let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in
+    enulalias := false;
     let node_aset = CP.EMapSV.build_eset node_als in
-    elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars in
+    elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars)
+  in
   let p,pre,bag_vars = begin
     match subst_fml with
     | None -> 
@@ -8651,17 +8654,11 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
   | Base b ->
     let h,p,pre,bag_vars = helper b.formula_base_heap b.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
-    let fml = if bag_vars = [] then
-      Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
-    else
-      Exists {formula_exists_qvars = bag_vars;
-              formula_exists_heap = h;
-              formula_exists_pure = MCP.mix_of_pure p;
-              formula_exists_type = b.formula_base_type;
-              formula_exists_flow = b.formula_base_flow;
-              formula_exists_branches = b.formula_base_branches;
-              formula_exists_label = b.formula_base_label;
-              formula_exists_pos = b.formula_base_pos}
+    let exists_h_vars = if pre_vars = [] then [] else 
+      List.filter (fun x -> not (CP.is_res_spec_var x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
+    let fml = mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
+        h (MCP.mix_of_pure p) b.formula_base_type b.formula_base_flow b.formula_base_branches
+        b.formula_base_pos
     in (fml,pre)
 
 let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = 

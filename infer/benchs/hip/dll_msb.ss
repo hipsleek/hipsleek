@@ -126,6 +126,7 @@ node pop_front(ref node x)
   }
 }
 
+/*
 relation APP(bag a, bag b, bag c).
 node append(node x, node y)
   infer [APP]
@@ -170,7 +171,7 @@ node append1(node x, node y)
 		return x;
 	}
 }
-
+*/
 relation APP2(bag a, bag b, bag c).
 void append2(node x, node y)
   infer [APP2]

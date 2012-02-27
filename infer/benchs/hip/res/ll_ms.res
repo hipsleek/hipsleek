@@ -728,10 +728,13 @@ Checking procedure swap$node~node...
                   ([0<=n][0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 13::ref [x;y]
-                              x'::ll<m1>@M[Orig][LHSCase]@ rem br[{403,402}] * 
-                              y'::ll<n1>@M[Orig][LHSCase]@ rem br[{403,402}]&
-                              (([n1=n & 0<=n][m1=m & 0<=m][y=x'][x=y']))&
-                              {FLOW,(20,21)=__norm})
+                              EXISTS(m1_2498,
+                              n1_2499: x'::ll<m1_2498>@M[Orig][LHSCase]@ rem br[{403,402}] * 
+                              y'::ll<n1_2499>@M[Orig][LHSCase]@ rem br[{403,402}]&
+                              (
+                              ([n=n1_2499 & 0<=n][m=m1_2498 & 0<=m][y=x']
+                               [x=y']))&
+                              {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]

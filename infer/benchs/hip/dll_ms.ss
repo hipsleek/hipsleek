@@ -188,7 +188,7 @@ void set_next(node x, node y)
 void set_null2(node x)
   infer[x]
   requires x::dll<_> // x!=null
-  ensures x::node<_,_,null>;
+  ensures x::node<_,_,r>; //r=null
 {
   if (4>3)
     x.next = null;
@@ -200,7 +200,7 @@ void set_null2(node x)
 void set_null(node x)
   infer[x]
   requires x::dll<_>  // x!=null
-  ensures x::node<_,_,null>;
+  ensures x::node<_,_,r>; // r=null
 {
   x.next = null;
 }

@@ -139,7 +139,7 @@ node pop_front(ref node x)
 }
 
 /* append 2 doubly linked lists */
-relation APP(int a, int b, int c).
+/*relation APP(int a, int b, int c).
 node append(node x, node y)
   infer [APP]
 	requires x::dll<q, m> * y::dll<p, n>
@@ -182,7 +182,7 @@ node append1(node x, node y)
 		return x;
 	}
 }
-
+*/
 /* append 2 doubly linked lists */
 relation APP2(int a, int b, int c).
 void append2(node x, node y)
