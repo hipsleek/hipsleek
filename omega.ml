@@ -310,12 +310,20 @@ let check_formula f timeout =
       res
   end
 
+(*
+let check_formula f timeout =
+  Gen.Profiling.push_time ("stat_omega [check_formula]");
+  let r = check_formula f timeout in
+  Gen.Profiling.pop_time ("stat_omega [check_formula]");
+  r
+*)
+
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
       check_formula f timeout
 
 (* linear optimization with omega *)
-let rec send_and_receive f timeout=
+let rec send_and_receive f timeout =
   begin
       if not !is_omega_running then
         start (); 
@@ -345,6 +353,14 @@ let rec send_and_receive f timeout=
       answ
           
   end
+
+(*
+let send_and_receive f timeout =
+  Gen.Profiling.push_time ("stat_omega [send_end_receive]");
+  let r = send_and_receive f timeout in
+  Gen.Profiling.pop_time ("stat_omega [send_end_receive]");
+  r
+*)
 
 let send_and_receive f timeout =
   let pr x = x in
