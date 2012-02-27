@@ -27,8 +27,8 @@ Checking procedure append2$node~node...
                               
                               x::ll<m>@M[Orig][LHSCase]&m=n2+1 & n1=1 & 
                               0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
-                              or x::ll<m>@M[Orig][LHSCase]&m=n1+n2 & 0<=n2 & 
-                                 1<=n1 & 0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
+                              or x::ll<m>@M[Orig][LHSCase]&m=n2+n1 & 1<=n1 & 
+                                 0<=n2 & 0<=n1 & 0<=n2&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]

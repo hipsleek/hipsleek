@@ -85,7 +85,7 @@ void swap(ref node x, ref node y)
 }
 
 // drop current content, and add n element with v value
-void assign(node x, int n, int v)
+void assign(ref node x, int n, int v)
   requires x::dll<_>
   ensures true;
 {
@@ -131,8 +131,8 @@ node pop_front(ref node x)
 /* append 2 doubly linked lists */
 void append2(node x, node y)
   infer [x]
-	requires x::dll<q> * y::dll<p> // x!=null
-	ensures x::dll<q>;
+  requires x::dll<q> * y::dll<p> // x!=null
+  ensures x::dll<q>;
 {
 	node tmp;
 	if (x.next == null)

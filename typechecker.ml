@@ -464,7 +464,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
                                 (*let _ = List.iter (fun f -> print_endline ("FLIST: " ^ Cprinter.string_of_formula f)) flist in*)
-                                let flist = Gen.BList.remove_dups_eq (=) (List.map (fun fml -> Solver.simplify_post_heap_only fml prog) flist) in
+                                let flist = Gen.BList.remove_dups_eq (=) (flist) in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in

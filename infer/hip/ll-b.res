@@ -24,8 +24,10 @@ Checking procedure appif$node~node...
                               
                               x::node<Anon_527,y>@M[Orig]&0<=n1&
                               {FLOW,(20,21)=__norm}
-                              or x::node<Anon_527,q_528>@M[Orig]&
-                                 q_528!=null & 0<=n1&{FLOW,(20,21)=__norm}
+                              or x::node<Anon_527,q_528>@M[Orig] * 
+                                 q_528::ll<flted_14_526>@M[Orig]&
+                                 flted_14_526=n1-1 & q_528!=null & 0<=n1&
+                                 {FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -34,7 +36,7 @@ Procedure appif$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 68 invocations 
+Stop Omega... 65 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.16 second(s)

@@ -71,7 +71,7 @@ Procedure hdtl$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 104 invocations 
+Stop Omega... 100 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.17 second(s)

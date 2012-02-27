@@ -41,9 +41,13 @@ Checking procedure appif$node~node...
                                                      1)) & MayLoop&
                                                      {FLOW,(1,23)=__flow}
                                                        EAssume 2::
-                                                         x::node<Anon_553,q_554>@M[Orig]&
-                                                         (q_554!=null & 
-                                                         2<=n1 | n1<=0 & 
+                                                         x::node<Anon_553,q_554>@M[Orig] * 
+                                                         q_554::ll<flted_14_552>@M[Orig]&
+                                                         (flted_14_552=n1-
+                                                         1 & q_554!=null & 
+                                                         2<=n1 | 
+                                                         flted_14_552=n1-1 & 
+                                                         n1<=0 & 
                                                          q_554!=null) & 
                                                          n1!=1 & 0<=n1&
                                                          {FLOW,(20,21)=__norm})
@@ -56,7 +60,7 @@ Procedure appif$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 74 invocations 
+Stop Omega... 70 invocations 
 2 false contexts at: ( (30,11)  (27,1) )
 
 Total verification time: 0.17 second(s)

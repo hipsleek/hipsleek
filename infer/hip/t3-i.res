@@ -33,7 +33,7 @@ Procedure hd$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 53 invocations 
+Stop Omega... 51 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.15 second(s)

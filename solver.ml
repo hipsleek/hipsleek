@@ -8559,7 +8559,7 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     else
       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
       let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
-        && not (CP.is_res_spec_var v_var)
+        && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
         && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
       in 
       if cond then HTrue else h
@@ -8569,7 +8569,7 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     else
       let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
       let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
-        && not (CP.is_res_spec_var d_var)
+        && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
         && List.length (List.filter (fun x -> x = d_var) heap_vars) <= 1
       in 
       if cond then HTrue else h

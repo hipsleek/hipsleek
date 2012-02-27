@@ -101,7 +101,7 @@ void push_front(ref node x, int v)
   x = tmp;
 }
 
-//pop and return first ele
+//pop and return first element
 node pop_front(ref node x)
   infer[x]
   requires x::ll1<>//x!=null
@@ -140,7 +140,7 @@ node get_next(node x)
   ensures true; // x::node<Anon_937,next_144_823'>@M[Orig] * q_938::ll1@M[Orig] & res=q_938 & next_144_823'=null
 {
   node tmp = x.next;
-  //x.next = null;
+  x.next = null;
   return tmp;
 }
 
