@@ -40,7 +40,7 @@ let fixbag_of_spec_var x = match x with
 (*  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id*)
 (*  | CP.SpecVar (_, id, Unprimed) -> id*)
 (*  | CP.SpecVar (_, id, Primed) -> "PRI" ^ id*)
-  | CP.SpecVar (_, id, _) -> id
+  | CP.SpecVar (_, id, _) -> if is_anon_var x then "v_" ^ id else id
 
 let rec fixbag_of_exp e = match e with
 (*  | CP.Null _ -> "null"*)
@@ -65,8 +65,11 @@ let rec fixbag_of_b_formula b =
     | CP.Gt (e1, e2, _) -> fixbag_of_exp e1 ^ op_gt ^ fixbag_of_exp e2
     | CP.Gte (e1, e2, _) -> fixbag_of_exp e1 ^ op_gte ^ fixbag_of_exp e2
     | CP.Eq (e1, e2, _) -> fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
-    | CP.Neq (e1, e2, _) -> if List.exists is_int_typ (CP.bfv b) then fixbag_of_exp e1 ^ op_neq ^ fixbag_of_exp e2
-      else "!(" ^ fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2 ^ ")"
+    | CP.Neq (e1, e2, _) -> 
+      if !allow_pred_spec && List.exists is_bag_typ (CP.bfv b) then "{}={}"
+      else 
+        if List.exists is_int_typ (CP.bfv b) then fixbag_of_exp e1 ^ op_neq ^ fixbag_of_exp e2
+        else "!(" ^ fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2 ^ ")"
     | CP.RelForm (id,args,_) -> (fixbag_of_spec_var id) ^ "(" ^ (string_of_elems args fixbag_of_exp ",") ^ ")"
 (*    | BagIn (sv, e, _) ->*)
 (*    | BagNotIn (sv, e, _) -> *)
@@ -122,7 +125,7 @@ let rec fixbag_of_pure_formula f = match f with
 (*    " exists (" ^ (string_of_elems svs fixbag_of_spec_var ",") ^ ": " ^ *)
 (*    fixbag_of_h_formula h ^ op_and ^ fixbag_of_mix_formula (p,b) ^ ")"*)
 
-let fixbag = "fixbag3"
+let fixbag = "fixbag4"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
@@ -383,24 +386,38 @@ let rec create_alias_tbl vs aset all_rel_vars = match vs with
     let tl = List.filter (fun x -> not(List.mem x (List.hd res1))) tl in
     res1@(create_alias_tbl tl aset all_rel_vars)
 
+let rewrite pure rel_lhs_vars rel_vars =
+  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
+  let aset = CP.EMapSV.build_eset als in
+  let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv pure) in
+  let alias = create_alias_tbl (rel_vars@other_vars) aset rel_lhs_vars in
+  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
+(*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
+(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+  let pure = CP.subst subst_lst pure in
+  CP.remove_redundant_constraints pure
+
 let propagate_rec_helper rcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
 (*  DD.devel_hprint (add_str "Before: " (!CP.print_formula)) rcase_orig no_pos;*)
 (*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
 (*  DD.devel_hprint (add_str "After: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = CP.drop_rel_formula rcase_orig in
-  let all_rel_vars = rel_vars @ (CP.fv rel) in
-  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure rcase) in
-  let aset = CP.EMapSV.build_eset als in
-  let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv rcase_orig) in
-  let alias = create_alias_tbl (rel_vars@other_vars) aset (CP.fv rel) in
-  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
-      let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
-(*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
-(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
-  let rcase = CP.subst subst_lst rcase in
+  let rel_lhs_vars = CP.fv rel in
+  let all_rel_vars = rel_vars @ rel_lhs_vars in
+  let rcase = rewrite rcase rel_lhs_vars rel_vars in
+(*  let all_rel_vars = rel_vars @ (CP.fv rel) in*)
+(*  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure rcase) in*)
+(*  let aset = CP.EMapSV.build_eset als in*)
+(*  let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv rcase_orig) in*)
+(*  let alias = create_alias_tbl (rel_vars@other_vars) aset (CP.fv rel) in*)
+(*  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
+(*      let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in*)
+(*(*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)*)
+(*(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)*)
+(*  let rcase = CP.subst subst_lst rcase in*)
 (*  let rcase = MCP.remove_ptr_equations rcase false in*)
-  let rcase = CP.remove_redundant_constraints rcase in
   let rcase_conjs = CP.list_of_conjs rcase in
   if List.exists (fun conj -> is_emp_bag conj rel_vars) rcase_conjs then CP.mkFalse no_pos
   else
@@ -508,6 +525,8 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> transform x v_synch rel) bcases in
+    let bcases = List.map (fun x -> rewrite x (CP.fv rel) []) bcases in
+
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
 (*    match bcases with*)
