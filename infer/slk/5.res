@@ -67,4 +67,4 @@ Entail  (15): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (ma
 Entail  (16): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
 
 
-Stop Omega... 187 invocations 
+Stop Omega... 138 invocations 

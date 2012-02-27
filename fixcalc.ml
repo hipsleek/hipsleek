@@ -352,7 +352,7 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
         let other_branches = get_other_branches or_fml (CP.get_rel_args rel) in
         let other_branches = List.map (fun p -> CP.mkNot_s p) other_branches in
         let pure_other_branches = CP.conj_of_list other_branches no_pos in
-        List.filter (fun b -> TP.is_sat_raw (CP.mkAnd b pure_other_branches no_pos)) bcases
+        List.filter (fun b -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd b pure_other_branches no_pos))) bcases
       | _ -> bcases
       end
     in

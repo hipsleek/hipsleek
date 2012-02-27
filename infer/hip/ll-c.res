@@ -56,9 +56,9 @@ Procedure appif$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 75 invocations 
+Stop Omega... 74 invocations 
 2 false contexts at: ( (30,11)  (27,1) )
 
-Total verification time: 0.19 second(s)
-	Time spent in main process: 0.16 second(s)
-	Time spent in child processes: 0.03 second(s)
+Total verification time: 0.17 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.02 second(s)

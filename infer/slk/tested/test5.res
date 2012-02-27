@@ -26,4 +26,4 @@ ERROR: at _0_0
 Message: y is not found in both sides
  exception in Entail  (5) check
 : no residue 
-Stop Omega... 121 invocations 
+Stop Omega... 104 invocations 

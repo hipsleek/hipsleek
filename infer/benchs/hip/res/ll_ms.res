@@ -739,9 +739,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1335 invocations 
+Stop Omega... 1365 invocations 
 6 false contexts at: ( (183,13)  (183,4)  (42,4)  (42,11)  (44,4)  (44,11) )
 
-Total verification time: 2.33 second(s)
-	Time spent in main process: 1.63 second(s)
-	Time spent in child processes: 0.7 second(s)
+Total verification time: 2.36 second(s)
+	Time spent in main process: 1.65 second(s)
+	Time spent in child processes: 0.71 second(s)

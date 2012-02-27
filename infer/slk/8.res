@@ -32,4 +32,4 @@ inferred heap: [y::lseg<inf_flted_31_135>@inf_ann_134[Orig][LHSCase];
 inferred pure: [z=null; inf_flted_31_135=null & y!=null | y=null; 
                inf_ann_134<=0; inf_p_121=null; inf_ann_120<=0]
 
-Stop Omega... 237 invocations 
+Stop Omega... 210 invocations 

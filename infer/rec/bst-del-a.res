@@ -77,7 +77,7 @@ Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 341 invocations 
+Stop Omega... 337 invocations 
 0 false contexts at: ()
 
 Total verification time: 1.6 second(s)

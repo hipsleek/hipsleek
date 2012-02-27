@@ -50,9 +50,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 198 invocations 
+Stop Omega... 196 invocations 
 0 false contexts at: ()
 
 Total verification time: 1.56 second(s)
-	Time spent in main process: 0.42 second(s)
-	Time spent in child processes: 1.14 second(s)
+	Time spent in main process: 0.41 second(s)
+	Time spent in child processes: 1.15 second(s)

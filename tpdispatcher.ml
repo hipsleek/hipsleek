@@ -1073,10 +1073,6 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
 
-let is_sat_raw (f: CP.formula) =
-  (* let f = drop_rel_formula f in *)
-  tp_is_sat_no_cache f "999"
-    
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
   else Omega.simplify f   
@@ -2703,6 +2699,22 @@ let change_prover prover =
   tp := prover;
   start_prover ();;
 
-let imply_raw ante conseq  =
-  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
+(*let imply_raw ante conseq  =*)
+(*  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None*)
+
+(*let is_sat_raw_no_cache (f: CP.formula) =*)
+(*  tp_is_sat_no_cache f "999"*)
+
+let is_sat_raw (f: MCP.mix_formula) =
+(* let f = drop_rel_formula f in *)
+(*  tp_is_sat_no_cache f "999"*)
+  is_sat_mix_sub_no f (ref 9) true true
+
+let imply_raw ante conseq =
+  let (res,_,_) = mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
+  res
+
+let imply_raw_mix ante conseq =
+  let (res,_,_) = mix_imply ante conseq "99" in
+  res
 

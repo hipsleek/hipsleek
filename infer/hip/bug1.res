@@ -25,7 +25,7 @@ Procedure foo2$int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 55 invocations 
+Stop Omega... 53 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.17 second(s)

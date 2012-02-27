@@ -5150,7 +5150,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* DD.tinfo_hprint (add_str "xpure_lhs_h1(2)" !Cast.print_mix_formula) xpure_lhs_h1 no_pos; *)
   (*let estate = estate_orig in*)
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
-  let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel TP.is_sat_raw estate_orig xpure_lhs_h1 
+  let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
     lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
   let infer_rel = estate.es_infer_rel in
   if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
@@ -6625,9 +6625,10 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     (* TODO : this part is repeated in no_rhs_match; should optimize *)
     let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
     let rhs_xpure,_,_,_ = xpure prog (formula_of_heap rhs no_pos) in
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
-    let rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+(*    let lhs_xpure = MCP.pure_of_mix lhs_xpure in*)
+(*    let rhs_xpure = MCP.pure_of_mix rhs_xpure in*)
+(*    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in*)
+    let fml = MCP.merge_mems lhs_xpure rhs_xpure true in
     let check_sat = TP.is_sat_raw fml in
     (* check if there is a contraction with the RHS heap *)
     let r = 
@@ -8441,7 +8442,7 @@ let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
   | Base b -> 
         let fml,_,_,_ = xpure prog fml 
-        in TP.is_sat_raw (MCP.pure_of_mix fml)
+        in TP.is_sat_raw fml
   | Exists e ->
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
@@ -8464,10 +8465,10 @@ let rev_imply_formula f1 f2 = match (f1,f2) with
   | (Base _, Base _) | (Exists _, Exists _) -> 
     let h1,p1,fl1,b1,t1 = split_components f1 in
     let h2,p2,fl2,b2,t2 = split_components f2 in
-    let p1 = MCP.pure_of_mix p1 in
-    let p2 = MCP.pure_of_mix p2 in
+(*    let p1 = MCP.pure_of_mix p1 in*)
+(*    let p2 = MCP.pure_of_mix p2 in*)
     let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
-    let res1 = TP.imply_raw p1 p2 in
+    let res1 = TP.imply_raw_mix p1 p2 in
     if res then
       if res1 then true
       else false
@@ -8503,7 +8504,7 @@ let rec simplify_heap_x h p prog : CF.h_formula = match h with
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
     let disjs = CP.list_of_disjs pure_h in
-    let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in
+    let res = List.filter (fun d -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd d p no_pos))) disjs in
     begin
       match res with
         | [] -> HFalse
@@ -8710,7 +8711,7 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
       else
       let pre = CP.conj_of_list pres no_pos in 
       let xpure_base,_,_,_ = xpure prog b.formula_struc_base in
-      let check_fml = CP.mkAnd (MCP.pure_of_mix xpure_base) pre no_pos in
+      let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
       if TP.is_sat_raw check_fml then
         simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos)
       else b.formula_struc_base in

@@ -52,4 +52,4 @@ Entail  (10): Valid.
 <1>true&m+1=n&{FLOW,(17,18)=__norm}
 inferred pure: [n!=0]
 
-Stop Omega... 255 invocations 
+Stop Omega... 216 invocations 
