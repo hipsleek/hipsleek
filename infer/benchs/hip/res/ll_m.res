@@ -11,18 +11,20 @@ Checking procedure append$node~node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase] * y::ll1@M[Orig][LHSCase]&true&
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                    y::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 23::
-                                x::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase] * y::ll1@M[Orig][LHSCase]&true&
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                  y::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                   {FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 23::
-                              x::ll1@M[Orig][LHSCase]&true&
-                              {FLOW,(20,21)=__norm})
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -48,7 +50,7 @@ Failed States:
          fe_name: separation entailment
          fe_locs: {
                    fc_message: 
-                    15.1 v_node_209_748'=null & v_node_209_748'=q_1011 |-  v_node_209_748'!=null (must-bug).
+                    (failure_code=15.3)  v_node_209_748'=q_1011 & v_node_209_748'=null |-  v_node_209_748'!=null (must-bug).
                    fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
        FAIL_OR 
         
@@ -59,16 +61,18 @@ Failed States:
  ]
 
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&0<a&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(([1<=a]))&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 41::
-                                x::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&1<=a&{FLOW,(20,21)=__norm}
-                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(([1<=a]))&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 41::
-                              x::ll1@M[Orig][LHSCase]&true&
-                              {FLOW,(20,21)=__norm})
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ())&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -82,14 +86,16 @@ Checking procedure delete_list$node...
 !!! POST:  x'=null
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [A]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 2::ref [x]
-                                true&A(x')&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                                true&(([A(x')]))&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 2::ref [x]
-                              true&x'=null&{FLOW,(20,21)=__norm})
+                              true&(([null=x']))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (x'=null) --> A(x')]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -103,34 +109,40 @@ Checking procedure empty$node...
 !!! POST:  !(res)
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [EMPT1,EMPT2]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       ECase case {
                              x=null -> ((None,[]),EBase true&MayLoop&
                                                         {FLOW,(1,23)=__flow}
                                                           EAssume 4::
-                                                            true&EMPT1(res)&
+                                                            true&(
+                                                            ([EMPT1(res)]))&
                                                             {FLOW,(20,21)=__norm})
                              ;
                              x!=null -> ((None,[]),EBase true&MayLoop&
                                                          {FLOW,(1,23)=__flow}
                                                            EAssume 5::
-                                                             true&EMPT2(res)&
+                                                             true&(
+                                                             ([EMPT2(res)]))&
                                                              {FLOW,(20,21)=__norm})
                              
                              })
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
                     ECase case {
-                           x=null -> ((None,[]),EBase true&MayLoop&
+                           x=null -> ((None,[]),EBase true&(([MayLoop]))&
                                                       {FLOW,(1,23)=__flow}
                                                         EAssume 4::
-                                                          true&res & x=null&
+                                                          true&(
+                                                          ([res][null=x]))&
                                                           {FLOW,(20,21)=__norm})
                            ;
-                           x!=null -> ((None,[]),EBase true&MayLoop&
+                           x!=null -> ((None,[]),EBase true&(([MayLoop]))&
                                                        {FLOW,(1,23)=__flow}
                                                          EAssume 5::
-                                                           true&!(res) & 
-                                                           x!=null&
+                                                           true&(
+                                                           ([!(res)][
+                                                            x!=null]))&
                                                            {FLOW,(20,21)=__norm})
                            
                            })
@@ -148,15 +160,17 @@ Checking procedure front$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 12::
-                                true&true&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                true&(())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              x::node<Anon_1221,q_1222>@M[Orig] * 
-                              q_1222::ll1@M[Orig]&Anon_1221=res&
+                              x::node<Anon_1220,q_1221>@M[Orig][]&(
+                              ([x!=null][res=Anon_1220]))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -168,16 +182,17 @@ Checking procedure get_next$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 27::
-                                true&true&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                true&(())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 27::
-                              x::node<Anon_1234,q_1235>@M[Orig] * 
-                              q_1235::ll1@M[Orig]&q_1235=res&
-                              {FLOW,(20,21)=__norm})
+                              x::node<Anon_1233,q_1234>@M[Orig][]&(
+                              ([x!=null][q_1234=res]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -188,22 +203,26 @@ Checking procedure get_next_next$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 36::
-                                res::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
+                                (())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 36::
                               
-                              x::node<Anon_1248,q_1249>@M[Orig] * 
-                              q_1249::node<Anon_1271,q_1272>@M[Orig] * 
-                              res::ll1@M[Orig][LHSCase]&q_1272=res & 
-                              q_1249!=null&{FLOW,(20,21)=__norm}
-                              or x::node<Anon_1248,q_1249>@M[Orig] * 
-                                 res::ll1@M[Orig][LHSCase]&q_1249=null & 
-                                 res=null&{FLOW,(20,21)=__norm}
+                              x::node<Anon_1247,q_1248>@M[Orig][] * 
+                              q_1248::node<Anon_1270,q_1271>@M[Orig][] * 
+                              res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null][q_1248!=null][res=q_1271]))&
+                              {FLOW,(20,21)=__norm}
+                              or x::node<Anon_1247,q_1248>@M[Orig][] * 
+                                 res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
+                                 (([x!=null][null=q_1248][null=res]))&
+                                 {FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -215,16 +234,18 @@ Checking procedure insert$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 38::
-                                x::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
-                              x::ll1@M[Orig][LHSCase]&true&
-                              {FLOW,(20,21)=__norm})
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -241,16 +262,18 @@ Checking procedure list_remove$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null, x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 72::
-                                x::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 72::
-                              x::ll1@M[Orig][LHSCase]&true&
-                              {FLOW,(20,21)=__norm})
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -267,17 +290,20 @@ Checking procedure pop_front$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 20::ref [x]
-                                x'::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                x'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
-                              tmp_98'::node<Anon_1600,next_112_846'>@M[Orig] * 
-                              x'::ll1@M[Orig][LHSCase]&res=tmp_98' & 
-                              x=tmp_98' & next_112_846'=null&
+                              tmp_98'::node<Anon_1597,next_112_846'>@M[Orig][] * 
+                              x'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x=res & x=tmp_98' & x!=null]
+                               [null=next_112_846']))&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -295,18 +321,20 @@ Checking procedure reverse$node~node...
 !!! POST:  xs'=null
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [REVERSE]
-              EBase xs::ll1@M[Orig][LHSCase] * ys::ll1@M[Orig][LHSCase]&true&
+              EBase xs::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                    ys::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 53::ref [xs;ys]
-                                ys'::ll1@M[Orig][LHSCase]&REVERSE(xs')&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase xs::ll1@M[Orig][LHSCase] * ys::ll1@M[Orig][LHSCase]&true&
+                                ys'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
+                                (([REVERSE(xs')]))&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase xs::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                  ys::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                   {FLOW,(20,21)=__norm}
-                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 53::ref [xs;ys]
-                              ys'::ll1@M[Orig][LHSCase]&xs'=null&
-                              {FLOW,(20,21)=__norm})
+                              ys'::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([null=xs']))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (xs'=null) --> REVERSE(xs')]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -317,18 +345,20 @@ Checking procedure set_next$node~node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase] * y::ll1@M[Orig][LHSCase]&true&
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                    y::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 28::
-                                x::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase] * y::ll1@M[Orig][LHSCase]&true&
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                  y::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
                   {FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 28::
-                              x::ll1@M[Orig][LHSCase]&true&
-                              {FLOW,(20,21)=__norm})
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -339,16 +369,19 @@ Checking procedure set_null$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 34::
-                                EXISTS(Anon_15,r: x::node<Anon_15,r>@M[Orig]&
-                                true&{FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                EXISTS(Anon_15,
+                                r: x::node<Anon_15,r>@M[Orig][]&(
+                                ([x!=null]))&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 34::
-                              x::node<Anon_15,r>@M[Orig]&r=null&
-                              {FLOW,(20,21)=__norm})
+                              x::node<Anon_15,r>@M[Orig][]&(
+                              ([x!=null][null=r]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -359,16 +392,19 @@ Checking procedure set_null2$node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 30::
-                                EXISTS(Anon_14,r: x::node<Anon_14,r>@M[Orig]&
-                                true&{FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                EXISTS(Anon_14,
+                                r: x::node<Anon_14,r>@M[Orig][]&(
+                                ([x!=null]))&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 30::
-                              x::node<Anon_14,r>@M[Orig]&r=null&
-                              {FLOW,(20,21)=__norm})
+                              x::node<Anon_14,r>@M[Orig][]&(
+                              ([x!=null][null=r]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -388,22 +424,24 @@ Checking procedure split1$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ x!=null, x!=null]
 !!! OLD SPECS: ((None,[]),EInfer [x]
-              EBase x::ll1@M[Orig][LHSCase]&0<a&{FLOW,(20,21)=__norm}
+              EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(([1<=a]))&
+                    {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 59::
-                                x::ll1@M[Orig][LHSCase] * 
-                                res::ll1@M[Orig][LHSCase]&true&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]&1<=a&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
+                                x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                                res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
+                                (())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase x::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(([1<=a]))&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 59::
                               
-                              x::ll1@M[Orig][LHSCase] * 
-                              res::ll1@M[Orig][LHSCase]&a=1&
-                              {FLOW,(20,21)=__norm}
-                              or x::ll1@M[Orig][LHSCase] * 
-                                 res::ll1@M[Orig][LHSCase]&2<=a&
-                                 {FLOW,(20,21)=__norm}
+                              x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                              res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&(
+                              ([x!=null][1=a]))&{FLOW,(20,21)=__norm}
+                              or x::ll1@M[Orig][LHSCase]@ rem br[{405,404}] * 
+                                 res::ll1@M[Orig][LHSCase]@ rem br[{405,404}]&
+                                 (([2<=a][x!=null]))&{FLOW,(20,21)=__norm}
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -415,9 +453,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 741 invocations 
+Stop Omega... 695 invocations 
 6 false contexts at: ( (164,13)  (164,4)  (43,4)  (43,11)  (45,4)  (45,11) )
 
-Total verification time: 1.03 second(s)
-	Time spent in main process: 0.87 second(s)
-	Time spent in child processes: 0.16 second(s)
+Total verification time: 1.15 second(s)
+	Time spent in main process: 1.03 second(s)
+	Time spent in child processes: 0.12 second(s)

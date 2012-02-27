@@ -6676,7 +6676,9 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
     | ViewNode n -> n.h_formula_view_node
     | _ -> report_error pos "Expect a node"
   in
-  let lhs_alias = MCP.ptr_equations_without_null lhs_xpure in
+  enulalias := true;
+  let lhs_alias = MCP.ptr_equations_with_null lhs_xpure in
+  enulalias := false;
   let lhs_aset = CP.EMapSV.build_eset lhs_alias in
   let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
   let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
