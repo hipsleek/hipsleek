@@ -382,7 +382,7 @@ int remove_min(ref node x)
 void delete(ref node x, int a)
 
 	requires x::avl<m, n> 
-	ensures x'::avl<m - 1, n1>; // or if m = 0 then the same
+	ensures x'::avl<m - 1, n1>; //' or if m = 0 then the same
 
 {
 	node tmp;
