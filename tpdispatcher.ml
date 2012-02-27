@@ -1017,7 +1017,16 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         mona_is_sat wf
       else
 		Smtsolver.is_sat f sat_no
-    | SPASS -> Spass.is_sat f sat_no
+    | SPASS -> ( 
+        if (is_bag_constraint wf) then
+          mona_is_sat wf
+        (*else if (is_list_constraint wf) then
+          Coq.is_sat wf sat_no*)
+        else if (is_array_constraint f) then
+          Smtsolver.is_sat f sat_no
+        else
+          Spass.is_sat f sat_no
+      )
 
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1161,7 +1170,16 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (omega_simplify f);
                   end
-          | SPASS -> Spass.simplify f;
+          | SPASS -> (
+              if (is_bag_constraint f) then
+                Mona.simplify f
+              (*else if (is_list_constraint f) then
+                Coq.simplify f*)
+              else if (is_array_constraint f) then
+                Smtsolver.simplify f
+              else
+                Spass.simplify f
+            )
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
 
@@ -1504,7 +1522,17 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         mona_imply ante_w conseq_s
       else
         Smtsolver.imply ante conseq timeout
-    | SPASS -> Spass.imply ante conseq timeout
+    | SPASS -> (
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          (called_prover :="Mona "; mona_imply ante_w conseq_s)
+        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
+          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
+        else if (is_array_constraint ante) || (is_array_constraint conseq) then
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+        else
+          (called_prover :="SPASS "; Spass.imply ante conseq timeout);
+      ) 
+      
   in
 	let _ = if should_output () then
 			begin
