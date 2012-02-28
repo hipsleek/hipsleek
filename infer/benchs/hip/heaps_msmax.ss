@@ -25,9 +25,9 @@ pq<n, mx> == self = null & n = 0 & mx = 0
 /* function to insert an element in a priority queue */
 relation INS(int a, int b, int c).
 node insert(node t, int v)
-  infer[INS]
+//  infer[INS]
   requires t::pq<n, mx> & v >= 0
-  ensures res::pq<n1, ma> & n1 = n+1 & INS(v,mx,ma);//(v>=mx & ma = v | ma = mx);v>=0 & ma>=v & mx>=0
+  ensures res::pq<n1, ma> & n1 = n+1 & (v>=mx & ma = v | ma = mx);//INS(v,mx,ma);//(v>=mx & ma = v | ma = mx);v>=0 & ma>=v & mx>=0
 {
 	node tmp, tmp_null = null;
 	int tmpv;
@@ -85,10 +85,10 @@ int deleteoneel1(ref node t)
 
 /* function to delete a leaf */
 int deleteoneel(ref node t)
-  infer[res,mx,mx2]
+  //infer[res,mx,mx2]
   requires t::pq<n, mx> & n > 0
-  ensures t'::pq<n-1, mx2> ;//& mx2 <= mx & 0 <= res <= mx &
-	//ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
+  //ensures t'::pq<n-1, mx2> ;//& mx2 <= mx & 0 <= res <= mx &
+	ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
 
 {
 	int v;

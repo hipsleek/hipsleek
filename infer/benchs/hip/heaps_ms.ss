@@ -73,14 +73,14 @@ node insert(node t, int v)
 /* function to delete a leaf */
 int deleteoneel1(ref node t)
   requires t::pq2<n> & n > 0
-  ensures t'::pq2<n-1> & res>=0;//& 0 <= res <= mx & mx2 <= mx;//'
+  ensures t'::pq2<n-1> & & 0 <= res <= mx & mx2 <= mx;//res>=0;//& 0 <= res <= mx & mx2 <= mx;//'
 
 //fail to compute fixpoint
 relation DELONE1(int a, int b).
 int deleteoneel(ref node t)
-  infer @post [n1,n,res]
+//  infer @post [n1,n,res]
   requires t::pq2<n> & n > 0
-  ensures t'::pq2<n1> ;//& DELONE1(n,n1);//'n1=n-1 & res>=0
+  ensures t'::pq2<n1> & n1=n-1 & res>=0;//& DELONE1(n,n1);//'n1=n-1 & res>=0
 {
 	int v;
 
@@ -130,9 +130,9 @@ void ripple1(ref int d, int v, int m1, int m2, node l, node r)
 //fail to compute the fixpoint
 relation RIP(int a, int b).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-    infer [RIP]
-	requires l::pq2<m1> * r::pq2<m2> & 0 <= v <= d & RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
-	ensures l::pq2<m1> * r::pq2<m2> ;
+//  infer [RIP]
+  requires l::pq2<m1> * r::pq2<m2> & 0 <= v <= d & 0 <= m1 - m2 <= 1//RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
+  ensures l::pq2<m1> * r::pq2<m2> ;
 {
 	if (m1 == 0)
       { //assume false;
@@ -185,9 +185,9 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 //something is wrong here
 relation DELM(int a, int b).
 int deletemax(ref node t)
-  infer[DELM,t]
+//  infer[DELM,t]
 	requires t::pq2<n> & n > 1 & t!=null
-	ensures t'::pq2<n1> & DELM(n1,n);//'
+	ensures t'::pq2<n1> & n1=n;//DELM(n1,n);//'
 
 {
 	int v, tmp;

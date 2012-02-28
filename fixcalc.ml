@@ -41,13 +41,25 @@ let fixcalc_of_spec_var x = match x with
   | CP.SpecVar (_, id, Unprimed) -> id
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
-let rec fixcalc_of_exp e = match e with
+let rec fixcalc_of_exp_list e op number = match number with
+  | 0 -> ""
+  | 1 -> fixcalc_of_exp e
+  | n -> fixcalc_of_exp e ^ op ^ (fixcalc_of_exp_list e op (n-1))
+
+and fixcalc_of_exp e = match e with
   | CP.Null _ -> "null"
   | CP.Var (x, _) -> fixcalc_of_spec_var x
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst (f, _) -> string_of_float f
   | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
   | CP.Subtract (e1, e2, _) -> fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
+  | CP.Mult (e1, e2, _) -> 
+    begin
+      match e1, e2 with
+      | (CP.IConst (i,_),_) -> fixcalc_of_exp_list e2 op_add i
+      | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
+      | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
+    end
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let rec fixcalc_of_b_formula b =
