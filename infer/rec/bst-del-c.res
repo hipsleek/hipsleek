@@ -30,7 +30,7 @@ Successful States:
  ]
 
 !!! REL :  B(s,sm)
-!!! POST:  sm=s
+!!! POST:  s=sm
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [B]
               EBase exists (Expl)(Impl)[sm; 
@@ -47,7 +47,7 @@ Successful States:
                             EAssume 2::ref [x]
                               EXISTS(l_1004,
                               s_1005: x'::bst<s_1005,l_1004>@M[Orig][LHSCase]&
-                              l_1004<=lg & sm=s_1005 & sm<=lg&
+                              l_1004<=lg & s_1005=sm & sm<=lg&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(lg:exists(a:s=sm & exists(qs_586:qs_586<=lg & 
   exists(pl_585:a<=qs_586 & pl_585<=a & sm<=pl_585))))) --> B(s,sm),
@@ -78,7 +78,7 @@ Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 338 invocations 
+Stop Omega... 345 invocations 
 0 false contexts at: ()
 
 Total verification time: 1.56 second(s)

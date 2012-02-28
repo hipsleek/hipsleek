@@ -8,8 +8,9 @@ Translating global variables to procedure parameters...
 
 Checking procedure insert$node2~int... 
 !!! REL :  C(mi,sm,ma,lg,a)
-!!! POST:  sm>=mi & lg>=sm & ma>=lg & a>=mi & ma>=a
-!!! PRE :  sm<=lg
+!!! POST:  lg>=sm & ma>=(1+lg) & sm=mi & ma=a | a>=(1+sm) & ma>=a & ma=lg & sm=mi | 
+sm>=a & ma>=sm & ma=lg & a=mi
+!!! PRE :  sm<=lg & lg<a | sm<a & a<=lg | a<=sm & sm<=lg
 !!! OLD SPECS: ((None,[]),EInfer [C]
               EBase exists (Expl)(Impl)[sm; 
                     lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
@@ -27,8 +28,10 @@ Checking procedure insert$node2~int...
                             EAssume 1::
                               EXISTS(mi_801,
                               ma_802: res::bst<mi_801,ma_802>@M[Orig][LHSCase]&
-                              res!=null & sm>=mi_801 & lg>=sm & ma_802>=lg & 
-                              a>=mi_801 & ma_802>=a & sm<=lg&
+                              res!=null & (lg>=sm & ma_802>=(1+lg) & 
+                              sm=mi_801 & ma_802=a | a>=(1+sm) & ma_802>=a & 
+                              ma_802=lg & sm=mi_801 | sm>=a & ma_802>=sm & 
+                              ma_802=lg & a=mi_801) & sm<=lg&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (a=mi & ma=lg & mi<=sm & sm<=lg | mi=sm & ma=a & sm<=lg & lg<a | mi=sm & 
   ma=lg & sm<a & a<=lg) --> C(mi,sm,ma,lg,a),
@@ -49,9 +52,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 186 invocations 
+Stop Omega... 187 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.01 second(s)
+Total verification time: 1.04 second(s)
 	Time spent in main process: 0.39 second(s)
-	Time spent in child processes: 0.62 second(s)
+	Time spent in child processes: 0.65 second(s)

@@ -11,7 +11,7 @@ Checking procedure appN$int~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 1<=n, 1<=n]
 !!! REL :  A(n,m,res)
-!!! POST:  n>=1 & n+m=res
+!!! POST:  n>=1 & res=m+n
 !!! PRE :  1<=n
 !!! OLD SPECS: ((None,[]),EInfer [n,m,A]
               EBase true&true&{FLOW,(20,21)=__norm}
@@ -20,7 +20,7 @@ Checking procedure appN$int~int...
                                 true&A(n,m,res)&{FLOW,(20,21)=__norm})
 !!! NEW SPECS: ((None,[]),EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}
                     EAssume 1::
-                      true&n>=1 & n+m=res&{FLOW,(20,21)=__norm})
+                      true&n>=1 & res=m+n&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (n=1 & -1+res=m) --> A(n,m,res),
  (1<=v_int_12_522 & -1+n=v_int_12_522 & -1+res=v_int_12_526 & 
   A(v_int_12_522,m,v_int_12_526)) --> A(n,m,res)]
@@ -30,7 +30,7 @@ Procedure appN$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 66 invocations 
+Stop Omega... 67 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.19 second(s)

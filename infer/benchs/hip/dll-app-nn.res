@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 
 Checking procedure append2$node2~node2... 
 !!! REL :  D(t,m,n,r,p,q)
-!!! POST:  n>=0 & t>=(1+n) & q=r & t=m+n
+!!! POST:  n>=0 & t>=(1+n) & r=q & t=m+n
 !!! PRE :  0<=n & 1<=m
 !!! OLD SPECS: ((None,[]),EInfer [D]
               EBase exists (Expl)(Impl)[q; m; p; 
@@ -25,7 +25,7 @@ Checking procedure append2$node2~node2...
                             EAssume 1::
                               EXISTS(t_735,
                               r_736: x::dll<r_736,t_735>@M[Orig][LHSCase]&
-                              n>=0 & t_735>=(1+n) & q=r_736 & t_735=m+n & 
+                              n>=0 & t_735>=(1+n) & r_736=q & t_735=m+n & 
                               0<=m & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_12_623:(t=2 & n=1 | 2+flted_12_623=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
@@ -39,9 +39,9 @@ Procedure append2$node2~node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 133 invocations 
+Stop Omega... 135 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.41 second(s)
-	Time spent in main process: 0.28 second(s)
-	Time spent in child processes: 0.13 second(s)
+Total verification time: 0.47 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.14 second(s)

@@ -11,7 +11,7 @@ Checking procedure delete$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ n!=1 | a!=1, n!=0 | a!=1, n!=0 | a<=1, n!=0 | 1<=a]
 !!! REL :  B(n,a,m)
-!!! POST:  a>=1 & m>=a & m+1=n
+!!! POST:  a>=1 & n>=(1+a) & n=m+1
 !!! PRE :  1<=a & a<n
 !!! OLD SPECS: ((None,[]),EInfer [n,a,B]
               EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase]&true&
@@ -25,7 +25,7 @@ Checking procedure delete$node~int...
                     EBase true&1<=a & a<n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               EXISTS(m_636: x::ll<m_636>@M[Orig][LHSCase]&
-                              a>=1 & m_636>=a & m_636+1=n & 0<=n&
+                              a>=1 & n>=(1+a) & n=m_636+1 & 0<=n&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_12_569:exists(flted_12_548:(m=1 & n=2 | -1+n=m & 1+
   flted_12_569=m & flted_12_548=m & 2<=m) & a=1))) --> B(n,a,m),
@@ -38,9 +38,9 @@ Procedure delete$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 111 invocations 
+Stop Omega... 112 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.3 second(s)
-	Time spent in main process: 0.2 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.19 second(s)
 	Time spent in child processes: 0.1 second(s)

@@ -46,9 +46,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 230 invocations 
+Stop Omega... 232 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.84 second(s)
-	Time spent in main process: 0.76 second(s)
+Total verification time: 0.88 second(s)
+	Time spent in main process: 0.8 second(s)
 	Time spent in child processes: 0.08 second(s)

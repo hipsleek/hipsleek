@@ -40,7 +40,7 @@ Procedure append$node2~node2 SUCCESS
 
 Checking procedure append2$node2~node2... 
 !!! REL :  D(t,m,n,r,p,q)
-!!! POST:  n>=0 & t>=(1+n) & q=r & t=m+n
+!!! POST:  n>=0 & t>=(1+n) & r=q & t=m+n
 !!! PRE :  0<=n & 1<=m
 !!! OLD SPECS: ((None,[]),EInfer [D]
               EBase exists (Expl)(Impl)[q; m; p; 
@@ -57,7 +57,7 @@ Checking procedure append2$node2~node2...
                             EAssume 9::
                               EXISTS(t_943,
                               r_944: x::dll<r_944,t_943>@M[Orig][LHSCase]&
-                              n>=0 & t_943>=(1+n) & q=r_944 & t_943=m+n & 
+                              n>=0 & t_943>=(1+n) & r_944=q & t_943=m+n & 
                               0<=m & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_12_831:(t=2 & n=1 | 2+flted_12_831=t & 1+n=t & 3<=t) & r=q & 
   m=1)) --> D(t,m,n,r,p,q),
@@ -71,9 +71,9 @@ Procedure append2$node2~node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 208 invocations 
+Stop Omega... 211 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.68 second(s)
-	Time spent in main process: 0.48 second(s)
+Total verification time: 0.66 second(s)
+	Time spent in main process: 0.46 second(s)
 	Time spent in child processes: 0.2 second(s)

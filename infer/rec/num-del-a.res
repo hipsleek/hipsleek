@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 
 Checking procedure del$int~int... 
 !!! REL :  B(n,a,res)
-!!! POST:  a>=1 & res>=a & res+1=n
+!!! POST:  a>=1 & n>=(1+a) & n=res+1
 !!! PRE :  1<=a & a<n
 !!! OLD SPECS: ((None,[]),EInfer [n,B]
               EBase true&1<=a & a<n&{FLOW,(20,21)=__norm}
@@ -18,7 +18,7 @@ Checking procedure del$int~int...
 !!! NEW SPECS: ((None,[]),EBase true&1<=a & a<n&{FLOW,(20,21)=__norm}
                     EBase true&1<=a & a<n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              true&a>=1 & res>=a & res+1=n&
+                              true&a>=1 & n>=(1+a) & n=res+1&
                               {FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (a=1 & 1+res=n & 2<=n) --> B(n,a,res),
  ((1+v_int_22_542)<=v_int_22_541 & 1<=v_int_22_542 & -1+n=v_int_22_541 & -1+
@@ -30,7 +30,7 @@ Procedure del$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 57 invocations 
+Stop Omega... 58 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.2 second(s)

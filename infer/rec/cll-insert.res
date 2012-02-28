@@ -11,7 +11,7 @@ Checking procedure insert$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ n!=0]
 !!! REL :  A(m,n)
-!!! POST:  m>=2 & m=n+1
+!!! POST:  n>=1 & n+1=m
 !!! PRE :  1<=n
 !!! OLD SPECS: ((None,[]),EInfer [n,A]
               EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
@@ -25,8 +25,7 @@ Checking procedure insert$node~int...
                     EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               EXISTS(m_590: x::hd<m_590>@M[Orig][LHSCase]&
-                              m_590>=2 & m_590=n+1 & 0<=n&
-                              {FLOW,(20,21)=__norm}))
+                              n>=1 & n+1=m_590 & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=n+1 & 1<=n) --> A(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -34,7 +33,7 @@ Procedure insert$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 106 invocations 
+Stop Omega... 107 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.29 second(s)

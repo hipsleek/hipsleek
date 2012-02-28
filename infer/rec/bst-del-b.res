@@ -30,7 +30,7 @@ Successful States:
  ]
 
 !!! REL :  B(sm,s,l,lg)
-!!! POST:  l>=sm & lg>=l & sm=s
+!!! POST:  l>=s & lg>=l & s=sm
 !!! PRE :  sm<=lg
 !!! OLD SPECS: ((None,[]),EInfer [B]
               EBase exists (Expl)(Impl)[sm; 
@@ -48,8 +48,8 @@ Successful States:
                             EAssume 2::ref [x]
                               EXISTS(s_1007,
                               l_1008: x'::bst<s_1007,l_1008>@M[Orig][LHSCase]&
-                              sm<=s_1007 & l_1008<=lg & l_1008>=sm & 
-                              lg>=l_1008 & sm=s_1007 & sm<=lg&
+                              sm<=s_1007 & l_1008<=lg & l_1008>=s_1007 & 
+                              lg>=l_1008 & s_1007=sm & sm<=lg&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(qs_589:exists(a:s=sm & sm<=l & a<=qs_589 & l<=a & 
   qs_589<=lg))) --> B(sm,s,l,lg),
@@ -79,9 +79,9 @@ Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 336 invocations 
+Stop Omega... 343 invocations 
 0 false contexts at: ()
 
 Total verification time: 1.04 second(s)
-	Time spent in main process: 0.88 second(s)
-	Time spent in child processes: 0.16 second(s)
+	Time spent in main process: 0.89 second(s)
+	Time spent in child processes: 0.15 second(s)

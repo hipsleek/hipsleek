@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 
 Checking procedure delete$node... 
 !!! REL :  A(m,n)
-!!! POST:  m>=0 & m+1=n
+!!! POST:  n>=1 & n=m+1
 !!! PRE :  1<=n
 !!! OLD SPECS: ((None,[]),EInfer [n,A]
               EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&0<n&
@@ -22,8 +22,7 @@ Checking procedure delete$node...
                     EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::ref [x]
                               EXISTS(m_628: x'::hd<m_628>@M[Orig][LHSCase]&
-                              m_628>=0 & m_628+1=n & 0<=n&
-                              {FLOW,(20,21)=__norm}))
+                              n>=1 & n=m_628+1 & 0<=n&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(flted_11_599:m=1 & n=2 | -1+n=m & 1+flted_11_599=m & 
   2<=m)) --> A(m,n),
  (n=1 & m=0) --> A(m,n),
@@ -34,9 +33,9 @@ Procedure delete$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 107 invocations 
+Stop Omega... 110 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.34 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.15 second(s)
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.18 second(s)

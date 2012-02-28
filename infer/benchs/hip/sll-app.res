@@ -11,7 +11,7 @@ Checking procedure append_sll$node~node...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ xl<=ys]
 !!! REL :  D(r,xs,t,yl,m,xn,yn)
-!!! POST:  yl>=r & yl>=xs & t>=yl & yn>=0 & m>=(1+yn) & m=xn+yn
+!!! POST:  yl>=xs & yl>=r & t>=yl & yn>=0 & m>=(1+yn) & m=xn+yn
 !!! PRE :  xs<=yl & 1<=xn & 0<=yn
 !!! OLD SPECS: ((None,[]),EInfer [xl,ys,D]
               EBase exists (Expl)(Impl)[xn; xs; xl; yn; ys; 
@@ -31,7 +31,7 @@ Checking procedure append_sll$node~node...
                             EAssume 1::
                               EXISTS(r_685,t_686,
                               m_687: x::sll<m_687,r_685,t_686>@M[Orig][LHSCase]&
-                              yl>=r_685 & yl>=xs & t_686>=yl & yn>=0 & 
+                              yl>=xs & yl>=r_685 & t_686>=yl & yn>=0 & 
                               m_687>=(1+yn) & m_687=xn+yn & 0<=xn & xs<=xl & 
                               0<=yn & ys<=yl&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(qmin_620:1+yn=m & 1<=m & yl<=t & xn=1 & 
@@ -51,9 +51,9 @@ Procedure append_sll$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 154 invocations 
+Stop Omega... 155 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.49 second(s)
+Total verification time: 0.5 second(s)
 	Time spent in main process: 0.32 second(s)
-	Time spent in child processes: 0.17 second(s)
+	Time spent in child processes: 0.18 second(s)

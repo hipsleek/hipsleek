@@ -8,7 +8,7 @@ Translating global variables to procedure parameters...
 
 Checking procedure count$node... 
 !!! REL :  A(res,n)
-!!! POST:  res>=0 & res=n
+!!! POST:  n>=0 & n=res
 !!! PRE :  0<=n
 !!! OLD SPECS: ((None,[]),EInfer [A]
               EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&true&
@@ -22,7 +22,7 @@ Checking procedure count$node...
                     EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 2::
                               EXISTS(n_1034: x::hd<n_1034>@M[Orig][LHSCase]&
-                              n_1034=n & res>=0 & res=n & 0<=n&
+                              n_1034=n & n>=0 & n=res & 0<=n&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(n_585:res=1 & n=1 | -1+res=n_585 & -1+n=n_585 & 
   1<=n_585)) --> A(res,n),
@@ -34,7 +34,7 @@ Procedure count$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 156 invocations 
+Stop Omega... 159 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.6 second(s)

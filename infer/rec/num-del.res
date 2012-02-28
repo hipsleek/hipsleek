@@ -11,7 +11,7 @@ Checking procedure del$int~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ 2<=n, 1<=n]
 !!! REL :  B(n,a,res)
-!!! POST:  a>=1 & res>=a & res+1=n
+!!! POST:  a>=1 & n>=(1+a) & n=res+1
 !!! PRE :  1<=a & a<n
 !!! OLD SPECS: ((None,[]),EInfer [n,B]
               EBase true&true&{FLOW,(20,21)=__norm}
@@ -20,7 +20,7 @@ Checking procedure del$int~int...
                                 true&B(n,a,res)&{FLOW,(20,21)=__norm})
 !!! NEW SPECS: ((None,[]),EBase true&1<=a & a<n & MayLoop&{FLOW,(1,23)=__flow}
                     EAssume 1::
-                      true&a>=1 & res>=a & res+1=n&{FLOW,(20,21)=__norm})
+                      true&a>=1 & n>=(1+a) & n=res+1&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (a=1 & 1+res=n & 2<=n) --> B(n,a,res),
  ((1<=v_int_14_540 | v_int_14_540<=(0-1)) & 
   B(v_int_14_539,v_int_14_540,v_int_14_544) & -1+res=v_int_14_544 & -1+
@@ -31,9 +31,9 @@ Procedure del$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 86 invocations 
+Stop Omega... 87 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.15 second(s)
+Total verification time: 0.21 second(s)
+	Time spent in main process: 0.16 second(s)
 	Time spent in child processes: 0.05 second(s)

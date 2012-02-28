@@ -11,8 +11,8 @@ Checking procedure insert$node3...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ n!=0 | h!=0, n!=0 | h!=0, n!=0 | h!=0, n!=0 | h!=0]
 !!! REL :  A(n,h,m,k)
-!!! POST:  k>=2 & k>=h & (h+1)>=k & (k+m)>=(3+h) & m=n+1
-!!! PRE :  1<=n & 1<=h
+!!! POST:  (h+1)>=k & k>=h & (k+n)>=(2+h) & k>=2 & n+1=m
+!!! PRE :  1<=h & 1<=n
 !!! OLD SPECS: ((None,[]),EInfer [A,n,h]
               EBase exists (Expl)(Impl)[n; h](ex)x::bt<n,h>@M[Orig][LHSCase]&
                     true&{FLOW,(20,21)=__norm}
@@ -22,12 +22,12 @@ Checking procedure insert$node3...
                                 A(n,h,m,k)&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; h](ex)x::bt<n,h>@M[Orig][LHSCase]&
                   true&{FLOW,(20,21)=__norm}
-                    EBase true&1<=n & 1<=h & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&1<=h & 1<=n & MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               EXISTS(m_930,
-                              k_931: x::bt<m_930,k_931>@M[Orig][LHSCase]&
-                              k_931>=2 & k_931>=h & (h+1)>=k_931 & (k_931+
-                              m_930)>=(3+h) & m_930=n+1 & 0<=n & 0<=h&
+                              k_931: x::bt<m_930,k_931>@M[Orig][LHSCase]&(h+
+                              1)>=k_931 & k_931>=h & (k_931+n)>=(2+h) & 
+                              k_931>=2 & n+1=m_930 & 0<=n & 0<=h&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(hq_693:k=2 & m=2 & n=1 & h=1 | 1+n=m & 3<=m & -1+k=hq_693 & -1+
   h=hq_693 & 2<=hq_693 | k=2 & h=2 & 1+n=m & 3<=m)) --> A(n,h,m,k),
@@ -56,9 +56,9 @@ Procedure insert$node3 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 219 invocations 
+Stop Omega... 221 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.98 second(s)
-	Time spent in main process: 0.68 second(s)
-	Time spent in child processes: 0.3 second(s)
+Total verification time: 0.9 second(s)
+	Time spent in main process: 0.62 second(s)
+	Time spent in child processes: 0.28 second(s)

@@ -1,20 +1,20 @@
 /* singly linked lists */
-//should not run with eps
+
 /* representation of a node */
 data node {
 	int val;
 	node next;
 }
 
-void dispose(node x)
-  requires x::node<_,_>
-  ensures x=null;
-
 /* view for a sorted linked list */
-//size + sorted
 sll2<n, sm, lg> == self = null & n = 0 & sm <= lg
   or (exists qs,ql: self::node<qmin, q> * q::sll2<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
 	inv n >= 0 & sm <= lg;
+
+
+void dispose(ref node x)
+  requires x::node<_,_>
+  ensures x'=null;
 
 void delete_list(ref node x)
   requires x::sll2<n, sm, lg>
@@ -55,8 +55,7 @@ int size(node x)
   return size_helper(x, m);
 }
 
-//(val)A reference to the first element in the list container.
-//dll
+// A reference to the first element in the list container.
 int front(node x)
   requires x::node<v,p>*p::sll2<m, sm, lg>
   ensures res=v;
@@ -75,6 +74,18 @@ void swap(ref node x, ref node y)
   y = tmp;
 }
 
+/*
+// drop current content, and add n element with v value
+relation ASSIGN(int a, int b, int c).
+void assign(ref node x, int n, int v)
+  infer[ASSIGN]
+  requires x::sll<m>
+  ensures x'::sll<n1> & ASSIGN(n,n1,m);
+{
+  x = create_list(n, v);
+}
+*/
+
 relation PUF(int a, int b).
 void push_front(ref node x, int v)
   infer[PUF]
@@ -86,7 +97,6 @@ void push_front(ref node x, int v)
 }
 
 //pop and return first ele
-//waiting for fix
 relation PF(int a, int b, int c, int d).
 node pop_front(ref node x)
   infer[PF]
@@ -100,7 +110,6 @@ node pop_front(ref node x)
 }
 
 /* append two singly linked lists */
-//fail with eps
 relation MRG(int a, int b, int c, int d, int e, int f).
 node merge1(node x1, node x2)
 //infer[MRG]
@@ -127,7 +136,6 @@ node merge1(node x1, node x2)
 }
 
 /* return the tail of a singly linked list */
-//fail with eps
 relation GN(int a, int b, int c, int d).
 node get_next(ref node x)
   infer[GN]
@@ -145,7 +153,6 @@ node get_next(ref node x)
 }
 
 /* function to set the tail of a list */
-//fail with eps
 //relation SN(int a, int b, int c, int d, int e).
  void set_next(ref node x, node y)
 //infer[SN]
@@ -192,7 +199,6 @@ void set_null(ref node x)
 }
 
 /* function to get the third element of a list */
-//ok: compute GNN
 relation GNN(int a, int b, int c, int d).
 node get_next_next(node x)
   infer[n,GNN]
@@ -223,7 +229,8 @@ node insert(node x, int v)
 		}
 	}
 }
-//relation INS2(int a, int b, int c).
+
+relation INS2(int a, int b, int c).
 node insert2(node x, node vn)
 //infer[INS2]
   requires x::sll2<n, sm, lg> *  vn::node<v, _>
@@ -244,8 +251,7 @@ node insert2(node x, node vn)
 }
 
 /* function to delete the a-th node in a singly linked list */
-//ok
-//relation DEL(bag a, bag b).
+relation DEL(bag a, bag b).
 void delete(node x, int a)
 //infer  [DEL]
   requires x::sll2<n,xs, xl> & n > a & a > 0
@@ -260,7 +266,6 @@ void delete(node x, int a)
 }
 
 /* function to delete the a-th node in a singly linked list */
-//ok
 //relation DEL2(int a, int b, int c, int d).
 node delete2(node x, int v)
 //infer[DEL2]
@@ -287,7 +292,6 @@ node delete2(node x, int v)
 }
 
 /* function to create a singly linked list with a nodes */
-//fail
 relation CL(int a, int b, int c).
   node create_list(int n, int v)
   infer[CL]
@@ -306,86 +310,6 @@ relation CL(int a, int b, int c).
     n  = n - 1;
     tmp = create_list(n,v);
     return new node (v, tmp);
-  }
-}
-
-/*****************************************/
-/*********SMALLROOT EXAMPLES*************/
-//ok
-//relation TRAV(bag a, bag b).
-  void list_traverse(node x)
-//infer  [TRAV]
-  requires x::sll2<n,sm1, lg1>
-    ensures x::sll2<n,sm1, lg1> ;//& TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
-{
-  node t;
-  if(x != null) {
-    t = x;
-    //process t
-    list_traverse(x.next);
-  }
-}
-//ok
-//relation CPY(int a, int b, int c, int d).
-node list_copy(node x)
-//infer [CPY]
-  requires x::sll2<n,sm1, lg1>
-  ensures x::sll2<n,sm1, lg1> * res::sll2<n,sm2, lg2> & sm2=sm1 & lg2=lg1; //CPY(sm1, lg1,sm2, lg2);//
-{
-  node tmp;
-  if (x != null) {
-    tmp = list_copy(x.next);
-    return new node (x.val, tmp) ;
-  }
-  else
-    return null;
-}
-
-/*function to remove all nodes which have value v in nullable singly linked list*/
-//relation FIL(bag a, bag b).
-relation FIL(int a, int b, int c, int d).
-node list_filter2(node x, int v)
-  infer  [FIL]
-  requires x::sll2<n, xs, xl>
-  ensures res::sll2<nres, sres, lres> &  nres <= n & FIL(xs,xl,sres,lres);//lres <= xl & sres >= xs;
-//xl>=xs & lres>=xs & lres>=sres & xl>=sres
-
-//requires x::ll2<n,S> & n >= 0
-//  ensures res::ll2<m,S2> & m <= n & S2 subset S;//& FIL(S,S2);
-{
-  node tmp;
-  if(x != null) {
-    if(x.val == v){
-      tmp = x.next;
-      dispose(x);
-      x = tmp;
-      x = list_filter2(x,v);
-    }
-    else{
-      tmp = list_filter2(x.next, v);
-      x.next = tmp;
-    }
-  }
-  return x;
-}
-/**************************************************************/
-/**********************SLAYER (SLL) EXAMPLES***************************/
-
-/* function to return the first node being greater than v*/
-//fail to compute FGE
-//relation FGE(int a, int b).
-node find_ge(node x, int v)
-//infer[FGE]
-  requires x::sll2<n,sm,sl> & n >= 0
-  ensures res = null or res::node<m,p>*p::sll2<k,sm2,sl2> & m >= v & m<=sl2;//FGE(S,m);//m in S;m in S
-{
-  if(x == null)
-    return null;
-  else {
-    if(x.val >= v)
-      return x;
-    else
-      return find_ge(x.next, v);
   }
 }
 
@@ -412,3 +336,121 @@ node split1(ref node x, int a)
     return tmp;
   }
 }
+
+/*****************************************/
+/*********SMALLROOT EXAMPLES*************/
+//relation TRAV(bag a, bag b).
+  void list_traverse(node x)
+//infer  [TRAV]
+  requires x::sll2<n,sm1, lg1>
+    ensures x::sll2<n,sm1, lg1> ;//& TRAV(S1,S2);//S1=S2,  TRAV(S1,S2)
+{
+  node t;
+  if(x != null) {
+    t = x;
+    //process t
+    list_traverse(x.next);
+  }
+}
+
+//relation CPY(int a, int b, int c, int d).
+node list_copy(node x)
+//infer [CPY]
+  requires x::sll2<n,sm1, lg1>
+  ensures x::sll2<n,sm1, lg1> * res::sll2<n,sm2, lg2> & sm2=sm1 & lg2=lg1; //CPY(sm1, lg1,sm2, lg2);//
+{
+  node tmp;
+  if (x != null) {
+    tmp = list_copy(x.next);
+    return new node (x.val, tmp) ;
+  }
+  else
+    return null;
+}
+
+/*
+/*function to remove the first node which has value v in singly linked list*/
+relation RMV(int k, int m).
+void list_remove(node x, int v)
+  infer[RMV]
+  requires x::ll<n> & x!=null // 1<=n
+  ensures x::ll<m> & RMV(m,n); // m>=1 & (m+1)>=n & n>=m
+{
+  if(x.next != null) {
+    if(x.next.val == v) {
+      node tmp = x.next;
+      x.next = x.next.next;
+      dispose(tmp);
+    }
+    else {
+      list_remove(x.next, v);
+    }
+  }
+}
+
+/*function to remove the first node which has value v in nullable singly linked list*/
+relation RMV2(int k, int m).
+node list_remove2(node x, int v)
+  infer[RMV2]
+  requires x::ll<n> //n>=0
+  ensures res::ll<m> & RMV2(m,n); //m+1)>=n & m>=0 & n>=m
+{
+  node tmp;
+  if(x != null) {
+    if(x.val == v) {
+      tmp = x;
+      x = x.next;
+      dispose(tmp);
+    }
+    else {
+      tmp = list_remove2(x.next, v);
+      x.next = tmp;
+    }
+  }
+  return x;
+}
+*/
+/*function to remove all nodes which have value v in nullable singly linked list*/
+//relation FIL(bag a, bag b).
+relation FIL(int a, int b, int c, int d).
+node list_filter2(node x, int v)
+  infer  [FIL]
+  requires x::sll2<n, xs, xl>
+  ensures res::sll2<nres, sres, lres> &  nres <= n & FIL(xs,xl,sres,lres);//lres <= xl & sres >= xs;
+//xl>=xs & lres>=xs & lres>=sres & xl>=sres
+{
+  node tmp;
+  if(x != null) {
+    if(x.val == v){
+      tmp = x.next;
+      dispose(x);
+      x = tmp;
+      x = list_filter2(x,v);
+    }
+    else{
+      tmp = list_filter2(x.next, v);
+      x.next = tmp;
+    }
+  }
+  return x;
+}
+/**************************************************************/
+/**********************SLAYER (SLL) EXAMPLES***************************/
+
+/* function to return the first node being greater than v*/
+//relation FGE(int a, int b).
+node find_ge(node x, int v)
+//infer[FGE]
+  requires x::sll2<n,sm,sl> & n >= 0
+  ensures res = null or res::node<m,p>*p::sll2<k,sm2,sl2> & m >= v & m<=sl2;//FGE(S,m);//m in S;m in S
+{
+  if(x == null)
+    return null;
+  else {
+    if(x.val >= v)
+      return x;
+    else
+      return find_ge(x.next, v);
+  }
+}
+

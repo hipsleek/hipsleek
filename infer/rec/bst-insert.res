@@ -8,8 +8,9 @@ Translating global variables to procedure parameters...
 
 Checking procedure insert$node2~int... 
 !!! REL :  C(mi,sm,ma,lg,a,res)
-!!! POST:  sm>=mi & lg>=sm & ma>=lg & a>=mi & ma>=a & res!=null
-!!! PRE :  sm<=lg
+!!! POST:  lg>=sm & ma>=(1+lg) & res!=null & sm=mi & ma=a | a>=(1+sm) & ma>=a & 
+res!=null & ma=lg & sm=mi | sm>=a & ma>=sm & res!=null & ma=lg & a=mi
+!!! PRE :  sm<=lg & lg<a | sm<a & a<=lg | a<=sm & sm<=lg
 !!! OLD SPECS: ((None,[]),EInfer [C]
               EBase exists (Expl)(Impl)[sm; 
                     lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
@@ -26,9 +27,11 @@ Checking procedure insert$node2~int...
                             EAssume 1::
                               EXISTS(mi_833,
                               ma_834: res::bst<mi_833,ma_834>@M[Orig][LHSCase]&
-                              sm>=mi_833 & lg>=sm & ma_834>=lg & a>=mi_833 & 
-                              ma_834>=a & res!=null & sm<=lg&
-                              {FLOW,(20,21)=__norm}))
+                              (lg>=sm & ma_834>=(1+lg) & res!=null & 
+                              sm=mi_833 & ma_834=a | a>=(1+sm) & ma_834>=a & 
+                              res!=null & ma_834=lg & sm=mi_833 | sm>=a & 
+                              ma_834>=sm & res!=null & ma_834=lg & 
+                              a=mi_833) & sm<=lg&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ ((a=mi & ma=lg & mi<=sm & sm<=lg | mi=sm & ma=a & sm<=lg & lg<a | mi=sm & 
   ma=lg & sm<a & a<=lg) & res!=null) --> C(mi,sm,ma,lg,a,res),
  (C(mi_649,sm_621,ma_650,lg_622,a,v_node2_43_716) & ma=lg & mi=mi_649 & 
@@ -50,9 +53,9 @@ Procedure insert$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 196 invocations 
+Stop Omega... 197 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.52 second(s)
-	Time spent in main process: 0.4 second(s)
-	Time spent in child processes: 1.12 second(s)
+Total verification time: 1.58 second(s)
+	Time spent in main process: 0.41 second(s)
+	Time spent in child processes: 1.17 second(s)

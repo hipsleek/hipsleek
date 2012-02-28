@@ -1,25 +1,25 @@
 /* singly linked lists */
-//should not run with eps
+
 /* representation of a node */
 data node {
 	int val;
 	node next;
 }
 
-void dispose(node x)
-  requires x::node<_,_>
-  ensures x=null;
-
 /* view for a sorted linked list */
-//size + bag for sorted ll
 sll1<n, S> == self = null & n = 0 & S={}
   or self::node<v, r> * r::sll1<m, S1> & n=m+1 & S=union(S1, {v})
-  // & forall (x: (x notin S1 | v <= x))
+  //& forall (x: (x notin S1 | v <= x))
   inv n >= 0;
+
+
+void dispose(ref node x)
+  requires x::node<_,_>
+  ensures x'=null;
 
 void delete_list(ref node x)
   requires x::sll1<n, S>
-  ensures x'=null;//'
+  ensures x'=null;
 {
   if (x!=null) {
     delete_list(x.next);
@@ -29,18 +29,21 @@ void delete_list(ref node x)
 
 bool empty(node x)
   requires x::sll1<n, S>
- case {n = 0 -> ensures res;//res
-  n!= 0 -> ensures !res;//!(res)
-}
+  case 
+  {
+    n = 0 -> ensures res;//res
+    n!= 0 -> ensures !res;//!(res)
+  }
 {
-  if (x == null) return true;
+  if (x == null) 
+    return true;
   else return false;
 }
 
 //The number of elements that conform the list's content.
 int size_helper(node x, ref int n)
-  requires x::sll1<m, S> & 0<=m
-  ensures res=m+n & m>=0;
+  requires x::sll1<m, S>
+  ensures res=m+n;
 {
   if (x==null) return n;
   else {
@@ -56,7 +59,7 @@ int size(node x)
   return size_helper(x, m);
 }
 
-//(val)A reference to the first element in the list container.
+// A reference to the first element in the list container.
 int front(node x)
   requires x::node<v,p>*p::sll1<m, _>
   ensures res=v;
@@ -98,7 +101,6 @@ node pop_front(ref node x)
 }
 
 /* append two sorted linked lists */
-//fail with eps
 relation MRG(bag a, bag b, bag c).
 node merge1(node x1, node x2)
 //  infer[MRG]
@@ -123,12 +125,11 @@ node merge1(node x1, node x2)
 }
 
 /* return the tail of a singly linked list */
-//fail with eps
 relation GN(bag a, bag b, int c).
-node get_next(ref node x)
+node get_next(node x)
   infer[GN]
   requires x::sll1<n,S> & x!=null
-  ensures x'::node<v,null> * res::sll1<n-1,S2> & GN(S,S2,v);//S  = union(S1, S2)//'
+  ensures x::node<v,null> * res::sll1<n-1,S2> & GN(S,S2,v); //S = union(S2, {v})
 {
   node tmp = x.next;
   x.next = null;
@@ -136,17 +137,16 @@ node get_next(ref node x)
 }
 
 /* function to set the tail of a list */
-//fail with eps
 relation SN(bag a, bag b, int c).
 void set_next(ref node x, node y)
   infer[SN]
-  requires x::node<v,t>*t::sll1<_,_> * y::sll1<j,S>& x!=null
-  ensures x::sll1<k,S2> & k>=1 & k=j+1 & SN(S,S2,v);
+  requires x::node<v,t>*t::sll1<_,_> * y::sll1<j,S>
+  ensures x'::sll1<k,S2> & k=j+1 & SN(S,S2,v);//S2=union(S,{v});//SN(S,S2,v);
 {
   node tmp = x;
-  //tmp.next = null;
-  //x = insert2(y, tmp);
-  x.next = y;
+  tmp.next = null;
+  x = insert2(y, tmp);
+  //x.next = y;
 }
 
 void set_null2(ref node x)
@@ -192,7 +192,7 @@ relation INS(bag a, bag b, int a).
 node insert(node x, int v)
 //  infer [INS]
   requires x::sll1<n, S>
-  ensures res::sll1<n + 1, S1> & S1=union(S,{v});//INS(S,S1,a);//S1=union(S,{v})
+  ensures res::sll1<n + 1, S1> & S1=union(S,{v});//INS(S,S1,v);//S1=union(S,{v})
 {
 	node tmp;
 
@@ -210,11 +210,12 @@ node insert(node x, int v)
 		}
 	}
 }
+/* insert a node into a sorted list */
 relation INS2(bag a, bag b, int a).
 node insert2(node x, node vn)
 //  infer[INS2]
   requires x::sll1<n, S> *  vn::node<v, _>
-  ensures res::sll1<n+1, S2> & S1=union(S,{v});//INS2(S,S1,a);//S1=union(S,{v})
+  ensures res::sll1<n+1, S2> & S2=union(S,{v});//INS2(S,S2,v);//S2=union(S,{v})
 {
 	if (x==null) {
 		vn.next = null;
@@ -277,8 +278,8 @@ node create_list(int n, int v)
   requires n>=0 //0<=v
   case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll1<n, S> & v in S;//CL(S,v); //& CL(S,v);//& S={v};
-  n<0 -> ensures true;
+  n > 0 -> ensures res::sll1<n, S> & forall (_x: _x notin S | _x=v);//CL(S,v); //& CL(S,v);//& S={v};
+  n < 0 -> ensures true;
   }
 {
   node tmp;
@@ -289,6 +290,30 @@ node create_list(int n, int v)
     n  = n - 1;
     tmp = create_list(n,v);
     return new node (v, tmp);
+  }
+}
+
+relation SPLIT(bag a, bag b, bag c).
+node split1(ref node x, int a)
+  infer[SPLIT]
+  requires x::sll1<n, S> & a > 0 & n > a
+  ensures x'::sll1<n1, S1> * res::sll1<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 &
+ SPLIT(S,S1,S2);//S = union(S1, S2);//'
+{
+  node tmp;
+
+  if (a == 1)	{
+    tmp = x.next;
+    x.next = null;
+    return tmp;
+  }
+  else{
+    a = a - 1;
+    node tmp;
+    bind x to (_, xnext) in {
+      tmp = split1(xnext, a);
+    }
+    return tmp;
   }
 }
 
@@ -365,26 +390,3 @@ node find_ge(node x, int v)
   }
 }
 
-relation SPLIT(bag a, bag b, bag c).
-node split1(ref node x, int a)
-  infer[SPLIT]
-  requires x::sll1<n, S> & a > 0 & n > a
-  ensures x'::sll1<n1, S1> * res::sll1<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 &
- SPLIT(S,S1,S2);//S = union(S1, S2);//'
-{
-  node tmp;
-
-  if (a == 1)	{
-    tmp = x.next;
-    x.next = null;
-    return tmp;
-  }
-  else{
-    a = a - 1;
-    node tmp;
-    bind x to (_, xnext) in {
-      tmp = split1(xnext, a);
-    }
-    return tmp;
-  }
-}
