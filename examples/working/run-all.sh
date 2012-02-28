@@ -19,16 +19,20 @@ time ./run-fast-tests.pl hip -flags "--eps" $@
 echo -e "\n##################### imm tests --eps ###################"
 time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 
+echo -e "\n##################### hip_vperm tests ###################"
+time ./run-fast-tests.pl hip_vperm $@
+
+echo -e "\n##################### NO slicing tests ?? ###################"
+#time ./run-fast-tests.pl hip_slicing $@
+
 # fixed in infer2r_lbl at moment
 #echo -e "\n##################### lists tests #####################"
 #time ./run-fast-tests.pl lists $@ -tp coq
 # takes a long time for lr.ss!
 
-
 # soundness check for no eps
-echo -e "\n##################### imm tests --eps ###################"
+echo -e "\n##################### imm tests no eps ###################"
 time ./run-fast-tests.pl imm $@ -tp redlog
-
 
 echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##################"
 
