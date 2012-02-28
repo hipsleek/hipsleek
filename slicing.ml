@@ -517,7 +517,7 @@ struct
   module MF_S           = Memo_Formula(Label)
 
   let regroup_memo_group (lst: memo_pure) : memo_pure =
-    if !f_1_slice || !dis_slicing then 
+    if !f_1_slice (* || !dis_slicing *) then 
       (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
@@ -534,7 +534,7 @@ struct
 
   let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
     let r = 
-      if !f_1_slice  || !dis_slicing then 
+      if !f_1_slice || !dis_slicing then 
 		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
         let h1, h2 = (List.hd l1, List.hd l2) in
 		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
