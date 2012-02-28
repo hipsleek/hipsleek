@@ -1,0 +1,67 @@
+/*
+
+	// check whether a number is a odd or even number?
+
+	//ORIGINAL: MUTUAL RECURSION version
+	bool even(n : int)
+	{
+		if n == 0 then
+			return true;
+		else
+			return odd(n-1);
+	}
+
+	bool odd(n : int)
+	{
+		if n == 0 then
+			return false;
+		else
+			return even(n-1);
+	}
+
+	//TRANSFORMED: IMMUTUAL RECURSION version
+	bool even(n : int)
+	{
+		if n == 0 then
+			return true;
+		else if (n-1 == 0)
+			return false;
+		else
+			return even(n-2);
+	}
+
+	bool odd(n : int)
+	{
+		if n == 0 then
+			return false;
+		else if (n-1 == 0)
+			return true;
+		else
+			return odd(n-2);
+	}
+
+	//REFINED: equivalent while loop (in term of termination) for both even and odd function
+	x is integer
+	while !((x == 0) || (x-1 == 0))
+	{
+		x = x - 2
+	}
+
+	//ANALYS:  
+
+	- Loop condition: 			(x != 0) & (x != 1) & (x is integer) ----> (x >= 2)
+	- Termination condition:	                                           (x < 2)
+
+	- with update function f(x) = x - 2 => lim x(n) = -oo (n -> +oo )
+
+*/
+
+/* for building the entailment, refer to file limit-based-entailment.txt */
+
+//Loop entailment:
+checkentail true |- forall (e: (e >= 0) | forall (x: (x >= e) | (x >= 2))).			// expect Fail because loop terminate
+
+//Termination entailment:
+checkentail true |- (exists e: (e < 0) & forall (x: (x >= e) | (x < 2))).			// expect Valid
+			
+

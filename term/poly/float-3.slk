@@ -1,0 +1,34 @@
+/*
+
+	EXAMPLE from paper "Proving Termination by Divergence" - Byron Cook:
+		x = a;
+		while (x < 10)
+			x = x^3 - 2 * x^2 - x + 2
+		
+	analysis: 
+		+ update function:
+			x = f(x) = x = x^3 - 2 * x^2 - x + 2
+		+ sequence:
+			x(0) = a
+			x(n) = f(x(n-1))
+		+ x(n) can reach to -oo or +oo depend on the initial value x0 = a.
+
+*/
+
+/* for building the entailment, refer to file limit-based-entailment.txt */
+
+/* if lim(x) = +oo */
+// check LOOP; loop condition is (x < 10)
+checkentail true |- forall (e: (e <= 0) | forall (x: (x <= e) | (x < 10))). 	// expect Fail
+
+// check TERMINATION; termination condition is (x >= 10)
+checkentail true |- (exists e: (e > 0) & forall (x: (x <= e) | (x >= 10))).		// expect Valid
+
+
+/* if lim(x) = -oo */
+// check LOOP; loop condition is (x < 10)
+checkentail true |- forall (e: (e >= 0) | forall (x: (x > e) | (x < 10))). 		// expect Valid
+
+// check TERMINATION; termination condition is (x >= 10)
+checkentail true |- (exists e: (e < 0) & forall (x: (x > e) | (x >= 10))).		// expect Fail
+

@@ -1,51 +1,39 @@
 /*
-- if lim x(n)  -> L in both side then the termination entailment is:
-	checkentail true |- (exists e: (e > 0) & forall (x: ((x > L - e) & (x < L + e)) -> Terminate(x))))
-	==
-	checkentail true |- (exists e: (e > 0) & forall (x: (not(x > L - e) | not(x < L + e) | Terminate(x)))))
 
-- if lim x(n)  -> L+   (it means x(n) > L) then the termination entailment is:
-	checkentail true |- (exists e: (e > 0) & forall (x: ((x > L) & (x < L + e)) -> Terminate(x))))
-	==
-	checkentail true |- (exists e: (e > 0) & forall (x: (not(x > L) | not(x < L + e) | Terminate(x))))
-	
-- if lim x(n)  -> L-   (it means x(n) < L) then the termination entailment is:
-	checkentail true |- (exists e: (e > 0) & forall (x: ((x < L) & (x > L - e)) -> Terminate(x))))
-	==
-	checkentail true |- (exists e: (e > 0) & forall (x: (not(x < L) | not(x > L - e) | Terminate(x))))
-*/
-
-
-/*
-EXAMPL2:
-	x > 0;
-	while (x > 0)
-		x = x/2;
+	EXAMPL1:
+		x > 0;
+		while (x > 0)
+			x = x/2;
 		
-analysis:
-	x(n) > 0; lim x(n) -> 0+;
+	analysis:
+		x(n) > 0; lim x(n) -> 0+;
 	
 */
 
-// check loop; loop condition is (x > 0)
-checkentail x > 0.0 |- x > 0.0 . // if valid then LOOP
+/* for building the entailment, refer to file limit-based-entailment.txt */
+
+// check loop; loop condition is (x > 0.0)
+checkentail true |- forall (e: (e <= 0.0) | forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (x > 0.0)))).		// expect: Valid
 
 // check termination; termination condition is (x <= 0)
-checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.0))).
+checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.0))).		// expect: Fail
 
 /*
-EXAMPLE 2:
-	x > 0;
-	while (x > 0.001)
-		x = x/2;
+
+	EXAMPLE 2:
+		x > 0;
+		while (x > 0.001)
+			x = x/2;
 		
-analysis:
-	x(n) > 0; lim x(n) -> 0+;
+	analysis:
+		x(n) > 0; lim x(n) -> 0+;
 	
 */
 
-// check LOOP; loop condition is (x > 0)
-checkentail x > 0.0 |- x > 0.001. // if valid then LOOP
+/* for building the entailment, refer to file limit-based-entailment.txt */
+
+// check LOOP; loop condition is (x > 0.001)
+checkentail true |- forall (e: (e <= 0.0) | forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (x > 0.001)))).	// expect: Fail
 
 // check TERMINATION; termination condition is (x <= 0.001)
-checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.001))).
+checkentail true |- (exists e: (e > 0.0) & forall (x: (x <= 0.0) | (x >= 0.0 + e) | (x <= 0.001))).		// expect: Valid

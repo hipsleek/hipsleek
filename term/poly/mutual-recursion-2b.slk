@@ -1,0 +1,84 @@
+/*
+	//ORIGINAL: MUTUAL RECURSION version
+	float f(x : float)
+	{
+		if x <= 0.01 then
+			return 0;
+		else
+			return g(x/2);
+	}
+
+	float g(x : float)
+	{
+		if x <= 0.02 then
+			return 0;
+		else
+			return f(x);
+	}
+
+	//TRANSFORMED: IMMUTUAL RECURSION version
+	float f(x : float)
+	{
+		if x <= 0.01 then
+			return 0;
+		else if (x/2 <= 0.02)
+			return 0;
+		else
+			return f(x/2);
+	}
+
+	float g(x : float)
+	{
+		if x <= 0.02 then
+			return 0;
+		else if (x <= 0.01)
+			return 0;
+		else
+			return g(x/2);
+	}
+
+	//REFINED: 
+	+ equivalent while loop (in term of termination) for both f(x) function
+		x0 > 0;
+		while !((x <= 0.01) | (x/2 <= 0.02))
+		{
+			x = x/2
+		}
+
+	+ equivalent while loop (in term of termination) for both g(x) function
+		x0 > 0;
+		while !((x <= 0.02) | (x <= 0.01))
+		{
+			x = x/2
+		}
+
+	//ANALYS:  
+
+	f(x)
+	- Loop condition: 			!((x <= 0.01) | (x/2 <= 0.02))                =   (x>0.01) & (x/2 > 0.02)
+	- Termination condition:	((x <= 0.01) | (x/2 <= 0.02))
+
+	- with update function h(x) = x/2; initial point x > 0.0 => lim x(n) = 0+ (n -> +oo )
+
+	g(x)
+	- Loop condition: 			!((x <= 0.02) | (x <= 0.01))
+	- Termination condition:	((x <= 0.02) | (x <= 0.01))
+
+	- with update function h(x) = x/2; initial point x > 0.0 => lim x(n) = 0+ (n -> +oo )
+*/
+
+/* for building the entailment, refer to file limit-based-entailment.txt */
+
+/* f(x) - the correspondent while loop is terminated */
+//Loop entailment:
+checkentail true |- forall (e: (e <= 0.0) | forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (!((x <= 0.01) | (x/2 <= 0.02)))))).				// expect fail
+
+//Termination entailment:
+checkentail true |- (exists e: (e > 0.0) & forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (((x <= 0.01) | (x/2 <= 0.02)))))).				// expect Valid
+
+/* g(x) - the correspondent while loop is terminated */
+//Loop entailment:
+checkentail true |- forall (e: (e <= 0.0) | forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (!((x <= 0.02) | (x <= 0.01)))))).				// expect fail
+
+//Termination entailment:
+checkentail true |- (exists e: (e > 0.0) & forall (x: ((x <= 0.0) | (x >= 0.0 + e) | (((x <= 0.02) | (x <= 0.01)))))).					// expect Valid

@@ -1,0 +1,87 @@
+I. While loop:
+
+	x = x0;
+	while (condition(x))
+	{
+		x = f(x);
+	}
+	
+II. Termination & loop condition:
+
+	TerminationCondition: not(condition(x))
+	LoopCondition:		  condition(x)
+
+III. Update function:
+
+	x = f(x)
+	
+	-> build a sequence:
+		x(0) = x0;
+		x(n) = f(x(n-1));
+	
+	Consider the limit of sequence x(n) when n -> +oo
+	
+IV. If exist lim x(n) = L (specific value) when n -> +oo
+	
+	IV.1. If lim x(n)  = L (it means x(n) reaches to L in both left and right hand side) then the termination entailment is:
+
+		- Termination entailment:
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x > L - e) & (x < L + e)) -> TerminationCondition(x))))			(Valid -> Terminate; Invalid -> Not sure)
+			==
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x <= L - e) | (x >= L + e) | TerminationCondition(x))))
+		
+		- Loop entailment:
+			checkentail true |- forall (e: (e > 0) -> forall (x: ((x > L - e) & (x < L + e)) -> LoopCondition(x))))					(Valid -> Loop; Invalid -> Not sure)
+			==
+			checkentail true |- forall (e: (e <= 0) | forall (x: ((x <= L - e) | (x >= L + e) | LoopCondition(x))))
+
+	IV.2. If lim x(n)  -> L+   (it means x(n) > L) then the termination entailment is:
+
+		- Termination entailment:
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x > L) & (x < L + e)) -> TerminationCondition(x))))				(Valid -> Terminate; Invalid -> Not sure)
+			==
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x <= L) | (x >= L + e) | TerminationCondition(x))))
+		
+		- Loop entailment:
+			checkentail true |- forall (e: (e > 0) -> forall (x: ((x > L) & (x < L + e)) -> LoopCondition(x))))						(Valid -> Loop; Invalid -> Not sure)
+			==
+			checkentail true |- forall (e: (e <= 0) | forall (x: ((x <= L) | (x >= L + e) | LoopCondition(x))))
+	
+	IV.3. If lim x(n)  -> L-   (it means x(n) < L) then the termination entailment is:
+
+		- Termination entailment:
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x < L) & (x > L - e)) -> TerminationCondition(x))))				(Valid -> Terminate; Invalid -> Not sure)
+			==
+			checkentail true |- (exists e: (e > 0) & forall (x: ((x >= L) | (x <= L - e) | TerminationCondition(x))))
+		
+		- Loop entailment:
+			checkentail true |- forall (e: (e > 0) -> forall (x: ((x < L) & (x > L - e)) -> LoopCondition(x))))						(Valid -> Loop; Invalid -> Not sure)
+			==
+			checkentail true |- forall (e: (e <= 0) | forall (x: ((x >= L) | (x <= L - e) | LoopCondition(x))))
+
+V. If exist lim x(n) = +oo or -oo when n -> oo
+
+	V.1. If lim x(n)  -> +oo
+	
+		- Termination entailment:
+			checkentail true |- (exists e: (e > 0) & forall (x: (x > e) -> TerminationCondition(x)))    										(Valid --> Terminate, Invalid --> Not sure)
+			== 		
+			checkentail true |- (exists e: (e > 0) & forall (x: (x <= e) | TerminationCondition(x)))
+			
+		- Loop entailment:
+			checkentail true |- forall (e: (e > 0) -> forall (x: (x > e) -> LoopCondition(x)))    												(Valid --> Loop, Invalid --> Not sure)
+			==
+			checkentail true |- forall (e: (e <= 0) | forall (x: (x <= e) | LoopCondition(x)))
+		
+	V.2. If lim x(n)  -> -oo
+	
+		- Termination entailment:
+			checkentail true |- (exists e: (e < 0) & forall (x: (x < e) -> TerminationCondition(x)))											(Valid --> Terminate, Invalid --> Not sure)
+			==
+			checkentail true |- (exists e: (e < 0) & forall (x: (x >= e) | TerminationCondition(x)))
+			
+		- Loop entailment:
+			checkentail true |- forall (e: (e < 0) -> forall (x: (x < e) -> LoopCondition(x)))													(Valid --> Loop, Invalid --> Not sure)
+			==
+			checkentail true |- forall (e: (e >= 0) | forall (x: (x >= e) | LoopCondition(x)))
+
