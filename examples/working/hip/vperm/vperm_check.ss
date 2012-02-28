@@ -9,22 +9,22 @@ data cell{
 
 //valid
 void inc(ref int i)
-  requires @full[i]
-  ensures @full[i];
+  requires true //@full[i]
+  ensures true; //@full[i]; //' check for VPERM only
 {
   i++;
 }
 
 void incCell(ref cell x)
-  requires x::cell<i> & @full[x]
-  ensures x::cell<i+1> & @full[x]; //check for permission only
+  requires x::cell<i> //& @full[x]
+  ensures x::cell<i+1> ; //& @full[x]; //check for permission only
 {
   x.val++;
 }
 
 //fail
 int test1(ref int x,ref int y)
-  requires @full[x,y]
+  requires true //@full[x,y]
   ensures @full[y] & res = z
           and @full[x] & thread=z; //'
 {
@@ -37,7 +37,7 @@ int test1(ref int x,ref int y)
 
 //fail
 int test2(ref cell x,ref cell y)
-  requires x::cell<i> * y::cell<j> & @full[x,y] 
+  requires x::cell<i> * y::cell<j> // & @full[x,y] 
   ensures y::cell<j+1> & @full[y] & res = z
           and x::cell<i+1> & @full[x] & thread=z; //'
 {
@@ -50,7 +50,7 @@ int test2(ref cell x,ref cell y)
 
 //fail
 int test3(ref int x,ref int y)
-  requires @full[x,y]
+  requires true //@full[x,y]
   ensures @full[y] & res = z
           and @full[x] & thread=z; //'
 {
@@ -63,7 +63,7 @@ int test3(ref int x,ref int y)
 
 //fail
 int test4(ref int x,ref int y)
-  requires @full[x,y]
+  requires true //@full[x,y]
   ensures @full[y] & res = z
           and @full[x] & thread=z; //'
 {

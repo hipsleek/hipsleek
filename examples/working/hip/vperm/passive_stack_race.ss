@@ -5,8 +5,8 @@
  */
 
 void assign(ref int x, int y)
-  requires @full[x] & @value[y]
-  ensures  @full[x] & x'=y; //'
+  requires true //@full[x] & @value[y]
+  ensures  x'=y; // & @full[x] //'
 {
   x = y;
 }
