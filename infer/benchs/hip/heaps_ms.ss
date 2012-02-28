@@ -73,7 +73,7 @@ node insert(node t, int v)
 /* function to delete a leaf */
 int deleteoneel1(ref node t)
   requires t::pq2<n> & n > 0
-  ensures t'::pq2<n-1> & & 0 <= res <= mx & mx2 <= mx;//res>=0;//& 0 <= res <= mx & mx2 <= mx;//'
+  ensures t'::pq2<n-1> & 0 <= res <= mx & mx2 <= mx;//res>=0;//& 0 <= res <= mx & mx2 <= mx;//'
 
 //fail to compute fixpoint
 relation DELONE1(int a, int b).
