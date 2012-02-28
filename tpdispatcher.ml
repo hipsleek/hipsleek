@@ -1502,6 +1502,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		r
 ;;
 
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  let pr1 = Cprinter.string_of_pure_formula in
+  let prout x = string_of_bool x in
+  Debug.no_2 "tp_imply_no_cache" 
+      (add_str "ante" pr1) 
+      (add_str "conseq" pr1) 
+      (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
 let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then
