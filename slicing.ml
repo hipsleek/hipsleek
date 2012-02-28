@@ -110,6 +110,8 @@ sig
   (* split_by_fv is used in Quantifier pushing *)
   val split_by_fv: spec_var list -> constr list -> slice list
 
+  val merge_constr: constr list -> slice
+
   (* Aggressive get_ctr *)
   (* The integer parameters can be used to
    * limit the completeness of searching *)
@@ -166,6 +168,11 @@ struct
 
   (* Merge relevant constraints into one slice *)
   let merge_constr_by_slice (s: slice) (ps: constr list) : slice =
+    let _, cl = List.split ps in
+    let s_label = ALabel.merge_list (List.map Constr.get_label ps) in
+    (Some s_label, cl)
+
+  let merge_constr (ps: constr list) : slice =
     let _, cl = List.split ps in
     let s_label = ALabel.merge_list (List.map Constr.get_label ps) in
     (Some s_label, cl)
@@ -517,16 +524,24 @@ struct
   module MF_S           = Memo_Formula(Label)
 
   let regroup_memo_group (lst: memo_pure) : memo_pure =
-    if !f_1_slice || !dis_slicing then 
-      (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
-    else 
+    if !f_1_slice (* || !dis_slicing *) then 
+      (if (List.length lst)>1 then 
+        (print_string "multi slice problem"; failwith "multi slice problem") 
+      else lst)
+    else
       let l = MG_Constr_S.constr_of_atom_list lst in
       let sl = MG_S.split l in
       MF_S.memo_pure_of_mg_slice sl None
 
+  let regroup_memo_group (lst: memo_pure) : memo_pure =
+    let pr = !Mcpure_D.print_mp_f in
+    Debug.no_1 "regroup_memo_group" pr pr
+    regroup_memo_group lst
+
   let group_mem_by_fv (lst: memo_pure) : memo_pure =
-    if !f_1_slice || !dis_slicing then
-      (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
+    if !f_1_slice (* || !dis_slicing *) then
+      (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem")
+      else lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
       let sl = MG_S.split l in
@@ -534,18 +549,21 @@ struct
 
   let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
     let r = 
-      if !f_1_slice  || !dis_slicing then 
-		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
-        let h1, h2 = (List.hd l1, List.hd l2) in
-		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
-		    [{
-          memo_group_fv = remove_dups_svl (h1.memo_group_fv @ h2.memo_group_fv);
-		      memo_group_linking_vars = remove_dups_svl (h1.memo_group_linking_vars @ h2.memo_group_linking_vars);
-		      memo_group_cons = filter_merged_cons na [h1.memo_group_cons; h2.memo_group_cons];
-		      memo_group_changed = true;
-		      memo_group_slice = h1.memo_group_slice @ h2.memo_group_slice;
-		      memo_group_aset = na;
-		    }])
+      if !f_1_slice (* || !dis_slicing *) then 
+        begin
+		    if (List.length l1)>1 || (List.length l2)>1 then (print_string "multi slice problem"; failwith "multi slice problem")
+        else
+          let h1, h2 = (List.hd l1, List.hd l2) in
+		      let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
+		      [{
+            memo_group_fv = remove_dups_svl (h1.memo_group_fv @ h2.memo_group_fv);
+		        memo_group_linking_vars = remove_dups_svl (h1.memo_group_linking_vars @ h2.memo_group_linking_vars);
+		        memo_group_cons = filter_merged_cons na [h1.memo_group_cons; h2.memo_group_cons];
+		        memo_group_changed = true;
+		        memo_group_slice = h1.memo_group_slice @ h2.memo_group_slice;
+		        memo_group_aset = na;
+		      }]
+        end 
       else
         let l = MG_Constr_S.constr_of_atom_list (l1@l2) in
         let sl = MG_S.split l in
@@ -558,6 +576,11 @@ struct
         }) merged_mp
     in r
 
+  let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
+    let pr = !Mcpure_D.print_mp_f in
+    Debug.no_2 "merge_mem_nx" pr pr pr
+    (fun _ _ -> merge_mems_nx l1 l2 slice_check_dups filter_merged_cons) l1 l2
+
   let create_memo_group (l1: b_formula list) (l2: formula list) 
     (status: prune_status) filter_merged_cons : memo_pure =
     (* Normalize l1 and l2 to lists of atomic constraints *)
@@ -567,7 +590,7 @@ struct
     let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
     let sl =
       let l = l1 @ l2 in
-      if !f_1_slice  || !dis_slicing then (* No slicing *)
+      if !f_1_slice (* || !dis_slicing *) then (* No slicing *)
         let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
         let lbl = Pure_Label.label_of_fv (Gen.BList.remove_dups_eq eq_spec_var v) in
         [(Some lbl, l)] 
@@ -578,9 +601,17 @@ struct
     in
     MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
 
+  let create_memo_group (l1: b_formula list) (l2: formula list) 
+    (status: prune_status) filter_merged_cons : memo_pure =
+    let pr1 = pr_list (!CP.print_b_formula) in
+    let pr2 = pr_list (!CP.print_formula) in
+    let pr3 = !Mcpure_D.print_mp_f in
+    Debug.no_2 "create_memo_group" pr1 pr2 pr3
+    (fun _ _ -> create_memo_group l1 l2 status filter_merged_cons) l1 l2
+
   let split_mem_grp (g : memoised_group) : memo_pure = 
-    if !f_1_slice  || !dis_slicing then [g]
-    else
+    if !f_1_slice (* || !dis_slicing *) then [g]
+    else 
       let l =  Memo_Constr.memo_constr_of_memo_group g in
       let n_l = Memo_Constr_S.constr_of_atom_list l in 
       let sl = Memo_S.split n_l in

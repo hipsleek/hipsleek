@@ -1101,8 +1101,6 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
-
-
 (**
  * To be implemented
  *)
