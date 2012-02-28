@@ -81,18 +81,18 @@ void swap(ref node x, ref node y)
 
 // drop current content, and add n element with v value
 void assign(ref node x, int n, int v)
-  infer @post []
+//  infer @post []
   requires x::dll<_,m,S3>
-  ensures x'::dll<_,n,S4> ; // forall _x: _x notin S4 | _x = v;
+  ensures x'::dll<_,n,S4> & forall (_x: _x notin S4 | _x = v);
 {
   x = create_list(n, v);
 }
 
-relation PUF(bag a, bag b, int b).
+relation PUF(bag a, bag b).
 void push_front(ref node x, int v)
   infer[PUF]
   requires x::dll<_,n,S>
-  ensures x'::node<v,_,q>*q::dll<_,n,S1> & PUF(S1,S,v);// S1=S
+  ensures x'::node<v,_,q>*q::dll<_,n,S1> & PUF(S1,S);// S1=S
 {
   if (x==null) {
     node tmp = new node(v,null,x);
@@ -215,11 +215,11 @@ node get_next(ref node x)
 }
 
 /* function to set the tail of a list */
-relation SN(bag a, bag b, int c).
+relation SN(bag a, bag b).
 void set_next(ref node x, node y)
   infer[SN]
   requires x::node<v,_,t>*t::dll<x,_,_>*y::dll<_,j,S> & x!=null
-  ensures x::dll<_,k,S2> & k>=1 & k=j+1 & SN(S,S2,v); // S2=union(S,{v})
+  ensures x::node<v,_,y>*y::dll<_,j,S2> & SN(S,S2); // S2=S
 {
   if (y==null) 
     x.next = y;
@@ -329,11 +329,11 @@ node delete2(ref node x, int a)
 /* function to create a doubly linked list with a nodes */
 relation CL(bag a, int b).
 node create_list(int n, int v)
-  infer[CL]
+//  infer[CL]
   requires n>=0
   case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::dll<_,n,S> & CL(S,v);// forall _x: _x notin S | _x = v;
+  n > 0 -> ensures res::dll<_,n,S> & forall (_x: _x notin S | _x = v);//CL(S,v);// forall _x: _x notin S | _x = v;
   n < 0 -> ensures true;
   }
 {
@@ -418,9 +418,9 @@ void list_traverse(node x)
 
 relation CPY(bag a, bag b).
 node list_copy(node x)
-  infer [CPY]
+//  infer [CPY]
   requires x::dll<p,n,S>
-  ensures x::dll<p,n,S> * res::dll<_,n,S2> & CPY(S,S2); //S2=S
+  ensures x::dll<p,n,S> * res::dll<_,n,S2> & S=S2;//CPY(S,S2); //S2=S
 {
   node tmp;
   if (x != null) {

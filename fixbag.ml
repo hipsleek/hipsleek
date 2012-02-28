@@ -454,7 +454,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
 (*    let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in*)
 (*    List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs*)
 
-let transform fml v_synch rel = match fml with
+let transform fml v_synch fv_rel = match fml with
   | BForm ((Eq (v1, BagUnion ([b2;Bag([Var (v,_)],_)],_), _), _),_)
   | BForm ((Eq (v1, BagUnion ([Bag([Var (v,_)],_);b2],_), _), _),_)
   | BForm ((Eq (BagUnion ([Bag([Var (v,_)],_);b2],_), v1, _), _),_)
@@ -479,8 +479,8 @@ let transform fml v_synch rel = match fml with
     | _ -> fml
     end
   | And _ -> 
-    let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch (CP.fv rel)) in
-    let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) (CP.fv rel)) in
+    let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch fv_rel) in
+    let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) fv_rel) in
 (*    DD.devel_hprint (add_str "VSYNCH: " (!print_svl)) v_synch no_pos;*)
 (*    DD.devel_hprint (add_str "VSUBST: " (!print_svl)) v_subst no_pos;*)
     (match (v_subst, v_synch) with
@@ -524,9 +524,15 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
-    let bcases = List.map (fun x -> transform x v_synch rel) bcases in
-    let bcases = List.map (fun x -> rewrite x (CP.fv rel) []) bcases in
-
+    let fv_rel = CP.fv rel in
+    let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
+    let bcases = List.map (fun x -> let fv_x = CP.fv x in
+        if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
+          let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
+          let r = Redlog.elim_exists_with_eq r in
+          TP.simplify_raw r) bcases in
+    let bcases = List.map (fun x -> rewrite x fv_rel []) bcases in
+    let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
 (*    match bcases with*)

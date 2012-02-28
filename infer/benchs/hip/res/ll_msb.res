@@ -260,6 +260,9 @@ Checking procedure empty$node...
 Procedure empty$node SUCCESS
 
 Checking procedure find_ge$node~int... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 !!! REL :  FGE(S,m)
 !!! POST:  m <in> S 
 !!! PRE :  true
@@ -304,9 +307,6 @@ Checking procedure find_ge$node~int...
 Procedure find_ge$node~int SUCCESS
 
 Checking procedure front$node... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 Procedure front$node SUCCESS
 
 Checking procedure get_next$node... 
@@ -914,6 +914,6 @@ Termination checking result:
 
 12 false contexts at: ( (162,13)  (162,4)  (241,4)  (241,11)  (246,4)  (246,11)  (245,10)  (245,4)  (244,8)  (244,12)  (244,4)  (244,4) )
 
-Total verification time: 5.8 second(s)
+Total verification time: 5.7 second(s)
 	Time spent in main process: 2.33 second(s)
-	Time spent in child processes: 3.47 second(s)
+	Time spent in child processes: 3.37 second(s)
