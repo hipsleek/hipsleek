@@ -6,14 +6,14 @@
  */
 
 void inc(ref int i)
-requires @full[i]
-ensures @full[i] & i'=i+1; //'
+ requires true //@full[i]
+ ensures  i'=i+1; //'@full[i] &
 {
   i++;
 }
 
 int creator(ref int x,ref int y)
-  requires @full[x] & @full[y]
+  requires true // @full[x] & @full[y]
   ensures @full[y] & y'=y+1 & res=z
           and @full[x] & x'=x+1 & thread=z; //'
 {
@@ -26,7 +26,7 @@ int creator(ref int x,ref int y)
 void joiner(int id, ref int x)
   requires [i] @value[id]
            and @full[x] & x'=i+1 & thread=id //'
-  ensures @full[x] & x'=i+1; //'
+  ensures  x'=i+1; //' @full[x] &
 {
   join(id);
 }
