@@ -742,13 +742,19 @@ and merge_mems_repatch (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pu
   if (consistent_memo_pure r) then r
   else check_repatch_memo_pure r "@ merge_mems"
 
-and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
+and merge_mems_nx_x (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
   let r = 
     if (isConstMFalse l1) || (isConstMTrue l2) then l1
 	  else if (isConstMFalse l2) || (isConstMTrue l1) then l2
 	  else if !do_slicing then AnnoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons
     else AutoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons
   in r
+
+and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
+  let pr = !print_mp_f in
+  Debug.no_2 "merge_mems_nx" pr pr pr 
+  (fun _ _ -> merge_mems_nx_x l1 l2 slice_check_dups) l1 l2 
+
 
 (*add cm to l_init and depending on the fnf flag
   true: add cm and also add the negation of cm as a fail condition
@@ -1471,8 +1477,9 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
     with_disj ante_disj conseq
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
-  let n_ante = 
-    if !do_slicing then 
+  let n_ante =
+    if !dis_slicing then ante_disj
+    else if !do_slicing then 
       AnnoS.get_rel_ctr 2 conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
@@ -1709,7 +1716,7 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
     | h :: rest -> 
         let r = fold_mem_lst_to_lst [h] false !no_RHS_prop_drop true in
         let r = List.concat (List.map list_of_conjs r) in
-	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
+	      let (r1,r2,r3) = (mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
 	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in (* A -> C *)
 	        (r1,r2@r22,r23)
@@ -1724,15 +1731,14 @@ and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
 *)
         
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
-  if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
+  (* Slicing: if a FALSE is found in the ante then return true *)
+  if (isConstMFalse ante_memo0) then (true, [], None) 
   else
-  let ante_memo0 = 
-    if !f_2_slice  || !dis_slicing (* Use one slice for proving (sat, imply) *)
-	then
-	  match ante_memo0 with
-       | [] -> []
-       | [h] -> [h]
-       | h::t -> [List.fold_left (fun a c ->
+    let merge_memo m = 
+      match m with
+        | [] -> []
+        | [h] -> [h]
+        | h::t -> [List.fold_left (fun a c ->
           let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
              memo_group_linking_vars = [];
@@ -1740,16 +1746,23 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
              memo_group_changed = true;
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
              memo_group_aset = na;}) h t]
-    else ante_memo0 in
-  imply_memo ante_memo0 conseq_memo t_imply imp_no
+    in 
+    let ante_memo0 = 
+      if !f_2_slice || !dis_slicing then merge_memo ante_memo0 (* Use one slice for proving (sat, imply) *)
+	    else ante_memo0 
+    in
+    let conseq_memo =
+      if !f_2_slice || !dis_slicing then merge_memo conseq_memo
+      else conseq_memo
+    in 
+    imply_memo ante_memo0 conseq_memo t_imply imp_no
 
-let imply_memo ante_memo0 conseq_memo t_imply imp_no=
+let imply_memo ante_memo0 conseq_memo t_imply imp_no =
  Debug.no_2 "imply_memo 2" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
 
-	
 (*let imply_memo_debug ante_memo conseq_memo t_imply =
   let (r1,r2,r3)= imply_memo ante_memo conseq_memo in  
   print_string ("imply_memo input1: "^(!print_mp_f ante_memo)^"\n");
@@ -1809,7 +1822,7 @@ let mkMFalse_no_mix = mkMFalse
 let mkMTrue_no_mix = mkMTrue
   
 let mkMTrue pos = 
-    if (!Globals.allow_pred_spec or !Globals.do_slicing) then  MemoF (mkMTrue pos)
+    if (!Globals.allow_pred_spec or !Globals.do_slicing) then MemoF (mkMTrue pos)
     else OnePF (mkTrue pos)
 	  
 let mkMFalse pos = 
@@ -1865,15 +1878,14 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
 (*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2 *)
 (*   | MemoF f1, OnePF f2 -> *)
 (*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1 *)
-  (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
+(*   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
 let merge_mems f1 f2 slice_dup = 
   Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
-  
- let replace_mix_formula_label lb s = match s with
+let replace_mix_formula_label lb s = match s with
   | MemoF f -> MemoF (replace_memo_pure_label lb f)
   | OnePF f -> OnePF (replace_pure_formula_label lb f)
 	
@@ -2029,11 +2041,7 @@ let mix_cons_filter f fct =
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
   | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
   | OnePF pf -> OnePF (combine_branch s (pf,snd f))
- (*
- match f with
-  | MemoF f -> 
-  | OnePF f -> 
- *)
+
 let mix_drop_null self l neg = match l with
   | MemoF l -> 
     let r = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self neg ) c.memo_group_slice}) l in
@@ -2081,7 +2089,7 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
 (*find constraints in f that related to specvar in v_l*)    
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
   | MemoF f -> 
-MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
+      MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
   | OnePF f -> OnePF (Cpure.find_rel_constraints f v_l)
   
 let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f
@@ -2090,7 +2098,6 @@ let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; 
 let filter_complex_inv f = match f with
   | MemoF f -> MemoF (memo_filter_complex_inv f)
   | OnePF f -> OnePF (filter_complex_inv f)
-	
 	
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
 
@@ -2154,8 +2161,6 @@ let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_gr
         memo_group_cons = new_cons;
         memo_group_slice = new_slice;
         memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
-  
-    
   
 let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)=
    let f_comb f = List.concat f in

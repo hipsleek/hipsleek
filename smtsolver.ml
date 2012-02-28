@@ -1101,15 +1101,13 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
-
-
 (**
  * To be implemented
  *)
 let simplify (f: CP.formula) : CP.formula = (*f*)
   (*let _ = print_endline "locle: simplify" in*)
   try (Omega.simplify f) with | _ -> f
-
+  (* f *)
 
 let simplify (pe : CP.formula) : CP.formula =
   match (CP.do_with_check "" simplify pe)

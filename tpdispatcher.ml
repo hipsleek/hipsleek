@@ -897,10 +897,12 @@ let disj_cnt a c s =
   else ()
 
 let stat_tp cmd tp_name =
-  Gen.Profiling.push_time ("stat_" ^ tp_name);
-  let r = (Lazy.force cmd) in
-  Gen.Profiling.pop_time ("stat_" ^ tp_name);
-  r
+  try 
+    Gen.Profiling.push_time ("stat_" ^ tp_name);
+    let r = (Lazy.force cmd) in
+    Gen.Profiling.pop_time ("stat_" ^ tp_name);
+    r
+  with ex -> (Gen.Profiling.pop_time ("stat_" ^ tp_name); raise ex)
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 (*  print_endline "==== in function tp_is_sat_no_cache ====";*)
@@ -1127,7 +1129,9 @@ let is_sat_raw (f: CP.formula) =
     
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
-  else Omega.simplify f   
+  else 
+    (* Omega.simplify f *)
+    stat_tp (lazy (Omega.simplify f)) "oc"
             
 let simplify_omega f =
   Debug.no_1 "simplify_omega"
@@ -1351,7 +1355,9 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | OM ->
 	  if (is_bag_constraint f) then
 		(Mona.hull f)
-	  else (Omega.hull f)
+	  else 
+      (* (Omega.hull f) *)
+      stat_tp (lazy (Omega.hull f)) "oc" 
   | OI ->
 	  if (is_bag_constraint f) then
 		(Isabelle.hull f)
@@ -1378,7 +1384,8 @@ let hull (f : CP.formula) : CP.formula = match !tp with
 		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
 	  else
 	  *)
-	  (Omega.hull f)
+	  (* (Omega.hull f) *)
+    stat_tp (lazy (Omega.hull f)) "oc"
 
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
@@ -1395,7 +1402,9 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | OM ->
 	  if (is_bag_constraint f) then
 		(Mona.pairwisecheck f)
-	  else (Omega.pairwisecheck f)
+	  else 
+      (* (Omega.pairwisecheck f) *)
+      stat_tp (lazy (Omega.pairwisecheck f)) "oc"
   | OI ->
 	  if (is_bag_constraint f) then
 		(Isabelle.pairwisecheck f)
@@ -1418,7 +1427,8 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
 		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
 	  else
 	  *)
-	  (Omega.pairwisecheck f)
+	  (* (Omega.pairwisecheck f) *)
+    stat_tp (lazy (Omega.pairwisecheck f)) "oc"
 
 let pairwisecheck (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
@@ -2213,7 +2223,7 @@ let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imp
 let is_sat f sat_no do_cache =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
-      Some res -> res       
+      | Some res -> res       
       | None -> false
   else  begin   
     disj_cnt f None "sat";
@@ -2723,7 +2733,7 @@ let print_stats () =
 
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
-  Redlog.start ();
+  (* Redlog.start (); *)
   match !tp with
   | Coq -> begin
       Coq.start ();
@@ -2731,8 +2741,8 @@ let start_prover () =
 	 end
   | Redlog | RM -> 
       begin
-      (* Redlog.start (); *)
-	  Omega.start ();
+      Redlog.start ();
+	    (* Omega.start (); *)
 	 end
   | Cvc3 -> 
         begin
@@ -2812,4 +2822,3 @@ let imply_raw ante conseq =
   Debug.no_2 "imply_raw" pr pr string_of_bool
   imply_raw ante conseq
   
-

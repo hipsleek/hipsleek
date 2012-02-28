@@ -1506,8 +1506,8 @@ struct
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try
       push_time s;
-        let r=f e in
-        (pop_time s; r)
+      let r = f e in
+      (pop_time s; r)
     with ex -> (pop_time s; raise ex)
 
   let do_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
