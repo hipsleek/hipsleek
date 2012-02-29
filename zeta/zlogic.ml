@@ -63,29 +63,42 @@ let check st t =
 	let _ = print_string ("[check]: {{{\n" ^ (string_of_term  t) ^ "\n}}} ") in
 	let ctx = Z3.mk_context_x [|
 		("SOFT_TIMEOUT", "5000");
-		("PULL_NESTED_QUANTIFIERS", "true")|] in
+		("PULL_NESTED_QUANTIFIERS", "true");
+		("PROOF_MODE","2")|] in
 	(* assert constraints *)
 	let _ = assert_all_axioms ctx st in
 	let t = mkUnaryTerm Neg t in
 	let _ = Z3.assert_cnstr ctx (z3ast ctx t) in
-	(* check and return *)
+	(* check and get proof *)
 	let res = Z3.check ctx in
 	let res = negate_triary (z3lbool_to_triary_bool res) in
 	let _ = print_endline (string_of_triary_bool res) in
+	let _ = Z3.del_context(ctx) in
 		res
-	
-let get_induction_candidates st t =
-	let fas = collect_fun_apps t in
-	let ivals = List.map (fun x ->
-		let fn = get_functor_name x in
-		let fa = get_fun_app_arg x in
+
+let get_top_ind st t = match t with
+	| FunApp (GFunc, fn::fa) -> begin
 		try
-			let s = Hashtbl.find st fn in
+			let s = Hashtbl.find st (name_of_var fn) in
 			let rep = mapi (fun i y -> ("$" ^ (string_of_int i), y)) fa in
 				List.map (fun t -> subst rep t) s.induction
 		with
-			| Not_found -> []) fas in
-	List.flatten ivals
+			| Not_found -> [] end
+	| _ -> []
+	
+
+let get_induction_candidates st t =
+	let vst = frv t in
+	let fas = collect_fun_apps t in
+	let ivals = List.map (get_top_ind st) fas in
+	let ivals = List.flatten ivals in
+	(* remove expression that contain quantified variables *)
+	let ivals = List.filter (fun x -> subset_eq eq_var (frv x) vst) ivals in
+		ivals
+		
+(* Give priority to the expressions in the consequence *)
+(*let get_induction_candidates st t =*)
+	
 
 let make_induction_scheme st iv t =
 	(*let _ = print_endline ("[make_induction_scheme]: " ^ (string_of_term_list tvars)) in*)
@@ -118,15 +131,20 @@ let check_induction st t =
 				| _ -> Unknown
 
 let verify_theorem st t =
-	let _ = print_endline ("[verify_theorem]: " ^ (string_of_term t.thm)) in
-	match check st t.thm with
+	(*let _ = print_endline ("[verify_theorem]: " ^ (string_of_term t.thm)) in*)
+	let validity = check st t.thm in
+	let validity = match validity with
+		| Unknown -> check_induction st t.thm
+		| _ -> validity in
+	{ t with proved = (validity = True) }
+	(*let validity = match validity with
 		| True -> print_endline "[verify_theorem]: derived"
 		| False -> print_endline "[verify_theorem]: false"
 		| Unknown -> 
 			let _ = print_endline "[verify_theorem]: unknown -- try induction " in
 			match (check_induction st t.thm) with
 				| True -> print_endline "[verify_theorem]: valid"
-				| _ -> print_endline "[verify_theorem]: unknown"
+				| _ -> print_endline "[verify_theorem]: unknown"*)
 
 (* INTERFACE TO OTHER MODULES *)
 

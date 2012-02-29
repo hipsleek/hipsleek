@@ -29,16 +29,27 @@ let rec group_elms eqv l = match l with
 let remove_dups_eq eq l =
 	let eq_classes = group_elms eq l in
 		List.map List.hd eq_classes
+
+(**
+ * Check if exists y in l such that [eq x y]
+ *)
+let memeq eq l x =
+	try
+		let _ = List.find (eq x) l in
+			true
+	with
+		| Not_found -> false
+
+(**
+ * Check if for all y in l: [eq x y] does not hold
+ *)	
+let notmemeq eq l x = not (memeq eq l x)
 	
 (**
  * Compute l1 \ l2
  *)
 let remove_all_eq eq l1 l2 =
-	let meml2 x = try
-			let _ = List.find (eq x) l2 in
-				false
-		with Not_found -> true in
-	List.filter meml2 l1
+	List.filter (notmemeq eq l2) l1
 
 (**
  * Position-aware list map
@@ -49,3 +60,9 @@ let mapi f l =
 			| [] -> []
 			| h :: t -> (f i h) :: (mapi_helper t (i+1)) in
 	mapi_helper l 0
+	
+(**
+ * Check if the elements of l1 is a subset of l2
+ *)
+let subset_eq eq l1 l2 =
+	List.for_all (memeq eq l2) l1
