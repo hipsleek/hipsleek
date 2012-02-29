@@ -52,6 +52,10 @@ For precondition we get:
 // Inferred Pure:[ n!=0 | m!=0, n!=0 | m<=0, n!=0 | m!=0, n!=0 | m<=0]
 // inferred pre : (n!=0 | m<=0) 
 
+// TODO: WHY infer m>=0 when not in infer list
+//!!! POST:  m>=0 & z>=(1+m) & z=n+m
+//!!! PRE :  0<=m & 1<=n
+
 void append(node x, node y)
 // infer [n,m,B]
   infer [n,A]
