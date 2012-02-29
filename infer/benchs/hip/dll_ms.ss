@@ -480,18 +480,20 @@ void splice (ref node x, node y)
 {
   if(x == null)
     x = y;
-  else {
-    if(y != null){
-      node nx = x.next;
-      node ny = y.next;
-      x.next = y;
-      if (y!=null)
-        y.prev = x;
-      splice(nx, ny);
-      y.next = nx;
-      if (nx!=null)
-        nx.prev = y;
+  else
+    {
+      if(y != null)
+        {
+          node nx = x.next;
+          node ny = y.next;
+          x.next = y;
+          if (y!=null)
+            y.prev = x;
+          splice(nx, ny);
+          y.next = nx;
+          if (nx!=null)
+            nx.prev = y;
+        }
     }
-  }
 }
 

@@ -20,7 +20,7 @@ data node2 {
 		- we used it to make the insertion easier (because in the insertion there are points where we need to
 		know if a subtree is perfect or not)
 */
-
+//memory safety -> height minheight
 complete<n, nmin> == self = null & n = 0 & nmin = 0
   or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
   or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1

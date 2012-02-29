@@ -11,14 +11,18 @@ data node {
 /* view for avl trees */
 //memory safety
 avl1<> == self = null
-  or self::node<_, n, p, q> * p::avl1<> * q::avl1<>
+  or self::node<_, n, p, q> * p::avl1<> * q::avl1<> & n>=0
 	inv true;
 
 /* function to return the height of an avl tree */
+int height1(node x)
+  requires x::avl1<>
+  ensures x::avl1<> & res>=0;
+
 int height(node x)
-  infer[x]
-  requires x::avl1<>@I
-  ensures true;
+  infer[res]
+  requires x::avl1<>
+  ensures x::avl1<>;
 
 {
 	if (x == null)
@@ -28,21 +32,28 @@ int height(node x)
 }
 
 /*  function to rotate left */
-node rotate_left(node l, node rl, node rr)
-  infer[l,rl,rr,res]
+node rotate_left1(node l, node rl, node rr)
   requires l::avl1<> * rl::avl1<> * rr::avl1<>
-  ensures res::avl1<>;//res!=null
+  ensures res::avl1<> & res!=null;
+
+node rotate_left(node l, node rl, node rr)
+  infer[res]
+  requires l::avl1<> * rl::avl1<> * rr::avl1<>
+  ensures res::avl1<> ;//& res!=null;
 
 {
 	node tmp;
 	int v = 10, h;
 
-	h = height(l) + 1;
+	h = height1(l) + 1;
 	tmp = new node(v, h, l, rl);
 	h = h + 1;
 	return new node(v, h, tmp, rr);
 }
 
+node rotate_right1(node ll, node lr, node r)
+  requires ll::avl1<> * lr::avl1<> * r::avl1<>
+  ensures res::avl1<> & res!=null;
 
 /* function to rotate right */
 node rotate_right(node ll, node lr, node r)
@@ -53,7 +64,7 @@ node rotate_right(node ll, node lr, node r)
 	node tmp;
 	int v = 10, h;
 
-	h = height(r) + 1;
+	h = height1(r) + 1;
 	tmp = new node(v, h, lr, r);
 	h = h + 1;
 	return new node(v, h, ll, tmp);
@@ -69,10 +80,11 @@ int get_max(int a , int b)
 		return b;
 }
 
-//should be improved, failed when run all file
-//!!! Inferred Heap :[ c::avl1@inf_ann_1590[Orig]@ rem br[{651,650}], d::avl1@inf_ann_1591[Orig]@ rem br[{651,650}], a::avl1@inf_ann_1580[Orig]@ rem br[{651,650}], b::avl1@inf_ann_1581[Orig]@ rem br[{651,650}]]
-//!!! Inferred Pure :[ inf_ann_1590<=1, inf_ann_1591<=1, inf_ann_1580<=1, inf_ann_1581<=1]
 /* double left rotation */
+node rotate_double_left1(node a, node b, node c, node d, int v1, int v2, int v3)
+  requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>
+  ensures res::avl1<>;
+
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
   infer[a,b,c,d]
   requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>// & an = max(bn, cn)
@@ -82,19 +94,22 @@ node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 	node tmp1, tmp2;
 	int h;
 
-	h = get_max(height(a), height(b));
+	h = get_max(height1(a), height1(b));
 	h = h + 1;
 	tmp1 = new node(v1, h, a, b);
 
-	h = get_max(height(c), height(d));
+	h = get_max(height1(c), height1(d));
 	h = h + 1;
 	tmp2 = new node(v3, h, c, d);
 
-	h = get_max(height(tmp1), height(tmp2));
+	h = get_max(height1(tmp1), height1(tmp2));
 	h = h + 1;
 	return new node(v2, h, tmp1, tmp2);
 }
 
+node rotate_double_right1(node a, node b, node c, node d, int v1, int v2, int v3)
+  requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>
+  ensures res::avl1<>;
 /*
 should be improved, failed when run all file
 !!! Inferred Heap :[ c::avl1@inf_ann_1559[Orig]@ rem br[{651,650}], d::avl1@inf_ann_1560[Orig]@ rem br[{651,650}], a::avl1@inf_ann_1549[Orig]@ rem br[{651,650}], b::avl1@inf_ann_1550[Orig]@ rem br[{651,650}]]
@@ -110,15 +125,15 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 	node tmp1, tmp2;
 	int h;
 
-	h = get_max(height(a), height(b));
+	h = get_max(height1(a), height1(b));
 	h = h + 1;
 	tmp1 = new node(v3, h, a, b);
 
-	h = get_max(height(c), height(d));
+	h = get_max(height1(c), height1(d));
 	h = h + 1;
 	tmp2 = new node(v1, h, c, d);
 
-	h = get_max(height(tmp1), height(tmp2));
+	h = get_max(height1(tmp1), height1(tmp2));
 	h = h + 1;
 	return new node(v2, h, tmp1, tmp2);
 }
@@ -126,7 +141,7 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 
 /* functions to build avl trees */
 node build_avl1(node x, node y)
-  infer[x,y]
+  infer[x]
   requires x::avl1<> * y::avl1<> //& x != null
   ensures res::avl1<>;
 {
@@ -139,7 +154,7 @@ node build_avl1(node x, node y)
 }
 
 void build_avl2(node x, node y, node z)
-  infer[x,y,z]
+  infer[x,y]
   requires y::avl1<> * z::avl1<> * x::node<_, _, _, _> //& y != null
   ensures  x::avl1<>;
 {
@@ -154,7 +169,6 @@ node node_error() requires true ensures false;
 
 /* function to insert a node in an avl tree (using the rotate functions) */
 node insert(node x, int a)
-  infer[x,a]
   requires x::avl1<>
   ensures res::avl1<>;
 {
@@ -169,16 +183,16 @@ node insert(node x, int a)
           tmp = x.left;
           x.left = insert(tmp, a);
           // check if we need rotation
-          if ((height(x.left) - height(x.right)) == 2)
+          if ((height1(x.left) - height1(x.right)) == 2)
 			{
-              if (height(x.left.left) > height(x.left.right))
+              if (height1(x.left.left) > height1(x.left.right))
 				{
-                  return rotate_right(x.left.left, x.left.right, x.right);
+                  return rotate_right1(x.left.left, x.left.right, x.right);
 				}
               else
 				{
-                  if (height(x.left.left) == (height(x.left.right) - 1))
-                    return rotate_double_left(x.left.left, x.left.right.left, x.left.right.right, x.right, 1, 1, 1);
+                  if (height1(x.left.left) == (height1(x.left.right) - 1))
+                    return rotate_double_left1(x.left.left, x.left.right.left, x.left.right.right, x.right, 1, 1, 1);
                   else
                     return node_error();
 				}
@@ -190,16 +204,16 @@ node insert(node x, int a)
           {
 			tmp = x.right;
 			x.right = insert(tmp, a);
-			if ((height(x.right) - height(x.left)) == 2)
+			if ((height1(x.right) - height1(x.left)) == 2)
               {
-				if (height(x.right.right) > height(x.right.left))
+				if (height1(x.right.right) > height1(x.right.left))
                   {
-					return rotate_left(x.left, x.right.left, x.right.right);
+					return rotate_left1(x.left, x.right.left, x.right.right);
                   }
 				else
                   {
-					if ((height(x.right.left) - 1) == height(x.right.right))
-                      return rotate_double_right(x.left, x.right.left.left, x.right.left.right, x.right.right, 1, 1, 1);
+					if ((height1(x.right.left) - 1) == height1(x.right.right))
+                      return rotate_double_right1(x.left, x.right.left.left, x.right.left.right, x.right.right, 1, 1, 1);
 					else
                       return node_error();
                   }

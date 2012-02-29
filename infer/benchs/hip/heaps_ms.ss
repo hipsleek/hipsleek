@@ -21,7 +21,7 @@ relation INS(int a, int b).
 node insert(node t, int v)
   infer[INS]
   requires t::pq2<n> & v >= 0
-  ensures res::pq2<n1> & INS(n1,n);//n1 = n+1;
+  ensures res::pq2<n1> & n1 = n+1;//INS(n1,n)
 {
 	node tmp, tmp_null = null;
 	int tmpv;
@@ -103,6 +103,12 @@ int deleteoneel(ref node t)
 
 }
 
+int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
+  requires l::pq2<m1> * r::pq2<m2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq2<m1'> * r'::pq2<m2'> & res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
+//m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;
+//DELONE2(m1,m1',m2,m2') & //m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1
+
 //relation DELONE2(int a, int b, int c, int d).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 //infer[DELONE2]
@@ -126,13 +132,13 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 /* function to restore the heap property */
 void ripple1(ref int d, int v, int m1, int m2, node l, node r)
 	requires l::pq2<m1> * r::pq2<m2> & 0 <= d & 0 <= m1 - m2 <= 1
-	ensures l::pq2<m1> * r::pq2<m2> ;
+	ensures l::pq2<m1> * r::pq2<m2> & d'>=0;//'
 //fail to compute the fixpoint
-relation RIP(int a, int b).
+relation RIP(int a).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-//  infer [RIP]
-  requires l::pq2<m1> * r::pq2<m2> & 0 <= v <= d & 0 <= m1 - m2 <= 1//RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
-  ensures l::pq2<m1> * r::pq2<m2> ;
+  infer [RIP]
+  requires l::pq2<m1> * r::pq2<m2> &  0 <= v <= d & 0 <= m1 - m2 <= 1 //RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
+  ensures l::pq2<m1> * r::pq2<m2>  & RIP(d);//'& d'>=0
 {
 	if (m1 == 0)
       { //assume false;
@@ -182,12 +188,11 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 }
 
 /* function to delete the root of a heap tree */
-//something is wrong here
-relation DELM(int a, int b).
+//can not reverify
 int deletemax(ref node t)
-//  infer[DELM,t]
-	requires t::pq2<n> & n > 1 & t!=null
-	ensures t'::pq2<n1> & n1=n;//DELM(n1,n);//'
+//infer[n1]
+  requires t::pq2<n> & n > 0 & t!=null
+  ensures t'::pq2<n1> & n1=n-1 ;//'& n1=n-1
 
 {
 	int v, tmp;
@@ -201,7 +206,7 @@ int deletemax(ref node t)
 	else
 	{
       bind t to (tval, tnleft, tnright, tleft, tright) in {
-        v = deleteone(tnleft, tnright, tleft, tright);
+        v = deleteone1(tnleft, tnright, tleft, tright);
         //dprint;
         tmp = tval;
         ripple1(tval, v, tnleft, tnright, tleft, tright);

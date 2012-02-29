@@ -114,14 +114,15 @@ int deleteoneel(ref node t)
 int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
   ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
-  & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+  & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;//'
 
-/* function to delete one element */
+/* function to delete one element*/
+//can not reverify
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
-     infer[mx1,mx2,mx3,mx4]
+//infer[mx1,mx2,mx3,mx4]
      requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
      ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 &
-     maxi = max(mx1, mx2) & 0 <= res <= maxi;
+     m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
                           //& mx3 <= mx1 & mx4 <= mx2;
   /* 
     requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
