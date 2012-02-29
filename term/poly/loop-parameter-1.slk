@@ -1,0 +1,85 @@
+/*  
+
+		x= x0 > 0;
+		A > 0;
+		while (C(x))
+		{
+			x = 1/2 * (x + A/x);
+		}
+
+		+ lim x(n) = L+;		// L = sqrt(A)
+*/
+
+/* In this example, all the entailment for the initail condition for proving LOOP is expect to FAIL because the initial value doesn't have enough information to conclude */
+
+/* Example 1: C(x) :=  x < L - 1 */
+
+	/* Termination entailment: */
+	//checkentail true |- (exists e: (e > 0.0) & forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x >= L - 1))))
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x >= L - 1.0)))).				// expect Valid
+
+	/* Loop entailment: */
+	// initial
+	// checkentail true |- (x > 0.0) & (A > 0.0) -> (x < L - 1.0).
+	checkentail    true |- !(x <= 0.0) | (A <= 0.0) | (x < L - 1.0).																							// expect Fail
+	// limit
+	// checkentail true |- forall (e: (e > 0.0) -> forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x < L - 1.0))))					
+	checkentail    true |- forall (e: (e <= 0.0) | forall (x: (A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x < L - 1.0))).				// expect Fail
+		
+
+/* Example 2: C(x) :=  x <= L */
+
+	/* Termination entailment: */
+	//checkentail true |- (exists e: (e > 0.0) & forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x >= L))))
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x >= L)))).					// expect Valid
+
+	/* Loop entailment: */
+	// initial
+	// checkentail true |- (x > 0.0) & (A > 0.0) -> (x < L).
+	checkentail    true |- !(x <= 0.0) | (A <= 0.0) | (x < L).																									// expect Fail
+	// limit
+	// checkentail true |- forall (e: (e > 0.0) -> forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x < L))))						
+	checkentail    true |- forall (e: (e <= 0.0) | forall (x: (A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x < L))).						// expect Fail
+
+/* Example 3: C(x) :=  x > L */
+
+	/* Termination entailment: */
+	//checkentail true |- (exists e: (e > 0.0) & forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x <= L))))
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x <= L)))).					// expect Fail
+
+	/* Loop entailment: */
+	// initial
+	// checkentail true |- (x > 0.0) & (A > 0.0) -> (x > L).
+	checkentail    true |- !(x <= 0.0) | (A <= 0.0) | (x > L).																									// expect Fail	
+	// limit
+	// checkentail true |- forall (e: (e > 0.0) -> forall (x: ((A > 0.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x > L))))						
+	checkentail    true |- forall (e: (e <= 0.0) | forall (x: (A <= 0.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x > L))).						// expect Valid
+
+/* Example 4: C(x) :=  x * x * x > A  with A > 1*/
+
+	/* Termination entailment: */
+	//checkentail true |- (exists e: (e > 0.0) & forall (x: ((A > 1.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x * x * x <= A))))
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((A <= 1.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x * x * x <= A)))).			// expect Fail
+
+	/* Loop entailment: */
+	// initial
+	// checkentail true |- (x > 0.0) & (A > 1.0) -> (x * x * x > A).
+	checkentail    true |- !(x <= 0.0) | (A <= 1.0) | (x * x * x > A).																							// expect Fail
+	// limit
+	// checkentail true |- forall (e: (e > 0.0) -> forall (x: ((A > 1.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x * x * x > A))))						
+	checkentail    true |- forall (e: (e <= 0.0) | forall (x: (A <= 1.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x * x * x > A))).				// expect Valid
+
+/* Example 5: C(x) :=  x * x * x > A  with A < 1*/
+
+	/* Termination entailment: */
+	//checkentail true |- (exists e: (e > 0.0) & forall (x: ((A < 1.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x * x * x <= A))))
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((A >= 1.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x * x * x <= A)))).			// expect Valid
+
+	/* Loop entailment: */
+	// initial
+	// checkentail true |- (x > 0.0) & (A < 1.0) -> (x * x * x > A).
+	checkentail    true |- !(x <= 0.0) | (A >= 1.0) | (x * x * x > A).																							// expect Fail
+	// limit
+	// checkentail true |- forall (e: (e > 0.0) -> forall (x: ((A < 1.0) & (L > 0.0) & (L * L = A) & (x > L) & (x < L + e)) -> (x * x * x > A))))						
+	checkentail    true |- forall (e: (e <= 0.0) | forall (x: (A >= 1.0) | (L <= 0.0) | (L * L != A) | (x <= L) | (x >= L + e) | (x * x * x > A))).				// expect Fail
+
