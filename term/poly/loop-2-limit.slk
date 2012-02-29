@@ -1,0 +1,53 @@
+/*
+	x = x0 > 0;
+	while C(x)
+	{
+		x = 1 + 1/x;
+	}
+	
+	x(0) = x0.
+	x(n) = f(x(n-1)).
+	
+	Analysis:	limit of x(n) is (1 + sqrt(5))/2  = 1.6180339... :    root of equation x^2 - x - 1 = 0.
+*/
+
+/* Termination entailments: 
+		1) checkentail true |- (exists e: (e > 0) & forall (x: ((x <= L - e) | (x >= L + e) | TerminationCondition(x))))
+*/
+	
+/* Loop entailment:
+		2) checkentail true |- forall (e: (e <= 0) | forall (x: ((x <= L - e) | (x >= L + e) | LoopCondition(x))))
+*/
+
+/* Example 1: C(x) = x > 1; */
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.0)))).			// expect Fail
+	
+	// Loop:
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.0))).			// expect Valid but FAIL because of the incompleteness of loop entailment; weaken than invariant method.
+
+/* Example 2: C(x) = x < 1.618; */
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.618)))).		// expect Valid	; better than invariant method
+	
+	// Loop:
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.618))).			// expect Fail
+
+/* Example 3: C(x) = x > 1.619; */
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.619)))).		// expect Valid ; better than invariant method
+	
+	// Loop:
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.619))).			// expect Fail
+
+/* Example 4: C(x) = x < 1; */
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.0)))).			// expect Valid
+	
+	// Loop:
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.0))).			// expect Fail
+

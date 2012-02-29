@@ -1,0 +1,54 @@
+I. While loop:
+
+	x = x0 satisfies initial condition
+	while (condition(x))
+	{
+		x = f(x);
+	}
+	
+II. Termination & loop condition:
+
+	TerminationCondition: not(condition(x))
+	LoopCondition:		  condition(x)
+
+III. Update function:
+
+	x = f(x)
+	
+	-> build a sequence:
+		x(0) = x0;
+		x(n) = f(x(n-1));
+
+	
+	=> find invariant of x: - for exampe, the invariant is like: x_min < x < x_max; x is odd; even... 
+							- maybe the invariant is started from x(n) with specific value of n. (the remained values are trivial cases)
+	
+	=> Can use the invariant x to support loop/termination proving.
+
+IV. Entailment
+
+	IV.1 Termination entailment:																				// Valid -> Terminate
+		
+		checkentail true |- (forall x: Invariant(x) -> TerminationCondition(x)).
+		==
+		checkentail true |- (forall x: !Invariant(x) | TerminationCondition(x)).
+		
+	IV.2 Loop entailment: have to check the 2 conditions: trivial cases of x(0), x(1)... and invariant case		// All the cases Valid -> Terminate. 
+		
+		+ Trivial cases condition:
+			
+			checkentail true |- TrivialCasesCondition(x) -> LoopCondition(x).
+		
+
+		+ Invariant condition:
+
+			checkentail true |- forall (x: Invariant(x) -> LoopCondition(x)).
+			==
+			checkentail true |- forall (x: !Invariant(x) | LoopCondition(x)).
+			
+			
+
+**************************			
+NOTE: 
+
+- The invariant method seems to better than limit method when proving the loop condition; but for termination proving, the limit method is better

@@ -1,0 +1,57 @@
+/*
+	x = x0 > 0;
+	while C(x)
+	{
+		x = 1 + 1/x;
+	}
+	
+	x(0) = x0.
+	x(n) = f(x(n-1)).
+	
+	Analysis:	INVARIAN: with x(0) = x0 > 0 => 		1 < x(n) < 2 from n >= 2  (n=0, 1 are the trivial cases).
+	
+				limit of x(n) is (1 + sqrt(5))/2  = 1.6180339
+
+*/
+
+/* Termination entailments: 
+		1) checkentail true |- forall (x: ((1 < x < 2) -> !C(x))). 
+*/
+	
+/* Loop entailment:
+		2) checkentail true |- x(0) -> C(x).						// trivial case
+		3) checkentail true |- x(1) -> C(x).						// trivial case
+		4) checkentail true |- forall (x: (1 < x < 2) -> C(x)).		// invariant case
+*/
+
+/* Example 1: C(x) = x > 1; */
+
+	// Termination:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x <= 1.0)).								// expect: Fail.
+	
+	// Loop:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x > 1.0)).								// expect: Valid.
+
+/* Example 2: C(x) = x < 1.618; */
+
+	// Termination:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x >= 1.618)).								// expect: Valid but in fact Fail --> the range value is weaken than limit method
+	
+	// Loop:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x < 1.618)).								// expect: Fail.
+
+/* Example 3: C(x) = x > 1.619; */
+
+	// Termination:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x <= 1.619)).								// expect: Valid but in fact Fail --> the range value is weaken than limit method
+	
+	// Loop:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x > 1.619)).								// expect: Fail.
+
+/* Example 4: C(x) = x < 1; */
+
+	// Termination:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x >= 1.0)).								// expect: Valid.
+	
+	// Loop:
+	checkentail true |- forall (x: (x <= 1.0) | (x >= 2.0) | (x < 1.0)).								// expect: Fail.
