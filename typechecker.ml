@@ -1244,7 +1244,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let triples (*(rel, post, pre)*) = if rels = [] then []
                               else Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
                             let triples = List.map (fun (rel,post,pre) ->
-                                let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
+                                let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
                                 let pre_new = TP.simplify_exists_raw exist_vars post in
                                 (rel,post,pre_new)) triples in
                             let evars = stk_evars # get_stk in

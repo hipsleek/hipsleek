@@ -1,7 +1,7 @@
 
 Processing file "heaps_ms.ss"
 Parsing heaps_ms.ss ...
-Parsing ../../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -715,6 +715,6 @@ Termination checking result:
 Stop Omega... 1913 invocations 
 8 false contexts at: ( (139,2)  (199,6)  (199,13)  (198,10)  (198,6)  (197,13)  (197,6)  (197,6) )
 
-Total verification time: 6.84 second(s)
-	Time spent in main process: 5.93 second(s)
-	Time spent in child processes: 0.91 second(s)
+Total verification time: 1.8 second(s)
+	Time spent in main process: 0.91 second(s)
+	Time spent in child processes: 0.89 second(s)
