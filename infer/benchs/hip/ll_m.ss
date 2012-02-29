@@ -105,7 +105,7 @@ void push_front(ref node x, int v)
 node pop_front(ref node x)
   infer[x]
   requires x::ll1<>//x!=null
-  ensures x'::ll1<>;//res=x
+  ensures x'::ll1<>;//'res=x
 {
   node tmp = x;
   x = x.next;
@@ -283,8 +283,8 @@ node split1(node x, int a)
 		a = a - 1;
 		node tmp;
 		bind x to (_, xnext) in
-    {
-      tmp = split1(xnext, a);
+        {
+          tmp = split1(xnext, a);
 		}
 		return tmp;
 	}

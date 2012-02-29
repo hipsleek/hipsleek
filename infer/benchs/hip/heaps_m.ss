@@ -70,10 +70,14 @@ node insert(ref node t, int v)
 }
 
 /* function to delete a leaf */
+int deleteoneel1(ref node t)
+  requires t::pq1<> & t!=null
+	ensures t'::pq1<> & res>=0;
+
 int deleteoneel(ref node t)
   infer[t,res]
   requires t::pq1<> //& t!=null
-	ensures t'::pq1<> & res>=0;//& 0 <= res;// <= mx & mx2 <= mx;
+	ensures t'::pq1<> ;//& 0 <= res;// <= mx & mx2 <= mx;
 	//ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
 
 {
@@ -90,7 +94,7 @@ int deleteoneel(ref node t)
 		int tmp;
 
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
-			tmp = deleteone(tnleft, tnright, tleft, tright);
+			tmp = deleteone1(tnleft, tnright, tleft, tright);
 		}
 
 		return tmp;
@@ -99,21 +103,25 @@ int deleteoneel(ref node t)
 }
 
 /* function to delete one element */
+int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
+  requires l::pq1<> * r::pq1<>  & l!=null & r!=null//& m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq1<> * r'::pq1<>  & res>=0 & (m2'+1)>=m2 & m2>=m2' & m2'+m1'+1=m1+m2;
+
 relation DELONE(int a, int b, int c, int d).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
   infer[DELONE]
-  requires l::pq1<> * r::pq1<> //& m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  requires l::pq1<> * r::pq1<> & l!=null & r!=null//& m1 + m2 > 0 & 0 <= m1 - m2 <=1
   ensures l'::pq1<> * r'::pq1<> & DELONE(m1,m1',m2,m2') & res>=0;//(m2'+1)>=m2 & m2>=m2' & m2'+m1'+1=m1+m2
 {
 	if (m1 > m2)
 	{
 		m1 = m1 - 1;
-		return deleteoneel(l);
+		return deleteoneel1(l);
 	}
 	else 
 	{
 		m2 = m2 - 1;
-		return deleteoneel(r);
+		return deleteoneel1(r);
 	}
 }
 
@@ -122,10 +130,11 @@ void ripple1(ref int d, int v, int m1, int m2, node l, node r)
   ensures l::pq1<> * r::pq1<> ;//& RIP(d,v,m1,m2);//'
 
 /* function to restore the heap property */
+                                             relation RP(int a, int b, int c, int d).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-  infer[l,r]
-  requires l::pq1<> * r::pq1<>// l!= null & r!=null
-  ensures l::pq1<> * r::pq1<> ;//
+                                             infer[l,r,RP]
+   requires l::pq1<> * r::pq1<>//& l!= null & r!=null
+  ensures l::pq1<> * r::pq1<>& RP(d,v,m1,m2);// & RP(l,r);//
 {
 	if (m1 == 0)
       { //assume false;
@@ -192,10 +201,10 @@ int deletemax(ref node t)
 	else
 	{
       bind t to (tval, tnleft, tnright, tleft, tright) in {
-          v = deleteone(tnleft, tnright, t.left, t.right);
+        v = deleteone1(tnleft, tnright, t.left, t.right);
 			//dprint;
-          tmp = tval;
-          ripple1(tval, v, tnleft, tnright, t.left, t.right);
+        tmp = tval;
+        ripple1(tval, v, tnleft, tnright, t.left, t.right);
       }
 		return tmp;
 	}

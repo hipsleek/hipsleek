@@ -83,10 +83,10 @@ int get_max(int a , int b)
 /* double left rotation */
 node rotate_double_left1(node a, node b, node c, node d, int v1, int v2, int v3)
   requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>
-  ensures res::avl1<>;
+  ensures res::avl1<> & res!=null;
 
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer[a,b,c,d]
+  infer[res]
   requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>// & an = max(bn, cn)
 // & -1 <= bn - cn <= 1
   ensures res::avl1<>;
@@ -109,7 +109,7 @@ node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 
 node rotate_double_right1(node a, node b, node c, node d, int v1, int v2, int v3)
   requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>
-  ensures res::avl1<>;
+  ensures res::avl1<> & res!=null;
 /*
 should be improved, failed when run all file
 !!! Inferred Heap :[ c::avl1@inf_ann_1559[Orig]@ rem br[{651,650}], d::avl1@inf_ann_1560[Orig]@ rem br[{651,650}], a::avl1@inf_ann_1549[Orig]@ rem br[{651,650}], b::avl1@inf_ann_1550[Orig]@ rem br[{651,650}]]
@@ -117,10 +117,10 @@ should be improved, failed when run all file
  */
 /* double right rotation */
 node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer[a,b,c,d]
+  infer[res]
   requires a::avl1<> * b::avl1<> * c::avl1<> * d::avl1<>
 //& an = max(bn, cn) & -1 <= cn - bn <= 1
-  ensures res::avl1<>;
+  ensures res::avl1<>;//res!=null
 {
 	node tmp1, tmp2;
 	int h;
@@ -168,9 +168,11 @@ void build_avl2(node x, node y, node z)
 node node_error() requires true ensures false;
 
 /* function to insert a node in an avl tree (using the rotate functions) */
+relation INS(node a).
 node insert(node x, int a)
+//infer[INS]
   requires x::avl1<>
-  ensures res::avl1<>;
+  ensures res::avl1<> & res!=null;
 {
 	node tmp, tmp_null = null;
 

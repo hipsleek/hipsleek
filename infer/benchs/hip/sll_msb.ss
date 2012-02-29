@@ -80,17 +80,17 @@ void swap(ref node x, ref node y)
 // drop current content, and add n element with v value
 void assign(ref node x, int n, int v)
   infer @post []
-  requires x::sll1<m,_>
-  ensures x'::sll1<n1,S>;
+  requires x::sll1<m,_>& n>=0
+  ensures x'::sll1<n1,S>;//'
 {
-  x = create_list(n, v);
+  x = create_list1(n, v);
 }
 
 relation PUF(bag a, int b).
 void push_front(ref node x, int v)
 //  infer[PUF]
   requires x::sll1<n, S> & forall (a: (a notin S | v <= a))
-  ensures x'::sll1<n+1, S1> & forall (a2: (a2 notin S1 | v <= a2)); //PUF(S1,v);
+  ensures x'::sll1<n+1, S1> & forall (a2: (a2 notin S1 | v <= a2)); //'PUF(S1,v);
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -150,7 +150,7 @@ relation SN(bag a, bag b, int c).
 void set_next(ref node x, node y)
   infer[SN]
   requires x::node<v,t>*t::sll1<_,_> * y::sll1<j,S>
-  ensures x'::sll1<k,S2> & k=j+1 & SN(S,S2,v);//S2=union(S,{v});//SN(S,S2,v);
+  ensures x'::sll1<k,S2> & k=j+1 & SN(S,S2,v);//'S2=union(S,{v});//SN(S,S2,v);
 {
   node tmp = x;
   tmp.next = null;
@@ -281,6 +281,14 @@ node delete2(node x, int v)
 }
 
 /* function to create a singly linked list with a nodes */
+node create_list1(int n, int v)
+  requires n>=0
+ case {
+  n = 0 -> ensures res=null;
+  n > 0 -> ensures res::sll1<n,S> & (forall (x: x notin S | x = v));
+  n < 0 -> ensures true;
+}
+
 relation CL(bag a, int b).
 node create_list(int n, int v)
 infer[CL]

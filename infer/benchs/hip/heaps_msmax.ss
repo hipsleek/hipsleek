@@ -79,7 +79,7 @@ node insert(node t, int v)
 }
 
 int deleteoneel1(ref node t)
-  infer[res,mx,mx2]
+//infer[res,mx,mx2]
   requires t::pq<n, mx> & n > 0
   ensures t'::pq<n-1, mx2> & mx2 <= mx & 0 <= res <= mx ;//'
 

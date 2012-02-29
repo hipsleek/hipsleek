@@ -135,11 +135,12 @@ int remove_min1(ref node2 x)
   requires x::bst2<n,h,s, b> & x != null
   ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;//'
 
-relation DEL(int x, int y, int z, int a, int b).
+//relation DEL(int x, int y, int z, int a, int b).
+//fail to reverify
 void delete(ref node2 x, int a)
-  infer[DEL]
+//infer[DEL]
   requires x::bst2<n,h,sm, lg>
-  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & DEL(sm,s,l,lg,a);//sm <= s & l <= lg;//'
+  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & sm <= s & l <= lg;//'DEL(sm,s,l,lg,a)
 {
 	int tmp;
 

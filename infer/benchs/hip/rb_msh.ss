@@ -105,8 +105,12 @@ bool is_red_1(node x)
 bool is_red(node x)
   infer[bh1,bh2]
   requires x::rb<n, cl, bh>
+ case {
+  x=null -> ensures !res;
+  x!=null ->
   ensures x::rb<n, cl, bh1> & cl = 1 & res //[bh1=bh & 1<=bh]
   or x::rb<n, cl, bh2> & cl = 0 & !res;//bh=bh2 & 2<=bh2 & 1<=bh
+}
 {
 	if (x == null)
 		return false;
@@ -125,10 +129,14 @@ bool is_black_1(node x)
   or x::rb<n, cl, bh> & cl = 0 & res;
 
 bool is_black(node x)
-   infer[bh1,bh2]
+  infer[bh1,bh2]
   requires x::rb<n, cl, bh>
-  ensures x::rb<n, cl, bh1> & cl = 1 & !res//bh1=bh & 1<=bh
-  or x::rb<n, cl, bh2> & cl = 0 & res; //bh=bh2 & 2<=bh2 & 1<=bh
+ case {
+  x=null -> ensures res;
+  x!=null ->
+    ensures x::rb<n, cl, bh1> & cl = 1 & !res//bh1=bh & 1<=bh
+    or x::rb<n, cl, bh2> & cl = 0 & res; //bh=bh2 & 2<=bh2 & 1<=bh
+}
 {
 	if (x == null)
 		return true;

@@ -255,7 +255,7 @@ void set_null2(ref node x)
 /* function to set null the tail of a list */
 void set_null(ref node x)
   requires x::dll<_,_> & x!=null
-  ensures x'::node<_,_,null>;
+  ensures x'::node<_,_,null>;//'
 {
   x.next = null;
 }

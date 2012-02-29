@@ -107,8 +107,12 @@ bool is_red_1(node x)
 bool is_red(node x)
   infer[n1,n2]
   requires x::rb2<n, cl>
+ case {
+  x = null -> ensures !res;
+  x!=null ->
   ensures x::rb2<n1, cl> & cl = 1 & res //n=n1 & 1<=n1 & 0<=n]
   or x::rb2<n2, cl> & cl = 0 & !res;//n2=n & 1<=n & 0<=n
+}
 {
 	if (x == null)
 		return false;
@@ -123,14 +127,18 @@ bool is_red(node x)
 /* function to check if a node is black */
 bool is_black_1(node x)
   requires x::rb2<n, cl>
-  ensures x::rb2<n, cl> & cl = 1 & !res
+   ensures x::rb2<n, cl> & cl = 1 & !res
   or x::rb2<n, cl> & cl = 0 & res;
 
 bool is_black(node x)
   infer[n1,n2]
+  case {
+  x=null -> ensures res;
+  x!=null ->
   requires x::rb2<n, cl>
   ensures x::rb2<n1, cl> & cl = 1 & !res //n=n1 & 1<=n1 & 0<=n
   or x::rb2<n2, cl> & cl = 0 & res;//n2=n & 1<=n & 0<=n
+}
 {
 	if (x == null)
 		return true;
@@ -329,9 +337,9 @@ node del_2_1(node a, node b, node c)
   ensures res::rb2<na+nb+nc+2, 0>;
 
 node del_2(node a, node b, node c)
-  infer[res]
+//infer[res]
   requires a::rb2<na, 0> * b::rb2<nb, 0> * c::rb2<nc, 0> & b != null
-  ensures res::rb2<n, 0>;
+  ensures res::rb2<n, 0> & n=2+na+nb+nc;
 /*
 n=2+na+nb+nc.
 failed: or spec, it processes just one.

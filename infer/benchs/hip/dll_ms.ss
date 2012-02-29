@@ -228,7 +228,7 @@ void insert(node x, int a)
   else 
     insert(x.next, a);
 }
-
+/*
 /* delete a node from a doubly linked list */
 void delete(node x, int a)
   infer [x]
@@ -254,7 +254,7 @@ void delete(node x, int a)
 		delete(x.next, a-1);
       }
 }
-
+*/
 /* function to delete the a-th node in a doubly linked list */
 node delete2(ref node x, int a)
   requires x::dll<_>
@@ -326,7 +326,7 @@ void reverse(ref node xs, ref node ys)
       reverse(xs, ys);
     }
 }
-
+/*
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 node split1(ref node x, int a)
   infer[x]
@@ -351,6 +351,7 @@ node split1(ref node x, int a)
 		return tmp;
 	}
 }
+*/
 /*****************************************/
 /*********SMALLFOOT EXAMPLES*************/
 void list_traverse(node x)

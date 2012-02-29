@@ -81,18 +81,22 @@ void swap(ref node x, ref node y)
 
 // drop current content, and add n element with v value
 void assign(ref node x, int n, int v)
-//  infer @post []
-  requires x::dll<_,m,S3>
-  ensures x'::dll<_,n,S4> & forall (_x: _x notin S4 | _x = v);
+// infer @post []
+  requires x::dll<_,m,S3> & n>=0
+ case {
+  n=0 -> ensures x'=null;//'
+  n>0 -> ensures x'::dll<_,n,S4> & forall (_x: _x notin S4 | _x = v);//'
+  n<0 -> ensures true;
+}
 {
-  x = create_list(n, v);
+  x = create_list1(n, v);
 }
 
 relation PUF(bag a, bag b).
 void push_front(ref node x, int v)
   infer[PUF]
   requires x::dll<_,n,S>
-  ensures x'::node<v,_,q>*q::dll<_,n,S1> & PUF(S1,S);// S1=S
+  ensures x'::node<v,_,q>*q::dll<_,n,S1> & PUF(S1,S);//' S1=S
 {
   if (x==null) {
     node tmp = new node(v,null,x);
@@ -327,6 +331,14 @@ node delete2(ref node x, int a)
 
 
 /* function to create a doubly linked list with a nodes */
+node create_list1(int n, int v)
+  requires n>=0
+ case {
+  n = 0 -> ensures res=null;
+  n > 0 -> ensures res::dll<_,n,S> & forall (_x: _x notin S | _x = v);
+  n < 0 -> ensures true;
+}
+
 relation CL(bag a, int b).
 node create_list(int n, int v)
 //  infer[CL]

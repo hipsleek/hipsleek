@@ -78,17 +78,21 @@ void swap(ref node x, ref node y)
 // drop current content, and add n element with v value
 void assign(ref node x, int n, int v)
   infer @post []
-  requires x::ll2<m,S3>
-  ensures x'::ll2<n,S4> ; // forall _x: _x notin S4 | _x = v;
+  requires x::ll2<m,S3> & n>=0
+   case {
+  n = 0 -> ensures x'=null;
+n > 0 -> ensures x'::ll2<n,S4> ; //' forall _x: _x notin S4 | _x = v;
+ n < 0 -> ensures true;
+}
 {
-  x = create_list(n, v);
+  x = create_list1(n, v);
 }
 
 relation PUF(bag a, bag b, int b).
 void push_front(ref node x, int v)
   infer[PUF]
   requires x::ll2<n,S>
-  ensures x'::ll2<n+1,S1> & PUF(S1,S,v);// S1=S+{v}
+  ensures x'::ll2<n+1,S1> & PUF(S1,S,v);//' S1=S+{v}
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -99,7 +103,7 @@ relation PF(bag a, bag b).
 node pop_front(ref node x)
   infer[PF]
   requires x::ll2<m,S1> & x!=null
-  ensures x'::ll2<m-1,S2> & PF(S1,S2); //S2<subset> S1
+  ensures x'::ll2<m-1,S2> & PF(S1,S2); //'S2<subset> S1
 {
   node tmp = x;
   x = x.next;
@@ -111,7 +115,7 @@ node pop_front(ref node x)
 relation APP(bag a, bag b, bag c).
 void append(node x, node y)
   infer [APP]
-  requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null 
+  requires x::ll2<n1,S1> * y::ll2<n2,S2> & x!=null
   ensures x::ll2<m,S> & m=n1+n2 & APP(S,S1,S2); //S=union(S1,S2)
 {
   if (x.next == null)
@@ -135,7 +139,7 @@ relation GN(bag a, bag b, bag c).
 node get_next(ref node x)
   infer[GN]
   requires x::ll2<n,S> & x!=null
-  ensures x'::ll2<1,S1> * res::ll2<n-1,S2> & GN(S,S1,S2); //S = union(S1, S2)
+  ensures x'::ll2<1,S1> * res::ll2<n-1,S2> & GN(S,S1,S2); //'S = union(S1, S2)
 {
   node tmp = x.next;
   x.next = null;
@@ -154,7 +158,7 @@ void set_next(ref node x, node y)
 
 void set_null2(ref node x)
   requires x::ll2<i,_> & x!=null
-  ensures x'::ll2<1,_>;
+  ensures x'::ll2<1,_>;//'
 {
   if (4>3)
     x.next = null;
@@ -165,7 +169,7 @@ void set_null2(ref node x)
 /* function to set null the tail of a list */
 void set_null(ref node x)
   requires x::ll2<i,S> & x!=null
-  ensures x'::node<_,null>;
+  ensures x'::node<_,null>;//'
 {
   x.next = null;
 }
@@ -226,6 +230,14 @@ node delete2(node x, int a)
 }
 
 /* function to create a singly linked list with a nodes */
+node create_list1(int n, int v)
+  requires n>=0
+ case {
+  n = 0 -> ensures res=null;
+  n > 0 -> ensures res::ll2<n,S> & (forall (x: x notin S | x = v));
+  n < 0 -> ensures true;
+}
+
 relation CL(bag a, int b).
 node create_list(int n, int v)
   infer[CL]
