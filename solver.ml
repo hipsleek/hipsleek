@@ -6196,9 +6196,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
       let old_lhs_zero_vars = estate.es_var_zero_perm in
-      (*find a closure*)
-      let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in
-      let _ = if (lhs_zero_vars!=[] or rhs_vperms!=[]) then
+      (*find a closure of exist vars*)
+      let func v = 
+        if (List.mem v estate.es_evars) then find_closure_mix_formula v lhs_p
+        else [v]
+      in
+      (* let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in *)
+      let lhs_zero_vars = List.concat (List.map func old_lhs_zero_vars) in
+      (* let _ = print_endline ("zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)
+      let _ = if (!Globals.ann_vp) && (lhs_zero_vars!=[] or rhs_vperms!=[]) then
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^(string_of_vp_ann VP_Zero)^ (Cprinter.string_of_spec_var_list lhs_zero_vars) ^ " |- "  ^ (pr_list Cprinter.string_of_pure_formula rhs_vperms)^"\n") pos
       in
       let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
@@ -6222,7 +6228,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* let _ = print_endline ("heap_entail_empty_rhs_heap: lhs_zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)
       (* let _ = print_endline ("heap_entail_empty_rhs_heap: tmp1 = " ^ (Cprinter.string_of_spec_var_list tmp1)) in *)
       (* let _ = print_endline ("heap_entail_empty_rhs_heap: tmp2 = " ^ (Cprinter.string_of_spec_var_list tmp2)) in *)
-      if (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
+      if (!Globals.ann_vp) && (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
         begin
             (*FAIL*)
             let _ = if tmp1!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") pos in
@@ -6256,8 +6262,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* ----------------------- *)
       (* S@zero |- v@full  --> S+{v}@Z *)
         (*note: use the old_lhs_zero_vars, not use its closure*)
-        let new_lhs_zero_vars = (old_lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
-        let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
+        let estate = if not (!Globals.ann_vp) then estate else
+              let new_lhs_zero_vars = (old_lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
+              {estate with es_var_zero_perm=new_lhs_zero_vars}
+        in
     (*************************************************************************)
     (*************************** END *****************************************)
     (*************************************************************************)
