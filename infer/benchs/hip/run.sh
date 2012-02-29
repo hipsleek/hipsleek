@@ -21,5 +21,5 @@
 ../../../hip rb_msh.ss --eps > res/rb_msh.res
 ../../../hip complete_msh.ss --eps > res/complete_msh.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
-#../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
+../../../hip complete_mshsize.ss --eps > res/complete_mshsize.res
 
