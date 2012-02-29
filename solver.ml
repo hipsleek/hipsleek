@@ -8667,10 +8667,10 @@ let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_
   Debug.no_2 "simplify_post" pr pr2 (pr_pair pr (pr_list !CP.print_formula))
       (fun _ _ -> simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars) post_fml post_vars
 
-let rec simplify_pre pre_fml = match pre_fml with
+let rec simplify_pre pre_fml lst_assume = match pre_fml with
   | Or _ ->
     let disjs = CF.list_of_disjs pre_fml in
-    let res = List.map (fun f -> simplify_pre f) disjs in
+    let res = List.map (fun f -> simplify_pre f lst_assume) disjs in
     let res = remove_dups_imply rev_imply_formula res in
     CF.disj_of_list res no_pos
 (*    let f1 = simplify_pre f1 in*)
@@ -8681,17 +8681,27 @@ let rec simplify_pre pre_fml = match pre_fml with
     let h, p, fl, b, t = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
+    let p = if lst_assume = [] then p
+      else
+        let rels = CP.get_RelForm p in
+        let p = CP.drop_rel_formula p in
+        let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
+        let pres = List.concat (List.map (fun (a1,a2,a3) -> 
+          if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
+        let pre = CP.conj_of_list (ps@pres) no_pos in
+        pre
+    in
     mkBase h (MCP.mix_of_pure p) t fl b no_pos
 		
-let simplify_pre pre_fml =
+let simplify_pre pre_fml lst_assume =
 	let pr = !CF.print_formula in
-	Debug.no_1 "simplify_pre" pr pr simplify_pre pre_fml
+	Debug.no_1 "simplify_pre" pr pr simplify_pre pre_fml lst_assume
 	
-let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog inf_post evars: struc_formula * CP.formula list = 
+let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume: struc_formula * CP.formula list = 
   match sp with
   | ECase b ->
     let r = map_l_snd (fun s->
-        let new_s, pres = simplify_relation s subst_fml pre_vars post_vars prog inf_post evars in
+        let new_s, pres = simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume in
         if pres = [] then new_s
         else 
 		let lpre = List.map (fun x -> CF.formula_of_pure_formula x no_pos) pres in
@@ -8702,17 +8712,17 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
 		| None -> (None,[]) 
 		| Some l -> 
       let pre_vars = pre_vars @ (CF.fv b.formula_struc_base) in
-      let r1,r2 = simplify_relation l subst_fml pre_vars post_vars prog inf_post evars 
+      let r1,r2 = simplify_relation l subst_fml pre_vars post_vars prog inf_post evars lst_assume
       in (Some r1, r2) 
     in
     let base = 
-      if pres = [] then simplify_pre b.formula_struc_base 
+      if pres = [] then simplify_pre b.formula_struc_base lst_assume
       else
       let pre = CP.conj_of_list pres no_pos in 
       let xpure_base,_,_,_ = xpure prog b.formula_struc_base in
       let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
       if TP.is_sat_raw check_fml then
-        simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos)
+        simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
       else b.formula_struc_base in
     (EBase {b with formula_struc_base = base; formula_struc_continuation = r}, [])
   | EAssume(svl,f,fl) ->
@@ -8721,11 +8731,11 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
 	  (EAssume(svl,new_f,fl), pres)
   | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 	| EList b ->   
-		let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars) b in
+		let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
 	   (EList new_sp, List.concat pres)
 	| EOr b -> 
-		let f1,l1 = simplify_relation b.formula_struc_or_f1 subst_fml pre_vars post_vars prog inf_post evars in
-		let f2,l2 = simplify_relation b.formula_struc_or_f2 subst_fml pre_vars post_vars prog inf_post evars in
+		let f1,l1 = simplify_relation b.formula_struc_or_f1 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
+		let f2,l2 = simplify_relation b.formula_struc_or_f2 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
 		(EOr {b with formula_struc_or_f1 = f1; formula_struc_or_f2 = f2;}, l1@l2)
 
 

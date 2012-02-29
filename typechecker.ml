@@ -271,7 +271,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
                 | [] -> b.CF.formula_struc_base
-                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 b.CF.formula_struc_base p pos_spec))
+                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
                 | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
             Debug.trace_hprint (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
             Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
@@ -1253,9 +1253,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                 Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
                                 Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
                                 Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
-                            if triples = [] then fst (Solver.simplify_relation new_spec None pre_vars post_vars prog inf_post_flag evars)
+                            if triples = [] then fst (Solver.simplify_relation new_spec None pre_vars post_vars prog inf_post_flag evars lst_assume)
                             else fst (Solver.simplify_relation (CF.transform_spec new_spec (CF.list_of_posts proc.proc_static_specs)) 
-                              (Some triples) pre_vars post_vars prog inf_post_flag evars)
+                              (Some triples) pre_vars post_vars prog inf_post_flag evars lst_assume)
                               end
                             with _ -> 
                                 begin
