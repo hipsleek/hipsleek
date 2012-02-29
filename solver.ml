@@ -5437,7 +5437,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                (Term.string_of_term_res (term_pos, t_ann_trans, None, 
+                  (Term.string_of_term_res (term_pos, t_ann_trans, None, 
                   Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))::estate.CF.es_var_stack
               in
               Term.term_res_stk # pop;

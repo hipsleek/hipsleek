@@ -792,7 +792,15 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
     assumption_filter_slicing ante cons
   (* Always support MONA with assumption filtering *) 
   else if !dis_slicing then
-    begin
+    (* begin
+     if (is_bag_constraint ante) || (is_bag_constraint cons) then
+        CP.assumption_filter ante cons
+      else 
+        (ante, cons)
+    end *)
+    match !tp with
+    | Mona -> CP.assumption_filter ante cons
+    | _ -> begin 
       if (is_bag_constraint ante) || (is_bag_constraint cons) then
         CP.assumption_filter ante cons
       else 
@@ -1477,6 +1485,13 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
+let subst_var_by_const_rhs ante conseq =
+  let sst = CP.collect_var_with_const_formula ante in
+  let conseq = CP.subst_term_avoid_capture sst conseq in
+  let cl = split_conjunctions conseq in
+  let pr_conseq = List.filter (fun c -> not (CP.isTrue_formula c)) cl in
+  join_conjunctions pr_conseq
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let rec add_ann_constraints vrs f =  *)
   (*   match vrs with *)
@@ -1492,6 +1507,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let imm_vrs = CP.remove_dups_svl imm_vrs in
+  let conseq = subst_var_by_const_rhs ante conseq in
+  if (CP.isConstTrue conseq) then true else
   (* add invariant constraint @M<:v<:@L for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
   (* let _ = print_endline("new ante  = " ^ (Cprinter.string_of_pure_formula ante) ) in *)

@@ -602,7 +602,7 @@ and isConstTrue_debug (p:formula) =
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos), _),_) -> true
   | _ -> false
-        
+
 and isConstBTrue (p:b_formula) =
   let (pf,_) = p in
   match pf with
@@ -619,6 +619,25 @@ and isConstBFalse (p:b_formula) =
   match pf with
     | BConst (false, pos) -> true
     | _ -> false
+
+(* Consider an equality of two equal constants as true *)  
+and isTrue_formula (f: formula) =
+  match f with
+  | BForm (bf, _) -> isTrue_bform bf
+  | And (f1, f2, _) -> (isTrue_formula f1) && (isTrue_formula f2)
+  | Or (f1, f2, _, _) -> (isTrue_formula f1) || (isTrue_formula f2)
+  | _ -> false
+
+and isTrue_bform (bf: b_formula) =
+  let (pf, _) = bf in
+  match pf with
+  | BConst (true, _) -> true
+  | Eq (e1, e2, _) -> (match e1, e2 with
+    | Null _, Null _ -> true
+    | IConst (i1, _), IConst (i2, _) -> i1 == i2
+    | FConst (f1, _), FConst (f2, _) -> f1 == f2
+    | _ -> false)
+  | _ -> false
 
 and isSubAnn (p:formula) =
   match p with
@@ -4874,6 +4893,23 @@ let get_bform_neq_args_aux conv (bf:b_formula) =
             | _, _ -> None)
     | _-> None     	  
 
+(* Collect the constant value of a variable *)   
+let collect_var_with_const_bform (bf: b_formula) =
+  let (pf, _) = bf in
+  match pf with
+  | Eq (e1, e2, _) ->
+      if (is_var e1) && (is_specific_val e2) then [(to_var e1, e2)]
+      else if (is_specific_val e1) && (is_var e2) then [(to_var e2, e1)]
+      else []
+  | _ -> []
+
+let rec collect_var_with_const_formula (f: formula) =
+  match f with
+  | BForm (bf, _) -> collect_var_with_const_bform bf 
+  | And (f1, f2, _) -> 
+      (collect_var_with_const_formula f1) @ (collect_var_with_const_formula f2)
+  | _ -> []
+
 (* get arguments of an eq formula *)
 let get_bform_eq_args (bf:b_formula) =
   get_bform_eq_args_aux (fun x -> x) bf
@@ -7438,6 +7474,17 @@ and count_term_b_formula bf =
         | _ -> 0)
   | _ -> 0
 
+(* Collect the set of object vars of a formula *)  
+let collect_obj_var (f: formula) =
+  let f_e e = 
+    match e with
+    | Var (SpecVar (Named _, _, _) as v, _) -> Some [v]
+    | _ -> None
+  in 
+  remove_dups_svl (fold_formula f (nonef, nonef, f_e) List.concat)
 
+(* Create the inv x>=0 for an object var x *)
+let mkInv_obj_var (v: spec_var) =
+  BForm ((mkGte (mkVar v no_pos) (mkIConst 0 no_pos) no_pos, None), None)
 
 

@@ -5,6 +5,8 @@ open Globals
 open Gen.Basic
 open Cpure
 
+module CP = Cpure
+
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
@@ -96,16 +98,16 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then	(omega_of_exp a1)^ " < 1"
-        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
-        else  				(omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        if is_null a2 then	(omega_of_exp a1) ^ " < 1" (* " = 0 " *)
+        else if is_null a1 then (omega_of_exp a2) ^ " < 1" (* " = 0 " *)
+        else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
-        				(omega_of_exp a1) ^ " > 0"
+          (omega_of_exp a1) ^ " > 0"
         else if is_null a1 then						
-        				(omega_of_exp a2) ^ " > 0"
-        else		(omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+        	(omega_of_exp a2) ^ " > 0"
+        else (omega_of_exp a1) ^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in
@@ -394,6 +396,9 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
       begin
           omega_subst_lst := [];
           let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+          (* let obj_vars = CP.collect_obj_var pe in
+          let inv = List.fold_left (fun a v -> CP.mkAnd a (CP.mkInv_obj_var v) no_pos) (CP.mkTrue no_pos) obj_vars in
+          let pe = CP.mkAnd pe inv no_pos in *)
           let fstr = omega_of_formula 1 pr_weak pr_strong pe in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
@@ -466,7 +471,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
-	        omega_subst_lst := [];
+	          omega_subst_lst := [];
             let fstr = omega_of_formula 2 pr_strong pr_weak pe in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
             let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
@@ -532,7 +537,11 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     let tmp2 = mkExists fvars tmp1 no_pos in
     not (is_valid tmp2)
    *)
-  
+  (* 
+  let obj_vars = CP.collect_obj_var ante in
+  let inv = List.fold_left (fun a v -> CP.mkAnd a (CP.mkInv_obj_var v) no_pos) (CP.mkTrue no_pos) obj_vars in
+  let ante = CP.mkAnd ante inv no_pos in
+  *)
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   	
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in

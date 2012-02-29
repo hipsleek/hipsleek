@@ -1241,6 +1241,7 @@ let _ = if !print_proof then
         Prooftracer.pop_div ();
 	    (* print_endline "DONE!" *)
 	  end in
+  (* print_endline ("rs: " ^ (Cprinter.string_of_list_partial_context rs)); *)
   if (CF.isSuccessListPartialCtx_new rs) then
       rs
     else begin

@@ -1478,8 +1478,9 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante =
-    if !dis_slicing then ante_disj
-    else if !do_slicing then 
+    (* if !dis_slicing then ante_disj
+    else *)
+    if !do_slicing then 
       AnnoS.get_rel_ctr 2 conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
@@ -1751,10 +1752,10 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
       if !f_2_slice || !dis_slicing then merge_memo ante_memo0 (* Use one slice for proving (sat, imply) *)
 	    else ante_memo0 
     in
-    let conseq_memo =
+    (* let conseq_memo =
       if !f_2_slice || !dis_slicing then merge_memo conseq_memo
       else conseq_memo
-    in 
+    in *)
     imply_memo ante_memo0 conseq_memo t_imply imp_no
 
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =

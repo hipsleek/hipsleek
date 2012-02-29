@@ -13,16 +13,28 @@
   let rec trans_null (b:formula):formula = 
     let rec trans_p_f_null pf =
 	  match pf with
-      | Lt (e1,e2,p) -> (match (e1,e2) with
+      (* | Lt (e1,e2,p) -> (match (e1,e2) with
             | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else pf
             | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
             | _ -> pf)
       | Lte(e1,e2,p) ->(match (e1,e2) with
             | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else pf
             | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
+            | _ -> pf) *)
+      | Lt (e1,e2,p) -> (match (e1,e2) with
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) && (i>=0) then Neq(e2,Null l,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) && (i<=1) then Eq(e1,Null l,p) else pf          
+            | _ -> pf)
+      | Lte (e1,e2,p) -> (match (e1,e2) with
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) && (i>=1) then Neq(e2,Null l,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) && (i<1) then Eq(e1,Null l,p) else pf          
             | _ -> pf) 
+      (* | Eq (e1,e2,p) -> (match (e1,e2) with
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) && (i=0) then Eq (e2, Null l, p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) && (i=0) then Eq (e1, Null l, p) else pf          
+            | _ -> pf) *)
       | Gt (e1,e2,p) -> trans_p_f_null (Lt (e2,e1,p))
-      | Gte(e1,e2,p) -> trans_p_f_null (Lte (e2,e1,p))
+      | Gte (e1,e2,p) -> trans_p_f_null (Lte (e2,e1,p))
       | _ -> pf in
     match b with
       | BForm ((pf,il),l) -> BForm (((trans_p_f_null pf), il),l)

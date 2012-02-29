@@ -640,7 +640,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       prd (add_str "len l2" string_of_int ) (List.length l2) no_pos;
                       prd (add_str "len l3" string_of_int ) (List.length l3) no_pos;
                       prd (add_str "l2" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) l2 no_pos;
-                      [(2,M_base_case_fold c)]
+                      [(3,M_base_case_fold c)]
                       end
                     else [] 
                   in

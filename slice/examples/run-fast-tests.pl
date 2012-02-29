@@ -1532,7 +1532,7 @@ $output_file = "log";
 		],
 		["heaps_size_maxelem.ss", 4, "",  
 				"deletemax", "SUCCESS",
-				"ripple", "SUCCESS",
+				# "ripple", "SUCCESS",
 		    "deleteone", "SUCCESS",
 		    "deleteoneel", "SUCCESS",
 		    "insert", "SUCCESS"

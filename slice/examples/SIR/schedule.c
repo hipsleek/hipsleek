@@ -235,7 +235,8 @@ void schedule(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
     }
  }
 {
-    int n;
+		assume (n3 > 0);
+		int n;
     cur_proc = null;
     n = get_mem_count(pq3);
     if (n > 0){
