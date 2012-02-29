@@ -25,8 +25,8 @@ Checking procedure append2$node~node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 29::
-                              EXISTS(q_1444: x::dll<q_1444>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                              (([x!=null][q=q_1444]))&{FLOW,(20,21)=__norm}))
+                              EXISTS(q_1443: x::dll<q_1443>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              (([x!=null][q=q_1443]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -39,10 +39,10 @@ Checking procedure assign$node~int~int...
 Procedure assign$node~int~int SUCCESS
 
 Checking procedure delete$node~int... 
-( [(364::,0 ); (364::,0 )]) :dll_ms.ss:242: 10: bind: node  v_node_242_973'::node<val_242_974',prev_242_975',next_242_976'>@L[Orig] cannot be derived from context
+( [(364::,0 ); (364::,0 )]) :dll_ms.ss:243: 10: bind: node  v_node_243_972'::node<val_243_973',prev_243_974',next_243_975'>@L[Orig] cannot be derived from context
 
 
-(Cause of Bind Failure):dll_ms.ss:242: 10:  List of Failesc Context: [FEC(1, 0, 0 )]
+(Cause of Bind Failure):dll_ms.ss:243: 10:  List of Failesc Context: [FEC(1, 0, 0 )]
 Failed States:
 [
  Label: [(364::,0 ); (364::,0 )]
@@ -52,7 +52,7 @@ Failed States:
          fe_name: separation entailment
          fe_locs: {
                    fc_message: 
-                    (failure_code=15.3)  v_node_242_973'=q_1599 & v_node_242_973'=null |-  v_node_242_973'!=null (must-bug).
+                    (failure_code=15.3)  v_node_243_972'=q_1598 & v_node_243_972'=null |-  v_node_243_972'!=null (must-bug).
                    fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
        FAIL_OR 
         
@@ -62,31 +62,22 @@ Failed States:
        
  ]
 
-Procedure Call:dll_ms.ss:253: 2: 
-Verification Context:(Line:235,Col:9)
-Proving precondition in method delete$node~int for spec:
- ((None,[]),EBase exists (Expl)(Impl)[p_1672](ex)v_node_253_1008'::dll<p_1672>@M[Orig][LHSCase]@ rem br[{528}]&
-                  (([null!=v_node_253_1008']))&{FLOW,(20,21)=__norm}
-                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+!!! OLD SPECS: ((None,[]),EInfer [x]
+              EBase exists (Expl)(Impl)[p](ex)x::dll<p>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                    (())&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 54::
+                                EXISTS(p_159: x::dll<p_159>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                                (([p=p_159]))&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[p](ex)x::dll<p>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                  (())&{FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 54::
-                              EXISTS(p_1293: v_node_253_1008'::dll<p_1293>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                              (([p_1293=p_1672]))&{FLOW,(20,21)=__norm}))
-Current States: [ x'::node<Anon_1661,p_1659,q_1662>@M[Orig][] * q_1662::dll<self_1660>@M[Orig]@ rem br[{529,528}]&(([
-                                                                    tmp_161'=null]
-                                                                    [!(v_bool_240_1009')]
-                                                                    [x=x' & 
-                                                                    x=self_1660 & 
-                                                                    x'!=null]
-                                                                    [p_1659=p]
-                                                                    [v_node_253_1008'=q_1662]
-                                                                    [a'=a & 
-                                                                    a'!=1 & 
-                                                                    1+
-                                                                    v_int_253_1007'=a']
-                                                                    ))&{FLOW,(20,21)=__norm}
- es_var_measures: MayLoop] has failed 
-
-
+                              EXISTS(p_1679: x::dll<p_1679>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              (([p=p_1679]))&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
 Procedure delete$node~int result FAIL-1
 
 Checking procedure delete2$node~int... 
@@ -180,12 +171,12 @@ Checking procedure front$node...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              EXISTS(Anon_2063,p_2064,q_2065,
-                              self_2066: self_2066::node<Anon_2063,p_2064,q_2065>@M[Orig][] * 
-                              q_2065::dll<self_2066>@M[Orig]@ rem br[{529,528}]&
+                              EXISTS(Anon_2064,p_2065,q_2066,
+                              self_2067: self_2067::node<Anon_2064,p_2065,q_2066>@M[Orig][] * 
+                              q_2066::dll<self_2067>@M[Orig]@ rem br[{529,528}]&
                               (
-                              ([x=self_2066 & self_2066!=null]
-                               [Anon_19=p_2064][res=Anon_2063]))&
+                              ([x=self_2067 & self_2067!=null]
+                               [Anon_19=p_2065][res=Anon_2064]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -206,13 +197,13 @@ Checking procedure get_next$node...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 35::
-                              EXISTS(q_2102,self_2103,f_2104,Anon_2105,
-                              next_169_2106: q_2102::dll<self_2103>@M[Orig]@ rem br[{529,528}] * 
-                              self_2103::node<Anon_2105,prev_169_1109',next_169_2106>@M[Orig][]&
+                              EXISTS(q_2103,self_2104,f_2105,Anon_2106,
+                              next_169_2107: q_2103::dll<self_2104>@M[Orig]@ rem br[{529,528}] * 
+                              self_2104::node<Anon_2106,prev_169_1108',next_169_2107>@M[Orig][]&
                               (
-                              ([x=self_2103 & self_2103!=null]
-                               [null=next_169_2106][null=prev_169_1109']
-                               [res=q_2102]))&
+                              ([x=self_2104 & self_2104!=null]
+                               [null=next_169_2107][null=prev_169_1108']
+                               [res=q_2103]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -235,18 +226,18 @@ Checking procedure get_next_next$node...
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 49::
                               
-                              EXISTS(p_2173,Anon_2174,p_2175,q_2176,
-                              Anon_2177: p_2173::node<Anon_2174,p_2175,q_2176>@M[Orig][] * 
-                              res::dll<Anon_2177>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              EXISTS(p_2174,Anon_2175,p_2176,q_2177,
+                              Anon_2178: p_2174::node<Anon_2175,p_2176,q_2177>@M[Orig][] * 
+                              res::dll<Anon_2178>@M[Orig][LHSCase]@ rem br[{529,528}]&
                               (
-                              ([Anon_2177=q_2176 & q_2176!=null]
-                               [x=p_2173 & x!=null][Anon_42=p_2175]))&
+                              ([Anon_2178=q_2177 & q_2177!=null]
+                               [x=p_2174 & x!=null][Anon_42=p_2176]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(self_2178,Anon_2179,p_2180,
-                                 q_2181: self_2178::node<Anon_2179,p_2180,q_2181>@M[Orig][]&
+                              or EXISTS(self_2179,Anon_2180,p_2181,
+                                 q_2182: self_2179::node<Anon_2180,p_2181,q_2182>@M[Orig][]&
                                  (
-                                 ([x=self_2178 & self_2178!=null][null=res]
-                                  [null=q_2181][Anon_42=p_2180]))&
+                                 ([x=self_2179 & self_2179!=null][null=res]
+                                  [null=q_2182][Anon_42=p_2181]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -269,8 +260,8 @@ Checking procedure insert$node~int...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 51::
-                              EXISTS(p_2275: x::dll<p_2275>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                              (([x!=null][p=p_2275]))&{FLOW,(20,21)=__norm}))
+                              EXISTS(p_2276: x::dll<p_2276>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              (([x!=null][p=p_2276]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -297,8 +288,8 @@ Checking procedure list_remove$node~int...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 99::
-                              EXISTS(p_2869: x::dll<p_2869>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                              (([x!=null][p=p_2869]))&{FLOW,(20,21)=__norm}))
+                              EXISTS(p_2870: x::dll<p_2870>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              (([x!=null][p=p_2870]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -326,19 +317,19 @@ Checking procedure pop_front$node...
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 22::ref [x]
                               
-                              EXISTS(tmp_3235,f_3236,Anon_3237,
-                              p_3238: tmp_3235::node<Anon_3237,p_3238,next_120_1157'>@M[Orig][]&
+                              EXISTS(tmp_3236,f_3237,Anon_3238,
+                              p_3239: tmp_3236::node<Anon_3238,p_3239,next_120_1156'>@M[Orig][]&
                               (
-                              ([res=x & res=tmp_3235 & res!=null][null=x']
-                               [null=next_120_1157'][Anon_28=p_3238]))&
+                              ([res=x & res=tmp_3236 & res!=null][null=x']
+                               [null=next_120_1156'][Anon_28=p_3239]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(tmp_3239,f_3240,Anon_3241,p_3242,
-                                 Anon_3243: tmp_3239::node<Anon_3241,p_3242,next_127_1173'>@M[Orig][] * 
-                                 x'::dll<Anon_3243>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              or EXISTS(tmp_3240,f_3241,Anon_3242,p_3243,
+                                 Anon_3244: tmp_3240::node<Anon_3242,p_3243,next_127_1172'>@M[Orig][] * 
+                                 x'::dll<Anon_3244>@M[Orig][LHSCase]@ rem br[{529,528}]&
                                  (
-                                 ([res=x & res=tmp_3239 & res!=null]
-                                  [x'!=null][null=next_127_1173']
-                                  [Anon_28=p_3242][Anon_3243=null]))&
+                                 ([res=x & res=tmp_3240 & res!=null]
+                                  [x'!=null][null=next_127_1172']
+                                  [Anon_28=p_3243][Anon_3244=null]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -371,7 +362,7 @@ Checking procedure reverse$node~node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 76::ref [xs;ys]
-                              EXISTS(Anon_3491: ys'::dll<Anon_3491>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              EXISTS(Anon_3492: ys'::dll<Anon_3492>@M[Orig][LHSCase]@ rem br[{529,528}]&
                               (([null=xs']))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (xs'=null) --> REVERSE(xs')]
 !!! NEW ASSUME:[]
@@ -398,11 +389,11 @@ Checking procedure set_next$node~node...
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
                               
-                              EXISTS(Anon_3619: x::dll<Anon_3619>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                              (([x!=null][null=y][Anon_3619=Anon_33]))&
+                              EXISTS(Anon_3620: x::dll<Anon_3620>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              (([x!=null][null=y][Anon_3620=Anon_33]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(Anon_3620: x::dll<Anon_3620>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                                 (([y!=null][x!=null][Anon_3620=Anon_33]))&
+                              or EXISTS(Anon_3621: x::dll<Anon_3621>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                                 (([y!=null][x!=null][Anon_3621=Anon_33]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -426,9 +417,9 @@ Checking procedure set_null$node...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 47::
-                              EXISTS(Anon_3643,Anon_3644,
-                              r_3645: x::node<Anon_3643,Anon_3644,r_3645>@M[Orig][]&
-                              (([x!=null][null=r_3645][Anon_39=Anon_3644]))&
+                              EXISTS(Anon_3644,Anon_3645,
+                              r_3646: x::node<Anon_3644,Anon_3645,r_3646>@M[Orig][]&
+                              (([x!=null][null=r_3646][Anon_39=Anon_3645]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -451,9 +442,9 @@ Checking procedure set_null2$node...
                   (())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 43::
-                              EXISTS(Anon_3679,Anon_3680,
-                              r_3681: x::node<Anon_3679,Anon_3680,r_3681>@M[Orig][]&
-                              (([x!=null][null=r_3681][Anon_3680=Anon_36]))&
+                              EXISTS(Anon_3680,Anon_3681,
+                              r_3682: x::node<Anon_3680,Anon_3681,r_3682>@M[Orig][]&
+                              (([x!=null][null=r_3682][Anon_3681=Anon_36]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -487,17 +478,17 @@ Checking procedure split1$node~int...
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 84::ref [x]
                               
-                              EXISTS(p_4056,
-                              Anon_4057: x'::dll<p_4056>@M[Orig][LHSCase]@ rem br[{529,528}] * 
-                              res::dll<Anon_4057>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                              EXISTS(p_4057,
+                              Anon_4058: x'::dll<p_4057>@M[Orig][LHSCase]@ rem br[{529,528}] * 
+                              res::dll<Anon_4058>@M[Orig][LHSCase]@ rem br[{529,528}]&
                               (
-                              ([x'=x & Anon_4057=x' & x'!=null][p=p_4056]
+                              ([x'=x & Anon_4058=x' & x'!=null][p=p_4057]
                                [1=a]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(p_4058,
-                                 Anon_4059: x'::dll<p_4058>@M[Orig][LHSCase]@ rem br[{529,528}] * 
-                                 res::dll<Anon_4059>@M[Orig][LHSCase]@ rem br[{529,528}]&
-                                 (([2<=a][x'=x & x'!=null][p=p_4058]))&
+                              or EXISTS(p_4059,
+                                 Anon_4060: x'::dll<p_4059>@M[Orig][LHSCase]@ rem br[{529,528}] * 
+                                 res::dll<Anon_4060>@M[Orig][LHSCase]@ rem br[{529,528}]&
+                                 (([2<=a][x'=x & x'!=null][p=p_4059]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -510,9 +501,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1150 invocations 
-7 false contexts at: ( (490,10)  (196,13)  (196,4)  (44,4)  (44,11)  (46,4)  (46,11) )
+Stop Omega... 1166 invocations 
+7 false contexts at: ( (491,10)  (196,13)  (196,4)  (44,4)  (44,11)  (46,4)  (46,11) )
 
-Total verification time: 0.56 second(s)
-	Time spent in main process: 0.39 second(s)
-	Time spent in child processes: 0.17 second(s)
+Total verification time: 0.54 second(s)
+	Time spent in main process: 0.38 second(s)
+	Time spent in child processes: 0.16 second(s)

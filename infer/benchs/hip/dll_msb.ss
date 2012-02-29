@@ -273,9 +273,9 @@ void insert(node x, int a)
 // FAIL
 relation DEL(bag a, bag b).
 void delete( node x, int a)
-//  infer [DEL]
+  infer [DEL]
   requires x::dll<p,n,S> & n > a & a > 0
-  ensures x::dll<p,m,S1> & S1 subset S; //DEL(S,S1);//S1 subset S
+  ensures x::dll<p,m,S1> & DEL(S,S1);//S1 subset S
 {
 	node tmp;
 	node tmp_null = null;

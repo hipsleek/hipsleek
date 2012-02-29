@@ -834,6 +834,6 @@ Termination checking result:
 
 16 false contexts at: ( (168,13)  (168,4)  (39,4)  (39,11)  (40,7)  (40,14)  (296,4)  (296,11)  (301,4)  (301,11)  (300,10)  (300,4)  (299,9)  (299,13)  (299,4)  (299,4) )
 
-Total verification time: 6.76 second(s)
+Total verification time: 6.8 second(s)
 	Time spent in main process: 0.49 second(s)
-	Time spent in child processes: 6.27 second(s)
+	Time spent in child processes: 6.31 second(s)

@@ -231,7 +231,8 @@ void insert(node x, int a)
 
 /* delete a node from a doubly linked list */
 void delete(node x, int a)
-	requires x::dll<p> & x!=null
+  infer [x]
+	requires x::dll<p> //& x!=null
 	ensures x::dll<p>; 
 {
 	node tmp;

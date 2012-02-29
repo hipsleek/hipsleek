@@ -66,8 +66,8 @@ let rec fixbag_of_b_formula b =
     | CP.Gte (e1, e2, _) -> fixbag_of_exp e1 ^ op_gte ^ fixbag_of_exp e2
     | CP.Eq (e1, e2, _) -> fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
     | CP.Neq (e1, e2, _) -> 
-      if !allow_pred_spec && List.exists is_bag_typ (CP.bfv b) then "{}={}"
-      else 
+      if !allow_pred_spec && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
+      else
         if List.exists is_int_typ (CP.bfv b) then fixbag_of_exp e1 ^ op_neq ^ fixbag_of_exp e2
         else "!(" ^ fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2 ^ ")"
     | CP.RelForm (id,args,_) -> (fixbag_of_spec_var id) ^ "(" ^ (string_of_elems args fixbag_of_exp ",") ^ ")"

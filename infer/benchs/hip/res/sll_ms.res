@@ -25,8 +25,8 @@ Checking procedure assign$node~int~int...
                   (([0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 16::ref [x]
-                              EXISTS(n1_1068: x'::sll<n1_1068>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([n=n1_1068 & 0<=n][0<=m]))&
+                              EXISTS(n1_1066: x'::sll<n1_1066>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([n=n1_1066 & 0<=n][0<=m]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n=n1 & 0<=n1 & 0<=m) --> ASSIGN(n,n1,m)]
 !!! NEW ASSUME:[]
@@ -53,16 +53,16 @@ Checking procedure delete$node~int...
                     EBase true&(([MayLoop][1<=a & (1+a)<=n]))&
                           {FLOW,(1,23)=__flow}
                             EAssume 53::
-                              EXISTS(m_1177: x::sll<m_1177>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(m_1175: x::sll<m_1175>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([0<=m_1177 & 0<=n & 1+m_1177=n & a<=m_1177 & 
+                              ([0<=m_1175 & 0<=n & 1+m_1175=n & a<=m_1175 & 
                                  1<=a]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (a=1 & -1+n=m & 1<=m) --> DEL(m,n,a),
- ((1<=v_int_285_1164 | v_int_285_1164<=(0-1)) & 
-  DEL(m_1163,n_1142,v_int_285_1164) & 1<=m & -1+n=n_1142 & -1+
-  a=v_int_285_1164 & 1+m_1163=m & 0<=n_1142) --> DEL(m,n,a)]
+ ((1<=v_int_285_1162 | v_int_285_1162<=(0-1)) & 
+  DEL(m_1161,n_1140,v_int_285_1162) & 1<=m & -1+n=n_1140 & -1+
+  a=v_int_285_1162 & 1+m_1161=m & 0<=n_1140) --> DEL(m,n,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
@@ -82,14 +82,14 @@ Checking procedure delete2$node~int...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 57::
-                              EXISTS(m_1273: res::sll<m_1273>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(m_1271: res::sll<m_1271>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([m_1273<=n & 0<=n & 0<=m_1273 & (-1+n)<=m_1273]
+                              ([m_1271<=n & 0<=n & 0<=m_1271 & (-1+n)<=m_1271]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n=m & 1<=m) --> DEL2(m,n),
  (-1+n=m & 0<=m) --> DEL2(m,n),
- (0<=n_1225 & 1+m_1239=m & -1+n=n_1225 & DEL2(m_1239,n_1225) & 
+ (0<=n_1223 & 1+m_1237=m & -1+n=n_1223 & DEL2(m_1237,n_1223) & 
   1<=m) --> DEL2(m,n),
  (m=0 & n=0) --> DEL2(m,n)]
 !!! NEW ASSUME:[]
@@ -189,13 +189,13 @@ Checking procedure find_ge$node~int...
                             EAssume 89::
                               
                               true&(([res=null][0<=n]))&{FLOW,(20,21)=__norm}
-                              or EXISTS(Anon_1374,
-                                 m_1375: res::node<m_1375,Anon_1374>@M[Orig][]&
-                                 (([v<=m_1375][res!=null][0<=n]))&
+                              or EXISTS(Anon_1372,
+                                 m_1373: res::node<m_1373,Anon_1372>@M[Orig][]&
+                                 (([v<=m_1373][res!=null][0<=n]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[ (v<=m) --> FGE(v,m),
- (exists(Anon_1337:m=m_1372 & (1+Anon_1337)<=v & FGE(v,m_1372))) --> FGE(v,m)]
+ (exists(Anon_1335:m=m_1370 & (1+Anon_1335)<=v & FGE(v,m_1370))) --> FGE(v,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -214,12 +214,12 @@ Checking procedure front$node...
                   (([0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 12::
-                              EXISTS(Anon_1394,q_1395,
-                              flted_11_1396: x::node<Anon_1394,q_1395>@M[Orig][] * 
-                              q_1395::sll<flted_11_1396>@M[Orig]@ rem br[{388,387}]&
+                              EXISTS(Anon_1392,q_1393,
+                              flted_11_1394: x::node<Anon_1392,q_1393>@M[Orig][] * 
+                              q_1393::sll<flted_11_1394>@M[Orig]@ rem br[{388,387}]&
                               (
-                              ([1+flted_11_1396=m & 0<=m & 1<=m][x!=null]
-                               [res=Anon_1394]))&
+                              ([1+flted_11_1394=m & 0<=m & 1<=m][x!=null]
+                               [res=Anon_1392]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -249,12 +249,12 @@ Checking procedure get_next$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 29::ref [x]
-                              EXISTS(flted_166_1422,v_1423,
-                              m_1424: x'::node<v_1423,flted_166_1422>@M[Orig][] * 
-                              res::sll<m_1424>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(flted_166_1420,v_1421,
+                              m_1422: x'::node<v_1421,flted_166_1420>@M[Orig][] * 
+                              res::sll<m_1422>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([1+m_1424=n & 0<=n & 0<=m_1424][x'!=null]
-                               [null=flted_166_1422]))&
+                              ([1+m_1422=n & 0<=n & 0<=m_1422][x'!=null]
+                               [null=flted_166_1420]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-1+n=m & 0<=m) --> GN(m,n)]
 !!! NEW ASSUME:[]
@@ -279,8 +279,8 @@ Checking procedure get_next_next$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][2<=n]))&{FLOW,(1,23)=__flow}
                             EAssume 41::
-                              EXISTS(m_1466: res::sll<m_1466>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([2+m_1466=n & 0<=n & 0<=m_1466]))&
+                              EXISTS(m_1464: res::sll<m_1464>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([2+m_1464=n & 0<=n & 0<=m_1464]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-2+n=m & 0<=m) --> GNN(m,n)]
 !!! NEW ASSUME:[]
@@ -305,8 +305,8 @@ Checking procedure get_tail$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
-                              EXISTS(m_1487: res::sll<m_1487>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([1+m_1487=n & 0<=n & 0<=m_1487]))&
+                              EXISTS(m_1485: res::sll<m_1485>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([1+m_1485=n & 0<=n & 0<=m_1485]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-1+n=m & 0<=m) --> GT(m,n)]
 !!! NEW ASSUME:[]
@@ -328,13 +328,13 @@ Checking procedure insert$node~int...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 42::
-                              EXISTS(m_1583: res::sll<m_1583>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(m_1581: res::sll<m_1581>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([0<=m_1583 & 0<=n & -1+m_1583=n & 1<=m_1583]))&
+                              ([0<=m_1581 & 0<=n & -1+m_1581=n & 1<=m_1581]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=1 & n=0) --> INS(m,n),
  (1+n=m & 2<=m) --> INS(m,n),
- (0<=n_1524 & 1+m_1538=m & -1+n=n_1524 & INS(m_1538,n_1524) & 
+ (0<=n_1522 & 1+m_1536=m & -1+n=n_1522 & INS(m_1536,n_1522) & 
   1<=m) --> INS(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -359,13 +359,13 @@ Checking procedure insert2$node~node...
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 47::
-                              EXISTS(m_1691: res::sll<m_1691>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(m_1689: res::sll<m_1689>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([0<=m_1691 & 0<=n & -1+m_1691=n & 1<=m_1691]))&
+                              ([0<=m_1689 & 0<=n & -1+m_1689=n & 1<=m_1689]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=1 & n=0) --> INS2(m,n),
  (1+n=m & 2<=m) --> INS2(m,n),
- (0<=n_1632 & 1+m_1648=m & -1+n=n_1632 & INS2(m_1648,n_1632) & 
+ (0<=n_1630 & 1+m_1646=m & -1+n=n_1630 & INS2(m_1646,n_1630) & 
   1<=m) --> INS2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -389,13 +389,13 @@ Checking procedure list_copy$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 78::
-                              EXISTS(n_1763,
-                              m_1764: x::sll<n_1763>@M[Orig][LHSCase]@ rem br[{388,387}] * 
-                              res::sll<m_1764>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([n=n_1763 & n=m_1764 & 0<=n]))&
+                              EXISTS(n_1761,
+                              m_1762: x::sll<n_1761>@M[Orig][LHSCase]@ rem br[{388,387}] * 
+                              res::sll<m_1762>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([n=n_1761 & n=m_1762 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (0<=n_1714 & 1+m_1727=m & -1+n=n_1714 & 1<=m & 
-  CPY(m_1727,n_1714)) --> CPY(m,n),
+!!! NEW RELS:[ (0<=n_1712 & 1+m_1725=m & -1+n=n_1712 & 1<=m & 
+  CPY(m_1725,n_1712)) --> CPY(m,n),
  (m=0 & n=0) --> CPY(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -416,13 +416,13 @@ Checking procedure list_filter2$node~int...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 81::ref [x]
-                              EXISTS(m_1856: res::sll<m_1856>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([m_1856<=n & 0<=n & 0<=m_1856]))&
+                              EXISTS(m_1854: res::sll<m_1854>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([m_1854<=n & 0<=n & 0<=m_1854]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (0<=n_1801 & m_1838=m & -1+n=n_1801 & FIL(m_1838,n_1801) & 
+!!! NEW RELS:[ (0<=n_1799 & m_1836=m & -1+n=n_1799 & FIL(m_1836,n_1799) & 
   0<=m) --> FIL(m,n),
- (1<=m & FIL(m_1831,n_1816) & -1+n=n_1816 & 1+m_1831=m & 
-  0<=n_1816) --> FIL(m,n),
+ (1<=m & FIL(m_1829,n_1814) & -1+n=n_1814 & 1+m_1829=m & 
+  0<=n_1814) --> FIL(m,n),
  (m=0 & n=0) --> FIL(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -443,10 +443,10 @@ Checking procedure list_traverse$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 75::
-                              EXISTS(m_1904: x::sll<m_1904>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([n=m_1904 & 0<=n]))&{FLOW,(20,21)=__norm}))
+                              EXISTS(m_1902: x::sll<m_1902>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([n=m_1902 & 0<=n]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=0 & n=0) --> TRAV(m,n),
- (0<=n_1880 & 1+m_1887=m & -1+n=n_1880 & TRAV(m_1887,n_1880) & 
+ (0<=n_1878 & 1+m_1885=m & -1+n=n_1878 & TRAV(m_1885,n_1878) & 
   1<=m) --> TRAV(m,n),
  (n=0 & m=0) --> TRAV(m,n)]
 !!! NEW ASSUME:[]
@@ -473,16 +473,16 @@ Checking procedure merge1$node~node...
                   ([0<=n1][0<=n2]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 23::ref [x1]
-                              EXISTS(m_1989: res::sll<m_1989>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(m_1987: res::sll<m_1987>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([0<=m_1989 & 0<=n1 & m_1989=n1+n2 & 0<=n2 & 
-                                 n2<=m_1989]
+                              ([0<=m_1987 & 0<=n1 & m_1987=n1+n2 & 0<=n2 & 
+                                 n2<=m_1987]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n2=0 & n1=m & 0<=m) --> MRG(m,n1,n2),
  (n1=0 & n2=m & 1<=m) --> MRG(m,n1,n2),
- (2<=n1_1960 & 1<=n2_1961 & m_1982=m & -1+n2=n2_1961 & 1+n1=n1_1960 & 0<=m & 
-  MRG(m_1982,n1_1960,n2_1961)) --> MRG(m,n1,n2),
+ (2<=n1_1958 & 1<=n2_1959 & m_1980=m & -1+n2=n2_1959 & 1+n1=n1_1958 & 0<=m & 
+  MRG(m_1980,n1_1958,n2_1959)) --> MRG(m,n1,n2),
  (1+n1=m & n2=1 & 2<=m) --> MRG(m,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -506,8 +506,8 @@ Checking procedure pop_front$node...
                   (([0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
-                              EXISTS(n_2016: x'::sll<n_2016>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([1+n_2016=m & 0<=m & 0<=n_2016]))&
+                              EXISTS(n_2014: x'::sll<n_2014>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([1+n_2014=m & 0<=m & 0<=n_2014]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-1+m=n & 0<=n) --> PF(m,n)]
 !!! NEW ASSUME:[]
@@ -529,8 +529,8 @@ Checking procedure push_front$node~int...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 18::ref [x]
-                              EXISTS(m_2030: x'::sll<m_2030>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([0<=m_2030 & 1+n=m_2030 & 0<=n]))&
+                              EXISTS(m_2028: x'::sll<m_2028>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([0<=m_2028 & 1+n=m_2028 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-1+m=n & 0<=n) --> PUF(m,n)]
 !!! NEW ASSUME:[]
@@ -552,8 +552,8 @@ Checking procedure ret_first$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 28::
-                              EXISTS(m_2034: x::sll<m_2034>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([n=m_2034 & 0<=n]))&{FLOW,(20,21)=__norm}))
+                              EXISTS(m_2032: x::sll<m_2032>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([n=m_2032 & 0<=n]))&{FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n=m & 0<=m) --> RF(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -581,8 +581,8 @@ Checking procedure set_next$node~node...
                   ([0<=i][0<=j]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 31::ref [x]
-                              EXISTS(k_2070: x'::sll<k_2070>@M[Orig][LHSCase]@ rem br[{388,387}]&
-                              (([0<=k_2070 & 1+j=k_2070 & 0<=j][0<=i]))&
+                              EXISTS(k_2068: x'::sll<k_2068>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              (([0<=k_2068 & 1+j=k_2068 & 0<=j][0<=i]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (-1+k=j & 0<=j) --> SN(k,j)]
 !!! NEW ASSUME:[]
@@ -604,9 +604,9 @@ Checking procedure set_null$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 39::ref [x]
-                              EXISTS(v_2089,
-                              r_2090: x'::node<v_2089,r_2090>@M[Orig][]&(
-                              ([1<=n & 0<=n][x'=x & x'!=null][null=r_2090]))&
+                              EXISTS(v_2087,
+                              r_2088: x'::node<v_2087,r_2088>@M[Orig][]&(
+                              ([1<=n & 0<=n][x'=x & x'!=null][null=r_2088]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -628,9 +628,9 @@ Checking procedure set_null2$node...
                   (([0<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 34::ref [x]
-                              EXISTS(v_2120,
-                              r_2121: x'::node<v_2120,r_2121>@M[Orig][]&(
-                              ([x'=x & x'!=null][1<=n & 0<=n][null=r_2121]))&
+                              EXISTS(v_2118,
+                              r_2119: x'::node<v_2118,r_2119>@M[Orig][]&(
+                              ([x'=x & x'!=null][1<=n & 0<=n][null=r_2119]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -654,7 +654,7 @@ Checking procedure size_helper$node~int...
                             EAssume 7::ref [n]
                               true&(([0<=m & m+n=res]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & res=n) --> SIZEH(res,m,n),
- (0<=m_2151 & res=v_int_61_959' & -1+m=m_2151 & SIZEH(v_int_61_959',m_2151,n-
+ (0<=m_2149 & res=v_int_61_957' & -1+m=m_2149 & SIZEH(v_int_61_957',m_2149,n-
   -1)) --> SIZEH(res,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -702,18 +702,18 @@ Checking procedure split1$node~int...
                     EBase true&(([MayLoop][1<=a & a<=n]))&
                           {FLOW,(1,23)=__flow}
                             EAssume 68::ref [x]
-                              EXISTS(n1_2274,
-                              n2_2275: x'::sll<n1_2274>@M[Orig][LHSCase]@ rem br[{388,387}] * 
-                              res::sll<n2_2275>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(n1_2272,
+                              n2_2273: x'::sll<n1_2272>@M[Orig][LHSCase]@ rem br[{388,387}] * 
+                              res::sll<n2_2273>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([a=n1_2274 & a+n2_2275=n & 0<=n & 
-                                 0<=n2_2275 & 0<=n1_2274 & 1<=a]
+                              ([a=n1_2272 & a+n2_2273=n & 0<=n & 
+                                 0<=n2_2273 & 0<=n1_2272 & 1<=a]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n1=1 & a=1 & -1+n=n2 & 0<=n2) --> SPLIT(n,a,n1,n2),
- ((1<=a_2259 | a_2259<=(0-1)) & 0<=n2 & 1<=n1 & 
-  SPLIT(n_2223,a_2259,n1_2256,n2_2257) & -1+n=n_2223 & -1+a=a_2259 & 
-  n2_2257=n2 & 1+n1_2256=n1 & 0<=n_2223) --> SPLIT(n,a,n1,n2)]
+ ((1<=a_2257 | a_2257<=(0-1)) & 0<=n2 & 1<=n1 & 
+  SPLIT(n_2221,a_2257,n1_2254,n2_2255) & -1+n=n_2221 & -1+a=a_2257 & 
+  n2_2255=n2 & 1+n1_2254=n1 & 0<=n_2221) --> SPLIT(n,a,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -736,11 +736,11 @@ Checking procedure swap$node~node...
                   ([0<=n][0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 13::ref [x;y]
-                              EXISTS(n1_2283,
-                              m1_2284: x'::sll<n1_2283>@M[Orig][LHSCase]@ rem br[{388,387}] * 
-                              y'::sll<m1_2284>@M[Orig][LHSCase]@ rem br[{388,387}]&
+                              EXISTS(n1_2281,
+                              m1_2282: x'::sll<n1_2281>@M[Orig][LHSCase]@ rem br[{388,387}] * 
+                              y'::sll<m1_2282>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
-                              ([n=m1_2284 & 0<=n][m=n1_2283 & 0<=m][y=x']
+                              ([n=m1_2282 & 0<=n][m=n1_2281 & 0<=m][y=x']
                                [x=y']))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
