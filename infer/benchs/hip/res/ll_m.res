@@ -1,7 +1,7 @@
 
 Processing file "ll_m.ss"
 Parsing ll_m.ss ...
-Parsing ../../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -467,6 +467,6 @@ Termination checking result:
 Stop Omega... 697 invocations 
 6 false contexts at: ( (164,13)  (164,4)  (43,4)  (43,11)  (45,4)  (45,11) )
 
-Total verification time: 1.16 second(s)
-	Time spent in main process: 1.04 second(s)
+Total verification time: 0.33 second(s)
+	Time spent in main process: 0.21 second(s)
 	Time spent in child processes: 0.12 second(s)

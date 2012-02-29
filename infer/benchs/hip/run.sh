@@ -5,7 +5,6 @@
 ../../../hip sll_msb.ss -tp mona --eps > res/sll_msb.res
 ../../../hip sll_mso.ss --eps > res/sll_mso.res
 ../../../hip dll_ms.ss --eps > res/dll_ms.res
-#../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
 ../../../hip dll_size.ss --eps > res/dll_size.res
 ../../../hip dll_msb.ss -tp mona --eps > res/dll_msb.res
 ../../../hip heaps_m.ss --eps > res/heaps_m.res
@@ -22,3 +21,5 @@
 ../../../hip rb_msh.ss --eps > res/rb_msh.res
 ../../../hip complete_msh.ss --eps > res/complete_msh.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
+#../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
+

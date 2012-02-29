@@ -1,7 +1,7 @@
 
 Processing file "dll_ms.ss"
 Parsing dll_ms.ss ...
-Parsing ../../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -511,8 +511,8 @@ Procedure swap$node~node SUCCESS
 Termination checking result:
 
 Stop Omega... 1150 invocations 
-7 false contexts at: ( (488,6)  (196,13)  (196,4)  (44,4)  (44,11)  (46,4)  (46,11) )
+7 false contexts at: ( (490,10)  (196,13)  (196,4)  (44,4)  (44,11)  (46,4)  (46,11) )
 
-Total verification time: 2.31 second(s)
-	Time spent in main process: 2.13 second(s)
-	Time spent in child processes: 0.18 second(s)
+Total verification time: 0.56 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.17 second(s)

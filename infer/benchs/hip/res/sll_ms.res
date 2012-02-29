@@ -1,7 +1,7 @@
 
 Processing file "sll_ms.ss"
 Parsing sll_ms.ss ...
-Parsing ../../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -12,7 +12,7 @@ Procedure create_list$int~int SUCCESS
 Checking procedure assign$node~int~int... 
 !!! REL :  ASSIGN(n,n1,m)
 !!! POST:  n>=0 & m>=0 & n=n1
-!!! PRE :  0<=n & 0<=m
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [ASSIGN]
               EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=m]))&{FLOW,(20,21)=__norm}
@@ -23,7 +23,7 @@ Checking procedure assign$node~int~int...
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=m]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n][0<=m]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 16::ref [x]
                               EXISTS(n1_1068: x'::sll<n1_1068>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([n=n1_1068 & 0<=n][0<=m]))&
@@ -36,11 +36,11 @@ Procedure assign$node~int~int SUCCESS
 Checking procedure delete$node~int... 
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
-!!! Inferred Pure :[ n!=1, n!=0, n!=0]
+!!! Inferred Pure :[ a!=1 | n!=1, a!=1 | n!=0, n!=0 | a<=1, n!=0 | 1<=a]
 !!! REL :  DEL(m,n,a)
 !!! POST:  a>=1 & m>=a & m+1=n
 !!! PRE :  1<=a & a<n
-!!! OLD SPECS: ((None,[]),EInfer [n,DEL]
+!!! OLD SPECS: ((None,[]),EInfer [n,a,DEL]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
@@ -70,7 +70,7 @@ Procedure delete$node~int SUCCESS
 Checking procedure delete2$node~int... 
 !!! REL :  DEL2(m,n)
 !!! POST:  m>=0 & (m+1)>=n & n>=m
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [DEL2]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -80,7 +80,7 @@ Checking procedure delete2$node~int...
                                 (([0<=m & DEL2(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 57::
                               EXISTS(m_1273: res::sll<m_1273>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
@@ -232,7 +232,7 @@ Checking procedure get_next$node...
 !!! Inferred Pure :[ x!=null]
 !!! REL :  GN(m,n)
 !!! POST:  m>=0 & m+1=n
-!!! PRE :  1<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [x,GN]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -247,8 +247,7 @@ Checking procedure get_next$node...
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][1<=n][x!=null]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 29::ref [x]
                               EXISTS(flted_166_1422,v_1423,
                               m_1424: x'::node<v_1423,flted_166_1422>@M[Orig][] * 
@@ -294,7 +293,7 @@ Checking procedure get_tail$node...
 !!! Inferred Pure :[ x!=null]
 !!! REL :  GT(m,n)
 !!! POST:  m>=0 & m+1=n
-!!! PRE :  1<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [x,GT]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -304,8 +303,7 @@ Checking procedure get_tail$node...
                                 (([0<=m & GT(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][1<=n][x!=null]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
                               EXISTS(m_1487: res::sll<m_1487>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([1+m_1487=n & 0<=n & 0<=m_1487]))&
@@ -318,7 +316,7 @@ Procedure get_tail$node SUCCESS
 Checking procedure insert$node~int... 
 !!! REL :  INS(m,n)
 !!! POST:  m>=1 & m=n+1
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [INS]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -328,7 +326,7 @@ Checking procedure insert$node~int...
                                 (([0<=m & INS(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 42::
                               EXISTS(m_1583: res::sll<m_1583>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
@@ -345,7 +343,7 @@ Procedure insert$node~int SUCCESS
 Checking procedure insert2$node~node... 
 !!! REL :  INS2(m,n)
 !!! POST:  m>=1 & m=n+1
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [INS2]
               EBase exists (Expl)(Impl)[n; v; 
                     Anon_14](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}] * 
@@ -359,7 +357,7 @@ Checking procedure insert2$node~node...
                   Anon_14](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}] * 
                   vn::node<v,Anon_14>@M[Orig][]&(([0<=n][vn!=null]))&
                   {FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 47::
                               EXISTS(m_1691: res::sll<m_1691>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
@@ -376,7 +374,7 @@ Procedure insert2$node~node SUCCESS
 Checking procedure list_copy$node... 
 !!! REL :  CPY(m,n)
 !!! POST:  n>=0 & n=m
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [CPY]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -389,7 +387,7 @@ Checking procedure list_copy$node...
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 78::
                               EXISTS(n_1763,
                               m_1764: x::sll<n_1763>@M[Orig][LHSCase]@ rem br[{388,387}] * 
@@ -406,7 +404,7 @@ Procedure list_copy$node SUCCESS
 Checking procedure list_filter2$node~int... 
 !!! REL :  FIL(m,n)
 !!! POST:  m>=0 & n>=m
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [FIL]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -416,7 +414,7 @@ Checking procedure list_filter2$node~int...
                                 (([0<=m & FIL(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 81::ref [x]
                               EXISTS(m_1856: res::sll<m_1856>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([m_1856<=n & 0<=n & 0<=m_1856]))&
@@ -433,7 +431,7 @@ Procedure list_filter2$node~int SUCCESS
 Checking procedure list_traverse$node... 
 !!! REL :  TRAV(m,n)
 !!! POST:  m>=0 & m=n
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [TRAV]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -443,7 +441,7 @@ Checking procedure list_traverse$node...
                                 (([0<=m & TRAV(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 75::
                               EXISTS(m_1904: x::sll<m_1904>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([n=m_1904 & 0<=n]))&{FLOW,(20,21)=__norm}))
@@ -458,7 +456,7 @@ Procedure list_traverse$node SUCCESS
 Checking procedure merge1$node~node... 
 !!! REL :  MRG(m,n1,n2)
 !!! POST:  n2>=0 & m>=n2 & m=n1+n2
-!!! PRE :  0<=n2 & 0<=n1
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [MRG]
               EBase exists (Expl)(Impl)[n1; 
                     n2](ex)x1::sll<n1>@M[Orig][LHSCase]@ rem br[{388,387}] * 
@@ -473,8 +471,7 @@ Checking procedure merge1$node~node...
                   n2](ex)x1::sll<n1>@M[Orig][LHSCase]@ rem br[{388,387}] * 
                   x2::sll<n2>@M[Orig][LHSCase]@ rem br[{388,387}]&(
                   ([0<=n1][0<=n2]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n2][0<=n1]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 23::ref [x1]
                               EXISTS(m_1989: res::sll<m_1989>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (
@@ -497,7 +494,7 @@ Checking procedure pop_front$node...
 !!! Inferred Pure :[ x!=null]
 !!! REL :  PF(m,n)
 !!! POST:  n>=0 & n+1=m
-!!! PRE :  1<=m
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [x,PF]
               EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=m]))&{FLOW,(20,21)=__norm}
@@ -507,8 +504,7 @@ Checking procedure pop_front$node...
                                 (([0<=n & PF(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=m]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][1<=m][x!=null]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 20::ref [x]
                               EXISTS(n_2016: x'::sll<n_2016>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([1+n_2016=m & 0<=m & 0<=n_2016]))&
@@ -521,7 +517,7 @@ Procedure pop_front$node SUCCESS
 Checking procedure push_front$node~int... 
 !!! REL :  PUF(m,n)
 !!! POST:  n>=0 & n+1=m
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [PUF]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -531,7 +527,7 @@ Checking procedure push_front$node~int...
                                 (([0<=m & PUF(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 18::ref [x]
                               EXISTS(m_2030: x'::sll<m_2030>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([0<=m_2030 & 1+n=m_2030 & 0<=n]))&
@@ -544,7 +540,7 @@ Procedure push_front$node~int SUCCESS
 Checking procedure ret_first$node... 
 !!! REL :  RF(m,n)
 !!! POST:  n>=0 & n=m
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [RF]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -554,7 +550,7 @@ Checking procedure ret_first$node...
                                 (([0<=m & RF(m,n)]))&{FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 28::
                               EXISTS(m_2034: x::sll<m_2034>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([n=m_2034 & 0<=n]))&{FLOW,(20,21)=__norm}))
@@ -569,7 +565,7 @@ Checking procedure set_next$node~node...
 !!! Inferred Pure :[ x!=null]
 !!! REL :  SN(k,j)
 !!! POST:  j>=0 & j+1=k
-!!! PRE :  0<=j
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [x,SN]
               EBase exists (Expl)(Impl)[i; 
                     j](ex)x::sll<i>@M[Orig][LHSCase]@ rem br[{388,387}] * 
@@ -583,8 +579,7 @@ Checking procedure set_next$node~node...
                   j](ex)x::sll<i>@M[Orig][LHSCase]@ rem br[{388,387}] * 
                   y::sll<j>@M[Orig][LHSCase]@ rem br[{388,387}]&(
                   ([0<=i][0<=j]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=j][x!=null]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}
                             EAssume 31::ref [x]
                               EXISTS(k_2070: x'::sll<k_2070>@M[Orig][LHSCase]@ rem br[{388,387}]&
                               (([0<=k_2070 & 1+j=k_2070 & 0<=j][0<=i]))&
@@ -645,7 +640,7 @@ Procedure set_null2$node SUCCESS
 Checking procedure size_helper$node~int... 
 !!! REL :  SIZEH(res,m,n)
 !!! POST:  m>=0 & m+n=res
-!!! PRE :  0<=m
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [SIZEH]
               EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=m]))&{FLOW,(20,21)=__norm}
@@ -655,7 +650,7 @@ Checking procedure size_helper$node~int...
                                 {FLOW,(20,21)=__norm})
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[m](ex)x::sll<m>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=m]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=m]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 7::ref [n]
                               true&(([0<=m & m+n=res]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & res=n) --> SIZEH(res,m,n),
@@ -668,7 +663,7 @@ Procedure size_helper$node~int SUCCESS
 Checking procedure size$node... 
 !!! REL :  SIZE(res,n)
 !!! POST:  res>=0 & res=n
-!!! PRE :  0<=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [SIZE]
               EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                     (([0<=n]))&{FLOW,(20,21)=__norm}
@@ -677,7 +672,7 @@ Checking procedure size$node...
                                 true&(([SIZE(res,n)]))&{FLOW,(20,21)=__norm})
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::sll<n>@M[Orig][LHSCase]@ rem br[{388,387}]&
                   (([0<=n]))&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][0<=n]))&{FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 11::
                               true&(([n=res & 0<=n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (res=n & 0<=n) --> SIZE(res,n)]
@@ -755,9 +750,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1328 invocations 
+Stop Omega... 1324 invocations 
 6 false contexts at: ( (193,13)  (193,4)  (44,4)  (44,11)  (46,4)  (46,11) )
 
-Total verification time: 2.13 second(s)
-	Time spent in main process: 1.51 second(s)
-	Time spent in child processes: 0.62 second(s)
+Total verification time: 0.92 second(s)
+	Time spent in main process: 0.35 second(s)
+	Time spent in child processes: 0.57 second(s)

@@ -77,11 +77,20 @@ void swap(ref node x, ref node y)
   y = tmp;
 }
 
-relation PUF(bag a, bag b, int b).
+// drop current content, and add n element with v value
+void assign(ref node x, int n, int v)
+  infer @post []
+  requires x::sll1<m,_>
+  ensures x'::sll1<n1,S>;
+{
+  x = create_list(n, v);
+}
+
+relation PUF(bag a, int b).
 void push_front(ref node x, int v)
 //  infer[PUF]
   requires x::sll1<n, S> & forall (a: (a notin S | v <= a))
-  ensures x'::sll1<n+1, S1> & forall (a2: (a2 notin S1 | v <= a2)); //PUF(S1,S,v);//'
+  ensures x'::sll1<n+1, S1> & forall (a2: (a2 notin S1 | v <= a2)); //PUF(S1,v);
 {
   node tmp = new node(v,x);
   x = tmp;
@@ -103,9 +112,9 @@ node pop_front(ref node x)
 /* append two sorted linked lists */
 relation MRG(bag a, bag b, bag c).
 node merge1(node x1, node x2)
-//  infer[MRG]
+  infer[MRG]
   requires x1::sll1<n1,S1> * x2::sll1<n2, S2>
-  ensures res::sll1<n1+n2, S3> & S3 = union(S1, S2);//MRG(S3,S1,S2);// S3 = union(S1, S2)
+  ensures res::sll1<n1+n2, S3> & MRG(S3,S1,S2);// S3 = union(S1, S2)
 {
 	if (x2 == null)
 		return x1; 
@@ -190,9 +199,9 @@ node get_next_next(node x)
 /* insert an element in a sorted list */
 relation INS(bag a, bag b, int a).
 node insert(node x, int v)
-//  infer [INS]
+  infer [INS]
   requires x::sll1<n, S>
-  ensures res::sll1<n + 1, S1> & S1=union(S,{v});//INS(S,S1,v);//S1=union(S,{v})
+  ensures res::sll1<n + 1, S1> & INS(S,S1,v);//S1=union(S,{v})
 {
 	node tmp;
 
@@ -213,9 +222,9 @@ node insert(node x, int v)
 /* insert a node into a sorted list */
 relation INS2(bag a, bag b, int a).
 node insert2(node x, node vn)
-//  infer[INS2]
+  infer[INS2]
   requires x::sll1<n, S> *  vn::node<v, _>
-  ensures res::sll1<n+1, S2> & S2=union(S,{v});//INS2(S,S2,v);//S2=union(S,{v})
+  ensures res::sll1<n+1, S2> & INS2(S,S2,v);//S2=union(S,{v})
 {
 	if (x==null) {
 		vn.next = null;
@@ -234,9 +243,9 @@ node insert2(node x, node vn)
 /* function to delete the a-th node in a singly linked list */
 relation DEL(bag a, bag b).
 void delete(node x, int a)
-//  infer [DEL]
+  infer [DEL]
   requires x::sll1<n,S> & n > a & a > 0
-  ensures x::sll1<m, S1> & S1 subset S; //DEL(S,S1);//'S1 subset S
+  ensures x::sll1<m, S1> & DEL(S,S1);// S1 subset S
 {
   if (a == 1){
     x.next = x.next.next;
@@ -249,9 +258,9 @@ void delete(node x, int a)
 /* function to delete the a-th node in a singly linked list */
 relation DEL2(int a, bag b, bag c).
 node delete2(node x, int v)
-//  infer[DEL2]
+  infer[DEL2]
   requires x::sll1<n, S>
-  ensures res::sll1<m, S1> & n-1 <= m <= n & (a notin S & S = S1 | S=union(S1, {a}));//DEL2(a,S,S1);
+  ensures res::sll1<m, S1> & n-1 <= m <= n & DEL2(v,S,S1); // (v notin S & S = S1 | S=union(S1, {v}));
 {
 	node tmp;
 
@@ -272,13 +281,13 @@ node delete2(node x, int v)
 }
 
 /* function to create a singly linked list with a nodes */
-//relation CL(bag a, int b).
+relation CL(bag a, int b).
 node create_list(int n, int v)
-//infer[CL]
+infer[CL]
   requires n>=0 //0<=v
   case {
   n = 0 -> ensures res=null;
-  n > 0 -> ensures res::sll1<n, S> & forall (_x: _x notin S | _x=v);//CL(S,v); //& CL(S,v);//& S={v};
+  n > 0 -> ensures res::sll1<n, S> & CL(S,v); //forall (_x: _x notin S | _x=v);
   n < 0 -> ensures true;
   }
 {

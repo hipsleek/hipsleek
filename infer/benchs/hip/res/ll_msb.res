@@ -2,7 +2,7 @@
 
 Processing file "ll_msb.ss"
 Parsing ll_msb.ss ...
-Parsing ../../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Translating global variables to procedure parameters...
 
@@ -205,7 +205,7 @@ Restarting Mona ...
 
 !!! REL :  DEL2(a,S,S1)
 !!! POST:  S1=S & a <notin> S  | S1<subset> S  & a <in> S 
-!!! PRE :  a <notin> S  | a <in> S 
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [DEL2]
               EBase exists (Expl)(Impl)[n; 
                     S](ex)x::ll2<n,S>@M[Orig][LHSCase]@ rem br[{405,404}]&(
@@ -219,8 +219,7 @@ Restarting Mona ...
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; 
                   S](ex)x::ll2<n,S>@M[Orig][LHSCase]@ rem br[{405,404}]&(
                   ())&{FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][a <notin> S  | a <in> S ]))&
-                          {FLOW,(1,23)=__flow}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 45::
                               EXISTS(m_1938,
                               S1_1939: res::ll2<m_1938,S1_1939>@M[Orig][LHSCase]@ rem br[{405,404}]&
@@ -260,9 +259,6 @@ Checking procedure empty$node...
 Procedure empty$node SUCCESS
 
 Checking procedure find_ge$node~int... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  FGE(S,m)
 !!! POST:  m <in> S 
 !!! PRE :  true
@@ -307,6 +303,9 @@ Restarting Mona ...
 Procedure find_ge$node~int SUCCESS
 
 Checking procedure front$node... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 Procedure front$node SUCCESS
 
 Checking procedure get_next$node... 
@@ -914,6 +913,6 @@ Termination checking result:
 
 12 false contexts at: ( (162,13)  (162,4)  (241,4)  (241,11)  (246,4)  (246,11)  (245,10)  (245,4)  (244,8)  (244,12)  (244,4)  (244,4) )
 
-Total verification time: 5.7 second(s)
-	Time spent in main process: 2.33 second(s)
+Total verification time: 3.9 second(s)
+	Time spent in main process: 0.53 second(s)
 	Time spent in child processes: 3.37 second(s)

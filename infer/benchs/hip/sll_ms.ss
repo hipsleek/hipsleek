@@ -274,7 +274,7 @@ node insert2(node x, node vn)
 /* function to delete the a-th node in a sorted singly linked list */
 relation DEL(int m, int n, int p).
 void delete(node x, int a)
-  infer [n,DEL]
+  infer [n,a,DEL]
   requires x::sll<n> 
   ensures x::sll<m> & DEL(m,n,a);
 {
@@ -312,16 +312,7 @@ node delete2(node x, int v)
 }
 
 /* function to create a singly linked list with a nodes */
-relation CL(int a, int b).
 node create_list(int n, int v)
-/*  infer[CL]
-  requires n>=0 //0<=v
-  case 
-  {
-    n = 0 -> ensures res=null;
-    n > 0 -> ensures res::sll<n> & CL(m,n);//m=n & m>=1
-    n < 0 -> ensures true;
-  }*/
   requires true
   ensures res::sll<n>;
 {
