@@ -19,7 +19,7 @@ pq2<n> == self = null & n = 0
 /* function to insert an element in a priority queue */
 relation INS(int a, int b).
 node insert(node t, int v)
-  infer[res,t,INS]
+  infer[t,INS]
   requires t::pq2<n> & v >= 0
   ensures res::pq2<n1> & INS(n1,n);//n1 = n+1;//INS(n1,n)
 {
@@ -183,10 +183,11 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 }
 
 /* function to delete the root of a heap tree */
+relation A(int a, int b).
 int deletemax(ref node t)
-  infer[t]
+  infer[n,A]
   requires t::pq2<n> //& n > 0 & t!=null
-  ensures t'::pq2<n1> ;//'& n1=n-1
+  ensures t'::pq2<n1> & A(n1,n);//'& n1=n-1
 
 {
 	int v, tmp;

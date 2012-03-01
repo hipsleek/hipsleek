@@ -15,25 +15,23 @@ pq<n, mx> == self = null & n = 0 & mx = 0
 	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
 	inv n >= 0 & mx >= 0;
 
-/*pq1<n, S> == self = null & n = 0 & S = {} 
-	or self::node<d, m1, m2, l, r> * l::pq1<n1, S1> * r::pq1<n2, S2> 
-	& n = n1 + n2 + 1 & d >= 0 &  m1 = n1 & m2 = n2 & 0 <= n1 - n2 & n1 - n2 <= 1 
-	& forall(a : (a notin S1 | a <= d)) & forall(b : (b notin S2 | b <= d)) & S = union(S1, S2, {d})
-	inv n >= 0;*/
-
+pq1<n, mx> == self = null & n = 0 & mx = 0
+	or (exists m3: self::node<d, m1, m2, l, r> * l::pq1<m1, mx1> * r::pq1<m2, mx2>
+	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx = d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
+	inv n >= 0 & mx >= 0;
 
 /* function to insert an element in a priority queue */
 relation INS(int a, int b, int c).
 node insert(node t, int v)
-//  infer[INS]
+//  infer [INS]
   requires t::pq<n, mx> & v >= 0
-  ensures res::pq<n1, ma> & n1 = n+1 & (v>=mx & ma = v | ma = mx);//INS(v,mx,ma);//(v>=mx & ma = v | ma = mx);v>=0 & ma>=v & mx>=0
+  ensures res::pq<n+1, ma> & (v>=mx & ma = v | ma = mx);//INS(v,mx,ma);//(v>=mx & ma = v | ma = mx);
 {
 	node tmp, tmp_null = null;
 	int tmpv;
 
 	if (t == null){
-      assume(ma = max(v, mx));
+      assume ma = max(v, mx);
       return new node(v, 0, 0, tmp_null, tmp_null);
     }
 	else
@@ -84,11 +82,12 @@ int deleteoneel1(ref node t)
   ensures t'::pq<n-1, mx2> & mx2 <= mx & 0 <= res <= mx ;//'
 
 /* function to delete a leaf */
+relation DEL(int a, int b, int c).
 int deleteoneel(ref node t)
-  //infer[res,mx,mx2]
+  infer[DEL]
   requires t::pq<n, mx> & n > 0
-  //ensures t'::pq<n-1, mx2> ;//& mx2 <= mx & 0 <= res <= mx &
-	ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
+  ensures t'::pq<n-1, mx2> & DEL(res,mx,mx2);//& mx2 <= mx & 0 <= res <= mx &
+	//ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
 
 {
 	int v;
@@ -117,18 +116,17 @@ int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;//'
 
 /* function to delete one element*/
-//can not reverify
+relation DELONE (int a, int b, int c, int d).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
-//infer[mx1,mx2,mx3,mx4]
-     requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-     ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 &
-     m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
-                          //& mx3 <= mx1 & mx4 <= mx2;
-  /* 
-    requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-	ensures l'::pq<n3, mx3> * r'::pq<n4, mx4> & n3 + n4 + 1 = m1 + m2 & 0 <= n3 - n4 <= 1 & 
-		m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
-    */
+  infer [DELONE]
+  requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1'+m2'+1 = m1+m2 & 0 <= m1'-m2'<= 1 &
+    m1'=n3 & m2'=n4 /*& mx3<=mx1 & mx4<=mx2*/ & maxi= max(mx1, mx2) & 0 <= res <= maxi & DELONE(mx3,mx1,mx2,mx4);
+/* 
+  requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq<n3, mx3> * r'::pq<n4, mx4> & n3 + n4 + 1 = m1 + m2 & 0 <= n3 - n4 <= 1 & 
+  m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+*/
 {
 	if (m1 > m2)
 	{
@@ -143,13 +141,12 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 }
 
 /* function to restore the heap property */
-//relation RIP(int a, int b, int c).
+relation RIP(int a, int b, int c, int d).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-//infer[RIP]
+  //infer[RIP]
   requires l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
-  ensures l::pq<m1, mx3> * r::pq<m2, mx4> & mx3 <= mx1 & mx4 <= mx2 &// & RIP(mx1,mx2,d)
-	max1 = max(mx1, v) & max2 = max(mx2, max1) &
-		d' <= max2 & d' >= mx3, mx4, 0;
+  ensures l::pq<m1, mx3> * r::pq<m2, mx4> /*& mx3 <= mx1 & mx4 <= mx2 */
+    & max1 = max(mx1, v) & max2 = max(mx2, max1) & d' <= max2 & d' >= mx3, mx4, 0;
 {
 	if (m1 == 0)
       { //assume false;

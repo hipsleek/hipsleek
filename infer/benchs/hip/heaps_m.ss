@@ -130,11 +130,9 @@ void ripple1(ref int d, int v, int m1, int m2, node l, node r)
   ensures l::pq1<> * r::pq1<> ;//& RIP(d,v,m1,m2);//'
 
 /* function to restore the heap property */
-                                             relation RP(int a, int b, int c, int d).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-                                             infer[l,r,RP]
-   requires l::pq1<> * r::pq1<>//& l!= null & r!=null
-  ensures l::pq1<> * r::pq1<>& RP(d,v,m1,m2);// & RP(l,r);//
+  requires l::pq1<> * r::pq1<> & l!= null & r!=null
+  ensures l::pq1<> * r::pq1<>;
 {
 	if (m1 == 0)
       { //assume false;
