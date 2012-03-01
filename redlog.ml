@@ -1018,7 +1018,7 @@ let options_to_bool opts default =
   | None -> default
 
 let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
-  if is_linear_formula f then
+  if (not !dis_oc) && (is_linear_formula f) then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
@@ -1110,7 +1110,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
     is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
-    if is_linear_formula f then
+    if (not !dis_oc) && (is_linear_formula f) then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
     (* (is_valid f imp_no) *)
     else

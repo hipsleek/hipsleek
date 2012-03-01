@@ -1047,7 +1047,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           Setmona.is_sat wf
     | Redlog -> 
           (* let f = CP.drop_rel_formula f in *)
-          redlog_is_sat wf
+          stat_tp (lazy (redlog_is_sat wf)) "redlog"
     | RM ->
           (* let f = CP.drop_rel_formula f in *)
           if (is_bag_constraint wf) then
@@ -1629,7 +1629,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | SetMONA -> Setmona.imply ante_w conseq_s 
   | Redlog -> 
       (* let _ = print_string ("tp_imply_no_cache: Redlog \n") in *)
-      redlog_imply ante_w conseq_s  
+      stat_tp (lazy (redlog_imply ante_w conseq_s)) "redlog"
     | RM -> 
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             mona_imply ante_w conseq_s
@@ -2796,7 +2796,7 @@ let stop_prover () =
     | Redlog | RM -> 
           begin
             Redlog.stop();
-	        Omega.stop();
+	          Omega.stop();
 	      end
     | Cvc3 -> 
           begin
