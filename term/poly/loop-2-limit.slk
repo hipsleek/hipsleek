@@ -51,3 +51,27 @@
 	// Loop:
 	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.0))).			// expect Fail
 
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 2.0)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.8)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.6)))).			// expect Valid
+
+checkentail i>0.0001 & i1=i/2 |- i-i1>0.00005.
+
+
+// (1 + sqrt(5))/2 
+//(i-(1+sqrt(5))/2)^2 =
+checkentail i1=1.0+(1.0/i) & L*L=L+1.0 & L>0.0 & i>0.0 & (i!=L) |- 
+       (i>=L & i1>=L & i-L>=i1-L)
+     | (i<=L & i1>=L & L-i>=i1-L)
+     | (i>=L & i1<=L & i-L>=L-i1)
+     | (i<=L & i1<=L & L-i>=L-i1).
+
+
