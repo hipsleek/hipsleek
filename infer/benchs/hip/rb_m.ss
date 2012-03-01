@@ -20,7 +20,7 @@ node rotate_case_3_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node rotate_case_3(node a, node b, node c)
-  infer[cl]
+  infer @post []
   requires a::rb1<1> * b::rb1<0> * c::rb1<0> //[a!=null]
   ensures res::rb1<cl>;//[cl=0][res!=null]
 {
@@ -38,7 +38,7 @@ node case_2_1(node a, node b, node c, node d)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node case_2(node a, node b, node c, node d)
-  infer[cl]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
   ensures res::rb1<cl>;//[cl=0][res!=null]
 {
@@ -56,7 +56,7 @@ node rotate_case_3r_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node rotate_case_3r(node a, node b, node c)
-  infer[cl]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<1>
   ensures res::rb1<cl>;//[cl=0][res!=null][c!=null]
 {
@@ -73,7 +73,7 @@ node case_2r_1(node a, node b, node c, node d)
   ensures res::rb1< cl> & cl=0 & res!=null;
 
 node case_2r(node a, node b, node c, node d)
-  infer[cl]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
   ensures res::rb1< cl>;//[cl=0][res!=null]
 {
@@ -154,7 +154,7 @@ node del_6_1(node a, node b, node c, int color)
 //relation DEL6_2(int a, int b).
 node del_6(node a, node b, node c, int color)
 //infer[DEL6_1,DEL6_2]
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1< _> * c::rb1<1> & color = 0 or //[c!=null]
   a::rb1<0> * b::rb1<_> * c::rb1<1> & color = 1
 /*
@@ -189,7 +189,7 @@ node del_6r_1(node a, node b, node c, int color)
 //relation DEL6R_2(int a, int b).
 node del_6r(node a, node b, node c, int color)
 //infer[DEL6R_1,DEL6R_2]
-  infer[a,res]
+  infer @post []
   requires a::rb1<1> * b::rb1<_> * c::rb1<0> & color = 0 or //null!=a
   a::rb1<1> * b::rb1<_> * c::rb1<0> & color = 1
 /*
@@ -221,7 +221,7 @@ node del_5_1(node a, node b, node c, node d, int color)
 //relation DEL5_2(int a, int b).
 node del_5(node a, node b, node c, node d, int color)
 //infer[DEL5_1,DEL5_2]
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0> & color = 0 or
   a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0> & color = 1
 /*
@@ -250,7 +250,7 @@ node del_5r_1(node a, node b, node c, node d, int color)
 //relation DEL5R_2(int a, int b).
 node del_5r(node a, node b, node c, node d, int color)
 //infer[res,DEL5R_1,DEL5R_2]
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0> & color = 0 or
   a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0> & color = 1
 /*case {
@@ -274,7 +274,7 @@ node del_4_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node del_4(node a, node b, node c)
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl>; //[cl=0][res!=null]
 {
@@ -290,7 +290,7 @@ node del_4r_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node del_4r(node a, node b, node c)
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl>;
 //inferred: [cl=0][res!=null]
@@ -308,7 +308,7 @@ node del_3_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node del_3(node a, node b, node c)
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl>;
 //inferred: [cl=0][res!=null]
@@ -326,7 +326,7 @@ node del_3r_1(node a, node b, node c)
   ensures res::rb1<cl> & cl=0 & res!=null;
 
 node del_3r(node a, node b, node c)
-  infer[res]
+  infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl>;
 //inferred: [cl=0][res!=null]
@@ -514,8 +514,10 @@ void del(ref node  x, int a)
 {
 	int v;
 
-    assert false;if (x!=null)
-    {  assert false;
+  //assert false;
+  if (x!=null)
+    {  
+  //assert false;
       if (x.val == a) // delete x
         {
           if (x.right == null)

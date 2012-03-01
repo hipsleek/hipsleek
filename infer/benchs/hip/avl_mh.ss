@@ -20,7 +20,7 @@ int height1(node x)
      ensures x::avl1<h> & res = h;
 
 int height(node x)
-     infer[res]
+     infer @post []
      requires x::avl1<h>
      ensures x::avl1<h>;//res = h;
 {
@@ -37,7 +37,7 @@ node rotate_left1(node l, node rl, node rr)
 
 //relation RL(int a, int b).
 node rotate_left(node l, node rl, node rr)
-  infer [rr, res]
+  infer [rr]
   requires l::avl1<ln> * rl::avl1<ln> * rr::avl1<ln+1>//rr!=null
   ensures res::avl1<k>;//k=2+ln
 //2+ln=k & 0<=ln & 2<=k
@@ -58,7 +58,7 @@ node rotate_right1(node ll, node lr, node r)
   ensures res::avl1< 1 + lln>;
 
 node rotate_right(node ll, node lr, node r)
-  infer[ll,lr,r,res]
+  infer[ll]
   requires ll::avl1<lln> * lr::avl1<lln - 1> * r::avl1<lln - 1>//ll!=null
   ensures res::avl1<k>;//k=1 + lln
 //1+lln=k & 0<=lln & 2<=k
@@ -75,6 +75,11 @@ node rotate_right(node ll, node lr, node r)
 int get_max(int a , int b)
   requires true
   ensures res = max(a, b);
+
+int get_max1(int a , int b)
+  infer @post []
+  requires true
+  ensures true;//res = max(a, b);
 {
 	if (a >= b)
 		return a;
@@ -89,7 +94,7 @@ node rotate_double_left1(node a, node b, node c, node d, int v1, int v2, int v3)
      ensures res::avl1<k> & k=an + 2 & res!=null;
 
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer [res]
+  infer @post []
   requires a::avl1<an> * b::avl1<bn> * c::avl1<cn> * d::avl1<an>
   & an = max(bn, cn) & -1 <= bn - cn <= 1
      ensures res::avl1<k>;//k=an + 2 & res!=null
@@ -117,7 +122,7 @@ node rotate_double_right1(node a, node b, node c, node d, int v1, int v2, int v3
      ensures res::avl1<k> & k=2 + an & res!=null;
 
 node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer [res]
+  infer @post []
   requires a::avl1<an> * b::avl1<bn> * c::avl1<cn> * d::avl1<an>
 	         & an = max(bn, cn) & -1 <= cn - bn <= 1
      ensures res::avl1<k>;//k=2 + an & res!=null
@@ -141,7 +146,7 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 
 /* functions to build avl trees */
 node build_avl1(node x, node y)
-  infer[x,res]
+  infer[x]
   requires x::avl1<nx1> * y::avl1<nx1> //& x != null
   ensures res::avl1<k>;//k=1 + nx & res!=null
 //1+nx1=k & 0<=nx1 & 2<=k
@@ -155,7 +160,7 @@ node build_avl1(node x, node y)
 }
 
 void build_avl2(ref node x, node y, node z)
-  infer[x,y]
+  infer[y]
   requires y::avl1<ny> * z::avl1<ny> * x::node<_, _, _, _> //& y != null
   ensures  x'::avl1<k>;//'k=ny+1
 //-1+k=ny & 0<=ny & 1<=ny
@@ -241,7 +246,7 @@ case {
 relation INSI1(int a, int b).
 relation INSI2(int a, int b).
 node insert_inline(node x, int a)
-  infer[x,INSI1,INSI2]
+  infer[x]
   requires x::avl1< n>
   ensures res::avl1<n1> &  n<= n1 <= n+1;
 /*

@@ -20,7 +20,7 @@ node rotate_case_3_1(node a, node b, node c)
   ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
 node rotate_case_3(node a, node b, node c)
-  infer[bha1]
+  infer @post []
   requires a::rb<na, 1, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha>
   ensures res::rb<na + nb + nc + 2, 0, bha1>;
 /*
@@ -41,7 +41,7 @@ node case_2_1(node a, node b, node c, node d)
   ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
 node case_2(node a, node b, node c, node d)
-  infer[bha1]
+  infer @post []
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha1>;
 /*
@@ -62,7 +62,7 @@ node rotate_case_3r_1(node a, node b, node c)
 	ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
 node rotate_case_3r(node a, node b, node c)
-  infer[bha1]
+  infer @post []
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 1, bha>
   ensures res::rb<na + nb + nc + 2, 0, bha1>;
 /*
@@ -82,7 +82,7 @@ node case_2r_1(node a, node b, node c, node d)
   ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
 node case_2r(node a, node b, node c, node d)
-  infer[bha1]
+  infer @post []
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha1>;
 /*
@@ -103,7 +103,7 @@ bool is_red_1(node x)
   or x::rb<n, cl, bh> & cl = 0 & !res;
 
 bool is_red(node x)
-  infer[bh1,bh2]
+  infer @post []
   requires x::rb<n, cl, bh>
  case {
   x=null -> ensures !res;
@@ -129,7 +129,7 @@ bool is_black_1(node x)
   or x::rb<n, cl, bh> & cl = 0 & res;
 
 bool is_black(node x)
-  infer[bh1,bh2]
+  infer @post []
   requires x::rb<n, cl, bh>
  case {
   x=null -> ensures res;
@@ -155,7 +155,7 @@ requires a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 0 or
   res::rb<na + nb + nc + 2, 1, h + 1> & color = 1;
 
 node del_6(node a, node b, node c, int color)
-  infer[h1,h2]
+  infer @post []
   requires a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 1
   ensures res::rb<na + nb + nc + 2, 0,h1> & color = 0 or //h1= h + 2
@@ -177,7 +177,7 @@ node del_6r_1(node a, node b, node c, int color)
   res::rb<na + nb + nc + 2, 1, ha + 1> & color = 1;
 
 node del_6r(node a, node b, node c, int color)
-  infer[ha1,ha2]
+  infer @post []
   requires a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 0 or
   a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 1
   ensures res::rb<na + nb + nc + 2, 0, ha1> & color = 0 or //ha1=ha+2
@@ -199,7 +199,7 @@ node del_5_1(node a, node b, node c, node d, int color)
   res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 
 node del_5(node a, node b, node c, node d, int color)
-  infer[h1,h2]
+  infer @post []
   requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1
   ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or //h1=h+2
@@ -220,7 +220,7 @@ node del_5r_1(node a, node b, node c, node d, int color)
   res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 
 node del_5r(node a, node b, node c, node d, int color)
-  infer[h1,h2]
+  infer @post []
   requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1
   ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or //h1=h+2
@@ -238,7 +238,7 @@ node del_4_1(node a, node b, node c)
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 node del_4(node a, node b, node c)
-  infer[ha1]
+  infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
 {
@@ -254,7 +254,7 @@ node del_4r_1(node a, node b, node c)
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 node del_4r(node a, node b, node c)
-  infer[ha1]
+  infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
 {
@@ -271,7 +271,7 @@ node del_3_1(node a, node b, node c)
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 node del_3(node a, node b, node c)
-  infer[ha1]
+  infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
 {
@@ -288,7 +288,7 @@ node del_3r_1(node a, node b, node c)
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 node del_3r(node a, node b, node c)
-  infer[ha1]
+  infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
 {
@@ -305,7 +305,7 @@ node del_2_1(node a, node b, node c)
   ensures res::rb<na+nb+nc+2, 0, h + 2>;
 
 node del_2(node a, node b, node c)
-  infer[h1]
+  infer @post []
   requires a::rb<na, 0, h> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h+1> & b != null & c != null
   ensures res::rb<na+nb+nc+2, 0, h1>;//2+h=h1 & 1<=h & 3<=h1
 {
@@ -332,7 +332,7 @@ node del_2r_1(node a, node b, node c)
   ensures res::rb<na+nb+nc+2, 0, h+2>;
 
 node del_2r(node a, node b, node c)
-  infer[h1]
+  infer @post []
   requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null //& a != null
   ensures res::rb<na+nb+nc+2, 0, h1>;//2+h=h1 & 1<=h & 3<=h1
 {
@@ -347,9 +347,9 @@ node del_2r(node a, node b, node c)
 	}
 	else
 		tmp = del_6r_1(b.left, b.right, c, 1);
-	assert tmp'::rb<nb+nc+1, _, ha> & h=ha;
-	assert a'::rb<n_1, 0, hb> & hb=h & n_1=nb;
-	assert a'::rb<n_2, 0, hc> & hc=h+1 & n_2=na;
+	//assert tmp'::rb<nb+nc+1, _, ha> & h=ha;
+	//assert a'::rb<n_1, 0, hb> & hb=h & n_1=nb;
+	//assert a'::rb<n_2, 0, hc> & hc=h+1 & n_2=na;
 	f = new node(0, 0, a, tmp);
 	//assert f'::rb<_,_,_>;
 	return f;
@@ -477,8 +477,9 @@ void del(ref node  x, int a)
 {
 	int v;
 
-    assert false;if (x!=null)
-    {  assert false;
+  //assert false;
+  if (x!=null)
+    {  //assert false;
       if (x.val == a) // delete x
         {
           if (x.right == null)

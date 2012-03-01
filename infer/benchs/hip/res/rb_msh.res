@@ -7,55 +7,55 @@ Starting Omega...oc
 Translating global variables to procedure parameters...
 
 Checking procedure case_2$node~node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [bha1]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; nb; nc; nd; 
-                    bha](ex)EXISTS(bha_628,bha_629,bha_630,flted_45_624,
-                    flted_45_625,flted_45_626,
-                    flted_45_627: a::rb<na,flted_45_627,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_45_626,bha_628>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_45_625,bha_629>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    d::rb<nd,flted_45_624,bha_630>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                    bha](ex)EXISTS(bha_621,bha_622,bha_623,flted_45_617,
+                    flted_45_618,flted_45_619,
+                    flted_45_620: a::rb<na,flted_45_620,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_45_619,bha_621>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_45_618,bha_622>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    d::rb<nd,flted_45_617,bha_623>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_45_627][0=flted_45_626][0=flted_45_625]
-                     [0=flted_45_624]
-                     [bha=bha_630 & bha=bha_629 & bha=bha_628 & 1<=bha_630]
+                    ([0=flted_45_620][0=flted_45_619][0=flted_45_618]
+                     [0=flted_45_617]
+                     [bha=bha_623 & bha=bha_622 & bha=bha_621 & 1<=bha_623]
                      [0<=na][0<=nb][0<=nc][0<=nd]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 5::
-                                EXISTS(flted_46_622,
-                                flted_46_623: res::rb<flted_46_623,flted_46_622,bha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_46_615,flted_46_616,
+                                bha1: res::rb<flted_46_616,flted_46_615,bha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_46_623 & flted_46_623=3+na+nb+nc+
+                                ([0<=flted_46_616 & flted_46_616=3+na+nb+nc+
                                    nd]
-                                 [0=flted_46_622][1<=bha1]))&
+                                 [0=flted_46_615][1<=bha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; nd; 
-                  bha](ex)a::rb<na,flted_45_627,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_45_626,bha_628>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_45_625,bha_629>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  d::rb<nd,flted_45_624,bha_630>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  bha](ex)a::rb<na,flted_45_620,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_45_619,bha_621>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_45_618,bha_622>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  d::rb<nd,flted_45_617,bha_623>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([bha_629=bha & bha_629=bha_630 & bha_629=bha_628 & 
-                     1<=bha_629]
-                   [0<=na][0<=nb][0<=nc][0<=nd][0=flted_45_627]
-                   [0=flted_45_626][0=flted_45_625][0=flted_45_624]))&
+                  ([bha_622=bha & bha_622=bha_623 & bha_622=bha_621 & 
+                     1<=bha_622]
+                   [0<=na][0<=nb][0<=nc][0<=nd][0=flted_45_620]
+                   [0=flted_45_619][0=flted_45_618][0=flted_45_617]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 5::
-                              EXISTS(flted_46_4276,flted_46_4277,
-                              bha1_4278: res::rb<flted_46_4276,flted_46_4277,bha1_4278>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_46_4250,flted_46_4251,
+                              bha1_4252: res::rb<flted_46_4250,flted_46_4251,bha1_4252>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([flted_46_4276=3+na+nb+nc+nd & 0<=nb & 
+                              ([flted_46_4250=3+na+nb+nc+nd & 0<=nb & 
                                  0<=nc & 0<=nd & 0<=na]
-                               [res!=null][-1+bha1_4278=bha & 1<=bha]
-                               [0=flted_46_4277][1<=bha_630]
-                               [0<=flted_45_624 & flted_45_624<=1]
-                               [1<=bha_629]
-                               [0<=flted_45_625 & flted_45_625<=1]
-                               [1<=bha_628]
-                               [0<=flted_45_626 & flted_45_626<=1]
-                               [0<=flted_45_627 & flted_45_627<=1]))&
+                               [res!=null][-1+bha1_4252=bha & 1<=bha]
+                               [0=flted_46_4251][1<=bha_623]
+                               [0<=flted_45_617 & flted_45_617<=1]
+                               [1<=bha_622]
+                               [0<=flted_45_618 & flted_45_618<=1]
+                               [1<=bha_621]
+                               [0<=flted_45_619 & flted_45_619<=1]
+                               [0<=flted_45_620 & flted_45_620<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -63,55 +63,55 @@ Checking procedure case_2$node~node~node~node...
 Procedure case_2$node~node~node~node SUCCESS
 
 Checking procedure case_2r$node~node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [bha1]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; nb; nc; nd; 
-                    bha](ex)EXISTS(bha_568,bha_569,bha_570,flted_86_564,
-                    flted_86_565,flted_86_566,
-                    flted_86_567: a::rb<na,flted_86_567,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_86_566,bha_568>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_86_565,bha_569>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    d::rb<nd,flted_86_564,bha_570>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                    bha](ex)EXISTS(bha_561,bha_562,bha_563,flted_86_557,
+                    flted_86_558,flted_86_559,
+                    flted_86_560: a::rb<na,flted_86_560,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_86_559,bha_561>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_86_558,bha_562>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    d::rb<nd,flted_86_557,bha_563>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_86_567][0=flted_86_566][0=flted_86_565]
-                     [0=flted_86_564]
-                     [bha=bha_570 & bha=bha_569 & bha=bha_568 & 1<=bha_570]
+                    ([0=flted_86_560][0=flted_86_559][0=flted_86_558]
+                     [0=flted_86_557]
+                     [bha=bha_563 & bha=bha_562 & bha=bha_561 & 1<=bha_563]
                      [0<=na][0<=nb][0<=nc][0<=nd]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 11::
-                                EXISTS(flted_87_562,
-                                flted_87_563: res::rb<flted_87_563,flted_87_562,bha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_87_555,flted_87_556,
+                                bha1: res::rb<flted_87_556,flted_87_555,bha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_87_563 & flted_87_563=3+na+nb+nc+
+                                ([0<=flted_87_556 & flted_87_556=3+na+nb+nc+
                                    nd]
-                                 [0=flted_87_562][1<=bha1]))&
+                                 [0=flted_87_555][1<=bha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; nd; 
-                  bha](ex)a::rb<na,flted_86_567,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_86_566,bha_568>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_86_565,bha_569>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  d::rb<nd,flted_86_564,bha_570>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  bha](ex)a::rb<na,flted_86_560,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_86_559,bha_561>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_86_558,bha_562>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  d::rb<nd,flted_86_557,bha_563>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([bha_569=bha & bha_569=bha_570 & bha_569=bha_568 & 
-                     1<=bha_569]
-                   [0<=na][0<=nb][0<=nc][0<=nd][0=flted_86_567]
-                   [0=flted_86_566][0=flted_86_565][0=flted_86_564]))&
+                  ([bha_562=bha & bha_562=bha_563 & bha_562=bha_561 & 
+                     1<=bha_562]
+                   [0<=na][0<=nb][0<=nc][0<=nd][0=flted_86_560]
+                   [0=flted_86_559][0=flted_86_558][0=flted_86_557]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 11::
-                              EXISTS(flted_87_4394,flted_87_4395,
-                              bha1_4396: res::rb<flted_87_4394,flted_87_4395,bha1_4396>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_87_4368,flted_87_4369,
+                              bha1_4370: res::rb<flted_87_4368,flted_87_4369,bha1_4370>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([flted_87_4394=3+na+nb+nc+nd & 0<=na & 
+                              ([flted_87_4368=3+na+nb+nc+nd & 0<=na & 
                                  0<=nc & 0<=nd & 0<=nb]
-                               [res!=null][-1+bha1_4396=bha & 1<=bha]
-                               [0=flted_87_4395][1<=bha_570]
-                               [0<=flted_86_564 & flted_86_564<=1]
-                               [1<=bha_569]
-                               [0<=flted_86_565 & flted_86_565<=1]
-                               [1<=bha_568]
-                               [0<=flted_86_566 & flted_86_566<=1]
-                               [0<=flted_86_567 & flted_86_567<=1]))&
+                               [res!=null][-1+bha1_4370=bha & 1<=bha]
+                               [0=flted_87_4369][1<=bha_563]
+                               [0<=flted_86_557 & flted_86_557<=1]
+                               [1<=bha_562]
+                               [0<=flted_86_558 & flted_86_558<=1]
+                               [1<=bha_561]
+                               [0<=flted_86_559 & flted_86_559<=1]
+                               [0<=flted_86_560 & flted_86_560<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -119,12 +119,6 @@ Checking procedure case_2r$node~node~node~node...
 Procedure case_2r$node~node~node~node SUCCESS
 
 Checking procedure del$node~int... 
-assert/assume:rb_msh.ss:480: 4:  : failed
-
-
-assert/assume:rb_msh.ss:481: 7:  : failed
-
-
 !!! REL :  DEL1(bh,bh1)
 !!! POST:  1=bh1 & 1=bh
 !!! PRE :  true
@@ -136,63 +130,63 @@ assert/assume:rb_msh.ss:481: 7:  : failed
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [DEL1,DEL2,DEL3]
               EBase exists (Expl)(Impl)[n; cl; 
-                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                     (([0<=cl & cl<=1][0<=n][1<=bh]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 79::ref [x]
+                              EAssume 76::ref [x]
                                 
-                                EXISTS(flted_463_117,bh1,
-                                cl2: x'::rb<flted_463_117,cl2,bh1>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                                EXISTS(flted_463_116,bh1,
+                                cl2: x'::rb<flted_463_116,cl2,bh1>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                                 (
-                                ([0<=flted_463_117 & 1+flted_463_117=n]
+                                ([0<=flted_463_116 & 1+flted_463_116=n]
                                  [1<=bh1 & DEL1(bh,bh1)][1=cl]
                                  [0<=cl2 & cl2<=1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_464_118,flted_464_119,
-                                   bh2: x'::rb<flted_464_119,flted_464_118,bh2>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                or EXISTS(flted_464_117,flted_464_118,
+                                   bh2: x'::rb<flted_464_118,flted_464_117,bh2>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                    (
-                                   ([0<=flted_464_119 & 1+flted_464_119=n]
-                                    [0=flted_464_118][1<=bh2 & DEL2(bh,bh2)]
+                                   ([0<=flted_464_118 & 1+flted_464_118=n]
+                                    [0=flted_464_117][1<=bh2 & DEL2(bh,bh2)]
                                     [0=cl]))&
                                    {FLOW,(20,21)=__norm})
-                                or EXISTS(n_120,cl_121,
-                                   bh3: x'::rb<n_120,cl_121,bh3>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                                or EXISTS(n_119,cl_120,
+                                   bh3: x'::rb<n_119,cl_120,bh3>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                                    (
                                    ([1<=bh3 & DEL3(bh,bh3)]
-                                    [n=n_120 & 0<=n_120]
-                                    [cl=cl_121 & cl_121<=1 & 0<=cl_121]))&
+                                    [n=n_119 & 0<=n_119]
+                                    [cl=cl_120 & cl_120<=1 & 0<=cl_120]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; cl; 
-                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                   (([0<=n][1<=bh][0<=cl & cl<=1]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
-                            EAssume 79::ref [x]
+                            EAssume 76::ref [x]
                               
-                              EXISTS(flted_464_6977,flted_464_6978,
-                              bh2_6979: x'::rb<flted_464_6978,flted_464_6977,bh2_6979>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_464_6951,flted_464_6952,
+                              bh2_6953: x'::rb<flted_464_6952,flted_464_6951,bh2_6953>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([bh=2 & 1<=bh][bh2_6979<=2 & 1<=bh2_6979]
-                               [cl=0 & 0<=cl & cl<=1][0=flted_464_6977]
-                               [0<=flted_464_6978 & 0<=n & 1+flted_464_6978=n]
+                              ([bh=2 & 1<=bh][bh2_6953<=2 & 1<=bh2_6953]
+                               [cl=0 & 0<=cl & cl<=1][0=flted_464_6951]
+                               [0<=flted_464_6952 & 0<=n & 1+flted_464_6952=n]
                                ))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_463_6980,bh1_6981,
-                                 cl2_6982: x'::rb<flted_463_6980,cl2_6982,bh1_6981>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                              or EXISTS(flted_463_6954,bh1_6955,
+                                 cl2_6956: x'::rb<flted_463_6954,cl2_6956,bh1_6955>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                                  (
-                                 ([bh=1 & 1<=bh][1=bh1_6981 & 1<=bh1_6981]
-                                  [0<=cl2_6982 & cl2_6982<=1]
+                                 ([bh=1 & 1<=bh][1=bh1_6955 & 1<=bh1_6955]
+                                  [0<=cl2_6956 & cl2_6956<=1]
                                   [cl=1 & 0<=cl & cl<=1]
-                                  [0<=flted_463_6980 & 0<=n & 1+
-                                    flted_463_6980=n]
+                                  [0<=flted_463_6954 & 0<=n & 1+
+                                    flted_463_6954=n]
                                   ))&
                                  {FLOW,(20,21)=__norm})
-                              or EXISTS(n_6983,cl_6984,
-                                 bh3_6985: x'::rb<n_6983,cl_6984,bh3_6985>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                              or EXISTS(n_6957,cl_6958,
+                                 bh3_6959: x'::rb<n_6957,cl_6958,bh3_6959>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                                  (
-                                 ([bh=1 & 1<=bh][1=bh3_6985 & 1<=bh3_6985]
-                                  [cl=cl_6984 & cl<=1 & 0<=cl]
-                                  [n=n_6983 & 0<=n]))&
+                                 ([bh=1 & 1<=bh][1=bh3_6959 & 1<=bh3_6959]
+                                  [cl=cl_6958 & cl<=1 & 0<=cl]
+                                  [n=n_6957 & 0<=n]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[ (bh1=1 & bh=1) --> DEL1(bh,bh1),
@@ -205,91 +199,90 @@ assert/assume:rb_msh.ss:481: 7:  : failed
 Procedure del$node~int SUCCESS
 
 Checking procedure del_2$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [h1]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; h; nb; 
-                    nc](ex)EXISTS(flted_309_185,flted_309_186,flted_309_187,
-                    flted_309_188,
-                    flted_309_189: a::rb<na,flted_309_189,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_309_188,flted_309_187>@M[Orig][LHSCase]@ rem br[{706}] * 
-                    c::rb<nc,flted_309_186,flted_309_185>@M[Orig][LHSCase]@ rem br[{706}]&
+                    nc](ex)EXISTS(flted_309_178,flted_309_179,flted_309_180,
+                    flted_309_181,
+                    flted_309_182: a::rb<na,flted_309_182,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_309_181,flted_309_180>@M[Orig][LHSCase]@ rem br[{696}] * 
+                    c::rb<nc,flted_309_179,flted_309_178>@M[Orig][LHSCase]@ rem br[{696}]&
                     (
-                    ([0=flted_309_189][flted_309_188=0][flted_309_186=0]
-                     [1<=h & -1+flted_309_185=h & -1+flted_309_187=h]
+                    ([0=flted_309_182][flted_309_181=0][flted_309_179=0]
+                     [1<=h & -1+flted_309_178=h & -1+flted_309_180=h]
                      [null!=b][null!=c][0<=na][0<=nb & 0!=nb][0<=nc & 0!=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 51::
-                                EXISTS(flted_310_183,
-                                flted_310_184: res::rb<flted_310_184,flted_310_183,h1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_310_176,flted_310_177,
+                                h1: res::rb<flted_310_177,flted_310_176,h1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_310_184 & flted_310_184=2+na+nb+nc]
-                                 [0=flted_310_183][1<=h1]))&
+                                ([0<=flted_310_177 & flted_310_177=2+na+nb+nc]
+                                 [0=flted_310_176][1<=h1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; h; nb; 
-                  nc](ex)a::rb<na,flted_309_189,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_309_188,flted_309_187>@M[Orig][LHSCase]@ rem br[{706}] * 
-                  c::rb<nc,flted_309_186,flted_309_185>@M[Orig][LHSCase]@ rem br[{706}]&
+                  nc](ex)a::rb<na,flted_309_182,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_309_181,flted_309_180>@M[Orig][LHSCase]@ rem br[{696}] * 
+                  c::rb<nc,flted_309_179,flted_309_178>@M[Orig][LHSCase]@ rem br[{696}]&
                   (
-                  ([flted_309_185=flted_309_187 & 1+h=flted_309_185 & 
-                     2<=flted_309_185]
-                   [b!=null][c!=null][0<=na][1<=nb][1<=nc][0=flted_309_189]
-                   [0=flted_309_188][0=flted_309_186]))&
+                  ([flted_309_178=flted_309_180 & 1+h=flted_309_178 & 
+                     2<=flted_309_178]
+                   [b!=null][c!=null][0<=na][1<=nb][1<=nc][0=flted_309_182]
+                   [0=flted_309_181][0=flted_309_179]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 51::
                               
-                              EXISTS(v_7592,flted_13_7593,l_7594,r_7595,
-                              flted_310_7596,flted_310_7597,
-                              h1_7598: b::node<v_7592,flted_13_7593,l_7594,r_7595>@M[Orig][] * 
-                              res::rb<flted_310_7596,flted_310_7597,h1_7598>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(v_7566,flted_13_7567,l_7568,r_7569,
+                              flted_310_7570,flted_310_7571,
+                              h1_7572: b::node<v_7566,flted_13_7567,l_7568,r_7569>@M[Orig][] * 
+                              res::rb<flted_310_7570,flted_310_7571,h1_7572>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
                               ([b!=null]
-                               [2+na+nb+nc=flted_310_7596 & (3+na+
-                                 nb)<=flted_310_7596 & 0<=nb & 0<=na & 
+                               [2+na+nb+nc=flted_310_7570 & (3+na+
+                                 nb)<=flted_310_7570 & 0<=nb & 0<=na & 
                                  0<=nc & 1<=nb]
-                               [res!=null][-2+h1_7598=h & 1<=h][c!=null]
-                               [0=flted_13_7593][0=flted_310_7597]
-                               [1<=flted_309_185]
-                               [0<=flted_309_186 & flted_309_186<=1]
-                               [1<=flted_309_187]
-                               [0<=flted_309_188 & flted_309_188<=1]
-                               [0<=flted_309_189 & flted_309_189<=1]))&
+                               [res!=null][-2+h1_7572=h & 1<=h][c!=null]
+                               [0=flted_13_7567][0=flted_310_7571]
+                               [1<=flted_309_178]
+                               [0<=flted_309_179 & flted_309_179<=1]
+                               [1<=flted_309_180]
+                               [0<=flted_309_181 & flted_309_181<=1]
+                               [0<=flted_309_182 & flted_309_182<=1]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(v_7599,flted_13_7600,r_7601,l_7602,
-                                 v_7603,flted_12_7604,l_7605,r_7606,
-                                 flted_310_7607,flted_310_7608,
-                                 h1_7609: b::node<v_7599,flted_13_7600,l_7602,r_7601>@M[Orig][] * 
-                                 l_7602::node<v_7603,flted_12_7604,l_7605,r_7606>@M[Orig][] * 
-                                 res::rb<flted_310_7607,flted_310_7608,h1_7609>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              or EXISTS(v_7573,flted_13_7574,r_7575,l_7576,
+                                 v_7577,flted_12_7578,l_7579,r_7580,
+                                 flted_310_7581,flted_310_7582,
+                                 h1_7583: b::node<v_7573,flted_13_7574,l_7576,r_7575>@M[Orig][] * 
+                                 l_7576::node<v_7577,flted_12_7578,l_7579,r_7580>@M[Orig][] * 
+                                 res::rb<flted_310_7581,flted_310_7582,h1_7583>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                  (
-                                 ([c!=null][b!=null][-2+h1_7609=h & 1<=h]
-                                  [2+na+nb+nc=flted_310_7607 & (3+na+
-                                    nb)<=flted_310_7607 & 0<=nb & 2<=nb & 
-                                    0<=nc & 0<=na]
-                                  [l_7602!=null][res!=null][1=flted_12_7604]
-                                  [0=flted_13_7600][0=flted_310_7608]
-                                  [1<=flted_309_185]
-                                  [0<=flted_309_186 & flted_309_186<=1]
-                                  [1<=flted_309_187]
-                                  [0<=flted_309_188 & flted_309_188<=1]
-                                  [0<=flted_309_189 & flted_309_189<=1]))&
+                                 ([c!=null][b!=null][-2+h1_7583=h & 1<=h]
+                                  [flted_310_7581=2+na+nb+nc & 2<=nb & 
+                                    0<=nb & 1<=nc & 0<=nc & 0<=na]
+                                  [l_7576!=null][res!=null][1=flted_12_7578]
+                                  [0=flted_13_7574][0=flted_310_7582]
+                                  [1<=flted_309_178]
+                                  [0<=flted_309_179 & flted_309_179<=1]
+                                  [1<=flted_309_180]
+                                  [0<=flted_309_181 & flted_309_181<=1]
+                                  [0<=flted_309_182 & flted_309_182<=1]))&
                                  {FLOW,(20,21)=__norm})
-                              or EXISTS(v_7610,flted_13_7611,l_7612,r_7613,
-                                 flted_310_7614,flted_310_7615,
-                                 h1_7616: b::node<v_7610,flted_13_7611,l_7612,r_7613>@M[Orig][] * 
-                                 res::rb<flted_310_7614,flted_310_7615,h1_7616>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              or EXISTS(v_7584,flted_13_7585,l_7586,r_7587,
+                                 flted_310_7588,flted_310_7589,
+                                 h1_7590: b::node<v_7584,flted_13_7585,l_7586,r_7587>@M[Orig][] * 
+                                 res::rb<flted_310_7588,flted_310_7589,h1_7590>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                  (
-                                 ([2+na+nb+nc=flted_310_7614 & (4+na+
-                                    nc)<=flted_310_7614 & 0<=nb & 0<=na & 
-                                    0<=nc & 1<=nc]
-                                  [-2+h1_7616=h & 1<=h][r_7613!=null]
-                                  [res!=null][c!=null][b!=null]
-                                  [0=flted_13_7611][0=flted_310_7615]
-                                  [1<=flted_309_185]
-                                  [0<=flted_309_186 & flted_309_186<=1]
-                                  [1<=flted_309_187]
-                                  [0<=flted_309_188 & flted_309_188<=1]
-                                  [0<=flted_309_189 & flted_309_189<=1]))&
+                                 ([2+na+nb+nc=flted_310_7588 & (3+na+
+                                    nb)<=flted_310_7588 & 0<=nb & 2<=nb & 
+                                    0<=nc & 0<=na]
+                                  [r_7587!=null][res!=null][c!=null][
+                                  b!=null][-2+h1_7590=h & 1<=h]
+                                  [0=flted_13_7585][0=flted_310_7589]
+                                  [1<=flted_309_178]
+                                  [0<=flted_309_179 & flted_309_179<=1]
+                                  [1<=flted_309_180]
+                                  [0<=flted_309_181 & flted_309_181<=1]
+                                  [0<=flted_309_182 & flted_309_182<=1]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -298,101 +291,92 @@ Checking procedure del_2$node~node~node...
 Procedure del_2$node~node~node SUCCESS
 
 Checking procedure del_2r$node~node~node... 
-assert/assume:rb_msh.ss:350: 1:  : failed
-
-
-assert/assume:rb_msh.ss:351: 1:  : failed
-
-
-assert:rb_msh.ss:352: 1:  : ok
-
-
-!!! OLD SPECS: ((None,[]),EInfer [h1]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; nb; nc; 
-                    h](ex)EXISTS(flted_336_147,flted_336_148,flted_336_149,
-                    flted_336_150,
-                    flted_336_151: a::rb<na,flted_336_151,flted_336_150>@M[Orig][LHSCase]@ rem br[{706}] * 
-                    b::rb<nb,flted_336_149,flted_336_148>@M[Orig][LHSCase]@ rem br[{706}] * 
-                    c::rb<nc,flted_336_147,h>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                    h](ex)EXISTS(flted_336_146,flted_336_147,flted_336_148,
+                    flted_336_149,
+                    flted_336_150: a::rb<na,flted_336_150,flted_336_149>@M[Orig][LHSCase]@ rem br[{696}] * 
+                    b::rb<nb,flted_336_148,flted_336_147>@M[Orig][LHSCase]@ rem br[{696}] * 
+                    c::rb<nc,flted_336_146,h>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_336_151][flted_336_149=0]
-                     [1<=flted_336_150 & 1!=flted_336_148 & -1+
-                       flted_336_148=h & -1+flted_336_150=h]
-                     [0=flted_336_147][null!=b][0!=na & 0<=na][0<=nb & 0!=nb]
+                    ([0=flted_336_150][flted_336_148=0]
+                     [1<=flted_336_149 & 1!=flted_336_147 & -1+
+                       flted_336_147=h & -1+flted_336_149=h]
+                     [0=flted_336_146][null!=b][0!=na & 0<=na][0<=nb & 0!=nb]
                      [0<=nc][null!=a]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 56::
-                                EXISTS(flted_337_145,
-                                flted_337_146: res::rb<flted_337_146,flted_337_145,h1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_337_144,flted_337_145,
+                                h1: res::rb<flted_337_145,flted_337_144,h1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_337_146 & flted_337_146=2+na+nb+nc]
-                                 [0=flted_337_145][1<=h1]))&
+                                ([0<=flted_337_145 & flted_337_145=2+na+nb+nc]
+                                 [0=flted_337_144][1<=h1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  h](ex)a::rb<na,flted_336_151,flted_336_150>@M[Orig][LHSCase]@ rem br[{706}] * 
-                  b::rb<nb,flted_336_149,flted_336_148>@M[Orig][LHSCase]@ rem br[{706}] * 
-                  c::rb<nc,flted_336_147,h>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  h](ex)a::rb<na,flted_336_150,flted_336_149>@M[Orig][LHSCase]@ rem br[{696}] * 
+                  b::rb<nb,flted_336_148,flted_336_147>@M[Orig][LHSCase]@ rem br[{696}] * 
+                  c::rb<nc,flted_336_146,h>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([flted_336_148=flted_336_150 & 1+h=flted_336_148 & 
-                     2<=flted_336_148]
-                   [b!=null][1<=na][1<=nb][0<=nc][a!=null][0=flted_336_151]
-                   [0=flted_336_149][0=flted_336_147]))&
+                  ([flted_336_147=flted_336_149 & 1+h=flted_336_147 & 
+                     2<=flted_336_147]
+                   [b!=null][1<=na][1<=nb][0<=nc][a!=null][0=flted_336_150]
+                   [0=flted_336_148][0=flted_336_146]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 56::
                               
-                              EXISTS(v_8366,flted_13_8367,l_8368,r_8369,
-                              flted_337_8370,flted_337_8371,
-                              h1_8372: b::node<v_8366,flted_13_8367,l_8368,r_8369>@M[Orig][] * 
-                              res::rb<flted_337_8370,flted_337_8371,h1_8372>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(v_8214,flted_13_8215,l_8216,r_8217,
+                              flted_337_8218,flted_337_8219,
+                              h1_8220: b::node<v_8214,flted_13_8215,l_8216,r_8217>@M[Orig][] * 
+                              res::rb<flted_337_8218,flted_337_8219,h1_8220>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([2+na+nb+nc=flted_337_8370 & 0<=na & (3+nb+
-                                 nc)<=flted_337_8370 & 0<=nb & 0<=nc & 1<=nb]
-                               [-2+h1_8372=h & 1<=h][b!=null][a!=null]
-                               [res!=null][0=flted_13_8367][0=flted_337_8371]
-                               [0<=flted_336_147 & flted_336_147<=1]
-                               [1<=flted_336_148]
-                               [0<=flted_336_149 & flted_336_149<=1]
-                               [1<=flted_336_150]
-                               [0<=flted_336_151 & flted_336_151<=1]))&
+                              ([2+na+nb+nc=flted_337_8218 & 0<=na & (3+nb+
+                                 nc)<=flted_337_8218 & 0<=nb & 0<=nc & 1<=nb]
+                               [b!=null][a!=null][-2+h1_8220=h & 1<=h]
+                               [res!=null][0=flted_13_8215][0=flted_337_8219]
+                               [0<=flted_336_146 & flted_336_146<=1]
+                               [1<=flted_336_147]
+                               [0<=flted_336_148 & flted_336_148<=1]
+                               [1<=flted_336_149]
+                               [0<=flted_336_150 & flted_336_150<=1]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(v_8373,flted_13_8374,l_8375,r_8376,
-                                 v_8377,flted_12_8378,l_8379,r_8380,
-                                 flted_337_8381,flted_337_8382,
-                                 h1_8383: b::node<v_8373,flted_13_8374,l_8375,r_8376>@M[Orig][] * 
-                                 r_8376::node<v_8377,flted_12_8378,l_8379,r_8380>@M[Orig][] * 
-                                 res::rb<flted_337_8381,flted_337_8382,h1_8383>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              or EXISTS(v_8221,flted_13_8222,l_8223,r_8224,
+                                 v_8225,flted_12_8226,l_8227,r_8228,
+                                 flted_337_8229,flted_337_8230,
+                                 h1_8231: b::node<v_8221,flted_13_8222,l_8223,r_8224>@M[Orig][] * 
+                                 r_8224::node<v_8225,flted_12_8226,l_8227,r_8228>@M[Orig][] * 
+                                 res::rb<flted_337_8229,flted_337_8230,h1_8231>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                  (
-                                 ([2+na+nb+nc=flted_337_8381 & 0<=na & (3+nb+
-                                    nc)<=flted_337_8381 & 0<=nb & 2<=nb & 
+                                 ([2+na+nb+nc=flted_337_8229 & 0<=na & (3+nb+
+                                    nc)<=flted_337_8229 & 0<=nb & 2<=nb & 
                                     0<=nc]
-                                  [r_8376!=null][a!=null]
-                                  [-2+h1_8383=h & 1<=h][b!=null][res!=null]
-                                  [0=flted_13_8374][1=flted_12_8378]
-                                  [0=flted_337_8382]
-                                  [0<=flted_336_147 & flted_336_147<=1]
-                                  [1<=flted_336_148]
-                                  [0<=flted_336_149 & flted_336_149<=1]
-                                  [1<=flted_336_150]
-                                  [0<=flted_336_151 & flted_336_151<=1]))&
+                                  [r_8224!=null][b!=null]
+                                  [-2+h1_8231=h & 1<=h][a!=null][res!=null]
+                                  [0=flted_13_8222][1=flted_12_8226]
+                                  [0=flted_337_8230]
+                                  [0<=flted_336_146 & flted_336_146<=1]
+                                  [1<=flted_336_147]
+                                  [0<=flted_336_148 & flted_336_148<=1]
+                                  [1<=flted_336_149]
+                                  [0<=flted_336_150 & flted_336_150<=1]))&
                                  {FLOW,(20,21)=__norm})
-                              or EXISTS(v_8384,flted_13_8385,l_8386,r_8387,
-                                 flted_337_8388,flted_337_8389,
-                                 h1_8390: b::node<v_8384,flted_13_8385,l_8386,r_8387>@M[Orig][] * 
-                                 res::rb<flted_337_8388,flted_337_8389,h1_8390>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              or EXISTS(v_8232,flted_13_8233,l_8234,r_8235,
+                                 flted_337_8236,flted_337_8237,
+                                 h1_8238: b::node<v_8232,flted_13_8233,l_8234,r_8235>@M[Orig][] * 
+                                 res::rb<flted_337_8236,flted_337_8237,h1_8238>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                  (
-                                 ([2+na+nb+nc=flted_337_8388 & 0<=na & (3+nb+
-                                    nc)<=flted_337_8388 & 0<=nb & 2<=nb & 
-                                    0<=nc]
-                                  [-2+h1_8390=h & 1<=h][a!=null][b!=null]
-                                  [l_8386!=null][res!=null][0=flted_13_8385]
-                                  [0=flted_337_8389]
-                                  [0<=flted_336_147 & flted_336_147<=1]
-                                  [1<=flted_336_148]
-                                  [0<=flted_336_149 & flted_336_149<=1]
-                                  [1<=flted_336_150]
-                                  [0<=flted_336_151 & flted_336_151<=1]))&
+                                 ([-2+h1_8238=h & 1<=h]
+                                  [2+na+nb+nc=flted_337_8236 & 0<=na & (2+na+
+                                    nb)<=flted_337_8236 & 0<=nb & 2<=nb & 
+                                    0<=nc & 1<=na]
+                                  [a!=null][b!=null][l_8234!=null][res!=null]
+                                  [0=flted_13_8233][0=flted_337_8237]
+                                  [0<=flted_336_146 & flted_336_146<=1]
+                                  [1<=flted_336_147]
+                                  [0<=flted_336_148 & flted_336_148<=1]
+                                  [1<=flted_336_149]
+                                  [0<=flted_336_150 & flted_336_150<=1]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -401,47 +385,47 @@ assert:rb_msh.ss:352: 1:  : ok
 Procedure del_2r$node~node~node SUCCESS
 
 Checking procedure del_3$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [ha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_244,
-                    ha_245,flted_275_241,flted_275_242,
-                    flted_275_243: a::rb<na,flted_275_243,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_275_242,ha_244>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_275_241,ha_245>@M[Orig][LHSCase]@ rem br[{708,706}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_237,
+                    ha_238,flted_275_234,flted_275_235,
+                    flted_275_236: a::rb<na,flted_275_236,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_275_235,ha_237>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_275_234,ha_238>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_275_243][0=flted_275_242][0=flted_275_241]
-                     [ha=ha_245 & ha=ha_244 & 1<=ha_245][0<=na][0<=nb][
+                    ([0=flted_275_236][0=flted_275_235][0=flted_275_234]
+                     [ha=ha_238 & ha=ha_237 & 1<=ha_238][0<=na][0<=nb][
                      0<=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 45::
-                                EXISTS(flted_276_239,
-                                flted_276_240: res::rb<flted_276_240,flted_276_239,ha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_276_232,flted_276_233,
+                                ha1: res::rb<flted_276_233,flted_276_232,ha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_276_240 & flted_276_240=2+na+nb+nc]
-                                 [0=flted_276_239][1<=ha1]))&
+                                ([0<=flted_276_233 & flted_276_233=2+na+nb+nc]
+                                 [0=flted_276_232][1<=ha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  ha](ex)a::rb<na,flted_275_243,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_275_242,ha_244>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_275_241,ha_245>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  ha](ex)a::rb<na,flted_275_236,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_275_235,ha_237>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_275_234,ha_238>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([ha_244=ha & ha_244=ha_245 & 1<=ha_244][0<=na][0<=nb]
-                   [0<=nc][0=flted_275_243][0=flted_275_242][0=flted_275_241]
+                  ([ha_237=ha & ha_237=ha_238 & 1<=ha_237][0<=na][0<=nb]
+                   [0<=nc][0=flted_275_236][0=flted_275_235][0=flted_275_234]
                    ))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 45::
-                              EXISTS(flted_276_8519,flted_276_8520,
-                              ha1_8521: res::rb<flted_276_8519,flted_276_8520,ha1_8521>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_276_8367,flted_276_8368,
+                              ha1_8369: res::rb<flted_276_8367,flted_276_8368,ha1_8369>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([2+na+nb+nc=flted_276_8519 & 0<=na & (2+nb+
-                                 nc)<=flted_276_8519 & 0<=nc & 0<=nb]
-                               [1+ha=ha1_8521 & 1<=ha & 2<=ha1_8521]
-                               [res!=null][0=flted_276_8520][1<=ha_245]
-                               [0<=flted_275_241 & flted_275_241<=1]
-                               [1<=ha_244]
-                               [0<=flted_275_242 & flted_275_242<=1]
-                               [0<=flted_275_243 & flted_275_243<=1]))&
+                              ([2+na+nb+nc=flted_276_8367 & 0<=na & (2+nb+
+                                 nc)<=flted_276_8367 & 0<=nc & 0<=nb]
+                               [1+ha=ha1_8369 & 1<=ha & 2<=ha1_8369]
+                               [res!=null][0=flted_276_8368][1<=ha_238]
+                               [0<=flted_275_234 & flted_275_234<=1]
+                               [1<=ha_237]
+                               [0<=flted_275_235 & flted_275_235<=1]
+                               [0<=flted_275_236 & flted_275_236<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -449,47 +433,47 @@ Checking procedure del_3$node~node~node...
 Procedure del_3$node~node~node SUCCESS
 
 Checking procedure del_3r$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [ha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_217,
-                    ha_218,flted_292_214,flted_292_215,
-                    flted_292_216: a::rb<na,flted_292_216,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_292_215,ha_217>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_292_214,ha_218>@M[Orig][LHSCase]@ rem br[{708,706}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_210,
+                    ha_211,flted_292_207,flted_292_208,
+                    flted_292_209: a::rb<na,flted_292_209,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_292_208,ha_210>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_292_207,ha_211>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_292_216][0=flted_292_215][0=flted_292_214]
-                     [ha=ha_218 & ha=ha_217 & 1<=ha_218][0<=na][0<=nb][
+                    ([0=flted_292_209][0=flted_292_208][0=flted_292_207]
+                     [ha=ha_211 & ha=ha_210 & 1<=ha_211][0<=na][0<=nb][
                      0<=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 48::
-                                EXISTS(flted_293_212,
-                                flted_293_213: res::rb<flted_293_213,flted_293_212,ha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_293_205,flted_293_206,
+                                ha1: res::rb<flted_293_206,flted_293_205,ha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_293_213 & flted_293_213=2+na+nb+nc]
-                                 [0=flted_293_212][1<=ha1]))&
+                                ([0<=flted_293_206 & flted_293_206=2+na+nb+nc]
+                                 [0=flted_293_205][1<=ha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  ha](ex)a::rb<na,flted_292_216,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_292_215,ha_217>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_292_214,ha_218>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  ha](ex)a::rb<na,flted_292_209,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_292_208,ha_210>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_292_207,ha_211>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([ha_217=ha & ha_217=ha_218 & 1<=ha_217][0<=na][0<=nb]
-                   [0<=nc][0=flted_292_216][0=flted_292_215][0=flted_292_214]
+                  ([ha_210=ha & ha_210=ha_211 & 1<=ha_210][0<=na][0<=nb]
+                   [0<=nc][0=flted_292_209][0=flted_292_208][0=flted_292_207]
                    ))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 48::
-                              EXISTS(flted_293_8650,flted_293_8651,
-                              ha1_8652: res::rb<flted_293_8650,flted_293_8651,ha1_8652>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_293_8498,flted_293_8499,
+                              ha1_8500: res::rb<flted_293_8498,flted_293_8499,ha1_8500>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([2+na+nb+nc=flted_293_8650 & (2+na+
-                                 nc)<=flted_293_8650 & 0<=nb & 0<=na & 0<=nc]
-                               [1+ha=ha1_8652 & 1<=ha & 2<=ha1_8652]
-                               [res!=null][0=flted_293_8651][1<=ha_218]
-                               [0<=flted_292_214 & flted_292_214<=1]
-                               [1<=ha_217]
-                               [0<=flted_292_215 & flted_292_215<=1]
-                               [0<=flted_292_216 & flted_292_216<=1]))&
+                              ([2+na+nb+nc=flted_293_8498 & (2+na+
+                                 nc)<=flted_293_8498 & 0<=nb & 0<=na & 0<=nc]
+                               [1+ha=ha1_8500 & 1<=ha & 2<=ha1_8500]
+                               [res!=null][0=flted_293_8499][1<=ha_211]
+                               [0<=flted_292_207 & flted_292_207<=1]
+                               [1<=ha_210]
+                               [0<=flted_292_208 & flted_292_208<=1]
+                               [0<=flted_292_209 & flted_292_209<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -497,47 +481,47 @@ Checking procedure del_3r$node~node~node...
 Procedure del_3r$node~node~node SUCCESS
 
 Checking procedure del_4$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [ha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_298,
-                    ha_299,flted_242_295,flted_242_296,
-                    flted_242_297: a::rb<na,flted_242_297,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_242_296,ha_298>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_242_295,ha_299>@M[Orig][LHSCase]@ rem br[{708,706}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_291,
+                    ha_292,flted_242_288,flted_242_289,
+                    flted_242_290: a::rb<na,flted_242_290,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_242_289,ha_291>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_242_288,ha_292>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_242_297][0=flted_242_296][0=flted_242_295]
-                     [ha=ha_299 & ha=ha_298 & 1<=ha_299][0<=na][0<=nb][
+                    ([0=flted_242_290][0=flted_242_289][0=flted_242_288]
+                     [ha=ha_292 & ha=ha_291 & 1<=ha_292][0<=na][0<=nb][
                      0<=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 38::
-                                EXISTS(flted_243_293,
-                                flted_243_294: res::rb<flted_243_294,flted_243_293,ha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_243_286,flted_243_287,
+                                ha1: res::rb<flted_243_287,flted_243_286,ha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_243_294 & flted_243_294=2+na+nb+nc]
-                                 [0=flted_243_293][1<=ha1]))&
+                                ([0<=flted_243_287 & flted_243_287=2+na+nb+nc]
+                                 [0=flted_243_286][1<=ha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  ha](ex)a::rb<na,flted_242_297,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_242_296,ha_298>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_242_295,ha_299>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  ha](ex)a::rb<na,flted_242_290,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_242_289,ha_291>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_242_288,ha_292>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([ha_298=ha & ha_298=ha_299 & 1<=ha_298][0<=na][0<=nb]
-                   [0<=nc][0=flted_242_297][0=flted_242_296][0=flted_242_295]
+                  ([ha_291=ha & ha_291=ha_292 & 1<=ha_291][0<=na][0<=nb]
+                   [0<=nc][0=flted_242_290][0=flted_242_289][0=flted_242_288]
                    ))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 38::
-                              EXISTS(flted_243_8789,flted_243_8790,
-                              ha1_8791: res::rb<flted_243_8789,flted_243_8790,ha1_8791>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_243_8637,flted_243_8638,
+                              ha1_8639: res::rb<flted_243_8637,flted_243_8638,ha1_8639>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([flted_243_8789=2+na+nb+nc & 0<=na & 0<=nb & 
+                              ([flted_243_8637=2+na+nb+nc & 0<=na & 0<=nb & 
                                  0<=nc]
-                               [1+ha=ha1_8791 & 1<=ha & 2<=ha1_8791]
-                               [res!=null][0=flted_243_8790][1<=ha_299]
-                               [0<=flted_242_295 & flted_242_295<=1]
-                               [1<=ha_298]
-                               [0<=flted_242_296 & flted_242_296<=1]
-                               [0<=flted_242_297 & flted_242_297<=1]))&
+                               [1+ha=ha1_8639 & 1<=ha & 2<=ha1_8639]
+                               [res!=null][0=flted_243_8638][1<=ha_292]
+                               [0<=flted_242_288 & flted_242_288<=1]
+                               [1<=ha_291]
+                               [0<=flted_242_289 & flted_242_289<=1]
+                               [0<=flted_242_290 & flted_242_290<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -545,47 +529,47 @@ Checking procedure del_4$node~node~node...
 Procedure del_4$node~node~node SUCCESS
 
 Checking procedure del_4r$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [ha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_271,
-                    ha_272,flted_258_268,flted_258_269,
-                    flted_258_270: a::rb<na,flted_258_270,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_258_269,ha_271>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_258_268,ha_272>@M[Orig][LHSCase]@ rem br[{708,706}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; ha](ex)EXISTS(ha_264,
+                    ha_265,flted_258_261,flted_258_262,
+                    flted_258_263: a::rb<na,flted_258_263,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_258_262,ha_264>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_258_261,ha_265>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([0=flted_258_270][0=flted_258_269][0=flted_258_268]
-                     [ha=ha_272 & ha=ha_271 & 1<=ha_272][0<=na][0<=nb][
+                    ([0=flted_258_263][0=flted_258_262][0=flted_258_261]
+                     [ha=ha_265 & ha=ha_264 & 1<=ha_265][0<=na][0<=nb][
                      0<=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 42::
-                                EXISTS(flted_259_266,
-                                flted_259_267: res::rb<flted_259_267,flted_259_266,ha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_259_259,flted_259_260,
+                                ha1: res::rb<flted_259_260,flted_259_259,ha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_259_267 & flted_259_267=2+na+nb+nc]
-                                 [0=flted_259_266][1<=ha1]))&
+                                ([0<=flted_259_260 & flted_259_260=2+na+nb+nc]
+                                 [0=flted_259_259][1<=ha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  ha](ex)a::rb<na,flted_258_270,ha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_258_269,ha_271>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_258_268,ha_272>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  ha](ex)a::rb<na,flted_258_263,ha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_258_262,ha_264>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_258_261,ha_265>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([ha_271=ha & ha_271=ha_272 & 1<=ha_271][0<=na][0<=nb]
-                   [0<=nc][0=flted_258_270][0=flted_258_269][0=flted_258_268]
+                  ([ha_264=ha & ha_264=ha_265 & 1<=ha_264][0<=na][0<=nb]
+                   [0<=nc][0=flted_258_263][0=flted_258_262][0=flted_258_261]
                    ))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 42::
-                              EXISTS(flted_259_8920,flted_259_8921,
-                              ha1_8922: res::rb<flted_259_8920,flted_259_8921,ha1_8922>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_259_8768,flted_259_8769,
+                              ha1_8770: res::rb<flted_259_8768,flted_259_8769,ha1_8770>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([2+na+nb+nc=flted_259_8920 & (2+na+
-                                 nc)<=flted_259_8920 & 0<=nb & 0<=na & 0<=nc]
-                               [1+ha=ha1_8922 & 1<=ha & 2<=ha1_8922]
-                               [res!=null][0=flted_259_8921][1<=ha_272]
-                               [0<=flted_258_268 & flted_258_268<=1]
-                               [1<=ha_271]
-                               [0<=flted_258_269 & flted_258_269<=1]
-                               [0<=flted_258_270 & flted_258_270<=1]))&
+                              ([2+na+nb+nc=flted_259_8768 & (2+na+
+                                 nc)<=flted_259_8768 & 0<=nb & 0<=na & 0<=nc]
+                               [1+ha=ha1_8770 & 1<=ha & 2<=ha1_8770]
+                               [res!=null][0=flted_259_8769][1<=ha_265]
+                               [0<=flted_258_261 & flted_258_261<=1]
+                               [1<=ha_264]
+                               [0<=flted_258_262 & flted_258_262<=1]
+                               [0<=flted_258_263 & flted_258_263<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -593,117 +577,117 @@ Checking procedure del_4r$node~node~node...
 Procedure del_4r$node~node~node SUCCESS
 
 Checking procedure del_5$node~node~node~node~int... 
-!!! OLD SPECS: ((None,[]),EInfer [h1,h2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; nb; nc; nd; 
                     h](ex)
-                          EXISTS(h_405,h_406,h_407,flted_203_397,
-                          flted_203_398,flted_203_399,
-                          flted_203_400: a::rb<na,flted_203_400,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          b::rb<nb,flted_203_399,h_405>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          c::rb<nc,flted_203_398,h_406>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          d::rb<nd,flted_203_397,h_407>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                          EXISTS(h_398,h_399,h_400,flted_203_390,
+                          flted_203_391,flted_203_392,
+                          flted_203_393: a::rb<na,flted_203_393,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          b::rb<nb,flted_203_392,h_398>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          c::rb<nc,flted_203_391,h_399>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          d::rb<nd,flted_203_390,h_400>@M[Orig][LHSCase]@ rem br[{698,696}]&
                           (
-                          ([0=flted_203_400][0=flted_203_399]
-                           [0=flted_203_398][0=flted_203_397][0=color]
-                           [h=h_407 & h=h_406 & h=h_405 & 1<=h_407][0<=na]
+                          ([0=flted_203_393][0=flted_203_392]
+                           [0=flted_203_391][0=flted_203_390][0=color]
+                           [h=h_400 & h=h_399 & h=h_398 & 1<=h_400][0<=na]
                            [0<=nb][0<=nc][0<=nd]))&
                           {FLOW,(20,21)=__norm})
-                          or EXISTS(h_408,h_409,h_410,flted_204_401,
-                             flted_204_402,flted_204_403,
-                             flted_204_404: a::rb<na,flted_204_404,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             b::rb<nb,flted_204_403,h_408>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             c::rb<nc,flted_204_402,h_409>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             d::rb<nd,flted_204_401,h_410>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                          or EXISTS(h_401,h_402,h_403,flted_204_394,
+                             flted_204_395,flted_204_396,
+                             flted_204_397: a::rb<na,flted_204_397,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             b::rb<nb,flted_204_396,h_401>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             c::rb<nc,flted_204_395,h_402>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             d::rb<nd,flted_204_394,h_403>@M[Orig][LHSCase]@ rem br[{698,696}]&
                              (
-                             ([0=flted_204_404][0=flted_204_403]
-                              [0=flted_204_402][0=flted_204_401][1=color]
-                              [h=h_410 & h=h_409 & h=h_408 & 1<=h_410][
+                             ([0=flted_204_397][0=flted_204_396]
+                              [0=flted_204_395][0=flted_204_394][1=color]
+                              [h=h_403 & h=h_402 & h=h_401 & 1<=h_403][
                               0<=na][0<=nb][0<=nc][0<=nd]))&
                              {FLOW,(20,21)=__norm})
                           
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 32::
                                 
-                                EXISTS(flted_205_393,
-                                flted_205_394: res::rb<flted_205_394,flted_205_393,h1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_205_386,flted_205_387,
+                                h1: res::rb<flted_205_387,flted_205_386,h1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_205_394 & flted_205_394=3+na+nb+
+                                ([0<=flted_205_387 & flted_205_387=3+na+nb+
                                    nc+nd]
-                                 [0=flted_205_393][0=color][1<=h1]))&
+                                 [0=flted_205_386][0=color][1<=h1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_206_395,
-                                   flted_206_396: res::rb<flted_206_396,flted_206_395,h2>@M[Orig][LHSCase]@ rem br[{707}]&
+                                or EXISTS(flted_206_388,flted_206_389,
+                                   h2: res::rb<flted_206_389,flted_206_388,h2>@M[Orig][LHSCase]@ rem br[{697}]&
                                    (
-                                   ([0!=flted_206_396 & 0<=flted_206_396 & 
-                                      flted_206_396=3+na+nb+nc+nd]
-                                    [flted_206_395=1][1=color][1<=h2]
+                                   ([0!=flted_206_389 & 0<=flted_206_389 & 
+                                      flted_206_389=3+na+nb+nc+nd]
+                                    [flted_206_388=1][1=color][1<=h2]
                                     [null!=res]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; nd; 
                   h](ex)
-                        a::rb<na,flted_203_400,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        b::rb<nb,flted_203_399,h_405>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        c::rb<nc,flted_203_398,h_406>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        d::rb<nd,flted_203_397,h_407>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                        a::rb<na,flted_203_393,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        b::rb<nb,flted_203_392,h_398>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        c::rb<nc,flted_203_391,h_399>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        d::rb<nd,flted_203_390,h_400>@M[Orig][LHSCase]@ rem br[{698,696}]&
                         (
-                        ([h_406=h & h_406=h_407 & h_406=h_405 & 1<=h_406]
-                         [0<=na][0<=nb][0<=nc][0<=nd][0=flted_203_400]
-                         [0=flted_203_399][0=flted_203_398][0=flted_203_397]
+                        ([h_399=h & h_399=h_400 & h_399=h_398 & 1<=h_399]
+                         [0<=na][0<=nb][0<=nc][0<=nd][0=flted_203_393]
+                         [0=flted_203_392][0=flted_203_391][0=flted_203_390]
                          [0=color]))&
                         {FLOW,(20,21)=__norm}
-                        or a::rb<na,flted_204_404,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           b::rb<nb,flted_204_403,h_408>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           c::rb<nc,flted_204_402,h_409>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           d::rb<nd,flted_204_401,h_410>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                        or a::rb<na,flted_204_397,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           b::rb<nb,flted_204_396,h_401>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           c::rb<nc,flted_204_395,h_402>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           d::rb<nd,flted_204_394,h_403>@M[Orig][LHSCase]@ rem br[{698,696}]&
                            (
-                           ([h_409=h & h_409=h_410 & h_409=h_408 & 1<=h_409]
-                            [0<=na][0<=nb][0<=nc][0<=nd][0=flted_204_404]
-                            [0=flted_204_403][0=flted_204_402]
-                            [0=flted_204_401][1=color]))&
+                           ([h_402=h & h_402=h_403 & h_402=h_401 & 1<=h_402]
+                            [0<=na][0<=nb][0<=nc][0<=nd][0=flted_204_397]
+                            [0=flted_204_396][0=flted_204_395]
+                            [0=flted_204_394][1=color]))&
                            {FLOW,(20,21)=__norm}
                         
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 32::
                               
-                              EXISTS(flted_205_9291,flted_205_9292,
-                              h1_9293: res::rb<flted_205_9291,flted_205_9292,h1_9293>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_205_9139,flted_205_9140,
+                              h1_9141: res::rb<flted_205_9139,flted_205_9140,h1_9141>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([(0<=flted_203_400 & flted_203_400<=1 & 
-                                 1<=h & 0<=na & 0<=flted_203_399 & 
-                                 flted_203_399<=1 & 1<=h_405 & 0<=nb & 
-                                 0<=flted_203_398 & flted_203_398<=1 & 
-                                 1<=h_406 & 0<=nc & 0<=flted_203_397 & 
-                                 flted_203_397<=1 & 1<=h_407 & 0<=nd | 
-                                 0<=flted_204_404 & flted_204_404<=1 & 
-                                 1<=h & 0<=na & 0<=flted_204_403 & 
-                                 flted_204_403<=1 & 1<=h_408 & 0<=nb & 
-                                 0<=flted_204_402 & flted_204_402<=1 & 
-                                 1<=h_409 & 0<=nc & 0<=flted_204_401 & 
-                                 flted_204_401<=1 & 1<=h_410 & 0<=nd) & 
-                                 flted_205_9291=3+na+nb+nc+nd & 1<=h & 
-                                 0<=nd & -2+h1_9293=h & 0<=nc & 0<=nb & 0<=na]
-                               [res!=null][0=flted_205_9292][0=color]))&
+                              ([(0<=flted_203_393 & flted_203_393<=1 & 
+                                 1<=h & 0<=na & 0<=flted_203_392 & 
+                                 flted_203_392<=1 & 1<=h_398 & 0<=nb & 
+                                 0<=flted_203_391 & flted_203_391<=1 & 
+                                 1<=h_399 & 0<=nc & 0<=flted_203_390 & 
+                                 flted_203_390<=1 & 1<=h_400 & 0<=nd | 
+                                 0<=flted_204_397 & flted_204_397<=1 & 
+                                 1<=h & 0<=na & 0<=flted_204_396 & 
+                                 flted_204_396<=1 & 1<=h_401 & 0<=nb & 
+                                 0<=flted_204_395 & flted_204_395<=1 & 
+                                 1<=h_402 & 0<=nc & 0<=flted_204_394 & 
+                                 flted_204_394<=1 & 1<=h_403 & 0<=nd) & 
+                                 flted_205_9139=3+na+nb+nc+nd & 1<=h & 
+                                 0<=nd & -2+h1_9141=h & 0<=nc & 0<=nb & 0<=na]
+                               [res!=null][0=flted_205_9140][0=color]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_206_9294,flted_206_9295,
-                                 h2_9296: res::rb<flted_206_9294,flted_206_9295,h2_9296>@M[Orig][LHSCase]@ rem br[{707}]&
+                              or EXISTS(flted_206_9142,flted_206_9143,
+                                 h2_9144: res::rb<flted_206_9142,flted_206_9143,h2_9144>@M[Orig][LHSCase]@ rem br[{697}]&
                                  (
-                                 ([(0<=flted_203_400 & flted_203_400<=1 & 
-                                    1<=h & 0<=na & 0<=flted_203_399 & 
-                                    flted_203_399<=1 & 1<=h_405 & 0<=nb & 
-                                    0<=flted_203_398 & flted_203_398<=1 & 
-                                    1<=h_406 & 0<=nc & 0<=flted_203_397 & 
-                                    flted_203_397<=1 & 1<=h_407 & 0<=nd | 
-                                    0<=flted_204_404 & flted_204_404<=1 & 
-                                    1<=h & 0<=na & 0<=flted_204_403 & 
-                                    flted_204_403<=1 & 1<=h_408 & 0<=nb & 
-                                    0<=flted_204_402 & flted_204_402<=1 & 
-                                    1<=h_409 & 0<=nc & 0<=flted_204_401 & 
-                                    flted_204_401<=1 & 1<=h_410 & 0<=nd) & 3+
-                                    na+nb+nc+nd=flted_206_9294 & 1<=h & (3+
-                                    nb+nc+nd)<=flted_206_9294 & -1+
-                                    h2_9296=h & 0<=nc & 0<=nb & 0<=nd]
-                                  [res!=null][1=flted_206_9295][1=color]))&
+                                 ([(0<=flted_203_393 & flted_203_393<=1 & 
+                                    1<=h & 0<=na & 0<=flted_203_392 & 
+                                    flted_203_392<=1 & 1<=h_398 & 0<=nb & 
+                                    0<=flted_203_391 & flted_203_391<=1 & 
+                                    1<=h_399 & 0<=nc & 0<=flted_203_390 & 
+                                    flted_203_390<=1 & 1<=h_400 & 0<=nd | 
+                                    0<=flted_204_397 & flted_204_397<=1 & 
+                                    1<=h & 0<=na & 0<=flted_204_396 & 
+                                    flted_204_396<=1 & 1<=h_401 & 0<=nb & 
+                                    0<=flted_204_395 & flted_204_395<=1 & 
+                                    1<=h_402 & 0<=nc & 0<=flted_204_394 & 
+                                    flted_204_394<=1 & 1<=h_403 & 0<=nd) & 3+
+                                    na+nb+nc+nd=flted_206_9142 & 1<=h & (3+
+                                    nb+nc+nd)<=flted_206_9142 & -1+
+                                    h2_9144=h & 0<=nc & 0<=nb & 0<=nd]
+                                  [res!=null][1=flted_206_9143][1=color]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -712,117 +696,117 @@ Checking procedure del_5$node~node~node~node~int...
 Procedure del_5$node~node~node~node~int SUCCESS
 
 Checking procedure del_5r$node~node~node~node~int... 
-!!! OLD SPECS: ((None,[]),EInfer [h1,h2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[na; nb; nc; nd; 
                     h](ex)
-                          EXISTS(h_340,h_341,h_342,flted_224_332,
-                          flted_224_333,flted_224_334,
-                          flted_224_335: a::rb<na,flted_224_335,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          b::rb<nb,flted_224_334,h_340>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          c::rb<nc,flted_224_333,h_341>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          d::rb<nd,flted_224_332,h_342>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                          EXISTS(h_333,h_334,h_335,flted_224_325,
+                          flted_224_326,flted_224_327,
+                          flted_224_328: a::rb<na,flted_224_328,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          b::rb<nb,flted_224_327,h_333>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          c::rb<nc,flted_224_326,h_334>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          d::rb<nd,flted_224_325,h_335>@M[Orig][LHSCase]@ rem br[{698,696}]&
                           (
-                          ([0=flted_224_335][0=flted_224_334]
-                           [0=flted_224_333][0=flted_224_332][0=color]
-                           [h=h_342 & h=h_341 & h=h_340 & 1<=h_342][0<=na]
+                          ([0=flted_224_328][0=flted_224_327]
+                           [0=flted_224_326][0=flted_224_325][0=color]
+                           [h=h_335 & h=h_334 & h=h_333 & 1<=h_335][0<=na]
                            [0<=nb][0<=nc][0<=nd]))&
                           {FLOW,(20,21)=__norm})
-                          or EXISTS(h_343,h_344,h_345,flted_225_336,
-                             flted_225_337,flted_225_338,
-                             flted_225_339: a::rb<na,flted_225_339,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             b::rb<nb,flted_225_338,h_343>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             c::rb<nc,flted_225_337,h_344>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             d::rb<nd,flted_225_336,h_345>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                          or EXISTS(h_336,h_337,h_338,flted_225_329,
+                             flted_225_330,flted_225_331,
+                             flted_225_332: a::rb<na,flted_225_332,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             b::rb<nb,flted_225_331,h_336>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             c::rb<nc,flted_225_330,h_337>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             d::rb<nd,flted_225_329,h_338>@M[Orig][LHSCase]@ rem br[{698,696}]&
                              (
-                             ([0=flted_225_339][0=flted_225_338]
-                              [0=flted_225_337][0=flted_225_336][1=color]
-                              [h=h_345 & h=h_344 & h=h_343 & 1<=h_345][
+                             ([0=flted_225_332][0=flted_225_331]
+                              [0=flted_225_330][0=flted_225_329][1=color]
+                              [h=h_338 & h=h_337 & h=h_336 & 1<=h_338][
                               0<=na][0<=nb][0<=nc][0<=nd]))&
                              {FLOW,(20,21)=__norm})
                           
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 35::
                                 
-                                EXISTS(flted_226_328,
-                                flted_226_329: res::rb<flted_226_329,flted_226_328,h1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_226_321,flted_226_322,
+                                h1: res::rb<flted_226_322,flted_226_321,h1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_226_329 & flted_226_329=3+na+nb+
+                                ([0<=flted_226_322 & flted_226_322=3+na+nb+
                                    nc+nd]
-                                 [0=flted_226_328][0=color][1<=h1]))&
+                                 [0=flted_226_321][0=color][1<=h1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_227_330,
-                                   flted_227_331: res::rb<flted_227_331,flted_227_330,h2>@M[Orig][LHSCase]@ rem br[{707}]&
+                                or EXISTS(flted_227_323,flted_227_324,
+                                   h2: res::rb<flted_227_324,flted_227_323,h2>@M[Orig][LHSCase]@ rem br[{697}]&
                                    (
-                                   ([0!=flted_227_331 & 0<=flted_227_331 & 
-                                      flted_227_331=3+na+nb+nc+nd]
-                                    [flted_227_330=1][1=color][1<=h2]
+                                   ([0!=flted_227_324 & 0<=flted_227_324 & 
+                                      flted_227_324=3+na+nb+nc+nd]
+                                    [flted_227_323=1][1=color][1<=h2]
                                     [null!=res]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; nd; 
                   h](ex)
-                        a::rb<na,flted_224_335,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        b::rb<nb,flted_224_334,h_340>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        c::rb<nc,flted_224_333,h_341>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        d::rb<nd,flted_224_332,h_342>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                        a::rb<na,flted_224_328,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        b::rb<nb,flted_224_327,h_333>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        c::rb<nc,flted_224_326,h_334>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        d::rb<nd,flted_224_325,h_335>@M[Orig][LHSCase]@ rem br[{698,696}]&
                         (
-                        ([h_341=h & h_341=h_342 & h_341=h_340 & 1<=h_341]
-                         [0<=na][0<=nb][0<=nc][0<=nd][0=flted_224_335]
-                         [0=flted_224_334][0=flted_224_333][0=flted_224_332]
+                        ([h_334=h & h_334=h_335 & h_334=h_333 & 1<=h_334]
+                         [0<=na][0<=nb][0<=nc][0<=nd][0=flted_224_328]
+                         [0=flted_224_327][0=flted_224_326][0=flted_224_325]
                          [0=color]))&
                         {FLOW,(20,21)=__norm}
-                        or a::rb<na,flted_225_339,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           b::rb<nb,flted_225_338,h_343>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           c::rb<nc,flted_225_337,h_344>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           d::rb<nd,flted_225_336,h_345>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                        or a::rb<na,flted_225_332,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           b::rb<nb,flted_225_331,h_336>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           c::rb<nc,flted_225_330,h_337>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           d::rb<nd,flted_225_329,h_338>@M[Orig][LHSCase]@ rem br[{698,696}]&
                            (
-                           ([h_344=h & h_344=h_345 & h_344=h_343 & 1<=h_344]
-                            [0<=na][0<=nb][0<=nc][0<=nd][0=flted_225_339]
-                            [0=flted_225_338][0=flted_225_337]
-                            [0=flted_225_336][1=color]))&
+                           ([h_337=h & h_337=h_338 & h_337=h_336 & 1<=h_337]
+                            [0<=na][0<=nb][0<=nc][0<=nd][0=flted_225_332]
+                            [0=flted_225_331][0=flted_225_330]
+                            [0=flted_225_329][1=color]))&
                            {FLOW,(20,21)=__norm}
                         
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 35::
                               
-                              EXISTS(flted_226_9700,flted_226_9701,
-                              h1_9702: res::rb<flted_226_9700,flted_226_9701,h1_9702>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_226_9548,flted_226_9549,
+                              h1_9550: res::rb<flted_226_9548,flted_226_9549,h1_9550>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([(0<=flted_224_335 & flted_224_335<=1 & 
-                                 1<=h & 0<=na & 0<=flted_224_334 & 
-                                 flted_224_334<=1 & 1<=h_340 & 0<=nb & 
-                                 0<=flted_224_333 & flted_224_333<=1 & 
-                                 1<=h_341 & 0<=nc & 0<=flted_224_332 & 
-                                 flted_224_332<=1 & 1<=h_342 & 0<=nd | 
-                                 0<=flted_225_339 & flted_225_339<=1 & 
-                                 1<=h & 0<=na & 0<=flted_225_338 & 
-                                 flted_225_338<=1 & 1<=h_343 & 0<=nb & 
-                                 0<=flted_225_337 & flted_225_337<=1 & 
-                                 1<=h_344 & 0<=nc & 0<=flted_225_336 & 
-                                 flted_225_336<=1 & 1<=h_345 & 0<=nd) & 
-                                 flted_226_9700=3+na+nb+nc+nd & 1<=h & 
-                                 0<=na & -2+h1_9702=h & 0<=nc & 0<=nb & 0<=nd]
-                               [res!=null][0=flted_226_9701][0=color]))&
+                              ([(0<=flted_224_328 & flted_224_328<=1 & 
+                                 1<=h & 0<=na & 0<=flted_224_327 & 
+                                 flted_224_327<=1 & 1<=h_333 & 0<=nb & 
+                                 0<=flted_224_326 & flted_224_326<=1 & 
+                                 1<=h_334 & 0<=nc & 0<=flted_224_325 & 
+                                 flted_224_325<=1 & 1<=h_335 & 0<=nd | 
+                                 0<=flted_225_332 & flted_225_332<=1 & 
+                                 1<=h & 0<=na & 0<=flted_225_331 & 
+                                 flted_225_331<=1 & 1<=h_336 & 0<=nb & 
+                                 0<=flted_225_330 & flted_225_330<=1 & 
+                                 1<=h_337 & 0<=nc & 0<=flted_225_329 & 
+                                 flted_225_329<=1 & 1<=h_338 & 0<=nd) & 
+                                 flted_226_9548=3+na+nb+nc+nd & 1<=h & 
+                                 0<=na & -2+h1_9550=h & 0<=nc & 0<=nb & 0<=nd]
+                               [res!=null][0=flted_226_9549][0=color]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_227_9703,flted_227_9704,
-                                 h2_9705: res::rb<flted_227_9703,flted_227_9704,h2_9705>@M[Orig][LHSCase]@ rem br[{707}]&
+                              or EXISTS(flted_227_9551,flted_227_9552,
+                                 h2_9553: res::rb<flted_227_9551,flted_227_9552,h2_9553>@M[Orig][LHSCase]@ rem br[{697}]&
                                  (
-                                 ([(0<=flted_224_335 & flted_224_335<=1 & 
-                                    1<=h & 0<=na & 0<=flted_224_334 & 
-                                    flted_224_334<=1 & 1<=h_340 & 0<=nb & 
-                                    0<=flted_224_333 & flted_224_333<=1 & 
-                                    1<=h_341 & 0<=nc & 0<=flted_224_332 & 
-                                    flted_224_332<=1 & 1<=h_342 & 0<=nd | 
-                                    0<=flted_225_339 & flted_225_339<=1 & 
-                                    1<=h & 0<=na & 0<=flted_225_338 & 
-                                    flted_225_338<=1 & 1<=h_343 & 0<=nb & 
-                                    0<=flted_225_337 & flted_225_337<=1 & 
-                                    1<=h_344 & 0<=nc & 0<=flted_225_336 & 
-                                    flted_225_336<=1 & 1<=h_345 & 0<=nd) & 3+
-                                    na+nb+nc+nd=flted_227_9703 & 1<=h & (3+
-                                    nb+nc+nd)<=flted_227_9703 & -1+
-                                    h2_9705=h & 0<=nc & 0<=nb & 0<=nd]
-                                  [res!=null][1=flted_227_9704][1=color]))&
+                                 ([(0<=flted_224_328 & flted_224_328<=1 & 
+                                    1<=h & 0<=na & 0<=flted_224_327 & 
+                                    flted_224_327<=1 & 1<=h_333 & 0<=nb & 
+                                    0<=flted_224_326 & flted_224_326<=1 & 
+                                    1<=h_334 & 0<=nc & 0<=flted_224_325 & 
+                                    flted_224_325<=1 & 1<=h_335 & 0<=nd | 
+                                    0<=flted_225_332 & flted_225_332<=1 & 
+                                    1<=h & 0<=na & 0<=flted_225_331 & 
+                                    flted_225_331<=1 & 1<=h_336 & 0<=nb & 
+                                    0<=flted_225_330 & flted_225_330<=1 & 
+                                    1<=h_337 & 0<=nc & 0<=flted_225_329 & 
+                                    flted_225_329<=1 & 1<=h_338 & 0<=nd) & 3+
+                                    na+nb+nc+nd=flted_227_9551 & 1<=h & (3+
+                                    nb+nc+nd)<=flted_227_9551 & -1+
+                                    h2_9553=h & 0<=nc & 0<=nb & 0<=nd]
+                                  [res!=null][1=flted_227_9552][1=color]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -831,25 +815,25 @@ Checking procedure del_5r$node~node~node~node~int...
 Procedure del_5r$node~node~node~node~int SUCCESS
 
 Checking procedure del_6$node~node~node~int... 
-!!! OLD SPECS: ((None,[]),EInfer [h1,h2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[Anon_15; na; nb; Anon_16; nc; 
                     h](ex)
-                          EXISTS(h_507,h_508,flted_159_503,
-                          flted_159_504: a::rb<na,flted_159_504,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                          b::rb<nb,Anon_15,h_507>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                          c::rb<nc,flted_159_503,h_508>@M[Orig][LHSCase]@ rem br[{707}]&
+                          EXISTS(h_500,h_501,flted_159_496,
+                          flted_159_497: a::rb<na,flted_159_497,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                          b::rb<nb,Anon_15,h_500>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                          c::rb<nc,flted_159_496,h_501>@M[Orig][LHSCase]@ rem br[{697}]&
                           (
-                          ([0=flted_159_504][flted_159_503=1][0=color]
-                           [h=h_508 & h=h_507 & 1<=h_508][0<=na][0<=nb]
+                          ([0=flted_159_497][flted_159_496=1][0=color]
+                           [h=h_501 & h=h_500 & 1<=h_501][0<=na][0<=nb]
                            [Anon_15<=1 & 0<=Anon_15][0<=nc & 0!=nc][null!=c]))&
                           {FLOW,(20,21)=__norm})
-                          or EXISTS(h_509,h_510,flted_160_505,
-                             flted_160_506: a::rb<na,flted_160_506,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                             b::rb<nb,Anon_16,h_509>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                             c::rb<nc,flted_160_505,h_510>@M[Orig][LHSCase]@ rem br[{707}]&
+                          or EXISTS(h_502,h_503,flted_160_498,
+                             flted_160_499: a::rb<na,flted_160_499,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                             b::rb<nb,Anon_16,h_502>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                             c::rb<nc,flted_160_498,h_503>@M[Orig][LHSCase]@ rem br[{697}]&
                              (
-                             ([0=flted_160_506][flted_160_505=1][1=color]
-                              [h=h_510 & h=h_509 & 1<=h_510][0<=na][0<=nb]
+                             ([0=flted_160_499][flted_160_498=1][1=color]
+                              [h=h_503 & h=h_502 & 1<=h_503][0<=na][0<=nb]
                               [Anon_16<=1 & 0<=Anon_16][0<=nc & 0!=nc]
                               [null!=c]))&
                              {FLOW,(20,21)=__norm})
@@ -857,79 +841,79 @@ Checking procedure del_6$node~node~node~int...
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 24::
                                 
-                                EXISTS(flted_161_499,
-                                flted_161_500: res::rb<flted_161_500,flted_161_499,h1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_161_492,flted_161_493,
+                                h1: res::rb<flted_161_493,flted_161_492,h1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_161_500 & flted_161_500=2+na+nb+nc]
-                                 [0=flted_161_499][0=color][1<=h1]))&
+                                ([0<=flted_161_493 & flted_161_493=2+na+nb+nc]
+                                 [0=flted_161_492][0=color][1<=h1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_162_501,
-                                   flted_162_502: res::rb<flted_162_502,flted_162_501,h2>@M[Orig][LHSCase]@ rem br[{707}]&
+                                or EXISTS(flted_162_494,flted_162_495,
+                                   h2: res::rb<flted_162_495,flted_162_494,h2>@M[Orig][LHSCase]@ rem br[{697}]&
                                    (
-                                   ([0!=flted_162_502 & 0<=flted_162_502 & 
-                                      flted_162_502=2+na+nb+nc]
-                                    [flted_162_501=1][1=color][1<=h2]
+                                   ([0!=flted_162_495 & 0<=flted_162_495 & 
+                                      flted_162_495=2+na+nb+nc]
+                                    [flted_162_494=1][1=color][1<=h2]
                                     [null!=res]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[Anon_15; na; nb; Anon_16; nc; 
                   h](ex)
-                        a::rb<na,flted_159_504,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                        b::rb<nb,Anon_15,h_507>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                        c::rb<nc,flted_159_503,h_508>@M[Orig][LHSCase]@ rem br[{707}]&
+                        a::rb<na,flted_159_497,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                        b::rb<nb,Anon_15,h_500>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                        c::rb<nc,flted_159_496,h_501>@M[Orig][LHSCase]@ rem br[{697}]&
                         (
-                        ([h_507=h & h_507=h_508 & 1<=h_507][0<=na][0<=nb]
-                         [1<=nc][c!=null][0=flted_159_504][1=flted_159_503]
+                        ([h_500=h & h_500=h_501 & 1<=h_500][0<=na][0<=nb]
+                         [1<=nc][c!=null][0=flted_159_497][1=flted_159_496]
                          [0=color][Anon_15<=1 & 0<=Anon_15]))&
                         {FLOW,(20,21)=__norm}
-                        or a::rb<na,flted_160_506,h>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                           b::rb<nb,Anon_16,h_509>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                           c::rb<nc,flted_160_505,h_510>@M[Orig][LHSCase]@ rem br[{707}]&
+                        or a::rb<na,flted_160_499,h>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                           b::rb<nb,Anon_16,h_502>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                           c::rb<nc,flted_160_498,h_503>@M[Orig][LHSCase]@ rem br[{697}]&
                            (
-                           ([h_509=h & h_509=h_510 & 1<=h_509][0<=na][
-                            0<=nb][1<=nc][c!=null][0=flted_160_506]
-                            [1=flted_160_505][1=color]
+                           ([h_502=h & h_502=h_503 & 1<=h_502][0<=na][
+                            0<=nb][1<=nc][c!=null][0=flted_160_499]
+                            [1=flted_160_498][1=color]
                             [Anon_16<=1 & 0<=Anon_16]))&
                            {FLOW,(20,21)=__norm}
                         
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 24::
                               
-                              EXISTS(flted_161_10306,flted_161_10307,
-                              h1_10308: res::rb<flted_161_10306,flted_161_10307,h1_10308>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_161_10154,flted_161_10155,
+                              h1_10156: res::rb<flted_161_10154,flted_161_10155,h1_10156>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
                               ([Anon_15<=1 & 0<=Anon_15 & 
-                                 (0<=flted_159_504 & flted_159_504<=1 & 
+                                 (0<=flted_159_497 & flted_159_497<=1 & 
                                  1<=h & 0<=na & 0<=Anon_15 & Anon_15<=1 & 
-                                 1<=h_507 & 0<=nb & 0<=flted_159_503 & 
-                                 flted_159_503<=1 & 1<=h_508 & 0<=nc | 
-                                 0<=flted_160_506 & flted_160_506<=1 & 
+                                 1<=h_500 & 0<=nb & 0<=flted_159_496 & 
+                                 flted_159_496<=1 & 1<=h_501 & 0<=nc | 
+                                 0<=flted_160_499 & flted_160_499<=1 & 
                                  1<=h & 0<=na & 0<=Anon_16 & Anon_16<=1 & 
-                                 1<=h_509 & 0<=nb & 0<=flted_160_505 & 
-                                 flted_160_505<=1 & 1<=h_510 & 0<=nc) & 2+na+
-                                 nb+nc=flted_161_10306 & 3<=h1_10308 & (2+nb+
-                                 nc)<=flted_161_10306 & 2+h=h1_10308 & 
+                                 1<=h_502 & 0<=nb & 0<=flted_160_498 & 
+                                 flted_160_498<=1 & 1<=h_503 & 0<=nc) & 2+na+
+                                 nb+nc=flted_161_10154 & 3<=h1_10156 & (2+nb+
+                                 nc)<=flted_161_10154 & 2+h=h1_10156 & 
                                  0<=nb & 1<=nc]
                                [res!=null][c!=null][0=color]
-                               [0=flted_161_10307]))&
+                               [0=flted_161_10155]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_162_10309,flted_162_10310,
-                                 h2_10311: res::rb<flted_162_10309,flted_162_10310,h2_10311>@M[Orig][LHSCase]@ rem br[{707}]&
+                              or EXISTS(flted_162_10157,flted_162_10158,
+                                 h2_10159: res::rb<flted_162_10157,flted_162_10158,h2_10159>@M[Orig][LHSCase]@ rem br[{697}]&
                                  (
                                  ([Anon_16<=1 & 0<=Anon_16 & 
-                                    (0<=flted_159_504 & flted_159_504<=1 & 
+                                    (0<=flted_159_497 & flted_159_497<=1 & 
                                     1<=h & 0<=na & 0<=Anon_15 & Anon_15<=1 & 
-                                    1<=h_507 & 0<=nb & 0<=flted_159_503 & 
-                                    flted_159_503<=1 & 1<=h_508 & 0<=nc | 
-                                    0<=flted_160_506 & flted_160_506<=1 & 
+                                    1<=h_500 & 0<=nb & 0<=flted_159_496 & 
+                                    flted_159_496<=1 & 1<=h_501 & 0<=nc | 
+                                    0<=flted_160_499 & flted_160_499<=1 & 
                                     1<=h & 0<=na & 0<=Anon_16 & Anon_16<=1 & 
-                                    1<=h_509 & 0<=nb & 0<=flted_160_505 & 
-                                    flted_160_505<=1 & 1<=h_510 & 0<=nc) & 2+
-                                    na+nb+nc=flted_162_10309 & 2<=h2_10311 & 
-                                    (2+nb+nc)<=flted_162_10309 & 1+
-                                    h=h2_10311 & 0<=nb & 1<=nc]
+                                    1<=h_502 & 0<=nb & 0<=flted_160_498 & 
+                                    flted_160_498<=1 & 1<=h_503 & 0<=nc) & 2+
+                                    na+nb+nc=flted_162_10157 & 2<=h2_10159 & 
+                                    (2+nb+nc)<=flted_162_10157 & 1+
+                                    h=h2_10159 & 0<=nb & 1<=nc]
                                   [res!=null][c!=null][1=color]
-                                  [1=flted_162_10310]))&
+                                  [1=flted_162_10158]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -938,26 +922,26 @@ Checking procedure del_6$node~node~node~int...
 Procedure del_6$node~node~node~int SUCCESS
 
 Checking procedure del_6r$node~node~node~int... 
-!!! OLD SPECS: ((None,[]),EInfer [ha1,ha2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[Anon_19; na; nb; Anon_20; nc; 
                     ha](ex)
-                           EXISTS(ha_462,ha_463,flted_181_458,
-                           flted_181_459: a::rb<na,flted_181_459,ha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                           b::rb<nb,Anon_19,ha_462>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                           c::rb<nc,flted_181_458,ha_463>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                           EXISTS(ha_455,ha_456,flted_181_451,
+                           flted_181_452: a::rb<na,flted_181_452,ha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                           b::rb<nb,Anon_19,ha_455>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                           c::rb<nc,flted_181_451,ha_456>@M[Orig][LHSCase]@ rem br[{698,696}]&
                            (
-                           ([flted_181_459=1][0=flted_181_458][0=color]
-                            [ha=ha_463 & ha=ha_462 & 1<=ha_463]
+                           ([flted_181_452=1][0=flted_181_451][0=color]
+                            [ha=ha_456 & ha=ha_455 & 1<=ha_456]
                             [0<=na & 0!=na][null!=a][0<=nb]
                             [Anon_19<=1 & 0<=Anon_19][0<=nc]))&
                            {FLOW,(20,21)=__norm})
-                           or EXISTS(ha_464,ha_465,flted_182_460,
-                              flted_182_461: a::rb<na,flted_182_461,ha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                              b::rb<nb,Anon_20,ha_464>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                              c::rb<nc,flted_182_460,ha_465>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                           or EXISTS(ha_457,ha_458,flted_182_453,
+                              flted_182_454: a::rb<na,flted_182_454,ha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                              b::rb<nb,Anon_20,ha_457>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                              c::rb<nc,flted_182_453,ha_458>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([flted_182_461=1][0=flted_182_460][1=color]
-                               [ha=ha_465 & ha=ha_464 & 1<=ha_465]
+                              ([flted_182_454=1][0=flted_182_453][1=color]
+                               [ha=ha_458 & ha=ha_457 & 1<=ha_458]
                                [0<=na & 0!=na][null!=a][0<=nb]
                                [Anon_20<=1 & 0<=Anon_20][0<=nc]))&
                               {FLOW,(20,21)=__norm})
@@ -965,81 +949,82 @@ Checking procedure del_6r$node~node~node~int...
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 28::
                                 
-                                EXISTS(flted_183_454,
-                                flted_183_455: res::rb<flted_183_455,flted_183_454,ha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_183_447,flted_183_448,
+                                ha1: res::rb<flted_183_448,flted_183_447,ha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_183_455 & flted_183_455=2+na+nb+nc]
-                                 [0=flted_183_454][0=color][1<=ha1]))&
+                                ([0<=flted_183_448 & flted_183_448=2+na+nb+nc]
+                                 [0=flted_183_447][0=color][1<=ha1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_184_456,
-                                   flted_184_457: res::rb<flted_184_457,flted_184_456,ha2>@M[Orig][LHSCase]@ rem br[{707}]&
+                                or EXISTS(flted_184_449,flted_184_450,
+                                   ha2: res::rb<flted_184_450,flted_184_449,ha2>@M[Orig][LHSCase]@ rem br[{697}]&
                                    (
-                                   ([0!=flted_184_457 & 0<=flted_184_457 & 
-                                      flted_184_457=2+na+nb+nc]
-                                    [flted_184_456=1][1=color][1<=ha2]
+                                   ([0!=flted_184_450 & 0<=flted_184_450 & 
+                                      flted_184_450=2+na+nb+nc]
+                                    [flted_184_449=1][1=color][1<=ha2]
                                     [null!=res]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[Anon_19; na; nb; Anon_20; nc; 
                   ha](ex)
-                         a::rb<na,flted_181_459,ha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                         b::rb<nb,Anon_19,ha_462>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                         c::rb<nc,flted_181_458,ha_463>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                         a::rb<na,flted_181_452,ha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                         b::rb<nb,Anon_19,ha_455>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                         c::rb<nc,flted_181_451,ha_456>@M[Orig][LHSCase]@ rem br[{698,696}]&
                          (
-                         ([ha_462=ha & ha_462=ha_463 & 1<=ha_462][1<=na]
-                          [a!=null][0<=nb][0<=nc][1=flted_181_459]
-                          [0=flted_181_458][0=color][Anon_19<=1 & 0<=Anon_19]
+                         ([ha_455=ha & ha_455=ha_456 & 1<=ha_455][1<=na]
+                          [a!=null][0<=nb][0<=nc][1=flted_181_452]
+                          [0=flted_181_451][0=color][Anon_19<=1 & 0<=Anon_19]
                           ))&
                          {FLOW,(20,21)=__norm}
-                         or a::rb<na,flted_182_461,ha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                            b::rb<nb,Anon_20,ha_464>@M[Orig][LHSCase]@ rem br[{708,707,706}] * 
-                            c::rb<nc,flted_182_460,ha_465>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                         or a::rb<na,flted_182_454,ha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                            b::rb<nb,Anon_20,ha_457>@M[Orig][LHSCase]@ rem br[{698,697,696}] * 
+                            c::rb<nc,flted_182_453,ha_458>@M[Orig][LHSCase]@ rem br[{698,696}]&
                             (
-                            ([ha_464=ha & ha_464=ha_465 & 1<=ha_464][
-                             1<=na][a!=null][0<=nb][0<=nc][1=flted_182_461]
-                             [0=flted_182_460][1=color]
+                            ([ha_457=ha & ha_457=ha_458 & 1<=ha_457][
+                             1<=na][a!=null][0<=nb][0<=nc][1=flted_182_454]
+                             [0=flted_182_453][1=color]
                              [Anon_20<=1 & 0<=Anon_20]))&
                             {FLOW,(20,21)=__norm}
                          
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 28::
                               
-                              EXISTS(flted_183_10932,flted_183_10933,
-                              ha1_10934: res::rb<flted_183_10932,flted_183_10933,ha1_10934>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_183_10780,flted_183_10781,
+                              ha1_10782: res::rb<flted_183_10780,flted_183_10781,ha1_10782>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
                               ([Anon_19<=1 & 0<=Anon_19 & 
-                                 (0<=flted_181_459 & flted_181_459<=1 & 
+                                 (0<=flted_181_452 & flted_181_452<=1 & 
                                  1<=ha & 0<=na & 0<=Anon_19 & Anon_19<=1 & 
-                                 1<=ha_462 & 0<=nb & 0<=flted_181_458 & 
-                                 flted_181_458<=1 & 1<=ha_463 & 0<=nc | 
-                                 0<=flted_182_461 & flted_182_461<=1 & 
+                                 1<=ha_455 & 0<=nb & 0<=flted_181_451 & 
+                                 flted_181_451<=1 & 1<=ha_456 & 0<=nc | 
+                                 0<=flted_182_454 & flted_182_454<=1 & 
                                  1<=ha & 0<=na & 0<=Anon_20 & Anon_20<=1 & 
-                                 1<=ha_464 & 0<=nb & 0<=flted_182_460 & 
-                                 flted_182_460<=1 & 1<=ha_465 & 0<=nc) & 
-                                 flted_183_10932=2+na+nb+nc & 3<=ha1_10934 & 
-                                 1<=na & 2+ha=ha1_10934 & 0<=nc & 0<=nb]
+                                 1<=ha_457 & 0<=nb & 0<=flted_182_453 & 
+                                 flted_182_453<=1 & 1<=ha_458 & 0<=nc) & 2+
+                                 na+nb+nc=flted_183_10780 & 3<=ha1_10782 & 
+                                 (2+na+nb)<=flted_183_10780 & 2+
+                                 ha=ha1_10782 & 0<=nb & 1<=na]
                                [res!=null][a!=null][0=color]
-                               [0=flted_183_10933]))&
+                               [0=flted_183_10781]))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_184_10935,flted_184_10936,
-                                 ha2_10937: res::rb<flted_184_10935,flted_184_10936,ha2_10937>@M[Orig][LHSCase]@ rem br[{707}]&
+                              or EXISTS(flted_184_10783,flted_184_10784,
+                                 ha2_10785: res::rb<flted_184_10783,flted_184_10784,ha2_10785>@M[Orig][LHSCase]@ rem br[{697}]&
                                  (
                                  ([Anon_20<=1 & 0<=Anon_20 & 
-                                    (0<=flted_181_459 & flted_181_459<=1 & 
+                                    (0<=flted_181_452 & flted_181_452<=1 & 
                                     1<=ha & 0<=na & 0<=Anon_19 & 
-                                    Anon_19<=1 & 1<=ha_462 & 0<=nb & 
-                                    0<=flted_181_458 & flted_181_458<=1 & 
-                                    1<=ha_463 & 0<=nc | 0<=flted_182_461 & 
-                                    flted_182_461<=1 & 1<=ha & 0<=na & 
-                                    0<=Anon_20 & Anon_20<=1 & 1<=ha_464 & 
-                                    0<=nb & 0<=flted_182_460 & 
-                                    flted_182_460<=1 & 1<=ha_465 & 0<=nc) & 
-                                    2+na+nb+nc=flted_184_10935 & 
-                                    2<=ha2_10937 & (2+na+
-                                    nb)<=flted_184_10935 & 1+ha=ha2_10937 & 
+                                    Anon_19<=1 & 1<=ha_455 & 0<=nb & 
+                                    0<=flted_181_451 & flted_181_451<=1 & 
+                                    1<=ha_456 & 0<=nc | 0<=flted_182_454 & 
+                                    flted_182_454<=1 & 1<=ha & 0<=na & 
+                                    0<=Anon_20 & Anon_20<=1 & 1<=ha_457 & 
+                                    0<=nb & 0<=flted_182_453 & 
+                                    flted_182_453<=1 & 1<=ha_458 & 0<=nc) & 
+                                    2+na+nb+nc=flted_184_10783 & 
+                                    2<=ha2_10785 & (2+na+
+                                    nb)<=flted_184_10783 & 1+ha=ha2_10785 & 
                                     0<=nb & 1<=na]
                                   [res!=null][a!=null][1=color]
-                                  [1=flted_184_10936]))&
+                                  [1=flted_184_10784]))&
                                  {FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[]
@@ -1052,35 +1037,35 @@ Checking procedure insert$node~int...
 !!! POST:  1=bh & 1=bh1
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [INS]
-              EBase exists (Expl)(Impl)[n; Anon_22; 
-                    bh](ex)x::rb<n,Anon_22,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
-                    (([0<=n][1<=bh][Anon_22<=1 & 0<=Anon_22]))&
+              EBase exists (Expl)(Impl)[n; Anon_21; 
+                    bh](ex)x::rb<n,Anon_21,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
+                    (([0<=n][1<=bh][Anon_21<=1 & 0<=Anon_21]))&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 114::
-                                EXISTS(flted_588_111,Anon_23,
-                                bh1: res::rb<flted_588_111,Anon_23,bh1>@M[Orig][LHSCase]@ rem br[{707,706}]&
+                              EAssume 109::
+                                EXISTS(flted_589_110,Anon_22,
+                                bh1: res::rb<flted_589_110,Anon_22,bh1>@M[Orig][LHSCase]@ rem br[{697,696}]&
                                 (
-                                ([0!=flted_588_111 & 0<=flted_588_111 & -1+
-                                   flted_588_111=n]
+                                ([0!=flted_589_110 & 0<=flted_589_110 & -1+
+                                   flted_589_110=n]
                                  [null!=res][1<=bh1 & INS(bh,bh1)]
-                                 [Anon_23<=1 & 0<=Anon_23]))&
+                                 [Anon_22<=1 & 0<=Anon_22]))&
                                 {FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; Anon_22; 
-                  bh](ex)x::rb<n,Anon_22,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
-                  (([0<=n][1<=bh][Anon_22<=1 & 0<=Anon_22]))&
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; Anon_21; 
+                  bh](ex)x::rb<n,Anon_21,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
+                  (([0<=n][1<=bh][Anon_21<=1 & 0<=Anon_21]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
-                            EAssume 114::
-                              EXISTS(flted_588_11730,Anon_11731,
-                              bh1_11732: res::rb<flted_588_11730,Anon_11731,bh1_11732>@M[Orig][LHSCase]@ rem br[{707,706}]&
+                            EAssume 109::
+                              EXISTS(flted_589_11578,Anon_11579,
+                              bh1_11580: res::rb<flted_589_11578,Anon_11579,bh1_11580>@M[Orig][LHSCase]@ rem br[{697,696}]&
                               (
-                              ([1=bh1_11732 & 1<=bh1_11732][bh=1 & 1<=bh]
+                              ([1=bh1_11580 & 1<=bh1_11580][bh=1 & 1<=bh]
                                [null!=res]
-                               [0!=flted_588_11730 & 0<=n & -1+
-                                 flted_588_11730=n & 0<=flted_588_11730]
-                               [0<=Anon_11731 & Anon_11731<=1]
-                               [Anon_22<=1 & 0<=Anon_22]))&
+                               [0!=flted_589_11578 & 0<=n & -1+
+                                 flted_589_11578=n & 0<=flted_589_11578]
+                               [0<=Anon_11579 & Anon_11579<=1]
+                               [Anon_21<=1 & 0<=Anon_21]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (bh=1 & bh1=1) --> INS(bh,bh1)]
 !!! NEW ASSUME:[]
@@ -1088,9 +1073,9 @@ Checking procedure insert$node~int...
 Procedure insert$node~int SUCCESS
 
 Checking procedure is_black$node... 
-!!! OLD SPECS: ((None,[]),EInfer [bh1,bh2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[n; cl; 
-                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                     (([0<=n][1<=bh][cl<=1 & 0<=cl]))&{FLOW,(20,21)=__norm}
                       ECase case {
                              x=null -> ((None,[]),EBase true&MayLoop&
@@ -1103,27 +1088,28 @@ Checking procedure is_black$node...
                                                          {FLOW,(1,23)=__flow}
                                                            EAssume 20::
                                                              
-                                                             EXISTS(n_536,
-                                                             cl_537: 
-                                                             x::rb<n_536,cl_537,bh1>@M[Orig][LHSCase]@ rem br[{707}]&
+                                                             EXISTS(n_529,
+                                                             cl_530,
+                                                             bh1: x::rb<n_529,cl_530,bh1>@M[Orig][LHSCase]@ rem br[{697}]&
                                                              (
                                                              ([!(res)]
-                                                              [n=n_536 & 
-                                                                0<=n_536 & 
-                                                                0!=n_536]
-                                                              [cl=cl_537 & 
+                                                              [n=n_529 & 
+                                                                0<=n_529 & 
+                                                                0!=n_529]
+                                                              [cl=cl_530 & 
                                                                 cl=1]
                                                               [1<=bh1]
                                                               [null!=x]))&
                                                              {FLOW,(20,21)=__norm})
-                                                             or EXISTS(n_538,
-                                                                cl_539: 
-                                                                x::rb<n_538,cl_539,bh2>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                                             or EXISTS(n_531,
+                                                                cl_532,
+                                                                bh2: 
+                                                                x::rb<n_531,cl_532,bh2>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                                                 (
                                                                 ([res]
-                                                                 [n=n_538 & 
-                                                                   0<=n_538]
-                                                                 [cl=cl_539 & 
+                                                                 [n=n_531 & 
+                                                                   0<=n_531]
+                                                                 [cl=cl_532 & 
                                                                    cl=0]
                                                                  [1<=bh2]))&
                                                                 {FLOW,(20,21)=__norm})
@@ -1131,7 +1117,7 @@ Checking procedure is_black$node...
                              
                              })
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; cl; 
-                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                   (([0<=n][1<=bh][0<=cl & cl<=1]))&{FLOW,(20,21)=__norm}
                     ECase case {
                            x=null -> ((None,[]),EBase true&(([MayLoop]))&
@@ -1150,36 +1136,36 @@ Checking procedure is_black$node...
                                                        {FLOW,(1,23)=__flow}
                                                          EAssume 20::
                                                            
-                                                           EXISTS(n_11966,
-                                                           cl_11967,
-                                                           bh1_11968: 
-                                                           x::rb<n_11966,cl_11967,bh1_11968>@M[Orig][LHSCase]@ rem br[{707}]&
+                                                           EXISTS(n_11814,
+                                                           cl_11815,
+                                                           bh1_11816: 
+                                                           x::rb<n_11814,cl_11815,bh1_11816>@M[Orig][LHSCase]@ rem br[{697}]&
                                                            (
-                                                           ([n=n_11966 & 
+                                                           ([n=n_11814 & 
                                                               1<=n & 0<=n]
-                                                            [bh=bh1_11968 & 
+                                                            [bh=bh1_11816 & 
                                                               1<=bh]
                                                             [x!=null]
                                                             [1=cl & 0<=cl & 
                                                               cl<=1]
-                                                            [1=cl_11967]
+                                                            [1=cl_11815]
                                                             [!(res)]))&
                                                            {FLOW,(20,21)=__norm})
-                                                           or EXISTS(n_11969,
-                                                              cl_11970,
-                                                              bh2_11971: 
-                                                              x::rb<n_11969,cl_11970,bh2_11971>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                                           or EXISTS(n_11817,
+                                                              cl_11818,
+                                                              bh2_11819: 
+                                                              x::rb<n_11817,cl_11818,bh2_11819>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                                               (
-                                                              ([bh=bh2_11971 & 
+                                                              ([bh=bh2_11819 & 
                                                                  2<=bh & 
                                                                  1<=bh]
                                                                [x!=null]
-                                                               [n=n_11969 & 
+                                                               [n=n_11817 & 
                                                                  1<=n & 0<=n]
                                                                [0=cl & 
                                                                  0<=cl & 
                                                                  cl<=1]
-                                                               [0=cl_11970]
+                                                               [0=cl_11818]
                                                                [res]))&
                                                               {FLOW,(20,21)=__norm})
                                                            )
@@ -1191,9 +1177,9 @@ Checking procedure is_black$node...
 Procedure is_black$node SUCCESS
 
 Checking procedure is_red$node... 
-!!! OLD SPECS: ((None,[]),EInfer [bh1,bh2]
+!!! OLD SPECS: ((None,[]),EInfer @post []
               EBase exists (Expl)(Impl)[n; cl; 
-                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                     (([0<=n][1<=bh][cl<=1 & 0<=cl]))&{FLOW,(20,21)=__norm}
                       ECase case {
                              x=null -> ((None,[]),EBase true&MayLoop&
@@ -1207,27 +1193,28 @@ Checking procedure is_red$node...
                                                          {FLOW,(1,23)=__flow}
                                                            EAssume 15::
                                                              
-                                                             EXISTS(n_546,
-                                                             cl_547: 
-                                                             x::rb<n_546,cl_547,bh1>@M[Orig][LHSCase]@ rem br[{707}]&
+                                                             EXISTS(n_539,
+                                                             cl_540,
+                                                             bh1: x::rb<n_539,cl_540,bh1>@M[Orig][LHSCase]@ rem br[{697}]&
                                                              (
                                                              ([res]
-                                                              [n=n_546 & 
-                                                                0<=n_546 & 
-                                                                0!=n_546]
-                                                              [cl=cl_547 & 
+                                                              [n=n_539 & 
+                                                                0<=n_539 & 
+                                                                0!=n_539]
+                                                              [cl=cl_540 & 
                                                                 cl=1]
                                                               [1<=bh1]
                                                               [null!=x]))&
                                                              {FLOW,(20,21)=__norm})
-                                                             or EXISTS(n_548,
-                                                                cl_549: 
-                                                                x::rb<n_548,cl_549,bh2>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                                             or EXISTS(n_541,
+                                                                cl_542,
+                                                                bh2: 
+                                                                x::rb<n_541,cl_542,bh2>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                                                 (
                                                                 ([!(res)]
-                                                                 [n=n_548 & 
-                                                                   0<=n_548]
-                                                                 [cl=cl_549 & 
+                                                                 [n=n_541 & 
+                                                                   0<=n_541]
+                                                                 [cl=cl_542 & 
                                                                    cl=0]
                                                                  [1<=bh2]))&
                                                                 {FLOW,(20,21)=__norm})
@@ -1235,7 +1222,7 @@ Checking procedure is_red$node...
                              
                              })
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; cl; 
-                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                   (([0<=n][1<=bh][0<=cl & cl<=1]))&{FLOW,(20,21)=__norm}
                     ECase case {
                            x=null -> ((None,[]),EBase true&(([MayLoop]))&
@@ -1254,36 +1241,36 @@ Checking procedure is_red$node...
                                                        {FLOW,(1,23)=__flow}
                                                          EAssume 15::
                                                            
-                                                           EXISTS(n_12205,
-                                                           cl_12206,
-                                                           bh1_12207: 
-                                                           x::rb<n_12205,cl_12206,bh1_12207>@M[Orig][LHSCase]@ rem br[{707}]&
+                                                           EXISTS(n_12053,
+                                                           cl_12054,
+                                                           bh1_12055: 
+                                                           x::rb<n_12053,cl_12054,bh1_12055>@M[Orig][LHSCase]@ rem br[{697}]&
                                                            (
-                                                           ([bh=bh1_12207 & 
-                                                              1<=bh]
-                                                            [n=n_12205 & 
+                                                           ([n=n_12053 & 
                                                               1<=n & 0<=n]
+                                                            [bh=bh1_12055 & 
+                                                              1<=bh]
                                                             [x!=null]
                                                             [1=cl & 0<=cl & 
                                                               cl<=1]
-                                                            [1=cl_12206][
+                                                            [1=cl_12054][
                                                             res]))&
                                                            {FLOW,(20,21)=__norm})
-                                                           or EXISTS(n_12208,
-                                                              cl_12209,
-                                                              bh2_12210: 
-                                                              x::rb<n_12208,cl_12209,bh2_12210>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                                           or EXISTS(n_12056,
+                                                              cl_12057,
+                                                              bh2_12058: 
+                                                              x::rb<n_12056,cl_12057,bh2_12058>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                                               (
                                                               ([x!=null]
-                                                               [bh=bh2_12210 & 
+                                                               [bh=bh2_12058 & 
                                                                  2<=bh & 
                                                                  1<=bh]
-                                                               [n=n_12208 & 
+                                                               [n=n_12056 & 
                                                                  1<=n & 0<=n]
                                                                [0=cl & 
                                                                  0<=cl & 
                                                                  cl<=1]
-                                                               [0=cl_12209]
+                                                               [0=cl_12057]
                                                                [!(res)]))&
                                                               {FLOW,(20,21)=__norm})
                                                            )
@@ -1300,54 +1287,54 @@ Checking procedure remove_min$node...
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [RMVM1,RMVM2]
               EBase exists (Expl)(Impl)[n; cl; 
-                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{707,706}]&
+                    bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{697,696}]&
                     (([null!=x][0<=cl & cl<=1][1<=bh][0<=n & 0!=n]))&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 66::ref [x]
+                              EAssume 63::ref [x]
                                 
-                                EXISTS(flted_378_126,bh1,
-                                cl2: x'::rb<flted_378_126,cl2,bh1>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                                EXISTS(flted_378_125,bh1,
+                                cl2: x'::rb<flted_378_125,cl2,bh1>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                                 (
-                                ([0<=flted_378_126 & 1+flted_378_126=n]
+                                ([0<=flted_378_125 & 1+flted_378_125=n]
                                  [1<=bh1 & RMVM1(bh,bh1)][1=cl]
                                  [0<=cl2 & cl2<=1]))&
                                 {FLOW,(20,21)=__norm})
-                                or EXISTS(flted_379_127,flted_379_128,
-                                   bh2: x'::rb<flted_379_128,flted_379_127,bh2>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                or EXISTS(flted_379_126,flted_379_127,
+                                   bh2: x'::rb<flted_379_127,flted_379_126,bh2>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                    (
-                                   ([0<=flted_379_128 & 1+flted_379_128=n]
-                                    [0=flted_379_127]
+                                   ([0<=flted_379_127 & 1+flted_379_127=n]
+                                    [0=flted_379_126]
                                     [1<=bh2 & bh2<=bh & (-1+bh)<=bh2][
                                     0=cl]))&
                                    {FLOW,(20,21)=__norm})
                                 )
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; cl; 
-                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{707,706}]&(
+                  bh](ex)x::rb<n,cl,bh>@M[Orig][LHSCase]@ rem br[{697,696}]&(
                   ([x!=null][1<=bh][1<=n][0<=cl & cl<=1]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
-                            EAssume 66::ref [x]
+                            EAssume 63::ref [x]
                               
-                              EXISTS(flted_378_13653,bh1_13654,
-                              cl2_13655: x'::rb<flted_378_13653,cl2_13655,bh1_13654>@M[Orig][LHSCase]@ rem br[{708,707,706}]&
+                              EXISTS(flted_378_13501,bh1_13502,
+                              cl2_13503: x'::rb<flted_378_13501,cl2_13503,bh1_13502>@M[Orig][LHSCase]@ rem br[{698,697,696}]&
                               (
-                              ([bh=1 & 1<=bh][1=bh1_13654 & 1<=bh1_13654]
-                               [0<=cl2_13655 & cl2_13655<=1]
+                              ([bh=1 & 1<=bh][1=bh1_13502 & 1<=bh1_13502]
+                               [0<=cl2_13503 & cl2_13503<=1]
                                [cl=1 & 0<=cl & cl<=1]
-                               [0<=flted_378_13653 & 0<=n & 1+
-                                 flted_378_13653=n]
+                               [0<=flted_378_13501 & 0<=n & 1+
+                                 flted_378_13501=n]
                                ))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(flted_379_13656,flted_379_13657,
-                                 bh2_13658: x'::rb<flted_379_13657,flted_379_13656,bh2_13658>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              or EXISTS(flted_379_13504,flted_379_13505,
+                                 bh2_13506: x'::rb<flted_379_13505,flted_379_13504,bh2_13506>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                  (
                                  ([cl=0 & 0<=cl & cl<=1]
-                                  [1<=bh2_13658 & 1<=bh & (-1+
-                                    bh)<=bh2_13658 & bh2_13658<=bh]
-                                  [0=flted_379_13656]
-                                  [0<=flted_379_13657 & 0<=n & 1+
-                                    flted_379_13657=n]
+                                  [1<=bh2_13506 & 1<=bh & (-1+
+                                    bh)<=bh2_13506 & bh2_13506<=bh]
+                                  [0=flted_379_13504]
+                                  [0<=flted_379_13505 & 0<=n & 1+
+                                    flted_379_13505=n]
                                   ))&
                                  {FLOW,(20,21)=__norm})
                               )
@@ -1358,48 +1345,48 @@ Checking procedure remove_min$node...
 Procedure remove_min$node SUCCESS
 
 Checking procedure rotate_case_3$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [bha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; bha](ex)EXISTS(bha_659,
-                    bha_660,flted_24_656,flted_24_657,
-                    flted_24_658: a::rb<na,flted_24_658,bha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                    b::rb<nb,flted_24_657,bha_659>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_24_656,bha_660>@M[Orig][LHSCase]@ rem br[{708,706}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; bha](ex)EXISTS(bha_652,
+                    bha_653,flted_24_649,flted_24_650,
+                    flted_24_651: a::rb<na,flted_24_651,bha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                    b::rb<nb,flted_24_650,bha_652>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_24_649,bha_653>@M[Orig][LHSCase]@ rem br[{698,696}]&
                     (
-                    ([flted_24_658=1][0=flted_24_657][0=flted_24_656]
-                     [bha=bha_660 & bha=bha_659 & 1<=bha_660][0<=na & 0!=na]
+                    ([flted_24_651=1][0=flted_24_650][0=flted_24_649]
+                     [bha=bha_653 & bha=bha_652 & 1<=bha_653][0<=na & 0!=na]
                      [null!=a][0<=nb][0<=nc]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 2::
-                                EXISTS(flted_25_654,
-                                flted_25_655: res::rb<flted_25_655,flted_25_654,bha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_25_647,flted_25_648,
+                                bha1: res::rb<flted_25_648,flted_25_647,bha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_25_655 & flted_25_655=2+na+nb+nc]
-                                 [0=flted_25_654][1<=bha1]))&
+                                ([0<=flted_25_648 & flted_25_648=2+na+nb+nc]
+                                 [0=flted_25_647][1<=bha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  bha](ex)a::rb<na,flted_24_658,bha>@M[Orig][LHSCase]@ rem br[{707}] * 
-                  b::rb<nb,flted_24_657,bha_659>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_24_656,bha_660>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                  bha](ex)a::rb<na,flted_24_651,bha>@M[Orig][LHSCase]@ rem br[{697}] * 
+                  b::rb<nb,flted_24_650,bha_652>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_24_649,bha_653>@M[Orig][LHSCase]@ rem br[{698,696}]&
                   (
-                  ([bha_659=bha & bha_659=bha_660 & 1<=bha_659][1<=na]
-                   [a!=null][0<=nb][0<=nc][1=flted_24_658][0=flted_24_657]
-                   [0=flted_24_656]))&
+                  ([bha_652=bha & bha_652=bha_653 & 1<=bha_652][1<=na]
+                   [a!=null][0<=nb][0<=nc][1=flted_24_651][0=flted_24_650]
+                   [0=flted_24_649]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 2::
-                              EXISTS(flted_25_13787,flted_25_13788,
-                              bha1_13789: res::rb<flted_25_13787,flted_25_13788,bha1_13789>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_25_13635,flted_25_13636,
+                              bha1_13637: res::rb<flted_25_13635,flted_25_13636,bha1_13637>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([1+bha=bha1_13789 & 1<=bha & 2<=bha1_13789]
-                               [2+na+nb+nc=flted_25_13787 & 0<=na & (3+nb+
-                                 nc)<=flted_25_13787 & 0<=nb & 0<=nc]
-                               [a!=null][res!=null][0=flted_25_13788]
-                               [1<=bha_660]
-                               [0<=flted_24_656 & flted_24_656<=1]
-                               [1<=bha_659]
-                               [0<=flted_24_657 & flted_24_657<=1]
-                               [0<=flted_24_658 & flted_24_658<=1]))&
+                              ([1+bha=bha1_13637 & 1<=bha & 2<=bha1_13637]
+                               [2+na+nb+nc=flted_25_13635 & 0<=na & (3+nb+
+                                 nc)<=flted_25_13635 & 0<=nb & 0<=nc]
+                               [a!=null][res!=null][0=flted_25_13636]
+                               [1<=bha_653]
+                               [0<=flted_24_649 & flted_24_649<=1]
+                               [1<=bha_652]
+                               [0<=flted_24_650 & flted_24_650<=1]
+                               [0<=flted_24_651 & flted_24_651<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -1407,49 +1394,49 @@ Checking procedure rotate_case_3$node~node~node...
 Procedure rotate_case_3$node~node~node SUCCESS
 
 Checking procedure rotate_case_3r$node~node~node... 
-!!! OLD SPECS: ((None,[]),EInfer [bha1]
-              EBase exists (Expl)(Impl)[na; nb; nc; bha](ex)EXISTS(bha_599,
-                    bha_600,flted_66_596,flted_66_597,
-                    flted_66_598: a::rb<na,flted_66_598,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    b::rb<nb,flted_66_597,bha_599>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                    c::rb<nc,flted_66_596,bha_600>@M[Orig][LHSCase]@ rem br[{707}]&
+!!! OLD SPECS: ((None,[]),EInfer @post []
+              EBase exists (Expl)(Impl)[na; nb; nc; bha](ex)EXISTS(bha_592,
+                    bha_593,flted_66_589,flted_66_590,
+                    flted_66_591: a::rb<na,flted_66_591,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    b::rb<nb,flted_66_590,bha_592>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                    c::rb<nc,flted_66_589,bha_593>@M[Orig][LHSCase]@ rem br[{697}]&
                     (
-                    ([0=flted_66_598][0=flted_66_597][flted_66_596=1]
-                     [bha=bha_600 & bha=bha_599 & 1<=bha_600][0<=na][
+                    ([0=flted_66_591][0=flted_66_590][flted_66_589=1]
+                     [bha=bha_593 & bha=bha_592 & 1<=bha_593][0<=na][
                      0<=nb][0<=nc & 0!=nc][null!=c]))&
                     {FLOW,(20,21)=__norm})
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 8::
-                                EXISTS(flted_67_594,
-                                flted_67_595: res::rb<flted_67_595,flted_67_594,bha1>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                                EXISTS(flted_67_587,flted_67_588,
+                                bha1: res::rb<flted_67_588,flted_67_587,bha1>@M[Orig][LHSCase]@ rem br[{698,696}]&
                                 (
-                                ([0<=flted_67_595 & flted_67_595=2+na+nb+nc]
-                                 [0=flted_67_594][1<=bha1]))&
+                                ([0<=flted_67_588 & flted_67_588=2+na+nb+nc]
+                                 [0=flted_67_587][1<=bha1]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[na; nb; nc; 
-                  bha](ex)a::rb<na,flted_66_598,bha>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  b::rb<nb,flted_66_597,bha_599>@M[Orig][LHSCase]@ rem br[{708,706}] * 
-                  c::rb<nc,flted_66_596,bha_600>@M[Orig][LHSCase]@ rem br[{707}]&
+                  bha](ex)a::rb<na,flted_66_591,bha>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  b::rb<nb,flted_66_590,bha_592>@M[Orig][LHSCase]@ rem br[{698,696}] * 
+                  c::rb<nc,flted_66_589,bha_593>@M[Orig][LHSCase]@ rem br[{697}]&
                   (
-                  ([bha_599=bha & bha_599=bha_600 & 1<=bha_599][0<=na][
-                   0<=nb][1<=nc][c!=null][0=flted_66_598][0=flted_66_597]
-                   [1=flted_66_596]))&
+                  ([bha_592=bha & bha_592=bha_593 & 1<=bha_592][0<=na][
+                   0<=nb][1<=nc][c!=null][0=flted_66_591][0=flted_66_590]
+                   [1=flted_66_589]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 8::
-                              EXISTS(flted_67_13918,flted_67_13919,
-                              bha1_13920: res::rb<flted_67_13918,flted_67_13919,bha1_13920>@M[Orig][LHSCase]@ rem br[{708,706}]&
+                              EXISTS(flted_67_13766,flted_67_13767,
+                              bha1_13768: res::rb<flted_67_13766,flted_67_13767,bha1_13768>@M[Orig][LHSCase]@ rem br[{698,696}]&
                               (
-                              ([1+bha=bha1_13920 & 1<=bha & 2<=bha1_13920]
-                               [2+na+nb+nc=flted_67_13918 & (2+na+
-                                 nc)<=flted_67_13918 & 0<=nb & 0<=na & 
+                              ([1+bha=bha1_13768 & 1<=bha & 2<=bha1_13768]
+                               [2+na+nb+nc=flted_67_13766 & (2+na+
+                                 nc)<=flted_67_13766 & 0<=nb & 0<=na & 
                                  0<=nc & 1<=nc]
-                               [c!=null][res!=null][0=flted_67_13919]
-                               [1<=bha_600]
-                               [0<=flted_66_596 & flted_66_596<=1]
-                               [1<=bha_599]
-                               [0<=flted_66_597 & flted_66_597<=1]
-                               [0<=flted_66_598 & flted_66_598<=1]))&
+                               [c!=null][res!=null][0=flted_67_13767]
+                               [1<=bha_593]
+                               [0<=flted_66_589 & flted_66_589<=1]
+                               [1<=bha_592]
+                               [0<=flted_66_590 & flted_66_590<=1]
+                               [0<=flted_66_591 & flted_66_591<=1]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
@@ -1458,9 +1445,9 @@ Procedure rotate_case_3r$node~node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 6328 invocations 
-324 false contexts at: ( (452,3)  (452,10)  (449,4)  (449,11)  (444,22)  (444,29)  (443,26)  (443,71)  (443,56)  (443,42)  (443,34)  (443,22)  (443,22)  (438,26)  (438,33)  (437,30)  (437,100)  (437,85)  (437,65)  (437,46)  (437,38)  (437,26)  (437,26)  (433,28)  (433,35)  (432,32)  (432,62)  (432,48)  (432,40)  (432,28)  (432,28)  (428,28)  (428,35)  (427,32)  (427,62)  (427,48)  (427,40)  (427,28)  (427,28)  (425,39)  (425,28)  (425,28)  (425,24)  (424,37)  (424,26)  (424,22)  (422,33)  (422,22)  (422,18)  (418,20)  (418,27)  (415,22)  (415,29)  (414,26)  (414,56)  (414,42)  (414,34)  (414,22)  (414,22)  (412,22)  (412,22)  (412,18)  (410,27)  (410,18)  (410,14)  (408,25)  (408,14)  (408,10)  (406,6)  (406,22)  (406,19)  (116,2)  (116,9)  (121,3)  (121,10)  (119,3)  (119,10)  (118,17)  (118,6)  (118,6)  (118,2)  (142,2)  (142,9)  (147,3)  (147,10)  (145,3)  (145,10)  (144,17)  (144,6)  (144,6)  (144,2)  (695,14)  (692,16)  (688,24)  (685,28)  (685,35)  (684,32)  (684,71)  (684,57)  (684,49)  (684,28)  (684,28)  (680,28)  (680,35)  (679,44)  (679,28)  (678,43)  (678,28)  (678,28)  (676,37)  (676,28)  (676,24)  (671,24)  (671,31)  (670,28)  (670,85)  (670,65)  (670,46)  (670,38)  (670,24)  (670,24)  (666,24)  (666,31)  (665,40)  (665,24)  (664,39)  (664,24)  (664,24)  (662,33)  (662,24)  (662,20)  (649,12)  (646,16)  (642,24)  (638,30)  (638,37)  (637,34)  (637,95)  (637,75)  (637,56)  (637,43)  (637,30)  (637,30)  (633,30)  (633,37)  (632,46)  (632,30)  (631,45)  (631,30)  (631,30)  (629,39)  (629,30)  (629,26)  (622,26)  (622,33)  (621,30)  (621,73)  (621,59)  (621,46)  (621,26)  (621,26)  (617,26)  (617,33)  (616,42)  (616,26)  (615,41)  (615,26)  (615,26)  (613,35)  (613,26)  (613,22)  (553,14)  (574,30)  (574,75)  (574,60)  (574,46)  (574,38)  (574,26)  (572,32)  (572,102)  (572,87)  (572,67)  (572,48)  (572,40)  (572,28)  (569,36)  (569,66)  (569,52)  (569,44)  (569,32)  (567,36)  (567,66)  (567,52)  (567,44)  (567,32)  (566,45)  (566,34)  (566,34)  (566,30)  (564,41)  (564,30)  (564,26)  (563,39)  (563,28)  (563,24)  (559,30)  (559,60)  (559,46)  (559,38)  (559,26)  (558,28)  (558,28)  (558,24)  (556,33)  (556,24)  (556,20)  (555,33)  (555,22)  (555,18)  (553,18)  (553,34)  (553,31)  (526,14)  (545,34)  (545,79)  (545,70)  (545,56)  (545,43)  (545,30)  (543,32)  (543,102)  (543,93)  (543,73)  (543,54)  (543,41)  (543,28)  (541,34)  (541,70)  (541,56)  (541,43)  (541,30)  (539,34)  (539,70)  (539,56)  (539,43)  (539,30)  (538,43)  (538,32)  (538,32)  (538,28)  (537,41)  (537,30)  (537,26)  (536,39)  (536,28)  (536,24)  (532,30)  (532,66)  (532,52)  (532,39)  (532,26)  (531,28)  (531,28)  (531,24)  (529,33)  (529,24)  (529,20)  (528,33)  (528,22)  (528,18)  (526,18)  (526,35)  (526,32)  (493,14)  (513,32)  (513,77)  (513,68)  (513,54)  (513,41)  (513,28)  (511,34)  (511,104)  (511,95)  (511,75)  (511,56)  (511,43)  (511,30)  (509,36)  (509,72)  (509,58)  (509,45)  (509,32)  (507,36)  (507,72)  (507,58)  (507,45)  (507,32)  (506,45)  (506,34)  (506,34)  (506,30)  (505,43)  (505,32)  (505,28)  (504,41)  (504,30)  (504,26)  (500,32)  (500,68)  (500,54)  (500,41)  (500,28)  (499,30)  (499,30)  (499,26)  (497,35)  (497,26)  (497,22)  (495,33)  (495,22)  (495,18)  (493,18)  (493,35)  (493,32) )
+Stop Omega... 5805 invocations 
+324 false contexts at: ( (452,3)  (452,10)  (449,4)  (449,11)  (444,22)  (444,29)  (443,26)  (443,71)  (443,56)  (443,42)  (443,34)  (443,22)  (443,22)  (438,26)  (438,33)  (437,30)  (437,100)  (437,85)  (437,65)  (437,46)  (437,38)  (437,26)  (437,26)  (433,28)  (433,35)  (432,32)  (432,62)  (432,48)  (432,40)  (432,28)  (432,28)  (428,28)  (428,35)  (427,32)  (427,62)  (427,48)  (427,40)  (427,28)  (427,28)  (425,39)  (425,28)  (425,28)  (425,24)  (424,37)  (424,26)  (424,22)  (422,33)  (422,22)  (422,18)  (418,20)  (418,27)  (415,22)  (415,29)  (414,26)  (414,56)  (414,42)  (414,34)  (414,22)  (414,22)  (412,22)  (412,22)  (412,18)  (410,27)  (410,18)  (410,14)  (408,25)  (408,14)  (408,10)  (406,6)  (406,22)  (406,19)  (116,2)  (116,9)  (121,3)  (121,10)  (119,3)  (119,10)  (118,17)  (118,6)  (118,6)  (118,2)  (142,2)  (142,9)  (147,3)  (147,10)  (145,3)  (145,10)  (144,17)  (144,6)  (144,6)  (144,2)  (696,14)  (693,16)  (689,24)  (686,28)  (686,35)  (685,32)  (685,71)  (685,57)  (685,49)  (685,28)  (685,28)  (681,28)  (681,35)  (680,44)  (680,28)  (679,43)  (679,28)  (679,28)  (677,37)  (677,28)  (677,24)  (672,24)  (672,31)  (671,28)  (671,85)  (671,65)  (671,46)  (671,38)  (671,24)  (671,24)  (667,24)  (667,31)  (666,40)  (666,24)  (665,39)  (665,24)  (665,24)  (663,33)  (663,24)  (663,20)  (650,12)  (647,16)  (643,24)  (639,30)  (639,37)  (638,34)  (638,95)  (638,75)  (638,56)  (638,43)  (638,30)  (638,30)  (634,30)  (634,37)  (633,46)  (633,30)  (632,45)  (632,30)  (632,30)  (630,39)  (630,30)  (630,26)  (623,26)  (623,33)  (622,30)  (622,73)  (622,59)  (622,46)  (622,26)  (622,26)  (618,26)  (618,33)  (617,42)  (617,26)  (616,41)  (616,26)  (616,26)  (614,35)  (614,26)  (614,22)  (554,14)  (575,30)  (575,75)  (575,60)  (575,46)  (575,38)  (575,26)  (573,32)  (573,102)  (573,87)  (573,67)  (573,48)  (573,40)  (573,28)  (570,36)  (570,66)  (570,52)  (570,44)  (570,32)  (568,36)  (568,66)  (568,52)  (568,44)  (568,32)  (567,45)  (567,34)  (567,34)  (567,30)  (565,41)  (565,30)  (565,26)  (564,39)  (564,28)  (564,24)  (560,30)  (560,60)  (560,46)  (560,38)  (560,26)  (559,28)  (559,28)  (559,24)  (557,33)  (557,24)  (557,20)  (556,33)  (556,22)  (556,18)  (554,18)  (554,34)  (554,31)  (527,14)  (546,34)  (546,79)  (546,70)  (546,56)  (546,43)  (546,30)  (544,32)  (544,102)  (544,93)  (544,73)  (544,54)  (544,41)  (544,28)  (542,34)  (542,70)  (542,56)  (542,43)  (542,30)  (540,34)  (540,70)  (540,56)  (540,43)  (540,30)  (539,43)  (539,32)  (539,32)  (539,28)  (538,41)  (538,30)  (538,26)  (537,39)  (537,28)  (537,24)  (533,30)  (533,66)  (533,52)  (533,39)  (533,26)  (532,28)  (532,28)  (532,24)  (530,33)  (530,24)  (530,20)  (529,33)  (529,22)  (529,18)  (527,18)  (527,35)  (527,32)  (494,14)  (514,32)  (514,77)  (514,68)  (514,54)  (514,41)  (514,28)  (512,34)  (512,104)  (512,95)  (512,75)  (512,56)  (512,43)  (512,30)  (510,36)  (510,72)  (510,58)  (510,45)  (510,32)  (508,36)  (508,72)  (508,58)  (508,45)  (508,32)  (507,45)  (507,34)  (507,34)  (507,30)  (506,43)  (506,32)  (506,28)  (505,41)  (505,30)  (505,26)  (501,32)  (501,68)  (501,54)  (501,41)  (501,28)  (500,30)  (500,30)  (500,26)  (498,35)  (498,26)  (498,22)  (496,33)  (496,22)  (496,18)  (494,18)  (494,35)  (494,32) )
 
-Total verification time: 6.06 second(s)
-	Time spent in main process: 4.01 second(s)
-	Time spent in child processes: 2.05 second(s)
+Total verification time: 5.56 second(s)
+	Time spent in main process: 4. second(s)
+	Time spent in child processes: 1.56 second(s)
