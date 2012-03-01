@@ -6,128 +6,68 @@ Starting Reduce...
 Starting Omega...oc
 Translating global variables to procedure parameters...
 
-Checking procedure deleteone$int~int~node~node... 
-!!! REL :  DELONE(m1,m1',m2,m2')
-!!! POST:  (m2'+1)>=m2 & m2>=m2' & m2'+m1'+1=m1+m2
-!!! PRE :  true
-!!! OLD SPECS: ((None,[]),EInfer [DELONE]
-              EBase l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                    r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
-                    {FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 36::ref [m1;m2;l;r]
-                                l'::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                r'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                ([DELONE(m1,m1',m2,m2')][0<=res]))&
-                                {FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                  r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
-                  {FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
-                            EAssume 36::ref [m1;m2;l;r]
-                              l'::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                              r'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                              ([(-1+m2)<=m2' & m1'+m2'=-1+m1+m2 & m2'<=m2]
-                               [0<=res]))&
-                              {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (m2'=m2 & -1+m1=m1' & m2<=m1') --> DELONE(m1,m1',m2,m2'),
- (m1'=m1 & -1+m2=m2' & (-1+m1)<=m2') --> DELONE(m1,m1',m2,m2')]
-!!! NEW ASSUME:[]
-!!! NEW RANK:[]
-Procedure deleteone$int~int~node~node SUCCESS
-
-Checking procedure deleteoneel$node... 
-!!! >>>>>> HIP gather infer pre <<<<<<
-!!! Inferred Heap :[]
-!!! Inferred Pure :[ t!=null, t!=null, t!=null, t!=null]
-!!! OLD SPECS: ((None,[]),EInfer [t,res]
-              EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
-                    {FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 29::ref [t]
-                                t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                ([0<=res]))&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
-                  {FLOW,(20,21)=__norm}
-                    EBase true&(([MayLoop][t!=null]))&{FLOW,(1,23)=__flow}
-                            EAssume 29::ref [t]
-                              
-                              EXISTS(l_1153,
-                              r_1154: l_1153::pq1@M[Orig]@ rem br[{327,326}] * 
-                              r_1154::pq1@M[Orig]@ rem br[{327,326}]&(
-                              ([t!=null][0<=res][null=t']))&
-                              {FLOW,(20,21)=__norm})
-                              or t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
-                                 (([t'=t & t'!=null][0<=res]))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[]
-!!! NEW ASSUME:[]
-!!! NEW RANK:[]
-Procedure deleteoneel$node SUCCESS
-
 Checking procedure deletemax$node... 
 !!! >>>>>> HIP gather infer pre <<<<<<
-!!! Inferred Heap :[ inf_left_195_1257::pq1@inf_ann_1375[Orig][LHSCase]@ rem br[{326}], inf_right_195_1258::pq1@inf_ann_1376[Orig][LHSCase]@ rem br[{326}], inf_left_195_1257::pq1@inf_ann_1293[Orig][LHSCase]@ rem br[{327,326}], inf_right_195_1258::pq1@inf_ann_1294[Orig][LHSCase]@ rem br[{327,326}], t::node<inf_val_195_1254,inf_nleft_195_1255,inf_nright_195_1256,inf_left_195_1257,inf_right_195_1258>@inf_ann_1253[Orig][], inf_left_195_1264::pq1@inf_ann_1378[Orig][LHSCase]@ rem br[{326}], inf_right_195_1265::pq1@inf_ann_1379[Orig][LHSCase]@ rem br[{326}], inf_left_195_1264::pq1@inf_ann_1299[Orig][LHSCase]@ rem br[{327,326}], inf_right_195_1265::pq1@inf_ann_1300[Orig][LHSCase]@ rem br[{327,326}], t::node<inf_val_195_1261,inf_nleft_195_1262,inf_nright_195_1263,inf_left_195_1264,inf_right_195_1265>@inf_ann_1260[Orig][], inf_left_195_1271::pq1@inf_ann_1381[Orig][LHSCase]@ rem br[{326}], inf_right_195_1272::pq1@inf_ann_1382[Orig][LHSCase]@ rem br[{326}], inf_left_195_1271::pq1@inf_ann_1305[Orig][LHSCase]@ rem br[{327,326}], inf_right_195_1272::pq1@inf_ann_1306[Orig][LHSCase]@ rem br[{327,326}], t::node<inf_val_195_1268,inf_nleft_195_1269,inf_nright_195_1270,inf_left_195_1271,inf_right_195_1272>@inf_ann_1267[Orig][]]
-!!! Inferred Pure :[ t!=null, inf_ann_1375<=0, inf_ann_1376<=0, inf_ann_1293<=0, inf_ann_1294<=0, t!=null, inf_ann_1378<=0, inf_ann_1379<=0, inf_ann_1299<=0, inf_ann_1300<=0, t!=null, inf_ann_1381<=0, inf_ann_1382<=0, inf_ann_1305<=0, inf_ann_1306<=0, t!=null]
+!!! Inferred Heap :[ inf_left_204_1059::pq1@inf_ann_1177[Orig][LHSCase]@ rem br[{328}], inf_right_204_1060::pq1@inf_ann_1178[Orig][LHSCase]@ rem br[{328}], inf_left_204_1059::pq1@inf_ann_1095[Orig][LHSCase]@ rem br[{328}], inf_right_204_1060::pq1@inf_ann_1096[Orig][LHSCase]@ rem br[{328}], t::node<inf_val_204_1056,inf_nleft_204_1057,inf_nright_204_1058,inf_left_204_1059,inf_right_204_1060>@inf_ann_1055[Orig][], inf_left_204_1066::pq1@inf_ann_1180[Orig][LHSCase]@ rem br[{328}], inf_right_204_1067::pq1@inf_ann_1181[Orig][LHSCase]@ rem br[{328}], inf_left_204_1066::pq1@inf_ann_1101[Orig][LHSCase]@ rem br[{328}], inf_right_204_1067::pq1@inf_ann_1102[Orig][LHSCase]@ rem br[{328}], t::node<inf_val_204_1063,inf_nleft_204_1064,inf_nright_204_1065,inf_left_204_1066,inf_right_204_1067>@inf_ann_1062[Orig][], inf_left_204_1073::pq1@inf_ann_1183[Orig][LHSCase]@ rem br[{328}], inf_right_204_1074::pq1@inf_ann_1184[Orig][LHSCase]@ rem br[{328}], inf_left_204_1073::pq1@inf_ann_1107[Orig][LHSCase]@ rem br[{328}], inf_right_204_1074::pq1@inf_ann_1108[Orig][LHSCase]@ rem br[{328}], t::node<inf_val_204_1070,inf_nleft_204_1071,inf_nright_204_1072,inf_left_204_1073,inf_right_204_1074>@inf_ann_1069[Orig][]]
+!!! Inferred Pure :[ t!=null, inf_ann_1177<=0, inf_ann_1178<=0, inf_ann_1095<=0, inf_ann_1096<=0, t!=null, inf_ann_1180<=0, inf_ann_1181<=0, inf_ann_1101<=0, inf_ann_1102<=0, t!=null, inf_ann_1183<=0, inf_ann_1184<=0, inf_ann_1107<=0, inf_ann_1108<=0, t!=null]
 !!! OLD SPECS: ((None,[]),EInfer [t]
-              EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
+              EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 59::ref [t]
-                                t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
+                              EAssume 61::ref [t]
+                                t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
                                 ())&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
+!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
-                            EAssume 59::ref [t]
+                            EAssume 61::ref [t]
                               
-                              EXISTS(l_1476,
-                              r_1477: l_1476::pq1@M[Orig]@ rem br[{327,326}] * 
-                              r_1477::pq1@M[Orig]@ rem br[{327,326}]&(
+                              EXISTS(l_1278,
+                              r_1279: l_1278::pq1@M[Orig]@ rem br[{329,328}] * 
+                              r_1279::pq1@M[Orig]@ rem br[{329,328}]&(
                               ([t!=null][0<=res][null=t']))&
                               {FLOW,(20,21)=__norm})
-                              or EXISTS(f_1478,tval_1479,tnleft_1480,
-                                 tnright_1481,l_1482,
-                                 r_1483: t'::node<tval_1479,tnleft_1480,tnright_1481,l_1482,r_1483>@M[Orig][] * 
-                                 t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
+                              or EXISTS(f_1280,tval_1281,tnleft_1282,
+                                 tnright_1283,l_1284,
+                                 r_1285: t'::node<tval_1281,tnleft_1282,tnright_1283,l_1284,r_1285>@M[Orig][] * 
+                                 t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
                                  (
-                                 ([t=t' & (0-1)<=tnleft_1480 & (0-
-                                    tnright_1481)<=tnleft_1480 & 
-                                    tnleft_1480<=0 & 0<=res & t'!=null | 
-                                    t=t' & (0-1)<=tnleft_1480 & 
-                                    tnleft_1480<=0 & tnleft_1480<=((0-
-                                    tnright_1481)-2) & 0<=res & t'!=null]
+                                 ([t=t' & (0-1)<=tnleft_1282 & (0-
+                                    tnright_1283)<=tnleft_1282 & 
+                                    tnleft_1282<=0 & 0<=res & t'!=null | 
+                                    t=t' & (0-1)<=tnleft_1282 & 
+                                    tnleft_1282<=0 & tnleft_1282<=((0-
+                                    tnright_1283)-2) & 0<=res & t'!=null]
                                   ))&
                                  {FLOW,(20,21)=__norm})
-                              or EXISTS(f_1484,tval_1485,tnleft_1486,
-                                 tnright_1487,l_1488,
-                                 r_1489: t'::node<tval_1485,tnleft_1486,tnright_1487,l_1488,r_1489>@M[Orig][] * 
-                                 t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
+                              or EXISTS(f_1286,tval_1287,tnleft_1288,
+                                 tnright_1289,l_1290,
+                                 r_1291: t'::node<tval_1287,tnleft_1288,tnright_1289,l_1290,r_1291>@M[Orig][] * 
+                                 t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
                                  (
-                                 ([t=t' & (0-tnleft_1486)<=tnright_1487 & (0-
-                                    1)<=tnright_1487 & tnright_1487<=0 & 
+                                 ([t=t' & (0-tnleft_1288)<=tnright_1289 & (0-
+                                    1)<=tnright_1289 & tnright_1289<=0 & 
                                     0<=res & t'!=null | t=t' & (0-
-                                    1)<=tnright_1487 & tnright_1487<=((0-
-                                    tnleft_1486)-2) & tnright_1487<=0 & 
+                                    1)<=tnright_1289 & tnright_1289<=((0-
+                                    tnleft_1288)-2) & tnright_1289<=0 & 
                                     0<=res & t'!=null]
                                   ))&
                                  {FLOW,(20,21)=__norm})
-                              or EXISTS(f_1490,tval_1491,tnleft_1492,
-                                 tnright_1493,l_1494,
-                                 r_1495: t'::node<tval_1491,tnleft_1492,tnright_1493,l_1494,r_1495>@M[Orig][] * 
-                                 t'::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
+                              or EXISTS(f_1292,tval_1293,tnleft_1294,
+                                 tnright_1295,l_1296,
+                                 r_1297: t'::node<tval_1293,tnleft_1294,tnright_1295,l_1296,r_1297>@M[Orig][] * 
+                                 t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
                                  (
-                                 ([t=t' & 0<=res & 1<=(tnright_1493+
-                                    tnleft_1492) & t'!=null & 
-                                    0<=tnleft_1492 & 0<=tnright_1493 | 
-                                    t=t' & tnright_1493<=(0-1) & 
-                                    0<=tnleft_1492 & 0<=res & t'!=null | 
-                                    t=t' & tnleft_1492<=(0-1) & t'!=null & 
-                                    0<=tnright_1493 & 0<=res | t=t' & 
-                                    tnright_1493<=((0-tnleft_1492)-3) & 
-                                    tnright_1493<=(0-1) & tnleft_1492<=(0-
-                                    1) & t'!=null & 0<=res]
+                                 ([t=t' & 0<=res & 1<=(tnright_1295+
+                                    tnleft_1294) & t'!=null & 
+                                    0<=tnleft_1294 & 0<=tnright_1295 | 
+                                    t=t' & tnright_1295<=(0-1) & 0<=res & 
+                                    t'!=null & 0<=tnleft_1294 | t=t' & 
+                                    tnleft_1294<=(0-1) & t'!=null & 
+                                    0<=tnright_1295 & 0<=res | t=t' & 
+                                    tnright_1295<=((0-tnleft_1294)-3) & 
+                                    tnright_1295<=(0-1) & tnleft_1294<=(0-
+                                    1) & 0<=res & t'!=null]
                                   ))&
                                  {FLOW,(20,21)=__norm})
                               )
@@ -136,23 +76,146 @@ Checking procedure deletemax$node...
 !!! NEW RANK:[]
 Procedure deletemax$node SUCCESS
 
+Checking procedure deleteone$int~int~node~node... 
+!!! REL :  DELONE(m1,m1',m2,m2')
+!!! POST:  (m2'+1)>=m2 & m2>=m2' & m2'+m1'+1=m1+m2
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [DELONE]
+              EBase l::pq1@M[Orig][LHSCase]@ rem br[{328}] * 
+                    r::pq1@M[Orig][LHSCase]@ rem br[{328}]&(
+                    ([null!=l][null!=r]))&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 38::ref [m1;m2;l;r]
+                                l'::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                                r'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                                ([DELONE(m1,m1',m2,m2')][0<=res]))&
+                                {FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase l::pq1@M[Orig][LHSCase]@ rem br[{328}] * 
+                  r::pq1@M[Orig][LHSCase]@ rem br[{328}]&(
+                  ([l!=null][r!=null]))&{FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
+                            EAssume 38::ref [m1;m2;l;r]
+                              l'::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                              r'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                              ([(-1+m2)<=m2' & m1'+m2'=-1+m1+m2 & m2'<=m2]
+                               [0<=res]))&
+                              {FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (m2=m2' & m1'=m1-1 & m2'<m1) --> DELONE(m1,m1',m2,m2'),
+ (m1=m1' & m2'=m2-1 & m1'<=m2) --> DELONE(m1,m1',m2,m2')]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
+Procedure deleteone$int~int~node~node SUCCESS
+
+Checking procedure deleteoneel$node... 
+Procedure Call:heaps_m.ss:97: 9: 
+Verification Context:(Line:80,Col:9)
+Proving precondition in method deleteone1$int~int~node~node for spec:
+ ((None,[]),EBase tleft_65'::pq1@M[Orig][LHSCase]@ rem br[{328}] * 
+                  tright_66'::pq1@M[Orig][LHSCase]@ rem br[{328}]&(
+                  ([null!=tleft_65'][null!=tright_66']))&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 37::ref [tnleft_63;tnright_64;tleft_65;tright_66]
+                              tleft_65'::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                              tright_66'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
+                              (
+                              ([0<=res]
+                               [tnright_64'<=tnright_64 & tnleft_63'+
+                                 tnright_64'=-1+tnleft_63+tnright_64 & (-1+
+                                 tnright_64)<=tnright_64']
+                               ))&
+                              {FLOW,(20,21)=__norm})
+Current States: [ or[l_1351::pq1@M[Orig]@ rem br[{329,328}] * r_1352::pq1@M[Orig]@ rem br[{329,328}]&(([
+                                                                    !(v_bool_86_792')]
+                                                                    [635::!(v_boolean_86_1417)]
+                                                                    [m2_1350=tnright_64' & 
+                                                                    m2_1350!=0]
+                                                                    [d_1348=tval_62' & 
+                                                                    0<=d_1348]
+                                                                    [t'=t & 
+                                                                    t'!=null]
+                                                                    [m1_1349=tnleft_63' & 
+                                                                    m1_1349=0]
+                                                                    [v_boolean_86_1416]
+                                                                    [r_1352=tright_66']
+                                                                    [l_1351=tleft_65']
+                                                                    ))&{FLOW,(20,21)=__norm}
+    es_infer_vars/rel: [t; res]
+    es_infer_pure: [t!=null]
+    es_var_measures: MayLoop; 
+l_1351::pq1@M[Orig]@ rem br[{329,328}] * r_1352::pq1@M[Orig]@ rem br[{329,328}]&(([
+                                                                    !(v_bool_86_792')]
+                                                                    [v_boolean_86_1421]
+                                                                    [m2_1350=tnright_64' & 
+                                                                    m2_1350=0]
+                                                                    [d_1348=tval_62' & 
+                                                                    0<=d_1348]
+                                                                    [t=t' & 
+                                                                    t'!=null]
+                                                                    [m1_1349=tnleft_63' & 
+                                                                    m1_1349!=0]
+                                                                    [640::!(v_boolean_86_1420)]
+                                                                    [r_1352=tright_66']
+                                                                    [l_1351=tleft_65']
+                                                                    ))&{FLOW,(20,21)=__norm}
+es_infer_vars/rel: [t; res]
+es_infer_pure: [t!=null]
+es_var_measures: MayLoop; 
+l_1351::pq1@M[Orig]@ rem br[{329,328}] * r_1352::pq1@M[Orig]@ rem br[{329,328}]&(([
+                                                                    !(v_bool_86_792')]
+                                                                    [617::!(v_boolean_86_1425)]
+                                                                    [m2_1350=tnright_64' & 
+                                                                    m2_1350!=0]
+                                                                    [d_1348=tval_62' & 
+                                                                    0<=d_1348]
+                                                                    [t'=t & 
+                                                                    t'!=null]
+                                                                    [m1_1349=tnleft_63' & 
+                                                                    m1_1349!=0]
+                                                                    [640::!(v_boolean_86_1424)]
+                                                                    [r_1352=tright_66']
+                                                                    [l_1351=tleft_65']
+                                                                    ))&{FLOW,(20,21)=__norm}
+es_infer_vars/rel: [t; res]
+es_infer_pure: [t!=null]
+es_var_measures: MayLoop]] has failed 
+
+
+!!! OLD SPECS: ((None,[]),EInfer [t,res]
+              EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 30::ref [t]
+                                t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                                ())&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
+                            EAssume 30::ref [t]
+                              t'::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                              ())&{FLOW,(20,21)=__norm})
+!!! NEW RELS:[]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
+Procedure deleteoneel$node result FAIL-1
+
 Checking procedure insert$node~int... 
 !!! OLD SPECS: ((None,[]),EInfer [res,t]
-              EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(([0<=v]))&
+              EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(([0<=v]))&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 1::ref [t]
-                                res::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
+                                res::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
                                 (())&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(([0<=v]))&
+!!! NEW SPECS: ((None,[]),EBase t::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(([0<=v]))&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 1::ref [t]
                               
-                              res::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
+                              res::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
                               ([0<=v][res!=null][null=t'][null=t]))&
                               {FLOW,(20,21)=__norm}
-                              or res::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&
+                              or res::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&
                                  (([0<=v][res=t & res=t' & res!=null]))&
                                  {FLOW,(20,21)=__norm}
                               )
@@ -165,68 +228,51 @@ Checking procedure ripple$int~int~int~int~node~node...
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ l!=null, l!=null, r!=null | l=null, l!=null, r!=null | l=null, l!=null, r!=null | l=null, l!=null, r!=null | l=null, l!=null]
-!!! OLD SPECS: ((None,[]),EInfer [l,r]
-              EBase l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                    r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
+!!! REL :  RP(d,v,m1,m2)
+!!! POST:  m2>=1 | 0>=(1+m2) | 0=m2 & 0=m1 | v>=0 & 0=m2
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [l,r,RP]
+              EBase l::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                    r::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 43::ref [d]
-                                l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                ())&{FLOW,(20,21)=__norm})
-!!! NEW SPECS: ((None,[]),EBase l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                  r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(())&
+                              EAssume 45::ref [d]
+                                l::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                                r::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                                ([RP(d,v,m1,m2)]))&{FLOW,(20,21)=__norm})
+!!! NEW SPECS: ((None,[]),EBase l::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                  r::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(())&
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop][r!=null][l!=null]))&
                           {FLOW,(1,23)=__flow}
-                            EAssume 43::ref [d]
-                              
-                              l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                              r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                              ([v=d'][0=m1][0=m2]))&{FLOW,(20,21)=__norm}
-                              or l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                 r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                 ([m1=0 & d=d' & 1<=m2 | m1=0 & d=d' & 
-                                    m2<=(0-1)]
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              or l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                 r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                 ([m2=0 & v=d' & l!=null & 1<=m1 & 0<=d' | 
-                                    m2=0 & v=d' & m1<=(0-1) & l!=null & 0<=d']
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              or l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                 r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                 ([v=d' & r!=null & 1<=m1 & 1<=m2 & 0<=d' & 
-                                    l!=null | v=d' & m2<=(0-1) & r!=null & 
-                                    1<=m1 & 0<=d' & l!=null | v=d' & m1<=(0-
-                                    1) & r!=null & 1<=m2 & 0<=d' & l!=null | 
-                                    v=d' & m2<=(0-1) & m1<=(0-1) & r!=null & 
-                                    0<=d' & l!=null]
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              or l::pq1@M[Orig][LHSCase]@ rem br[{327,326}] * 
-                                 r::pq1@M[Orig][LHSCase]@ rem br[{327,326}]&(
-                                 ([v<d' & r!=null & l!=null & 1<=m1 & 
-                                    1<=m2 & 0<=d' | m1<=(0-1) & v<d' & 
-                                    r!=null & l!=null & 1<=m2 & 0<=d' | 
-                                    m2<=(0-1) & v<d' & r!=null & l!=null & 
-                                    1<=m1 & 0<=d' | m1<=(0-1) & m2<=(0-1) & 
-                                    v<d' & r!=null & l!=null & 0<=d']
-                                  ))&
-                                 {FLOW,(20,21)=__norm}
-                              )
-!!! NEW RELS:[]
+                            EAssume 45::ref [d]
+                              l::pq1@M[Orig][LHSCase]@ rem br[{329,328}] * 
+                              r::pq1@M[Orig][LHSCase]@ rem br[{329,328}]&(
+                              ([m2>=1 | 0>=(1+m2) | 0=m2 & 0=m1 | v>=0 & 0=m2]
+                               ))&
+                              {FLOW,(20,21)=__norm})
+!!! NEW RELS:[ (m2=0 & m1=0) --> RP(d,v,m1,m2),
+ (m1=0 & 1<=m2 | m1=0 & m2<=(0-1)) --> RP(d,v,m1,m2),
+ (m2=0 & 1<=m1 & 0<=v | m2=0 & m1<=(0-1) & 0<=v) --> RP(d,v,m1,m2),
+ (1<=m2 & 1<=m1 & 0<=v | m2<=(0-1) & m1<=(0-1) & 0<=v | m1<=(0-1) & 1<=m2 & 
+  0<=v | m2<=(0-1) & 1<=m1 & 0<=v) --> RP(d,v,m1,m2),
+ ((v<d' & 1<=m2 & 0<=d' & 1<=m1 | m1<=(0-1) & v<d' & m2<=(0-1) & 0<=d' | 
+  v<d' & m2<=(0-1) & 0<=d' & 1<=m1 | m1<=(0-1) & v<d' & 0<=d' & 1<=m2) & 
+  RP(d',v,m1_1793,m2_1794)) --> RP(d,v,m1,m2),
+ (1<=m2 & 1<=m1 & 1<=v | m2<=(0-1) & m1<=(0-1) & 1<=v | m1<=(0-1) & 1<=m2 & 
+  1<=v | m2<=(0-1) & 1<=m1 & 1<=v) --> RP(d,v,m1,m2),
+ ((v<d' & 1<=m2 & 1<=d' & 1<=m1 | m1<=(0-1) & v<d' & m2<=(0-1) & 1<=d' | 
+  v<d' & m2<=(0-1) & 1<=d' & 1<=m1 | m1<=(0-1) & v<d' & 1<=d' & 1<=m2) & 
+  RP(d',v,m1_1823,m2_1824)) --> RP(d,v,m1,m2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure ripple$int~int~int~int~node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1258 invocations 
+Stop Omega... 1180 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.49 second(s)
-	Time spent in main process: 0.38 second(s)
-	Time spent in child processes: 1.11 second(s)
+Total verification time: 1.61 second(s)
+	Time spent in main process: 0.36 second(s)
+	Time spent in child processes: 1.25 second(s)

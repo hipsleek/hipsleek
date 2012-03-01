@@ -37,10 +37,8 @@ Checking procedure count$node2...
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (res=0) --> COUNT(res),
- (COUNT(cleft_65') & COUNT(cright_66') & 1+cleft_65'+
-  cright_66'=res) --> COUNT(res),
- (COUNT(cright_66') & COUNT(cleft_65') & 1+cleft_65'+
-  cright_66'=res) --> COUNT(res)]
+ (res=cright_66'+cleft_65'+1 & COUNT(cright_66') & 
+  COUNT(cleft_65')) --> COUNT(res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure count$node2 SUCCESS
@@ -92,32 +90,18 @@ Checking procedure height$node2...
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (res=0 & h=0) --> HGT(res,h),
- (exists(nmin_62:exists(nmin:HGT(v_int_97_1201,h_1121) & 
-  HGT(v_int_97_1184,h_1143) & (1+v_int_97_1184)<=res & -2+h=h_1143 & 1+
-  v_int_97_1201=res & -1+h_1121=h_1143 & 
-  exists(nmin2_1102:exists(nmin1_1100:1<=nmin1_1100 & nmin2_1102<=h_1143 & 
-  (-1+nmin=nmin2_1102 & -1+nmin_62=nmin2_1102 & 0<=nmin2_1102 & 
-  nmin2_1102<=nmin1_1100 & (-1+nmin1_1100)<=h_1143 | nmin_62=nmin & 1+
-  nmin1_1100=nmin & nmin<=nmin2_1102)))))) --> HGT(res,h),
- (exists(nmin_62:exists(nmin:HGT(v_int_97_1186,h_1121) & 
-  HGT(v_int_97_1250,h_1143) & (2+v_int_97_1186)<=res & -2+h=h_1143 & 1+
-  v_int_97_1250=res & -1+h_1121=h_1143 & 
-  exists(nmin2_1102:exists(nmin1_1100:1<=nmin1_1100 & nmin2_1102<=h_1143 & 
-  (-1+nmin=nmin2_1102 & -1+nmin_62=nmin2_1102 & 0<=nmin2_1102 & 
-  nmin2_1102<=nmin1_1100 & (-1+nmin1_1100)<=h_1143 | nmin_62=nmin & 1+
-  nmin1_1100=nmin & nmin<=nmin2_1102)))))) --> HGT(res,h),
- (exists(nmin_62:exists(nmin:HGT(v_int_97_1188,h_1143) & 
-  HGT(v_int_97_1299,h_1121) & (1+v_int_97_1188)<=res & 1+v_int_97_1299=res & 
-  -1+h=h_1143 & h_1121=h_1143 & (exists(nmin1_1115:nmin_62=nmin & 1<=nmin & 
-  (-1+nmin)<=nmin1_1115 & nmin1_1115<=h_1143) | 
-  exists(nmin2_1117:nmin_62=nmin & 1<=nmin & nmin<=nmin2_1117 & 
-  nmin2_1117<=h_1143))))) --> HGT(res,h),
- (exists(nmin_62:exists(nmin:HGT(v_int_97_1348,h_1143) & 
-  HGT(v_int_97_1190,h_1121) & (2+v_int_97_1190)<=res & 1+v_int_97_1348=res & 
-  -1+h=h_1143 & h_1121=h_1143 & (exists(nmin1_1115:nmin_62=nmin & 1<=nmin & 
-  (-1+nmin)<=nmin1_1115 & nmin1_1115<=h_1143) | 
-  exists(nmin2_1117:nmin_62=nmin & 1<=nmin & nmin<=nmin2_1117 & 
-  nmin2_1117<=h_1143))))) --> HGT(res,h),
+ (res=v_int_97_1201+1 & h_1121=h-1 & h_1143=h-2 & 
+  v_int_97_1184<=v_int_97_1201 & 2<=h & HGT(v_int_97_1184,h_1143) & 
+  HGT(v_int_97_1201,h_1121)) --> HGT(res,h),
+ (res=v_int_97_1250+1 & h_1121=h-1 & h_1143=h-2 & 
+  v_int_97_1186<v_int_97_1250 & 2<=h & HGT(v_int_97_1250,h_1143) & 
+  HGT(v_int_97_1186,h_1121)) --> HGT(res,h),
+ (res=v_int_97_1299+1 & h_1121=h-1 & h_1143=h-1 & 
+  v_int_97_1188<=v_int_97_1299 & 1<=h & HGT(v_int_97_1299,h_1121) & 
+  HGT(v_int_97_1188,h_1143)) --> HGT(res,h),
+ (res=v_int_97_1348+1 & h_1121=h-1 & h_1143=h-1 & 
+  v_int_97_1190<v_int_97_1348 & 1<=h & HGT(v_int_97_1190,h_1121) & 
+  HGT(v_int_97_1348,h_1143)) --> HGT(res,h),
  (h=0 & res=0) --> HGT(res,h)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -158,26 +142,17 @@ Checking procedure is_perfect$node2...
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (res=1 & h=0 & nmin=0) --> PERFECT(nmin,h,res),
  (nmin=0 & h=0 & res=1) --> PERFECT(nmin,h,res),
- (exists(nmin_52:res=0 & exists(nmin1_2434:1<=nmin1_2434 & 
-  exists(nmin2_2317:(nmin_52=nmin & 1+nmin2_2317=nmin & 1<=nmin & (-1+
-  nmin)<=nmin1_2434 & (1+nmin1_2434)<=h | nmin_52=nmin & 1+nmin1_2434=nmin & 
-  nmin<=nmin2_2317) & (2+nmin2_2317)<=h)))) --> PERFECT(nmin,h,res),
- (exists(nmin_52:PERFECT(nmin_2386,h_2385,1) & 
-  PERFECT(nmin_2408,h_2407,v_int_198_601') & v_int_198_601'=res & 
-  (nmin_52=nmin & 1+nmin_2408=nmin & 1<=nmin & (-1+nmin)<=nmin_2386 & (1+
-  nmin_2386)<=h | nmin_52=nmin & 1+nmin_2386=nmin & 1<=nmin & 
-  nmin<=nmin_2408 & (1+nmin_2408)<=h) & 1+h_2385=h & 1+
-  h_2407=h)) --> PERFECT(nmin,h,res),
- (exists(nmin_52:exists(h_2358:exists(nmin1_2521:exists(flted_26_2326:exists(h_51:exists(flted_26_2327:PERFECT(nmin_2386,h_2385,v_int_197_2518) & 
-  res=0 & exists(nmin1_2330:1+h_2358=h & 1+h_2385=h & 1+flted_26_2326=h & 
-  h_51=h & 1+flted_26_2327=h & exists(nmin2_2332:nmin1_2521=nmin_2386 & 
-  nmin1_2330=nmin_2386 & (nmin_52=nmin & 1+nmin2_2332=nmin & 1<=nmin & (-1+
-  nmin)<=nmin_2386 & (1+nmin_2386)<=h & 2<=v_int_197_2518 | nmin_52=nmin & 1+
-  nmin_2386=nmin & 1<=nmin & nmin<=nmin2_2332 & (1+nmin2_2332)<=h & 
-  v_int_197_2518<=0 | nmin_52=nmin & 1+nmin2_2332=nmin & 1<=nmin & (-1+
-  nmin)<=nmin_2386 & (1+nmin_2386)<=h & v_int_197_2518<=0 | nmin_52=nmin & 1+
-  nmin_2386=nmin & 1<=nmin & nmin<=nmin2_2332 & (1+nmin2_2332)<=h & 
-  2<=v_int_197_2518)))))))))) --> PERFECT(nmin,h,res)]
+ (res=0 & 1<=nmin & nmin<h) --> PERFECT(nmin,h,res),
+ ((v_int_198_601'=res & h_2407=h_2385 & nmin_2408=nmin-1 & h=h_2385+1 & 
+  (nmin-1)<=nmin_2386 & nmin_2386<=h_2385 & 1<=nmin | v_int_198_601'=res & 
+  h_2407=h_2385 & nmin=nmin_2386+1 & h=h_2385+1 & 0<=nmin_2386 & 
+  nmin_2386<nmin_2408 & nmin_2408<=h_2385) & 
+  PERFECT(nmin_2408,h_2407,v_int_198_601') & 
+  PERFECT(nmin_2386,h_2385,1)) --> PERFECT(nmin,h,res),
+ ((res=0 & h=h_2385+1 & (nmin-1)<=nmin_2386 & nmin_2386<=h_2385 & 1<=nmin & 
+  2<=v_int_197_2518 | res=0 & h=h_2385+1 & (nmin-1)<=nmin_2386 & 
+  nmin_2386<=h_2385 & v_int_197_2518<=0 & 1<=nmin) & 
+  PERFECT(nmin_2386,h_2385,v_int_197_2518)) --> PERFECT(nmin,h,res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure is_perfect$node2 SUCCESS
@@ -229,30 +204,26 @@ Checking procedure min_height$node2...
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (res=0 & nmin=0) --> MHGT(res,nmin),
- (exists(nmin_58:MHGT(v_int_112_2707,nmin_2645) & 
-  MHGT(v_int_112_2724,nmin_2667) & (-1+res)<=v_int_112_2707 & 1+
-  v_int_112_2724=res & 1<=nmin_2645 & exists(flted_25_2620:(nmin_58=nmin & 1+
-  nmin_2667=nmin & 1<=nmin & (-1+nmin)<=nmin_2645 & 
-  nmin_2645<=flted_25_2620 | nmin_58=nmin & 1+nmin_2645=nmin & 
-  nmin<=nmin_2667) & (1+nmin_2667)<=flted_25_2620))) --> MHGT(res,nmin),
- (exists(nmin_58:MHGT(v_int_112_2773,nmin_2645) & 
-  MHGT(v_int_112_2709,nmin_2667) & res<=v_int_112_2709 & 1+
-  v_int_112_2773=res & 1<=nmin_2645 & exists(flted_25_2620:(nmin_58=nmin & 1+
-  nmin_2667=nmin & 1<=nmin & (-1+nmin)<=nmin_2645 & 
-  nmin_2645<=flted_25_2620 | nmin_58=nmin & 1+nmin_2645=nmin & 
-  nmin<=nmin_2667) & (1+nmin_2667)<=flted_25_2620))) --> MHGT(res,nmin),
- (exists(nmin_58:MHGT(v_int_112_2822,nmin_2667) & 
-  MHGT(v_int_112_2711,nmin_2645) & (-1+res)<=v_int_112_2711 & 1+
-  v_int_112_2822=res & (exists(h:nmin_58=nmin & 1+nmin_2667=nmin & 1<=nmin & 
-  (-1+nmin)<=nmin_2645 & (1+nmin_2645)<=h) | exists(h:nmin_58=nmin & 1+
-  nmin_2645=nmin & 1<=nmin & nmin<=nmin_2667 & (1+
-  nmin_2667)<=h)))) --> MHGT(res,nmin),
- (exists(nmin_58:MHGT(v_int_112_2713,nmin_2667) & 
-  MHGT(v_int_112_2871,nmin_2645) & res<=v_int_112_2713 & 1+
-  v_int_112_2871=res & (exists(h:nmin_58=nmin & 1+nmin_2667=nmin & 1<=nmin & 
-  (-1+nmin)<=nmin_2645 & (1+nmin_2645)<=h) | exists(h:nmin_58=nmin & 1+
-  nmin_2645=nmin & 1<=nmin & nmin<=nmin_2667 & (1+
-  nmin_2667)<=h)))) --> MHGT(res,nmin),
+ ((nmin_2667=nmin-1 & v_int_112_2724=res-1 & 1<=nmin & nmin<=(nmin_2645+1) & 
+  res<=(v_int_112_2707+1) & 1<=nmin_2645 | nmin=nmin_2645+1 & 
+  v_int_112_2724=res-1 & 1<=nmin_2645 & nmin_2645<nmin_2667 & 
+  res<=(v_int_112_2707+1)) & MHGT(v_int_112_2724,nmin_2667) & 
+  MHGT(v_int_112_2707,nmin_2645)) --> MHGT(res,nmin),
+ ((nmin_2667=nmin-1 & v_int_112_2773=res-1 & 1<=nmin & nmin<=(nmin_2645+1) & 
+  res<=v_int_112_2709 & 1<=nmin_2645 | nmin=nmin_2645+1 & v_int_112_2773=res-
+  1 & 1<=nmin_2645 & nmin_2645<nmin_2667 & res<=v_int_112_2709) & 
+  MHGT(v_int_112_2709,nmin_2667) & 
+  MHGT(v_int_112_2773,nmin_2645)) --> MHGT(res,nmin),
+ ((nmin_2667=nmin-1 & v_int_112_2822=res-1 & 1<=nmin & nmin<=(nmin_2645+1) & 
+  res<=(v_int_112_2711+1) | nmin=nmin_2645+1 & v_int_112_2822=res-1 & 
+  0<=nmin_2645 & nmin_2645<nmin_2667 & res<=(v_int_112_2711+1)) & 
+  MHGT(v_int_112_2711,nmin_2645) & 
+  MHGT(v_int_112_2822,nmin_2667)) --> MHGT(res,nmin),
+ ((nmin_2667=nmin-1 & v_int_112_2871=res-1 & 1<=nmin & nmin<=(nmin_2645+1) & 
+  res<=v_int_112_2713 | nmin=nmin_2645+1 & v_int_112_2871=res-1 & 
+  0<=nmin_2645 & nmin_2645<nmin_2667 & res<=v_int_112_2713) & 
+  MHGT(v_int_112_2871,nmin_2645) & 
+  MHGT(v_int_112_2713,nmin_2667)) --> MHGT(res,nmin),
  (nmin=0 & res=0) --> MHGT(res,nmin)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -260,9 +231,9 @@ Procedure min_height$node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 2490 invocations 
+Stop Omega... 2496 invocations 
 30 false contexts at: ( (170,12)  (169,12)  (168,12)  (167,18)  (167,12)  (167,12)  (156,10)  (155,10)  (154,10)  (153,16)  (153,10)  (153,10)  (149,8)  (148,8)  (147,8)  (146,14)  (146,8)  (146,8)  (164,12)  (163,12)  (162,12)  (161,18)  (161,12)  (161,12)  (142,2)  (141,25)  (141,19)  (141,6)  (141,2)  (141,2) )
 
-Total verification time: 2.37 second(s)
-	Time spent in main process: 0.93 second(s)
+Total verification time: 2.38 second(s)
+	Time spent in main process: 0.94 second(s)
 	Time spent in child processes: 1.44 second(s)

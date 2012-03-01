@@ -67,8 +67,8 @@ Checking procedure create_list$int~int...
                                                        {FLOW,(20,21)=__norm})
                            
                            })
-!!! NEW RELS:[ (v=sm & sm<=lg) --> CL(sm,lg,v),
- (sm=v & lg_1414=lg & v<=sm_1413 & sm_1413<=lg & 
+!!! NEW RELS:[ (sm=v & v<=lg) --> CL(sm,lg,v),
+ (v=sm & lg=lg_1414 & sm<=sm_1413 & sm_1413<=lg_1414 & 
   CL(sm_1413,lg_1414,v)) --> CL(sm,lg,v)]
 !!! NEW ASSUME:[ RELASS [CL]: ( CL(sm_1413,lg_1414,v)) -->  lg_1414<sm_1413 | v<=sm_1413 & sm_1413<=lg_1414]
 !!! NEW RANK:[]
@@ -102,10 +102,9 @@ Checking procedure delete$node~int...
                               ([xl=lres_1625 & xs=sres_1624 & xs<=xl]
                                [0<=nres_1623 & 0<=n & 1+nres_1623=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(qmin_1509:xs=sres & xl=lres & exists(qs_1507:qmin_1509<=qs_1507 & 
-  sres<=qmin_1509 & qs_1507<=lres))) --> DEL(sres,xs,lres,xl),
- (xs_1551<=xl_1552 & xs=sres & xl=xl_1552 & lres_1595=lres & sres<=xs_1551 & 
-  sres<=sres_1594 & sres_1594<=lres & 
+!!! NEW RELS:[ (sres=xs & lres=xl & xs<=xl) --> DEL(sres,xs,lres,xl),
+ (xl_1552=xl & sres=xs & lres=lres_1595 & xs<=sres_1594 & 
+  sres_1594<=lres_1595 & xs<=xs_1551 & xs_1551<=xl & 
   DEL(sres_1594,xs_1551,lres_1595,xl_1552)) --> DEL(sres,xs,lres,xl)]
 !!! NEW ASSUME:[ RELASS [DEL]: ( DEL(sres_1594,xs_1551,lres_1595,xl_1552)) -->  xl_1552<xs_1551 | xs_1551<=xl_1552 & lres_1595<sres_1594 | 
 xs_1551<=sres_1594 & sres_1594<=lres_1595 & xs_1551<=xl_1552]
@@ -142,14 +141,12 @@ Checking procedure delete2$node~int...
                                  nres_1777<=n]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (xs=sres & xl=lres & exists(v:exists(qs_1652:(1+v)<=sres & sres<=qs_1652 & 
-  qs_1652<=lres))) --> DEL2(sres,xs,lres,xl),
- (xl=lres & sres<=lres & xs<=sres) --> DEL2(sres,xs,lres,xl),
- (xs_1684<=xl_1685 & xs=sres & xl=xl_1685 & lres_1711=lres & 
-  sres<=sres_1710 & sres<=xs_1684 & sres_1710<=lres & 
-  DEL2(sres_1710,xs_1684,lres_1711,xl_1685) & exists(v:(1+
-  sres)<=v)) --> DEL2(sres,xs,lres,xl),
- (sres=xs & lres=xl & xs<=xl) --> DEL2(sres,xs,lres,xl)]
+!!! NEW RELS:[ (sres=xs & lres=xl & xs<=xl) --> DEL2(sres,xs,lres,xl),
+ (lres=xl & xs<=sres & sres<=xl) --> DEL2(sres,xs,lres,xl),
+ (xl_1685=xl & sres=xs & lres=lres_1711 & xs<=xs_1684 & xs_1684<=xl & 
+  xs<=sres_1710 & sres_1710<=lres_1711 & 
+  DEL2(sres_1710,xs_1684,lres_1711,xl_1685)) --> DEL2(sres,xs,lres,xl),
+ (xs=sres & xl=lres & sres<=lres) --> DEL2(sres,xs,lres,xl)]
 !!! NEW ASSUME:[ RELASS [DEL2]: ( DEL2(sres_1710,xs_1684,lres_1711,xl_1685)) -->  xl_1685<xs_1684 | xs_1684<=xl_1685 & lres_1711<sres_1710 | 
 xs_1684<=sres_1710 & sres_1710<=lres_1711 & xs_1684<=xl_1685]
 !!! NEW RANK:[]
@@ -198,13 +195,8 @@ Checking procedure find_ge$node~int...
                                   [0<=k_1932][res!=null][0<=n][sm<=sl]))&
                                  {FLOW,(20,21)=__norm})
                               )
-!!! NEW RELS:[ (exists(qs_1862:exists(sl:m<=qs_1862 & qs_1862<=sl2 & sl2<=sl) & 
-  exists(sm:exists(v:sm<=m & v<=m)))) --> FGE(m,sl2),
- (exists(ql_1863:exists(sl:sl2_1925=sl2 & m_1924=m & FGE(m_1924,sl2_1925) & 
-  exists(qs_1862:exists(sm:ql_1863<=sl & 
-  exists(qmin_1864:exists(sm2_1923:exists(v:qs_1862<=ql_1863 & 
-  sm<=qmin_1864 & qmin_1864<=qs_1862 & (1+qmin_1864)<=v & v<=m & 
-  sm2_1923<=sl2)))))))) --> FGE(m,sl2)]
+!!! NEW RELS:[ (m<=sl2) --> FGE(m,sl2),
+ (m=m_1924 & sl2=sl2_1925 & FGE(m_1924,sl2_1925)) --> FGE(m,sl2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -249,8 +241,7 @@ Checking procedure get_next$node...
                                [0<=flted_159_1977 & 0<=n & 1+flted_159_1977=n]
                                [null=flted_159_1978]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(qmin_1964:sres<=lres & lres<=xl & xs<=qmin_1964 & 
-  qmin_1964<=sres)) --> GN(sres,xs,lres,xl)]
+!!! NEW RELS:[ (xs<=sres & sres<=lres & lres<=xl) --> GN(sres,xs,lres,xl)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next$node SUCCESS
@@ -288,10 +279,7 @@ Checking procedure get_next_next$node...
                                [0<=flted_215_2047 & 0<=n & 2+flted_215_2047=n]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(qs_2004:sm2<=lg2 & 
-  exists(qmin_2006:exists(qmin_2039:exists(ql_2005:qs_2004<=qmin_2039 & 
-  qmin_2006<=qs_2004 & sm1<=qmin_2006 & qmin_2039<=sm2 & lg2<=ql_2005 & 
-  ql_2005<=lg1))))) --> GNN(sm1,lg1,sm2,lg2)]
+!!! NEW RELS:[ (sm1<=sm2 & sm2<=lg2 & lg2<=lg1) --> GNN(sm1,lg1,sm2,lg2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next_next$node SUCCESS
@@ -325,8 +313,7 @@ Checking procedure get_tail$node...
                                [0<=flted_195_2082 & 0<=n & 1+flted_195_2082=n]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (sres<=lres & lres<=xl & exists(qmin_2074:xs<=qmin_2074 & 
-  qmin_2074<=sres)) --> GT(sres,xs,lres,xl)]
+!!! NEW RELS:[ (xs<=sres & sres<=lres & lres<=xl) --> GT(sres,xs,lres,xl)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_tail$node SUCCESS
@@ -369,11 +356,10 @@ Checking procedure list_copy$node...
                                  sm1=sm2_2570 & sm1<=lg1]
                                [n=n_2566 & n=n_2569 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (sm2=sm1 & lg1=lg2 & sm1<=lg2) --> CPY(sm1,lg1,sm2,lg2),
- (lg2_2494=lg2 & sm2_2493<=lg2 & CPY(sm1_2470,lg1_2471,sm2_2493,lg2_2494) & 
-  sm1_2470<=lg1_2471 & lg1=lg1_2471 & sm2<=sm1_2470 & sm2<=sm2_2493 & 
-  sm1=sm2) --> CPY(sm1,lg1,sm2,lg2),
- (sm2=sm1 & lg1=lg2 & sm1<=lg2) --> CPY(sm1,lg1,sm2,lg2)]
+!!! NEW RELS:[ (sm1=sm2 & lg1=lg1_2471 & lg2=lg2_2494 & sm2<=sm1_2470 & 
+  sm1_2470<=lg1_2471 & sm2<=sm2_2493 & sm2_2493<=lg2_2494 & 
+  CPY(sm1_2470,lg1_2471,sm2_2493,lg2_2494)) --> CPY(sm1,lg1,sm2,lg2),
+ (sm1=sm2 & lg2=lg1 & sm2<=lg1) --> CPY(sm1,lg1,sm2,lg2)]
 !!! NEW ASSUME:[ RELASS [CPY]: ( CPY(sm1_2470,lg1_2471,sm2_2493,lg2_2494)) -->  lg1_2471<sm1_2470 | sm1_2470<=lg1_2471 & lg2_2494<sm2_2493 | 
 sm1_2470<=sm2_2493 & sm2_2493<=lg2_2494 & sm1_2470<=lg1_2471]
 !!! NEW RANK:[]
@@ -407,14 +393,13 @@ Checking procedure list_filter2$node~int...
                                  xs<=xl & xs<=sres_2718]
                                [0<=nres_2717 & 0<=n & nres_2717<=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (xs_2619<=xl_2620 & xl=xl_2620 & sres_2680=sres & lres_2681=lres & 
-  sres<=lres & FIL(xs_2619,xl_2620,sres_2680,lres_2681) & 
-  xs<=xs_2619) --> FIL(xs,xl,sres,lres),
- (exists(v:((1+v)<=sres | (1+sres)<=v) & 
-  FIL(xs_2641,xl_2642,sres_2667,lres_2668) & sres_2667<=lres & 
-  sres<=xs_2641 & sres<=sres_2667 & xl=xl_2642 & xs=sres & lres_2668=lres & 
-  xs_2641<=xl_2642)) --> FIL(xs,xl,sres,lres),
- (sres=xs & lres=xl & xs<=xl) --> FIL(xs,xl,sres,lres)]
+!!! NEW RELS:[ (xl_2620=xl & sres=sres_2680 & lres=lres_2681 & xs<=xs_2619 & xs_2619<=xl & 
+  sres_2680<=lres_2681 & 
+  FIL(xs_2619,xl_2620,sres_2680,lres_2681)) --> FIL(xs,xl,sres,lres),
+ (lres=lres_2668 & sres=xs & xl_2642=xl & xs<=sres_2667 & 
+  sres_2667<=lres_2668 & xs<=xs_2641 & xs_2641<=xl & 
+  FIL(xs_2641,xl_2642,sres_2667,lres_2668)) --> FIL(xs,xl,sres,lres),
+ (xs=sres & xl=lres & sres<=lres) --> FIL(xs,xl,sres,lres)]
 !!! NEW ASSUME:[ RELASS [FIL]: ( FIL(xs_2641,xl_2642,sres_2667,lres_2668)) -->  xs_2641<=sres_2667 | xl_2642<xs_2641 & sres_2667<xs_2641 | 
 lres_2668<sres_2667 & sres_2667<xs_2641 & xs_2641<=xl_2642]
 !!! NEW RANK:[]
@@ -447,10 +432,10 @@ Checking procedure list_traverse$node...
                               ([lg1=lg2_2805 & sm1=sm2_2804 & sm1<=lg1]
                                [n=n_2803 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (sm1_2754<=lg1_2755 & sm1=sm2 & lg1=lg1_2755 & lg2_2768=lg2 & 
-  sm2<=sm2_2767 & sm2_2767<=lg2 & sm2<=sm1_2754 & 
+!!! NEW RELS:[ (lg1_2755=lg1 & lg2=lg2_2768 & sm2=sm1 & sm1<=sm1_2754 & sm1_2754<=lg1 & 
+  sm1<=sm2_2767 & sm2_2767<=lg2_2768 & 
   TRAV(sm1_2754,lg1_2755,sm2_2767,lg2_2768)) --> TRAV(sm1,lg1,sm2,lg2),
- (sm2=sm1 & lg2=lg1 & sm1<=lg1) --> TRAV(sm1,lg1,sm2,lg2)]
+ (sm1=sm2 & lg1=lg2 & sm2<=lg2) --> TRAV(sm1,lg1,sm2,lg2)]
 !!! NEW ASSUME:[ RELASS [TRAV]: ( TRAV(sm1_2754,lg1_2755,sm2_2767,lg2_2768)) -->  lg1_2755<sm1_2754 | sm1_2754<=lg1_2755 & lg2_2768<sm2_2767 | 
 sm1_2754<=sm2_2767 & sm2_2767<=lg2_2768 & sm1_2754<=lg1_2755]
 !!! NEW RANK:[]
@@ -494,24 +479,20 @@ lg1>=sm1 & lg3>=lg1 & lg2>=sm3 | lg1>=sm1 & lg3>=lg1 & lg2>=sm2 & sm1=sm3
                                  flted_135_2936=n1+n2 & 0<=n2]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (sm1=sm3 & lg1=lg3 & sm2<=lg2 & sm3<=lg3) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
- (sm2=sm3 & lg2=lg3 & sm3<=lg3 & sm1<=lg1) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
- (exists(sm:exists(lg:exists(qmin_2845:(sm=sm1 & lg=lg1 & sm1_2886=sm1 & 
-  lg1_2887=qmin_2845 & sm1<=lg1 & lg1<=qmin_2845 & qmin_2845<=sm2_2889 & 
-  sm2<=qmin_2845 | sm=sm1 & lg=lg1 & qmin_2845=sm1_2886 & lg1_2887=lg1 & 
-  sm2<=sm1_2886 & (1+sm1_2886)<=sm1 & sm1<=lg1 & sm1_2886<=sm2_2889 | 
-  sm=sm1 & lg=lg1 & sm1_2886=sm1 & lg1_2887=lg1 & sm2<=qmin_2845 & 
-  sm1<=qmin_2845 & qmin_2845<=sm2_2889 & (1+qmin_2845)<=lg1) & 
-  MRG(sm1_2886,sm2_2889,sm3_2924,lg1_2887,lg2_2890,lg3_2925) & sm3<=lg3 & 
-  lg2_2890<=lg2 & lg3_2925=lg3 & sm3_2924=sm3 & 
-  sm2_2889<=lg2_2890)))) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
- (exists(lg:exists(sm:exists(qmin_2845:exists(qs_2843:exists(ql_2844:(lg=lg1 & 
-  sm=sm1 & sm3=sm1 & qmin_2845=lg3 & sm1<=lg1 & lg1<=lg3 & lg3<=qs_2843 & 
-  sm2<=lg3 | lg=lg1 & lg3=lg1 & sm=sm1 & qmin_2845=sm3 & sm2<=sm3 & (1+
-  sm3)<=sm1 & sm1<=lg1 & sm3<=qs_2843 | lg=lg1 & lg3=lg1 & sm=sm1 & 
-  sm3=sm1 & sm2<=qmin_2845 & sm1<=qmin_2845 & (1+qmin_2845)<=lg1 & 
-  qmin_2845<=qs_2843) & ql_2844<=lg2 & 
-  qs_2843<=ql_2844)))))) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3)]
+!!! NEW RELS:[ (sm3=sm1 & lg3=lg1 & sm1<=lg1 & sm2<=lg2) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
+ (sm3=sm2 & lg3=lg2 & sm2<=lg2 & sm1<=lg1) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
+ ((sm1=sm1_2886 & sm3_2924=sm3 & lg3_2925=lg3 & sm1_2886<=lg1 & 
+  lg1<=lg1_2887 & lg1_2887<=sm2_2889 & sm2_2889<=lg2_2890 & lg2_2890<=lg2 & 
+  sm3<=lg3 & sm2<=lg1_2887 | lg1=lg1_2887 & sm3_2924=sm3 & lg3_2925=lg3 & 
+  sm2<=sm1_2886 & sm1_2886<=sm2_2889 & sm2_2889<=lg2_2890 & lg2_2890<=lg2 & 
+  sm1_2886<sm1 & sm1<=lg1_2887 & sm3<=lg3 | sm1=sm1_2886 & lg1=lg1_2887 & 
+  sm3_2924=sm3 & lg3_2925=lg3 & sm1_2886<=sm2_2889 & sm2<=sm2_2889 & 
+  sm2_2889<=lg2_2890 & lg2_2890<=lg2 & sm3<=lg3 & sm1_2886<lg1_2887 & 
+  sm2<lg1_2887) & 
+  MRG(sm1_2886,sm2_2889,sm3_2924,lg1_2887,lg2_2890,lg3_2925)) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3),
+ (sm1=sm3 & lg1<=lg3 & sm2<=lg3 & lg3<=lg2 & sm3<=lg1 | lg1=lg3 & sm2<=sm3 & 
+  sm3<sm1 & sm1<=lg3 & sm3<=lg2 | lg1=lg3 & sm1=sm3 & sm3<=(lg3-1) & 
+  sm3<=lg2 & sm2<=(lg3-1) & sm2<=lg2) --> MRG(sm1,sm2,sm3,lg1,lg2,lg3)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure merge1$node~node SUCCESS
@@ -546,8 +527,7 @@ Checking procedure pop_front$node...
                                [0<=flted_122_2977 & 0<=m & 1+flted_122_2977=m]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (sm2<=lg2 & lg2<=lg1 & exists(qmin_2964:sm1<=qmin_2964 & 
-  qmin_2964<=sm2)) --> PF(sm1,sm2,lg1,lg2)]
+!!! NEW RELS:[ (sm1<=sm2 & sm2<=lg2 & lg2<=lg1) --> PF(sm1,sm2,lg1,lg2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure pop_front$node SUCCESS
@@ -586,7 +566,7 @@ Procedure ret_null$node SUCCESS
 
 Checking procedure set_next$node~node... 
 !!! REL :  SN(v,sm2,sm3,lg3m_3050,lg2)
-!!! POST:  v>=sm2 & lg2>=sm2 & sm2=sm3 | sm2>=(1+sm3) & lg2>=sm2 & sm3=v
+!!! POST:  sm2>=(sm3+1) & lg2>=sm2 & sm3=v | lg2>=sm3 & v>=sm3 & sm3=sm2
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [SN]
               EBase exists (Expl)(Impl)[v; t; Anon_13; sm1; lg1; j; sm2; 
@@ -618,9 +598,8 @@ Checking procedure set_next$node~node...
                                [0<=k_3056 & 0<=j & -1+k_3056=j][sm2<=lg2]
                                [sm1<=lg1][0<=Anon_13]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(lg:lg=lg2 & lg2<=v & sm3=sm2 & sm2<=lg2 | lg=lg2 & sm3=v & 
-  sm2<=lg2 & (1+v)<=sm2 | lg=lg2 & (1+v)<=lg2 & sm3=sm2 & 
-  sm2<=v)) --> SN(v,sm2,sm3,lg3m_3050,lg2)]
+!!! NEW RELS:[ (v=sm3 & sm3<sm2 & sm2<=lg2 | sm2=sm3 & sm3<=lg2 & 
+  sm3<=v) --> SN(v,sm2,sm3,lg3m_3050,lg2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure set_next$node~node SUCCESS
@@ -650,8 +629,7 @@ Checking procedure set_null$node...
                               (
                               ([x'!=null][null=flted_205_3088][0<=n][xs<=xl]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(xl:exists(ql_3083:ql_3083<=xl & xs<=v & 
-  exists(qs_3082:qs_3082<=ql_3083 & v<=qs_3082)))) --> SNULL(xs,v,sl_3087)]
+!!! NEW RELS:[ (xs<=v) --> SNULL(xs,v,sl_3087)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure set_null$node SUCCESS
@@ -681,8 +659,7 @@ Checking procedure set_null2$node...
                               (
                               ([x'!=null][null=flted_182_3131][0<=n][xs<=xl]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(xl:exists(ql_3122:ql_3122<=xl & xs<=v & 
-  exists(qs_3121:qs_3121<=ql_3122 & v<=qs_3121)))) --> SNULL2(xs,v,sl_3130)]
+!!! NEW RELS:[ (xs<=v) --> SNULL2(xs,v,sl_3130)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure set_null2$node SUCCESS
@@ -734,9 +711,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1749 invocations 
+Stop Omega... 1759 invocations 
 16 false contexts at: ( (187,13)  (187,4)  (54,17)  (54,24)  (55,7)  (55,14)  (323,4)  (323,11)  (328,4)  (328,11)  (327,10)  (327,4)  (326,9)  (326,13)  (326,4)  (326,4) )
 
-Total verification time: 1.64 second(s)
-	Time spent in main process: 0.44 second(s)
-	Time spent in child processes: 1.2 second(s)
+Total verification time: 1.62 second(s)
+	Time spent in main process: 0.45 second(s)
+	Time spent in child processes: 1.17 second(s)

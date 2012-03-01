@@ -33,9 +33,9 @@ Checking procedure append$node~node... Starting Omega...oc
   S2=union(S1_613,{v_612})) & S=union(S1_595,{v_593}) & S1=union(S1_552,
   {v_550}) & S2=S1_595 & v_550=v_593 & S1_552=))))))) --> A(S1,S2,S),
  (exists(S1_633:exists(v_632:exists(S1_552:exists(v_550:exists(S1_620:exists(v_618:S_617=union(S1_633,
-  {v_632}) & S_617=S1_620 & v_550=v_618 & S1_552=S1_566 & S2=S2_567 & true & 
-  S1=union(S1_552,{v_550}) & S=union(S1_620,{v_618}))))))) & 
-  A(S1_566,S2_567,S_617)) --> A(S1,S2,S)]
+  {v_632}) & S_617=S1_620 & v_550=v_618 & S1_552=S1_566 & S2=S2_567 & 
+  A(S1_566,S2_567,S_617) & S1=union(S1_552,{v_550}) & S=union(S1_620,
+  {v_618})))))))) --> A(S1,S2,S)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append$node~node SUCCESS

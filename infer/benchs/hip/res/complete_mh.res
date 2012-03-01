@@ -49,8 +49,8 @@ Checking procedure height$node2...
                               t::complete3@M[Orig][LHSCase]@ rem br[{265,264}]&
                               (([0<=res]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ ((v_int_100_880=res-1 & v_int_100_879<res | v_int_100_879=res-1 & 
-  v_int_100_880<=(res-2)) & HGT(v_int_100_879) & 
-  HGT(v_int_100_880)) --> HGT(res),
+  v_int_100_880<=(res-2)) & HGT(v_int_100_880) & 
+  HGT(v_int_100_879)) --> HGT(res),
  (res=0) --> HGT(res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -74,10 +74,7 @@ Checking procedure insert$node2~int...
                               t'::complete3@M[Orig][LHSCase]@ rem br[{265,264}]&
                               (([t'!=null]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (t'!=null) --> INS(t'),
- (INS(aux_54') & t'!=null) --> INS(t'),
- (INS(aux_54') & t'!=null) --> INS(t'),
- (INS(aux_54') & t'!=null) --> INS(t'),
- (INS(aux_54') & t'!=null) --> INS(t')]
+ (t'!=null & INS(aux_54')) --> INS(t')]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node2~int SUCCESS
@@ -101,9 +98,9 @@ Checking procedure is_perfect$node2...
                               (([0<=res & res<=1]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (res=1) --> PEF(res),
  (res=0) --> PEF(res),
- (res=v_int_186_585' & PEF(v_int_186_585') & PEF(1)) --> PEF(res),
- ((2<=v_int_185_1218 | v_int_185_1218<=0) & PEF(v_int_185_1218) & 
-  res=0) --> PEF(res)]
+ (v_int_186_585'=res & PEF(v_int_186_585') & PEF(1)) --> PEF(res),
+ ((res=0 & 2<=v_int_185_1218 | res=0 & v_int_185_1218<=0) & 
+  PEF(v_int_185_1218)) --> PEF(res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure is_perfect$node2 SUCCESS
@@ -146,8 +143,8 @@ Checking procedure min_height$node2...
                               t::complete3@M[Orig][LHSCase]@ rem br[{265,264}]&
                               (([0<=res]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ ((v_int_115_1291=res-1 & res<=(v_int_115_1292+1) | v_int_115_1292=res-1 & 
-  res<=v_int_115_1291) & MHGT(v_int_115_1291) & 
-  MHGT(v_int_115_1292)) --> MHGT(res),
+  res<=v_int_115_1291) & MHGT(v_int_115_1292) & 
+  MHGT(v_int_115_1291)) --> MHGT(res),
  (res=0) --> MHGT(res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -172,9 +169,9 @@ Procedure minim1$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 631 invocations 
+Stop Omega... 633 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.37 second(s)
+Total verification time: 0.35 second(s)
 	Time spent in main process: 0.17 second(s)
-	Time spent in child processes: 0.2 second(s)
+	Time spent in child processes: 0.18 second(s)

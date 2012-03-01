@@ -1190,10 +1190,12 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 (*          let new_lhs = pairwise_proc (new_lhs) in*)
 	  (*          (new_lhs,rhs) 
 		      in*)
-          let new_lhs_drop_rel = if is_bag_cnt then (CP.drop_rel_formula new_lhs) 
-            else TP.simplify_raw (CP.drop_rel_formula new_lhs) in
-          let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
-          let new_lhs = CP.conj_of_list (new_lhs_drop_rel::rel_lhs) no_pos in
+          let new_lhs = if is_bag_cnt then pairwise_proc (CP.arith_simplify_new new_lhs)
+            else
+              let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+              let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
+              CP.conj_of_list (new_lhs_drop_rel::rel_lhs) no_pos 
+          in
           let rel_def_id = CP.get_rel_id_list rhs in
           let rank_bnd_id = CP.get_rank_bnd_id_list rhs in
           let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in
@@ -1209,7 +1211,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           (*if CP.isConstTrue new_lhs then [] else *)[(rel_cat,new_lhs,rhs)] in
         let inf_rel_ls = List.map (filter_ass lhs_2) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
-(*        let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in*)
+        let inf_rel_ls = List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls in
         DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
 	(*        let inf_rel_ls = List.map wrap_exists inf_rel_ls in*)
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in

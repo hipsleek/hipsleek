@@ -35,10 +35,10 @@ Checking procedure append2$node~node...
                                [q=q_1673]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (t=1 & n=0 & m=1) --> APP2(t,n,m),
- (m=1 & 1+n=t & 2<=t) --> APP2(t,n,m),
+ (m=1 & t=n+1 & 1<=n) --> APP2(t,n,m),
  (t=1 & m=1 & n=0) --> APP2(t,n,m),
- (n_1575=n & 1+t_1648=t & 0<=n & 2<=t & APP2(t_1648,n_1575,m_1573) & 
-  1<=m_1573 & -1+m=m_1573) --> APP2(t,n,m)]
+ (m=m_1573+1 & n=n_1575 & t=t_1648+1 & 1<=m_1573 & 0<=n_1575 & 1<=t_1648 & 
+  APP2(t_1648,n_1575,m_1573)) --> APP2(t,n,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append2$node~node SUCCESS
@@ -48,7 +48,7 @@ Procedure create_list$int~int SUCCESS
 
 Checking procedure assign$node~int~int... 
 !!! REL :  ASSIGN(n,n1,m)
-!!! POST:  n>=0 & m>=0 & n=n1
+!!! POST:  m>=0 & n>=0 & n=n1
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [ASSIGN]
               EBase exists (Expl)(Impl)[Anon_28; 
@@ -69,7 +69,7 @@ Checking procedure assign$node~int~int...
                               n1_1831: x'::dll<Anon_1830,n1_1831>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (([n=n1_1831 & 0<=n][0<=m]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (n=n1 & 0<=n1 & 0<=m) --> ASSIGN(n,n1,m)]
+!!! NEW RELS:[ (n1=n & 0<=n & 0<=m) --> ASSIGN(n,n1,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure assign$node~int~int SUCCESS
@@ -79,7 +79,7 @@ Checking procedure delete$node~int...
 !!! Inferred Heap :[]
 !!! Inferred Pure :[ a!=1 | n!=1, a!=1 | n!=0, a!=1 | n!=1, a!=1 | n!=0, n!=0 | a<=1, n!=0 | 1<=a]
 !!! REL :  DEL(n,a,m)
-!!! POST:  a>=1 & m>=a & m+1=n
+!!! POST:  a>=1 & n>=(1+a) & n=m+1
 !!! PRE :  1<=a & a<n
 !!! OLD SPECS: ((None,[]),EInfer [DEL,n,a]
               EBase exists (Expl)(Impl)[p; 
@@ -100,15 +100,16 @@ Checking procedure delete$node~int...
                               EXISTS(p_2093,
                               m_2094: x::dll<p_2093,m_2094>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (
-                              ([0<=m_2094 & 0<=n & 1+m_2094=n & a<=m_2094 & 
+                              ([0<=m_2094 & 0<=n & -1+n=m_2094 & (1+a)<=n & 
                                  1<=a]
                                [p=p_2093]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (a=1 & 2<=m & -1+n=m) --> DEL(n,a,m),
+!!! NEW RELS:[ (a=1 & n=m+1 & 2<=m) --> DEL(n,a,m),
  (m=1 & n=2 & a=1) --> DEL(n,a,m),
- ((1<=v_int_308_2068 | v_int_308_2068<=(0-1)) & 
-  DEL(n_1996,v_int_308_2068,m_2067) & 1<=m & -1+n=n_1996 & 1+m_2067=m & -1+
-  a=v_int_308_2068 & 0<=n_1996) --> DEL(n,a,m)]
+ ((a=v_int_308_2068+1 & m_2067=m-1 & n=n_1996+1 & 1<=m & 0<=n_1996 & 
+  1<=v_int_308_2068 | a=v_int_308_2068+1 & m_2067=m-1 & n=n_1996+1 & 
+  v_int_308_2068<=(0-1) & 1<=m & 0<=n_1996) & 
+  DEL(n_1996,v_int_308_2068,m_2067)) --> DEL(n,a,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
@@ -137,15 +138,12 @@ Checking procedure delete2$node~int...
                               ([m_2359<=n & 0<=n & 0<=m_2359 & (-1+n)<=m_2359]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (DEL2(m_2212,n_2191) & -1+n=n_2191 & m=1 & m_2212=0 & 
-  0<=n_2191) --> DEL2(m,n),
- (m=0 & n=0) --> DEL2(m,n),
- (-1+n=m & 1<=m) --> DEL2(m,n),
+!!! NEW RELS:[ (m=0 & n=0) --> DEL2(m,n),
+ (m=n-1 & 2<=n) --> DEL2(m,n),
  (m=0 & n=1) --> DEL2(m,n),
- (DEL2(m_2212,n_2191) & 2<=m & 1+m_2212=m & -1+n=n_2191 & 
-  0<=n_2191) --> DEL2(m,n),
- (DEL2(m_2212,n_2191) & -1+n=n_2191 & m=1 & m_2212=0 & 
-  0<=n_2191) --> DEL2(m,n)]
+ (m=m_2212+1 & n_2191=n-1 & 1<=m_2212 & 1<=n & 
+  DEL2(m_2212,n_2191)) --> DEL2(m,n),
+ (m=1 & m_2212=0 & n_2191=n-1 & 1<=n & DEL2(m_2212,n_2191)) --> DEL2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete2$node~int SUCCESS
@@ -235,8 +233,8 @@ Checking procedure find_ge$node~int...
                                  (([(1+v)<=m_2490][res!=null][0<=n]))&
                                  {FLOW,(20,21)=__norm})
                               )
-!!! NEW RELS:[ ((1+v)<=m) --> FGE(m,v),
- (exists(Anon_2441:m=m_2486 & Anon_2441<=v & FGE(m_2486,v))) --> FGE(m,v)]
+!!! NEW RELS:[ (v<m) --> FGE(m,v),
+ (m_2486=m & FGE(m_2486,v)) --> FGE(m,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure find_ge$node~int SUCCESS
@@ -261,7 +259,7 @@ Checking procedure front$node...
                             EAssume 12::
                               true&(([res=v][0<=Anon_21]))&
                               {FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (v=res) --> FRONT(res,v)]
+!!! NEW RELS:[ (res=v) --> FRONT(res,v)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure front$node SUCCESS
@@ -297,7 +295,7 @@ Checking procedure get_next$node...
                               ([1+m_2542=n & 0<=n & 0<=m_2542][x!=null]
                                [null=flted_222_2538][null=flted_222_2539]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (-1+n=m & 0<=m) --> GN(m,n)]
+!!! NEW RELS:[ (m=n-1 & 1<=n) --> GN(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next$node SUCCESS
@@ -327,7 +325,7 @@ Checking procedure get_next_next$node...
                               m_2608: res::dll<Anon_2607,m_2608>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (([2+m_2608=n & 0<=n & 0<=m_2608]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (-2+n=m & 0<=m) --> GNN(m,n)]
+!!! NEW RELS:[ (m=n-2 & 2<=n) --> GNN(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure get_next_next$node SUCCESS
@@ -358,8 +356,8 @@ Checking procedure insert$node~int...
                                [p=p_2725]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=2 & n=1) --> INSERT(m,n),
- (1<=n_2656 & -1+n=n_2656 & 1+m_2700=m & INSERT(m_2700,n_2656) & 
-  2<=m) --> INSERT(m,n)]
+ (n_2656=n-1 & m=m_2700+1 & 2<=n & 1<=m_2700 & 
+  INSERT(m_2700,n_2656)) --> INSERT(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node~int SUCCESS
@@ -391,10 +389,9 @@ Checking procedure list_copy$node...
                               res::dll<Anon_2956,m_2957>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (([n=n_2955 & n=m_2957 & 0<=n][p=p_2954]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (0<=n_2760 & m_2780=0 & m=1 & -1+n=n_2760 & CPY(m_2780,n_2760)) --> CPY(m,n),
- (0<=n_2760 & 1+m_2780=m & -1+n=n_2760 & 2<=m & 
+!!! NEW RELS:[ (n_2760=n-1 & m=m_2780+1 & 1<=n & 1<=m_2780 & 
   CPY(m_2780,n_2760)) --> CPY(m,n),
- (0<=n_2760 & m_2780=0 & m=1 & -1+n=n_2760 & CPY(m_2780,n_2760)) --> CPY(m,n),
+ (m_2780=0 & m=1 & n_2760=n-1 & 1<=n & CPY(m_2780,n_2760)) --> CPY(m,n),
  (m=0 & n=0) --> CPY(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -422,12 +419,10 @@ Checking procedure list_filter2$node~int...
                               m_3170: res::dll<Anon_3169,m_3170>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (([m_3170<=n & 0<=n & 0<=m_3170]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (FIL(m_3045,n_3026) & -1+n=n_3026 & m=1 & m_3045=0 & 0<=n_3026) --> FIL(m,n),
- (0<=n_3006 & m_3097=m & -1+n=n_3006 & FIL(m_3097,n_3006) & 
-  0<=m) --> FIL(m,n),
- (FIL(m_3049,n_3026) & 2<=m & 1+m_3049=m & -1+n=n_3026 & 
-  0<=n_3026) --> FIL(m,n),
- (FIL(m_3045,n_3026) & -1+n=n_3026 & m=1 & m_3045=0 & 0<=n_3026) --> FIL(m,n),
+!!! NEW RELS:[ (n_3006=n-1 & m=m_3097 & 1<=n & 0<=m_3097 & FIL(m_3097,n_3006)) --> FIL(m,n),
+ (m=m_3049+1 & n_3026=n-1 & 1<=m_3049 & 1<=n & 
+  FIL(m_3049,n_3026)) --> FIL(m,n),
+ (m=1 & m_3045=0 & n_3026=n-1 & 1<=n & FIL(m_3045,n_3026)) --> FIL(m,n),
  (m=0 & n=0) --> FIL(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -459,9 +454,10 @@ Checking procedure list_remove$node~int...
                                  n)<=m_3472 & 1<=m_3472]
                                [p=p_3471]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (-1+n=m & 2<=m) --> RMV(m,n),
+!!! NEW RELS:[ (m=n-1 & 3<=n) --> RMV(m,n),
  (m=1 & n=2) --> RMV(m,n),
- (2<=m & 2<=n & RMV(m_3424,n_3334) & 1+n_3334=n & 1+m_3424=m) --> RMV(m,n),
+ (n=n_3334+1 & m=m_3424+1 & 1<=m_3424 & 1<=n_3334 & 
+  RMV(m_3424,n_3334)) --> RMV(m,n),
  (m=1 & n=1) --> RMV(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -492,14 +488,11 @@ Checking procedure list_remove2$node~int...
                               ([m_3735<=n & 0<=n & 0<=m_3735 & (-1+n)<=m_3735]
                                [p=p_3734]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (RMV2(m_3592,n_3577) & -1+n=n_3577 & m=1 & m_3592=0 & 
-  0<=n_3577) --> RMV2(m,n),
- (-1+n=m & 1<=m) --> RMV2(m,n),
+!!! NEW RELS:[ (m=n-1 & 2<=n) --> RMV2(m,n),
  (m=0 & n=1) --> RMV2(m,n),
- (RMV2(m_3594,n_3577) & 2<=m & -1+n=n_3577 & 1+m_3594=m & 
-  0<=n_3577) --> RMV2(m,n),
- (RMV2(m_3592,n_3577) & -1+n=n_3577 & m=1 & m_3592=0 & 
-  0<=n_3577) --> RMV2(m,n),
+ (m=m_3594+1 & n_3577=n-1 & 1<=m_3594 & 1<=n & 
+  RMV2(m_3594,n_3577)) --> RMV2(m,n),
+ (m=1 & m_3592=0 & n_3577=n-1 & 1<=n & RMV2(m_3592,n_3577)) --> RMV2(m,n),
  (m=0 & n=0) --> RMV2(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -529,7 +522,7 @@ Checking procedure list_traverse$node...
                               (([n=m_3811 & 0<=n][p=p_3810]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=0 & n=0) --> TRAV(m,n),
- (0<=n_3770 & 1+m_3779=m & -1+n=n_3770 & 1<=m & 
+ (n_3770=n-1 & m=m_3779+1 & 1<=n & 0<=m_3779 & 
   TRAV(m_3779,n_3770)) --> TRAV(m,n),
  (n=0 & m=0) --> TRAV(m,n)]
 !!! NEW ASSUME:[]
@@ -559,7 +552,7 @@ Checking procedure pop_front$node...
                               (([1+n_3926=m & 0<=m & 0<=n_3926]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n=0 & m=1) --> PF(n,m),
- (-1+m=n & 1<=n) --> PF(n,m)]
+ (n=m-1 & 2<=m) --> PF(n,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure pop_front$node SUCCESS
@@ -590,7 +583,7 @@ Checking procedure push_front$node~int...
                               (([n=m_4000 & 0<=n][x'!=null][v=v_3996]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (m=0 & n=0) --> PUF(m,n),
- (n=m & 1<=m) --> PUF(m,n)]
+ (m=n & 1<=n) --> PUF(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure push_front$node~int SUCCESS
@@ -616,7 +609,7 @@ Checking procedure ret_first$node...
                               EXISTS(Anon_4005,
                               n_4006: x::dll<Anon_4005,n_4006>@M[Orig][LHSCase]@ rem br[{525,524}]&
                               (([m=n_4006 & 0<=m]))&{FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (m=n & 0<=n) --> RF(m,n)]
+!!! NEW RELS:[ (n=m & 0<=m) --> RF(m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure ret_first$node SUCCESS
@@ -649,15 +642,15 @@ Checking procedure reverse$node~node...
                                  n<=k_4215]
                                [xs'=null]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (0<=n_4092 & -1+n=n_4092 & k_4179=k & REV(k_4179,m_4094,n_4092) & 0<=k & 
-  2<=m_4094 & 1+m=m_4094) --> REV(k,m,n),
- (0<=n_4092 & m_4094=1 & k_4187=k & -1+n=n_4092 & m=0 & 0<=k & 
+!!! NEW RELS:[ (n_4092=n-1 & m=m_4094-1 & k=k_4179 & 1<=n & 2<=m_4094 & 0<=k_4179 & 
+  REV(k_4179,m_4094,n_4092)) --> REV(k,m,n),
+ (m_4094=1 & n_4092=n-1 & m=0 & k=k_4187 & 1<=n & 0<=k_4187 & 
   REV(k_4187,m_4094,n_4092)) --> REV(k,m,n),
- (0<=n_4092 & -1+n=n_4092 & k_4198=k & REV(k_4198,m_4094,n_4092) & 0<=k & 
-  2<=m_4094 & 1+m=m_4094) --> REV(k,m,n),
- (0<=n_4092 & m_4094=1 & k_4206=k & -1+n=n_4092 & m=0 & 0<=k & 
+ (n_4092=n-1 & m=m_4094-1 & k=k_4198 & 1<=n & 2<=m_4094 & 0<=k_4198 & 
+  REV(k_4198,m_4094,n_4092)) --> REV(k,m,n),
+ (m_4094=1 & n_4092=n-1 & m=0 & k=k_4206 & 1<=n & 0<=k_4206 & 
   REV(k_4206,m_4094,n_4092)) --> REV(k,m,n),
- (m=k & n=0 & 0<=k) --> REV(k,m,n)]
+ (n=0 & k=m & 0<=m) --> REV(k,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure reverse$node~node SUCCESS
@@ -689,7 +682,7 @@ Checking procedure set_next$node~node...
                                [0<=i]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (k=1 & j=0) --> SN(k,j),
- (1+j=k & 2<=k) --> SN(k,j)]
+ (k=j+1 & 1<=j) --> SN(k,j)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure set_next$node~node SUCCESS
@@ -702,7 +695,7 @@ Procedure set_null2$node SUCCESS
 
 Checking procedure size_helper$node~int... 
 !!! REL :  SIZEH(res,m,n)
-!!! POST:  m>=0 & m+n=res
+!!! POST:  m>=0 & res=n+m
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [SIZEH]
               EBase exists (Expl)(Impl)[Anon_18; 
@@ -717,10 +710,10 @@ Checking procedure size_helper$node~int...
                   (([0<=m]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 7::ref [n]
-                              true&(([0<=m & m+n=res]))&{FLOW,(20,21)=__norm})
+                              true&(([0<=m & res=m+n]))&{FLOW,(20,21)=__norm})
 !!! NEW RELS:[ (m=0 & res=n) --> SIZEH(res,m,n),
- (0<=m_4505 & res=v_int_55_1386' & -1+m=m_4505 & 
-  SIZEH(v_int_55_1386',m_4505,n--1)) --> SIZEH(res,m,n)]
+ (v_int_55_1386'=res & m_4505=m-1 & 1<=m & SIZEH(v_int_55_1386',m_4505,n+
+  1)) --> SIZEH(res,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure size_helper$node~int SUCCESS
@@ -742,7 +735,7 @@ Checking procedure size$node...
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 11::
                               true&(([m=res & 0<=m]))&{FLOW,(20,21)=__norm})
-!!! NEW RELS:[ (res=m & 0<=m) --> SIZE(res,m)]
+!!! NEW RELS:[ (m=res & 0<=res) --> SIZE(res,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure size$node SUCCESS
@@ -775,14 +768,14 @@ Checking procedure splice$node~node...
                                  n<=t_4777]
                                ))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (0<=n_4613 & 0<=m_4615 & t_4636=0 & t=2 & -1+n=n_4613 & -1+m=m_4615 & 
+!!! NEW RELS:[ (t_4636=0 & t=2 & n_4613=n-1 & m_4615=m-1 & 1<=n & 1<=m & 
   SPLICE(t_4636,m_4615,n_4613)) --> SPLICE(t,m,n),
- (n=0 & m=t & 0<=t) --> SPLICE(t,m,n),
- (0<=m_4615 & 0<=n_4613 & 2+t_4636=t & -1+m=m_4615 & -1+n=n_4613 & 
-  SPLICE(t_4636,m_4615,n_4613) & 3<=t) --> SPLICE(t,m,n),
- (0<=m_4615 & 0<=n_4613 & t_4636=0 & t=2 & -1+n=n_4613 & -1+m=m_4615 & 
+ (n=0 & t=m & 0<=m) --> SPLICE(t,m,n),
+ (m_4615=m-1 & n_4613=n-1 & t=t_4636+2 & 1<=m & 1<=n & 1<=t_4636 & 
   SPLICE(t_4636,m_4615,n_4613)) --> SPLICE(t,m,n),
- (m=0 & n=t & 1<=t) --> SPLICE(t,m,n)]
+ (t_4636=0 & t=2 & n_4613=n-1 & m_4615=m-1 & 1<=m & 1<=n & 
+  SPLICE(t_4636,m_4615,n_4613)) --> SPLICE(t,m,n),
+ (m=0 & t=n & 1<=n) --> SPLICE(t,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure splice$node~node SUCCESS
@@ -820,10 +813,11 @@ Checking procedure split1$node~int...
                                  0<=n2_4935 & 0<=n1_4934 & 1<=a]
                                [p=p_4932]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (n1=1 & a=1 & -1+n=n2 & 0<=n2) --> SPLIT(n,a,n1,n2),
- ((1<=a_4904 | a_4904<=(0-1)) & SPLIT(n_4850,a_4904,n1_4901,n2_4902) & 
-  0<=n2 & 1<=n1 & -1+a=a_4904 & -1+n=n_4850 & 1+n1_4901=n1 & n2_4902=n2 & 
-  0<=n_4850) --> SPLIT(n,a,n1,n2)]
+!!! NEW RELS:[ (n1=1 & a=1 & n2=n-1 & 1<=n) --> SPLIT(n,a,n1,n2),
+ ((a=a_4904+1 & n2_4902=n2 & n1_4901=n1-1 & n=n_4850+1 & 0<=n2 & 1<=n1 & 
+  0<=n_4850 & 1<=a_4904 | a=a_4904+1 & n2_4902=n2 & n1_4901=n1-1 & n=n_4850+
+  1 & a_4904<=(0-1) & 0<=n2 & 1<=n1 & 0<=n_4850) & 
+  SPLIT(n_4850,a_4904,n1_4901,n2_4902)) --> SPLIT(n,a,n1,n2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure split1$node~int SUCCESS
@@ -860,9 +854,9 @@ Procedure swap$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 2214 invocations 
+Stop Omega... 2240 invocations 
 7 false contexts at: ( (546,6)  (252,13)  (252,4)  (41,17)  (41,24)  (42,7)  (42,14) )
 
-Total verification time: 1.65 second(s)
-	Time spent in main process: 0.69 second(s)
-	Time spent in child processes: 0.96 second(s)
+Total verification time: 1.64 second(s)
+	Time spent in main process: 0.67 second(s)
+	Time spent in child processes: 0.97 second(s)
