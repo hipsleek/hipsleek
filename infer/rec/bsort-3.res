@@ -1,7 +1,7 @@
 
 Processing file "bsort-3.ss"
 Parsing bsort-3.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -34,11 +34,8 @@ Checking procedure bubble$node...
                                  n_1304=n & res & 0<=n&{FLOW,(20,21)=__norm})
                               )
 !!! NEW RELS:[ (res<=0) --> B(res),
- (res<=0) --> B(res),
- (res<=0) --> B(res),
- (B(tmp_42') & 1<=res & tmp_42') --> B(res),
- (B(tmp_42') & res<=0 & !(tmp_42')) --> B(res),
- (1<=res) --> B(res),
+ (1<=res & tmp_42' & B(tmp_42')) --> B(res),
+ (res<=0 & !(tmp_42') & B(tmp_42')) --> B(res),
  (1<=res) --> B(res)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -46,9 +43,9 @@ Procedure bubble$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 232 invocations 
+Stop Omega... 240 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.88 second(s)
-	Time spent in main process: 0.8 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.15 second(s)
 	Time spent in child processes: 0.08 second(s)

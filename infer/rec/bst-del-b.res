@@ -1,7 +1,7 @@
 
 Processing file "bst-del-b.ss"
 Parsing bst-del-b.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -31,7 +31,7 @@ Successful States:
 
 !!! REL :  B(sm,s,l,lg)
 !!! POST:  l>=s & lg>=l & s=sm
-!!! PRE :  sm<=lg
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [B]
               EBase exists (Expl)(Impl)[sm; 
                     lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
@@ -44,44 +44,31 @@ Successful States:
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
                   lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
                   {FLOW,(20,21)=__norm}
-                    EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 2::ref [x]
                               EXISTS(s_1007,
                               l_1008: x'::bst<s_1007,l_1008>@M[Orig][LHSCase]&
                               sm<=s_1007 & l_1008<=lg & l_1008>=s_1007 & 
                               lg>=l_1008 & s_1007=sm & sm<=lg&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(qs_589:exists(a:s=sm & sm<=l & a<=qs_589 & l<=a & 
-  qs_589<=lg))) --> B(sm,s,l,lg),
- (s=sm & exists(lg_718:exists(pl_719:exists(qs_720:sm<=pl_719 & 
-  exists(qs_589:lg_718=l & qs_720<=l & exists(v_721:qs_589<=lg & 
-  exists(a:pl_719<=v_721 & v_721<=qs_720 & l<=a & 
-  a<=qs_589))))))) --> B(sm,s,l,lg),
- (s=sm & exists(qs_678:exists(pl_719:exists(qs_720:sm<=pl_719 & qs_720<=l & 
-  exists(v_721:qs_678<=lg & l<=qs_678 & pl_719<=v_721 & 
-  v_721<=qs_720))))) --> B(sm,s,l,lg),
- (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg),
- (s=sm & sm<=l & exists(qs_678:qs_678<=lg & l<=qs_678)) --> B(sm,s,l,lg),
- (l=lg & sm=s & exists(s1_841:exists(tmp_31':s1_841<=lg & s<=tmp_31' & 
-  tmp_31'<=s1_841))) --> B(sm,s,l,lg),
- (B(sm_622,s_894,l_895,lg_623) & l_895<=lg & l=l_895 & s=sm & lg_623=lg & 
-  s_894<=l_895 & exists(pl_588:sm<=pl_588 & 
-  exists(a:exists(v_590:sm_622<=s_894 & pl_588<=v_590 & v_590<=sm_622 & (1+
-  v_590)<=a)))) --> B(sm,s,l,lg),
- (B(sm_642,s_949,l_950,lg_643) & sm<=s_949 & l=lg & s=s_949 & sm_642=sm & 
-  s_949<=l_950 & exists(qs_589:exists(a:exists(v_590:qs_589<=lg & 
-  l_950<=lg_643 & lg_643<=v_590 & v_590<=qs_589 & (1+
-  a)<=v_590)))) --> B(sm,s,l,lg),
- (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg)]
+!!! NEW RELS:[ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (lg=l & sm=s & s<=l) --> B(sm,s,l,lg),
+ (sm=s & lg=lg_623 & l_895=l & s<=sm_622 & sm_622<=s_894 & s_894<=l & 
+  l<=lg_623 & B(sm_622,s_894,l_895,lg_623)) --> B(sm,s,l,lg),
+ (lg=l & sm=sm_642 & s_949=s & sm_642<=s & s<=l_950 & l_950<=lg_643 & 
+  lg_643<=l & B(sm_642,s_949,l_950,lg_643)) --> B(sm,s,l,lg),
+ (sm=s & lg=l & s<=l) --> B(sm,s,l,lg)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 343 invocations 
+Stop Omega... 347 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.04 second(s)
-	Time spent in main process: 0.89 second(s)
-	Time spent in child processes: 0.15 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.14 second(s)

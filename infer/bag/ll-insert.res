@@ -2,7 +2,7 @@
 
 Processing file "ll-insert.ss"
 Parsing ll-insert.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Translating global variables to procedure parameters...
 
@@ -29,9 +29,9 @@ Checking procedure insert$node~int... Starting Omega...oc
   S1_550= & v_548=v_581 & a=v_588 & S=union(S1_550,{v_548}) & S!=() & 
   S1=union(S1_583,{v_581})))))))) --> A(S,S1,a),
  (exists(S1_616:exists(v_615:exists(S1_550:exists(v_548:exists(S1_603:exists(v_601:S1_600=union(S1_616,
-  {v_615}) & S1_600=S1_603 & v_548=v_601 & S1_550=S_565 & 
-  A(S_565,S1_600,a) & S=union(S1_550,{v_548}) & S!=() & S1=union(S1_603,
-  {v_601})))))))) --> A(S,S1,a)]
+  {v_615}) & S1_600=S1_603 & v_548=v_601 & S1_550=S_565 & true & 
+  S=union(S1_550,{v_548}) & S!=() & S1=union(S1_603,{v_601}))))))) & 
+  A(S_565,S1_600,a)) --> A(S,S1,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node~int SUCCESS
@@ -41,6 +41,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.31 second(s)
-	Time spent in main process: 0.2 second(s)
+Total verification time: 0.16 second(s)
+	Time spent in main process: 0.05 second(s)
 	Time spent in child processes: 0.11 second(s)

@@ -1,7 +1,7 @@
 
 Processing file "cll-count1.ss"
 Parsing cll-count1.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -36,8 +36,8 @@ Successful States:
  ]
 
 !!! REL :  A(res,n)
-!!! POST:  n>=0 & n=res
-!!! PRE :  0<=n
+!!! POST:  res>=0 & res=n
+!!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [A]
               EBase exists (Expl)(Impl)[p; 
                     n](ex)x::cll<p,n>@M[Orig][LHSCase]&h=p&
@@ -50,29 +50,24 @@ Successful States:
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[p; n](ex)x::cll<p,n>@M[Orig][LHSCase]&
                   h=p&{FLOW,(20,21)=__norm}
-                    EBase true&0<=n & MayLoop&{FLOW,(1,23)=__flow}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
                             EAssume 1::
                               EXISTS(p_675,
                               n_676: x::cll<p_675,n_676>@M[Orig][LHSCase]&
-                              p_675=p & n_676=n & n>=0 & n=res & 0<=n&
+                              p_675=p & n_676=n & res>=0 & res=n & 0<=n&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(flted_11_572:exists(n_31:(n_578=0 & n=1 | 1+n_578=n_31 & 1+
-  flted_11_572=n_31 & n=n_31 & 2<=n_31) & A(n_611,n_578) & -1+
-  res=n_611))) --> A(res,n),
- (exists(flted_11_572:exists(flted_11_620:(n_578=0 & n=1 | 
-  n_578=flted_11_620 & flted_11_572=flted_11_620 & -1+n=flted_11_620 & 
-  1<=flted_11_620) & A(n_611,n_578) & -1+res=n_611))) --> A(res,n),
+!!! NEW RELS:[ (res=n_611+1 & n_578=n-1 & 1<=n & A(n_611,n_578)) --> A(res,n),
  (res=0 & n=0) --> A(res,n),
- (A(n_640,n_578) & -1+res=n_640 & n=1 & n_578=0) --> A(res,n)]
+ (n=1 & n_640=res-1 & n_578=0 & A(n_640,n_578)) --> A(res,n)]
 !!! NEW ASSUME:[ RELASS [A]: ( A(n_611,n_578)) -->  n_578<=0]
 !!! NEW RANK:[]
 Procedure count$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 177 invocations 
+Stop Omega... 188 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.52 second(s)
-	Time spent in main process: 0.47 second(s)
-	Time spent in child processes: 1.05 second(s)
+Total verification time: 1.09 second(s)
+	Time spent in main process: 0.09 second(s)
+	Time spent in child processes: 1. second(s)

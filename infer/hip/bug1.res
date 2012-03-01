@@ -1,7 +1,7 @@
 
 Processing file "bug1.ss"
 Parsing bug1.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -28,6 +28,6 @@ Termination checking result:
 Stop Omega... 53 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.14 second(s)
-	Time spent in main process: 0.12 second(s)
+Total verification time: 0.05 second(s)
+	Time spent in main process: 0.03 second(s)
 	Time spent in child processes: 0.02 second(s)

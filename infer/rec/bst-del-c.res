@@ -1,7 +1,7 @@
 
 Processing file "bst-del-c.ss"
 Parsing bst-del-c.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -49,38 +49,18 @@ Successful States:
                               s_1005: x'::bst<s_1005,l_1004>@M[Orig][LHSCase]&
                               l_1004<=lg & s_1005=sm & sm<=lg&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(lg:exists(a:s=sm & exists(qs_586:qs_586<=lg & 
-  exists(pl_585:a<=qs_586 & pl_585<=a & sm<=pl_585))))) --> B(s,sm),
- (s=sm & 
-  exists(pl_716:exists(qs_717:exists(qs_586:exists(l:exists(lg_715:sm<=pl_716 & 
-  exists(v_718:qs_717<=l & lg_715=l & exists(a:pl_716<=v_718 & 
-  v_718<=qs_717 & exists(lg:l<=a & a<=qs_586 & 
-  qs_586<=lg))))))))) --> B(s,sm),
- (s=sm & exists(pl_716:exists(qs_717:exists(l:sm<=pl_716 & qs_717<=l & 
-  exists(lg_673:exists(qs_675:exists(v_718:qs_675<=lg_673 & l<=qs_675 & 
-  pl_716<=v_718 & v_718<=qs_717))))))) --> B(s,sm),
- (exists(l:s=sm & sm<=l)) --> B(s,sm),
- (exists(qs_675:exists(lg_584:s=sm & exists(l:qs_675<=lg_584 & l<=qs_675 & 
-  sm<=l)))) --> B(s,sm),
- (sm=s & exists(s1_838:exists(l:s1_838<=l & exists(tmp_31':s<=tmp_31' & 
-  tmp_31'<=s1_838)))) --> B(s,sm),
- (B(s_892,sm_619) & s=sm & exists(pl_585:sm<=pl_585 & 
-  exists(a:exists(l:exists(v_587:s_892<=l & exists(lg_620:pl_585<=v_587 & 
-  v_587<=sm_619 & (1+v_587)<=a & sm_619<=lg_620 & l<=lg_620)))))) --> B(s,sm),
- (B(s_947,sm_639) & s=s_947 & sm_639=sm & 
-  exists(lg_640:exists(qs_586:exists(a:exists(l_946:exists(l:exists(lg_584:sm<=lg_640 & 
-  l_946<=lg_640 & s_947<=l_946 & exists(v_587:qs_586<=l & lg_584=l & 
-  lg_640<=v_587 & v_587<=qs_586 & (1+a)<=v_587)))))))) --> B(s,sm),
- (exists(l:s=sm & sm<=l)) --> B(s,sm)]
+!!! NEW RELS:[ (sm=s & s<=sm_619 & B(s_892,sm_619)) --> B(s,sm),
+ (sm=sm_639 & s_947=s & B(s_947,sm_639)) --> B(s,sm),
+ (sm=s) --> B(s,sm)]
 !!! NEW ASSUME:[ RELASS [B]: ( B(s_892,sm_619)) -->  sm_619<=s_892]
 !!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 345 invocations 
+Stop Omega... 351 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.56 second(s)
-	Time spent in main process: 0.9 second(s)
+Total verification time: 0.81 second(s)
+	Time spent in main process: 0.15 second(s)
 	Time spent in child processes: 0.66 second(s)

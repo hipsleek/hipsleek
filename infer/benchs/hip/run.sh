@@ -1,4 +1,4 @@
-../../../hip ll_m.ss --eps > res/ll_m.res
+#../../../hip ll_m.ss --eps > res/ll_m.res
 ../../../hip ll_ms.ss --eps > res/ll_ms.res
 ../../../hip ll_msb.ss -tp mona --eps > res/ll_msb.res
 ../../../hip sll_ms.ss --eps > res/sll_ms.res
@@ -10,7 +10,7 @@
 ../../../hip complete_mh.ss --eps > res/complete_mh.res
 ../../../hip complete_msh.ss --eps > res/complete_msh.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
-#../../../hip heaps_m.ss --eps > res/heaps_m.res
+../../../hip heaps_m.ss --eps > res/heaps_m.res
 ../../../hip heaps_ms.ss --eps > res/heaps_ms.res
 ../../../hip heaps_msmax.ss --eps > res/heaps_msmax.res
 #../../../hip avl_m.ss --eps > res/avl_m.res

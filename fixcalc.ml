@@ -372,7 +372,7 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
       | _ -> bcases
       end
     in
-    let bcases = List.map (fun b -> TP.simplify_raw b) bcases in
+(*    let bcases = List.map (fun b -> TP.simplify_raw b) bcases in*)
     let no_of_disjs = List.map (fun b -> let disjs = CP.list_of_disjs b in 
         let cond = List.exists (fun d -> let conjs = CP.list_of_conjs d in 
             List.exists (fun c -> CP.is_eq_const c) conjs) disjs in 
