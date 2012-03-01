@@ -299,7 +299,7 @@ void delete( node x, int a)
 		delete(x.next, a-1);
 	}
 }
-
+/*
 /* function to delete node val = a in a doubly linked list */
 // FAIL
 relation DEL2(int a, bag b, bag c).
@@ -328,7 +328,7 @@ node delete2(ref node x, int a)
     }
 	}
 }
-
+*/
 
 /* function to create a doubly linked list with a nodes */
 node create_list1(int n, int v)
@@ -385,13 +385,13 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
-
+/*
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 relation SPLIT(bag a, bag b, bag c).
 node split1(ref node x, int a)
   infer[SPLIT]
   requires x::dll<p,n,S> & a > 0 & n > a
-  ensures x'::dll<p,n1,S1>*res::dll<_,n2, S2> & n=n1+n2 & n1>0 & n2>0 & n1=a & SPLIT(S,S1,S2);//S = union(S1, S2);
+  ensures x'::dll<p,n1,S1>*res::dll<_,n2, S2> & n=n1+n2 & n1>0 & n2>0 & n1=a & SPLIT(S,S1,S2);//'S = union(S1, S2);
 {
 	node tmp;
 	if (a == 1)
@@ -410,7 +410,7 @@ node split1(ref node x, int a)
 		return tmp;
 	}
 }
-
+*/
 
 /*****************************************/
 /*********SMALLFOOT EXAMPLES*************/

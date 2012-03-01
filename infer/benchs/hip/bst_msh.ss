@@ -8,6 +8,7 @@ data node2 {
 }
 
 /* view for trees with number of nodes and depth */
+//memory + size --> height
 //size, height
 bst1<m, n> == self = null & m = 0 & n = 0
 	or self::node2<_, p, q> * p::bst1<m1, n1> * q::bst1<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
@@ -21,9 +22,8 @@ dll<p, n> == self = null & n = 0
 /* function to append 2 doubly linked lists */
 //relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
-//infer[APP]
   requires x::dll<_, m> * y::dll<_, n>
-  ensures res::dll<r, k> & k=n+ m;//m>=0 & k>=m & k=n+m APP(k,m,n)
+  ensures res::dll<r, k> & k=m+n;//m>=0 & k>=m & k=n+m APP(k,m,n)
 {
 	node2 z;
 
@@ -73,7 +73,7 @@ node2 appendC(node2 x, node2 y)
 /* function to count the number of nodes in a tree */
 relation CNT(int a, int b).
 int count(node2 z)
-  infer[CNT]
+  infer[res,CNT]
   requires z::bst1<n, h>
   ensures  z::bst1<n, h1> & CNT(h,h1) & res = n;//h1=h;
 {
