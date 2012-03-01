@@ -86,7 +86,10 @@ let rec fixcalc_of_b_formula b =
         let s = fixcalc_of_exp e1 in
         let t = fixcalc_of_exp e2 in
         "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
-    | CP.RelForm (id,args,_) -> (fixcalc_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
+    | CP.RelForm (id,args,_) -> 
+      if List.exists (fun x -> match x with | CP.IConst _ -> true | _ -> false) args then "0=0"
+      else
+        (fixcalc_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with

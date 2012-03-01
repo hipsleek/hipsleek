@@ -244,15 +244,11 @@ node insert(node x, int a)
 }
 
 /* function to insert in an avl tree (inline version) */
-//relation INSI(int a, int b).
+relation INSI(int a, int b).
 node insert_inline(node x, int a)
-//infer[INSI]
+//  infer[INSI]
   requires x::avl<m, n>
-  ensures res::avl<m+1, n1> & INSI(k,m) & n <= n1 <= n+1;
-
-                                      /*
-0=m & 1=k
-                                       */
+  ensures res::avl<m+1, n1> & n <= n1 <= n+1;//0=m & 1=k
 {
 	node k1, tmp, k2, tmp_null = null;
 	int h, hl, hr, hlt;

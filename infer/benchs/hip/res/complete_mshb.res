@@ -38,11 +38,11 @@ Restarting Mona ...
                     (([true][nmin<=h]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 5::
-                                EXISTS(n_73,h_74,nmin_75,
-                                S2: t::complete1<n_73,h_74,nmin_75,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                                EXISTS(n_72,h_73,nmin_74,
+                                S2: t::complete1<n_72,h_73,nmin_74,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
                                 (
-                                ([true][CNT(S2,S1)][n=n_73]
-                                 [h_74=h & nmin=nmin_75 & nmin_75<=h_74]))&
+                                ([true][CNT(S2,S1)][n=n_72]
+                                 [h_73=h & nmin=nmin_74 & nmin_74<=h_73]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; h; nmin; 
                   S1](ex)t::complete1<n,h,nmin,S1>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
@@ -97,12 +97,12 @@ Restarting Mona ...
                     (([true][nmin<=h]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 11::
-                                EXISTS(n_70,h_71,nmin_72,
-                                S2: t::complete1<n_70,h_71,nmin_72,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                                EXISTS(n_69,h_70,nmin_71,
+                                S2: t::complete1<n_69,h_70,nmin_71,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
                                 (
-                                ([HGT(S1,S2)][n=n_70]
-                                 [nmin_72=nmin & h=h_71 & h=res & 
-                                   nmin_72<=h_71]
+                                ([HGT(S1,S2)][n=n_69]
+                                 [nmin_71=nmin & h=h_70 & h=res & 
+                                   nmin_71<=h_70]
                                  ))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; h; nmin; 
@@ -183,6 +183,58 @@ Restarting Mona ...
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
+!!! REL :  PEF(S1,S2)
+!!! POST:  S1=S2
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [PEF]
+              EBase exists (Expl)(Impl)[k; n; nmin; 
+                    S1](ex)t::complete1<k,n,nmin,S1>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                    (([true][nmin<=n]))&{FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 34::
+                                EXISTS(k_49,n_50,nmin_51,
+                                S2: t::complete1<k_49,n_50,nmin_51,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                                (
+                                ([PEF(S1,S2)][k=k_49]
+                                 [n=n_50 & nmin=nmin_51 & (nmin!=n | 
+                                   res=1) & (nmin=n | res=0) & nmin_51<=n_50]
+                                 ))&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[k; n; nmin; 
+                  S1](ex)t::complete1<k,n,nmin,S1>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                  (([nmin<=n]))&{FLOW,(20,21)=__norm}
+                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
+                            EAssume 34::
+                              EXISTS(k_7716,n_7717,nmin_7718,
+                              S2_7719: t::complete1<k_7716,n_7717,nmin_7718,S2_7719>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                              (
+                              ([S1=S2_7719]
+                               [nmin=nmin_7718 & n=n_7717 & (nmin!=n | 
+                                 res=1) & (nmin=n | res=0) & nmin<=n & 
+                                 0<=nmin]
+                               [k=k_7716 & 0<=k]))&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (S2= & S2=S1) --> PEF(S1,S2),
+ (S1=S2 & S2=) --> PEF(S1,S2),
+ (exists(S_6765:exists(S2_7143:exists(S2_6617:exists(S1_7139:exists(S:exists(v_6609:exists(v_7135:exists(S1_6613:S1!=() & 
+  S2=union(S1_7139,S2_7143,{v_7135}) & S1=union(S1_6613,S2_6617,{v_6609}) & 
+  S_6765=S2_6617 & S2_7143=S2_6617 & S1_6613=S & S1_7139=S & v_6609=v_7135 & 
+  S1_6613!=()))))))))) --> PEF(S1,S2),
+ (exists(S2_7336:exists(S1_7332:exists(v_6632:exists(v_7328:exists(S2_6640:exists(S_6765:exists(S:exists(S1_6636:S1!=() & 
+  S2=union(S1_7332,S2_7336,{v_7328}) & S1=union(S1_6636,S2_6640,{v_6632}) & 
+  PEF(S1_7052,S2_7327) & PEF(S1_6941,S2_6997) & S2_7327=S2_7336 & 
+  S2_6997=S1_7332 & v_6632=v_7328 & S2_6640=S_6765 & S1_7052=S_6765 & 
+  S=S1_6636 & S1_6941=S1_6636))))))))) --> PEF(S1,S2),
+ (exists(S_6765:exists(S2_7549:exists(S2_6640:exists(S1_7545:exists(v_6632:exists(v_7541:exists(S1_6636:exists(S:S2=union(S1_7545,
+  S2_7549,{v_7541}) & S1=union(S1_6636,S2_6640,{v_6632}) & S1!=() & 
+  PEF(S1_6941,S2_7018) & S_6765=S2_6640 & S2_7549=S2_6640 & 
+  S2_7018=S1_7545 & v_6632=v_7541 & S1_6636=S & 
+  S1_6941=S))))))))) --> PEF(S1,S2)]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
 Procedure is_perfect$node2 SUCCESS
 
 Checking procedure minim$int~int... 
@@ -210,12 +262,12 @@ Restarting Mona ...
                     (([true][nmin<=h]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 15::
-                                EXISTS(n_63,h_64,nmin_65,
-                                S2: t::complete1<n_63,h_64,nmin_65,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                                EXISTS(n_62,h_63,nmin_64,
+                                S2: t::complete1<n_62,h_63,nmin_64,S2>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
                                 (
-                                ([MHGT(S1,S2)][n=n_63]
-                                 [h_64=h & nmin=nmin_65 & nmin=res & 
-                                   nmin_65<=h_64]
+                                ([MHGT(S1,S2)][n=n_62]
+                                 [h_63=h & nmin=nmin_64 & nmin=res & 
+                                   nmin_64<=h_63]
                                  ))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; h; nmin; 
@@ -223,25 +275,25 @@ Restarting Mona ...
                   (([nmin<=h]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 15::
-                              EXISTS(n_8565,h_8566,nmin_8567,
-                              S2_8568: t::complete1<n_8565,h_8566,nmin_8567,S2_8568>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
+                              EXISTS(n_8727,h_8728,nmin_8729,
+                              S2_8730: t::complete1<n_8727,h_8728,nmin_8729,S2_8730>@M[Orig][LHSCase]@ rem br[{255,254,253}]&
                               (
-                              ([S1=S2_8568]
-                               [res=nmin & res=nmin_8567 & h=h_8566 & 
+                              ([S1=S2_8730]
+                               [res=nmin & res=nmin_8729 & h=h_8728 & 
                                  nmin<=h & 0<=nmin]
-                               [n=n_8565 & 0<=n]))&
+                               [n=n_8727 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S2= & S2=S1) --> MHGT(S1,S2),
- (exists(S2_8074:exists(S1_8070:exists(v_7678:exists(v_8066:exists(S2_7686:exists(S1_7682:S1=union(S1_7682,
-  S2_7686,{v_7678}) & S2=union(S1_8070,S2_8074,{v_8066}) & S1!=() & 
-  MHGT(S1_7716,S2_7834) & MHGT(S1_7844,S2_7928) & S2_7928=S2_8074 & 
-  S2_7834=S1_8070 & v_7678=v_8066 & S1_7716=S1_7682 & S1_7844=S2_7686 & 
-  S1_7682!=() & S2_7834!=()))))))) --> MHGT(S1,S2),
- (exists(S2_8292:exists(S1_8288:exists(v_7701:exists(v_8284:exists(S1_7705:exists(S2_7709:S1!=() & 
-  S2=union(S1_8288,S2_8292,{v_8284}) & S1=union(S1_7705,S2_7709,{v_7701}) & 
-  MHGT(S1_7716,S2_7837) & MHGT(S1_7844,S2_7946) & S2_7946=S2_8292 & 
-  S2_7837=S1_8288 & v_7701=v_8284 & S1_7716=S1_7705 & 
-  S1_7844=S2_7709))))))) --> MHGT(S1,S2),
+ (exists(S2_8236:exists(S1_8232:exists(v_7840:exists(v_8228:exists(S2_7848:exists(S1_7844:S1=union(S1_7844,
+  S2_7848,{v_7840}) & S2=union(S1_8232,S2_8236,{v_8228}) & S1!=() & 
+  MHGT(S1_7878,S2_7996) & MHGT(S1_8006,S2_8090) & S2_8090=S2_8236 & 
+  S2_7996=S1_8232 & v_7840=v_8228 & S1_7878=S1_7844 & S1_8006=S2_7848 & 
+  S1_7844!=() & S2_7996!=()))))))) --> MHGT(S1,S2),
+ (exists(S2_8454:exists(S1_8450:exists(v_7863:exists(v_8446:exists(S1_7867:exists(S2_7871:S1!=() & 
+  S2=union(S1_8450,S2_8454,{v_8446}) & S1=union(S1_7867,S2_7871,{v_7863}) & 
+  MHGT(S1_7878,S2_7999) & MHGT(S1_8006,S2_8108) & S2_8108=S2_8454 & 
+  S2_7999=S1_8450 & v_7863=v_8446 & S1_7878=S1_7867 & 
+  S1_8006=S2_7871))))))) --> MHGT(S1,S2),
  (S1=S2 & S2=) --> MHGT(S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -250,8 +302,8 @@ Procedure min_height$node2 SUCCESS
 Termination checking result:
 
 
-30 false contexts at: ( (150,12)  (149,12)  (148,12)  (147,18)  (147,12)  (147,12)  (136,10)  (135,10)  (134,10)  (133,16)  (133,10)  (133,10)  (129,8)  (128,8)  (127,8)  (126,14)  (126,8)  (126,8)  (144,12)  (143,12)  (142,12)  (141,18)  (141,12)  (141,12)  (122,2)  (121,25)  (121,19)  (121,6)  (121,2)  (121,2) )
+30 false contexts at: ( (145,12)  (144,12)  (143,12)  (142,18)  (142,12)  (142,12)  (131,10)  (130,10)  (129,10)  (128,16)  (128,10)  (128,10)  (124,8)  (123,8)  (122,8)  (121,14)  (121,8)  (121,8)  (139,12)  (138,12)  (137,12)  (136,18)  (136,12)  (136,12)  (117,2)  (116,25)  (116,19)  (116,6)  (116,2)  (116,2) )
 
-Total verification time: 95.78 second(s)
-	Time spent in main process: 1.46 second(s)
-	Time spent in child processes: 94.32 second(s)
+Total verification time: 96.89 second(s)
+	Time spent in main process: 1.69 second(s)
+	Time spent in child processes: 95.2 second(s)

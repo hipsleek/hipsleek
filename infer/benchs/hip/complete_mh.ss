@@ -50,12 +50,33 @@ int minim(int a, int b)
 		return a;
 }
 
+int maxim1(int a, int b)
+  infer @post []
+	requires true
+	ensures true;
+{
+	if(a >= b)
+		return a;
+	else
+		return b;
+}
+
+int minim1(int a, int b)
+  infer @post []
+	requires true
+	ensures true;
+{
+	if(a >= b)
+		return b;
+	else
+		return a;
+}
+
 /* function to count the number of nodes in a tree */
-//relation CNT(bag a, bag b).
 int count(node2 t)
-  infer[t,res]
+  infer @post []
   requires t::complete3<>
-  ensures t::complete3<> & res >= 0;// & CNT(S1,S2);
+  ensures t::complete3<>;// & res >= 0;
 {
 	int cleft, cright;
 
@@ -147,11 +168,11 @@ void insert(ref node2 t, int v)
 	}
 }
 
-//relation PEF(int a).
+relation PEF(int a).
 int is_perfect(node2 t)
-// infer[PEF]
+ infer[PEF]
   requires t::complete3<>
-  ensures t::complete3<> & (res=0 | res=1);
+  ensures t::complete3<> & PEF(res);//(res=0 | res=1);
 {
   if(t == null)
     return 1;

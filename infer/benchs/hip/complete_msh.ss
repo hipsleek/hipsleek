@@ -26,9 +26,20 @@ complete<n, nmin> == self = null & n = 0 & nmin = 0
   or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
 	inv nmin >= 0 & n >= nmin;
 
+/*int maxim(int a, int b)*/
+/*	requires true*/
+/*	ensures (a < b | res = a) & (a >= b | res = b);*/
+/*{*/
+/*	if(a >= b)*/
+/*		return a;*/
+/*	else*/
+/*		return b;*/
+/*}*/
+
 int maxim(int a, int b)
+  infer @post []
 	requires true
-	ensures (a < b | res = a) & (a >= b | res = b);
+	ensures true;
 {
 	if(a >= b)
 		return a;
@@ -36,9 +47,20 @@ int maxim(int a, int b)
 		return b;
 }
 
+/*int minim(int a, int b)*/
+/*	requires true*/
+/*	ensures (a < b | res = b) & (a >= b | res = a);*/
+/*{*/
+/*	if(a >= b)*/
+/*		return b;*/
+/*	else*/
+/*		return a;*/
+/*}*/
+
 int minim(int a, int b)
+  infer @post []
 	requires true
-	ensures (a < b | res = b) & (a >= b | res = a);
+	ensures true;
 {
 	if(a >= b)
 		return b;
@@ -47,11 +69,11 @@ int minim(int a, int b)
 }
 
 /* function to count the number of nodes in a tree */
-//relation CNT(bag a, bag b).
+relation COUNT(int a).
 int count(node2 t)
-//infer[res]
+  infer [COUNT]
   requires t::complete<h, nmin>
-  ensures t::complete<h, nmin> & res >= 0;// & CNT(S1,S2);
+  ensures t::complete<h, nmin> & COUNT(res);//res >= 0;
 {
 	int cleft, cright;
 
@@ -82,7 +104,7 @@ int height1(node2 t)
 
 relation MHGT(int a, int b).
 int min_height(node2 t)
-   infer[MHGT]
+  infer[MHGT]
   requires t::complete<h, nmin>
   ensures t::complete<h, nmin> & MHGT(res,nmin);//res = nmin;
 {
@@ -101,6 +123,13 @@ int min_height1(node2 t)
 //relation INS4(int a, int b).
 void insert(ref node2 t, int v)
 //  infer[INS3,INS4]
+//  requires t::complete<h1,nmin>
+//  case 
+//  {
+//    nmin < h1 -> ensures t'::complete<h2, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1) & INS3(h1,h2);
+//    nmin = h1 -> ensures t'::complete<h2, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1) & INS4(h1,h2);
+//    nmin > h1 -> ensures true;
+//  }
   requires t::complete<h1, nmin> & nmin < h1 // there is still place to insert
   ensures t'::complete<h2, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1) & h1=h2;//'INS1(nmin1,nmin, n) & INS3(m,n);
   requires t::complete<h1, nmin> & nmin = h1 // there is no empty place -> we need to increase the height
@@ -145,9 +174,17 @@ void insert(ref node2 t, int v)
 	}
 }
 
+relation PERFECT1(int a).
+relation PERFECT2(int b).
+relation PERFECT(int a, int b, int c).
 int is_perfect(node2 t)
+  infer [PERFECT]
   requires t::complete<h, nmin>
-  ensures t::complete<h, nmin> & (nmin != h | res = 1) & (nmin = h | res = 0);
+//  case{
+//    nmin = h -> ensures t::complete<h, nmin> & PERFECT1(res);
+//    nmin != h -> ensures t::complete<h, nmin> & PERFECT2(res);
+//  }
+  ensures t::complete<h, nmin> & PERFECT(nmin,h,res);//(nmin != h | res = 1) & (nmin = h | res = 0);
 {
   if(t == null)
     return 1;
