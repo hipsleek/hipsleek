@@ -16,10 +16,10 @@ avl<m, n> == self = null & m = 0 & n = 0
 	inv m >= 0 & n >= 0;
 
 /* function to return the height of an avl tree */
-int height(node x)
-     infer[res]
+int height1(node x)
+  infer @post []
 	requires x::avl<m, n>
-     ensures x::avl<m, n> & res = n;
+  ensures x::avl<m, n> ;//& res = n;
 {
 	if (x == null)
       return 0;
@@ -27,13 +27,18 @@ int height(node x)
       return x.height;
 }
 
+int height(node x)
+  infer @post []
+	requires x::avl<m, n>
+  ensures x::avl<m, n> & res = n;
+
 /*  function to rotate left */
 node rotate_left1(node l, node rl, node rr)
   requires l::avl<lm, ln> * rl::avl<rlm, ln> * rr::avl<rrm, ln+1>
   ensures res::avl<2+lm+rlm+rrm, 2+ln>;
 
 node rotate_left(node l, node rl, node rr)
-  infer @post [res]
+  infer @post []
   requires l::avl<lm, ln> * rl::avl<rlm, ln> * rr::avl<rrm, ln+1>
   ensures res::avl<k, ln+2>;
 /*
@@ -56,7 +61,7 @@ node rotate_right1(node ll, node lr, node r)
   ensures res::avl<2 + llm + lrm + rm, 1 + lln>;
 
 node rotate_right(node ll, node lr, node r)
-  infer[res]
+  infer @post []
   requires ll::avl<llm, lln> * lr::avl<lrm, lln - 1> * r::avl<rm, lln - 1>
   ensures res::avl<k, 1 + lln>;
 /*
@@ -75,6 +80,11 @@ k=2 + llm + lrm + rm
 int get_max(int a , int b)
   requires true
   ensures res = max(a, b);
+
+int get_max1(int a , int b)
+  infer @post []
+  requires true
+  ensures true;//res = max(a, b);
 {
 	if (a >= b)
 		return a;
@@ -89,7 +99,7 @@ node rotate_double_left1(node a, node b, node c, node d, int v1, int v2, int v3)
   ensures res::avl<3 + am + bm + cm + dm, an + 2>;
 
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer [res]
+  infer @post []
   requires a::avl<am, an> * b::avl<bm, bn> * c::avl<cm, cn> * d::avl<dm, an>
   & an = max(bn, cn) & -1 <= bn - cn <= 1
      ensures res::avl<k, an + 2>;
@@ -120,7 +130,7 @@ node rotate_double_right1(node a, node b, node c, node d, int v1, int v2, int v3
      ensures res::avl<3 + am + bm + cm + dm, 2 + an>;
 
 node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
-  infer [res]
+  infer @post []
   requires a::avl<am, an> * b::avl<bm, bn> * c::avl<cm, cn> * d::avl<dm, an>
   & an = max(bn, cn) & -1 <= cn - bn <= 1
      ensures res::avl<k, 2 + an>;
@@ -147,7 +157,7 @@ k=3 + am + bm + cm + dm
 
 /* functions to build avl trees */
 node build_avl1(node x, node y)
-  infer[res]
+  infer @post []
   requires x::avl<mx, nx1> * y::avl<my, nx1> & x != null
   ensures res::avl<k, 1 + nx>;
 /*
@@ -163,7 +173,7 @@ k=1 + mx + my
 }
 
 void build_avl2(ref node x, node y, node z)
-  infer[x]
+  infer @post []
   requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null
   ensures  x'::avl<k, ny+1>;//'k=ny+1
 //k=1 + my + mz
@@ -175,7 +185,9 @@ void build_avl2(ref node x, node y, node z)
 	x.height = y.height  + 1;
 }
 
-node node_error() requires true ensures false;
+node node_error() 
+  requires true 
+  ensures false;
 
 node insert1(node x, int a)
   requires x::avl<m, n>
@@ -467,28 +479,31 @@ void delete(ref node x, int a)
 	}
 }
 */
-//relation MRG1(int a, int b, int c).
+relation MRG1(int a, int b, int c).
+relation MRG2(int a, int b).
 node merge(node t1, node t2)
-//infer[MRG1, t1,t2]
+  infer[MRG2]
 /*requires t2::avl<s2,h2>
 case {
       t1=null -> ensures res::avl<s2,h2>;
       t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
 }*/
 case {
-      t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
-      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures res::avl<s1+s2,_> ;//& MRG1(s3,s2,s1);
+      t1=null -> requires t2::avl<s2,h2> ensures res::avl<s3,h2> & MRG2(s3,s2);
+      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures res::avl<s1+s2,_>;//res::avl<s1+s2,_> ;//& MRG1(s3,s2,s1);
 }
 /*
 s3=s2+s1
  */
 
 {
- if (t1 == null) return t2;
-    else {
-	  node tmp = insert1(t2, t1.val);
-	  node tmp1 = merge (tmp, t1.left);
-	  return merge(tmp1, t1.right);
-	  }
+  if (t1 == null){
+    return t2;
+  }
+  else {
+    node tmp = insert1(t2, t1.val);
+    node tmp1 = merge (tmp, t1.left);
+    return merge(tmp1, t1.right);
+  }
 }
 

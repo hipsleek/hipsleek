@@ -170,11 +170,10 @@ int remove_min1(ref node2 x)
   ensures x'::bst0<n-1>;//'
 
 relation DEL(int a, int b).
-//fail to compute fixpoint
 void delete(ref node2 x, int a)
-// infer[DEL]
-  requires x::bst0<n>
-  ensures x'::bst0<n1> & n1<=n;//DEL(n,n1);//& n1<=n & h1<=h;//'
+  infer[DEL]
+  requires x::bst0<n1>
+  ensures x'::bst0<n> & DEL(n,n1);//& n1<=n & h1<=h;//'
 {
 	int tmp;
 
@@ -191,7 +190,7 @@ void delete(ref node2 x, int a)
             else
               {
                 tmp = remove_min1(xright);
-                assert true;
+                //assert true;
                 xval = tmp;
               }
           }

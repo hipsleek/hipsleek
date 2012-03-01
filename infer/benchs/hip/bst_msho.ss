@@ -135,12 +135,11 @@ int remove_min1(ref node2 x)
   requires x::bst2<n,h,s, b> & x != null
   ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;//'
 
-//relation DEL(int x, int y, int z, int a, int b).
-//fail to reverify
+relation DEL(int x, int y, int z, int a).
 void delete(ref node2 x, int a)
-//infer[DEL]
+  infer[DEL]
   requires x::bst2<n,h,sm, lg>
-  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & sm <= s & l <= lg;//'DEL(sm,s,l,lg,a)
+  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & DEL(sm,s,l,lg);//sm <= s & l <= lg;//'DEL(sm,s,l,lg,a)
 {
 	int tmp;
 
@@ -169,6 +168,10 @@ void delete(ref node2 x, int a)
 			}
 		}
 	}
+  else {
+    assume sm<=s;
+    assume l<=lg;
+  }
 }
 
 /*
@@ -197,11 +200,11 @@ void traverse(node2 x)
 }
 
 //Searching
-relation SEA(int a, int b, int c).
+relation SEARCH(int a, int b, int c).
 bool search(node2 x, int a)
-//infer[SEA]
+  infer[SEARCH]
   requires x::bst2<n, h,sm, lg>
-  ensures x::bst2<n, h,sm, lg> & (res & sm<=a<=lg | !res);//'sm<=a<=lg SEA(sm,a,lg)
+  ensures x::bst2<n, h,sm, lg> & !res or x::bst2<n,h,sm,lg> & res & SEARCH(sm,a,lg);//(res & sm<=a<=lg | !res);//'sm<=a<=lg SEA(sm,a,lg)
 {
 	int tmp;
 
@@ -220,7 +223,9 @@ bool search(node2 x, int a)
       }
       return false;
 	}
-    else return false;
+  else {
+    return false;
+  }
 }
 
 /*************************************************************/

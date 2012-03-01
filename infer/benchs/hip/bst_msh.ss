@@ -22,7 +22,7 @@ dll<p, n> == self = null & n = 0
 //relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
 //infer[APP]
-   requires x::dll<_, m> * y::dll<_, n>
+  requires x::dll<_, m> * y::dll<_, n>
   ensures res::dll<r, k> & k=n+ m;//m>=0 & k>=m & k=n+m APP(k,m,n)
 {
 	node2 z;
@@ -112,11 +112,10 @@ void flatten(node2 x)
 
 /* insert a node in a bst */
 relation INS(int a, int b).
-//fail to compute fixpoint
 node2 insert(node2 x, int a)
-//infer[INS]
-  requires x::bst1<m, h>
-  ensures res::bst1<m+1, h1> & res != null & h1>=h;//INS(h,h1);
+  infer[INS]
+  requires x::bst1<m, n1>
+  ensures res::bst1<m+1, n> & res != null & INS(n,n1);//h1>=h;//INS(h,h1);
 {
 	node2 tmp;
     node2 tmp_null = null;
@@ -141,13 +140,17 @@ node2 insert(node2 x, int a)
 	} 
 }
 
+int remove_min1(ref node2 x)
+  infer[RMV_MIN]
+  requires x::bst1<sn, n> & x != null
+  ensures x'::bst1<sn-1, n1> & RMV_MIN(n,n1);//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
+
 /* delete a node from a bst */
 relation RMV_MIN(int a, int b).
-//fail to compute fixpoint
 int remove_min(ref node2 x)
-//infer[RMV_MIN]
-  requires x::bst1<n, h> & x != null
-  ensures x'::bst1<n-1, h1> & h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
+  infer[RMV_MIN]
+  requires x::bst1<sn, n> & x != null
+  ensures x'::bst1<sn-1, n1> & RMV_MIN(n,n1);//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
 {
 	int tmp, a;
 
@@ -188,8 +191,8 @@ void delete(ref node2 x, int a)
             }
             else
               {
-                tmp = remove_min(xright);
-                assert true;
+                tmp = remove_min1(xright);
+                //assert true;
                 xval = tmp;
               }
           }
