@@ -1,7 +1,6 @@
 
 Processing file "bst_msh.ss"
 Parsing bst_msh.ss ...
-WARNING : parsing problem RMV_MIN is neither a ranking function nor a relation
 Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
@@ -34,58 +33,61 @@ Checking procedure count$node2...
                   ([0<=n][0<=h]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 15::
-                              EXISTS(n_1309,
-                              h1_1310: z::bst1<n_1309,h1_1310>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              EXISTS(n_1312,
+                              h1_1313: z::bst1<n_1312,h1_1313>@M[Orig][LHSCase]@ rem br[{286,285}]&
                               (
-                              ([h=h1_1310 & 0<=h][res=n & res=n_1309 & 0<=n]))&
+                              ([h=h1_1313 & 0<=h][res=n & res=n_1312 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (h1=0 & h=0) --> CNT(h,h1),
  (h=0 & h1=0) --> CNT(h,h1),
- ((h1=h1_1257+1 & h=h_1243+1 & 0<=h_1261 & h_1261<=h_1243 & 0<=h1_1278 & 
-  h1_1278<=h1_1257 | h1=h1_1278+1 & h=h_1261+1 & 0<=h1_1257 & 
-  h1_1257<h1_1278 & 0<=h_1243 & h_1243<h_1261 | h1=h1_1278+1 & h=h_1243+1 & 
-  0<=h_1261 & h_1261<=h_1243 & 0<=h1_1257 & h1_1257<h1_1278 | h1=h1_1257+1 & 
-  h=h_1261+1 & 0<=h1_1278 & h1_1278<=h1_1257 & 0<=h_1243 & h_1243<h_1261) & 
-  CNT(h_1261,h1_1278) & CNT(h_1243,h1_1257)) --> CNT(h,h1)]
+ ((h1=h1_1260+1 & h=h_1246+1 & 0<=h_1264 & h_1264<=h_1246 & 0<=h1_1281 & 
+  h1_1281<=h1_1260 | h1=h1_1281+1 & h=h_1264+1 & 0<=h1_1260 & 
+  h1_1260<h1_1281 & 0<=h_1246 & h_1246<h_1264 | h1=h1_1281+1 & h=h_1246+1 & 
+  0<=h_1264 & h_1264<=h_1246 & 0<=h1_1260 & h1_1260<h1_1281 | h1=h1_1260+1 & 
+  h=h_1264+1 & 0<=h1_1281 & h1_1281<=h1_1260 & 0<=h_1246 & h_1246<h_1264) & 
+  CNT(h_1264,h1_1281) & CNT(h_1246,h1_1260)) --> CNT(h,h1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure count$node2 SUCCESS
 
 Checking procedure delete$node2~int... 
-!!! REL :  DEL(h,h1)
-!!! POST:  h>=0 & h1>=0
+!!! REL :  DEL(n,n1)
+!!! POST:  (n+1)>=n1 & n1>=n
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [DEL]
-              EBase exists (Expl)(Impl)[n; 
-                    h](ex)x::bst1<n,h>@M[Orig][LHSCase]@ rem br[{286,285}]&(
-                    ([0<=n][0<=h]))&{FLOW,(20,21)=__norm}
+              EBase exists (Expl)(Impl)[sn; 
+                    n1](ex)x::bst1<sn,n1>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                    (([0<=sn][0<=n1]))&{FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 40::ref [x]
-                                EXISTS(n1,
-                                h1: x'::bst1<n1,h1>@M[Orig][LHSCase]@ rem br[{286,285}]&
-                                (([0<=h1 & DEL(h,h1)][0<=n1]))&
+                                EXISTS(sn1,
+                                n: x'::bst1<sn1,n>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                                (([0<=n & DEL(n,n1)][0<=sn1]))&
                                 {FLOW,(20,21)=__norm}))
-!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; 
-                  h](ex)x::bst1<n,h>@M[Orig][LHSCase]@ rem br[{286,285}]&(
-                  ([0<=n][0<=h]))&{FLOW,(20,21)=__norm}
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sn; 
+                  n1](ex)x::bst1<sn,n1>@M[Orig][LHSCase]@ rem br[{286,285}]&(
+                  ([0<=sn][0<=n1]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 40::ref [x]
-                              EXISTS(n1_1570,
-                              h1_1571: x'::bst1<n1_1570,h1_1571>@M[Orig][LHSCase]@ rem br[{286,285}]&
-                              (([0<=h1_1571][0<=h][0<=n1_1570][0<=n]))&
+                              EXISTS(sn1_1573,
+                              n_1574: x'::bst1<sn1_1573,n_1574>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              (
+                              ([0<=n_1574 & 0<=n1 & n_1574<=n1 & (-1+
+                                 n1)<=n_1574]
+                               [0<=sn1_1573][0<=sn]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (h1=h-1 & 2<=h) --> DEL(h,h1),
- (false) --> DEL(h,h1),
- (1<=h1 & 2<=h) --> DEL(h,h1),
- ((h=h1 & 0<=h_1381 & h_1381<h1 & 0<=h1_1525 & h1_1525<h1 | h1=h1_1525+1 & 
-  h=h_1381+1 & 1<=h1_1525 & 1<=h_1381 | h1=h1_1525+1 & 0<=h_1381 & 
-  h_1381<h & h<=h1_1525 | h=h_1381+1 & 0<=h1_1525 & h1_1525<h1 & 
-  h1<=h_1381) & DEL(h_1381,h1_1525)) --> DEL(h,h1),
- ((h1=h1_1548+1 & h_1393=h-1 & 1<=h & 0<=h1_1548 | h1=h & 0<=h1_1548 & 
-  h1_1548<=(h-2) & 0<=h_1393 & h_1393<=(h-2) | h_1393=h-1 & 0<=h1_1548 & 
-  h1_1548<=(h1-2) & h1<=h | h1=h1_1548+1 & (h_1393+2)<=h & h<=(h1_1548+1) & 
-  0<=h_1393) & DEL(h_1393,h1_1548)) --> DEL(h,h1),
- (h1=0 & h=0) --> DEL(h,h1)]
+!!! NEW RELS:[ (n=n1-1 & 2<=n1) --> DEL(n,n1),
+ (false) --> DEL(n,n1),
+ (n1=n+1 & 1<=n) --> DEL(n,n1),
+ ((n1=n & 0<=n1_1384 & n1_1384<n & 0<=n_1528 & n_1528<n | n=n_1528+1 & 
+  n1=n1_1384+1 & 1<=n_1528 & 1<=n1_1384 | n=n_1528+1 & 0<=n1_1384 & 
+  n1_1384<n1 & n1<=n_1528 | n1=n1_1384+1 & 0<=n_1528 & n_1528<n & 
+  n<=n1_1384) & DEL(n_1528,n1_1384)) --> DEL(n,n1),
+ ((n=n_1551+1 & n1_1396=n1-1 & 1<=n1 & 0<=n_1551 | n=n1 & 0<=n_1551 & 
+  n_1551<=(n1-2) & 0<=n1_1396 & n1_1396<=(n1-2) | n1_1396=n1-1 & 0<=n_1551 & 
+  n_1551<=(n-2) & n<=n1 | n=n_1551+1 & (n1_1396+2)<=n1 & n1<=(n_1551+1) & 
+  0<=n1_1396) & DEL(n_1551,n1_1396)) --> DEL(n,n1),
+ (n=0 & n1=0) --> DEL(n,n1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
@@ -115,25 +117,25 @@ Checking procedure insert$node2~int...
                   ([0<=m][0<=n1]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 28::
-                              EXISTS(flted_118_1949,
-                              n_1950: res::bst1<flted_118_1949,n_1950>@M[Orig][LHSCase]@ rem br[{285}]&
+                              EXISTS(flted_118_1952,
+                              n_1953: res::bst1<flted_118_1952,n_1953>@M[Orig][LHSCase]@ rem br[{285}]&
                               (
-                              ([0!=n_1950 & 0<=n1 & n1<=n_1950 & (-1+
-                                 n_1950)<=n1 & 0<=n_1950]
+                              ([0!=n_1953 & 0<=n1 & n1<=n_1953 & (-1+
+                                 n_1953)<=n1 & 0<=n_1953]
                                [null!=res]
-                               [0!=flted_118_1949 & 0<=m & -1+
-                                 flted_118_1949=m & 0<=flted_118_1949]
+                               [0!=flted_118_1952 & 0<=m & -1+
+                                 flted_118_1952=m & 0<=flted_118_1952]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n1=0 & n=1) --> INS(n,n1),
- ((n=n_1858+1 & n1_1838=n1-1 & 1<=n1 & 1<=n_1858 | n=n1 & 1<=n_1858 & 
-  n_1858<=(n1-2) & 0<=n1_1838 & n1_1838<=(n1-2) | n1_1838=n1-1 & 1<=n_1858 & 
-  n_1858<=(n-2) & n<=n1 | n=n_1858+1 & (n1_1838+2)<=n1 & n1<=(n_1858+1) & 
-  0<=n1_1838) & INS(n_1858,n1_1838)) --> INS(n,n1),
- ((n1=n & 0<=n1_1865 & n1_1865<n & 1<=n_1885 & n_1885<n | n=n_1885+1 & 
-  n1=n1_1865+1 & 1<=n_1885 & 1<=n1_1865 | n=n_1885+1 & 0<=n1_1865 & 
-  n1_1865<n1 & n1<=n_1885 | n1=n1_1865+1 & 1<=n_1885 & n_1885<n & 
-  n<=n1_1865) & INS(n_1885,n1_1865)) --> INS(n,n1)]
+ ((n=n_1861+1 & n1_1841=n1-1 & 1<=n1 & 1<=n_1861 | n=n1 & 1<=n_1861 & 
+  n_1861<=(n1-2) & 0<=n1_1841 & n1_1841<=(n1-2) | n1_1841=n1-1 & 1<=n_1861 & 
+  n_1861<=(n-2) & n<=n1 | n=n_1861+1 & (n1_1841+2)<=n1 & n1<=(n_1861+1) & 
+  0<=n1_1841) & INS(n_1861,n1_1841)) --> INS(n,n1),
+ ((n1=n & 0<=n1_1868 & n1_1868<n & 1<=n_1888 & n_1888<n | n=n_1888+1 & 
+  n1=n1_1868+1 & 1<=n_1888 & 1<=n1_1868 | n=n_1888+1 & 0<=n1_1868 & 
+  n1_1868<n1 & n1<=n_1888 | n1=n1_1868+1 & 1<=n_1888 & n_1888<n & 
+  n<=n1_1868) & INS(n_1888,n1_1868)) --> INS(n,n1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure insert$node2~int SUCCESS
@@ -149,10 +151,10 @@ Checking procedure remove_min$node2...
                     {FLOW,(20,21)=__norm}
                       EBase true&MayLoop&{FLOW,(1,23)=__flow}
                               EAssume 35::ref [x]
-                                EXISTS(flted_153_75,
-                                n1: x'::bst1<flted_153_75,n1>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                                EXISTS(flted_152_75,
+                                n1: x'::bst1<flted_152_75,n1>@M[Orig][LHSCase]@ rem br[{286,285}]&
                                 (
-                                ([0<=flted_153_75 & 1+flted_153_75=sn]
+                                ([0<=flted_152_75 & 1+flted_152_75=sn]
                                  [0<=n1 & RMV_MIN(n,n1)]))&
                                 {FLOW,(20,21)=__norm}))
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sn; 
@@ -160,20 +162,20 @@ Checking procedure remove_min$node2...
                   ([x!=null][1<=sn][1<=n]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 35::ref [x]
-                              EXISTS(flted_153_2044,
-                              n1_2045: x'::bst1<flted_153_2044,n1_2045>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              EXISTS(flted_152_2047,
+                              n1_2048: x'::bst1<flted_152_2047,n1_2048>@M[Orig][LHSCase]@ rem br[{286,285}]&
                               (
-                              ([0<=n1_2045 & 0<=n & n1_2045<=n & (-1+
-                                 n)<=n1_2045]
-                               [0<=flted_153_2044 & 0<=sn & 1+
-                                 flted_153_2044=sn]
+                              ([0<=n1_2048 & 0<=n & n1_2048<=n & (-1+
+                                 n)<=n1_2048]
+                               [0<=flted_152_2047 & 0<=sn & 1+
+                                 flted_152_2047=sn]
                                ))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (n=n1+1 & 0<=n1) --> RMV_MIN(n,n1),
- ((n1=n1_2025+1 & n_2002=n-1 & 2<=n & 0<=n1_2025 | n1=n & 0<=n1_2025 & 
-  n1_2025<=(n-2) & 1<=n_2002 & n_2002<=(n-2) | n_2002=n-1 & 0<=n1_2025 & 
-  n1_2025<=(n1-2) & n1<=n | n1=n1_2025+1 & (n_2002+2)<=n & n<=(n1_2025+1) & 
-  1<=n_2002) & RMV_MIN(n_2002,n1_2025)) --> RMV_MIN(n,n1)]
+ ((n1=n1_2028+1 & n_2005=n-1 & 2<=n & 0<=n1_2028 | n1=n & 0<=n1_2028 & 
+  n1_2028<=(n-2) & 1<=n_2005 & n_2005<=(n-2) | n_2005=n-1 & 0<=n1_2028 & 
+  n1_2028<=(n1-2) & n1<=n | n1=n1_2028+1 & (n_2005+2)<=n & n<=(n1_2028+1) & 
+  1<=n_2005) & RMV_MIN(n_2005,n1_2028)) --> RMV_MIN(n,n1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure remove_min$node2 SUCCESS
@@ -199,22 +201,22 @@ Checking procedure search$node2~int...
                   ([0<=n][0<=h]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 50::
-                              EXISTS(n_2199,
-                              h1_2200: x::bst1<n_2199,h1_2200>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              EXISTS(n_2202,
+                              h1_2203: x::bst1<n_2202,h1_2203>@M[Orig][LHSCase]@ rem br[{286,285}]&
                               (
-                              ([h=h1_2200 & 0<=h][n=n_2199 & 0<=n]
+                              ([h=h1_2203 & 0<=h][n=n_2202 & 0<=n]
                                [res | !(res)]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (h1=0 & h=0) --> SEA(h,h1),
  (h1=h & 1<=h) --> SEA(h,h1),
- ((h=h1 & 0<=h_2097 & h_2097<h1 & 0<=h1_2153 & h1_2153<h1 | h1=h1_2153+1 & 
-  h=h_2097+1 & 1<=h_2097 & 1<=h1_2153 | h1=h1_2153+1 & 0<=h_2097 & 
-  h_2097<h & h<=h1_2153 | h=h_2097+1 & 0<=h1_2153 & h1_2153<h1 & 
-  h1<=h_2097) & SEA(h_2097,h1_2153)) --> SEA(h,h1),
- ((h1=h1_2174+1 & h_2110=h-1 & 1<=h & 0<=h1_2174 | h1=h & 0<=h1_2174 & 
-  h1_2174<=(h-2) & 0<=h_2110 & h_2110<=(h-2) | h_2110=h-1 & 0<=h1_2174 & 
-  h1_2174<=(h1-2) & h1<=h | h1=h1_2174+1 & (h_2110+2)<=h & h<=(h1_2174+1) & 
-  0<=h_2110) & SEA(h_2110,h1_2174)) --> SEA(h,h1),
+ ((h=h1 & 0<=h_2100 & h_2100<h1 & 0<=h1_2156 & h1_2156<h1 | h1=h1_2156+1 & 
+  h=h_2100+1 & 1<=h_2100 & 1<=h1_2156 | h1=h1_2156+1 & 0<=h_2100 & 
+  h_2100<h & h<=h1_2156 | h=h_2100+1 & 0<=h1_2156 & h1_2156<h1 & 
+  h1<=h_2100) & SEA(h_2100,h1_2156)) --> SEA(h,h1),
+ ((h1=h1_2177+1 & h_2113=h-1 & 1<=h & 0<=h1_2177 | h1=h & 0<=h1_2177 & 
+  h1_2177<=(h-2) & 0<=h_2113 & h_2113<=(h-2) | h_2113=h-1 & 0<=h1_2177 & 
+  h1_2177<=(h1-2) & h1<=h | h1=h1_2177+1 & (h_2113+2)<=h & h<=(h1_2177+1) & 
+  0<=h_2113) & SEA(h_2113,h1_2177)) --> SEA(h,h1),
  (h=0 & h1=0) --> SEA(h,h1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -239,17 +241,17 @@ Checking procedure traverse$node2...
                   ([0<=n][0<=h]))&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 48::
-                              EXISTS(n_2284,
-                              h1_2285: x::bst1<n_2284,h1_2285>@M[Orig][LHSCase]@ rem br[{286,285}]&
-                              (([h=h1_2285 & 0<=h][n=n_2284 & 0<=n]))&
+                              EXISTS(n_2287,
+                              h1_2288: x::bst1<n_2287,h1_2288>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              (([h=h1_2288 & 0<=h][n=n_2287 & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (h1=0 & h=0) --> TRAV(h,h1),
- ((h1=h1_2252+1 & h=h_2239+1 & 0<=h_2248 & h_2248<=h_2239 & 0<=h1_2259 & 
-  h1_2259<=h1_2252 | h1=h1_2259+1 & h=h_2248+1 & 0<=h1_2252 & 
-  h1_2252<h1_2259 & 0<=h_2239 & h_2239<h_2248 | h1=h1_2259+1 & h=h_2239+1 & 
-  0<=h_2248 & h_2248<=h_2239 & 0<=h1_2252 & h1_2252<h1_2259 | h1=h1_2252+1 & 
-  h=h_2248+1 & 0<=h1_2259 & h1_2259<=h1_2252 & 0<=h_2239 & h_2239<h_2248) & 
-  TRAV(h_2239,h1_2252) & TRAV(h_2248,h1_2259)) --> TRAV(h,h1),
+ ((h1=h1_2255+1 & h=h_2242+1 & 0<=h_2251 & h_2251<=h_2242 & 0<=h1_2262 & 
+  h1_2262<=h1_2255 | h1=h1_2262+1 & h=h_2251+1 & 0<=h1_2255 & 
+  h1_2255<h1_2262 & 0<=h_2242 & h_2242<h_2251 | h1=h1_2262+1 & h=h_2242+1 & 
+  0<=h_2251 & h_2251<=h_2242 & 0<=h1_2255 & h1_2255<h1_2262 | h1=h1_2255+1 & 
+  h=h_2251+1 & 0<=h1_2262 & h1_2262<=h1_2255 & 0<=h_2242 & h_2242<h_2251) & 
+  TRAV(h_2242,h1_2255) & TRAV(h_2251,h1_2262)) --> TRAV(h,h1),
  (h=0 & h1=0) --> TRAV(h,h1)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -257,9 +259,9 @@ Procedure traverse$node2 SUCCESS
 
 Termination checking result:
 
-Stop Omega... 1578 invocations 
+Stop Omega... 1588 invocations 
 0 false contexts at: ()
 
 Total verification time: 1.12 second(s)
-	Time spent in main process: 0.43 second(s)
-	Time spent in child processes: 0.69 second(s)
+	Time spent in main process: 0.42 second(s)
+	Time spent in child processes: 0.7 second(s)

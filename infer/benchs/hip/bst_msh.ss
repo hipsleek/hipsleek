@@ -141,9 +141,8 @@ node2 insert(node2 x, int a)
 }
 
 int remove_min1(ref node2 x)
-  infer[RMV_MIN]
   requires x::bst1<sn, n> & x != null
-  ensures x'::bst1<sn-1, n1> & RMV_MIN(n,n1);//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
+  ensures x'::bst1<sn-1, n1> & n1<=n & n1+1>=n;//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
 
 /* delete a node from a bst */
 relation RMV_MIN(int a, int b).
@@ -174,8 +173,8 @@ int remove_min(ref node2 x)
 relation DEL(int a, int b).
 void delete(ref node2 x, int a)
   infer[DEL]
-  requires x::bst1<n, h>
-  ensures x'::bst1<n1, h1> & DEL(h,h1);//& n1<=n & h1<=h;//'
+  requires x::bst1<sn, n1>
+  ensures x'::bst1<sn1, n> & DEL(n,n1);//& n1<=n & h1<=h;//'
 {
 	int tmp;
 
