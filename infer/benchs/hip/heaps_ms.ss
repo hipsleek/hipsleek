@@ -1,5 +1,6 @@
 /* priority queues */
-
+//this file is OK. change with care
+//shape --> memory + size
 data node {
 	int val;
 	int nleft;
@@ -17,11 +18,10 @@ pq2<n> == self = null & n = 0
 
 /* function to insert an element in a priority queue */
 relation INS(int a, int b).
-//fail to compute fixpoint
 node insert(node t, int v)
-  infer[INS]
+  infer[res,t,INS]
   requires t::pq2<n> & v >= 0
-  ensures res::pq2<n1> & n1 = n+1;//INS(n1,n)
+  ensures res::pq2<n1> & INS(n1,n);//n1 = n+1;//INS(n1,n)
 {
 	node tmp, tmp_null = null;
 	int tmpv;
@@ -73,14 +73,12 @@ node insert(node t, int v)
 /* function to delete a leaf */
 int deleteoneel1(ref node t)
   requires t::pq2<n> & n > 0
-  ensures t'::pq2<n-1> & 0 <= res <= mx & mx2 <= mx;//res>=0;//& 0 <= res <= mx & mx2 <= mx;//'
+  ensures t'::pq2<n-1> & 0 <= res;//'
 
-//fail to compute fixpoint
-relation DELONE1(int a, int b).
 int deleteoneel(ref node t)
-//  infer @post [n1,n,res]
-  requires t::pq2<n> & n > 0
-  ensures t'::pq2<n1> & n1=n-1 & res>=0;//& DELONE1(n,n1);//'n1=n-1 & res>=0
+  infer @post [t]
+  requires t::pq2<n> //& n > 0 & t!=null
+  ensures t'::pq2<n1> ;//'& n1=n-1 & res>=0 ;//'n1=n-1 & res>=0
 {
 	int v;
 
@@ -95,7 +93,7 @@ int deleteoneel(ref node t)
 		int tmp;
 
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
-			tmp = deleteone(tnleft, tnright, tleft, tright);
+			tmp = deleteone1(tnleft, tnright, tleft, tright);
 		}
 
 		return tmp;
@@ -106,14 +104,11 @@ int deleteoneel(ref node t)
 int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   requires l::pq2<m1> * r::pq2<m2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
   ensures l'::pq2<m1'> * r'::pq2<m2'> & res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
-//m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;
-//DELONE2(m1,m1',m2,m2') & //m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1
 
-//relation DELONE2(int a, int b, int c, int d).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
-//infer[DELONE2]
+  infer @post [l,r]
   requires l::pq2<m1> * r::pq2<m2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq2<m1'> * r'::pq2<m2'> & res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
+  ensures l'::pq2<m1'> * r'::pq2<m2'> ;//& res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
 //m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;
 //DELONE2(m1,m1',m2,m2') & //m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1
 {
@@ -133,11 +128,11 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 void ripple1(ref int d, int v, int m1, int m2, node l, node r)
 	requires l::pq2<m1> * r::pq2<m2> & 0 <= d & 0 <= m1 - m2 <= 1
 	ensures l::pq2<m1> * r::pq2<m2> & d'>=0;//'
-//fail to compute the fixpoint
+
 relation RIP(int a).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-  infer [RIP]
-  requires l::pq2<m1> * r::pq2<m2> &  0 <= v <= d & 0 <= m1 - m2 <= 1 //RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
+  infer [RIP,m1,m2]
+  requires l::pq2<m1> * r::pq2<m2> &  0 <= v <= d //& 0 <= m1 - m2 <= 1 //RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
   ensures l::pq2<m1> * r::pq2<m2>  & RIP(d);//'& d'>=0
 {
 	if (m1 == 0)
@@ -188,11 +183,10 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 }
 
 /* function to delete the root of a heap tree */
-//can not reverify
 int deletemax(ref node t)
-//infer[n1]
-  requires t::pq2<n> & n > 0 & t!=null
-  ensures t'::pq2<n1> & n1=n-1 ;//'& n1=n-1
+  infer[t]
+  requires t::pq2<n> //& n > 0 & t!=null
+  ensures t'::pq2<n1> ;//'& n1=n-1
 
 {
 	int v, tmp;

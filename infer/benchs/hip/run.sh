@@ -10,7 +10,7 @@
 ../../../hip complete_mh.ss --eps > res/complete_mh.res
 ../../../hip complete_msh.ss --eps > res/complete_msh.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
-../../../hip heaps_m.ss --eps > res/heaps_m.res
+#../../../hip heaps_m.ss --eps > res/heaps_m.res
 ../../../hip heaps_ms.ss --eps > res/heaps_ms.res
 ../../../hip heaps_msmax.ss --eps > res/heaps_msmax.res
 #../../../hip avl_m.ss --eps > res/avl_m.res

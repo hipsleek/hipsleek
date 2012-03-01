@@ -20,9 +20,9 @@ pq1<> == self = null
 node insert(ref node t, int v)
   infer [res,t]
   requires t::pq1<> & v >= 0
-  ensures res::pq1<>;//'res!=null res=t & t!=null
+  ensures res::pq1<>;//'res!=null res=t
 {
-	node tmp, tmp_null = null; 
+	node tmp, tmp_null = null;
 	int tmpv;
 
 	if (t == null)
