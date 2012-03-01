@@ -110,6 +110,8 @@ let common_arguments = [
 	"Log all formulae sent to Mona in file allinput.mona");
 	("--log-redlog", Arg.Set Redlog.is_log_all,
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
+  ("--log-spass", Arg.Set Spass.log_all_flag,
+    "Log all formulae sent to SPASS in file allinput.spass");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
@@ -146,7 +148,7 @@ let common_arguments = [
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
-	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.\n\tspass: SPASS");
 	("-perm", Arg.Symbol (["fperm"; "cperm"; "none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,

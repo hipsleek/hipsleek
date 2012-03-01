@@ -1,0 +1,48 @@
+data node { int val ; node next }.
+
+pred lseg<p> == self = p 
+	or self::node<next = r> * r::lseg<p> & self!=p
+	inv true.
+
+/*
+checkentail x=null |- x::lseg<p>.
+print residue.
+
+checkentail x::node<_, null> |- x::lseg<p>.
+print residue.
+
+
+checkentail x::node<_, p> |- x::lseg<p>.
+print residue.
+
+
+checkentail x::node<_, p> & x!=p |- x::lseg<p>.
+print residue.
+
+checkentail x::node<_, p> * p::node<_,_> |- x::lseg<p>.
+print residue.
+
+
+checkentail x::node<_, p> * p::lseg<null> |- x::lseg<null>.
+print residue.
+
+
+// q is existential
+checkentail x::node<_, p> * p::lseg<null> |- (exists q: x::lseg<q> & q!=null).
+print residue.
+
+// q is implicit existential for instantiation
+checkentail x::node<_, p> * p::lseg<null> |- x::lseg<q> & q!=null.
+print residue.
+
+// q is explicit existential for instantiation
+checkentail x::node<_, p> * p::lseg<null> |- [q] x::lseg<q> & q!=null.
+print residue.
+
+*/
+
+
+//checkentail xxx::node<_, p> * yyy::node<_,_> & zzz=xxx |- xxx!=zzz.
+checkentail xxx::node<_, p> * yyy::node<_,_> & zzz=xxx |- xxx!=yyy.
+print residue.
+
