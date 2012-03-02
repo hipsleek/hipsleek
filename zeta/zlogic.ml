@@ -39,22 +39,8 @@ type theorem = {
 let get_all_axioms st =
 	Hashtbl.fold (fun _ y axms -> List.append y.axioms axms) st []
 
-let check st t = 
-	let _ = print_string ("[check]: {{{\n" ^ (string_of_term  t) ^ "\n}}} ") in
-	let ctx = Z3.mk_context_x [|
-		("SOFT_TIMEOUT", "5000");
-		("PULL_NESTED_QUANTIFIERS", "true");
-		("PROOF_MODE","2")|] in
-	(* assert constraints *)
-	let _ = assert_all_axioms ctx st in
-	let t = mkUnaryTerm Neg t in
-	let _ = Z3.assert_cnstr ctx (z3ast ctx t) in
-	(* check and get proof *)
-	let res = Z3.check ctx in
-	let res = negate_triary (z3lbool_to_triary_bool res) in
-	let _ = print_endline (string_of_triary_bool res) in
-	let _ = Z3.del_context(ctx) in
-		res
+let check st t =
+	fst (Zexprf.Z3.derive (t :: (get_all_axioms st)))
 
 let get_top_ind st t = match t with
 	| FunApp (GFunc, fn::fa) -> begin

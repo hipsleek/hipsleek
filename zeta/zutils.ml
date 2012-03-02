@@ -82,3 +82,12 @@ let negate_triary b = match b with
 	| True -> False
 	| False -> True
 	| Unknown -> Unknown
+
+(* File I/O utilities *)
+
+let string_of_file fname =
+	let chn = open_in fname in
+	let len = in_channel_length chn in
+	let str = String.make len ' ' in
+	let _ = really_input chn str 0 len in
+		(close_in chn; str)

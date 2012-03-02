@@ -5,6 +5,10 @@
 
 open Zlogic
 
+let print_help_msg = ref false
+
+let print_version = ref false
+
 let usage = "zeta (source files)+"
 	
 let input_files = ref ([] : string list)
@@ -20,22 +24,23 @@ let parse_file file_name =
 		close_in input_channel;
 		defs
 	with End_of_file -> exit 0
-	
-let string_of_file fname =
-	let chn = open_in fname in
-	let len = in_channel_length chn in
-	let str = String.make len ' ' in
-	let _ = really_input chn str 0 len in
-		(close_in chn; str)
 
+(**
+ * Command line options as in Arg.parse
+ *)
+let command_line_arg_speclist = [
+	("-z3inp", Arg.Set Zexprf.Z3.print_z3_input, "Print Z3 input generated.");
+	("-h", Arg.Set print_help_msg, "Print the help message.");
+	("-v", Arg.Set print_version, "Print zeta version.")]
+	
 let main () =
-	let _ = Arg.parse [] add_source_file usage in
+	let _ = Arg.parse command_line_arg_speclist add_source_file usage in
 	let _ = Z3.toggle_warning_messages false in
 	let _ = print_endline ("Source files : {" ^ (String.concat ", " !input_files) ^ "}") in
 	let defs = List.map parse_file !input_files in
 	let output = List.map process_definitions defs in
 	let output = List.flatten output in
-	let html_template = string_of_file "template.html" in
+	let html_template = Zutils.string_of_file "template.html" in
 	let outrexp = Str.regexp_string "$OUTPUT_CONTENT$" in
 	let output = Str.global_replace outrexp (String.concat "" output) html_template in
 	let chn = open_out "zeta.html" in

@@ -44,6 +44,8 @@ module type Exprf =
 module Z3 =
 	struct
 		
+		let print_z3_input = ref false
+		
 		(**
 		 * Convert sort to Z3 sort
 		 *)
@@ -135,8 +137,32 @@ module Z3 =
 				| Z3.L_TRUE -> True
 				| Z3.L_UNDEF -> Unknown
 
-		let derive ts =
-			(True, [])
+		let derive ts = match ts with
+			| [] -> (True, []) (* \emptyset |- Top *)
+			| h::rs ->
+				let _ = if (!print_z3_input) then
+					print_endline ("[Zexprf.Z3.derive]: input = {{{\n" ^ 
+						(string_of_term h) ^ "\n}}}") in
+				let ctx = Z3.mk_context_x [|
+					("SOFT_TIMEOUT", "5000");
+					("PULL_NESTED_QUANTIFIERS", "true");
+					("PROOF_MODE","2") |] in
+				(* assert constraints *)
+				let z3hyps = List.map (z3ast ctx) rs in
+				let z3conc = z3ast ctx (mkUnaryTerm Neg h) in
+				let z3asserts = z3conc :: z3hyps in
+				let _ = List.map (Z3.assert_cnstr ctx) z3asserts in
+				let _ = if (!print_z3_input) then
+					print_endline ("[Zexprf.Z3.derive]: Generated Z3 input = {{{\n" ^ 
+						(String.concat "\n" (List.map (Z3.ast_to_string ctx) z3asserts)) ^ "}}}") in
+				(* check and get proof *)
+				let res = Z3.check ctx in
+				let res = negate_triary (z3lbool_to_triary_bool res) in
+				let _ = Z3.del_context(ctx) in
+				let _ = if (!print_z3_input) then
+					print_endline ("[Zexprf.Z3.derive]: output = " ^ (string_of_triary_bool res)) in
+				(* currently, we do not parse the proof from Z3 *)
+					(res, [])
 		
 	end
 
@@ -158,6 +184,6 @@ module Intel =
 
 	end
 	
-let derive prv t = match prv with
+(*let derive prv t = match prv with
 	| Z3 -> Zexprf.Z3.derive t
-	| Reduce -> failwith "[Zexprf.derive] : Reduce is currently unsupported."
+	| Reduce -> failwith "[Zexprf.derive] : Reduce is currently unsupported."*)
