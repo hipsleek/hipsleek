@@ -7,7 +7,7 @@
 ../../../hip dll_ms.ss --eps > res/dll_ms.res
 ../../../hip dll_size.ss --eps > res/dll_size.res
 ../../../hip dll_msb.ss -tp mona --eps > res/dll_msb.res
-../../../hip complete_mh.ss --eps > res/complete_mh.res
+../../../hip complete_m.ss --eps > res/complete_m.res
 ../../../hip complete_msh.ss --eps > res/complete_msh.res
 ../../../hip complete_mshb.ss -tp mona --eps > res/complete_mshb.res
 #../../../hip heaps_m.ss --eps > res/heaps_m.res
