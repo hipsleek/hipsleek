@@ -272,7 +272,7 @@ void insert(node x, int a)
   else 
     insert(x.next, a);
 }
-
+/*
 /* delete a node from a doubly linked list */
 // FAIL
 relation DEL(bag a, bag b).
@@ -299,7 +299,7 @@ void delete( node x, int a)
 		delete(x.next, a-1);
 	}
 }
-/*
+*/
 /* function to delete node val = a in a doubly linked list */
 // FAIL
 relation DEL2(int a, bag b, bag c).
@@ -328,7 +328,7 @@ node delete2(ref node x, int a)
     }
 	}
 }
-*/
+
 
 /* function to create a doubly linked list with a nodes */
 node create_list1(int n, int v)

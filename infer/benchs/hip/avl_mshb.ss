@@ -9,11 +9,7 @@ data node {
 }
 
 /* view for avl trees */
-avl<m, n> == self = null & m = 0 & n = 0 
-	or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & 
-        n2<=n1+1 & n1<=n2+1 & n = max(n1, n2) + 1 
-	inv m >= 0 & n >= 0;
-                                              // memory+height+size --> balance
+// memory+height+size --> balance
 avl2<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
   or self::node<_, n, p, q> * p::avl2<m1, n1, _> * q::avl2<m2, n2, _>
 		& m = 1+m1+m2 & n=1+max(n1, n2)
@@ -272,7 +268,7 @@ case {
               if (height1(k1.left) > height1(k1.right))
 				{//SRR
                   x.left = k1.right;
-                  h = get_max(height1(k1.right), height(x.right));
+                  h = get_max(height1(k1.right), height1(x.right));
                   k1.right = x;
                   h = h + 1;
                   x.height = h;
