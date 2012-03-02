@@ -709,7 +709,8 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
       let args = CP.fv fml in (* var on lhs *)
       let quan_var = CP.diff_svl args iv in
       let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
-      let quan_var = quan_var@vars_overlap in
+      (* vars overlap do not work - see infer/imm/t3a.slk *)
+      let quan_var = quan_var(* @vars_overlap *) in
       let is_bag_cnt = TP.is_bag_constraint fml in
       let new_p,new_p_ass = 
         if is_bag_cnt then           
@@ -959,7 +960,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr_p = !CP.print_formula in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) (fun l -> (string_of_int (List.length l))) in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-      Debug.no_4 "infer_pure_m" 
+      Debug.to_4 "infer_pure_m" 
           (add_str "estate " pr0) 
           (add_str "lhs xpure " pr1) 
           (add_str "lhs xpure0 " pr1)

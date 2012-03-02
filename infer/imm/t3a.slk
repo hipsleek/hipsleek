@@ -17,6 +17,8 @@ print residue.
 infer [a,c] a>0 |- c=a & a>0.
 print residue.
 
+infer [a,c] true |- c=a & a>0.
+print residue.
 
 
 
