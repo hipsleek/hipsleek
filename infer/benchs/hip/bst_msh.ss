@@ -73,7 +73,7 @@ node2 appendC(node2 x, node2 y)
 /* function to count the number of nodes in a tree */
 relation CNT(int a, int b).
 int count(node2 z)
-  infer[res,CNT]
+  infer[CNT]
   requires z::bst1<n, h>
   ensures  z::bst1<n, h1> & CNT(h,h1) & res = n;//h1=h;
 {
