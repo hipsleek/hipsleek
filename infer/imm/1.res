@@ -30,32 +30,32 @@ Entail  (7): Valid.
 
 Entail  (8): Valid. 
 
-<1>EXISTS(flted_7_97: b::ll<flted_7_97>@M[Orig]&flted_7_97+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_95: b::ll<flted_9_95>@M[Orig]&flted_9_95+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [x!=null]
 
 Entail  (9): Valid. 
 
-<1>EXISTS(flted_7_116: b::ll<flted_7_116>@I[Orig]&flted_7_116+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_114: b::ll<flted_9_114>@I[Orig]&flted_9_114+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [x!=null]
 
 Entail  (10): Valid. 
 
-<1>EXISTS(flted_7_135: b::ll<flted_7_135>@I[Orig]&flted_7_135+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_133: b::ll<flted_9_133>@I[Orig]&flted_9_133+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (11): Valid. 
 
-<1>EXISTS(flted_7_154: b::ll<flted_7_154>@M[Orig]&flted_7_154+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_152: b::ll<flted_9_152>@M[Orig]&flted_9_152+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (12): Valid. 
 
-<1>EXISTS(flted_7_174: x::node<a,b>@M[Orig] * b::ll<flted_7_174>@M[Orig]&flted_7_174+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_172: x::node<a,b>@M[Orig] * b::ll<flted_9_172>@M[Orig]&flted_9_172+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0]
 
 Entail  (13): Valid. 
 
-<1>EXISTS(flted_7_197,flted_7_216: x::node<a,b>@L[Orig] * b::node<Anon_12,Anon_13>@L[Orig] * Anon_13::ll<flted_7_216>@L[Orig]&flted_7_216+1=flted_7_197 & flted_7_197+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_195,flted_9_214: x::node<a,b>@L[Orig] * b::node<Anon_12,Anon_13>@L[Orig] * Anon_13::ll<flted_9_214>@L[Orig]&flted_9_214+1=flted_9_195 & flted_9_195+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [n!=0; n!=1]
 
 Entail  (14): Fail.(may) cause:lor[911 : mismatched annotation,valid]
@@ -63,18 +63,14 @@ Entail  (14): Fail.(may) cause:lor[911 : mismatched annotation,valid]
 
 Entail  (15): Valid. 
 
-<1>EXISTS(flted_7_280,flted_7_299: x::node<a,b>@L[Orig] * b::node<Anon_16,Anon_17>@L[Orig] * Anon_17::ll<flted_7_299>@L[Orig]&flted_7_299+1=flted_7_280 & flted_7_280+1=n & 1<n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_278,flted_9_297: x::node<a,b>@L[Orig] * b::node<Anon_16,Anon_17>@L[Orig] * Anon_17::ll<flted_9_297>@L[Orig]&flted_9_297+1=flted_9_278 & flted_9_278+1=n & 1<n&{FLOW,(17,18)=__norm})
 
 Entail  (16): Fail.(must) cause:911 : mismatched annotation
 
-<1>EXISTS(flted_7_323,q_343,flted_7_341: Hole[326] * q_343::ll<flted_7_341>@L[Orig]&flted_7_341+1=flted_7_323 & flted_7_323+1=n & 1<n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_9_321,q_341,flted_9_339: Hole[324] * q_341::ll<flted_9_339>@L[Orig]&flted_9_339+1=flted_9_321 & flted_9_321+1=n & 1<n&{FLOW,(17,18)=__norm})
 
-Entail  (17): Valid. 
+Entail  (17): Fail.(must) cause:911 : mismatched annotation
 
-<1>EXISTS(flted_7_364,flted_7_383: x::node<a,b>@L[Orig] * b::node<Anon_20,Anon_21>@L[Orig] * Anon_21::ll<flted_7_383>@L[Orig]&flted_7_383+1=flted_7_364 & flted_7_364+1=n & 1<n&{FLOW,(17,18)=__norm})
+<1>EXISTS(q_363,flted_9_361: q_363::ll<flted_9_361>@L[Orig]&flted_9_361+1=n & 1<n&{FLOW,(17,18)=__norm})
 
-Entail  (18): Fail.(must) cause:911 : mismatched annotation
-
-<1>EXISTS(q_408,flted_7_406: q_408::ll<flted_7_406>@L[Orig]&flted_7_406+1=n & 1<n&{FLOW,(17,18)=__norm})
-
-Stop Omega... 48 invocations 
+Stop Omega... 45 invocations 

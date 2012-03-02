@@ -20,8 +20,15 @@ Entail (5): Valid.
 
 <1>true&v<:@M&{FLOW,(17,18)=__norm}
 
-Entail (6): Valid. 
+Entail (6): Fail.(may) cause:(failure_code=213)  v<:@L |-  v=@L (may-bug).
+
+
+Entail (7): Valid. 
 
 <1>false&false&{FLOW,(17,18)=__norm}
 
-Stop Omega... 9 invocations 
+Entail (8): Valid. 
+
+<1>true&v1=@M & v2=@I&{FLOW,(17,18)=__norm}
+
+Stop Omega... 16 invocations 
