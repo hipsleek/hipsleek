@@ -1069,9 +1069,9 @@ let tp_is_sat f sat_no do_cache =
   Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no do_cache) f
 
-let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
+(* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f

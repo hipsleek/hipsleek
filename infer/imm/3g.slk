@@ -15,6 +15,10 @@ infer [v1] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
 print residue.
 
 // (3)
+/*
+<1>true&a=Anon_16 & b=q & v1<:v2 & Anon_18=Anon_17 & Anon_19=r & v2<=1&{FLOW,(17,18)=__norm}
+inferred pure: [v2<=1]
+*/
 infer [v1,v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
 print residue.
 

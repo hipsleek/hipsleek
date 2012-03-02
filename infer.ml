@@ -722,13 +722,19 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
            (TP.simplify_raw (CP.mkExists quan_var new_p None pos), mkFalse no_pos)
         else
           let lhs_xpure = CP.drop_rel_formula lhs_xpure in
+          let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
+          let vrs1 = CP.fv lhs_xpure in
+          let vrs2 = CP.fv rhs_xpure in
+          let vrs = CP.remove_dups_svl (vrs1@vrs2) in
+          let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) (vrs) in 
+          let lhs_xpure = Cpure.add_ann_constraints imm_vrs lhs_xpure in
+          let _ = DD.trace_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure pos  in
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
             (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
           let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
           let new_p_for_assume = new_p in
           let _ = DD.trace_hprint (add_str "new_p_assume: " !CP.print_formula) new_p pos in
           let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in
-          let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
           let _ = DD.trace_hprint (add_str "rhs_xpure: " !CP.print_formula) rhs_xpure pos  in
           let _ = DD.trace_hprint (add_str "fml2: " !CP.print_formula) fml2 pos in
           let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p2 pos in

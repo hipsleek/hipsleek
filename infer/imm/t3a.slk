@@ -8,25 +8,15 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 
-infer [a] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
-print residue.
-
 infer [a,c] x::node<c,_> |- x::node<a,b> & a>0.
 print residue.
 
 infer [a,c] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
 print residue.
 
-infer [n,a] x::ll<n> |- x::node<a,b> & a>0.
+infer [a,c] a>0 |- c=a & a>0.
 print residue.
 
-infer [n,a] x::ll<n> & a>0 |- x::node<a,b> & a>0.
-print residue.
-
-
-/*
-Entail  (1): Fail.(may) cause:(failure_code=213)  true |-  Anon_46=a;  true |-  0<a (may-bug).
-*/
 
 
 
