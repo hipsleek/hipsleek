@@ -1032,6 +1032,9 @@ sub log_one_line_of_timings{
  }
 }
 
+# string-pattern for collecting hip answer after the verification of a procedure:
+#   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be 
+#                                                  verified, and RESULT can be either SUCCESS or FAIL
 sub hip_process_file {
     foreach $param (@param_list)
     {
@@ -1061,7 +1064,7 @@ sub hip_process_file {
 			#print "\nbegin"."$output"."end\n";
 			for($i = 3; $i<$limit;$i+=2)
 			{
-				if($output !~ /$procedure $test->[$i].* $test->[$i+1]/)
+				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
@@ -1113,7 +1116,7 @@ sub sleek_process_file  {
             } else {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
-            $script_args = $script_arguments.$extra_options;
+            $script_args = $script_arguments." ".$extra_options;
 			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
