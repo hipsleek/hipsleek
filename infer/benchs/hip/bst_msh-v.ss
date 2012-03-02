@@ -8,7 +8,6 @@ data node2 {
 }
 
 /* view for trees with number of nodes and depth */
-//memory + size --> height
 //size, height
 bst1<m, n> == self = null & m = 0 & n = 0
 	or self::node2<_, p, q> * p::bst1<m1, n1> * q::bst1<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
@@ -22,8 +21,9 @@ dll<p, n> == self = null & n = 0
 /* function to append 2 doubly linked lists */
 //relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
-  requires x::dll<_, m> * y::dll<_, n>
-  ensures res::dll<r, k> & k=m+n;//m>=0 & k>=m & k=n+m APP(k,m,n)
+//infer[APP]
+   requires x::dll<_, m> * y::dll<_, n>
+  ensures res::dll<r, k> & k=n+ m;//m>=0 & k>=m & k=n+m APP(k,m,n)
 {
 	node2 z;
 
@@ -40,42 +40,11 @@ node2 append(node2 x, node2 y)
 	}
 }
 
-//relation C(int a, int b, int c).
-node2 appendC(node2 x, node2 y)
-//infer [C]
-  requires x::dll<q, m> * y::dll<p, n>
-  ensures res::dll<_, k> & k=m+n;//C(k,m,n);
-
-{
-	node2 tmp;
-
-	if (x == null)
-		return y;
-	else
-	{ 	
-
-		tmp = x.right;
-		tmp = appendC(tmp, y);
-
-		if (tmp != null)
-		{
-			x.right = tmp; 
-			tmp.left = x;
-		}
-		else {
-			x.right = null;
-		}
-
-		return x; 
-	}
-}
-
 /* function to count the number of nodes in a tree */
-relation CNT(int a, int b).
+//relation CNT(int a, int b).
 int count(node2 z)
-  infer[CNT]
   requires z::bst1<n, h>
-  ensures  z::bst1<n, h1> & CNT(h,h1) & res = n;//h1=h;
+  ensures  z::bst1<n, h1> & h1=h & res = n;//h1=h;
 {
 	int cleft, cright;
 
@@ -112,10 +81,11 @@ void flatten(node2 x)
 
 /* insert a node in a bst */
 relation INS(int a, int b).
+//fail to compute fixpoint
 node2 insert(node2 x, int a)
-  infer[INS]
-  requires x::bst1<m, n1>
-  ensures res::bst1<m+1, n> & res != null & INS(n,n1);//h1>=h;//INS(h,h1);
+//infer[INS]
+  requires x::bst1<m, h>
+  ensures res::bst1<m+1, h1> & res != null & h1>=h;//INS(h,h1);
 {
 	node2 tmp;
     node2 tmp_null = null;
@@ -140,16 +110,13 @@ node2 insert(node2 x, int a)
 	} 
 }
 
-int remove_min1(ref node2 x)
-  requires x::bst1<sn, n> & x != null
-  ensures x'::bst1<sn-1, n1> & n1<=n & n1+1>=n;//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
-
 /* delete a node from a bst */
 relation RMV_MIN(int a, int b).
+//fail to compute fixpoint
 int remove_min(ref node2 x)
-  infer[RMV_MIN]
-  requires x::bst1<sn, n> & x != null
-  ensures x'::bst1<sn-1, n1> & RMV_MIN(n,n1);//h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
+//infer[RMV_MIN]
+  requires x::bst1<n, h> & x != null
+  ensures x'::bst1<n-1, h1> & h1<=h;//RMV_MIN(h,h1);//h1<=h & n1=n-1;//'
 {
 	int tmp, a;
 
@@ -170,11 +137,11 @@ int remove_min(ref node2 x)
 	}
 }
 
-relation DEL(int a, int b).
+//relation DEL(int a, int b).
 void delete(ref node2 x, int a)
-  infer[DEL]
-  requires x::bst1<sn, n1>
-  ensures x'::bst1<sn1, n> & DEL(n,n1);//& n1<=n & h1<=h;//'
+// infer[DEL]
+  requires x::bst1<n, h>
+  ensures x'::bst1<n1, h1> & n1<=n & h1<=h;//'
 {
 	int tmp;
 
@@ -190,8 +157,8 @@ void delete(ref node2 x, int a)
             }
             else
               {
-                tmp = remove_min1(xright);
-                //assert true;
+                tmp = remove_min(xright);
+                assert true;
                 xval = tmp;
               }
           }
@@ -217,11 +184,11 @@ There are three different types of depth-first traversals, :
 - PostOrder traversal - visit left child, then the right child and then the parent;
 */
 //DFS
-relation TRAV(int a, int b).
+//relation TRAV(int a, int b).
 void traverse(node2 x)
-  infer[TRAV]
+//  infer[TRAV]
   requires x::bst1<n, h>//0<=h & h<=n
-  ensures x::bst1<n, h1>& TRAV(h,h1);//'h1>=0 & n1>=h1 & h1=h & n1=n
+  ensures x::bst1<n, h>;//'h1>=0 & n1>=h1 & h1=h & n1=n
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
@@ -234,11 +201,11 @@ void traverse(node2 x)
 }
 
 //Searching
-relation SEA(int a, int b).
+//relation SEA(int a, int b).
 bool search(node2 x, int a)
-  infer[SEA]
+//  infer[SEA]
   requires x::bst1<n, h>
-  ensures x::bst1<n, h1> & (res | !res) & SEA(h,h1);//'n>=0 & h>=0 & n=n1 & h=h1
+  ensures x::bst1<n, h> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1
 {
 	int tmp;
 

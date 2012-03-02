@@ -20,15 +20,13 @@ data node2 {
 		- we used it to make the insertion easier (because in the insertion there are points where we need to
 		know if a subtree is perfect or not)
 */
-//->memory safety
-complete<n> == self = null & n = 0
-  or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-2>
-  or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-1>
-	inv n>=0;
 
-complete3<> == self = null
-  or self::node2<_, l, r> * l::complete3<> * r::complete3<>
-	inv true;
+complete1<m, n, nmin,S> == self = null & n = 0 & nmin = 0 & S={} & m=0
+  or self::node2<v, l, r> * l::complete1<ml1,n-1, nmin1,S1> * r::complete1<mr1,n-2, nmin2,S2> & nmin = min(nmin1, nmin2) + 1
+  & S = union(S1,S2, {v}) & m=ml1+mr1+1
+  or self::node2<v, l, r> * l::complete1<ml2,n-1, nmin1,S1> * r::complete1<mr2, n-1, nmin2,S2> & nmin = min(nmin1, nmin2) + 1
+  & S = union(S1,S2, {v}) & m=ml2+mr2+1
+	inv m>=0 & nmin >= 0 & n >= nmin;
 
 int maxim(int a, int b)
 	requires true
@@ -51,10 +49,11 @@ int minim(int a, int b)
 }
 
 /* function to count the number of nodes in a tree */
+//relation CNT(bag a, bag b).
 int count(node2 t)
-//infer @post []
-  requires t::complete<h>
-  ensures t::complete<h> & res>=0;// & res >= 0;
+//infer[CNT]
+  requires t::complete1<n, h, nmin,S1>
+  ensures t::complete1<n, h, nmin,S2> & res >= 0 & S1=S2;//S1=S2
 {
 	int cleft, cright;
 
@@ -68,43 +67,34 @@ int count(node2 t)
 	}
 }
 
-relation HGT(int a, int b, int c).
+//relation HGT(bag a, bag b).
 int height(node2 t)
-  infer[HGT]
-  requires t::complete<h>
-  ensures t::complete<h1> & HGT(res,h, h1);//h1>=0 & h1=res & h1=h
+  requires t::complete1<n, h, nmin,S>
+  ensures t::complete1<n, h, nmin,S> & res=h;
 {
 	if (t != null)
 		return maxim(height(t.left), height(t.right)) + 1;
 	else return 0;
 }
-//for multi specs
-int height1(node2 t)
-  requires t::complete<h>
-  ensures t::complete<h1> & h1>=0 & h1=res & h1=h;
 
-relation MHGT(int b, int a).
+//for multi specs
 int min_height(node2 t)
-  infer[MHGT]
-  requires t::complete<h>
-  ensures t::complete<h1> & MHGT(h,h1) & res>=0;//res = nmin;
+  requires t::complete1<n, h, nmin,S1>
+  ensures t::complete1<n, h, nmin,S1> & res = nmin;
 {
 	if (t != null)
 		return minim(min_height(t.left), min_height(t.right)) + 1;
 	else return 0;
 }
-int min_height1(node2 t)
-  requires t::complete<h>
-  ensures t::complete<h> & res>=0;//res = nmin;
 
-//relation INS1(int a, int b, int c).
-//relation INS2(int a, int b, int c).
-//relation INS3(int a, int b).
-relation INS(node2 a).
 void insert(ref node2 t, int v)
-//infer[t,INS]
-  requires t::complete<h> // there is still place to insert
-  ensures t'::complete<h1> & t'!=null;//INS(t');//t'!=null
+//infer[INS1]
+  requires t::complete1<n, h1, nmin,S1> & nmin < h1 // there is still place to insert
+  ensures t'::complete1<n+1, h2, nmin1,S2> & (nmin1 = nmin | nmin1 = nmin + 1) & h1=h2 & S2=union(S1,{v}) ;
+//'INS1(nmin1,nmin, n) INS1(S1,S2,v); & S2=union(S1,{v});
+   requires t::complete1<k1, n, nmin,S1> & nmin = n // there is no empty place -> we need to increase the height
+  ensures t'::complete1<k1+1, m, nmin1,S2> & (nmin1 = nmin | nmin1 = nmin + 1) & m=n+1 & S2=union(S1,{v});
+//'INS2(nmin1,nmin,n)& INS4(m,n);
 {
 	node2 aux;
 
@@ -113,14 +103,14 @@ void insert(ref node2 t, int v)
 		return;
 	}
 	else {
-      if(min_height1(t.left) < height1(t.left)) {		// there is still space in the left subtree
+      if(min_height(t.left) < height(t.left)) {		// there is still space in the left subtree
         aux = t.left;
         insert(aux, v);
         t.left = aux;
         return;
       }
       else {
-        if(min_height1(t.right) < height1(t.right)) {	// there is still space in the right subtree
+        if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree
           aux = t.right;
           insert(aux, v);
           t.right = aux;
@@ -128,7 +118,7 @@ void insert(ref node2 t, int v)
         }
         else {
           node2 tmp = t.right;
-          if(height1(t.left) == height1(t.right)) { // tree is full - we must start another level
+          if(height(t.left) == height(t.right)) { // tree is full - we must start another level
             aux = t.left;
             insert(aux, v);
             t.left = aux;
@@ -145,24 +135,22 @@ void insert(ref node2 t, int v)
 	}
 }
 
-relation PEF(int a, int b).
+relation PEF(bag a, bag b).
 int is_perfect(node2 t)
- infer[PEF]
-  requires t::complete<h>
-  ensures t::complete<h1> & PEF(h,h1) & (res=0 | res=1);//h1>=0 & h1=h
+  infer[PEF]
+  requires t::complete1<k, n, nmin,S1>
+  ensures t::complete1<k, n, nmin,S2> & (nmin != n | res = 1) & (nmin = n | res = 0) & PEF(S1,S2);//S1=S2
 {
-  if(t == null)
-    return 1;
-  else
-    {
-      if(height1(t.left) != height1(t.right))
-        return 0;
-      else
-        {
-          if(is_perfect(t.left) == 1)
-            return is_perfect(t.right);
-          else
-            return 0;
+	if(t == null)
+		return 1;
+	else {
+		if(height(t.left) != height(t.right))
+			return 0;
+		else {
+			if(is_perfect(t.left) == 1)
+				return is_perfect(t.right);
+			else
+				return 0;
 		}
 	}
 }

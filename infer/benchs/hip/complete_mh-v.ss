@@ -21,10 +21,10 @@ data node2 {
 		know if a subtree is perfect or not)
 */
 //->memory safety
-complete<n> == self = null & n = 0
-  or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-2>
-  or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-1>
-	inv n>=0;
+complete<n, nmin> == self = null & n = 0 & nmin = 0
+  or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
+  or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
+	inv nmin >= 0 & n >= nmin;
 
 complete3<> == self = null
   or self::node2<_, l, r> * l::complete3<> * r::complete3<>
@@ -50,11 +50,33 @@ int minim(int a, int b)
 		return a;
 }
 
+int maxim1(int a, int b)
+  infer @post []
+	requires true
+	ensures true;
+{
+	if(a >= b)
+		return a;
+	else
+		return b;
+}
+
+int minim1(int a, int b)
+  infer @post []
+	requires true
+	ensures true;
+{
+	if(a >= b)
+		return b;
+	else
+		return a;
+}
+
 /* function to count the number of nodes in a tree */
 int count(node2 t)
 //infer @post []
-  requires t::complete<h>
-  ensures t::complete<h> & res>=0;// & res >= 0;
+  requires t::complete3<>
+  ensures t::complete3<> & res >= 0;
 {
 	int cleft, cright;
 
@@ -68,43 +90,35 @@ int count(node2 t)
 	}
 }
 
-relation HGT(int a, int b, int c).
-int height(node2 t)
-  infer[HGT]
-  requires t::complete<h>
-  ensures t::complete<h1> & HGT(res,h, h1);//h1>=0 & h1=res & h1=h
-{
-	if (t != null)
-		return maxim(height(t.left), height(t.right)) + 1;
-	else return 0;
-}
-//for multi specs
+//relation HGT(int a).
 int height1(node2 t)
-  requires t::complete<h>
-  ensures t::complete<h1> & h1>=0 & h1=res & h1=h;
-
-relation MHGT(int b, int a).
-int min_height(node2 t)
-  infer[MHGT]
-  requires t::complete<h>
-  ensures t::complete<h1> & MHGT(h,h1) & res>=0;//res = nmin;
+// infer[t,HGT]
+  requires t::complete3<>
+  ensures t::complete3<> & res>=0;//HGT(res);////res>=0 & res=h
 {
 	if (t != null)
-		return minim(min_height(t.left), min_height(t.right)) + 1;
+		return maxim(height1(t.left), height1(t.right)) + 1;
 	else return 0;
 }
+
+//relation MHGT(int a).
 int min_height1(node2 t)
-  requires t::complete<h>
-  ensures t::complete<h> & res>=0;//res = nmin;
+  requires t::complete3<>
+  ensures t::complete3<> & res>=0;//res = nmin;
+{
+	if (t != null)
+		return minim(min_height1(t.left), min_height1(t.right)) + 1;
+	else return 0;
+}
 
 //relation INS1(int a, int b, int c).
 //relation INS2(int a, int b, int c).
 //relation INS3(int a, int b).
-relation INS(node2 a).
+//relation INS(node2 a).
 void insert(ref node2 t, int v)
-//infer[t,INS]
-  requires t::complete<h> // there is still place to insert
-  ensures t'::complete<h1> & t'!=null;//INS(t');//t'!=null
+//  infer[INS]
+  requires t::complete3<> // there is still place to insert
+  ensures t'::complete3<> & t'!=null;
 {
 	node2 aux;
 
@@ -145,11 +159,11 @@ void insert(ref node2 t, int v)
 	}
 }
 
-relation PEF(int a, int b).
+//relation PEF(int a).
 int is_perfect(node2 t)
- infer[PEF]
-  requires t::complete<h>
-  ensures t::complete<h1> & PEF(h,h1) & (res=0 | res=1);//h1>=0 & h1=h
+// infer[PEF]
+  requires t::complete3<>
+  ensures t::complete3<> & (res=0 | res=1);//PEF(res);//(res=0 | res=1);
 {
   if(t == null)
     return 1;
