@@ -17,9 +17,9 @@ avl<m, n> == self = null & m = 0 & n = 0
 
 /* function to return the height of an avl tree */
 int height1(node x)
-  infer @post []
+// infer @post []
 	requires x::avl<m, n>
-  ensures x::avl<m, n> ;//& res = n;
+  ensures x::avl<m, n> & res = n;
 {
 	if (x == null)
       return 0;
@@ -28,7 +28,7 @@ int height1(node x)
 }
 
 int height(node x)
-  infer @post []
+//infer @post []
 	requires x::avl<m, n>
   ensures x::avl<m, n> & res = n;
 
