@@ -23,7 +23,7 @@ int find_min(node x)
 	if (x.next == null)
 		return x.val;
 	else
-	{		assume false;
+	{	
 		tmp = find_min(x.next);
 		if (tmp > x.val)
 			return x.val;

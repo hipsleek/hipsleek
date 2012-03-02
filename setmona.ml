@@ -164,6 +164,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListAllN _
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 					| RelForm _ -> failwith ("Relations are not supported in Mona")
+					| LexVar _ -> failwith ("LexVar are not supported in Mona")
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -280,6 +281,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListLength _
   | ListAppend _
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
+	| Func _ -> failwith ("Functions are not supported in Mona") 
 	| ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
 
 (* 
@@ -433,6 +435,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | ListNotIn _
 	  | ListAllN _
 	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
+	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
 		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
 		  
 (*

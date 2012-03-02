@@ -16,6 +16,9 @@ pred ll<n> == self = null & n = 0
 
 checkentail x::node<1,x2>*x2::node<3,null> |- x::ll<n>.
 
+print residue.
+
+/*
 checkentail x::node<1,x2>*x2::node<3,null> 
   |- x::node<_,y1>*y1::node<_,null>.
 
@@ -36,3 +39,4 @@ checkentail x::node<_,q> * q::ll<m> & m=4  |- x::ll<n> & n>6.
 checkentail x::ll<m> & m=4  |- [n] x::node<_,q> * q::ll<n-1>.
 
 print residue.
+*/

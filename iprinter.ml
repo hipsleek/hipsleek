@@ -5,6 +5,7 @@ open Iast
 open Globals
 open Lexing
 open Gen.Basic
+open Label_only
 
 module F = Iformula
 module P = Ipure
@@ -75,6 +76,9 @@ let string_of_label = function
 ;;
 
 let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_spec_label = Lab_List.string_of
+let string_of_spec_label_def = Lab2_List.string_of
+
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
@@ -133,6 +137,8 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Func (a, i, _)     ->  
+        a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
         (* An Hoa : print the array access *)
         a ^ (match p with 
@@ -171,6 +177,14 @@ let string_of_b_formula (pf,il) =
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
         (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
+  | P.LexVar (t_ann, ls1, ls2, l) ->
+      let ann = string_of_term_ann t_ann in
+      (match t_ann with
+      | Term -> 
+          let opt = if ls2==[] then "" else
+            "{"^(pr_list string_of_formula_exp ls2)^"}"
+          in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
+      | _ -> ann)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
@@ -336,10 +350,7 @@ let rec string_of_formula = function
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
-	  (*  | Iast.F.Exists (x, f, l)                -> "ex " ^ (match x with 
-		  | (id, p) -> match p with 
-		  | Primed    -> id ^ "'"
-		  | Unprimed  -> id ) ^ ".(" ^ (string_of_formula f) ^ ")" *)
+
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
@@ -358,76 +369,39 @@ let rec string_of_formula = function
 	  ^ ")"
 ;;
 
-let rec string_of_ext_formula = function
-	| Iformula.ECase {
-			Iformula.formula_case_branches  =  case_list ;
+let rec string_of_struc_formula c = match c with 
+	| F.ECase {
+			F.formula_case_branches  =  case_list ;
 		} -> 
-			let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^ 		
-		( List.fold_left  (fun a c -> a ^" "^(string_of_ext_formula c )) "" c2)^"\n") "ECase:\n" case_list in
+			let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^(string_of_struc_formula c2)^"\n") "ECase:\n" case_list in
 			("case{"^impl^"}")
-	|Iformula.EBase {
-		 	Iformula.formula_ext_implicit_inst = ii;
-			Iformula.formula_ext_explicit_inst = ei;
-		 	Iformula.formula_ext_base = fb;
-		 	Iformula.formula_ext_continuation = cont;	
+	|F.EBase {
+		 	F.formula_struc_implicit_inst = ii;
+			F.formula_struc_explicit_inst = ei;
+		 	F.formula_struc_base = fb;
+		 	F.formula_struc_continuation = cont;	
 		} -> 
 				let l1 = List.fold_left (fun a c-> a^" "^ string_of_var c) "" ii in
 				let l2 = List.fold_left (fun a c -> a^" "^ string_of_var c) "" ei in
 				let b = string_of_formula fb in
-				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
+				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| Iformula.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
-    | Iformula.EVariance {
-			Iformula.formula_var_label = label;
-			Iformula.formula_var_measures = measures;
-			Iformula.formula_var_escape_clauses = escape_clauses;
-			Iformula.formula_var_continuation = continuation;
-	  } ->
-	    let string_of_label = match label with
-		  | None -> ""
-		  | Some i -> "(" ^ (string_of_int i) ^ ")" in
-		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
-																			| None -> rs^(string_of_formula_exp expr)^" "
-																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
-		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
-		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
-		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
- | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
-   Iformula.formula_inf_post = postf;
-   Iformula.formula_inf_continuation = continuation;} ->
-          let ps =if (lvars==[] && postf) then "@post " else "" in
-    let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
-    let string_of_continuation = string_of_ext_formula continuation in
-    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
+	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+	| F.EInfer{F.formula_inf_vars = lvars;
+			   F.formula_inf_post = postf;
+			   F.formula_inf_continuation = continuation;} ->
+        let ps =if (lvars==[] && postf) then "@post " else "" in
+		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
+		let string_of_continuation = string_of_struc_formula continuation in
+		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
+	| F.EOr b-> (string_of_struc_formula b.F.formula_struc_or_f1) ^ "\nEOr" ^ (string_of_struc_formula b.F.formula_struc_or_f2)
+	| F.EList b ->   List.fold_left  (fun a (l,c)-> 
+		let l_s = (string_of_spec_label_def l) ^": " in
+		a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
+		(*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
+		
+	
 ;;
-
-let string_of_struc_formula d =  List.fold_left  (fun a c ->
-  let sep = if a = "" then "" else "||" in
-  a ^ "\n" ^ sep ^ "\n" ^ (string_of_ext_formula c)) "" d 
-;;
-(*
-let rec string_of_spec = function
-	| SCase {scase_branches= br;} ->
-		 (List.fold_left (fun a (c1,c2)->a^"\n"^(string_of_pure_formula c1)^"-> "^
-		( List.fold_left  (fun a c -> a ^"\n "^(string_of_spec c )) "" c2)) "case { " br)^"}\n"
-	| SRequires 	{
-			(*srequires_exists_vars = ev;*)
-			srequires_explicit_inst = ei;
-			srequires_base = fb;
-			srequires_continuation = cont;
-			}	 ->
-				(*let l1 = List.fold_left (fun a c -> a^ ","^(string_of_id c)) "" ev in*)
-				let l2 = List.fold_left (fun a c -> a^ (string_of_id c)) "" ei in
-				let b = string_of_formula fb in
-				let c = (List.fold_left (fun a  c1-> a^"\n"^string_of_spec c1) "{" cont)^"}\n" in
-				(*"["^l1^"],"*)"["^l2^"]"^b^" "^c
-	| SEnsure{sensures_base = fb } ->(string_of_formula fb)
-;;
-
-
-let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c )) "" d 
-;;*)
-
 
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with 

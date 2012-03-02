@@ -20,7 +20,7 @@ XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
 all: byte decidez.vo
 #gui
-byte: hip.byte sleek.byte
+byte: sleek.byte hip.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte

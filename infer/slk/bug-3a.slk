@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer [y] true |- y::node<a,b>*b::ll<n>.
+
+/*
+inferred pure: [inf_ann_31<=0 & inf_ann_28<=0 & inf_b_30=null & y!=null | 
+               inf_ann_28<=0 & inf_b_30!=null & 1<=inf_n_32; inf_ann_31<=0 & 
+               inf_b_30=null | inf_ann_31<=0 & inf_b_30!=null & 1<=inf_n_32]
+*/
+
+print residue.
+
+
+
+
+
+
+
+

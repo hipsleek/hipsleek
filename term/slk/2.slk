@@ -1,0 +1,115 @@
+//(1) Valid. T
+checkentail Term[1,_] |- Term[0].
+print residue.
+
+//(2) Fail. T
+checkentail Term[0,_] |- Term[1,_,_].
+print residue.
+
+//(3) F
+checkentail Term[_] |- MayLoop.
+print residue.
+
+//(4) F
+checkentail Term[_] |- Loop.
+print residue.
+
+//(5) L
+checkentail Loop |- Loop.
+print residue.
+
+//(6) F
+checkentail Loop |- Term[_].
+print residue.
+
+
+//(7) L
+checkentail Loop |- MayLoop.
+print residue.
+
+//(8) ML
+checkentail MayLoop |- Term[_].
+print residue.
+
+
+//(9) ML
+checkentail MayLoop |- Loop.
+print residue.
+
+//(10) ML
+checkentail MayLoop |- MayLoop.
+print residue.
+
+//(11) 
+checkentail n=m+2 & Term[n] |- Term[m].
+print residue.
+
+
+//(12)
+checkentail Term[x] & n>-3 |- 
+            case {
+              n<0 -> [] Loop; 
+              n>=0 -> [] Term[x-1];
+            }.
+print residue.
+
+//(13)
+checkentail Term[x] & n>=0 |- n<0 & Loop or n>=0 & Term[x-1].
+print residue.
+
+//(14)
+checkentail Term[x] & n>=-3 |- n<0 & Loop or n>=0 & Term[x-1].
+print residue.
+
+//(15)
+checkentail Term[x] & n>5 |- n<0 & Loop or n>=0 & Term[x-1].
+print residue.
+
+//(16)
+checkentail Term[x] & n>=-3 |- n<0 & Term[x-2] or n>=0 & Term[x-1].
+print residue.
+
+//(17)
+checkentail Term[x] & n>=-3 |- Loop or Term[x-1].
+print residue.
+
+//(18)
+checkentail Term[x] or Loop |- Term[x-2].
+print residue.
+
+//(19)
+checkentail Term[x] or Loop |- Loop.
+print residue.
+
+//(20)
+checkentail Term[x] |- Term[x-1] or Loop.
+print residue.
+
+//(21)
+checkentail Loop |- Term[x-1] or Loop.
+print residue.
+
+//(22)
+checkentail Term[x] or Loop |- Term[x-1] or Loop.
+print residue.
+
+//(23)
+checkentail Term[x] or Term[x-1] |- Term[x-1].
+print residue.
+
+//(24)
+checkentail Term[x] or Term[x-1] |- Loop.
+print residue.
+
+//(25)
+checkentail Term[x] or Term[x-1] |- Term[x-1] or Loop.
+print residue.
+
+//(26)
+checkentail Term[x] |- Term[y].
+print residue.
+
+//(27)
+checkentail Term[x] |- Term[x].
+print residue.
+

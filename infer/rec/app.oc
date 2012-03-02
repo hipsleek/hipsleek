@@ -1,0 +1,8 @@
+pre_fst := {[n,m]:n>=1};
+pre_rec := {[n,m]:forall(RECn,RECm: 
+        not(((RECn >= 1 && n >= 1 + RECn) && RECm >= 0) && RECm = m)
+        || RECn>=1)};
+pre_fst; pre_rec;
+
+pre := pre_fst intersection pre_rec;
+pre;

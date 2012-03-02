@@ -112,6 +112,7 @@ and aug_class_name (t : typ) = match t with
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
   | AnnT -> "AnnAug"
+  | RelT -> "RelAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
   | NUM -> "NUMAug"
@@ -1688,8 +1689,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_constructor = false;
 					proc_args = [cur_color pos; new_color pos];
 					proc_return = Bool;
-					proc_static_specs = [];
-					proc_dynamic_specs = [];
+					proc_static_specs = Iformula.mkEFalseF ();
+					proc_dynamic_specs = Iformula.mkEFalseF ();
 					proc_exceptions = [];
 					proc_body = Some seq2;
      proc_is_main = false;
@@ -1802,8 +1803,8 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_constructor = false;
 					 proc_args = [cur_color pos; new_color pos];
 					 proc_return = Bool;
-					 proc_static_specs = [];
-					 proc_dynamic_specs = [];
+					 proc_static_specs = Iformula.mkEFalseF ();
+					 proc_dynamic_specs = Iformula.mkEFalseF ();
 					 proc_body = Some combined_exp;
 					 proc_exceptions = [];
       proc_is_main = false;
