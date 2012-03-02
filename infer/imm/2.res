@@ -20,9 +20,6 @@ Entail (5): Valid.
 
 <1>true&v<:@M&{FLOW,(17,18)=__norm}
 
-
-infer_pure_m@1
-infer_pure_m@1 EXIT out :(new es,inf pure,rel_ass) :(None,None,0)
 Entail (6): Fail.(may) cause:(failure_code=213)  v<:@L |-  v=@L (may-bug).
 
 

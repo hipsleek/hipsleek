@@ -22,7 +22,7 @@ inferred pure: [v1<=1]
 infer [v1] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
 print residue.
 
-//(3) fail
+//(3) 2<=v2
 infer [v2] x::node<_,q>@v1 |- x::node<a,b>@v2.
 print residue.
 
@@ -36,6 +36,15 @@ print residue.
 
 //(5) fail
 infer [v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+
+//(5) fail
+infer [] x::node<_,q>@v1 |- x::node<a,b>@I.
+print residue.
+
+//(5) fail
+infer [v2] x::node<_,r>@v1 |- x::node<a,b>@v2.
 print residue.
 
 //(6) fail
