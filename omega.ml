@@ -428,7 +428,8 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*   let time = (post_time -. pre_time) *. 1000. in *)
 
           if !log_all_flag = true then begin
-              if sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: sat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
+              if sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") 
+              else output_string log_all ("[omega.ml]: sat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
           end else ();
           sat
       end

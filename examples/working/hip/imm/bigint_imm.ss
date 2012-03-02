@@ -249,7 +249,7 @@ node shift_left(node x)
 }*/
 
 node mult(node x, node y)
-  requires (x::bigint<v1>@L & y::bigint<v2>@L)
+  requires x::bigint<v1>@L * y::bigint<v2>@L
   ensures res::bigint<v1*v2>;
 /*
   requires x::bigint<v1>@I * y::bigint<v2>@I

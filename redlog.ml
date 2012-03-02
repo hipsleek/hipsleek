@@ -14,10 +14,11 @@ let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
-let timeout = ref 10.0 (* default timeout is 15 seconds *)
+let timeout = ref 15.0 (* default timeout is 15 seconds *)
+let pasf = ref false 
 
 (* logging *)
-let is_log_all = ref false
+let log_all_flag = ref false
 let log_file = open_out "allinput.rl"
 
 (* process management *)
@@ -40,7 +41,7 @@ let cached_count = ref 0
 
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
-let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+let process = ref {name = "rl"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
@@ -49,6 +50,11 @@ let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initi
 let print_svl = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initialized")
 
+type rl_mode = 
+  | OFSF 
+  | PASF
+
+let rl_current_mode = ref OFSF
 
 (**********************
  * auxiliari function *
@@ -66,7 +72,7 @@ let log level msg =
   let write_msg () = output_string log_file (msg ^ "\n") in
   match level with
     | ERROR -> write_msg ()
-    | DEBUG -> if !is_log_all then write_msg ()
+    | DEBUG -> if !log_all_flag then write_msg ()
 
 (*
  * read from input channel until we found the reduce's prompt
@@ -92,6 +98,14 @@ let send_cmd cmd =
     let _ = read_till_prompt !process.inchannel in
     ()
 
+let set_rl_mode mode =
+  if (!rl_current_mode == mode) then ()
+  else
+    rl_current_mode := mode;
+    match mode with
+    | PASF -> send_cmd "rlset pasf"
+    | OFSF -> send_cmd "rlset ofsf"
+
 (* start Reduce system in a separated process and load redlog package *)
 let start () =
   if not !is_reduce_running then begin
@@ -102,11 +116,12 @@ let start () =
         send_cmd "load_package redlog";
         send_cmd "rlset ofsf";
         send_cmd "on rlnzden";
-		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
-		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
+		    send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
+		    send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
+      rl_current_mode := OFSF;
       let set_process proc = process := proc in
-      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      let _ = Procutils.PrvComms.start !log_all_flag log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       print_endline "Starting Reduce... "; flush stdout
   end
 
@@ -126,7 +141,7 @@ let stop () =
         log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
-      let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      let _ = Procutils.PrvComms.stop !log_all_flag log_file !process  !redlog_call_count 9 ending_fnc in
       is_reduce_running := false
   end
 
@@ -134,7 +149,7 @@ let restart reason =
   if !is_reduce_running then begin
     print_string reason;
     print_endline " Restarting Reduce... "; flush stdout;
-    Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
+    Procutils.PrvComms.restart !log_all_flag log_file "redlog" reason start stop
   end
 
 (*
@@ -500,7 +515,7 @@ let has_exists2 f0 =
 (* e1 > e2 ~> e1 >= e2 + 1 *)
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
  
- let rec strengthen_formula f0 =
+let rec strengthen_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) -> 
       let r = match pf with
@@ -512,20 +527,19 @@ let has_exists2 f0 =
             CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
         | _ -> f0
       in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (weaken_formula (* strengthen_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
-
- let strengthen_formula f =
+(* let strengthen_formula f =
    let pr = string_of_formula in
    Debug.no_1 "strengthen_formula"
        pr pr
-       strengthen_formula f
+       strengthen_formula f*)
 
-let strengthen2 f0 =
+and strengthen2 f0 =
   let f_f f =
 	match f with
 	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
@@ -546,7 +560,7 @@ let strengthen2 f0 =
 (* e1 <= e2 ~> e1 < e2 + 1 *)
 (* e1 >= e2 ~> e1 > e2 - 1 *)
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
-let rec weaken_formula f0 =
+and weaken_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) ->
       let r = match pf with
@@ -558,13 +572,13 @@ let rec weaken_formula f0 =
             CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
         | _ -> f0
       in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Not (f,lbl,l) -> CP.Not (strengthen_formula (* weaken_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
-let weaken2 f0 =
+and weaken2 f0 =
   let f_f f = match f with
     | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
@@ -1018,7 +1032,8 @@ let options_to_bool opts default =
   | None -> default
 
 let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
-  if (not !dis_oc) && (is_linear_formula f) then
+  let is_linear = is_linear_formula f in
+  if (not !dis_oc) && is_linear then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
@@ -1026,11 +1041,30 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
+    
+    let _ = if !pasf then begin 
+      if is_linear then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
+    if !log_all_flag then begin
+      output_string log_file (Gen.new_line_str ^ "#is_sat " ^ sat_no ^ ": ");
+      output_string log_file ((string_of_formula f) ^ Gen.new_line_str);
+      output_string log_file (Gen.break_lines_1024 rl_input);
+      flush log_file;
+    end;
+
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
     let res, time = call_redlog proc in
     let sat = options_to_bool (Some res) true in (* default is SAT *)
+    
+    if !log_all_flag then begin
+      if sat then output_string log_file ("[redlog.ml]: unsat " ^ sat_no ^ " --> FAIL\n") 
+      else output_string log_file ("[omega.ml]: unsat " ^ sat_no ^ " --> SUCCESS\n");
+      flush log_file;
+    end else ();
+
     (sat, time)
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
@@ -1093,6 +1127,15 @@ let is_valid_ops pr_w pr_s f imp_no =
   let proc = lazy (run_with_timeout runner err_msg) in
   let res, time = call_redlog proc in
   let valid = options_to_bool (Some res) false in (* default is INVALID *)
+  if !log_all_flag then 
+    begin
+      output_string log_file (Gen.new_line_str ^ "#is_valid: ");
+      output_string log_file (rl_input);
+      (if valid then output_string log_file (Gen.new_line_str ^ "SUCCESS\n")
+      else output_string log_file (Gen.new_line_str ^ "FAIL\n"));
+      flush log_file;
+    end
+  else ();
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
@@ -1106,7 +1149,13 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f) 
+      then f 
+      else weaken_formula f in
+    let _ = if !pasf then begin 
+      if (is_linear_formula f) then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
     is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
@@ -1159,8 +1208,8 @@ let imply_ops pr_w pr_s ante conseq imp_no =
       with Not_found ->
           let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
           let _ = if time > cache_threshold then
-                let _ = log DEBUG "Caching."in
-                Hashtbl.add !impl_cache fstring res
+            let _ = log DEBUG "Caching."in
+            Hashtbl.add !impl_cache fstring res
           in res
   in
   log DEBUG (if res then "VALID" else "INVALID");

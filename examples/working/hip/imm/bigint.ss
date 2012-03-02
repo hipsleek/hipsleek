@@ -183,8 +183,13 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
-  requires x::bigint<v1> * y::bigint<v2>
-  ensures x::bigint<v1> * y::bigint<v2> & (res & v1 = v2 | !res & v1 != v2);
+  //requires x::bigint<v1> * y::bigint<v2>
+  //ensures x::bigint<v1> * y::bigint<v2> & (res & v1 = v2 | !res & v1 != v2);
+	requires x::bigint<v1> * y::bigint<v2>
+	case {
+		v1=v2 -> ensures x::bigint<v1> * y::bigint<v2> & res;
+		v1!=v2 -> ensures x::bigint<v1> * y::bigint<v2> & !res;
+	} 
 {
   if (x == null) {
     if (is_zero(y)) return true;

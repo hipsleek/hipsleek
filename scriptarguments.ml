@@ -110,7 +110,7 @@ let common_arguments = [
 	"Log all formulae sent to Coq in file allinput.v");
 	("--log-mona", Arg.Set Mona.log_all_flag,
 	"Log all formulae sent to Mona in file allinput.mona");
-	("--log-redlog", Arg.Set Redlog.is_log_all,
+	("--log-redlog", Arg.Set Redlog.log_all_flag,
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
@@ -262,6 +262,7 @@ let common_arguments = [
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
   ("--dis-oc", Arg.Set Globals.dis_oc, "Disable Omega when running other provers");
+  ("--rlpa", Arg.Set Redlog.pasf, "Using Presburger Arithmetic of Redlog");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
