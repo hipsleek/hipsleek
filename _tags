@@ -1,4 +1,4 @@
-<{parser,parse_fix}.ml>: pp(camlp4of)
+<{parser,parse_fix,parse_fixbag}.ml>: pp(camlp4of)
 <xml/*.*>: not_hygienic
 <omega_modified/omega_lib/obj/*.*>: not_hygienic
 <omega_modified/code_gen/obj/*.*>: not_hygienic
@@ -7,3 +7,5 @@
 <z3iw/z3/lib/*.*>: not_hygienic
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
+<sw/*>: not_hygienic
+<lp-ex/*>: not_hygienic

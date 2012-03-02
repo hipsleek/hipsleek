@@ -121,11 +121,12 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> pr_mr e; fmt_string ("=>Unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "=>BaseCaseUnfold"
   | M_base_case_fold e -> pr_mr e; fmt_string "=>BaseCaseFold"
-  | M_rd_lemma e -> pr_mr e; fmt_string "=>RightDistrLemma"
+  | M_rd_lemma e -> pr_mr e; fmt_string "=>RD_Lemma"
   | M_lemma (e,s) -> pr_mr e; fmt_string ("=>"^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo: "^s)
-  | M_infer_heap (h,_) -> fmt_string ("InferHeap: "^(string_of_h_formula h))
+  | M_infer_heap p -> let pr = string_of_h_formula in
+    fmt_string ("InferHeap: "^(pr_pair pr pr p))
   | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData: "^(string_of_h_formula h))
   | Cond_action l -> pr_seq_nocut "=>COND:" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "=>SEQ:" (pr_action_wt_res pr_mr) l
@@ -152,7 +153,7 @@ let string_of_action_wt_res0 e = poly_string_of_pr (pr_action_wt_res (fun _ -> f
 
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
-let must_action_stk = new Gen.stack (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl
+let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
    
 let action_get_holes a = match a with
   | Undefined_action e
@@ -175,7 +176,7 @@ let action_get_holes a = match a with
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
   let pr2 = pr_option pr_no in
-  Gen.Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
+  Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
 
 let action_wt_get_holes (_,a) = action_get_holes a
    
@@ -214,7 +215,7 @@ let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list 
   let psv = Cprinter.string_of_spec_var in
   let pr1 l = pr_list (pr_pair psv psv) l in
   let pr2 l = pr_list (pr_list psv) l in
-  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+  Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
 
 let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
   let tmp = List.filter (fun a -> CP.mem v a) aset in
@@ -227,7 +228,7 @@ let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 let psv = Cprinter.string_of_spec_var in
  let pr1 = (pr_list psv) in
  let pr2 = pr_list pr1 in
- Gen.Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+ Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
 
 let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
     let eqns = MCP.ptr_equations_without_null rhs_p in
@@ -237,7 +238,7 @@ let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
  let psv = Cprinter.string_of_spec_var in
  let pr2 = (pr_list (pr_list psv)) in
  let pr1 = Cprinter.string_of_mix_formula in
- Gen.Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
+ Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
 
 let comp_alias_part r_asets a_vars = 
     (* let a_vars = lhs_fv @ posib_r_aliases in *)
@@ -272,7 +273,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   if Gen.is_empty paset then  
     failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
-	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
+	(Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
   else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
@@ -283,7 +284,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.no_5 "choose_context" 
+  Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -302,7 +303,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 and view_mater_match prog c vs1 aset imm f =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
-  Gen.Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
@@ -332,7 +333,7 @@ and view_mater_match_x prog c vs1 aset imm f =
 (*   let psv = Cprinter.string_of_spec_var in *)
 (*   let pr1 = pr_list psv in *)
 (*   let pr2 = pr_list  psv in   *)
-(*   Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
+(*   Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
               
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
@@ -354,7 +355,7 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr (c,_) = string_of_coercion c in
-  Gen.Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
+  Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
@@ -384,7 +385,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Gen.Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
       
 (*
@@ -403,7 +404,7 @@ and spatial_ctx_extract p f a i rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
-  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
+  Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
@@ -472,7 +473,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
-  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
+  Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -514,8 +515,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
-                  let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
-                  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in
+                 (* let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
+                  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in*)
                   let flag = 
                     if !ann_derv 
                     then (not(dl_data_derv) && not(dr_data_derv)) 
@@ -740,7 +741,7 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   match l with
@@ -767,16 +768,50 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
-        (-1, (Cond_action [ (* ri; *) r; r0]))
-      else r0
+        (-1, (Cond_action [ ri; r; r0]))
+      else (-1, Cond_action [ ri; r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
     | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
 
+and choose_closest a ys =
+  let similar m o =
+    (m.match_res_lhs_node == o.match_res_lhs_node)
+        && (m.match_res_rhs_node == o.match_res_rhs_node) in
+  let rec find m ys = 
+    match ys with
+      | [] -> None
+      | (_,x)::xs ->
+            begin
+            let r =(find_a m x) in
+            match r with
+              | None -> find m xs
+              | Some a -> r
+            end 
+  and find_a m x = 
+    match x with
+      | M_match o ->
+            if similar m o then Some x
+            else None
+      | Cond_action awl 
+      | Seq_action awl
+      | Search_action awl
+          -> (find m awl)
+      | _ -> None in
+  match a with
+    | M_match m -> find m ys
+    | _ -> None
+  
+and choose_match f ys =
+  match f with
+    | None -> None
+    | Some a -> choose_closest a ys
+
+
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -803,14 +838,21 @@ and sort_wt_x (ys: action_wt list) : action list =
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
 
+and sort_wt_match opt (ys: action_wt list) : action list =
+  match (choose_match opt ys) with
+    | None -> sort_wt ys
+    | Some a -> 
+          (* let _ = print_endline "WN : Found a must_action_stk match" in  *)
+          [a]
+
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
-  Gen.Debug.no_1 "sort_wt_new" pr pr sort_wt_new_x ys
+  Debug.no_1 "sort_wt_new" pr pr sort_wt_new_x ys
 
 and group_equal_actions (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
         (action_wt list)=
   let pr = pr_list string_of_action_wt_res_simpl in
-  Gen.Debug.no_4 "group_equal_actions" pr pr string_of_int pr pr group_equal_actions_x ys running running_w rs
+  Debug.no_4 "group_equal_actions" pr pr string_of_int pr pr group_equal_actions_x ys running running_w rs
 
 and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
         (action_wt list)=
@@ -897,12 +939,12 @@ and pick_unfold_only ((w,a):action_wt) : action_wt list =
 (* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
 
 and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos :action =
-  if not(must_action_stk # is_empty) then
-    begin
-      let a = must_action_stk # top in
-      must_action_stk # pop; a
-    end
-  else
+  let opt = 
+   if not(must_action_stk # is_empty) then
+     let a = must_action_stk # top in
+      (must_action_stk # pop; Some a)
+   else None
+  in
     let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
     (* match r with  *)
     (*   | [] -> M_Nothing_to_do "no nodes to match" *)
@@ -914,7 +956,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normali
       | [] -> M_Nothing_to_do "no nodes on RHS"
       | xs -> 
             (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-            let ys = sort_wt r in 
+            let ys = sort_wt_match opt r in 
             List.hd (ys)
    (*  match ys with
         | [(_, act)] -> act
@@ -940,7 +982,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_3 "compute_actions" 
+  Debug.no_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)

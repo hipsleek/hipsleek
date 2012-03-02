@@ -1,0 +1,8 @@
+infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- LexVar[0,p2,m] & n<m.
+//print residue.
+
+//infer [p1,p2] n=m+1 & LexVar[0,p1,n] |- n<m.
+//print residue.
+
+//infer [m] n=m+1 |- m>n.
+//print residue.

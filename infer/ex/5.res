@@ -1,101 +1,73 @@
 Starting Reduce... 
 Starting Omega...oc
-Infer  (1): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ !(n=0 & y=null), n=1]
-<1>EXISTS(q_50,flted_7_48: q_50::ll<flted_7_48>@M[Orig] & flted_7_48=0 & 
-n=1 &
-{FLOW,(17,18)=__norm})
+Entail  (1): Valid. 
+
+<1>EXISTS(q_48,flted_7_46: q_48::ll<flted_7_46>@M[Orig] & flted_7_46+1=n & n=1 & {FLOW,(17,18)=__norm})
+inferred pure: [n=1; n!=0 | y!=null]
+
+Entail  (2): Valid. 
+
+<1>EXISTS(q_76,flted_7_74: q_76::ll<flted_7_74>@M[Orig] & flted_7_74+1=n & n=1 & {FLOW,(17,18)=__norm})
+inferred pure: [n=1; n!=0]
+
+Entail  (3): Valid. 
+
+<1>EXISTS(flted_7_98: b::ll<flted_7_98>@M[Orig] & flted_7_98+1=n & {FLOW,(17,18)=__norm})
+inferred pure: [n!=0]
+
+Entail  (4): Valid. 
+
+<1>true & y=null & n=0 & {FLOW,(17,18)=__norm}
+inferred pure: [n=0]
+
+Entail  (5): Valid. 
+
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [n!=1]
+
+Entail  (6): Valid. 
+
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [n!=1]
+
+Entail  (7): Valid. 
+
+<1>true & 0<n & m<n & 4<=n & {FLOW,(17,18)=__norm}
+inferred pure: [4<=n]
+
+Entail  (8): Valid. 
+
+<1>true & 0<n & m<n & 4<m & 9<=n & {FLOW,(17,18)=__norm}
+inferred pure: [9<=n]
+
+Entail  (9): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+
+<1>true & 0<n & m<n & {FLOW,(1,2)=__Error}
+
+Entail  (10): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+
+<1>true & 0<n & m<n & {FLOW,(1,2)=__Error}
+
+Entail  (11): Fail.(must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
+
+<1>true & true & {FLOW,(1,2)=__Error}
+
+Entail  (12): Fail.(must) cause:(failure_code=213)  true |-  false (RHS: contradiction).
+
+<1>true & 0<n & m=2 & {FLOW,(1,2)=__Error}
+
+Entail  (13): Fail.(may) cause:(failure_code=213)  2<m & a=p |-  m<a (may-bug).
 
 
-Infer  (2): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n!=0, n=1]
-<1>EXISTS(q_80,flted_7_78: q_80::ll<flted_7_78>@M[Orig] & flted_7_78=0 & 
-n=1 &
-{FLOW,(17,18)=__norm})
+Entail  (14): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
 
 
-Infer  (3): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n!=0]
-<1>EXISTS(flted_7_104: b::ll<flted_7_104>@M[Orig] & flted_7_104+1=n &
-{FLOW,(17,18)=__norm})
+Entail  (15): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
 
 
-Infer  (4): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n=0]
-<1>true & n=0 & y=null &
-{FLOW,(17,18)=__norm}
+Entail  (16): Valid. 
 
+<1>true & 2<m & 5<=m & m<p & {FLOW,(17,18)=__norm}
+inferred pure: [(1+m)<=p; 5<=m]
 
-Infer  (5): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n!=1]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (6): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n!=1]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (7): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ 4<=n]
-<1>true & m<n & 4<=n &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (8): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ 9<=n]
-<1>true & 5<=m & m<n & 9<=n &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (9): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ 1>n]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (10): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ !(m<n & 1<=n)]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (11): Fail.(must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
-<1>true & true &
-{FLOW,(1,2)=__Error}
-
-
-Infer  (12): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ !(m=2 & 1<=n)]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (13): Fail.(may) cause:(failure_code=213)  2<m & a=p |-  m<a (may-bug).
-
-Infer  (14): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
-
-Infer  (15): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
-
-Infer  (16): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ 5<=m & m<p]
-<1>true & 5<=m & m<p &
-{FLOW,(17,18)=__norm}
-
-
-Halting Reduce... 
-Stop Omega... 288 invocations 
+Stop Omega... 180 invocations 

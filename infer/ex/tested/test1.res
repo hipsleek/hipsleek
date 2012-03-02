@@ -1,91 +1,76 @@
 Starting Reduce... 
 Starting Omega...oc
-Infer  (1): Valid. 
-Inferred Heap:[ y::node<inf_28,inf_29>@M[Orig]]
-Inferred Pure:[]
-<1>true & a=inf_28 & b=inf_29 &
-{FLOW,(17,18)=__norm}
+Entail  (1): Valid. 
 
+<1>true & a=inf_a_29 & b=inf_b_30 & inf_ann_28<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_29,inf_b_30>@inf_ann_28[Orig]]
+inferred pure: [inf_ann_28<=0]
 
-Infer  (2): Valid. 
-Inferred Heap:[ y::ll<inf_36>@M[Orig][LHSCase]]
-Inferred Pure:[]
-<1>true & n=inf_36 &
-{FLOW,(17,18)=__norm}
+Entail  (2): Valid. 
 
+<1>true & n=inf_n_35 & inf_ann_34<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [y::ll<inf_n_35>@inf_ann_34[Orig][LHSCase]]
+inferred pure: [inf_ann_34<=0]
 
-Infer  (3): Valid. 
-Inferred Heap:[ y::node<inf_46,inf_47>@M[Orig], b::node<inf_48,inf_49>@M[Orig]]
-Inferred Pure:[ b=inf_47]
-<1>true & a=inf_46 & b=inf_47 & c=inf_48 & d=inf_49 &
-{FLOW,(17,18)=__norm}
+Entail  (3): Valid. 
 
+<1>true & a=inf_a_43 & b=inf_b_44 & c=inf_c_46 & d=inf_d_47 & inf_ann_45<=0 & inf_ann_42<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_43,inf_b_44>@inf_ann_42[Orig]; 
+               inf_b_44::node<inf_c_46,inf_d_47>@inf_ann_45[Orig]]
+inferred pure: [inf_ann_42<=0; inf_ann_45<=0]
 
-Infer  (4): Valid. 
-Inferred Heap:[ y::node<inf_55,inf_56>@M[Orig], b::ll<inf_60>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_56]
-<1>true & a=inf_55 & b=inf_56 & m=inf_60 &
-{FLOW,(17,18)=__norm}
+Entail  (4): Valid. 
 
+<1>true & a=inf_a_54 & b=inf_b_55 & m=inf_m_57 & inf_ann_56<=0 & inf_ann_53<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_54,inf_b_55>@inf_ann_53[Orig]; 
+               inf_b_55::ll<inf_m_57>@inf_ann_56[Orig][LHSCase]]
+inferred pure: [inf_ann_53<=0; inf_ann_56<=0]
 
-Infer  (5): Valid. 
-Inferred Heap:[ y::ll<inf_70>@M[Orig][LHSCase]]
-Inferred Pure:[]
-<1>true & x=y & n=inf_70 &
-{FLOW,(17,18)=__norm}
+Entail  (5): Valid. 
 
+<1>true & x=y & n=inf_n_62 & inf_ann_61<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_62>@inf_ann_61[Orig][LHSCase]]
+inferred pure: [inf_ann_61<=0]
 
-Infer  (6): Valid. 
-Inferred Heap:[ y::ll<inf_n_84>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_84=0]
-<1>true & n=0 & y=x & inf_n_84=0 &
-{FLOW,(17,18)=__norm}
+Entail  (6): Valid. 
 
+<1>true & n=0 & x=y & inf_ann_70<=0 & inf_n_71<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_71>@inf_ann_70[Orig][LHSCase]]
+inferred pure: [inf_n_71<=0; inf_ann_70<=0]
 
-Infer  (7): Valid. 
-Inferred Heap:[ x::ll<inf_99>@M[Orig][LHSCase]]
-Inferred Pure:[]
-<1>true & x=y & n=inf_99 &
-{FLOW,(17,18)=__norm}
+Entail  (7): Valid. 
 
+<1>true & x=y & n=inf_n_81 & inf_ann_80<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_81>@inf_ann_80[Orig][LHSCase]]
+inferred pure: [inf_ann_80<=0]
 
-Infer  (8): Valid. 
-<1>true & a=ia & b=ib &
-{FLOW,(17,18)=__norm}
+Entail  (8): Valid. 
 
+<1>true & a=ia & b=ib & {FLOW,(17,18)=__norm}
 
-Infer  (9): Valid. 
-Inferred Heap:[ y::node<inf_a_120,inf_flted_43_121>@M[Orig]]
-Inferred Pure:[ inf_flted_43_121=null & 1<=inf_a_120]
-<1>true & inf_flted_43_121=null & 1<=inf_a_120 &
-{FLOW,(17,18)=__norm}
+Entail  (9): Valid. 
 
+<1>true & inf_ann_99<=0 & inf_flted_43_101=null & 1<=inf_a_100 & {FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_100,inf_flted_43_101>@inf_ann_99[Orig]]
+inferred pure: [1<=inf_a_100; inf_flted_43_101=null; inf_ann_99<=0]
 
-Infer  (10): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ 1<=aa]
-<1>EXISTS(flted_47_147: true & flted_47_147=null & 1<=aa &
-{FLOW,(17,18)=__norm})
+Entail  (10): Valid. 
 
+<1>EXISTS(flted_47_127: true & flted_47_127=null & 1<=aa & {FLOW,(17,18)=__norm})
+inferred pure: [1<=aa]
 
-Infer  (11): Valid. 
-<1>true & n=m &
-{FLOW,(17,18)=__norm}
+Entail  (11): Valid. 
 
+<1>true & n=m & {FLOW,(17,18)=__norm}
 
-Infer  (12): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>false & false &
-{FLOW,(17,18)=__norm}
+Entail  (12): Valid. 
 
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [x!=null]
 
-Infer  (13): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ y!=null]
-<1>false & false &
-{FLOW,(17,18)=__norm}
+Entail  (13): Valid. 
 
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [y!=null]
 
-Halting Reduce... 
-Stop Omega... 185 invocations 
+Stop Omega... 204 invocations 

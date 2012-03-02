@@ -981,6 +981,7 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
 
 let ngs_union gs = 
   List.fold_left IGO.union IG.empty gs 
@@ -995,8 +996,7 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
     | _ -> None
   in
   fold_exp exp f ngs_union cg
-
-
+	
 let addin_callgraph_of_proc cg proc : IG.t = 
   match proc.proc_body with
   | None -> cg
@@ -1063,7 +1063,7 @@ let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) =
 let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) = 
   let pr2 = pr_list (pr_list (fun x -> x)) in
   let pr3 = pr_list (pr_pair (pr_list (fun x -> x)) pr_no) in
-  Gen.Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
+  Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
  
 
 let cmbn_rw a b = 
@@ -1229,7 +1229,7 @@ let add_globalv_to_mth_prog prog =
   }
 
 let add_globalv_to_mth_prog prog = 
-  Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+  Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
 prog: current program*)  
@@ -1251,7 +1251,8 @@ let pre_process_of_iprog iprims prog =
 
 let pre_process_of_iprog iprims prog = 
   let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
-  Gen.Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
+  (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
+  Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
 

@@ -12,7 +12,6 @@ void foo1(ref int i)
   bnd(i);
 }
 
-
 void foo1a(ref int i)
  infer [] // infer better pre/post
  requires i>0
@@ -27,6 +26,19 @@ void foo1a(ref int i)
   bnd(i);
 }
 
+void foo1b(ref int i)
+ infer [i] // infer better pre/post
+ requires i>0
+ ensures true; //'
+/*
+  expecting 
+   requires i>0
+   ensures i'=i+1;
+*/
+{
+  i = i-1;
+  bnd(i);
+}
 
 
 void foo2(ref int i)

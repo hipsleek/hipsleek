@@ -1,8 +1,9 @@
 int bsearch(int a, int v, int low, int up)
 case {
-	low>up ->  ensures "l1":true & res=-1 ;
+	low>up ->  requires Term ensures "l1":true & res=-1 ;
 	low<=up -> // variance up-low => low>up
                // bound -1 // should be a constant
+			   requires Term[up-low]
                ensures "l2":true & (res=-1 | a=v & low<=res<=up);
 			   /* case { */
 			   /*  	a<v -> ensures "l2":true; */
@@ -37,11 +38,11 @@ case {
 }
 
 bool lessthan(int a, int v)
-requires true
+requires Term
 //ensures a<v;
 ensures res & a<v or !res & a>=v ;
 
 bool greaterthan(int a, int v)
-requires true
+requires Term
 //ensures a>=v;
 ensures res & a>v or !res & a<=v ;

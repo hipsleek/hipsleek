@@ -1,11 +1,9 @@
 Starting Reduce... 
 Starting Omega...oc
-Infer  (1): Valid. 
-Inferred Heap:[ y::ll<inf_n_33>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_33=0]
-<1>true & n=0 & y=x & inf_n_33=0 &
-{FLOW,(17,18)=__norm}
+Entail  (1): Valid. 
 
+<1>true & n=0 & x=y & inf_ann_30<=0 & inf_n_31<=0 & {FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_31>@inf_ann_30[Orig][LHSCase]]
+inferred pure: [inf_n_31<=0; inf_ann_30<=0]
 
-Halting Reduce... 
-Stop Omega... 53 invocations 
+Stop Omega... 41 invocations 

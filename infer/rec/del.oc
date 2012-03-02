@@ -1,0 +1,11 @@
+pre_fst := {[n,a]:n>=2};
+# derive pre to ensure safety of all recursive call
+pre_rec := {[n,a]:
+  forall(RECn,RECa:
+  not((RECn >= 0 && n >= 1 + RECn) && n + RECa = a + RECn)
+  || RECn>=2)};
+
+pre_fst; pre_rec;
+
+pre := pre_fst intersection pre_rec;
+pre;
