@@ -45,7 +45,7 @@ print residue.
 
 
 
-// (10) inferred v2<=1
+// (10) inferred v2<=1 & v1<:v2
 /*
 <1>EXISTS(flted_7_226,flted_7_240: Anon_15::ll<flted_7_240>@v1[Orig]&flted_7_240+1=flted_7_226 & flted_7_226+1=n & 1<n & v1<:v2 & v2<=1&{FLOW,(17,18)=__norm})
 */
@@ -53,18 +53,19 @@ infer [v1,v2] x::ll<n>@v1 & n>1 |- x::node<a,b>@I*b::node<_,_>@v2.
 print residue.
 
 
-// (11) valid
+
+// (11) valid with 1<=v2
 /*
 <1>EXISTS(flted_7_263,flted_7_277: Anon_17::ll<flted_7_277>@I[Orig]&flted_7_277+1=flted_7_263 & flted_7_263+1=n & 1<n & @I<:v2&{FLOW,(17,18)=__norm})
 */
 infer [v2] x::ll<n>@I & n>1 |- x::node<a,b>@I*b::node<_,_>@v2.
 print residue.
 
-// (12) valid with v1<:v2 in residue
+// (12) valid with v1<:v2 
 infer [v1,v2] x::node<a,b>@v1 |- x::node<c,d>@v2.
 print residue.
 
-// (13) valid with v1<:v2 in residue
+// (13) valid with v1<:v2 
 infer [v1,v2] x::ll<n>@v1 |- x::ll<n>@v2.
 print residue.
 
@@ -82,6 +83,22 @@ print residue.
 
 // (17) 
 infer [v2] x::ll<n>@L |- x::ll<n>@v2.
+print residue.
+
+// (18)
+infer [v1] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+// (19)
+infer [v1,v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+// (20)
+infer [v1] x::node<_,q>@v1 & v1<:I |- x::node<a,b>@v2.
+print residue.
+
+// (21)
+infer [v1] x::node<_,q>@v1 |- x::node<a,b>@I.
 print residue.
 
 

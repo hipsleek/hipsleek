@@ -232,7 +232,7 @@ $output_file = "log";
          "sub", "SUCCESS",
          "mult_c", "SUCCESS",
          "shift_left", "SUCCESS",
-         "mult", "SUCCESS",
+         "mult2", "SUCCESS",
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
