@@ -46,6 +46,10 @@ do
 	time ./run-fast-tests.pl pmona -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp mona -stat
 	time ./run-fast-tests.pl pmona -flags "--eps --dfe --ep-stat" --log-timings -tp mona -stat
 
+	# Redlog
+	time ./run-fast-tests.pl predlog -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp redlog -stat
+	time ./run-fast-tests.pl predlog -flags "--eps --dfe --ep-stat" --log-timings -tp redlog -stat
+
 	# OM
 	# time ./run-fast-tests.pl plink -flags "--eps --dis-imm --dfe --dis-slicing" --log-timings -tp om
 	# time ./run-fast-tests.pl plink -flags "--eps --dis-imm --dfe" --log-timings -tp om
@@ -63,6 +67,10 @@ do
 	time ./run-fast-tests.pl plink -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp zm -stat
 	time ./run-fast-tests.pl plink -flags "--eps --dfe --ep-stat" --log-timings -tp zm -stat
 	time ./run-fast-tests.pl plink -flags "--eps --dfe --enable-slicing --ep-stat" --log-timings -tp zm -stat
+
+	# SIR
+	time ./run-fast-tests.pl SIR -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -stat
+	time ./run-fast-tests.pl SIR -flags "--eps --dfe --ep-stat" --log-timings -stat
 
 	mv timings_log.xls timings_log_$(date +%Y%m%d_%H%M%S).xls
 done
