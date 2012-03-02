@@ -100,25 +100,3 @@ let rec subst_ground_sorts a sl =
 		let rs = List.flatten rs in 
 		let rs = List.fold_right (fun (x,y) r -> List.map (fun (z,t) -> (z, subst_sort (x,y) t)) r) gr rs in
 			subst_ground_sorts (List.append a gr) rs
-
-(** Convert sort to Z3 sort *)
-let rec z3sort ctx s = match s with
-	| SWild _ -> failwith "[z3sort] wild sort cannot be translated to Z3"
-	| SBool -> Z3.mk_bool_sort ctx
-	| SInt -> Z3.mk_int_sort ctx
-	| SMap d ->
-		let doms = Array.of_list (List.tl d) in
-		let syms = Array.mapi (fun i _ -> Z3.mk_string_symbol ctx ("Z" ^ (string_of_int i))) doms in
-		let doms = Array.map (fun x -> z3sort ctx x) doms in
-		let doms, _, _ = Z3.mk_tuple_sort ctx (Z3.mk_string_symbol ctx "smap") syms doms in
-		let imgs = z3sort ctx (List.hd d) in
-			Z3.mk_array_sort ctx doms imgs
-			
-and z3constructor_of_dom ctx s = match s with
-	| SMap d ->
-		let doms = Array.of_list (List.tl d) in
-		let syms = Array.mapi (fun i _ -> Z3.mk_string_symbol ctx ("Z" ^ (string_of_int i))) doms in
-		let doms = Array.map (fun x -> z3sort ctx x) doms in
-		let _, constr, _ = Z3.mk_tuple_sort ctx (Z3.mk_string_symbol ctx "smap") syms doms in
-			constr
-	| _ -> failwith "[z3sort_of_domain] : Unexpected sort"

@@ -66,3 +66,19 @@ let mapi f l =
  *)
 let subset_eq eq l1 l2 =
 	List.for_all (memeq eq l2) l1
+	
+(**
+ * Triary boolean types to capture unknown
+ *)
+type triary_bool =
+	| True | False | Unknown
+
+let string_of_triary_bool b = match b with
+	| True -> "true"
+	| False -> "false"
+	| Unknown -> "unknown"
+
+let negate_triary b = match b with
+	| True -> False
+	| False -> True
+	| Unknown -> Unknown

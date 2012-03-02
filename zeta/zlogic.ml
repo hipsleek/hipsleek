@@ -9,29 +9,6 @@ open Zsort
 open Zutils
 
 (**
- * Triary boolean types to capture unknown
- *)
-type triary_bool =
-	| True | False | Unknown
-
-let z3lbool_to_triary_bool b =
-	match b with
-		| Z3.L_FALSE -> False
-		| Z3.L_TRUE -> True
-		| Z3.L_UNDEF -> Unknown
-
-let string_of_triary_bool b = match b with
-	| True -> "true"
-	| False -> "false"
-	| Unknown -> "unknown"
-
-let negate_triary b = match b with
-	| True -> False
-	| False -> True
-	| Unknown -> Unknown
-
-
-(**
  * Record structure for symbols
  *)
 type symbol = {
@@ -52,12 +29,15 @@ type theorem = {
 
 (* THEOREM PROVING *)
 
-let assert_all_axioms ctx st =
+(*let assert_all_axioms ctx st =
 	Hashtbl.iter (fun x y -> 
 		let axms = y.axioms in
 		(*let _ = List.map (fun a -> print_endline ("Add axiom " ^ (string_of_term a))) axms in*)
 		let _ = List.map (fun a -> Z3.assert_cnstr ctx (z3ast ctx a)) axms in
-			()) st
+			()) st*)
+
+let get_all_axioms st =
+	Hashtbl.fold (fun _ y axms -> List.append y.axioms axms) st []
 
 let check st t = 
 	let _ = print_string ("[check]: {{{\n" ^ (string_of_term  t) ^ "\n}}} ") in

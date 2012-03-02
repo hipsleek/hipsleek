@@ -3,8 +3,9 @@
  * manipulate terms in the language
  * for first order logic. Support  
  * a subset of SMTLIB 2.0 standard for 
- * theory of integers with uninterpreted
- * functions for arrays reasoning.
+ * theory of integers with 
+ * uninterpreted functions for arrays 
+ * reasoning.
  *
  * @author Vu An Hoa
  *)
@@ -12,24 +13,36 @@
 open Zsort
 open Zutils
 
-type func =
+
+(**
+ * Data structure for LOGICAL TERM
+ *
+ * Note: For the case FunApp:
+ * 
+ * If func = GFunc then the first
+ * argument must be a Var term whose
+ * name is the function/array name.
+ * 
+ * If func = Exists or Forall then 
+ * the first argument term is the
+ * formula and the rest are variables
+ * under the quantification.
+ *
+ * TODO consider removing sort from var
+ * such information is deducible from
+ * the context
+ *)
+type term =
+	| Num of int (* Numeral constant *)
+	| Var of sort * string (* Variables/Function symbols *)
+	| FunApp of func * term list
+	
+and func =
 	| Add | Sub | Mul | Div | Mod
 	| Lt | Le | Gt | Ge | Eq | Ne
 	| Top | Bot | And | Or | Neg
 	| Implies | Iff | Exists | Forall
 	| GFunc
-
-type term =
-	| Num of int (* Numeral constant *)
-	| Var of sort * string (* Variables/Function symbols *)
-	(* Function application.*)
-	(* If func = GFunc then the first *)
-	(* argument is a Var term whose name*)
-	(* is the function name. If func = Exists*)
-	(* or Forall then the first term is the*)
-	(* formula and the rest are quantified vars *)
-	| FunApp of func * term list
-	
 
 (* TERM TREE POST-ORDER TRAVERSAL *)
 
@@ -201,6 +214,8 @@ let mkBinTerm f x1 x2 = mkListTerm f [x1; x2]
 
 let mkUnaryTerm f x = mkListTerm f [x]
 
+let mkFunApp f l = FunApp (f, l)
+
 let mkTop () = FunApp (Top, [])
 
 let mkBot () = FunApp (Bot, [])
@@ -280,7 +295,11 @@ let rec frv t = match t with
 let rec subst stl t = if stl = [] then t 
 	else match t with
 		| Num _ -> t
-		| Var (_, v) -> (try List.assoc v stl with Not_found -> t)
+		| Var (_, v) -> begin
+			try 
+				List.assoc v stl
+			with 
+				| Not_found -> t end
 		| FunApp (f, x) -> match f with
 			| Exists | Forall ->
 				let fml = List.hd x in
@@ -293,58 +312,3 @@ let rec subst stl t = if stl = [] then t
 				
 let filter_defined_symbols st vl =
 	List.filter (fun x -> not (Hashtbl.mem st (name_of_var x))) vl
-
-(* CONVERT TERM TO Z3 AST *)
-
-(* Assoc list to assoc functor to Z3 AST constructors *)
-let z3_array_constr =
-	[(Add, Z3.mk_add);
-	(Sub, Z3.mk_sub);
-	(Mul, Z3.mk_mul);
-	(And, Z3.mk_and);
-	(Or, Z3.mk_or);
-	(Ne, Z3.mk_distinct)]
-
-let z3_bin_constr = 
-	[(Div, Z3.mk_div);
-	(Mod, Z3.mk_mod);
-	(Lt, Z3.mk_lt);
-	(Le, Z3.mk_le);
-	(Gt, Z3.mk_gt);
-	(Ge, Z3.mk_ge);
-	(Eq, Z3.mk_eq);
-	(Implies, Z3.mk_implies);
-	(Iff, Z3.mk_iff)]
-
-(**
- * Convert term to Z3 AST
- *)
-let rec z3ast ctx t =
-	(*let _ = print_endline ("[z3ast] " ^ (string_of_term t)) in*)
-	match t with
-		| Num i ->
-			Z3.mk_int ctx i (Z3.mk_int_sort ctx)
-		| Var (s, v) ->
-			Z3.mk_const ctx (Z3.mk_string_symbol ctx v) (z3sort ctx s)
-		| FunApp (f, x) ->
-			let xs = List.map (z3ast ctx) x in
-			match f with
-				| Top -> Z3.mk_true ctx
-				| Bot -> Z3.mk_false ctx
-				| Neg -> Z3.mk_not ctx (List.hd xs)
-				| Exists -> Z3.mk_exists_const ctx 0 (Array.of_list (List.map (Z3.to_app ctx) (List.tl xs))) [| |] (List.hd xs)
-				| Forall -> Z3.mk_forall_const ctx 0 (Array.of_list (List.map (Z3.to_app ctx) (List.tl xs))) [| |] (List.hd xs)
-				| Add | Sub | Mul | And | Or | Ne ->
-					let z3constr = List.assoc f z3_array_constr in
-						z3constr ctx (Array.of_list xs)
-				| Div | Mod | Lt | Le | Gt | Ge | Eq | Implies | Iff ->
-					let x0 = List.nth xs 0 in
-					let x1 = List.nth xs 1 in
-					let z3constr = List.assoc f z3_bin_constr in
-						z3constr ctx x0 x1
-				| GFunc ->
-					let o, xs = List.hd xs, List.tl xs in
-					let sf = sort_of_term (List.hd x) in
-					let dc = z3constructor_of_dom ctx sf in
-					(*let sf = Hashtbl.find (name_of_var o) in*)
-						Z3.mk_select ctx o (Z3.mk_app ctx dc (Array.of_list xs))
