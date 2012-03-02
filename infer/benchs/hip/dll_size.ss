@@ -282,7 +282,7 @@ void insert(node x, int a)
     insert(x.next, a);
 }
 
-
+/*
 /* delete a node from a doubly linked list */
 relation DEL(int a, int b, int c).
 void delete(node x, int a)
@@ -308,7 +308,7 @@ void delete(node x, int a)
 		delete(x.next, a-1);
 	}
 }
-
+*/
 /* function to delete node val = a in a doubly linked list */
 relation DEL2(int m, int n).
 node delete2(ref node x, int a)
@@ -377,7 +377,7 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
-
+/*
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 relation SPLIT(int a, int b, int c, int d).
 node split1(ref node x, int a)
@@ -402,7 +402,7 @@ node split1(ref node x, int a)
 		return tmp;
 	}
 }
-
+*/
 
 /*****************************************/
 /*********SMALLFOOT EXAMPLES*************/

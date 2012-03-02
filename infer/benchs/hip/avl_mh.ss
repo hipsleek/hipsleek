@@ -334,7 +334,7 @@ node insert_inline(node x, int a)
                   x.height = h;
 
                   hr = height1(k1.right);
-                  h = get_max(height(x), hr);
+                  h = get_max(height1(x), hr);
                   h = h + 1;
                   k1.height = h;
 

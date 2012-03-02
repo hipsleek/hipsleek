@@ -15,12 +15,18 @@ pq<n, mx> == self = null & n = 0 & mx = 0
 	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
 	inv n >= 0 & mx >= 0;
 
+pq1<n, mx,S> == self = null & n = 0 & mx = 0 & S={}
+  or (exists m3: self::node<d, m1, m2, l, r> * l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2>
+	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx = d & m3 = m1-m2 & m3 >= 0 & m3 <= 1
+      & S=union(S1,S2,{d})) //0 <= n1 - n2 & n1 - n2 <= 1
+	inv n >= 0 & mx >= 0;
+
 /* function to insert an element in a priority queue */
-relation INS(int a, int b, int c).
+relation INS(bag a, bag b, int c).
 node insert(node t, int v)
-//  infer [INS]
-  requires t::pq<n, mx> & v >= 0
-  ensures res::pq<n+1, ma> & (v>=mx & ma = v | ma = mx);//INS(v,mx,ma);//(v>=mx & ma = v | ma = mx);
+  infer [INS]
+  requires t::pq1<n, mx,S1> & v >= 0
+  ensures res::pq1<n+1, ma,S2> & (v>=mx & ma = v | ma = mx) & INS(S1,S2,v);//S2=union(S1,{v});//INS(S1,S2,v);//(v>=mx & ma = v | ma = mx);
 {
 	node tmp, tmp_null = null;
 	int tmpv;
@@ -73,17 +79,15 @@ node insert(node t, int v)
 
 int deleteoneel1(ref node t)
 //infer[res,mx,mx2]
-  requires t::pq<n, mx> & n > 0
-  ensures t'::pq<n-1, mx2> & mx2 <= mx & 0 <= res <= mx ;//'
+  requires t::pq1<n, mx,S1> & n > 0
+  ensures t'::pq1<n-1, mx2,S2> & mx2 <= mx & 0 <= res <= mx & S2 subset S1 ;//'
 
 /* function to delete a leaf */
 relation DEL(int a, int b, int c).
 int deleteoneel(ref node t)
-  infer[DEL]
-  requires t::pq<n, mx> & n > 0
-  ensures t'::pq<n-1, mx2> & DEL(res,mx,mx2);//& mx2 <= mx & 0 <= res <= mx &
-	//ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
-
+//infer[DEL]
+  requires t::pq1<n, mx,S1> & n > 0
+  ensures t'::pq1<n-1, mx2,S2> & mx2 <= mx & 0 <= res <= mx & S2 subset S1 ;//'
 {
 	int v;
 
@@ -106,29 +110,30 @@ int deleteoneel(ref node t)
 
 }
 int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
-  requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
-  & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;//'
+  requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq1<m1', mx3,S3> * r'::pq1<m2', mx4,S4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
+  & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 &
+//maxi = max(mx1, mx2)
+  ((maxi=mx1 & maxi >= mx2) | (maxi=mx2 & maxi > mx1))
+  & 0 <= res <= maxi & S5=union(S1,S2) & S6=union(S3,S4) & S6 subset S5;//'
 
 /* function to delete one element*/
-relation DELONE (int a, int b, int c, int d).
+//relation DELONE (int a, int b, int c, int d).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
-  infer [DELONE]
-  requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1'+m2'+1 = m1+m2 & 0 <= m1'-m2'<= 1 &
-    m1'=n3 & m2'=n4 /*& mx3<=mx1 & mx4<=mx2*/ & maxi= max(mx1, mx2) & 0 <= res <= maxi & DELONE(mx3,mx1,mx2,mx4);
-/* 
-  requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq<n3, mx3> * r'::pq<n4, mx4> & n3 + n4 + 1 = m1 + m2 & 0 <= n3 - n4 <= 1 & 
-  m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
-*/
+//infer [DELONE]
+  requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+  ensures l'::pq1<m1', mx3,S3> * r'::pq1<m2', mx4,S4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
+  & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 &
+//maxi = max(mx1, mx2)
+  ((maxi=mx1 & maxi >= mx2) | (maxi=mx2 & maxi > mx1))
+  & 0 <= res <= maxi & S5=union(S1,S2) & S6=union(S3,S4) & S6 subset S5;//'
 {
 	if (m1 > m2)
 	{
 		m1 = m1 - 1;
 		return deleteoneel1(l);
 	}
-	else 
+	else
 	{
 		m2 = m2 - 1;
 		return deleteoneel1(r);
@@ -139,9 +144,11 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 relation RIP(int a, int b, int c, int d).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
   //infer[RIP]
-  requires l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
-  ensures l::pq<m1, mx3> * r::pq<m2, mx4> /*& mx3 <= mx1 & mx4 <= mx2 */
-    & max1 = max(mx1, v) & max2 = max(mx2, max1) & d' <= max2 & d' >= mx3, mx4, 0;
+  requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
+  ensures l::pq1<m1, mx3,S3> * r::pq1<m2, mx4,S4> /*& mx3 <= mx1 & mx4 <= mx2 */
+//    & max1 = max(mx1, v) & max2 = max(mx2, max1)
+  & ((max1=mx1 & max1 >= v) | (max1=v & max1 > mx1)) & ((max2=mx2 & max2>= max1) | (max2=max1 & max2 > mx2))
+& d' <= max2 & d' >= mx3, mx4, 0;
 {
 	if (m1 == 0)
       { //assume false;

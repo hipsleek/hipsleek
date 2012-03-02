@@ -701,13 +701,14 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
       let total_sub_flag = List.for_all (fun r ->
         let alias = r::(CP.EMapSV.find_equiv_all r lhs_aset) in
         CP.intersect alias iv != []) vars_rhs in
-(*      let total_sub_flag =  (CP.diff_svl vars_rhs iv == []) in*)
+      let total_sub_flag = if (CP.diff_svl iv vars_rhs == []) then false else total_sub_flag in
       Debug.trace_hprint (add_str "total_sub_flag" string_of_bool) total_sub_flag no_pos;
       let vars_rhs = List.concat (List.map (fun r -> r::(CP.EMapSV.find_equiv_all r lhs_aset)) vars_rhs) in
       let vars_overlap =  if total_sub_flag then (CP.intersect_svl vars_lhs vars_rhs) else [] in
       Debug.trace_hprint (add_str "vars overlap" !CP.print_svl) vars_overlap no_pos;
       let args = CP.fv fml in (* var on lhs *)
       let quan_var = CP.diff_svl args iv in
+      let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
       let quan_var = quan_var@vars_overlap in
       let is_bag_cnt = TP.is_bag_constraint fml in
       let new_p,new_p_ass = 

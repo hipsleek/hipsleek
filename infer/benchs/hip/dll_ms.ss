@@ -228,7 +228,7 @@ void insert(node x, int a)
   else 
     insert(x.next, a);
 }
-
+/*
 /* delete a node from a doubly linked list */
 void delete(node x, int a)
   infer [x]
@@ -254,7 +254,7 @@ void delete(node x, int a)
 		delete(x.next, a-1);
       }
 }
-/*
+*/
 /* function to delete the a-th node in a doubly linked list */
 node delete2(ref node x, int a)
   requires x::dll<_>
@@ -280,7 +280,7 @@ node delete2(ref node x, int a)
     }
 	}
 }
-*/
+
 
 /* function to create a doubly linked list with a nodes */
 node create_list(int n, int v)
