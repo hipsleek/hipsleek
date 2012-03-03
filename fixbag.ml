@@ -398,6 +398,41 @@ let rewrite pure rel_lhs_vars rel_vars =
   let pure = CP.subst subst_lst pure in
   CP.remove_redundant_constraints pure
 
+let rec get_all_pairs conjs = match conjs with
+  | [] -> []
+  | c::cs -> 
+    let lst = List.map (fun conj -> (c,conj)) cs in
+    lst @ (get_all_pairs cs)
+
+let rec rewrite_by_subst pairs = match pairs with
+  | [] -> []
+  | [(e1,e2)] ->
+    begin
+    match (e1,e2) with
+    | (BForm ((pf1,_),_), BForm ((pf2,_),_)) -> 
+      begin
+      match pf1,pf2 with
+      | Eq (exp1, exp2, _), Eq (exp3, exp4, _) ->
+        begin
+        match (exp1,exp2,exp3,exp4) with 
+        (* Add more if necessary *)
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); Bag([Var (sv24,_)],_)],_)
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) 
+        | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); Bag([Var (sv24,_)],_)],_), Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
+        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
+        ->
+          if eq_spec_var sv12 sv22 && eq_spec_var sv13 sv23 then
+            [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv11 no_pos; Bag([mkVar sv24 no_pos],no_pos)],no_pos)) no_pos]
+          else []
+        | _ -> []
+        end
+      | _ -> []
+      end
+    | _ -> []
+    end
+  | p::ps -> (rewrite_by_subst [p]) @ (rewrite_by_subst ps)
+  
+
 let propagate_rec_helper rcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
 (*  DD.devel_hprint (add_str "Before: " (!CP.print_formula)) rcase_orig no_pos;*)
@@ -421,6 +456,14 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let rcase_conjs = CP.list_of_conjs rcase in
   if List.exists (fun conj -> is_emp_bag conj rel_vars) rcase_conjs then CP.mkFalse no_pos
   else
+    let rcase_conjs_eq = List.filter is_eq_exp rcase_conjs in
+    let rcase_conjs = 
+      if List.length rcase_conjs_eq <= 4 then
+        let all_pairs = get_all_pairs rcase_conjs_eq in
+(*        DD.info_hprint (add_str "PAIRS: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) all_pairs no_pos;*)
+        rcase_conjs @ (rewrite_by_subst all_pairs)
+      else rcase_conjs 
+    in
     let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
     let rels = CP.get_RelForm rcase_orig in
     let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in

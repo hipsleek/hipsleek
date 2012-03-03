@@ -95,7 +95,7 @@ int count(node2 z)
 
 relation FLAT(bag x, bag y).
 void flatten(node2 x)
-//infer[FLAT]
+//  infer[FLAT]
   requires x::bst3<n,h,sm, lg,S1>
   ensures x::dll<q, n,S2> & S1=S2;//S1=S2;FLAT(S1,S2)
 {

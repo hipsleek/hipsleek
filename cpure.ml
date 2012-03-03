@@ -6893,6 +6893,14 @@ let is_eq_const (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq _,_)
+    | (Eq _,_) -> true
+    | _ -> false)
+  | _ -> false
+
 let get_rank_dec_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with

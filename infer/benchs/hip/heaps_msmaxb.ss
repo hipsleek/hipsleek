@@ -81,7 +81,7 @@ int deleteoneel1(ref node t)
 //infer[res,mx,mx2]
   requires t::pq1<n, mx,S1> & n > 0
   ensures t'::pq1<n-1, mx2,S2> & mx2 <= mx & 0 <= res <= mx & S2 subset S1 ;//'
-
+/*
 /* function to delete a leaf */
 relation DEL(int a, int b, int c).
 int deleteoneel(ref node t)
@@ -109,6 +109,8 @@ int deleteoneel(ref node t)
 	}
 
 }
+
+*/
 int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
   ensures l'::pq1<m1', mx3,S3> * r'::pq1<m2', mx4,S4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
@@ -196,13 +198,13 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 		}
 	}
 }
-
+/*
 /* function to delete the root of a heap tree */
 relation DELM(int a, int b, int c).
 int deletemax(ref node t)
-  infer[DELM]
+//  infer[DELM]
   requires t::pq<n, mx> & n > 0
-  ensures t'::pq<n-1, mx2> & DELM(mx,mx2,res);//& mx2 <= res <= mx;//'mx2>=0 & res>=mx2 & mx>=res
+  ensures t'::pq<n-1, mx2> & mx2 <= res <= mx;//DELM(mx,mx2,res);//& mx2 <= res <= mx;//'mx2>=0 & res>=mx2 & mx>=res
 {
 	int v, tmp;
 
@@ -223,3 +225,4 @@ int deletemax(ref node t)
       return tmp;
 	}
 }
+*/
