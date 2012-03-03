@@ -257,6 +257,8 @@ and b_f_bag_equations_aux with_emp f =
       if not b then [] else [(get_alias_bag e1, get_alias_bag e2)]
   | _ -> [] 
 
+and b_f_bag_equations f = b_f_bag_equations_aux true f
+
 and is_bf_ptr_equations bf =
   let (pf,_) = bf in
   match pf with
@@ -295,12 +297,18 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
 
-and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list = 
+and pure_bag_equations_aux_x with_emp (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
     | BForm (bf,_) -> b_f_bag_equations_aux with_emp bf
     | _ -> [] 
   in prep_f f
+
+and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list = 
+  let pr1 = string_of_bool in
+  let pr2 = !print_pure_f in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "pure_bag_equations_aux" pr1 pr2 pr3 pure_bag_equations_aux_x with_emp f 
 
 (* use_with_null_const for below *)
 (* assume that f is a satisfiable conjunct *) 
@@ -311,6 +319,14 @@ and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list 
     let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c -> a @ (pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
+    r @ eqs in
+  List.concat (List.map helper f)
+
+and bag_equations_aux_mp with_emp (f : memo_pure) : (spec_var * spec_var) list =  
+  let helper f = 
+    let r = List.fold_left (fun a c -> (a @ b_f_bag_equations c.memo_formula)) [] f.memo_group_cons in
+    let r = List.fold_left (fun a c -> a @ (pure_bag_equations_aux with_emp c)) r f.memo_group_slice in
+    let eqs = get_equiv_eq f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
 
@@ -1931,7 +1947,7 @@ let ptr_equations_aux with_null f = match f with
   | OnePF f -> pure_ptr_equations_aux with_null f
 
 let bag_equations_aux with_emp f = match f with
-  | MemoF f -> []
+  | MemoF f -> bag_equations_aux_mp with_emp f
   | OnePF f -> pure_bag_equations_aux with_emp f
 
 (* type: mix_formula -> (Cpure.EMapSV.elem * Cpure.EMapSV.elem) list *)

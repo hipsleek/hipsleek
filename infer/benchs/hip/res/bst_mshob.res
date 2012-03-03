@@ -40,26 +40,26 @@ Restarting Mona ...
                   ())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 1::
-                              EXISTS(flted_29_1383,r_1384,
-                              S_1385: res::dll<r_1384,flted_29_1383,S_1385>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              EXISTS(flted_29_1386,r_1387,
+                              S_1388: res::dll<r_1387,flted_29_1386,S_1388>@M[Orig][LHSCase]@ rem br[{286,285}]&
                               (
-                              ([S_1385=union(S1,S2)]
-                               [flted_29_1383=m+n & 0<=m & 0<=n]))&
+                              ([S_1388=union(S1,S2)]
+                               [flted_29_1386=m+n & 0<=m & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(S1_1346:exists(v_1138:exists(v_1343:exists(S1_1141:S1!=() & 
-  S1=union(S1_1141,{v_1138}) & S=union(S1_1346,{v_1343}) & 
-  APP(S_1191,S1_1147,S2_1150) & S2_1150=S2 & S1_1346=S_1191 & 
-  v_1138=v_1343 & S1_1141=S1_1147 & S_1191=))))) --> APP(S,S1,S2),
+!!! NEW RELS:[ (exists(S1_1349:exists(v_1141:exists(v_1346:exists(S1_1144:S1!=() & 
+  S1=union(S1_1144,{v_1141}) & S=union(S1_1349,{v_1346}) & 
+  APP(S_1194,S1_1150,S2_1153) & S2_1153=S2 & S1_1349=S_1194 & 
+  v_1141=v_1346 & S1_1144=S1_1150 & S_1194=))))) --> APP(S,S1,S2),
  (S=S2 & S1=) --> APP(S,S1,S2),
- (exists(S1_1252:exists(v_1249:exists(S1_1282:exists(v_1279:exists(S1_1269:exists(v_1266:exists(S1_1141:exists(v_1138:S1_1252=S1_1282 & 
-  v_1249=v_1279 & S_1191=union(S1_1252,{v_1249}) & S_1191!=() & 
-  S1_1269=union(S1_1282,{v_1279}) & S1_1141=S1_1147 & v_1138=v_1266 & 
-  S2_1150=S2 & APP(S_1191,S1_1147,S2_1150) & S=union(S1_1269,{v_1266}) & 
-  S1=union(S1_1141,{v_1138}) & S1!=()))))))))) --> APP(S,S1,S2),
- (exists(S1_1346:exists(v_1343:exists(S1_1141:exists(v_1138:S_1191= & 
-  S1_1141=S1_1147 & v_1138=v_1343 & S1_1346=S_1191 & S2_1150=S2 & 
-  APP(S_1191,S1_1147,S2_1150) & S=union(S1_1346,{v_1343}) & S1=union(S1_1141,
-  {v_1138}) & S1!=()))))) --> APP(S,S1,S2)]
+ (exists(S1_1255:exists(v_1252:exists(S1_1285:exists(v_1282:exists(S1_1272:exists(v_1269:exists(S1_1144:exists(v_1141:S1_1255=S1_1285 & 
+  v_1252=v_1282 & S_1194=union(S1_1255,{v_1252}) & S_1194!=() & 
+  S1_1272=union(S1_1285,{v_1282}) & S1_1144=S1_1150 & v_1141=v_1269 & 
+  S2_1153=S2 & APP(S_1194,S1_1150,S2_1153) & S=union(S1_1272,{v_1269}) & 
+  S1=union(S1_1144,{v_1141}) & S1!=()))))))))) --> APP(S,S1,S2),
+ (exists(S1_1349:exists(v_1346:exists(S1_1144:exists(v_1141:S_1194= & 
+  S1_1144=S1_1150 & v_1141=v_1346 & S1_1349=S_1194 & S2_1153=S2 & 
+  APP(S_1194,S1_1150,S2_1153) & S=union(S1_1349,{v_1346}) & S1=union(S1_1144,
+  {v_1141}) & S1!=()))))) --> APP(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append$node2~node2 SUCCESS
@@ -88,22 +88,22 @@ Restarting Mona ...
                   ())&{FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 8::
-                              EXISTS(flted_54_1660,Anon_1661,
-                              S_1662: res::dll<Anon_1661,flted_54_1660,S_1662>@M[Orig][LHSCase]@ rem br[{286,285}]&
+                              EXISTS(flted_54_1663,Anon_1664,
+                              S_1665: res::dll<Anon_1664,flted_54_1663,S_1665>@M[Orig][LHSCase]@ rem br[{286,285}]&
                               (
-                              ([S_1662=union(S1,S2)]
-                               [flted_54_1660=m+n & 0<=m & 0<=n]))&
+                              ([S_1665=union(S1,S2)]
+                               [flted_54_1663=m+n & 0<=m & 0<=n]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (S=S2 & S1=) --> C(S,S1,S2),
- (exists(S1_1538:exists(v_1535:exists(S1_1572:exists(v_1569:exists(S1_1559:exists(v_1556:exists(S1_1428:exists(v_1425:S1_1538=S1_1572 & 
-  v_1535=v_1569 & S_1485=union(S1_1538,{v_1535}) & S_1485!=() & 
-  S1_1559=union(S1_1572,{v_1569}) & S1_1428=S1_1434 & v_1425=v_1556 & 
-  S2_1437=S2 & C(S_1485,S1_1434,S2_1437) & S=union(S1_1559,{v_1556}) & 
-  S1!=() & S1=union(S1_1428,{v_1425})))))))))) --> C(S,S1,S2),
- (exists(S1_1636:exists(v_1633:exists(S1_1428:exists(v_1425:S_1477= & 
-  S1_1636= & S1_1434=S1_1428 & v_1425=v_1633 & S2=S2_1437 & 
-  C(S_1477,S1_1434,S2_1437) & S=union(S1_1636,{v_1633}) & S1!=() & 
-  S1=union(S1_1428,{v_1425})))))) --> C(S,S1,S2)]
+ (exists(S1_1541:exists(v_1538:exists(S1_1575:exists(v_1572:exists(S1_1562:exists(v_1559:exists(S1_1431:exists(v_1428:S1_1541=S1_1575 & 
+  v_1538=v_1572 & S_1488=union(S1_1541,{v_1538}) & S_1488!=() & 
+  S1_1562=union(S1_1575,{v_1572}) & S1_1431=S1_1437 & v_1428=v_1559 & 
+  S2_1440=S2 & C(S_1488,S1_1437,S2_1440) & S=union(S1_1562,{v_1559}) & 
+  S1!=() & S1=union(S1_1431,{v_1428})))))))))) --> C(S,S1,S2),
+ (exists(S1_1639:exists(v_1636:exists(S1_1431:exists(v_1428:S_1480= & 
+  S1_1639= & S1_1437=S1_1431 & v_1428=v_1636 & S2=S2_1440 & 
+  C(S_1480,S1_1437,S2_1440) & S=union(S1_1639,{v_1636}) & S1!=() & 
+  S1=union(S1_1431,{v_1428})))))) --> C(S,S1,S2)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure appendC$node2~node2 SUCCESS
@@ -177,6 +177,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 14.92 second(s)
-	Time spent in main process: 1.45 second(s)
-	Time spent in child processes: 13.47 second(s)
+Total verification time: 13.83 second(s)
+	Time spent in main process: 1.12 second(s)
+	Time spent in child processes: 12.71 second(s)

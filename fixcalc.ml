@@ -395,15 +395,18 @@ let rec compute_fixpoint (i:int) input_pairs pre_vars specs =
       (fun _ _ -> compute_fixpoint_x input_pairs pre_vars specs) input_pairs pre_vars
 
 and compute_fixpoint_x input_pairs ante_vars specs =
+(*  let input_pairs_rec = List.map (fun (p,r) -> is_rec p) input_pairs in*)
+(*  let is_recur = List.fold_left (||) false input_pairs_rec in*)
   let is_bag_cnt rel =
     let bag_vars = List.filter CP.is_bag_typ (CP.fv rel) in
     bag_vars != []
   in
   let input_pairs_bag, input_pairs_num = List.partition (fun (p,r) -> is_bag_cnt r) input_pairs in
-  let bag_res = if input_pairs_bag = [] then [] else Fixbag.compute_fixpoint 3 input_pairs_bag ante_vars in
+  let bag_res = if input_pairs_bag = [] then [] else Fixbag.compute_fixpoint 3 input_pairs_bag ante_vars true in
   let num_res =
     if input_pairs_num = [] then []
     else
+(*    if is_recur then *)
       let (pfs, rels) = List.split input_pairs_num in
       let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
       let triples = List.concat (List.map (fun r -> helper input_pairs_num r ante_vars specs) rels) in 
@@ -411,6 +414,27 @@ and compute_fixpoint_x input_pairs ante_vars specs =
       DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
       let rel = List.map (fun (x,y,n) -> (x,y,n,ante_vars)) triples in
       compute_fixpoint_aux rel
+(*    else *)
+(*      let (pfs, rels) = List.split input_pairs in*)
+(*      let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in*)
+(*      let res = List.map (fun rel -> *)
+(*        let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in*)
+(*        let pfs,_ = List.split pairs in*)
+(*        let is_mona = TP.is_bag_constraint (List.hd pfs) in*)
+(*        let pfs = if is_mona then *)
+(*          List.map (fun p -> *)
+(*            let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in*)
+(*            CP.remove_cnts bag_vars p) pfs*)
+(*          else pfs*)
+(*        in*)
+(*        let pfs = List.map (fun p -> *)
+(*          let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in *)
+(*          let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in*)
+(*          TP.simplify_exists_raw exists_vars p) pfs *)
+(*        in*)
+(*        (rel,List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs)*)
+(*        ) rels*)
+(*      in res*)
   in bag_res @ num_res
 
 and preprocess_rels rels =
@@ -497,7 +521,7 @@ and compute_fixpoint_aux rel =
   in
   List.map (fun x ->
 	  match x with
-    | (post, (rel,_,_,_)) -> (rel, post, CP.mkTrue no_pos)
+    | (post, (rel,_,_,_)) -> (rel, post)
     | _ -> report_error no_pos "Expecting a post"
 	) fixpoint_rel
 

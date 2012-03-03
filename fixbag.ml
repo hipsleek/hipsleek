@@ -389,14 +389,29 @@ let rec create_alias_tbl vs aset all_rel_vars = match vs with
 let rewrite pure rel_lhs_vars rel_vars =
   let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
   let aset = CP.EMapSV.build_eset als in
-  let other_vars = List.filter (fun x -> CP.is_int_typ x) (CP.fv pure) in
+  let other_vars = List.filter CP.is_int_typ (CP.fv pure) in
   let alias = create_alias_tbl (rel_vars@other_vars) aset rel_lhs_vars in
   let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
       let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
-(*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
-(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
+(*  DD.info_hprint (add_str "PURE: " (!CP.print_formula)) pure no_pos;*)
   let pure = CP.subst subst_lst pure in
   CP.remove_redundant_constraints pure
+
+let rewrite2 pure rel_lhs_vars rel_vars =
+  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
+  let aset = CP.EMapSV.build_eset als in
+  let pure_vars = CP.fv pure in
+  let int_vars, other_vars = List.partition CP.is_int_typ pure_vars in
+  let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars in
+  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in 
+        List.concat (List.map (fun v -> 
+          if mem_svl v pure_vars && mem_svl hd pure_vars then [mkEqVar v hd no_pos] else []) 
+        (List.tl vars))) alias) in
+(*  DD.info_hprint (add_str "PURE: " (!CP.print_formula)) pure no_pos;*)
+  let pure = conj_of_list (pure::subst_lst) no_pos in
+  CP.remove_dup_constraints pure
 
 let rec get_all_pairs conjs = match conjs with
   | [] -> []
@@ -574,6 +589,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
           let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
           let r = Redlog.elim_exists_with_eq r in
           TP.simplify_raw r) bcases in
+(*    let bcases = List.map (fun x -> rewrite2 x [] fv_rel) bcases in*)
     let bcases = List.map (fun x -> rewrite x fv_rel []) bcases in
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let no_of_disjs = List.length bcases in
@@ -621,8 +637,34 @@ let simplify_res fixpoint =
     if TP.imply_raw p2 p1 then p1 else fixpoint
   | _ -> fixpoint
 
-let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars = 
-  if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos, CP.mkFalse no_pos)
+let rec remove_subtract_exp e = match e with
+  | CP.Subtract (_, Subtract (_,en,_), _) -> remove_subtract_exp en
+  | CP.Bag (es, p) -> Bag (List.map remove_subtract_exp es, p)
+  | CP.BagUnion (es, p) -> BagUnion (List.map remove_subtract_exp es, p)
+  | CP.BagIntersect (es, p) -> BagIntersect (List.map remove_subtract_exp es, p)
+  | CP.BagDiff (e1, e2, p) -> BagDiff (remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | _ -> e
+
+let remove_subtract_pf pf = match pf with
+  | CP.Lt (e1, e2, p) -> Lt(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Lte (e1, e2, p) -> Lte(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Gt (e1, e2, p) -> Gt(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Gte (e1, e2, p) -> Gte(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Eq (e1, e2, p) -> Eq(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Neq (e1, e2, p) -> Neq(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | _ -> pf
+
+
+let rec remove_subtract pure = match pure with
+  | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
+  | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
+  | Or (f1,f2,_,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None no_pos
+  | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
+  | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
+
+let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur = 
+  if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos)
   else (
     let (name,vars) = match rel_fml with
       | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
@@ -651,11 +693,17 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars =
       let fixpoint = Parse_fixbag.parse_fix res in
       DD.devel_hprint (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
       match fixpoint with
-        | [post] -> (rel_fml, simplify_res post, CP.mkTrue no_pos)
+        | [post] -> (rel_fml, simplify_res post)
         | _ -> report_error no_pos "Expecting a post"
-    with _ -> report_error no_pos "Unexpected error in computing fixpoint by FixBag")
+    with _ -> 
+      if not(is_rec pf) then 
+        let exists_vars = CP.diff_svl (CP.fv pf) (CP.fv rel_fml) in 
+        let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
+        let pf = TP.simplify_exists_raw exists_vars pf in
+        (rel_fml, remove_subtract pf)
+      else report_error no_pos "Unexpected error in computing fixpoint by FixBag")
 
-let compute_fixpoint input_pairs ante_vars =
+let compute_fixpoint input_pairs ante_vars is_rec =
   let (pfs, rels) = List.split input_pairs in
   let rels = Gen.BList.remove_dups_eq CP.equalFormula rels in
   let pairs = match rels with
@@ -672,14 +720,14 @@ let compute_fixpoint input_pairs ante_vars =
     | _ -> List.concat (List.map (fun r -> helper input_pairs r ante_vars) rels)
   in
   DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-  List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars) pairs
+  List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars is_rec) pairs
 
-let compute_fixpoint (i:int) input_pairs pre_vars =
+let compute_fixpoint (i:int) input_pairs pre_vars is_rec =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
-      (fun _ _ -> compute_fixpoint input_pairs pre_vars) input_pairs pre_vars
+      (fun _ _ -> compute_fixpoint input_pairs pre_vars is_rec) input_pairs pre_vars
 
  
 

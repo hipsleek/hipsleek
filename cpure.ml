@@ -793,23 +793,51 @@ and get_alias (e : exp) : spec_var =
     | Null _ -> null_var (* it is safe to name it "null" as no other variable can be named "null" *)
     | _ -> failwith ("get_alias: argument is neither a variable nor null")
 
+(*and can_be_aliased_aux_bag with_emp (e : exp) : bool =*)
+(*  match e with*)
+(*    | Var _ -> true*)
+(*    | Bag ([],_) -> with_emp*)
+(*    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) *)
+(*    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) -> true*)
+(*    | _ -> false*)
+
+(*and get_alias_bag (e : exp) : spec_var =*)
+(*  match e with*)
+(*    | Var (sv, _) -> sv*)
+(*    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)*)
+(*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
+(*      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv1) ^ (name_of_spec_var sv2), Unprimed)*)
+(*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
+(*      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv2) ^ (name_of_spec_var sv1), Unprimed)*)
+(*    | _ -> report_error no_pos "Not a bag or a variable or null"*)
+
 and can_be_aliased_aux_bag with_emp (e : exp) : bool =
   match e with
-    | Var _ -> true
-    | Bag ([],_) -> with_emp
-    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) 
-    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) -> true
-    | _ -> false
-
+  | Var _ -> true
+  | Subtract (_,Subtract (_,Var _,_),_) -> true
+  | Bag ([],_) -> with_emp
+  | Bag (es,_) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | BagUnion (es, _) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | _ -> false
+ 
 and get_alias_bag (e : exp) : spec_var =
   match e with
-    | Var (sv, _) -> sv
-    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)
-    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> 
-      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv1) ^ (name_of_spec_var sv2), Unprimed)
-    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> 
-      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv2) ^ (name_of_spec_var sv1), Unprimed)
-    | _ -> report_error no_pos "Not a bag or a variable or null"
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> sv
+  | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)
+  | Bag (es,_) -> 
+    SpecVar (Named "", "bag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+  | BagUnion (es, _) -> 
+    SpecVar (Named "", "unionbag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+  | _ -> report_error no_pos "Not a bag or a variable or a bag_union or null"
+
+and name_of_exp (e: exp): string =
+  match e with
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> name_of_spec_var sv
+  | Bag ([],_) -> "emptybag"
+  | Bag (es,_)
+  | BagUnion (es, _) -> (List.fold_left (fun x y -> x ^ name_of_exp y) "" es)
 
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true

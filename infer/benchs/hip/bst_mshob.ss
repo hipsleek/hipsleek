@@ -117,7 +117,7 @@ void flatten(node2 x)
 node2 insert(node2 x, int a)
   requires x::bst3<n,h,sm, lg,S1>
   ensures res::bst3<n+1,h1,mi, ma,S2> & h1>=h
-  & res != null & mi = min(sm, a) & ma = max(lg, a);//& S2=union(S1,{a})
+  & res != null & mi = min(sm, a) & ma = max(lg, a) & S2=union(S1,{a});
 {
 	node2 tmp;
     node2 tmp_null = null;
