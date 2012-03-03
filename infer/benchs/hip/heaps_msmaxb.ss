@@ -24,9 +24,9 @@ pq1<n, mx,S> == self = null & n = 0 & mx = 0 & S={}
 /* function to insert an element in a priority queue */
 relation INS(bag a, bag b, int c).
 node insert(node t, int v)
-  infer [INS]
+//  infer [INS]
   requires t::pq1<n, mx,S1> & v >= 0
-  ensures res::pq1<n+1, ma,S2> & (v>=mx & ma = v | ma = mx) & INS(S1,S2,v);//S2=union(S1,{v});//INS(S1,S2,v);//(v>=mx & ma = v | ma = mx);
+  ensures res::pq1<n+1, ma,S2> & (v>=mx & ma = v | ma = mx) & S2=union(S1,{v});//S2=union(S1,{v});//INS(S1,S2,v);//(v>=mx & ma = v | ma = mx);
 {
 	node tmp, tmp_null = null;
 	int tmpv;
