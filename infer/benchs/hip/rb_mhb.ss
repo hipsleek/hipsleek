@@ -96,11 +96,10 @@ node case_2r_1(node a, node b, node c, node d)
 	requires a::rb1<0, bha, S1> * b::rb1<0, bha, S2> * c::rb1<0, bha, S3> * d::rb1<0, bha, S4>
 	ensures res::rb1<0, bha + 1, S5> & S5 = union(S1, S2, S3, S4, {0}, {0}, {0});
 
-
 /* function to check if a node is red */
 relation RED1(bag a, bag b).
 relation RED2(bag a, bag b).
-bool is_red_1(node x)
+bool is_red(node x)
 	infer [RED1,RED2]
 	requires x::rb1<cl, bh, S>
 	ensures x::rb1<cl, bh, S1> & cl = 1 & res & RED1(S1,S)
@@ -117,13 +116,21 @@ bool is_red_1(node x)
 			return true;
 }
 
+/* function to check if a node is red */
+bool is_red_1(node x)
+	requires x::rb1<cl, bh, S>
+	ensures x::rb1<cl, bh, S> & cl = 1 & res
+		or x::rb1<cl, bh, S> & cl = 0 & !res;
+
 
 /* function to check if a node is black */
-bool is_black_1(node x)
-
+relation BLACK1(bag a, bag b).
+relation BLACK2(bag a, bag b).
+bool is_black(node x)
+	infer [BLACK1,BLACK2]
 	requires x::rb1<cl, bh, S>
-	ensures x::rb1<cl, bh, S> & cl = 1 & !res
-		or x::rb1<cl, bh, S> & cl = 0 & res;
+	ensures x::rb1<cl, bh, S1> & cl = 1 & !res & BLACK1(S1,S)
+		or x::rb1<cl, bh, S2> & cl = 0 & res & BLACK2(S2,S);
 
 {
 	if (x == null)
@@ -136,12 +143,22 @@ bool is_black_1(node x)
 			return false;
 }
 
+/* function to check if a node is black */
+bool is_black_1(node x)
+	requires x::rb1<cl, bh, S>
+	ensures x::rb1<cl, bh, S> & cl = 1 & !res
+		or x::rb1<cl, bh, S> & cl = 0 & res;
+
+
 /* function for case 6 delete (simple rotation) */
-node del_6_1(node a, node b, node c, int color)
+relation DEL61(bag a, bag b, bag c, bag d).
+relation DEL62(bag a, bag b, bag c, bag d).
+node del_6(node a, node b, node c, int color)
+  infer [DEL61,DEL62]
 	requires a::rb1<0, h, S1> * b::rb1<_, h, S2> * c::rb1<1, h, S3> & color = 0 or 
 		 a::rb1<0, h, S1> * b::rb1<_, h, S2> * c::rb1<1, h, S3> & color = 1  
-	ensures res::rb1<0, h + 2, S4> & S4 = union(S1, S2, S3, {0}, {0}) & color = 0 or 
-		res::rb1<1, h + 1, S5> & S5 = union(S1, S2, S3, {0}, {0}) & color = 1;
+	ensures res::rb1<0, h + 2, S4> & DEL61(S1,S2,S3,S4) & color = 0 or 
+		res::rb1<1, h + 1, S5> & DEL62(S1,S2,S3,S5) & color = 1;
  
 {
 	node tmp; 
@@ -151,6 +168,12 @@ node del_6_1(node a, node b, node c, int color)
 
 	return new node(0, color, tmp, c);
 }
+
+node del_6_1(node a, node b, node c, int color)
+	requires a::rb1<0, h, S1> * b::rb1<_, h, S2> * c::rb1<1, h, S3> & color = 0 or 
+		 a::rb1<0, h, S1> * b::rb1<_, h, S2> * c::rb1<1, h, S3> & color = 1  
+	ensures res::rb1<0, h + 2, S4> & S4 = union(S1, S2, S3, {0}, {0}) & color = 0 or 
+		res::rb1<1, h + 1, S5> & S5 = union(S1, S2, S3, {0}, {0}) & color = 1;
 
 /* function for case 6 at delete (simple rotation) - when is right child */
 node del_6r_1(node a, node b, node c, int color)
@@ -200,10 +223,12 @@ node del_5r_1(node a, node b, node c, node d, int color)
 	return del_6r_1(tmp, c, d, color);
 }
 
-/* function for case 4(just recolor) */
-node del_4_1(node a, node b, node c)
+
+relation DEL4(bag a, bag b, bag c, bag d).
+node del_4(node a, node b, node c)
+  infer [DEL4]
 	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
-	ensures res::rb1<0, ha + 1, S4> & S4 = union(S1, S2, S3, {0}, {0});
+	ensures res::rb1<0, ha + 1, S4> & DEL4(S1,S2,S3,S4);//S4 = union(S1, S2, S3, {0}, {0});
 
 {
 	node tmp; 
@@ -212,12 +237,16 @@ node del_4_1(node a, node b, node c)
 	return new node(0, 0, a, tmp);
 }
 
-
-/* function for case 4 (just recolor) - right child */
-node del_4r_1(node a, node b, node c)
-
+/* function for case 4(just recolor) */
+node del_4_1(node a, node b, node c)
 	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
 	ensures res::rb1<0, ha + 1, S4> & S4 = union(S1, S2, S3, {0}, {0});
+
+relation DEL4R(bag a, bag b, bag c, bag d).
+node del_4r(node a, node b, node c)
+  infer [DEL4R]
+	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
+	ensures res::rb1<0, ha + 1, S4> & DEL4R(S1,S2,S3,S4);//& S4 = union(S1, S2, S3, {0}, {0});
 
 {
 	node tmp; 
@@ -227,11 +256,19 @@ node del_4r_1(node a, node b, node c)
 	return new node(0, 0, tmp, c);
 }
 
+/* function for case 4 (just recolor) - right child */
+node del_4r_1(node a, node b, node c)
 
-/* function for case 3 (just recolor) */
-node del_3_1(node a, node b, node c)
 	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
 	ensures res::rb1<0, ha + 1, S4> & S4 = union(S1, S2, S3, {0}, {0});
+
+
+/* function for case 3 (just recolor) */
+relation DEL3(bag a, bag b, bag c, bag d).
+node del_3(node a, node b, node c)
+  infer [DEL3]
+	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
+	ensures res::rb1<0, ha + 1, S4> & DEL3(S1,S2,S3,S4);//& S4 = union(S1, S2, S3, {0}, {0});
 {
 	node tmp;
 
@@ -240,11 +277,16 @@ node del_3_1(node a, node b, node c)
 	return new node(0, 0, a, tmp);
 }
 
-/* function for case 3 (just recolor) - right child */
-node del_3r_1(node a, node b, node c)
-
+node del_3_1(node a, node b, node c)
 	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
 	ensures res::rb1<0, ha + 1, S4> & S4 = union(S1, S2, S3, {0}, {0});
+
+/* function for case 3 (just recolor) - right child */
+relation DEL3R(bag a, bag b, bag c, bag d).
+node del_3r(node a, node b, node c)
+  infer [DEL3R]
+	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
+	ensures res::rb1<0, ha + 1, S4> & DEL3R(S1,S2,S3,S4);//& S4 = union(S1, S2, S3, {0}, {0});
 
 {
 	node tmp;
@@ -253,6 +295,10 @@ node del_3r_1(node a, node b, node c)
 
 	return new node(0, 0, tmp, c);
 }
+
+node del_3r_1(node a, node b, node c)
+	requires a::rb1<0, ha, S1> * b::rb1<0, ha, S2> * c::rb1<0, ha, S3> 
+	ensures res::rb1<0, ha + 1, S4> & S4 = union(S1, S2, S3, {0}, {0});
 
 
 /* function for case 2 (simple rotation + applying one of the cases 4, 5, 6) */
@@ -498,9 +544,11 @@ void del_1(ref node  x, int a)
 
 node node_error() requires true ensures false; 
 
+relation INS(bag a, bag b, int c).
 node insert_1(node x, int v)
+  infer [INS]
 	requires x::rb1<_, bh, S>
-	ensures res::rb1< _, bh1, S1> & res != null & bh <= bh1 <= bh & S1 = union(S, {v});
+	ensures res::rb1< _, bh1, S1> & res != null & bh <= bh1 <= bh & INS(S1,S,v);//S1 = union(S, {v});
 
 {
 	node tmp, tmp_null = null;
