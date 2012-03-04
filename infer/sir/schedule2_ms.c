@@ -76,7 +76,7 @@ new_process::node<v1,v2,null> & n4+n5+n6=n1+n2+n3+1 &v5>=1 & v5<=3 & res = 0;//'
 
 int enqueue1(int prio, node new_process,ref node curJob,ref node pq0, ref node pq1,
             ref node pq2, ref node pq3)
-  infer @post []
+//infer @post [] //segmentation fault
   requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>*new_process::node<v1,v2,null>
   & v2>=1 & v2<=3
  case{
@@ -362,7 +362,7 @@ int block(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq
 }
 
 int block1(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
- infer @post []
+      //infer @post []
  requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case { curJob=null -> ensures true;
   curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
@@ -509,7 +509,7 @@ int finish(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
 }
 
 int finish1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
-  infer @post []
+      //infer @post [] segmetation fault when reverify
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
    case {
   curJob =null -> case {
