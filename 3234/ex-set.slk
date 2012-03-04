@@ -1,0 +1,9 @@
+// (1)
+//checkentail forall(x: x notin S | x>2) |- forall(y: y notin S | y>0) .
+
+// (2)
+//checkentail S=union(S1,S2) & S1!={} |- S!={}.
+
+// (1)
+checkentail forall(x: x notin S | x>2) & S={} |- true & exists (y: y notin S | y>3) .
+
