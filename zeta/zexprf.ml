@@ -34,7 +34,7 @@ module type Exprf =
 		 * together with the proof (if
 		 * there is any).
 		 *)
-		val derive : term list -> triary_bool * term list
+		val derive : term list -> TBool.triary_bool * term list
 		
 	end
 
@@ -133,12 +133,12 @@ module Z3 =
 
 		let z3lbool_to_triary_bool b =
 			match b with
-				| Z3.L_FALSE -> False
-				| Z3.L_TRUE -> True
-				| Z3.L_UNDEF -> Unknown
+				| Z3.L_FALSE -> TBool.False
+				| Z3.L_TRUE -> TBool.True
+				| Z3.L_UNDEF -> TBool.Unknown
 
 		let derive ts = match ts with
-			| [] -> (True, []) (* \emptyset |- Top *)
+			| [] -> (TBool.True, []) (* \emptyset |- Top *)
 			| h::rs ->
 				let _ = if (!print_z3_input) then
 					print_endline ("[Zexprf.Z3.derive]: input = {{{\n" ^ 
@@ -157,10 +157,10 @@ module Z3 =
 						(String.concat "\n" (List.map (Z3.ast_to_string ctx) z3asserts)) ^ "}}}") in
 				(* check and get proof *)
 				let res = Z3.check ctx in
-				let res = negate_triary (z3lbool_to_triary_bool res) in
+				let res = TBool.negate_triary (z3lbool_to_triary_bool res) in
 				let _ = Z3.del_context(ctx) in
 				let _ = if (!print_z3_input) then
-					print_endline ("[Zexprf.Z3.derive]: output = " ^ (string_of_triary_bool res)) in
+					print_endline ("[Zexprf.Z3.derive]: output = " ^ (TBool.string_of_triary_bool res)) in
 				(* currently, we do not parse the proof from Z3 *)
 					(res, [])
 		
@@ -180,8 +180,6 @@ module Intel =
 
 		let select_prover st t = Z3
 		
-		
-
 	end
 	
 (*let derive prv t = match prv with

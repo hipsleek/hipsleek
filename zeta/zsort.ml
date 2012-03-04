@@ -89,9 +89,9 @@ let eq_sort_pair (x,y) (z,t) =
 
 let rec subst_ground_sorts a sl =
 	let gr, rs = List.partition (fun (_, y) -> is_ground_sort y) sl in
-	let gr = remove_dups_eq eq_sort_pair gr in
+	let gr = GList.remove_dups_eq eq_sort_pair gr in
 	(*let _ = List.map (fun (x,y) -> print_endline ("Ground substitution found : " ^ (string_of_sort x) ^ " --> " ^ (string_of_sort y))) gr in*)
-	if (gr = []) then (remove_dups_eq eq_sort_pair a, sl)
+	if (gr = []) then (GList.remove_dups_eq eq_sort_pair a, sl)
 	else
 		let rs = List.map (fun (x,y) ->
 			try let u,v = List.find (fun (z,t) -> eq_sort x z) gr in

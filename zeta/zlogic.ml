@@ -46,7 +46,7 @@ let get_top_ind st t = match t with
 	| FunApp (GFunc, fn::fa) -> begin
 		try
 			let s = Hashtbl.find st (name_of_var fn) in
-			let rep = mapi (fun i y -> ("$" ^ (string_of_int i), y)) fa in
+			let rep = GList.mapi (fun i y -> ("$" ^ (string_of_int i), y)) fa in
 				List.map (fun t -> subst rep t) s.induction
 		with
 			| Not_found -> [] end
@@ -59,7 +59,7 @@ let get_induction_candidates st t =
 	let ivals = List.map (get_top_ind st) fas in
 	let ivals = List.flatten ivals in
 	(* remove expression that contain quantified variables *)
-	let ivals = List.filter (fun x -> subset_eq eq_var (frv x) vst) ivals in
+	let ivals = List.filter (fun x -> GList.subset_eq eq_var (frv x) vst) ivals in
 		ivals
 		
 (* Give priority to the expressions in the consequence *)
@@ -86,23 +86,23 @@ let check_induction st t =
 	let ivals = get_induction_candidates st t in
 	let _ = print_endline ("[check_induction]: induction values { " ^ (string_of_term_list ivals) ^ " }") in
 	match ivals with
-		| [] -> print_endline "[check_induction]: no candidate found!"; Unknown
+		| [] -> print_endline "[check_induction]: no candidate found!"; TBool.Unknown
 		| _ -> let iv = List.hd ivals in
 			let fb, fi = make_induction_scheme st iv t in
 			let _ = print_endline ("[check_induction]: base case " (*^ (string_of_term fb)*)) in
 			match (check st fb) with
-				| True ->
+				| TBool.True ->
 					let _ = print_endline ("[check_induction]: induction " (*^ (string_of_term fi)*)) in
 					check st fi
-				| _ -> Unknown
+				| _ -> TBool.Unknown
 
 let verify_theorem st t =
 	(*let _ = print_endline ("[verify_theorem]: " ^ (string_of_term t.thm)) in*)
 	let validity = check st t.thm in
 	let validity = match validity with
-		| Unknown -> check_induction st t.thm
+		| TBool.Unknown -> check_induction st t.thm
 		| _ -> validity in
-	{ t with proved = (validity = True) }
+	{ t with proved = (validity = TBool.True) }
 	(*let validity = match validity with
 		| True -> print_endline "[verify_theorem]: derived"
 		| False -> print_endline "[verify_theorem]: false"

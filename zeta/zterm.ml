@@ -281,9 +281,9 @@ let rec frv t = match t with
 		let vl = match f with
 			| Exists | Forall ->
 				let qvars = List.flatten (List.tl vx) in
-					remove_all_eq eq_var (List.hd vx) qvars
+					GList.remove_all_eq eq_var (List.hd vx) qvars
 			| _ -> List.flatten vx in
-		remove_dups_eq eq_var vl
+		GList.remove_dups_eq eq_var vl
 
 (**
  * Substitute simultaneously [v/vt]
@@ -305,7 +305,7 @@ let rec subst stl t = if stl = [] then t
 				let fml = List.hd x in
 				let qvars = List.tl x in
 				let qvarsnames = List.map name_of_var qvars in
-				let stl = remove_all_eq (fun (v,_) q -> v = q) stl qvarsnames in
+				let stl = GList.remove_all_eq (fun (v,_) q -> v = q) stl qvarsnames in
 					FunApp (f, (subst stl fml) :: qvars)
 			| _ -> (* Warning : potential dangerous substitution of functors *)
 				FunApp (f, List.map (subst stl) x)

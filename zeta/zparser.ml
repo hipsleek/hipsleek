@@ -86,7 +86,7 @@ let infer_sorts defs =
 	(* collect & group symbols by name *)
 	let vss = map_defn_list collect_vars defs in
 	let vss = List.flatten vss in
-	let vss = List.map (group_elms eq_var) vss in
+	let vss = List.map (GList.group_elms eq_var) vss in
 	(* generate local sorts unification constraints *)
 	let gen_loc_unif_constr sym_class =
 		(name_of_var (List.hd sym_class), List.map sort_of_term sym_class) in
@@ -140,7 +140,7 @@ let infer_sorts defs =
 							(* List.map (fun t -> ) *) a;
 						induction = match t with
 							| Some t1 -> (* standardize inductions *)
-								let stl = Zutils.mapi  
+								let stl = GList.mapi  
 									(fun i y -> 
 										let vi = Var (sort_of_term y, 
 																	"$" ^ (string_of_int i)) in 

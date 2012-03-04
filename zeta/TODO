@@ -1,0 +1,4 @@
+ - Perform definition analysis
+ - Pattern matching for division, modulo
+ - Existential quantification & Skolemization
+ - 

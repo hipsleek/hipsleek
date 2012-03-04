@@ -13,6 +13,7 @@ divides(x,y) -> divides(y,z) -> divides(x,z).
 
 theorem y = 0 -> divides(x,y).
 
+/*
 theorem 0 < y & y < x -> ! divides(x,y).
 
 theorem 0 < x & divides(x,y) -> divides(x,y+x).
@@ -41,7 +42,7 @@ theorem divides(2,n) | divides(2,n+1).
 
 // Generalization of the above to get division algorithm
 //theorem 0 < x -> exists {z} (0 <= z & z < x & divides(x,y-z)).
-
+*/
 
 // Recursive definition for divides
 // relation and the analogous 
