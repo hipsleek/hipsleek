@@ -432,7 +432,7 @@ let set_tp tp_str =
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
-    (tp := SPASS; prover_str := "z3"::!prover_str;)
+    (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -491,6 +491,7 @@ let log_file_of_tp tp = match tp with
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
+  | SPASS -> "allinput.spass"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -1075,7 +1076,16 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         *)
         stat_tp (lazy (z3_is_sat wf)) "z3"
       end
-    | SPASS -> Spass.is_sat f sat_no
+    | SPASS -> ( 
+        if (is_bag_constraint wf) then
+          stat_tp (lazy (mona_is_sat wf)) "mona"
+        (*else if (is_list_constraint wf) then
+          Coq.is_sat wf sat_no*)
+        else if (is_array_constraint f) then
+          stat_tp (lazy (z3_is_sat f)) "z3"
+        else
+          stat_tp (lazy (Spass.is_sat f sat_no)) "spass"
+      )
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
 
@@ -1225,6 +1235,16 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (omega_simplify f);
                   end
+          | SPASS -> (
+              if (is_bag_constraint f) then
+                Mona.simplify f
+              (*else if (is_list_constraint f) then
+                Coq.simplify f*)
+              else if (is_array_constraint f) then
+                Smtsolver.simplify f
+              else
+                Spass.simplify f
+            )
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
 
@@ -1386,6 +1406,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
         Mona.hull f
       else
         Smtsolver.hull f
+  | SPASS -> Spass.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -1429,6 +1450,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | ZM ->
       if is_bag_constraint f then Mona.pairwisecheck f
       else Smtsolver.pairwisecheck f
+  | SPASS -> Spass.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -1654,7 +1676,19 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           r*)
           stat_tp (lazy (z3_imply ante conseq)) "z3"
         end
-  | SPASS -> Smtsolver.imply ante conseq timeout
+  | SPASS -> (
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          (called_prover := "mona "; 
+          stat_tp (lazy (mona_imply ante_w conseq_s)) "mona")
+        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
+          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
+        else if (is_array_constraint ante) || (is_array_constraint conseq) then
+          (called_prover := "z3 "; 
+          stat_tp (lazy (z3_imply ante conseq)) "z3")
+        else
+          (called_prover := "spass "; 
+          stat_tp (lazy (Spass.imply ante conseq timeout)) "spass");
+      ) 
   in
 	let _ = if should_output () then
 			begin
@@ -2784,6 +2818,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
+  | SPASS -> Spass.start();
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2819,6 +2854,7 @@ let stop_prover () =
 	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+    | SPASS -> Spass.stop();
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
