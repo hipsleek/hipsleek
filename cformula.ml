@@ -7196,6 +7196,52 @@ let get_varperm_formula (f:formula) typ : CP.spec_var list =
       !print_formula string_of_vp_ann !print_svl
       get_varperm_formula_x f typ
 
+(*get varperm of all concurrent threads*)
+let get_varperm_formula_all_x (f:formula) typ : CP.spec_var list =
+  let rec helper f =
+    match f with
+      | Base b-> 
+          let p = b.formula_base_pure in
+          let a = b.formula_base_and in
+          let func (a: one_formula) = 
+            let a_base = formula_of_one_formula a in
+            (helper a_base)
+          in
+          (*get varperm from child threads*)
+          let c_vars = List.concat (List.map func a) in
+          (*get varperm from main thread*)
+          let m_vars = MCP.get_varperm_mix_formula p typ in
+          (m_vars@c_vars)
+      | Exists b-> 
+          let p = b.formula_exists_pure in
+          let a = b.formula_exists_and in
+          let func (a: one_formula) = 
+            let a_base = formula_of_one_formula a in
+            (helper a_base)
+          in
+          (*get varperm from child threads*)
+          let c_vars = List.concat (List.map func a) in
+          (*get varperm from main thread*)
+          let m_vars = MCP.get_varperm_mix_formula p typ in
+          (m_vars@c_vars)
+      | Or b-> 
+          let res1 = helper b.formula_or_f1 in
+          let res2 = helper b.formula_or_f1 in
+          (*approximation*)
+          (match typ with
+            | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
+            | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+            | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+          )
+  in
+  helper f
+
+(*get varperm of all concurrent threads*)
+let get_varperm_formula_all (f:formula) typ : CP.spec_var list =
+  Debug.no_2 "get_varperm_formula_all"
+      !print_formula string_of_vp_ann !print_svl
+      get_varperm_formula_x f typ
+
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   let data_node = DataNode ({
@@ -7641,3 +7687,74 @@ let compose_context_formula_and (ctx : context) (phi : formula) (id: CP.spec_var
   in
   helper ctx phi
 
+
+let has_formula_and (f : formula) : bool = 
+  let rec helper f = match f with
+    | Base {formula_base_and = a}
+    | Exists {formula_exists_and = a} ->
+        (a!=[])
+    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          (helper f1) || (helper f2) (*approximation*)
+  in helper f
+
+(*Automatically infer VPERM spec for sequential spec*)
+let rec norm_struc_vperm struc_f ref_vars val_vars =
+  Debug.no_3 "norm_ext_vperm" 
+      !print_struc_formula !print_svl !print_svl !print_struc_formula
+      norm_struc_vperm_x struc_f ref_vars val_vars
+
+and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
+  | ECase ({ formula_case_branches = cl } as ef) ->
+      let n_cl = List.map (fun (c, sf) -> 
+        (c, norm_struc_vperm sf ref_vars val_vars)) cl in
+      ECase { ef with formula_case_branches = n_cl }
+  | EBase ef ->
+      let b = ef.formula_struc_base in
+	  let cont = ef.formula_struc_continuation in
+      let pos = ef.formula_struc_pos in
+      if not (has_formula_and b) then
+        (*sequential pre-condition*)
+        let r_vars = get_varperm_formula b VP_Full in
+        let v_vars = get_varperm_formula b VP_Value in
+        let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
+        let diff_v_vars = Gen.BList.difference_eq CP.eq_spec_var_ident v_vars val_vars in
+        (*The specification of VPERM is not correct*)
+        if (diff_r_vars!=[] || diff_v_vars!=[]) then
+          let m1 = if diff_r_vars!=[] then "@full permissions not matched." else "" in
+          let m2 = if diff_v_vars!=[] then "@val permissions not matched." else "" in
+          Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ m1 ^ m2 ^ "\n" ^ (!print_struc_formula struc_f)}
+        else
+          let new_b = drop_varperm_formula b in
+          let ref_f = CP.mk_varperm VP_Full ref_vars pos in
+          let val_f = CP.mk_varperm VP_Value val_vars pos in
+          let new_b = add_pure_formula_to_formula ref_f new_b in
+          let new_b = add_pure_formula_to_formula val_f new_b in
+          let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
+          EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont}
+      else
+        (*concurrency spec. USERS specify this precondition.
+          Proceed to check for post-condition*)
+        let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
+          EBase{ef with formula_struc_continuation = n_cont}
+  | EAssume (vars,post,lb) ->
+      (*We have (ref) vars in the post-condition*)
+      let pos = pos_of_formula post in
+      if not (has_formula_and post) then
+        (*sequential post-condition*)
+        let r_vars = get_varperm_formula post VP_Full in
+        let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars vars in
+        if (diff_r_vars!=[]) then
+          Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. @full permissions not matched.\n" ^ (!print_struc_formula struc_f)}
+        else
+          let new_post = drop_varperm_formula post in
+          let ref_f = CP.mk_varperm VP_Full vars pos in
+          let new_post = add_pure_formula_to_formula ref_f new_post in
+          EAssume (vars,new_post,lb)
+      else
+        (*concurrency spec. USERS specify this*)
+        struc_f
+  | EInfer ({ formula_inf_continuation = cont }) ->struc_f (*Not handle this at the moment*)
+  | EOr b -> EOr {b with 
+				formula_struc_or_f1= norm_struc_vperm_x b.formula_struc_or_f1 ref_vars val_vars;
+				formula_struc_or_f2= norm_struc_vperm_x b.formula_struc_or_f2 ref_vars val_vars;}
+  | EList b-> EList (map_l_snd (fun c-> norm_struc_vperm_x c ref_vars val_vars) b)

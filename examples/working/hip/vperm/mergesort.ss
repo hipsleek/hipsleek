@@ -19,8 +19,8 @@ sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
  
 /* function to count the number of elements of a list */
 int count(node x)
-	requires x::bnd<n, sm, bg> & @value[x]
-        ensures x::bnd<n, sm, bg> & res = n;
+  requires x::bnd<n, sm, bg> // & @value[x]
+  ensures x::bnd<n, sm, bg> & res = n;
 {
 	int tmp;
 
@@ -32,8 +32,8 @@ int count(node x)
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 node split_func(ref node x, int a)
-	requires x::bnd<n, sm, bg> & a > 0 & n > a & @value[a] & @full[x]
-        ensures x'::bnd<n1, sm, bg> * res::bnd<n2, sm, bg> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a & @full[x]; //'
+  requires x::bnd<n, sm, bg> & a > 0 & n > a // & @value[a] & @full[x]
+  ensures x'::bnd<n1, sm, bg> * res::bnd<n2, sm, bg> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a; // & @full[x]; //'
 
 {
 	node tmp;
@@ -55,11 +55,13 @@ node split_func(ref node x, int a)
 	}
 }
 
-int div2(int c) requires @value[c] ensures res + res = c;
+int div2(int c) 
+  requires true //@value[c] 
+  ensures res + res = c;
 
 node merge(node x1, node x2)
-    requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> & @value[x1,x2]
-	ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2);
+  requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> // & @value[x1,x2]
+  ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2);
 {
 	if (x2 == null)
 		return x1; 
@@ -84,7 +86,7 @@ node merge(node x1, node x2)
 
 /* function to insert an element in a sorted list */
 node insert(node x, int v)
-  requires x::sll<n, xs, xl> & n > 0 & @value[x,v]
+  requires x::sll<n, xs, xl> & n > 0 //& @value[x,v]
 	ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres =  max(v, xl);
 {
 	node tmp;
@@ -107,8 +109,8 @@ node insert(node x, int v)
 }
 
 void parallel_merge_sort2(node xs,ref node ys)
-	requires xs::bnd<n, sm, bg> & n > 0 & @value[xs] & @full[ys]
-	ensures ys'::sll<n, smres, bgres> & smres >= sm & bgres <= bg & @full[ys]; //'
+  requires xs::bnd<n, sm, bg> & n > 0 // & @value[xs] & @full[ys]
+	ensures ys'::sll<n, smres, bgres> & smres >= sm & bgres <= bg; // & @full[ys]; //'
 {
 	int c, middle;
 	node s1, s2, s3;

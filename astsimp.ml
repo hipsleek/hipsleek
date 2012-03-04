@@ -1794,6 +1794,25 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
 	let static_specs_list  = CF.plug_ref_vars by_names static_specs_list in
 	let dynamic_specs_list = CF.plug_ref_vars by_names dynamic_specs_list in
+    (*=============================*)
+	let by_val_tmp = List.filter (fun p -> p.I.param_mod = I.NoMod) proc.I.proc_args in
+	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
+    (*pass-by-value parameters*)
+	let by_val = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_val_tmp in
+    (*check and add VPERM when need*)
+    let static_specs_list = 
+      if (!Globals.ann_vp) then
+        CF.norm_struc_vperm static_specs_list by_names by_val
+      else
+        static_specs_list
+    in
+    let dynamic_specs_list = 
+      if (!Globals.ann_vp) then
+        CF.norm_struc_vperm dynamic_specs_list by_names by_val
+      else
+        dynamic_specs_list
+    in
+    (*=============================*)
 	let final_static_specs_list = if CF.isConstDTrue static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc else static_specs_list in
 	(** An Hoa : print out final_static_specs_list for inspection **)
 	(* let _ = print_string "Static spec list : " in *)

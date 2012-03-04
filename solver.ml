@@ -2893,6 +2893,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
 	            let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic prog x 0)) ctx11 in
                 (*************Compose variable permissions >>> ******************)
+                if (!Globals.ann_vp) then
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_struc_formula f)^"\n")) pos;
                 let full_vars = get_varperm_formula post VP_Full in
                 let new_post = drop_varperm_formula post in
@@ -2906,11 +2907,16 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                     Ctx {es with es_formula = mkFalse_nf pos})
                   else Ctx {es with CF.es_var_zero_perm= Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars}
                 in
-                let rs = CF.transform_context add_vperm_full rs in
+                (*TO DO: add_vperm_full only when VPERM*)
+                let rs = if (!Globals.ann_vp) then
+                      CF.transform_context add_vperm_full rs 
+                    else rs
+                in
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+                if (!Globals.ann_vp) then
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
@@ -5112,9 +5118,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
       let old_lhs_zero_vars = estate.es_var_zero_perm in
-      (*find a closure*)
-      let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in
-      let _ = if (lhs_zero_vars!=[] or rhs_vperms!=[]) then
+      (*find a closure of exist vars*)
+      let func v = 
+        if (List.mem v estate.es_evars) then find_closure_mix_formula v lhs_p
+        else [v]
+      in
+      (* let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in *)
+      let lhs_zero_vars = List.concat (List.map func old_lhs_zero_vars) in
+      (* let _ = print_endline ("zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)
+      let _ = if (!Globals.ann_vp) && (lhs_zero_vars!=[] or rhs_vperms!=[]) then
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^(string_of_vp_ann VP_Zero)^ (Cprinter.string_of_spec_var_list lhs_zero_vars) ^ " |- "  ^ (pr_list Cprinter.string_of_pure_formula rhs_vperms)^"\n") pos
       in
       let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
@@ -5132,7 +5144,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* v@zero  |- v@full --> fail *)
       let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_val_vars) in
       let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_full_vars) in
-      if (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
+      if (!Globals.ann_vp) && (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
         begin
             (*FAIL*)
             let _ = if tmp1!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") pos in
@@ -5157,8 +5169,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* ----------------------- *)
       (* S@zero |- v@full  --> S+{v}@Z *)
         (*note: use the old_lhs_zero_vars, not use its closure*)
-        let new_lhs_zero_vars = (old_lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
-        let estate = {estate with es_var_zero_perm=new_lhs_zero_vars} in
+        let estate = if not (!Globals.ann_vp) then estate else
+              let new_lhs_zero_vars = (old_lhs_zero_vars@rhs_full_vars) in (*TO CHECK*)
+              {estate with es_var_zero_perm=new_lhs_zero_vars}
+        in
     (*************************************************************************)
     (*************************** END *****************************************)
     (*************************************************************************)

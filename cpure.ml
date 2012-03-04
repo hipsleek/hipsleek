@@ -1468,6 +1468,9 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
+
+and mkTrue_p pos = BConst (true, pos)
+
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
@@ -7233,7 +7236,10 @@ let get_rel_id_list (f:formula) = match f with
     | (RelForm(id,_,_),_) -> [id]
     | _ -> [])
   | _ -> []
+
 let mk_varperm_p typ ls pos =
+  if (ls==[]) then (mkTrue_p pos)
+  else
   (VarPerm (typ,ls,pos))
 
 let mk_varperm typ ls pos =
