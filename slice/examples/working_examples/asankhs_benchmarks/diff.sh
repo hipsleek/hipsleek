@@ -7,17 +7,39 @@ do
 	# grep Fail spaguetti-$i.z3 | sed 's/Entail (\([0-9]*\)).*/\1/' > z3
 	# grep Fail spaguetti-$i.z3.slc | sed 's/Entail (\([0-9]*\)).*/\1/' > z3.slc
 	# grep Fail spaguetti-$i.z3.ineq | sed 's/Entail (\([0-9]*\)).*/\1/' > z3.ineq
-	
+
+	grep Fail spaguetti-$i.oc.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > oc.eps
+	grep Fail spaguetti-$i.oc.slc.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > oc.slc.eps
 	grep Fail spaguetti-$i.oc.ineq.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > oc.ineq.eps
+
+	grep Fail spaguetti-$i.rl.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > rl.eps
+	grep Fail spaguetti-$i.rl.slc.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > rl.slc.eps
+	grep Fail spaguetti-$i.rl.ineq.eps | sed 's/Entail (\([0-9]*\)).*/\1/' > rl.ineq.eps
 
 	echo "[z3] (eps vs. slc.eps) spaguetti-$i"
 	diff z3.eps z3.slc.eps
 
 	echo "[z3] (eps vs. ineq.eps) spaguetti-$i"
 	diff z3.eps z3.ineq.eps
-	
+
+	echo "[oc] (eps vs. slc.eps) spaguetti-$i"
+	diff oc.eps oc.slc.eps
+
+	echo "[oc] (eps vs. ineq.eps) spaguetti-$i"
+	diff oc.eps oc.ineq.eps
+
+	echo "[rl] (eps vs. slc.eps) spaguetti-$i"
+	diff rl.eps rl.slc.eps
+
+	echo "[rl] (eps vs. ineq.eps) spaguetti-$i"
+	diff rl.eps rl.ineq.eps
+
+	##########################################
 	echo "[z3 vs. oc] (ineq.eps) spaguetti-$i"
 	diff z3.ineq.eps oc.ineq.eps
+
+	echo "[rl vs. oc] (ineq.eps) spaguetti-$i"
+	diff rl.ineq.eps oc.ineq.eps
 	
 	# echo "[z3] (eps vs. no_eps) spaguetti-$i"
 	# diff z3.eps z3

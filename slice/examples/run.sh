@@ -47,8 +47,8 @@ do
 	time ./run-fast-tests.pl pmona -flags "--eps --dfe --ep-stat" --log-timings -tp mona -stat
 
 	# Redlog
-	time ./run-fast-tests.pl predlog -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp redlog -stat
-	time ./run-fast-tests.pl predlog -flags "--eps --dfe --ep-stat" --log-timings -tp redlog -stat
+	time ./run-fast-tests.pl predlog -flags "--dis-oc --eps --dfe --dis-slicing --ep-stat" --log-timings -tp redlog -stat
+	time ./run-fast-tests.pl predlog -flags "--dis-oc --eps --dfe --ep-stat" --log-timings -tp redlog -stat
 
 	# OM
 	# time ./run-fast-tests.pl plink -flags "--eps --dis-imm --dfe --dis-slicing" --log-timings -tp om
