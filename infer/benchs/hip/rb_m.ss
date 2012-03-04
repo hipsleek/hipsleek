@@ -19,6 +19,7 @@ node rotate_case_3_1(node a, node b, node c)
   requires a::rb1<1> * b::rb1<0> * c::rb1<0> & a!=null
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//3
 node rotate_case_3(node a, node b, node c)
   infer @post []
   requires a::rb1<1> * b::rb1<0> * c::rb1<0> //[a!=null]
@@ -37,6 +38,7 @@ node case_2_1(node a, node b, node c, node d)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//2
 node case_2(node a, node b, node c, node d)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
@@ -55,6 +57,7 @@ node rotate_case_3r_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<1> & c!=null
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//3
 node rotate_case_3r(node a, node b, node c)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<1>
@@ -72,6 +75,7 @@ node case_2r_1(node a, node b, node c, node d)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
   ensures res::rb1< cl> & cl=0 & res!=null;
 
+//2
 node case_2r(node a, node b, node c, node d)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> * d::rb1<0>
@@ -92,6 +96,7 @@ bool is_red_1(node x)
   x!=null ->  ensures x::rb1<cl>& cl = 1 & res or x::rb1<cl> & cl = 0 & !res;
 }
 
+//4
 relation IR1(int a, bool b).
 relation IR2(int a, bool b).
 bool is_red(node x)
@@ -122,6 +127,7 @@ bool is_black_1(node x)
   x!=null -> ensures x::rb1<1> & !res  or x::rb1<0> & res;
 }
 
+//4
 relation IB1(int a, bool b).
 relation IB2(int a, bool b).
 bool is_black(node x)
@@ -152,6 +158,7 @@ node del_6_1(node a, node b, node c, int color)
 
 //relation DEL6_1(int a, int b).
 //relation DEL6_2(int a, int b).
+//5
 node del_6(node a, node b, node c, int color)
 //infer[DEL6_1,DEL6_2]
   infer @post []
@@ -187,6 +194,7 @@ node del_6r_1(node a, node b, node c, int color)
 
 //relation DEL6R_1(int a, int b).
 //relation DEL6R_2(int a, int b).
+//5
 node del_6r(node a, node b, node c, int color)
 //infer[DEL6R_1,DEL6R_2]
   infer @post []
@@ -219,6 +227,7 @@ node del_5_1(node a, node b, node c, node d, int color)
 
 //relation DEL5_1(int a, int b).
 //relation DEL5_2(int a, int b).
+//5
 node del_5(node a, node b, node c, node d, int color)
 //infer[DEL5_1,DEL5_2]
   infer @post []
@@ -248,6 +257,7 @@ node del_5r_1(node a, node b, node c, node d, int color)
 
 //relation DEL5R_1(int a, int b).
 //relation DEL5R_2(int a, int b).
+//5
 node del_5r(node a, node b, node c, node d, int color)
 //infer[res,DEL5R_1,DEL5R_2]
   infer @post []
@@ -273,6 +283,7 @@ node del_4_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//2
 node del_4(node a, node b, node c)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
@@ -289,6 +300,7 @@ node del_4r_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//2
 node del_4r(node a, node b, node c)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
@@ -307,6 +319,7 @@ node del_3_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//2
 node del_3(node a, node b, node c)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
@@ -325,6 +338,7 @@ node del_3r_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//2
 node del_3r(node a, node b, node c)
   infer @post []
   requires a::rb1<0> * b::rb1<0> * c::rb1<0>
@@ -343,6 +357,7 @@ node del_2_1(node a, node b, node c)
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> & b != null
   ensures res::rb1<cl> & cl=0 & res!=null;
 
+//3
 node del_2(node a, node b, node c)
   infer[res,b]
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> //& b != null & c != null
@@ -370,6 +385,7 @@ node del_2r_1(node a, node b, node c)
 	ensures res::rb1<0> & res!=null;
 
 /* function for case 2 (simple rotation + applying one of the cases 4, 5, 6) - right child*/
+//3
 node del_2r(node a, node b, node c)
   infer[a,b,res]
   requires a::rb1<0> * b::rb1<0> * c::rb1<0> //& b != null
@@ -409,6 +425,7 @@ int remove_min_1(ref node x)
   requires x::rb1<cl> & x != null
   ensures x'::rb1<cl2> & cl = 1 & 0 <= cl2 <= 1 or x'::rb1<0> & cl = 0;
 
+//6
 relation RMVM1(int a, int b).
 relation RMVM2(int a, int b).
 int remove_min(ref node x)
@@ -494,6 +511,7 @@ inferred:
 }
 
 /* function to delete an element in a red black tree */
+//4
 relation DEL1(int a, int b).
 relation DEL2(int a, int b).
 void del(ref node  x, int a)
@@ -619,7 +637,7 @@ void del(ref node  x, int a)
 }
 
 node node_error() requires true ensures false;
-
+//1
 relation INS(node a).
 node insert(node x, int v)
   infer[INS]
