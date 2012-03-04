@@ -196,11 +196,12 @@ let pr_term_status_short = function
   | TermErr r -> 
       fmt_string "(ERR: ";
       pr_term_reason_short r
+  | NonTerm_S _ -> fmt_string "(NonTerm_S)"
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 
 let pr_term_ctx (ctx: formula) =
-  let h_f, p_f, _, _ = split_components ctx in
+  let h_f, p_f, _, _, _ = split_components ctx in
   begin
     fmt_string "Current context";
     fmt_print_newline ();
@@ -557,7 +558,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 
 let strip_lexvar_lhs (ctx: context) : context =
   let es_strip_lexvar_lhs (es: entail_state) : context =
-    let _, pure_f, _, _ = split_components es.es_formula in
+    let _, pure_f, _, _, _ = split_components es.es_formula in
     let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
     (* Using transform_formula to update the pure part of es_f *)
     let f_e_f _ = None in

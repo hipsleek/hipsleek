@@ -60,6 +60,7 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -86,11 +87,11 @@ and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
     
-and proc_decl = { 
+and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
 		proc_return : typ;
-		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
+	mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
     (* this puts invariant of pre into the post-condition *)
@@ -242,6 +243,7 @@ and exp_return = { exp_return_type : typ;
 (* static call *)
 and exp_scall = { exp_scall_type : typ;
    exp_scall_method_name : ident;
+   exp_scall_lock : ident option;
     exp_scall_arguments : ident list;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
@@ -1405,7 +1407,8 @@ let check_proper_return cret_type exc_list f =
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		  if b_rez then
+		  if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
+            & not(F.equal_flow_interval !top_flow_int fl_int) then
 			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
@@ -1746,8 +1749,6 @@ and add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: boo
   let pvs = List.concat pvs in
   let n_procs = List.map (fun proc -> { proc with
     (* Option 1: Add logical variables of scc group into specifications for inference *)
-    (* proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs; *)
-    (* proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs; *)
     (* Option 2: Store the set of logical variables into proc_logical_vars 
      * It will be added into the initial context in check_proc *)
        proc_logical_vars = pvs;

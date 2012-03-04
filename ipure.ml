@@ -21,6 +21,7 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
+
 and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
@@ -42,6 +43,7 @@ and p_formula =
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)	
 	  (* lists and list formulae *)
+  | VarPerm of (vp_ann * ((ident * primed) list) * loc)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)
@@ -150,6 +152,10 @@ and bfv (bf : b_formula) =
   | BagSub (a1, a2, _) -> combine_avars a1 a2
   | BagMax (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
   | BagMin (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
+  | VarPerm (ct,ls,_) -> 
+      ls
+      (* let ls1 = List.map (fun v -> (v,Unprimed)) ls in *)
+      (* ls1 *)
   | ListIn (a1, a2, _) -> 
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
@@ -465,6 +471,7 @@ and pos_of_formula (f : formula) = match f with
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
 		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
+		  | VarPerm (_,_,p) -> p
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -571,6 +578,12 @@ and b_apply_one (fr, t) bf =
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> BagMax ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
   | BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+  | VarPerm (ct,ls,pos) -> (*TO CHECK*)
+      let func v =
+        (if eq_var v fr then t else v)
+      in
+      let ls1 = List.map func ls in
+      VarPerm (ct,ls1,pos)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -695,6 +708,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | BagMin (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)	
+  | VarPerm _ -> [] (*can not have anon_var*)
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -743,6 +757,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| BagNotIn (_, e, _) -> find_lexp_exp e ls
 	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| BagMin _ | BagMax _ -> []
+	| VarPerm _ -> []
 	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -790,6 +805,16 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Not (f, _, _) -> break_pure_formula f
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
+
+let rec list_of_conjs (f: formula) : formula list =
+  match f with
+	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
+    | _ -> [f]
+
+let rec conj_of_list (fs:formula list) : formula =
+  match fs with
+    | [] -> mkTrue no_pos
+    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
 
 let rec contain_vars_exp (expr : exp) : bool =
   match expr with
@@ -1116,6 +1141,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			let t = BForm ((BagSub (ne1, ne2, l), il), lbl) in
 			add_exists t np1 np2 l
 	  | SubAnn _
+      | VarPerm _
 	  | BagMin _ 
 	  | BagMax _ -> BForm (b,lbl)	
 	  | ListIn (e1, e2, l) -> 
@@ -1154,4 +1180,5 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Not (f1,lbl, l) -> Not((float_out_pure_min_max f1), lbl, l)
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
+
 

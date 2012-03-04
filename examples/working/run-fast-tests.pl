@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|hip_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -489,6 +489,70 @@ $output_file = "log";
                                           "decrease2","SUCCESS",
 										  "main","SUCCESS"]
 				],
+	"hip_vperm" =>[
+				["vperm/alt_threading.ss",2,  "--ann-vp", 
+                                "increment","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none", 
+                                "seq_fib","SUCCESS",
+                                "para_fib2","SUCCESS"
+								],
+				["vperm/mergesort.ss",5,  "--ann-vp", 
+                                "count","SUCCESS",
+                                "split_func","SUCCESS",
+                                "merge","SUCCESS",
+                                "insert","SUCCESS",
+                                "parallel_merge_sort2","SUCCESS"
+								],
+				["vperm/passive_stack_race.ss",2,  "--ann-vp", 
+                                "assign","SUCCESS",
+                                "stack_race","FAIL"
+								],
+				["vperm/stack_race.ss",2,  "--ann-vp", 
+                                "assign","SUCCESS",
+                                "stack_race","FAIL"
+								],
+				["vperm/quicksort.ss",3,  "--ann-vp", 
+                                "partition","SUCCESS",
+                                "append_bll","SUCCESS",
+                                "para_qsort2","SUCCESS",
+								],
+				["vperm/task_decompose.ss",4,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "creator","SUCCESS",
+                                "joiner","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/threads.ss",6,  "--ann-vp", 
+                                "make_tree","SUCCESS",
+                                "tree_compute_sum_facs","SUCCESS",
+                                "summator","SUCCESS",
+                                "start_sum_thread","SUCCESS",
+                                "join_sum_thread","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/tree_count.ss",1,  "--ann-vp", 
+                                "parallelCount2","SUCCESS"
+								],
+				["vperm/tree_search.ss",1,  "--ann-vp -tp mona", 
+                                "para_search2","SUCCESS"
+								],
+				["vperm/vperm_check.ss",6,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "incCell","SUCCESS",
+                                "test1","FAIL",
+                                "test2","FAIL",
+                                "test3","FAIL",
+                                "test4","FAIL"
+								],
+				["vperm/vperm_simple.ss",4,  "--ann-vp", 
+                                "foo","SUCCESS",
+                                "f","SUCCESS",
+                                "foo2","SUCCESS",
+                                "f2","SUCCESS"
+								]
+             ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
          "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
@@ -861,6 +925,7 @@ $output_file = "log";
                       # slow in sleek8.slk due to search
                       ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+											["symb-diff.slk", "", "", "Valid.Valid.Valid."],
                       ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer4.slk", "", "", "Fail."],
@@ -878,7 +943,7 @@ $output_file = "log";
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
               ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
-    "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
 			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
@@ -1021,7 +1086,7 @@ sub sleek_process_file  {
   {
       my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
-      if ("$param" =~ "errors") {
+      if ("$param" =~ "musterr") {
           print "Starting sleek must/may errors tests:\n";
           $exempl_path_full = "$exec_path/errors";
           $err = 1;

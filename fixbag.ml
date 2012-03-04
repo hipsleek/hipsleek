@@ -342,7 +342,7 @@ let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
     (get_other_branches fml.formula_or_f1 args) @ (get_other_branches fml.formula_or_f2 args)
   | _ ->
-    let _,p,_,_ = split_components or_fml in
+    let _,p,_,_,_ = split_components or_fml in
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 

@@ -123,6 +123,7 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -166,6 +167,7 @@ let rec smt_of_b_formula b =
 	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
 	| CP.BagMax _ | CP.BagMin _ -> 
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+    | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
 	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
     | CP.LexVar _ ->
@@ -199,10 +201,10 @@ let rec smt_of_formula pr_w pr_s f =
             | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
             | Some f -> let _ = Debug.devel_pprint ("SOME #") no_pos in helper f
         end
-	| CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
+        | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-        | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
 	| CP.Forall (sv, p, _,_) ->
 		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
 	| CP.Exists (sv, p, _,_) ->
@@ -289,6 +291,7 @@ and collect_bformula_info b = match b with
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ 
+    | CP.VarPerm _
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
@@ -718,6 +721,10 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
   (* let _ = print_endline ("ante = " ^ (!print_pure ante)) in *)
   (* let _ = print_endline ("fvars: " ^ ((!CP.print_svl) fvars)) in *)
   (*let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
+    (*drop VarPerm beforehand*)
+    let conseq = CP.drop_varperm_formula conseq in
+    let ante = CP.drop_varperm_formula ante in
+    (*--------------------------------------*)
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v ->
         let tp = (CP.type_of_spec_var v)in
@@ -757,9 +764,13 @@ and to_smt_v1 ante conseq logic fvars =
 		| [] -> ""
 		| var::rest -> "(" ^ (smt_of_spec_var var) ^ " Int) " ^ (defvars rest)
 	in
+    (*drop VarPerm beforehand*)
+    let conseq = CP.drop_varperm_formula conseq in
+    let ante = CP.drop_varperm_formula ante in
     let (pr_w,pr_s) = CP.drop_complex_ops in
 	let ante = smt_of_formula pr_w pr_s ante in
 	let conseq = smt_of_formula pr_w pr_s conseq in
+    (*--------------------------------------*)
 	let extrafuns = 
 		if fvars = [] then "" 
 		else ":extrafuns (" ^ (defvars fvars) ^ ")\n"

@@ -56,6 +56,8 @@ and primed =
 
 and heap_ann = Lend | Imm | Mutable
 
+and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
+
 and term_ann = 
   | Term    (* definitely terminates *)
   | Loop    (* definitely loops *)
@@ -135,6 +137,14 @@ let int_of_heap_ann a =
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
+
+let string_of_vp_ann a =  
+  (match a with
+    | VP_Zero -> "@zero"
+    | VP_Full -> "@full"
+    | VP_Value -> "@value"
+    (* | VP_Ref-> "@p_ref" *)
+  )
 
 let string_of_term_ann a =
   match a with
@@ -297,6 +307,23 @@ let rec s_i_list l c = match l with
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 ;;
 
+let string_of_primed p =
+  match p with
+    | Primed -> "'"
+    | Unprimed -> ""
+
+let string_of_primed_ident (id,p) =
+  id ^ string_of_primed p
+
+let rec s_p_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> string_of_primed_ident h
+  | h::t -> (string_of_primed_ident h) ^ c ^ (s_p_i_list t c)
+;;
+
+let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
+;;
+
 let is_substr s id =
   let len_s = String.length s in
   try
@@ -343,6 +370,7 @@ let res_name = "res"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
+let fnc_error = "function call"
 let lemma_error = "lemma"
 let undefined_error = "undefined"
 
@@ -355,6 +383,17 @@ let this = "this"
 
 let is_self_ident id = self=id
 
+let thread_name = "thread"  (*special thread id*)
+let thread_typ = Int  (*special thread id*)
+let proc_typ = Void  (*special thread id*)
+let fork_name = "fork"  (*generic, its args can vary*)
+let join_name = "join"
+
+let init_name = "init"  (*generic, its args can vary*)
+let finalize_name = "finalize"
+let acquire_name = "acquire"
+let release_name = "release"
+let lock_name = "lock"
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -391,14 +430,16 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref true
+let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
+
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let print_proc = ref false
 
 let check_all = ref true
-
+  
 let auto_number = ref true
 
 let use_field = ref false
@@ -535,6 +576,7 @@ let dis_ass_chk = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false
+let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false
 let infer_slicing = ref false

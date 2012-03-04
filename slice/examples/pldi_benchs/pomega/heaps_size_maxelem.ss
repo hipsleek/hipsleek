@@ -279,7 +279,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 					d = v;
 				else
                   {  //assume false;
-                    dprint;
+                    //dprint;
 					d = r.val;
 					ripple(r.val, v, r.nleft, r.nright, r.left, r.right);
 				}
@@ -362,7 +362,7 @@ int deletemax(ref node t)
 	{
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
 			v = deleteone(tnleft, tnright, tleft, tright);
-			dprint;
+			//dprint;
       tmp = tval;
       
 			ripple(tval, v, tnleft, tnright, tleft, tright);

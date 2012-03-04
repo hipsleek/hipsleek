@@ -114,6 +114,24 @@ let pr_simpl_match_res (c:match_res):unit =
 (*   fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node; *)
 (*   fmt_string ")" *)
 
+let rec pr_action_name a = match a with
+  | Undefined_action e -> fmt_string "Undefined_action"
+  | M_match e -> fmt_string "Match"
+  | M_fold e -> fmt_string "Fold"
+  | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
+  | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
+  | M_base_case_fold e -> fmt_string "BaseCaseFold"
+  | M_rd_lemma e -> fmt_string "RD_Lemma"
+  | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+  | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
+  | M_infer_heap p -> fmt_string ("InferHeap")
+  | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData")
+  | Cond_action l -> fmt_string "COND"
+  | Seq_action l -> fmt_string "SEQ"
+  | Search_action l -> fmt_string "SEARCH"
+  | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
+
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
   | M_match e -> pr_mr e; fmt_string "=>Match"
@@ -138,6 +156,8 @@ let rec pr_action_res pr_mr a = match a with
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
+
+let string_of_action_name (e:action) = poly_string_of_pr pr_action_name e
 
 let string_of_action_res_simpl (e:action) = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
 
@@ -499,6 +519,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let dr_data_orig = dr.h_formula_data_original in
                   let dl_data_derv = dl.h_formula_data_derv in
                   let dr_data_derv = dr.h_formula_data_derv in
+                  
                   let dl_flag, dr_flag = 
                     if !ann_derv then
                       (not(dl_data_derv)),(not(dr_data_derv))
@@ -515,14 +536,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
-                 (* let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
-                  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in*)
-                  let flag = 
-                    if !ann_derv 
-                    then (not(dl_data_derv) && not(dr_data_derv)) 
-                    else (dl_data_orig || dr_data_orig)
-                  in
-                  let l3 = if flag
+              (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
+              let flag = 
+                if !ann_derv 
+                then (not(dl_data_derv) && not(dr_data_derv)) 
+                else (dl_data_orig || dr_data_orig)
+              in
+              let l3 = if flag
                   then 
                     begin
                       let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
@@ -624,9 +644,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  [] in
                   let l4 = 
                     (* TODO WN : what is original?? *)
+                    (* Without it, run-fast-test of big imm runs faster while
+                     * still accurate. However, it fails with
+                     * imm/imm1.slk imm/imm3.slk *)
                     if get_view_original rhs_node then 
                       [(2,M_base_case_fold c)] 
                     else [] in
+                    (* [] in *)
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
@@ -748,14 +772,14 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
     | [] -> 
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
-      if (is_view rhs_node) && (get_view_original rhs_node) then
-        let r = (2, M_base_case_fold { 
-            match_res_lhs_node = HTrue; 
-            match_res_lhs_rest = lhs_h; 
-            match_res_holes = [];
-            match_res_type = Root;
-            match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest;}) in 
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+            let r = (2, M_base_case_fold {
+                match_res_lhs_node = HTrue;
+                match_res_lhs_rest = lhs_h;
+                match_res_holes = [];
+                match_res_type = Root;
+                match_res_rhs_node = rhs_node;
+                match_res_rhs_rest = rhs_rest;}) in 
         (* WN : why do we need to have a fold following a base-case fold?*)
         (* changing to no_match found *)
         (*(-1, Search_action [r])*)
@@ -768,7 +792,8 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
-        (-1, (Cond_action [ ri; r; r0]))
+
+       (-1, (Cond_action [ ri; r; r0]))
       else (-1, Cond_action [ ri; r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
@@ -825,18 +850,36 @@ and sort_wt_x (ys: action_wt list) : action list =
           if (rw==0) then h 
           else (rw,Search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
-        -> 
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Cond_action l)
+        ->
+        (*drop ummatched actions if possible*)
+        (* let l = drop_unmatched_action l in *)
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
     | Seq_action l ->
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Seq_action l)
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  (snd (List.split sl)) 
+  (snd (List.split sl))
+
+  and drop_unmatched_action l=
+    let rec helper acs rs=
+      match acs with
+        | [] -> rs
+        | ac::ss ->
+            ( match ac with
+              | (_, M_unmatched_rhs_data_node _) -> helper ss rs
+              | _ -> helper ss (ac::rs)
+            )
+    in
+      (match l with
+        | [] -> []
+        | [a] -> [a]
+        | _ -> helper l []
+      )
 
 and sort_wt_match opt (ys: action_wt list) : action list =
   match (choose_match opt ys) with
@@ -1069,6 +1112,7 @@ and update_ctx_es_orig_conseq ctx new_conseq =
 
 
 
+
   (*if Gen.is_empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Match (matches)*)
 
@@ -1076,17 +1120,17 @@ type deprecated_find_node_result =
   | Deprecated_Failed (* p2 (of p2::c2<V2> coming from the RHS) is not in FV(LHS) *)
   | Deprecated_NoMatch (* p2 \in FV(LHS), but no aliased node is found *)
   | Deprecated_Match of match_res list (* found p1::c1<V1> such that p1=p2 *)
-  
+
 let rec pr_node_res (e:deprecated_find_node_result) =
   match e with
     | Deprecated_Failed -> fmt_string "Failed"
     | Deprecated_NoMatch -> fmt_string "NoMatch"
     | Deprecated_Match l -> pr_seq "Match" pr_match_res l
 let string_of_node_res e = poly_string_of_pr pr_node_res e
-  
+
 let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
   let node = match node with | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v} | _ -> report_error pos "deprecated_find_node_one error" in
-  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in 
+  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches
 
