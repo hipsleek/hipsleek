@@ -10,10 +10,10 @@ data node {
 
 /* view for a heap tree with positive integers */
 
-pq<n, mx> == self = null & n = 0 & mx = 0
-	or (exists m3: self::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
-	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
-	inv n >= 0 & mx >= 0;
+/*pq<n, mx> == self = null & n = 0 & mx = 0*/
+/*	or (exists m3: self::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>*/
+/*	& n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1*/
+/*	inv n >= 0 & mx >= 0;*/
 
 pq1<n, mx,S> == self = null & n = 0 & mx = 0 & S={}
   or (exists m3: self::node<d, m1, m2, l, r> * l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2>
@@ -24,9 +24,9 @@ pq1<n, mx,S> == self = null & n = 0 & mx = 0 & S={}
 /* function to insert an element in a priority queue */
 relation INS(bag a, bag b, int c).
 node insert(node t, int v)
-//  infer [INS]
+  infer [INS]
   requires t::pq1<n, mx,S1> & v >= 0
-  ensures res::pq1<n+1, ma,S2> & (v>=mx & ma = v | ma = mx) & S2=union(S1,{v});//S2=union(S1,{v});//INS(S1,S2,v);//(v>=mx & ma = v | ma = mx);
+  ensures res::pq1<n+1, ma,S2> & (v>=mx & ma = v | ma = mx) & INS(S1,S2,v);//S2=union(S1,{v});//INS(S1,S2,v);
 {
 	node tmp, tmp_null = null;
 	int tmpv;

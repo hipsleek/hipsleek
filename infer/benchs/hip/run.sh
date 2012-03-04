@@ -26,4 +26,6 @@
 ../../../hip rb_ms.ss --eps > res/rb_ms.res
 ../../../hip rb_msh.ss --eps > res/rb_msh.res
 ../../../hip rb_mhb.ss --eps -tp mona > res/rb_mhb.res
+../../../hip rb_mshb.ss --eps -tp mona > res/rb_mshb.res
+../../../hip rb_mshb2.ss --eps -tp mona > res/rb_mshb2.res
 

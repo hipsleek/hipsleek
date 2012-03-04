@@ -7473,25 +7473,52 @@ let rec remove_cnts exist_vars f = match f with
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
 
-let rec is_num_dom_exp e = match e with
+let rec is_num_dom_exp_0 e = match e with
   | IConst _ -> true
-  | Add (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
+  | Add (e1,e2,_) -> is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2
 (*  | Subtract (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2*)
   | _ -> false
 
-let is_num_dom pf = match pf with
+let rec is_num_dom_exp e = match e with
+  | IConst (0,_) -> false
+  | IConst _ -> true
+  | Add (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
+  | _ -> false
+
+let get_num_dom_pf pf = match pf with
   | Lt (e1,e2,_)
   | Lte (e1,e2,_)
   | Gt (e1,e2,_)
   | Gte (e1,e2,_)
-  | Eq (e1,e2,_)
-  | Neq (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
-  | _ -> false
+  | Neq (e1,e2,_) -> 
+    if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then 
+      let r = afv e1 @ afv e2 in
+      (r,[],r) 
+    else ([],[],[])
+  | Eq (e1,e2,_) -> 
+    begin
+    match e1,e2 with
+    | Var _, BagUnion _ -> ([], List.filter is_int_typ (afv e1 @ afv e2), [])
+    | _ -> 
+      if is_num_dom_exp e1 || is_num_dom_exp e2 then 
+        let r = afv e1 @ afv e2 in
+        (r,[],r) 
+      else 
+      if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then (afv e1 @ afv e2,[],[]) 
+      else ([],[],[])
+    end
+  | _ -> ([],[],[])
 
 let rec get_num_dom f = match f with
-  | BForm ((pf,_),_) -> if is_num_dom pf then fv f else []
-  | And (f1,f2,_) -> (get_num_dom f1) @ (get_num_dom f2)
-  | Or (f1,f2,_,_) -> (get_num_dom f1) @ (get_num_dom f2)
+  | BForm ((pf,_),_) -> get_num_dom_pf pf
+  | And (f1,f2,_) -> 
+    let (r11,r12,r13) = get_num_dom f1 in
+    let (r21,r22,r23) = get_num_dom f2 in
+    (r11@r21,r12@r22,r13@r23)
+  | Or (f1,f2,_,_) ->
+    let (r11,r12,r13) = get_num_dom f1 in
+    let (r21,r22,r23) = get_num_dom f2 in
+    (r11@r21,r12@r22,r13@r23)
   | Not (f,_,_) -> get_num_dom f
   | Forall (_,f,_,_) -> get_num_dom f
   | Exists (_,f,_,_) -> get_num_dom f

@@ -617,7 +617,9 @@ let helper input_pairs rel ante_vars =
     let p = if noc > 20 then p else Redlog.elim_exists_with_eq p in
     let p = TP.simplify_raw p in 
     let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
-    let num_vars = get_num_dom p in
+    let num_vars, others, num_vars_new = get_num_dom p in
+    DD.devel_hprint (add_str "VARS: " (!print_svl)) others no_pos;    
+    let num_vars = if CP.intersect num_vars others = [] then num_vars else num_vars_new in
     CP.remove_cnts (exists_node_vars@num_vars) p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in
   let pfs = List.map (fun p -> 
