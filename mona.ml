@@ -393,6 +393,7 @@ and is_firstorder_mem_a e vs =
           end
     | CP.IConst _ 
     | CP.Null _ -> true
+    | CP.Add (e1, e2, _) -> (is_firstorder_mem e1 vs) && (is_firstorder_mem e2 vs)
     | _ -> false
 
 
