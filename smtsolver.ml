@@ -629,7 +629,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Debug.ho_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -927,7 +927,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.ho_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -990,7 +990,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Debug.ho_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
