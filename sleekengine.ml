@@ -581,7 +581,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
-  DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
@@ -631,20 +631,29 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string ("exception caught " ^ check_id ^ " check\n")
+
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let num_id = "\nEntail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
+  (* with e -> print_exc num_id *)
 
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
-  let num_id = "\nEntail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+      (* print_exc num_id *)
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in

@@ -1,10 +1,12 @@
+// loop invariant z>=n
+// ranking function z-n
 
-// (1) invariant preservation 
-checkentail  i<=n & i!=n |- (i+1)<=n.
+// (1) rank is bounded
+checkentail  z>=n & z!=n |- z-n>=0.
 
-// (2) rank is bounded
-checkentail  i<=n & i!=n |- n-i>=0.
+// (2) loop invariant is preserved
+checkentail  z>=n & z!=n & n-z=R0 |- z+1>=n .
 
-// (3) rank is decreasing
-checkentail  R0=(n-i) & i<=n & i!=n  |- R0>(n-(i+1)).
+// (3) rank decreases per iteration
+checkentail  z>=n & z!=n & n-z=R0 |- R0>n-(z+1).
 
