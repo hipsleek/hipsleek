@@ -407,7 +407,7 @@ $output_file = "log";
 						  "delete","SUCCESS",
 						  #"delete1","SUCCESS",
 						  "create_list","SUCCESS",
-						  "rev","SUCCESS",
+						  "reverse","SUCCESS",
 						  #"reverse1","SUCCESS",
 						  #"test","SUCCESS"
 						  ],
