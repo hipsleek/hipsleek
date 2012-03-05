@@ -145,9 +145,9 @@ node2 insert(node2 x, int a)
 //mona fails while inferring
 relation RMVM(bag x, bag y).
 int remove_min(ref node2 x)
-//infer[RMVM]
+  infer[RMVM]
   requires x::bst3<n,h,s, b,S1> & x != null
-  ensures x'::bst3<n-1,h1,s1, b,S2> & h1<=h & s <= res <= s1 & S2 subset S1;//'RMVM(S1,S2);//
+  ensures x'::bst3<n-1,h1,s1, b,S2> & h1<=h & s <= res <= s1 & RMVM(S1,S2);//S2 subset S1;//'RMVM(S1,S2);//
 {
   int tmp, a;
 

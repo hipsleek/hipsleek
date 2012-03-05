@@ -378,19 +378,22 @@ let pre_process vars fmls =
 (*    DD.devel_hprint (add_str "VARS: " !print_svl) vs no_pos;*)
     CP.subset vs vars) fmls
 
-let rec create_alias_tbl vs aset all_rel_vars = match vs with
+let rec create_alias_tbl vs aset all_rel_vars base_case = match vs with
   | [] -> []
-  | [hd] -> [List.filter (fun x -> not(List.mem x all_rel_vars)) (hd::(CP.EMapSV.find_equiv_all hd aset))]
+  | [hd] -> 
+    if base_case then 
+      [hd::(List.filter (fun x -> not(List.mem x all_rel_vars)) (CP.EMapSV.find_equiv_all hd aset))]
+    else [List.filter (fun x -> not(List.mem x all_rel_vars)) (hd::(CP.EMapSV.find_equiv_all hd aset))]
   | hd::tl ->
-    let res1 = [List.filter (fun x -> not(List.mem x all_rel_vars)) (hd::(CP.EMapSV.find_equiv_all hd aset))] in
+    let res1 = create_alias_tbl [hd] aset all_rel_vars base_case in
     let tl = List.filter (fun x -> not(List.mem x (List.hd res1))) tl in
-    res1@(create_alias_tbl tl aset all_rel_vars)
+    res1@(create_alias_tbl tl aset all_rel_vars base_case)
 
-let rewrite pure rel_lhs_vars rel_vars =
+let rewrite pure rel_lhs_vars rel_vars base_case =
   let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
   let aset = CP.EMapSV.build_eset als in
-  let other_vars = List.filter CP.is_int_typ (CP.fv pure) in
-  let alias = create_alias_tbl (rel_vars@other_vars) aset rel_lhs_vars in
+  let int_vars, other_vars = List.partition CP.is_int_typ (CP.fv pure) in
+  let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars base_case in
   let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
       let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
 (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
@@ -398,20 +401,20 @@ let rewrite pure rel_lhs_vars rel_vars =
   let pure = CP.subst subst_lst pure in
   CP.remove_redundant_constraints pure
 
-let rewrite2 pure rel_lhs_vars rel_vars =
-  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
-  let aset = CP.EMapSV.build_eset als in
-  let pure_vars = CP.fv pure in
-  let int_vars, other_vars = List.partition CP.is_int_typ pure_vars in
-  let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars in
-  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
-      let hd = List.hd vars in 
-        List.concat (List.map (fun v -> 
-          if mem_svl v pure_vars && mem_svl hd pure_vars then [mkEqVar v hd no_pos] else []) 
-        (List.tl vars))) alias) in
-(*  DD.info_hprint (add_str "PURE: " (!CP.print_formula)) pure no_pos;*)
-  let pure = conj_of_list (pure::subst_lst) no_pos in
-  CP.remove_dup_constraints pure
+(*let rewrite2 pure rel_lhs_vars rel_vars =*)
+(*  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in*)
+(*  let aset = CP.EMapSV.build_eset als in*)
+(*  let pure_vars = CP.fv pure in*)
+(*  let int_vars, other_vars = List.partition CP.is_int_typ pure_vars in*)
+(*  let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars in*)
+(*  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
+(*      let hd = List.hd vars in *)
+(*        List.concat (List.map (fun v -> *)
+(*          if mem_svl v pure_vars && mem_svl hd pure_vars then [mkEqVar v hd no_pos] else []) *)
+(*        (List.tl vars))) alias) in*)
+(*(*  DD.info_hprint (add_str "PURE: " (!CP.print_formula)) pure no_pos;*)*)
+(*  let pure = conj_of_list (pure::subst_lst) no_pos in*)
+(*  CP.remove_dup_constraints pure*)
 
 let rec get_all_pairs conjs = match conjs with
   | [] -> []
@@ -439,6 +442,12 @@ let rec rewrite_by_subst pairs = match pairs with
           if eq_spec_var sv12 sv22 && eq_spec_var sv13 sv23 then
             [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv11 no_pos; Bag([mkVar sv24 no_pos],no_pos)],no_pos)) no_pos]
           else []
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_), Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_)
+        -> 
+          if eq_spec_var sv13 sv23 && eq_spec_var sv14 sv24 then
+            [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos; Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos;
+            CP.mkEqExp (mkVar sv11 no_pos) (BagUnion ([mkVar sv12 no_pos; Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos]
+          else []
         | _ -> []
         end
       | _ -> []
@@ -456,7 +465,10 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let rcase = CP.drop_rel_formula rcase_orig in
   let rel_lhs_vars = CP.fv rel in
   let all_rel_vars = rel_vars @ rel_lhs_vars in
-  let rcase = rewrite rcase rel_lhs_vars rel_vars in
+  let rcase = Infer.filter_var rcase all_rel_vars in
+(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+  let rcase = rewrite rcase rel_lhs_vars rel_vars false in
+(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
 (*  let all_rel_vars = rel_vars @ (CP.fv rel) in*)
 (*  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure rcase) in*)
 (*  let aset = CP.EMapSV.build_eset als in*)
@@ -471,7 +483,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let rcase_conjs = CP.list_of_conjs rcase in
   if List.exists (fun conj -> is_emp_bag conj rel_vars) rcase_conjs then CP.mkFalse no_pos
   else
-    let rcase_conjs_eq = List.filter is_eq_exp rcase_conjs in
+    let rcase_conjs_eq = List.filter is_beq_exp rcase_conjs in
     let rcase_conjs = 
       if List.length rcase_conjs_eq <= 4 then
         let all_pairs = get_all_pairs rcase_conjs_eq in
@@ -480,6 +492,8 @@ let propagate_rec_helper rcase_orig rel ante_vars =
       else rcase_conjs 
     in
     let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
+    let rcase = Infer.filter_var rcase all_rel_vars in
+(*    DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
     let rels = CP.get_RelForm rcase_orig in
     let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
   (*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
@@ -512,7 +526,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
 (*    let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in*)
 (*    List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs*)
 
-let transform fml v_synch fv_rel = match fml with
+let rec transform fml v_synch fv_rel = match fml with
   | BForm ((Eq (v1, BagUnion ([b2;Bag([Var (v,_)],_)],_), _), _),_)
   | BForm ((Eq (v1, BagUnion ([Bag([Var (v,_)],_);b2],_), _), _),_)
   | BForm ((Eq (BagUnion ([Bag([Var (v,_)],_);b2],_), v1, _), _),_)
@@ -536,6 +550,7 @@ let transform fml v_synch fv_rel = match fml with
       end
     | _ -> fml
     end
+  | And (BForm f1, BForm f2, _) -> mkAnd (transform (BForm f1) v_synch fv_rel) (transform (BForm f2) v_synch fv_rel) no_pos
   | And _ -> 
     let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch fv_rel) in
     let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) fv_rel) in
@@ -580,17 +595,21 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
-    let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
-(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let fv_rel = CP.fv rel in
-    let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
         if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
           let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
           let r = Redlog.elim_exists_with_eq r in
           TP.simplify_raw r) bcases in
 (*    let bcases = List.map (fun x -> rewrite2 x [] fv_rel) bcases in*)
-    let bcases = List.map (fun x -> rewrite x fv_rel []) bcases in
+    let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
+    let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
+    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
+    let bcases = List.map (fun x -> CP.remove_cnts2 fv_rel x) bcases in
+    let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
+(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
+(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
@@ -618,7 +637,7 @@ let helper input_pairs rel ante_vars =
     let p = TP.simplify_raw p in 
     let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
     let num_vars, others, num_vars_new = get_num_dom p in
-    DD.devel_hprint (add_str "VARS: " (!print_svl)) others no_pos;    
+(*    DD.devel_hprint (add_str "VARS: " (!print_svl)) others no_pos;    *)
     let num_vars = if CP.intersect num_vars others = [] then num_vars else num_vars_new in
     CP.remove_cnts (exists_node_vars@num_vars) p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in

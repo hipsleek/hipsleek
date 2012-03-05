@@ -6929,6 +6929,14 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_beq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (_,BagUnion _,_),_)
+    | (Eq (_,BagUnion _,_),_) -> true
+    | _ -> false)
+  | _ -> false
+
 let get_rank_dec_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -7472,6 +7480,14 @@ let rec remove_cnts exist_vars f = match f with
   | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+
+let rec remove_cnts2 keep_vars f = match f with
+  | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
+  | Or (f1,f2,o,p) -> mkOr (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) o p
+  | Not (f,o,p) -> Not (remove_cnts2 keep_vars f,o,p)
+  | Forall (v,f,o,p) -> Forall (v,remove_cnts2 keep_vars f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_cnts2 keep_vars f,o,p)
 
 let rec is_num_dom_exp_0 e = match e with
   | IConst _ -> true

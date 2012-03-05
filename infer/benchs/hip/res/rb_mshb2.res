@@ -161,7 +161,7 @@ Restarting Mona ...
 !!! POST:  S=S2
 !!! PRE :  true
 !!! REL :  BLACK1(S1,S)
-!!! POST:  S=S1
+!!! POST:  S1=S
 !!! PRE :  true
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
@@ -258,7 +258,7 @@ Restarting Mona ...
 !!! POST:  S=S2
 !!! PRE :  true
 !!! REL :  RED1(S1,S)
-!!! POST:  S=S1
+!!! POST:  S1=S
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [RED1,RED2]
               EBase exists (Expl)(Impl)[n; cl; bh; 
@@ -518,6 +518,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 6.3 second(s)
-	Time spent in main process: 0.69 second(s)
-	Time spent in child processes: 5.61 second(s)
+Total verification time: 5.08 second(s)
+	Time spent in main process: 0.66 second(s)
+	Time spent in child processes: 4.42 second(s)
