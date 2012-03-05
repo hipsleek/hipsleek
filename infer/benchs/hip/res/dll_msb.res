@@ -578,6 +578,6 @@ Termination checking result:
 
 21 false contexts at: ( (555,6)  (243,13)  (243,4)  (354,4)  (354,11)  (364,6)  (364,13)  (363,6)  (363,6)  (361,6)  (361,13)  (360,8)  (359,27)  (359,14)  (359,9)  (358,10)  (358,4)  (357,8)  (357,12)  (357,4)  (357,4) )
 
-Total verification time: 5.93 second(s)
-	Time spent in main process: 1.34 second(s)
-	Time spent in child processes: 4.59 second(s)
+Total verification time: 4.62 second(s)
+	Time spent in main process: 0.86 second(s)
+	Time spent in child processes: 3.76 second(s)

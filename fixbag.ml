@@ -391,6 +391,7 @@ let rec create_alias_tbl vs aset all_rel_vars base_case = match vs with
 
 let rewrite pure rel_lhs_vars rel_vars base_case =
   let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure pure) in
+(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
   let aset = CP.EMapSV.build_eset als in
   let int_vars, other_vars = List.partition CP.is_int_typ (CP.fv pure) in
   let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars base_case in
@@ -434,19 +435,32 @@ let rec rewrite_by_subst pairs = match pairs with
         begin
         match (exp1,exp2,exp3,exp4) with 
         (* Add more if necessary *)
-        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); Bag([Var (sv24,_)],_)],_)
-        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) 
-        | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); Bag([Var (sv24,_)],_)],_), Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
-        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), 
+          Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
+          Bag([Var (sv24,_)],_)],_)
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), 
+          Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);
+          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) 
+        | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
+          Bag([Var (sv24,_)],_)],_), 
+          Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
+        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);
+          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), 
+          Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
         ->
           if eq_spec_var sv12 sv22 && eq_spec_var sv13 sv23 then
             [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv11 no_pos; Bag([mkVar sv24 no_pos],no_pos)],no_pos)) no_pos]
           else []
-        | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_), Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_)
+        | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_), 
+          Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_)
+        | Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_),
+          Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_)
         -> 
           if eq_spec_var sv13 sv23 && eq_spec_var sv14 sv24 then
-            [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos; Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos;
-            CP.mkEqExp (mkVar sv11 no_pos) (BagUnion ([mkVar sv12 no_pos; Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos]
+            [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos; 
+            Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos;
+            CP.mkEqExp (mkVar sv11 no_pos) (BagUnion ([mkVar sv12 no_pos; 
+            Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos]
           else []
         | _ -> []
         end
@@ -456,6 +470,29 @@ let rec rewrite_by_subst pairs = match pairs with
     end
   | p::ps -> (rewrite_by_subst [p]) @ (rewrite_by_subst ps)
   
+let rec rewrite_by_subst2 pairs = match pairs with
+  | [] -> []
+  | [(f1,f2)] ->
+    begin
+    match (f1,f2) with
+    | (BForm ((Eq (exp1, exp2, _),_),_), BForm ((Eq (exp3, exp4, _),_),_)) -> 
+      begin
+      match (exp1,exp2,exp3,exp4) with 
+      | Var (sv1,_), Var (sv2,_), Var (sv3,_), BagUnion (es,_) -> 
+        let evars = List.concat (List.map afv es) in
+        let subst = 
+          if mem_svl sv3 evars && eq_spec_var sv1 sv3 && is_bag_typ sv1 then [(sv1,sv2)] else
+          if mem_svl sv3 evars && eq_spec_var sv2 sv3 && is_bag_typ sv1 then [(sv2,sv1)] else [] in
+        let exp = e_apply_subs subst exp4 in
+        if subst = [] then [] else [([f1;f2],[CP.mkEqExp (mkVar sv3 no_pos) exp no_pos])]
+      | _ -> []
+      end
+    | (Forall _, Forall _) -> [([f1;f2],[])]
+    | (Forall _,_) -> [([f1],[])]
+    | (_,Forall _) -> [([f2],[])]
+    | _ -> []
+    end
+  | p::ps -> (rewrite_by_subst2 [p]) @ (rewrite_by_subst2 ps)
 
 let propagate_rec_helper rcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
@@ -562,6 +599,32 @@ let rec transform fml v_synch fv_rel = match fml with
     )
   | _ -> fml
 
+let rec remove_subtract_exp e = match e with
+  | CP.Subtract (_, Subtract (_,en,_), _) -> remove_subtract_exp en
+  | CP.Bag (es, p) -> Bag (List.map remove_subtract_exp es, p)
+  | CP.BagUnion (es, p) -> BagUnion (List.map remove_subtract_exp es, p)
+  | CP.BagIntersect (es, p) -> BagIntersect (List.map remove_subtract_exp es, p)
+  | CP.BagDiff (e1, e2, p) -> BagDiff (remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | _ -> e
+
+let remove_subtract_pf pf = match pf with
+  | CP.Lt (e1, e2, p) -> Lt(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Lte (e1, e2, p) -> Lte(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Gt (e1, e2, p) -> Gt(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Gte (e1, e2, p) -> Gte(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Eq (e1, e2, p) -> Eq(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | CP.Neq (e1, e2, p) -> Neq(remove_subtract_exp e1, remove_subtract_exp e2, p)
+  | _ -> pf
+
+
+let rec remove_subtract pure = match pure with
+  | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
+  | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
+  | Or (f1,f2,_,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None no_pos
+  | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
+  | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
+
 let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
   | None -> (pfs,1)
   | Some ivs ->
@@ -604,13 +667,24 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*    let bcases = List.map (fun x -> rewrite2 x [] fv_rel) bcases in*)
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
-    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
+(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> CP.remove_cnts2 fv_rel x) bcases in
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
+    let bcases = if List.length fv_rel <= 5 then bcases else
+      List.map (fun bcase -> 
+        let bcase = remove_subtract bcase in
+        let bcase_conjs = list_of_conjs bcase in
+        let all_pairs = get_all_pairs bcase_conjs in
+(*        DD.info_hprint (add_str "PAIRS: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) all_pairs no_pos;*)
+        let (rem,add) = List.split (rewrite_by_subst2 all_pairs) in
+        let conjs = (Gen.BList.difference_eq (=) bcase_conjs (List.concat rem)) @ (List.concat add) in
+        conj_of_list conjs no_pos
+      ) bcases 
+    in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
 (*    match bcases with*)
@@ -657,32 +731,6 @@ let simplify_res fixpoint =
     if TP.imply_raw p1 p2 then p2 else 
     if TP.imply_raw p2 p1 then p1 else fixpoint
   | _ -> fixpoint
-
-let rec remove_subtract_exp e = match e with
-  | CP.Subtract (_, Subtract (_,en,_), _) -> remove_subtract_exp en
-  | CP.Bag (es, p) -> Bag (List.map remove_subtract_exp es, p)
-  | CP.BagUnion (es, p) -> BagUnion (List.map remove_subtract_exp es, p)
-  | CP.BagIntersect (es, p) -> BagIntersect (List.map remove_subtract_exp es, p)
-  | CP.BagDiff (e1, e2, p) -> BagDiff (remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | _ -> e
-
-let remove_subtract_pf pf = match pf with
-  | CP.Lt (e1, e2, p) -> Lt(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | CP.Lte (e1, e2, p) -> Lte(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | CP.Gt (e1, e2, p) -> Gt(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | CP.Gte (e1, e2, p) -> Gte(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | CP.Eq (e1, e2, p) -> Eq(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | CP.Neq (e1, e2, p) -> Neq(remove_subtract_exp e1, remove_subtract_exp e2, p)
-  | _ -> pf
-
-
-let rec remove_subtract pure = match pure with
-  | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
-  | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
-  | Or (f1,f2,_,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None no_pos
-  | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
-  | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
 
 let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur = 
   if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos)
