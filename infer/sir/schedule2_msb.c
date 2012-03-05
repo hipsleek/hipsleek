@@ -212,6 +212,24 @@ int new_job1(int prio,ref int npid,ref node curJob,ref node pq1, ref node pq2, r
   }
   prio > 3 | prio < 0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & npid'=npid &res = -4;//'
  }
+
+      //relation NJ(bag a, bag b).
+int new_job(int prio,ref int npid,ref node curJob,ref node pq1, ref node pq2, ref node pq3)
+      //infer [NJ]
+  requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3> & prio>=1 & prio<=3
+ case {
+  prio = 0 -> ensures true; //error
+  prio >= 1 & prio<=3 -> case{
+    curJob = null -> ensures pq1'::ll1<n4,S4>*pq2'::ll1<n5,S5>*pq3'::ll1<n6,S6>*
+      curJob'::node<_,_,null> & n4+n5+n6=n1+n2+n3 & npid'=npid +1 & res = 0;
+//add bag constraint
+   curJob != null ->requires curJob::node<_,v,null> & v>=1 & v<=3
+      ensures pq1'::ll1<n4,S4>*pq2'::ll1<n5,S5>*pq3'::ll1<n6,S6> *curJob'::node<_,v3,null>
+      & n4+n5+n6=n1+n2+n3+1 & npid'=npid +1 &res = 0;//'v2>=v
+    //add bag constraint
+  }
+  prio > 3 | prio < 0 -> ensures pq1'::ll1<n1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & npid'=npid &res = -4;//'
+ }
 {
   int status = 0;//OK 0
   node new_process, tmp;
@@ -565,26 +583,6 @@ node get_current1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
 }
 
  /* Put highest priority job into current_job */
-int reschedule(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node pq3)
-  requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
-   case{
-  cur_job = null -> case {
-    n3>0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3-1>*cur_job'::node<_,v4,null> & v4>=1 & v4<=3 & res=0;//'
-    n3<=0 -> case {
-      n2>0 -> ensures pq1'::ll<n1>*pq2'::ll<n2-1>*pq3'::ll<n3>*cur_job'::node<_,v4,null>  & v4>=1 & v4<=3 & res=0;//'
-      n2<=0 -> case{
-        n1>0 -> ensures pq1'::ll<n1-1>*pq2'::ll<n2>*pq3'::ll<n3>*cur_job'::node<_,v4,null> & v4>=1 & v4<=3 & res=0;//'
-        n1<=0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & cur_job'=null & res=0;//'
-      }
-    }
-  }
-  cur_job != null -> requires cur_job::node<v1,v2,null> & v2>=1 & v2 <=3 case {
-    prio > v2 -> ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*cur_job'::node<_,v4,null> & n4+n5+n6=n1+n2+n3 & res=0 & v4>=1 & v4<=3; //v4>=v1
-   prio <= v2 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>*cur_job::node<v1,v2,null> & cur_job'=cur_job & res=0;//'
-  }
-}
-
-//can not verify bag condition
 int reschedule1(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node pq3)
   requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
  case{
@@ -592,6 +590,30 @@ int reschedule1(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node
     n3>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3-1,S31>*cur_job'::node<v,v4,null> & v4>=1 & v4<=3 & res=0 & S3=union(S31,{v});//'
     n3<=0 -> case {
       n2>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S3>*cur_job'::node<_,v4,null>  & v4>=1 & v4<=3 & res=0 & S2=union(S21,{v});//'
+      n2<=0 -> case{
+        n1>0 -> ensures pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*cur_job'::node<v,v4,null> & v4>=1 & v4<=3 & res=0 & S1=union(S11,{v});//'
+        n1<=0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & cur_job'=null & res=0;//'
+      }
+    }
+  }
+  cur_job != null -> requires cur_job::node<v1,v2,null> & v2>=1 & v2 <=3 case {
+    prio > v2 -> ensures pq1'::ll1<n4,S4>*pq2'::ll1<n5,S5>*pq3'::ll1<n6,S6>*cur_job'::node<v3,v4,null> & n4+n5+n6=n1+n2+n3 & res=0 & v4>=1 & v4<=3 ;
+    //& S7=union(S1,S2,S3) &
+    //  S8=union(S4,S5,S6) & union(S7,{v1})=union(S8,{v3}); //v4>=v1
+    prio <= v2 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*cur_job::node<v1,v2,null> & cur_job'=cur_job & res=0;//'
+  }
+}
+
+//can not verify bag condition
+relation RSCH1(bag a, bag b, int c).
+int reschedule(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node pq3)
+//infer [RSCH1]
+  requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
+ case{
+  cur_job = null -> case {
+    n3>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3-1,S31>*cur_job'::node<v,v4,null> & v4>=1 & v4<=3 & res=0 & S3=union(S31,{v});//'
+    n3<=0 -> case {
+      n2>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S3>*cur_job'::node<_,v4,null>  & v4>=1 & v4<=3 & res=0 & S2=union(S21,{v});//' RSCH1(S2,S21,v)
       n2<=0 -> case{
         n1>0 -> ensures pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*cur_job'::node<v,v4,null> & v4>=1 & v4<=3 & res=0 & S1=union(S11,{v});//'
         n1<=0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & cur_job'=null & res=0;//'
@@ -803,6 +825,18 @@ int do_get_process1(int ratio, ref node job, ref node pq0)
     n != 0 -> ensures pq0'::ll1<n-1,S1> * job'::node<v,v4,null> & res = 1 & v4>=1 & v4<=3 & S=union(S1,{v});//'
   }
 }
+
+relation DGET(bag a, bag b, int c).
+int do_get_process(int ratio, ref node job, ref node pq0)
+//infer [DGET]
+  requires pq0::ll1<n,S>
+ case {
+  ratio < 1 | ratio > n -> ensures pq0'::ll1<n,S> & res=-5 & job'=job;//'
+  ratio >= 1 & ratio <= n -> case{
+    n = 0 -> ensures pq0'=null & job'=null & res = 0;//'
+    n != 0 -> ensures pq0'::ll1<n-1,S1> * job'::node<v,v4,null> & res = 1 & v4>=1 & v4<=3 & S=union(S1,{v});//'DGET(S,S1,v)
+  }
+}
 {
   int length;
   int index;
@@ -858,6 +892,44 @@ int get_process1(int prio, int ratio, ref node job, ref node pq0, ref node pq1, 
     prio > 3 | prio <0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-4;
 }
 
+relation GP0(bag a, bag b, int c).
+relation GP1(bag a, bag b, int c).
+relation GP2(bag a, bag b, int c).
+relation GP3(bag a, bag b, int c).
+int get_process(int prio, int ratio, ref node job, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
+  infer [GP0,GP1,GP2,GP3]
+  requires pq0::ll1<n,S0>*pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
+ case {
+  prio = 0 -> case {
+    ratio < 1 | ratio > n -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
+    ratio >= 1 & ratio <= n -> case{
+      n = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
+      n != 0 -> ensures pq0'::ll1<n-1,S01>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 & GP0(S0,S01,v);//S0=union(S01,{v})
+      }
+    }
+    prio = 1 -> case {
+      ratio < 1 | ratio > n1 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
+      ratio >= 1 & ratio <= n1 -> case{
+        n1 = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
+      n1 != 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 & GP1(S1,S11,v);//S1=union(S11,{v})
+      }
+    }
+    prio = 2 -> case {
+      ratio < 1 | ratio > n2 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
+      ratio >= 1 & ratio <= n2 -> case{
+        n2 = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
+      n2 != 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S3> * job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1 &  GP2(S2,S21,v);//S2=union(S21,{v})
+      }
+    }
+    prio = 3 -> case {
+      ratio < 1 | ratio > n3 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
+      ratio >= 1 & ratio <= n3 -> case{
+      n3 = 0 -> ensures  pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
+      n3 != 0 -> ensures  pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3-1,S31>* job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1 &  GP3(S3,S31,v);// S3=union(S31,{v})
+      }
+    }
+    prio > 3 | prio <0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-4;
+}
 {
   int status;
   if(prio > 3 || prio < 0) return (-4); /* Somebody goofed MAXPRIO 3, BADPRIO -4*/
