@@ -214,17 +214,6 @@ let smt_of_formula pr_w pr_s f =
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
-(* let rec smt_of_formula f = *)
-(* 	match f with *)
-(* 	| CP.BForm (b,_) -> (smt_of_b_formula b) *)
-(* 	| CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")" *)
-(* 	| CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")" *)
-(* 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")" *)
-(* 	| CP.Forall (sv, p, _,_) -> *)
-(* 		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")" *)
-(* 	| CP.Exists (sv, p, _,_) -> *)
-(* 		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")" *)
-
 let smt_of_formula pr_w pr_s f =
   Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula pr_w pr_s f) f
 
@@ -545,9 +534,6 @@ let command_for prover =
     | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
     )
-(*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
-	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
-*)
 
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
@@ -579,36 +565,7 @@ let run st prover input timeout =
 
 (*for z3-3.2*)
 let rec prelude () = ()
-(*
-let init_str = "(set-option :PULL_NESTED_QUANTIFIERS true)\n" in
-   output_string (!prover_process.outchannel) init_str;
-   flush (!prover_process.outchannel);
-*)
-(*
-  begin
- (* let line = input_line (! prover_process.inchannel) in
-	  let _ = print_endline line in
-	(if !log_all_flag then
-          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") ); *)
-  (*set logic*)
-   let init_str = "(set-logic AUFNIA)\n" in
-(set-option :PULL_NESTED_QUANTIFIERS true)
-   output_string (!prover_process.outchannel) init_str;
-   flush (!prover_process.outchannel);
 
- (* let finished = ref false in
-  while not !finished do
- *)
- (*   let line = input_line (! prover_process.inchannel) in
-	  let _ = print_endline line in
-	(if !log_all_flag then
-          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") );*)
-(*
-    if ((String.length line)>=0) then finished := true;
-  done
-*)
- end
-*)
 
 (* start z3 system in a separated process and load redlog package *)
 and start() =
@@ -656,17 +613,12 @@ let check_formula f timeout =
 	        z3_call_count := 0;
         end;
       let fnc f = 
-        (*let _ = print_endline "check" in*)
         let _ = incr z3_call_count in
         (*due to global stack - incremental, push current env into a stack before working and
         removing it after that. may be improved *)
-        let new_f =
-          "(push)\n" ^ f ^ "(pop)\n"
-        in
-        (* let _ = print_endline ("locle: check\n " ^ new_f) in *)
+        let new_f = "(push)\n" ^ f ^ "(pop)\n" in
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
-
         iget_answer (!prover_process.inchannel) f
       in
       let fail_with_timeout () = 
@@ -677,7 +629,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Debug.ho_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -715,9 +667,6 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
-  (* let _ = print_endline ("ante = " ^ (!print_pure ante)) in *)
-  (* let _ = print_endline ("fvars: " ^ ((!CP.print_svl) fvars)) in *)
-  (*let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
     (*drop VarPerm beforehand*)
     let conseq = CP.drop_varperm_formula conseq in
     let ante = CP.drop_varperm_formula ante in
@@ -882,9 +831,8 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
     * Select the value to do induction on.
     * A simple approach : induct on the length of an array.
 *)
-and choose_induction_value (ante : CP.formula) (conseq : CP.formula) (vals : CP.exp list) : CP.exp =
-  (* TODO Implement the main heuristic here! *)	
-  List.hd vals
+and choose_induction_value (ante : CP.formula) (conseq : CP.formula) (vals : CP.exp list) : CP.exp =  List.hd vals
+
 
 (** 
     * Create a variable totally different from the ones in vlist.
@@ -979,7 +927,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.ho_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -1021,23 +969,16 @@ and has_exists conseq = match conseq with
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
-  (*let _ = print_endline ("imply :" ^ (string_of_float timeout)) in*)
   let (pr_w,pr_s) = CP.drop_complex_ops in
   smt_imply pr_w pr_s ante conseq Z3 timeout
 
-let imply_ops pr_weak pr_strong ante conseq timeout =
-  (*let _ = print_endline ("imply :" ^ (string_of_float timeout)) in*)
-	smt_imply pr_weak pr_strong ante conseq Z3 timeout
+let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_strong ante conseq Z3 timeout
 
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   try
-      (* let timeo = match timeout with *)
-      (*   | 0. -> z3_timeout *)
-      (*   |_ -> timeout *)
-      (* in *)
     imply ante conseq timeout
   with Illegal_Prover_Format s -> 
       begin
@@ -1049,7 +990,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.ho_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -1070,10 +1011,7 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt pr_weak pr_strong f None prover in
-(*    let new_input =
-    if (Cpure.contains_exists f) then
-      ("(set-option :mbqi true)\n" ^ input)
-    else input in *)
+(*    let new_input = if (Cpure.contains_exists f) then ("(set-option :mbqi true)\n" ^ input) else input in *)
 	let output =
       if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
       else check_formula input timeout
@@ -1086,17 +1024,13 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     else res
 
 (*let default_is_sat_timeout = 2.0*)
-let is_sat_ops pr_weak pr_strong f sat_no =
- (*  let _ = print_endline "locle: sat" in*)
-  smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+let is_sat_ops pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
 (* see imply *)
 let is_sat f sat_no =
- (*  let _ = print_endline "locle: sat" in*)
   let (pr_w,pr_s) = CP.drop_complex_ops in
   smt_is_sat pr_w pr_s f sat_no Z3 z3_sat_timeout_limit
 
-let is_sat_with_check (pe : CP.formula) sat_no : bool option =
-  CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
+let is_sat_with_check (pe : CP.formula) sat_no : bool option = CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
 (* let is_sat f sat_no = Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
 

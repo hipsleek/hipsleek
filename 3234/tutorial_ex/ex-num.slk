@@ -1,0 +1,22 @@
+
+// (1)
+checkentail x>5 |- x>0.
+
+// (2)
+checkentail x>5 |- x<0.
+
+// (3)
+checkentail x>5 |- x>6.
+
+// (4)
+checkentail x>1 & r=2*x |-  r>3.
+
+// (5)
+checkentail x>1 & y>1 & r=y*x |- r>3.
+
+
+checkentail x>a  |- x>2. // add constraint on a
+
+checkentail x+a>4 |- x+5>b. // add constraint on a and b
+
+checkentail x>4 & a>5 |- x>a. //add constraint on a
