@@ -1176,7 +1176,9 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         let lhs_2 = CP.restore_memo_formula subs bvars lhs in
         DD.trace_hprint (add_str "lhs_2 (b4 filter ass):" (!CP.print_formula)) lhs_2 pos;
         (* TODO: Need a faster filter_assumption *)
+        let is_bag_cnt = TP.is_bag_constraint lhs in
         let filter_ass lhs rhs = 
+          let is_sat = if is_bag_cnt then (fun x -> true) else is_sat in
           let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
           (simplify_disj_new lhs,rhs) in      
         let pairwise_proc lhs =
@@ -1185,7 +1187,6 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let lst = List.map (fun e -> if CP.is_disjunct e then TP.pairwisecheck e else e) lst in
           CP.join_conjunctions lst
         in
-        let is_bag_cnt = TP.is_bag_constraint lhs in
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
