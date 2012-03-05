@@ -1,0 +1,10 @@
+Checking benchs/aprove/pasta/PastaC9-while.ss
+Total number of errors: 6 in files:
+ error at: benchs/lit/leap-year-bug-zune.ss loop
+term error at: benchs/lit/leap-year-bug-zune.ss 
+error at: benchs/key/Middle.ss middle
+error at: benchs/aprove/Costa_Julia_09/TestJulia4.ss main
+error at: benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss doSum
+error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
+
+example/working/bugs/infer5.slk

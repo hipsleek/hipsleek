@@ -1,0 +1,15 @@
+
+// (1)
+checkentail x>5 |- x>0.
+
+// (2)
+checkentail x>5 |- x<0.
+
+// (3)
+checkentail x>5 |- x>6.
+
+// (4)
+checkentail x>1 & r=2*x |-  r>3.
+
+// (5)
+checkentail x>1 & y>1 & r=y*x |- r>3.
