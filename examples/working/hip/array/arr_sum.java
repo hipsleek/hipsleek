@@ -16,10 +16,11 @@ axiom i < j & sumarray(a,i,j-1,s-a[j]) ==> sumarray(a, i, j, s).
 
 int sigmaright(int[] a, int i, int j) 
 	case {
-		i <= j
-		  -> requires Term[j-i] & dom(a,i,j) /* the allocation is from a[i..j] */
+		i <= j ->  
+				requires dom(a,i,j) & Term[j-i] /* the allocation is from a[i..j] */
 				ensures sumarray(a,i,j,res);
-		i > j -> requires Term[]
+		i > j -> 
+				requires Term
 			  ensures sumarray(a,i,j,res);
 	}
 {

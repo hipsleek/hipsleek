@@ -34,7 +34,7 @@ void test_fork(ref int2 x,  ref int2 y)
   tid id;
   fork(id,inc,x); // not supported yet
   y.val++;
-  join1(id); // not supported yet
+  join(id); // not supported yet
   assert x'::int2(f)<n1+1>;
   assert y'::int2(f)<n2+1>;
 }

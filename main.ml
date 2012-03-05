@@ -32,7 +32,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
+      (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
@@ -88,7 +88,8 @@ let rec process_header_with_pragma hlist plist =
 (***************end process preclude*********************)
 
 let process_source_full source =
-  print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
+  (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
@@ -120,10 +121,14 @@ let process_source_full source =
     (* Append all primitives in list into one only *)
     let iprims_list = process_intermediate_prims prims_list in
     let iprims = Iast.append_iprims_list_head iprims_list in
+    (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
     let intermediate_prog = Globalvars.trans_global_to_param prog in
+    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+    (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+    (* let _ = print_endline ("process_source_full: after --pip") in *)
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
     (* let ptime1 = Unix.times () in
@@ -239,13 +244,14 @@ let main1 () =
 	print_version ()
   end else
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
-  let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-      Globals.procs_verified := ["f3"];
-      Globals.source_files := ["examples/test5.ss"]
+      (* Globals.procs_verified := ["f3"]; *)
+      (* Globals.source_files := ["examples/test5.ss"] *)
+        print_string "Source file(s) not specified\n"
     end;
     let _ = Gen.Profiling.push_time "Overall" in
     let _ = List.map process_source_full !Globals.source_files in

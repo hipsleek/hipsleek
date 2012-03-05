@@ -165,6 +165,8 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
 	| Cpure.LexVar _ -> 
 			illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+	| Cpure.VarPerm _ -> 
+			illegal_format ("z3.smt_of_b_formula: VarPerm should not appear here.\n")
 	| Cpure.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -267,6 +269,7 @@ and collect_bformula_info b = match b with
 	| Cpure.ListIn _
 	| Cpure.ListNotIn _
 	| Cpure.ListAllN _
+	| Cpure.VarPerm _
 	| Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| Cpure.LexVar _ -> default_formula_info
 	| Cpure.RelForm (r,args,_) ->
