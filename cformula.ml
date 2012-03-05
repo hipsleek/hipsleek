@@ -5894,22 +5894,31 @@ let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_for
     | None -> "None"
     | Some l -> "Some"^string_of_int(List.length l) in
   Debug.no_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
+
   
 let rec label_view (f0:struc_formula):struc_formula = 
-  let rec label_formula (f:formula):formula = match f with
-    | Base b -> Base{b with formula_base_label = Some (fresh_formula_label "")} 
-    | Exists b -> Exists{b with formula_exists_label = Some (fresh_formula_label "")} 
+  let rec label_formula (f:formula):formula =  match f with
+    | Base b ->  Base{b with formula_base_label = Some (fresh_formula_label "")} 
+    | Exists b -> Exists{b with formula_exists_label = Some (fresh_formula_label "")}    
     | Or b -> Or{b with formula_or_f1 = label_formula b.formula_or_f1;formula_or_f2 = label_formula b.formula_or_f2;}  in
   let rec label_struc (f:struc_formula):struc_formula = match f with
-    | EBase b -> EBase{b with formula_struc_continuation = map_opt label_struc b.formula_struc_continuation; formula_struc_base= label_formula b.formula_struc_base}
+    | EBase b -> EBase{b with formula_struc_continuation = map_opt label_struc b.formula_struc_continuation; formula_struc_base= label_formula b.formula_struc_base} 
     | ECase b -> ECase{b with formula_case_branches = map_l_snd label_struc b.formula_case_branches}
     | EAssume (x,b,l)-> EAssume (x,label_formula b,l)
     | EInfer b -> EInfer {b with formula_inf_continuation = label_struc b.formula_inf_continuation}
 	| EOr b -> EOr  {b with formula_struc_or_f1 = label_struc b.formula_struc_or_f1; formula_struc_or_f2 = label_struc b.formula_struc_or_f2;}  
 	| EList b -> EList (map_l_snd label_struc b) in
 	label_struc f0
-  
-  
+
+(*
+ let label_view (f0:struc_formula):struc_formula = 
+  let _ = print_string ("asankhs:" ^ (!print_struc_formula f0) ^ "\n") in 
+  let f1 = label_view_auto f0 in 
+  let _ = print_string ("asankhs:" ^ (!print_struc_formula f1) ^ "\n") in
+  f1
+*)
+
+
 let get_view_branches (f0:struc_formula):(formula * formula_label) list= 
   let rec formula_br (f:formula):(formula * formula_label) list = match f with
     | Base {formula_base_label=lbl} 

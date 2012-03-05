@@ -973,6 +973,7 @@ let rec pr_h_formula h =
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)
+          string_of_formula_label_opt pid (string_of_spec_var sv);
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;

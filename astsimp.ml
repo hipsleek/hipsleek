@@ -1033,8 +1033,9 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
-		  let cviews = List.map (trans_view prog) tmp_views in
+		  let cviews_x = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
+          let cviews = List.map auto_lbl_cview cviews_x in
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
@@ -1256,6 +1257,13 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr_r = Cprinter.string_of_view_decl in
   Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
+(*
+and trans_view_autolbl (prog :I.prog_decl) (vdef : I.view_decl) : C.view_decl = 
+  let _ = if List.for_all (fun c -> if c == [] then true else false) vdef.I.view_labels 
+          then let _ = print_endline ("Auto Labels for Pure") in
+          else print_endline ("Labels already there") 
+  in trans_view_x prog vdef  
+*)
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
@@ -6976,3 +6984,16 @@ and fm_main g lv =
   let unlocked_v = List.map (fun v -> (v, fm_gain g (fm_find_partition lp v) v)) lv in
   helper g lp (unlocked_v, [])
 
+and auto_lbl_cview (cview: C.view_decl) : C.view_decl = 
+  if List.for_all (fun c -> if c == [] then true else false) cview.C.view_labels
+          then (*print_endline ("Auto Labels for Pure")*)
+            let auto_lbls_str = List.map CP.string_of_spec_var cview.C.view_vars in
+            (*let _ = print_endline(String.concat "," auto_lbls_str) in*)
+            let auto_lbls = List.map (fun c -> [c]) auto_lbls_str in 
+            let cview_lbls = {cview with C.view_labels = auto_lbls } in 
+            (*let*) 
+            let _ = print_endline(Cprinter.string_of_view_decl cview_lbls) in 
+            cview_lbls
+          else (*print_endline ("Labels already there")*)
+            let _ = print_endline(Cprinter.string_of_view_decl cview) in 
+            cview
