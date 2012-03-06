@@ -65,9 +65,6 @@ Restarting Mona ...
 Procedure append$node2~node2 SUCCESS
 
 Checking procedure appendC$node2~node2... 
-[mona.ml]: Mona is preparing to restart because of upper limit reached
-Restarting Mona ...
-
 !!! REL :  C(S,S1,S2)
 !!! POST:  S=union(S1,S2)
 !!! PRE :  true
@@ -109,6 +106,9 @@ Restarting Mona ...
 Procedure appendC$node2~node2 SUCCESS
 
 Checking procedure count$node2... 
+[mona.ml]: Mona is preparing to restart because of upper limit reached
+Restarting Mona ...
+
 Procedure count$node2 SUCCESS
 
 Checking procedure remove_min$node2... 
@@ -313,6 +313,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 14.89 second(s)
-	Time spent in main process: 0.97 second(s)
-	Time spent in child processes: 13.92 second(s)
+Total verification time: 15.28 second(s)
+	Time spent in main process: 1.55 second(s)
+	Time spent in child processes: 13.73 second(s)

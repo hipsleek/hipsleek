@@ -228,7 +228,7 @@ let rec is_rec pf = match pf with
   | CP.Exists (_,f,_,_) -> is_rec f
 
 let rec get_rel_vars pf = match pf with
-  | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
+  | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.get_rel_args pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.Not (f,_,_) -> get_rel_vars f
@@ -323,9 +323,9 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
     begin
       match (v1,v2) with
       | (Var (b1,_), Var (b2,_))
-      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Var (b2,_))
-      | (Var (b1,_), Subtract (_, Subtract (_,Var (b2,_),_),_))
-      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Subtract (_, Subtract (_,Var (b2,_),_),_))
+(*      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Var (b2,_))*)
+(*      | (Var (b1,_), Subtract (_, Subtract (_,Var (b2,_),_),_))*)
+(*      | (Subtract (_, Subtract (_,Var (b1,_),_),_), Subtract (_, Subtract (_,Var (b2,_),_),_))*)
       -> (eq_spec_var b1 b2 && es != [],[])
       | _ -> (false,[])
     end
@@ -438,23 +438,21 @@ let rec rewrite_by_subst pairs = match pairs with
         | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), 
           Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
           Bag([Var (sv24,_)],_)],_)
-        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), 
-          Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);
-          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) 
+(*        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), *)
+(*          Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);*)
+(*          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) *)
         | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
           Bag([Var (sv24,_)],_)],_), 
           Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
-        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);
-          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), 
-          Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
+(*        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);*)
+(*          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), *)
+(*          Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)*)
         ->
           if eq_spec_var sv12 sv22 && eq_spec_var sv13 sv23 then
             [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv11 no_pos; Bag([mkVar sv24 no_pos],no_pos)],no_pos)) no_pos]
           else []
         | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_), 
           Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_)
-        | Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_),
-          Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_)
         -> 
           if eq_spec_var sv13 sv23 && eq_spec_var sv14 sv24 then
             [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos; 
@@ -494,6 +492,11 @@ let rec rewrite_by_subst2 pairs = match pairs with
     end
   | p::ps -> (rewrite_by_subst2 [p]) @ (rewrite_by_subst2 ps)
 
+let rec filter_var f vars = 
+  match f with
+  | CP.Or (f1,f2,l,p) -> CP.mkOr (filter_var f1 vars) (filter_var f2 vars) l p
+  | _ -> CP.filter_var (CP.drop_rel_formula f) vars
+
 let propagate_rec_helper rcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
 (*  DD.devel_hprint (add_str "Before: " (!CP.print_formula)) rcase_orig no_pos;*)
@@ -502,7 +505,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   let rcase = CP.drop_rel_formula rcase_orig in
   let rel_lhs_vars = CP.fv rel in
   let all_rel_vars = rel_vars @ rel_lhs_vars in
-  let rcase = Infer.filter_var rcase all_rel_vars in
+  let rcase = filter_var rcase all_rel_vars in
 (*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = rewrite rcase rel_lhs_vars rel_vars false in
 (*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
@@ -529,8 +532,9 @@ let propagate_rec_helper rcase_orig rel ante_vars =
       else rcase_conjs 
     in
     let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
-    let rcase = Infer.filter_var rcase all_rel_vars in
+    let rcase = filter_var rcase all_rel_vars in
 (*    DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+    let rcase = if CP.diff_svl (List.filter is_bag_typ rel_vars) (CP.fv rcase) != [] then CP.mkFalse no_pos else rcase in
     let rels = CP.get_RelForm rcase_orig in
     let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
   (*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
@@ -570,8 +574,8 @@ let rec transform fml v_synch fv_rel = match fml with
   | BForm ((Eq (BagUnion ([b2;Bag([Var (v,_)],_)],_), v1, _), _),_) -> 
     begin
     match v1 with
-    | Var (b1,_)
-    | Subtract (_, Subtract (_,Var (b1,_),_),_) ->
+    | Var (b1,_) ->
+(*    | Subtract (_, Subtract (_,Var (b1,_),_),_) ->*)
       let vars = afv b2 in
       let v_synch = List.filter (fun x -> not (eq_spec_var x v)) v_synch in
       begin
@@ -650,14 +654,16 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
 (*    let no_of_disjs = List.fold_left (fun a b -> max a b) 1 no_of_disjs in*)
     let bcases = List.concat (List.map (fun x -> CP.list_of_disjs x) bcases) in
     let rcases = List.concat (List.map (fun x -> CP.list_of_disjs (TP.simplify_raw x)) rcases) in
+    let bcases = List.map remove_subtract bcases in
+    let rcases = List.map remove_subtract rcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = simplify bcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let rcases = simplify rcases in
-(*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
+    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
-(*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
+    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let fv_rel = CP.fv rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
         if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
@@ -672,7 +678,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
-(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let bcases = if List.length fv_rel <= 5 then bcases else
       List.map (fun bcase -> 
