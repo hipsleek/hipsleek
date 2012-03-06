@@ -1,9 +1,12 @@
+// use "-tp z3"
+// Add a strongest precondition using "facta" relation
+// to prove full functional correctness of fact function below.
+
+
 relation facta(int n, int f).
 axiom n=0 ==> facta(n,1).
 axiom n > 0 & facta(n-1,f1) ==> facta(n,n*f1).
 
-// Add a strongest precondition using facta relation
-// to prove functional correctness of fact function below.
 
 int fact(int n)
   requires n>=0

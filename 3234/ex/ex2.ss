@@ -1,7 +1,7 @@
-data cell {int val;}
-
 // Add strongest postcondition for the swap etmhod
 // below over cell data structures.
+
+data cell {int val;}
 
 void swap (cell i, cell j)
   requires i::cell<a> & i=j

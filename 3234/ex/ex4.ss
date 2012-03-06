@@ -1,6 +1,7 @@
 // (i) Add Term criterion with ranking function for the recursive case
 // (ii) Add a strongest possible postcondition for the recursive case
 //      and use -tp redlog to perform the verification
+// Hint:  1+2+..+ n = n*(n+1)/2
 
 int sum_down(int i) 
 case {

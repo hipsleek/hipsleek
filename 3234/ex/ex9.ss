@@ -4,6 +4,8 @@
 //     [x,x',c,x'] for loop method below.
 // (ii) VERY HARD : find a ranking function that
 //      completes termination property below!
+// Hint : focus on loop method first
+//        ranking function is a linear function f(x,c)
 
 int mcCarthy (int x)
 case {

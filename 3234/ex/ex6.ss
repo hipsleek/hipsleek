@@ -1,5 +1,6 @@
 // Write the strongest postconditions over [res,i,n]
 // for the method below.
+// Hint : res = ?
 
 int sum_tail(int i, int n) 
  case {
