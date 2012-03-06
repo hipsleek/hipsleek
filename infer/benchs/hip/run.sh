@@ -13,8 +13,8 @@
 #../../../hip heaps_m.ss --eps > res/heaps_m.res
 ../../../hip heaps_ms.ss --eps > res/heaps_ms.res
 ../../../hip heaps_msmax.ss --eps > res/heaps_msmax.res
-../../../hip heaps_msb.ss --eps -tp mona > res/heaps_ms.res
-../../../hip heaps_msmaxb.ss --eps -tp mona > res/heaps_msmax.res
+../../../hip heaps_msb.ss --eps -tp mona > res/heaps_msb.res
+../../../hip heaps_msmaxb.ss --eps -tp mona > res/heaps_msmaxb.res
 #../../../hip avl_m.ss --eps > res/avl_m.res
 #../../../hip avl_ms.ss --eps > res/avl_ms.res
 ../../../hip avl_mh.ss --eps > res/avl_mh.res

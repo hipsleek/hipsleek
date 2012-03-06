@@ -120,9 +120,9 @@ int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   & 0 <= res <= maxi & S5=union(S1,S2) & S6=union(S3,S4) & S6 subset S5;//'
 
 /* function to delete one element*/
-//relation DELONE (int a, int b, int c, int d).
+relation DELONE (bag a, bag b).
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
-//infer [DELONE]
+//  infer [DELONE]
   requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
   ensures l'::pq1<m1', mx3,S3> * r'::pq1<m2', mx4,S4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
   & m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 &
@@ -143,14 +143,13 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 }
 
 /* function to restore the heap property */
-relation RIP(int a, int b, int c, int d).
+relation RIP(bag a, bag b).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
-  //infer[RIP]
+//  infer[RIP]
   requires l::pq1<m1, mx1,S1> * r::pq1<m2, mx2,S2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
-  ensures l::pq1<m1, mx3,S3> * r::pq1<m2, mx4,S4> /*& mx3 <= mx1 & mx4 <= mx2 */
-//    & max1 = max(mx1, v) & max2 = max(mx2, max1)
+  ensures l::pq1<m1, mx3,S3> * r::pq1<m2, mx4,S4>
   & ((max1=mx1 & max1 >= v) | (max1=v & max1 > mx1)) & ((max2=mx2 & max2>= max1) | (max2=max1 & max2 > mx2))
-& d' <= max2 & d' >= mx3, mx4, 0;
+  & d' <= max2 & d' >= mx3, mx4, 0;
 {
 	if (m1 == 0)
       { //assume false;

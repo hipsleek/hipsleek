@@ -82,10 +82,11 @@ int deleteoneel1(ref node t)
   requires t::pq1<n,S> & n > 0
   ensures t'::pq1<n-1,S1> & S1 subset S & 0 <= res;//'
 
+relation DELE(bag a, bag b).
 int deleteoneel(ref node t)
-  infer @post [t]
+//  infer [DELE]
   requires t::pq1<n,S> & n > 0
-  ensures t'::pq1<n-1,S1> & res>=0;
+  ensures t'::pq1<n-1,S1> & res>=0 & S1 subset S;
 {
 	int v;
 
