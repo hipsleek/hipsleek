@@ -449,8 +449,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
   case {
   bq != null -> requires bq::ll<m> & m >0
  case{
-    ratio < m -> ensures true;
-    ratio = m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
+    ratio <= m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
     ratio > m -> ensures true;
   }
    bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
@@ -465,8 +464,7 @@ void unblock_process1(int ratio, ref node bq, ref node pq1, ref node pq2, ref no
   case {
   bq != null -> requires bq::ll<m> & m >0
  case{
-    ratio < m -> ensures true;
-    ratio = m -> ensures bq'::ll<m1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & UP2(m1,m) &
+    ratio <= m -> ensures bq'::ll<m1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & UP2(m1,m) &
       UP1(n1,n2,n3,n4,n5,n6);//n4+n5+n6=n1+n2+n3+1;
     ratio > m -> ensures true;
   }
@@ -489,7 +487,7 @@ void unblock_process1(int ratio, ref node bq, ref node pq1, ref node pq2, ref no
     if (bq != null)
     {
       count = get_mem_count(bq);
-      n = ratio + 1;//(int) (count*ratio + 1);
+      n = ratio;//(int) (count*ratio + 1);
       proc = find_nth2(bq, n);
       if (proc != null) {
 	    // block_queue = del_ele(block_queue, proc);

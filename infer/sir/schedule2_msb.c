@@ -1,5 +1,6 @@
 //note
 /*
+---urgent: get_current1 is timeout when run all file. should be fixed.
 add bag constraint
 -reschedule and its callers:
 -enqueue
@@ -519,6 +520,7 @@ requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
   ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*curJob::node<v1,v2,null> &  curJob'=curJob& res=curJob;//'
 }
 
+//timeout when run all file. should be fixed.
 relation GC1(bag a, bag b, int c).
 node get_current1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
   infer [GC1]
