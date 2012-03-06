@@ -36,3 +36,72 @@ error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
 example/working/bugs/infer5.slk
 
 =======================================================
+-imm problems
+
+Total number of errors: 2 in files:
+  imm/imm1.slk imm/imm3.slk.
+
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult
+error at: bigint-tight-imm.ss mult
+.
+
+BAG tests (very slow)
+=========
+error at: avl-all-1.ss 
+error at: avl-modular-2.ss delete_top
+error at: avl-modular-2.ss remove_min
+error at: avl-modular-2.ss remove_max_add
+error at: avl-modular-2.ss remove_min_add
+error at: avl-modular-2.ss insert
+error at: avl-modular-2.ss rotate_double_right
+error at: avl-modular-2.ss rotate_double_left
+error at: avl-modular-2.ss rotate_right
+error at: avl-modular-2.ss rotate_left
+error at: avl-modular-3.ss delete_top
+error at: avl-modular-3.ss remove_min
+error at: avl-modular-3.ss remove_max_add
+error at: avl-modular-3.ss remove_min_add
+error at: avl-modular-3.ss insert
+error at: avl-modular-3.ss rotate_double_left
+error at: avl-modular-3.ss rotate_right
+error at: avl-modular-3.ss rotate_left
+error at: avl-modular-2.ss delete_top
+error at: avl-modular-2.ss remove_min
+error at: avl-modular-2.ss remove_max_add
+error at: avl-modular-2.ss remove_min_add
+error at: avl-modular-2.ss insert
+error at: avl-modular-2.ss rotate_double_right
+error at: avl-modular-2.ss rotate_double_left
+error at: avl-modular-2.ss rotate_right
+error at: avl-modular-2.ss rotate_left
+error at: avl-modular-new3.ss delete_top
+error at: avl-modular-new3.ss remove_min
+error at: avl-modular-new3.ss remove_max_add
+error at: avl-modular-new3.ss remove_min_add
+error at: avl-modular-new3.ss is_mem
+error at: avl-modular-new3.ss rotate_double_right
+error at: avl-modular-new3.ss rotate_double_left
+error at: avl-modular-new3.ss rotate_right
+error at: avl-modular-new3.ss rotate_left
+error at: avl-modular.ss delete_top
+error at: avl-modular.ss remove_min
+error at: avl-modular.ss remove_max_add
+error at: avl-modular.ss remove_min_add
+error at: avl-modular.ss insert
+error at: avl-modular.ss rotate_double_right
+error at: avl-modular.ss rotate_double_left
+error at: avl-modular.ss rotate_right
+error at: avl-modular.ss rotate_left
+error at: avl.scp.ss delete
+error at: avl.scp.ss remove_min
+error at: avl.ss insert
+error at: avl.ss rotate_right
+error at: avl.ss rotate_left
+error at: merge-modular.ss insert1
+error at: merge-modular.ss merge_sort1
+error at: merge-modular.ss split1
+error at: rb_bags.ss del_2r_1
+error at: rb_bags.ss del_2_1
+error at: rb.scp.ss del_2r_1
+error at: rb.scp.ss del_2_1
