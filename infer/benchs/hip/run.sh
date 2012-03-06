@@ -4,6 +4,7 @@
 ../../../hip sll_ms.ss --eps > res/sll_ms.res
 ../../../hip sll_msb.ss -tp mona --eps > res/sll_msb.res
 ../../../hip sll_mso.ss --eps > res/sll_mso.res
+../../../hip sll_msob.ss --eps -tp mona > res/sll_msob.res
 ../../../hip dll_ms.ss --eps > res/dll_ms.res
 ../../../hip dll_size.ss --eps > res/dll_size.res
 ../../../hip dll_msb.ss -tp mona --eps > res/dll_msb.res

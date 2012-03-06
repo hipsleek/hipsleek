@@ -60,10 +60,10 @@ let rec fixbag_of_b_formula b =
   match pf with
     | CP.BConst (b,_) -> "{}={}"
     | CP.BVar (x, _) -> fixbag_of_spec_var x
-    | CP.Lt (e1, e2, _) -> fixbag_of_exp e1 ^ op_lt ^ fixbag_of_exp e2
-    | CP.Lte (e1, e2, _) -> fixbag_of_exp e1 ^ op_lte ^ fixbag_of_exp e2
-    | CP.Gt (e1, e2, _) -> fixbag_of_exp e1 ^ op_gt ^ fixbag_of_exp e2
-    | CP.Gte (e1, e2, _) -> fixbag_of_exp e1 ^ op_gte ^ fixbag_of_exp e2
+    | CP.Lt (e1, e2, _) -> "{}={}"
+    | CP.Lte (e1, e2, _) -> "{}={}"
+    | CP.Gt (e1, e2, _) -> "{}={}"
+    | CP.Gte (e1, e2, _) -> "{}={}"
     | CP.Eq (e1, e2, _) -> fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
     | CP.Neq (e1, e2, _) -> 
       if !allow_pred_spec && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
@@ -575,20 +575,21 @@ let rec transform fml v_synch fv_rel = match fml with
     begin
     match v1 with
     | Var (b1,_) ->
-(*    | Subtract (_, Subtract (_,Var (b1,_),_),_) ->*)
-      let vars = afv b2 in
-      let v_synch = List.filter (fun x -> not (eq_spec_var x v)) v_synch in
-      begin
-        match (vars,v_synch) with
-        | ([hd],[v_s]) ->
-          let v_new = v_s in
-          let b2_new = CP.fresh_spec_var_prefix "FB" hd in
-          let als1 = CP.mkEqVar v v_new no_pos in
-          let als2 = CP.mkEqVar hd b2_new no_pos in
-          let f_new = mkEqExp (mkVar b1 no_pos) (BagUnion([mkVar b2_new no_pos;Bag([mkVar v_new no_pos],no_pos)],no_pos)) no_pos in
-          conj_of_list [als1;als2;f_new] no_pos
-        | _ -> fml
-      end
+      if diff_svl (fv fml) fv_rel = [] then
+        let vars = afv b2 in
+        let v_synch = List.filter (fun x -> not (eq_spec_var x v)) v_synch in
+        begin
+          match (vars,v_synch) with
+          | ([hd],[v_s]) ->
+            let v_new = v_s in
+            let b2_new = CP.fresh_spec_var_prefix "FB" hd in
+            let als1 = CP.mkEqVar v v_new no_pos in
+            let als2 = CP.mkEqVar hd b2_new no_pos in
+            let f_new = mkEqExp (mkVar b1 no_pos) (BagUnion([mkVar b2_new no_pos;Bag([mkVar v_new no_pos],no_pos)],no_pos)) no_pos in
+            conj_of_list [als1;als2;f_new] no_pos
+          | _ -> fml
+        end
+      else fml
     | _ -> fml
     end
   | And (BForm f1, BForm f2, _) -> mkAnd (transform (BForm f1) v_synch fv_rel) (transform (BForm f2) v_synch fv_rel) no_pos
@@ -620,7 +621,6 @@ let remove_subtract_pf pf = match pf with
   | CP.Neq (e1, e2, p) -> Neq(remove_subtract_exp e1, remove_subtract_exp e2, p)
   | _ -> pf
 
-
 let rec remove_subtract pure = match pure with
   | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
   | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
@@ -628,6 +628,15 @@ let rec remove_subtract pure = match pure with
   | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
   | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
+
+let isComp pure = match pure with
+  | BForm ((pf,_),_) ->
+    begin
+    match pf with
+    | Lt _ | Gt _ | Lte _ | Gte _ -> true
+    | _ -> false
+    end
+  | _ -> false
 
 let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
   | None -> (pfs,1)
@@ -655,6 +664,10 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let bcases = List.concat (List.map (fun x -> CP.list_of_disjs x) bcases) in
     let rcases = List.concat (List.map (fun x -> CP.list_of_disjs (TP.simplify_raw x)) rcases) in
     let bcases = List.map remove_subtract bcases in
+    let bcases = List.map (fun bcase -> 
+      let conjs = list_of_conjs bcase in
+      let conjs = List.filter (fun x -> not (isComp x)) conjs in
+      conj_of_list conjs no_pos) bcases in
     let rcases = List.map remove_subtract rcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = simplify bcases in
@@ -664,13 +677,14 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
     DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
-    let fv_rel = CP.fv rel in
+    let fv_rel = get_rel_args rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
         if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
           let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
           let r = Redlog.elim_exists_with_eq r in
           TP.simplify_raw r) bcases in
 (*    let bcases = List.map (fun x -> rewrite2 x [] fv_rel) bcases in*)
+    let bcases = List.map remove_subtract bcases in
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
@@ -691,6 +705,9 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
         conj_of_list conjs no_pos
       ) bcases 
     in
+    let bcases = List.map (fun bcase -> 
+      if diff_svl fv_rel (fv bcase) != [] && diff_svl (fv bcase) fv_rel != [] 
+      then mkFalse no_pos else bcase) bcases in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
 (*    match bcases with*)

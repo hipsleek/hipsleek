@@ -151,6 +151,6 @@ Termination checking result:
 
 1 false contexts at: ( (156,2) )
 
-Total verification time: 24.26 second(s)
-	Time spent in main process: 2.01 second(s)
-	Time spent in child processes: 22.25 second(s)
+Total verification time: 22.95 second(s)
+	Time spent in main process: 1.67 second(s)
+	Time spent in child processes: 21.28 second(s)

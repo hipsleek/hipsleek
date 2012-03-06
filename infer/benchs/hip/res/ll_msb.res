@@ -945,6 +945,6 @@ Termination checking result:
 
 12 false contexts at: ( (166,13)  (166,4)  (253,4)  (253,11)  (258,4)  (258,11)  (257,10)  (257,4)  (256,8)  (256,12)  (256,4)  (256,4) )
 
-Total verification time: 4.71 second(s)
-	Time spent in main process: 0.92 second(s)
-	Time spent in child processes: 3.79 second(s)
+Total verification time: 4.45 second(s)
+	Time spent in main process: 0.83 second(s)
+	Time spent in child processes: 3.62 second(s)

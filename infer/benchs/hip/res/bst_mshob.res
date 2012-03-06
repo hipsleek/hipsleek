@@ -117,7 +117,6 @@ Restarting Mona ...
 
 [mona.ml]: Mona is preparing to restart because of upper limit reached
 Restarting Mona ...
-Timeout when checking #simplify  Restarting Omega after ... 96 invocations Stop Omega... 96 invocations Starting Omega...oc
 
 !!! REL :  RMVM(S1,S2)
 !!! POST:  S2<subset> S1 
@@ -147,13 +146,13 @@ Timeout when checking #simplify  Restarting Omega after ... 96 invocations Stop 
                   {FLOW,(20,21)=__norm}
                     EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}
                             EAssume 35::ref [x]
-                              EXISTS(b_2159,flted_150_2160,h1_2161,s1_2162,
-                              S2_2163: x'::bst3<flted_150_2160,h1_2161,s1_2162,b_2159,S2_2163>@M[Orig][LHSCase]@ rem br[{288,287}]&
+                              EXISTS(b_2155,flted_150_2156,h1_2157,s1_2158,
+                              S2_2159: x'::bst3<flted_150_2156,h1_2157,s1_2158,b_2155,S2_2159>@M[Orig][LHSCase]@ rem br[{288,287}]&
                               (
-                              ([b=b_2159 & s1_2162<=b_2159 & s<=b & s<=res & 
-                                 res<=s1_2162]
-                               [h1_2161<=h & 0<=h][1+flted_150_2160=n & 0<=n]
-                               [S2_2163<subset> S1 ]))&
+                              ([b=b_2155 & s1_2158<=b_2155 & s<=b & s<=res & 
+                                 res<=s1_2158]
+                               [h1_2157<=h & 0<=h][1+flted_150_2156=n & 0<=n]
+                               [S2_2159<subset> S1 ]))&
                               {FLOW,(20,21)=__norm}))
 !!! NEW RELS:[ (exists(x':exists(q_1849:exists(res:exists(n1_1846:exists(n:exists(h1_1847:exists(h:exists(sm_1840:exists(v_int_159_765':exists(s1:exists(b:exists(flted_150_86:exists(h1:exists(s:exists(pl_1842:exists(tmp_88':exists(qs_1843:exists(lg_1841:exists(p_1845:exists(x:exists(n2_1850:exists(v_bool_154_767':exists(h2_1851:exists(S2_1852:exists(v_1844:exists(S1_1848:(x'=q_1849 & 
   S2=S2_1852 & res=tmp_88' & v_1844=tmp_88' & n1_1846=0 & -1+n=n2_1850 & 
@@ -313,6 +312,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 15.28 second(s)
-	Time spent in main process: 1.55 second(s)
-	Time spent in child processes: 13.73 second(s)
+Total verification time: 14.84 second(s)
+	Time spent in main process: 1.4 second(s)
+	Time spent in child processes: 13.44 second(s)

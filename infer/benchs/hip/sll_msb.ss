@@ -197,7 +197,7 @@ node get_next_next(node x)
 }
 
 /* insert an element in a sorted list */
-relation INS(bag a, bag b, int a).
+relation INS(bag a, bag b, int c).
 node insert(node x, int v)
   infer [INS]
   requires x::sll1<n, S>
