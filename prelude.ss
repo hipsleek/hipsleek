@@ -254,29 +254,29 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
-/* int fork() */
-/*   requires true */
-/*   ensures true; */
+int fork()
+  requires true
+  ensures true;
 
-/* void join(int id) */
-/*   requires true */
-/*   ensures true; */
+void join(int id)
+  requires true
+  ensures true;
 
-/* void init() */
-/*   requires true */
-/*   ensures true; */
+void init()
+  requires true
+  ensures true;
 
-/* void finalize() */
-/*   requires true */
-/*   ensures true; */
+void finalize()
+  requires true
+  ensures true;
 
-/* void acquire() */
-/*   requires true */
-/*   ensures true; */
+void acquire()
+  requires true
+  ensures true;
 
-/* void release() */
-/*   requires true */
-/*   ensures true; */
+void release()
+  requires true
+  ensures true;
 
 
 /* ************ */
