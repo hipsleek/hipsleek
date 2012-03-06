@@ -448,9 +448,9 @@ node list_filter2(node x, int v)
 /* function to return the first node being greater than v*/
 relation FGE(bag a, int b).
 node find_ge(node x, int v)
-//  infer[FGE]
+  infer[FGE]
   requires x::sll2<n,sm,sl,S> & n >= 0
-  ensures res = null or res::node<m,p>*p::sll2<k,sm2,sl2,_> & m >= v & m<=sl2 & m in S;
+  ensures res = null or res::node<m,p>*p::sll2<k,sm2,sl2,_> & m >= v & m<=sl2 & FGE(S,m);//m in S;
 {
   if(x == null)
     return null;

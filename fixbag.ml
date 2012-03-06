@@ -40,7 +40,7 @@ let fixbag_of_spec_var x = match x with
 (*  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id*)
 (*  | CP.SpecVar (_, id, Unprimed) -> id*)
 (*  | CP.SpecVar (_, id, Primed) -> "PRI" ^ id*)
-  | CP.SpecVar (_, id, _) -> if is_anon_var x then "v_" ^ id else id
+  | CP.SpecVar (_, id, _) -> if is_anon_var x && not (is_bag_typ x) then "v_" ^ id else id
 
 let rec fixbag_of_exp e = match e with
 (*  | CP.Null _ -> "null"*)
@@ -669,7 +669,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
       let conjs = List.filter (fun x -> not (isComp x)) conjs in
       conj_of_list conjs no_pos) bcases in
     let rcases = List.map remove_subtract rcases in
-(*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
     let bcases = simplify bcases in
 (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
 (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
