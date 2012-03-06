@@ -53,15 +53,10 @@ let parse_file_full file_name =
       raise t)
 
 (* Parse all prelude files declared by user.*)
-let rec process_primitives (file_list: string list) : Iast.prog_decl list =
-  match file_list with
-  | [] -> []
-  | hd::tl ->
-        let header_filename = String.sub hd 1 ((String.length hd) - 2) in
-        let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
-        (* let _ = print_string ("\n WN : prelude here"^new_filename^"\n") in *)
-        let primitives = parse_file_full new_filename in
-                primitives :: (process_primitives tl)
+let process_primitives (file_list: string list) : Iast.prog_decl list =
+  let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
+  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
+  else List.map parse_file_full new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
