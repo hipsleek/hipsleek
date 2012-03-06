@@ -1,10 +1,29 @@
-Checking benchs/aprove/pasta/PastaC9-while.ss
-Total number of errors: 6 in files:
- error at: benchs/lit/leap-year-bug-zune.ss loop
-term error at: benchs/lit/leap-year-bug-zune.ss 
-error at: benchs/key/Middle.ss middle
-error at: benchs/aprove/Costa_Julia_09/TestJulia4.ss main
-error at: benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss doSum
-error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
 
+## below timeout and thus commented
+Total number of errors: 6 in files:
+error at: benchs/lit/leap-year-bug-zune.ss loop
+term error at: benchs/lit/leap-year-bug-zune.ss 
+
+
+error at: benchs/key/Middle.ss middle
+ Context of Verification Failure: File "key/Middle.ss",Line:7,Col:53
+ Last Proving Location: File "key/Middle.ss",Line:16,Col:9
+ ERROR: at key/Middle.ss_7_53 
+ Message: Post condition cannot be derived.
+# added -tp redlog
+ 
+error at: benchs/aprove/Costa_Julia_09/TestJulia4.ss main
+Exception occurred: Failure("the guards don't cover the whole domain for :  
+ECase case {\n        ((5*a_22)/\n        b_23)<=i_25 -> ((None,[]),EBase true&Term&{FLOW,(20,21)=__norm}[]\n                                          EAssume 9::\n                                            EXISTS(a_22,b_23: true&\n                                            a_22'=a_22 & b_23'=b_23&\n                                            {FLOW,(20,21)=__norm})[])\n        ;\n        i_25<((5*a_22)/\n        b_23) -> ((None,[]),EBase true&Term[((5*a_22)/b_23)-i_25]&\n                                  {FLOW,(20,21)=__norm}[]\n                                    EAssume 10::\n                                      EXISTS(a_22,b_23: true&a_22'=a_22 & \n                                      b_23'=b_23&{FLOW,(20,21)=__norm})[])\n        \n        }\n")
+Error(s) detected at main 
+# added  -tp redlog
+
+error at: benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss doSum
+# added  -tp z3
+
+error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
+ -tp z3; -tp redlog
+# removed --eps caused failure for above
+
+// xpure_symbolic for inference!
 example/working/bugs/infer5.slk

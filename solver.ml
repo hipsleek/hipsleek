@@ -6422,6 +6422,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
                 {estate with 
                     es_infer_vars = new_iv; 
                     es_infer_vars_dead = dead_iv@estate.es_infer_vars_dead; 
+                    es_infer_heap = new_rn::estate.es_infer_heap;
                     es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
                 } 
               in

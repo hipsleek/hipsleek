@@ -422,6 +422,7 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+
 let verify_callees = ref false
 
 let elim_unsat = ref false
@@ -430,7 +431,8 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false (*imm will delay checking guard conditions*)
+(* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
+let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
