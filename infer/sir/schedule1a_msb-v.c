@@ -206,19 +206,6 @@ case{
   n1+n2+n3 <=0 -> ensures pq1'=null & pq2'=null & pq3'=null  & num_processes' = num_processes;
 }
  */
-void finish_process1(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, ref int num_processes)
-  requires  pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> * cur_proc::ll1<n,S>
- case{
-  n3 > 0 ->
-    ensures  pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3-1,S6> & cur_proc' = null & num_processes' = num_processes -1;
-  n3<=0 -> case {
-      n2>0 -> ensures pq1'::ll1<n1,S4> * pq3'::ll1<n3,S6> * pq2'::ll1<n2-1,S5> & cur_proc' = null & num_processes' = num_processes -1;
-  n2<=0 -> case{
-    n1>0 -> ensures pq3'::ll1<n3,S6> * pq2'::ll1<n2,S5> * pq1'::ll1<n1-1,S4> & cur_proc' = null & num_processes' = num_processes -1;
-        n1<=0 -> ensures pq1'=null &  pq2'= null & pq3'= null & cur_proc' = null & num_processes' = num_processes;
-      }
-    }
-}
 
 //relation FiP1(bag a1, bag a2).
 void finish_process(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, ref int num_processes)
@@ -329,19 +316,6 @@ void do_upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2)
   }
   n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;//'
 }
-
-relation DUG1(bag a, bag b, bag c, bag d).
-relation DUG2(bag a, bag b, bag c, bag d).
-void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
-  infer [DUG1,DUG2]
-  requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
- case {
-  n1 > 0 ->  case {
-    ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & union(S1,S2) = union(S3,S4);
-    ratio > n1 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG1(S1,S2,S3,S4);
-  }
-  n1 <= 0 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG2(S1,S2,S3,S4);//'
-}
 {
   int count;
   int n;
@@ -383,33 +357,6 @@ void upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2, ref 
     ratio > n2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>;
        }
       n2 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>;
-  }
-  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; //'
-}
-
-relation UG1(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-relation UG2(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-relation UG3(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-relation UG4(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-relation UG5(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-relation UG6(bag a, bag b, bag c, bag a1, bag a2, bag a3).
-void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref node pq3)
-  infer [UG1,UG2, UG3, UG4,UG5,UG6]
-  requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & prio>0 & prio <=3 & ratio >=1
- case {
-  prio = 1 -> case {
-    n1 > 0 ->  case {
-      ratio <= n1  -> ensures pq1'::ll1<n1-1,S4> * pq2'::ll1<n2+1,S5> * pq3'::ll1<n3,S6> & UG1(S1,S2,S3,S4,S5,S6);
-      ratio > n1 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6>  & UG3(S1,S2,S3,S4,S5,S6);
-      }
-    n1 <= 0 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & UG4(S1,S2,S3,S4,S5,S6);
-  }
-  prio = 2 -> case {
-      n2 > 0 -> case {
-      ratio <= n2 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2-1,S5> * pq3'::ll1<n3+1,S6> & UG2(S1,S2,S3,S4,S5,S6);
-    ratio > n2 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & UG5(S1,S2,S3,S4,S5,S6);
-       }
-      n2 <= 0 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & UG6(S1,S2,S3,S4,S5,S6);
   }
   prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; //'
 }
@@ -480,19 +427,6 @@ requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
   n <= 0 -> ensures block_queue'::ll<n> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> ;
   }
 */
-void unblock_process1(int ratio, ref node bq, ref node pq1, ref node pq2, ref node pq3)
-//infer[UP2]
-  requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & ratio >=1
-  case {
-  bq != null -> requires bq::ll1<m,S0> & m >0
- case{
-    ratio <= m -> ensures bq'::ll1<m-1,S01> * pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6> & n4+n5+n6=n1+n2+n3+1
-      & S01 subset S0;
-    ratio > m -> ensures true;
-  }
-  bq=null -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & bq'=null;//
- }
-
 void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref node pq3)
 //infer[UP2]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & ratio >=1
@@ -579,18 +513,6 @@ void block_process1(ref node cur_proc, ref node block_queue, ref node pq1, ref n
     n1+n2+n3=n4+n5+n6+1 & S02 subset S021 & cur_proc'!=null;
   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S02> * pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3> & cur_proc' = null;
 }
-
-relation BP1(bag a, bag b).
-//relation BP2 (bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, node d).
-void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
-  infer [BP1]
-  requires cur_proc::ll1<n,S01> * block_queue::ll1<n,S02> * pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3>
- case {
-  n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1,S021> * pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6> &
-    n1+n2+n3=n4+n5+n6+1 & BP1(S02,S021) & cur_proc'!=null;
- n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S02> * pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3> & cur_proc' = null
-    ;//'
-}
 {
     schedule1(cur_proc, pq1, pq2,pq3);
     if (cur_proc != null)
@@ -623,23 +545,6 @@ void add_process1(int prio, ref int alloc_proc_num, ref int num_processes, ref n
              (alloc_proc_num' = alloc_proc_num+1)& S4=S1 & S6=S3 & S5=union(S2, {alloc_proc_num+1});
               prio = 3 -> ensures  pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3+1,S6> & (num_processes'= num_processes+1) &
              (alloc_proc_num' = alloc_proc_num+1) & S4=S1 & S5=S2 & S6=union(S3, {alloc_proc_num+1});
-    prio <= 0 | prio >3 -> ensures pq1'=pq1 & pq2'=pq2 & pq3'=pq3 & (num_processes'= num_processes) &
-             (alloc_proc_num' = alloc_proc_num) & flow __error;
- }
-
-relation AP1(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
-relation AP2(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
-relation AP3(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
-void add_process(int prio, ref int alloc_proc_num, ref int num_processes, ref node pq1, ref node pq2, ref node pq3)
-    infer [AP1,AP2,AP3]
-    requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & prio>0 & prio<=3
-     case {
-      prio = 1 -> ensures  pq1'::ll1<n1+1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & (num_processes'= num_processes+1) &
-             (alloc_proc_num' = alloc_proc_num+1) & AP1(S1,S2,S3,S4,S5,S6,alloc_proc_num);
-    prio = 2 -> ensures  pq1'::ll1<n1,S4> * pq2'::ll1<n2+1,S5> * pq3'::ll1<n3,S6> & (num_processes'= num_processes+1) &
-             (alloc_proc_num' = alloc_proc_num+1)& AP2(S1,S2,S3,S4,S5,S6,alloc_proc_num);
-              prio = 3 -> ensures  pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3+1,S6> & (num_processes'= num_processes+1) &
-             (alloc_proc_num' = alloc_proc_num+1) & AP3(S1,S2,S3,S4,S5,S6,alloc_proc_num);
     prio <= 0 | prio >3 -> ensures pq1'=pq1 & pq2'=pq2 & pq3'=pq3 & (num_processes'= num_processes) &
              (alloc_proc_num' = alloc_proc_num) & flow __error;
  }
