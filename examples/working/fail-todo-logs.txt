@@ -1,3 +1,10 @@
+vperm problems
+error at: vperm/passive_stack_race.ss stack_race
+error at: vperm/stack_race.ss stack_race
+error at: vperm/vperm_check.ss test1
+error at: vperm/vperm_check.ss test2
+error at: vperm/vperm_check.ss test3
+error at: vperm/vperm_check.ss test4
 
 ## below timeout and thus commented
 Total number of errors: 6 in files:
@@ -27,3 +34,5 @@ error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
 
 // xpure_symbolic for inference!
 example/working/bugs/infer5.slk
+
+=======================================================
