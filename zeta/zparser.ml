@@ -180,7 +180,7 @@ zeta : [[ t = LIST0 definition -> t]];
 
 definition : [[
 		(*`AXIOM; a = formula; `DOT -> mkAxiom a
-	|*) h = symbol_defn_header; `SUCH; `THAT; 
+	|*) h = symbol_defn_header; `BE; `SUCH; `THAT; 
 		a = LIST1 formula SEP `SEMICOLON; `DOT -> 
 			mkSymbol (fst h) a (snd h)
 	(*| h = symbol_defn_header; `DEFEQ; 

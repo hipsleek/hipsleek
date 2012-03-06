@@ -2,7 +2,7 @@
 //	exists {z} y = x * z.
 
 let [induction y] divides(x, y) 
-such that 
+be such that 
 divides(x,y) <-> exists {z} y = x * z;
 divides(x,y) -> divides(y,z) -> divides(x,z).
 
@@ -25,6 +25,7 @@ theorem x < 0 & divides(0-x,y) -> divides(x,y).
 theorem x < 0 & divides(x,y) -> divides(0-x,y).
 
 theorem x = 0 & divides(x,y) -> y = 0.
+*/
 
 // Reflexivity of divide
 theorem divides(x, x).
@@ -37,6 +38,7 @@ theorem 0 <= x & 0 <= y & divides(x,y) &
 theorem divides(m, n) & divides(n, p) -> 
 	divides(m, p).
 
+/*
 // Every integer is even or odd
 theorem divides(2,n) | divides(2,n+1).
 
@@ -75,7 +77,7 @@ theorem divrec(m, n) & divrec(n, p) -> divrec(m, p).
 */
 
 let [induction x] isprime(x)
-such that
+be such that
 isprime(x) <-> x > 1 & forall {y} (1 < y & y < x -> ! divides(y,x)).
 
 // Theorem of Eratosthenes

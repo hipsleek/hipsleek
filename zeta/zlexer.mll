@@ -109,6 +109,7 @@ module Make (Token : ZTokenS)
 	[	("let", LET);
 		("axiom", AXIOM);
 		("theorem", THEOREM);
+		("be", BE);
 		("such", SUCH);
 		("that", THAT);
 		("induction", INDUCTION);

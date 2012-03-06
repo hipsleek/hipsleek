@@ -1,0 +1,170 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amsthm,amssymb,listings,color,verbatim}
+
+\newcommand{\zetatp}{$\zeta$eta}
+
+\title{\zetatp: A number theoretic theorem prover}
+\author{Vu An Hoa}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This article serves as documentation for a small theorem prover the author designed and implemented to handle number theoretical problems. I shall briefly discuss the use cases, examples, current features, how to use the system, and finally how to extend or improve it. {\bf Note}: This documentation is developed in parallel to the actual prover and also serves as a development guidance. Features and descriptions are to be reflected in actual implementation.
+\end{abstract}
+
+\section{Introduction}
+
+There are many successful automated theorem provers (ATP) today, such as ACL2, Isabelle. So why should we start a new project? They are mainly designed as proof \emph{checkers}, not \emph{discoverer}, as M. Kaufmann and J. S. Moore put it in \emph{Some Key Research Problems in Automated Theorem Proving
+for Hardware and Software Verification}. That means these systems require significant guidance from sufficiently experienced user and are general enough to capture almost every available mathematical theory. Moreover, we also want to utilize a prover to support our program verification system. In such situation, the theorems (generated from verification conditions) are usually not human-readable; a fact which greatly hinders interaction with users for proof hints.
+
+What we highly desire is a fully automated theorem proving system in the spirit of H. Wang of the 1960. His programs produced  proofs for more than 200 theorems about propositional and predicate logic (mainly $\forall^{*}\exists^{*}$ with equality) in Russell and Whitehead's {\it Principia Mathematica} automatically. Such a success prompts us to replicate and thus aims to support arithmetical problems. That is also one of the aims that H. Wang claimed he originally had for his system, but he would never have finished it.
+
+Besides automated theorem provers, there are now Satisfiability Modulo Theory solvers. Yet their target is to find models and are thus so weak at theorem proving. As a result, we believe that building a \emph{specialized tool} for a particular (standard) theory of interest is necessarily the right approach.
+
+\section{Motivating example}
+
+Let us consider the following example on divisibility. As a note, we choose to write the example in \zetatp\ input language for the sake of presenting it later. We believe that the language itself is self-explanatory even to new users.
+
+\lstset{keywords={let,be,such,that,theorem,induction},
+morecomment=[l]{//}}
+\begin{lstlisting}
+let divides(x,y) be such that
+    divides(x,y) <-> exists {z} y = x * z.
+
+// reflexivity
+theorem divides(x,x).
+
+// anti-symmetry
+theorem divides(x,y) -> divides(y,x) -> x = y | x = -y.
+
+// transitivity
+theorem divides(x,y) -> divides(y,z) -> divides(x,z).
+\end{lstlisting}
+
+Interestingly, this example is not provable using the SMT solver Z3. For any existing theorem prover, it can be handled by algebraic simplification after a series of development. For example, in Isabelle (c.f. file \texttt{HOL/Rings.thy} in Isabelle source directory):
+
+\lstset{keywords={definition,where,lemma,proof,qed,assumes,shows,simp,by,from,obtain,moreover,ultimately,have}}
+\begin{lstlisting}
+definition dvd::"'a \<Rightarrow> 'a \<Rightarrow> bool"
+(infixl "dvd" 50) where
+"b dvd a \<longleftrightarrow> (\<exists>k. a = b * k)"
+
+lemma dvdI [intro?]:
+  "a = b * k \<Longrightarrow> b dvd a"
+  unfolding dvd_def ..
+
+lemma dvdE [elim?]:
+  "b dvd a \<Longrightarrow> 
+  (\<And>k. a = b * k \<Longrightarrow> P)
+  \<Longrightarrow> P"
+  unfolding dvd_def by blast 
+  
+lemma dvd_refl[simp]: "a dvd a"
+proof
+  show "a = a * 1" by simp
+qed
+
+lemma dvd_trans:
+  assumes "a dvd b" and "b dvd c"
+  shows "a dvd c"
+proof -
+  from assms obtain v
+    where "b = a * v" by (auto elim!: dvdE)
+  moreover from assms obtain w 
+    where "c = b * w" by (auto elim!: dvdE)
+  ultimately have "c = a * (v * w)" 
+    by (simp add: mult_assoc)
+  then show ?thesis ..
+qed
+\end{lstlisting}
+
+\underline{Remark}: Isabelle's formalization is more general as it is applicable to all ring structures, not only the ring of integers.
+
+Similarly, transitivity of \emph{divides} relation is formally proved in ACL2 library (c.f. file \texttt{book/misc/int-division.lisp})
+\lstset{keywords={defthm,implies,and,not,equal,hints,use}}
+\begin{lstlisting}
+(defthm divide-transitivity
+  (implies (and (divides a b)
+		(divides b c))
+	   (divides a c))
+  :hints (("Goal"
+	   :in-theory (enable integer-quotient)
+	   :use crap003)))
+\end{lstlisting}
+\newcommand{\setZ}{\mathbb{Z}}
+where \texttt{crap003} is a theorem in the same file, which says that: for all $a,b,c \in \setZ$ one has:
+$$\left\{ a \not= 0, b \not= 0, \frac{b}{a} \in \setZ,\frac{c}{b} \in \setZ \right\} \vdash \frac{c}{a} \in \setZ.$$
+
+As we can see, proofs in Isabelle require an amount of effort from the users. In fact, users are expected to write the entire proofs and the task of the system is mainly to mechanically check the validity of the proofs using formal rules of logic. The same statement can be made for ACL2 in which users are to build necessary lemmas and hints to the prover. In fact, the design of ACL2 reflects J. S. Moore's viewpoint on program verification as in \emph{A Mechanized Program Veriﬁer}
+\begin{quote}
+\scriptsize{While I strongly advocate and actively work on the integration of decision procedures and static
+analyzers into mechanized theorem provers to ease the burden of proof, I do not believe they are
+the breakthroughs needed to make software verification palatable to the masses. I do not believe
+software verification will ever be palatable to the masses (until the AI challenge is solved).}
+\end{quote}
+which he meant that human assistance is absolutely necessary.
+
+Fortunately, these systems already have a big library which formalized many parts of mathematics. Yet unfortunately, they still requires significant user experience and patience.
+
+%In the program verification contexts where hundreds of verification conditions can be generated, asking human user to prove them one-by-one is not an acceptable system.
+%So what is our approach?
+
+So we propose a system which has sufficiently rich built-in mathematical tools for theory of integers.
+
+\section{The language of \zetatp}
+
+\zetatp\ has two main constructs: \emph{symbol definition} and \emph{theorem statement}. The former is to provide user with a method of defining new symbols to the language of arithmetics, for examples, Fibonacci or factorial functions. The later is for stating theorems which will be checked by the system. Their forms are:
+\begin{quote}
+{\bf let} {\it [induction} $\langle$expressions$\rangle${\it]} f(x1,...,xk) {\bf be such that} $\langle$formulas separated by semicolon for axioms$\rangle${\bf .}
+\end{quote}
+and
+\begin{quote}
+{\bf theorem} $\langle$formula$\rangle${\bf .}
+\end{quote}
+The optional {\it induction} statement indicates the quantity to do induction on which serves to guide induction heuristic.
+
+\underline{Note}: \textbf{let, be, such, that, induction, theorem} are \zetatp\ keywords so that they should not be used to name functions or variables.
+
+\section{Technical details}
+
+\subsection{Knowledge base}
+
+In contrast to most ATP which try to build rich theories from a simple logical core (first order, higher order, Zermelo-Fraenkel set theory, etc.), we take a \emph{reasonable theory} as our starting point. In particular, we assume the commutative ring structure for the integers and apply various strategy in symbolic algebra.
+
+\subsection{Embedded computer algebra}
+
+A large part of arithmetic concerns algebraic equations. To support this functionality, our system needs a symbolic manipulation for elementary algebra. To do so, we make use of techniques in symbolic algebra such as term normalization.
+
+As a basic functionality, algebraic constraints are normalized and manipulated internally by our system. This is essential as SMT solvers are not good at these manipulation while it is not easy to access such information from existing automated theorem provers  or computer algebra systems (CAS). Besides, CAS might not make \emph{sound} derivations due to their lack of formalism, for example, any CAS like \texttt{Reduce} would be willing to make simplification
+$$\frac{x^2-1}{x-1}$$
+to
+$$x+1$$
+while it is only valid to do so if $x \not= 1$ (c.f. J. Harrison's \emph{A Short Survey of Automated Reasoning}). In any event, the methods of existing CAS are useful.
+
+\subsection{Automated induction tactics}
+
+The induction hint allows the prover to try proving the theorem using mathematical induction. We have heuristic to choose the induction candidates.
+
+\subsection{Theorem transformation}
+
+Sometimes, the original form of the theorem is not easily proved while its \emph{contrapositive} is easily proved.
+
+\subsection{Instantiation of quantification}
+
+We follow M. Davis and H. Putnam's \emph{A Computing Procedure for Quantification Theory} with the method of Skolemization. Method B in W. V. Quine's \emph{A Proof Procedure for Quantification Theory} seems to offer a better alternative due to the absence of making a big conjunction since the position of each quantification intuitively embeds its meaning which is lost after the transformation into prenex normal form.
+
+\subsection{User-defined functions and relations}
+
+\subsection{Automated type inference}
+
+%\section{Technical details}
+
+Since the system is built to particularly support arithmetic, sort (type) information of functions and variables is usually deducible from the contexts they are used. Thus, we have a mechanism to perform automatic type inference so that user does not have to specify sorts all the time.
+
+\centering{
+\textit{MORE FEATURES TO APPEND}
+}
+
+\end{document}
