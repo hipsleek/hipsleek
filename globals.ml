@@ -811,3 +811,10 @@ let print_proof = ref false
 
 (* Create a quoted version of a string, for example, hello --> "hello" *)
 let strquote s = "\"" ^ s ^ "\""
+
+
+let open_log_out s = 
+ (try
+	Unix.mkdir "logs" 0o750
+ with _ -> ());
+ open_out ("logs/"^s)

@@ -18,7 +18,7 @@ let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out "allinput.rl"
+let log_file = open_log_out "allinput.rl"
 
 (* process management *)
 let is_reduce_running = ref false

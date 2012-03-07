@@ -28,7 +28,7 @@ let test_number = ref 0
 
 let set_log_file () :  unit=
   log_cvc3_formula := true;
-  cvc3_log := open_out "allinput.cvc3"
+  cvc3_log := open_log_out "allinput.cvc3"
 
 let run_cvc3 (input : string) : unit =
   begin
