@@ -1,0 +1,7 @@
+checkentail  m & k |- k.
+
+checkentail  (m:bool) |- k.
+
+checkentail  (m:int) > 3 |- m > 2.
+
+checkentail  (m:float) > 3 |- m > 2.
