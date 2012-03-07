@@ -5,26 +5,18 @@ open Cpure
 module StringSet = Set.Make(String)
 
 (* Global settings *)
-let spass_timeout_limit = 15.0
-let spass_process = ref { name = "SPASS";
-                           pid = 0;
-                           inchannel = stdin;
-                           outchannel = stdout;
-                           errchannel = stdin 
-                          }
+let minisat_timeout_limit = 15.0
+
 
 let test_number = ref 0
 let last_test_number = ref 0
-let spass_restart_interval = ref (-1)
+let minisat_restart_interval = ref (-1)
 let log_all_flag = ref false
-let is_spass_running = ref false
+let is_minisat_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
-let spass_call_count: int ref = ref 0
-let log_file = open_out ("allinput.spass")
-let spass_path = "SPASS-MOD"
-let spass_name = "SPASS-MOD"
-let spass_input_format = "dfg"   (* valid value is: "dfg" or "tptp" *)
-let spass_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
+let minisat_call_count: int ref = ref 0
+let log_file = open_out ("allinput.minisat")
+let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
 
 (*minisat*)
 let minisat_path = "/usr/local/bin/minisat"
@@ -146,8 +138,8 @@ let minisat_cnf_of_formula f =
 (*bach-minisat*)
 
 (*************************************************************)
-(* Check whether spass can handle the expression, formula... *)
-let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
+(* Check whether minisat can handle the expression, formula... *)
+let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   match exp with
   | Cpure.Null _         -> false
   | Cpure.Var _          -> false
@@ -179,7 +171,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Func _ ->  false 
 
 
-and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
+and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
   | LexVar _             -> false
   | BConst _             -> true
@@ -206,18 +198,18 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListPerm _
   | RelForm _            -> false
 
-and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
+and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with
-  | (pf, _) -> can_spass_handle_p_formula pf
+  | (pf, _) -> can_minisat_handle_p_formula pf
 
-and can_spass_handle_formula (f: Cpure.formula) : bool =
+and can_minisat_handle_formula (f: Cpure.formula) : bool =
   match f with
-  | BForm (bf, _)       -> can_spass_handle_b_formula bf
-  | And (f1, f2, _)     -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
-  | Or (f1, f2, _, _)   -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
-  | Not (f, _, _)       -> can_spass_handle_formula f
-  | Forall (_, f, _, _) -> can_spass_handle_formula f
-  | Exists (_, f, _, _) -> can_spass_handle_formula f
+  | BForm (bf, _)       -> can_minisat_handle_b_formula bf
+  | And (f1, f2, _)     -> (can_minisat_handle_formula f1) && (can_minisat_handle_formula f2)
+  | Or (f1, f2, _, _)   -> (can_minisat_handle_formula f1) && (can_minisat_handle_formula f2)
+  | Not (f, _, _)       -> can_minisat_handle_formula f
+  | Forall (_, f, _, _) -> can_minisat_handle_formula f
+  | Exists (_, f, _, _) -> can_minisat_handle_formula f
 
 (***************************************************************
 INTERACTION
@@ -241,7 +233,7 @@ let string_of_prover_validity_output (output: prover_output_t) =
   | Unknown -> "Unknown"
   | Aborted -> "Aborted"
 
-let string_of_spass_output output =
+let string_of_minisat_output output =
   (String.concat "\n" output.original_output_text)
 
 (* collect the output information of a process
@@ -259,7 +251,7 @@ let rec collect_output (chn: in_channel) (accumulated_output: string list) : (st
   with 
   | End_of_file ->  (accumulated_output, false)
 
-(* read the output stream of SPASS prover, return (conclusion * reason)    *)
+(* read the output stream of minisat prover, return (conclusion * reason)    *)
 (* TODO: this function need to be optimized                                *)
 let get_prover_result (output : string list) : validity_t =
   (* debug *)
@@ -271,14 +263,14 @@ let get_prover_result (output : string list) : validity_t =
       if (String.sub text 0 len = subtext) then true
       else false
     with _ -> false in
-  let conclusion_line = try List.find (is_start_with "SPASS beiseite:") output
+  let conclusion_line = try List.find (is_start_with "minisat beiseite:") output
                         with Not_found -> "Unknown" in
   (* debug *)
   (* let _ = print_endline ("-- get_prover_result: " ^ conclusion_line) in *)
   let validity =
-    if (conclusion_line = "SPASS beiseite: Completion found.") then
+    if (conclusion_line = "minisat beiseite: Completion found.") then
       Invalid
-    else if (conclusion_line = "SPASS beiseite: Proof found.") then
+    else if (conclusion_line = "minisat beiseite: Proof found.") then
       Valid
     else
       Unknown in 
@@ -299,43 +291,43 @@ let remove_file filename =
   with e -> ignore e
 
 let set_process (proc: Globals.prover_process_t) =
-  spass_process := proc
+  minisat_process := proc
 
 let start () =
-  if not !is_spass_running then (
+  if not !is_minisat_running then (
     print_endline ("Starting Minisat... \n");
     last_test_number := !test_number;
     let prelude () = () in
     if (minisat_input_format = "cnf") then (
       Procutils.PrvComms.start !log_all_flag log_file (minisat_name, minisat_path, [|minisat_arg|]) set_process prelude;
-      is_spass_running := true;
+      is_minisat_running := true;
       print_endline ("minisat called... \n");
     )
   )
 
-(* stop SPASS system *)
+(* stop minisat system *)
 let stop () =
-  if !is_spass_running then (
+  if !is_minisat_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Minisat... " ^ (string_of_int !spass_call_count) ^ " invocations "); flush stdout;
-    let _ = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
-    is_spass_running := false;
+    print_string ("Stop Minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
+    let _ = Procutils.PrvComms.stop !log_all_flag log_file !minisat_process num_tasks Sys.sigkill (fun () -> ()) in
+    is_minisat_running := false;
   )
 
 (* restart Omega system *)
 let restart reason =
-  if !is_spass_running then (
-    let _ = print_string (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
-    Procutils.PrvComms.restart !log_all_flag log_file reason "SPASS" start stop
+  if !is_minisat_running then (
+    let _ = print_string (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
+    Procutils.PrvComms.restart !log_all_flag log_file reason "minisat" start stop
   )
   else (
-    let _ = print_string (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in ()
+    let _ = print_string (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
   )
     
 (* Runs the specified prover and returns output *)
 let check_problem_through_file (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.check_problem" in *)
+  (* let _ = print_endline "** In function minisat.check_problem" in *)
   let file_suffix = Random.int 1000000 in
   let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".cnf" in
   let _ = print_endline ("-- input: \n" ^ input) in 
@@ -343,17 +335,17 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
   output_string out_stream input;
   close_out out_stream;
   let minisat_result="minisatres.txt" in
-  let set_process proc = spass_process := proc in
+  let set_process proc = minisat_process := proc in
   let fnc () =
     if (minisat_input_format = "cnf") then (
       print_string "Solving by minisat...";
       Procutils.PrvComms.start false stdout (minisat_name, minisat_path, [|minisat_arg;infile;minisat_result|]) set_process (fun () -> ());
-      spass_call_count := !spass_call_count + 1;
-      let (prover_output, running_state) = get_answer !spass_process.inchannel in
-      is_spass_running := running_state;
+      minisat_call_count := !minisat_call_count + 1;
+      let (prover_output, running_state) = get_answer !minisat_process.inchannel in
+      is_minisat_running := running_state;
       prover_output;
     )
-    else illegal_format "[minisat.ml] The value of spass_input_format is invalid!" in
+    else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
   let res =
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
@@ -361,11 +353,11 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
     with _ -> ((* exception : return the safe result to ensure soundness *)
       Printexc.print_backtrace stdout;
       print_endline ("WARNING: Restarting prover due to timeout");
-      Unix.kill !spass_process.pid 9;
-      ignore (Unix.waitpid [] !spass_process.pid);
+      Unix.kill !minisat_process.pid 9;
+      ignore (Unix.waitpid [] !minisat_process.pid);
       { original_output_text = []; validity_result = Aborted; }
     ) in
-  let _ = Procutils.PrvComms.stop false stdout !spass_process 0 9 (fun () -> ()) in
+  let _ = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
   remove_file infile;
   res
 
@@ -377,24 +369,24 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
 (* Runs the specified prover and returns output *)
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  (*let _ = print_endline "** In function Spass.check_problem_through_stdin" in 
+  (*let _ = print_endline "** In function minisat.check_problem_through_stdin" in 
   let _ = print_endline ("  -- input: \n" ^ input) in*)
-  if not !is_spass_running then (
-    (*let _ = print_endline "  -- start SPASS" in*)
+  if not !is_minisat_running then (
+    (*let _ = print_endline "  -- start minisat" in*)
     start ()
   )
-  else if (!spass_call_count = !spass_restart_interval) then (
-    (*let _ = print_endline "  -- restart SPASS" in
+  else if (!minisat_call_count = !minisat_restart_interval) then (
+    (*let _ = print_endline "  -- restart minisat" in
     restart("Regularly restart:1 ");*)
-    spass_call_count := 0;
+    minisat_call_count := 0;
   );
-  (*let _ = print_endline (" -- spass_process_pid: " ^ string_of_int(!spass_process.pid)) in*)
+  (*let _ = print_endline (" -- minisat_process_pid: " ^ string_of_int(!minisat_process.pid)) in*)
   let fnc f =
-    output_string (!spass_process.outchannel) f;
-    flush (!spass_process.outchannel);
-    let _ = incr spass_call_count in
-    let (prover_output, running_state) = get_answer !spass_process.inchannel in
-    is_spass_running := running_state;
+    output_string (!minisat_process.outchannel) f;
+    flush (!minisat_process.outchannel);
+    let _ = incr minisat_call_count in
+    let (prover_output, running_state) = get_answer !minisat_process.inchannel in
+    is_minisat_running := running_state;
     prover_output in
   let res =
     try
@@ -404,8 +396,8 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
     | _ -> ((* exception : return the safe result to ensure soundness *)
         Printexc.print_backtrace stdout;
         print_endline ("WARNING: Restarting prover due to timeout");
-        Unix.kill !spass_process.pid 9;
-        ignore (Unix.waitpid [] !spass_process.pid);
+        Unix.kill !minisat_process.pid 9;
+        ignore (Unix.waitpid [] !minisat_process.pid);
         { original_output_text = []; validity_result = Aborted; }
       ) in
   res
@@ -418,8 +410,8 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
 (***************************************************************
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
-(* spass: output for dfg format *)
-let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula)(mapvar: spec_var list) : string =
+(* minisat: output for cnf format *)
+let to_minisat_cnf (ante: Cpure.formula) (conseq: Cpure.formula)(mapvar: spec_var list) : string =
   let ante_str = cnf_to_string_to_file (to_cnf ante) mapvar 
   and conseq_str = cnf_to_string_to_file (to_cnf conseq) mapvar in
 		  let result = "p cnf "^(string_of_int !number_var)^" "^ (string_of_int !number_clauses)
@@ -432,26 +424,26 @@ let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula)(mapvar: spec_var 
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 let return_number_var nbv = number_var:= nbv
-let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
+let to_minisat (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
-  (* let _ = print_endline "** In function to_spass:" in *)
+  (* let _ = print_endline "** In function to_minisat:" in *)
   let conseq = match conseq with
     (* We don't have conseq part in is_sat checking *)
     | None   -> Cpure.mkFalse no_pos
     | Some f -> f
   in
   let res = 
-    if (spass_input_format = "dfg") then (
-	    (* if sending problem in DFG format to SPASS *)
+    if (minisat_input_format = "cnf") then (
+	    (* if sending problem in cnf format to minisat *)
 	    let ante_fv = Cpure.fv ante in
 	    let conseq_fv = Cpure.fv conseq in
 	    let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in	
 	    let _= return_number_var (List.length all_fv) in
-	    let dfg_res = to_spass_dfg ante conseq all_fv
-      (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
-      in dfg_res
+	    let cnf_res = to_minisat_cnf ante conseq all_fv
+      (* let _ = print_endline ("-- Input problem in cnf format:\n" ^ cnf_res) in *)
+      in cnf_res
     ) 
-    else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
+    else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
 
   (* use for debug: print formula in Omega format *)
   (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
@@ -479,29 +471,29 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 * We also consider unknown is the same as sat
 *)
 
-let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  (* let _ = "** In function Spass.spass_imply" in *)
+let rec minisat_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
+  (* let _ = "** In function minisat.minisat_imply" in *)
   let pr = Cprinter.string_of_pure_formula in
   let result = 
-    Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
-    (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
+    Debug.no_2_loop "minisat_imply" (pr_pair pr pr) string_of_float string_of_bool
+    (fun _ _ -> minisat_imply_x ante conseq timeout) (ante, conseq) timeout in
   (* let omega_result = Omega.imply ante conseq "" timeout in
-  let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
+  let _ = print_endline ("-- minisat_imply result: " ^ (if result then "TRUE" else "FALSE")) in
   let _ = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result;
     
 
-and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  let _ = "** In function Spass.spass_imply_x" in
-  let res, should_run_spass =
-    if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
+and minisat_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
+  let _ = "** In function minisat.minisat_imply_x" in
+  let res, should_run_minisat =
+    if not ((can_minisat_handle_formula ante) && (can_minisat_handle_formula conseq)) then
       (* for debug *)
       (* let fomega_ante = Omega.omega_of_formula ante in
-      let _ = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
-              (if (can_spass_handle_formula ante) then "true" else "false")) in
+      let _ = print_endline ("can_minisat_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
+              (if (can_minisat_handle_formula ante) then "true" else "false")) in
       let fomega_conseq = Omega.omega_of_formula conseq in
-      let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
-              (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
+      let _ = print_endline ("can_minisat_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
+              (if (can_minisat_handle_formula conseq) then "true" else "false")) in *)
       try
         let _ = print_endline "-- use Omega.imply_..." in
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
@@ -510,15 +502,15 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
         | Some r -> (r, false)
       with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
     else (false, true) in
-  if (should_run_spass) then
-    (* let _ = print_endline "-- use Spass.check_problem" in *)
-    let spass_input = to_spass ante (Some conseq) in
+  if (should_run_minisat) then
+    (* let _ = print_endline "-- use minisat.check_problem" in *)
+    let minisat_input = to_minisat ante (Some conseq) in
     let validity =
-      if (spass_input_mode = "file") then
-        check_problem_through_file spass_input timeout
-      else if (spass_input_mode = "stdin") then
-        check_problem_through_stdin spass_input timeout
-      else illegal_format "[spass.ml] The value of spass_input_mode is invalid!" in
+      if (minisat_input_mode = "file") then
+        check_problem_through_file minisat_input timeout
+      else if (minisat_input_mode = "stdin") then
+        check_problem_through_stdin minisat_input timeout
+      else illegal_format "[minisat.ml] The value of minisat_input_mode is invalid!" in
     (* let prover_output = String.concat "\n" output.original_output_text in *)
     (* debug let _ = print_endline ("** prover output:" ^              *)
     (* prover_output) in                                               *)
@@ -533,30 +525,30 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
     res
 
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
-  let result = spass_imply ante conseq timeout in
+  (* let _ = print_endline "** In function minisat.imply:" in *)
+  let result = minisat_imply ante conseq timeout in
   (* let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
   result
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
-  (* let _ = print_endline "** In function Spass.imply_with_check:" in *)
+  (* let _ = print_endline "** In function minisat.imply_with_check:" in *)
   Cpure.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
+  (* let _ = print_endline "** In function minisat.imply:" in *)
   try
     let result = imply ante conseq timeout in
     result
   with Illegal_Prover_Format s -> (
     print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-    print_endline ("Apply Spass.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
+    print_endline ("Apply minisat.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
     print_endline ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
     flush stdout;
     failwith s
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
+  (* let _ = print_endline "** In function minisat.imply:" in *)
   Debug.no_1_loop "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
@@ -565,16 +557,16 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 * We also consider unknown is the same as sat
 *)
 
-let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
+let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.spass_is_sat:" in *)
-  (* anything that SPASS counldn't handle will be transfer to Omega *)
-  let res, should_run_spass =
-    if not (can_spass_handle_formula f) then
+  (* let _ = print_endline "** In function minisat.minisat_is_sat:" in *)
+  (* anything that minisat counldn't handle will be transfer to Omega *)
+  let res, should_run_minisat =
+    if not (can_minisat_handle_formula f) then
       (* for debug *)
       (* let fomega = Omega.omega_of_formula f in
-      let _ = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
-              (if (can_spass_handle_formula f) then "true" else "false")) in
+      let _ = print_endline ("can_minisat_handle_formula f: " ^ fomega ^ ": " ^ 
+              (if (can_minisat_handle_formula f) then "true" else "false")) in
       let _ = print_endline "-- use Omega.is_sat..." in *)
       try
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
@@ -584,17 +576,17 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
         | None -> (true, false)
       with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
     else (false, true) in
-  if (should_run_spass) then
-    (* let _ = print_endline "-- use Spass.check_problem..." in *)
-    (* to check sat of f, spass check the validity of negative(f) or (f => None) *)
-    let spass_input = to_spass f None in
+  if (should_run_minisat) then
+    (* let _ = print_endline "-- use minisat.check_problem..." in *)
+    (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
+    let minisat_input = to_minisat f None in
     let validity =
-      if (spass_input_mode = "file") then
-        check_problem_through_file spass_input timeout
-      else if (spass_input_mode = "stdin") then
-        check_problem_through_stdin spass_input timeout
-      else illegal_format "[spass.ml] The value of spass_input_mode is invalid!" in
-    (* let validity = check_problem_through_file spass_input timeout in *)
+      if (minisat_input_mode = "file") then
+        check_problem_through_file minisat_input timeout
+      else if (minisat_input_mode = "stdin") then
+        check_problem_through_stdin minisat_input timeout
+      else illegal_format "[minisat.ml] The value of minisat_input_mode is invalid!" in
+    (* let validity = check_problem_through_file minisat_input timeout in *)
     let res =
       match validity.validity_result with
       | Invalid -> true      (* if neg(f) invalid ==> f sat *) 
@@ -604,24 +596,24 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   else
     res
 
-(* spass *)
-let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
-  spass_is_sat f sat_no spass_timeout_limit
+(* minisat *)
+let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
+  minisat_is_sat f sat_no minisat_timeout_limit
 
-(* spass *)
-let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
+(* minisat *)
+let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  let result = Debug.no_1 "spass_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
+  let result = Debug.no_1 "minisat_is_sat" pr string_of_bool (fun _ -> minisat_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
-  let _ = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
+  let _ = print_endline ("-- minisat_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
   let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result
 
 (* see imply *)
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.is_sat: " in *)
-  let result = spass_is_sat f sat_no in
+  (* let _ = print_endline "** In function minisat.is_sat: " in *)
+  let result = minisat_is_sat f sat_no in
   (* let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
   result
 
@@ -632,12 +624,12 @@ let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
 (* string_of_bool is_sat f sat_no                                          *)
 
 let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
-  (* let _ = print_endline "** In function Spass.is_sat: " in *)
+  (* let _ = print_endline "** In function minisat.is_sat: " in *)
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
     print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-    print_endline ("Apply Spass.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
+    print_endline ("Apply minisat.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
     flush stdout;
     failwith s
   )
@@ -647,7 +639,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 *)
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.simplify" in *)
+  (* let _ = print_endline "** In function minisat.simplify" in *)
   try (Omega.simplify f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =
