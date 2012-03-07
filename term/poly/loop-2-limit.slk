@@ -22,67 +22,71 @@
 /* Example 1: C(x) = x > 1; */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.0)))).			// expect Fail
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.0)))).	// expect Fail
 	
 	// Loop:
-	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.0))).			// expect Valid but FAIL because of the incompleteness of loop entailment; weaken than invariant method.
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.0))).	// expect Valid but FAIL because of the incompleteness of loop entailment; weaken than invariant method.
 
 /* Example 2: C(x) = x < 1.618; */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.618)))).		// expect Valid	; better than invariant method
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.618)))).	// expect Valid	; better than invariant method
 	
 	// Loop:
-	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.618))).			// expect Fail
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.618))).	// expect Fail
 
 /* Example 3: C(x) = x > 1.619; */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.619)))).		// expect Valid ; better than invariant method
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x <= 1.619)))).	// expect Valid ; better than invariant method
 	
 	// Loop:
-	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.619))).			// expect Fail
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.619))).	// expect Fail
 
-/* Example 3: C(x) = x < 1.619; */
+/* Example 4: C(x) = x < 1.619; */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).		// expect Valid ; better than invariant method
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).	// expect Valid ; in fact Fail
 	
 	// Loop:
-	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.619))).			// expect Fail
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.619))).	// expect Fail
 
-/* Example 4: C(x) = x < 1; */
+/* Example 5: C(x) = x < 1; */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.0)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.0)))).	// expect Valid
 	
 	// Loop:
-	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.0))).			// expect Fail
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.0))).	// expect Fail
+
+
+/* other examples */
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 2.0)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 2.0)))).	// expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.8)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.8)))).	// expect Valid
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).	// expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).                        // expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x > 1.619)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x > 1.619)))).                       // expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).	// expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.62)))).		// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.62)))).    // expect Valid; in fact Fail
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.63)))).		// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.63)))).	// expect Valid; in fact Fail
 
+/* decrease steps */
 checkentail i>0.0001 & i1=i/2 |- i-i1>0.00005.
 
 
