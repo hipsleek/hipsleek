@@ -2,4 +2,23 @@
 
 //checkentail  n>4 & n<8 & m>1 |- m>2 .
 
-checkentail  ((!k) & (c)) |k |- true.
+//checkentail  ((!k) & (c)) |k |- true.
+
+
+//checkentail  k & !k |- false.
+
+//checkentail  k | !k |- false.
+
+//checkentail  k |- k.
+
+//checkentail  k |- !k.
+
+//checkentail (k:bool)>1 |- k>0. // problem
+
+//checkentail  k  |- k.
+
+//checkentail  k & (m:boolean)  |- k.
+
+//checkentail  k & !k |- k.
+
+checkentail  (k:float)>1.0  |- true.
