@@ -21,4 +21,8 @@
 
 //checkentail  k & !k |- k.
 
-checkentail  (k:float)>1.0  |- true.
+checkentail  k & !(!m) |- k.
+
+checkentail  m |- k.
+
+//checkentail  (k:float)>1.0  |- true.
