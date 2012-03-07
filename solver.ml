@@ -2867,7 +2867,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	              | FailCtx _ ->(* let _ = print_endline ("###: 1") in *) (n_ctx_list, prf)
 	              | SuccCtx _ ->
 						let res_ctx, res_prf = match formula_cont with
-							| Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l None pos pid
+							| Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid pos pid (*also propagate tid*)
 							| None -> (n_ctx_list, prf) in
 						let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
 						(res_ctx,res_prf)

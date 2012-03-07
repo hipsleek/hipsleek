@@ -17,7 +17,7 @@ let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
 let omega_restart_interval = ref (-1)
-let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all = open_log_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (* currently not used --should be removed*)
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
@@ -539,6 +539,11 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
   end else ();
   result
 
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  let pr = !print_formula in
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
+
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
   imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
@@ -560,6 +565,11 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
         flush stdout;
         failwith s
       end
+
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  let pr = !print_formula in
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let is_valid (pe : formula) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in

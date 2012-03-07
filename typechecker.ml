@@ -1804,8 +1804,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           begin
                             Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                             Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                            Debug.info_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+                            Debug.dinfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.dinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 

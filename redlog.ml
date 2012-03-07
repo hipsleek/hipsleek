@@ -18,7 +18,7 @@ let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out "allinput.rl"
+let log_file = open_log_out "allinput.rl"
 
 (* process management *)
 let is_reduce_running = ref false
@@ -143,6 +143,7 @@ let restart reason =
  * return empty string if reduce is not running
  *)
 let send_and_receive f =
+  if not !is_reduce_running then start ();
   if !is_reduce_running then
     try
         let fnc () =
@@ -1149,11 +1150,16 @@ let imply_ops pr_w pr_s ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+let imply_ops pr_w pr_s ante conseq imp_no =
+  let pr = !CP.print_formula in
+  Debug.no_2 "[redlog.ml]imply_ops" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
    imply_ops pr_w pr_s f imp_no
 
-   let imply ante conseq imp_no =
+let imply ante conseq imp_no =
   Debug.no_3 "[Redlog] imply" 
       (add_str "ante" string_of_formula) 
       (add_str "conseq" string_of_formula)

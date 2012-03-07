@@ -634,7 +634,7 @@ $output_file = "log";
 				["benchs/lit/dijkstra76-2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/dijkstra76-3.ss", 1, "", "loop", "SUCCESS"],
         # -tp z3 caused timeouts below
-		#		["benchs/lit/leap-year-bug-zune.ss", 2, "-tp z3", "ConvertDays", "SUCCESS", "loop", "SUCCESS"],
+				#["benchs/lit/leap-year-bug-zune.ss", 2, "-tp z3", "ConvertDays", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/lit/pldi06-1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/pldi06-2.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
 				["benchs/lit/pldi06-3.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
@@ -684,7 +684,7 @@ $output_file = "log";
 				["benchs/key/Lcm.ss", 2, "", "lcm", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/Marbie1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/Marbie2.ss", 1, "", "loop", "SUCCESS"],
-				["benchs/key/Middle.ss", 1, "-tp redlog", "middle", "SUCCESS"],
+				["benchs/key/Middle.ss", 1, "", "middle", "SUCCESS"],
 				["benchs/key/MirrorIntervSim.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/MirrorInterv.ss", 2, "", "mirrorInterv", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/ModuloLower.ss", 1, "", "loop", "SUCCESS"],
