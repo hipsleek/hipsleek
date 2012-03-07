@@ -74,6 +74,8 @@ let common_arguments = [
 	"No assumption filtering.");
 	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
+	("--dis-auto-num", Arg.Clear Globals.auto_number,
+	"Disable Auto Numbering");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
@@ -180,10 +182,10 @@ let common_arguments = [
 	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
 	"print input representation");
-	("--no-cache", Arg.Set Globals.no_cache_formula,
+	("--dis-cache", Arg.Set Globals.no_cache_formula,
     "Do not cache result of satisfiability and validity checking");
-	("--enable-cache", Arg.Clear Globals.no_cache_formula,
-    "Cache result of satisfiability and validity checking");
+	(*("--enable-cache", Arg.Clear Globals.no_cache_formula,
+    "Cache result of satisfiability and validity checking");*)
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
@@ -220,7 +222,7 @@ let common_arguments = [
     ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
     ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
-    ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
+    (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");

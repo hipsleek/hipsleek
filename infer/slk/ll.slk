@@ -1,0 +1,40 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// n is implicit inst var
+checkentail x::node<1,x2>*x2::node<3,null> |- x::ll<n>.
+
+
+//checkentail x::node<1,x2>*x2::node<3,p> infer [p] |- x::ll<n> .
+// abduction : p::ll<m> 
+// frame : n=2+m
+
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> .
+//checkentail x::ll<n> & n>2 |- x::node<_,y>*y::node<_,p> .
+// frame : p::ll<n-2> & n>2
+
+//checkentail x::ll<n> infer [n] |- x::node<_,y>*y::node<_,p> .
+// abduction: n>=2
+// frame : p::ll<n-2> & n>=2
+
+// n is explicit inst var
+//checkentail x::node<1,x2>*x2::node<3,null> |- [n] x::ll<n>.
+
+// n is existential var
+//checkentail x::node<1,x2>*x2::node<3,null> |- (exists n: x::ll<n> & n>1).
+
+//print residue.
+
+checkentail x::node<1,x2>*x2::node<3,p> |- x::ll<n> .

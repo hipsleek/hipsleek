@@ -1,0 +1,23 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (29)
+// TODO
+// WHY infer true?
+//inferred pure: [inf_b_34=b; b!=null | b=null; inf_ann_32<=0; inf_ann_36<=0]
+//infer [y,b] true |- y::node<a,b> * b::ll<m>.
+//print residue.
+
+// (30)
+// OK
+// TODO
+// WHY infer something already in the LHS?
+//inferred pure: [b!=null; inf_b_53=b; inf_ann_51<=0; inf_ann_55<=0]
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.

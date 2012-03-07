@@ -38,7 +38,7 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM | TVar _ | Named _ | Array _ ->
+  | NUM | TVar _ | Named _ | Array _ |RelT |AnnT->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;
@@ -122,6 +122,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.Func _ -> failwith ("Func are not supported in Isabelle")
+  | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for a list of expressions *)
@@ -197,7 +199,9 @@ and isabelle_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
   | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
+  | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)
@@ -208,13 +212,6 @@ and isabelle_of_formula f =
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
     | CP.Not (p, _,_) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
-(*	begin
-	  if (is_bag_formula f) then
-	    match p with
-		| CP.BForm (CP.BVar (bv, _)) -> (isabelle_of_spec_var bv) ^ " = 0"
-		| _ -> 
-          else ""
-	end*)
     | CP.Forall (sv, p, _,_) ->
 	  if (is_bag_formula f) then
 	    " (ALL " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
@@ -223,6 +220,7 @@ and isabelle_of_formula f =
 	  if (is_bag_formula f) then
 	    " (EX " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
           else ""
+	| CP.AndList _ -> Gen.report_error no_pos "isabelle.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) ->
 	  if (is_bag_formula p1) & (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " & " ^ (isabelle_of_formula p2) ^ ")"

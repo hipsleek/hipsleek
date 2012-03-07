@@ -102,7 +102,7 @@ let rec smt_of_exp a =
 	| CP.Null _ -> "0"
 	| CP.Var (sv, _) -> smt_of_spec_var sv
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-	| CP.AConst (i, _) -> string_of_heap_ann i
+	| CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
 	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
 	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
@@ -123,6 +123,7 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -200,6 +201,7 @@ let rec smt_of_formula pr_w pr_s f =
             | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
             | Some f -> let _ = Debug.devel_pprint ("SOME #") no_pos in helper f
         end
+        | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
@@ -252,6 +254,7 @@ and collect_formula_info_raw f = match f with
   | CP.BForm ((b,_),_) -> collect_bformula_info b
   | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
+  | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
   | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
 		let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
@@ -823,6 +826,7 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
 			  (* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 	| CP.Forall _ | CP.Exists _ -> []
@@ -934,7 +938,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
         let (pr_w,pr_s) = CP.drop_complex_ops in
-	try (match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
+	try (match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
 	  | None -> (false, true)
 	  | Some r -> (r, false)
 	)
@@ -1002,7 +1006,7 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
 		try
             let (pr_w,pr_s) = CP.drop_complex_ops in
-            let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
+            let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in
         ( match optr with
           | Some r -> (r, false)
           | None -> (true, false)
@@ -1032,8 +1036,6 @@ let is_sat f sat_no =
 
 let is_sat_with_check (pe : CP.formula) sat_no : bool option = CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
-(* let is_sat f sat_no = Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
-
 let is_sat (pe : CP.formula) sat_no : bool =
   try
     is_sat pe sat_no
@@ -1045,6 +1047,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
+let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

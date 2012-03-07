@@ -31,6 +31,7 @@
       | Not (f,fl,l) -> Not ((trans_null f),fl,l)
       | Forall (sv,f,fl,l) -> Forall(sv,(trans_null f),fl,l)
       | Exists (sv,f,fl,l) -> Exists(sv,(trans_null f),fl,l)
+	  | AndList _ -> Gen.report_error no_pos "ocparser: unexpected AndList"
 %}
 
 %token AND

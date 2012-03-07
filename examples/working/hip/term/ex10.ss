@@ -2,15 +2,15 @@
 void loop(ref int x, ref int y, int N)
  case {
   x>N ->  
-    variance [0,0] // Base case
+    requires Term // Base case
     ensures "l1": x'=x & y'=y;
   x<=N -> 
     case { 
       y>N ->
-        variance [0,1,0] // ==> x'>N
+        requires Term // ==> x'>N
         ensures "l2": true;
       y<=N -> 
-        variance [0,2,2*N - (x+y)]
+        requires Term[2*N - (x+y)]
         ensures "l3":true;
   }
  }

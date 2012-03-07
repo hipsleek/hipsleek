@@ -5,10 +5,13 @@
 *)
 
 open Globals
+open Label_only
+open Label
 
 type formula = 
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
+  | AndList of (spec_label * formula) list
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
   | Forall of ((ident * primed) * formula *(formula_label option)* loc)
@@ -84,6 +87,17 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   |	BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
 
+let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+
+module Exp_Pure =
+struct 
+  type e = formula
+  let comb x y = And (x,y,no_pos)
+  let string_of = !print_formula
+end;;
+
+module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+
 let linking_exp_list = ref (Hashtbl.create 100)
 let _ = let zero = IConst (0, no_pos)
 		in Hashtbl.add !linking_exp_list zero 0
@@ -94,6 +108,7 @@ let _ = let zero = IConst (0, no_pos)
 let rec fv (f : formula) : (ident * primed) list = match f with 
   | BForm (b,_) -> bfv b
   | And (p1, p2, _) -> combine_pvars p1 p2
+  | AndList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd fv b)
   | Or (p1, p2, _,_) -> combine_pvars p1 p2
   | Not (nf, _,_) -> fv nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
@@ -327,8 +342,14 @@ and mkAnd f1 f2 pos = match f1 with
   | _ -> match f2 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
-      | _ -> And (f1, f2, pos)
+      | _ -> match f1,f2 with 
+		| AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
+		| AndList b, f 
+		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+		| _ -> And (f1, f2, pos)
 
+and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
+		
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
   | BForm ((BConst (true, _), _), _) -> f1
@@ -454,6 +475,7 @@ and pos_of_formula (f : formula) = match f with
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
+  | AndList l -> match l with | x::_ -> pos_of_formula (snd x) | _-> no_pos
 
 and pos_of_exp (e : exp) = match e with
   | Null p 
@@ -506,6 +528,7 @@ and subst sst (f : formula) = match sst with
 
 and apply_one (fr, t) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
+  | AndList b -> AndList (Gen.map_l_snd (apply_one (fr,t)) b)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
 							  apply_one (fr, t) p2, pos)
   | Or (p1, p2, lbl, pos) -> Or (apply_one (fr, t) p1,
@@ -659,6 +682,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
   | BForm (b,_) -> look_for_anonymous_b_formula b
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
+  | AndList b -> Gen.fold_l_snd look_for_anonymous_pure_formula b 
   | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)
   | Forall (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
@@ -776,6 +800,7 @@ let rec break_pure_formula (f: formula) : b_formula list =
   match f with
 	| BForm (bf, _) -> [bf]
 	| And (f1, f2, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| AndList b -> Gen.fold_l_snd break_pure_formula b
 	| Or (f1, f2, _, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
 	| Not (f, _, _) -> break_pure_formula f
 	| Forall (_, f, _, _) -> break_pure_formula f
@@ -991,23 +1016,7 @@ and float_out_pure_min_max (p : formula) : formula =
 	  | None -> (r, ev)
 	  | Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in 
 	List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,l))) r ev2 in
-  
-  (* An Hoa : produce exists x_1 exists x_2 ... exists x_n t *)	
-  (*let add_exists (t: formula) (nps: (formula * (string list))option list) l: formula = 			
-	let r, ev = match np1 with
-	| None -> (t,[])
-	| Some (p1, ev1) -> (And (t, p1, l), ev1) in
-	let r, ev2 = match np2 with 
-	| None -> (r, ev)
-	| Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in
-	List.fold_left (fun fml np -> let r, ev = match np1 with
-	| None -> fml
-	| Some (p, ev) -> (And (t, p1, l), ev))
-	t
-	nps
-	List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,l))) r ev2 in *)							
-  (* End add_exists *)
-  
+    
   let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
 	let (pf,il) = b in
 	match pf with
@@ -1166,6 +1175,7 @@ and float_out_pure_min_max (p : formula) : formula =
   match p with
 	| BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
   	| And (f1, f2, l) -> And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
+	| AndList b -> AndList (Gen.map_l_snd float_out_pure_min_max b)
   	| Or (f1, f2, lbl, l) -> Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), lbl,l)
   	| Not (f1,lbl, l) -> Not((float_out_pure_min_max f1), lbl, l)
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)

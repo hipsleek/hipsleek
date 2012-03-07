@@ -243,11 +243,9 @@ struct
     match perm with
       | None -> []
       | Some f -> [f]
-  let subst_var_perm ((fr, t) as s) perm =
-    map_opt (Cpure.subst_var s) perm
+  let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.subst_var s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
-  let mkEq_cperm v1 v2 pos =
-    Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+  let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
 end;;
 
 

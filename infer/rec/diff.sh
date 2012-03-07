@@ -6,16 +6,55 @@ echo "======= 2b ======"
 diff 2b.res 2b.n
 echo "======= 2c ======"
 diff 2c.res 2c.n
-echo "======= ll-len ======"
-diff ll-len.res ll-len.n
-echo "======= ll-const ======"
-diff ll-const.res ll-const.n
 echo "======= ll-app ======"
 diff ll-app.res ll-app.n
-echo "======= todo ======"
-echo "======= bug1 ======"
-echo "======= bug2 ======"
-echo "======= bug5t ======"
-echo "======= ll-a2 ======"
-echo "======= ll-b ======"
-echo "======= ll-c ======"
+echo "======= ll-const ======"
+diff ll-const.res ll-const.n
+echo "======= ll-len ======"
+diff ll-len.res ll-len.n
+echo "======= ll-len2 ======"
+diff ll-len2.res ll-len2.n
+echo "======= ll-reverse ======"
+diff ll-reverse.res ll-reverse.n
+echo "======= ll-rev2 ======"
+diff ll-rev2.res ll-rev2.n
+echo "======= ll-del ======"
+diff ll-del.res ll-del.n
+echo "======= num-app ======"
+diff num-app.res num-app.n
+echo "======= num-del ======"
+diff num-del.res num-del.n
+echo "======= num-del-a ======"
+diff num-del-a.res num-del-a.n
+echo "======= cll-count1 ======"
+diff cll-count1.res cll-count1.n
+echo "======= cll-count2 ======"
+diff cll-count2.res cll-count2.n
+echo "======= cll-del ======"
+diff cll-del.res cll-del.n
+echo "======= cll-insert ======"
+diff cll-insert.res cll-insert.n
+echo "======= dll-app ======"
+diff dll-app.res dll-app.n
+echo "======= dll-del ======"
+diff dll-del.res dll-del.n
+echo "======= dll-insert ======"
+diff dll-insert.res dll-insert.n
+echo "======= r1-i ======"
+diff r1-i.res r1-i.n
+echo "======= r2a-i ======"
+diff r2a-i.res r2a-i.n
+echo "======= bug-3c ======"
+diff bug-3c.res bug-3c.n
+echo "======= bug-del2 ======"
+diff bug-del2.res bug-del2.n
+echo "======= bug-num-del ======"
+diff bug-num-del.res bug-num-del.n
+echo "======= bsort-1 ======"
+diff bsort-1.res bsort-1.n
+echo "======= bst-del ======"
+diff bst-del.res bst-del.n
+echo "======= bst-insert ======"
+diff bst-insert.res bst-insert.n
+echo "======= bst-remove-min ======"
+diff bst-remove-min.res bst-remove-min.n
