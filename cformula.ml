@@ -6160,6 +6160,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_infer_rel = es.es_infer_rel;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
+        es_var_zero_perm = es.es_var_zero_perm;
   }
 
 let clear_entailment_history xp (ctx : context) : context =  
