@@ -1102,8 +1102,6 @@ let is_sat f sat_no =
 let is_sat_with_check (pe : CP.formula) sat_no : bool option =
   CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
-(* let is_sat f sat_no = Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
-
 let is_sat (pe : CP.formula) sat_no : bool =
   try
     is_sat pe sat_no
@@ -1115,6 +1113,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
+let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

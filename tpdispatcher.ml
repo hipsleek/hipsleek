@@ -1063,7 +1063,7 @@ let tp_is_sat (f:CP.formula) (sat_no :string) =
     in res
 
 let tp_is_sat f sat_no =
-  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
+  Debug.no_1_loop "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no) f
     
 (* let is_sat_raw (f: CP.formula) = *)
@@ -1418,10 +1418,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             failwith ("dp-omega imply mismatch on: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^
 					" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
         else r
-    | OmegaCalc -> 
+    | OmegaCalc ->
           if (CP.is_float_formula ante) || (CP.is_float_formula conseq) 
-          then  redlog_imply ante_w conseq_s
-          else  (omega_imply ante conseq)
+          then redlog_imply ante_w conseq_s
+          else (omega_imply ante conseq)
     | CvcLite -> Cvclite.imply ante_w conseq_s
     | Cvc3 -> begin
         match process with
@@ -1522,6 +1522,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		r
 ;;
 
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "tp_imply_no_cache" pr pr string_of_bool
+  (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
 let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then
@@ -2381,10 +2385,10 @@ let start_prover () =
 	 (* Omega.start ();*)
 	 end
   | Redlog | RM -> 
-      begin
+    begin
       Redlog.start ();
-	  Omega.start ();
-	 end
+	    Omega.start ();
+	  end
   | Cvc3 -> 
         begin
             provers_process := Some (Cvc3.start ()); (* because of incremental *)
@@ -2417,14 +2421,17 @@ let start_prover () =
   
 let stop_prover () =
   match !tp with
+    | OmegaCalc ->
+        Omega.stop ();
+        if !Redlog.is_reduce_running then Redlog.stop ();
     | Coq -> (* Coq.stop_prover () *)
           begin
             Coq.stop ();
 	        (*Omega.stop();*)
 	      end
     | Redlog | RM -> 
-          begin
-            Redlog.stop();
+        begin
+          Redlog.stop();
 	        Omega.stop();
 	      end
     | Cvc3 -> 
@@ -2441,15 +2448,15 @@ let stop_prover () =
 	      end
     | Mona -> Mona.stop();
     | OM ->
-	  begin
-		Mona.stop();
-		Omega.stop();
-	  end
-	| DP -> Smtsolver.stop()
+	      begin
+		      Mona.stop();
+		      Omega.stop();
+	      end
+	  | DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
     (* | AUTO -> *)
-	(*     Omega.stop(); *)
+	  (*     Omega.stop(); *)
     (*     (\* Mona.stop(); *\) *)
     (*     (\* Smtsolver.stop(); *\) *)
     (*     (\* Coq.stop(); *\) *)
