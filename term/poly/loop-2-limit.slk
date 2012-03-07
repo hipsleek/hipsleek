@@ -43,6 +43,14 @@
 	// Loop:
 	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x > 1.619))).			// expect Fail
 
+/* Example 3: C(x) = x < 1.619; */
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).		// expect Valid ; better than invariant method
+	
+	// Loop:
+	checkentail   true |- forall (e: (e <= 0.0) | forall (x: (L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x < 1.619))).			// expect Fail
+
 /* Example 4: C(x) = x < 1; */
 
 	// Termination:
@@ -61,17 +69,36 @@
 	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).			// expect Valid
 
 	// Termination:
-	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.6)))).			// expect Valid
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x >= 1.7)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L != 1.6180339) | (x <= L - e) | (x >= L + e) | (x > 1.619)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.619)))).			// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.62)))).		// expect Valid
+
+	// Termination:
+	checkentail   true |- (exists e: (e > 0.0) & forall (x: ((L <= 0.0) | (L * L - L - 1.0 != 0) | (x <= L - e) | (x >= L + e) | (x >= 1.63)))).		// expect Valid
 
 checkentail i>0.0001 & i1=i/2 |- i-i1>0.00005.
 
 
 // (1 + sqrt(5))/2 
 //(i-(1+sqrt(5))/2)^2 =
-checkentail i1=1.0+(1.0/i) & L*L=L+1.0 & L>0.0 & i>0.0 & (i!=L) |- 
-       (i>=L & i1>=L & i-L>=i1-L)
-     | (i<=L & i1>=L & L-i>=i1-L)
-     | (i>=L & i1<=L & i-L>=L-i1)
-     | (i<=L & i1<=L & L-i>=L-i1).
+checkentail (i1 = 1.0 + (1.0 / i)) & (L * L - L - 1.0 = 0.0) & (L > 0.0) & (i > 0.0) & (i != L) |-			// FAIL, see a counter-example below
+       (i >= L & i1 >= L & i - L >= i1 - L)
+     | (i <  L & i1 >= L & L - i >= i1 - L)
+     | (i >= L & i1 <  L & i - L >= L  - i1)
+     | (i <  L & i1 <  L & L - i >= L  - i1).
 
-
+/*
+   counter-example for above entailment:
+      L = 1.618...
+      	+ i = 2   => i1 = 1.5 => |i - L| > |i1 - L|
+	+ i = 0.1 => i1 = 11  => |i - L| < |i1 - L|
+   => the condition (i > 0.0) isn't good enough to make sure that |i - L| > |i1 - L|
+      the new condition can be (i > 1.0)  (because after first time re-assigning i = 1 + 1/i, the new value of i > 1.0)
+*/
