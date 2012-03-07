@@ -19,7 +19,7 @@ let resultfilename = "result.mona." ^ (string_of_int (Unix.getpid()))
 *)
 
 let log_all_flag = ref true
-let log_all = open_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all = open_log_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (*************************************************************)
 (*************************************************************)
