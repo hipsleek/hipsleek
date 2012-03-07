@@ -1,0 +1,5 @@
+//checkentail  n>4 & n<8  |- n>3 .
+
+//checkentail  n>4 & n<8 & m>1 |- m>2 .
+
+checkentail  ((!k) & (c)) |k |- true.

@@ -32,7 +32,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
-
+  | MINISAT    
 let test_db = false
 
 let tp = ref OmegaCalc
@@ -80,7 +80,7 @@ let string_of_prover prover = match prover with
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
   | SPASS -> "SPASS"
-
+  | MINISAT-> "MINISAT"  
 
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
 
@@ -431,6 +431,8 @@ let set_tp tp_str =
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
     (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
+  else if tp_str = "minisat" then
+    (tp := MINISAT; prover_str:= "minisat"::!prover_str)    
   else
 	();
   check_prover_existence !prover_str
@@ -456,7 +458,7 @@ let string_of_tp tp = match tp with
    | AUTO -> "auto"
   | DP -> "dp"
   | SPASS -> "spass"
-
+  | MINISAT-> "minisat"  
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
   | CvcLite -> "CVC Lite"
@@ -478,7 +480,7 @@ let name_of_tp tp = match tp with
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
   | SPASS -> "SPASS"
-
+  | MINISAT -> "MINISAT" 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
   | Cvc3 -> "allinput.cvc3"
@@ -490,6 +492,7 @@ let log_file_of_tp tp = match tp with
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
   | SPASS -> "allinput.spass"
+  | MINISAT -> "allinput.minisat"  
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -1027,6 +1030,16 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else
           Spass.is_sat f sat_no
       )
+    | MINISAT -> ( 
+        if (is_bag_constraint wf) then
+          mona_is_sat wf
+        (*else if (is_list_constraint wf) then
+          Coq.is_sat wf sat_no*)
+        else if (is_array_constraint f) then
+          Smtsolver.is_sat f sat_no
+        else
+          Minisat.is_sat f sat_no
+      ) 
 
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
@@ -1179,6 +1192,16 @@ let simplify (f : CP.formula) : CP.formula =
                 Smtsolver.simplify f
               else
                 Spass.simplify f
+            )
+	     | MINISAT -> (
+              if (is_bag_constraint f) then
+                Mona.simplify f
+              (*else if (is_list_constraint f) then
+                Coq.simplify f*)
+              else if (is_array_constraint f) then
+                Smtsolver.simplify f
+              else
+                Minisat.simplify f
             )
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
@@ -1532,7 +1555,17 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else
           (called_prover :="SPASS "; Spass.imply ante conseq timeout);
       ) 
-      
+       | MINISAT -> (
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          (called_prover :="Mona "; mona_imply ante_w conseq_s)
+        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
+          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
+        else if (is_array_constraint ante) || (is_array_constraint conseq) then
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+        else
+          (called_prover :="MINISAT "; Minisat.imply ante conseq timeout);
+      ) 
+       
   in
 	let _ = if should_output () then
 			begin
@@ -2640,7 +2673,8 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
-  | SPASS -> Spass.start();
+  | SPASS -> let _= print_string "called start spas\n" in Spass.start();
+  | MINISAT -> let _= print_string "called start mini\n" in Minisat.start() ; 
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2677,6 +2711,7 @@ let stop_prover () =
     | Z3 ->
       Smtsolver.stop();
     | SPASS -> Spass.stop();
+    | MINISAT -> Minisat.stop() ; 
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
