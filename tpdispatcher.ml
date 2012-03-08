@@ -1037,8 +1037,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           Coq.is_sat wf sat_no*)
         else if (is_array_constraint f) then
           Smtsolver.is_sat f sat_no
-        else
+	else
+	  (
           Minisat.is_sat f sat_no
+	  )
       ) 
 
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
@@ -1315,6 +1317,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
       else
         Smtsolver.hull f
   | SPASS -> Spass.hull f
+  | MINISAT -> Minisat.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -1553,7 +1556,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else if (is_array_constraint ante) || (is_array_constraint conseq) then
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
         else
-          (called_prover :="SPASS "; Spass.imply ante conseq timeout);
+          (called_prover :="SPASS ";
+	   Spass.imply ante conseq timeout);
       ) 
        | MINISAT -> (
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
@@ -1563,7 +1567,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else if (is_array_constraint ante) || (is_array_constraint conseq) then
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
         else
-          (called_prover :="MINISAT "; Minisat.imply ante conseq timeout);
+          (called_prover :="MINISAT "; 
+	   Minisat.imply ante conseq timeout);
       ) 
        
   in
@@ -2673,8 +2678,8 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
-  | SPASS -> let _= print_string "called start spas\n" in Spass.start();
-  | MINISAT -> let _= print_string "called start mini\n" in Minisat.start() ; 
+  | SPASS -> Spass.start();
+  | MINISAT ->  Minisat.start() ; 
   | _ -> Omega.start()
   
 let stop_prover () =
