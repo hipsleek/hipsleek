@@ -144,8 +144,20 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_f f2 -> (match f1 with 
                              | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
-  | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
-
+  | Pure_c f1, Pure_c f2 -> (
+      let bool_var1 = (
+        match f1 with
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
+      let bool_var2 = (
+        match f2 with
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
+      Pure_f(fct bool_var1 bool_var2)
+    )
+    
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
@@ -173,7 +185,15 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                       in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                                    else P.BForm (((fct f1 f2), None), None)
                                       in Pure_f(res) 
-                                    | _ -> Pure_f (P.BForm(((fct f1 f2), None), None)))
+                                    | _ -> (
+                                        let typ1 = P.typ_of_exp f1 in 
+                                        let typ2 = P.typ_of_exp f2 in
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) then 
+                                          Pure_f (P.BForm(((fct f1 f2), None), None))
+                                        else
+                                          report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
+                                      )
+                                    )
                              )
   | Pure_f f1 , Pure_c f2 ->(match f1  with 
 						    | P.BForm((pf,il),oe) -> (match pf with 
@@ -875,6 +895,7 @@ pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr
 					match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+                    | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
 ann_term: 

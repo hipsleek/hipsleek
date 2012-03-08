@@ -12,9 +12,9 @@ checkentail  k |- k.
 
 checkentail  k |- !k.
 
-checkentail 1 > (k:bool) |- k>0. // problem
+checkentail  1 > (k:int) |- k>0.
 
-checkentail 1 + k > 1 |- k>0. // problem
+checkentail  1 + k > 1 |- k>0.
 
 checkentail  k  |- k.
 

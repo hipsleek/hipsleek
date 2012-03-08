@@ -1,0 +1,8 @@
+checkentail 1 > (k:int) |- k > 0.
+
+// problem
+checkentail 1 > (k:bool) |- k > 0.
+
+// problem
+checkentail 1 > (k:float) |- k > 0.
+
