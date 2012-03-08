@@ -17,6 +17,7 @@ type prover =
 	| Reduce
 	| Z3
 
+(*
 (**
  * Interface for external prover.
  *)
@@ -37,6 +38,7 @@ module type Exprf =
 		val derive : term list -> TBool.triary_bool * term list
 		
 	end
+*)
 
 (**
  * Module to interact with Z3 SMT solver.

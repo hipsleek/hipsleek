@@ -1,3 +1,5 @@
+/* Elementary example on "divides" relation */
+
 let [induction y] divides(x, y) be such that divides(x,y) <-> exists {z} y = x * z.
 
 // Reflexivity of divide
@@ -7,4 +9,4 @@ theorem divides(x, x).
 theorem divides(x,y) & divides(y,x) -> x = y | x = 0 - y.
 
 // Transitivity of divide relation
-theorem divides(m, n) & divides(n, p) -> divides(m, p).
+theorem divides(x, y) & divides(y, z) -> divides(x, z).

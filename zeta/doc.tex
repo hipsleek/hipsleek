@@ -97,7 +97,7 @@ Similarly, transitivity of \emph{divides} relation is formally proved in ACL2 li
 where \texttt{crap003} is a theorem in the same file, which says that: for all $a,b,c \in \setZ$ one has:
 $$\left\{ a \not= 0, b \not= 0, \frac{b}{a} \in \setZ,\frac{c}{b} \in \setZ \right\} \vdash \frac{c}{a} \in \setZ.$$
 
-As we can see, proofs in Isabelle require an amount of effort from the users. In fact, users are expected to write the entire proofs and the task of the system is mainly to mechanically check the validity of the proofs using formal rules of logic. The same statement can be made for ACL2 in which users are to build necessary lemmas and hints to the prover. In fact, the design of ACL2 reflects J. S. Moore's viewpoint on program verification as in \emph{A Mechanized Program Veriﬁer}
+As we can see, proofs in Isabelle require an amount of effort from the users. In fact, users are expected to write the entire proofs and the task of the system is mainly to mechanically check the validity of the proofs using formal rules of logic. The same statement can be made for ACL2 in which users are to build necessary lemmas and hints to the prover. In fact, the design of ACL2 reflects J. S. Moore's viewpoint on program verification as in \emph{A Mechanized Program Verifier}
 \begin{quote}
 \scriptsize{While I strongly advocate and actively work on the integration of decision procedures and static
 analyzers into mechanized theorem provers to ease the burden of proof, I do not believe they are
@@ -111,7 +111,7 @@ Fortunately, these systems already have a big library which formalized many part
 %In the program verification contexts where hundreds of verification conditions can be generated, asking human user to prove them one-by-one is not an acceptable system.
 %So what is our approach?
 
-So we propose a system which has sufficiently rich built-in mathematical tools for theory of integers.
+The fact that easy examples like transitivity can be handled by standard technique like Skolemization and resolution makes this example in Isabelle or ACL2 hardly satisfiable. Therefore, we propose a system which has sufficiently rich built-in mathematical tools for theory of integers.
 
 \section{The language of \zetatp}
 
@@ -131,17 +131,19 @@ The optional {\it induction} statement indicates the quantity to do induction on
 
 \subsection{Knowledge base}
 
-In contrast to most ATP which try to build rich theories from a simple logical core (first order, higher order, Zermelo-Fraenkel set theory, etc.), we take a \emph{reasonable theory} as our starting point. In particular, we assume the commutative ring structure for the integers and apply various strategy in symbolic algebra.
+In contrast to most ATP which try to build rich theories from a simple logical core (first order, higher order, Zermelo-Fraenkel set theory, etc.), we take a \emph{reasonable theory} as our starting point. In particular, we assume the commutative ring structure for the integers, apply various strategy in symbolic algebra and utilize external computer algebra system (CAS).
+
+
 
 \subsection{Embedded computer algebra}
 
 A large part of arithmetic concerns algebraic equations. To support this functionality, our system needs a symbolic manipulation for elementary algebra. To do so, we make use of techniques in symbolic algebra such as term normalization.
 
-As a basic functionality, algebraic constraints are normalized and manipulated internally by our system. This is essential as SMT solvers are not good at these manipulation while it is not easy to access such information from existing automated theorem provers  or computer algebra systems (CAS). Besides, CAS might not make \emph{sound} derivations due to their lack of formalism, for example, any CAS like \texttt{Reduce} would be willing to make simplification
+As a basic functionality, algebraic constraints are normalized and manipulated internally by our system. This is essential as SMT solvers are not good at these manipulation while it is not easy to access such information from existing ATP or CAS. Besides, CAS might not make \emph{sound} derivations due to their lack of formalism, for example, any CAS like \texttt{Reduce} would be willing to make simplification
 $$\frac{x^2-1}{x-1}$$
 to
 $$x+1$$
-while it is only valid to do so if $x \not= 1$ (c.f. J. Harrison's \emph{A Short Survey of Automated Reasoning}). In any event, the methods of existing CAS are useful.
+while it is only valid to do so if $x \not= 1$ (c.f. J. Harrison's \emph{A Short Survey of Automated Reasoning}). In any event, the methods of existing CAS are useful: one can still utilize such simplification results in theorem proving applications.
 
 \subsection{Automated induction tactics}
 
@@ -149,11 +151,19 @@ The induction hint allows the prover to try proving the theorem using mathematic
 
 \subsection{Theorem transformation}
 
-Sometimes, the original form of the theorem is not easily proved while its \emph{contrapositive} is easily proved.
+Sometimes, the original form of the theorem is not easily proved while its \emph{contrapositive} is easily proved. The law of contrapositive is
+$$\Gamma \cup \{\phi\} \vdash \psi \text{ if and only if } \Gamma \cup \{\neg \psi\} \vdash \neg \phi$$
+which allows us to ``switch'' hypothesis and conclusion.
 
 \subsection{Instantiation of quantification}
 
 We follow M. Davis and H. Putnam's \emph{A Computing Procedure for Quantification Theory} with the method of Skolemization. Method B in W. V. Quine's \emph{A Proof Procedure for Quantification Theory} seems to offer a better alternative due to the absence of making a big conjunction since the position of each quantification intuitively embeds its meaning which is lost after the transformation into prenex normal form.
+
+Our strategy will differ at some point. For example, we make a special construct
+\begin{center}
+\texttt{HasRoot(}$\langle$ equations$\rangle$\texttt{)}
+\end{center}
+which is to replace $\exists x_1, x_2, ..., x_t :\; \varphi$ where $\varphi$ contains only elementary algebraic equations.
 
 \subsection{User-defined functions and relations}
 

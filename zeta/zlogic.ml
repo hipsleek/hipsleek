@@ -17,7 +17,7 @@ type symbol = {
 		axioms : term list;    (* list of defining axioms *)
 		induction : term list; (* induction hints *)
 	}
-
+	
 (**
  * Record structure for theorems
  *)
@@ -25,6 +25,24 @@ type theorem = {
 		thm : term; (* content of theorem *)
 		proved : bool; (* proved/unproved status *)
 		(* TODO added user hints for theorem *)
+	}
+	
+(**
+ * Symbol database
+ *)
+type symbol_table = (string * symbol) list
+
+let find_symbol st s =
+	List.assoc s st
+	
+(**
+ * System database
+ *)
+type database = {
+		defined_symbol : string list;
+		axioms : symbol_table;
+		
+		proved_theorems : term list;
 	}
 
 (* THEOREM PROVING *)
@@ -38,6 +56,37 @@ type theorem = {
 
 let get_all_axioms st =
 	Hashtbl.fold (fun _ y axms -> List.append y.axioms axms) st []
+
+(**
+ * Introduce additional Skolem functions and constants to remove existential quantifiers
+ *)
+let skolemize st t =
+	(st, t)
+	
+(**
+ * Normalize term algebraically
+ *  - flatten associative operators
+ *  - make all quantified variables different
+ *  - re-order and simplify sub-terms
+ * TODO implement
+ *)
+let rec normalize t = match t with
+	| Num _ | Var _ -> t
+	| FunApp (f, x) -> 
+		let nx = List.map normalize x in
+		(match f with
+			| And | Or ->
+				let nx = List.map (fun y -> match y with
+					| FunApp (f, x1) -> x1
+					| _ -> [y]) nx in
+				FunApp (f, (List.flatten nx))
+			| _ -> t)
+
+(**
+ * Simple algebraic equation solving facility
+ *)
+let solve_eq_constraints tl =
+	tl
 
 let check st t =
 	fst (Zexprf.Z3.derive (t :: (get_all_axioms st)))

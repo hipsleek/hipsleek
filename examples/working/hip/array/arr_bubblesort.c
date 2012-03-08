@@ -14,7 +14,7 @@ relation sorted(int[] a, int i, int j) ==
 // adjacent elements until no transposition is required.
 void bubblesort(ref int[] a, int i, int j)
 	requires [k,t] dom(a, k, t) & k <= i & j <= t
-	ensures sorted(a', i, j) & idexc(a,a',i,j);
+	ensures dom(a, k, t) & sorted(a', i, j) & idexc(a,a',i,j);
 {
 	if (!bubble(a, i, j))
 		bubblesort(a, i, j);

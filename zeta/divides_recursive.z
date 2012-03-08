@@ -1,0 +1,30 @@
+/* "divides" as a recursively defined relation */
+
+// Recursive definition for divides
+// relation and the analogous 
+// theorems on reflexivity, 
+// antisymmetry and transitivity
+let [induction y] divides(x, y)
+such that
+y = 0 -> divides(x,y);
+0 < y & y < x -> ! divides(x,y);
+0 < x & divides(x,y) -> divides(x,y+x);
+0 < x & divides(x,y) -> divides(x,y-x);
+x < 0 & divides(0-x,y) -> divides(x,y);
+x < 0 & divides(x,y) -> divides(0-x,y);
+x = 0 & divides(x,y) -> y = 0.
+
+// equivalence to the original definition
+theorem divides(x,y) <-> exists {z} y = x * z.
+
+// Every integer is even or odd
+theorem divides(2,n) | divides(2,n+1).
+
+// Reflexivity of divide
+theorem divides(x, x).
+
+// Antisymmetric property of divide
+theorem 0 <= x & 0 <= y & divides(x,y) & divides(y,x) -> x = y.
+
+// Transitivity of divide relation
+theorem divides(x, y) & divides(y, z) -> divides(x, z).

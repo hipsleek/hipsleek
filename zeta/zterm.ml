@@ -222,27 +222,6 @@ let mkBot () = FunApp (Bot, [])
 
 let mkVar v = Var (SWild (inc var_count), v) (* add a wild sort for the IMAGE *)
 
-(* TERM NOMALIZATION *)
-
-(**
- * Normalize term
- *  - flatten associative operators
- *  - make all quantified variables different
- *  - re-order and simplify sub-terms
- * TODO implement
- *)
-let rec normalize t = match t with
-	| Num _ | Var _ -> t
-	| FunApp (f, x) -> 
-		let nx = List.map normalize x in
-		(match f with
-			| And | Or ->
-				let nx = List.map (fun y -> match y with
-					| FunApp (f, x1) -> x1
-					| _ -> [y]) nx in
-				FunApp (f, (List.flatten nx))
-			| _ -> t)
-
 (* TERM UTILITIES *)
 
 let rec collect_vars t = match t with

@@ -13,7 +13,6 @@ divides(x,y) -> divides(y,z) -> divides(x,z).
 
 theorem y = 0 -> divides(x,y).
 
-/*
 theorem 0 < y & y < x -> ! divides(x,y).
 
 theorem 0 < x & divides(x,y) -> divides(x,y+x).
@@ -25,7 +24,6 @@ theorem x < 0 & divides(0-x,y) -> divides(x,y).
 theorem x < 0 & divides(x,y) -> divides(0-x,y).
 
 theorem x = 0 & divides(x,y) -> y = 0.
-*/
 
 // Reflexivity of divide
 theorem divides(x, x).
@@ -38,43 +36,11 @@ theorem 0 <= x & 0 <= y & divides(x,y) &
 theorem divides(m, n) & divides(n, p) -> 
 	divides(m, p).
 
-/*
 // Every integer is even or odd
 theorem divides(2,n) | divides(2,n+1).
 
 // Generalization of the above to get division algorithm
 //theorem 0 < x -> exists {z} (0 <= z & z < x & divides(x,y-z)).
-*/
-
-// Recursive definition for divides
-// relation and the analogous 
-// theorems on reflexivity, 
-// antisymmetry and transitivity
-/*
-let [induction y] divrec(x, y)
-such that
-y = 0 -> divrec(x,y);
-0 < y & y < x -> ! divrec(x,y);
-0 < x & divrec(x,y) -> divrec(x,y+x);
-0 < x & divrec(x,y) -> divrec(x,y-x);
-x < 0 & divrec(0-x,y) -> divrec(x,y);
-x < 0 & divrec(x,y) -> divrec(0-x,y);
-x = 0 & divrec(x,y) -> y = 0;
-divrec(x,y) -> divrec(y,z) -> divrec(x,z).
-*/
-/*
-// Every integer is even or odd
-theorem divrec(2,n) | divrec(2,n+1).
-
-// Reflexivity of divide
-theorem divrec(x, x).
-
-// Antisymmetric property of divide
-theorem 0 <= x & 0 <= y & divrec(x,y) & divrec(y,x) -> x = y.
-
-// Transitivity of divide relation
-theorem divrec(m, n) & divrec(n, p) -> divrec(m, p).
-*/
 
 let [induction x] isprime(x)
 be such that
