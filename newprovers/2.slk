@@ -1,29 +1,41 @@
+// (1)
 checkentail  n>4 & n<8  |- n>3 .
 
+// (2)
 checkentail  n>4 & n<8 & m>1 |- m>2 .
 
+// (3)
 checkentail  ((!k) & (c)) |k |- true.
 
+// (4)
 checkentail  k & !k |- false.
 
+// (5)
 checkentail  k | !k |- false.
 
+// (6)
 checkentail  k |- k.
 
+// (7)
 checkentail  k |- !k.
 
+// (8)
 checkentail  1 > (k:int) |- k>0.
 
+// (9)
 checkentail  1 + k > 1 |- k>0.
 
-checkentail  k  |- k.
-
+// (10)
 checkentail  k & (m: bool)  |- k.
 
+// (11)
 checkentail  k & !k |- k.
 
+// (12)
 checkentail  k & !(!m) |- k.
 
+// (13)
 checkentail  m & k |- k.
 
+// (14)
 checkentail  (k:float)>1.0  |- true.

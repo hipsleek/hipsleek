@@ -1,0 +1,1 @@
+checkentail  (m:float) > 3 |- m > 2. // problem
