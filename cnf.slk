@@ -1,2 +1,10 @@
 
-checkentail m | k |-k.
+checkentail m | !k |-k.
+
+checkentail  k &!(!k) |-true .
+
+checkentail  k &!k |-true .
+
+checkentail  k &!k |-false .
+
+checkentail  k |!k |-k .
