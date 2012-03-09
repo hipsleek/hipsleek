@@ -405,7 +405,7 @@ let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
   (* let _ = print_endline "** In function minisat.is_sat: " in *)
   let result = minisat_is_sat f sat_no in
-  (* let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
+  (*let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
   result
 
 let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
@@ -437,11 +437,11 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
   (*let _ = print_endline "** In function minisat.imply:" in *)
   let cons=  (mkNot_s conseq) in
-    let imply_f= mkAnd ante conseq no_pos  in
+    let imply_f= mkAnd ante cons no_pos  in
     (*let _=print_endline ("imply Ante Formula :" ^ (Cprinter.string_of_pure_formula ante))in
     let _=print_endline ("imply conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq))in*)
     let res =minisat_is_sat imply_f ""
-    in res
+    in if(res) then false else true
   
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function minisat.imply:" in *)
