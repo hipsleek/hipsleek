@@ -1,8 +1,12 @@
+\documentclass{article}
+
+\begin{document}
+
 Problems:
 
 1. Z3 is too weak to handle multiplicative arithmetic!
 
-In particular, the application of division theorems i.e. automatic inference of constraints like x = y * z + t & 0 <= t <= |z| leads to y = x div z & t = x mod z.
+In particular, the application of division theorems i.e. automatic inference of constraints like x = y * z + t \& 0 <= t <= |z| leads to y = x div z \& t = x mod z.
 Pattern matching for division and modulo. When? How?   
 Why should Z3 fail in transitivity of divides?
 The formula can simply be skolemized and the induced higher-order unification seems to be trivial if the system do the basic algebra.
@@ -21,3 +25,5 @@ Should we have rewrite rules or proof tactics?
 4. Programming aspect
 
 5. Improvements
+
+\end{document}
