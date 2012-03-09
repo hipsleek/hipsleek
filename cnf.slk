@@ -7,7 +7,11 @@ checkentail  k &!k |-true .
 
 checkentail  k &!k |-false .
 
-checkentail  k |!k |-k .
+checkentail  k |!k |-k . 
+
+checkentail  k |-!k  .
+
+checkentail  !k |-k  .
 
 checkentail  k & !m |-!k .
 

@@ -224,7 +224,7 @@ let rec collect_output (chn: in_channel)  : (string * bool) =
   with 
   | End_of_file ->  ("", false)
 
-(* read the output stream of SPASS prover, return (conclusion * reason)    *)
+(* read the output stream of MINISAT prover, return (conclusion * reason)    *)
 (* TODO: this function need to be optimized                                *)
 let get_prover_result (output : string) :bool =
   let validity =
