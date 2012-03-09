@@ -348,7 +348,7 @@ let string_of_spass_output output =
 let rec collect_output (chn: in_channel) (accumulated_output: string list) : (string list * bool) =
   try
     let line = input_line chn in
-    let _ = print_endline (line) in 
+    (*let _ = print_endline (line) in *)
     if line = "---SPASS-MOD-STOP---" then
       (accumulated_output, true)
     else
@@ -528,7 +528,7 @@ GENERATE SMT INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 let to_spass_dfg (ante: Cpure.formula) (conseq: Cpure.formula): string =
   let (ante_str, func_list1, pred_list1) = spass_dfg_of_formula ante in
   let (conseq_str, func_list2, pred_list2) = spass_dfg_of_formula conseq in
-  let _=print_endline ("Spass imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante)^" " ^(Cprinter.string_of_pure_formula conseq))in
+  (*let _=print_endline ("Spass imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante)^" " ^(Cprinter.string_of_pure_formula conseq))in*)
   let func_list = Gen.BList.remove_dups_eq (=) (func_list1 @ func_list2) in
   let pred_list = Gen.BList.remove_dups_eq (=) (pred_list1 @ pred_list2) in
   let dfg_description =
@@ -658,7 +658,7 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
       let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
-        let _ = print_endline "-- use Omega.imply_..." in
+        (*let _ = print_endline "-- use Omega.imply_..." in*)
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
         match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
         | None -> (false, true)
@@ -689,14 +689,14 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
 
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
    (*let _ = print_endline "** In function Spass.imply 1:" in *)
-   let _=print_endline ("Spass imply Ante Formula :" ^ (Cprinter.string_of_pure_formula ante))
+   (*let _=print_endline ("Spass imply Ante Formula :" ^ (Cprinter.string_of_pure_formula ante))
   and _=print_endline ("Spass imply Conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq))
-  in
+  in*)
   let result = spass_imply ante conseq timeout in
   (* let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
   result
 
-(*let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
+let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
   (* let _ = print_endline "** In function Spass.imply_with_check:" in *)
   Cpure.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
@@ -718,7 +718,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   (*let _ = print_endline "** In function Spass.imply: 2" in *)
   Debug.no_1_loop "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
-*)
+
 (**
 * Test for satisfiability
 * We also consider unknown is the same as sat

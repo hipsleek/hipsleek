@@ -2481,7 +2481,12 @@ let stop_prover () =
     | Z3 ->
       Smtsolver.stop();
     | SPASS -> Spass.stop();
-    | MINISAT -> Minisat.stop() ; 
+    | MINISAT ->  if !Redlog.is_reduce_running then (
+	          Redlog.stop () ;
+                  Omega.stop () ;
+		  Minisat.stop() 
+                  )
+                  else (Omega.stop () ;Minisat.stop() )
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096

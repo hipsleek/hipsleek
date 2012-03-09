@@ -368,14 +368,14 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     if not (can_minisat_handle_formula f) then
       try
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
-        let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
+        let optr= Redlog.is_sat f sat_no(*(Omega.is_sat f sat_no)*) in
         match optr with
-        | Some r -> (r, false)
-        | None -> (true, false)
-      with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
+        | true -> (true, false)
+        | false -> (false, false)
+      with _ -> (false,false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
     else (false, true) in
   if (should_run_minisat) then
-    (* let _ = print_endline "-- use minisat.check_problem..." in *)
+    (*let _ = print_endline "-- use minisat.check_problem..." in *)
     (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
     let minisat_input = to_minisat f in
     let validity =
@@ -438,9 +438,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   (*let _ = print_endline "** In function minisat.imply:" in *)
   let cons=  (mkNot_s conseq) in
     let imply_f= mkAnd ante cons no_pos  in
-    (*let _=print_endline ("imply Ante Formula :" ^ (Cprinter.string_of_pure_formula ante))in
-    let _=print_endline ("imply conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq))in*)
-    let res =minisat_is_sat imply_f ""
+    let res =is_sat imply_f ""
     in if(res) then false else true
   
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =

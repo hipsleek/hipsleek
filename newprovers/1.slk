@@ -6,4 +6,4 @@ checkentail  (m:int) > 3 |- m > 2.
 
 //checkentail  (m:float) > 3 |- m > 2. // problem
 
-checkentail  (m:float) > 3.0 |- m > 2.0.
+checkentail  (m:float) > (3.0) |- m > (2.0) .
