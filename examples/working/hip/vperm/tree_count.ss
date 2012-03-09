@@ -17,8 +17,8 @@ tree<n> == self = null & n = 0
 //valid
 //two child thread
 void parallelCount2(node2 t, ref int count)
-  requires t::tree(f)<n> & @value[t] & @full[count]
-     ensures t::tree(f)<n> & count'=n & n >= 0 & @full[count]; //'
+  requires t::tree(f)<n> // & @value[t] & @full[count]
+     ensures t::tree(f)<n> & count'=n & n >= 0; // & @full[count]; //'
 {
   int cleft=0;
   int cright=0;

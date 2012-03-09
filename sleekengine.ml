@@ -8,6 +8,7 @@ open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
+open Label_only
 
 module H = Hashtbl
 module I = Iast
@@ -173,10 +174,8 @@ let process_pred_def pdef =
 		ignore (AS.compute_view_x_formula !cprog cpdef !Globals.n_xpure);
         ignore (AS.set_materialized_prop cpdef);
 	let cpdef = AS.fill_one_base_case !cprog cpdef in 
-    let cpdef = 
-      if !Globals.enable_case_inference then 
-        AS.view_case_inference !cprog iprog.I.prog_view_decls cpdef else cpdef in
-		let n_cpdef = AS.view_prune_inv_inference !cprog cpdef in
+    (*let cpdef =  if !Globals.enable_case_inference then AS.view_case_inference !cprog iprog.I.prog_view_decls cpdef else cpdef in*)
+	let n_cpdef = AS.view_prune_inv_inference !cprog cpdef in
     !cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
     let n_cpdef = {n_cpdef with 
         C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ;
@@ -233,7 +232,7 @@ let convert_pred_to_cast () =
   let cprog2 = AS.sat_warnings cprog1 in        
   let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
-  let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
+  let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if !Globals.print_input then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
@@ -520,15 +519,14 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n")) no_pos in
-  (* let ante = CF.normalize_varperm_formula ante in *)
-  let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
+  let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
   let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n")) no_pos in
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
@@ -581,13 +579,16 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
-  DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
-  let (_, term_output) = List.fold_left (fun (no,a) (b,m) ->
-    if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
-    else (no+1, a)) (1,"") term_res 
+  let term_output = 
+    if t_valid then ""
+    else
+      snd (List.fold_left (fun (no,a) (b,m) ->
+        if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
+        else (no+1, a)) (1,"") term_res)
   in
   if not valid then
     begin
@@ -631,20 +632,29 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string ("exception caught " ^ check_id ^ " check\n")
+
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let num_id = "\nEntail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
+  (* with e -> print_exc num_id *)
 
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
-  let num_id = "\nEntail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+      (* print_exc num_id *)
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in

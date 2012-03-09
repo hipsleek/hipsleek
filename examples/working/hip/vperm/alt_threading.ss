@@ -8,8 +8,8 @@
  */
 
 void increment(ref int x)
-  requires @full[x]
-  ensures x'=x+1 & @full[x]; //'
+  requires true //@full[x]
+  ensures x'=x+1; // & @full[x]; //'
 {
   x++;
 }

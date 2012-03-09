@@ -120,7 +120,8 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
 (* return formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_formula f : (string * string list * string list) =
   match f with
-  | BForm (b, _)         -> spass_dfg_of_b_formula b
+  | BForm (b, _)         -> spass_dfg_of_b_formula b	
+  | AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _)      -> (
       let (s1, func_list1, pred_list1) = spass_dfg_of_formula f1 in
       let (s2, func_list2, pred_list2) = spass_dfg_of_formula f2 in
@@ -658,7 +659,7 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
       try
         let _ = print_endline "-- use Omega.imply_..." in
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
-        match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
+        match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
         | None -> (false, true)
         | Some r -> (r, false)
       with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
@@ -731,7 +732,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       let _ = print_endline "-- use Omega.is_sat..." in *)
       try
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
-        let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
+        let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)

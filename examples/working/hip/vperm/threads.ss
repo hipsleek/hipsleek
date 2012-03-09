@@ -10,7 +10,7 @@ int rand()
   ensures true;
 
 int fac(int x)
-  requires @value[x]
+  requires true //@value[x]
   ensures true;
 
 data node {
@@ -30,7 +30,7 @@ tree<n> == self = null & n = 0
 
 
 node make_tree(int depth)
-  requires @value[depth]
+  requires true //@value[depth]
   ensures res::tree<depth>;
 {
   if (depth==0) {return null;}
@@ -48,7 +48,7 @@ node make_tree(int depth)
 
 //do not care about the value of sum
 int tree_compute_sum_facs(node t)
-  requires t::tree<n> & @value[t]
+  requires t::tree<n> //& @value[t]
   ensures t::tree<n>;
 {
   if (t==null) 
@@ -63,8 +63,8 @@ int tree_compute_sum_facs(node t)
 
 //do not care about the value of sum
 void summator(node t, ref int sum)
-  requires t::tree<n> & @value[t] & @full[sum]
-  ensures t::tree<n> & @full[sum];
+  requires t::tree<n> // & @value[t] & @full[sum]
+  ensures t::tree<n>; // & @full[sum];
 {
   int tmp = tree_compute_sum_facs(t);
   sum = tmp;
@@ -73,7 +73,7 @@ void summator(node t, ref int sum)
 //fork a thread, return its id
 //do not care about the value of sum
 int start_sum_thread(node t, ref int sum)
-  requires t::tree<n> & @value[t] & @full[sum]
+  requires t::tree<n> //& @value[t] & @full[sum]
   ensures res=id
           and t::tree<n> & @full[sum] & thread = id;
 {
@@ -86,7 +86,7 @@ int start_sum_thread(node t, ref int sum)
 void join_sum_thread(node t, ref int sum, int id)
   requires @value[t,id]
            and t::tree<n> & @full[sum] & thread = id
-  ensures t::tree<n> & @full[sum];
+  ensures t::tree<n>; // & @full[sum];
 {
   join(id);
 }

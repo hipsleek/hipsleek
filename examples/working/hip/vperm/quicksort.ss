@@ -22,8 +22,8 @@ sll<n, sm, lg> ==
 // xs constains elements < c
 // res include elemts >= c
 node partition(ref node xs, int c)
-  requires xs::bnd<n, sm, bg> & @full[xs] & @value[c] & sm <= c <= bg
-    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & @full[xs] & n = a+b;//'
+  requires xs::bnd<n, sm, bg> & sm <= c <= bg //& @full[xs] & @value[c]
+    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b; // & @full[xs];//'
 {
 	node tmp1;
 	int v; 
@@ -54,9 +54,9 @@ node partition(ref node xs, int c)
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
  case{
-  x = null -> requires y::sll<m,s2,b2> & @value[x,y]
+  x = null -> requires y::sll<m,s2,b2> //& @value[x,y]
              ensures res::sll<m,s2,b2>;
- x != null -> requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2 & @value[x,y]
+  x != null -> requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2 //& @value[x,y]
               ensures res::sll<nn+m, s0, b2>;
 }
 {
@@ -73,11 +73,11 @@ node append_bll(node x, node y)
 // two thread
 void para_qsort2(ref node xs)
  case{
-  xs = null -> requires @full[xs]
-               ensures xs'=null & @full[xs];
+  xs = null -> requires true //@full[xs]
+               ensures xs'=null; // & @full[xs];
   xs != null ->
-     requires xs::bnd<n, sm, bg> & n>0 & @full[xs]
-     ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg & @full[xs]; //'
+     requires xs::bnd<n, sm, bg> & n>0 // & @full[xs]
+     ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg; // & @full[xs]; //'
 }
 {
 	node tmp;

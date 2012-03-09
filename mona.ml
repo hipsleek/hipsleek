@@ -14,7 +14,8 @@ let timeout = ref 11.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
 let log_all_flag = ref false
-let log_all = open_out "allinput.mona"
+let log_all = open_log_out "allinput.mona"
+
 
 let automaton_completed = ref false
 let sat_optimize = ref false
@@ -159,6 +160,7 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
     match f with
       | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
       | CP.And (p1, p2, l1) -> (CP.mkAnd (helper p1) (helper p2) l1)
+	  | CP.AndList b -> CP.AndList (Gen.map_l_snd helper b)
       | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, l1)
       | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (helper p1),lbl, l1)
       | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (helper p1),lbl, l1)
@@ -193,6 +195,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
   | CP.Not(f1, _,_) -> (find_order_formula f1 vs)
+  | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
@@ -237,9 +240,9 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
 	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
 	          else 
 	            begin
-	              if (r == 0) then
-	                ((Hashtbl.replace vs sv1 1); true)
-	              else false
+	                if (r == 0) then
+	                  ((Hashtbl.replace vs sv1 1); true)
+	                else false
 	            end
 	        with
 	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
@@ -254,8 +257,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
 	          if (r == 2) then 
 	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
 	          else 
-	            if (r == 0) then
-	              ((Hashtbl.replace vs sv1 1); true)
+	            if (r == 0) then ((Hashtbl.replace vs sv1 1); true)
 	            else false
 	        with
 	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
@@ -266,8 +268,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
 	          if (r == 1) then 
 	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "\n")}
 	          else 
-	            if(r == 0) then
-	              ((Hashtbl.replace vs sv1 2); true)
+	            if(r == 0) then ((Hashtbl.replace vs sv1 2); true)
 	            else
 	              false
             with
@@ -338,7 +339,7 @@ and find_order_exp (e : CP.exp) order vs = match e with
           try
 	        let r = Hashtbl.find vs sv1 in 
 	        if (r == 0 && order != 0) then
-	          ((Hashtbl.replace vs sv1 order); true) 
+              ((Hashtbl.replace vs sv1 order); true) 
 	        else
 	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
 	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -395,7 +396,20 @@ and is_firstorder_mem_a e vs =
     | CP.Null _ -> true
     | _ -> false
 
-
+and part_firstorder_mem e vs =
+  match e with
+    | CP.Var(sv1, l1) ->
+          begin
+            try 
+	          let r = Hashtbl.find vs sv1 in 
+	          if (r == 1) then true
+	          else false
+            with 
+	          | Not_found -> false
+          end
+    | CP.IConst _
+    | CP.Null _ -> true
+    | _ -> false
 (*
   Pretty printing
 *)
@@ -450,6 +464,8 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
+  | CP.AConst (i, _) -> ([], ("pconst(" ^ (string_of_int (int_of_heap_ann i))
+                              ^ ")"), "")
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
@@ -643,6 +659,7 @@ and mona_of_b_formula_x b f vs =
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+	  | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
 	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
@@ -686,6 +703,7 @@ and mona_of_formula_x f initial_f vs =
     match f with
       | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
       | CP.And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2) ^ ")"
+	  | CP.AndList _ -> Gen.report_error no_pos "mona.ml: encountered AndList, should have been already handled"
       | CP.Or (p1, p2, _,_) -> "(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
       | CP.Not (p, _,_) ->
             begin
@@ -1013,7 +1031,8 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
   (* let _ = Hashtbl.iter (fun x y -> (print_string ("var " ^ (Cprinter.string_of_spec_var x) ^ " --> " ^ (string_of_int y) ^ "\n"))) vs in *)
-  let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.Var(sv, no_pos)) vs)) all_fv) in
+  let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
+      (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
     else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ "; " in

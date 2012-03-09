@@ -21,7 +21,7 @@ int sigmaright(int[] a, int i, int j)
 				ensures sumarray(a,i,j,res);
 		i > j -> 
 				requires Term
-			ensures sumarray(a,i,j,res);
+			  ensures sumarray(a,i,j,res);
 	}
 {
 	if (i > j)
