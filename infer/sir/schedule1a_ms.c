@@ -212,6 +212,7 @@ case{
     }
 }
 
+//17
 relation FP1(node a, int b, int c).relation FP2(int b, int c).
 relation FP3(node a, int b, int c).relation FP4(int b, int c).
 relation FP5(node a, int b, int c).relation FP6(int b, int c).
@@ -329,6 +330,7 @@ requires pq1::ll<n1> * pq2::ll<n2> & ratio >=1
     n1 <= 0 -> ensures pq1'::ll<n1> * pq2'::ll<n2>;//'
 }
 
+//4
 relation DUP1(int a, int b).
 relation DUP2(int a, int b).
 void do_upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2)
@@ -455,6 +457,7 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
    bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
  }
 
+//10
 relation UP1(int a, int b, int c, int d, int e, int f).
   relation UP2(int a, int b).
   relation UP3(node a).
@@ -553,6 +556,7 @@ case {
    n1+n2+n3 <= 0 -> ensures block_queue'::ll<n> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & cur_proc' = null;
 }
 
+//15
 relation BP1(int a, int b, int c, int d, int e, int f, node g).
 relation BP2(int a, int b, int c, int d, int e, int f, node g).
 void block_process1(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
@@ -581,6 +585,7 @@ node new_process(int prio, ref int alloc_proc_num, ref int num_processes)
   & (num_processes'= num_processes+1) &
              (alloc_proc_num' = alloc_proc_num+1);
 
+//3
         relation NP(int a, int b, int c, int d, int e).
 node new_process1(int prio, ref int alloc_proc_num, ref int num_processes)
   infer [NP]
@@ -611,6 +616,7 @@ void add_process(int prio, ref int alloc_proc_num, ref int num_processes, ref no
              (alloc_proc_num' = alloc_proc_num) & flow __error;
  }
 
+//24
 relation AP1(int a1, int b1, int c1, int a2, int b2, int c2, int d1, int d2, int e1, int e2).
 relation AP2(int a1, int b1, int c1, int a2, int b2, int c2, int d1, int d2, int e1, int e2).
 relation AP3(int a1, int b1, int c1, int a2, int b2, int c2, int d1, int d2, int e1, int e2).
@@ -656,6 +662,7 @@ node init_prio_queue_helper(node queue,int prio,int i,int n/*, ref int alloc_pro
         ensures res::ll<n>;
     //&(num_processes'= n) & (alloc_proc_num' = n);//'
 
+//2
  relation IPH(int a, int b).
 node init_prio_queue_helper1(node queue,int prio,int i,int n/*, ref int alloc_proc_num, ref int num_processes*/)
   infer [IPH]
@@ -685,6 +692,7 @@ void init_prio_queue(int prio, int num_proc, ref node pq1, ref node pq2, ref nod
         //(num_processes'= num_processes) & (alloc_proc_num' = alloc_proc_num);//'
 }
 
+//21
  relation IPQ1(int a, int b, int c, int d, int e1, int e2, int f).
 relation IPQ2(int a, int b, int c, int d, int e1, int e2, int f).
 relation IPQ3(int a, int b, int c, int d, int e1, int e2, int f).

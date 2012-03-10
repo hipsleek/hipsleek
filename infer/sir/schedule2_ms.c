@@ -222,53 +222,57 @@ case {
   prio > 3 | prio < 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & npid'=npid &res = -4;//'
  }
 
+//18:6
 relation NJ1(int a, int b, int c, int d, int e, int f).
 relation NJ2(int a, int b, int c).
 relation NJ3(int a, int b, int c, int d, int e, int f).
 relation NJ4(int a, int b, int c).
 int new_job1(int prio,ref int npid,ref node curJob,ref node pq1, ref node pq2, ref node pq3)
-      infer @post [NJ1,NJ2,NJ3,NJ4]
+  infer [NJ1,NJ2,NJ3,NJ4]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3> & prio>=1 & prio<=3
-case {
+  case {
   prio = 0 -> ensures true; //error
-  prio >= 1 & prio<=3 -> case{
+  prio >= 1 & prio<=3 -> 
+    case
+    {
     curJob = null -> ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
-    curJob'::node<_,_,null> &NJ1(n1,n2,n3,n4,n5,n6) & NJ2(npid',npid,res);//& n4+n5+n6=n1+n2+n3 & npid'=npid +1 & res = 0;
-    curJob != null ->requires curJob::node<_,v,null> & v>=1 & v<=3
-      ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6> *curJob'::node<_,v3,null> &NJ3(n1,n2,n3,n4,n5,n6) & NJ4(npid',npid,res);
-    //& n4+n5+n6=n1+n2+n3+1 & npid'=npid +1 &res = 0;//'v3>=v
+    curJob'::node<_,_,null> & NJ1(n1,n2,n3,n4,n5,n6) & NJ2(npid',npid,res); //& n4+n5+n6=n1+n2+n3 & npid'=npid+1 & res=0;
+    curJob != null ->
+      requires curJob::node<_,v,null> & v>=1 & v<=3
+      ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6> *curJob'::node<_,v3,null> 
+      & NJ3(n1,n2,n3,n4,n5,n6) & NJ4(npid',npid,res);//& n4+n5+n6=n1+n2+n3+1 & npid'=npid+1 & res=0;//'v3>=v
+    }
+  prio > 3 | prio < 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>;//& npid'=npid &res = -4;//'
   }
-  prio > 3 | prio < 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>;
-//& npid'=npid &res = -4;//'
- }
 {
   int status = 0;//OK 0
   node new_process, tmp;
-    npid = npid + 1;
-    //new_process = (struct process *) malloc(sizeof(struct process));
-    //if(!new_process) status = MALLOC_ERR;
-    //else
-    //{
-    //new_process.id = pid;
-    //new_process.priority = prio;
-    //	new_process.next = null;//(struct process *) 0;
-    new_process = new node(npid, prio, null);
-    //assume(prio=1);
-    // assume(curJob!=null);
-    //dprint;
-    tmp = null;
-    status = enqueue(prio, new_process, curJob,tmp,pq1,pq2,pq3);
-    if(status != 0)
-      {
-      free(new_process); // Return process block
-        npid = npid -1; // Unsuccess. Restore pid
-      }
-    //}
-    //if(status) next_pid--; // Unsuccess. Restore pid 
-    return (status);
-}
+  npid = npid + 1;
+  //new_process = (struct process *) malloc(sizeof(struct process));
+  //if(!new_process) status = MALLOC_ERR;
+  //else
+  //{
+  //new_process.id = pid;
+  //new_process.priority = prio;
+  //	new_process.next = null;//(struct process *) 0;
+  new_process = new node(npid, prio, null);
+  //assume(prio=1);
+  // assume(curJob!=null);
+  //dprint;
+  tmp = null;
+  status = enqueue(prio, new_process, curJob,tmp,pq1,pq2,pq3);
+  if(status != 0)
+  {
+    free(new_process); // Return process block
+    npid = npid -1; // Unsuccess. Restore pid
+  }
+  //}
+  //if(status) next_pid--; // Unsuccess. Restore pid 
+  return (status);
+  }
 
- /* increment priority at ratio in queue */
+
+/* increment priority at ratio in queue */
 int upgrade_prio(int prio,int ratio,ref node curJob,ref node pq1,ref node pq2,ref node pq3)
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
   case{
@@ -301,62 +305,76 @@ int upgrade_prio(int prio,int ratio,ref node curJob,ref node pq1,ref node pq2,re
     prio > 2 | prio <1 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & res=-4;//'
   }
 
- relation UP1(int a, int b, int c, int d, int e, int f, int res1).
- relation UP2(int a, int b, int c, int d, int e, int f, int res1).
-   relation UP3(int a).
- relation UP4(int a, int b, int c, int d, int e, int f, int res1).
- relation UP5(int a, int b, int c, int d, int e, int f, int res1).
-   relation UP6(int a).
+
+// 34:14
+relation UP1(int a, int b, int c, int d, int e, int f, int res1).
+relation UP2(int a, int b, int c, int d, int e, int f, int res1).
+relation UP3(int a).
+relation UP4(int a, int b, int c, int d, int e, int f, int res1).
+relation UP5(int a, int b, int c, int d, int e, int f, int res1).
+relation UP6(int a).
 relation UP7(int a).
 relation UP8(int a).
 int upgrade_prio1(int prio,int ratio,ref node curJob,ref node pq1,ref node pq2,ref node pq3)
-   infer @post [UP1,UP2,UP3,UP4,UP5,UP6,UP7,UP8]
+  infer [UP1,UP2,UP3,UP4,UP5,UP6,UP7,UP8]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
-  case{
-    prio = 1 -> case {
-      ratio < 1 | ratio > n1 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>;
-     // & res=-5;//'
-      ratio >= 1 & ratio <= n1 ->  case {
-	n1 = 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP3(res);//& res = 0;//'
-	n1 != 0 -> case {
-	  curJob = null -> ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+  case {
+    prio = 1 -> 
+      case {
+      ratio < 1 | ratio > n1 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>;// & res=-5;//'
+      ratio >= 1 & ratio <= n1 ->  
+        case {
+        n1 = 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP3(res);//& res = 0;//'
+        n1 != 0 -> 
+          case {
+	        curJob = null -> 
+            ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
             curJob'::node<_,_,null> & UP1(n1,n2,n3,n4,n5,n6,res);// & n4+n5+n6=n1+n2+n3-1 & res=0;//'
-	  curJob != null -> requires curJob::node<_,v,null>& v>=1 & v<=3
-	   ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+	        curJob != null -> 
+            requires curJob::node<_,v,null>& v>=1 & v<=3
+	          ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
             curJob'::node<_,_,null> & UP2(n1,n2,n3,n4,n5,n6,res);//& n4+n5+n6=n1+n2+n3 & res=0;//'
-	}
+	        }
+        }
       }
-    }
-    prio = 2 -> case {
+    prio = 2 -> 
+      case {
       ratio < 1 | ratio > n2 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP6(res);//& res=-5;//'
-      ratio >= 1 & ratio <= n2 ->  case {
-	n2 = 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP7(res);//& res = 0;//'
-	n2 != 0 ->case {
-	  curJob = null -> ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+      ratio >= 1 & ratio <= n2 -> 
+        case {
+        n2 = 0 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP7(res);//& res = 0;//'
+        n2 != 0 ->
+          case {
+          curJob = null -> 
+            ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
             curJob'::node<_,_,null> & UP4(n1,n2,n3,n4,n5,n6,res);//& n4+n5+n6=n1+n2+n3-1 & res=0;//'
-	  curJob != null -> requires curJob::node<_,v,null>& v>=1 & v<=3
-	   ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+	        curJob != null -> 
+            requires curJob::node<_,v,null>& v>=1 & v<=3
+	          ensures pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
             curJob'::node<_,_,null> & UP5(n1,n2,n3,n4,n5,n6,res);//& n4+n5+n6=n1+n2+n3 & res=0;//'
-	}
+	        }
+        }
       }
-    }
-    prio > 2 | prio <1 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP8(res);//& res=-4;//'
+    prio > 2 | prio < 1 -> ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UP8(res);//& res=-4;//'
   }
 {
-    int status;
-    node job, tmp;
-    tmp = null;
-    //sume(prio = 1);
-    //sume(ratio = 1);
-    if(prio < 1 || prio > 2) return (-4);//MAXLOPRIO 2; BADPRIO -4
-    status = get_process(prio, ratio, job, tmp,pq1,pq2,pq3);
-    if(status <= 0) return (status);
-    /* We found a job in that queue. Upgrade it */
-    job.priority = prio + 1;
-    status = enqueue(prio + 1, job, curJob, tmp,pq1,pq2,pq3);
-    return status;
+  int status;
+  node job, tmp;
+  tmp = null;
+  //sume(prio = 1);
+  //sume(ratio = 1);
+  if(prio < 1 || prio > 2) 
+    return (-4);//MAXLOPRIO 2; BADPRIO -4
+  status = get_process(prio, ratio, job, tmp,pq1,pq2,pq3);
+  if(status <= 0) 
+    return (status);
+  /* We found a job in that queue. Upgrade it */
+  job.priority = prio + 1;
+  status = enqueue(prio + 1, job, curJob, tmp,pq1,pq2,pq3);
+  return status;
 }
-      /*
+
+/*
  requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case { curJob=null -> case {
     n1+n2+n3>1 ->  ensures pq0'::ll<n+1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6> *curJob'::node<_,_,null> & n4+n5+n6=n1+n2+n3-2 & res=0;//'
@@ -365,30 +383,33 @@ int upgrade_prio1(int prio,int ratio,ref node curJob,ref node pq1,ref node pq2,r
   }
   curJob!=null -> ensures true;
 }
-       */
- /* Put current job in blocked queue */
+*/
+/* Put current job in blocked queue */
 int block(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
  requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case { curJob=null -> ensures true;
-  curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
+   curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
 }
 
 int block1(ref node curJob, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
-      //infer @post []
- requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
- case { curJob=null -> ensures true;
-  curJob!=null -> requires curJob::node<_,v2,null> & v2>=1 & v2<=3 ensures true;
-}
+  //infer @post []
+  requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
+  case { 
+  curJob=null -> ensures true;
+  curJob!=null -> 
+    requires curJob::node<_,v2,null> & v2>=1 & v2<=3 
+    ensures true;
+  }
 {
-    node job;
-    job = get_current(curJob, pq1, pq2, pq3);
-    if(job != null)
-    {
-      curJob = null;//(struct process *)0; // remove it
-      return (enqueue(0, job,curJob, pq0,pq1,pq2,pq3));
-// BLOCKPRIO 0 put into blocked queue 
-    }
-    return 0;//OK 0
+  node job;
+  job = get_current(curJob, pq1, pq2, pq3);
+  if(job != null)
+  {
+    curJob = null;//(struct process *)0; // remove it
+    return (enqueue(0, job,curJob, pq0,pq1,pq2,pq3));
+  // BLOCKPRIO 0 put into blocked queue 
+  }
+  return 0;//OK 0
 }
 
 /* Restore job @ ratio in blocked queue to its queue */
@@ -409,36 +430,38 @@ int unblock(int ratio,ref node curJob, ref node pq0,ref node pq1, ref node pq2, 
     }
 }
 
- relation UB1(int a, int b, int c, int d, int e, int f, int res1, int g).
-   relation UB2(int a, int b, int c, int d, int e, int f, int res1, int g).
-   relation UB3(int a).
+// 21:9
+relation UB1(int a, int b, int c, int d, int e, int f, int res1, int g).
+relation UB2(int a, int b, int c, int d, int e, int f, int res1, int g).
+relation UB3(int a).
 relation UB4(int a).
 int unblock1(int ratio,ref node curJob, ref node pq0,ref node pq1, ref node pq2, ref node pq3)
-   infer @post [UB1,UB2,UB3,UB4]
+  infer [UB1,UB2,UB3,UB4]
   requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
- case {
-   ratio  < 1 | ratio > n -> ensures pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UB3(res);
-  // & res=-5;
-    ratio >= 1 & ratio <= n -> case{
+  case {
+    ratio < 1 | ratio > n -> ensures pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UB3(res);// & res=-5;
+    ratio >= 1 & ratio <= n -> 
+      case {
       n=0 -> ensures  pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & UB4(res);// & res=0;
-      n!=0 -> case {
-	curJob = null -> ensures pq0'::ll<n-1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
-	  curJob'::node<_,v4,null> & UB1(n1,n2,n3,n4,n5,n6,res,v4);// & res=0 & n4+n5+n6=n1+n2+n3 & v4>=1 & v4<=3;//'
-        curJob != null -> requires curJob::node<_,v,null> & v>=1 & v<=3
-	   ensures pq0'::ll<n-1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
-	  curJob'::node<_,v4,null> & UB2(n1,n2,n3,n4,n5,n6,res,v4);// & res=0 & n4+n5+n6=n1+n2+n3+1 & v4>=1 & v4<=3;//'
+      n!=0 -> 
+        case {
+        curJob = null -> ensures pq0'::ll<n-1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+	      curJob'::node<_,v4,null> & UB1(n1,n2,n3,n4,n5,n6,res,v4);// & res=0 & n4+n5+n6=n1+n2+n3 & v4>=1 & v4<=3;//'
+        curJob != null -> 
+          requires curJob::node<_,v,null> & v>=1 & v<=3
+          ensures pq0'::ll<n-1>*pq1'::ll<n4>*pq2'::ll<n5>*pq3'::ll<n6>*
+	        curJob'::node<_,v4,null> & UB2(n1,n2,n3,n4,n5,n6,res,v4);// & res=0 & n4+n5+n6=n1+n2+n3+1 & v4>=1 & v4<=3;//'
+        }
       }
-
     }
-}
 {
-    int status;
-    node job;
-    status = get_process(0, ratio, job,pq0,pq1,pq2,pq3);
-    if(status <= 0) return(status);//BLOCKPRIO 0
-    /* We found a blocked process. Put it where it belongs. */
-    status = enqueue(job.priority, job, curJob, pq0,pq1,pq2,pq3);
-    return status;
+  int status;
+  node job;
+  status = get_process(0, ratio, job,pq0,pq1,pq2,pq3);
+  if(status <= 0) return(status);//BLOCKPRIO 0
+  /* We found a blocked process. Put it where it belongs. */
+  status = enqueue(job.priority, job, curJob, pq0,pq1,pq2,pq3);
+  return status;
 }
 
 /* put current job at end of its queue */
@@ -455,11 +478,12 @@ int quantum_expire(ref node curJob,ref node pq1, ref node pq2, ref node pq3)
     & res=0 & n4+n5+n6=n1+n2+n3 & v4>=1 & v4<=3;//';//& v4>=1 & v4<=3 & v4>=v2
   }
 
+// 22:10
 relation QE1(int a, int b, int c, int d, int e, int f, int res1, int g).
 relation QE2(int a, int b, int c, int d, int e, int f, int res1, int g).
 relation QE3(node a, int b).
 int quantum_expire1(ref node curJob,ref node pq1, ref node pq2, ref node pq3)
-  infer @post [QE1,QE2,QE3]
+  infer [QE1,QE2,QE3]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case {
   curJob = null -> case {
@@ -527,12 +551,13 @@ int finish(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
   }
 }
 
+//13:9
 relation FI1(int a, int b, int c, int d, int e, int f, int res1).
   relation FI2(int a).
   relation FI3(node a, int b).
 relation FI4(node a, int b).
 int finish1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
-  infer @post [FI1,FI2,FI3,FI4] //segmetation fault when reverify
+  infer [FI1,FI2,FI3,FI4] //segmetation fault when reverify
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
    case {
   curJob =null -> case {
@@ -601,10 +626,11 @@ int flush(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
       n4+n5+n6<=n1+n2+n3 & res=0;//'
 }
 
+//13:7
 relation FLU1(int a, int b, int c, int d, int e, int f, int res1).
 relation FLU2(node a, node b, node c, node d, int f).
 int flush1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
-                 infer [FLU1,FLU2]
+  infer [FLU1,FLU2]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case {
   curJob = null & n1=0 & n2=0 & n3=0 -> ensures FLU2(pq1', pq2',pq3',curJob',res);
@@ -642,13 +668,14 @@ node get_current(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
     ensures pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>*curJob::node<v1,v2,null> &  curJob'=curJob& res=curJob;//'
 }
 
+//14
 relation GC1(node a, int b).
 relation GC2(node a, int b).
 relation GC3(node a, int b).
 relation GC4(node a, node b).
   relation GC5(node a, node b, node c).
 node get_current1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
-  infer @post [GC1,GC2,GC3,GC4,GC5]
+  infer [GC1,GC2,GC3,GC4,GC5]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case {
   curJob =null -> case {
@@ -703,6 +730,7 @@ int reschedule(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node 
   }
 }
 
+//26:23
 relation RESC1(int a, int b).
 relation RESC2(int a, int b).
 relation RESC3(int a, int b).
@@ -710,7 +738,7 @@ relation RESC4(node a, int b).
   relation RESC5(node a, node c, int b).
   relation RESC6(int a, int b, int c, int d, int e, int f, int g, int h).
 int reschedule1(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node pq3)
-  infer @post [RESC1,RESC2,RESC3,RESC4,RESC5,RESC6]
+  infer [RESC1,RESC2,RESC3,RESC4,RESC5,RESC6]
   requires pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case{
   cur_job = null -> case {
@@ -874,13 +902,14 @@ int put_end(int prio, node process, ref node pq0, ref node pq1, ref node pq2, re
    process::node<v1,v2,null> & res = -4;//'
  }
 
+//5
 relation PE1(int a).
 relation PE2(int a).
 relation PE3(int a).
 relation PE4(int a).
 relation PE5(int a).
  int put_end1(int prio, node process, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
-  infer @post [PE1,PE2,PE3,PE4,PE5]
+  infer [PE1,PE2,PE3,PE4,PE5]
   requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>*process::node<v1,v2,null>
    &v2>=1 & v2<=3
  case{
@@ -1001,10 +1030,13 @@ int get_process(int prio, int ratio, ref node job, ref node pq0, ref node pq1, r
     prio > 3 | prio <0 -> ensures pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3> & res=-4;
 }
 
-relation GP1(int a).relation GP2(node a, int b).relation GP3(int a, int b).
+//25
+relation GP1(int a).
+relation GP2(node a, int b).
+relation GP3(int a, int b).
 relation GP4(int a).
 int get_process1(int prio, int ratio, ref node job, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
-  infer @post [GP1, GP2, GP3,GP4]
+  infer [GP1, GP2, GP3,GP4]
   requires pq0::ll<n>*pq1::ll<n1>*pq2::ll<n2>*pq3::ll<n3>
  case {
     prio = 0 -> case {

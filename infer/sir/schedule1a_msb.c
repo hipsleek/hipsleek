@@ -330,14 +330,16 @@ void do_upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2)
   n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;//'
 }
 
+//5+1
 relation DUG1(bag a, bag b, bag c, bag d).
 relation DUG2(bag a, bag b, bag c, bag d).
+relation DUG3(bag a, bag b, bag c, bag d).
 void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
-  infer [DUG1,DUG2]
+  infer [DUG1,DUG2,DUG3]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
  case {
   n1 > 0 ->  case {
-    ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & union(S1,S2) = union(S3,S4);
+    ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & DUG3(S1,S2,S3,S4);//union(S1,S2) = union(S3,S4);
     ratio > n1 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG1(S1,S2,S3,S4);
   }
   n1 <= 0 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG2(S1,S2,S3,S4);//'
@@ -387,14 +389,18 @@ void upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2, ref 
   prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; //'
 }
 
+//16+3
 relation UG1(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG2(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG3(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG4(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG5(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG6(bag a, bag b, bag c, bag a1, bag a2, bag a3).
+relation UG7(bag a, bag b).
+relation UG8(bag a, bag b).
+relation UG9(bag a, bag b).
 void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref node pq3)
-  infer [UG1,UG2, UG3, UG4,UG5,UG6]
+  infer [UG1,UG2, UG3, UG4,UG5,UG6,UG7,UG8,UG9]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & prio>0 & prio <=3 & ratio >=1
  case {
   prio = 1 -> case {
@@ -411,7 +417,7 @@ void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref n
        }
       n2 <= 0 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & UG6(S1,S2,S3,S4,S5,S6);
   }
-  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; //'
+  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S01> * pq2'::ll1<n2,S02> * pq3'::ll1<n3,S03> & UG7(S01,S1) & UG8(S02,S2) & UG9(S03,S3); //'
 }
 {
     int count;
@@ -580,16 +586,21 @@ void block_process1(ref node cur_proc, ref node block_queue, ref node pq1, ref n
   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S02> * pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3> & cur_proc' = null;
 }
 
+//1+4
 relation BP1(bag a, bag b).
+relation BP2(bag a, bag b).
+relation BP3(bag a, bag b).
+relation BP4(bag a, bag b).
+relation BP5(bag a, bag b).
 //relation BP2 (bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, node d).
 void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
-  infer [BP1]
+  infer [BP1,BP2,BP3,BP4,BP5]
   requires cur_proc::ll1<n,S01> * block_queue::ll1<n,S02> * pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3>
  case {
   n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1,S021> * pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6> &
     n1+n2+n3=n4+n5+n6+1 & BP1(S02,S021) & cur_proc'!=null;
- n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S02> * pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3> & cur_proc' = null
-    ;//'
+ n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S021> * pq1'::ll1<n1,S11> * pq2'::ll1<n2,S21> * pq3'::ll1<n3,S31> & cur_proc' = null
+  & BP2(S021,S02) & BP3(S11,S1) & BP4(S21,S2) & BP5(S31,S3);//'
 }
 {
     schedule1(cur_proc, pq1, pq2,pq3);
@@ -627,6 +638,7 @@ void add_process1(int prio, ref int alloc_proc_num, ref int num_processes, ref n
              (alloc_proc_num' = alloc_proc_num) & flow __error;
  }
 
+//9
 relation AP1(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
 relation AP2(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
 relation AP3(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).

@@ -65,8 +65,10 @@ prio = 2 -> case {
     process::node<_,prio,null>*curJob'::node<_,_,null> & n4+n5+n6=n1+n2+n3+1 & res = 0;//'
   }
  */
+relation ENQ1(bag a, bag b).
 int enqueue1(int prio, node new_process,ref node curJob,ref node pq0, ref node pq1,
             ref node pq2, ref node pq3)
+//  infer [ENQ1]
   requires pq0::ll1<n,S0>*pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>*
   new_process::node<v1,v2,null> & v2>=1 & v2<=3
  case{
@@ -520,24 +522,44 @@ requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
   ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*curJob::node<v1,v2,null> &  curJob'=curJob& res=curJob;//'
 }
 
+//15
 //timeout when run all file. should be fixed.
 relation GC1(bag a, bag b, int c).
+relation GC2(bag a, bag b, int c).
+relation GC3(bag a, bag b, int c).
+relation GC11(bag a, bag b).
+relation GC12(bag a, bag b).
+relation GC21(bag a, bag b).
+relation GC22(bag a, bag b).
+relation GC31(bag a, bag b).
+relation GC32(bag a, bag b).
+relation GC41(bag a, bag b).
+relation GC42(bag a, bag b).
+relation GC43(bag a, bag b).
+relation GC51(bag a, bag b).
+relation GC52(bag a, bag b).
+relation GC53(bag a, bag b).
 node get_current1(ref node curJob, ref node pq1, ref node pq2, ref node pq3)
-  infer [GC1]
+  infer [GC1,GC2,GC3,GC11,GC12,GC21,GC22,GC31,GC32,GC41,GC42,GC43,GC51,GC52,GC53]
   requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
  case {
   curJob =null -> case {
-    n3>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3-1,S31>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3 & GC1(S3,S31,v);//S3=union(S31,{v});//'
+    n3>0 -> ensures pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3-1,S31>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3 
+    & GC1(S3,S31,v) & GC11(S1,S11) & GC12(S2,S21);//S3=union(S31,{v});//'
     n3<=0 -> case {
-      n2>0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S3>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3& S2=union(S21,{v});
+      n2>0 -> ensures pq1'::ll1<n1,S11>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S31>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3
+    & GC2(S2,S21,v) & GC21(S1,S11) & GC22(S3,S31);//& S2=union(S21,{v});
       n2<=0 -> case{
-        n1>0 -> ensures pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3 & S1=union(S11,{v});
-      n1<=0 -> ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & curJob'=null & res=null;//'
+        n1>0 -> ensures pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31>*curJob'::node<v,v2,null> & res=curJob' & v2>=1 & v2<=3 
+    & GC1(S1,S11,v) & GC31(S2,S21) & GC32(S3,S31);//& S1=union(S11,{v});
+      n1<=0 -> ensures pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31> & curJob'=null & res=null
+    & GC41(S1,S11) & GC42(S2,S21) & GC43(S3,S31);//'
       }
     }
   }
   curJob !=null -> requires curJob::node<v1,v2,null>
-  ensures pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3>*curJob::node<v1,v2,null> &  curJob'=curJob& res=curJob;//'
+  ensures pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31>*curJob::node<v1,v2,null> &  curJob'=curJob& res=curJob
+  & GC51(S1,S11) & GC52(S2,S21) & GC53(S3,S31);//'
 }
 {
     int prio;
@@ -581,9 +603,9 @@ int reschedule1(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node
 }
 
 //can not verify bag condition
-relation RSCH1(bag a, bag b, int c).
+//relation RSCH1(bag a, bag b, int c).
 int reschedule(int prio, ref node cur_job, ref node pq1, ref node pq2, ref node pq3)
-//infer [RSCH1]
+  //infer [RSCH1]
   requires pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
  case{
   cur_job = null -> case {
@@ -868,40 +890,57 @@ int get_process1(int prio, int ratio, ref node job, ref node pq0, ref node pq1, 
     prio > 3 | prio <0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-4;
 }
 
+//36
 relation GP0(bag a, bag b, int c).
 relation GP1(bag a, bag b, int c).
 relation GP2(bag a, bag b, int c).
 relation GP3(bag a, bag b, int c).
+relation GP01(bag a, bag b).
+relation GP02(bag a, bag b).
+relation GP03(bag a, bag b).
+relation GP11(bag a, bag b).
+relation GP12(bag a, bag b).
+relation GP13(bag a, bag b).
+relation GP21(bag a, bag b).
+relation GP22(bag a, bag b).
+relation GP23(bag a, bag b).
+relation GP31(bag a, bag b).
+relation GP32(bag a, bag b).
+relation GP33(bag a, bag b).
 int get_process(int prio, int ratio, ref node job, ref node pq0, ref node pq1, ref node pq2, ref node pq3)
-  infer [GP0,GP1,GP2,GP3]
+  infer [GP0,GP1,GP2,GP3,GP01,GP02,GP03,GP11,GP12,GP13,GP21,GP22,GP23,GP31,GP32,GP33]
   requires pq0::ll1<n,S0>*pq1::ll1<n1,S1>*pq2::ll1<n2,S2>*pq3::ll1<n3,S3>
  case {
   prio = 0 -> case {
-    ratio < 1 | ratio > n -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
+    ratio < 1 | ratio > n -> ensures pq0'::ll1<n,S01>*pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31> & res=-5;
     ratio >= 1 & ratio <= n -> case{
       n = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
-      n != 0 -> ensures pq0'::ll1<n-1,S01>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 & GP0(S0,S01,v);//S0=union(S01,{v})
+      n != 0 -> ensures pq0'::ll1<n-1,S01>*pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 
+      & GP0(S0,S01,v) & GP01(S1,S11) & GP02(S2,S21) & GP03(S3,S31);//S0=union(S01,{v})
       }
     }
     prio = 1 -> case {
       ratio < 1 | ratio > n1 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
       ratio >= 1 & ratio <= n1 -> case{
         n1 = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
-      n1 != 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 & GP1(S1,S11,v);//S1=union(S11,{v})
+        n1 != 0 -> ensures pq0'::ll1<n,S01>*pq1'::ll1<n1-1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3,S31> * job'::node<v,v4,null> & v4>=1 & v4<=3 & res = 1 
+        & GP1(S1,S11,v) & GP11(S0,S01) & GP12(S2,S21) & GP13(S3,S31);//S1=union(S11,{v})
       }
     }
     prio = 2 -> case {
       ratio < 1 | ratio > n2 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
       ratio >= 1 & ratio <= n2 -> case{
         n2 = 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
-      n2 != 0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S3> * job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1 &  GP2(S2,S21,v);//S2=union(S21,{v})
+        n2 != 0 -> ensures pq0'::ll1<n,S01>*pq1'::ll1<n1,S11>*pq2'::ll1<n2-1,S21>*pq3'::ll1<n3,S31> * job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1
+        & GP2(S2,S21,v) & GP21(S0,S01) & GP22(S1,S11) & GP23(S3,S31);//S2=union(S21,{v})
       }
     }
     prio = 3 -> case {
       ratio < 1 | ratio > n3 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-5;
       ratio >= 1 & ratio <= n3 -> case{
       n3 = 0 -> ensures  pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & job'=null & res = 0;
-      n3 != 0 -> ensures  pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3-1,S31>* job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1 &  GP3(S3,S31,v);// S3=union(S31,{v})
+      n3 != 0 -> ensures  pq0'::ll1<n,S01>*pq1'::ll1<n1,S11>*pq2'::ll1<n2,S21>*pq3'::ll1<n3-1,S31>* job'::node<_,v4,null> & v4>=1 & v4<=3 & res = 1 
+      & GP3(S3,S31,v) & GP31(S0,S01) & GP32(S1,S11) & GP33(S2,S21);// S3=union(S31,{v})
       }
     }
     prio > 3 | prio <0 -> ensures pq0'::ll1<n,S0>*pq1'::ll1<n1,S1>*pq2'::ll1<n2,S2>*pq3'::ll1<n3,S3> & res=-4;
