@@ -1089,6 +1089,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
   in res
 
+let tp_is_sat_no_cache f sat_no =	
+  Gen.Profiling.push_time ("stat_sat_no_cache_timings");
+  let r = tp_is_sat_no_cache f sat_no in
+  Gen.Profiling.push_time ("stat_sat_no_cache_timings");
+  r
+
 let tp_is_sat_no_cache f sat_no =
   Debug.no_1 "tp_is_sat_no_cache" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat_no_cache f sat_no) f
@@ -1710,6 +1716,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		r
 ;;
 
+let tp_imply_no_cache ante conseq imp_no timeout process =	
+  Gen.Profiling.push_time ("stat_imply_no_cache_timings");
+  let r = tp_imply_no_cache ante conseq imp_no timeout process in
+  Gen.Profiling.push_time ("stat_imply_no_cache_timings");
+  r
 
 let tp_imply_no_cache i ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
