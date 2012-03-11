@@ -7,26 +7,40 @@
 
 \maketitle
 
+\begin{abstract}
+\begin{scriptsize}
+This document drafts my research and implementation plan. The goal is to obtain a working number theoretic theorem prover that supports: (i) Handling of elementary algebraic problems concerning of integers such as divisibility, gcd, Fibonacci, factorial, etc.; (ii) Automated induction using user annotation. We expect to solve the current set of theorems. Currently, we already got a working parser, type inference, standard translation to Z3 that should work perfectly for propositional properties.
+\end{scriptsize}
+\end{abstract}
+
 \begin{enumerate}
 
 \item [12-16 March]
 
 \begin{enumerate}
-\item Finish the summaries of classical articles in automated theorem proving
+\item Finish the summaries of classical articles in automated theorem proving.
+\item Explore some systems introduced in CADE ATP System Competition (CASC) like \texttt{Vampire}, \texttt{iProver}, \texttt{Paradox}.
+\item Take a look at the CASC problems.
 \item Draft the implementation notes and plan
 \item Refactor existing implementation
 \begin{itemize}
-\item Use generic type for \textbf{term} term data structure to allow the use of different underlying types for variable and numerical constants.
-
+\item Use generic type for \textbf{term} term data structure to allow the use of different underlying types for variable and numerical constants.\\
 Currently, we are using \textbf{string} to name variables. It is necessary for parsing the input files, but not for efficient manipulation in later stages. Translate them to \textbf{int} will be much more convenient.
-\item 
+\item Remove the sort information from the variable. Formulas should have associated variables to sort.
+\item Redesign internal data structures using records and getter.
 \end{itemize}
-\item Enhance current translation to Z3
+\item Enhance current translation to Z3. Sorts, variables, functions, etc. should be computed once and retrieve later. Distinguish arrays and functions.
+\item Finish Skolemization of formulas.
 \end{enumerate}
 
 \item [19-23 March]
 
 \begin{enumerate}
+\item Finish Skolemization of formulas.
+\item Normalize algebraic  terms
+\item Implements simple equation solver
+\item Utilize \texttt{Reduce} as an underlying equation solver. Note that this requires generating input, parsing output, etc. (Can reuse the code in hip/sleek \texttt{redlog} module.)
+\item 
 \item TO BE FILL UP AT THE END OF PREVIOUS WEEK
 \end{enumerate}
 
