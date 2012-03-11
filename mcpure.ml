@@ -1705,6 +1705,19 @@ let mimply_conj ante_memo0 conseq_conj t_imply imp_no =
       (!print_mp_f) (pr_list !print_p_f_f) (fun (x,_,_) -> string_of_bool x)
       (fun _ _ -> mimply_conj ante_memo0 conseq_conj t_imply imp_no) ante_memo0 conseq_conj
 
+let merge_memo m =
+  match m with
+  | [] -> []
+  | [h] -> [h]
+  | h::t -> [List.fold_left (fun a c ->
+      let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
+      {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
+      memo_group_linking_vars = [];
+      memo_group_cons = filter_merged_cons na [a.memo_group_cons; c.memo_group_cons];
+      memo_group_changed = true;
+      memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
+      memo_group_aset = na;}) h t]
+
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
  Debug.no_2 "imply_memo 1" (!print_mp_f)
       (!print_mp_f)
@@ -1713,6 +1726,11 @@ let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
 
 and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+  if (!Globals.dis_decompose) then
+    let m_ante = fold_mem_lst (mkTrue no_pos) false true ante_memo0 in
+    let m_conseq = fold_mem_lst (mkTrue no_pos) false true conseq_memo in
+    t_imply m_ante m_conseq ("imply_memo:" ^ (string_of_int !imp_no)) false None 
+  else 
   match conseq_memo with
     | h :: rest -> 
         let r = fold_mem_lst_to_lst [h] false !no_RHS_prop_drop true in
@@ -1735,19 +1753,6 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   (* Slicing: if a FALSE is found in the ante then return true *)
   if (isConstMFalse ante_memo0) then (true, [], None) 
   else
-    let merge_memo m = 
-      match m with
-        | [] -> []
-        | [h] -> [h]
-        | h::t -> [List.fold_left (fun a c ->
-          let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
-            {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
-             memo_group_linking_vars = [];
-             memo_group_cons = filter_merged_cons na [a.memo_group_cons; c.memo_group_cons];
-             memo_group_changed = true;
-             memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
-             memo_group_aset = na;}) h t]
-    in 
     let ante_memo0 = 
       if !f_2_slice || !dis_slicing then merge_memo ante_memo0 (* Use one slice for proving (sat, imply) *)
 	    else ante_memo0 

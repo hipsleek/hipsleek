@@ -502,6 +502,7 @@ let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
 let dis_oc = ref false
+let dis_decompose = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false

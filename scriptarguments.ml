@@ -263,6 +263,7 @@ let common_arguments = [
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
   ("--dis-oc", Arg.Set Globals.dis_oc, "Disable Omega when running other provers");
   ("--rlpa", Arg.Set Redlog.pasf, "Using Presburger Arithmetic of Redlog");
+  ("--dis-decompose", Arg.Set Globals.dis_decompose, "Disable decomposition of implication checking");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");

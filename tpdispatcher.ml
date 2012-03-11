@@ -1525,6 +1525,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*           CP.mkAnd c12  rf no_pos *)
   (*     | [] -> f *)
   (* in *)
+  let _ = disj_cnt ante (Some conseq) "imply_no_cache" in
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
@@ -1660,6 +1661,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | ZM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
+          (* let _ = print_endline ("ante: " ^ (!CP.print_formula ante)) in
+          let _ = print_endline ("conseq: " ^ (!CP.print_formula conseq)) in *)
           called_prover := "mona "; 
           (* Gen.Profiling.push_time "Mona";
           let r = mona_imply ante_w conseq_s in
