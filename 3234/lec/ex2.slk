@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<v,q>*q::ll<n-1>
+  inv n>=0.
+
+// (1) what is n?
+checkentail x=null |- x::ll<n>.
+print residue.
+
+// (2) what is n?
+checkentail x::node<_,q>*q::node<_,null> |- x::ll<n>.
+print residue.
+
+// (3) why is this invalid?
+checkentail x::node<_,q>*q::node<_,_> |- x::ll<n>.
+
+// (4) why is this invalid?
+checkentail x::ll<n> |- x::node<a,b>.
+
+// (5) what is b?
+checkentail x::ll<n> & n>0 |- x::node<a,b>.
+print residue.
+
+// (6) why is this invalid?
+checkentail x::ll<n> & n>0 |- x::node<2,b>.
+
+
