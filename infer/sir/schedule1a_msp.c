@@ -1,3 +1,4 @@
+// 14
 /*  -*- Last-Edit:  Wed May 7 10:12:52 1993 by Monica; -*- */
 /*
 Note:
@@ -140,6 +141,13 @@ node find_nth1(node f_list, int j)
   requires f_list::ll1<n> & n>=j & j>=1
   ensures f_list::lseg1<res,j-1> * res::node<_,prio,q>
   * q::ll1<n-j> & prio>=1 & prio<=3;
+
+relation FIND(int a).
+node find_nth2(node f_list, int j)
+  infer [FIND]
+  requires f_list::ll1<n> & n>=j & j>=1
+  ensures f_list::lseg1<res,j-1> * res::node<_,prio,q>
+  * q::ll1<n-j> & FIND(prio);//prio>=1 & prio<=3;
 {
   node f_ele;
 
@@ -575,21 +583,17 @@ requires pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3> * cur_proc::ll1<n>
     }
 }
 
-void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
-// infer [BP1,BP2]
-  requires cur_proc::ll1<n> * block_queue::ll1<n> * pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3>
-case {
-  n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1> * pq1'::ll1<n4> * pq2'::ll1<n5> * pq3'::ll1<n6> & cur_proc'!=null&
-   n1+n2+n3=n4+n5+n6+1;
-   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n> * pq1'::ll1<n1> * pq2'::ll1<n2> * pq3'::ll1<n3> &
-        cur_proc' = null;
-}
+/*void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)*/
+/*  requires cur_proc::ll1<n> * block_queue::ll1<n> * pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3>*/
+/*case {*/
+/*  n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1> * pq1'::ll1<n4> * pq2'::ll1<n5> * pq3'::ll1<n6> & cur_proc'!=null&*/
+/*   n1+n2+n3=n4+n5+n6+1;*/
+/*   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n> * pq1'::ll1<n1> * pq2'::ll1<n2> * pq3'::ll1<n3> &*/
+/*        cur_proc' = null;*/
+/*}*/
 
-//15
-relation BP1(int a).
-relation BP2(int a, int b, int c, int d, int e, int f, node g).
 void block_process1(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
-// infer [BP1]
+//  infer [BP1]
 /*
   requires cur_proc::ll1<n> * block_queue::ll1<n> * pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3>
 case {
@@ -613,12 +617,41 @@ case{
     }
  }
 
+//15
+relation BP1(int a).
+relation BP2(int a).
+relation BP3(int a).
+void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
+  infer [BP1,BP2,BP3,n]
+/*
+  requires cur_proc::ll1<n> * block_queue::ll1<n> * pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3>
+case {
+  n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1> * pq1'::ll1<n4> * pq2'::ll1<n5> * pq3'::ll1<n6> & cur_proc'!=null&
+   n1+n2+n3=n4+n5+n6+1;
+   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n> * pq1'::ll1<n1> * pq2'::ll1<n2> * pq3'::ll1<n3> &
+        cur_proc' = null;
+}
+*/
+  requires cur_proc::ll1<n> * block_queue::ll1<n> * pq1::ll1<n1> * pq2::ll1<n2> * pq3::ll1<n3>
+case{
+  n3 > 0 ->
+    ensures  block_queue'::lseg1<cur_proc',n> * pq1'::ll1<n1> * pq2'::ll1<n2> * pq3'::ll1<n3-1> * cur_proc'::node<_,v2,null>
+   & BP1(v2);//& v2>=1 & v2<=3;//' & BP1(v2);
+  n3<=0 -> case {
+    n2>0 -> ensures block_queue'::lseg1<cur_proc',n+1> * pq1'::ll1<n1> * pq2'::ll1<n2-1> * pq3'::ll1<n3>* cur_proc'::node<_,v2,null> & BP2(v2);//v2>=1 & v2<=3;//'
+      n2<=0 -> case{
+        n1>0 -> ensures block_queue'::lseg1<cur_proc',n> * pq1'::ll1<n1-1> * pq2'::ll1<n2> * pq3'::ll1<n3>* cur_proc'::node<_,v2,null> & BP3(v2);//& v2>=1 & v2<=3;//'
+        n1<=0 -> ensures block_queue'::ll1<n> & pq1'=null &  pq2'= null & pq3'= null & cur_proc' = null;//'
+      }
+    }
+ }
+
 {
     schedule(cur_proc, pq1, pq2,pq3);
     if (cur_proc != null)
     {
       //assert (cur_proc.priority >=1 & cur_proc.priority <=3);
-      dprint;
+      //dprint;
       //assert(true);
       block_queue = append_ele1(block_queue, cur_proc, cur_proc.priority);
     }
