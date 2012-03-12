@@ -335,7 +335,8 @@ relation DUG1(bag a, bag b, bag c, bag d).
 relation DUG2(bag a, bag b, bag c, bag d).
 relation DUG3(bag a, bag b, bag c, bag d).
 void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
-  infer [DUG1,DUG2,DUG3]
+/*
+// infer [DUG1,DUG2,DUG3]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
  case {
   n1 > 0 ->  case {
@@ -343,6 +344,15 @@ void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
     ratio > n1 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG1(S1,S2,S3,S4);
   }
   n1 <= 0 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG2(S1,S2,S3,S4);//'
+}
+*/
+requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
+ case {
+  n1 > 0 ->  case {
+    ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & union(S1,S2) = union(S3,S4);
+    ratio > n1 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;
+  }
+  n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;//'
 }
 {
   int count;
