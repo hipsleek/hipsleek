@@ -308,8 +308,10 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
-      res
+      if not (!dis_provers_timeout) then 
+        let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
+        res
+      else fnc f
   end
 
 (*
@@ -321,7 +323,7 @@ let check_formula f timeout =
 *)
 
 let check_formula i f timeout =
-  Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
+  Debug.no_2 "[omega.ml]check_formula" (fun x->x) string_of_float string_of_bool
       check_formula f timeout
 
 (* linear optimization with omega *)

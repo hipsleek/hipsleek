@@ -559,18 +559,18 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
 
-(*
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let entail_check = fun _ -> run_entail_check iante0 iconseq0 in
-  let fail_with_timeout () =
-    let _ = print_endline ("TIMEOUT") in
-    let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
-      (CF.mk_failure_may "timeout" Globals.timeout_error)) in
-    (false, fctx)
-  in 
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout entail_check () 2.0 fail_with_timeout in 
-  res 
-*)
+  if !sleek_timeout_limit > 0. then
+    let entail_check = fun _ -> run_entail_check iante0 iconseq0 in
+    let fail_with_timeout () =
+      let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
+        (CF.mk_failure_may "timeout" Globals.timeout_error)) in
+      (false, fctx)
+    in
+    let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_silent entail_check ()
+      !sleek_timeout_limit fail_with_timeout in 
+    res 
+  else run_entail_check iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
@@ -636,6 +636,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
+(*
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let entail_check = fun _ -> process_entail_check iante0 iconseq0 in
   let fail_with_timeout () = 
@@ -643,6 +644,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout entail_check () 2.0 fail_with_timeout in 
   res 
+*)
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
   let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  

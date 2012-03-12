@@ -167,9 +167,15 @@ let send_and_receive f =
         let fail_with_timeout () =
           restart "Timeout!";
           "" in
-        let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
-        answ
+        let answ = 
+          if not (!dis_provers_timeout) then
+            Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout 
+          else
+            fnc ()
+        in answ
     with
+      (* Timeout exception is not expected here except for dis_provers_timeout *)
+      | Procutils.PrvComms.Timeout as exc -> raise exc
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
@@ -238,8 +244,13 @@ let run_with_timeout func err_msg =
     restart ("After timeout"^err_msg);
     None
   in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
-  res
+  let res = 
+    if not (!dis_provers_timeout) then
+      Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout 
+    else
+      try func ()
+      with exc -> raise exc
+  in res
 
 (**************************
  * cpure to reduce/redlog *

@@ -459,6 +459,7 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
     )
     else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
   let res =
+    if not (!dis_provers_timeout) then
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
@@ -468,7 +469,11 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
       Unix.kill !spass_process.pid 9;
       ignore (Unix.waitpid [] !spass_process.pid);
       { original_output_text = []; validity_result = Aborted; }
-    ) in
+    ) 
+    else 
+      try fnc ()
+      with exc -> raise exc
+  in
   let _ = Procutils.PrvComms.stop false stdout !spass_process 0 9 (fun () -> ()) in
   remove_file infile;
   res
@@ -501,6 +506,7 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
     is_spass_running := running_state;
     prover_output in
   let res =
+    if not (!dis_provers_timeout) then
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc input timeout in
       res
@@ -511,8 +517,11 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
         { original_output_text = []; validity_result = Aborted; }
-      ) in
-  res
+      ) 
+    else 
+      try fnc input
+      with exc -> raise exc
+  in res
 
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
   Debug.no_1 "check_problem_through_stdin"

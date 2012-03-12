@@ -529,6 +529,9 @@ let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
 let imply_timeout_limit = ref 3.
+
+let dis_provers_timeout = ref false
+let sleek_timeout_limit = ref 0.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

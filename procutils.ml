@@ -1,4 +1,5 @@
 open Gen.Basic
+open Globals
 
 external set_close_on_exec : Unix.file_descr -> unit = "unix_set_close_on_exec";;
 
@@ -63,7 +64,11 @@ struct
     let answ = fnc arg in
     set_timer 0.0;
     reset_sigalrm ();
-    answ 
+    answ
+
+  let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
+    Debug.no_1 "maybe_raise_timeout" 
+    string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
 
   let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
     Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
@@ -83,6 +88,14 @@ struct
           (* print_endline "Non-timeout Exception from maybe_raise_and_catch" ;  *)
           (* with_timeout () *)
               end
+
+  let maybe_raise_and_catch_timeout_silent (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
+    try
+      let res = maybe_raise_timeout fnc arg tsec in
+      res
+    with 
+      | Timeout -> print_endline ("Timeout caught"); with_timeout ()
+      | exc -> raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
