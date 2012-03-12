@@ -265,7 +265,7 @@ let start () =
 let stop () =
   if !is_minisat_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
+    print_string ("\nStop Minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_file !minisat_process num_tasks Sys.sigkill (fun () -> ()) in
     is_minisat_running := false;
   )
