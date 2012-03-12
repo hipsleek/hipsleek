@@ -28,14 +28,14 @@ void delete_list(ref node x)
 }
 
 //true if the container size is 0, false otherwise.
-relation EMPT1(bool a).
-relation EMPT2(bool a).
+//relation EMPT1(bool a).
+//relation EMPT2(bool a).
 bool empty(node x)
-  infer[EMPT1,EMPT2]
+// infer[EMPT1,EMPT2]
   requires x::ll<n>
   case {
-    n = 0 -> ensures EMPT1(res);//res
-    n!= 0 -> ensures EMPT2(res);//!(res)
+  n = 0 -> ensures res;//EMPT1(res);//res
+  n!= 0 -> ensures !res;//EMPT2(res);//!(res)
   }
 {
   if (x == null) 
@@ -118,8 +118,8 @@ void push_front(ref node x, int v)
 //pop and return first element
 relation PF(int a, int b).
 node pop_front(ref node x)
-  infer[x,PF]
-  requires x::ll<m> //& x!=null & m>=1
+  infer[PF]
+  requires x::ll<m> & x!=null //& m>=1
   ensures x'::ll<n> & PF(n,m); //' m>=1 & m=n+1
 {
   node tmp = x;
@@ -131,8 +131,8 @@ node pop_front(ref node x)
 /* append two singly linked lists */
 relation A(int m, int n1, int n2).
 void append(node x, node y)
-  infer[x,A]
-  requires x::ll<n1> * y::ll<n2> //& x!=null
+  infer[A]
+  requires x::ll<n1> * y::ll<n2> & x!=null
   ensures x::ll<m> & A(m,n1,n2);//n1>=1 & m>=n1 & m=n2+n1
 {
   if (x.next == null)
@@ -154,8 +154,8 @@ node ret_first(node x)
 /* return the tail of a singly linked list */
 relation GN(int m, int n).
 node get_next(node x)
-  infer[x,GN]
-  requires x::ll<n>// & x!=null
+  infer[GN]
+  requires x::ll<n> & x!=null
   ensures x::node<_,null> * res::ll<m> & GN(m,n);//n>=1 & n=m+1
 {
   node tmp = x.next;
@@ -166,16 +166,16 @@ node get_next(node x)
 /* function to set the tail of a list */
 relation SN(int m, int n).
 void set_next(node x, node y)
-  infer[x,SN]
-  requires x::ll<i> * y::ll<j> //& x!=null
+  infer[SN]
+  requires x::ll<i> * y::ll<j> & x!=null
   ensures x::ll<k> & SN(k,j); // k>=1 & k=j+1
 {
   x.next = y;
 }
 
 void set_null2(ref node x)
-  infer[x]
-  requires x::ll<i> //& x!=null
+//infer[x]
+  requires x::ll<i> & x!=null
   ensures x'::node<_,null>;//'
 {
   if (4>3)
@@ -186,8 +186,8 @@ void set_null2(ref node x)
 
 /* function to set null the tail of a list */
 void set_null(ref node x)
-  infer[x]
-  requires x::ll<i> //& x!=null
+//infer[x]
+  requires x::ll<i> & x!=null
   ensures x'::node<_,null>;//'
 {
   x.next = null;
@@ -197,7 +197,7 @@ void set_null(ref node x)
 relation GNN(int m, int n).
 node get_next_next(node x)
   infer[n,GNN]
-  requires x::ll<n> //& x!=null //2<=n
+  requires x::ll<n> & x!=null //2<=n
   ensures res::ll<m> & GNN(m,n); //n>=2 & n=m+2
 {
   return x.next.next;
@@ -206,8 +206,8 @@ node get_next_next(node x)
 /* function to insert a node in a singly linked list */
 relation INS(int m, int n).
 void insert(node x, int a)
-  infer[INS,x]
-  requires x::ll<n> //& x!=null //1<=n
+  infer[INS]
+  requires x::ll<n> & x!=null //1<=n
   ensures x::ll<m> & INS(m,n);//m>=2 & m=n+1
 {
   node tmp = null;
