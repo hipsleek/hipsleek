@@ -305,6 +305,7 @@ let logical_error = "logical bug"
 let fnc_error = "function call"
 let lemma_error = "lemma"
 let undefined_error = "undefined"
+let timeout_error = "timeout"
 
 let eres_name = "eres"
 

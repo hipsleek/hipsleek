@@ -555,8 +555,22 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
+(* Run entail check with timeout: 0 means not timeout *)  
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
+
+(*
+let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let entail_check = fun _ -> run_entail_check iante0 iconseq0 in
+  let fail_with_timeout () =
+    let _ = print_endline ("TIMEOUT") in
+    let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
+      (CF.mk_failure_may "timeout" Globals.timeout_error)) in
+    (false, fctx)
+  in 
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout entail_check () 2.0 fail_with_timeout in 
+  res 
+*)
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
@@ -614,12 +628,21 @@ let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
   print_string ("exception in " ^ check_id ^ " check\n")
+
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
+
+let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let entail_check = fun _ -> process_entail_check iante0 iconseq0 in
+  let fail_with_timeout () = 
+    print_endline ("TIMEOUT");
+  in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout entail_check () 2.0 fail_with_timeout in 
+  res 
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
   let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
