@@ -36,7 +36,7 @@ do
 	# time ./run-fast-tests.pl pz3 -flags "--eps --dis-imm --dfe --dis-slicing" --log-timings -tp z3
 	# time ./run-fast-tests.pl pz3 -flags "--eps --dis-imm --dfe" --log-timings -tp z3
 	
-	time ./run-fast-tests.pl pz3 -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp z3 -stat
+	time ./run-fast-tests.pl pz3 -flags "--eps --dfe --dis-slicing --ep-stat -nofilter" --log-timings -tp z3 -stat
 	time ./run-fast-tests.pl pz3 -flags "--eps --dfe --ep-stat" --log-timings -tp z3 -stat
 
 	# Mona
@@ -64,12 +64,12 @@ do
 	# time ./run-fast-tests.pl plink -flags "--eps --dis-imm --dfe" --log-timings -tp zm
 	# time ./run-fast-tests.pl plink -flags "--eps --dis-imm --enable-slicing" --log-timings -tp zm
 
-	time ./run-fast-tests.pl plink -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -tp zm -stat
+	time ./run-fast-tests.pl plink -flags "--eps --dfe --dis-slicing --ep-stat -nofilter" --log-timings -tp zm -stat
 	time ./run-fast-tests.pl plink -flags "--eps --dfe --ep-stat" --log-timings -tp zm -stat
 	time ./run-fast-tests.pl plink -flags "--eps --dfe --enable-slicing --ep-stat" --log-timings -tp zm -stat
 
 	# SIR
-	time ./run-fast-tests.pl SIR -flags "--eps --dfe --dis-slicing --ep-stat" --log-timings -stat
+	time ./run-fast-tests.pl SIR -flags "--eps --dfe --dis-slicing --ep-stat -nofilter" --log-timings -stat
 	time ./run-fast-tests.pl SIR -flags "--eps --dfe --ep-stat" --log-timings -stat
 
 	mv timings_log.xls timings_log_$(date +%Y%m%d_%H%M%S).xls

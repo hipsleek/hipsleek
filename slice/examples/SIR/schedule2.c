@@ -71,7 +71,7 @@ int enqueue(int prio, node new_process,ref node curJob,ref node pq0, ref node pq
     curJob'::node<_,v4,null> & n4+n5+n6=n1+n2+n3+1 &v4>=1 & v4<=3 & res = 0;//'v4>=v
   }
   prio > 3 | prio < 0 -> ensures pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>*
-    new_process::node<v1,v2,null> & res = -4;//'
+    new_process::node<v1,v2,null> & res + 4 = 0;//'
  }
  
 {

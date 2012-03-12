@@ -799,14 +799,15 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
       else 
         (ante, cons)
     end *)
-    match !tp with
+    (* match !tp with
     | Mona -> CP.assumption_filter ante cons
     | _ -> begin 
       if (is_bag_constraint ante) || (is_bag_constraint cons) then
         CP.assumption_filter ante cons
       else 
         (ante, cons)
-    end
+    end *)
+    (ante, cons)
   else
     CP.assumption_filter ante cons
 
