@@ -507,20 +507,17 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
     prover_output in
   let res =
     if not (!dis_provers_timeout) then
-    try
-      let res = Procutils.PrvComms.maybe_raise_timeout fnc input timeout in
-      res
-    with 
-    | _ -> ((* exception : return the safe result to ensure soundness *)
+      try
+        let res = Procutils.PrvComms.maybe_raise_timeout fnc input timeout in
+        res
+      with 
+      | _ -> ((* exception : return the safe result to ensure soundness *)
         Printexc.print_backtrace stdout;
         print_endline ("WARNING: Restarting prover due to timeout");
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
-        { original_output_text = []; validity_result = Aborted; }
-      ) 
-    else 
-      try fnc input
-      with exc -> raise exc
+        { original_output_text = []; validity_result = Aborted; }) 
+    else fnc input
   in res
 
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =

@@ -575,7 +575,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Debug.no_2_loop "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;

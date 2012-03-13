@@ -247,9 +247,7 @@ let run_with_timeout func err_msg =
   let res = 
     if not (!dis_provers_timeout) then
       Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout 
-    else
-      try func ()
-      with exc -> raise exc
+    else func ()
   in res
 
 (**************************
