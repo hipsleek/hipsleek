@@ -11,7 +11,13 @@ pred lsort<s,n> == self::node<s,null> & n=1
   or self::node<s,q>*q::lsort<s2,n-1> & s<=s2 
   inv n>=1.
 
+pred nlsort<s,n> == self=null & n=0
+  or self::node<s,q>*q::ll<s2,n-1> & s>s2
+  or self::node<s,q>*q::nlsort<s2,n-1> & s<=s2
+  inv n>=0.
+
 lemma self::lsort<s,n> -> self::ll<n>.
+//lemma self::ll<n> -> self::lsort<s,n> & flow __Error.
 // try --elp for enable lemma proving (via an automatic inductive proof)
 
 // (1) what are s,n instantiated to?
