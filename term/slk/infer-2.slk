@@ -1,0 +1,17 @@
+//Constraints from hip/infer-1.ss
+
+//(1): nothing
+infer[p3] Term[p3,y] |- Term[p3,y-1].
+print residue.
+
+//(2): p3>p2
+infer[p2,p3] (y>=0 & x>0) & (y-1<0 & x+y>0) & Term[p3,y] |- Term[p2,x+y]. 
+print residue.
+
+//(3): nothing
+infer[p2] (x>0 & y<0) & (x+y>0 & y-1<0) & Term[p2,x] |- Term[p2,x+y].
+print residue.
+
+//(4)
+infer[p2,p1] (x>0 & y<0) & (x+y<=0) & Term[p2,x] |- Term[p1].
+print residue.

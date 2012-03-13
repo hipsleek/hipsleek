@@ -500,6 +500,7 @@ module type ETABLE =
     val order_flow : nflow -> nflow -> int
     val norm_flow : nflow -> nflow 
     val string_of_flow : nflow -> string
+    val string_of_list_flow : nflow list -> string
     val subtract_flow : nflow -> nflow -> nflow
     val intersect_flow : nflow -> nflow -> nflow
     val subtract_flow_l : nflow -> nflow -> nflow list
@@ -517,7 +518,8 @@ module type ETABLE =
       (* method sort : unit *)
       method remove_dupl : unit
       method clear : unit
-      method sub_type_obj : ident -> ident -> bool 
+      method sub_type_obj : ident -> ident -> bool
+      method union_flow_ne: nflow -> nflow -> nflow
     end
     val exlist : exc
    end;;
@@ -610,6 +612,7 @@ struct
     if (is_empty_flow nf) then empty_flow
     else nf
   let string_of_flow = pr_pair string_of_int string_of_int
+  let string_of_list_flow = pr_list string_of_flow
   let subtract_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     let x = subtract_flow_l f1 f2 in
     match x with
@@ -731,6 +734,10 @@ struct
         let n1 = self#get_hash t1 in
         let n2 = self#get_hash t2
         in is_subset_flow n1 n2
+      end
+    method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
+      begin
+          ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc
@@ -884,6 +891,7 @@ struct
     let pr_pair_int = pr_pair (string_of_int) (string_of_int) in
     let pr_pair_int_list = pr_list (fun (a,b) -> pr_pair_int (a,b)) in
     pr_pair (pr_pair_int) (pr_pair_int_list) f1
+  let string_of_list_flow = pr_list string_of_flow
   (*this is not used at all. only use subtract_flow_l*)
   let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
     let x = subtract_flow_l f1 f2 in
@@ -1030,6 +1038,10 @@ struct
         let n1 = self#get_hash t1 in
         let n2 = self#get_hash t2
         in is_subset_flow n1 n2
+      end
+    method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
+      begin
+          ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc

@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [n] y::ll<n> |- y=null.
+print residue.
+
+//Fail. Why?
+//checkentail y::ll<n> & n = 0 |- y=null.
+//print residue.

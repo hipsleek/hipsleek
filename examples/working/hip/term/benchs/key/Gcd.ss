@@ -1,0 +1,25 @@
+
+int gcd (int a, int b)
+
+{
+	int t = 0;
+	if (b > a) {
+		t = a;
+		a = b;
+		b = t;
+	}
+	loop(a, b);
+	return a;
+}
+
+void loop (ref int a, ref int b)
+
+{
+	int t = 0;
+	if (b != 0) {
+		t = a - b;
+		a = b;
+		b = t;
+		gcd (a, b);
+	}
+}

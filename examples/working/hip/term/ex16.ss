@@ -1,13 +1,13 @@
 void loop (ref int x, ref int y)
 case {
-	x < y -> variance (0) ensures "l0" : true;
-	x = y -> variance (-1) ensures false;
+	x < y -> requires Term ensures "l0" : true;
+	x = y -> requires Loop ensures false;
 	x > y -> case {
-					x>1 -> variance (1) [x-y]
+					x>1 -> requires Term[x-y]
 						   ensures "l1" : true;
-					x=1 -> variance (2)
+					x=1 -> requires Term
 					       ensures "l2" : true;
-					x<1 -> variance (3) [-x@0]
+					x<1 -> requires Term[-x]
 					       ensures "l3" : true;
 			  }
 }

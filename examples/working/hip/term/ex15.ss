@@ -1,22 +1,29 @@
 // McCarthy 91
 int f(int x)
-ensures true;
+requires x<=111
+case {
+	x>100 -> requires Term ensures res=x-10;
+	x<=100 -> requires Term ensures res=91;
+}
 {
 	int s = 1;
 	return loop(x, s);
 }
 
 int loop(int x, int s)
-requires s>=1
+requires s>=1 & x<=111 
 case {
 	//Lexicographical ranking function <10s-x+90,x>
 	x>100 -> case {
-				s=1 -> ensures "l1":true;
-				s!=1 -> //variance x
-						ensures "l2":true;
+		s=1 -> requires Term ensures "l1":res=x-10;
+		s!=1 -> //requires Term[10*s-x+90,x]
+						requires Term[200+21*s-2*x]
+						ensures "l2":res=91;
 			 }
 	x<=100 -> //variance 10s-x
-			  ensures "l3":true;
+				//requires Term[10*s-x+90,x]
+				requires Term[200+21*s-2*x]
+			  ensures "l3":res=91;
 }
 {
 	int x1, s1;

@@ -33,7 +33,8 @@ void dispatch(node lst, ref node gtl, ref node ltl)
   dprint;
   if (b) { gtl=null; ltl =null; assert false;}
    else {
-     assume false;
+     assume true;
+     //assume false;
    }
 }
 

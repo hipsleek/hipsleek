@@ -11,13 +11,13 @@ type sleek_token =
   | JAVA          of string
   (*keywords*)
   | ASSERT | ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
-  | BIND | BOOL | BREAK | BAGMAX | BAGMIN
+  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG
   | CASE | CHECKENTAIL | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
 	| DATA | DDEBUG | DIFF | DYNAMIC 
   | DTIME
   | ELSE_TT
   | ENSURES | ENUM | EXISTS | EXTENDS
-  | FALSE | FLOAT | FORALL
+  | FALSE | FLOAT | FORALL | FUNC
 	| IF 
   | IN_T | INT | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
 	| LEMMA | LET
@@ -25,9 +25,10 @@ type sleek_token =
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
 	| PRED | DPRINT | PRINT
-	| REF |REL | REQUIRES | RES of string | RETURN
+	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
-  | THEN| THIS of string | TO | TRUE 
+  | THEN| THIS of string | TO | TRUE | LEXVAR
+  | TERM | LOOP | MAYLOOP
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -44,6 +45,7 @@ type sleek_token =
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | SUBANN | PRE | POST
   | INVLOCK
+  | LOGICAL
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -60,16 +62,17 @@ module Token = struct
     (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
-	| AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
-    | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin"
+    | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
+    | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
+    | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag"
     | CASE ->"case" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | ENSURES ->"ensures" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
-    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall"
+    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
-    | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static"
+    | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
   (*operators*)
@@ -88,6 +91,11 @@ module Token = struct
     | SUBANN -> "<:"
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | INVLOCK->"inv_lock"
+    | LOGICAL -> "logical"
+    | TERM -> "Term"
+    | LOOP -> "Loop"
+    | MAYLOOP -> "MayLoop"
+
 
   let print ppf x = pp_print_string ppf (to_string x)
 

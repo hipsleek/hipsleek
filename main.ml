@@ -53,20 +53,15 @@ let parse_file_full file_name =
       raise t)
 
 (* Parse all prelude files declared by user.*)
-let rec process_primitives (file_list: string list) : Iast.prog_decl list =
-  match file_list with
-  | [] -> []
-  | hd::tl ->
-        let header_filename = String.sub hd 1 ((String.length hd) - 2) in
-        let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
-        (* let _ = print_string ("\n WN : prelude here"^new_filename^"\n") in *)
-        let primitives = parse_file_full new_filename in
-                primitives :: (process_primitives tl)
+let process_primitives (file_list: string list) : Iast.prog_decl list =
+  let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
+  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
+  else List.map parse_file_full new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Gen.Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
+  Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -74,7 +69,7 @@ let rec process_intermediate_prims prims_list =
   | [] -> []
   | hd::tl ->
         let iprims = Globalvars.trans_global_to_param hd in
-        let iprims = Iast.label_procs_prog iprims in
+        let iprims = Iast.label_procs_prog iprims false in
                 iprims :: (process_intermediate_prims tl)
 
 (* Process prelude pragma *)
@@ -125,8 +120,7 @@ let process_source_full source =
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-    (* let _ = print_endline ("process_source_full") in *)
-    let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+    let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     (* let _ = print_endline ("process_source_full: after --pip") in *)
@@ -137,8 +131,10 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
+
 	(* Forward axioms and relations declarations to SMT solver module *)
-	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+	let _ = List.map (fun crdef -> 
+        Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
 	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
@@ -184,7 +180,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog prog);
+       ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -238,11 +234,12 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
-  let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
   (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
@@ -258,7 +255,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

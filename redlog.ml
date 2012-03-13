@@ -18,13 +18,13 @@ let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out "allinput.rl"
+let log_file = open_log_out "allinput.rl"
 
 (* process management *)
 let is_reduce_running = ref false
 
 (* cache *)
-let sat_cache = ref (Hashtbl.create 100)
+(* let sat_cache = ref (Hashtbl.create 100) *)
 let impl_cache = ref (Hashtbl.create 100)
 (* threshold for caching *)
 let cache_threshold = 0.001 (* 1ms *)
@@ -143,6 +143,7 @@ let restart reason =
  * return empty string if reduce is not running
  *)
 let send_and_receive f =
+  if not !is_reduce_running then start ();
   if !is_reduce_running then
     try
         let fnc () =
@@ -167,7 +168,7 @@ let send_and_receive f =
 
 
 let send_and_receive f =
-  Gen.Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
       send_and_receive f
 
 let check_formula f =
@@ -181,7 +182,7 @@ let check_formula f =
     None
 
 let check_formula f =
-  Gen.Debug.no_1 "check_formula" (fun s -> s) 
+  Debug.no_1 "check_formula" (fun s -> s) 
       (pr_option string_of_bool) check_formula f 
 
 (* 
@@ -300,14 +301,22 @@ let rl_of_b_formula b =
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "redlog: bags is not supported"
 
-let rec rl_of_formula f0 = 
-  match f0 with
-  | CP.BForm (b,_) -> rl_of_b_formula b 
-  | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula f) ^ ")"
-  | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
-  | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
-  | CP.And (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " and " ^ (rl_of_formula f2) ^ ")"
-  | CP.Or (f1, f2, _, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
+let rec rl_of_formula pr_w pr_s f0 =
+  let rec helper f0 =
+    match f0 with
+      | CP.BForm ((b,_) as bf,_) -> 
+            begin
+              match (pr_w b) with
+                | None -> "(" ^ (rl_of_b_formula bf) ^ ")"
+                | Some f -> helper f
+            end
+	  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
+      | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
+      | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
+      | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
+  in helper f0
 
 (***********************************
  pretty printer for pure formula
@@ -355,6 +364,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
         CP.And (nf1, nf2, l)
+	| CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
     | CP.Or (f1, f2, lbl, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
@@ -402,13 +412,14 @@ let is_linear_bformula b =
 let rec is_linear_formula f0 = 
   match f0 with
     | CP.BForm (b,_) -> is_linear_bformula b
+	| CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
         is_linear_formula f;
     | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
         (is_linear_formula f1) && (is_linear_formula f2)
 
 let is_linear_formula f0 =
-  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 
 let has_var_exp e0 =
@@ -454,6 +465,7 @@ let rec has_existential_quantifier f0 negation_bounded =
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (has_existential_quantifier f1 negation_bounded) ||
       (has_existential_quantifier f2 negation_bounded)
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
 
 let rec has_existential_quantifier_of_int f0 negation_bounded =
@@ -472,6 +484,7 @@ let rec has_existential_quantifier_of_int f0 negation_bounded =
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (has_existential_quantifier_of_int f1 negation_bounded) ||
       (has_existential_quantifier_of_int f2 negation_bounded)
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
 
 let has_exists2 f0 =
@@ -510,12 +523,13 @@ let has_exists2 f0 =
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
 
  let strengthen_formula f =
    let pr = string_of_formula in
-   Gen.Debug.no_1 "strengthen_formula"
+   Debug.no_1 "strengthen_formula"
        pr pr
        strengthen_formula f
 
@@ -556,6 +570,7 @@ let rec weaken_formula f0 =
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
 let weaken2 f0 =
@@ -646,6 +661,7 @@ let rec find_bound v f0 =
         (min, max)
       end
   | CP.BForm (bf,_) -> find_bound_b_formula v bf
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> None, None
   
 and get_subst_min f0 v = match f0 with
@@ -657,6 +673,7 @@ and get_subst_min f0 v = match f0 with
       let st2, rf2 = get_subst_min f2 v in
       (st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm bf -> get_subst_min_b_formula bf v
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
 and get_subst_min_b_formula (bf,lbl) v =
@@ -680,6 +697,7 @@ and get_subst_max f0 v = match f0 with
       let st2, rf2 = get_subst_max f2 v in
       (st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm bf -> get_subst_max_b_formula bf v
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
   
 and get_subst_max_b_formula (bf,lbl) v =
@@ -766,6 +784,7 @@ let rec get_subst_equation f0 v =
 		  let st2, rf2 = get_subst_equation f2 v in
 			(st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm (bf, lbl) -> get_subst_equation_b_formula bf v lbl
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
 (* base of all elim_exits functions *)
@@ -808,6 +827,7 @@ let rec elim_exists_helper core f0 =
 		res
 	end
   | CP.BForm _ -> f0
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
 
 let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   let f_f f = match f with
@@ -828,9 +848,9 @@ let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   in
   CP.map_formula f0 (f_f, somef, somef)
 
-let rec elim_exists_with_eq f0 = 
+let rec elim_exists_with_eq_x f0 = 
   let core qvar qf lbl pos =
-    let qf = elim_exists_with_eq qf in
+    let qf = elim_exists_with_eq_x qf in
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
     let conjs = CP.list_of_conjs bare_f in
@@ -845,7 +865,7 @@ let rec elim_exists_with_eq f0 =
     if not (Gen.is_empty st) then
       let new_qf = CP.subst_term st pp1 in
       let new_qf = CP.mkExists qvars0 new_qf lbl pos in
-      let tmp3 = elim_exists_with_eq new_qf in
+      let tmp3 = elim_exists_with_eq_x new_qf in
       let tmp4 = CP.mkAnd no_qvars tmp3 pos in
       tmp4
     else (* if qvar is not equated to any variables, try the next one *)
@@ -853,6 +873,10 @@ let rec elim_exists_with_eq f0 =
       let tmp2 = CP.mkExists [qvar] tmp1 lbl pos in
       tmp2
   in elim_exists_helper core f0
+
+and elim_exists_with_eq f0 =
+  let pr = !CP.print_formula in
+  Debug.no_1 "elim_exists_with_eq" pr pr elim_exists_with_eq_x f0
 
 and elim_exists_min f0 =
   let core qvar qf lbl pos =
@@ -929,7 +953,7 @@ let rec elim_exists_with_ineq f0 =
   in elim_exists_helper core f0
 
 let elim_exists_with_ineq f =
-  Gen.Debug.no_1 "elim_exists_with_ineq"
+  Debug.no_1 "elim_exists_with_ineq"
    !print_formula !print_formula elim_exists_with_ineq f
 
 
@@ -942,7 +966,7 @@ let elim_exist_quantifier f =
   f
 
 let elim_exist_quantifier f =
-  Gen.Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
+  Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
 
 
 (*********************************
@@ -973,6 +997,7 @@ let rec negate_formula f0 = match f0 with
     | None -> CP.Not (CP.BForm (bf, lbl), None, no_pos)
     in res
   | CP.And (f1, f2, pos) -> CP.Or (negate_formula f1, negate_formula f2, None, pos)
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, pos) -> CP.And (negate_formula f1, negate_formula f2, pos)
   | CP.Not (f, lbl, pos) -> f
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
@@ -980,10 +1005,11 @@ let rec negate_formula f0 = match f0 with
 
 let negate_formula f0 =
   let pr = !print_formula in
-  Gen.Debug.no_1 "negate_formula" pr pr negate_formula f0
+  Debug.no_1 "negate_formula" pr pr negate_formula f0
   
 let rec normalize_formula f0 = match f0 with
   | CP.BForm _ -> f0
+  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.And (f1, f2, pos) -> CP.And (normalize_formula f1, normalize_formula f2, pos)
   | CP.Or (f1, f2, lbl, pos) -> CP.Or (normalize_formula f1, normalize_formula f2, lbl, pos)
   | CP.Not (f1, lbl, pos) -> negate_formula f1
@@ -1007,14 +1033,14 @@ let options_to_bool opts default =
       in res
   | None -> default
 
-let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
+let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
     then f 
     else strengthen_formula f in
-    let frl = rl_of_formula sf in
+    let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
@@ -1023,46 +1049,28 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
 
-let is_sat_no_cache f sat_no =
-  Gen.Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
+let is_sat_no_cache_ops pr_w pr_s f sat_no =
+  Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
       (fun (b,_) -> string_of_bool b)
-      (fun _ -> is_sat_no_cache f sat_no) f 
+      (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
+
+let is_sat_ops pr_w pr_s f sat_no =
+  fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
 
 let is_sat f sat_no =
-  let sf = simplify_var_name (normalize_formula f) in
-  let fstring = string_of_formula sf in
-  log DEBUG ("\n#is_sat " ^ sat_no);
-  log DEBUG fstring;
-  let res = 
-    if !no_cache then
-      fst (is_sat_no_cache f sat_no)
-    else
-      try
-        (*Be careful: incorrect fstring can result in errors because of caching*)
-        let res = Hashtbl.find !sat_cache fstring in
-        incr cached_count;
-        log DEBUG "Cached.";
-        res
-      with Not_found -> 
-        let res, time = is_sat_no_cache f sat_no in
-        let _ = if time > cache_threshold then
-              let _ = log DEBUG "Caching."in
-              Hashtbl.add !sat_cache fstring res 
-        in res
-  in
-  log DEBUG (if res then "SAT" else "UNSAT");
-  res
+  let (pr_w,pr_s) = CP.drop_complex_ops in
+  is_sat_ops pr_w pr_s f sat_no
 
-let is_sat f sat_no =
-  Gen.Debug.no_2 "[Redlog] is_sat"
+  let is_sat f sat_no =
+  Debug.no_2 "[Redlog] is_sat"
       string_of_formula
       (fun c -> c)
       string_of_bool
       is_sat f sat_no
 
-let is_valid f imp_no =
+let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
-  let frl = rl_of_formula f in
+  let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
@@ -1071,11 +1079,11 @@ let is_valid f imp_no =
   let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
 
-let is_valid f imp_no =
-  Gen.Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
-       is_valid f imp_no
+let is_valid_ops pr_w pr_s f imp_no =
+  Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+       (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
-let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
+let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
   let has_eq_int f = has_existential_quantifier_of_int f false in
   let elim_eq f =
@@ -1083,11 +1091,11 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   let valid f = 
     let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
-    is_valid wf imp_no
+    is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.is_valid_with_default f !timeout))
+      call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
     (* (is_valid f imp_no) *)
     else
       if has_eq f then
@@ -1107,12 +1115,14 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   res
 
-let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
-  Gen.Debug.no_2 "[Redlog] imply_no_cache" 
+let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
+  Debug.no_2 "[Redlog] imply_no_cache" 
       (add_str "formula" string_of_formula)
-      (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+      (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+      (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
-let imply ante conseq imp_no =
+
+let imply_ops pr_w pr_s ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
@@ -1120,9 +1130,9 @@ let imply ante conseq imp_no =
   log DEBUG ("\n#imply " ^ imp_no);
   log DEBUG ("ante: " ^ (string_of_formula ante));
   log DEBUG ("conseq: " ^ (string_of_formula conseq));
-  let res = 
+  let res =
     if !no_cache then
-      fst (imply_no_cache f imp_no)
+      fst (imply_no_cache_ops pr_w pr_s f imp_no)
     else
       try
         (*Be careful: incorrect fstring can result in errors because of caching*)
@@ -1131,7 +1141,7 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
-          let res, time = imply_no_cache f imp_no in
+          let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
           let _ = if time > cache_threshold then
                 let _ = log DEBUG "Caching."in
                 Hashtbl.add !impl_cache fstring res
@@ -1140,20 +1150,37 @@ let imply ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+let imply_ops pr_w pr_s ante conseq imp_no =
+  let pr = !CP.print_formula in
+  Debug.no_2 "[redlog.ml]imply_ops" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+
+let imply f imp_no =
+  let (pr_w,pr_s) = CP.drop_complex_ops in
+   imply_ops pr_w pr_s f imp_no
+
 let imply ante conseq imp_no =
-  Gen.Debug.no_3 "[Redlog] imply" 
+  Debug.no_3 "[Redlog] imply" 
       (add_str "ante" string_of_formula) 
       (add_str "conseq" string_of_formula)
       (add_str "imp_no" (fun c -> c)) 
       string_of_bool imply ante conseq imp_no
 
+(* let imply ante conseq imp_no = *)
+(*   Debug.no_3 "[Redlog] imply"  *)
+(*       (add_str "ante" string_of_formula)  *)
+(*       (add_str "conseq" string_of_formula) *)
+(*       (add_str "imp_no" (fun c -> c))  *)
+(*       string_of_bool imply ante conseq imp_no *)
+
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  let pr_n x = None in
   if (CP.is_float_formula f) then
     (* do a manual existential elimination *)
     elim_exist_quantifier f
   else 
-    let rlf = rl_of_formula (normalize_formula f) in
+    let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
     let _ = send_cmd "rlset pasf" in
     let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
     let _ = send_cmd "rlset ofsf" in
@@ -1163,7 +1190,7 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
-  Gen.Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
+  Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
 
 (*Note: a linear formula is passed to Omega only when
 it is not a float formula.
@@ -1309,7 +1336,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
 		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
-		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
+		(* let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in *)
 		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
 		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
@@ -1359,8 +1386,8 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
 		let sst = List.flatten sst in
 		let sst = List.filter (fun (x,y) -> not (CP.eq_spec_var x y)) sst in
-		(*let _ = print_endline "Replacements : " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in*)
+(*		let _ = print_endline "Replacements : " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in *)
 			(sst, strrep)
 ;;
 
@@ -1436,7 +1463,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
 	(*let _ = print_endline "\nInput equations: " in
-	let _ = print_endline input_eqns in*)
+	let _ = print_endline input_eqns in *)
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in

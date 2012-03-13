@@ -1,0 +1,72 @@
+data node {
+	int val;
+	node next; 
+}.
+
+
+/* view for binary search trees */
+pred sll <sm, lg> == self = null & sm <= lg 
+    or self::node<sm, p> * p::sll<s2, lg> & sm<=s2
+	inv sm <= lg.
+
+relation B(int x, int y, int a, int b).
+
+/*
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
+    |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+// folding against x::sll<s,l> failed as it required post-cond from B
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2<=s3 & l3<=lg & 
+  B(s2,s3,l3,lg)  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+infer [s2,s3] x::node<sm,q>*q::sll<s3,l3> & sm<=s2
+    |- x::sll<s,l>.
+print residue.
+
+infer [] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2<=s3 
+    |- x::sll<s,l> .
+*/
+
+// BUG below
+/*infer [s2,s3] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)
+    |- x::sll<s,l>.
+print residue.
+*/
+
+
+infer [s2,s3,l3,lg,B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & 
+  B(s2,s3,l3,lg)  |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
+    |- x::sll<s,l> & B(sm,s,l,lg).
+print residue.
+
+infer [] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2 <= s3 & l3 <= lg  
+    |- x::sll<s,l> & sm <= s & l <= lg.
+print residue.
+
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & s2 <= s3 & B(l3,lg)  
+    |- x::sll<s,l> & sm <= s & B(l,lg).
+print residue.
+
+/*
+inferred pure: []
+inferred rel: [( B(s2,s3,l3,lg) & sm<=s2 & l=l3 & s=sm & s3<=l3) 
+-->  B(sm,s,l,lg),
+ B(s2,s3,l3,lg) --> s2<=s3]
+
+*/
+/*
+inferred pure: [s2<=s3]
+inferred rel: [( B(s2,s3,l3,lg) & sm<=s2 & l=l3 & s=sm & s2<=s3 & s3<=l3) -->  B(sm,s,l,lg)]
+
+*/
+/*
+infer [B] x::node<sm,q>*q::sll<s3,l3> & sm<=s2 & B(s2,s3,l3,lg)  
+    |- B(sm,s,l,lg).
+print residue.
+*/

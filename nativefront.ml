@@ -50,7 +50,7 @@ let parse (input : string) : command =
 let parse (input : string) : command =  Parser.parse_sleek_int "sleek string" input
 
 (* let parse (input : string) : command =   *)
-(*   Gen.Debug.loop_1_no "parse" (fun x -> x) (fun _ -> "?") parse input *)
+(*   Debug.loop_1_no "parse" (fun x -> x) (fun _ -> "?") parse input *)
 
 let list_parse (input_file) : command list =
   let org_in_chnl = open_in input_file in
@@ -60,4 +60,4 @@ let list_parse (input_file) : command list =
 	cmd
 
 (* let list_parse (input_file) : command list = *)
-(*   Gen.Debug.loop_1_no "list_parse" (fun _ -> "?") (fun _ -> "?") list_parse input_file *)
+(*   Debug.loop_1_no "list_parse" (fun _ -> "?") (fun _ -> "?") list_parse input_file *)

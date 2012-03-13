@@ -25,7 +25,7 @@ int foo(node x)
   ensures x::node<v,q>;
 {
   int a;
-  dprint;
+  //dprint;
   a = x.next.val;
   //dprint;
   return a;
