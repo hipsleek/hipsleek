@@ -1,0 +1,42 @@
+Processing file "avl-modular-2.ss"
+Procedure height$node SUCCESS
+Procedure diff_h_by_1$node~node SUCCESS
+Procedure diff_h_by_2$node~node SUCCESS
+Procedure eq_h$node~node SUCCESS
+Procedure get_max$int~int SUCCESS
+Procedure get_max_height_add1$node~node SUCCESS
+Procedure less_h$node~node SUCCESS
+Procedure remove_min_add$node~myint FAIL-2
+Procedure remove_min$node~myint FAIL-2
+Procedure rotate_double_right$node~node~node~node~int~int~int result FAIL-1
+Procedure rotate_right$node~node~node~int~int FAIL-2
+Procedure delete_top$node result FAIL-1
+Procedure rotate_double_left$node~node~node~node~int~int~int result FAIL-1
+Procedure rotate_left$node~node~node~int~int FAIL-2
+Procedure delete$node~int SUCCESS
+Procedure lesseq_h$node~node SUCCESS
+Procedure remove_max_add$node~myint FAIL-2
+Procedure insert$node~int FAIL-2
+Procedure main$ SUCCESS
+
+loris@loris-desktop:/home2/loris/hg/sl_label/examples/working/hip/bags$ ../../../../hip avl-modular-2.ss -tp om | grep Proc
+Procedure height$node SUCCESS
+Procedure diff_h_by_1$node~node SUCCESS
+Procedure diff_h_by_2$node~node SUCCESS
+Procedure eq_h$node~node SUCCESS
+Procedure get_max$int~int SUCCESS
+Procedure get_max_height_add1$node~node SUCCESS
+Procedure less_h$node~node SUCCESS
+
+Procedure remove_min_add$node~myint FAIL-2
+Procedure remove_min$node~myint FAIL-2
+Procedure rotate_double_right$node~node~node~node~int~int~int FAIL-2
+Procedure rotate_right$node~node~node~int~int FAIL-2
+Procedure delete_top$node FAIL-2
+Procedure rotate_double_left$node~node~node~node~int~int~int FAIL-2
+Procedure rotate_left$node~node~node~int~int FAIL-2
+Procedure delete$node~int SUCCESS
+Procedure lesseq_h$node~node SUCCESS
+Procedure remove_max_add$node~myint FAIL-2
+Procedure insert$node~int FAIL-2
+Procedure main$ SUCCESS
