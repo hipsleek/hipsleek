@@ -991,6 +991,7 @@ let rec pr_h_formula h =
           fmt_close()
     | HTrue -> fmt_bool true
     | HFalse -> fmt_bool false
+    | HEmp -> fmt_string "emp"
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
 (** convert formula exp to a string via pr_formula_exp *)
@@ -2504,6 +2505,7 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_pos =pos}) ->
 			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
 	| HTrue -> "<b>true</b>"
+	| HEmp -> "<b>emp</b>"
 	| HFalse -> "<b>false</b>"
 	| Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
 

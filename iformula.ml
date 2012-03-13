@@ -97,7 +97,8 @@ and h_formula = (* heap formula *)
 	  (* pointer * base type * list of dimensions *)
   | HTrue 
   | HFalse
-  
+  | HEmp (* emp for classical logic *)
+
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }

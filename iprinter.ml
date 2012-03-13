@@ -253,8 +253,9 @@ let rec string_of_pure_formula = function
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
 
+(* TOCHECK : what is the purpose? *)
 let is_bool_f = function 
-  | F.HTrue | F.HFalse -> true 
+  | F.HEmp | F.HTrue | F.HFalse -> true 
   | _                  -> false 
 ;;
 
@@ -320,6 +321,7 @@ let rec string_of_h_formula = function
       ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
+  | F.HEmp                        -> "emp"
 
 and string_of_imm imm = match imm with
   | Iformula.ConstAnn(Imm) -> "@I"
@@ -359,9 +361,9 @@ let rec string_of_formula = function
       let sa = if a == [] then "" else "\nAND " in
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
-	  if hf = F.HTrue then 
+	  if (hf == F.HTrue) then 
 		((string_of_pure_formula pf)^" FLOW "^fl)
-      else if hf = F.HFalse then 
+      else if (hf == F.HFalse) then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
             else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
