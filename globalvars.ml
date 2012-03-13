@@ -209,6 +209,7 @@ let rec find_read_write_global_var
 	  end
   | I.CallNRecv e ->
       if (e.I.exp_call_nrecv_method=Globals.fork_name) then
+        (*Construct the async call from parameters of the fork procedure*)
         (*method name is the first arguments*)
         try
         let fn_exp = (List.hd e.I.exp_call_nrecv_arguments) in
@@ -613,9 +614,41 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 	  end
   | I.CallNRecv e ->
       if (e.I.exp_call_nrecv_method=Globals.fork_name) then
-        (*TO DO: add global variables into fork method*)
-        (*we can reconstruct CallNRecv, transform and reverse back*)
-        exp
+        (*Construct the async call (new_e) from parameters of the fork procedure*)
+        try
+        let fn_exp = (List.hd e.I.exp_call_nrecv_arguments) in
+        let fn = match fn_exp with
+          | I.Var v ->
+              v.I.exp_var_name
+          | _ -> 
+              Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting a method name as the first parameter of a fork")}
+        in
+        let args = List.tl e.I.exp_call_nrecv_arguments in
+        let new_e = I.CallNRecv {
+            I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
+            I.exp_call_nrecv_method = fn;
+		    I.exp_call_nrecv_arguments = args;
+		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+        let new_e1 = extend_body temp_procs new_e in
+        (* ================== *)
+        match new_e1 with
+          | I.CallNRecv e1 ->
+              let fn1 = I.Var { I.exp_var_name = e1.I.exp_call_nrecv_method;
+                                I.exp_var_pos = e1.I.exp_call_nrecv_pos} 
+              in
+              let new_fork_exp = I.CallNRecv {
+                  I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
+                  I.exp_call_nrecv_method = e.I.exp_call_nrecv_method; (*fork_name*)
+		          I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
+		          I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
+		          I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
+              in
+              new_fork_exp
+          | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a I.CallNRecv")}
+        (* ================== *)
+        with _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
       else if (e.I.exp_call_nrecv_method=Globals.join_name) then
         (*no need for join*)
         exp
@@ -971,6 +1004,11 @@ let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_va
 let extend_args (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : I.proc_decl =
   let (read_global_var, write_global_var) = 
 	get_read_write_global_var global_var_decls proc in
+  (* (\*LDK*\) *)
+  (* let _ = print_string ("proc_name: "^ proc.I.proc_name ^ "\n") in *)
+  (* let _ = print_string ("read vars: "^(print_list string_of_IdentSet read_global_var)^"\n") in *)
+  (* let _ = print_string ("writes vars: "^(pr_list string_of_IdentSet write_global_var)^"\n") in *)
+
   let new_param_list = add_global_as_param read_global_var write_global_var proc.I.proc_args in
   { proc with I.proc_args = new_param_list }
   	
