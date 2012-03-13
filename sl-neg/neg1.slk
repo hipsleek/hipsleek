@@ -1,0 +1,37 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<v,q>*q::ll<n-1>
+  inv n>=0.
+
+pred lsort<s,n> == self::node<s,null> & n=1
+  or self::node<s,q>*q::lsort<s2,n-1> & s<=s2 
+  inv n>=1.
+
+pred nlsort<n> == self=null & n=0
+  or self::node<s,q>*q::lsort<s2,n-1> & s>s2
+  or self::node<s,q>*q::nlsort<n-1>
+  inv n>=0.
+
+lemma self::nlsort<n> -> self::lsort<_,n> & flow __Error.
+
+//new notation for counter predicate - disjoint/universal set
+lemma self::ll<n> <-> self::lsort<_,n> + self::nlsort<n>.
+/*
+todo:
+- complex lemma - disjoint/universal lemma
+- how to prove this lemma?
+- how to infer the counter predicates
+*/
+// (1) MAY = OK LOR MUST
+checkentail x::ll<n> |- x::lsort<a,b>.
+//print residue.
+
+//1a.
+checkentail x::lsort<a,b> |- x::lsort<a,b>.
+
+//1b.
+checkentail x::nlsort<b> |- x::lsort<a,b>.
