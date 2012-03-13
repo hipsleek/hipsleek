@@ -1,4 +1,5 @@
 open Globals
+open Label_only
 
 module AS = Astsimp
 module C  = Cast
@@ -35,7 +36,7 @@ let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
@@ -100,7 +101,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_struc_original rhs true in
+    let rhs = CF.add_struc_original true rhs in
     let rhs = CF.reset_struc_origins rhs in
     let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in

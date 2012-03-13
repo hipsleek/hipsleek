@@ -1,4 +1,6 @@
 (* global types and utility functions *)
+(* module Lb = Label_only *)
+    (* circular with Lb *)
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -17,13 +19,26 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
-and branch_label = string	(*formula branches*)
+and ho_branch_label = string
+(*and branch_label = spec_label	(*formula branches*)*)
+
+
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
+
+
+let empty_label = (0,"")
+let app_e_l c = (empty_label, c)
+let combine_lbl (i1,s1)(i2,s2) = match s1 with 
+  | "" -> (match s2 with 
+            | "" -> (i1,s1)
+            | _ -> (i2,s2))
+  | _ -> (i1,s1)
+
 
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
 
@@ -40,6 +55,8 @@ and primed =
   | Unprimed
 
 and heap_ann = Lend | Imm | Mutable
+
+and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
 and term_ann = 
   | Term    (* definitely terminates *)
@@ -121,6 +138,14 @@ let int_of_heap_ann a =
     | Imm -> 1
     | Mutable -> 0
 
+let string_of_vp_ann a =  
+  (match a with
+    | VP_Zero -> "@zero"
+    | VP_Full -> "@full"
+    | VP_Value -> "@value"
+    (* | VP_Ref-> "@p_ref" *)
+  )
+
 let string_of_term_ann a =
   match a with
   | Term -> "Term"
@@ -156,24 +181,50 @@ let string_of_loc_by_char_num (l : loc) =
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
 
-class prog_loc =
+(* class prog_loc = *)
+(*    object  *)
+(*      val mutable lc = None *)
+(*      method is_avail : bool = match lc with *)
+(*        | None -> false *)
+(*        | Some _ -> true *)
+(*      method set (nl:loc) = lc <- Some nl *)
+(*      method get :loc = match lc with *)
+(*        | None -> no_pos *)
+(*        | Some p -> p *)
+(*      method reset = lc <- None *)
+(*      method string_of : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_loc l) *)
+(*      method string_of_pos : string = match lc with *)
+(*        | None -> "None" *)
+(*        | Some l -> (string_of_pos l.start_pos) *)
+(*    end;; *)
+
+
+class ['a] store (x_init:'a) (epr:'a->string) =
    object 
+     val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
        | None -> false
        | Some _ -> true
-     method set (nl:loc) = lc <- Some nl
-     method get :loc = match lc with
-       | None -> no_pos
+     method set (nl:'a) = lc <- Some nl
+     method get :'a = match lc with
+       | None -> emp_val
        | Some p -> p
      method reset = lc <- None
      method string_of : string = match lc with
        | None -> "None"
-       | Some l -> (string_of_loc l)
+       | Some l -> (epr l)
+   end;;
+
+class prog_loc =
+object
+  inherit [loc] store no_pos string_of_loc
      method string_of_pos : string = match lc with
        | None -> "None"
        | Some l -> (string_of_pos l.start_pos)
-   end;;
+end;;
 
 let proving_loc  = new prog_loc
 
@@ -256,6 +307,23 @@ let rec s_i_list l c = match l with
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 ;;
 
+let string_of_primed p =
+  match p with
+    | Primed -> "'"
+    | Unprimed -> ""
+
+let string_of_primed_ident (id,p) =
+  id ^ string_of_primed p
+
+let rec s_p_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> string_of_primed_ident h
+  | h::t -> (string_of_primed_ident h) ^ c ^ (s_p_i_list t c)
+;;
+
+let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
+;;
+
 let is_substr s id =
   let len_s = String.length s in
   try
@@ -315,6 +383,17 @@ let this = "this"
 
 let is_self_ident id = self=id
 
+let thread_name = "thread"  (*special thread id*)
+let thread_typ = Int  (*special thread id*)
+let proc_typ = Void  (*special thread id*)
+let fork_name = "fork"  (*generic, its args can vary*)
+let join_name = "join"
+
+let init_name = "init"  (*generic, its args can vary*)
+let finalize_name = "finalize"
+let acquire_name = "acquire"
+let release_name = "release"
+let lock_name = "lock"
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -343,6 +422,7 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+
 let verify_callees = ref false
 
 let elim_unsat = ref false
@@ -351,13 +431,18 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref true
+(* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
+let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
+
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let print_proc = ref false
 
 let check_all = ref true
+  
+let auto_number = ref true
 
 let use_field = ref false
 
@@ -465,7 +550,7 @@ let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let no_cache_formula = ref true
+let no_cache_formula = ref false
 
 let enable_incremental_proving = ref false
 
@@ -493,6 +578,7 @@ let dis_ass_chk = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false
+let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false
 let infer_slicing = ref false
@@ -770,3 +856,10 @@ let print_proof = ref false
 
 (* Create a quoted version of a string, for example, hello --> "hello" *)
 let strquote s = "\"" ^ s ^ "\""
+
+
+let open_log_out s = 
+ (try
+	Unix.mkdir "logs" 0o750
+ with _ -> ());
+ open_out ("logs/"^s)

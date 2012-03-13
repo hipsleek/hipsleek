@@ -28,7 +28,7 @@ let test_number = ref 0
 
 let set_log_file () :  unit=
   log_cvc3_formula := true;
-  cvc3_log := open_out "allinput.cvc3"
+  cvc3_log := open_log_out "allinput.cvc3"
 
 let run_cvc3 (input : string) : unit =
   begin
@@ -72,6 +72,7 @@ and cvc3_of_exp a = match a with
 	| CP.Func _ -> failwith ("Functions are not supported in cvc3")
 	| CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
+    | CP.AConst _ -> failwith ("aconst not supported in cvc3")
 
 and cvc3_of_b_formula b =
   let (pf,_) = b in
@@ -114,11 +115,14 @@ and cvc3_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvc3_of_exp e1 ^ ", " ^ cvc3_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvc3_of_b_formula: BagMax/BagMin should not appear here.\n")
+  | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3")
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
+    | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
+     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
 	    
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
@@ -128,6 +132,7 @@ and cvc3_of_sv_type sv = match sv with
 and cvc3_of_formula f = match f with
   | CP.BForm (b,_) -> "(" ^ (cvc3_of_b_formula b) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (cvc3_of_formula p1) ^ " AND " ^ (cvc3_of_formula p2) ^ ")"
+  | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvc3_of_formula p1) ^ " OR " ^ (cvc3_of_formula p2) ^ ")"
   | CP.Not (p,_, _) ->
 	    begin
@@ -146,6 +151,7 @@ and remove_quantif f quant_list  = match f with
   | CP.BForm (b,_) -> 
 		(*let _ = print_string ("\n#### BForm: " ^ Cprinter.string_of_pure_formula f ) in*)
 		(f, quant_list)
+  | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"
   | CP.And (p1, p2, pos) -> 
 		begin
 		  let (tmp1, quant_list) = remove_quantif p1 quant_list in

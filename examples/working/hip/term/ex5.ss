@@ -1,15 +1,15 @@
 int foo (int n)
 /*
 	case {
- 		n<0 -> variance (-1) ensures false; // non-terminating inputs
- 		n>=0 -> variance (1) [n] ensures res = 2*n;
+ 		n<0 -> requires Loop ensures false; // non-terminating inputs
+ 		n>=0 -> requires Term[n] ensures res = 2*n;
  	}
 */
 // A better specification
 	case {
- 		n<0 -> variance [0,-1] ensures false; // non-terminating inputs
-		n=0 -> variance [0,0] ensures res = 0;
- 		n>0 -> variance [0,1,n] ensures res = 2*n;
+ 		n<0 -> requires Loop ensures false; // non-terminating inputs
+		n=0 -> requires Term ensures res = 0;
+ 		n>0 -> requires Term[n] ensures res = 2*n;
  	}
 
 {

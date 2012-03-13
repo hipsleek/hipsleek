@@ -1,9 +1,14 @@
-data node3 { int val; node3 left; node3 right; }
+data node3 { 
+  int val; 
+  node3 left; 
+  node3 right; 
+}
 
-bst<sm,lg> == self::node3<v,null,null> & sm=v & v=lg or
-              self::node3<v,null,q> * q::bst<qs,lg> & sm=v & v<=qs or
-              self::node3<v,p,null> * p::bst<sm,pl> & sm<=v & v=lg or
-              self::node3<v,p,q> * p::bst<sm,pl> * q::bst<qs,lg> & pl<=v & v<=qs inv sm<=lg;
+bst<sm,lg> == self::node3<v,null,null> & sm=v & v=lg 
+  or self::node3<v,null,q> * q::bst<qs,lg> & sm=v & v<=qs 
+  or self::node3<v,p,null> * p::bst<sm,pl> & sm<=v & v=lg 
+  or self::node3<v,p,q> * p::bst<sm,pl> * q::bst<qs,lg> & pl<=v & v<=qs 
+  inv sm<=lg;
 
 relation A(int a, int b, int c).
 

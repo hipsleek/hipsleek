@@ -106,6 +106,10 @@ and cvcl_of_exp a = match a with
       failwith ("Lists are not supported in cvclite")
 	| CP.ArrayAt _ ->
       failwith ("Arrays are not supported in cvclite")
+	| CP.Func _ ->
+      failwith ("Func are not supported in cvclite")
+	| CP.AConst _ ->
+      failwith ("Aconst not supported in cvclite")
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in
@@ -141,11 +145,14 @@ and cvcl_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
+  | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n")
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvclite")
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
+	| CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
+	| CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
 	  
 and cvcl_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
@@ -155,6 +162,7 @@ and cvcl_of_sv_type sv = match sv with
 and cvcl_of_formula f = match f with
   | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
   | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " AND " ^ (cvcl_of_formula p2 ) ^ ")"
+  | CP.AndList _ -> Gen.report_error no_pos "cvclite.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " OR " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.Not (p,_, _) ->
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)

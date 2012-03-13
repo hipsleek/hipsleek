@@ -44,3 +44,25 @@ node2 append(node2 x, node2 y)
 		return x; 
 	}
 }
+
+relation D(int x, int y, int z, node2 m, node2 n, node2 p).
+
+void append2(node2 x, node2 y)
+  infer @pre [m,D]
+	requires x::dll<q, m> * y::dll<p, n>
+	ensures x::dll<r, t> & D(t,m,n,r,p,q);
+
+{
+	node2 tmp;
+
+
+	if (x.next == null) {
+		x.next = y;
+		if (y != null) {
+			y.prev = x;
+		}		
+	}
+	else {
+		append2(x.next, y);
+	}
+}

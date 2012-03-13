@@ -48,11 +48,12 @@ and view_decl = { view_name : ident;
 		  mutable view_data_name : ident;
           (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
 		  view_vars : ident list;
-		  view_labels : branch_label list;
+		  view_labels : Label_only.spec_label list;
 		  view_modes : mode list;
 		  mutable view_typed_vars : (typ * ident) list;
-		  view_invariant : (P.formula * (branch_label * P.formula) list);
+		  view_invariant : P.formula;
 		  view_formula : Iformula.struc_formula;
+          view_inv_lock : F.formula option;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
@@ -76,13 +77,13 @@ and axiom_decl = {
 		  }
 
 and hopred_decl = { hopred_name : ident;
-          hopred_mode : branch_label;
+          hopred_mode : ho_branch_label;
           hopred_mode_headers : ident list;
           hopred_typed_vars: (typ * ident) list;
           mutable hopred_typed_args : (typ * ident) list;
           hopred_fct_args : ident list;
           hopred_shape    : Iformula.struc_formula list;
-          hopred_invariant :(P.formula * (branch_label * P.formula) list)
+          hopred_invariant :P.formula
 }
 
 and enum_decl = { enum_name : ident;
@@ -248,6 +249,7 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 		     exp_bool_lit_pos : loc }
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
+               exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
 		       exp_call_nrecv_pos : loc }
@@ -412,6 +414,8 @@ let float_type = Float
 
 let bool_type = Bool
 
+let bag_type = BagT Int
+
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
@@ -419,8 +423,7 @@ let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
-  let r = iprog.prog_proc_decls in
-  let er = List.filter (fun pd -> pd.proc_static_specs ==[]) r in
+  let er = List.filter (fun c-> F.isEConstTrue c.proc_static_specs) iprog.prog_proc_decls in
   let s = "Empty Specs: " ^ (pr_list pr_id (List.map (fun x -> x.proc_name) er)) in
   report_warning no_pos s
  
@@ -1008,14 +1011,13 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
   If there are conflicts, report as errors.
 *)
 
-and collect_struc (f:Iformula.struc_formula):ident list =  List.concat (List.map collect_ext f)
-
-and collect_ext (f:Iformula.ext_formula):ident list = match f with
-  | Iformula.EAssume (b,_) -> collect_formula b
-  | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
-  | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
-  (*| Iformula.EVariance b -> collect_ext b.F.formula_var_continuation*)
-  | Iformula.EInfer b -> collect_ext b.F.formula_inf_continuation
+and collect_struc (f:F.struc_formula):ident list =  match f with
+  | F.EAssume (b,_) -> collect_formula b
+  | F.ECase b-> Gen.fold_l_snd  collect_struc b.F.formula_case_branches
+  | F.EBase b-> (collect_formula b.F.formula_struc_base)@ (Gen.fold_opt collect_struc b.F.formula_struc_continuation)
+  | F.EInfer b -> collect_struc b.F.formula_inf_continuation
+  | F.EList b -> Gen.fold_l_snd collect_struc b
+  | F.EOr b -> (collect_struc b.F.formula_struc_or_f1)@(collect_struc b.F.formula_struc_or_f2)
 
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
@@ -1033,9 +1035,9 @@ and collect_formula (f0 : F.formula) : ident list =
 		  else n1@n2
 	| _ -> [] in
   match f0 with
-    | Iformula.Base f -> helper f.Iformula.formula_base_heap
-    | Iformula.Exists f -> helper f.Iformula.formula_exists_heap
-    | Iformula.Or f -> (collect_formula f.Iformula.formula_or_f1) @ (collect_formula f.Iformula.formula_or_f2)
+    | F.Base f -> helper f.F.formula_base_heap
+    | F.Exists f -> helper f.F.formula_exists_heap
+    | F.Or f -> (collect_formula f.F.formula_or_f1) @ (collect_formula f.F.formula_or_f2)
 
 and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let x = collect_struc f in
@@ -1050,109 +1052,11 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
       (fun _ -> syn_data_name_x data_decls view_decls) () 
 
 and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
-  (*let vl = List.map (fun v -> v.view_name) view_decls in*)
-  (* An Hoa : Implement the equality checking *)
-  (** [Internal] replaces aliases of self by it. **)
-  (*let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
-
-  (** [Internal] replaces aliases of self in an struc_formula **)
-  and process_eq_self_sf f = List.map process_eq_self_ef f
-
-  (** [Internal] replaces aliases of self in an ext_formula **)
-  and process_eq_self_ef f = match f with
-	| F.ECase ecf -> let b = List.map (fun (x,y) -> (x,process_eq_self_sf y)) 
-		ecf.F.formula_case_branches in
-	  F.ECase { ecf with F.formula_case_branches = b }
-	| F.EBase ebf -> let bf = process_formula ebf.F.formula_ext_base in
-	  let ecnt = process_eq_self_sf ebf.F.formula_ext_continuation in
-	  F.EBase { ebf with F.formula_ext_base = bf; 
-		  F.formula_ext_continuation = ecnt }
-	| _ -> f (* Stay the same on the other cases. *)
-
-  (** [Internal] replaces aliases of self in an formula **)
-  and process_formula f = match f with
-	| F.Base fb -> F.Base { fb with 
-		  F.formula_base_heap = process_pure_heap fb.F.formula_base_pure 
-			  fb.F.formula_base_heap }
-	| F.Exists fe -> F.Exists { fe with 
-		  F.formula_exists_heap = process_pure_heap fe.F.formula_exists_pure
-			  fe.F.formula_exists_heap }
-	| F.Or fo -> let f1 = process_formula fo.F.formula_or_f1 in
-	  let f2 = process_formula fo.F.formula_or_f2 in
-	  F.Or { fo with F.formula_or_f1 = f1; F.formula_or_f2 = f2 }
-
-  (** [Internal] extract equalities of form self = x and replace x 
-	  with self in heapreturn a new heap formula.
-  **)
-  and process_pure_heap p h =
-	let vars = collect_eq_self p in
-	(* let _ = print_endline ("Variables equal self : " ^ (String.concat "," (List.map (fun (x,y) -> x) vars))) in *)
-	replace_self h vars
-	    
-  and collect_eq_self p = match p with
-	| P.BForm (f,_) -> (let (pf, _) = f in match pf with
-		| P.Eq (e1,e2,_) -> (match e1 with
-			| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
-				match e2 with
-				  | P.Var ((xn,xp),_) -> [(xn,xp)]
-				  | _ -> [] 
-			  else match e2 with
-				| P.Var (("self",Unprimed),_) -> [(vn,vp)]
-				| _ -> [])
-			| _ -> [])
-		| _ -> [])
-	| P.And (f1,f2,_) -> List.append (collect_eq_self f1) (collect_eq_self f2)
-	| P.Or _ | P.Not _ -> []
-	| P.Forall (_,f,_,_) | P.Exists (_,f,_,_) -> collect_eq_self f
-
-  and replace_self h vars = match h with
-	| F.Phase h1 -> F.Phase { h1 with
-		  F.h_formula_phase_rd = replace_self h1.F.h_formula_phase_rd vars;
-		  F.h_formula_phase_rw = replace_self h1.F.h_formula_phase_rw vars}
-	| F.Conj h1 -> F.Conj { h1 with
-		  F.h_formula_conj_h1 = replace_self h1.F.h_formula_conj_h1 vars;
-		  F.h_formula_conj_h2 = replace_self h1.F.h_formula_conj_h2 vars}
-	| F.Star h1 -> F.Star { h1 with
-		  F.h_formula_star_h1 = replace_self h1.F.h_formula_star_h1 vars;
-		  F.h_formula_star_h2 = replace_self h1.F.h_formula_star_h2 vars}
-	| F.HeapNode h1 -> F.HeapNode { h1 with
-		  (* Replace the pointer with self if we detected it equals self *)
-		  F.h_formula_heap_node = 
-			  if List.mem h1.F.h_formula_heap_node vars then
-				("self",Unprimed)
-			  else
-				h1.F.h_formula_heap_node }
-	| F.HeapNode2 h1 ->F.HeapNode2 { h1 with
-		  (* Replace the pointer with self if we detected it equals self *)
-		  F.h_formula_heap2_node = 
-			  if List.mem h1.F.h_formula_heap2_node vars then
-				("self",Unprimed)
-			  else
-				h1.F.h_formula_heap2_node }
-	| F.HTrue -> h
-	| F.HFalse -> h
-  in*)
-  (* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
-	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let view_decls_org = view_decls in
-  (*let view_decls = List.map process_eq_self_view view_decls in*)
-  (* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
-	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
-  (*let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in*)
-  (*let _ = List.iter 
-    (fun (v,_,tl) -> 
-    if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-    then report_error no_pos ("self points infinitely within definition "^v.view_name) 
-    else () )  rl in*)
   (* Restore the original list of view_decls and continue with the previous implementation *)
   let view_decls = view_decls_org in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
-  (* let _ = List.iter 
-     (fun (v,_,tl) -> 
-     if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-     then report_error no_pos ("self points infinitely within definition "^v.view_name) 
-     else () )  rl in*)
   rl
 
 and fixpt_data_name (view_ans)  =
@@ -1217,12 +1121,12 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
   update_fixpt vl
 
 
-and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
+and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
   let pr = !print_struc_formula in
   Debug.no_1_loop "data_name_of_view" pr (fun x->x)
-      (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula)) f0
+      (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula)) f0
 
-and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
+and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
 
   let handle_list_res  (e:string list): string = 
 	let r = List.filter (fun c-> (String.length c)>0) e in
@@ -1233,15 +1137,14 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formu
 	  if (List.for_all (fun c-> (String.compare c h)==0 ) tl) then (List.hd r)
 	  else "" in
   
-  let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
-	| Iformula.EAssume (b,_) -> data_name_of_view1 view_decls b
-	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view_x  view_decls c2) b.Iformula.formula_case_branches)
-	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
-		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])
-	(*| Iformula.EVariance b -> data_name_in_ext b.F.formula_var_continuation*)
- | Iformula.EInfer b -> data_name_in_ext b.F.formula_inf_continuation
-  in
-  handle_list_res (List.map data_name_in_ext f0) 
+  let rec data_name_in_struc (f:F.struc_formula):ident = match f with
+	| F.EAssume (b,_) -> data_name_of_view1 view_decls b
+	| F.ECase b-> handle_list_res (Gen.fold_l_snd (fun c->[data_name_in_struc c]) b.F.formula_case_branches)
+	| F.EBase b-> handle_list_res (data_name_of_view1 view_decls b.F.formula_struc_base ::(Gen.fold_opt (fun c-> [data_name_of_view_x view_decls c]) b.F.formula_struc_continuation))
+	| F.EInfer b -> data_name_in_struc b.F.formula_inf_continuation
+	| F.EList b -> handle_list_res (List.map (fun c-> data_name_in_struc(snd c)) b) 
+	| F.EOr b -> handle_list_res [data_name_in_struc b.F.formula_struc_or_f1; data_name_in_struc b.F.formula_struc_or_f2] in
+   data_name_in_struc f0
 
 and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident = 
   let rec get_name_from_heap (h0 : F.h_formula) : ident option = match h0 with
@@ -1303,55 +1206,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 and contains_field_ho (e:exp) : bool =
   let helper e = match e with | Member _ -> Some true | _ -> None in
   fold_exp e (helper) (List.exists (fun b -> b)) false
-(*
-and contains_field2 (e0 : exp) : bool = match e0 with
-  | Assert _ -> false
-  | Assign _ -> false
-  | Binary e -> (contains_field2 e.exp_binary_oper1) || (contains_field2 e.exp_binary_oper2)
-  | Bind e -> contains_field2 e.exp_bind_body
-  | Block e -> contains_field2 e.exp_block_body
-  | BoolLit _ -> false
-  | Break _ -> false
-  | CallRecv e -> 
-	    contains_field2 e.exp_call_recv_receiver 
-	    || (List.exists contains_field2 e.exp_call_recv_arguments)
-  | CallNRecv e -> List.exists contains_field2 e.exp_call_nrecv_arguments
-  | Cast e -> contains_field2 e.exp_cast_body
-  | Catch e -> contains_field2 e.exp_catch_body
-  | Cond e ->
-	    let e1 = e.exp_cond_condition in
-	    let e2 = e.exp_cond_then_arm in
-	    let e3 = e.exp_cond_else_arm in
-		(contains_field2 e1) || (contains_field2 e2) || (contains_field2 e3)
-  | ConstDecl _ -> false
-  | Continue _ -> false
-  | Debug _ -> false
-  | Dprint _ -> false
-  | Empty _ -> false
-  | FloatLit _ -> false
-  | Finally e -> contains_field2 e.exp_finally_body
-  | IntLit _ -> false
-  | Java _ -> false
-  | Label (_,e)-> contains_field2 e
-  | Member _ -> true
-  | New e -> List.exists contains_field2 e.exp_new_arguments
-  | Null _ -> false
-  | Return e -> 
-	    let ret_val = e.exp_return_val in
-		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
-  | Seq e -> (contains_field2 e.exp_seq_exp1) || (contains_field2 e.exp_seq_exp2)
-  | This e -> false
-  | Unary e -> contains_field2 e.exp_unary_exp
-  | Var _ -> false
-  | VarDecl _ -> false (* this can't happen on RHS anyway *)
-  | While e -> (contains_field2 e.exp_while_condition) || (contains_field2 e.exp_while_body)
-  | Unfold _ -> false
-  | Raise e -> begin match e.exp_raise_val with | None -> false | Some e -> contains_field2 e end
-  | Try e -> (contains_field2 e.exp_try_block) ||
-		(List.exists contains_field2 e.exp_catch_clauses)||
-			(List.exists contains_field2 e.exp_finally_clause)
-  | Time _ -> false
-*)
+
  
 (* smart constructors *)
 
@@ -1845,9 +1700,12 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
        (* let _ = print_endline ("1: " ^ data_name) in*)
        (* let _ = print_endline ("2: " ^ field_name) in *)
 		let ddef = look_up_data_def_raw ddefs data_name in
+        (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
-			field
+		field
+         with _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("field name " ^ field_name ^ " is not found");}
+        )
 	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
 
 
