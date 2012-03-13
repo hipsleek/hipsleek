@@ -428,6 +428,10 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : 
 	(I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = Hashtbl.find h proc.I.proc_name in
+  (*LDK*)
+  (* let _ = print_string ("get_read_write_global_var: proc_name: "^ proc.I.proc_name ^ "\n") in *)
+  (* let _ = print_string ("read vars: "^(string_of_IdentSet reads)^"\n") in *)
+  (* let _ = print_string ("writes vars: "^(string_of_IdentSet writes)^"\n") in *)
   let readSet = IdentSet.diff reads writes in
   let writeSet = writes in
   to_var_decl_list global_var_decls readSet writeSet
@@ -996,6 +1000,7 @@ let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_va
   let write_param_ext = List.map (global_to_param I.RefMod) write_global_var in
   let param_ext = read_param_ext @ write_param_ext in
   args @ param_ext
+
 	
 (** Extend the parameter list of a procedure with global variables 
 	@param global_var_decls list of global variable declaration 
@@ -1004,11 +1009,6 @@ let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_va
 let extend_args (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : I.proc_decl =
   let (read_global_var, write_global_var) = 
 	get_read_write_global_var global_var_decls proc in
-  (* (\*LDK*\) *)
-  (* let _ = print_string ("proc_name: "^ proc.I.proc_name ^ "\n") in *)
-  (* let _ = print_string ("read vars: "^(print_list string_of_IdentSet read_global_var)^"\n") in *)
-  (* let _ = print_string ("writes vars: "^(pr_list string_of_IdentSet write_global_var)^"\n") in *)
-
   let new_param_list = add_global_as_param read_global_var write_global_var proc.I.proc_args in
   { proc with I.proc_args = new_param_list }
   	

@@ -112,7 +112,6 @@ let process_source_full source =
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-
     (* Append all primitives in list into one only *)
     let iprims_list = process_intermediate_prims prims_list in
     let iprims = Iast.append_iprims_list_head iprims_list in

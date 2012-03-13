@@ -1190,6 +1190,26 @@ let addin_callargs_of_exp ht e : exp =
                 })
 
     | CallNRecv e ->
+        if(e.exp_call_nrecv_method=Globals.fork_name) then
+          (*get forked procedure name*)
+          let fn_exp = (List.hd e.exp_call_nrecv_arguments) in
+          let fn = match fn_exp with
+            | Var v ->
+                v.exp_var_name
+            | _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("addin_callargs_of_exp: expecting a method name as the first parameter of a fork")}
+          in
+          let cn = fn in
+          (*add free vars into forked proc call*)
+          let rws = H.find ht cn in
+          let loc = e.exp_call_nrecv_pos in
+          let eags = exp_of_rws loc rws in
+          Some (CallNRecv 
+                    { e with
+                        exp_call_nrecv_arguments = 
+                            e.exp_call_nrecv_arguments @ eags;
+                    })
+        else
         let cn = e.exp_call_nrecv_method in
         let rws = H.find ht cn in
         let loc = e.exp_call_nrecv_pos in
