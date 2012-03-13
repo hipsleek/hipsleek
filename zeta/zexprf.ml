@@ -68,7 +68,7 @@ module Z3 =
 				let doms = Array.of_list (List.tl d) in
 				let syms = Array.mapi (fun i _ -> Z3.mk_string_symbol ctx ("Z" ^ (string_of_int i))) doms in
 				let doms = Array.map (fun x -> z3sort ctx x) doms in
-				let _, constr, _ = Z3.mk_tuple_sort ctx (Z3.mk_string_symbol ctx "smap") syms doms in
+				let _,constr,_ = Z3.mk_tuple_sort ctx (Z3.mk_string_symbol ctx "smap") syms doms in
 					constr
 			| _ -> failwith "[z3sort_of_domain] : Unexpected sort"
 
@@ -100,10 +100,31 @@ module Z3 =
 			(Implies, Z3.mk_implies);
 			(Iff, Z3.mk_iff)]
 		
+		let prepare_z3ast ctx ds t =
+			(* prepare sorts for SMap domains & their constructors *)
+			let vs = collect_vars t in
+			let srts = List.map sort_of_term vs in
+			let is_map_sort s = match s with | SMap _ -> true | _ -> false in
+			let srts = List.filter is_map_sort srts in
+			let srts = GList.remove_dups_eq eq_sort srts in
+			
+			(* produces functions applications for defined symbols *)
+			let fas = List.map (fun (s,t) ->
+				let ss = sort_of_symbol s t in
+				let sd = domain_of ss in
+				let sr = result_of ss in
+				(s,Z3.mk_func_decl ctx (Z3.mk_string_symbol ctx s)
+					sdom sres)) ds in
+			
+			
+			(* prepare all symbols *)
+			
+				true
+			
 		(**
 		 * Convert term to Z3 AST
 		 *)
-		let rec z3ast ctx t =
+		let rec z3ast ctx ds t =
 			(*let _ = print_endline ("[z3ast] " ^ (string_of_term t)) in*)
 			match t with
 				| Num i ->
@@ -165,9 +186,10 @@ module Z3 =
 					print_endline ("[Zexprf.Z3.derive]: output = " ^ (TBool.string_of_triary_bool res)) in
 				(* currently, we do not parse the proof from Z3 *)
 					(res, [])
-		
+
 	end
 
+(*
 (**
  * An intelligent dispatcher that
  * send a formula to the external
@@ -183,6 +205,7 @@ module Intel =
 		let select_prover st t = Z3
 		
 	end
+*)
 	
 (*let derive prv t = match prv with
 	| Z3 -> Zexprf.Z3.derive t

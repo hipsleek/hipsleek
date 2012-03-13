@@ -13,7 +13,6 @@
 open Zsort
 open Zutils
 
-
 (**
  * Data structure for LOGICAL TERM
  *
@@ -75,10 +74,15 @@ let rec term_trans f_pre f_arg f_post a t =
 (* TERM PRINTING *)
 
 let precedence_of f = match f with
-	| Add | Sub -> 8 | Mul | Div | Mod -> 9
+	| Add | Sub -> 8
+	| Mul | Div | Mod -> 9
 	| Lt | Le | Gt | Ge | Eq | Ne -> 7
-	| Top | Bot -> 10 | And -> 3 | Or -> 2 | Neg -> 5
-	| Implies | Iff -> 1 | Exists | Forall -> 4
+	| Top | Bot -> 10
+	| And -> 3
+	| Or -> 2
+	| Neg -> 5
+	| Implies | Iff -> 1
+	| Exists | Forall -> 4
 	| GFunc -> 10
 
 let rec print_term_helper pr_var pr_func p t  = match t with

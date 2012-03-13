@@ -35,13 +35,14 @@ type symbol_table = (string * symbol) list
 let find_symbol st s =
 	List.assoc s st
 	
+
 (**
  * System database
  *)
 type database = {
 		defined_symbol : string list;
 		axioms : symbol_table;
-		
+		theorems : term list;
 		proved_theorems : term list;
 	}
 

@@ -9,17 +9,18 @@
 open Zutils
 
 type sort =
-	| SBool | SInt (* primitive sorts *)
-	| SWild of int (* wildcard sort *)
-	| SMap of sort list (* head is sort of image, tail is sort of arguments *)
+	| SBool
+	| SInt (* primitive sorts *)
+	| SWild of int (* wildcard sort with ID *)
+	| SMap of sort list (* head is sort of image and tail is sort of arguments *)
 
 (* SORT PRINTING *)
 
 let rec string_of_sort s = match s with
 	| SWild i -> "X_" ^ (string_of_int i)
 	| SInt -> "Z"
-	| SMap d -> (String.concat " x " (List.map string_of_sort (List.tl d))) ^ " ~~> " ^ (string_of_sort (List.hd d))
-	| SBool -> "{T,F}"
+	| SMap d -> (String.concat "x" (List.map string_of_sort (List.tl d))) ^ "->" ^ (string_of_sort (List.hd d))
+	| SBool -> "2"
 
 let rec latex_of_sort s = match s with
 	| SWild i -> "\\mathcal{X}_{" ^ (string_of_int i) ^ "}" 
