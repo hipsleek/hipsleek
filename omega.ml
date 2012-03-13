@@ -499,7 +499,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
                     false
                 | exc ->
                     begin
-                        print_endline ("IMPLY timeout");
+                        (* print_endline ("IMPLY timeout: " ^ (Printexc.to_string exc)); *)
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
                         stop (); raise exc
           (* restart ("Unexpected exception when doing IMPLY "); *)

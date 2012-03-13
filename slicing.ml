@@ -517,7 +517,7 @@ struct
   module MF_S           = Memo_Formula(Label)
 
   let regroup_memo_group (lst: memo_pure) : memo_pure =
-    if !f_1_slice (* || !dis_slicing *) then 
+    if !f_1_slice || !dis_slicing then 
       (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in

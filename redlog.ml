@@ -175,7 +175,9 @@ let send_and_receive f =
         in answ
     with
       (* Timeout exception is not expected here except for dis_provers_timeout *)
-      | Procutils.PrvComms.Timeout as exc -> raise exc
+      | Procutils.PrvComms.Timeout as exc ->
+          restart "Reduce restart because of timeout.";
+          raise exc
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
