@@ -1478,10 +1478,10 @@ let replace_memo_pure_label nl f =
  (* imply functions *)
 
 let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
- Debug.no_3 "mimply_process_ante" (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+ Debug.ho_4 "mimply_process_ante" (fun x -> string_of_int x) string_of_int (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
-  (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) 
-    with_disj ante_disj conseq
+  (fun _ _ _ _ -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) 
+    with_disj !Slicing.getctr_n ante_disj conseq
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante =
