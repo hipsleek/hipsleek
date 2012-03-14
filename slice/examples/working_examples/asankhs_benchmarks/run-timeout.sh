@@ -11,7 +11,7 @@ kill_proc () {
 	killall -v sleek
 }
 
-for (( i = 11; i <= 15; i++ ))
+for (( i = 16; i <= 20; i++ ))
 do
 	# Omega
 	# echo "[oc][.nslc] spaguetti-$i"

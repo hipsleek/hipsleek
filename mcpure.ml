@@ -1488,7 +1488,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     (* if !dis_slicing then ante_disj
     else *)
     if !do_slicing then 
-      AnnoS.get_rel_ctr 2 conseq ante_disj
+      AnnoS.get_rel_ctr !Slicing.getctr_n conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in

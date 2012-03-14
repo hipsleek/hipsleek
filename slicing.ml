@@ -5,6 +5,8 @@ open Gen
 
 module CP = Cpure
 
+let getctr_n = ref 2
+
 (************************************)
 (* Signatures for Slicing Framework *)
 (************************************)

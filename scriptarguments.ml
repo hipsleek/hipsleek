@@ -268,6 +268,7 @@ let common_arguments = [
   ("--dis-oc", Arg.Set Globals.dis_oc, "Disable Omega when running other provers");
   ("--rlpa", Arg.Set Redlog.pasf, "Using Presburger Arithmetic of Redlog");
   ("--dis-decompose", Arg.Set Globals.dis_decompose, "Disable decomposition of implication checking");
+  ("--getctr-n", Arg.Set_int Slicing.getctr_n, "Set the level of GetCtr for the annotated slicing");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
