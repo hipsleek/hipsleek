@@ -420,6 +420,7 @@ let stop () =
     let _ = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
     is_spass_running := false;
   )
+  else Debug.info_pprint "SPASS is not running" no_pos
 
 (* restart Omega system *)
 let restart reason =
@@ -428,7 +429,8 @@ let restart reason =
     Procutils.PrvComms.restart !log_all_flag log_file reason "SPASS" start stop
   )
   else (
-    let _ = print_string (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in ()
+    let _ = print_string (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in 
+    start ()
   )
     
 (* Runs the specified prover and returns output *)
@@ -472,7 +474,11 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
     ) 
     else 
       try fnc ()
-      with exc -> raise exc
+      with exc -> 
+        restart "Restarting SPASS because of timeout.";
+        if !Omega.is_omega_running then Omega.restart "Restarting Omega because of timeout.";
+        (* failwith "spass timeout"; *)
+        raise exc
   in
   let _ = Procutils.PrvComms.stop false stdout !spass_process 0 9 (fun () -> ()) in
   remove_file infile;
@@ -517,7 +523,14 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
         { original_output_text = []; validity_result = Aborted; }) 
-    else fnc input
+    else 
+      try fnc input
+      with
+      | Procutils.PrvComms.Timeout as exc ->
+          restart "Restarting SPASS because of timeout.";
+          if !Omega.is_omega_running then Omega.restart "Restarting Omega because of timeout.";
+          (* failwith "spass timeout"; *)
+          raise exc
   in res
 
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
@@ -665,9 +678,13 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
         let _ = print_endline "-- use Omega.imply_..." in
         let (pr_w, pr_s) = Cpure.drop_complex_ops in
         match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
-        | None -> (false, true)
+        | None -> (false, (* true*) false)
         | Some r -> (r, false)
-      with _ -> (false, true) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
+      with exc -> match exc with 
+        | Procutils.PrvComms.Timeout -> 
+            if not (!dis_provers_timeout) then (false, (* true *) false)
+            else raise exc (* Timeout exception of a higher-level function *)
+        | _ -> (false, (* true *) false) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem" in *)
@@ -741,7 +758,11 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
         match optr with
         | Some r -> (r, false)
         | None -> (true, false)
-      with _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
+      with exc -> match exc with 
+        | Procutils.PrvComms.Timeout -> 
+            if not (!dis_provers_timeout) then (true, false)
+            else raise exc (* Timeout exception of a higher-level function *)
+        | _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
     (* let _ = print_endline "-- use Spass.check_problem..." in *)

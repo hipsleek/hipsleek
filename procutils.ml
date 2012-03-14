@@ -94,8 +94,8 @@ struct
       let res = maybe_raise_timeout fnc arg tsec in
       res
     with 
-      | Timeout -> (* print_endline ("Timeout caught");*) with_timeout ()
-      | exc -> raise exc
+      | Timeout -> print_endline ("[procutils] Timeout caught"); with_timeout ()
+      | exc -> (* prerr_endline (Printexc.to_string exc); *) raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
@@ -154,9 +154,9 @@ struct
     let _ = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
     flush log_file;
     close_pipes process;
-    try 
+    try
         Unix.kill process.pid killing_signal;
-        ignore (Unix.waitpid [] process.pid)
+        ignore (Unix.waitpid [] process.pid);
     with
       | e -> 
           (ignore e;

@@ -1365,7 +1365,14 @@ let slow_imply impl nf rhs =
       (Gen.Profiling.pop_time "slow_imply";
       Gen.Profiling.pop_time_to_s_no_count x);
       r                   
-  with _ -> (Gen.Profiling.pop_time_to_s_no_count x ;false) 
+  with exc -> match exc with
+    | Procutils.PrvComms.Timeout -> raise exc 
+    | _ -> (Gen.Profiling.pop_time_to_s_no_count x; false) 
+
+let slow_imply impl nf rhs =
+  let no_pr = fun _ -> "" in
+  Debug.no_1 "slow_imply" no_pr no_pr
+  (fun _ -> slow_imply impl nf rhs) impl
 
 (*
 let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =

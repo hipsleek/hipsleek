@@ -1720,7 +1720,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 let tp_imply_no_cache ante conseq imp_no timeout process =	
   Gen.Profiling.push_time ("stat_imply_no_cache_timings");
   let r = tp_imply_no_cache ante conseq imp_no timeout process in
-  Gen.Profiling.push_time ("stat_imply_no_cache_timings");
+  Gen.Profiling.pop_time ("stat_imply_no_cache_timings");
   r
 
 let tp_imply_no_cache i ante conseq imp_no timeout process =	

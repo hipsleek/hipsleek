@@ -199,6 +199,7 @@ let start() =
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
   end
+  else  Debug.info_pprint "Omega starts ERROR" no_pos 
 
 (* stop Omega system *)
 let stop () =
@@ -208,6 +209,7 @@ let stop () =
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
+  else Debug.info_pprint "Omega stops ERROR" no_pos
 
 (* restart Omega system *)
 let restart reason =
@@ -312,6 +314,12 @@ let check_formula f timeout =
         let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
         res
       else fnc f
+        (* try fnc f
+        with 
+        | Procutils.PrvComms.Timeout as exc ->
+          restart "Restarting Omega because of timeout.";
+          raise exc
+        | exc -> raise exc *)
   end
 
 (*
@@ -499,7 +507,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
                     false
                 | exc ->
                     begin
-                        (* print_endline ("IMPLY timeout: " ^ (Printexc.to_string exc)); *)
+                        print_endline ("IMPLY timeout: " ^ (Printexc.to_string exc));
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
                         stop (); raise exc
           (* restart ("Unexpected exception when doing IMPLY "); *)
@@ -657,10 +665,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 	                    match_vars (fv pe) rel
 	                  end
 	                with
-                      | Procutils.PrvComms.Timeout ->
+                      | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
                             restart ("Timeout when checking #simplify ");
-                            pe
+                            if not (!dis_provers_timeout) then pe
+                            else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
                             restart ("End_of_file when checking #simplify \n");
                             pe
@@ -675,7 +684,10 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
                   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f
-              with _ -> pe (* not simplified *)
+              with
+              (* Timeout exception of provers is not expected at this level *)
+              | Procutils.PrvComms.Timeout as exc -> raise exc 
+              | _ -> pe (* not simplified *)
             end
   end
 
