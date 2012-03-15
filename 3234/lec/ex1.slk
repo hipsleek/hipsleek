@@ -1,0 +1,18 @@
+data Cell {
+  int val;
+}.
+
+// (1) why is this valid?
+checkentail x::Cell<3>*y::Cell<3> |- x!=y.
+
+// (2) what is "a" and residue?
+checkentail x::Cell<3>*y::Cell<3> |- x::Cell<a>.
+print residue.
+
+// (3) why is this invalid?
+checkentail x::Cell<3>*y::Cell<3> |- x::Cell<a> * y::Cell<b>.
+print residue.
+
+// (4) why is this false?
+checkentail x::Cell<3>*x::Cell<3> |- false.
+print residue.
