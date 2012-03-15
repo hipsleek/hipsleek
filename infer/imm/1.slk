@@ -48,7 +48,7 @@ print residue.
 //(10)
 infer [n] x::ll<n>@I |- x::node<a,b>@I.
 print residue.
-
+/*
 //(11)
 infer [n] x::ll<n> |- x::node<a,b>.
 print residue.
@@ -76,3 +76,4 @@ print residue.
 //(17)
 infer [] x::ll<n>@L & n>1 |- x::node<a,b>*b::node<_,_>.
 print residue.
+*/
