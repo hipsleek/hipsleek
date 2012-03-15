@@ -59,12 +59,12 @@ checkentail x::node<v,q> * q::ll2<n,s,B> & v>=0 & v<3 & ["s":s<3n]
 */
 
 
-checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
-   |- (exists n2 : x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2]).
+//checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
+//	       |- (exists n2 : x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2]).
 // should fail, why did it succeed? a bug here!
 
-checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
-   |-  x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2].
+//checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
+  // |-  x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2].
 // without exists, it seems ok?
 
 checkentail x::node<v,q> * q::lla<n,s> & v>=0 & v<3 & ["s":s<3n]

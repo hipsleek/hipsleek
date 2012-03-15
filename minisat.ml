@@ -341,6 +341,7 @@ let return_number_var nbv = number_var:= nbv
 let to_minisat (ante : Cpure.formula): string =
   (* debug *)
   (*let _ = print_endline "** In function to_minisat:" in *)
+ 
   let res = 
     if (minisat_input_format = "cnf") then (
 	    (* if sending problem in cnf format to minisat *)
@@ -436,6 +437,9 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
                        
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
   (*let _ = print_endline "** In function minisat.imply:" in *)
+  let ante_fv = Cpure.fv ante in
+  let all=Gen.BList.remove_dups_eq (=) (ante_fv) in
+  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in
   let cons=  (mkNot_s conseq) in
     let imply_f= mkAnd ante cons no_pos  in
     let res =is_sat imply_f ""
