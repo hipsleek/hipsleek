@@ -45,7 +45,7 @@ else
 	}
 
 if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 'z3' => 'z3', 'zm' => 'zm', 
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc', 'z3' => 'z3', 'zm' => 'zm', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){
@@ -59,7 +59,7 @@ else{
         $prover = "$1";
     }
     else{
-	$prover = "omega";
+	$prover = "oc";
     }
 }
 
@@ -2174,7 +2174,7 @@ sub hip_process_file {
             $exempl_path_full = "$exempl_path/pldi_benchs/pmona";
             print "Starting automatic slicing experiment for PLDI paper with Mona:\n";
 		}elsif ("$param" =~ "plink") {
-            $exempl_path_full = "$exempl_path/pldi_benchs/link";
+            $exempl_path_full = "$exempl_path/pldi_benchs/plink";
             print "Starting annotated slicing experiment for PLDI paper:\n";
 		}
 		$t_list = $hip_files{$param};
@@ -2187,6 +2187,7 @@ sub hip_process_file {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
 			#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
+			#print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0]";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";

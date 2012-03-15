@@ -18,7 +18,7 @@ let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out "allinput.rl"
+let log_file = open_log_out "allinput.rl"
 
 (* process management *)
 let is_reduce_running = ref false
@@ -143,6 +143,7 @@ let restart reason =
  * return empty string if reduce is not running
  *)
 let send_and_receive f =
+  if not !is_reduce_running then start ();
   if !is_reduce_running then
     try
         let fnc () =
@@ -297,6 +298,7 @@ let rl_of_b_formula b =
       let a3 = rl_of_exp e3 in
       "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
+  | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "redlog: bags is not supported"
 
 let rec rl_of_formula pr_w pr_s f0 =
@@ -1148,11 +1150,16 @@ let imply_ops pr_w pr_s ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+let imply_ops pr_w pr_s ante conseq imp_no =
+  let pr = !CP.print_formula in
+  Debug.no_2 "[redlog.ml]imply_ops" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
    imply_ops pr_w pr_s f imp_no
 
-   let imply ante conseq imp_no =
+let imply ante conseq imp_no =
   Debug.no_3 "[Redlog] imply" 
       (add_str "ante" string_of_formula) 
       (add_str "conseq" string_of_formula)
@@ -1379,8 +1386,8 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
 		let sst = List.flatten sst in
 		let sst = List.filter (fun (x,y) -> not (CP.eq_spec_var x y)) sst in
-		(*let _ = print_endline "Replacements : " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in*)
+(*		let _ = print_endline "Replacements : " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in *)
 			(sst, strrep)
 ;;
 
@@ -1456,7 +1463,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
 	(*let _ = print_endline "\nInput equations: " in
-	let _ = print_endline input_eqns in*)
+	let _ = print_endline input_eqns in *)
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in

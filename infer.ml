@@ -253,7 +253,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, t) = split_components f in
+  let (h, p, fl, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -344,21 +344,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
-                (* let _ = print_endline ("iv_alias:"^(!CP.print_svl iv_alias)) in *)
-                (* let _ = print_endline ("orig root:"^(!CP.print_sv orig_r)) in *)
-                (* let _ = print_endline ("new root:"^(!CP.print_sv new_r)) in *)
-                (* let _ = print_endline ("new hform:"^(!print_h_formula new_h)) in *)
-                (* we do not need to add lhs_root=iv into the inf_pure as info is in LHS*)
-                (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)  *)
-                (*   (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in *)
-                (* let new_p = (CP.mkTrue no_pos) in *)
-                let lhs_h,_,_,_ = CF.split_components es.es_formula in
-                (* why is orig_ante being used?????? *)
-                (* let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in *)
-                (* let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in *)
-                (* let new_p_conjs = CP.list_of_conjs new_p in *)
-                (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) *)
-                (*   (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in *)
+                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_hprint (add_str "unmatch RHS : " !print_h_formula) rhs pos;
                 DD.devel_hprint (add_str "orig inf vars : " !print_svl) iv pos;

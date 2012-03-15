@@ -50,24 +50,17 @@ int div4(int a, int b)
 
 int mod___(int a, int b) case {
   a >= 0 -> case {
-		b >= 1 -> case {
-	  	a < b -> ensures res = a;
-	  	a >= b -> case {
-				a < 2*b -> ensures res = a - b;
-				a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
-	  	}
-		}
+	b >= 1 -> case {
+	  a < b -> ensures res = a;
+	  a >= b -> case {
+		a < 2*b -> ensures res = a - b;
+		a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+	  }
+	}
     b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
   }
-/*
-	a >= 0 -> case {
-		b >= 1 -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
-		b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-	}
-*/
   a < 0 -> case {
     b >= 1 -> ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1);
     b <= -1 -> ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1);
@@ -261,13 +254,30 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
-/* void fork(tid id) */
-/*   requires true */
-/*   ensures id::tid<>; */
+int fork()
+  requires true
+  ensures true;
 
-/* void join1(tid id) */
-/*   requires id::tid<> */
-/*   ensures true; */
+void join(int id)
+  requires true
+  ensures true;
+
+void init()
+  requires true
+  ensures true;
+
+void finalize()
+  requires true
+  ensures true;
+
+void acquire()
+  requires true
+  ensures true;
+
+void release()
+  requires true
+  ensures true;
+
 
 /* ************ */
 /* Concurrency  */

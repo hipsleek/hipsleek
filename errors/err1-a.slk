@@ -1,0 +1,31 @@
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail n = 1 |- n > 5 or n<0 .
+
+
+checkentail n > 1 |- n > 5 or n<0 .
+
+checkentail n > 1 |- n<-5 or n<0 .
+
+/*
+
+AndR
+OrR
+UnionR
+
+
+Entail (1): Fail.(must) cause:
+   UnionR[(n=1 |-  5<n) (must-bug),
+    (n=1 |-  n<0) (must-bug)]
+
+
+Entail (2): Fail.(may) cause:
+   (1<n |-  5<n) (may-bug)]
+
+*/

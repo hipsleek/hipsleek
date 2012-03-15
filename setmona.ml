@@ -19,7 +19,7 @@ let resultfilename = "result.mona." ^ (string_of_int (Unix.getpid()))
 *)
 
 let log_all_flag = ref true
-let log_all = open_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all = open_log_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (*************************************************************)
 (*************************************************************)
@@ -110,6 +110,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 						cont := r1 || r2
 				  | BagMin _
 				  | BagMax _ -> failwith ("compute_fo_b_formula: BagMin/BagMax not supported.")
+				  | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.")
 					(* Booleans *)
 				  | BConst _ -> compute_fo_b_formula rest var_map
 				  | BVar (sv, _) ->
@@ -358,6 +359,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
+	  | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here")
 	  | ListIn _
 	  | ListNotIn _
 	  | ListAllN _

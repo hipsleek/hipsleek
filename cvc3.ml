@@ -28,7 +28,7 @@ let test_number = ref 0
 
 let set_log_file () :  unit=
   log_cvc3_formula := true;
-  cvc3_log := open_out "allinput.cvc3"
+  cvc3_log := open_log_out "allinput.cvc3"
 
 let run_cvc3 (input : string) : unit =
   begin
@@ -115,6 +115,7 @@ and cvc3_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvc3_of_exp e1 ^ ", " ^ cvc3_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvc3_of_b_formula: BagMax/BagMin should not appear here.\n")
+  | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3")
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

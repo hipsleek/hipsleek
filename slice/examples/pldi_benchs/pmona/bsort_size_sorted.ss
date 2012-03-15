@@ -20,7 +20,7 @@ ll<n> == self=null & n=0
 	inv n>=0;
 
 //coercion self::sll<n, sm, lg, S> -> self::bnd<n,_,_, _>;
-coercion self::sll<n, sm, lg> -> self::ll<n>;
+lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 //------------------------------------------------------------
 

@@ -11,7 +11,7 @@ module CP = Cpure
 let isabelle_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
-let log_all = open_out "allinput.thy"
+let log_all = open_log_out "allinput.thy"
 let image_path_lst = ["MyImage"; "/usr/local/bin/MyImage"]
 let isabelle_image = ref "MyImage"
 let max_flag = ref false
@@ -200,6 +200,7 @@ and isabelle_of_b_formula b =
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
+  | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   

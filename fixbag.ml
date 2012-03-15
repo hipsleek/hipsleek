@@ -79,6 +79,7 @@ let rec fixbag_of_pure_formula f = match f with
   | CP.BForm (b,_) -> fixbag_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixbag_of_pure_formula p1 ^ op_and ^ fixbag_of_pure_formula p2 ^ ")"
+  | CP.AndList b -> "(" ^ String.concat op_and (List.map (fun (_,c)-> fixbag_of_pure_formula c) b) ^ ")"
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixbag_of_pure_formula p1 ^ op_or ^ fixbag_of_pure_formula p2 ^ ")"
   | CP.Not (p,_ , _) -> 
@@ -218,6 +219,7 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
+  | CP.AndList b -> exists_l_snd is_rec b
   | CP.Or (f1,f2,_,_) -> is_rec f1 || is_rec f2
   | CP.Not (f,_,_) -> is_rec f
   | CP.Forall (_,f,_,_) -> is_rec f
@@ -226,6 +228,7 @@ let rec is_rec pf = match pf with
 let rec get_rel_vars pf = match pf with
   | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
+  | CP.AndList b -> fold_l_snd get_rel_vars b
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.Not (f,_,_) -> get_rel_vars f
   | CP.Forall (_,f,_,_) -> get_rel_vars f
@@ -339,7 +342,7 @@ let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
     (get_other_branches fml.formula_or_f1 args) @ (get_other_branches fml.formula_or_f2 args)
   | _ ->
-    let _,p,_,_ = split_components or_fml in
+    let _,p,_,_,_ = split_components or_fml in
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
@@ -393,7 +396,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars =
     let pre_vars, post_vars = List.partition (fun v -> List.mem v ante_vars) vars in
 (*    try*)
       let rhs = fixbag_of_pure_formula pf in
-      let no = string_of_int no_of_disjs in
+(*      let no = string_of_int no_of_disjs in*)
       let input_fixbag =  "fixbag" ^ name ^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
         ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := " 
         ^ rhs
