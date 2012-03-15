@@ -9,7 +9,19 @@ time ./run-fast-tests.pl sleek $@
 echo -e "\n##################### hip_vperm tests ###################"
 time ./run-fast-tests.pl hip_vperm $@
 
+echo -e "\n##################### must-bugs error tests ###################"
+time ./run-fast-tests.pl musterr $@
+
+# problem to be fixed!
+echo -e "\n##################### lists tests #####################"
+time ./run-fast-tests.pl lists $@ -tp coq
+# takes a long time for lr.ss!
+
 # another check for lemma-proving
+# problem to be fixed!
+echo -e "\n##################### lists tests #####################"
+time ./run-fast-tests.pl lemmas $@ 
+# takes a long time for lr.ss!
 
 # soundness check for --eps
 echo -e "\n##################### hip tests --eps #####################"
@@ -22,16 +34,11 @@ time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 echo -e "\n##################### NO slicing tests ?? ###################"
 #time ./run-fast-tests.pl hip_slicing $@
 
-
 # soundness check for no eps
 echo -e "\n##################### imm tests no eps ###################"
 time ./run-fast-tests.pl imm $@ -tp redlog
 
 
-# problem to be fixed!
-echo -e "\n##################### lists tests #####################"
-time ./run-fast-tests.pl lists $@ -tp coq
-# takes a long time for lr.ss!
 
 # fixed
 echo -e "\n##################### term tests #####################"
