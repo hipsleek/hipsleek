@@ -6738,7 +6738,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)
       | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-        CF.mk_failure_must ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
+        CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
             (* to Thai : please move inference code from M_unmatched_rhs here
                and then restore M_unmatched_rhs to previous code without
                any inference *)
