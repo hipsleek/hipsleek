@@ -11,7 +11,7 @@ pred lsort<s,n> == self::node<s,null> & n=1
   or self::node<s,q>*q::lsort<s2,n-1> & s<=s2 
   inv n>=1.
 
-lemma self::lsort<s,n> -> self::ll<n>.
+lemma self::lsort<s,n> <-> self::ll<n>.
 // try --elp for enable lemma proving (via an automatic inductive proof)
 
 // (1) what are s,n instantiated to?
@@ -23,7 +23,7 @@ checkentail x::node<3,q>*q::node<1,null> |- x::lsort<s,n>.
 print residue.
 
 // (3) add smallest constraint to LHS for succeed & note the residue.
-checkentail x::node<3,q>*q::lsort<m,n> |- x::lsort<a,b>.
+checkentail x::node<3,q>*q::lsort<m,n> & m>=3 |- x::lsort<3,b>.
 print residue.
 
 // (4) will this succeed?

@@ -14,7 +14,7 @@ ll<n> == self=null & n=0
 
 node insert(node x, node v)
   requires x::ll<n>*v::node<_,_> 
-  ensures true;
+  ensures res::ll<n+1> & (res=v | res=x);
 {
   if (x==null) {
        v.next=null;
