@@ -21,7 +21,7 @@ let null_flag = ref false
 (*sugar*)
 let sugar_path = "sugar"
 let sugar_name = "sugar"
-let sugar_arg = "sugar"
+let sugar_arg = "sugar -solver \"minisat -pre\""
 let sugar_input_format = "csp"   (* valid value is: csp *)
 let number_clauses = ref 1
 let number_var = ref 0
@@ -340,13 +340,12 @@ let restart reason =
 let check_problem_through_file (input: string list) (timeout: float) : bool =
   (* debug *)
   (* let _ = print_endline "** In function sugar.check_problem" in *)
-  let file_suffix = Random.int 1000000 in
-  let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".csp" in
+  let file_suffix = "sg" in
+  let infile = "/tmp/in" ^ (file_suffix) ^ ".csp" in
   (*let _ = print_endline ("-- input: \n" ^ input) in*) 
   let out_stream = open_out infile in
   List.map (fun x-> output_string out_stream x) input;
   close_out out_stream;
-  let sugar_result="sugarres.txt" in
   let set_process proc = sugar_process := proc in
   let fnc () =
     if (sugar_input_format = "csp") then (
