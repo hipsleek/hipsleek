@@ -2029,7 +2029,7 @@ $output_file = "log";
 		]
 	],
 	"plink" => [
-		["avl_size_height_1_link.ss", 12, "",  
+		["avl_size_height_1_link.ss", 12, "--getctr 1",  
 			"height", "SUCCESS",
 			"rotate_left", "SUCCESS",
 			"rotate_right", "SUCCESS",
@@ -2044,7 +2044,7 @@ $output_file = "log";
 			"remove_min","SUCCESS"
 			#"delete","SUCCESS"
 		],
-		["avl_size_height_bags_1_link.ss", 13, "",  
+		["avl_size_height_bags_1_link.ss", 13, "--getctr 1",  
 			"height", "SUCCESS",
 			"rotate_left", "SUCCESS",
 			"rotate_right", "SUCCESS",
@@ -2086,7 +2086,7 @@ $output_file = "log";
 			"rotate_left_child", "SUCCESS",
 			"rotate_right_child", "SUCCESS"
 		],
-		["rb_size_bheight_bags_1_link.ss", 19, "", 
+		["rb_size_bheight_bags_1_link.ss", 19, "--getctr 1", 
 			"insert_1", "SUCCESS", 
 			"del_1", "SUCCESS", 
 			"remove_min_1", "SUCCESS", 

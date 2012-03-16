@@ -793,12 +793,12 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
     assumption_filter_slicing ante cons
   (* Always support MONA with assumption filtering *) 
   else if !dis_slicing then
-    (* begin
+    begin
      if (is_bag_constraint ante) || (is_bag_constraint cons) then
         CP.assumption_filter ante cons
       else 
         (ante, cons)
-    end *)
+    end
     (* match !tp with
     | Mona -> CP.assumption_filter ante cons
     | _ -> begin 
@@ -807,7 +807,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
       else 
         (ante, cons)
     end *)
-    (ante, cons)
+    (* (ante, cons) *)
   else
     CP.assumption_filter ante cons
 
@@ -930,13 +930,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
-  let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
+  let _ = Gen.Profiling.push_time "stat_tp_is_sat_no_cache" in
   let res = 
   match !tp with
 	| DP -> 
-		let r = Dp.is_sat f sat_no in
+		let r = stat_tp (lazy (Dp.is_sat f sat_no)) "dp_unsat" in
 		if test_db then 
-			let r2 = Smtsolver.is_sat f sat_no in
+			let r2 = stat_tp (lazy (Smtsolver.is_sat f sat_no)) "dp_z3_unsat" in
 			if r=r2 then r 
 			else 
 				failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
@@ -1087,14 +1087,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else
           stat_tp (lazy (Spass.is_sat f sat_no)) "spass"
       )
-  in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
+  in let _ = Gen.Profiling.pop_time "stat_tp_is_sat_no_cache" 
   in res
-
-let tp_is_sat_no_cache f sat_no =	
-  Gen.Profiling.push_time ("stat_sat_no_cache_timings");
-  let r = tp_is_sat_no_cache f sat_no in
-  Gen.Profiling.push_time ("stat_sat_no_cache_timings");
-  r
 
 let tp_is_sat_no_cache f sat_no =
   Debug.no_1 "tp_is_sat_no_cache" Cprinter.string_of_pure_formula string_of_bool 
@@ -1560,11 +1554,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
+  let _ = Gen.Profiling.push_time "stat_tp_imply_no_cache" in
   let r = match !tp with
     | DP ->
-        let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
+        let r = stat_tp (lazy (Dp.imply ante_w conseq_s (imp_no^"XX") timeout)) "dp_imply" in
         if test_db then 
-          let r2 = Smtsolver.imply ante conseq (*(imp_no^"XX")*) timeout in
+          let r2 = stat_tp (lazy (Smtsolver.imply ante conseq (*(imp_no^"XX")*)
+          timeout)) "z3_dp_imply" in
           if r=r2 then r
           else 
             failwith ("dp-omega imply mismatch on: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^
@@ -1700,6 +1696,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           stat_tp (lazy (Spass.imply ante conseq timeout)) "spass");
       ) 
   in
+  let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;
@@ -1716,12 +1713,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	in
 		r
 ;;
-
-let tp_imply_no_cache ante conseq imp_no timeout process =	
-  Gen.Profiling.push_time ("stat_imply_no_cache_timings");
-  let r = tp_imply_no_cache ante conseq imp_no timeout process in
-  Gen.Profiling.pop_time ("stat_imply_no_cache_timings");
-  r
 
 let tp_imply_no_cache i ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in

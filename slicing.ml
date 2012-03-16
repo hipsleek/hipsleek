@@ -280,6 +280,7 @@ struct
     let wv_x = snd x in
     (Gen.BList.overlap_eq eq_spec_var v_q sv_x) ||
     (sv_x = [] && (Gen.BList.subset_eq eq_spec_var wv_x v_q))
+    (* (sv_x = [] && (Gen.BList.overlap_eq eq_spec_var wv_x v_q)) *)
 
   (* Two label are relevant with respect to vl 
    * if they share some common variables in vl *)
