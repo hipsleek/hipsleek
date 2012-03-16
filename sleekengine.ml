@@ -632,7 +632,7 @@ let print_exc (check_id: string) =
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try 
-    let valid, rs = Tpdispatcher.stat_tp (lazy (run_entail_check iante0 iconseq0)) "run_entail_check" in
+    let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
