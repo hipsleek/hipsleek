@@ -23,3 +23,8 @@ zeta:
 clean:
 	$(OCAMLBUILD) -quiet -clean 
 	rm -f zeta
+	rm -f zeta2
+
+zetatwo:
+	@ocamlbuild $(OB_FLAGS) zeta.native
+	cp -u _build/zmain.native zeta2

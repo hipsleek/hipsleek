@@ -100,7 +100,7 @@ module Z3 =
 			(Implies, Z3.mk_implies);
 			(Iff, Z3.mk_iff)]
 		
-		let prepare_z3ast ctx ds t =
+		(*let prepare_z3ast ctx ds t =
 			(* prepare sorts for SMap domains & their constructors *)
 			let vs = collect_vars t in
 			let srts = List.map sort_of_term vs in
@@ -119,12 +119,12 @@ module Z3 =
 			
 			(* prepare all symbols *)
 			
-				true
+				true*)
 			
 		(**
 		 * Convert term to Z3 AST
 		 *)
-		let rec z3ast ctx ds t =
+		let rec z3ast ctx (* ds *) t =
 			(*let _ = print_endline ("[z3ast] " ^ (string_of_term t)) in*)
 			match t with
 				| Num i ->

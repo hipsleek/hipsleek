@@ -34,14 +34,18 @@ type symbol_table = (string * symbol) list
 
 let find_symbol st s =
 	List.assoc s st
-	
+
+type axiom = {
+		content : term;
+		(* tactics, dependent symbols *)
+	}
 
 (**
  * System database
  *)
-type database = {
+type context = {
 		defined_symbol : string list;
-		axioms : symbol_table;
+		all_axioms : term list;
 		theorems : term list;
 		proved_theorems : term list;
 	}
