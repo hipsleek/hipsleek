@@ -2529,9 +2529,11 @@ let stop_prover () =
                   )
                   else (Omega.stop () ;Minisat.stop() )
     | SUGAR ->  if !Redlog.is_reduce_running then (
-	          Redlog.stop () ;
+	                Redlog.stop () ;
+									 Sugar.stop() ;
                   Omega.stop () ;
-		  Sugar.stop() 
+		             
+									print_endline "why doesn't sugar stop\n"
                   )
                   else (Omega.stop () ;Sugar.stop() ) 
     | _ -> Omega.stop();;

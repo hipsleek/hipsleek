@@ -22,7 +22,7 @@ let sugar_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 let sugar_path = "/home/bachle/sleekex-temp2/sugar-v1-15-0/bin/sugar"
 let sugar_name = "sugar"
 let sugar_arg = "sugar"
-let sugar_input_format = "cnf"   (* valid value is: cnf *)
+let sugar_input_format = "csp"   (* valid value is: csp *)
 let number_clauses = ref 1
 let number_var = ref 0
 let sugar_process = ref {  name = "sugar";
@@ -39,40 +39,40 @@ type domainVar = {
 let listVar = ref ([]: domainVar list)
 let flag = -10000	
 (***************************************************************
-TRANSLATE CPURE FORMULA TO PROBLEM IN CNF FORMAT
+TRANSLATE CPURE FORMULA TO PROBLEM IN CSP FORMAT
 **************************************************************)
 (*sugar*)
-let sugar_cnf_of_spec_var sv = let ident=Cpure.name_of_spec_var sv in ident
+let sugar_csp_of_spec_var sv = let ident=Cpure.name_of_spec_var sv in ident
 
 let get_list_var f = let fvar=Cpure.fv f in 
 	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
 	let listVarTemp = ref ([]: domainVar list) in
-	let mk_domain sv={var=sugar_cnf_of_spec_var sv;
+	let mk_domain sv={var=sugar_csp_of_spec_var sv;
 						lb = flag;
 						ub= flag;
 			      } 
 						in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv in !listVarTemp
 
 let asign_domain_lowerbound sv value= 
-	let var=sugar_cnf_of_spec_var sv in 
+	let var=sugar_csp_of_spec_var sv in 
 	List.map (fun x->if (var=x.var && x.lb=flag) then x.lb<-value )	!listVar
 	
 let asign_domain_upperbound sv value= 
-	let var=sugar_cnf_of_spec_var sv in 
+	let var=sugar_csp_of_spec_var sv in 
 	List.map (fun x->if var=x.var && x.ub=flag then x.ub<-value )	!listVar
 							
 let rec sugar_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (sv, _) -> sugar_cnf_of_spec_var sv
+  | Var (sv, _) -> sugar_csp_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> illegal_format ("sugar.sugar_of_exp: array, bag or list constraint")
   | Add (a1, a2, _) -> "(+ "^(sugar_of_exp a1)^ "  "^(sugar_of_exp a2)^")"
   | Subtract (a1, a2, _) -> "(- "^(sugar_of_exp a1)^ "  "^(sugar_of_exp a2)^")"
   | Mult (a1, a2, l) ->
       let r = match a1 with
-        | IConst (i, _) -> "(* "^(string_of_int i) ^ "(" ^ (sugar_of_exp a2) ^ ")"^")"
+        | IConst (i, _) -> "(* "^(string_of_int i) ^ " " ^ (sugar_of_exp a2) ^ " "^")"
         | _ -> let rr = match a2 with
-            | IConst (i, _) -> "(* "^(string_of_int i) ^ "(" ^ (sugar_of_exp a1) ^ ")"^")"
+            | IConst (i, _) -> "(* "^(string_of_int i) ^ " " ^ (sugar_of_exp a1) ^ " "^")"
             | _ -> illegal_format "[sugar.ml] Non-linear arithmetic is not supported by sugar."
                 (* Error.report_error { *)
                 (*   Error.error_loc = l; *)
@@ -80,8 +80,11 @@ let rec sugar_of_exp e0 = match e0 with
                 (* } *)
             in rr
       in r
-  | Div (a1, a2, l) -> illegal_format ("sugar.sugar_of_exp: min/max should not appear here")
-			
+  | Div (a1, a2, l) -> 
+		let r = match a2 with
+        | IConst (i, _) -> "(/ "^(sugar_of_exp a2) ^ " " ^ (string_of_int i) ^ " "^")"
+        | _ -> illegal_format "[sugar.ml] Non-linear arithmetic is not supported by sugar."
+      in r
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)
       (*   Error.error_text ="[sugar.ml] Divide is not supported." *)
@@ -100,7 +103,7 @@ and  sugar_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "true" else "false"
-  | BVar (bv, _) ->  "bool "^(sugar_cnf_of_spec_var bv) (* easy to track boolean var *)
+  | BVar (bv, _) ->  "bool "^(sugar_csp_of_spec_var bv) (* easy to track boolean var *)
   | Lt (a1, a2, _) ->"(< "^(sugar_of_exp a1) ^ "  " ^ (sugar_of_exp a2)^")"
   | Lte (a1, a2, _) -> "(<= "^(sugar_of_exp a1) ^ " " ^ (sugar_of_exp a2)^")"
   | Gt (a1, a2, _) ->  "(> "^(sugar_of_exp a1) ^ "  " ^ (sugar_of_exp a2)^")"
@@ -140,7 +143,7 @@ and domain_of_variables b =
 		match (a1,a2) with
 		| (IConst (i, _),Var(sv,_)) (*do sth*)
 		| (Var(sv,_),IConst (i,_)) -> (asign_domain_lowerbound sv i; asign_domain_upperbound sv i);true 
-	|_ ->  false 
+	  |_ ->  false 
 	end
 	| _-> false
  
@@ -181,10 +184,10 @@ let rec can_sugar_handle_expression (exp: Cpure.exp) : bool =
   (* arithmetic expressions *)
   | Cpure.Add _
   | Cpure.Subtract _
-  | Cpure.Mult _          ->true
-  | Cpure.Div _
+  | Cpure.Mult _          
+  | Cpure.Div _           ->true       
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _           -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -289,7 +292,7 @@ let start () =
 (*    print_endline ("Starting sugar... \n");*)
     last_test_number := !test_number;
     let prelude () = () in
-    if (sugar_input_format = "cnf") then (
+    if (sugar_input_format = "csp") then (
       Procutils.PrvComms.start !log_all_flag log_file (sugar_name, sugar_path, [|sugar_arg|]) set_process prelude;
       is_sugar_running := true;
 			print_endline ("Starting sugar... \n")
@@ -320,7 +323,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   (* debug *)
   (* let _ = print_endline "** In function sugar.check_problem" in *)
   let file_suffix = Random.int 1000000 in
-  let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".cnf" in
+  let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".csp" in
   (*let _ = print_endline ("-- input: \n" ^ input) in*) 
   let out_stream = open_out infile in
   List.map (fun x-> output_string out_stream x) input;
@@ -328,7 +331,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   let sugar_result="sugarres.txt" in
   let set_process proc = sugar_process := proc in
   let fnc () =
-    if (sugar_input_format = "cnf") then (
+    if (sugar_input_format = "csp") then (
       Procutils.PrvComms.start false stdout (sugar_name, sugar_path, [|sugar_arg;infile|]) set_process (fun () -> ());
       sugar_call_count := !sugar_call_count + 1;
       let (prover_output, running_state) = get_answer !sugar_process.inchannel in
@@ -352,16 +355,16 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   res
     
 (***************************************************************
-GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
+GENERATE csp INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 let domain_to_string list=
 	let mk_string record= "(int "^record.var^" "^(string_of_int record.lb) ^" "^ (string_of_int record.ub)^")\n" in
 			let str= ref ([]: string list) in
 			let _= List.map (fun x-> (*let _=print_endline (mk_string x) in*) str:= [(mk_string x)] @ !str)  list in !str
 
-(* sugar: output for cnf format *)
-let to_sugar_cnf (ante: Cpure.formula)  : string list=
-  (*let _ = "** In function Spass.to_sugar_cnf" in*)
+(* sugar: output for csp format *)
+let to_sugar_csp (ante: Cpure.formula)  : string list=
+  (*let _ = "** In function Spass.to_sugar_csp" in*)
  (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
 	let func = listVar := get_list_var ante in 
 	let result=sugar_of_formula ante in
@@ -372,7 +375,7 @@ let to_sugar_cnf (ante: Cpure.formula)  : string list=
 	  
 (*bach*) 
 (***************************************************************
-GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
+GENERATE csp INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 let return_number_var nbv = number_var:= nbv
 let to_sugar (ante : Cpure.formula): string list=
@@ -380,11 +383,11 @@ let to_sugar (ante : Cpure.formula): string list=
   (*let _ = print_endline "** In function to_sugar:" in *)
  
   let res = 
-    if (sugar_input_format = "cnf") then (
-	    (* if sending problem in cnf format to sugar *)
-	    let cnf_res = to_sugar_cnf ante 
-      (* let _ = print_endline ("-- Input problem in cnf format:\n" ^ cnf_res) in *)
-      in cnf_res
+    if (sugar_input_format = "csp") then (
+	    (* if sending problem in csp format to sugar *)
+	    let csp_res = to_sugar_csp ante 
+      (* let _ = print_endline ("-- Input problem in csp format:\n" ^ csp_res) in *)
+      in csp_res
     ) 
     else illegal_format "[sugar.ml] The value of sugar_input_format is invalid!" in
   res
@@ -474,7 +477,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   let ante_fv = Cpure.fv ante in
 	let conseq_fv = Cpure.fv conseq in
   let all=Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
-(* let _=List.map (fun x-> print_endline (sugar_cnf_of_spec_var x)) all in*)
+(* let _=List.map (fun x-> print_endline (sugar_csp_of_spec_var x)) all in*)
   let cons=  (mkNot_s conseq) in
     let imply_f= mkAnd ante cons no_pos  in
 (*		let _=print_endline ("Apply sugar.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula imply_f)) in*)
