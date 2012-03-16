@@ -357,6 +357,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
     )
     else illegal_format "[sugar.ml] The value of sugar_input_format is invalid!" in
   let res =
+    if not (!dis_provers_timeout) then
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
@@ -366,7 +367,16 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
       Unix.kill !sugar_process.pid 9;
       ignore (Unix.waitpid [] !sugar_process.pid);
       false
-    ) in
+    )
+    else 
+      try fnc ()
+      with exc -> 
+        restart "Restarting Sugar because of timeout.";
+        if !Omega.is_omega_running then Omega.restart "Restarting Omega because of timeout.";
+        (* failwith "spass timeout"; *)
+        remove_file infile;
+        raise exc
+  in
   let _ = Procutils.PrvComms.stop false stdout !sugar_process 0 9 (fun () -> ()) in
   remove_file infile;
   res
