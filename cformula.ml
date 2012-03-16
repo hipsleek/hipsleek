@@ -1851,7 +1851,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
       in
       let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
-  | HTrue | HFalse | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
@@ -1890,7 +1890,7 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
-  | HTrue | HFalse | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ -> []
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -2243,6 +2243,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_pos = pos})
   | HTrue -> f
   | HFalse -> f
+  | HEmp -> f
   | Hole _ -> f
 (** An Hoa : End of heap formula substitution **) 
 
@@ -2435,6 +2436,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 
   | HTrue -> f
   | HFalse -> f
+  | HEmp -> f
   | Hole _ -> f    
 
 (* normalization *)
@@ -5458,7 +5460,8 @@ and filter_heap (f:formula):formula option = match f with
 	  | ViewNode _ 
 	  | Hole _ -> None
 	  | HTrue 
-	  | HFalse -> Some f
+	  | HFalse
+    | HEmp -> Some f
       end
 
 and set_es_evars (c:context)(v:Cpure.spec_var list):context = 
@@ -5532,6 +5535,7 @@ let rec replace_heap_formula_label nl f = match f with
   | ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
   | HTrue 
   | HFalse 
+  | HEmp 
   | Hole _ -> f
 	
 and replace_formula_label1 nl f = match f with
@@ -5574,6 +5578,7 @@ and residue_labels_in_formula f =
     | ViewNode b -> (match b.h_formula_view_label with Some s-> [s] | _ -> [])
     | HTrue 
     | HFalse 
+    | HEmp
     | Hole _ -> [] 
         in match f with
 	| Base b-> residue_labels_in_heap b.formula_base_heap 
@@ -5615,7 +5620,8 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
 	      | ViewNode _
 	      | Hole _	  
 	      | HTrue
-          | HFalse -> (e, f_comb []) 
+          | HFalse 
+    | HEmp -> (e, f_comb []) 
   in (helper e arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
@@ -5656,7 +5662,8 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	      | ViewNode _
 	      | Hole _
 	      | HTrue
-	      | HFalse -> e
+	      | HFalse 
+        | HEmp -> e
 
 
 let transform_formula_x f (e:formula):formula =
@@ -5959,7 +5966,8 @@ let rename_labels transformer e =
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
 	    | Hole _
 	    | HTrue
-	    | HFalse -> Some e in
+	    | HFalse 
+      | HEmp -> Some e in
   let f_m e = None in
   let f_a e = None in
 	let f_b e = Some e in
@@ -5992,7 +6000,8 @@ let rename_labels_formula_ante  e=
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
 	    | Hole _
 	    | HTrue
-	    | HFalse -> Some e in
+	    | HFalse 
+      | HEmp -> Some e in
   let f_m e = None in
   let f_a e = None in
 	let f_b e = Some e in
@@ -6891,7 +6900,7 @@ let mark_derv_self name f =
           h_formula_phase_rd = h_h p.h_formula_phase_rd;
           h_formula_phase_rw =  h_h p.h_formula_phase_rw;}     
       | DataNode _
-      | Hole _ | HTrue | HFalse -> f in
+      | Hole _ | HTrue | HFalse | HEmp -> f in
   let rec h_f f = match f with 
     | Or b -> Or {b with formula_or_f1 = h_f b.formula_or_f1; formula_or_f2 = h_f b.formula_or_f2; }
     | Base b-> Base {b with formula_base_heap = h_h b.formula_base_heap; }

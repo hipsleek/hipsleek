@@ -1,0 +1,28 @@
+/* representation of a cell node */
+
+data cell {
+	int val; 
+}.
+
+
+checkentail emp * x::cell<_> |- x::cell<_>.
+
+checkentail emp * true |- true.
+
+checkentail true * false |- true.
+
+checkentail true * false |- false.
+
+checkentail true * true |- false.
+
+checkentail true & true |- false.
+
+checkentail true * false |- x::cell<_>.
+
+checkentail true |- emp.
+
+checkentail emp |- true.
+
+
+
+

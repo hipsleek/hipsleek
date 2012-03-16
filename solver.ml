@@ -360,7 +360,8 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
             )
       | Hole _
       | HTrue
-      | HFalse ->
+      | HFalse
+      | HEmp  ->
          (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
          {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
   in helper f
@@ -482,6 +483,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
             MCP.merge_mems ph1 ph2 true
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
+      | HEmp -> MCP.mkMFalse no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let memset = h_formula_2_mem h0 [] prog in
@@ -589,6 +591,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             MCP.merge_mems ph1 ph2 true
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
+      | HEmp -> MCP.mkMFalse no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   (xpure_heap_helper prog h0 which_xpure, memset)
@@ -678,7 +681,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
     | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;}) 
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
-    | HTrue | Hole _ | HFalse -> [] in
+    | HTrue | Hole _ | HFalse | HEmp -> [] in
   helper h0
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * CP.spec_var list) = 
@@ -729,7 +732,8 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           (tmp1, addrs1 @ addrs2)	      
     | HTrue -> (mkMTrue no_pos, [])
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
-    | HFalse -> (mkMFalse no_pos, []) in
+    | HFalse -> (mkMFalse no_pos, [])
+    | HEmp -> (mkMFalse no_pos, []) in
   helper h0
 
 (*xpure heap in the presence of imm and permissions*)
@@ -794,7 +798,8 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           (MCP.merge_mems ph1 ph2 true,  addrs1 @ addrs2)	      
     | HTrue -> (MCP.mkMTrue no_pos, [])
     | Hole _ -> (MCP.mkMTrue no_pos, []) (* shouldn't get here *)
-    | HFalse -> (MCP.mkMFalse no_pos, []) in
+    | HFalse -> (MCP.mkMFalse no_pos, []) 
+    | HEmp -> (MCP.mkMFalse no_pos, []) in
   helper h0
 
 (* xpure of consumed precondition *)
@@ -834,6 +839,7 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
         CP.mkAnd ph1 ph2 pos
   | HTrue  -> P.mkTrue no_pos
   | HFalse -> P.mkFalse no_pos
+  | HEmp -> P.mkFalse no_pos
   | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
 
 and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
@@ -975,7 +981,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
              h_formula_phase_pos = s.h_formula_phase_pos }, mem2, (changed1 or changed2) )
     | Hole _
     | HTrue 
-    | HFalse -> (hp, old_mem, false) 
+    | HFalse 
+    | HEmp -> (hp, old_mem, false) 
     | DataNode d ->       
           (match d.h_formula_data_remaining_branches with
             | Some l -> (hp, old_mem, false)
@@ -1171,7 +1178,8 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     l1r@l2r 
   and sln_helper h = match h with
     | HTrue  
-    | HFalse -> [(h,h)]
+    | HFalse 
+    | HEmp -> [(h,h)]
     | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
     | DataNode _ 
     | ViewNode _ -> [(h,HTrue)]
@@ -1343,7 +1351,7 @@ and find_pred_roots_heap h0 =
         tmp
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
-    | DataNode _ | HTrue | HFalse | Hole _ -> []
+    | DataNode _ | HTrue | HFalse | HEmp | Hole _ -> []
 
 (* unfold then unsat *)
 and unfold_context_unsat_now_x prog0 (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (pos : loc) : list_context =
@@ -3096,7 +3104,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	| Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
 		  List.append (collect_data_view h1) (collect_data_view h2) 
 	| DataNode _ | ViewNode _ -> [f]
-	| Hole _ | HTrue | HFalse -> []
+	| Hole _ | HTrue | HFalse | HEmp -> []
   in (* End of function collect_data_view *)
 
   (** [Internal] Generate the action based on the list of node and its tail **)

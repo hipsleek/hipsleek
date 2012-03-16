@@ -152,6 +152,11 @@ let bf_to_var p = match p with
 type pure_double =
   | Pure_f of P.formula
   | Pure_c of P.exp
+
+let string_of_pure_double p =
+  match p with
+  | Pure_f f -> "Pure_f: " ^ (Iprinter.string_of_pure_formula f)
+  | Pure_c c -> "Pure_c: " ^ (Iprinter.string_of_formula_exp c) 
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
@@ -170,11 +175,27 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_f f2 -> (match f1 with 
                              | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
-  | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
+  | Pure_c f1, Pure_c f2 -> (
+      let bool_var1 = (
+        match f1 with
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
+      let bool_var2 = (
+        match f2 with
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
+      Pure_f(fct bool_var1 bool_var2)
+    )
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
+
+let apply_cexp_form2 fct form1 form2 =
+  DD.ho_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
+          (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
 let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
 
@@ -199,7 +220,15 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                       in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                                    else P.BForm (((fct f1 f2), None), None)
                                       in Pure_f(res) 
-                                    | _ -> Pure_f (P.BForm(((fct f1 f2), None), None)))
+                                    | _ -> (
+                                        let typ1 = P.typ_of_exp f1 in 
+                                        let typ2 = P.typ_of_exp f2 in
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) then 
+                                          Pure_f (P.BForm(((fct f1 f2), None), None))
+                                        else
+                                          report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
+                                      )
+                                    )
                              )
   | Pure_f f1 , Pure_c f2 ->(match f1  with 
 						    | P.BForm((pf,il),oe) -> (match pf with 
@@ -344,6 +373,10 @@ SHGram.Entry.of_parser "peek_print"
  let peek_pure_out = 
    SHGram.Entry.of_parser "peek_pure_out"
        (fun strm -> 
+           (* debug *)
+           let [t1,_;t2,_;t3,_] = Stream.npeek 3 strm in
+           DD.devel_print ("Parser.peek_pure_out: (" ^ (Token.to_string t1) ^ "  ;  "
+                           ^ (Token.to_string t2) ^ "  ;  " ^ (Token.to_string t3) ^ ")");
            match Stream.npeek 3 strm with
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
@@ -351,6 +384,9 @@ SHGram.Entry.of_parser "peek_print"
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | [TRUE,_;STAR,_;_] -> raise Stream.Failure            (* heap operations *)
+             | [FALSE,_;STAR,_;_] -> raise Stream.Failure           (* heap operations *)
+             | [EMPTY,_;STAR,_;_] -> raise Stream.Failure           (* heap operations *)
              | _ -> ())
 let peek_dc = 
    SHGram.Entry.of_parser "peek_dc"
@@ -774,13 +810,17 @@ core_constr_conjunctions: [ "core_constr_and" LEFTA
                   ];
 
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> 
-		let pos = (get_pos_camlp4 _loc 1) in
-		F.formula_of_pure_with_flow (P.mkAnd pc fb pos) fc [] pos
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   ->
-		let pos = (get_pos_camlp4 _loc 2) in 
-		F.mkBase hc (P.mkAnd pc fb pos) fc [] pos
-   ]];
+  [
+    [ pc= pure_constr ; fc= opt_flow_constraints; fb=opt_branches ->
+       let _ = DD.devel_print "Parser.core_constr: pure_constr" in 
+       let pos = (get_pos_camlp4 _loc 1) in
+       F.formula_of_pure_with_flow (P.mkAnd pc fb pos) fc [] pos
+    | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
+       let _ = DD.devel_print "Parser.core_constr: opt_heap_constr" in
+       let pos = (get_pos_camlp4 _loc 2) in 
+       F.mkBase hc (P.mkAnd pc fb pos) fc [] pos
+    ]
+  ];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
@@ -798,9 +838,7 @@ pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_bran
 
 formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
 
-opt_heap_constr: 
-  [[ t = heap_constr -> t
-     | `TRUE -> F.HTrue]];
+opt_heap_constr: [[ t = heap_constr -> t]];
 
 (* heap_constr: *)
 (*   [[    hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos_camlp4 _loc 2)]  *)
@@ -878,6 +916,9 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+   | `TRUE -> F.HTrue
+   | `FALSE -> F.HFalse
+   | `EMPTY -> F.HEmp
   ]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)
@@ -906,11 +947,15 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
-					match t with
-                    | Pure_f f -> f
-                    | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
-                    | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
+pure_constr: 
+  [[ peek_pure_out; t= cexp_w -> 
+       let _ = DD.devel_print ("Parser.pure_constr: " ^ (string_of_pure_double  t)) in
+       match t with
+       | Pure_f f -> f
+       | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
+  ]];
 
 ann_term: 
   [[
@@ -1175,12 +1220,12 @@ time_cmd:
 
 let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
-  
+
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
    | f= formulas              -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
-	 | c = compose_cmd           -> MetaCompose c]];
-   
+   | c = compose_cmd           -> MetaCompose c]];
+
 meta_constr:
   [[ `DOLLAR; `IDENTIFIER id -> MetaVar id
    | d=disjunctive_constr    -> MetaForm (F.subst_stub_flow n_flow d)

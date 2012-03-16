@@ -133,6 +133,7 @@ module Make (Token : SleekTokenS)
 	 ("diff", DIFF);
 	 ("dynamic", DYNAMIC);
 	 ("else", ELSE_TT);
+   ("emp", EMPTY);
 	 ("ensures", ENSURES);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);

@@ -460,6 +460,7 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
   | HTrue -> [] 
   | HFalse -> [] 
+  | HEmp -> [] 
 ;;
 
 let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
@@ -755,6 +756,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
+  | HEmp -> f
 	    
 
 and rename_bound_vars (f : formula) = 
@@ -882,7 +884,8 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
     | HTrue -> (f,[])
-    | HFalse -> (f,[]) in
+    | HFalse -> (f,[]) 
+    | HEmp -> (f,[]) in
   let helper_one_formula (f:one_formula) =
     let rh,rl = float_out_exps f.formula_heap in
     if (List.length rl) == 0 then ([],f)
@@ -1120,6 +1123,7 @@ match h with
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
+    |  HEmp -> (h, None)
 	 
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with

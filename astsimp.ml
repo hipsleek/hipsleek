@@ -476,7 +476,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
             IF.h_formula_phase_rd = tmp1;
             IF.h_formula_phase_rw = tmp2; }
     | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
-    | IF.HTrue | IF.HFalse | IF.HeapNode _ -> h0
+    | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
   match f0 with
@@ -1499,7 +1499,8 @@ and find_m_prop_heap_x eq_f h = match h with
   | CF.Phase h -> (find_m_prop_heap_x eq_f h.CF.h_formula_phase_rd)@(find_m_prop_heap_x eq_f h.CF.h_formula_phase_rw)  
   | CF.Hole _ 
   | CF.HTrue 
-  | CF.HFalse -> []
+  | CF.HFalse 
+  | CF.HEmp -> []
 
 and param_alias_sets p params = 
   let eqns = ptr_equations_with_null p in
@@ -2107,7 +2108,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_view_arguments = _;
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
-              | CF.HTrue | CF.HFalse | CF.Hole _ -> "")
+              | CF.HTrue | CF.HFalse | CF.HEmp | CF.Hole _ -> "")
 	      in find_view_heap h
     | CF.Or _ ->
 	      Err.report_error
@@ -4255,7 +4256,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 	          (tmp_h, tmp_type)
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
-    in 
+        | IF.HEmp -> (CF.HEmp, CF.TypeFalse) in 
     res
 
   in
@@ -5693,7 +5694,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                          Err.error_loc = pos;
 			                          Err.error_text = c ^ " is neither 2 a data nor view name";
 			                      })) in ()
-    | IF.HTrue | IF.HFalse -> ()
+    | IF.HTrue | IF.HFalse | IF.HEmp -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
   try
@@ -5907,7 +5908,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
-      | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos) in
+      | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
+      | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkFalse no_pos) in 
 	  
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
