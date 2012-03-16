@@ -19,7 +19,7 @@ let log_file = open_out ("allinput.sugar")
 let sugar_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
 
 (*sugar*)
-let sugar_path = "/home/bachle/sleekex-temp2/sugar-v1-15-0/bin/sugar"
+let sugar_path = "sugar"
 let sugar_name = "sugar"
 let sugar_arg = "sugar"
 let sugar_input_format = "csp"   (* valid value is: csp *)
@@ -37,7 +37,8 @@ type domainVar = {
 	mutable ub: int;
 	}
 let listVar = ref ([]: domainVar list)
-let flag = -10000	
+let flag = -10000
+let execute_with=(*"all"*)"eq_neq" (*Or all is for >=,<=,=,!= but we need to assign domains for variables*)
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN CSP FORMAT
 **************************************************************)
@@ -53,6 +54,15 @@ let get_list_var f = let fvar=Cpure.fv f in
 			      } 
 						in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv in !listVarTemp
 
+let get_list_var_anhchanh f = let fvar=Cpure.fv f in 
+	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
+	let listVarTemp = ref ([]: domainVar list) in
+	let mk_domain sv={var=sugar_csp_of_spec_var sv;
+						lb = 1;
+						ub= 1+(List.length all_fv);
+			      } 
+						in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv in !listVarTemp
+						
 let asign_domain_lowerbound sv value= 
 	let var=sugar_csp_of_spec_var sv in 
 	List.map (fun x->if (var=x.var && x.lb=flag) then x.lb<-value )	!listVar
@@ -111,7 +121,7 @@ and  sugar_of_b_formula b =
   | SubAnn (a1, a2, _) -> illegal_format ("sugar.sugar_of_exp: bag or list constraint")
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-         							(sugar_of_exp a1) ^ "  " ^ (sugar_of_exp a2)
+         							 "(= "^(sugar_of_exp a1) ^ "  " ^ (sugar_of_exp a2)^")"
   										end
   | Neq (a1, a2, _) -> begin
         							 "(!= "^(sugar_of_exp a1)^ "  " ^ (sugar_of_exp a2)^")"
@@ -142,7 +152,8 @@ and domain_of_variables b =
   | Eq (a1, a2, _) -> begin 
 		match (a1,a2) with
 		| (IConst (i, _),Var(sv,_)) (*do sth*)
-		| (Var(sv,_),IConst (i,_)) -> (asign_domain_lowerbound sv i; asign_domain_upperbound sv i);true 
+		| (Var(sv,_),IConst (i,_)) -> (asign_domain_lowerbound sv i; asign_domain_upperbound sv i);true
+(*		| (Var(sv,_),Var(sv,_))-> *)
 	  |_ ->  false 
 	end
 	| _-> false
@@ -153,8 +164,11 @@ and sugar_of_formula f  =
     match f with
   | BForm ((b,_) as bf,_) -> 		
         begin
-					  domain_of_variables bf; 
-            (sugar_of_b_formula bf) 
+						if(execute_with<>"eq_neq") then 
+					     (domain_of_variables bf;
+							  sugar_of_b_formula bf)
+								else 
+									 sugar_of_b_formula bf
         end
   | AndList _ -> report_error no_pos "sugar.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(and" ^ (helper p1) ^ "  " ^ (helper p2 ) ^ ")"
@@ -253,7 +267,7 @@ INTERACTION
 let rec collect_output (chn: in_channel)  : (string * bool) =
   try
     let line = input_line chn in
-(* let _ = print_endline ("  -- output: " ^ line) in *)
+(* let _ = print_endline ("  -- output: " ^ line) in*)
 		if line = "s SATISFIABLE" then
       (line, true)
     else
@@ -366,11 +380,11 @@ let domain_to_string list=
 let to_sugar_csp (ante: Cpure.formula)  : string list=
   (*let _ = "** In function Spass.to_sugar_csp" in*)
  (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
-	let func = listVar := get_list_var ante in 
+	let func = if(execute_with<>"eq_neq") then listVar := get_list_var ante else listVar := get_list_var_anhchanh ante in 
 	let result=sugar_of_formula ante in
 	let domain=domain_to_string !listVar in
   let res= domain @ [result] in 
-(*	let _= List.map (print_endline) res in*)
+(*	let _= List.map (fun x-> print_endline x) res in*)
 	res
 	  
 (*bach*) 
