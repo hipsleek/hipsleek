@@ -17,7 +17,7 @@ ll<n> == self = null & n = 0
 
 /* append two singly linked lists */
 void append2(node x, node y)
-  infer [n1]
+  infer @pre [n1]
   requires x::ll<n1> * y::ll<n2>
   ensures x::ll<m> & m=n1+n2;
 {    

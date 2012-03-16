@@ -29,7 +29,7 @@ print residue.
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
 
-// (5)
+// (5) Fail
 infer [x] x::ll<n> |- x::node<_,null>.
 print residue.
 
@@ -45,7 +45,7 @@ print residue.
 infer [n] x::ll<n> & n>0 |- x=null.
 print residue.
 
-// (9)
+// (9) Fail.
 infer [] x::ll<n> & n>0 |- x=null.
 print residue.
 

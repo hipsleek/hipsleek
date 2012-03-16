@@ -1069,14 +1069,10 @@ let tp_is_sat f sat_no do_cache =
   Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no do_cache) f
 
-let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
+(* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
-let is_sat_raw (f: CP.formula) =
-  (* let f = drop_rel_formula f in *)
-  tp_is_sat_no_cache f "999"
-    
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
   else Omega.simplify f   
@@ -1186,18 +1182,16 @@ let simplify (f : CP.formula) : CP.formula =
       with | _ -> f)
 
 let rec simplify_raw (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
+        let rels = CP.get_RelForm disj in
+        let disj = CP.drop_rel_formula disj in
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
         let others = simplify_raw (conj_of_list others no_pos) in
-        conj_of_list (others::bag_cnts) no_pos
+        conj_of_list ([others]@bag_cnts@rels) no_pos
       ) disjs in
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
@@ -1208,11 +1202,7 @@ let rec simplify_raw (f: CP.formula) =
     CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -1229,11 +1219,7 @@ let simplify_raw f =
 	Debug.no_1 "simplify_raw" pr pr simplify_raw f
 
 let simplify_exists_raw exist_vars (f: CP.formula) = 
-  let is_bag_cnt = 
-    match !tp with
-    | Mona | MonaH -> if is_bag_constraint f then true else false
-    | _ -> false
-  in
+  let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
     let new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -2713,6 +2699,22 @@ let change_prover prover =
   tp := prover;
   start_prover ();;
 
-let imply_raw ante conseq  =
-  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None
+(*let imply_raw ante conseq  =*)
+(*  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None*)
+
+(*let is_sat_raw_no_cache (f: CP.formula) =*)
+(*  tp_is_sat_no_cache f "999"*)
+
+let is_sat_raw (f: MCP.mix_formula) =
+(* let f = drop_rel_formula f in *)
+(*  tp_is_sat_no_cache f "999"*)
+  is_sat_mix_sub_no f (ref 9) true true
+
+let imply_raw ante conseq =
+  let (res,_,_) = mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
+  res
+
+let imply_raw_mix ante conseq =
+  let (res,_,_) = mix_imply ante conseq "99" in
+  res
 

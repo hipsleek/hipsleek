@@ -78,12 +78,14 @@ GLOBAL: expression or_formula formula pformula exp specvar;
       begin
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
+        | (Bag _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
         | _ -> mkTrue loc
       end
     | x = exp; ">="; y = exp -> 
       begin
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
+        | (Var _, Bag _) -> BForm ((BagSub (y, x, loc), None), None)
         | _ -> mkTrue loc
       end
     | x = exp; "="; y = exp -> 
@@ -95,14 +97,22 @@ GLOBAL: expression or_formula formula pformula exp specvar;
       end
     | x = exp; "!="; y = exp -> BForm ((Neq (x, y, loc), None), None)
     | "forall"; x = exp; "in"; y = exp; ":"; z = pformula ->
-      let res = begin
+      begin
       match (x,z) with
         | (Var (v1,_), BForm ((Neq(Var(v2,_),Var(v3,_),_),_),_)) -> 
-          if eq_spec_var v1 v2 then BagNotIn (v3,y,loc) else
-          if eq_spec_var v1 v3 then BagNotIn (v2,y,loc) else BConst(true,loc)
-        | _ -> BConst(true,loc)
+          let res = 
+            if eq_spec_var v1 v2 then BagNotIn (v3,y,loc) else
+            if eq_spec_var v1 v3 then BagNotIn (v2,y,loc) else BConst(true,loc)
+          in BForm ((res,None),None)
+        | (Var (v1,_), BForm ((Eq(Var(v2,_),Var(v3,_),_),_),_)) -> 
+          if eq_spec_var v1 v2 then mkForall [v1]
+            (mkOr (BForm ((BagNotIn (v1,y,loc),None),None)) 
+                  (BForm ((Eq (Var (v1,loc),Var (v3,loc),loc),None),None)) None loc) None loc else
+          if eq_spec_var v1 v3 then mkForall [v1]
+            (mkOr (BForm ((BagNotIn (v1,y,loc),None),None)) 
+                  (BForm ((Eq (Var (v1,loc),Var (v2,loc),loc),None),None)) None loc) None loc else mkTrue loc
+        | _ -> mkTrue loc
       end
-      in BForm ((res,None),None)
     | "exists"; x = exp; "in"; y = exp; ":"; z = pformula ->
       let res = begin
       match (x,z) with

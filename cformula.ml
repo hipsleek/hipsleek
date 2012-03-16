@@ -6798,12 +6798,15 @@ and get_or_post sp rel_id =
     (fun _ _ -> get_or_post_x rel_id sp) sp rel_id
 
 let unwrap_exists f =
-  let helper f =
+  let rec helper f =
     match f with
       | Base b -> ([],[],f)
       | Exists b -> (b.formula_exists_qvars, 
         h_fv b.formula_exists_heap, Exists {b with formula_exists_qvars=[]} )
-      | _ -> ([],[],f)
+      | Or b -> 
+        let (e1,h1,f1) = helper b.formula_or_f1 in
+        let (e2,h2,f2) = helper b.formula_or_f2 in
+        (e1@e2,h1@h2,mkOr f1 f2 b.formula_or_pos)
   in helper f
 
 let add_exists vs f =
@@ -6962,4 +6965,64 @@ let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula =
 		| EList b-> (try EList (List.map2 (fun (l,e) a ->(l,helper e a)) b pre) with _ -> sp)
 		| EOr b -> report_error no_pos "Do not expect EOr at merge_struc_pre"
 		| _ -> (match pre with | x::[] -> helper sp x | _ -> sp)
-	
+
+let rec list_of_posts (sp:struc_formula) = match sp with
+	| ECase b -> List.concat (List.map (fun (p,c) -> let res = list_of_posts c in
+      List.map (fun (pures,post) -> ([p]@pures,post)) res) b.formula_case_branches)
+	| EBase b ->
+    (match b.formula_struc_continuation with
+      | None -> []
+      | Some f -> list_of_posts f)
+	| EAssume(_,f,_) -> [([],f)]
+	| EInfer b -> list_of_posts b.formula_inf_continuation
+	| EList b -> List.concat (List.map (fun (_,e) -> list_of_posts e) b)
+	| EOr b -> list_of_posts b.formula_struc_or_f1 @ list_of_posts b.formula_struc_or_f2
+
+let rec transform_spec (sp:struc_formula) pairs = match sp with
+	| ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) -> 
+      let new_pairs = List.concat (List.map (fun (x,y) -> if List.hd x == p then [(List.tl x,y)] else []) pairs) in
+      (p,transform_spec c new_pairs)) b.formula_case_branches)}
+	| EBase b -> EBase {b with formula_struc_continuation =
+    (match b.formula_struc_continuation with
+      | None -> None
+      | Some f -> Some (transform_spec f pairs))}
+	| EAssume(svl,f,fl) -> (match pairs with 
+      | [([],p2)] -> EAssume(svl,p2,fl)
+      | _ -> report_error no_pos "Error in transforming spec")
+	| EInfer b -> EInfer {b with formula_inf_continuation = transform_spec b.formula_inf_continuation pairs}
+	| EList b -> EList (List.map (fun (l,e) ->(l,transform_spec e pairs)) b)
+	| EOr b -> EOr {b with formula_struc_or_f1 = transform_spec b.formula_struc_or_f1 pairs;
+                         formula_struc_or_f2 = transform_spec b.formula_struc_or_f2 pairs}
+
+let sum_of_int_lst lst = List.fold_left (+) 0 lst
+
+let rec no_of_cnts_heap heap = match heap with
+  | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
+  | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
+  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)
+  | Phase h -> no_of_cnts_heap h.h_formula_phase_rd + no_of_cnts_heap h.h_formula_phase_rw
+  | DataNode _ -> 1
+  | ViewNode _ -> 1
+  | Hole _ -> 1
+  | HTrue -> 0
+  | HFalse -> 1
+
+let rec no_of_cnts_fml fml = match fml with
+  | Or f -> no_of_cnts_fml f.formula_or_f1 + no_of_cnts_fml f.formula_or_f2
+  | Base f -> no_of_cnts_heap f.formula_base_heap + CP.no_of_cnts (MCP.pure_of_mix f.formula_base_pure)
+  | Exists f -> no_of_cnts_heap f.formula_exists_heap  + CP.no_of_cnts (MCP.pure_of_mix f.formula_exists_pure)
+
+let rec no_of_cnts (sp:struc_formula) = match sp with
+	| ECase b -> 
+    let nums = List.map (fun (p,c) -> CP.no_of_cnts p + no_of_cnts c) b.formula_case_branches in
+    sum_of_int_lst nums
+	| EBase b -> no_of_cnts_fml b.formula_struc_base + 
+    (match b.formula_struc_continuation with | None -> 0 | Some x -> no_of_cnts x)
+	| EAssume(_,f,_) -> no_of_cnts_fml f
+	| EInfer b -> no_of_cnts b.formula_inf_continuation
+	| EList b -> 
+    let nums = List.map (fun (_,e) -> no_of_cnts e) b in
+    sum_of_int_lst nums
+	| EOr b -> no_of_cnts b.formula_struc_or_f1 + no_of_cnts b.formula_struc_or_f2
+
+

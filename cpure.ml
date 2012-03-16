@@ -793,6 +793,52 @@ and get_alias (e : exp) : spec_var =
     | Null _ -> null_var (* it is safe to name it "null" as no other variable can be named "null" *)
     | _ -> failwith ("get_alias: argument is neither a variable nor null")
 
+(*and can_be_aliased_aux_bag with_emp (e : exp) : bool =*)
+(*  match e with*)
+(*    | Var _ -> true*)
+(*    | Bag ([],_) -> with_emp*)
+(*    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) *)
+(*    | BagUnion ([Var (_,_); Bag ([Var(_,_)],_)], _) -> true*)
+(*    | _ -> false*)
+
+(*and get_alias_bag (e : exp) : spec_var =*)
+(*  match e with*)
+(*    | Var (sv, _) -> sv*)
+(*    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)*)
+(*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
+(*      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv1) ^ (name_of_spec_var sv2), Unprimed)*)
+(*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
+(*      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv2) ^ (name_of_spec_var sv1), Unprimed)*)
+(*    | _ -> report_error no_pos "Not a bag or a variable or null"*)
+
+and can_be_aliased_aux_bag with_emp (e : exp) : bool =
+  match e with
+  | Var _ -> true
+  | Subtract (_,Subtract (_,Var _,_),_) -> true
+  | Bag ([],_) -> with_emp
+  | Bag (es,_) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | BagUnion (es, _) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | _ -> false
+ 
+and get_alias_bag (e : exp) : spec_var =
+  match e with
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> sv
+  | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)
+  | Bag (es,_) -> 
+    SpecVar (Named "", "bag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+  | BagUnion (es, _) -> 
+    SpecVar (Named "", "unionbag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+  | _ -> report_error no_pos "Not a bag or a variable or a bag_union or null"
+
+and name_of_exp (e: exp): string =
+  match e with
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> name_of_spec_var sv
+  | Bag ([],_) -> "emptybag"
+  | Bag (es,_)
+  | BagUnion (es, _) -> (List.fold_left (fun x y -> x ^ name_of_exp y) "" es)
+
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
   | _ -> false
@@ -6875,6 +6921,22 @@ let is_eq_const (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq _,_)
+    | (Eq _,_) -> true
+    | _ -> false)
+  | _ -> false
+
+let is_beq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (_,BagUnion _,_),_)
+    | (Eq (_,BagUnion _,_),_) -> true
+    | _ -> false)
+  | _ -> false
+
 let get_rank_dec_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -7412,12 +7474,70 @@ and count_term_b_formula bf =
   | _ -> 0
 
 let rec remove_cnts exist_vars f = match f with
-  | BForm (bf,_) -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,_) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) no_pos
-  | Or (f1,f2,_,_) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) None no_pos
+  | BForm _ -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) p
+  | Or (f1,f2,o,p) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) o p
   | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+
+let rec remove_cnts2 keep_vars f = match f with
+  | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
+  | Or (f1,f2,o,p) -> mkOr (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) o p
+  | Not (f,o,p) -> Not (remove_cnts2 keep_vars f,o,p)
+  | Forall (v,f,o,p) -> Forall (v,remove_cnts2 keep_vars f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_cnts2 keep_vars f,o,p)
+
+let rec is_num_dom_exp_0 e = match e with
+  | IConst _ -> true
+  | Add (e1,e2,_) -> is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2
+(*  | Subtract (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2*)
+  | _ -> false
+
+let rec is_num_dom_exp e = match e with
+  | IConst (0,_) -> false
+  | IConst _ -> true
+  | Add (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
+  | _ -> false
+
+let get_num_dom_pf pf = match pf with
+  | Lt (e1,e2,_)
+  | Lte (e1,e2,_)
+  | Gt (e1,e2,_)
+  | Gte (e1,e2,_)
+  | Neq (e1,e2,_) -> 
+    if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then 
+      let r = afv e1 @ afv e2 in
+      (r,[],r) 
+    else ([],[],[])
+  | Eq (e1,e2,_) -> 
+    begin
+    match e1,e2 with
+    | Var _, BagUnion _ -> ([], List.filter is_int_typ (afv e1 @ afv e2), [])
+    | _ -> 
+      if is_num_dom_exp e1 || is_num_dom_exp e2 then 
+        let r = afv e1 @ afv e2 in
+        (r,[],r) 
+      else 
+      if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then (afv e1 @ afv e2,[],[]) 
+      else ([],[],[])
+    end
+  | _ -> ([],[],[])
+
+let rec get_num_dom f = match f with
+  | BForm ((pf,_),_) -> get_num_dom_pf pf
+  | And (f1,f2,_) -> 
+    let (r11,r12,r13) = get_num_dom f1 in
+    let (r21,r22,r23) = get_num_dom f2 in
+    (r11@r21,r12@r22,r13@r23)
+  | Or (f1,f2,_,_) ->
+    let (r11,r12,r13) = get_num_dom f1 in
+    let (r21,r22,r23) = get_num_dom f2 in
+    (r11@r21,r12@r22,r13@r23)
+  | Not (f,_,_) -> get_num_dom f
+  | Forall (_,f,_,_) -> get_num_dom f
+  | Exists (_,f,_,_) -> get_num_dom f
 
 let order_var v1 v2 vs =
   if List.exists (eq_spec_var_nop v1) vs then
@@ -7456,4 +7576,28 @@ let rec norm_subs subs =
     | (fr,t)::xs -> 
           let new_s = norm_subs xs in
           (fr,apply_subs_sv new_s t)::new_s
+
+let is_emp_bag pf rel_vars = match pf with
+  | BForm ((pf,_),_) ->
+    begin
+      match pf with
+      | Eq (Var (x,_), Bag ([],_), _)
+      | Eq (Bag ([],_), Var (x,_), _) -> mem_svl x rel_vars
+      | _ -> false
+    end
+  | _ -> false
+
+let sum_of_int_lst lst = List.fold_left (+) 0 lst
+
+let rec no_of_cnts f = match f with
+  | BForm _ -> if isConstTrue f || is_RelForm f then 0 else 1
+  | And (f1,f2,_) -> no_of_cnts f1 + no_of_cnts f2
+  | Or (f1,f2,_,_) -> no_of_cnts f1 + no_of_cnts f2
+  | AndList fs -> sum_of_int_lst (List.map (fun (_,fml) -> no_of_cnts fml) fs)
+  | Not (f,_,_) -> no_of_cnts f
+  | Exists (_,f,_,_) -> no_of_cnts f
+  | Forall (_,f,_,_) -> no_of_cnts f
+
+
+
 

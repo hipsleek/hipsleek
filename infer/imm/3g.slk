@@ -1,0 +1,52 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+// (1)
+infer [v1] x::node<_,q>@v1 |- x::node<a,b>@I.
+print residue.
+
+
+// (2)
+infer [v1] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+// (3)
+/*
+<1>true&a=Anon_16 & b=q & v1<:v2 & Anon_18=Anon_17 & Anon_19=r & v2<=1&{FLOW,(17,18)=__norm}
+inferred pure: [v2<=1]
+*/
+infer [v1,v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+// (4)
+infer [v1] x::node<_,q>@v1 & v1<:I |- x::node<a,b>@v2.
+print residue.
+
+// (5)
+infer [v1] x::node<_,q>@v1 |- x::node<a,b>@I.
+print residue.
+
+// (6)
+infer [v1] v1<v2 |- v1<=1.
+print residue.
+
+// (7)
+infer [v1] true |- v1<=1.
+print residue.
+
+
+
+
+//M<:I<:L
+//M v=0
+//I v=1
+//L v=2
+/*
+v<=0 <==> v=@M
+v<=1 <==> v=@M or v=@I
+v<=2 <==> v=@M or v=@I or v=@L
+*/

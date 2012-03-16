@@ -21,9 +21,9 @@ relation A(int x, int y).
 
 /* functions to count the number of nodes in a circular list */
 int count(node x, node h)
-    infer @pre[h,p]
-    requires x::cll<p, n>
-    ensures x::cll<p, n> & res = n; 
+    infer [A]
+    requires x::cll<p, n> & h=p
+    ensures x::cll<p, n> & A(res,n); //res=n; 
 
 {
 	int n;
@@ -34,7 +34,7 @@ int count(node x, node h)
   }
 	else
 	{
-    assume false;
+    //assume false;
 		n = count(x.next, h);
 		n = n + 1;
     dprint;
