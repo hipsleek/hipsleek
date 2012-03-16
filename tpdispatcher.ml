@@ -32,6 +32,8 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
+  | MINISAT
+  | SUGAR    
 
 let test_db = false
 
@@ -80,7 +82,8 @@ let string_of_prover prover = match prover with
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
   | SPASS -> "SPASS"
-
+  | MINISAT-> "MINISAT"  
+  | SUGAR -> "SUGAR" 	
 
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
 
@@ -433,6 +436,10 @@ let set_tp tp_str =
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
     (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
+  else if tp_str = "minisat" then
+    (tp := MINISAT; prover_str:= "minisat"::!prover_str)    
+  else if tp_str = "sugar" then
+    (tp := SUGAR; prover_str:= "sugar"::!prover_str)    	
   else
 	();
   check_prover_existence !prover_str
@@ -458,6 +465,8 @@ let string_of_tp tp = match tp with
    | AUTO -> "auto"
   | DP -> "dp"
   | SPASS -> "spass"
+  | MINISAT-> "minisat"  
+  | SUGAR -> "sugar"	
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -480,6 +489,8 @@ let name_of_tp tp = match tp with
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
   | SPASS -> "SPASS"
+  | MINISAT -> "MINISAT" 
+  | SUGAR -> "SUGAR"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -492,6 +503,8 @@ let log_file_of_tp tp = match tp with
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
   | SPASS -> "allinput.spass"
+  | MINISAT -> "allinput.minisat"  
+  | SUGAR -> "allinput.sugar" 
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -934,7 +947,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let res = 
   match !tp with
 	| DP -> 
-		let r = stat_tp (lazy (Dp.is_sat f sat_no)) "dp_unsat" in
+		let r = stat_tp (lazy (Dp.is_sat f sat_no)) "dp" in
 		if test_db then 
 			let r2 = stat_tp (lazy (Smtsolver.is_sat f sat_no)) "dp_z3_unsat" in
 			if r=r2 then r 
@@ -1087,6 +1100,30 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else
           stat_tp (lazy (Spass.is_sat f sat_no)) "spass"
       )
+	| MINISAT -> ( 
+        if (is_bag_constraint wf) then
+          mona_is_sat wf
+        (*else if (is_list_constraint wf) then
+          Coq.is_sat wf sat_no*)
+        else if (is_array_constraint f) then
+          Smtsolver.is_sat f sat_no
+	else
+	  (
+          Minisat.is_sat f sat_no
+	  )
+      ) 
+    | SUGAR -> ( 
+        if (is_bag_constraint wf) then
+          mona_is_sat wf
+        (*else if (is_list_constraint wf) then
+          Coq.is_sat wf sat_no*)
+        else if (is_array_constraint f) then
+          Smtsolver.is_sat f sat_no
+	else
+	  (
+          Sugar.is_sat f sat_no
+	  )
+      ) 
   in let _ = Gen.Profiling.pop_time "stat_tp_is_sat_no_cache" 
   in res
 
@@ -1245,6 +1282,26 @@ let simplify (f : CP.formula) : CP.formula =
                 Smtsolver.simplify f
               else
                 Spass.simplify f
+            )
+	     | MINISAT -> (
+              if (is_bag_constraint f) then
+                Mona.simplify f
+              (*else if (is_list_constraint f) then
+                Coq.simplify f*)
+              else if (is_array_constraint f) then
+                Smtsolver.simplify f
+              else
+                Minisat.simplify f
+            )
+	  | SUGAR -> (
+              if (is_bag_constraint f) then
+                Mona.simplify f
+              (*else if (is_list_constraint f) then
+                Coq.simplify f*)
+              else if (is_array_constraint f) then
+                Smtsolver.simplify f
+              else
+                Sugar.simplify f
             )
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
@@ -1695,6 +1752,29 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           (called_prover := "spass "; 
           stat_tp (lazy (Spass.imply ante conseq timeout)) "spass");
       ) 
+       | MINISAT -> (
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          (called_prover :="Mona "; mona_imply ante_w conseq_s)
+        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
+          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
+        else if (is_array_constraint ante) || (is_array_constraint conseq) then
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+        else
+          (called_prover :="MINISAT "; 
+	   Minisat.imply ante conseq timeout);
+      ) 
+       | SUGAR -> (
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          (called_prover :="Mona "; mona_imply ante_w conseq_s)
+        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
+          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
+        else if (is_array_constraint ante) || (is_array_constraint conseq) then
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
+        else
+          (called_prover :="SUGAR "; 
+	   Sugar.imply ante conseq timeout);
+      ) 
+       
   in
   let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in
 	let _ = if should_output () then
@@ -2825,10 +2905,15 @@ let start_prover () =
   | Z3 ->
       Smtsolver.start();
   | SPASS -> Spass.start();
+  | MINISAT ->  Minisat.start() ; 
+  | SUGAR ->  Sugar.start() ; 
   | _ -> Omega.start()
   
 let stop_prover () =
   match !tp with
+    | OmegaCalc ->
+        Omega.stop ();
+        if !Redlog.is_reduce_running then Redlog.stop ();
     | Coq -> (* Coq.stop_prover () *)
           begin
             Coq.stop ();
@@ -2861,6 +2946,18 @@ let stop_prover () =
     | Z3 ->
       Smtsolver.stop();
     | SPASS -> Spass.stop();
+    | MINISAT ->  if !Redlog.is_reduce_running then (
+	          Redlog.stop () ;
+                  Omega.stop () ;
+		  Minisat.stop() 
+                  )
+                  else (Omega.stop () ;Minisat.stop() )
+    | SUGAR ->  if !Redlog.is_reduce_running then (
+	          Redlog.stop () ;
+                  Omega.stop () ;
+		  Sugar.stop() 
+                  )
+                  else (Omega.stop () ;Sugar.stop() ) 
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
