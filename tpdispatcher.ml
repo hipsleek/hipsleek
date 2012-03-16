@@ -1614,7 +1614,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let _ = Gen.Profiling.push_time "stat_tp_imply_no_cache" in
   let r = match !tp with
     | DP ->
-        let r = stat_tp (lazy (Dp.imply ante_w conseq_s (imp_no^"XX") timeout)) "dp_imply" in
+        let r = stat_tp (lazy (Dp.imply ante_w conseq_s (imp_no^"XX") timeout)) "dp" in
         if test_db then 
           let r2 = stat_tp (lazy (Smtsolver.imply ante conseq (*(imp_no^"XX")*)
           timeout)) "z3_dp_imply" in

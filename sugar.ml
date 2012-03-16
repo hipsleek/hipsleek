@@ -341,7 +341,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   (* debug *)
   (* let _ = print_endline "** In function sugar.check_problem" in *)
   let file_suffix = "sg" in
-  let infile = "/tmp/in" ^ (file_suffix) ^ ".csp" in
+  let infile = "in" ^ (file_suffix) ^ ".csp" in
   (*let _ = print_endline ("-- input: \n" ^ input) in*) 
   let out_stream = open_out infile in
   List.map (fun x-> output_string out_stream x) input;
