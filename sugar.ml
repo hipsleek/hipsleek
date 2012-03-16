@@ -17,7 +17,7 @@ let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let sugar_call_count: int ref = ref 0
 let log_file = open_out ("allinput.sugar")
 let sugar_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
-
+let null_flag = ref false
 (*sugar*)
 let sugar_path = "sugar"
 let sugar_name = "sugar"
@@ -37,31 +37,37 @@ type domainVar = {
 	mutable ub: int;
 	}
 let listVar = ref ([]: domainVar list)
+let numVar = ref 0
 let flag = -10000
-let execute_with="all" (*"eq_neq"*) (*Or all is for >=,<=,=,!= but we need to assign domains for variables*)
+let execute_with= "eq_neq" (*Or all is for >=,<=,=,!= but we need to assign domains for variables*)
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN CSP FORMAT
 **************************************************************)
 (*sugar*)
 let sugar_csp_of_spec_var sv = let ident=Cpure.name_of_spec_var sv in ident
 
+let asign_domain_null lv =
+  let domain_null={var="null";lb=1;ub= 1 + (List.length lv)} in  [domain_null] @ lv
+
 let get_list_var f = let fvar=Cpure.fv f in 
 	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
 	let listVarTemp = ref ([]: domainVar list) in
 	let mk_domain sv={var=sugar_csp_of_spec_var sv;
-						lb = flag;
-						ub= flag;
-			      } 
-						in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv in !listVarTemp
-
+			  lb = flag;
+			  ub = flag;
+			 } 
+	in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv 
+	   in  !listVarTemp
+													     
 let get_list_var_eq_logic f = let fvar=Cpure.fv f in 
 	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
 	let listVarTemp = ref ([]: domainVar list) in
 	let mk_domain sv={var=sugar_csp_of_spec_var sv;
-						lb = 1;
-						ub= 1+(List.length all_fv);
-			      } 
-						in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv in !listVarTemp
+			  lb = 1;
+			  ub= 1+(List.length all_fv);
+			 } 
+	in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv 
+	   in  !listVarTemp
 						
 let asign_domain_lowerbound sv value= 
 	let var=sugar_csp_of_spec_var sv in 
@@ -70,9 +76,9 @@ let asign_domain_lowerbound sv value=
 let asign_domain_upperbound sv value= 
 	let var=sugar_csp_of_spec_var sv in 
 	List.map (fun x->if var=x.var && x.ub=flag then x.ub<-value )	!listVar
-							
+
 let rec sugar_of_exp e0 = match e0 with
-  | Null _ -> "0"
+  | Null _ -> "null"
   | Var (sv, _) -> sugar_csp_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> illegal_format ("sugar.sugar_of_exp: array, bag or list constraint")
@@ -188,7 +194,7 @@ let sugar_of_formula f =
 (* Check whether sugar can handle the expression, formula... *)
 let rec can_sugar_handle_expression (exp: Cpure.exp) : bool =
   match exp with
-  | Cpure.Null _         -> false
+  | Cpure.Null _         -> true
   | Cpure.Var _          -> true
   | Cpure.IConst _       -> true
   | Cpure.FConst _       -> false
@@ -379,12 +385,14 @@ let to_sugar_csp (ante: Cpure.formula)  : string list=
   (*let _ = "** In function Spass.to_sugar_csp" in*)
  (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
 	let func = if(execute_with<>"eq_neq") then listVar := get_list_var ante else listVar := get_list_var_eq_logic ante in 
+	(*print_endline "null has been assigned";*)
+	let _= listVar := asign_domain_null !listVar in
 	let result=sugar_of_formula ante in
 	let domain=domain_to_string !listVar in
-  let res= domain @ [result] in 
-(*	let _= List.map (fun x-> print_endline x) res in*)
+	let res= domain @ [result] in 
+	(*let _= List.map (fun x-> print_endline x) domain in*)
 	res
-	  
+   
 (*bach*) 
 (***************************************************************
 GENERATE csp INPUT FOR IMPLICATION / SATISFIABILITY CHECKING

@@ -458,9 +458,10 @@ let is_void_type t = match t with | Void -> true | _ -> false
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
-
   let res = Gen.BList.remove_dups_eq eq_spec_var tmp in
+  (*let _ = print_endline ("fv:" ^ (!print_svl res)) in*)
   res
+
 and check_dups_svl ls = 
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
