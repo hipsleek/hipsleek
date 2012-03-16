@@ -4,6 +4,6 @@ data cell {
 	int val; 
 }.
 
-
 checkentail emp * true |- true.
 
+// checkentail true * true |- emp.

@@ -4,6 +4,4 @@ data cell {
 	int val; 
 }.
 
-checkentail true |- emp.
-
-//checkentail emp |- true.
+checkentail x::cell<_> * y::cell<_> |- x::cell<_>.

@@ -5909,7 +5909,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
-      | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkFalse no_pos) in 
+      | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) in 
 	  
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =

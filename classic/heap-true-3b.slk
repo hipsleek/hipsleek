@@ -1,0 +1,14 @@
+/* representation of a cell node */
+
+data cell {
+	int val; 
+}.
+
+//checkentail emp * true |- true.
+
+//checkentail emp * true |- emp.
+
+checkentail true |- emp.
+
+//checkentail emp |- true * emp.
+
