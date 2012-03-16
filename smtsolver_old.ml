@@ -709,6 +709,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+  let dp_imply = Dp.imply 
 	let res, should_run_smt = if (has_exists conseq) then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
 	else (false, true) in

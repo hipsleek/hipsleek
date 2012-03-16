@@ -1,6 +1,7 @@
 open Globals
 open Error
 open Cpure
+
 type var_rep = string
 
 type sformula = 
@@ -81,7 +82,7 @@ let set_add_eq l (v1,v2) =
 let get_aset l v = try List.find (Gen.BList.mem_eq s_eq v) l  with | Not_found -> [v]	
 	
 let trans_exp e : var_rep = match e with 
-	| Var (v1,_) -> Cprinter.string_of_spec_var v1
+	| Var (v1,_) -> !print_sv v1
 	| Null _ -> "null"
 	| IConst (i,_) -> string_of_int i
 	| FConst (f,_) -> string_of_float f
@@ -102,7 +103,7 @@ let trans_bf bf = match bf with
 			let v2 = trans_exp e2 in
 			if (s_eq v1 v2) then SFalse else SComp (Sneq (v1,v2))
 		| BVar (v,_) -> STrue (*SComp (Seq (Cprinter.string_of_spec_var v, "true"))		*)
-		| _ -> failwith ("found unexpected expression2 :"^(Cprinter.string_of_b_formula (bf,None))) 
+		| _ -> failwith ("found unexpected expression2 :"^(!print_b_formula (bf,None))) 
   
 let neg f = match f with 
   | STrue -> SFalse
@@ -172,7 +173,7 @@ let rec trans_f b f = match f with
   | Or (f1,f2,_,_) -> mkSOr (trans_f b f1) (trans_f b f2)
   | Not (f,_,_) -> neg (trans_f b f) 
   | Forall _ -> failwith "unexpected forall!"
-  | Exists (v,f,_,_) -> if b then elim_ex (Cprinter.string_of_spec_var v) (trans_f b f) else trans_f b f  
+  | Exists (v,f,_,_) -> if b then elim_ex (!Cpure.print_sv v) (trans_f b f) else trans_f b f  
   
 let trans_f b f = Gen.Profiling.do_2 "dptransf" trans_f b f
 let sat_check f = 
@@ -199,15 +200,36 @@ let sat_check f =
       helper eqs neqs ((List.tl l) @ w_l) (List.hd l) 
     | SOr (f1,f2) -> (helper eqs neqs w_l f1) || (helper eqs neqs w_l f2) in
   helper [] [] [] f 
-      
+
+(*     
+let z3_is_sat f sat_no =
+  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+  Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no
+*)
+
 let is_sat f sat_no = 
   let h f = match trans_f false f with 
   | STrue -> true
   | SFalse -> false
   | SComp fc -> sat_check fc in
- (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
-  Gen.Profiling.do_1 "dpsat" h f
-      
+  (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
+  (* Gen.Profiling.do_1 "stat_dp_sat" h f *)
+  let _ = Gen.Profiling.push_time "stat_tp_sat" in
+  let res = h f in
+  let _ = Gen.Profiling.pop_time "stat_tp_sat" in
+  res
+
+(*
+let is_sat f sat_no =
+(*  let z3_res = z3_is_sat f sat_no in
+  let dp_res = is_sat f sat_no in
+  let _ = if (z3_res != dp_res) then
+    print_endline ("z3-dp: " ^ !CP.print_formula f)
+  in
+  dp_res   *)
+  is_sat f sat_no
+*)
+
 let imply_test afc cfc =   
   let rec t_imply e_s n_s cfc = match cfc with 
 	| Seq (v1,v2) -> Gen.BList.mem_eq s_eq v2 (get_aset e_s v1)
@@ -230,8 +252,14 @@ let imply_test afc cfc =
 	| SAnd (f1,f2)-> icollect f1 e_s n_l (f2::w_l)
 	| SOr (f1,f2) -> (icollect f1 e_s n_l w_l) && (icollect f2 e_s n_l w_l) in
   icollect afc [] [] [] 
-  
-let imply ante conseq impl_no _ = 
+
+(*
+let z3_imply ante conseq impl_no timeout = 
+  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+  Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout
+*)
+
+let imply ante conseq impl_no _ =
 	let h ante conseq = match trans_f true conseq with
 	  | SFalse -> false
 	  | STrue -> true 
@@ -239,17 +267,32 @@ let imply ante conseq impl_no _ =
 		 | STrue -> false
 		 | SFalse -> true
 		 | SComp afc -> imply_test afc cfc in
-	Gen.Profiling.do_2 "dpimply" h ante conseq 
-      
+	(* Gen.Profiling.do_2 "stat_dp_imply" h ante conseq *)
+  let _ = Gen.Profiling.push_time "stat_tp_imply" in
+  let res = h ante conseq in
+  let _ = Gen.Profiling.pop_time "stat_tp_imply" in
+  res
+
+(*
+let imply ante conseq impl_no timeout =
+  let z3_res = z3_imply ante conseq impl_no timeout in
+  let dp_res = imply ante conseq impl_no timeout in
+  let _ = if (z3_res != dp_res) then
+    print_endline ("z3-dp: " ^ (!CP.print_formula ante) ^ " |- " ^ (!CP.print_formula conseq))
+  in
+  dp_res
+  (* imply ante conseq impl_no timeout *)
+*)
+
 (*
 let imply ante conseq i f = Gen.Profiling.do_2 "dpimply" Smtsolver.imply ante conseq(* i f*)
 let is_sat f sn = Gen.Profiling.do_2 "dpsat" Smtsolver.is_sat f sn
 	*)  
-let simplify f = Omega.simplify f
+let simplify f = (* Omega.simplify f *) f
 
-let hull f = Omega.hull f	
+let hull f = (* Omega.hull f *) f
 	
-let pairwisecheck f = Omega.pairwisecheck f
+let pairwisecheck f = (* Omega.pairwisecheck f *) f
 	
 (*let imply ante conseq impl_no _ = match trans_f false ante with
   | SFalse -> true

@@ -970,8 +970,20 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
   Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
-      (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
+      (fun _ _-> smt_imply_both  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
+and smt_imply_stat pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
+  Gen.Profiling.do_1 "stat_z3_imply" (smt_imply_x pr_weak pr_strong ante conseq prover) timeout
+  (* Gen.Profiling.do_1 "[dp@z3]imply" (Dp.imply ante conseq "") timeout *)
+
+and smt_imply_both pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
+  let z3_res = smt_imply_stat pr_weak pr_strong ante conseq prover timeout in
+  let dp_res = Dp.imply ante conseq "" timeout in
+  (* let _ = if (z3_res != dp_res) then
+    print_endline ("z3-dp: " ^ (!CP.print_formula ante) ^ " |- " ^ (!CP.print_formula conseq))
+  in *)
+  dp_res
+ 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
@@ -1003,6 +1015,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
 	res
   else
 	res
+
 and has_exists conseq = match conseq with
   | CP.Exists _ -> true
   | _ -> false
@@ -1074,6 +1087,18 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
 	let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in
 		res
     else res
+
+let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
+  Gen.Profiling.do_1 "stat_z3_sat" (smt_is_sat pr_weak pr_strong f sat_no prover) timeout
+  (* Gen.Profiling.do_1 "[dp@z3]sat" (Dp.is_sat f) sat_no *)
+
+let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
+  let z3_res = smt_is_sat pr_weak pr_strong f sat_no prover timeout in
+  let dp_res = Dp.is_sat f sat_no in
+  (* let _ = if (z3_res != dp_res) then
+    print_endline ("z3-dp: " ^ (!CP.print_formula f))
+  in *)
+  dp_res
 
 (*let default_is_sat_timeout = 2.0*)
 let is_sat_ops pr_weak pr_strong f sat_no =
