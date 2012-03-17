@@ -1275,6 +1275,26 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
+let infer_shape input = 
+  let shape = Parse_shape.parse_shape input in
+  Debug.info_hprint (add_str "Shape: " (pr_pair !CF.print_formula !CF.print_formula)) shape no_pos;;
+
+let _ = 
+  let syscall cmd =
+    let ic, oc = Unix.open_process cmd in
+    let buf = Buffer.create 16 in
+    (try
+       while true do
+         Buffer.add_channel buf ic 1
+       done
+     with End_of_file -> ());
+    let _ = Unix.close_process (ic, oc) in
+    (Buffer.contents buf)
+  in
+  let input_shape = "./infer/shape/ll-app.shape" in
+  let input_str = syscall ("cat " ^ input_shape) in
+  infer_shape input_str
+
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
 
