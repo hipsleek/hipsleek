@@ -1,9 +1,4 @@
 /* Last-Edit:  Wed May 7 10:12:52 1993 by Monica; */
-/*
-del_ele has problem with size
- */
-
-
 //#include <stdio.h>
 
 /* A job descriptor. */
@@ -40,16 +35,6 @@ data node {
 //  int    mem_count;		/* member count */
 //} List;
 
-/* view for a doubly linked list with size, we use ll and lseg */
-/*
-ll<n> == self=null & n=0
-  or self::node<_, _, q> * q::ll<n-1>
-	inv n>=0;
-
-lseg<p, n> == self=p & n=0
-  or self::node<_,_, q> * q::lseg<p, n-1>
-	inv n>=0;
-*/
 ll1<n,S> == self=null & n=0 & S={}
   or self::node<v, _, q> * q::ll1<n-1,S1> & S=union(S1,{v})
 	inv n>=0;
@@ -121,12 +106,10 @@ node find_nth_helper(node l, int j)
   & res!=null;
 {
   if (j>1){
-    //assume false;
     node r2=find_nth_helper(l.next, j-1);
     return r2;
   }
   else {
-    //assume false;
      return l;
   }
 }
@@ -151,19 +134,6 @@ node find_nth2(node f_list, int j)
 }
 
 
-/* better specs
-node find_nth2(node f_list, int j)
-  requires j>=1 //& n>=1
- case {
-  f_list = null -> ensures f_list=null & res=null;
-  f_list != null -> requires f_list::ll<n>
- case {
-  j <= n -> ensures (exists q: f_list::lseg<res,j-1> * res::node<_,v2,q> * q::ll<n-j> & v2>=1 & v2<=3);
-  j > n -> ensures f_list::ll<n> & res=null;
-}
-}*/
-
-
 /*-----------------------------------------------------------------------------
   del_ele
         deletes the old_ele from the list.
@@ -171,8 +141,8 @@ node find_nth2(node f_list, int j)
 	      node is not deallocated.
 -----------------------------------------------------------------------------*/
 node del_ele(ref node x, node ele)
-  requires (exists j,q: x::lseg1<ele,j,S1> * ele::node<v1,v2,q> * q::ll1<m,S2>) //&  v2 >=1 & v2 <= 3
-  ensures x'::lseg1<q,j,S1> * q::ll1<m,S2> * ele::node<v1,v2,q>& v2 >=1 & v2 <= 3 & res=x';//'
+  requires (exists j,q: x::lseg1<ele,j,S1> * ele::node<v1,v2,q> * q::ll1<m,S2>) 
+  ensures x'::lseg1<q,j,S1> * q::ll1<m,S2> * ele::node<v1,v2,q>& v2 >=1 & v2 <= 3 & res=x';
 
 
 /*-----------------------------------------------------------------------------
@@ -182,7 +152,7 @@ node del_ele(ref node x, node ele)
 -----------------------------------------------------------------------------*/
 void free_ele(ref node ptr)
   requires ptr::node<_,_,_>
-  ensures ptr'= null;//'
+  ensures ptr'= null;
 {
     ptr = null;
 }
@@ -199,13 +169,6 @@ global node prio_queue3;
 global node block_queue;
 
 
-/*
-requires  pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> * cur_proc::ll<n>
-case{
-  n1+n2+n3 >0 -> ensures pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6>  & num_processes' = num_processes -1 & n4+n5+n6=n1+n2+n3-1;
-  n1+n2+n3 <=0 -> ensures pq1'=null & pq2'=null & pq3'=null  & num_processes' = num_processes;
-}
- */
 void finish_process1(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, ref int num_processes)
   requires  pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> * cur_proc::ll1<n,S>
  case{
@@ -220,9 +183,7 @@ void finish_process1(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, 
     }
 }
 
-//relation FiP1(bag a1, bag a2).
 void finish_process(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, ref int num_processes)
-//infer [FiP1]
   requires  pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> * cur_proc::ll1<n,S>
  case{
   n3 > 0 ->
@@ -239,30 +200,10 @@ void finish_process(ref node pq1,ref node pq2,ref node pq3, ref node cur_proc, r
     schedule1();
     if (cur_proc != null)
     {
-      //fprintf(stdout, "%d ", cur_proc->val);
       free_ele(cur_proc);
       num_processes--;
     }
 }
-/*more precise specs. need bags predicates
-requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> * cur_proc::ll<n>
- case{
-  n3 > 0 ->
-     ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3-1> * cur_proc'::node<_,1,null>;
-  n3<=0 -> case {
-      n2>0 -> ensures  pq1'::ll<n1> * pq3'::ll<n3> * pq2'::ll<n2-1> * cur_proc'::node<_,2,null>;
-      n2<=0 -> case{
-        n1>0 -> ensures pq3'::ll<n3> * pq2'::ll<n2> * pq1'::ll<n1-1> * cur_proc'::node<_,3,null>;
-        n1<=0 -> ensures pq1'=null &  pq2'= null & pq3'= null & cur_proc' = null;
-      }
-    }
- }
- requires  pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> * cur_proc::ll<n>
-case{
-  n1+n2+n3 >0 -> ensures pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6>* cur_proc'::node<_,_,null> & n4+n5+n6=n1+n2+n3-1;
-  n1+n2+n3 <=0 -> ensures pq1'=null & pq2'=null & pq3'=null & cur_proc' = null;
-}
- */
 
 void schedule1(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> * cur_proc::ll1<n,S>
@@ -278,9 +219,7 @@ void schedule1(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
   }
 }
 
-//relation SCH1(bag a1, bag a2, int c).
 void schedule(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
-//infer [SCH1]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> * cur_proc::ll1<n,S>
  case{
   n3 > 0 ->
@@ -300,20 +239,19 @@ void schedule(ref node cur_proc, ref node pq1, ref node pq2,ref node pq3)
     if (n > 0){
       cur_proc = find_nth2(pq3, 1);
       cur_proc.next = null;
-      //dprint;
       pq3 = del_ele(pq3,  cur_proc);
       return;
     }
     n = get_mem_count(pq2);
     if (n > 0){
-      cur_proc = find_nth(pq2, 1);//get_first_node(prio_queue2);
+      cur_proc = find_nth(pq2, 1);
       cur_proc.next = null;
       pq2 = del_ele(pq2, cur_proc);
       return;
     }
     n = get_mem_count(pq1);
     if (n > 0){
-      cur_proc = find_nth(pq1, 1);//get_first(prio_queue1);
+      cur_proc = find_nth(pq1, 1);
       cur_proc.next = null;
       pq1 = del_ele(pq1,  cur_proc);
       return;
@@ -327,32 +265,20 @@ void do_upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2)
     ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & union(S1,S2) = union(S3,S4);
     ratio > n1 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;
   }
-  n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;//'
+  n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;
 }
 
-//5+1
 relation DUG1(bag a, bag b, bag c, bag d).
 relation DUG2(bag a, bag b, bag c, bag d).
 relation DUG3(bag a, bag b, bag c, bag d).
 void do_upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2)
-/*
-// infer [DUG1,DUG2,DUG3]
-  requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
- case {
-  n1 > 0 ->  case {
-    ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & DUG3(S1,S2,S3,S4);//union(S1,S2) = union(S3,S4);
-    ratio > n1 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG1(S1,S2,S3,S4);
-  }
-  n1 <= 0 -> ensures pq1'::ll1<n1,S3> * pq2'::ll1<n2,S4> & DUG2(S1,S2,S3,S4);//'
-}
-*/
-requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
+ requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
  case {
   n1 > 0 ->  case {
     ratio <= n1  -> ensures pq1'::ll1<n1-1,S3> * pq2'::ll1<n2+1,S4> & union(S1,S2) = union(S3,S4);
     ratio > n1 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;
   }
-  n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;//'
+  n1 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2>;
 }
 {
   int count;
@@ -361,21 +287,14 @@ requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> & ratio >=1
   count = get_mem_count(pq1) ;
   if (count > 0)
     {
-      n = ratio;//(int) (count*ratio + 1);
+      n = ratio;
       proc = find_nth2(pq1, n);
-      // assume (false);
       if (proc != null) {
         proc.next = null;
         pq1 = del_ele(pq1, proc);
         proc.priority = prio;
-        //dprint;
-        // assume (false);
         pq2 = append_ele(pq2, proc, prio);
-        // dprint;
-        // assume (false);
       }
-      //dprint;
-      // assume (false);
     }
 }
 
@@ -396,10 +315,9 @@ void upgrade_process_prio1(int prio, int ratio, ref node pq1, ref node pq2, ref 
        }
       n2 <= 0 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>;
   }
-  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; //'
+  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3>; 
 }
 
-//16+3
 relation UG1(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG2(bag a, bag b, bag c, bag a1, bag a2, bag a3).
 relation UG3(bag a, bag b, bag c, bag a1, bag a2, bag a3).
@@ -427,7 +345,7 @@ void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref n
        }
       n2 <= 0 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> & UG6(S1,S2,S3,S4,S5,S6);
   }
-  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S01> * pq2'::ll1<n2,S02> * pq3'::ll1<n3,S03> & UG7(S01,S1) & UG8(S02,S2) & UG9(S03,S3); //'
+  prio <1 | prio >2 -> ensures pq1'::ll1<n1,S01> * pq2'::ll1<n2,S02> * pq3'::ll1<n3,S03> & UG7(S01,S1) & UG8(S02,S2) & UG9(S03,S3); 
 }
 {
     int count;
@@ -443,61 +361,9 @@ void upgrade_process_prio(int prio, int ratio, ref node pq1, ref node pq2, ref n
         else if (prio == 2) {
           do_upgrade_process_prio1(prio, ratio, pq2, pq3);
         }
-    //    if (prio >= /*MAXPRIO*/3)
-    /*     return;
-    else if (prio == 1) {
-      src_queue =  pq1;
-      dest_queue = pq2;
-    }else if (prio == 2) {
-      src_queue =  pq2;
-      dest_queue = pq3;
-    }
-    count = get_mem_count(src_queue);
-    if (count > 0)
-      {
-        n = ratio;//(int) (count*ratio + 1);
-        //dprint;
-        // assume (false);
-        proc = find_nth2(src_queue, n);
-        // assume (false);
-        if (proc != null) {
-          proc.next = null;
-          src_queue = del_ele(src_queue, proc);
-          proc.priority = prio;
-           dprint;
-          // assume (false);
-           dest_queue = append_ele(dest_queue, proc);
-          //dprint;
-           // assume (false);
-        }
-        // assume (false);
-      }
-    */
 }
-/* more precise specs
-requires pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
-  case {
-  bq != null -> requires bq::ll<m> & m >0
- case{
-    ratio < m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-    ratio = m -> ensures bq'::ll<m-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-    ratio > m -> ensures bq'::ll<m> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3>;
-  }
-   bq=null -> ensures pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & bq'=null;//
- }
- */
 
-
-/*
-  requires block_queue::ll<n> * pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3> & ratio >=1
-  case {
-  n > 0 -> requires ratio <= n
-	ensures block_queue'::ll<n-1> * pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> & n4+n5+n6=n1+n2+n3+1;
-  n <= 0 -> ensures block_queue'::ll<n> * pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> ;
-  }
-*/
 void unblock_process1(int ratio, ref node bq, ref node pq1, ref node pq2, ref node pq3)
-//infer[UP2]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & ratio >=1
   case {
   bq != null -> requires bq::ll1<m,S0> & m >0
@@ -510,7 +376,6 @@ void unblock_process1(int ratio, ref node bq, ref node pq1, ref node pq2, ref no
  }
 
 void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref node pq3)
-//infer[UP2]
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & ratio >=1
   case {
   bq != null -> requires bq::ll1<m,S0> & m >0
@@ -529,14 +394,12 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
     if (bq != null)
     {
       count = get_mem_count(bq);
-      n = ratio;//(int) (count*ratio + 1);
+      n = ratio;
       proc = find_nth2(bq, n);
       if (proc != null) {
-	    // block_queue = del_ele(block_queue, proc);
 	    /* append to appropriate prio queue */
 	    prio = proc.priority;
         if (prio == 1){
-          // dprint;
           bq = del_ele(bq, proc);
           proc.next = null;
           pq1 = append_ele(pq1, proc, prio);}
@@ -548,24 +411,9 @@ void unblock_process(int ratio, ref node bq, ref node pq1, ref node pq2, ref nod
           bq = del_ele(bq, proc);
           proc.next = null;
           pq3 = append_ele(pq3, proc,prio);}
-        //  assume (false);
       }
-      //dprint;
-      //assume (false);
     }
-    // dprint;
-    //	assume (false);
 }
-/*
-more precise specs.
-requires cur_proc::ll<n> * pq1::ll<n1> * pq2::ll<n2> * pq3::ll<n3>
- case {
-  n1+n2+n3>0 -> ensures  true;//pq1'::ll<n4> * pq2'::ll<n5> * pq3'::ll<n6> &
-  //n4+n5+n6=n1+n2+n3 & cur_proc' != null;
-  n1+n2+n3<=0 -> ensures true;//pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3> & cur_proc' = null;
-}
- */
-
 
 void quantum_expire1(ref node cur_proc, ref node pq1, ref node pq2, ref node pq3)
   requires cur_proc::ll1<n,S0> * pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3>
@@ -596,13 +444,11 @@ void block_process1(ref node cur_proc, ref node block_queue, ref node pq1, ref n
   n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S02> * pq1'::ll1<n1,S1> * pq2'::ll1<n2,S2> * pq3'::ll1<n3,S3> & cur_proc' = null;
 }
 
-//1+4
 relation BP1(bag a, bag b).
 relation BP2(bag a, bag b).
 relation BP3(bag a, bag b).
 relation BP4(bag a, bag b).
 relation BP5(bag a, bag b).
-//relation BP2 (bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, node d).
 void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref node pq2, ref node pq3)
   infer [BP1,BP2,BP3,BP4,BP5]
   requires cur_proc::ll1<n,S01> * block_queue::ll1<n,S02> * pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3>
@@ -610,13 +456,12 @@ void block_process(ref node cur_proc, ref node block_queue, ref node pq1, ref no
   n1+n2+n3 > 0 -> ensures block_queue'::ll1<n+1,S021> * pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6> &
     n1+n2+n3=n4+n5+n6+1 & BP1(S02,S021) & cur_proc'!=null;
  n1+n2+n3 <= 0 -> ensures block_queue'::ll1<n,S021> * pq1'::ll1<n1,S11> * pq2'::ll1<n2,S21> * pq3'::ll1<n3,S31> & cur_proc' = null
-  & BP2(S021,S02) & BP3(S11,S1) & BP4(S21,S2) & BP5(S31,S3);//'
+  & BP2(S021,S02) & BP3(S11,S1) & BP4(S21,S2) & BP5(S31,S3);
 }
 {
     schedule1(cur_proc, pq1, pq2,pq3);
     if (cur_proc != null)
     {
-      //dprint;
       block_queue = append_ele(block_queue, cur_proc, cur_proc.priority);
     }
 }
@@ -648,7 +493,6 @@ void add_process1(int prio, ref int alloc_proc_num, ref int num_processes, ref n
              (alloc_proc_num' = alloc_proc_num) & flow __error;
  }
 
-//9
 relation AP1(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
 relation AP2(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
 relation AP3(bag a1, bag b1, bag c1, bag a2, bag b2, bag c2, int d).
@@ -679,13 +523,11 @@ void add_process(int prio, ref int alloc_proc_num, ref int num_processes, ref no
        proc = new_process(prio,alloc_proc_num, num_processes);
        pq3 = append_ele(pq3, proc, proc.priority);
     }
-    // prio_queue[prio] = append_ele(prio_queue[prio], proc);
-    //assume false;
 }
 
-node init_prio_queue_helper1(node queue,int prio,int i,int n/*, ref int alloc_proc_num, ref int num_processes*/)
+node init_prio_queue_helper1(node queue,int prio,int i,int n)
   requires queue::ll1<i,S1> & prio>0 & prio<=3 & n >= 0 & i<=n
-  ensures res::ll1<n,S3>;//& S2=union(S1,{alloc_proc_num+1}) & S2 subset S3
+  ensures res::ll1<n,S3>;
 {
   node proc;
   if (i >= n) return queue;
@@ -696,28 +538,17 @@ node init_prio_queue_helper1(node queue,int prio,int i,int n/*, ref int alloc_pr
 }
 
 void init_prio_queue(int prio, int num_proc, ref node pq1, ref node pq2, ref node pq3)
-  /*ref int alloc_proc_num, ref int num_processes,*/
          requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & prio>0 & prio<=3 & num_proc>=0
   case {
            prio = 1 -> ensures pq1'::ll1<num_proc,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<n3,S6> ;
-         //& (num_processes'= num_processes+num_proc) & (alloc_proc_num' = alloc_proc_num+num_proc);
   prio = 2 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<num_proc,S5> * pq3'::ll1<n3,S6> ;
-         //& (num_processes'= num_processes+num_proc) &  (alloc_proc_num' = alloc_proc_num+num_proc);
                                          prio = 3 -> ensures pq1'::ll1<n1,S4> * pq2'::ll1<n2,S5> * pq3'::ll1<num_proc,S6> ;
-         //& (num_processes'= num_processes+num_proc) & (alloc_proc_num' = alloc_proc_num+num_proc);
   prio <= 0 | prio >3 -> ensures true;
-        //(num_processes'= num_processes) & (alloc_proc_num' = alloc_proc_num);//'
 }
 {
     node queue = null;
     int i;
 
-    //queue = new_list();
-    /*for (i=0; i<num_proc; i++)
-    {
-	proc = new_process(prio);
-	queue = append_ele(queue, proc);
-    }*/
     i = 0;
     queue = init_prio_queue_helper1(queue, prio, i, num_proc);
      if (prio == 1)
@@ -726,7 +557,6 @@ void init_prio_queue(int prio, int num_proc, ref node pq1, ref node pq2, ref nod
       pq2 = queue;
     if (prio == 3)
       pq3 = queue;
-    //   prio_queue[prio] = queue;
 }
 
 void initialize()
@@ -739,7 +569,7 @@ void initialize()
 
 void main_helper(int i, int maxprio, ref node pq1, ref node pq2, ref node pq3)
   requires pq1::ll1<n1,S1> * pq2::ll1<n2,S2> * pq3::ll1<n3,S3> & i >= 0 & i <= maxprio & maxprio = 3
-  ensures (exists n4,n5,n6: pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6>);//'
+  ensures (exists n4,n5,n6: pq1'::ll1<n4,S4> * pq2'::ll1<n5,S5> * pq3'::ll1<n6,S6>);
 {
   if (i>=1){
     init_prio_queue(i, 7, pq1, pq2, pq3);
@@ -754,64 +584,10 @@ void main(int argc)
 {
     int command;
     int prio;
-//    float ratio;
-//    int status;
-
-//    if (argc < (/*MAXPRIO*/3+1))
-//    {
-//	fprintf(stdout, "incorrect usage\n");
-//	return;
-//    }
     
       initialize();
-//    for (prio=/*MAXPRIO*/; prio >= 1; prio--)
-//    {
       prio = 3;
       main_helper(prio, 3, prio_queue1, prio_queue2, prio_queue3);
-//    }
-//    for (status = fscanf(stdin, "%d", &command);
-//	 ((status!=EOF) && status);
-//	 status = fscanf(stdin, "%d", &command))
-//    {
-//	switch(command)
-//	{
-//	case /*FINISH*/6:
-//	    finish_process();
-//	    break;
-//	case /*BLOCK*/3:
-//	    block_process();
-//	    break;
-//	case /*QUANTUM_EXPIRE*/5:
-//	    quantum_expire();
-//	    break;
-//	case /*UNBLOCK*/4:
-//	    fscanf(stdin, "%f", &ratio);
-//	    unblock_process(ratio);
-//	    break;
-//	case /*UPGRADE_PRIO*/2:
-//	    fscanf(stdin, "%d", &prio);
-//	    fscanf(stdin, "%f", &ratio);
-//	    if (prio > /*MAXPRIO*/ || prio <= 0) { 
-//		fprintf(stdout, "** invalid priority\n");
-//		return;
-//	    }
-//	    else 
-//		upgrade_process_prio(prio, ratio);
-//	    break;
-//	case /*NEW_JOB*/1:
-//	    fscanf(stdin, "%d", &prio);
-//	    if (prio > /*MAXPRIO*/3 || prio <= 0) {
-//		fprintf(stdout, "** invalid priority\n");
-//		return;
-//	    }
-//	    else 
-//		add_process(prio);
-//	    break;
-//	case /*FLUSH*/7:
-//	    finish_all_processes();
-//	    break;
-//	}
-//    }
 }
 
 
