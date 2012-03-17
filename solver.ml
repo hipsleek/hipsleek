@@ -1773,9 +1773,10 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   (*let res_form = elim_unsat prog resform in*)
   if already_unsat then match (snd prog) with 
     | None -> 
-          (Gen.Profiling.push_time "unfold_unsat";
+          (* (Gen.Profiling.push_time "unfold_unsat";
           let r = elim_unsat_for_unfold (fst prog) resform in
-          Gen.Profiling.pop_time "unfold_unsat";r)    
+          Gen.Profiling.pop_time "unfold_unsat";r) *)
+          elim_unsat_for_unfold (fst prog) resform
     | _ -> resform
   else resform
 

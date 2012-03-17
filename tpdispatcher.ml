@@ -2303,11 +2303,11 @@ let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 ;;*)
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
-  let s = "imply" in
-  let _ = Gen.Profiling.push_time s in
+  (* let s = "imply" in
+  let _ = Gen.Profiling.push_time s in *)
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache process in
-  let _ = Gen.Profiling.pop_time s in
-  if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
+  (* let _ = Gen.Profiling.pop_time s in
+  if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count"; *) 
   (res1,res2,res3)
 	
 let imply_timeout a c i t dc process =

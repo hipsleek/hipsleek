@@ -976,9 +976,12 @@ and smt_imply_stat pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.form
   (* Gen.Profiling.do_1 "stat_z3_imply" (smt_imply_x pr_weak pr_strong ante conseq prover) timeout *)
   (* Gen.Profiling.do_1 "[dp@z3]imply" (Dp.imply ante conseq "") timeout *)
   let _ = Gen.Profiling.push_time "stat_z3_imply" in
-  let res = smt_imply_x pr_weak pr_strong ante conseq prover timeout in
+  let res_z3 = smt_imply_x pr_weak pr_strong ante conseq prover timeout in
+  let _ = Gen.Profiling.push_time "stat_dp_in_z3" in
+  (* let res = Dp.imply ante conseq "" timeout in *)
+  let _ = Gen.Profiling.pop_time "stat_dp_in_z3" in
   let _ = Gen.Profiling.pop_time "stat_z3_imply" in
-  res
+  res_z3
 
 (*
 and smt_imply_both pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -1098,9 +1101,12 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   (* Gen.Profiling.do_1 "stat_z3_sat" (smt_is_sat pr_weak pr_strong f sat_no prover) timeout *)
   (* Gen.Profiling.do_1 "[dp@z3]sat" (Dp.is_sat f) sat_no *)
   let _ = Gen.Profiling.push_time "stat_z3_sat" in
-  let res = smt_is_sat pr_weak pr_strong f sat_no prover timeout in
+  let res_z3 = smt_is_sat pr_weak pr_strong f sat_no prover timeout in
+  let _ = Gen.Profiling.push_time "stat_dp_in_z3" in
+  (* let res = Dp.is_sat f sat_no in *)
+  let _ = Gen.Profiling.pop_time "stat_dp_in_z3" in
   let _ = Gen.Profiling.pop_time "stat_z3_sat" in
-  res
+  res_z3
 
 (*
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 

@@ -1459,38 +1459,37 @@ struct
   let string_of_counters () =  counters#string_of
 
   let get_time () = 
-	let r = Unix.times () in
-	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+	  let r = Unix.times () in
+	  r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then
       let timer = get_time () in
-	  profiling_stack # push (msg, timer,true) 
+	    profiling_stack # push (msg, timer,true) 
     else ()
 
   let push_time msg = 
     if (!Globals.profiling) then
-      (
-      (* inc_counter ("cnt_"^msg); *)
+    ( (* inc_counter ("cnt_"^msg); *)
       let timer = get_time () in
-	  profiling_stack#push (msg, timer,true) )
-	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
+	    profiling_stack#push (msg, timer,true) )
+	    (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
     else ()
 
   let pop_time msg = 
     if (!Globals.profiling) then
-	  let m1,t1,_ = profiling_stack # top in
-	  if (String.compare m1 msg)==0 then 
-	    let t2 = get_time () in
-	    if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+	    let m1,t1,_ = profiling_stack # top in
+	    if (String.compare m1 msg)==0 then 
+	      let t2 = get_time () in
+	      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
 	    else
-		  profiling_stack # pop;
-	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
-		  (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
-		  (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
-		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
-          (* print_string ("\n skip double accounting for "^msg^"\n")  *)
-	    end	
+		    profiling_stack # pop;
+	      if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
+		    (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
+		    (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
+		    (* 	print_string ("\n double accounting for "^msg^"\n") *)
+        (* print_string ("\n skip double accounting for "^msg^"\n")  *)
+	      end	
         else tasks # add_task_instance m1 (t2-.t1) 
 	  else 
 	    Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
@@ -1499,16 +1498,19 @@ struct
  let print_info () = if (!Globals.profiling) then  tasks # print else ()
 
  let print_counters_info () =
-      if !Globals.enable_counters then
-        print_string (string_of_counters ())
-      else () 
+   if !Globals.enable_counters then
+     print_string (string_of_counters ())
+   else () 
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
+    f e
+    (*
     try
       push_time s;
       let r = f e in
       (pop_time s; r)
     with ex -> (pop_time s; raise ex)
+    *)
 
   let do_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
     prof_aux s f e

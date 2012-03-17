@@ -215,7 +215,7 @@ let is_sat f sat_no =
   (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
   (* Gen.Profiling.do_1 "stat_dp_sat" h f *)
   let _ = Gen.Profiling.push_time "stat_dp_sat" in
-  (* let _ = for i = 0 to 10000 do print_string "" done in *)
+  (* let _ = for i = 0 to 50000 do print_string "" done in *)
   let res = h f in
   let _ = Gen.Profiling.pop_time "stat_dp_sat" in
   res
@@ -270,7 +270,7 @@ let imply ante conseq impl_no _ =
 		 | SComp afc -> imply_test afc cfc in
 	(* Gen.Profiling.do_2 "stat_dp_imply" h ante conseq *)
   let _ = Gen.Profiling.push_time "stat_dp_imply" in
-  (* let _ = for i = 0 to 10000 do print_string "" done in *)
+  (* let _ = for i = 0 to 50000 do print_string "" done in *)
   let res = h ante conseq in
   let _ = Gen.Profiling.pop_time "stat_dp_imply" in
   res
