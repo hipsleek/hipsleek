@@ -6943,12 +6943,13 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     Debug.no_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
   in
   let (guard_list,u_inv_ls,pure_form_ls) = pick_pures init_form_lst v_l u_inv in
-  let new_guard_list = List.map 
-    (fun (l,(svl,f)) -> let r = List.assoc l u_inv_ls in (l,(svl,f@r))) guard_list in
+  let new_guard_list = List.map (fun (l,(svl,f)) -> let r = List.assoc l u_inv_ls in (l,(svl,f@r))) guard_list in
   let invariant_list = compute_invariants v_l new_guard_list in  
   let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
-  let ungrouped_b_l = List.map (fun (lbl, (b,_))-> (b,lbl)) guard_list in
+  let ungrouped_b_l = 
+	let filter_vl l= List.filter (fun c-> List.exists (CP.eq_spec_var c) v_l) l in
+	List.map (fun (lbl, (b,_))-> (filter_vl b,lbl)) guard_list in
   let prune_conds = sel_prune_conds ungrouped_g_l in
   let safe_prune_conds = get_safe_prune_conds prune_conds pure_form_ls in
   (safe_prune_conds,ungrouped_b_l, norm_inv_list)
