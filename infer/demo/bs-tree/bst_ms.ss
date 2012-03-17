@@ -8,7 +8,6 @@ data node2 {
 }
 
 /* view for trees with number of nodes and depth */
-//size
 bst0<m> == self = null & m = 0
 	or self::node2<_, p, q> * p::bst0<m1> * q::bst0<m2> & m = 1 + m1 + m2
 	inv m >= 0;
@@ -23,7 +22,7 @@ relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
    infer[APP]
    requires x::dll<_, m> * y::dll<_, n>
-     ensures res::dll<r, k> & APP(k,m,n);//m>=0 & k>=m & k=n+m
+     ensures res::dll<r, k> & APP(k,m,n);
 {
 	node2 z;
 
@@ -75,7 +74,7 @@ relation CNT(int a, int b, int c).
 int count(node2 z)
   infer[CNT]
   requires z::bst0<n>
-  ensures  z::bst0<n1> & CNT(res,n,n1);//res = n & n>=0 & n=n1;
+  ensures  z::bst0<n1> & CNT(res,n,n1);
 {
 	int cleft, cright;
 
@@ -90,12 +89,10 @@ int count(node2 z)
 }
 
 /* function to transform a tree in a doubly linked list */
-//fail to compute fixpoint if use append
-//relation FLAT(int a, int b).
 void flatten(node2 x)
   infer @post [x]
   requires x::bst0<m>
-  ensures  x::dll<q, m1> ;//& q=null
+  ensures  x::dll<q, m1> ;
 {
 	node2 tmp;
 	if (x != null)
@@ -115,7 +112,7 @@ relation INS(int a, int b).
 node2 insert(node2 x, int a)
   infer[INS]
   requires x::bst0<m>
-  ensures res::bst0<m1> & res != null & INS(m,m1);//m>=0 & m+1=m1
+  ensures res::bst0<m1> & res != null & INS(m,m1);
 {
 	node2 tmp;
         node2 tmp_null = null;
@@ -131,7 +128,6 @@ node2 insert(node2 x, int a)
 		}
 		else
 		{ 
-			//tmp = x.right;
 			x.right = insert(x.right, a);
 		}
 
@@ -143,8 +139,8 @@ node2 insert(node2 x, int a)
 relation RMV_MIN(int a, int b).
 int remove_min(ref node2 x)
   infer[RMV_MIN,x]
-  requires x::bst0<n> //& x != null
-  ensures x'::bst0<n1> & RMV_MIN(n,n1);//n1=n-1;//'
+  requires x::bst0<n> 
+  ensures x'::bst0<n1> & RMV_MIN(n,n1);
 {
 	int tmp, a;
 
@@ -167,13 +163,13 @@ int remove_min(ref node2 x)
 
 int remove_min1(ref node2 x)
   requires x::bst0<n> & x != null
-  ensures x'::bst0<n-1>;//'
+  ensures x'::bst0<n-1>;
 
 relation DEL(int a, int b).
 void delete(ref node2 x, int a)
   infer[DEL]
   requires x::bst0<n1>
-  ensures x'::bst0<n> & DEL(n,n1);//& n1<=n & h1<=h;//'
+  ensures x'::bst0<n> & DEL(n,n1);
 {
 	int tmp;
 
@@ -184,13 +180,11 @@ void delete(ref node2 x, int a)
         if (xval == a)
           {
             if (xright == null) {
-              //assert true;
               x = xleft;
             }
             else
               {
                 tmp = remove_min1(xright);
-                //assert true;
                 xval = tmp;
               }
           }
@@ -215,17 +209,15 @@ There are three different types of depth-first traversals, :
 - InOrder traversal - visit the left child, then the parent and the right child;
 - PostOrder traversal - visit left child, then the right child and then the parent;
 */
-//DFS
 relation TRAV(int a, int b).
 void traverse(node2 x)
   infer[TRAV]
-  requires x::bst0<n>//0<=h & h<=n
-  ensures x::bst0<n1>& TRAV(n,n1);//'h1>=0 & n1>=h1 & h1=h & n1=n
+  requires x::bst0<n>
+  ensures x::bst0<n1>& TRAV(n,n1);
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
     {
-      //process xval
       traverse(xleft);
       traverse(xright);
     }
@@ -237,7 +229,7 @@ relation SEA(int a, int b).
 bool search(node2 x, int a)
   infer[SEA]
   requires x::bst0<n>
-  ensures x::bst0<n1> & (res | !res) & SEA(n,n1);//'n>=0 & h>=0 & n=n1 & h=h1
+  ensures x::bst0<n1> & (res | !res) & SEA(n,n1);
 {
 	int tmp;
 

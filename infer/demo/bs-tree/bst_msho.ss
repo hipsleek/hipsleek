@@ -79,7 +79,7 @@ node2 insert(node2 x, int a)
   infer [C]
   requires x::bst2<n,h,sm, lg>
   ensures res::bst2<n+1,h1,mi, ma> & h1>=h
-  & res != null & C(mi,sm,lg,ma, a);//mi = min(sm, a) & ma = max(lg, a);a>=mi & ma>=a 
+  & res != null & C(mi,sm,lg,ma, a);
 {
 	node2 tmp;
     node2 tmp_null = null;
@@ -98,7 +98,6 @@ node2 insert(node2 x, int a)
 		}
       else
 		{
-          //tmp = x.right;
           x.right = insert(x.right, a);
 		}
 
@@ -111,7 +110,7 @@ relation RMVM(int x, int y, int z).
 int remove_min(ref node2 x)
   infer[RMVM]
   requires x::bst2<n,h,s, b> & x != null
-  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & RMVM(s,res,s1);//s <= res <= s1;//'
+  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & RMVM(s,res,s1);
 {
   int tmp, a;
 
@@ -133,13 +132,13 @@ int remove_min(ref node2 x)
 
 int remove_min1(ref node2 x)
   requires x::bst2<n,h,s, b> & x != null
-  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;//'
+  ensures x'::bst2<n-1,h1,s1, b> & h1<=h & s <= res <= s1;
 
 relation DEL(int x, int y, int z, int a).
 void delete(ref node2 x, int a)
   infer[DEL]
   requires x::bst2<n,h,sm, lg>
-  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & DEL(sm,s,l,lg);//sm <= s & l <= lg;//'DEL(sm,s,l,lg,a)
+  ensures x'::bst2<n1,h1,s, l> & n1<=n & h1<=h & DEL(sm,s,l,lg);
 {
 	int tmp;
 
@@ -184,15 +183,14 @@ There are three different types of depth-first traversals, :
 - InOrder traversal - visit the left child, then the parent and the right child;
 - PostOrder traversal - visit left child, then the right child and then the parent;
 */
-//DFS
+
 void traverse(node2 x)
   requires x::bst2<n, h,sm, lg>
-  ensures x::bst2<n, h,sm, lg>;//'
+  ensures x::bst2<n, h,sm, lg>;
 {
   if (x != null){
     bind x to (xval, xleft, xright) in
     {
-      //process xval
       traverse(xleft);
       traverse(xright);
     }
@@ -204,7 +202,7 @@ relation SEARCH(int a, int b, int c).
 bool search(node2 x, int a)
   infer[SEARCH]
   requires x::bst2<n, h,sm, lg>
-  ensures x::bst2<n, h,sm, lg> & !res or x::bst2<n,h,sm,lg> & res & SEARCH(sm,a,lg);//(res & sm<=a<=lg | !res);//'sm<=a<=lg SEA(sm,a,lg)
+  ensures x::bst2<n, h,sm, lg> & !res or x::bst2<n,h,sm,lg> & res & SEARCH(sm,a,lg);
 {
 	int tmp;
 

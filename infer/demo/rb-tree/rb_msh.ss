@@ -19,15 +19,11 @@ node rotate_case_3_1(node a, node b, node c)
   requires a::rb<na, 1, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha>
   ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
-//2
 relation ROT3(int a, int b).
 node rotate_case_3(node a, node b, node c)
   infer [ROT3]
   requires a::rb<na, 1, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha>
   ensures res::rb<na + nb + nc + 2, 0, bha1> & ROT3(bha1,bha);
-/*
--1+bha1=bha & 1<=bha
- */
 {
 	node tmp;
 
@@ -42,15 +38,11 @@ node case_2_1(node a, node b, node c, node d)
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
-//2
 relation CASE2(int a, int b).
 node case_2(node a, node b, node c, node d)
   infer [CASE2]
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha1> & CASE2(bha1,bha);
-/*
--1+bha1=bha & 1<=bha
- */
 {
 	node tmp;
 
@@ -65,15 +57,11 @@ node rotate_case_3r_1(node a, node b, node c)
 	requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 1, bha>
 	ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
-//2
 relation ROT3R(int a, int b).
 node rotate_case_3r(node a, node b, node c)
   infer [ROT3R]
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 1, bha>
   ensures res::rb<na + nb + nc + 2, 0, bha1> & ROT3R(bha1,bha);
-/*
--1+bha1=bha & 1<=bha
- */
 {
 	node tmp;
 
@@ -87,15 +75,11 @@ node case_2r_1(node a, node b, node c, node d)
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
-//2
 relation CASE2R(int a, int b).
 node case_2r(node a, node b, node c, node d)
   infer [CASE2R]
   requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
   ensures res::rb<na + nb + nc + nd + 3, 0, bha1> & CASE2R(bha1,bha);
-/*
--1+bha1=bha & 1<=bha
- */
 {
 	node tmp;
 
@@ -110,7 +94,6 @@ bool is_red_1(node x)
   ensures x::rb<n, cl, bh> & cl = 1 & res
   or x::rb<n, cl, bh> & cl = 0 & !res;
 
-//4
 relation RED1(int a, int b).
 relation RED2(int c, int d).
 bool is_red(node x)
@@ -119,8 +102,8 @@ bool is_red(node x)
  case {
   x=null -> ensures !res;
   x!=null ->
-  ensures x::rb<n, cl, bh1> & cl = 1 & res & RED1(bh1,bh) //[bh1=bh & 1<=bh]
-  or x::rb<n, cl, bh2> & cl = 0 & !res & RED2(bh2,bh);//bh=bh2 & 2<=bh2 & 1<=bh
+  ensures x::rb<n, cl, bh1> & cl = 1 & res & RED1(bh1,bh) 
+  or x::rb<n, cl, bh2> & cl = 0 & !res & RED2(bh2,bh);
 }
 {
 	if (x == null)
@@ -139,7 +122,6 @@ bool is_black_1(node x)
   ensures x::rb<n, cl, bh> & cl = 1 & !res
   or x::rb<n, cl, bh> & cl = 0 & res;
 
-//4
 relation BLACK1(int a, int b).
 relation BLACK2(int c, int d).
 bool is_black(node x)
@@ -148,8 +130,8 @@ bool is_black(node x)
  case {
   x=null -> ensures res;
   x!=null ->
-    ensures x::rb<n, cl, bh1> & cl = 1 & !res & BLACK1(bh1,bh)//bh1=bh & 1<=bh
-    or x::rb<n, cl, bh2> & cl = 0 & res & BLACK2(bh2,bh); //bh=bh2 & 2<=bh2 & 1<=bh
+    ensures x::rb<n, cl, bh1> & cl = 1 & !res & BLACK1(bh1,bh)
+    or x::rb<n, cl, bh2> & cl = 0 & res & BLACK2(bh2,bh); 
 }
 {
 	if (x == null)
@@ -168,7 +150,6 @@ requires a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 0 or
   ensures res::rb<na + nb + nc + 2, 0, h + 2> & color = 0 or
   res::rb<na + nb + nc + 2, 1, h + 1> & color = 1;
 
-//4
 relation DEL61(int a, int b).
 relation DEL62(int a, int b).
 node del_6(node a, node b, node c, int color)
@@ -176,8 +157,8 @@ node del_6(node a, node b, node c, int color)
   requires a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 1
   ensures res::rb<na + nb + nc + 2, 0,h1> & color = 0 & DEL61(h1,h)
-  or //h1= h + 2
-  res::rb<na + nb + nc + 2, 1, h2> & color = 1 & DEL62(h2,h);//h2= h + 1
+  or 
+  res::rb<na + nb + nc + 2, 1, h2> & color = 1 & DEL62(h2,h);
 {
 	node tmp;
 
@@ -194,15 +175,14 @@ node del_6r_1(node a, node b, node c, int color)
   ensures res::rb<na + nb + nc + 2, 0, ha + 2> & color = 0 or
   res::rb<na + nb + nc + 2, 1, ha + 1> & color = 1;
 
-//4
 relation DEL6R1(int a, int b).
 relation DEL6R2(int a, int b).
 node del_6r(node a, node b, node c, int color)
   infer [DEL6R1,DEL6R2]
   requires a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 0 or
   a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 1
-  ensures res::rb<na + nb + nc + 2, 0, ha1> & color = 0 & DEL6R1(ha1,ha) or //ha1=ha+2
-  res::rb<na + nb + nc + 2, 1, ha2> & color = 1 & DEL6R2(ha2,ha);//ha2=ha+1
+  ensures res::rb<na + nb + nc + 2, 0, ha1> & color = 0 & DEL6R1(ha1,ha) or 
+  res::rb<na + nb + nc + 2, 1, ha2> & color = 1 & DEL6R2(ha2,ha);
 {
 	node tmp;
 
@@ -220,13 +200,12 @@ node del_5_1(node a, node b, node c, node d, int color)
   res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 
 
-//4
 node del_5(node a, node b, node c, node d, int color)
   infer @post []
   requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1
-  ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or //h1=h+2
-  res::rb<na + nb + nc + nd + 3, 1, h2> & color = 1;//h2=h+1
+  ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or 
+  res::rb<na + nb + nc + nd + 3, 1, h2> & color = 1;
 {
 	node tmp;
 
@@ -242,13 +221,12 @@ node del_5r_1(node a, node b, node c, node d, int color)
   ensures res::rb<na + nb + nc + nd + 3, 0, h + 2> & color = 0 or
   res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 
-//4
 node del_5r(node a, node b, node c, node d, int color)
   infer @post []
   requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or
   a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1
-  ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or //h1=h+2
-  res::rb<na + nb + nc + nd + 3, 1, h2> & color = 1;//h2=h+1
+  ensures res::rb<na + nb + nc + nd + 3, 0, h1> & color = 0 or 
+  res::rb<na + nb + nc + nd + 3, 1, h2> & color = 1;
 {
 	node tmp;
 
@@ -261,12 +239,11 @@ node del_4_1(node a, node b, node c)
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
-//2
 relation DEL4(int a, int b).
 node del_4(node a, node b, node c)
   infer [DEL4]
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
-  ensures res::rb<na + nb + nc + 2, 0, ha1> & DEL4(ha1,ha);//-1+ha1=ha & 1<=ha
+  ensures res::rb<na + nb + nc + 2, 0, ha1> & DEL4(ha1,ha);
 {
 	node tmp1,tmp2;
 	tmp1 = new node(0, 1, b, c);
@@ -279,11 +256,10 @@ node del_4r_1(node a, node b, node c)
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
-//2
 node del_4r(node a, node b, node c)
   infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
-  ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
+  ensures res::rb<na + nb + nc + 2, 0, ha1>;
 {
 	node tmp;
 
@@ -297,11 +273,10 @@ node del_3_1(node a, node b, node c)
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
-//2
 node del_3(node a, node b, node c)
   infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
-  ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
+  ensures res::rb<na + nb + nc + 2, 0, ha1>;
 {
 	node tmp;
 
@@ -315,11 +290,10 @@ node del_3r_1(node a, node b, node c)
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
   ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
-//2
 node del_3r(node a, node b, node c)
   infer @post []
   requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha>
-  ensures res::rb<na + nb + nc + 2, 0, ha1>;//-1+ha1=ha & 1<=ha
+  ensures res::rb<na + nb + nc + 2, 0, ha1>;
 {
 	node tmp;
 
@@ -333,11 +307,10 @@ node del_2_1(node a, node b, node c)
   requires a::rb<na, 0, h> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h+1> & b != null & c != null
   ensures res::rb<na+nb+nc+2, 0, h + 2>;
 
-//2
 node del_2(node a, node b, node c)
   infer @post []
   requires a::rb<na, 0, h> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h+1> & b != null & c != null
-  ensures res::rb<na+nb+nc+2, 0, h1>;//2+h=h1 & 1<=h & 3<=h1
+  ensures res::rb<na+nb+nc+2, 0, h1>;
 {
 	node tmp;
 
@@ -358,14 +331,13 @@ node del_2(node a, node b, node c)
 
 /* function for case 2 (simple rotation + applying one of the cases 4, 5, 6) - right child*/
 node del_2r_1(node a, node b, node c)
-  requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null //& a != null
+  requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null 
   ensures res::rb<na+nb+nc+2, 0, h+2>;
 
-//2
 node del_2r(node a, node b, node c)
   infer @post []
-  requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null //& a != null
-  ensures res::rb<na+nb+nc+2, 0, h1>;//2+h=h1 & 1<=h & 3<=h1
+  requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null 
+  ensures res::rb<na+nb+nc+2, 0, h1>;
 {
 	node tmp, f;
 
@@ -378,11 +350,7 @@ node del_2r(node a, node b, node c)
 	}
 	else
 		tmp = del_6r_1(b.left, b.right, c, 1);
-	//assert tmp'::rb<nb+nc+1, _, ha> & h=ha;
-	//assert a'::rb<n_1, 0, hb> & hb=h & n_1=nb;
-	//assert a'::rb<n_2, 0, hc> & hc=h+1 & n_2=na;
 	f = new node(0, 0, a, tmp);
-	//assert f'::rb<_,_,_>;
 	return f;
 }
 
@@ -390,11 +358,6 @@ node del_2r(node a, node b, node c)
 /* not working, waiting for all the others to work to check the pbs*/
 /* primitive for the black height */
 int bh(node x) requires true ensures false;
-/*
-int bh(node x)
-  requires x::rb<n,cl,bh>
-  ensures x::rb<n,cl,bh> & res=bh;
-*/
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min_1(ref node x)
   requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
@@ -407,15 +370,7 @@ int remove_min(ref node x)
   infer[RMVM1,RMVM2]
   requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
   ensures x'::rb<n-1, cl2, bh1> & RMVM1(bh,bh1) &cl = 1 & 0 <= cl2 <= 1
-		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;//bh-1 <= bh2 <= bh
-                                               /*
-!!! REL :  RMVM1(bh,bh1)
-!!! POST:  1=bh1 & 1=bh
-!!! PRE :  bh=1
-!!! REL :  RMVM2(bh,bh2)
-!!! POST:  bh2>=1 & 2>=bh2 & 2=bh
-!!! PRE :  bh=2
-                                                */
+		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;
 {
 	int v1;
 
@@ -433,7 +388,6 @@ int remove_min(ref node x)
 	{
 		v1 = remove_min(x.left);
 
-		//rebalance
 		if (bh(x.left) < bh(x.right))
 		{
           if (is_black_1(x.left))
@@ -491,27 +445,15 @@ relation DEL3(int a, int b).
 void del(ref node  x, int a)
   infer[DEL1,DEL2,DEL3]
   requires x::rb<n, cl, bh> & 0 <= cl <= 1
-  ensures  x'::rb<n-1, cl2, bh1> & DEL1(bh,bh1) & cl = 1 & 0 <= cl2 <= 1 //'
-  or x'::rb<n-1, 0, bh2> & DEL2(bh,bh2)  & cl = 0 //'& bh-1 <= bh2 <= h
-  or x'::rb<n, cl, bh3> & DEL3(bh,bh3); //'bh3=bh
-/*
-!!! REL :  DEL1(bh,bh1)
-!!! POST:  1=bh1 & 1=bh
-!!! PRE :  bh=1
-!!! REL :  DEL2(bh,bh2)
-!!! POST:  bh2>=1 & 2>=bh2 & 2=bh
-!!! PRE :  bh=2
-!!! REL :  DEL3(bh,bh3)
-!!! POST:  1=bh3 & 1=bh
-!!! PRE :  bh=1
- */
+  ensures  x'::rb<n-1, cl2, bh1> & DEL1(bh,bh1) & cl = 1 & 0 <= cl2 <= 1 
+  or x'::rb<n-1, 0, bh2> & DEL2(bh,bh2)  & cl = 0
+  or x'::rb<n, cl, bh3> & DEL3(bh,bh3); 
 {
 	int v;
 
-  //assert false;
   if (x!=null)
-    {  //assert false;
-      if (x.val == a) // delete x
+    {  
+      if (x.val == a) 
         {
           if (x.right == null)
 			{
@@ -550,11 +492,10 @@ void del(ref node  x, int a)
 		}
 		else
 		{
-          if (x.val < a) //go right
+          if (x.val < a) 
 			{
               del(x.right, a);
 
-              // rebalance
               if (bh(x.right) < bh(x.left))
 				{
                   if (is_black_1(x.right))
@@ -578,10 +519,9 @@ void del(ref node  x, int a)
                       }
 				}
 			}
-          else   // go left
+          else  
 			{
               del(x.left, a);
-              // rebalance
               if (bh(x.left) < bh(x.right))
 				{
                   if (is_black_1(x.left))
@@ -617,12 +557,7 @@ relation INS(int a, int b).
 node insert(node x, int v)
   infer[INS]
   requires x::rb<n, _, bh>
-  ensures res::rb<n+1, _, bh1> & res != null & INS(bh,bh1);//bh<=bh1<=bh;//
-/*
-!!! REL :  INS(bh,bh1)
-!!! POST:  1=bh & 1=bh1
-!!! PRE :  bh=1
- */
+  ensures res::rb<n+1, _, bh1> & res != null & INS(bh,bh1);
 {
 	node tmp, tmp_null = null;
 
@@ -632,10 +567,9 @@ node insert(node x, int v)
 	else
 	{
       if (v <= x.val)
-		{ // left
+		{ 
           tmp = x.left;
           x.left = insert(tmp, v);
-          // rebalance
           if (x.color == 0)
 			{
               if (is_red_1(x.left))
@@ -681,11 +615,10 @@ node insert(node x, int v)
             return node_error();
 		}
 		else
-          { // right
+          { 
 			tmp = x.right;
 			x.right = insert(tmp, v);
 
-			// rebalance
 			if (x.color == 0)
 			{
               if (is_red_1(x.right))

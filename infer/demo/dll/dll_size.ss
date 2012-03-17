@@ -34,8 +34,8 @@ bool empty(node x)
   infer[EMPT1,EMPT2]
   requires x::dll<_,n>
   case {
-    n=0 -> ensures EMPT1(res);//res
-    n!=0 -> ensures EMPT2(res);//!(res)
+    n=0 -> ensures EMPT1(res);
+    n!=0 -> ensures EMPT2(res);
   }
 {
   if (x == null) return true;
@@ -47,7 +47,7 @@ relation SIZEH(int a, int b, int c).
 int size_helper(node x, ref int n)
   infer[SIZEH]
   requires x::dll<_,m>
-  ensures SIZEH(res,m,n);//res=m+n & m>=0
+  ensures SIZEH(res,m,n);
 {
   if (x==null) return n;
   else {
@@ -60,7 +60,7 @@ relation SIZE(int a, int b).
 int size(node x)
   infer[SIZE]
   requires x::dll<_,m>
-  ensures SIZE(res,m);//n>=0 & n=res
+  ensures SIZE(res,m);
 {
   int n = 0;
   return size_helper(x, n);
@@ -71,7 +71,7 @@ relation FRONT(int a, int b).
 int front(node x)
   infer[FRONT]
   requires x::node<v,p,q>*q::dll<_,_>
-  ensures FRONT(res,v);//res=v
+  ensures FRONT(res,v);
 {
   return x.val;
 }
@@ -84,7 +84,7 @@ int back(node x)
 void swap(ref node x, ref node y)
   infer @post []
   requires x::dll<_,m>*y::dll<_,n>
-  ensures x'::dll<_,m1>*y'::dll<_,n1>; // m=m1 & n=n1
+  ensures x'::dll<_,m1>*y'::dll<_,n1>; 
 {
   node tmp = x;
   x = y;
@@ -96,7 +96,7 @@ relation ASSIGN(int a, int b, int c).
 void assign(ref node x, int n, int v)
   infer[ASSIGN]
   requires x::dll<_,m>
-  ensures x'::dll<_,n1> & ASSIGN(n,n1,m); // m>=0 & n1>=0 & n1=n
+  ensures x'::dll<_,n1> & ASSIGN(n,n1,m); 
 {
   x = create_list(n, v);
 }
@@ -105,7 +105,7 @@ relation PUF(int a, int b).
 void push_front(ref node x, int v)
   infer[PUF]
   requires x::dll<_,n>
-  ensures x'::node<v,_,q>*q::dll<_,m> & PUF(m,n); //m=n
+  ensures x'::node<v,_,q>*q::dll<_,m> & PUF(m,n); 
 {
   if (x==null) {
     node tmp = new node(v,null,x);
@@ -122,7 +122,7 @@ relation PF(int a, int b).
 node pop_front(ref node x)
   infer[PF]
   requires x::dll<_,m> & x!=null
-  ensures x'::dll<_,n> & PF(n,m); // m>=1 & m=n+1
+  ensures x'::dll<_,n> & PF(n,m); 
 {
   node tmp = x;
   if (x.next == null) {
@@ -139,56 +139,11 @@ node pop_front(ref node x)
 }
 
 /* append 2 doubly linked lists */
-/*relation APP(int a, int b, int c).
-node append(node x, node y)
-  infer [APP]
-	requires x::dll<q, m> * y::dll<p, n>
-	ensures res::dll<_, t> & APP(t,m,n); // t=m+n
-
-{
-	node tmp;
-	if (x == null)
-		return y;
-	else
-	{ 	
-		tmp = x.next;
-		tmp = append(tmp, y);
-		if (tmp != null)
-		{
-			x.next = tmp; 
-			tmp.prev = x;
-		}
-		else {
-			x.next = null;
-		}
-		return x; 
-	}
-}
-
-relation APP1(int a, int b, int c).
-node append1(node x, node y)
-  infer [APP1]
-	requires x::dll<q, m> * y::dll<p, n>
-	ensures res::dll<_, t> & APP1(t,m,n);	//t=m+n
-{
-	if (x == null)
-		return y;
-	else
-	{	
-		node tmp = append1(x.next, y);
-		if (tmp != null)
-			tmp.prev = x;
-		x.next = tmp;
-		return x;
-	}
-}
-*/
-/* append 2 doubly linked lists */
 relation APP2(int a, int b, int c).
 void append2(node x, node y)
   infer [APP2]
-	requires x::dll<q, m> * y::dll<p, n> & x!=null //m>=1
-	ensures x::dll<q, t> & APP2(t,n,m); //t=m+n
+	requires x::dll<q, m> * y::dll<p, n> & x!=null 
+	ensures x::dll<q, t> & APP2(t,n,m);
 {
 	node tmp;
 	if (x.next == null) {
@@ -208,7 +163,7 @@ relation RF(int m, int n).
 node ret_first(node x)
   infer[RF]
   requires x::dll<_,m>
-  ensures x::dll<_,n> & RF(m,n); //m=n
+  ensures x::dll<_,n> & RF(m,n);
 {
   return x;
 }
@@ -219,7 +174,7 @@ relation GN(int m, int n).
 node get_next(node x)
   infer[GN]
   requires x::dll<_,n> & x!=null
-  ensures x::node<_,null,null> * res::dll<_,m> & GN(m,n); //m>=0 & m+1=n
+  ensures x::node<_,null,null> * res::dll<_,m> & GN(m,n); 
 {
   node tmp = x.next;
   x.next = null;
@@ -232,7 +187,7 @@ relation SN(int m, int n).
 void set_next(node x, node y)
   infer[SN]
   requires x::dll<_,i> * y::dll<_,j> & x!=null
-  ensures x::dll<_,k> & SN(k,j); // k>=1 & k=j+1
+  ensures x::dll<_,k> & SN(k,j); 
 {
   if (y==null) 
     x.next = y;
@@ -255,7 +210,7 @@ void set_null2(ref node x)
 /* function to set null the tail of a list */
 void set_null(ref node x)
   requires x::dll<_,_> & x!=null
-  ensures x'::node<_,_,null>;//'
+  ensures x'::node<_,_,null>;
 {
   x.next = null;
 }
@@ -265,7 +220,7 @@ relation GNN(int m, int n).
 node get_next_next(node x)
   infer[n,GNN]
   requires x::dll<_,n> & x!=null
-  ensures res::dll<_,m> & GNN(m,n); //m>=0 & m+2=n
+  ensures res::dll<_,m> & GNN(m,n); 
 {
   return x.next.next;
 }
@@ -273,8 +228,8 @@ node get_next_next(node x)
 relation INSERT(int a, int b).
 void insert(node x, int a)
   infer [INSERT]
-  requires x::dll<p, n> & x!=null  // n>=1
-  ensures x::dll<p, m> & INSERT(m,n); //& n>=1 & n+1=m; 
+  requires x::dll<p, n> & x!=null 
+  ensures x::dll<p, m> & INSERT(m,n); 
 {
   if (x.next == null)
     x.next = new node(a, x, null);
@@ -282,13 +237,12 @@ void insert(node x, int a)
     insert(x.next, a);
 }
 
-/*
 /* delete a node from a doubly linked list */
 relation DEL(int a, int b, int c).
 void delete(node x, int a)
   infer [DEL,n,a]
-	requires x::dll<p, n> //& n > a & a > 0 
-	ensures x::dll<p, m> & DEL (n,a,m); // n=m+1
+	requires x::dll<p, n>
+	ensures x::dll<p, m> & DEL (n,a,m); 
 {
 	node tmp;
 	node tmp_null = null;
@@ -308,13 +262,13 @@ void delete(node x, int a)
 		delete(x.next, a-1);
 	}
 }
-*/
+
 /* function to delete node val = a in a doubly linked list */
 relation DEL2(int m, int n).
 node delete2(ref node x, int a)
   infer[DEL2]
-  requires x::dll<_,n> //& 0<=n
-  ensures res::dll<_,m> & DEL2(m,n);// EXPLAIN: m>=0 & (m+1)>=n & n>=m ==> n=m | n=m+1
+  requires x::dll<_,n>
+  ensures res::dll<_,m> & DEL2(m,n);
 {
 	if (x == null)
 		return x;
@@ -364,7 +318,7 @@ relation REV(int k, int m, int n).
 void reverse(ref node xs, ref node ys)
   infer [REV]
   requires xs::dll<p,n> * ys::dll<q,m>
-  ensures ys'::dll<_,k> & xs'=null & REV(k,m,n); // m>=0 & k>=m & k=n+m
+  ensures ys'::dll<_,k> & xs'=null & REV(k,m,n); 
 {
   if (xs != null) {
     node tmp;
@@ -377,13 +331,13 @@ void reverse(ref node xs, ref node ys)
     reverse(xs, ys);
   }
 }
-/*
+
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
 relation SPLIT(int a, int b, int c, int d).
 node split1(ref node x, int a)
   infer[SPLIT,n,a]
-  requires x::dll<p,n> // 1<=a & a<=n
-  ensures x'::dll<p,n1> * res::dll<_,n2> & SPLIT(n,a,n1,n2); // n2>=0 & n>=(1+n2) & n=n1+n2 & n=a+n2
+  requires x::dll<p,n> 
+  ensures x'::dll<p,n1> * res::dll<_,n2> & SPLIT(n,a,n1,n2); 
 {
 	node tmp;
 	if (a == 1)
@@ -402,20 +356,18 @@ node split1(ref node x, int a)
 		return tmp;
 	}
 }
-*/
 
 /*****************************************/
 /*********SMALLFOOT EXAMPLES*************/
 relation TRAV(int k, int m).
 void list_traverse(node x)
   infer[TRAV]
-  requires x::dll<p,n> //0<=n
-  ensures x::dll<p,m> & TRAV(m,n); //m>=0 & m=n
+  requires x::dll<p,n> 
+  ensures x::dll<p,m> & TRAV(m,n); 
 {
   node t;
   if(x != null) {
     t = x;
-    //process t
     list_traverse(x.next);
   }
 }
@@ -423,8 +375,8 @@ void list_traverse(node x)
 relation CPY(int k, int m).
 node list_copy(node x)
   infer[CPY]
-  requires x::dll<p,n> //0<=n
-  ensures x::dll<p,n> * res::dll<_,m> & CPY(m,n); //m>=0 & m=n
+  requires x::dll<p,n> 
+  ensures x::dll<p,n> * res::dll<_,m> & CPY(m,n); 
 {
   node tmp;
   if (x != null) {
@@ -442,8 +394,8 @@ node list_copy(node x)
 relation RMV(int k, int m).
 void list_remove(node x, int v)
   infer[RMV]
-  requires x::dll<p,n> & x!=null // 1<=n
-  ensures x::dll<p,m> & RMV(m,n); // m>=1 & (m+1)>=n & n>=m
+  requires x::dll<p,n> & x!=null 
+  ensures x::dll<p,m> & RMV(m,n); 
 {
   if(x.next != null) {
     if(x.next.val == v) {
@@ -463,8 +415,8 @@ void list_remove(node x, int v)
 relation RMV2(int k, int m).
 node list_remove2(node x, int v)
   infer[RMV2]
-  requires x::dll<p,n> //n>=0
-  ensures res::dll<p,m> & RMV2(m,n); //m+1)>=n & m>=0 & n>=m
+  requires x::dll<p,n> 
+  ensures res::dll<p,m> & RMV2(m,n); 
 {
   node tmp;
   if(x != null) {
@@ -489,8 +441,8 @@ node list_remove2(node x, int v)
 relation FIL(int k, int m).
 node list_filter2(ref node x, int v)
   infer[FIL]
-  requires x::dll<_,n> // n>=0
-  ensures res::dll<_,m> & FIL(m,n); //m>=0 & n>=m
+  requires x::dll<_,n> 
+  ensures res::dll<_,m> & FIL(m,n); 
 {
   node tmp;
   if(x != null) {
@@ -517,7 +469,7 @@ relation FGE(int k, int m).
 node find_ge(node x, int v)
   infer[FGE]
   requires x::dll<_,n>
-  ensures res = null or res::node<m,_,_> & FGE(m,v); // m>=(1+v)
+  ensures res = null or res::node<m,_,_> & FGE(m,v); 
 {
   if(x == null)
     return null;
@@ -533,8 +485,8 @@ node find_ge(node x, int v)
 relation SPLICE (int a, int b, int c).
 void splice (ref node x, node y)
   infer [SPLICE]
-  requires x::dll<_,n> * y::dll<_,m> // 0<=m & 0<=n
-  ensures x'::dll<_,t> & SPLICE(t,m,n); // m>=0 & t>=m & t=n+m
+  requires x::dll<_,n> * y::dll<_,m> 
+  ensures x'::dll<_,t> & SPLICE(t,m,n); 
 {
   if(x == null)
     x = y;

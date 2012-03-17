@@ -1,6 +1,5 @@
 /* priority queues */
-//this file is OK. change with care
-//shape --> memory + size
+
 data node {
 	int val;
 	int nleft;
@@ -10,7 +9,6 @@ data node {
 }
 
 /* view for a heap tree with positive integers */
-
 pq2<n> == self = null & n = 0
 	or (exists m3: self::node<d, m1, m2, l, r> * l::pq2<m1> * r::pq2<m2>
 	& n = 1 + m1 + m2 & d >= 0 & m3 = m1-m2 & m3 >= 0 & m3 <= 1)
@@ -21,7 +19,7 @@ relation INS(int a, int b).
 node insert(node t, int v)
   infer[t,INS]
   requires t::pq2<n> & v >= 0
-  ensures res::pq2<n1> & INS(n1,n);//n1 = n+1;//INS(n1,n)
+  ensures res::pq2<n1> & INS(n1,n);
 {
 	node tmp, tmp_null = null;
 	int tmpv;
@@ -73,12 +71,12 @@ node insert(node t, int v)
 /* function to delete a leaf */
 int deleteoneel1(ref node t)
   requires t::pq2<n> & n > 0
-  ensures t'::pq2<n-1> & 0 <= res;//'
+  ensures t'::pq2<n-1> & 0 <= res;
 
 int deleteoneel(ref node t)
   infer @post [t]
-  requires t::pq2<n> //& n > 0 & t!=null
-  ensures t'::pq2<n1> ;//'& n1=n-1 & res>=0 ;//'n1=n-1 & res>=0
+  requires t::pq2<n>
+  ensures t'::pq2<n1> ;
 {
 	int v;
 
@@ -103,14 +101,12 @@ int deleteoneel(ref node t)
 
 int deleteone1(ref int m1, ref int  m2, ref node l, ref node r)
   requires l::pq2<m1> * r::pq2<m2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq2<m1'> * r'::pq2<m2'> & res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
+  ensures l'::pq2<m1'> * r'::pq2<m2'> & res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;
 
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
   infer @post [l,r]
   requires l::pq2<m1> * r::pq2<m2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-  ensures l'::pq2<m1'> * r'::pq2<m2'> ;//& res>=0 & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;//'
-//m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1;
-//DELONE2(m1,m1',m2,m2') & //m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1
+  ensures l'::pq2<m1'> * r'::pq2<m2'> ;
 {
 	if (m1 > m2)
 	{
@@ -127,16 +123,16 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 /* function to restore the heap property */
 void ripple1(ref int d, int v, int m1, int m2, node l, node r)
 	requires l::pq2<m1> * r::pq2<m2> & 0 <= d & 0 <= m1 - m2 <= 1
-	ensures l::pq2<m1> * r::pq2<m2> & d'>=0;//'
+	ensures l::pq2<m1> * r::pq2<m2> & d'>=0;
 
 relation RIP(int a).
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
   infer [RIP,m1,m2]
-  requires l::pq2<m1> * r::pq2<m2> &  0 <= v <= d //& 0 <= m1 - m2 <= 1 //RIP(m1,m2)//& 0 <= m1 - m2 <= 1 & 0 <= v <= d
-  ensures l::pq2<m1> * r::pq2<m2>  & RIP(d);//'& d'>=0
+  requires l::pq2<m1> * r::pq2<m2> &  0 <= v <= d 
+  ensures l::pq2<m1> * r::pq2<m2>  & RIP(d);
 {
 	if (m1 == 0)
-      { //assume false;
+      { 
 		if (m2 == 0)
 		{
 			d = v;
@@ -146,7 +142,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 	{
 		if (m2 == 0)
 		{
-          //assume false;
+         
 			if (v >= l.val)
 				d = v;
 			else
@@ -162,7 +158,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= l.val)
 					d = v;
 				else 
-                  {   //assume false;
+                  {  
 					d = l.val;
 					ripple(l.val, v, l.nleft, l.nright, l.left, l.right);
 				}
@@ -172,8 +168,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= r.val)
 					d = v;
 				else
-                  {  //assume false;
-                    //dprint;
+      {                      
 					d = r.val;
 					ripple(r.val, v, r.nleft, r.nright, r.left, r.right);
 				}
@@ -186,8 +181,8 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 relation A(int a, int b).
 int deletemax(ref node t)
   infer[n,A]
-  requires t::pq2<n> //& n > 0 & t!=null
-  ensures t'::pq2<n1> & A(n1,n);//'& n1=n-1
+  requires t::pq2<n> 
+  ensures t'::pq2<n1> & A(n1,n);
 
 {
 	int v, tmp;
@@ -202,7 +197,6 @@ int deletemax(ref node t)
 	{
       bind t to (tval, tnleft, tnright, tleft, tright) in {
         v = deleteone1(tnleft, tnright, tleft, tright);
-        //dprint;
         tmp = tval;
         ripple1(tval, v, tnleft, tnright, tleft, tright);
       }
