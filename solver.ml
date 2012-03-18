@@ -2154,7 +2154,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 
 (*LDK: add rhs_p*)
 and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
-  Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v rhs_p) u loc
+  Gen.Profiling.no_1 "fold" (fold_op_x(*debug_2*) p c vd v rhs_p u) loc
 
 (* and fold_op p c vd v u loc = *)
 (*   Gen.Profiling.no_2 "fold" (fold_op_x(\*debug_2*\) p c vd v) u loc *)
@@ -3056,11 +3056,11 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
       (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_x prog is_folding has_post a c pos pid) cl conseq
 
 and heap_entail_one_context_struc p i1 hp cl cs pos pid =
-  Gen.Profiling.do_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
+  Gen.Profiling.do_1 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl cs pos) pid
 
 and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid =
   let str="heap_entail_one_context_struc" in
-  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs pos pid
+  Gen.Profiling.do_1_num n str (heap_entail_one_context_struc_debug p i1 hp cl cs pos) pid
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
   Debug.no_1 "heap_entail_one_context_struc" 

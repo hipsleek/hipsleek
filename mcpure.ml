@@ -1359,11 +1359,13 @@ let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure =
 let slow_imply impl nf rhs =
   let x = Gen.Profiling.gen_time_msg () in
   try 
-    (Gen.Profiling.push_time_no_cnt x;
+    (
+        (* Gen.Profiling.push_time_no_cnt x; *)
     Gen.Profiling.push_time "slow_imply");
       let r = impl nf rhs in
-      (Gen.Profiling.pop_time "slow_imply";
-      Gen.Profiling.pop_time_to_s_no_count x);
+      (Gen.Profiling.pop_time "slow_imply"
+      (* ;Gen.Profiling.pop_time_to_s_no_count x *)
+      );
       r                   
   with exc -> match exc with
     | Procutils.PrvComms.Timeout -> raise exc 

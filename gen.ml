@@ -1394,58 +1394,57 @@ struct
 
 end;;
 
-class mult_counters =
-object (self)
-  val ctrs = Hashtbl.create 10
-  method get (s:string) : int = 
-    try
-      let r = Hashtbl.find ctrs s in r
-    with
-      | Not_found -> 0
-  method add (s:string) (i:int) = 
-    try
-      let r = Hashtbl.find ctrs s in
-      Hashtbl.replace ctrs  s (r+i)
-    with
-      | Not_found -> Hashtbl.add ctrs s i
-  method inc (s:string) = self # add s 1
-  method string_of : string= 
-    let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
-    let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-    "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
-end;;
-
-class task_table =
-object 
-  val tasks = Hashtbl.create 10
-  method add_task_instance msg time = 	
-    let m = if (time>Globals.profile_threshold) then  [time] else [] in
-    try 
-	  let (t1,cnt1,max1) = Hashtbl.find tasks msg in
-	  Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
-    with Not_found -> 
-	    Hashtbl.add tasks msg (time,1,m)
-
-  method print : unit = 
-    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
-    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
-    let f a = (string_of_float ((floor(100. *.a))/.100.)) in
-    let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-    let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-        let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-            (if (List.length l)>0 then 
-              let l = (List.sort compare l) in		
-              (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
-            else "")^"],  "^(fp (t/.ot))^"%)") in
-        ((a1+1),r) 
-    ) (0,"") str_list in
-    print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
-end;;
 
 
 module Profiling =
 struct
+  class mult_counters =
+  object (self)
+    val ctrs = Hashtbl.create 10
+    method get (s:string) : int = 
+      try
+        let r = Hashtbl.find ctrs s in r
+      with
+        | Not_found -> 0
+    method add (s:string) (i:int) = 
+      try
+        let r = Hashtbl.find ctrs s in
+        Hashtbl.replace ctrs  s (r+i)
+      with
+        | Not_found -> Hashtbl.add ctrs s i
+    method inc (s:string) = self # add s 1
+    method string_of : string= 
+      let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
+      let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+      "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+  end;;
+  class task_table =
+  object 
+    val tasks = Hashtbl.create 10
+    method add_task_instance msg time = 	
+      let m = if (time>Globals.profile_threshold) then  [time] else [] in
+      try 
+	    let (t1,cnt1,max1) = Hashtbl.find tasks msg in
+	    Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
+      with Not_found -> 
+	      Hashtbl.add tasks msg (time,1,m)
+
+    method print : unit = 
+      let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
+      let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+      let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+      let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+      let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+          let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+              (if (List.length l)>0 then 
+                let l = (List.sort compare l) in		
+                (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+              else "")^"],  "^(fp (t/.ot))^"%)") in
+          ((a1+1),r) 
+      ) (0,"") str_list in
+      print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
+  end;;
   let counters = new mult_counters
   let tasks = new task_table
   let profiling_stack = new stack_noexc ("stack underflow",0.,false) 
@@ -1462,100 +1461,111 @@ struct
 	  let r = Unix.times () in
 	  r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 
-  let push_time_no_cnt msg = 
-    if (!Globals.profiling) then
+  (* let push_time_no_cnt msg =  *)
+  (*   if (!Globals.profiling) then *)
+  (*     let timer = get_time () in *)
+  (*       profiling_stack # push (msg, timer,true)  *)
+  (*   else () *)
+
+  let push_time_safe msg = 
       let timer = get_time () in
-	    profiling_stack # push (msg, timer,true) 
-    else ()
+	    profiling_stack#push (msg, timer,true) 
+
+  let push_time_unsafe msg = 
+	  if !Globals.debugflag && (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then 
+        Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling : double accouting!"^msg)}
+      else
+        push_time_safe msg
 
   let push_time msg = 
     if (!Globals.profiling) then
-    ( (* inc_counter ("cnt_"^msg); *)
-      let timer = get_time () in
-	    profiling_stack#push (msg, timer,true) )
-	    (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
+      push_time_unsafe msg
     else ()
+
+  let pop_time_safe msg tm = 
+		profiling_stack # pop;
+        tasks # add_task_instance msg tm 
+
+  let pop_time_unsafe msg = 
+	let m1,t1,_ = profiling_stack # top in
+	let t2 = get_time () in
+    let tm = t2-.t1 in
+    if !Globals.debugflag then
+      begin
+	    if (String.compare m1 msg)!=0 then 
+          Error.report_error {Error.error_loc = Globals.no_pos; 
+          Error.error_text = ("Profiling :pop  mismatch "^m1^"with"^msg)};
+	    if tm < 0. then 
+          Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling : negative time")}
+      end
+        ; pop_time_safe msg tm
 
   let pop_time msg = 
     if (!Globals.profiling) then
-	    let m1,t1,_ = profiling_stack # top in
-	    if (String.compare m1 msg)==0 then 
-	      let t2 = get_time () in
-	      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
-	    else
-		    profiling_stack # pop;
-	      if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
-		    (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
-		    (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
-		    (* 	print_string ("\n double accounting for "^msg^"\n") *)
-        (* print_string ("\n skip double accounting for "^msg^"\n")  *)
-	      end	
-        else tasks # add_task_instance m1 (t2-.t1) 
-	  else 
-	    Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+      pop_time_unsafe msg
     else ()
 
- let print_info () = if (!Globals.profiling) then  tasks # print else ()
+  let print_info () = if (!Globals.profiling) then  tasks # print else ()
 
- let print_counters_info () =
-   if !Globals.enable_counters then
-     print_string (string_of_counters ())
-   else () 
+  let print_counters_info () =
+    if !Globals.enable_counters then
+      print_string (string_of_counters ())
+    else () 
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
-    f e
-    (*
-    try
-      push_time s;
-      let r = f e in
-      (pop_time s; r)
-    with ex -> (pop_time s; raise ex)
-    *)
+    if (!Globals.profiling) then
+      try
+        push_time_unsafe s;
+          let r = f e in
+          (pop_time_unsafe s; r)
+      with ex -> (pop_time_unsafe s; raise ex)
+    else f e
 
+
+  (* should eliminate do_2 *)
   let do_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
     prof_aux s f e
+  (* let do_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z = *)
+  (*   prof_aux s (f e1) e2 *)
+  (* (\* try *\) *)
+  (* (\*   push_time s; *\) *)
+  (* (\*     let r=f e1 e2 in *\) *)
+  (* (\*     (pop_time s; r) *\) *)
+  (* (\* with ex -> (pop_time s; raise ex) *\) *)
 
-  let do_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z =
-    prof_aux s (f e1) e2
-  (* try *)
-  (*   push_time s; *)
-  (*     let r=f e1 e2 in *)
-  (*     (pop_time s; r) *)
-  (* with ex -> (pop_time s; raise ex) *)
-
-  let do_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
-    prof_aux s (f e1 e2) e3
+  (* let do_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z = *)
+  (*   prof_aux s (f e1 e2) e3 *)
 
 
-  let do_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
-    prof_aux s (f e1 e2 e3) e4
+  (* let do_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z = *)
+  (*   prof_aux s (f e1 e2 e3) e4 *)
 
-  let do_5 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) : 'z =
-    prof_aux s (f e1 e2 e3 e4) e5
+  (* let do_5 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) : 'z = *)
+  (*   prof_aux s (f e1 e2 e3 e4) e5 *)
 
-  let do_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) (e6:'a6) : 'z =
-    prof_aux s (f e1 e2 e3 e4 e5) e6
+  (* let do_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) (e6:'a6) : 'z = *)
+  (*   prof_aux s (f e1 e2 e3 e4 e5) e6 *)
 
   let do_1_num n s =  let str=(s^"#"^n) in do_1 str
-  let do_2_num n s =  let str=(s^"#"^n) in do_2 str
-  let do_3_num n s =  let str=(s^"#"^n) in do_3 str
-  let do_4_num n s =  let str=(s^"#"^n) in do_4 str
-  let do_5_num n s =  let str=(s^"#"^n) in do_5 str
-  let do_6_num n s =  let str=(s^"#"^n) in do_6 str
+  (* let do_2_num n s =  let str=(s^"#"^n) in do_2 str *)
+  (* let do_3_num n s =  let str=(s^"#"^n) in do_3 str *)
+  (* let do_4_num n s =  let str=(s^"#"^n) in do_4 str *)
+  (* let do_5_num n s =  let str=(s^"#"^n) in do_5 str *)
+  (* let do_6_num n s =  let str=(s^"#"^n) in do_6 str *)
 
   let no_1 s f =  f
-  let no_2 s f =  f
-  let no_3 s f =  f
-  let no_4 s f =  f
-  let no_5 s f =  f
-  let no_6 s f =  f
+  (* let no_2 s f =  f *)
+  (* let no_3 s f =  f *)
+  (* let no_4 s f =  f *)
+  (* let no_5 s f =  f *)
+  (* let no_6 s f =  f *)
 
   let no_1_num n s f =  f
-  let no_2_num n s f =  f
-  let no_3_num n s f =  f
-  let no_4_num n s f =  f
-  let no_5_num n s f =  f
-  let no_6_num n s f =  f
+  (* let no_2_num n s f =  f *)
+  (* let no_3_num n s f =  f *)
+  (* let no_4_num n s f =  f *)
+  (* let no_5_num n s f =  f *)
+  (* let no_6_num n s f =  f *)
 
   let spec_counter = new counter 1
 

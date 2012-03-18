@@ -419,6 +419,7 @@ let print_type = ref false
 let wrap_exists_implicit_explicit = ref false
 
 let profiling = ref false
+let debugflag = ref true
 
 let enable_syn_base_case = ref false
 

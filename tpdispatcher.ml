@@ -2312,7 +2312,7 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
 	
 let imply_timeout a c i t dc process =
   disj_cnt a (Some c) "imply";
-  Gen.Profiling.do_5 "TP.imply_timeout" imply_timeout a c i t dc process
+  Gen.Profiling.do_1 "TP.imply_timeout" (imply_timeout a c i t dc) process
 	
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: memo_imply_timeout") in *)

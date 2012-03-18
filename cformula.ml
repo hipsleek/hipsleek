@@ -6572,7 +6572,7 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
-  Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
+  Gen.Profiling.do_1 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos b) ctx
       
 let normalize_max_renaming f pos b ctx = 
   if !max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx

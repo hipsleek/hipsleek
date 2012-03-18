@@ -175,7 +175,7 @@ let rec trans_f b f = match f with
   | Forall _ -> failwith "unexpected forall!"
   | Exists (v,f,_,_) -> if b then elim_ex (!Cpure.print_sv v) (trans_f b f) else trans_f b f  
   
-let trans_f b f = Gen.Profiling.do_2 "dptransf" trans_f b f
+let trans_f b f = Gen.Profiling.do_1 "dptransf" (trans_f b) f
 let sat_check f = 
   let rec and_lin f = match f with | SAnd (f1,f2) -> (and_lin f1)@(and_lin f2) | _ -> [f] in
   let contra_test1 eq_s (v1,v2) = Gen.BList.mem_eq s_eq v2 (get_aset eq_s v1) in

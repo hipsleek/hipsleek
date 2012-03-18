@@ -5329,7 +5329,7 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
   let _ = if r>0 then (Gen.Profiling.add_to_counter "fast_imply_success" 1) else () in
   (* let _  = Gen.Profiling.pop_time "fast_imply" in *) r
 
-let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
+let fast_imply a l r = Gen.Profiling.do_1 "fast_imply" (fast_imply a l) r
 
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let pr1 = !print_b_formula in
