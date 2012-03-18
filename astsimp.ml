@@ -408,8 +408,11 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     let vdef =
       I.look_up_view_def_raw prog.I.prog_view_decls
           h0.IF.h_formula_heap2_name in
+    let args = h0.IF.h_formula_heap2_arguments in
     let hargs =
-      match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
+      if args==[] then [] (* don't convert if empty *)
+      else
+        match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
     let h =
       {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
@@ -5605,6 +5608,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_imm = ann; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
+          Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
           let ft = cperm_typ () in
           let gather_type_info_ann c stab = match c with
             | IF.ConstAnn _ -> ()

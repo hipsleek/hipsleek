@@ -41,7 +41,7 @@ term<> ==
   final value for such a reduction.
 */
 
-value<> ==
+value<n:int> ==
   self::anode<1,null,null>  // denotes K
   or self::anode<2,null,null>  // denotes S
   or self::anode<0,f,a> * f::anode<1,null,null> * a::value<> // K v
