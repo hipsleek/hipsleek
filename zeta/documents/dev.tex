@@ -1,0 +1,139 @@
+\documentclass{beamer}
+
+\usepackage{amsmath,listings}
+
+\newcommand{\zetatp}{$\zeta$eta}
+\newcommand{\setZ}{\mathbb{Z}}
+\newcommand{\setB}{\mathbb{B}}
+
+\title{\zetatp\ Theorem Prover : Technical Report}
+\date{14 March 2012}
+\author{Vu An Hoa}
+
+\begin{document}
+
+\maketitle
+
+\lstset{language=ml,tabsize=2}
+
+\section{Data structures}
+
+\begin{frame}[fragile]{Input language}
+
+\begin{itemize}
+\item \emph{Symbol definition:} define additional (global) parameters i.e. constants, functions and relations to the underlying logical language
+\begin{quote}
+{\bf let} {\it [induction} $\langle$expressions$\rangle${\it]} f(x1,...,xk) {\bf be such that} $\langle$formulas separated by semicolon to  axiomatize the intended meaning of the symbol$\rangle${\bf .}
+\end{quote}
+\item \emph{Theorem:} state the theorem to be proved by the system
+\begin{quote}
+{\bf theorem} $\langle$formula$\rangle${\bf .}
+\end{quote}
+\item \emph{Underlying logic:} type theory (all/higher-order) logic with the intended base domains being $\langle \setZ, +, \times \rangle$ and $\langle \setB = \{0,1\}, \land, \lor, \neg, \rightarrow, \leftrightarrow \rangle$ for Boolean values.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Term}
+\textbf{Encapsulate logical formulas and terms.}
+\begin{lstlisting}
+type term =
+  | Top        (* Tautology *)
+  | Bot        (* Contradiction *)
+  | Num of int (* Numeral constant *)
+  | Fx of func * term list 
+               (* Function application *)
+
+and func = 
+  | Add | Sub | Mul | Div | Mod
+  | Eq | Ne | Lt | Le 
+  | And | Or | Neg | Implies | Iff
+  | Exists | Forall
+  | GF of int
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Domain}
+\textbf{Domain (type) associated with each variable symbol}
+\begin{lstlisting}
+type domain =
+  | SBool  (* true/false or {0,1} *)
+  | SInt   (* integers *)
+  | SWild of int 
+           (* wild card (unknown) *)
+           (* domain with id *)
+  | SMap of domain list
+           (* head is image and *)
+           (* tail is arguments *)
+\end{lstlisting}
+\textbf{Note: }\textit{Domains are automatically inferred by the system.}
+\end{frame}
+
+\begin{frame}[fragile]{Context}
+\textbf{Parsing result of input files}
+\begin{lstlisting}
+type context = {
+  symbols : symbol list;
+  axioms : term list;
+  theorems : theorem list;
+}
+
+and symbols = {
+
+}
+
+and theorem = {
+  content : term;
+  proved : TriaryLogic.triary_bool;
+}
+\end{lstlisting}
+\end{frame}
+
+\section{Logic}
+
+\begin{frame}{Logic}
+\begin{itemize}
+\item Translation
+\item Normalization
+\item Skolemization
+\item Algebra
+\item Induction
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Translation}
+\begin{itemize}
+\item Z3
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Normalization}
+\begin{itemize}
+\item Eliminate subtraction, implication and equivalence by  rewriting
+\begin{align*}
+a - b &\mapsto a + (-1) \times b\\
+(\varphi \rightarrow \psi) &\mapsto \neg \varphi \lor \psi\\
+(\varphi \leftrightarrow \psi) &\mapsto \text{either }(\neg \varphi \lor \psi) \land (\varphi \lor \neg  \psi)\\
+&\quad \text{or }(\neg \varphi \land \neg \psi) \lor (\varphi \land \psi)
+\end{align*}
+($+, \land, \lor$ offers associativity and commutativity which $-,\rightarrow$ lacks. Robinson's resolution principle is no more no less than MP but his method succeeded because of this advantage!)
+\item Collapse formulas by associativity and reorder sub-terms by commutativity: $\land, \lor, +, \times$
+\item Rename to make all quantified variables different
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Skolemization}
+\begin{itemize}
+%\item Pull out quantifiers
+\item Add Skolem functions and constants
+\item Managed dependency of quantified variables
+\item Wang's miniscope form
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Algebra}
+\begin{itemize}
+\item Utilize CAS like Reduce to solve equations
+\end{itemize}
+\end{frame}
+
+\end{document}

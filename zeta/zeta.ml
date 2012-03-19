@@ -469,6 +469,7 @@ module Context = struct
 		}
 		
 	and symbol = {
+			name : string;
 			dom : domain;
 			hints : hint list;
 		}
@@ -496,6 +497,12 @@ module type BasePrinter = sig
 	
 	val bot : string
 	
+	val newline : string
+	
+	val term_start : string
+	
+	val term_end : string 
+	
 end
 
 module StringBasePrinter : BasePrinter = struct
@@ -509,7 +516,7 @@ module StringBasePrinter : BasePrinter = struct
 		| SWild i -> "X_" ^ (string_of_int i)
 		| SMap d -> (String.concat "x" (List.map print_domain (List.tl d))) ^ "->" ^ (print_domain (List.hd d))
 	
-	let print_func pr_sym f = match f with
+	let print_func print_symbol f = match f with
 		| Add -> "+" | Sub -> "-" | Mul -> "*" 
 		| Div -> "/" | Mod -> "mod"
 		| Eq -> "=" | Ne -> "!="
@@ -518,11 +525,17 @@ module StringBasePrinter : BasePrinter = struct
 		| And -> " /\\ " 
 		| Or -> " \\/ " | Neg -> "~" | Implies -> "->" 
 		| Iff -> "<->" | Exists -> "E" | Forall -> "A"
-		| GF i -> pr_sym i
+		| GF i -> print_symbol i
 	
 	let top = "t"
 	
 	let bot = "f"
+	
+	let newline = "\n"
+	
+	let term_start = ""
+	
+	let term_end = ""
 	
 end
 
@@ -538,23 +551,31 @@ module TexBasePrinter : BasePrinter = struct
 		| SMap d -> (String.concat "\\times" (List.map print_domain (List.tl d))) ^
 				" \\mapsto " ^ (print_domain (List.hd d))
 	
-	let print_func pr_sym f = match f with
+	let print_func print_symbol f = match f with
 		| Add -> "+" | Sub -> "-" | Mul -> "\\times"
 		| Div -> "\\div" | Mod -> "\\bmod"
 		| Eq -> "=" | Ne -> "\\not="
 		| Lt -> "<" | Le -> "\\leq"
-		(* | Gt -> ">" | Ge -> "\\geq" *) 
+		(* | Gt -> ">" | Ge -> "\\geq" *)
 		| And -> "\\land"
 		| Or -> "\\lor" | Neg -> "\\neg"
 		| Implies -> "\\rightarrow" | Iff -> "\\leftrightarrow"
 		| Exists -> "\\exists" | Forall -> "\\forall"
-		| GF i -> pr_sym i
+		| GF i -> print_symbol i
 
 	let top = "\\top"
 	
 	let bot = "\\bot"
 	
+	let newline = "<br />"
+	
+	let term_start = "\\("
+	
+	let term_end = "\\)"
+	
 end
+
+(*
 
 module type VarPrinter = sig
 	
@@ -566,9 +587,9 @@ module RawVarPrinter : VarPrinter = struct
 	
 	let print_var i =
 		if (i < 0) then
-			"F_" ^ (string_of_int (-i))
+			"c_{" ^ (string_of_int (-i)) ^ "}"
 		else
-			"x_" ^ (string_of_int i)
+			"X_{" ^ (string_of_int i) ^ "}"
 	
 end
 
@@ -585,10 +606,19 @@ module StringVarPrinter : VarPrinter = struct
 	
 end
 
-module Printer (BP : BasePrinter) (VP : VarPrinter) = struct
+*)
+
+module Printer (BP : BasePrinter) = struct
 	
 	open Term
+	open Context
 
+	let print_symbol i =
+		if (i < 0) then
+			"c_{" ^ (string_of_int (-i)) ^ "}"
+		else
+			"X_{" ^ (string_of_int i) ^ "}"
+			
 	let precedence_of f = match f with
 		| Add | Sub -> 8
 		| Mul | Div | Mod -> 9
@@ -601,7 +631,7 @@ module Printer (BP : BasePrinter) (VP : VarPrinter) = struct
 		| Exists | Forall -> 4
 		| GF _ -> 10
 
-	let rec print_term_helper pr_sym p t  = match t with
+	let rec print_term_helper p t  = match t with
 		| Top -> BP.top
 		| Bot -> BP.bot
 		| Num i -> string_of_int i
@@ -609,20 +639,25 @@ module Printer (BP : BasePrinter) (VP : VarPrinter) = struct
 		| Fx (f, x) ->
 			let pf = precedence_of f in
 			let xp = match f with | GF _ -> 0 | _ -> pf in
-			let sx = List.map (print_term_helper pr_sym xp) x in
-			let sf = BP.print_func pr_sym f in
+			let sx = List.map (print_term_helper xp) x in
+			let sf = BP.print_func print_symbol f in
 			let e = match f with
 				| Exists | Forall -> sf ^ " " ^ (String.concat "," (List.tl sx)) ^ " : " ^ (List.hd sx)
-				| GF _ -> sf (*(List.hd sx)*) ^ "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]"
+				| GF _ -> sf (*(List.hd sx)*) ^ (match sx with
+					| [] -> ""
+					| _ -> "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]")
 				| Neg -> sf ^ " " ^ (List.hd sx)
 				| _ -> String.concat (" " ^ sf ^ " ") sx in
 			if (pf < p) then "(" ^ e ^ ")" else e
 	
-	let print_term pr_var t = print_term_helper pr_var 0 t
+	let print_term t = print_term_helper 0 t
 	
-	(*let print_term t = ""
-	
-	let print_context c = ""*)
+	let print_context c =
+		let print_symbol s = "<b>Definition:</b> " ^ s.name ^ "\n" in
+		let syms = String.concat "" (List.map print_symbol c.def_symbols) in
+		let print_thm t = "<b>Theorem:</b> " ^ BP.term_start ^ (print_term t.content) ^ BP.term_end ^ BP.newline in
+		let thms = String.concat "" (List.map print_thm c.theorems) in
+			syms ^ thms
 	
 end
 
@@ -644,6 +679,8 @@ module Parser = struct
 	
 	open Camlp4
 	open Ztoken
+	open Domain
+	open TriaryLogic
 	open Term
 	open Context
 	
@@ -834,8 +871,11 @@ module Parser = struct
 		
 	(* add items to ctx *)
 	
-	let add_lang_param s p a =
+	let add_lang_param h a =
+		let symname, args, hints = h in
+		(* process the arguments *)
 		let syms = {
+				name = symname;
 				dom = SWild 0;
 				hints = [];
 			} in
@@ -865,7 +905,8 @@ module Parser = struct
 		(*`AXIOM; a = formula; `DOT -> mkAxiom a
 		|*) h = symbol_defn_header; `BE; `SUCH; `THAT; 
 			a = LIST1 formula SEP `SEMICOLON; `DOT -> 
-				mkSymbol (fst h) a (snd h)
+				(* mkSymbol (fst h) a (snd h) *)
+				add_lang_param h a
 		(*| h = symbol_defn_header; `DEFEQ; 
 			t = formula; `DOT -> 
 				mkSymbol (fst h) (snd h) (Some t)*)
@@ -874,34 +915,36 @@ module Parser = struct
 	
 	symbol_defn_header : [[
 		`LET; a = OPT symbol_annotation;
-		t = formula -> (t, a) ]];
+		s = identifier; `OPAREN;
+		x = LIST0 identifier SEP `COMMA; `CPAREN
+		(* t = formula *) -> (s, x, a) ]];
 	
 	formula : [
 		"implication and iff" RIGHTA
-		[ t1 = SELF; `RIGHTARROW ; t2 = SELF -> mkBinTerm Implies t1 t2
-		| t1 = SELF; `LEFTRIGHTARROW ; t2 = SELF -> mkBinTerm Iff t1 t2]
-	| "disjunction" [ t1 = SELF; `OR; t2 = SELF -> mkBinTerm Or t1 t2]
-	| "conjunction" [ t1 = SELF; `AND; t2 = SELF -> mkBinTerm And t1 t2]
+		[ t1 = SELF; `RIGHTARROW ; t2 = SELF -> mkBFx Implies t1 t2
+		| t1 = SELF; `LEFTRIGHTARROW ; t2 = SELF -> mkBFx Iff t1 t2]
+	| "disjunction" [ t1 = SELF; `OR; t2 = SELF -> mkBFx Or t1 t2]
+	| "conjunction" [ t1 = SELF; `AND; t2 = SELF -> mkBFx And t1 t2]
 	| "quantified formulas"
-		[ `EXISTS; `OBRACE; qv = identifier_list; `CBRACE; t = SELF ->
-				mkListTerm Exists (t::(List.map mkVar qv))
-		| `FORALL; `OBRACE; qv = identifier_list; `CBRACE; t = SELF -> 
-				mkListTerm Forall (t::(List.map mkVar qv)) ]
-	| "negation" [`NOT; t = SELF -> mkUnaryTerm Neg t]
+		[ `EXISTS; `OBRACE; qv = LIST1 SELF SEP `COMMA (* identifier_list *); `CBRACE; t = SELF ->
+				mkFx Exists (t::qv (* (List.map mkVar qv) *))
+		| `FORALL; `OBRACE; qv = LIST1 SELF SEP `COMMA (* identifier_list *); `CBRACE; t = SELF -> 
+				mkFx Forall (t::qv (* (List.map mkVar qv) *) ) ]
+	| "negation" [`NOT; t = SELF -> mkUFx Neg t]
 	| "standard equality/inequality"
-		[ t1 = SELF; `EQ; t2 = SELF -> mkBinTerm Eq t1 t2
-		| t1 = SELF; `GT; t2 = SELF -> mkBinTerm Gt t1 t2
-		| t1 = SELF; `GTE; t2 = SELF -> mkBinTerm Ge t1 t2
-		| t1 = SELF; `LT; t2 = SELF -> mkBinTerm Lt t1 t2
-		| t1 = SELF; `LTE; t2 = SELF -> mkBinTerm Le t1 t2
-		| t1 = SELF; `NEQ; t2 = SELF -> mkBinTerm Ne t1 t2]
+		[ t1 = SELF; `EQ; t2 = SELF -> mkBFx Eq t1 t2
+		| t1 = SELF; `NEQ; t2 = SELF -> mkBFx Ne t1 t2
+		| t1 = SELF; `LT; t2 = SELF -> mkBFx Lt t1 t2
+		| t1 = SELF; `LTE; t2 = SELF -> mkBFx Le t1 t2
+		| t1 = SELF; `GT; t2 = SELF -> mkBFx Lt t2 t1
+		| t1 = SELF; `GTE; t2 = SELF -> mkBFx Le t2 t1 ]
 	| "additive"
-		[ t1 = SELF; `PLUS; t2 = SELF -> mkBinTerm Add t1 t2
-		| t1 = SELF; `MINUS; t2 = SELF -> mkBinTerm Sub t1 t2]
+		[ t1 = SELF; `PLUS; t2 = SELF -> mkBFx Add t1 t2
+		| t1 = SELF; `MINUS; t2 = SELF -> mkBFx Sub t1 t2]
 	| "multiplicative"
-		[ t1 = SELF; `STAR; t2 = SELF -> mkBinTerm Mul t1 t2
-		| t1 = SELF; `DIV; t2 = SELF -> mkBinTerm Div t1 t2
-		| t1 = SELF; `MOD; t2 = SELF -> mkBinTerm Mod t1 t2 ]
+		[ t1 = SELF; `STAR; t2 = SELF -> mkBFx Mul t1 t2
+		| t1 = SELF; `DIV; t2 = SELF -> mkBFx Div t1 t2
+		| t1 = SELF; `MOD; t2 = SELF -> mkBFx Mod t1 t2 ]
 	| "base"
 		[ s = identifier ->
 				mkVar (add_retrieve_symbol s)
@@ -936,9 +979,11 @@ module Parser = struct
 	 * list of theorems to be proved.
 	 *)
 	let parse n s =
-		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
+		(*let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
 		let defs, symtab = infer_sorts defs in
-			(symtab, get_theorems_list defs)
+			(symtab, get_theorems_list defs)*)
+		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
+			!ctx
 
 end
 
@@ -1254,10 +1299,10 @@ let parse_file file_name =
 	let input_channel = open_in file_name in
 	try
 		(*print_endline ("Parsing " ^ file_name ^ " ...\n");*)
-		let defs = Zparser.parse file_name (Stream.of_channel input_channel) in
+		let ctx = Parser.parse file_name (Stream.of_channel input_channel) in
 		close_in input_channel;
-		defs
-	with End_of_file -> exit 0
+		ctx
+	with End_of_file -> print_endline "End_of_file"; exit 0
 
 let string_of_file fname =
 	let chn = open_in fname in
@@ -1265,6 +1310,12 @@ let string_of_file fname =
 	let str = String.make len ' ' in
 	let _ = really_input chn str 0 len in
 		(close_in chn; str)
+
+module StringPrinter = Printer(StringBasePrinter)
+module TexPrinter = Printer(TexBasePrinter)
+
+let process_context ctx =
+	(*StringPrinter.*)TexPrinter.print_context ctx
 
 (**
  * Command line options as in Arg.parse
@@ -1278,12 +1329,17 @@ let main () =
 	let _ = Arg.parse command_line_arg_speclist add_source_file usage in
 	let _ = Z3.toggle_warning_messages false in
 	let _ = print_endline ("Source files : {" ^ (String.concat ", " !input_files) ^ "}") in
-	let defs = List.map parse_file !input_files in
+	let ctx = List.map parse_file !input_files in
+	(*let _ = print_endline (string_of_int (List.length ctx)) in*)
+	let ctx = List.hd ctx in
+	let output = process_context ctx in
+	let _ = print_endline ((* "Content:\n" ^ *) output) in
+	(*let defs = List.map parse_file !input_files in
 	let output = List.map process_definitions defs in
-	let output = List.flatten output in
+	let output = List.flatten output in*)
 	let html_template = Zutils.FileIO.string_of_file "template.html" in
 	let outrexp = Str.regexp_string "$OUTPUT_CONTENT$" in
-	let output = Str.global_replace outrexp (String.concat "" output) html_template in
+	let output = Str.global_replace outrexp ((*String.concat ""*) output) html_template in
 	let chn = open_out "zeta.html" in
 		output_string chn output
 	

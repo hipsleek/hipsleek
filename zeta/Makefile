@@ -27,4 +27,4 @@ clean:
 
 zetatwo:
 	@ocamlbuild $(OB_FLAGS) zeta.native
-	cp -u _build/zmain.native zeta2
+	cp -u _build/zeta.native zeta2
