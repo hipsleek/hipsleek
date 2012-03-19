@@ -1275,9 +1275,39 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
+let rec create_alias_tbl svl keep_vars aset = match svl with
+  | [] -> []
+  | [hd] -> 
+    [hd::(List.filter (fun x -> not(List.mem x keep_vars)) (CP.EMapSV.find_equiv_all hd aset))]
+  | hd::tl ->
+    let tmp = create_alias_tbl [hd] keep_vars aset in
+    let tl = List.filter (fun x -> not(List.mem x (List.hd tmp))) tl in
+    tmp@(create_alias_tbl tl keep_vars aset)
+
+(* Supposed fml to be Base _ *)
+let filter_var_heap keep_vars fml =
+  let _,pure,_,_,_ = CF.split_components fml in
+  let als = MCP.ptr_equations_without_null pure in
+(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
+  let aset = CP.EMapSV.build_eset als in
+  let alias_tbl = create_alias_tbl (keep_vars@CP.fv (MCP.pure_of_mix pure)) keep_vars aset in
+  let subst_lst = 
+    List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in 
+      List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
+(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
+  let fml = CF.subst subst_lst fml in
+  let heap,_,_,_,_ = CF.split_components fml in
+  CF.formula_of_heap heap no_pos
+
 let infer_shape input = 
   let shape = Parse_shape.parse_shape input in
-  Debug.info_hprint (add_str "Shape: " (pr_pair !CF.print_formula !CF.print_formula)) shape no_pos;;
+  let keep_vars = [SpecVar (Named "GenNode", "lst1", Unprimed); SpecVar (Named "GenNode", "lst2", Unprimed); SpecVar (Named "GenNode", "NULL", Unprimed)] in
+  let fml1 = filter_var_heap keep_vars (fst shape) in
+  let fml2 = filter_var_heap keep_vars (snd shape) in
+(*  Debug.info_hprint (add_str "Shape: " (pr_pair !CF.print_formula !CF.print_formula)) shape no_pos;*)
+  Debug.info_hprint (add_str "Inferred shape: " (pr_pair !CF.print_formula !CF.print_formula)) (fml1,fml2) no_pos;
+  print_newline ()
 
 let _ = 
   let syscall cmd =
