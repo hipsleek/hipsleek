@@ -327,9 +327,11 @@ and mkOneFormula (h : h_formula) (p : P.formula) id pos =
 and mkStar f1 f2 pos = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
+  | HEmp -> f2
   | _ -> match f2 with
 	  | HFalse -> HFalse
 	  | HTrue -> f1
+    | HEmp -> f1
 	  | _ -> Star { h_formula_star_h1 = f1;
 					h_formula_star_h2 = f2;
 					h_formula_star_pos = pos }
@@ -339,9 +341,11 @@ and mkStar f1 f2 pos = match f1 with
 and mkConj f1 f2 pos = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
+  | HEmp -> f2
   | _ -> match f2 with
 	  | HFalse -> HFalse
 	  | HTrue -> f1
+    | HEmp -> f1
 	  | _ -> Conj { h_formula_conj_h1 = f1;
 					h_formula_conj_h2 = f2;
 					h_formula_conj_pos = pos }

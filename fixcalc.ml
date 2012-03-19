@@ -111,6 +111,7 @@ let rec fixcalc_of_h_formula f = match f with
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "True"
   | HFalse -> "False"
+  | HEmp -> "Emp"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
 let fixcalc_of_mix_formula f = match f with

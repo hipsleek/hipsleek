@@ -255,7 +255,7 @@ let rec string_of_pure_formula = function
 
 (* TOCHECK : what is the purpose? *)
 let is_bool_f = function 
-  | F.HEmp | F.HTrue | F.HFalse -> true 
+  | F.HTrue | F.HFalse -> true 
   | _                  -> false 
 ;;
 

@@ -483,7 +483,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
             MCP.merge_mems ph1 ph2 true
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
-      | HEmp -> MCP.mkMFalse no_pos
+      | HEmp -> MCP.mkMTrue no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let memset = h_formula_2_mem h0 [] prog in
@@ -591,7 +591,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             MCP.merge_mems ph1 ph2 true
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
-      | HEmp -> MCP.mkMFalse no_pos
+      | HEmp -> MCP.mkMTrue no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   (xpure_heap_helper prog h0 which_xpure, memset)
@@ -733,7 +733,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | HTrue -> (mkMTrue no_pos, [])
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (mkMFalse no_pos, [])
-    | HEmp -> (mkMFalse no_pos, []) in
+    | HEmp -> (mkMTrue no_pos, []) in
   helper h0
 
 (*xpure heap in the presence of imm and permissions*)
@@ -799,7 +799,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
     | HTrue -> (MCP.mkMTrue no_pos, [])
     | Hole _ -> (MCP.mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (MCP.mkMFalse no_pos, []) 
-    | HEmp -> (MCP.mkMFalse no_pos, []) in
+    | HEmp -> (MCP.mkMTrue no_pos, []) in
   helper h0
 
 (* xpure of consumed precondition *)
@@ -839,7 +839,7 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
         CP.mkAnd ph1 ph2 pos
   | HTrue  -> P.mkTrue no_pos
   | HFalse -> P.mkFalse no_pos
-  | HEmp -> P.mkFalse no_pos
+  | HEmp -> P.mkTrue no_pos
   | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
 
 and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
@@ -4507,7 +4507,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                in the ante will be passed throught the entailment*)
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
-			                  | HTrue -> begin
+                        | HTrue
+			                  | HEmp -> begin
 				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
 						          ^ "conseq has an empty heap component"
 						          ^ "\ncontext:\n"
@@ -5952,7 +5953,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	          let l_h = match rem_l_node with
-		        | HTrue | HFalse -> l_h
+		        | HTrue | HFalse | HEmp-> l_h
 		        | _ -> mkStarH rem_l_node l_h pos in
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
 	          (* An Hoa : fix new_ante *)
@@ -5968,7 +5969,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
             let consumed_h =  (match rem_l_node with
-		      | HTrue | HFalse -> 
+		      | HTrue | HFalse | HEmp -> 
                   l_node
               | _ -> 
                   (*TO DO: this may not be correct because we may also

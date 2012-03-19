@@ -271,6 +271,7 @@ let comp_alias_part r_asets a_vars =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
+  let _ = Debug.devel_print ("Context.choose_context_x: " ^ (string_of_h_formula rhs_node)) in
   let imm,p= match rhs_node with
     | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
     | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
@@ -431,6 +432,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
+    | HEmp -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 	  h_formula_data_imm = imm1}) ->
@@ -1079,6 +1081,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
 		  h_formula_phase_pos = pos})  
     | DataNode _ 
     | ViewNode _
+    | HEmp
     | HTrue | HFalse -> frame
           
 and update_ctx_es_formula ctx0 f = 

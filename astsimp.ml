@@ -4256,7 +4256,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 	          (tmp_h, tmp_type)
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
-        | IF.HEmp -> (CF.HEmp, CF.TypeFalse) in 
+        | IF.HEmp -> (CF.HEmp, CF.TypeTrue) in 
     res
 
   in
@@ -5804,6 +5804,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 
   let rec flatten f = match f with
     | IF.HTrue ->  []
+    | IF.HFalse -> []
+    | IF.HEmp -> []
     | IF.Conj
 	        {  IF.h_formula_conj_h1 = f1;
 	        IF.h_formula_conj_h2 = f2;

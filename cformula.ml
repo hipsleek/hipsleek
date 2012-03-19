@@ -36,6 +36,7 @@ type t_formula = (* type constraint *)
   | TypeAnd of t_formula_and
   | TypeTrue
   | TypeFalse
+  | TypeEmpty
 
 and t_formula_sub_type = { t_formula_sub_type_var : Cpure.spec_var;
 t_formula_sub_type_type : ident }
@@ -562,7 +563,7 @@ and isAnyConstTrue f = match f with
   | _ -> false
 
 and is_complex_heap (h : h_formula) : bool = match h with
-  | HTrue | HFalse -> false
+  | HTrue | HFalse | HEmp-> false
   | _ -> true
 
 and is_coercible_x (h : h_formula) : bool = match h with
@@ -1021,9 +1022,11 @@ and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) lbl (
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
+  | HEmp -> f2
   | _ -> match f2 with
       | HFalse -> HFalse
       | HTrue -> f1
+      | HEmp -> f1
       | _ -> Star ({h_formula_star_h1 = f1; 
 		h_formula_star_h2 = f2; 
 		h_formula_star_pos = pos})
@@ -1031,9 +1034,11 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
+  | HEmp -> f2
   | _ -> match f2 with
       | HFalse -> HFalse
       | HTrue -> f1
+      | HEmp -> f1
       | _ -> Conj ({h_formula_conj_h1 = f1; 
 		h_formula_conj_h2 = f2; 
 		h_formula_conj_pos = pos})
@@ -1053,6 +1058,7 @@ and is_simple_formula (f:formula) =
   let h, _, _, _, _ = split_components f in
   match h with
     | HTrue | HFalse 
+    | HEmp
     | DataNode _ -> true
     | ViewNode _ -> true
     | _ -> false
@@ -1062,6 +1068,7 @@ and fv_simple_formula (f:formula) =
   let h, _, _, _, _ = split_components f in
   match h with
     | HTrue | HFalse -> []
+    | HEmp -> []
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
@@ -1079,6 +1086,7 @@ and fv_simple_formula_coerc (f:formula) =
   let h, _, _, _, _ = split_components f in
   match h with
     | HTrue | HFalse -> []
+    | HEmp -> []
     | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
     | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
     | _ -> []
@@ -1749,13 +1757,13 @@ and fv_heap_of (f:formula) =
 and fv_heap_of_one_formula (f:one_formula) =  (h_fv f.formula_heap)
 
 and mk_Star f1 f2 p = 
-  if f1==HTrue then f2
-  else if f2==HTrue then f1
+  if (f1==HTrue || f1==HEmp) then f2
+  else if (f2==HTrue || f2 = HEmp) then f1
   else Star {h_formula_star_h1=f1; h_formula_star_h2=f2; h_formula_star_pos=p}
 
 and mk_Conj f1 f2 p = 
-  if f1==HTrue then f2
-  else if f2==HTrue then f1
+  if (f1==HTrue || f1==HEmp) then f2
+  else if (f2==HTrue || f2==HEmp) then f1
   else Conj {h_formula_conj_h1=f1; h_formula_conj_h2=f2; h_formula_conj_pos=p}
 
 and remove_h_lend (f:h_formula) : h_formula = 
@@ -5448,7 +5456,8 @@ and filter_heap (f:formula):formula option = match f with
 	| ViewNode _ 
 	| Hole _ -> None
 	| HTrue 
-	| HFalse -> Some f
+	| HFalse
+  | HEmp -> Some f
     end
   | Exists b-> 
       begin
@@ -6854,9 +6863,11 @@ and merge_two_nodes dn1 dn2 =
 										h_formula_data_pos = no_pos } in 
 								if not_clashed then res else HFalse
 			| HTrue -> dn1
+      | HEmp -> dn1
 			| HFalse -> HFalse
 			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn2))} )
 	| HTrue -> dn2
+  | HEmp -> dn2
 	| HFalse -> HFalse
 	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn1)) }
 

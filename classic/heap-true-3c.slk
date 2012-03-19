@@ -6,11 +6,13 @@ data cell {
 
 //checkentail emp * true |- true.
 
+//checkentail true * true |- emp.
+
 //checkentail emp * true |- emp.
 
 checkentail emp |- true * true.
 
-checkentail emp |- true.
+//checkentail emp |- true.
 
 //checkentail emp |- true * emp.
 
