@@ -77,20 +77,45 @@ end
 module Domain = struct
 	
 	type domain =
-		(* | SBool true/false *)
+		| SBool (* true/false
+						even though representable using 
+						integers, separate here for the 
+						sake of later translation stages *)
 		| SInt	(* set of integers *)
 		| SWild of int
-						(* unknown domain, for domain estimation only *)
+						(* unknown set, for domain estimation only *)
 		| SMap of domain list
-						(* map : tail -> head *)
+						(* set of map from : {tail} -> head *)
 	
 	(* getters *)
 	
-	
+	(*
+	(**
+	 * Get the signature of a SMap sort
+	 *)
+	let signature_of_smap s = match s with
+		| SMap d -> d
+		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
+
+	(**
+	 * Get the signature of a SMap sort
+	 *)
+	let signature_of_smap s = match s with
+		| SMap d -> d
+		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
+
+	(**
+	 * Get the signature of a SMap sort
+	 *)
+	let signature_of_smap s = match s with
+		| SMap d -> d
+		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
+	*)	
 	
 	(* query *)
 	
 	let rec has_no_wild s = match s with
+		| SBool
 		| SInt -> true
 		| SWild _ -> false
 		| SMap d ->
@@ -107,26 +132,7 @@ module Domain = struct
 					List.for_all2 eq_domain d1 d2
 			| _ -> false
 	
-	(*(**
-	 * Get the signature of a SMap sort
-	 *)
-	let signature_of_smap s = match s with
-		| SMap d -> d
-		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
-
-	(**
-	 * Get the signature of a SMap sort
-	 *)
-	let signature_of_smap s = match s with
-		| SMap d -> d
-		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
-
-	(**
-	 * Get the signature of a SMap sort
-	 *)
-	let signature_of_smap s = match s with
-		| SMap d -> d
-		| _ -> failwith "[signature_of_smap] : input sort is not a SMap"
+	(*
 
 	(* solve the swild domain constraints *)
 
@@ -204,22 +210,26 @@ module Term = struct
 		| Bot
 		| Num of int*)
 
+	(* variable is just function *)
+	(* application with 0 argument *)
+	(* boolean true/false can be *)
+	(* represented by positive integers *)
+	(* and non-positive ones *)
 	type term =
-		(* | Top (* true, use > 0 i.e. positive *) *)
-		(* | Bot (* false, use <= 0 i.e. non-positive *) *)
+		| Top (* true > 0 *)
+		| Bot (* false <= 0 *)
 		| Num of int (* numeral constant *)
-		(* | Var of int *)
+		(* | Var of int (* variable *) *)
 		| Fx of func * (term list)
-						(* variable is just function *)
-						(* application with 0 argument *)
-
 	
 	and func =
 		| Add | Sub | Mul | Div | Mod
 		| Eq | Ne | Lt | Le (* | Gt | Ge *)
 		| And | Or | Neg | Implies | Iff
 		| Exists | Forall
-		| GFunc of int
+		| GF of int (* generic function of index *)
+								(* convention: negative for logical symbols (variable) *)
+								(* and non-negative for language parameters (constant/functions) *)
 
 	(* constructors *)
 	
@@ -229,7 +239,7 @@ module Term = struct
 	
 	let mkNum n = Num n
 	
-	let mkVar v = Var v
+	let mkVar v = Fx (GF v, [])
 	
 	let mkFx f x = Fx (f, x)
 	
@@ -239,15 +249,35 @@ module Term = struct
 	
 	(* compare *)
 	
+	(* query *)
+	
+	let rec is_ground t = match t with
+		| Top | Bot | Num _ -> true
+		| Fx (f, x) -> match f with
+			| GF _ -> false
+			| _ -> List.for_all is_ground x
+	
+	let is_var t = match t with
+		| Fx (GF _, []) -> true
+		| _ -> false
+	
 	(* getter *)
 	
-	let av t = match t with
+	let get_index t = match t with
+		| Fx (GF i, x) -> i
+		| _ -> 0
+	
+	let rec av t = match t with
 		| Top
 		| Bot
 		| Num _ -> []
-		| Var v -> [t]
-		| Fx (_, x) ->
-			List.flatten (List.map av x)
+		(* | Var v -> [t] *)
+		| Fx (f, x) ->
+			let r = List.flatten (List.map av x) in
+			match f with
+				| GF i -> i :: r
+				| _ -> r
+			
 	
 	(*let fv t = match t with
 		| Top
@@ -439,16 +469,18 @@ module Context = struct
 		}
 		
 	and symbol = {
-			name : string;
 			dom : domain;
+			hints : hint list;
 		}
+		
+	and hint =
+		| Rewrite of term
+		| Induction of term
 	
 	and theorem = {
 			content : term;
 			proved_status : triary_bool;
 		}
-	
-	
 	
 end
 
@@ -456,9 +488,9 @@ end
 
 module type BasePrinter = sig
 	
-	val print_domain : domain -> string
+	val print_domain : Domain.domain -> string
 	
-	val print_func : func -> string
+	val print_func : (int -> string) -> Term.func -> string
 	
 	val top : string
 	
@@ -468,47 +500,55 @@ end
 
 module StringBasePrinter : BasePrinter = struct
 	
-	let rec print_domain d = match d with
-		| SWild i -> "X_" ^ (string_of_int i)
-		| SInt -> "Z"
-		| SMap d -> (String.concat "x" (List.map print_domain (List.tl d))) ^ "->" ^ (string_of_sort (List.hd d))
-		| SBool -> "2"
+	open Domain
+	open Term
 	
-	let print_func f = match f with
+	let rec print_domain d = match d with
+		| SBool -> "2"
+		| SInt -> "Z"
+		| SWild i -> "X_" ^ (string_of_int i)
+		| SMap d -> (String.concat "x" (List.map print_domain (List.tl d))) ^ "->" ^ (print_domain (List.hd d))
+	
+	let print_func pr_sym f = match f with
 		| Add -> "+" | Sub -> "-" | Mul -> "*" 
 		| Div -> "/" | Mod -> "mod"
-		| Lt -> "<" | Le -> "<=" | Gt -> ">"
-		| Ge -> ">=" | Eq -> "=" | Ne -> "!="
+		| Eq -> "=" | Ne -> "!="
+		| Lt -> "<" | Le -> "<="
+		(* | Gt -> ">" | Ge -> ">=" *) 
 		| And -> " /\\ " 
 		| Or -> " \\/ " | Neg -> "~" | Implies -> "->" 
 		| Iff -> "<->" | Exists -> "E" | Forall -> "A"
-		| GFunc -> ""
+		| GF i -> pr_sym i
 	
-	let top = "T"
+	let top = "t"
 	
-	let bot = "F"
+	let bot = "f"
 	
 end
 
 module TexBasePrinter : BasePrinter = struct
 	
+	open Domain
+	open Term
+	
 	let rec print_domain d = match d with
-		| SWild i -> "\\mathcal{X}_{" ^ (string_of_int i) ^ "}" 
+		| SBool -> "\\mathbb{B}"
 		| SInt -> "\\mathbb{Z}"
+		| SWild i -> "\\mathcal{X}_{" ^ (string_of_int i) ^ "}" 
 		| SMap d -> (String.concat "\\times" (List.map print_domain (List.tl d))) ^
 				" \\mapsto " ^ (print_domain (List.hd d))
-		| SBool -> "\\mathbb{B}"
 	
-	let print_func f = match f with
+	let print_func pr_sym f = match f with
 		| Add -> "+" | Sub -> "-" | Mul -> "\\times"
 		| Div -> "\\div" | Mod -> "\\bmod"
-		| Lt -> "<" | Le -> "\\leq" | Gt -> ">"
-		| Ge -> "\\geq" | Eq -> "=" | Ne -> "\\not="
+		| Eq -> "=" | Ne -> "\\not="
+		| Lt -> "<" | Le -> "\\leq"
+		(* | Gt -> ">" | Ge -> "\\geq" *) 
 		| And -> "\\land"
 		| Or -> "\\lor" | Neg -> "\\neg"
 		| Implies -> "\\rightarrow" | Iff -> "\\leftrightarrow"
 		| Exists -> "\\exists" | Forall -> "\\forall"
-		| GFunc -> ""
+		| GF i -> pr_sym i
 
 	let top = "\\top"
 	
@@ -547,19 +587,33 @@ end
 
 module Printer (BP : BasePrinter) (VP : VarPrinter) = struct
 	
-	let rec print_term_helper pr_var p t  = match t with
+	open Term
+
+	let precedence_of f = match f with
+		| Add | Sub -> 8
+		| Mul | Div | Mod -> 9
+		| Eq | Ne | Lt | Le (* | Gt | Ge *) -> 7
+		(* | Top | Bot -> 10 *)
+		| And -> 3
+		| Or -> 2
+		| Neg -> 5
+		| Implies | Iff -> 1
+		| Exists | Forall -> 4
+		| GF _ -> 10
+
+	let rec print_term_helper pr_sym p t  = match t with
 		| Top -> BP.top
 		| Bot -> BP.bot
 		| Num i -> string_of_int i
-		| Var (s, v) -> pr_var s v
-		| FunApp (f, x) ->
+		(*| Var (s, v) -> pr_var s v*)
+		| Fx (f, x) ->
 			let pf = precedence_of f in
-			let xp = match f with | GFunc -> 0 | _ -> pf in
-			let sx = List.map (print_term_helper pr_var pr_func xp) x in
-			let sf = pr_func f in
+			let xp = match f with | GF _ -> 0 | _ -> pf in
+			let sx = List.map (print_term_helper pr_sym xp) x in
+			let sf = BP.print_func pr_sym f in
 			let e = match f with
 				| Exists | Forall -> sf ^ " " ^ (String.concat "," (List.tl sx)) ^ " : " ^ (List.hd sx)
-				| GFunc -> (List.hd sx) ^ "[" ^ (String.concat "," (List.tl sx)) ^ "]"
+				| GF _ -> sf (*(List.hd sx)*) ^ "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]"
 				| Neg -> sf ^ " " ^ (List.hd sx)
 				| _ -> String.concat (" " ^ sf ^ " ") sx in
 			if (pf < p) then "(" ^ e ^ ")" else e
@@ -590,20 +644,15 @@ module Parser = struct
 	
 	open Camlp4
 	open Ztoken
+	open Term
+	open Context
+	
 	(*open Zutils
 	open Zsort
 	open Zterm
 	open Zlogic*)
 
 	module ZGram = Camlp4.PreCast.MakeGram(Zlexer.Make(Ztoken))
-
-	(* Global table to map string to int (id) *)
-	
-	let symbol_id_table = Hashtbl.create 100
-	
-	let f_index = ref 1;
-	
-	let v_index = ref 1;
 	
 	(* INPUT DATA STRUCTURE *)
 	
@@ -755,7 +804,56 @@ module Parser = struct
 			thms
 	*)
 	
-	(* GRAMMAR *)
+	(** global parsing data structure **)
+	
+	(* map string symbols to integral id *)
+	let symbol_id_table = Hashtbl.create 100
+	
+	(* current number of symbols *)
+	let symbol_index = ref 0
+	
+	(* add/retrieve a symbol and return its id *)
+	let add_retrieve_symbol s =
+		try
+			Hashtbl.find symbol_id_table s
+		with
+			| Not_found -> 
+				let i = !symbol_index in
+				begin
+					Hashtbl.add symbol_id_table s i;
+					symbol_index := i + 1;
+					i
+				end
+	
+	(* source file input context *)
+	let ctx = ref {
+			def_symbols = [];
+			axioms = [];
+			theorems = [];
+		}
+		
+	(* add items to ctx *)
+	
+	let add_lang_param s p a =
+		let syms = {
+				dom = SWild 0;
+				hints = [];
+			} in
+		ctx := {!ctx with 
+			def_symbols = syms :: !ctx.def_symbols;
+			axioms = List.append !ctx.axioms a;
+		}
+		
+	let add_thm t =
+		let thmt = {
+				content = t;
+				proved_status = False;
+			} in
+		ctx := {!ctx with 
+			theorems = thmt :: !ctx.theorems
+		}
+	
+	(** Zeta grammar **)
 	
 	let zeta = ZGram.Entry.mk "zeta";;
 	
@@ -772,10 +870,11 @@ module Parser = struct
 			t = formula; `DOT -> 
 				mkSymbol (fst h) (snd h) (Some t)*)
 		| `THEOREM; t = formula; `DOT ->
-			mkTheorem t ]];
+			(* mkTheorem *) add_thm t ]];
 	
 	symbol_defn_header : [[
-		`LET; a = OPT symbol_annotation; t = formula -> (t, a) ]];
+		`LET; a = OPT symbol_annotation;
+		t = formula -> (t, a) ]];
 	
 	formula : [
 		"implication and iff" RIGHTA
@@ -804,12 +903,15 @@ module Parser = struct
 		| t1 = SELF; `DIV; t2 = SELF -> mkBinTerm Div t1 t2
 		| t1 = SELF; `MOD; t2 = SELF -> mkBinTerm Mod t1 t2 ]
 	| "base"
-		[ s = identifier -> mkVar s
+		[ s = identifier ->
+				mkVar (add_retrieve_symbol s)
 		| `NUMERAL i -> Num i
 		| `FALSE -> mkBot ()
 		| `TRUE -> mkTop ()
-		| f = identifier; `OPAREN; x = LIST0 SELF SEP `COMMA; `CPAREN ->
-			mkFx GFunc (mkVar f :: x)
+		| f = identifier; `OPAREN;
+			x = LIST0 SELF SEP `COMMA;
+			`CPAREN ->
+				mkFx (GF (add_retrieve_symbol f)) x
 		(*| f = identifier; `OSQUARE; x = LIST0 SELF SEP `COMMA; `CSQUARE ->
 			mkListTerm GFunc (mkVar f::x)*)]
 	| [ `OPAREN; t=SELF; `CPAREN -> t ]];
@@ -842,9 +944,11 @@ end
 
 (* Theorem proving : main program logic *)
 
-module ExternalProver = struct
+module ExternalSystem = struct
 
 module Z3 = struct
+	
+	(*
 	
 	let print_z3_input = ref false
 	
@@ -986,6 +1090,9 @@ module Z3 = struct
 				print_endline ("[Zexprf.Z3.derive]: output = " ^ (TBool.string_of_triary_bool res)) in
 			(* currently, we do not parse the proof from Z3 *)
 				(res, [])
+				
+	*)
+	
 end
 
 (*module Reduce = struct
@@ -995,6 +1102,8 @@ end*)
 end
 
 module Logic = struct
+	
+	(*
 	
 	module Skolemize = struct
 		
@@ -1123,6 +1232,8 @@ module Logic = struct
 			print_endline ("induction values : " ^ (String.concat "," (List.map string_of_term si.induction)))) symtab in*)
 		let _ = List.map (verify_theorem symtab) thms in
 			List.map (fun t -> "<b>Theorem:</b> \\(" ^ (latex_of_term t.thm) ^ "\\)<br />") thms
+
+	*)
 
 end
 
