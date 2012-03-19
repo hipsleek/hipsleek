@@ -12,7 +12,23 @@ data cell {
 
 checkentail emp |- true * true.
 
-//checkentail emp |- true.
+checkentail emp & n>0 |- true * true.
 
-//checkentail emp |- true * emp.
+checkentail emp & n>0 |- true .
+
+checkentail emp & n>0 |- n>=0 .
+
+checkentail emp & n>0 |- emp & n>=0 .
+
+checkentail emp |- true.
+
+checkentail n>0 |- true.  // emp & n>0 |- true & true
+
+checkentail n>0 |- emp & true.  // emp & n>0 |- emp & true
+
+checkentail n>0 |- emp * true.  // emp & n>0 |- true & true
+
+checkentail n>0 |- true * emp .  // emp & n>0 |- true & true
+
+//checkentail emp |- true * emp. 
 
