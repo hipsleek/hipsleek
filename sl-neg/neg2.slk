@@ -1,0 +1,50 @@
+data node {
+  int val;
+
+  node next;
+}
+
+data tree {
+  tree left;
+  tree right;
+}
+
+treelseg<t,p,d,n> ==
+     t::node<d,p> & self=null & n=1
+  or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
+     * right::treelseg<r,p,d+1,n2> & n=n1+n2
+  inv n>=1 ;
+
+tlseg<p,f,d,n> ==
+     self::node<d,p> & n=1 & d=f 
+  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
+  inv self!=null & n>=1 & f>=d ;
+
+// pred specifies a list of labels that would never
+// be able to generate a binary tree of upto that size
+// this predicate is expected to be the complement of tlseg
+// which is supposed to give our completeness result
+negtlseg<p,f,d,n> ==
+  self::node<f,p> & n=1 & f<d 
+  or self::negtlseg<p,f,d+1,n> & f!=d 
+  or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2 
+  inv self!=null & n>=1 & f!=d; 
+
+/*
+disjoint:
+ P1 /\ P2 |- false
+ P1 /\ x=nil |- false
+ P2 /\ x=nil |- false
+
+universal
+ x::lseg<p,n> & n>0 <-> P1 \/ not(P1)
+*/
+
+/* can we show disjointness of
+ (i) x=null
+ (ii) x::tsleg<p,f,d,_> 
+ (iii) x::negtlseg<p,f,d,_> 
+
+ can we show its universality?, namely
+ true |- (i) \/ (ii) \/ (iii)
+*/
