@@ -42,6 +42,7 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
+  | PInfer of (meta_formula * meta_formula)
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
@@ -82,6 +83,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | PInfer _ -> "PInfer"
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  

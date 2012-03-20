@@ -645,6 +645,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
          in ()
   (* with e -> print_exc num_id *)
 
+let process_pinfer puniv ph= print_endline "process_pinfer"
+
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in

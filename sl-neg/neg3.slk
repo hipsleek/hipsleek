@@ -1,4 +1,3 @@
-
 data node {
   int val;
   node next;
@@ -19,4 +18,6 @@ pred nll<n> == self=null & n=0
   inv n>=0.
 */
 
-pinfer x::ll<n> <-> x::pll<n> + ?//x::nll<n>
+pinfer x::ll<n> <-> x::pll<n> .
+
+//checkentail x::ll<n> & n>0 |- x=null.
