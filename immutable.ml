@@ -193,7 +193,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
       match h with
       | IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
       | IF.HeapNode hf -> hf.IF.h_formula_heap_imm
-      |  -> failwith ("Error in  normalize_h_formula\n")
+      | _ -> failwith ("Error in  normalize_h_formula\n")
     in
     (iformula_ann_to_cformula_ann iann)
   in

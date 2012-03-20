@@ -848,8 +848,8 @@ opt_heap_constr: [[ t = heap_constr -> t]];
 (*   ]];  *)
 
 heap_constr:
-  [[ `TRUE; `SEMICOLON; hrw=heap_rw       -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; `TRUE       -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
+  [[ `HTRUE; `SEMICOLON; hrw=heap_rw                        -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)
+   | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; `HTRUE      -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
    | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)]]; 
@@ -916,8 +916,8 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
-   | `TRUE -> F.HTrue
-   | `FALSE -> F.HFalse
+   | `HTRUE -> F.HTrue
+   (*| `FALSE -> F.HFalse*)
    | `EMPTY -> F.HEmp
   ]];
 

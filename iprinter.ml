@@ -319,8 +319,8 @@ let rec string_of_h_formula = function
       string_of_formula_label_opt pi
           ((string_of_id xid)
       ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
-  | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
-  | F.HFalse                        -> "false"
+  | F.HTrue                         -> "htrue"                                                                                                (* ?? is it ok ? *)
+  | F.HFalse                        -> "hfalse"
   | F.HEmp                        -> "emp"
 
 and string_of_imm imm = match imm with
@@ -386,7 +386,7 @@ let rec string_of_formula = function
       let rs=
 	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
-		   ("true & ")^string_of_pure_formula pf
+		   ("htrue & ")^string_of_pure_formula pf
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)

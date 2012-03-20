@@ -4517,7 +4517,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               ^ (Cprinter.string_of_formula conseq))) pos;
                             if (h1 = HEmp && h2 = HTrue)  then ( 
                               (* The case HEmp |- HTrue is considered to be FAILD *)
-                              let msg = "Empty |- True" in 
+                              let msg = "emp |- htrue" in 
                               (mkFailCtx_simple msg estate conseq pos , Failure)
                             ) else (
                               let b1 = { formula_base_heap = h1;

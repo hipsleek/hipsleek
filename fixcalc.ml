@@ -109,7 +109,7 @@ let rec fixcalc_of_h_formula f = match f with
   | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
-  | HTrue -> "True"
+  | HTrue -> "HTrue"
   | HFalse -> "False"
   | HEmp -> "Emp"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
