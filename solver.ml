@@ -4507,59 +4507,60 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                in the ante will be passed throught the entailment*)
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
-                        | HTrue
-			                  | HEmp -> begin
-				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
-						          ^ "conseq has an empty heap component"
-						          ^ "\ncontext:\n"
-						          ^ (Cprinter.string_of_context ctx0)
-						          ^ "\nconseq:\n"
-						          ^ (Cprinter.string_of_formula conseq))) pos;
-				                  let b1 = { formula_base_heap = h1;
-					              formula_base_pure = p1;
-					              formula_base_type = t1;
-                                  formula_base_and = a1; (*TO CHECK: Done: pass a1 through*)
-					              formula_base_flow = fl1;
-					              formula_base_label = None;
-					              formula_base_pos = pos } in
-				                  (* 23.10.2008 *)
-				                  (*+++++++++++++++++++++++++++++++++*)
-				                  (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
-				                  (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
-				                  (*+++++++++++++++++++++++++++++++++*)
-                                  (*LDK: remove duplicated conj from the p2*)
-                                  let p2 = remove_dupl_conj_eq_mix_formula p2 in
-				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
-                                  (* explicit instantiation this will move some constraint to the LHS*)
-                                  (*LDK: 25/08/2011, also instatiate ivars*)                          
-                                  (*this move_expl_inst call can occur at the end of folding and also 
-                                    at the end of entailments of stages possibly leading to duplications of instantiations
-                                    moving it would require the rhs pure to be moved as well...*)                          
-  				                  let new_ctx =
-						            (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
-						            (match ctx with
-						  	          | FailCtx _ -> ctx
-						  	          | SuccCtx cl ->
-						  	                let new_cl =
-						  	                  List.map (fun c ->
-						  	                      (transform_context
-    						  		                  (fun es ->
-						  		                          (* explicit inst *)
-						  		                          let l_inst = get_expl_inst es p2 in
-						  		                          let es = move_impl_inst_estate es p2 in
-						  		                          Ctx ( if (es.es_imm_last_phase) then
-						  		      	                    move_expl_inst_estate es p2
-						  		                          else
-						  			                        add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
-						  		                      ) c)) cl
-						  	                in SuccCtx(new_cl))
-
-						    
-						  in
-
-
-				                  (new_ctx, proof)
-				                end
+			                  | HTrue
+			                  | HEmp -> (
+                            Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
+                              ^ "conseq has an empty heap component"
+                              ^ "\ncontext:\n"
+                              ^ (Cprinter.string_of_context ctx0)
+                              ^ "\nconseq:\n"
+                              ^ (Cprinter.string_of_formula conseq))) pos;
+                            if (h1 = HEmp && h2 = HTrue)  then ( 
+                              (* The case HEmp |- HTrue is considered to be FAILD *)
+                              let msg = "Empty |- True" in 
+                              (mkFailCtx_simple msg estate conseq pos , Failure)
+                            ) else (
+                              let b1 = { formula_base_heap = h1;
+                                         formula_base_pure = p1;
+                                         formula_base_type = t1;
+                                         formula_base_and = a1; (*TO CHECK: Done: pass a1 through*)
+                                         formula_base_flow = fl1;
+                                         formula_base_label = None;
+                                         formula_base_pos = pos } in
+                              (* 23.10.2008 *)
+                              (*+++++++++++++++++++++++++++++++++*)
+                              (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
+                              (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
+                              (*+++++++++++++++++++++++++++++++++*)
+                              (*LDK: remove duplicated conj from the p2*)
+                              let p2 = remove_dupl_conj_eq_mix_formula p2 in
+                              let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
+                              (* explicit instantiation this will move some constraint to the LHS*)
+                              (*LDK: 25/08/2011, also instatiate ivars*)
+                              (*this move_expl_inst call can occur at the end of folding and also 
+                                at the end of entailments of stages possibly leading to duplications of instantiations
+                                moving it would require the rhs pure to be moved as well...*)
+                              let new_ctx =
+                              (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
+                                (match ctx with
+                                 | FailCtx _ -> ctx
+                                 | SuccCtx cl ->
+                                     let new_cl =
+                                       List.map (fun c ->
+                                         (transform_context
+                                         (fun es ->
+                                            (* explicit inst *)
+                                            let l_inst = get_expl_inst es p2 in
+                                            let es = move_impl_inst_estate es p2 in
+                                            Ctx ( if (es.es_imm_last_phase) then
+                                                    move_expl_inst_estate es p2
+                                                  else
+                                                    add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
+                                         )  c)) cl in 
+                                       SuccCtx(new_cl)) in
+                                     (new_ctx, proof)
+                            )
+                          )
 			                  | _ -> begin 
 				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
 						          ^ "conseq has an non-empty heap component"

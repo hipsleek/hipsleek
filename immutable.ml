@@ -191,90 +191,90 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   let get_imm (h : IF.h_formula) : ann = 
     let iann =
       match h with
-	|  IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
-	|  IF.HeapNode hf -> hf.IF.h_formula_heap_imm
-	| _ -> failwith ("Error in  normalize_h_formula\n")
+      | IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
+      | IF.HeapNode hf -> hf.IF.h_formula_heap_imm
+      |  -> failwith ("Error in  normalize_h_formula\n")
     in
     (iformula_ann_to_cformula_ann iann)
   in
   let rec extract_inner_phase f = match f with
     | IF.Phase _ -> (IF.HTrue, f)
     | IF.Star ({IF.h_formula_star_h1 = h1;
-	  IF.h_formula_star_h2 = h2;
-	  IF.h_formula_star_pos = pos
-	 }) -> 
-      let r11, r12 = extract_inner_phase h1 in 
-      let r21, r22 = extract_inner_phase h2 in 
-      (IF.mkStar r11 r21 pos, IF.mkStar r12 r22 pos) 
+                IF.h_formula_star_h2 = h2;
+                IF.h_formula_star_pos = pos
+               }) -> 
+        let r11, r12 = extract_inner_phase h1 in 
+        let r21, r22 = extract_inner_phase h2 in 
+        (IF.mkStar r11 r21 pos, IF.mkStar r12 r22 pos) 
     | _ -> (f,IF.HTrue) 
   in
   match h with
   | IF.Phase({IF.h_formula_phase_rd = h1;
-	 IF.h_formula_phase_rw = h2;
-	 IF.h_formula_phase_pos = pos
-	  }) ->
+              IF.h_formula_phase_rw = h2;
+              IF.h_formula_phase_pos = pos
+             }) ->
       (* conj in read phase -> split into two separate read phases *)
       if not(validate_rd_phase h1) then
-	 Error.report_error
-	   {Error.error_loc = pos;
-	    Error.error_text =  ("Invalid read phase h = " ^ (Iprinter.string_of_h_formula h) ^ "\n")}
+        Error.report_error
+          {Error.error_loc = pos;
+           Error.error_text =  ("Invalid read phase h = " ^ (Iprinter.string_of_h_formula h) ^ "\n")}
       else
-      let rd_phase = normalize_h_formula_rd_phase h1 in
-      let wr_phase = normalize_h_formula_x h2 true in 
-      let res = insert_wr_phase rd_phase wr_phase in
-	res
+        let rd_phase = normalize_h_formula_rd_phase h1 in
+        let wr_phase = normalize_h_formula_x h2 true in 
+        let res = insert_wr_phase rd_phase wr_phase in
+        res
   | IF.Star({IF.h_formula_star_h1 = h1;
-	  IF.h_formula_star_h2 = h2;
-	  IF.h_formula_star_pos = pos
-	 }) ->
-    let r1, r2 = extract_inner_phase h2 in
-    if (r1 == IF.HTrue) || (r2 == IF.HTrue) then 
-      IF.Star({IF.h_formula_star_h1 = h1;
-	  IF.h_formula_star_h2 = normalize_h_formula_x h2 false;
-	  IF.h_formula_star_pos = pos
-	 }) 
-    else
-      (* isolate the inner phase *)
-      IF.Star({IF.h_formula_star_h1 = IF.mkStar h1 r1 pos;
-	  IF.h_formula_star_h2 = normalize_h_formula_x r2 false;
-	  IF.h_formula_star_pos = pos
-	 }) 
-  | IF.Conj({IF.h_formula_conj_h1 = h1;
-	 IF.h_formula_conj_h2 = h2;
-	 IF.h_formula_conj_pos = pos
-	 }) ->
-	normalize_h_formula_rd_phase h 
-  | IF.HeapNode2 hf -> 
-    (let annv = get_imm h in
-    match annv with
-      | ConstAnn(Lend) -> h
-      | _ ->								 
-    begin
-  	(* write phase *)
-      if (wr_phase) then h
+             IF.h_formula_star_h2 = h2;
+             IF.h_formula_star_pos = pos
+            }) ->
+      let r1, r2 = extract_inner_phase h2 in
+      if (r1 == IF.HTrue) || (r2 == IF.HTrue) then 
+        IF.Star({IF.h_formula_star_h1 = h1;
+                 IF.h_formula_star_h2 = normalize_h_formula_x h2 false;
+                 IF.h_formula_star_pos = pos
+                }) 
       else
-  	IF.Phase({IF.h_formula_phase_rd = IF.HTrue;
-  		  IF.h_formula_phase_rw = h;
-  		  IF.h_formula_phase_pos = no_pos;
-  		 })
-    end)
-  | IF.HeapNode hf ->  
-    (let annv = get_imm h in
-    match annv with
+        (* isolate the inner phase *)
+        IF.Star({IF.h_formula_star_h1 = IF.mkStar h1 r1 pos;
+                 IF.h_formula_star_h2 = normalize_h_formula_x r2 false;
+                 IF.h_formula_star_pos = pos
+                }) 
+  | IF.Conj({IF.h_formula_conj_h1 = h1;
+             IF.h_formula_conj_h2 = h2;
+             IF.h_formula_conj_pos = pos
+            }) ->
+      normalize_h_formula_rd_phase h 
+  | IF.HeapNode2 hf -> 
+      (let annv = get_imm h in
+      match annv with
       | ConstAnn(Lend) -> h
-      | _ ->							   
-      begin
-    	(* write phase *)
-    	if (wr_phase) then h
-    	else
-    	  IF.Phase({IF.h_formula_phase_rd = IF.HTrue;
-    		    IF.h_formula_phase_rw = h;
-    		    IF.h_formula_phase_pos = no_pos;
-    		   })
-      end)
+      | _ ->
+         begin
+         (* write phase *)
+           if (wr_phase) then h
+           else
+            IF.Phase({IF.h_formula_phase_rd = IF.HTrue;
+                      IF.h_formula_phase_rw = h;
+                      IF.h_formula_phase_pos = no_pos;
+                     })
+         end)
+  | IF.HeapNode hf ->
+      (let annv = get_imm h in
+      match annv with
+      | ConstAnn(Lend) -> h
+      | _ ->
+        begin
+          (* write phase *)
+          if (wr_phase) then h
+          else
+            IF.Phase({IF.h_formula_phase_rd = IF.HTrue;
+                      IF.h_formula_phase_rw = h;
+                      IF.h_formula_phase_pos = no_pos;
+                     })
+        end)
   | _ ->  IF.Phase { IF.h_formula_phase_rd = IF.HTrue;
-	  	 IF.h_formula_phase_rw = h;
-	  	 IF.h_formula_phase_pos = no_pos }
+                     IF.h_formula_phase_rw = h;
+                     IF.h_formula_phase_pos = no_pos }
 
 and contains_phase (h : IF.h_formula) : bool = match h with
   | IF.Phase _ -> true
