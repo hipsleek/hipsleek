@@ -1,0 +1,2 @@
+
+checkentail (y:bool) & x & z |- x.
