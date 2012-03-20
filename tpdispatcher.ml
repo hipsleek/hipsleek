@@ -1988,7 +1988,7 @@ let simpl_in_quant formula negated rid =
   Gen.Profiling.no_1 "simpl_in_quant" 
   (fun _ -> simpl_in_quant formula negated rid) formula
 
-let simpl_pair rid (ante, conseq) =
+let simpl_pair rid ante conseq =
   let l1 = CP.bag_vars_formula ante in
   let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
@@ -2008,13 +2008,16 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
-let simpl_pair rid (ante, conseq) =
-  Gen.Profiling.no_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
+let simpl_pair rid ante conseq =
+  Gen.Profiling.no_1 "simpl_pair" (simpl_pair rid ante) conseq
 
-let simpl_pair rid (ante, conseq) =
+let simpl_pair _ a c = (a,c)
+
+let simpl_pair rid ante conseq =
   let pr = pr_pair (!CP.print_formula) (!CP.print_formula) in
-  Debug.no_1 "simpl_pair" pr pr
-  (fun _ -> simpl_pair rid (ante, conseq)) (ante, conseq)
+  let pr1 = (!CP.print_formula)  in
+  Debug.no_3 "simpl_pair" string_of_bool pr1 pr1 pr
+  (fun _ _ _ -> simpl_pair rid ante conseq) rid ante conseq
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   proof_no := !proof_no+1 ;
@@ -2025,10 +2028,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else
-    let t1 = Sys.time () in
-	  let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true) (f, CP.mkFalse no_pos) in
-    let t2 = Sys.time () in
-    let _ = print_endline ("simpl_pair: " ^ (string_of_float (t2 -. t1))) in
+    let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true f) (CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
 	  (* tp_is_sat f sat_no do_cache *)
     Gen.Profiling.do_1 "is_sat -> tp_is_sat" (tp_is_sat f sat_no) do_cache
@@ -2038,7 +2038,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   Gen.Profiling.do_1 "[tpdispatcher.ml] is_sat" (is_sat f sat_no) do_cache
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
-  Debug.ho_1 "[tpdispatcher.ml] is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+  Debug.no_1 "[tpdispatcher.ml] is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
@@ -2073,7 +2073,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let split_conseq = split_conjunctions conseq in
 		let pairs = List.map (fun cons ->
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
-            let (ante,cons) = simpl_pair false (requant ante, requant cons) in
+            let (ante,cons) = simpl_pair false (requant ante) (requant cons) in
             let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
             let ante = CP.remove_dup_constraints ante in
             let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -2162,7 +2162,7 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 			let ante = if CP.should_simplify ante then simplify_a 15 ante else ante in
 			if CP.isConstFalse ante then (true, [], None)
 			else
-			  let (ante, cons) = simpl_pair false (requant ante, requant conseq) in 
+			  let (ante, cons) = simpl_pair false (requant ante) (requant conseq) in 
 			  let ante = CP.remove_dup_constraints ante in
 			  let (ante, cons) = match process with
 				| Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)

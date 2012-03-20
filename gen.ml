@@ -1421,22 +1421,24 @@ struct
   class task_table =
   object 
     val tasks = Hashtbl.create 10
-    method add_task_instance msg time = 	
-      let m = if (time>Globals.profile_threshold) then  [time] else [] in
+    method add_task_instance msg ((f1,f2) as time) =
+      let tt = f1 +. f2 in
+      let m = if (tt>Globals.profile_threshold) then  [tt] else [] in
       try 
 	    let (t1,cnt1,max1) = Hashtbl.find tasks msg in
-	    Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
+        let addp (a,b) (c,d) = (a +.c, b +.d) in
+	    Hashtbl.replace tasks msg (addp t1 time,cnt1+1,m@max1)
       with Not_found -> 
 	      Hashtbl.add tasks msg (time,1,m)
 
     method print : unit = 
-      let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
+      let str_list = Hashtbl.fold (fun c1 ((t1,t2),cnt,l) a-> (c1,t1+.t2,cnt,l)::a) tasks [] in
       let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
       let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
       let f a = (string_of_float ((floor(100. *.a))/.100.)) in
       let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
       let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-          let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+          let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t /.(float_of_int cnt)))^",["^
               (if (List.length l)>0 then 
                 let l = (List.sort compare l) in		
                 (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
@@ -1447,8 +1449,8 @@ struct
   end;;
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack_noexc ("stack underflow",0.,false) 
-    (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
+  let profiling_stack = new stack_noexc ("stack underflow",(0.,0.),false) 
+    (fun (s,(v1,v2),b)-> "("^s^",("^(string_of_float v1)^","^(string_of_float v2)^"),"^(string_of_bool b) ^")") (=)
 
   let add_to_counter (s:string) i = 
     if !Globals.enable_counters then counters#add s i
@@ -1458,9 +1460,9 @@ struct
   let string_of_counters () =  counters#string_of
 
   let get_time () = 
-	  (* let r = Unix.times () in
-	  r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
-    Sys.time ()
+	  let r = Unix.times () in
+	  (r.Unix.tms_utime +. r.Unix.tms_stime, r.Unix.tms_cutime +. r.Unix.tms_cstime)
+    (* Sys.time () *)
 
   (* let push_time_no_cnt msg =  *)
   (*   if (!Globals.profiling) then *)
@@ -1470,7 +1472,7 @@ struct
 
   let push_time_safe msg =
     let timer = get_time () in
-    profiling_stack#push (msg, timer,true) 
+    profiling_stack#push (msg, timer, true) 
 
   let push_time_unsafe msg = 
 	  if !Globals.debugflag && (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then
@@ -1485,21 +1487,22 @@ struct
 
   let pop_time_safe msg tm = 
 		profiling_stack # pop;
-    tasks # add_task_instance msg tm 
+    tasks # add_task_instance msg tm
 
   let pop_time_unsafe msg =
-    let m1,t1,_ = profiling_stack # top in
-    let t2 = get_time () in
+    let m1,(t1,t1c),_ = profiling_stack # top in
+    let (t2,t2c) = get_time () in
     let tm = t2-.t1 in
+    let tmc = t2c-.t1c in
     if !Globals.debugflag then
     begin
 	    if (String.compare m1 msg)!=0 then 
         Error.report_error {Error.error_loc = Globals.no_pos; 
         Error.error_text = ("Profiling: pop mismatch " ^ m1 ^ " with " ^ msg)};
-	    if tm < 0. then 
-        Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling: negative time")}
+	    if tm < 0. || tmc < 0.0 then 
+        Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling: negative times")}
     end; 
-    pop_time_safe msg tm
+    pop_time_safe msg (tm,tmc)
 
   let pop_time msg = 
     if (!Globals.profiling) then
