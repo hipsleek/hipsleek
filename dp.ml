@@ -201,35 +201,25 @@ let sat_check f =
     | SOr (f1,f2) -> (helper eqs neqs w_l f1) || (helper eqs neqs w_l f2) in
   helper [] [] [] f 
 
-(*     
+(*
 let z3_is_sat f sat_no =
-  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+  let (pr_weak_z3,pr_strong_z3) = drop_complex_ops_z3 in
   Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no
 *)
 
 let is_sat f sat_no = 
-  let h f = match trans_f false f with 
+  match trans_f false f with 
   | STrue -> true
   | SFalse -> false
-  | SComp fc -> sat_check fc in
-  (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
-  (* Gen.Profiling.do_1 "stat_dp_sat" h f *)
-  let _ = Gen.Profiling.push_time "stat_dp_sat" in
-  (* let _ = for i = 0 to 50000 do print_string "" done in *)
-  let res = h f in
-  let _ = Gen.Profiling.pop_time "stat_dp_sat" in
-  res
+  | SComp fc -> sat_check fc
 
-(*
+let is_sat f sat_no = 
+  Gen.Profiling.do_1 "stat_dp_is_sat" (is_sat f) sat_no
+
 let is_sat f sat_no =
-(*  let z3_res = z3_is_sat f sat_no in
-  let dp_res = is_sat f sat_no in
-  let _ = if (z3_res != dp_res) then
-    print_endline ("z3-dp: " ^ !CP.print_formula f)
-  in
-  dp_res   *)
-  is_sat f sat_no
-*)
+  let no_pr = fun _ -> "" in
+  Debug.no_1 "[dp]is_sat" no_pr no_pr
+  (fun _ -> is_sat f sat_no) f
 
 let imply_test afc cfc =   
   let rec t_imply e_s n_s cfc = match cfc with 
@@ -274,6 +264,11 @@ let imply ante conseq impl_no _ =
   let res = h ante conseq in
   let _ = Gen.Profiling.pop_time "stat_dp_imply" in
   res
+
+let imply ante conseq impl_no timeout =
+  let no_pr = fun _ -> "" in
+  Debug.no_1 "[dp]imply" no_pr no_pr
+  (fun _ -> imply ante conseq impl_no timeout) ante
 
 (*
 let imply ante conseq impl_no timeout =

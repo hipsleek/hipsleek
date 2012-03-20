@@ -1413,7 +1413,7 @@ struct
       with
         | Not_found -> Hashtbl.add ctrs s i
     method inc (s:string) = self # add s 1
-    method string_of : string= 
+    method string_of : string = 
       let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
       let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
       "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
@@ -1458,8 +1458,9 @@ struct
   let string_of_counters () =  counters#string_of
 
   let get_time () = 
-	  let r = Unix.times () in
-	  r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+	  (* let r = Unix.times () in
+	  r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
+    Sys.time ()
 
   (* let push_time_no_cnt msg =  *)
   (*   if (!Globals.profiling) then *)
@@ -1467,15 +1468,15 @@ struct
   (*       profiling_stack # push (msg, timer,true)  *)
   (*   else () *)
 
-  let push_time_safe msg = 
-      let timer = get_time () in
-	    profiling_stack#push (msg, timer,true) 
+  let push_time_safe msg =
+    let timer = get_time () in
+    profiling_stack#push (msg, timer,true) 
 
   let push_time_unsafe msg = 
-	  if !Globals.debugflag && (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then 
-        Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling : double accouting!"^msg)}
-      else
-        push_time_safe msg
+	  if !Globals.debugflag && (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then
+      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling: double accouting!"^msg)}
+    else
+      push_time_safe msg
 
   let push_time msg = 
     if (!Globals.profiling) then
@@ -1484,21 +1485,21 @@ struct
 
   let pop_time_safe msg tm = 
 		profiling_stack # pop;
-        tasks # add_task_instance msg tm 
+    tasks # add_task_instance msg tm 
 
-  let pop_time_unsafe msg = 
-	let m1,t1,_ = profiling_stack # top in
-	let t2 = get_time () in
+  let pop_time_unsafe msg =
+    let m1,t1,_ = profiling_stack # top in
+    let t2 = get_time () in
     let tm = t2-.t1 in
     if !Globals.debugflag then
-      begin
+    begin
 	    if (String.compare m1 msg)!=0 then 
-          Error.report_error {Error.error_loc = Globals.no_pos; 
-          Error.error_text = ("Profiling :pop  mismatch "^m1^"with"^msg)};
+        Error.report_error {Error.error_loc = Globals.no_pos; 
+        Error.error_text = ("Profiling: pop mismatch " ^ m1 ^ " with " ^ msg)};
 	    if tm < 0. then 
-          Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling : negative time")}
-      end
-        ; pop_time_safe msg tm
+        Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Profiling: negative time")}
+    end; 
+    pop_time_safe msg tm
 
   let pop_time msg = 
     if (!Globals.profiling) then
@@ -1516,11 +1517,10 @@ struct
     if (!Globals.profiling) then
       try
         push_time_unsafe s;
-          let r = f e in
-          (pop_time_unsafe s; r)
+        let r = f e in
+        (pop_time_unsafe s; r)
       with ex -> (pop_time_unsafe s; raise ex)
     else f e
-
 
   (* should eliminate do_2 *)
   let do_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
@@ -1587,7 +1587,6 @@ struct
 	  | [] -> []
 	  | a::b-> (i,a)::(ff (i+1) b) in
     (ff 0 l)
-
 
 end;;
 

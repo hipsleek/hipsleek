@@ -943,7 +943,6 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
-  let _ = Gen.Profiling.push_time "stat_tp_is_sat_no_cache" in
   let res = 
   match !tp with
 	| DP -> 
@@ -1124,8 +1123,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           Sugar.is_sat f sat_no
 	  )
       ) 
-  in let _ = Gen.Profiling.pop_time "stat_tp_is_sat_no_cache" 
   in res
+
+let tp_is_sat_no_cache f sat_no =
+  Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
 
 let tp_is_sat_no_cache f sat_no =
   Debug.no_1 "tp_is_sat_no_cache" Cprinter.string_of_pure_formula string_of_bool 
@@ -1162,7 +1163,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
       (*print_string ("sat hits: "^s^"\n");*)
       r
     with Not_found -> 
-        let r = tp_is_sat_no_cache f sat_no in
+        let r = Gen.Profiling.do_1 "tp_is_sat -> tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no in
         (Hashtbl.add prune_sat_cache s r ;
         Gen.Profiling.inc_counter "sat_proof_count";
         r))
@@ -1953,6 +1954,10 @@ let rec fold_with_subst fold_fun current = function
       fold_with_subst fold_fun current (List.map subst_fun t)
 ;;
 
+let fold_with_subst fold_fun current =
+  Gen.Profiling.no_1 "fold_with_subst" 
+  (fun _ -> fold_with_subst fold_fun current) current
+
 (* TODO goes in just once *)
 let rec simpl_in_quant formula negated rid =
   match negated with
@@ -1979,11 +1984,15 @@ let rec simpl_in_quant formula negated rid =
       end
 ;;
 
+let simpl_in_quant formula negated rid =
+  Gen.Profiling.no_1 "simpl_in_quant" 
+  (fun _ -> simpl_in_quant formula negated rid) formula
+
 let simpl_pair rid (ante, conseq) =
   let l1 = CP.bag_vars_formula ante in
   let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
-  let fold_fun l_f_vars (ante, conseq)  = function
+  let fold_fun l_f_vars (ante, conseq) = function
     | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
     | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
@@ -1999,6 +2008,14 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
+let simpl_pair rid (ante, conseq) =
+  Gen.Profiling.no_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
+
+let simpl_pair rid (ante, conseq) =
+  let pr = pr_pair (!CP.print_formula) (!CP.print_formula) in
+  Debug.no_1 "simpl_pair" pr pr
+  (fun _ -> simpl_pair rid (ante, conseq)) (ante, conseq)
+
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
@@ -2008,13 +2025,20 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else
-	let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    let t1 = Sys.time () in
+	  let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true) (f, CP.mkFalse no_pos) in
+    let t2 = Sys.time () in
+    let _ = print_endline ("simpl_pair: " ^ (string_of_float (t2 -. t1))) in
     (* let f = CP.drop_rel_formula f in *)
-	tp_is_sat f sat_no do_cache
+	  (* tp_is_sat f sat_no do_cache *)
+    Gen.Profiling.do_1 "is_sat -> tp_is_sat" (tp_is_sat f sat_no) do_cache
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
-  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+  Gen.Profiling.do_1 "[tpdispatcher.ml] is_sat" (is_sat f sat_no) do_cache
+
+let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
+  Debug.ho_1 "[tpdispatcher.ml] is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
@@ -2364,7 +2388,7 @@ let is_sat f sat_no do_cache =
       | None -> false
   else  begin   
     disj_cnt f None "sat";
-    Gen.Profiling.do_1 "is_sat" (is_sat f sat_no) do_cache
+    is_sat f sat_no do_cache
   end
 ;;
 
