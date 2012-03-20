@@ -228,8 +228,8 @@ module Term = struct
 		| And | Or | Neg | Implies | Iff
 		| Exists | Forall
 		| GF of int (* generic function of index *)
-								(* convention: negative for logical symbols (variable) *)
-								(* and non-negative for language parameters (constant/functions) *)
+								(* convention: positive for logical symbols (variable) *)
+								(* and negative for language parameters (constant/functions) *)
 
 	(* constructors *)
 	
@@ -456,13 +456,13 @@ module TriaryLogic = struct
 
 end
 
-module Context = struct
+module Theory = struct
 	
 	open Domain
 	open Term
 	open TriaryLogic
 
-	type context = {
+	type theory = {
 			def_symbols : symbol list;
 			axioms : term list;
 			theorems : theorem list;
@@ -470,6 +470,7 @@ module Context = struct
 		
 	and symbol = {
 			name : string;
+			id : int;
 			dom : domain;
 			hints : hint list;
 		}
@@ -559,7 +560,8 @@ module TexBasePrinter : BasePrinter = struct
 		(* | Gt -> ">" | Ge -> "\\geq" *)
 		| And -> "\\land"
 		| Or -> "\\lor" | Neg -> "\\neg"
-		| Implies -> "\\rightarrow" | Iff -> "\\leftrightarrow"
+		| Implies -> "\\rightarrow"
+		| Iff -> "\\leftrightarrow"
 		| Exists -> "\\exists" | Forall -> "\\forall"
 		| GF i -> print_symbol i
 
@@ -611,7 +613,7 @@ end
 module Printer (BP : BasePrinter) = struct
 	
 	open Term
-	open Context
+	open Theory
 
 	let print_symbol i =
 		if (i < 0) then
@@ -652,8 +654,8 @@ module Printer (BP : BasePrinter) = struct
 	
 	let print_term t = print_term_helper 0 t
 	
-	let print_context c =
-		let print_symbol s = "<b>Definition:</b> " ^ s.name ^ "\n" in
+	let print_theory c =
+		let print_symbol s = "<b>Definition:</b> " ^ s.name ^ " ; id = " ^ (string_of_int s.id) ^ BP.newline in
 		let syms = String.concat "" (List.map print_symbol c.def_symbols) in
 		let print_thm t = "<b>Theorem:</b> " ^ BP.term_start ^ (print_term t.content) ^ BP.term_end ^ BP.newline in
 		let thms = String.concat "" (List.map print_thm c.theorems) in
@@ -682,7 +684,7 @@ module Parser = struct
 	open Domain
 	open TriaryLogic
 	open Term
-	open Context
+	open Theory
 	
 	(*open Zutils
 	open Zsort
@@ -876,8 +878,9 @@ module Parser = struct
 		(* process the arguments *)
 		let syms = {
 				name = symname;
-				dom = SWild 0;
-				hints = [];
+				id = add_retrieve_symbol symname;
+				dom = SWild 0; (* dummy value *)
+				hints = []; (* TODO fill up *)
 			} in
 		ctx := {!ctx with 
 			def_symbols = syms :: !ctx.def_symbols;
@@ -887,7 +890,7 @@ module Parser = struct
 	let add_thm t =
 		let thmt = {
 				content = t;
-				proved_status = False;
+				proved_status = Unknown;
 			} in
 		ctx := {!ctx with 
 			theorems = thmt :: !ctx.theorems
@@ -914,10 +917,10 @@ module Parser = struct
 			(* mkTheorem *) add_thm t ]];
 	
 	symbol_defn_header : [[
-		`LET; a = OPT symbol_annotation;
-		s = identifier; `OPAREN;
+		`LET; h = OPT symbol_annotation;
+		f = identifier; `OPAREN;
 		x = LIST0 identifier SEP `COMMA; `CPAREN
-		(* t = formula *) -> (s, x, a) ]];
+		(* t = formula *) -> (f, x, h) ]];
 	
 	formula : [
 		"implication and iff" RIGHTA
@@ -1148,43 +1151,85 @@ end
 
 module Logic = struct
 	
-	(*
+	open Term
 	
+	module Rewrite = struct
+		
+		(**
+		 * Replace non-commutative (subtract and implication)
+		 * operations by commutative ones.
+		 *)
+		let rec replace_uncomm t = match t with
+			| Top | Bot | Num _ -> t
+			| Fx (f, x) ->
+				let x = List.map replace_uncomm x in			
+				match f with
+					| Sub -> 
+						let a = List.nth x 0 in
+						let b = List.nth x 1 in
+							mkBFx Add a (mkBFx Mul (mkNum (-1)) b)
+					| Implies ->
+						let a = List.nth x 0 in
+						let b = List.nth x 1 in
+							mkBFx Or (mkUFx Neg a) b
+					| Iff ->
+						let a = List.nth x 0 in
+						let b = List.nth x 1 in
+						let aib = mkBFx Or (mkUFx Neg a) b in
+						let bia = mkBFx Or (mkUFx Neg b) a in
+							mkBFx And aib bia
+					| _ -> t
+		
+		(**
+		 * Collapse associative operations like AND, OR, +, * using associativity
+		 *)
+		let rec collapse_assoc t = match t with
+			| Top | Bot | Num _ (* | Var _ *) -> t
+			| Fx (f, x) -> 
+				let nx = List.map collapse_assoc x in
+				(match f with
+					| And | Or | Add | Mul ->
+						let nx = List.map (fun y -> match y with
+							| Fx (f, x1) -> x1
+							| _ -> [y]) nx in
+						mkFx f (List.flatten nx)
+					| _ -> t)
+
+		(**
+		 * Push negation toward the atomic
+		 * TODO implement
+		 *)
+		let push_neg t = match t with
+			| _ -> t
+
+		(**
+		 * Simplify terms
+		 * TODO implement
+		 *)
+		let rec simplify t = match t with
+			| _ -> t
+
+		(**
+		 * Normalize terms
+		 * TODO implement
+		 *)
+		let rec normalize t = t
+
+	end
+		
 	module Skolemize = struct
 		
 		(**
-		 * Introduce additional Skolem functions and constants to remove existential quantifiers
+		 * Introduce additional Skolem functions and 
+		 * constants to remove existential quantifiers
+		 * TODO implement
 		 *)
 		let skolemize st t =
 			(st, t)
-		
-		
 			
 	end
 	
-	module Rewrite = struct
-		(**
-		 * Normalize term algebraically
-		 *  - flatten associative operators
-		 *  - make all quantified variables different
-		 *  - re-order and simplify sub-terms
-		 * TODO implement
-		 *)
-		let rec normalize t = match t with
-			| Num _ | Var _ -> t
-			| FunApp (f, x) -> 
-				let nx = List.map normalize x in
-				(match f with
-					| And | Or ->
-						let nx = List.map (fun y -> match y with
-							| FunApp (f, x1) -> x1
-							| _ -> [y]) nx in
-						FunApp (f, (List.flatten nx))
-					| _ -> t)
-
-		
-	end
-	
+	(*
 	module Algebra = struct
 		(**
 		 * Simple algebraic equation solving facility
@@ -1315,7 +1360,7 @@ module StringPrinter = Printer(StringBasePrinter)
 module TexPrinter = Printer(TexBasePrinter)
 
 let process_context ctx =
-	(*StringPrinter.*)TexPrinter.print_context ctx
+	(*StringPrinter.*)TexPrinter.print_theory ctx
 
 (**
  * Command line options as in Arg.parse
