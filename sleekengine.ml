@@ -645,7 +645,32 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
          in ()
   (* with e -> print_exc num_id *)
 
-let process_pinfer puniv ph= print_endline "process_pinfer"
+let process_pinfer_x p_univ0 ph0=
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let pred_univ = meta_to_formula  p_univ0 false [] stab in
+  let pred_univ = Solver.prune_preds !cprog true pred_univ in
+  let pd = meta_to_formula  ph0 false [] stab in
+  let pd = Solver.prune_preds !cprog true pd in
+
+  let h_u, mf_u,_,_,_ = CF.split_components pred_univ in
+  (* let p_u = Mcpure.pure_of_mix mf_u in *)
+  let h, mf,_,_,_ = CF.split_components pd in
+  (* let p = Mcpure.pure_of_mix mf in *)
+  (match h_u,h with
+    | CF.ViewNode hv_u , CF.ViewNode hv->
+        let _ = DD.devel_pprint "heap: View" no_pos in
+        let vd_u = C.look_up_view_def_raw !cprog.C.prog_view_decls hv_u.CF.h_formula_view_name in
+        let vd = C.look_up_view_def_raw !cprog.C.prog_view_decls hv.CF.h_formula_view_name in
+        let _ = Inferp.synthesize_neg_view_def vd_u vd in
+        print_endline "process_pinfer"
+    | _ -> print_endline "process_pinfer: not process"
+  )
+
+let process_pinfer puniv ph=
+ let pr = string_of_meta_formula in
+  let pr_2 = (fun _ -> "out") in
+  Debug.ho_2 "process_pinfer" pr pr pr_2 process_pinfer_x puniv ph
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in

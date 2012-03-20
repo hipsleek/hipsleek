@@ -1155,8 +1155,8 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
 
 pinfer_cmd:
-   [[ `PINFER; t=meta_constr; `EQUIV; b=extended_meta_constr-> (t, b)]];
-(*  [[ `PINFER; t=meta_constr; `DERIVE; b=extended_meta_constr ;`PLUS;  `DOLLAR -> (t, b)]];*)
+   [[ `PINFER; t=meta_constr; `EQUIV; b=meta_constr-> (t, b)]];
+(*  [[ `PINFER; t=meta_constr; `DERIVE; b=meta_constr ;`PLUS;  `DOLLAR -> (t, b)]];*)
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
