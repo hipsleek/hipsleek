@@ -494,6 +494,8 @@ module type BasePrinter = sig
 	
 	val print_func : (int -> string) -> Term.func -> string
 	
+	val print_int : int -> string
+	
 	val top : string
 	
 	val bot : string
@@ -527,6 +529,8 @@ module StringBasePrinter : BasePrinter = struct
 		| Or -> " \\/ " | Neg -> "~" | Implies -> "->" 
 		| Iff -> "<->" | Exists -> "E" | Forall -> "A"
 		| GF i -> print_symbol i
+	
+	let print_int = string_of_int
 	
 	let top = "t"
 	
@@ -565,11 +569,13 @@ module TexBasePrinter : BasePrinter = struct
 		| Exists -> "\\exists" | Forall -> "\\forall"
 		| GF i -> print_symbol i
 
+	let print_int i = "\\underline{\\mathsf{" ^ (string_of_int i) ^ "}}"
+
 	let top = "\\top"
 	
 	let bot = "\\bot"
 	
-	let newline = "<br />"
+	let newline = "<br /><br /><br />"
 	
 	let term_start = "\\("
 	
@@ -636,7 +642,7 @@ module Printer (BP : BasePrinter) = struct
 	let rec print_term_helper p t  = match t with
 		| Top -> BP.top
 		| Bot -> BP.bot
-		| Num i -> string_of_int i
+		| Num i -> BP.print_int i
 		(*| Var (s, v) -> pr_var s v*)
 		| Fx (f, x) ->
 			let pf = precedence_of f in
@@ -650,7 +656,10 @@ module Printer (BP : BasePrinter) = struct
 					| _ -> "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]")
 				| Neg -> sf ^ " " ^ (List.hd sx)
 				| _ -> String.concat (" " ^ sf ^ " ") sx in
-			if (pf < p) then "(" ^ e ^ ")" else e
+(*			if (pf >= p) then*)
+(*				e              *)
+(*			else             *)
+				"(" ^ e ^ ")" 
 	
 	let print_term t = print_term_helper 0 t
 	
@@ -1152,6 +1161,7 @@ end
 module Logic = struct
 	
 	open Term
+	open Theory
 	
 	module Rewrite = struct
 		
@@ -1162,7 +1172,7 @@ module Logic = struct
 		let rec replace_uncomm t = match t with
 			| Top | Bot | Num _ -> t
 			| Fx (f, x) ->
-				let x = List.map replace_uncomm x in			
+				let x = List.map replace_uncomm x in
 				match f with
 					| Sub -> 
 						let a = List.nth x 0 in
@@ -1178,7 +1188,22 @@ module Logic = struct
 						let aib = mkBFx Or (mkUFx Neg a) b in
 						let bia = mkBFx Or (mkUFx Neg b) a in
 							mkBFx And aib bia
-					| _ -> t
+					| _ -> mkFx f x
+
+		module StringPrinter = Printer(StringBasePrinter)
+		
+		let print_inp_out s f t =
+			let _ = print_endline (s ^ " input = " ^ (StringPrinter.print_term t)) in
+			let r = f t in
+			let _ = print_endline (s ^ "output = " ^ (StringPrinter.print_term r)) in
+				r
+		
+		let replace_uncomm t =
+			print_inp_out "replace_uncomm" replace_uncomm t
+(*			let _ = print_endline ("input = " ^ (StringPrinter.print_term t)) in *)
+(*			let t = replace_uncomm t in                                          *)
+(*			let _ = print_endline ("output = " ^ (StringPrinter.print_term t)) in*)
+(*				t                                                                  *)
 		
 		(**
 		 * Collapse associative operations like AND, OR, +, * using associativity
@@ -1186,14 +1211,29 @@ module Logic = struct
 		let rec collapse_assoc t = match t with
 			| Top | Bot | Num _ (* | Var _ *) -> t
 			| Fx (f, x) -> 
-				let nx = List.map collapse_assoc x in
-				(match f with
-					| And | Or | Add | Mul ->
-						let nx = List.map (fun y -> match y with
-							| Fx (f, x1) -> x1
-							| _ -> [y]) nx in
-						mkFx f (List.flatten nx)
-					| _ -> t)
+				let x = List.map collapse_assoc x in
+				match f with
+					| And 
+					| Or 
+					| Add 
+					| Mul ->
+						let x = List.map (fun y -> match y with
+							| Fx (f1, z) -> (*(match (f, f1) with
+								| (And,And) 
+								| (Or,Or)
+								| (Add,Add) 
+								| (Mul,Mul) -> z
+								| _ -> [y])*)
+								if (f1 = f) then 
+									z 
+								else
+									[y]
+							| _ -> [y]) x in
+						mkFx f (List.flatten x)
+					| _ -> mkFx f x
+
+		let collapse_assoc t =
+			print_inp_out "collapse_assoc" collapse_assoc t
 
 		(**
 		 * Push negation toward the atomic
@@ -1213,7 +1253,10 @@ module Logic = struct
 		 * Normalize terms
 		 * TODO implement
 		 *)
-		let rec normalize t = t
+		let rec normalize t =
+			let t = replace_uncomm t in
+			let t = collapse_assoc t in
+				t
 
 	end
 		
@@ -1324,6 +1367,16 @@ module Logic = struct
 			List.map (fun t -> "<b>Theorem:</b> \\(" ^ (latex_of_term t.thm) ^ "\\)<br />") thms
 
 	*)
+	
+	let process_theorem thm = {
+			thm with
+				content = Rewrite.normalize thm.content;
+		}
+	
+	let process_theory thry = {
+		thry with
+			theorems = List.map process_theorem thry.theorems;
+		}
 
 end
 
@@ -1359,8 +1412,9 @@ let string_of_file fname =
 module StringPrinter = Printer(StringBasePrinter)
 module TexPrinter = Printer(TexBasePrinter)
 
-let process_context ctx =
-	(*StringPrinter.*)TexPrinter.print_theory ctx
+let process_theory th =
+	let th = Logic.process_theory th in
+	(*StringPrinter.*)TexPrinter.print_theory th
 
 (**
  * Command line options as in Arg.parse
@@ -1374,10 +1428,10 @@ let main () =
 	let _ = Arg.parse command_line_arg_speclist add_source_file usage in
 	let _ = Z3.toggle_warning_messages false in
 	let _ = print_endline ("Source files : {" ^ (String.concat ", " !input_files) ^ "}") in
-	let ctx = List.map parse_file !input_files in
+	let th = List.map parse_file !input_files in
 	(*let _ = print_endline (string_of_int (List.length ctx)) in*)
-	let ctx = List.hd ctx in
-	let output = process_context ctx in
+	let th = List.hd th in
+	let output = process_theory th in
 	let _ = print_endline ((* "Content:\n" ^ *) output) in
 	(*let defs = List.map parse_file !input_files in
 	let output = List.map process_definitions defs in
