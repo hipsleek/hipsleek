@@ -1,0 +1,26 @@
+/* representation of a cell node */
+
+data cell {
+    int val; 
+}.
+
+checkentail htrue |- emp.                               // Valid
+
+checkentail emp |- htrue.                               // Fail
+
+checkentail emp * htrue & false|- true.                 // Valid
+
+checkentail emp * htrue & true|- false.                 // Fail
+
+checkentail emp & false|- htrue & false.                // Fail
+
+checkentail htrue * htrue |- emp.                       // Valid
+
+checkentail htrue * x::cell<_> |- x::cell<_>.           // Valid
+
+checkentail x::cell<_> * htrue |- x::cell<_>.           // Valid
+
+checkentail emp * x::cell<_> |- x::cell<_>.             // Valid
+
+checkentail x::cell<_> * emp |- x::cell<_>.             // Valid
+

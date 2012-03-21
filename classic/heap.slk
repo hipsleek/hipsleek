@@ -1,7 +1,0 @@
-/* representation of a cell node */
-
-data cell {
-	int val; 
-}.
-
-checkentail x::cell<_> * y::cell<_> |- x::cell<_>.
