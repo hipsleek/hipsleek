@@ -176,11 +176,11 @@ and string_of_spec_var = function
 
 let rec formula_of_heap_1 h pos = mkBase h (P.mkTrue pos) top_flow [] pos
 
-and formula_of_pure_1 p pos = mkBase HTrue p top_flow [] pos
+and formula_of_pure_1 p pos = mkBase HEmp p top_flow [] pos                (* pure formula has Empty heap *)
 
 and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
 
-and formula_of_pure_with_flow p f a pos = mkBase HTrue p f a pos
+and formula_of_pure_with_flow p f a pos = mkBase HEmp p f a pos            (* pure formula has Empty heap *)
 
 and one_formula_of_formula f =
   match f with

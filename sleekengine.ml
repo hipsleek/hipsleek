@@ -419,6 +419,12 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
+let meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
+  let pr_meta = string_of_meta_formula in
+  let pr_f = Cprinter.string_of_formula in
+  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
+             (fun mf -> meta_to_formula mf quant fv_idents stab) mf0
+
 (* let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) = *)
 (* 		(\*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *\) *)
 (* 		(\* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *\) *)
