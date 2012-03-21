@@ -33,7 +33,8 @@ type tp_type =
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
   | MINISAT
-  | SUGAR    
+  | SUGAR   
+  | MEMO
 
 let test_db = false
 
@@ -51,6 +52,9 @@ let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" 
 
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
+
+let memo_res = ref []
+let memo_file = ref ""
 
 let prover_arg = ref "oc"
 let external_prover = ref false
@@ -83,7 +87,8 @@ let string_of_prover prover = match prover with
 	| DP -> "Disequality Solver"
   | SPASS -> "SPASS"
   | MINISAT-> "MINISAT"  
-  | SUGAR -> "SUGAR" 	
+  | SUGAR -> "SUGAR" 
+  | MEMO -> "MEMO"
 
 (* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
 
@@ -384,6 +389,7 @@ let set_tp tp_str =
   if (String.sub tp_str 0 2) = "oc" then
     (Omega.omegacalc := tp_str; tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "dp" then tp := DP
+  else if tp_str = "memo" then tp := MEMO
   else if tp_str = "cvcl" then 
 	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
@@ -466,7 +472,8 @@ let string_of_tp tp = match tp with
   | DP -> "dp"
   | SPASS -> "spass"
   | MINISAT-> "minisat"  
-  | SUGAR -> "sugar"	
+  | SUGAR -> "sugar"
+  | MEMO -> "memo"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -491,6 +498,7 @@ let name_of_tp tp = match tp with
   | SPASS -> "SPASS"
   | MINISAT -> "MINISAT" 
   | SUGAR -> "SUGAR"
+  | MEMO -> "memo"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -1122,8 +1130,22 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 	  (
           Sugar.is_sat f sat_no
 	  )
-      ) 
-  in res
+      )
+    | MEMO ->
+        let r = List.hd !memo_res in
+        memo_res := List.tl !memo_res;
+        r
+  in 
+  (* Memoising provers' result *)
+  let _ = 
+     match !tp with
+    | MEMO -> ()
+    | _ -> 
+        let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
+        output_string out_stream ((string_of_bool res) ^ "\n");
+        close_out out_stream
+  in 
+  res
 
 let tp_is_sat_no_cache f sat_no =
   Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
@@ -1774,8 +1796,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else
           (called_prover :="SUGAR "; 
 	   Sugar.imply ante conseq timeout);
-      ) 
-       
+      )
+       | MEMO -> 
+           let r = List.hd !memo_res in
+           memo_res := List.tl !memo_res;
+           r
   in
   let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in
 	let _ = if should_output () then
@@ -1792,7 +1817,16 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				(* print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>"); *)
 			end
 	in
-		r
+  (* Memoising provers' result *)
+  let _ =
+    match !tp with
+    | MEMO -> ()
+    | _ ->
+        let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
+        output_string out_stream ((string_of_bool r) ^ "\n");
+        close_out out_stream
+  in 
+	r
 ;;
 
 let tp_imply_no_cache i ante conseq imp_no timeout process =	
@@ -1884,7 +1918,6 @@ let tp_imply ante conseq imp_no timeout do_cache process =
     tp_imply ante conseq imp_no timeout process
 ;;
 
-
 let tp_imply(* _debug *) ante conseq imp_no timeout do_cache process =
   Debug.no_6 "tp_imply " 
       Cprinter.string_of_pure_formula 
@@ -1892,132 +1925,6 @@ let tp_imply(* _debug *) ante conseq imp_no timeout do_cache process =
       (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
       string_of_bool 
       tp_imply ante conseq imp_no timeout do_cache process
-
-(* renames all quantified variables *)
-let rec requant = function
-  | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
-  | CP.Or (f, g, lbl, l) -> CP.Or (requant f, requant g, lbl, l)
-  | CP.Not (f, lbl, l) -> CP.Not (requant f, lbl, l)
-  | CP.Forall (v, f, lbl, l) ->
-      let nv = CP.fresh_spec_var v in
-      CP.Forall (nv, (CP.subst [v, nv] (requant f)), lbl, l)
-  | CP.Exists (v, f, lbl, l) ->
-      let nv = CP.fresh_spec_var v in
-      CP.Exists (nv, (CP.subst [v, nv] (requant f)), lbl, l)
-  | x -> x
-;;
-
-let rewrite_in_list list formula =
-  match formula with
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
-      List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
-      List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
-  | x -> list
-;;
-
-let rec rewrite_in_and_tree rid formula rform =
-  match formula with
-  | CP.And (x, y, l) ->
-      let (x, fx) = rewrite_in_and_tree rid x rform in
-      let (y, fy) = rewrite_in_and_tree rid y rform in
-      (CP.And (x, y, l), (fun e -> fx (fy e)))
-  | x ->
-      let subst_fun =
-        match rform with
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> CP.subst [v1, v2]
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) -> CP.subst_term [v1, term]
-        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) -> CP.subst_term [v1, term]
-        | _ -> fun x -> x
-      in
-      if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
-;;
-
-let is_irrelevant = function
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> v1 = v2
-  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _) -> i1 = i2
-  | _ -> false
-;;
-
-let rec get_rid_of_eq = function
-  | CP.And (x, y, l) -> 
-      if is_irrelevant x then (get_rid_of_eq y) else
-      if is_irrelevant y then (get_rid_of_eq x) else
-      CP.And (get_rid_of_eq x, get_rid_of_eq y, l)
-  | z -> z
-;;
-
-let rec fold_with_subst fold_fun current = function
-  | [] -> current
-  | h :: t ->
-      let current, subst_fun = fold_fun current h in
-      fold_with_subst fold_fun current (List.map subst_fun t)
-;;
-
-let fold_with_subst fold_fun current =
-  Gen.Profiling.no_1 "fold_with_subst" 
-  (fun _ -> fold_with_subst fold_fun current) current
-
-(* TODO goes in just once *)
-let rec simpl_in_quant formula negated rid =
-  match negated with
-  | true ->
-      begin match formula with
-      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f false rid, lbl, l)
-      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, l)
-      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, l)
-      | CP.Or (f, g, lbl, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, lbl, l)
-      | CP.And (_, _, _) ->
-          let subfs = split_conjunctions formula in
-          let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
-          let nformula = get_rid_of_eq nformula in
-          nformula
-      | x -> x
-      end
-  | false ->
-      begin match formula with
-      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f true true, lbl, l)
-      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
-      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
-      | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
-      | x -> x
-      end
-;;
-
-let simpl_in_quant formula negated rid =
-  Gen.Profiling.no_1 "simpl_in_quant" 
-  (fun _ -> simpl_in_quant formula negated rid) formula
-
-let simpl_pair rid ante conseq =
-  let l1 = CP.bag_vars_formula ante in
-  let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
-  let antes = split_conjunctions ante in
-  let fold_fun l_f_vars (ante, conseq) = function
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
-        ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
-    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
-		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
-		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
-    | _ -> ((ante, conseq), fun x -> x)
-  in
-  let (ante1, conseq) = fold_with_subst (fold_fun l1) (ante, conseq) antes in
-  let ante1 = get_rid_of_eq ante1 in
-  let ante2 = simpl_in_quant ante1 true rid in
-  let ante3 = simpl_in_quant ante2 true rid in
-  (ante3, conseq)
-;;
-
-let simpl_pair rid ante conseq =
-  Gen.Profiling.no_1 "simpl_pair" (simpl_pair rid ante) conseq
-
-let simpl_pair _ a c = (a,c)
-
-let simpl_pair rid ante conseq =
-  let pr = pr_pair (!CP.print_formula) (!CP.print_formula) in
-  let pr1 = (!CP.print_formula)  in
-  Debug.no_3 "simpl_pair" string_of_bool pr1 pr1 pr
-  (fun _ _ _ -> simpl_pair rid ante conseq) rid ante conseq
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   proof_no := !proof_no+1 ;
@@ -2028,7 +1935,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else
-    let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true f) (CP.mkFalse no_pos) in
+    (* let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true f) (CP.mkFalse no_pos) in *)
     (* let f = CP.drop_rel_formula f in *)
 	  (* tp_is_sat f sat_no do_cache *)
     Gen.Profiling.do_1 "is_sat -> tp_is_sat" (tp_is_sat f sat_no) do_cache
@@ -2073,7 +1980,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let split_conseq = split_conjunctions conseq in
 		let pairs = List.map (fun cons ->
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
-            let (ante,cons) = simpl_pair false (requant ante) (requant cons) in
+            (* let (ante,cons) = simpl_pair false (requant ante) (requant cons) in *)
             let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
             let ante = CP.remove_dup_constraints ante in
             let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -2162,8 +2069,9 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 			let ante = if CP.should_simplify ante then simplify_a 15 ante else ante in
 			if CP.isConstFalse ante then (true, [], None)
 			else
-			  let (ante, cons) = simpl_pair false (requant ante) (requant conseq) in 
+			  (* let (ante, cons) = simpl_pair false (requant ante) (requant conseq) in *)
 			  let ante = CP.remove_dup_constraints ante in
+        let cons = conseq in
 			  let (ante, cons) = match process with
 				| Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
 				| _ -> assumption_filter ante cons
@@ -2895,6 +2803,11 @@ let print_stats () =
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   (* Redlog.start (); *)
+  (* Removing the old memo file *)
+  let _ = match !tp with
+  | MEMO -> ()
+  | _ -> Sys.remove !memo_file
+  in
   match !tp with
   | Coq -> begin
       Coq.start ();
@@ -2930,7 +2843,19 @@ let start_prover () =
       Smtsolver.start();
   | SPASS -> Spass.start();
   | MINISAT ->  Minisat.start() ; 
-  | SUGAR ->  Sugar.start() ; 
+  | SUGAR ->  Sugar.start() ;
+  | MEMO -> 
+      (if not (Sys.file_exists !memo_file) then 
+        report_error no_pos ("Memoised file not found (" ^ !memo_file ^ ")")
+      else     
+        let in_stream  = open_in !memo_file in
+        try
+          while true; do
+            memo_res := (bool_of_string (input_line in_stream)) :: !memo_res
+          done;
+        with End_of_file ->
+          close_in in_stream;
+          memo_res := List.rev !memo_res)
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2966,7 +2891,7 @@ let stop_prover () =
 		Mona.stop();
 		Omega.stop();
 	  end
-	| DP -> Smtsolver.stop()
+	  | DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
     | SPASS -> Spass.stop();
@@ -2981,7 +2906,8 @@ let stop_prover () =
                   Omega.stop () ;
 		  Sugar.stop() 
                   )
-                  else (Omega.stop () ;Sugar.stop() ) 
+                  else (Omega.stop () ;Sugar.stop() )
+    | MEMO -> ()
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096

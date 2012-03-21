@@ -1432,13 +1432,16 @@ struct
 	      Hashtbl.add tasks msg (time,1,m)
 
     method print : unit = 
-      let str_list = Hashtbl.fold (fun c1 ((t1,t2),cnt,l) a-> (c1,t1+.t2,cnt,l)::a) tasks [] in
+      let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
       let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-      let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+      let (_,(ot1, ot2),_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+      let ot = ot1 +. ot2 in
       let f a = (string_of_float ((floor(100. *.a))/.100.)) in
       let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-          let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t /.(float_of_int cnt)))^",["^
+      let fpair (x, y) = "(" ^ (f x) ^ ", " ^ (f y) ^ ")" in
+      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,(t1,t2),cnt,l)  ->
+          let t = t1 +. t2 in
+          let r = (a2^" \n("^c1^","^(fpair (t1,t2))^","^(string_of_int cnt)^","^ (f (t /.(float_of_int cnt)))^",["^
               (if (List.length l)>0 then 
                 let l = (List.sort compare l) in		
                 (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )

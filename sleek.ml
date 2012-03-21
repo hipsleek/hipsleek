@@ -38,7 +38,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 let source_files = ref ([] : string list)
 
-let set_source_file arg = 
+let set_source_file arg =
+  Tpdispatcher.memo_file := arg ^ ".memo";
   source_files := arg :: !source_files
 
 let print_version () =
@@ -188,7 +189,7 @@ let main () =
       | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
-    try
+  try
       if (!inter) then 
         while not (!quit) do
           if !inter then (* check for interactivity *)
@@ -256,10 +257,12 @@ let _ =
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
+    Tpdispatcher.stop_prover ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
-    print_string "\n")
+    (* Tpdispatcher.stop_prover (); *)
+    print_string "\n";)
+    

@@ -1,6 +1,136 @@
 open Globals
 open Error
 open Cpure
+open Gen
+
+module CP = Cpure
+
+(* simpl_pair from Tpdispatcher *)
+(* renames all quantified variables *)
+let rec requant = function
+  | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
+  | CP.Or (f, g, lbl, l) -> CP.Or (requant f, requant g, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (requant f, lbl, l)
+  | CP.Forall (v, f, lbl, l) ->
+      let nv = CP.fresh_spec_var v in
+      CP.Forall (nv, (CP.subst [v, nv] (requant f)), lbl, l)
+  | CP.Exists (v, f, lbl, l) ->
+      let nv = CP.fresh_spec_var v in
+      CP.Exists (nv, (CP.subst [v, nv] (requant f)), lbl, l)
+  | x -> x
+;;
+
+let rewrite_in_list list formula =
+  match formula with
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+      List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
+      List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
+  | x -> list
+;;
+
+let rec rewrite_in_and_tree rid formula rform =
+  match formula with
+  | CP.And (x, y, l) ->
+      let (x, fx) = rewrite_in_and_tree rid x rform in
+      let (y, fy) = rewrite_in_and_tree rid y rform in
+      (CP.And (x, y, l), (fun e -> fx (fy e)))
+  | x ->
+      let subst_fun =
+        match rform with
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> CP.subst [v1, v2]
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) -> CP.subst_term [v1, term]
+        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) -> CP.subst_term [v1, term]
+        | _ -> fun x -> x
+      in
+      if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
+;;
+
+let is_irrelevant = function
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> v1 = v2
+  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _) -> i1 = i2
+  | _ -> false
+;;
+
+let rec get_rid_of_eq = function
+  | CP.And (x, y, l) -> 
+      if is_irrelevant x then (get_rid_of_eq y) else
+      if is_irrelevant y then (get_rid_of_eq x) else
+      CP.And (get_rid_of_eq x, get_rid_of_eq y, l)
+  | z -> z
+;;
+
+let rec fold_with_subst fold_fun current = function
+  | [] -> current
+  | h :: t ->
+      let current, subst_fun = fold_fun current h in
+      fold_with_subst fold_fun current (List.map subst_fun t)
+;;
+
+let fold_with_subst fold_fun current =
+  Gen.Profiling.no_1 "fold_with_subst" 
+  (fun _ -> fold_with_subst fold_fun current) current
+
+(* TODO goes in just once *)
+let rec simpl_in_quant formula negated rid =
+  match negated with
+  | true ->
+      begin match formula with
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f false rid, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Or (f, g, lbl, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, lbl, l)
+      | CP.And (_, _, _) ->
+          let subfs = split_conjunctions formula in
+          let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
+          let nformula = get_rid_of_eq nformula in
+          nformula
+      | x -> x
+      end
+  | false ->
+      begin match formula with
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f true true, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
+      | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
+      | x -> x
+      end
+;;
+
+let simpl_in_quant formula negated rid =
+  Gen.Profiling.no_1 "simpl_in_quant" 
+  (fun _ -> simpl_in_quant formula negated rid) formula
+
+let simpl_pair rid ante conseq =
+  let l1 = CP.bag_vars_formula ante in
+  let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
+  let antes = split_conjunctions ante in
+  let fold_fun l_f_vars (ante, conseq) = function
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+        ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
+    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
+		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
+		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
+    | _ -> ((ante, conseq), fun x -> x)
+  in
+  let (ante1, conseq) = fold_with_subst (fold_fun l1) (ante, conseq) antes in
+  let ante1 = get_rid_of_eq ante1 in
+  let ante2 = simpl_in_quant ante1 true rid in
+  let ante3 = simpl_in_quant ante2 true rid in
+  (ante3, conseq)
+;;
+
+let simpl_pair rid ante conseq =
+  Gen.Profiling.no_1 "simpl_pair" (simpl_pair rid ante) conseq
+
+(* let simpl_pair _ a c = (a,c) *)
+
+let simpl_pair rid ante conseq =
+  let pr = pr_pair (!CP.print_formula) (!CP.print_formula) in
+  let pr1 = (!CP.print_formula)  in
+  Debug.no_3 "simpl_pair" string_of_bool pr1 pr1 pr
+  (fun _ _ _ -> simpl_pair rid ante conseq) rid ante conseq
 
 type var_rep = string
 
@@ -207,7 +337,8 @@ let z3_is_sat f sat_no =
   Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no
 *)
 
-let is_sat f sat_no = 
+let is_sat f sat_no =
+  let (f, _) = Gen.Profiling.do_1 "is_sat -> simpl_pair" (simpl_pair true f) (CP.mkFalse no_pos) in
   match trans_f false f with 
   | STrue -> true
   | SFalse -> false
@@ -258,6 +389,8 @@ let imply ante conseq impl_no _ =
 		 | STrue -> false
 		 | SFalse -> true
 		 | SComp afc -> imply_test afc cfc in
+  let (ante, cons) = simpl_pair false (requant ante) (requant conseq) in
+  let ante = CP.remove_dup_constraints ante in
 	(* Gen.Profiling.do_2 "stat_dp_imply" h ante conseq *)
   let _ = Gen.Profiling.push_time "stat_dp_imply" in
   (* let _ = for i = 0 to 50000 do print_string "" done in *)
@@ -304,9 +437,6 @@ let pairwisecheck f = (* Omega.pairwisecheck f *) f
         else if (sat_check cfc) then 
      else *)
      imply_test afc cfc *)
-     
-     
-     
      
 (*
 and sets = (var_rep list list * Hashtbl.t)

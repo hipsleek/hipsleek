@@ -210,6 +210,9 @@ let rec smt_of_formula pr_w pr_s f =
   helper f
 
 let smt_of_formula pr_w pr_s f =
+  Gen.Profiling.do_1 "smt_of_formula" (smt_of_formula pr_w pr_s) f
+
+let smt_of_formula pr_w pr_s f =
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
@@ -484,6 +487,9 @@ let iget_answer chn input=
     let solver_sat_result = List.nth output (List.length output - 1) in
 	{ original_output_text = output;
 	  sat_result = sat_type_from_string solver_sat_result input; }
+
+let iget_answer chn input =
+  Gen.Profiling.do_1 "iget_answer" (iget_answer chn) input
 
 let get_answer chn input=
 	let output = collect_output chn [] in

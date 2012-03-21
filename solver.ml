@@ -2597,7 +2597,10 @@ and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool =
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+  Debug.no_1 "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_s prog sat_subno es) es
+
+and elim_unsat_es_s (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+  Gen.Profiling.do_1 "elim_unsat_es" (elim_unsat_es_x prog sat_subno) es
       
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
@@ -2613,7 +2616,10 @@ and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : co
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_s prog sat_subno es) es
+
+and elim_unsat_es_now_s (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+  Gen.Profiling.do_1 "elim_unsat_es_now" (elim_unsat_es_now_x prog sat_subno) es
   	  
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
@@ -5378,7 +5384,11 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs rhs_p_br pos =
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) es lhs rhs
+      (fun _ _ _ -> heap_entail_empty_rhs_heap_stat p i_f es lhs rhs rhsb pos) es lhs rhs
+
+and heap_entail_empty_rhs_heap_stat p i_f es lhs rhs rhsb pos =
+  Gen.Profiling.do_1 "heap_entail_empty_rhs_heap"
+  (heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb) pos
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
