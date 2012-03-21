@@ -305,7 +305,8 @@ let rec trans_f b f = match f with
   | Forall _ -> failwith "unexpected forall!"
   | Exists (v,f,_,_) -> if b then elim_ex (!Cpure.print_sv v) (trans_f b f) else trans_f b f  
   
-let trans_f b f = Gen.Profiling.do_1 "dptransf" (trans_f b) f
+(* let trans_f b f = Gen.Profiling.do_1 "dptransf" (trans_f b) f *)
+
 let sat_check f = 
   let rec and_lin f = match f with | SAnd (f1,f2) -> (and_lin f1)@(and_lin f2) | _ -> [f] in
   let contra_test1 eq_s (v1,v2) = Gen.BList.mem_eq s_eq v2 (get_aset eq_s v1) in
@@ -345,7 +346,7 @@ let is_sat f sat_no =
   | SComp fc -> sat_check fc
 
 let is_sat f sat_no = 
-  Gen.Profiling.do_1 "stat_dp_is_sat" (is_sat f) sat_no
+  Gen.Profiling.do_1 "stat_dp_sat" (is_sat f) sat_no
 
 let is_sat f sat_no =
   let no_pr = fun _ -> "" in
@@ -391,12 +392,11 @@ let imply ante conseq impl_no _ =
 		 | SComp afc -> imply_test afc cfc in
   let (ante, cons) = simpl_pair false (requant ante) (requant conseq) in
   let ante = CP.remove_dup_constraints ante in
-	(* Gen.Profiling.do_2 "stat_dp_imply" h ante conseq *)
-  let _ = Gen.Profiling.push_time "stat_dp_imply" in
-  (* let _ = for i = 0 to 50000 do print_string "" done in *)
   let res = h ante conseq in
-  let _ = Gen.Profiling.pop_time "stat_dp_imply" in
   res
+
+let imply ante conseq impl_no timeout =
+  Gen.Profiling.do_1 "stat_dp_imply" (imply ante conseq impl_no) timeout
 
 let imply ante conseq impl_no timeout =
   let no_pr = fun _ -> "" in

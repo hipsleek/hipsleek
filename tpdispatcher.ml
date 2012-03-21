@@ -36,7 +36,7 @@ type tp_type =
   | SUGAR   
   | MEMO
 
-let test_db = false
+let test_dp = false
 
 let tp = ref OmegaCalc
 (* let tp = ref OZ *)
@@ -928,12 +928,13 @@ let disj_cnt a c s =
   else ()
 
 let stat_tp cmd tp_name =
-  try 
+  (* try 
     Gen.Profiling.push_time ("stat_" ^ tp_name);
     let r = (Lazy.force cmd) in
     Gen.Profiling.pop_time ("stat_" ^ tp_name);
     r
-  with ex -> (Gen.Profiling.pop_time ("stat_" ^ tp_name); raise ex)
+  with ex -> (Gen.Profiling.pop_time ("stat_" ^ tp_name); raise ex) *)
+  Gen.Profiling.do_1 ("stat_" ^ tp_name) Lazy.force cmd
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 (*  print_endline "==== in function tp_is_sat_no_cache ====";*)
@@ -955,13 +956,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
 	| DP -> 
 		let r = stat_tp (lazy (Dp.is_sat f sat_no)) "dp" in
-		if test_db then 
+		if test_dp then 
 			let r2 = stat_tp (lazy (Smtsolver.is_sat f sat_no)) "dp_z3_unsat" in
 			if r=r2 then r 
 			else 
 				failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
 		else r
-
     | OmegaCalc ->
           if (CP.is_float_formula wf) then (redlog_is_sat wf)
           else
@@ -1132,18 +1132,23 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 	  )
       )
     | MEMO ->
-        let r = List.hd !memo_res in
-        memo_res := List.tl !memo_res;
-        r
+        let get_res () = 
+          let r = List.hd !memo_res in
+          memo_res := List.tl !memo_res;
+          r
+        in stat_tp (lazy (get_res ())) "memo"
   in 
   (* Memoising provers' result *)
   let _ = 
      match !tp with
     | MEMO -> ()
     | _ -> 
-        let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
-        output_string out_stream ((string_of_bool res) ^ "\n");
-        close_out out_stream
+        let out_res () = 
+          let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
+          output_string out_stream ((string_of_bool res) ^ "\n");
+          close_out out_stream
+        in 
+        stat_tp (lazy (out_res ())) "memo_io"
   in 
   res
 
@@ -1220,7 +1225,7 @@ let simplify_omega f =
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
-    let omega_simplify f = Omega.simplify f in
+    let omega_simplify f = stat_tp (lazy (Omega.simplify f)) "oc_simpl" in
     (* this simplifcation will first remove complex formula
        as boolean vars but later restore them *)
     if !external_prover then 
@@ -1638,7 +1643,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let r = match !tp with
     | DP ->
         let r = stat_tp (lazy (Dp.imply ante_w conseq_s (imp_no^"XX") timeout)) "dp" in
-        if test_db then 
+        if test_dp then 
           let r2 = stat_tp (lazy (Smtsolver.imply ante conseq (*(imp_no^"XX")*)
           timeout)) "z3_dp_imply" in
           if r=r2 then r
@@ -1798,9 +1803,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	   Sugar.imply ante conseq timeout);
       )
        | MEMO -> 
-           let r = List.hd !memo_res in
-           memo_res := List.tl !memo_res;
-           r
+           let get_res () = 
+             let r = List.hd !memo_res in
+             memo_res := List.tl !memo_res;
+             r
+           in stat_tp (lazy (get_res ())) "memo"
   in
   let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in
 	let _ = if should_output () then
@@ -1822,9 +1829,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     match !tp with
     | MEMO -> ()
     | _ ->
-        let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
-        output_string out_stream ((string_of_bool r) ^ "\n");
-        close_out out_stream
+        let out_res () =
+          let out_stream = open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o666 !memo_file in
+          output_string out_stream ((string_of_bool r) ^ "\n");
+          close_out out_stream
+        in 
+        stat_tp (lazy (out_res ())) "memo_io"
   in 
 	r
 ;;
@@ -2806,7 +2816,7 @@ let start_prover () =
   (* Removing the old memo file *)
   let _ = match !tp with
   | MEMO -> ()
-  | _ -> Sys.remove !memo_file
+  | _ -> stat_tp (lazy (Sys.remove !memo_file)) "memo_io"
   in
   match !tp with
   | Coq -> begin
@@ -2844,18 +2854,20 @@ let start_prover () =
   | SPASS -> Spass.start();
   | MINISAT ->  Minisat.start() ; 
   | SUGAR ->  Sugar.start() ;
-  | MEMO -> 
-      (if not (Sys.file_exists !memo_file) then 
-        report_error no_pos ("Memoised file not found (" ^ !memo_file ^ ")")
-      else     
-        let in_stream  = open_in !memo_file in
-        try
-          while true; do
-            memo_res := (bool_of_string (input_line in_stream)) :: !memo_res
-          done;
-        with End_of_file ->
-          close_in in_stream;
-          memo_res := List.rev !memo_res)
+  | MEMO ->
+      let memo_start () = 
+        if not (Sys.file_exists !memo_file) then 
+          report_error no_pos ("Memoised file not found (" ^ !memo_file ^ ")")
+        else     
+          let in_stream  = open_in !memo_file in
+          try
+            while true; do
+              memo_res := (bool_of_string (input_line in_stream)) :: !memo_res
+            done;
+          with End_of_file ->
+            (close_in in_stream;
+            memo_res := List.rev !memo_res)
+      in stat_tp (lazy (memo_start ())) "memo"
   | _ -> Omega.start()
   
 let stop_prover () =

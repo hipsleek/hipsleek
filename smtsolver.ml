@@ -209,8 +209,8 @@ let rec smt_of_formula pr_w pr_s f =
   in
   helper f
 
-let smt_of_formula pr_w pr_s f =
-  Gen.Profiling.do_1 "smt_of_formula" (smt_of_formula pr_w pr_s) f
+(* let smt_of_formula pr_w pr_s f = *)
+(*   Gen.Profiling.do_1 "smt_of_formula" (smt_of_formula pr_w pr_s) f *)
 
 let smt_of_formula pr_w pr_s f =
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
@@ -488,8 +488,8 @@ let iget_answer chn input=
 	{ original_output_text = output;
 	  sat_result = sat_type_from_string solver_sat_result input; }
 
-let iget_answer chn input =
-  Gen.Profiling.do_1 "iget_answer" (iget_answer chn) input
+(* let iget_answer chn input = *)
+(*   Gen.Profiling.do_1 "iget_answer" (iget_answer chn) input *)
 
 let get_answer chn input=
 	let output = collect_output chn [] in
@@ -979,11 +979,8 @@ and smt_imply pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) 
       (fun _ _-> smt_imply_stat pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_stat pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
-  (* Gen.Profiling.do_1 "stat_z3_imply" (smt_imply_x pr_weak pr_strong ante conseq prover) timeout *)
-  (* Gen.Profiling.do_1 "[dp@z3]imply" (Dp.imply ante conseq "") timeout *)
-  let res = smt_imply_x pr_weak pr_strong ante conseq prover timeout in
-  (* let res = Dp.imply ante conseq "" timeout in *)
-  res
+  Gen.Profiling.do_1 "stat_z3_imply"
+    (smt_imply_x pr_weak pr_strong ante conseq prover) timeout 
 
 (*
 and smt_imply_both pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
