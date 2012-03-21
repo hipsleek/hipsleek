@@ -6858,6 +6858,7 @@ let rec add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)

@@ -7,10 +7,35 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
+relation A(int n).
+//relation B(AnnT v1, AnnT v2, AnnT v3).
+/*
+//(1) QA: why do I still have to infer n when I already have infer of A?
+infer [n,A] x::ll<n> & A(n) |- x::node<a,b> * b::ll<m> & A(m).
+print residue.
+
+//(2) below fails because i don't infer n 
+infer [A] x::ll<n> & A(n) |- x::node<a,b> * b::ll<m> & A(m).
+print residue.
+*/
+//(3) 
+infer [n, A, v, v1, v2] x::ll<n>@v & A(n) |- x::node<a,b>@v1 * b::ll<m>@v2 & A(m).
+print residue.
+
+/*
 //(1)
 infer [v] x::node<p,q>@v |- x::node<a,b>@I.
 print residue.
 
 //2
+infer [n] x::node<p,q> * q::ll<n> |- x::ll<n+1>.
+print residue.
+
+//3
+infer [n] x::node<p,q>@I * q::ll<n> |- x::ll<n+1>@v.
+print residue.
+
+//4
 infer [n,v] x::node<p,q>@I * q::ll<n> |- x::ll<n+1>@v.
 print residue.
+*/

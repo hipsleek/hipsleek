@@ -3467,9 +3467,14 @@ and default_value (t :typ) pos : C.exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | NUM | UNK | Void | AnnT ->
+    | NUM | UNK | Void | AnnT -> 
 	      failwith
               "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
+    (* | AnnT ->     C.Annot { *)
+    (*       let c1 = BForm((Lte(IConst(0, no_pos), Var(v,no_pos), no_pos), None), None) in *)
+    (*       let c2 = BForm((Lte(Var(v,no_pos), IConst(2, no_pos), no_pos), None), None) in *)
+    (*       let c12 = mkAnd c1 c2 no_pos in *)
+    (*       C.exp_annot_val = ; C.exp_annot_pos = pos;}                  (\* andreeac *\) *)
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
@@ -3515,6 +3520,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 						  Named c (* Store this temporarily *)
 				  ))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
+    (* | AnnT -> AnnT *)
     | p -> p
 
 and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =

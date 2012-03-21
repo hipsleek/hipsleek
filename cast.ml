@@ -333,6 +333,10 @@ and exp_label = {
   exp_label_type : typ;
     exp_label_path_id : (control_path_id * path_label);
     exp_label_exp: exp;}
+
+and exp_annot = {
+    exp_annot_val: exp_bconst;
+    exp_annot_name: ident;}
     
 and exp = (* expressions keep their types *)
     (* for runtime checking *)
@@ -342,6 +346,7 @@ and exp = (* expressions keep their types *)
   (* standard expressions *)
 	    (* | ArrayAt of exp_arrayat (* An Hoa *) *)
 	    (* | ArrayMod of exp_arraymod (* An Hoa *) *)
+  | Annot of exp_annot                  (* andreeac *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
