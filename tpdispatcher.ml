@@ -2816,7 +2816,9 @@ let start_prover () =
   (* Removing the old memo file *)
   let _ = match !tp with
   | MEMO -> ()
-  | _ -> stat_tp (lazy (Sys.remove !memo_file)) "memo_io"
+  | _ -> 
+      try stat_tp (lazy (Sys.remove !memo_file)) "memo_io"
+      with _ -> ()
   in
   match !tp with
   | Coq -> begin
