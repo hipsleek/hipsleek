@@ -373,10 +373,6 @@ SHGram.Entry.of_parser "peek_print"
  let peek_pure_out = 
    SHGram.Entry.of_parser "peek_pure_out"
        (fun strm -> 
-           (* debug *)
-           let [t1,_;t2,_;t3,_] = Stream.npeek 3 strm in
-           DD.devel_print ("Parser.peek_pure_out: (" ^ (Token.to_string t1) ^ "  ;  "
-                           ^ (Token.to_string t2) ^ "  ;  " ^ (Token.to_string t3) ^ ")");
            match Stream.npeek 3 strm with
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
@@ -817,11 +813,9 @@ core_constr_conjunctions: [ "core_constr_and" LEFTA
 core_constr:
   [
     [ pc= pure_constr ; fc= opt_flow_constraints; fb=opt_branches ->
-       let _ = DD.devel_print "Parser.core_constr: pure_constr" in 
        let pos = (get_pos_camlp4 _loc 1) in
        F.formula_of_pure_with_flow (P.mkAnd pc fb pos) fc [] pos
     | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
-       let _ = DD.devel_print "Parser.core_constr: opt_heap_constr" in
        let pos = (get_pos_camlp4 _loc 2) in 
        F.mkBase hc (P.mkAnd pc fb pos) fc [] pos
     ]
@@ -951,7 +945,6 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 pure_constr: 
   [[ peek_pure_out; t= cexp_w -> 
-       let _ = DD.devel_print ("Parser.pure_constr: " ^ (string_of_pure_double  t)) in
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)

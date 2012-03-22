@@ -331,14 +331,12 @@ and mkStar f1 f2 pos = match f1 with
     | _ -> f2)
   | HEmp -> f2
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  | HTrue -> f1
+    | HFalse -> HFalse
+    | HTrue -> f1
     | HEmp -> f1
-	  | _ -> Star { h_formula_star_h1 = f1;
-					h_formula_star_h2 = f2;
-					h_formula_star_pos = pos }
-
-
+    | _ -> Star { h_formula_star_h1 = f1;
+                  h_formula_star_h2 = f2;
+                  h_formula_star_pos = pos }
 
 and mkConj f1 f2 pos = match f1 with
   | HFalse -> HFalse
@@ -347,14 +345,12 @@ and mkConj f1 f2 pos = match f1 with
     | _ -> f2)
   | HEmp -> f2
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  | HTrue -> f1
+    | HFalse -> HFalse
+    | HTrue -> f1
     | HEmp -> f1
-	  | _ -> Conj { h_formula_conj_h1 = f1;
-					h_formula_conj_h2 = f2;
-					h_formula_conj_pos = pos }
-
-
+    | _ -> Conj { h_formula_conj_h1 = f1;
+                  h_formula_conj_h2 = f2;
+                  h_formula_conj_pos = pos }
 
 and mkPhase f1 f2 pos = 
   match f1 with

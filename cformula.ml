@@ -5605,32 +5605,31 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
       (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
     let r =  f arg e in 
-	match r with
-	  | Some (e1,v) -> (e1,v)
-	  | None  -> let new_arg = f_args arg e in
+    match r with
+    | Some (e1,v) -> (e1,v)
+    | None  -> let new_arg = f_args arg e in
         match e with
-		| Star s -> 
-                let (e1,r1)=helper s.h_formula_star_h1 new_arg in
-                let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-                (Star {s with h_formula_star_h1 = e1;
-			        h_formula_star_h2 = e2;},f_comb [r1;r2])
-		| Conj s -> 
-                let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
-                let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
-                (Conj {s with h_formula_conj_h1 = e1;
-			        h_formula_conj_h2 = e2;},f_comb [r1;r2])
-		| Phase s -> 
-                let (e1,r1)=helper s.h_formula_phase_rd new_arg in
-                let (e2,r2)=helper s.h_formula_phase_rw new_arg in
-                (Phase {s with h_formula_phase_rd = e1;
-			        h_formula_phase_rw = e2;},f_comb [r1;r2])
-
-	      | DataNode _
-	      | ViewNode _
-	      | Hole _	  
-	      | HTrue
-          | HFalse 
-    | HEmp -> (e, f_comb []) 
+        | Star s -> 
+            let (e1,r1)=helper s.h_formula_star_h1 new_arg in
+            let (e2,r2)=helper s.h_formula_star_h2 new_arg in
+            (Star {s with h_formula_star_h1 = e1;
+                          h_formula_star_h2 = e2;},f_comb [r1;r2])
+        | Conj s -> 
+            let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
+            let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
+            (Conj {s with h_formula_conj_h1 = e1;
+                          h_formula_conj_h2 = e2;},f_comb [r1;r2])
+        | Phase s -> 
+            let (e1,r1)=helper s.h_formula_phase_rd new_arg in
+            let (e2,r2)=helper s.h_formula_phase_rw new_arg in
+            (Phase {s with h_formula_phase_rd = e1;
+                           h_formula_phase_rw = e2;},f_comb [r1;r2])
+        | DataNode _
+        | ViewNode _
+        | Hole _	  
+        | HTrue
+        | HFalse 
+        | HEmp -> (e, f_comb []) 
   in (helper e arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =

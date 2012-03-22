@@ -110,7 +110,7 @@ let rec fixcalc_of_h_formula f = match f with
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "HTrue"
-  | HFalse -> "False"
+  | HFalse -> "HFalse"
   | HEmp -> "Emp"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 

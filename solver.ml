@@ -8182,7 +8182,7 @@ let rec simplify_heap_x h p prog : CF.h_formula = match h with
     let res = List.filter (fun d -> TP.is_sat_raw (CP.mkAnd d p no_pos)) disjs in
     begin
       match res with
-        | [] -> HFalse
+        | [] -> HEmp
         | hd::[] -> HTrue
         | _ -> h
     end 
