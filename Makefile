@@ -87,3 +87,7 @@ install:
 	cp decidez.vo /usr/local/lib/decidez.vo
 	./hip --build-image true
 	cp MyImage /usr/local/lib/MyImage
+
+install-native: hip.native sleek.native
+	cp -u _build/main.native /usr/local/bin/hip
+	cp -u _build/sleek.native /usr/local/bin/sleek

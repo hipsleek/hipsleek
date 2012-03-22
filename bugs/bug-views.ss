@@ -24,13 +24,13 @@ data anode {
     term ::= apply term term | K | S 
 */
 
-value<n:int> ==
+value<n:int,s:int> ==
   self::anode<1,null,null>  // denotes K
   or self::anode<2,null,null>  // denotes S
   or self::anode<0,f,a> * f::anode<1,null,null> * a::value<> // K v
-  or self::anode<0,f,a> * f::anode<2,null,null> * a::value<> // S v
+  or self::anode<0,f,a> * f::anode<2,null,null> * a::value<_,_> // S v
   or self::anode<0,f,a> * f::anode<0,f1,a1> * 
-      f1::anode<2,null,null> * a1::value<> * a::value<> // S v1 v2
+  f1::anode<2,null,null> * a1::value<_> * a::value<_,_> // S v1 v2
   inv self!=null;
 
 
