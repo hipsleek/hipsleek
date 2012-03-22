@@ -74,7 +74,16 @@ let partition_cases (vname:string) (inv:Cpure.formula) (lfl:(CF.formula * formul
        (fun _ _ -> partition_cases_x vname inv lfl) vname lfl
 
 (*generate 2 branches for each pair*)
-let synthesize_one_pair (u,e):CF.struc_formula=
+(*(CF.h_formula_view*Cpure.formula) list * CF.h_formula_data list * Cpure.formula*)
+let synthesize_one_inductive_pair_x ( (uvl, ud,up) ,(vl, d,p)):CF.struc_formula=
+
+
+let synthesize_one_inductive_pair ( (uvl, ud,up) ,(vl, d,p)):CF.struc_formula=
+  let pr1 = pr_list (fun x -> Cprinter.string_of_h_formula (CF.DataNode x)) in
+  let pr2 = pr_list (pr_pair (fun x -> Cprinter.string_of_h_formula (CF.ViewNode x)) Cprinter.string_of_pure_formula) in
+  let pr3 = pr_triple pr2 pr1 Cprinter.string_of_pure_formula in
+  Debug.ho_1 "synthesize_one_inductive_pair" (pr_pair pr3 pr3) (Cprinter.string_of_struc_formula)
+       (fun _ > synthesize_inductive_one_pair_x ((uvl, ud,up) ,(vl, d,p))) ((uvl, ud,up) ,(vl, d,p))
 
 let synthesize_neg_view_def_x vd_u vd=
   (*partition into base_case and inductive case*)
