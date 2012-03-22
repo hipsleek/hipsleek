@@ -25,7 +25,7 @@ open Globals
 module I = Iast
 module C = Cast
 module CF = Cformula
-module CP = Cpure
+(*module CP = Cpure*)
 module IF = Iformula
 module IP = Ipure
 
