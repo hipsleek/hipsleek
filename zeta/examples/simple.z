@@ -1,10 +1,9 @@
-theorem x * y = 1 -> x = 1 | x + 1 = 0.
+theorem x * y = 1 -> x = 1 | x = -1.
 
 theorem x * y = 0 -> x = 0 | y = 0.
 
 theorem y = x * n & z = y * m -> exists {p} (p = m * n & z = x * p).
 
-
 theorem y = x * n -> exists {m} (m = n + 1 & y + x = x * m).
 
-theorem y = x * n -> exists {m} (m = 0 - n & 0 - y = x * m).
+theorem y = x * n -> exists {m} (m = -n & -y = x * m).

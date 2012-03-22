@@ -456,6 +456,27 @@ module TriaryLogic = struct
 
 end
 
+module Proof = struct
+	
+	open Term
+	
+	type proof_step =
+		| HYP (* hypothesis *)
+		| RW of term * term
+		| IND of term * proof * proof
+			(* induction on a term;*)
+			(* proof for base case and *)
+			(* with inductive case *)
+		| MP of proof * proof
+			(* application of Modus Ponen*)
+			(* {p, p -> q} |- q *)
+			
+	and proof = proof_step list
+	
+	let mkEmptyProof () = []
+		
+end
+
 module Theory = struct
 	
 	open Domain
@@ -482,6 +503,20 @@ module Theory = struct
 	and theorem = {
 			content : term;
 			proved_status : triary_bool;
+			proof : Proof.proof;
+		}
+		
+	let mkThm t = {
+			content = t;
+			proved_status = Unknown;
+			proof = Proof.mkEmptyProof ();
+		}
+		
+	let mkSymbol s i = {
+			name = s;
+			id = i;
+			dom = SWild 0;
+			hints = [];
 		}
 	
 end
@@ -575,7 +610,7 @@ module TexBasePrinter : BasePrinter = struct
 	
 	let bot = "\\bot"
 	
-	let newline = "<br /><br /><br />"
+	let newline = "\n<br /><br /><br />\n"
 	
 	let term_start = "\\("
 	
@@ -656,9 +691,9 @@ module Printer (BP : BasePrinter) = struct
 					| _ -> "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]")
 				| Neg -> sf ^ " " ^ (List.hd sx)
 				| _ -> String.concat (" " ^ sf ^ " ") sx in
-(*			if (pf >= p) then*)
-(*				e              *)
-(*			else             *)
+			if (pf >= p) then
+				e
+			else
 				"(" ^ e ^ ")" 
 	
 	let print_term t = print_term_helper 0 t
@@ -874,7 +909,7 @@ module Parser = struct
 				end
 	
 	(* source file input context *)
-	let ctx = ref {
+	let thry = ref {
 			def_symbols = [];
 			axioms = [];
 			theorems = [];
@@ -884,25 +919,24 @@ module Parser = struct
 	
 	let add_lang_param h a =
 		let symname, args, hints = h in
+		let sid = add_retrieve_symbol symname in
 		(* process the arguments *)
-		let syms = {
-				name = symname;
-				id = add_retrieve_symbol symname;
-				dom = SWild 0; (* dummy value *)
-				hints = []; (* TODO fill up *)
-			} in
-		ctx := {!ctx with 
-			def_symbols = syms :: !ctx.def_symbols;
-			axioms = List.append !ctx.axioms a;
+		let syms = mkSymbol symname id in
+(*		let syms = {                        *)
+(*				name = symname;                 *)
+(*				id = sid;                       *)
+(*				dom = SWild 0; (* dummy value *)*)
+(*				hints = []; (* TODO fill up *)  *)
+(*			} in                              *)
+		thry := {!thry with 
+			def_symbols = List.append !thry.def_symbols [syms];
+			axioms = List.append !thry.axioms a;
 		}
 		
 	let add_thm t =
-		let thmt = {
-				content = t;
-				proved_status = Unknown;
-			} in
-		ctx := {!ctx with 
-			theorems = thmt :: !ctx.theorems
+		let thmt = mkThm t in
+		thry := {!thry with 
+			theorems = List.append !thry.theorems [thmt]
 		}
 	
 	(** Zeta grammar **)
@@ -911,38 +945,49 @@ module Parser = struct
 	
 	EXTEND ZGram GLOBAL : zeta;
 	
-	zeta : [[ t = LIST0 statement; `EOF -> t]];
+	zeta : [
+		[ t = LIST0 statement; `EOF -> t]
+	];
 	
-	statement : [[
-		(*`AXIOM; a = formula; `DOT -> mkAxiom a
-		|*) h = symbol_defn_header; `BE; `SUCH; `THAT; 
-			a = LIST1 formula SEP `SEMICOLON; `DOT -> 
-				(* mkSymbol (fst h) a (snd h) *)
+	statement : [
+		[	h = symbol_defn_header;
+			`BE; `SUCH; `THAT; 
+			a = LIST1 formula SEP `SEMICOLON;
+			`DOT -> 
 				add_lang_param h a
-		(*| h = symbol_defn_header; `DEFEQ; 
+		(* natural mathematical definition *)
+		(* | h = symbol_defn_header; `DEFEQ; 
 			t = formula; `DOT -> 
-				mkSymbol (fst h) (snd h) (Some t)*)
+				mkSymbol (fst h) (snd h) (Some t) *)
 		| `THEOREM; t = formula; `DOT ->
-			(* mkTheorem *) add_thm t ]];
+			add_thm t
+		(*`AXIOM; a = formula; `DOT -> mkAxiom a
+		|*) ]
+	];
 	
-	symbol_defn_header : [[
-		`LET; h = OPT symbol_annotation;
-		f = identifier; `OPAREN;
-		x = LIST0 identifier SEP `COMMA; `CPAREN
-		(* t = formula *) -> (f, x, h) ]];
+	symbol_defn_header : [
+		[ `LET; h = OPT symbol_annotation;
+			f = identifier; `OPAREN;
+			x = LIST0 identifier SEP `COMMA; `CPAREN
+			(* t = formula *) -> 
+				(f, x, h) ]
+	];
 	
 	formula : [
 		"implication and iff" RIGHTA
 		[ t1 = SELF; `RIGHTARROW ; t2 = SELF -> mkBFx Implies t1 t2
 		| t1 = SELF; `LEFTRIGHTARROW ; t2 = SELF -> mkBFx Iff t1 t2]
-	| "disjunction" [ t1 = SELF; `OR; t2 = SELF -> mkBFx Or t1 t2]
-	| "conjunction" [ t1 = SELF; `AND; t2 = SELF -> mkBFx And t1 t2]
+	| "disjunction" LEFTA
+		[ t1 = SELF; `OR; t2 = SELF -> mkBFx Or t1 t2]
+	| "conjunction" LEFTA
+		[ t1 = SELF; `AND; t2 = SELF -> mkBFx And t1 t2]
 	| "quantified formulas"
 		[ `EXISTS; `OBRACE; qv = LIST1 SELF SEP `COMMA (* identifier_list *); `CBRACE; t = SELF ->
 				mkFx Exists (t::qv (* (List.map mkVar qv) *))
 		| `FORALL; `OBRACE; qv = LIST1 SELF SEP `COMMA (* identifier_list *); `CBRACE; t = SELF -> 
 				mkFx Forall (t::qv (* (List.map mkVar qv) *) ) ]
-	| "negation" [`NOT; t = SELF -> mkUFx Neg t]
+	| "negation"
+		[ `NOT; t = SELF -> mkUFx Neg t ]
 	| "standard equality/inequality"
 		[ t1 = SELF; `EQ; t2 = SELF -> mkBFx Eq t1 t2
 		| t1 = SELF; `NEQ; t2 = SELF -> mkBFx Ne t1 t2
@@ -950,13 +995,15 @@ module Parser = struct
 		| t1 = SELF; `LTE; t2 = SELF -> mkBFx Le t1 t2
 		| t1 = SELF; `GT; t2 = SELF -> mkBFx Lt t2 t1
 		| t1 = SELF; `GTE; t2 = SELF -> mkBFx Le t2 t1 ]
-	| "additive"
+	| "additive" LEFTA
 		[ t1 = SELF; `PLUS; t2 = SELF -> mkBFx Add t1 t2
-		| t1 = SELF; `MINUS; t2 = SELF -> mkBFx Sub t1 t2]
-	| "multiplicative"
+		| t1 = SELF; `MINUS; t2 = SELF -> mkBFx Sub t1 t2 ]
+	| "multiplicative" LEFTA
 		[ t1 = SELF; `STAR; t2 = SELF -> mkBFx Mul t1 t2
 		| t1 = SELF; `DIV; t2 = SELF -> mkBFx Div t1 t2
 		| t1 = SELF; `MOD; t2 = SELF -> mkBFx Mod t1 t2 ]
+	| "unary minus"
+		[ `MINUS; t = SELF -> mkUFx Sub t ]
 	| "base"
 		[ s = identifier ->
 				mkVar (add_retrieve_symbol s)
@@ -969,15 +1016,28 @@ module Parser = struct
 				mkFx (GF (add_retrieve_symbol f)) x
 		(*| f = identifier; `OSQUARE; x = LIST0 SELF SEP `COMMA; `CSQUARE ->
 			mkListTerm GFunc (mkVar f::x)*)]
-	| [ `OPAREN; t=SELF; `CPAREN -> t ]];
+	| "parenthesized formula"
+		[ `OPAREN; t=SELF; `CPAREN -> t ]
+	];
 	
-	identifier : [[ `IDENTIFIER s -> s ]];
+	identifier : [
+		[ `IDENTIFIER s -> s ]
+	];
 	
-	identifier_list : [[ idlist = LIST0 identifier SEP `COMMA -> idlist ]];
+	identifier_list : [
+		[ idlist = LIST0 identifier SEP `COMMA -> idlist ]
+	];
 	
-	symbol_annotation : [[ `OSQUARE; h = OPT induction_hints; `CSQUARE -> match h with None -> [] | Some t -> t]];
+	symbol_annotation : [
+		[ `OSQUARE; h = OPT induction_hints; `CSQUARE -> 
+			match h with
+				| None -> []
+				| Some t -> t ]
+	];
 	
-	induction_hints : [[ `INDUCTION; p = LIST1 formula SEP `COMMA -> p ]];
+	induction_hints : [
+		[ `INDUCTION; p = LIST1 formula SEP `COMMA -> p ]
+	];
 	
 	END;;
 			
@@ -1174,10 +1234,14 @@ module Logic = struct
 			| Fx (f, x) ->
 				let x = List.map replace_uncomm x in
 				match f with
-					| Sub -> 
+					| Sub ->
 						let a = List.nth x 0 in
-						let b = List.nth x 1 in
-							mkBFx Add a (mkBFx Mul (mkNum (-1)) b)
+							if (List.length x = 1) then
+								(* unary minus case *)
+								mkBFx Mul (mkNum (-1)) a
+							else
+								let b = List.nth x 1 in
+									mkBFx Add a (mkBFx Mul (mkNum (-1)) b)
 					| Implies ->
 						let a = List.nth x 0 in
 						let b = List.nth x 1 in
@@ -1198,8 +1262,8 @@ module Logic = struct
 			let _ = print_endline (s ^ "output = " ^ (StringPrinter.print_term r)) in
 				r
 		
-		let replace_uncomm t =
-			print_inp_out "replace_uncomm" replace_uncomm t
+(*		let replace_uncomm t =                           *)
+(*			print_inp_out "replace_uncomm" replace_uncomm t*)
 (*			let _ = print_endline ("input = " ^ (StringPrinter.print_term t)) in *)
 (*			let t = replace_uncomm t in                                          *)
 (*			let _ = print_endline ("output = " ^ (StringPrinter.print_term t)) in*)
@@ -1232,8 +1296,8 @@ module Logic = struct
 						mkFx f (List.flatten x)
 					| _ -> mkFx f x
 
-		let collapse_assoc t =
-			print_inp_out "collapse_assoc" collapse_assoc t
+(*		let collapse_assoc t =                           *)
+(*			print_inp_out "collapse_assoc" collapse_assoc t*)
 
 		(**
 		 * Push negation toward the atomic
