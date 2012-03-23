@@ -1550,7 +1550,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.no_2 "tp_imply" 
+  Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
