@@ -1351,17 +1351,92 @@ module Logic = struct
 (*			print_inp_out "collapse_assoc" collapse_assoc t*)
 
 		(**
-		 * Push negation toward the atomic
-		 * TODO implement
+		 * Reorder sub-terms for all commutative functors.
 		 *)
-		let push_neg t = match t with
-			| _ -> t
+		let reorder_sub_terms t = match t with
+			| Top | Bot | Num _ (* | Var _ *) -> t
+			| Fx (f, x) -> 
+				let x = List.map collapse_assoc x in
+				match f with
+					| And 
+					| Or 
+					| Add 
+					| Mul ->
+						let x = List.map (fun y -> match y with
+							| Fx (f1, z) -> (*(match (f, f1) with
+								| (And,And) 
+								| (Or,Or)
+								| (Add,Add) 
+								| (Mul,Mul) -> z
+								| _ -> [y])*)
+								if (f1 = f) then 
+									z 
+								else
+									[y]
+							| _ -> [y]) x in
+						mkFx f (List.flatten x)
+					| _ -> mkFx f x
 
 		(**
-		 * Simplify terms
+		 * Push negation toward the atomic.
+		 *)
+		let rec push_neg t = match t with
+			| Top | Bot | Num _ -> t
+			| Fx (f, x) -> match f with
+				| Neg -> 
+					let x = List.hd x in
+					begin 
+						match x with
+						| Top -> Bot
+						| Bot -> Top
+						| Num _ -> failwith "Unexpected number in negation"
+						| Fx (g, y) -> begin match g with
+							| Neg -> (* double negation --> remove both *)
+								let y = List.hd y in
+									push_neg y
+							| Exists | Forall ->
+								let qv = List.tl y in
+								let z = mkUFx Neg (List.hd y) in
+								let z = push_neg z in
+								let h = if (g = Forall) then 
+										Exists
+									else
+										Forall in
+									mkFx h (z :: qv)
+							| And | Or -> 
+								let z = List.map (mkUFx Neg) y in
+								let z = List.map push_neg z in
+								let h = if (g = And) then
+										Or
+									else 
+										And in
+									mkFx h z
+							| Implies -> t (* TODO implement *)
+							| Iff -> t (* TODO implement *)
+							| _ -> t end
+					end
+				| _ -> 
+					let x = List.map push_neg x in
+						mkFx f x
+
+		(**
+		 * Simplify algebraic terms and equations
+		 * making use of:
+		 * (i) integral domain property of Z
+		 *     ab = 0 --> a = 0 \/ b = 0
+		 * (ii) constant factorization
+		 *     ab = n for numeral n --> 
+		 *	   \/ {a = d & b = n / d : d divides n}
+		 * (iii) unit elements
+		 *     0 + x = x + 0 = x
+		 *     0 * x = x * 0 = 0
+		 *     1 * x = x * 1 = x
+		 * (iv) distributivity
+		 *     
+		 *     
 		 * TODO implement
 		 *)
-		let rec simplify t = match t with
+		let rec alg_simplify t = match t with
 			| _ -> t
 
 		(**
@@ -1371,6 +1446,7 @@ module Logic = struct
 		let rec normalize t =
 			let t = replace_uncomm t in
 			let t = collapse_assoc t in
+			let t = push_neg t in
 				t
 
 	end
@@ -1528,7 +1604,7 @@ module StringPrinter = Printer(StringBasePrinter)
 module TexPrinter = Printer(TexBasePrinter)
 
 let process_theory th =
-(*	let th = Logic.process_theory th in*)
+	let th = Logic.process_theory th in
 	(*StringPrinter.*)TexPrinter.print_theory th
 
 (**
