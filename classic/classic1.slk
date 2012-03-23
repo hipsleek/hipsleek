@@ -12,7 +12,7 @@ checkentail emp * htrue & false|- true.                 // Valid
 
 checkentail emp * htrue & true|- false.                 // Fail
 
-checkentail emp & false|- htrue & false.                // Fail
+checkentail emp & false|- htrue & false.                // Valid
 
 checkentail htrue * htrue |- emp.                       // Valid
 
@@ -22,5 +22,5 @@ checkentail x::cell<_> * htrue |- x::cell<_>.           // Valid
 
 checkentail emp * x::cell<_> |- x::cell<_>.             // Valid
 
-checkentail x::cell<_> * emp |- x::cell<_>.             // Valid
+checkentail x::cell<_> * emp |- x::cell<_>.             // Valid 
 

@@ -1021,38 +1021,34 @@ and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) lbl (
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
-  | HTrue -> f2
   | HEmp -> f2
   | _ -> match f2 with
-      | HFalse -> HFalse
-      | HTrue -> f1
-      | HEmp -> f1
-      | _ -> Star ({h_formula_star_h1 = f1; 
-		h_formula_star_h2 = f2; 
-		h_formula_star_pos = pos})
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue 
+           else Star { h_formula_star_h1 = f1;
+                       h_formula_star_h2 = f2;
+                       h_formula_star_pos = pos }
 
 and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
-  | HTrue -> f2
   | HEmp -> f2
   | _ -> match f2 with
-      | HFalse -> HFalse
-      | HTrue -> f1
-      | HEmp -> f1
-      | _ -> Conj ({h_formula_conj_h1 = f1; 
-		h_formula_conj_h2 = f2; 
-		h_formula_conj_pos = pos})
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+           else Conj ({h_formula_conj_h1 = f1; 
+                       h_formula_conj_h2 = f2; 
+                       h_formula_conj_pos = pos})
 
 and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
   match f1 with
     | HFalse -> HFalse
-    (* | HTrue -> f2 *)
     | _ -> match f2 with
         | HFalse -> HFalse
-        (* | HTrue -> f1 *)
         | _ -> Phase ({h_formula_phase_rd = f1; 
-		  h_formula_phase_rw = f2; 
-		  h_formula_phase_pos = pos})
+                       h_formula_phase_rw = f2; 
+                       h_formula_phase_pos = pos})
 
 and is_simple_formula (f:formula) =
   let h, _, _, _, _ = split_components f in
@@ -1756,15 +1752,27 @@ and fv_heap_of (f:formula) =
 
 and fv_heap_of_one_formula (f:one_formula) =  (h_fv f.formula_heap)
 
-and mk_Star f1 f2 p = 
-  if (f1==HTrue || f1==HEmp) then f2
-  else if (f2==HTrue || f2 = HEmp) then f1
-  else Star {h_formula_star_h1=f1; h_formula_star_h2=f2; h_formula_star_pos=p}
+and mk_Star f1 f2 pos = match f1 with
+  | HFalse -> HFalse
+  | HEmp -> f2
+  | _ -> match f2 with
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+           else Star { h_formula_star_h1 = f1;
+                       h_formula_star_h2 = f2;
+                       h_formula_star_pos = pos }
 
-and mk_Conj f1 f2 p = 
-  if (f1==HTrue || f1==HEmp) then f2
-  else if (f2==HTrue || f2==HEmp) then f1
-  else Conj {h_formula_conj_h1=f1; h_formula_conj_h2=f2; h_formula_conj_pos=p}
+and mk_Conj f1 f2 p = match f1 with
+  | HFalse -> HFalse
+  | HEmp -> f2
+  | _ -> match f2 with
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+           else Conj { h_formula_conj_h1 = f1;
+                       h_formula_conj_h2 = f2;
+                       h_formula_conj_pos = p }
 
 and remove_h_lend (f:h_formula) : h_formula = 
   match f with

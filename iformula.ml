@@ -326,42 +326,34 @@ and mkOneFormula (h : h_formula) (p : P.formula) id pos =
 
 and mkStar f1 f2 pos = match f1 with
   | HFalse -> HFalse
-  | HTrue -> (match f2 with
-    | HEmp -> HTrue
-    | _ -> f2)
   | HEmp -> f2
   | _ -> match f2 with
     | HFalse -> HFalse
-    | HTrue -> f1
     | HEmp -> f1
-    | _ -> Star { h_formula_star_h1 = f1;
-                  h_formula_star_h2 = f2;
-                  h_formula_star_pos = pos }
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+           else Star { h_formula_star_h1 = f1;
+                       h_formula_star_h2 = f2;
+                       h_formula_star_pos = pos }
 
 and mkConj f1 f2 pos = match f1 with
   | HFalse -> HFalse
-  | HTrue -> (match f2 with
-    | HEmp -> HTrue
-    | _ -> f2)
   | HEmp -> f2
   | _ -> match f2 with
     | HFalse -> HFalse
-    | HTrue -> f1
     | HEmp -> f1
-    | _ -> Conj { h_formula_conj_h1 = f1;
-                  h_formula_conj_h2 = f2;
-                  h_formula_conj_pos = pos }
+    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+           else Conj { h_formula_conj_h1 = f1;
+                       h_formula_conj_h2 = f2;
+                       h_formula_conj_pos = pos }
 
-and mkPhase f1 f2 pos = 
+and mkPhase f1 f2 pos =
   match f1 with
   | HFalse -> HFalse
-  (* | HTrue -> f2 *)
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  (* | HTrue -> f1 *)
-	  | _ -> Phase { h_formula_phase_rd = f1;
-					h_formula_phase_rw = f2;
-					h_formula_phase_pos = pos }
+    | HFalse -> HFalse
+    | _ -> Phase { h_formula_phase_rd = f1;
+                   h_formula_phase_rw = f2;
+                   h_formula_phase_pos = pos }
 
 and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode { 
                    h_formula_heap_node = c;
