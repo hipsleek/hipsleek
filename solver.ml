@@ -182,8 +182,8 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
           let self_v = CP.SpecVar (Named v_def.view_data_name, self, if (CP.is_primed vn2.h_formula_view_node) then Primed else Unprimed) in
           let from_vars = self_v::v_def.view_vars in
           let subst_vars = List.combine from_vars to_vars in
-          let new_cond = List.map (fun (c1,c2)-> (CP.b_subst subst_vars c1,c2)) v_def.view_prune_conditions in         
-          let new_cond = List.filter (fun (_,c2)-> (List.length (Gen.BList.intersect_eq (=) need_prunning c2))>0) new_cond in
+          let new_cond = List.filter (fun (_,c2)-> (List.length (Gen.BList.intersect_eq (=) need_prunning c2))>0) v_def.view_prune_conditions in
+		  let new_cond = List.map (fun (c1,c2)-> (CP.b_subst subst_vars c1,c2)) new_cond in                   
           if (Gen.BList.subset_eq (=) need_prunning (List.concat (List.map snd new_cond))) then 
 			(*i have enough prunning conditions to succeed*)
             let ll = List.map (fun c -> List.filter (fun (_,c1)-> List.exists ((=) c) c1) new_cond) need_prunning in (*posib prunning cond for each branch*)
@@ -193,7 +193,13 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
             (*let inst_forms = CP.conj_of_list (List.map (fun (c,_)-> CP.BForm ((memo_f_neg c),None)) new_cond) no_pos in*)
 			let fls = ((List.length need_prunning)=(List.length l1)) in
             (true, Some (inst_forms,fls))
-          else (print_string "I do not have enough prunning conditions to succeed in this match\n";(false, None)) (*this should not occur though*)
+          else (
+			print_string "I do not have enough prunning conditions to succeed in this match\n";
+			print_string ("lhs_br: "^(Cprinter.string_of_formula_label_list l1));
+			print_string ("rhs_br: "^(Cprinter.string_of_formula_label_list l2));
+			print_string ("need_prunning: "^(Cprinter.string_of_formula_label_list need_prunning));
+			print_string ("cond : "^(Cprinter.string_of_case_guard new_cond));	  
+		  (false, None)) (*this should not occur though*)
       | None, Some _ ->
         Debug.print_info "Warning: " "left hand side node is not specialized!" no_pos;
         (false, None)
@@ -6738,7 +6744,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)
       | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-        CF.mk_failure_must ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
+        CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
             (* to Thai : please move inference code from M_unmatched_rhs here
                and then restore M_unmatched_rhs to previous code without
                any inference *)

@@ -619,6 +619,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                         | Some a -> [a]
                         | None -> 
                               let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
+                            (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
                               [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)

@@ -890,7 +890,9 @@ $output_file = "log";
         ["ll_nolists.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
         ["ll_test1.ss", 1, "", "reverse", "SUCCESS"],
         ["ll_test2.ss", 1, "", "delete", "SUCCESS"],
+        # above fails on postcondition!
         # ["ll_test3.ss", , "", ],
+        # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
         ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],

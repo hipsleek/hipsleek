@@ -12,23 +12,28 @@ time ./run-fast-tests.pl hip_vperm $@
 echo -e "\n##################### must-bugs error tests ###################"
 time ./run-fast-tests.pl musterr $@
 
-# problem to be fixed!
-echo -e "\n##################### lists tests #####################"
-time ./run-fast-tests.pl lists $@ -tp coq
-# takes a long time for lr.ss!
-
-# another check for lemma-proving
-# problem to be fixed!
-echo -e "\n##################### lists tests #####################"
-time ./run-fast-tests.pl lemmas $@ 
-# takes a long time for lr.ss!
-
 # soundness check for --eps
 echo -e "\n##################### hip tests --eps #####################"
 time ./run-fast-tests.pl hip -flags "--eps" $@
 
 echo -e "\n##################### imm tests --eps ###################"
 time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
+
+
+# fixed
+echo -e "\n##################### term tests #####################"
+time ./run-fast-tests.pl term $@
+# some failures ex1.ss, ex12, ex12b, ex12c
+
+# another check for lemma-proving
+# problem to be fixed! many failures
+echo -e "\n##################### lists tests #####################"
+time ./run-fast-tests.pl lemmas $@ 
+
+# problem to be fixed!
+echo -e "\n##################### lists tests #####################"
+time ./run-fast-tests.pl lists $@ -tp coq
+# takes a long time for lr.ss!
 
 
 echo -e "\n##################### NO slicing tests ?? ###################"
@@ -39,11 +44,6 @@ echo -e "\n##################### imm tests no eps ###################"
 time ./run-fast-tests.pl imm $@ -tp redlog
 
 
-
-# fixed
-echo -e "\n##################### term tests #####################"
-time ./run-fast-tests.pl term $@
-# some failures ex1.ss, ex12, ex12b, ex12c
 
 echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##################"
 
