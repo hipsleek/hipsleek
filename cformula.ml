@@ -3901,20 +3901,14 @@ let rec collect_term_err ctx =
   | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
 
 let collect_term_err_list_partial_context (ctx:list_partial_context) =
-  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_term_err c) cl))  ctx in
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) ->
+    collect_term_err c) cl)) ctx in
   List.concat r
-
-let rec collect_term_err ctx =
-  match ctx with
-  | Ctx estate ->
-    (match estate.es_term_err with
-      | None -> []
-      | Some msg -> [msg])
-  | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
 
 let collect_term_err_list_partial_context (ctx:list_partial_context) =
-  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_term_err c) cl))  ctx in
-  List.concat r
+  Debug.no_1 "collect_term_err_list_partial_context"
+  !print_list_partial_context (pr_list (fun x -> x))
+  collect_term_err_list_partial_context ctx
 
 let rec collect_pre_pure ctx = 
   match ctx with
@@ -3973,8 +3967,6 @@ let rec collect_term_err_msg_context ctx =
   | OCtx (ctx1, ctx2) -> 
       (collect_term_err_msg_context ctx1) @
       (collect_term_err_msg_context ctx2)
-
-
 
 (* let collect_term_err_msg_list_context ctx = *)
 (*   match ctx with *)
