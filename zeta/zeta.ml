@@ -658,9 +658,9 @@ module Printer (BP : BasePrinter) = struct
 
 	let print_symbol i =
 		if (i < 0) then
-			"c_{" ^ (string_of_int (-i)) ^ "}"
+			"C_{" ^ (string_of_int (-i)) ^ "}"
 		else
-			"X_{" ^ (string_of_int i) ^ "}"
+			"v_{" ^ (string_of_int i) ^ "}"
 			
 	let precedence_of f = match f with
 		| Add | Sub -> 8
@@ -921,7 +921,7 @@ module Parser = struct
 		let symname, args, hints = h in
 		let sid = add_retrieve_symbol symname in
 		(* process the arguments *)
-		let syms = mkSymbol symname id in
+		let syms = mkSymbol symname sid in
 (*		let syms = {                        *)
 (*				name = symname;                 *)
 (*				id = sid;                       *)
@@ -1040,6 +1040,57 @@ module Parser = struct
 	];
 	
 	END;;
+	
+	(**
+	 * Batch transform all terms in a 
+	 * theory thry using a term transform
+	 * function f : term -> term.
+	 *)
+	let transform_all_terms f thry =
+		{ thry with
+			axioms = List.map f thry.axioms;
+			theorems = List.map (fun t ->
+				{ t with content = f t.content })
+				thry.theorems; }
+	
+	(**
+	 * Replace all symbol i by j in the 
+	 * term t for all pair (i,j) in the
+	 * input list repl.
+	 *)
+	let rec replace_symbols repl t = match t with
+		| Top | Bot | Num _ -> t
+		| Fx (f, x) -> 
+			let x = List.map (replace_symbols repl) x in
+			match f with
+				| GF i -> 
+					let j = try 
+							List.assoc i repl
+						with 
+							| Not_found -> i in
+					Fx (GF j, x)
+				| _ -> Fx (f, x)
+
+	(**
+	 * Generate id for language parameters
+	 * and replace them in every formulas.
+	 *)
+	let rename_lang_params thry =
+		(* allocate constants for defined symbols *)
+		let dsyms = thry.def_symbols in
+		let repl = GList.mapi (fun i x -> 
+				let sid = -(i+1) in
+					({ x with id = sid },
+					(x.id, sid))
+				) dsyms in
+(*		let _ = List.map (fun (s,(i,n)) ->    *)
+(*			print_endline ("Symbol " ^ s.name ^ *)
+(*			" old id = " ^ (string_of_int i) ^  *)
+(*			" new id = " ^ (string_of_int n)))  *)
+(*		repl in                               *)
+		let nsyms, repl = List.split repl in
+		let thry = transform_all_terms (replace_symbols repl) thry in
+			{ thry with def_symbols = nsyms }
 			
 	(**
 	 * Parse an input stream and pre-process 
@@ -1055,7 +1106,7 @@ module Parser = struct
 		let defs, symtab = infer_sorts defs in
 			(symtab, get_theorems_list defs)*)
 		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
-			!ctx
+			rename_lang_params !thry
 
 end
 
@@ -1477,19 +1528,19 @@ module StringPrinter = Printer(StringBasePrinter)
 module TexPrinter = Printer(TexBasePrinter)
 
 let process_theory th =
-	let th = Logic.process_theory th in
+(*	let th = Logic.process_theory th in*)
 	(*StringPrinter.*)TexPrinter.print_theory th
 
 (**
  * Command line options as in Arg.parse
  *)
-let command_line_arg_speclist = [
+let cmd_line_arg_speclist = [
 	("-z3inp", Arg.Set Zexprf.Z3.print_z3_input, "Print Z3 input generated.");
 	("-h", Arg.Set print_help_msg, "Print the help message.");
 	("-v", Arg.Set print_version, "Print zeta version.")]
 	
 let main () =
-	let _ = Arg.parse command_line_arg_speclist add_source_file usage in
+	let _ = Arg.parse cmd_line_arg_speclist add_source_file usage in
 	let _ = Z3.toggle_warning_messages false in
 	let _ = print_endline ("Source files : {" ^ (String.concat ", " !input_files) ^ "}") in
 	let th = List.map parse_file !input_files in

@@ -1,17 +1,17 @@
-/* "divides" as a recursively defined relation */
+// "divides" as a recursively defined relation
 
 // Recursive definition for divides
 // relation and the analogous 
 // theorems on reflexivity, 
 // antisymmetry and transitivity
 let [induction y] divides(x, y)
-such that
+be such that
 y = 0 -> divides(x,y);
 0 < y & y < x -> ! divides(x,y);
 0 < x & divides(x,y) -> divides(x,y+x);
 0 < x & divides(x,y) -> divides(x,y-x);
-x < 0 & divides(0-x,y) -> divides(x,y);
-x < 0 & divides(x,y) -> divides(0-x,y);
+x < 0 & divides(-x,y) -> divides(x,y);
+x < 0 & divides(x,y) -> divides(-x,y);
 x = 0 & divides(x,y) -> y = 0.
 
 // equivalence to the original definition
