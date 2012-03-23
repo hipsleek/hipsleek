@@ -292,6 +292,7 @@ and check_bounded_term_x prog ctx post_pos =
     let _ = Term.add_term_res_stk term_res in 
     n_es, rs
   in
+
   let check_bounded_one_measures m es =
     Debug.no_1 "check_bounded_one_measures"
       (pr_list !CP.print_exp) (fun _ -> "")

@@ -5011,16 +5011,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                 Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
               in
-              let term_stack = match term_err_msg with
-                | None -> estate.CF.es_var_stack
-                | Some msg -> msg::estate.CF.es_var_stack
+              (* let term_stack = match term_err_msg with *)
+              (*  | None -> estate.CF.es_var_stack *)
+              (*  | Some msg -> msg::estate.CF.es_var_stack *)
+              (* in *)
+              let term_err = match estate.es_term_err with
+                | None -> term_err_msg
+                | Some _ -> estate.es_term_err 
               in
               Term.term_res_stk # pop;
               Term.term_res_stk # push term_res;
               { estate with 
                  CF.es_var_measures = term_measures;
-                 CF.es_var_stack = term_stack; 
-                 CF.es_term_err = term_err_msg;
+                 (* CF.es_var_stack = term_stack; *)
+                 CF.es_term_err = term_err;
               }
           | Some es -> es
       end
@@ -5537,7 +5541,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
         es_var_measures = estate.es_var_measures;
-        es_var_stack = estate.es_var_stack;
+        (* es_var_stack = estate.es_var_stack; *)
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
@@ -5547,8 +5551,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
-              es_group_lbl = estate.es_group_lbl;
-              es_term_err = estate.es_term_err;
+        es_group_lbl = estate.es_group_lbl;
+        es_term_err = estate.es_term_err;
     } in
     let na,prf = match lhs_vd.view_base_case with
       | None ->  Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
@@ -5658,9 +5662,9 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
                  es_var_measures = estate.es_var_measures;
-                 es_var_stack = estate.es_var_stack;
+                 (* es_var_stack = estate.es_var_stack; *)
+                 es_term_err = estate.es_term_err;
               es_group_lbl = estate.es_group_lbl;
-              es_term_err = estate.es_term_err;
 		         } in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 

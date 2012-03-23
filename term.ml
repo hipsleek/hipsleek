@@ -269,7 +269,6 @@ let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 exception LexVar_Not_found;;
 exception Invalid_Phase_Num;;
 
-
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
   
@@ -282,20 +281,20 @@ exception Invalid_Phase_Num;;
 (*     | EAssume _ -> false *)
 (*     | EVariance _ -> true *)
 (*     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont *)
-(*
-let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
-  if (v.formula_var_measures = []) then None 
-  else
-	  let vm = fst (List.split v.formula_var_measures) in
-	  let vi = v.formula_var_infer in
-    let pos = v.formula_var_pos in
-    Some (CP.mkPure (CP.mkLexVar Term vm vi pos))
 
-let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) =
-  let vm = fst (List.split v.formula_var_measures) in
-	let vi = v.formula_var_infer in
-  (Term, vm, vi)
-*)
+(* let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option = *)
+(*   if (v.formula_var_measures = []) then None *)
+(*   else *)
+(*	   let vm = fst (List.split v.formula_var_measures) in *)
+(*	   let vi = v.formula_var_infer in *)
+(*     let pos = v.formula_var_pos in *)
+(*     Some (CP.mkPure (CP.mkLexVar Term vm vi pos)) *)
+
+(* let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) = *)
+(*   let vm = fst (List.split v.formula_var_measures) in *)
+(*	 let vi = v.formula_var_infer in *)
+(*   (Term, vm, vi) *)
+  
 let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list * loc) =
   let (pf, _) = bf in
   match pf with
@@ -389,14 +388,18 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
               Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))) 
           in
-          let term_stack = match term_err_msg with
-            | None -> estate.es_var_stack
-            | Some msg -> add_term_err_stk msg; msg::estate.es_var_stack 
+          (* let term_stack = match term_err_msg with *)
+          (*  | None -> estate.es_var_stack *)
+          (*  | Some msg -> (* add_term_err_stk msg; *) msg::estate.es_var_stack *)
+          (* in *)
+          let term_err = match estate.es_term_err with
+            | None -> term_err_msg
+            | Some _ -> estate.es_term_err 
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
-            es_var_stack = term_stack;
-            es_term_err = term_err_msg;
+            (* es_var_stack = term_stack; *)
+            es_term_err = term_err;
           } in
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, None)
@@ -437,7 +440,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               None, 
               None
             else
-              if Inf.no_infer_all estate then (* No inference at all*)
+              if Inf.no_infer_all estate then (* No inference at all *)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
@@ -448,20 +451,24 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * The term_res_stk and es_var_stack 
                  * should be updated based on this result: 
                  * MayTerm_S -> Term_S *)
-		(* Assumming Inference will be successed *)
+                (* Assumming Inference will be successed *)
                 Some (t_ann, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 None, 
                 Some rank_formula  
           in 
-          let term_stack = match term_err_msg with
-            | None -> estate.es_var_stack
-            | Some msg -> msg::estate.es_var_stack
+          (* let term_stack = match term_err_msg with *)
+          (*  | None -> estate.es_var_stack *)
+          (*  | Some msg -> (* add_term_err_stk msg; *) msg::estate.es_var_stack *)
+          (* in *)
+          let term_err = match estate.es_term_err with
+            | None -> term_err_msg
+            | Some _ -> estate.es_term_err 
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
-            es_var_stack = term_stack; 
-            es_term_err = term_err_msg
+            (* es_var_stack = term_stack; *)
+            es_term_err = term_err
           } in
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
@@ -520,7 +527,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
-            es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
+            (* es_var_stack = (string_of_term_res term_res)::estate.es_var_stack; *)
             es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
@@ -588,10 +595,10 @@ let strip_lexvar_lhs (ctx: context) : context =
 
 
 (* HIP: Collecting information for termination proof *)
-let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
-  let err = (pos, None, Some ctx, TermErr reason) in
-  add_term_res_stk err;
-  err
+(* let report_term_error (ctx: formula) (reason: term_reason) pos : term_res = *)
+(*   let err = (pos, None, Some ctx, TermErr reason) in *)
+(*   add_term_res_stk err; *)
+(*   err *)
 
 let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   let _ = 
@@ -608,14 +615,11 @@ let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   add_term_res_stk term_res;
   term_res
 
-(*
 (* let get_phase_num (measure: ext_variance_formula) : int = *)
 (*   let phase_num = fst (List.nth measure.formula_var_measures 1) in *)
 (*   if (CP.is_num phase_num) then CP.to_int_const phase_num CP.Floor  *)
 (*   else raise Invalid_Phase_Num  *)
-*)
 
-(*  
 (* let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res = *)
 (*   let orig_ante = formula_of_context ctx in *)
 (*   try *)
@@ -644,8 +648,7 @@ let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
 (*   with  *)
 (*   | Invalid_Phase_Num *)
 (*   | Failure "nth" -> report_term_error orig_ante Invalid_Phase_Trans pos *)
-*)
-(*
+
 (* let check_reachable_term_measure f (ctx: context) (measure: ext_variance_formula) pos : term_res = *)
 (*   let orig_ante = formula_of_context ctx in *)
 (*   let lv = lexvar_of_evariance measure in *)
@@ -675,7 +678,6 @@ let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
 (*     term_res *)
 (*   else *)
 (*     check_reachable_term_measure f ctx measure pos *)
-*)
 
 (*****************************************)
 (* Phase Transition Inference            *)
