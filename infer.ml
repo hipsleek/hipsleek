@@ -14,31 +14,12 @@ module MCP = Mcpure
 module CF = Cformula
 module TP = Tpdispatcher
 
-(* let keep_dist f = match f with *)
-(*   | BForm ((Eq(e1,e2,_),_),_) -> not(eqExp_f eq_spec_var e1 e2) *)
-(*   | _ -> true *)
 
-(* (\* TODO Cristina : can remove duplicates too ; *)
-(*    remove x=x*\) *)
-(* let simplify_conjs f = *)
-(*   let ls = split_conjunctions f in *)
-(*   let ls = List.filter keep_dist ls in *)
-(*   join_conjunctions ls *)
-
+(************************************************)
 let keep_dist f = match f with
   | BForm ((Eq(e1,e2,_),_),_) ->  not((eqExp_f eq_spec_var e1 e2) || (is_null e1 && (is_null_const_exp e2)) || ((is_null_const_exp e1) && is_null e2)) 
-			(* | Or(f1, f2, lb, l) -> let _ = print_string("cris: f_or = " ^ (!CP.print_formula f) ^ "\n") in true *)
   | _ -> true
 
-(* TODO Cristina : can remove duplicates too ; remove x=x*)
-(* let rec simplify_disj_list conjl = *)
-(*   let simpl_conjl = List.map *)
-(*     (fun x-> *)
-(*       let disjl = split_disjunctions x in *)
-(*       let simpl_disjl = List.map (fun x-> simplify_conjs x) disjl in *)
-(*       join_disjunctions simpl_disjl) conjl *)
-(*   in *)
-(*   simpl_conjl *)
 let simplify_conjs f =
   let ls = split_conjunctions f in
   let ls = List.map (simplify_disj_new) ls in
@@ -65,7 +46,7 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
   let n_lhs = CP.filter_ante lhs n_rhs in
   (c,n_lhs,n_rhs)
 
-
+(************************************************)
 
 let no_infer estate = (estate.es_infer_vars == [])
 
@@ -112,10 +93,6 @@ let remove_infer_vars_all_list_context ctx =
 let remove_infer_vars_all_list_partial_context lpc = 
   List.map remove_infer_vars_all_partial_context lpc
 
-(* let collect_pre_heap_list_partial_context (ctx:list_partial_context) = *)
-(*   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in *)
-(*   List.concat r *)
-
 let restore_infer_vars_ctx iv ivr ctx = 
   let rec helper ctx =
     match ctx with
@@ -159,7 +136,6 @@ let rec get_all_args alias_of_root heap = match heap with
   | Conj c -> (get_all_args alias_of_root c.h_formula_conj_h1) @ (get_all_args alias_of_root c.h_formula_conj_h1)
   | Phase p -> (get_all_args alias_of_root p.h_formula_phase_rd) @ (get_all_args alias_of_root p.h_formula_phase_rw) 
   | _ -> []
-
 
 let is_inferred_pre_list_context ctx = 
   match ctx with
@@ -1298,15 +1274,16 @@ let filter_var_heap keep_vars fml =
 (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   let fml = CF.subst subst_lst fml in
   let heap,_,_,_,_ = CF.split_components fml in
-  CF.formula_of_heap heap no_pos
+  heap
 
 let infer_shape input = 
   let shape = Parse_shape.parse_shape input in
-  let keep_vars = [SpecVar (Named "GenNode", "lst1", Unprimed); SpecVar (Named "GenNode", "lst2", Unprimed); SpecVar (Named "GenNode", "NULL", Unprimed)] in
+  let keep_vars = ["lst1";"lst2";"NULL"] in
+  let keep_vars = List.map (fun s -> SpecVar (Named "GenNode", s, Unprimed)) keep_vars in
   let fml1 = filter_var_heap keep_vars (fst shape) in
   let fml2 = filter_var_heap keep_vars (snd shape) in
 (*  Debug.info_hprint (add_str "Shape: " (pr_pair !CF.print_formula !CF.print_formula)) shape no_pos;*)
-  Debug.info_hprint (add_str "Inferred shape: " (pr_pair !CF.print_formula !CF.print_formula)) (fml1,fml2) no_pos;
+  Debug.info_hprint (add_str "Inferred shape " (pr_pair !CF.print_h_formula !CF.print_h_formula)) (fml1,fml2) no_pos;
   print_newline ()
 
 let _ = 
