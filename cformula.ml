@@ -7025,4 +7025,21 @@ let rec no_of_cnts (sp:struc_formula) = match sp with
     sum_of_int_lst nums
 	| EOr b -> no_of_cnts b.formula_struc_or_f1 + no_of_cnts b.formula_struc_or_f2
 
+let mkViewNode view_node view_name view_args pos = ViewNode
+  { h_formula_view_node = view_node;
+  h_formula_view_name = view_name;
+  h_formula_view_derv = false;
+  h_formula_view_arguments = view_args;
+  h_formula_view_imm = ConstAnn Mutable;
+  h_formula_view_perm = None;
+  h_formula_view_modes = [];
+  h_formula_view_coercible = true;
+  h_formula_view_origins = [];
+  h_formula_view_original = true;
+  h_formula_view_lhs_case = true;
+  h_formula_view_unfold_num = 0;
+  h_formula_view_remaining_branches = None;
+  h_formula_view_pruning_conditions = [];
+  h_formula_view_label = None;
+  h_formula_view_pos = pos}
 
