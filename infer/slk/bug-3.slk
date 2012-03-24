@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+
+// (7) TODO need not infer n=0 which can be in
+//     the post-state
+// Entail  (7): Valid. 
+//
+// <1>true&y=null & n=0&{FLOW,(17,18)=__norm}
+// inferred pure: [n=0]
+infer [n] y=null |- y::ll<n>.  
+print residue.
+
+
+
+
+
+
+
+

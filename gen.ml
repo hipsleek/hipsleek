@@ -427,6 +427,9 @@ class ['a] stack  =
      (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
      method exists f = List.exists f stk 
      method push_list (ls:'a list) =  stk <- ls@stk
+     method pop_list (ls:'a list) = 
+       stk <- BList.drop (List.length ls) stk
+     method reset = stk <- []
    end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =

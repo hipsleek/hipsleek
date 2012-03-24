@@ -481,13 +481,14 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
              | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
           ) 
 
-and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
+and subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
     | None -> (f,None,None)
     | Some (l,r) -> 
           let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
-          let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          (* let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in *)
+          let lhs = c in
           begin
             match r with
               | CP.Var(v,_) -> 
@@ -495,6 +496,14 @@ and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula opt
                   else (f,None,Some c)
               | _ -> (f,None,Some c)
           end
+
+and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_no in
+  let pr2a = pr_option !CP.print_formula in
+  let pr3 = pr_triple string_of_bool pr2a pr2a in
+  Debug.no_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 
+
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =

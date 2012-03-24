@@ -33,7 +33,7 @@ infer [] true |- @I<:@M.
 // (9) fail
 infer [] true |- @L<:@I.
 
-// (10)
+// (10) valid
 infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
 
 // (11)
@@ -45,7 +45,7 @@ infer [] y::node<_,_>@L |- y::node<a,b>@v & v<:@L.
 // (13)
 infer [] y::node<_,_>@v & v<:@L |- y::node<a,b>@L.
 
-// (14)
+// (14) valid
 infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
 
 // (15)
