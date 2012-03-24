@@ -1,0 +1,107 @@
+vperm problems
+error at: vperm/passive_stack_race.ss stack_race
+error at: vperm/stack_race.ss stack_race
+error at: vperm/vperm_check.ss test1
+error at: vperm/vperm_check.ss test2
+error at: vperm/vperm_check.ss test3
+error at: vperm/vperm_check.ss test4
+
+## below timeout and thus commented
+Total number of errors: 6 in files:
+error at: benchs/lit/leap-year-bug-zune.ss loop
+term error at: benchs/lit/leap-year-bug-zune.ss 
+
+
+error at: benchs/key/Middle.ss middle
+ Context of Verification Failure: File "key/Middle.ss",Line:7,Col:53
+ Last Proving Location: File "key/Middle.ss",Line:16,Col:9
+ ERROR: at key/Middle.ss_7_53 
+ Message: Post condition cannot be derived.
+# added -tp redlog
+ 
+error at: benchs/aprove/Costa_Julia_09/TestJulia4.ss main
+Exception occurred: Failure("the guards don't cover the whole domain for :  
+ECase case {\n        ((5*a_22)/\n        b_23)<=i_25 -> ((None,[]),EBase true&Term&{FLOW,(20,21)=__norm}[]\n                                          EAssume 9::\n                                            EXISTS(a_22,b_23: true&\n                                            a_22'=a_22 & b_23'=b_23&\n                                            {FLOW,(20,21)=__norm})[])\n        ;\n        i_25<((5*a_22)/\n        b_23) -> ((None,[]),EBase true&Term[((5*a_22)/b_23)-i_25]&\n                                  {FLOW,(20,21)=__norm}[]\n                                    EAssume 10::\n                                      EXISTS(a_22,b_23: true&a_22'=a_22 & \n                                      b_23'=b_23&{FLOW,(20,21)=__norm})[])\n        \n        }\n")
+Error(s) detected at main 
+# added  -tp redlog
+
+error at: benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss doSum
+# added  -tp z3
+
+error at: benchs/aprove/Julia_10_Recursive/FibSLR.ss doSum
+ -tp z3; -tp redlog
+# removed --eps caused failure for above
+
+// xpure_symbolic for inference!
+example/working/bugs/infer5.slk
+
+=======================================================
+-imm problems
+
+Total number of errors: 2 in files:
+  imm/imm1.slk imm/imm3.slk.
+
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult
+error at: bigint-tight-imm.ss mult
+.
+
+BAG tests (very slow)
+=========
+error at: avl-all-1.ss 
+error at: avl-modular-2.ss delete_top
+error at: avl-modular-2.ss remove_min
+error at: avl-modular-2.ss remove_max_add
+error at: avl-modular-2.ss remove_min_add
+error at: avl-modular-2.ss insert
+error at: avl-modular-2.ss rotate_double_right
+error at: avl-modular-2.ss rotate_double_left
+error at: avl-modular-2.ss rotate_right
+error at: avl-modular-2.ss rotate_left
+error at: avl-modular-3.ss delete_top
+error at: avl-modular-3.ss remove_min
+error at: avl-modular-3.ss remove_max_add
+error at: avl-modular-3.ss remove_min_add
+error at: avl-modular-3.ss insert
+error at: avl-modular-3.ss rotate_double_left
+error at: avl-modular-3.ss rotate_right
+error at: avl-modular-3.ss rotate_left
+error at: avl-modular-2.ss delete_top
+error at: avl-modular-2.ss remove_min
+error at: avl-modular-2.ss remove_max_add
+error at: avl-modular-2.ss remove_min_add
+error at: avl-modular-2.ss insert
+error at: avl-modular-2.ss rotate_double_right
+error at: avl-modular-2.ss rotate_double_left
+error at: avl-modular-2.ss rotate_right
+error at: avl-modular-2.ss rotate_left
+error at: avl-modular-new3.ss delete_top
+error at: avl-modular-new3.ss remove_min
+error at: avl-modular-new3.ss remove_max_add
+error at: avl-modular-new3.ss remove_min_add
+error at: avl-modular-new3.ss is_mem
+error at: avl-modular-new3.ss rotate_double_right
+error at: avl-modular-new3.ss rotate_double_left
+error at: avl-modular-new3.ss rotate_right
+error at: avl-modular-new3.ss rotate_left
+error at: avl-modular.ss delete_top
+error at: avl-modular.ss remove_min
+error at: avl-modular.ss remove_max_add
+error at: avl-modular.ss remove_min_add
+error at: avl-modular.ss insert
+error at: avl-modular.ss rotate_double_right
+error at: avl-modular.ss rotate_double_left
+error at: avl-modular.ss rotate_right
+error at: avl-modular.ss rotate_left
+error at: avl.scp.ss delete
+error at: avl.scp.ss remove_min
+error at: avl.ss insert
+error at: avl.ss rotate_right
+error at: avl.ss rotate_left
+error at: merge-modular.ss insert1
+error at: merge-modular.ss merge_sort1
+error at: merge-modular.ss split1
+error at: rb_bags.ss del_2r_1
+error at: rb_bags.ss del_2_1
+error at: rb.scp.ss del_2r_1
+error at: rb.scp.ss del_2_1

@@ -190,7 +190,8 @@ let process_pred_def pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def pdef = 
-  Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
+  let pr = Iprinter.string_of_view_decl in
+  Debug.no_1 "process_pred_def" pr pr_no process_pred_def pdef
 
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
@@ -199,7 +200,15 @@ let process_pred_def_4_iast pdef =
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
-		let new_pdef = {pdef with Iast.view_formula = wf} in
+        let inv_lock = pdef.I.view_inv_lock in
+        let inv_lock =
+          (match inv_lock with
+            | None -> None
+            | Some f ->
+                let new_f = AS.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
+                Some new_f)
+        in
+		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
@@ -207,7 +216,8 @@ let process_pred_def_4_iast pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let process_pred_def_4_iast pdef = 
-  Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
+  let pr = Iprinter.string_of_view_decl in
+  Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
 
 let convert_pred_to_cast () = 
@@ -477,9 +487,14 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
+  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+                              ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
+                              ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
+                              ^"\n\n") no_pos in
   let ante = meta_to_formula iante0 false [] stab in
   let ante = Solver.prune_preds !cprog true ante in
-  let ante =
+  let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
         need to add type of full perm to stab *)
@@ -508,6 +523,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^"\n\n")) no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+  let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -565,7 +581,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
-  DD.trace_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
@@ -614,23 +630,33 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   DD.no_1 "print_entail_result" pr (fun _ -> "") 
     (fun _ -> print_entail_result valid residue num_id) residue
 
+
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string ("exception caught " ^ check_id ^ " check\n")
+
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
+  (* with e -> print_exc num_id *)
 
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
-  let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nEntail "^nn in
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result valid rs num_id
-  with _ -> print_exc num_id
+  with ex -> 
+      (* print_exc num_id *)
+         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+         in ()
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
@@ -683,7 +709,7 @@ let process_print_command pcmd0 = match pcmd0 with
         (*print all posible outcomes and their traces with numbering*)
         | Some s -> 
                print_string (
-                  (Cprinter.string_of_numbered_list_formula_no_trace
+                  (Cprinter.string_of_numbered_list_formula_trace
               (CF.list_formula_trace_of_list_context s))^"\n" )
 	  else
 			print_string ("unsupported print command: " ^ pcmd)

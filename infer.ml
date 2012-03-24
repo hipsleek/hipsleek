@@ -292,7 +292,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, b, t) = split_components f in
+  let (h, p, fl, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -383,21 +383,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
-                (* let _ = print_endline ("iv_alias:"^(!CP.print_svl iv_alias)) in *)
-                (* let _ = print_endline ("orig root:"^(!CP.print_sv orig_r)) in *)
-                (* let _ = print_endline ("new root:"^(!CP.print_sv new_r)) in *)
-                (* let _ = print_endline ("new hform:"^(!print_h_formula new_h)) in *)
-                (* we do not need to add lhs_root=iv into the inf_pure as info is in LHS*)
-                (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)  *)
-                (*   (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al) in *)
-                (* let new_p = (CP.mkTrue no_pos) in *)
                 let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
-                (* why is orig_ante being used?????? *)
-                (* let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in *)
-                (* let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in *)
-                (* let new_p_conjs = CP.list_of_conjs new_p in *)
-                (* let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) *)
-                (*   (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in *)
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_hprint (add_str "unmatch RHS : " !print_h_formula) rhs pos;
                 DD.devel_hprint (add_str "orig inf vars : " !print_svl) iv pos;
@@ -1040,10 +1026,10 @@ let check_rank_const rank_fml lhs_cond = match rank_fml with
   let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
   CP.join_conjunctions (rank_dec@rank_const@others) *)
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p rhs_p_br 
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p heap_entail_build_mix_formula_check pos =
     heap_entail_build_mix_formula_check pos =
   (* TODO : need to handle pure_branches in future ? *)
-  if no_infer_rel estate then (estate,lhs_p_orig,rhs_p,rhs_p_br) 
+  if no_infer_rel estate then (estate,lhs_p_orig,rhs_p) 
   else 
     let ivs = estate.es_infer_vars_rel in
     let rhs_p_n = MCP.pure_of_mix rhs_p in
@@ -1139,7 +1125,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       let lhs_rec_vars = CP.fv lhs_p_memo in
       if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
         DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
-        (estate,lhs_p_orig,rhs_p_new,rhs_p_br))
+        (estate,lhs_p_orig,rhs_p_new))
       else
         let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
         (* let lhs = lhs_simplifier lhs_h lhs_p_memo in *)
@@ -1224,7 +1210,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
             DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos;
             DD.devel_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
           end;
-        (estate,lhs_p_orig,rhs_p_new,rhs_p_br)
+        (estate,lhs_p_orig,rhs_p_new)
 (*
 Given:
 infer vars:[n,R]
@@ -1242,14 +1228,14 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p rhs_p_br 
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p 
   heap_entail_build_mix_formula_check pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
       Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
-      rhs_p rhs_p_br heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
+      rhs_p heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
 let rec create_alias_tbl svl keep_vars aset = match svl with
   | [] -> []

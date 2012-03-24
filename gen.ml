@@ -84,6 +84,8 @@ struct
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
  let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
+ let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
+ let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
  
  let add_str s f xs = s^":"^(f xs)
 
@@ -1357,7 +1359,7 @@ struct
 
   (* checks s |- x!=y *)
   let is_disj (eq:'a->'a->bool) (s: dpart)  (x:ptr) (y:ptr) : bool =
-    if (eq x y) then false 
+    if (eq x y) then false
     else
       let l1 = find_diff eq s x in
       let l2 = find_diff eq s y in

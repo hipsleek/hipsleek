@@ -27,3 +27,6 @@ and var_aset = Gen.EqMap(SV).emap
 
 let empty_var_aset = EMapSV.mkEmpty
 
+let print_mg_f = ref (fun (c: memoised_group) -> "printing not initialized")
+
+

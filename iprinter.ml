@@ -218,6 +218,7 @@ let string_of_b_formula (pf,il) =
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
+  | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
@@ -241,6 +242,9 @@ let concat_string_list_string strings =
 let rec string_of_pure_formula = function 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
+  | P.AndList b -> List.fold_left  (fun a (l,c)-> 
+		let l_s = (string_of_spec_label l) ^": " in
+		a ^ "\n" ^ (if a = "" then "" else " && ") ^ "\n" ^ l_s^(string_of_pure_formula c)) "" b
   | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
   | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
   | P.Forall (x, f,lbl, l)            -> "all " ^ (string_of_id x)
@@ -301,7 +305,7 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
+    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid   ;
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
@@ -313,7 +317,7 @@ let rec string_of_h_formula = function
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
           ((string_of_id xid)
-      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
+      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 
@@ -331,14 +335,32 @@ and string_of_imm imm = match imm with
  
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
+let string_of_one_formula (f:F.one_formula) =
+  let h,p,th,pos = F.split_one_formula f in
+  let sh = string_of_h_formula h in
+  let sp = string_of_pure_formula p in
+  let sth = match th with
+    | None -> ("thread = None")
+    | Some (v,_) ->("thread = " ^ v)  in
+  ( "<" ^ sth^ ">" 
+    ^ "*" ^ "(" ^ sh ^ ")" 
+    ^ "*" ^ "(" ^ sp ^ ")" )
+
+let rec string_of_one_formula_list (f:F.one_formula list) =
+  String.concat "\n AND" (List.map string_of_one_formula f)
+
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
 				  F.formula_base_pure = pf;
 				  F.formula_base_flow = fl;
-				  F.formula_base_pos = l}) ->  
+				  F.formula_base_and = a;
+				  F.formula_base_pos = l}) ->
+      let sa = if a == [] then "" else "\nAND " in
+      let sa = sa ^ (string_of_one_formula_list a) in
+      let rs = 
 	  if hf = F.HTrue then 
-		((string_of_pure_formula pf)^" FLOW "^fl^")")
+		((string_of_pure_formula pf)^" FLOW "^fl)
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
@@ -347,6 +369,7 @@ let rec string_of_formula = function
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
             else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+      in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
@@ -354,7 +377,11 @@ let rec string_of_formula = function
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
+					F.formula_exists_and = a;
 					F.formula_exists_pure = pf}) ->
+      let sa = if a==[] then "" else "\nAND " in
+      let sa = sa ^ string_of_one_formula_list a in
+      let rs=
 	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
 		   ("true & ")^string_of_pure_formula pf
@@ -367,6 +394,7 @@ let rec string_of_formula = function
 			 (if s = "" then  (string_of_h_formula hf)
               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
 	  ^ ")"
+      in rs^sa
 ;;
 
 let rec string_of_struc_formula c = match c with 
@@ -474,9 +502,11 @@ let rec string_of_exp = function
             else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
           else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
+                exp_call_nrecv_lock = lock;
 				exp_call_nrecv_path_id = pid;
 				exp_call_nrecv_arguments = el})-> 
-          string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+          let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
+          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")")
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
 			   exp_call_recv_path_id = pid;
@@ -600,7 +630,7 @@ let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
@@ -732,8 +762,11 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+Iformula.print_one_formula := string_of_one_formula;;
+Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
+Ipure.print_formula :=string_of_pure_formula;
 

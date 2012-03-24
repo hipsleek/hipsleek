@@ -1,0 +1,89 @@
+
+
+checkentail @zero[v1,v2] |- @p_val[x1,x2] 
+   --> @zero[v1,v2].
+
+checkentail v1'=x1 & @zero[v1,v2] |- @p_val[x1,x2] 
+   --> @zero[v1,v2].
+
+checkentail @zero[v1,v2] |- @p_ref[x1] 
+   --> @zero[v1,v2,x1].
+
+foo(ref int x, ref int y)
+   requires @p_val[x] & @p_ref[y]
+   ensures  @full[x] & @full[y]
+
+foo(ref int x, ref int y)
+   requires @p_val[x] & @p_ref[y]
+   ensures  @full[x,y]
+
+
+PRE-CONDITION: @p_val and @p_ref
+POST-CONDITION: @full
+
+  S1@F and S2@F  ==> (S1@S2)@Z
+  S1@F or S2@F  ==> (S1 \cap S2)@Z
+  S1@Z and S2@F  ==> (S1-S2)@Z
+  S1@Z or  S2@Z  ==> (S1 \cup S2)@Z
+  S1@Z and S2@Z  ==> (S1@S2)@Z
+
+
+
+We introduce a variable type-state:
+
+    v@F denotes var will full access
+    v@Z denotes var with possibly zero access
+
+
+   v@F  |- v@Copy --> v@F
+   v@F  |- v@Ref --> v@Z
+
+   v@Z  |- v@Copy --> fail
+   v@Z  |- v@Ref --> fail
+
+(a) no two vars can be passed by ref to the same location
+
+(b) when a thread is given a pass-by-ref, the variable
+     cannot be accessed until the thread has terminated
+
+(c) for pass by value, a copy of the variable is passed to
+     onwards; but the original location still have full access
+
+(d)
+
+Representation
+
+  {v1,..,vn}@F with full permission
+
+        v \in S
+  --------------------
+  S@F |- v@C  --> S@F
+
+
+         v \in S
+  -----------------------
+  S@F |- v@R  --> S-{v}@F
+
+  S1@F or  S2@F ==> (S1 \cap S2)@F
+  S1@F and S2@F ==> (S1 \cup S2)@F
+
+========================================================
+
+Another Representation
+
+  {v1,..,vn}@Z which may have zero permission
+
+     not(v \in S)
+  --------------------
+  S@Z |- v@C  --> S@Z
+
+
+         not(v \in S)
+  -----------------------
+  S@Z |- v@R  --> S+{v}@Z
+
+
+  S1@Z and S2@F ==> (S1-S2)@Z
+  S1@Z or  S2@Z  ==> (S1 \cup S2)@Z
+  S1@Z and S2@Z  ==> (S1 \cap S2)@Z
+

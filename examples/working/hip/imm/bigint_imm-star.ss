@@ -221,6 +221,8 @@ node shift_left(node x)
     x=null -> ensures res=null;
    x!=null -> ensures res::node<0,x>;
   }
+  /* requires x::bigint<v>@ */
+  /* ensures res::bigint<v*10>@I; */
 {
   if (x == null) { return x;}
   node t = new node(0, x);
@@ -230,7 +232,7 @@ node shift_left(node x)
 
 
 node mult(node x, node y)
-  requires x::bigint<v1>@L * y::bigint<v2>@L
+  requires x::bigint<v1>@L * y::bigint<v2>@L & true
   ensures res::bigint<v1*v2>;
 
 /*

@@ -165,6 +165,8 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
 	| Cpure.LexVar _ -> 
 			illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+	| Cpure.VarPerm _ -> 
+			illegal_format ("z3.smt_of_b_formula: VarPerm should not appear here.\n")
 	| Cpure.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -193,6 +195,7 @@ let rec smt_of_formula f =
 	match f with
 	| Cpure.BForm (b,_) -> (smt_of_b_formula b)
 	| Cpure.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| Cpure.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")"
 	| Cpure.Forall (sv, p, _,_) ->
@@ -236,6 +239,7 @@ and collect_combine_formula_info f1 f2 =
  *)
 and collect_formula_info_raw f = match f with
 	| Cpure.BForm ((b,_),_) -> collect_bformula_info b
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.And (f1,f2,_) | Cpure.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
 	| Cpure.Not (f1,_,_) -> collect_formula_info_raw f1
@@ -265,6 +269,7 @@ and collect_bformula_info b = match b with
 	| Cpure.ListIn _
 	| Cpure.ListNotIn _
 	| Cpure.ListAllN _
+	| Cpure.VarPerm _
 	| Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| Cpure.LexVar _ -> default_formula_info
 	| Cpure.RelForm (r,args,_) ->
@@ -497,7 +502,7 @@ let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
 let z3_restart_interval = ref (-1)
-let log_all = open_out ("allinput.z3")
+let log_all = open_log_out ("allinput.spass")
 
 let path_to_z3 = "z3" (*"z3"*)
 let smtsolver_name = ref ("z3": string)
@@ -843,6 +848,7 @@ let rec collect_induction_value_candidates (ante : Cpure.formula) (conseq : Cpur
 			  (* | Cpure.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [Cpure.mkSubtract high low no_pos] *)
 		| _ -> [])
 	| Cpure.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
 	| Cpure.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| Cpure.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 	| Cpure.Forall _ | Cpure.Exists _ -> []
@@ -953,7 +959,7 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
         let (pr_w,pr_s) = Cpure.drop_complex_ops in
-	try (match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
+	try (match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
 	  | None -> (false, true)
 	  | Some r -> (r, false)
 	)
@@ -1023,7 +1029,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
 		try
              let (pr_w,pr_s) = Cpure.drop_complex_ops in
-            let optr= (Omega.is_sat_with_check pr_w pr_s f sat_no) in
+            let optr= (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in
         ( match optr with
           | Some r -> (r, false)
           | None -> (true, false)
