@@ -1,0 +1,11 @@
+checkentail true & MayLoop &
+   ["m":m=1; "n":n=2] |- MayLoop.
+
+checkentail true & MayLoop &
+   ["m":m=1; "n":n=2] |- m>0.
+
+checkentail true & MayLoop &
+   ["m":m=1; "n":n=2] |- n>1.
+
+checkentail true & MayLoop &
+   ["m":m=1; "n":n=2] |- true & ["m":n>1].
