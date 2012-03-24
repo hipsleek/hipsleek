@@ -1270,21 +1270,21 @@ let infer_shape input =
   Debug.info_hprint (add_str "Inferred shape " (pr_pair !CF.print_h_formula !CF.print_h_formula)) (fml1,fml2) no_pos;
   print_newline ()
 
-let _ = 
-  let syscall cmd =
-    let ic, oc = Unix.open_process cmd in
-    let buf = Buffer.create 16 in
-    (try
-       while true do
-         Buffer.add_channel buf ic 1
-       done
-     with End_of_file -> ());
-    let _ = Unix.close_process (ic, oc) in
-    (Buffer.contents buf)
-  in
-  let input_shape = "./infer/shape/ll-app.shape" in
-  let input_str = syscall ("cat " ^ input_shape) in
-  infer_shape input_str
+(*let _ = *)
+(*  let syscall cmd =*)
+(*    let ic, oc = Unix.open_process cmd in*)
+(*    let buf = Buffer.create 16 in*)
+(*    (try*)
+(*       while true do*)
+(*         Buffer.add_channel buf ic 1*)
+(*       done*)
+(*     with End_of_file -> ());*)
+(*    let _ = Unix.close_process (ic, oc) in*)
+(*    (Buffer.contents buf)*)
+(*  in*)
+(*  let input_shape = "./infer/shape/ll-app.shape" in*)
+(*  let input_str = syscall ("cat " ^ input_shape) in*)
+(*  infer_shape input_str*)
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
