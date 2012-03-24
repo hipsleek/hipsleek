@@ -1,0 +1,34 @@
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+
+
+/* view for avl trees */
+pred avl<"m":m, "n":n, "S":S> == self = null & ["m":m = 0; "n": n = 0; "S": S = {}]
+  or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & [
+  "m" : m = 1+m1+m2 ; 
+  "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) ;
+  "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))]
+  inv true & ["m" : m >= 0;
+    "n" : n >= 0].
+
+checkentail x::avl<m,n,S> & x!=null |- S!={}.
+print residue.
+
+checkentail x::avl<m,n,S> & x!=null |- true & ["S":S!={}].
+print residue.
+
+checkentail x::avl<m,n,S> & ["S":S!={}] |- x!=null.
+print residue.
+
+checkentail x::avl<m,n,S> & ["S":S!={}] |- x=null.
+print residue.
+
+checkentail x::avl<m,n,S> & x!=null |- x::node<v,h,l,r>.
+print residue.
+
+
+

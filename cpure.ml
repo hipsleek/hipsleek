@@ -1308,32 +1308,44 @@ and mkAnd_dumb f1 f2 pos =
 	else if (isConstTrue f2) then f1
 	else And (f1, f2, pos)
 	
+(* and mkAnd_x f1 f2 pos =  *)
+(*   if (isConstFalse f1) then f1 *)
+(*   else if (isConstTrue f1) then f2 *)
+(*   else if (isConstFalse f2) then f2 *)
+(*   else if (isConstTrue f2) then f1 *)
+(*   else  *)
+(* 	let rec helper fal fnl = match fal with  *)
+(* 		| Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal)) *)
+(* 		| AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)]) *)
+(* 		| _ -> And (fal,fnl, pos) in *)
+(* 	match no_andl f1 , no_andl f2 with  *)
+(* 		| true, true -> And (f1, f2, pos) *)
+(* 		| true, false -> helper f2 f1 *)
+(* 		| false, true -> helper f1 f2 *)
+(* 		| false, false -> *)
+(* 		   match f1,f2 with *)
+(* 		   | Or _, _  *)
+(* 		   | _, Or _ ->   *)
+(* 				let lf1 = split_disjunctions f1 in *)
+(* 				let lf2 = split_disjunctions f2 in *)
+(* 				let lrd = List.map (fun c-> List.map (fun d->mkAnd_x d c pos) lf1) lf2 in *)
+(* 				join_disjunctions (List.concat lrd) *)
+(* 		   | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2) *)
+(* 		   | AndList b, f *)
+(* 		   | f, AndList b -> ((\*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*\)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])) *)
+(* 		   | _ -> And (f1, f2, pos) *)
+
 and mkAnd_x f1 f2 pos = 
   if (isConstFalse f1) then f1
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
-  else 
-	let rec helper fal fnl = match fal with 
-		| Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal))
-		| AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)])
-		| _ -> And (fal,fnl, pos) in
-	match no_andl f1 , no_andl f2 with 
-		| true, true -> And (f1, f2, pos)
-		| true, false -> helper f2 f1
-		| false, true -> helper f1 f2
-		| false, false ->
-		   match f1,f2 with
-		   | Or _, _ 
-		   | _, Or _ ->  
-				let lf1 = split_disjunctions f1 in
-				let lf2 = split_disjunctions f2 in
-				let lrd = List.map (fun c-> List.map (fun d->mkAnd_x d c pos) lf1) lf2 in
-				join_disjunctions (List.concat lrd)
-		   | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
-		   | AndList b, f
-		   | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
-		   | _ -> And (f1, f2, pos)
+  else	let helper b fnl = mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)]) in
+	match f1 , f2 with 
+		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
+		| _, AndList b -> helper b f1
+		| AndList b, _ -> helper b f2
+		| _, _ -> And (f1, f2, pos)
 	  
 and mkAnd f1 f2 pos = Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
   
@@ -1370,7 +1382,13 @@ and mkOr_x f1 f2 lbl pos=
 	| AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
 	| AndList l, f
 	| f, AndList l -> AndList (or_branches l [(empty_spec_label,f)] lbl pos)
-	| _ -> *)Or (f1, f2, lbl ,pos)
+	| _ -> *)
+    let flatten f1 = match f1 with
+      | AndList b -> 
+            if b = [] then mkTrue pos
+            else List.fold_left (fun a (_,f)-> mkAnd a f pos) (snd (List.hd b)) (List.tl b)
+      | _ -> f1 in
+    Or (flatten f1, flatten f2, lbl ,pos)
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 	
@@ -1567,9 +1585,13 @@ and disj_of_list (xs : formula list) pos : formula =
     | x::xs -> helper xs x
 
 	
+(* and no_andl  = function *)
+(* 		| BForm _ | And _ | Not _ | Forall _ | Exists _  -> true *)
+(* 		| Or (f1,f2,_,_) -> no_andl f1 && no_andl f2 *)
+(* 		| AndList _ -> false  *)
 and no_andl  = function
-		| BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
-		| Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+		| BForm _ | And _ | Not _ | Forall _ | Exists _ 
+		| Or (_,_,_,_) -> true
 		| AndList _ -> false 
 	
 	
