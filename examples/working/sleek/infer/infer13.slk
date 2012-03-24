@@ -27,3 +27,7 @@ print residue.
 
 infer [y] x::node<y>  |- x::node<a> * a::ll<n> .
 print residue.
+
+infer [z,y] x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+

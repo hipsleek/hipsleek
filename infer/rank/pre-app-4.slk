@@ -1,0 +1,17 @@
+relation P2(int s2, int l1, int l2).
+
+infer [l1,s2,P2] s1<=l1  |- s1<=s2 & P2(l1,s2,l2).
+print residue.
+/*
+TODO : why isn't RELDEFN P2 captured?
+<1>true&s1<=l1 & l1<=s2&{FLOW,(17,18)=__norm}
+inferred pure: [l1<=s2]
+*/
+
+infer [l1,s2,P2] s1<=l1 & l1<=s2 |- s1<=s2 & P2(l1,s2,l2).
+print residue.
+/*
+TODO : why isn't s1<=l1 captured on the LHS?
+<1>true&s1<=l1 & l1<=s2&{FLOW,(17,18)=__norm}
+inferred rel: [RELDEFN P2: ( l1<=s2) -->  P2(l1,s2,l2)]
+*/

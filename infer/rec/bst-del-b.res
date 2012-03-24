@@ -1,10 +1,11 @@
 
 Processing file "bst-del-b.ss"
 Parsing bst-del-b.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
+
 Checking procedure delete$node2~int... 
 dprint: bst-del-b.ss:66: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(73::,0 ); (73::,0 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(73::,1 ); (73::,1 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(69::,0 ); (69::,0 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )];  [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )])]
 
@@ -28,34 +29,46 @@ Successful States:
        es_var_measures: MayLoop
  ]
 
-INF-POST-FLAG: false
-REL :  B(sm,s,l,lg)
-POST:  l>=sm & lg>=l & sm=s
-PRE :  sm<=lg
-OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 2::ref [x]
-                     EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & 
-                     l<=lg & B(sm,s,l,lg)&{FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 2::ref [x]
-                   x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & l<=lg & 
-                   B(sm,s,l,lg) & sm<=lg&{FLOW,(20,21)=__norm}
-NEW RELS: [ (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (sm=s & l=lg & s<=lg) --> B(sm,s,l,lg), (s=sm & l=l_895 & lg_623=lg & sm<=sm_622 & sm_622<=s_894 & s_894<=l_895 & 
-  l_895<=lg & B(sm_622,s_894,l_895,lg_623)) --> B(sm,s,l,lg), (sm_642=sm & s=s_957 & l=lg & sm<=s_957 & s_957<=l_958 & l_958<=lg_643 & 
-  lg_643<=lg & B(sm_642,s_957,l_958,lg_643)) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg)]
-
+!!! REL :  B(sm,s,l,lg)
+!!! POST:  l>=s & lg>=l & s=sm
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::ref [x]
+                                EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&
+                                sm<=s & l<=lg & B(sm,s,l,lg)&
+                                {FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::ref [x]
+                              EXISTS(s_1007,
+                              l_1008: x'::bst<s_1007,l_1008>@M[Orig][LHSCase]&
+                              sm<=s_1007 & l_1008<=lg & l_1008>=s_1007 & 
+                              lg>=l_1008 & s_1007=sm & sm<=lg&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (lg=l & sm=s & s<=l) --> B(sm,s,l,lg),
+ (sm=s & lg=lg_623 & l_895=l & s<=sm_622 & sm_622<=s_894 & s_894<=l & 
+  l<=lg_623 & B(sm_622,s_894,l_895,lg_623)) --> B(sm,s,l,lg),
+ (lg=l & sm=sm_642 & s_949=s & sm_642<=s & s<=l_950 & l_950<=lg_643 & 
+  lg_643<=l & B(sm_642,s_949,l_950,lg_643)) --> B(sm,s,l,lg),
+ (sm=s & lg=l & s<=l) --> B(sm,s,l,lg)]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 633 invocations 
+Stop Omega... 347 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.67 second(s)
-	Time spent in main process: 1.56 second(s)
-	Time spent in child processes: 1.11 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.14 second(s)

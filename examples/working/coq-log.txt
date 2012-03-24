@@ -1,0 +1,34 @@
+PROBLEMS : lists -tp coq; slow with lr.ss 
+=========================================
+Checking ll_test2.ss
+error at: ll_test2.ss delete
+loops at lr.ss
+merge3.ss 
+ Context of Verification Failure: File "merge3.ss",Line:17,Col:9
+ Last Proving Location: File "merge3.ss",Line:36,Col:4
+
+ ERROR: at merge3.ss_17_9 
+ Message: Post condition cannot be derived.
+
+
+
+MORE PROBLEMS with -tp coq --eps
+================================
+rror at: perm.ss append
+Total number of errors: 14 in files:
+ error at: demo.ss insert
+error at: demo.ss append
+error at: demo2.ss append
+error at: ll.ss insert
+error at: ll.ss append
+error at: ll_bak.ss insert
+error at: ll_bak.ss append
+error at: ll_test2.ss delete
+error at: lr.ss my_rev
+error at: merge.ss merge
+error at: merge1.ss merge
+error at: merge2.ss merge
+error at: merge3.ss merge
+error at: perm.ss append
+
+

@@ -24,7 +24,7 @@ int remove_min(ref node2 x)
 	ensures x'::bst<s1, b> & s <= res <= s1;
 
 void delete(ref node2 x, int a)
-    infer @pre[B]
+    infer [B]
 	requires x::bst<sm, lg> 
     //ensures x'::bst<s, l> & sm <= s & l <= lg; 
     //ensures x'::bst<s, l> & sm <= s & l <= lg & B(sm,s,l,lg); 

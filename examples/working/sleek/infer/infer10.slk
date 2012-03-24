@@ -88,22 +88,16 @@ Inferred Pure:[ 9<=n]
 */
 
 // (9) lhs & rhs -> false
-// TODO : should drop m
-// --> (exists m: m<n & 1<=n)
+// inferred pure: [n<=0]
 infer [n] n>0 & n>m  |- false.
 print residue.
-/*
-Inferred Heap:[]
-Inferred Pure:[ !(m<n & 1<=n)]
-<1>false & false &
-*/
 
 // (10) lhs & rhs -> false
 infer [n,m] n>0 & n>m  |- false.
 print residue.
 /*
 Inferred Heap:[]
-Inferred Pure:[ !(m<n & 1<=n)]
+inferred pure: [n<=m | n<=0]
 <1>false & false &
 */
 

@@ -17,7 +17,7 @@ relation B(int x, int y).
 relation C(int x, int y, int z).
 
 void insert(node2 x, int a)
-     infer @pre[x,A]
+     infer [x,A]
      requires x::dll<p, n> //& n>0 //&  x!=null  
      ensures x::dll<p, m> & A(m,n); 
 {

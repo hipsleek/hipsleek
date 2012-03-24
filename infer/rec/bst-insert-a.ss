@@ -19,7 +19,7 @@ relation C(int x, int y, int z, int a, int b).
 
 /* insert a node in a bst */
 node2 insert(node2 x, int a)
-  infer @pre [C]
+  infer  [C]
   requires x::bst<sm, lg> 
   ensures res::bst<mi, ma> & res!=null & C(mi,sm, ma, lg, a);  
 	

@@ -34,15 +34,15 @@ inferred pure: [inf_ann_61<=0]
 
 Entail  (6): Valid. 
 
-<1>true&n=0 & x=y & inf_ann_70<=0 & inf_n_71<=0&{FLOW,(17,18)=__norm}
-inferred heap: [x::ll<inf_n_71>@inf_ann_70[Orig][LHSCase]]
-inferred pure: [inf_n_71<=0; inf_ann_70<=0]
+<1>true&n=0 & x=y & inf_ann_73<=0 & inf_n_74<=0&{FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_74>@inf_ann_73[Orig][LHSCase]]
+inferred pure: [inf_n_74<=0; inf_ann_73<=0]
 
 Entail  (7): Valid. 
 
-<1>true&x=y & n=inf_n_81 & inf_ann_80<=0&{FLOW,(17,18)=__norm}
-inferred heap: [x::ll<inf_n_81>@inf_ann_80[Orig][LHSCase]]
-inferred pure: [inf_ann_80<=0]
+<1>true&x=y & n=inf_n_84 & inf_ann_83<=0&{FLOW,(17,18)=__norm}
+inferred heap: [x::ll<inf_n_84>@inf_ann_83[Orig][LHSCase]]
+inferred pure: [inf_ann_83<=0]
 
 Entail  (8): Valid. 
 
@@ -50,13 +50,13 @@ Entail  (8): Valid.
 
 Entail  (9): Valid. 
 
-<1>true&inf_ann_99<=0 & inf_flted_43_101=null & 1<=inf_a_100&{FLOW,(17,18)=__norm}
-inferred heap: [y::node<inf_a_100,inf_flted_43_101>@inf_ann_99[Orig]]
-inferred pure: [1<=inf_a_100; inf_flted_43_101=null; inf_ann_99<=0]
+<1>true&inf_ann_109<=0 & inf_flted_43_111=null & 1<=inf_a_110&{FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_110,inf_flted_43_111>@inf_ann_109[Orig]]
+inferred pure: [1<=inf_a_110; inf_flted_43_111=null; inf_ann_109<=0]
 
 Entail  (10): Valid. 
 
-<1>EXISTS(flted_47_127: true&flted_47_127=null & 1<=aa&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_47_144: true&flted_47_144=null & 1<=aa&{FLOW,(17,18)=__norm})
 inferred pure: [1<=aa]
 
 Entail  (11): Valid. 
@@ -73,4 +73,4 @@ Entail  (13): Valid.
 <1>false&false&{FLOW,(17,18)=__norm}
 inferred pure: [y!=null]
 
-Stop Omega... 231 invocations 
+Stop Omega... 207 invocations 

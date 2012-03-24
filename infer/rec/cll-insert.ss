@@ -20,7 +20,7 @@ relation A(int x, int y).
 relation B(node x, node y). // can i have?
 
 void insert(node x, int v)
-	infer @pre[n,A]
+	infer [n,A]
 	requires x::hd<n> //& n > 0 
 	ensures x::hd<m> & A(m,n);
 {
