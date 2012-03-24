@@ -895,7 +895,8 @@ $output_file = "log";
         # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
-        ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        #["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        # above takes too long
         ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
         # ["lz_bak.ss", 0, ""],

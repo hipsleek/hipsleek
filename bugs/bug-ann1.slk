@@ -1,0 +1,11 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (10) valid
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+
+// (14) valid
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
+
