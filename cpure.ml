@@ -1532,6 +1532,7 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
 (* same of list_of_conjs *)
 and split_conjunctions =  function
     | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+    | AndList b -> fold_l_snd split_conjunctions b
     | z -> [z]
   
 and join_conjunctions fl = conj_of_list fl no_pos

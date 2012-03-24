@@ -1,5 +1,12 @@
+// fail
 checkentail true & MayLoop &
-   ["m":m=1; "n":n=2] |- MayLoop.
+   ["m":m=1; "n":n=2] |- MayLoop & n>1.
+
+checkentail true & MayLoop |- MayLoop .
+
+// succeed
+/*
+checkentail true & MayLoop |- MayLoop .
 
 checkentail true & MayLoop &
    ["m":m=1; "n":n=2] |- m>0.
@@ -9,3 +16,7 @@ checkentail true & MayLoop &
 
 checkentail true & MayLoop &
    ["m":m=1; "n":n=2] |- true & ["m":n>1].
+
+checkentail true & MayLoop & g>5 &
+   ["m":m=1; "n":n=2] |- g>1.
+*/

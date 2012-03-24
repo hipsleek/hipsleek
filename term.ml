@@ -308,7 +308,17 @@ let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp l
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
+  | CP.AndList m -> 
+        let rec f l = match l with
+          | [] -> raise LexVar_Not_found
+          | (_,h)::t -> 
+                try find_lexvar_formula h 
+                with _ -> f t in
+        f m
   | _ -> raise LexVar_Not_found
+
+let find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list * loc) =
+  Debug.no_1 "find_lexvar_formula " !CP.print_formula pr_no find_lexvar_formula f
 
 (* To syntactically simplify LexVar formula *) 
 (* (false,[]) means not decreasing *)
