@@ -768,7 +768,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
     let pre_vars, post_vars = List.partition (fun v -> List.mem v ante_vars) vars in
     try
       let rhs = fixbag_of_pure_formula pf in
-(*      let no = string_of_int no_of_disjs in*)
+      let no = string_of_int no_of_disjs in
       let input_fixbag =  "fixbag" ^ name ^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
         ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := " 
         ^ rhs

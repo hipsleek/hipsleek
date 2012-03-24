@@ -4988,8 +4988,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* DD.tinfo_hprint (add_str "xpure_lhs_h1(2)" !Cast.print_mix_formula) xpure_lhs_h1 no_pos; *)
   (*let estate = estate_orig in*)
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
-  let (estate,lhs_new,rhs_p,rhs_p_br) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
-    lhs_p rhs_p rhs_p_br heap_entail_build_mix_formula_check pos in
+  let (estate,lhs_new,rhs_p) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
+    lhs_p rhs_p pos in
   let infer_rel = estate.es_infer_rel in
   if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
@@ -6458,35 +6458,19 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     end
 
 and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
-  let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
-  (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
-  (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
-  (* Thai: change back to Inf.infer_pure *)
-  let rhs_node = match rhs with
-    | DataNode n -> n.h_formula_data_node
-    | ViewNode n -> n.h_formula_view_node
-    | _ -> report_error pos "Expect a node"
-  in
-  enulalias := true;
-  let lhs_alias = MCP.ptr_equations_with_null lhs_xpure in
-  enulalias := false;
-  let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-  let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
-  let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
-  let r = if CP.intersect rhs_als estate.es_infer_vars = []
-      && List.exists CP.is_node_typ estate.es_infer_vars then None 
-    else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
-  match r with
-    | Some (new_estate,pf) ->
+ (* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in*)
+
+ (* Thai: change back to Inf.infer_pure *)
+ (* let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in*)
+ (* match r with*)
+ (* | Some new_estate ->*)
           (* explicitly force unsat checking to be done here *)
-          let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
-          (* let ctx1 = set_unsat_flag ctx1 false in  *)
-          let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
-          let r1 = add_infer_pure_to_list_context [pf] r1 in
-          (r1,prf)
-    | None ->
+    (*      let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in*)
+          (* let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in *)
+    (* (r1,prf) *)
+  (*  | None ->*)
           begin
-            let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+            let (mix_rf,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
             (* let _ = print_flush "UNMATCHED RHS" in *)
             let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
             (*get list of pointers which equal NULL*)
@@ -6783,17 +6767,29 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
                 (*****************************************************************************)
           begin
-              let lhs_xpure,_,_ = xpure prog estate.es_formula in
-              (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
-              (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
-              (* Thai: change back to Inf.infer_pure *)
-              let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
-              let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
-              match r with
-                | Some (new_estate,pf) ->
-                (* explicitly force unsat checking to be done here *)
+            let lhs_xpure,_,_ = xpure prog estate.es_formula in
+            (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
+            (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
+            (* Thai: change back to Inf.infer_pure *)
+            let rhs_node = match rhs with
+              | DataNode n -> n.h_formula_data_node
+              | ViewNode n -> n.h_formula_view_node
+              | _ -> report_error pos "Expect a node"
+            in
+            enulalias := true;
+            let lhs_alias = MCP.ptr_equations_with_null lhs_xpure in
+            enulalias := false;
+            let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+            let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
+            let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
+            let r = if CP.intersect rhs_als estate.es_infer_vars = []
+                && List.exists CP.is_node_typ estate.es_infer_vars then None 
+              else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
+            match r with
+              | Some (new_estate,pf) ->
+                    (* explicitly force unsat checking to be done here *)
                     let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
-                (* let ctx1 = set_unsat_flag ctx1 false in  *)
+                    (* let ctx1 = set_unsat_flag ctx1 false in  *)
                     let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
                     let r1 = add_infer_pure_to_list_context [pf] r1 in
                     (r1,prf)
@@ -8382,7 +8378,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let exists_h_vars = if pre_vars = [] then [] else 
       List.filter (fun x -> not (CP.is_res_spec_var x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
     let fml = mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
-        h (MCP.mix_of_pure p) b.formula_base_type b.formula_base_flow b.formula_base_branches
+        h (MCP.mix_of_pure p) b.formula_base_type b.formula_base_flow b.formula_base_and
         b.formula_base_pos
     in (fml,pre)
 
@@ -8403,7 +8399,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
 (*    if f1 = f2 then f1*)
 (*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
-    let h, p, fl, b, t = split_components pre_fml in
+    let h, p, fl, t, a = split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     let p = if lst_assume = [] then p
@@ -8416,7 +8412,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
         let pre = CP.conj_of_list (ps@pres) no_pos in
         pre
     in
-    mkBase h (MCP.mix_of_pure p) t fl b no_pos
+    mkBase h (MCP.mix_of_pure p) t fl a no_pos
 		
 let simplify_pre pre_fml lst_assume =
 	let pr = !CF.print_formula in

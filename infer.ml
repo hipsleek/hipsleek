@@ -1026,8 +1026,7 @@ let check_rank_const rank_fml lhs_cond = match rank_fml with
   let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
   CP.join_conjunctions (rank_dec@rank_const@others) *)
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p heap_entail_build_mix_formula_check pos =
-    heap_entail_build_mix_formula_check pos =
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b *) rhs_p pos =
   (* TODO : need to handle pure_branches in future ? *)
   if no_infer_rel estate then (estate,lhs_p_orig,rhs_p) 
   else 
@@ -1059,7 +1058,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     if rel_rhs==[] then (
       DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
       DD.devel_pprint "no relation in rhs" pos; 
-      (estate,lhs_p_orig,rhs_p,rhs_p_br)
+      (estate,lhs_p_orig,rhs_p)
     (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
     (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
     (* Check if it is related to being unable to fold rhs_heap *)
@@ -1228,14 +1227,13 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p 
-  heap_entail_build_mix_formula_check pos =
+let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) rhs_p pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r,_) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
       Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
-      rhs_p heap_entail_build_mix_formula_check pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
+      rhs_p pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
 let rec create_alias_tbl svl keep_vars aset = match svl with
   | [] -> []

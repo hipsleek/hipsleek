@@ -7807,7 +7807,7 @@ let sum_of_int_lst lst = List.fold_left (+) 0 lst
 let rec no_of_cnts_heap heap = match heap with
   | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
   | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
-  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)
+(*  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)*)
   | Phase h -> no_of_cnts_heap h.h_formula_phase_rd + no_of_cnts_heap h.h_formula_phase_rw
   | DataNode _ -> 1
   | ViewNode _ -> 1
