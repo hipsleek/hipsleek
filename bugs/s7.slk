@@ -13,19 +13,12 @@ pred lseg<n, p> == case {
      }
      inv n >= 0.
 
-lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
-checkentail self::lseg<n,p>& n=2 |- (exists r: self::node<_,r> * r::node<_,q>).
+checkentail self::lseg<n,p>& n>=2 |-
+   self::node<next = r2> * r2::node<_,r>.
 
-print residue.
 
-checkentail self::lseg<n,p>& n=2 |- self::node<_,r> * r::node<_,q>.
+//checkentail x::lseg<n, p> & n > 1000 |- (exists r1: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 1 & n2 <=2 ).
 
-print residue.
 
-checkentail self::lseg<n,p>& n=6 |- self::lseg<a,r> * r::lseg<b,p> & a=3 & b=4.
-
-checkentail self::lseg<n,p>& n=6 |- (exists r: self::lseg<a,r> * r::lseg<b,p> & a=3 & b=4).
-
-print residue.
 
