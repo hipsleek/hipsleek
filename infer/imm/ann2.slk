@@ -1,0 +1,13 @@
+data cell {int val;}.
+
+// valid
+infer [v1] i::cell<a>@v1 |- i::cell<a>@L .
+print residue.
+
+// inferred v1<=0
+infer [v1] j::cell<a>@v1 |- j::cell<a>@M .
+print residue.
+
+// inferred v1<=0
+infer [v1] i::cell<a>@v1 * j::cell<a>@v1 |- j::cell<a>@M * i::cell<a>@L.
+print residue.
