@@ -3240,25 +3240,32 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
    - f represents the consequent
 *)
 
-and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
-  let pr1 = Cprinter.string_of_list_context_short in
-  let pr2 = Cprinter.string_of_mix_formula in
-  Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
-      move_expl_inst_ctx_list_x ctx f
+(* (\* superceded by get_expl_inst *\) *)
+(* and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = *)
+(*   let pr1 = Cprinter.string_of_list_context_short in *)
+(*   let pr2 = Cprinter.string_of_mix_formula in *)
+(*   Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1  *)
+(*       move_expl_inst_ctx_list_x ctx f *)
 
-(*TO CHECK: *)
-and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
-  match ctx with
-    | FailCtx _ -> ctx
-    | SuccCtx cl ->
-          let cl1 = 
-            List.map (fun c ->
-	            (transform_context
-	                (fun es -> Ctx(move_expl_inst_estate es f)
-	                ) c)) cl 
-          in SuccCtx(cl1)
+(* (\*TO CHECK: *\) *)
+(* (\* superceded by get_expl_inst *\) *)
+(* and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context =  *)
+(*   match ctx with *)
+(*     | FailCtx _ -> ctx *)
+(*     | SuccCtx cl -> *)
+(*           let cl1 =  *)
+(*             List.map (fun c -> *)
+(* 	            (transform_context *)
+(* 	                (fun es -> Ctx(move_expl_inst_estate es f) *)
+(* 	                ) c)) cl  *)
+(*           in SuccCtx(cl1) *)
 
 and get_expl_inst es (f : MCP.mix_formula) = 
+  let pr = Cprinter.string_of_mix_formula in
+  let pr2 = Cprinter.string_of_spec_var_list in
+  Debug.ho_2 "get_expl_inst" pr pr2 pr (fun _ _ -> get_expl_inst_x es f) f es.es_gen_expl_vars
+
+and get_expl_inst_x es (f : MCP.mix_formula) = 
   let l_inst = es.es_gen_expl_vars(*@es.es_gen_impl_vars@es.es_ivars*) in
   let f = MCP.find_rel_constraints f l_inst in
   let to_elim_vars = es.es_gen_impl_vars@es.es_evars in
@@ -4526,12 +4533,16 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 				                  (*+++++++++++++++++++++++++++++++++*)
                                   (*LDK: remove duplicated conj from the p2*)
                                   let p2 = remove_dupl_conj_eq_mix_formula p2 in
+                                  (* Debug.trace_hprint (add_str "p2" Cprinter.string_of_mix_formula) p2 no_pos; *)
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
                                   (* explicit instantiation this will move some constraint to the LHS*)
                                   (*LDK: 25/08/2011, also instatiate ivars*)                          
                                   (*this move_expl_inst call can occur at the end of folding and also 
                                     at the end of entailments of stages possibly leading to duplications of instantiations
-                                    moving it would require the rhs pure to be moved as well...*)                          
+                                    moving it would require the rhs pure to be moved as well...*)
+                                  (* TODO : WN : below were some changes to explicit instantiation
+                                       but is not working for simple ann2.slk examples *)
+				                  (* let new_ctx = move_expl_inst_ctx_list ctx p2 in *)
   				                  let new_ctx =
 						            (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
 						            (match ctx with
