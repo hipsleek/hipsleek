@@ -2118,9 +2118,10 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
     let simplified_f = List.fold_left (fun be e -> CP.mkAnd e be no_pos) sf fl in
     simplified_f
 
+
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
-  let f_prim = elim_exists es.es_formula in
+  let f_prim = elim_exists 1 es.es_formula in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
@@ -2149,7 +2150,7 @@ and elim_exists_ctx (ctx0:context) =
 
 and elim_ante_evars (es:entail_state) : context = 
   let f = push_exists es.es_ante_evars es.es_formula in
-  let ef = elim_exists f in
+  let ef = elim_exists 2 f in
   Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 (*used for finding the unsat in the original pred defs formulas*)
@@ -2373,14 +2374,20 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
   let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
   Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars *)
 
+and elim_exists i (f0 : formula) : formula = 
+  let pr = Cprinter.string_of_formula in
+  Debug.no_1_num i "elim_exists" pr pr elim_exists_x f0
+
 (* WN : why isn't this in cformula.ml? *)
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
-and elim_exists (f0 : formula) : formula = match f0 with
+and elim_exists_x (f0 : formula) : formula = 
+  let rec helper f0 = 
+  match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        let ef1 = elim_exists f1 in
-        let ef2 = elim_exists f2 in
+        let ef1 = helper f1 in
+        let ef2 = helper f2 in
 	    mkOr ef1 ef2 pos
   | Base _ -> f0
   | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
@@ -2395,15 +2402,16 @@ and elim_exists (f0 : formula) : formula = match f0 with
           let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
           let new_baref = subst st tmp in
           let tmp2 = add_quantifiers rest_qvars new_baref in
-          let tmp3 = elim_exists tmp2 in
+          let tmp3 = helper tmp2 in
           tmp3
         else (* if qvar is not equated to any variables, try the next one *)
           let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
-          let tmp2 = elim_exists tmp1 in
+          let tmp2 = helper tmp1 in
           let tmp3 = add_quantifiers [qvar] tmp2 in
           tmp3 in
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+  in helper f0
 
 (**************************************************************)
 (* heap entailment                                            *)
@@ -3244,7 +3252,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 (* and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = *)
 (*   let pr1 = Cprinter.string_of_list_context_short in *)
 (*   let pr2 = Cprinter.string_of_mix_formula in *)
-(*   Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1  *)
+(*   Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1  *)
 (*       move_expl_inst_ctx_list_x ctx f *)
 
 (* (\*TO CHECK: *\) *)
@@ -3263,37 +3271,45 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 and get_expl_inst es (f : MCP.mix_formula) = 
   let pr = Cprinter.string_of_mix_formula in
   let pr2 = Cprinter.string_of_spec_var_list in
-  Debug.ho_2 "get_expl_inst" pr pr2 pr (fun _ _ -> get_expl_inst_x es f) f es.es_gen_expl_vars
+  Debug.no_2 "get_expl_inst" pr pr2 pr (fun _ _ -> get_expl_inst_x es f) f es.es_gen_expl_vars
 
 and get_expl_inst_x es (f : MCP.mix_formula) = 
   let l_inst = es.es_gen_expl_vars(*@es.es_gen_impl_vars@es.es_ivars*) in
   let f = MCP.find_rel_constraints f l_inst in
   let to_elim_vars = es.es_gen_impl_vars@es.es_evars in
-  if (to_elim_vars = []) then f 
+  if (to_elim_vars == []) then f 
   else (elim_exists_mix_formula to_elim_vars f no_pos) 
 
 and move_expl_inst_estate es (f : MCP.mix_formula) = 
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_1 "move_expl_inst_estate" pr pr_no (fun _ -> move_expl_inst_estate_x es f) f 
+  Debug.no_1 "move_expl_inst_estate" pr pr_no (fun _ -> move_expl_inst_estate_x es f) f 
 
+(* WN_TODO should stuff from aux_conseq be added? *)
 and move_expl_inst_estate_x es (f : MCP.mix_formula) = 
   let pr = Cprinter.string_of_spec_var_list in
+  let pr2 = Cprinter.string_of_formula in
   let nf = 
     (* let f2 = get_expl_inst es f in *)
     CF.mkStar es.es_formula (formula_of_mix_formula f no_pos) Flow_combine no_pos in
-    Debug.info_hprint (add_str "gen_impl_vars" pr) es.es_gen_impl_vars no_pos; 
-    Debug.info_hprint (add_str "es_evars" pr) es.es_evars no_pos; 
+    Debug.ninfo_hprint (add_str "es_formula" pr2) nf no_pos; 
+    Debug.ninfo_hprint (add_str "gen_expl_vars" pr) es.es_gen_expl_vars no_pos; 
+    Debug.ninfo_hprint (add_str "gen_impl_vars" pr) es.es_gen_impl_vars no_pos; 
+    Debug.ninfo_hprint (add_str "es_evars" pr) es.es_evars no_pos; 
+    Debug.ninfo_hprint (add_str "es_ante_evars" pr) es.es_ante_evars no_pos; 
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
       es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars (*es.es_evars*);
+      es_gen_expl_vars = [];
       es_formula = nf;
       es_unsat_flag = false; } 
 
 and move_impl_inst_estate es (f:MCP.mix_formula) = 
   let l_inst = es.es_gen_impl_vars@es.es_ivars in
   let f = MCP.find_rel_constraints f l_inst in
-  let to_elim_vars = es.es_gen_expl_vars@es.es_evars in  
+  (* expl_vars should not be eliminated below *)
+  let to_elim_vars = es.es_gen_expl_vars@ es.es_evars in  
+  let to_elim_vars2 = es.es_evars in  
   let nf = 
     let f2 = if ( to_elim_vars = []) then f else 
 	  (elim_exists_mix_formula to_elim_vars f no_pos) in
@@ -3303,7 +3319,7 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
-      es_ante_evars = es.es_ante_evars @ to_elim_vars;
+      es_ante_evars = es.es_ante_evars @  to_elim_vars2 ;
       es_formula = nf;
       es_unsat_flag = false; } 
       
@@ -3614,7 +3630,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 
 and eliminate_exist_from_LHS qvars qh qp qt qfl pos estate =
   let pr = Cprinter.string_of_spec_var_list in
-  Debug.ho_1 "eliminate_exist_from_LHS" pr pr_no (fun _ -> eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate) qvars
+  Debug.no_1 "eliminate_exist_from_LHS" pr pr_no (fun _ -> eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate) qvars
 
 and eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate =  
   (* eliminating existential quantifiers from the LHS *)
@@ -4367,7 +4383,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
-  Debug.ho_1_num i "heap_entail_conjunct_helper" pr1 pr2
+  Debug.no_1_num i "heap_entail_conjunct_helper" pr1 pr2
       (fun _ -> heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
           (rhs_h_matched_set:CP.spec_var list) pos) ctx0
 
@@ -4566,8 +4582,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 						  		                          let l_inst = get_expl_inst es p2 in
 						  		                          let es = move_impl_inst_estate es p2 in
 						  		                          Ctx ( if (es.es_imm_last_phase) then
-                                                            (Debug.info_pprint "imm last phase" no_pos;
-						  		      	                    move_expl_inst_estate es p2)
+                                                            (Debug.ninfo_pprint "imm last phase" no_pos;
+						  		      	                    move_expl_inst_estate es l_inst (* p2 *) )
 						  		                          else
 						  			                        add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
 						  		                      ) c)) cl
