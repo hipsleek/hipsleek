@@ -3273,9 +3273,16 @@ and get_expl_inst_x es (f : MCP.mix_formula) =
   else (elim_exists_mix_formula to_elim_vars f no_pos) 
 
 and move_expl_inst_estate es (f : MCP.mix_formula) = 
+  let pr = Cprinter.string_of_mix_formula in
+  Debug.ho_1 "move_expl_inst_estate" pr pr_no (fun _ -> move_expl_inst_estate_x es f) f 
+
+and move_expl_inst_estate_x es (f : MCP.mix_formula) = 
+  let pr = Cprinter.string_of_spec_var_list in
   let nf = 
-    let f2 = get_expl_inst es f in
-    CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
+    (* let f2 = get_expl_inst es f in *)
+    CF.mkStar es.es_formula (formula_of_mix_formula f no_pos) Flow_combine no_pos in
+    Debug.info_hprint (add_str "gen_impl_vars" pr) es.es_gen_impl_vars no_pos; 
+    Debug.info_hprint (add_str "es_evars" pr) es.es_evars no_pos; 
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
@@ -3605,8 +3612,11 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
       end
     | _ -> report_error no_pos ("[solver.ml]: No disjunctive context should reach this level\n")
 
+and eliminate_exist_from_LHS qvars qh qp qt qfl pos estate =
+  let pr = Cprinter.string_of_spec_var_list in
+  Debug.ho_1 "eliminate_exist_from_LHS" pr pr_no (fun _ -> eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate) qvars
 
-and eliminate_exist_from_LHS qvars qh qp qt qfl pos estate =  
+and eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate =  
   (* eliminating existential quantifiers from the LHS *)
   (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
   let ws = CP.fresh_spec_vars qvars in
@@ -4357,7 +4367,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
-  Debug.no_1_num i "heap_entail_conjunct_helper" pr1 pr2
+  Debug.ho_1_num i "heap_entail_conjunct_helper" pr1 pr2
       (fun _ -> heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
           (rhs_h_matched_set:CP.spec_var list) pos) ctx0
 
@@ -4556,7 +4566,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 						  		                          let l_inst = get_expl_inst es p2 in
 						  		                          let es = move_impl_inst_estate es p2 in
 						  		                          Ctx ( if (es.es_imm_last_phase) then
-						  		      	                    move_expl_inst_estate es p2
+                                                            (Debug.info_pprint "imm last phase" no_pos;
+						  		      	                    move_expl_inst_estate es p2)
 						  		                          else
 						  			                        add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
 						  		                      ) c)) cl
