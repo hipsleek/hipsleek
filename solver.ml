@@ -3299,8 +3299,9 @@ and move_expl_inst_estate_x es (f : MCP.mix_formula) =
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
-      es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars (*es.es_evars*);
-      es_gen_expl_vars = [];
+      es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars;
+      (* below cause problem for universal lemma sleek7,8,9 *)
+      (* es_gen_expl_vars = []; *)
       es_formula = nf;
       es_unsat_flag = false; } 
 
@@ -3322,9 +3323,6 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
       es_ante_evars = es.es_ante_evars @  to_elim_vars2 ;
       es_formula = nf;
       es_unsat_flag = false; } 
-      
-
-
 
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
 and obtain_subst l =
