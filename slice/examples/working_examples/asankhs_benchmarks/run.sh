@@ -13,6 +13,20 @@ do
 	# echo "[z3][.imm.slc.eps] spaguetti-$i"
 	# time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps --enable-slicing > spaguetti-$i.z3.imm.slc.eps
 
+	
+	# sugar
+	echo "[sugar][.eps] spaguetti-$i"
+	echo "[sugar][.eps] spaguetti-$i" >> time.out
+	(time ../../../../sleek --ufdp -tp sugar spaguetti-$i.slk --eps --dis-slicing --dis-imm) 1> spaguetti-$i.sugar.eps 2>> time.out
+
+	echo "[sugar][.slc.eps] spaguetti-$i"
+	echo "[sugar][.slc.eps] spaguetti-$i" >> time.out
+	(time ../../../../sleek --ufdp -tp sugar spaguetti-$i.slk --eps --enable-slicing --dis-imm) 1> spaguetti-$i.sugar.slc.eps 2>> time.out
+
+	echo "[sugar][.ineq.eps] spaguetti-$i"
+	echo "[sugar][.ineq.eps] spaguetti-$i" >> time.out
+	(time ../../../../sleek --ufdp -tp sugar spaguetti-$i.slk --eps --enable-slicing --slc-opt-ineq --dis-imm) 1> spaguetti-$i.sugar.ineq.eps 2>> time.out
+	
 	# Z3
 	echo "[z3][.eps] spaguetti-$i"
 	echo "[z3][.eps] spaguetti-$i" >> time.out
@@ -25,6 +39,8 @@ do
 	echo "[z3][.ineq.eps] spaguetti-$i"
 	echo "[z3][.ineq.eps] spaguetti-$i" >> time.out
 	(time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps --enable-slicing --slc-opt-ineq --dis-imm) 1> spaguetti-$i.z3.ineq.eps 2>> time.out
+
+	
 
 	# Omega
 	echo "[oc][.eps] spaguetti-$i"

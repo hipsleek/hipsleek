@@ -21,7 +21,14 @@ let null_flag = ref false
 (*sugar*)
 let sugar_path = "sugar"
 let sugar_name = "sugar"
-let sugar_arg = "sugar -solver \"minisat -pre\""
+(*let back_end_path ="\"/home/bachle/sleekex-temp2/lingeling/lingeling\" "*)
+(*/home/bachle/sleekex-temp2/cryptominisat-2.9.2/cryptominisat --plain*)
+
+(*minisat -pre*)
+let sugar_arg1 = "sugar"
+let sugar_arg2 = "-solver"
+let sugar_arg3 = "minisat "
+
 let sugar_input_format = "csp"   (* valid value is: csp *)
 let number_clauses = ref 1
 let number_var = ref 0
@@ -37,17 +44,19 @@ type domainVar = {
 	mutable ub: int;
 	}
 let listVar = ref ([]: domainVar list)
-let numVar = ref 0
+let null_flag = ref false
 let flag = -10000
-let execute_with= "eq_neq" (*Or all is for >=,<=,=,!= but we need to assign domains for variables*)
+let sugar_max = 10000
+let execute_eq_ineq= ref false (*Or all is for >=,<=,=,!= but we need to assign domains for variables*)
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN CSP FORMAT
 **************************************************************)
 (*sugar*)
+    
 let sugar_csp_of_spec_var sv = let ident=Cpure.name_of_spec_var sv in ident
 
 let asign_domain_null lv =
-  let domain_null={var="null";lb=1;ub= 1 + (List.length lv)} in  [domain_null] @ lv
+  let domain_null={var="null";lb=sugar_max;ub= sugar_max + (List.length lv)} in  [domain_null] @ lv
 
 let get_list_var f = let fvar=Cpure.fv f in 
 	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
@@ -63,8 +72,9 @@ let get_list_var_eq_logic f = let fvar=Cpure.fv f in
 	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
 	let listVarTemp = ref ([]: domainVar list) in
 	let mk_domain sv={var=sugar_csp_of_spec_var sv;
-			  lb = 1;
-			  ub= 1+(List.length all_fv);
+			  lb = sugar_max;
+(*			  ub= sugar_max+(List.length all_fv);*)
+				ub =sugar_max+4;
 			 } 
 	in let _= List.map (fun x-> (let domain=mk_domain x in listVarTemp:=[domain] @ !listVarTemp)) all_fv 
 	   in  !listVarTemp
@@ -78,7 +88,7 @@ let asign_domain_upperbound sv value=
 	List.map (fun x->if var=x.var && x.ub=flag then x.ub<-value )	!listVar
 
 let rec sugar_of_exp e0 = match e0 with
-  | Null _ -> "null"
+  | Null _ -> null_flag := true; "null"
   | Var (sv, _) -> sugar_csp_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> illegal_format ("sugar.sugar_of_exp: array, bag or list constraint")
@@ -130,7 +140,7 @@ and  sugar_of_b_formula b =
          							 "(= "^(sugar_of_exp a1) ^ "  " ^ (sugar_of_exp a2)^")"
   										end
   | Neq (a1, a2, _) -> begin
-        							 "(!= "^(sugar_of_exp a1)^ "  " ^ (sugar_of_exp a2)^")"
+        							 "(alldifferent( "^(sugar_of_exp a1)^ "  " ^ (sugar_of_exp a2)^") )"
     									 end
   | EqMax (a1, a2, a3, _) ->illegal_format ("sugar.sugar_of_exp: LexVar 3")
       
@@ -138,6 +148,7 @@ and  sugar_of_b_formula b =
   | RelForm _ -> illegal_format ("sugar.sugar_of_exp: RelForm")
   | LexVar _ -> illegal_format ("sugar.sugar_of_exp: LexVar 3")
   | _ -> illegal_format ("sugar.sugar_of_exp: bag or list constraint")
+
 
 and domain_of_variables b =
 	let (pf, _) = b in
@@ -169,11 +180,9 @@ and sugar_of_formula f  =
     match f with
   | BForm ((b,_) as bf,_) -> 		
         begin
-						if(execute_with<>"eq_neq") then 
 					     (domain_of_variables bf;
 							  sugar_of_b_formula bf)
-								else 
-									 sugar_of_b_formula bf
+							
         end
   | And (p1, p2, _) -> 	"(and" ^ (helper p1) ^ "  " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(or" ^ (helper p1) ^ "  " ^ (helper p2) ^ ")"
@@ -185,6 +194,22 @@ and sugar_of_formula f  =
 	helper f
   with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)
 
+and sugar_of_formula_eq_logic f  =
+  let rec helper f = 
+    match f with
+  | BForm ((b,_) as bf,_) -> 		
+        begin
+									 sugar_of_b_formula bf
+        end
+  | And (p1, p2, _) -> 	"(and" ^ (helper p1) ^ "  " ^ (helper p2 ) ^ ")"
+  | Or (p1, p2,_ , _) -> 	"(or" ^ (helper p1) ^ "  " ^ (helper p2) ^ ")"
+  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
+  | Forall (sv, p,_ , _) -> illegal_format ("sugar.sugar_of_exp: bag or list constraint")
+  | Exists (sv, p,_ , _) -> illegal_format ("sugar.sugar_of_exp: bag or list constraint")
+  in 
+  try
+	helper f
+  with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)	
 let sugar_of_formula f =
   Debug.no_1 "sugar_of_formula" Cprinter.string_of_pure_formula pr_id sugar_of_formula f
 	   
@@ -311,7 +336,7 @@ let start () =
     last_test_number := !test_number;
     let prelude () = () in
     if (sugar_input_format = "csp") then (
-      Procutils.PrvComms.start !log_all_flag log_file (sugar_name, sugar_path, [|sugar_arg|]) set_process prelude;
+      Procutils.PrvComms.start !log_all_flag log_file (sugar_name, sugar_path, [|sugar_arg1|]) set_process prelude;
       is_sugar_running := true;
 			print_endline ("Starting sugar... \n")
     )
@@ -349,7 +374,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   let set_process proc = sugar_process := proc in
   let fnc () =
     if (sugar_input_format = "csp") then (
-      Procutils.PrvComms.start false stdout (sugar_name, sugar_path, [|sugar_arg;infile|]) set_process (fun () -> ());
+      Procutils.PrvComms.start false stdout (sugar_name, sugar_path, [|sugar_arg1;sugar_arg2;sugar_arg3;infile|]) set_process (fun () -> ());
       sugar_call_count := !sugar_call_count + 1;
       let (prover_output, running_state) = get_answer !sugar_process.inchannel in
       is_sugar_running := running_state;
@@ -389,18 +414,37 @@ let domain_to_string list=
 			let str= ref ([]: string list) in
 			let _= List.map (fun x-> (*let _=print_endline (mk_string x) in*) str:= [(mk_string x)] @ !str)  list in !str
 
+let domain_to_string_eq_logic f = let fvar=Cpure.fv f in 
+	let all_fv = Gen.BList.remove_dups_eq (=) (fvar) in
+	let domain = ref ([]: string list) 
+	in let lb= string_of_int sugar_max and ub=string_of_int (sugar_max+List.length all_fv) in
+	 let _= List.map (fun x-> let _="" in 
+		domain := ["(int "^ (sugar_csp_of_spec_var x)^ " " ^ lb ^ " "^ ub ^")\n"] @ !domain  ) all_fv 
+	   in if (!null_flag=true) then ["(int "^ "null "^lb ^ " "^ ub ^")"] @ !domain else !domain
+
 (* sugar: output for csp format *)
 let to_sugar_csp (ante: Cpure.formula)  : string list=
   (*let _ = "** In function Spass.to_sugar_csp" in*)
- (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
-	let func = if(execute_with<>"eq_neq") then listVar := get_list_var ante else listVar := get_list_var_eq_logic ante in 
+let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in
+	let  res = if(!execute_eq_ineq=false) then 
+		(
+			let _= listVar := get_list_var ante in 
+			let _= if (!null_flag=true) then (listVar := asign_domain_null !listVar; null_flag := false) in
+			let constraints_=sugar_of_formula ante in
+			let domain=domain_to_string !listVar in
+			 domain @ [constraints_]  
+	(*let _=   print_endline ("Apply sugar.is_sat on formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
+		) 
+		else 
+			(	
+				let constraints_=sugar_of_formula_eq_logic ante in
+				let domain = domain_to_string_eq_logic ante in
+				 domain @ [constraints_]  
+				) in 
+				res
 	(*print_endline "null has been assigned";*)
-	let _= listVar := asign_domain_null !listVar in
-	let result=sugar_of_formula ante in
-	let domain=domain_to_string !listVar in
-	let res= domain @ [result] in 
-	(*let _= List.map (fun x-> print_endline x) domain in*)
-	res
+	
+	
    
 (*bach*) 
 (***************************************************************
@@ -445,6 +489,9 @@ let sugar_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 (*	let _ = print_endline "-- use sugar.check_problem..." in*)
     (* to check sat of f, sugar check the validity of negative(f) or (f => None) *)
     let sugar_input = to_sugar f in
+(*		let _=List.map print_endline sugar_input in*)
+ let eq_logic_input=Cprinter.string_of_pure_formula f in
+		let _ = print_endline eq_logic_input in
     let validity =
       if (sugar_input_mode = "file") then
         check_problem_through_file sugar_input timeout

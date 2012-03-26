@@ -1308,8 +1308,10 @@ struct
   (* disjointness structures*)
   type dlist = (ptr list) 
   type dpart = dlist list
+	
       (* module BG = Baga(Elt) *)
   let eq = Elt.eq
+	let get_str = Elt.string_of
   let intersect = Elt.intersect
 
   module BL_EQ = BListEQ(Elt)
@@ -1389,9 +1391,18 @@ struct
     List.exists (is_conflict_list) s
 
   (* false result denotes contradiction *)
-  let is_sat_dset (xs:dpart) : bool = 
+  let is_sat_dset (xs:dpart) : bool =
     not(is_dupl_dset xs)
 
+(*	let rec sugar_alldiff (xs:dpart) : string list =                                      *)
+(*		let res= ref (["alldifferent("]:string list) in                                     *)
+(*		 match xs with                                                                      *)
+(*			| []-> []                                                                         *)
+(*			| q::qs-> let _= List.map (fun x-> let _= "" in res := !res @ [(get_str x)]) q in *)
+(*			let _= res := sugar_alldiff qs in let _= res := !res @ [" )"] in !res 	          *)
+(*	                                                                                      *)
+(*	let is_sat_dset (xs:dpart) :bool =                                                    *)
+(*		let  lstr=sugar_alldiff xs in Sugar.check_problem_through_file lstr 1.0             *)
 end;;
 
 class mult_counters =

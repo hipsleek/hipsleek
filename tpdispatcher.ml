@@ -1760,7 +1760,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else if (is_array_constraint ante) || (is_array_constraint conseq) then
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
         else
-          (called_prover :="MINISAT "; 
+          (called_prover :="minisat "; 
 	   Minisat.imply ante conseq timeout);
       ) 
        | SUGAR -> (

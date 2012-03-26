@@ -275,6 +275,9 @@ let common_arguments = [
 
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
+	
+	(* sugar enable to check equality and inequality *)
+  ("--sug-eq-ineq", Arg.Set Sugar.execute_eq_ineq, "Sugar enable to check equality and inequality");
   ] 
 
 (* arguments/flags used only by hip *)	
