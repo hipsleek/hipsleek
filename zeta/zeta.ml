@@ -1350,32 +1350,27 @@ module Logic = struct
 (*		let collapse_assoc t =                           *)
 (*			print_inp_out "collapse_assoc" collapse_assoc t*)
 
+		let rec compare_term t1 t2 = match t1 with
+			| Top -> if t2 = Top then 0 else -1
+			| Bot -> if t2 = Top then 1 else
+				if t2 = Bot then 0 else -1
+			| Num i -> (match t2 with
+				| Num j -> i - j
+				| _ -> -1)
+			| Fx (f1, x1) -> match t2 with
+				| Top | Bot | Num _ -> 1
+				| Fx (f2, x2) -> 1
+					
+
 		(**
 		 * Reorder sub-terms for all commutative functors.
 		 *)
-		let reorder_sub_terms t = match t with
-			| Top | Bot | Num _ (* | Var _ *) -> t
+		let rec reorder_sub_terms t = match t with
+			| Top | Bot | Num _ -> t
 			| Fx (f, x) -> 
-				let x = List.map collapse_assoc x in
-				match f with
-					| And 
-					| Or 
-					| Add 
-					| Mul ->
-						let x = List.map (fun y -> match y with
-							| Fx (f1, z) -> (*(match (f, f1) with
-								| (And,And) 
-								| (Or,Or)
-								| (Add,Add) 
-								| (Mul,Mul) -> z
-								| _ -> [y])*)
-								if (f1 = f) then 
-									z 
-								else
-									[y]
-							| _ -> [y]) x in
-						mkFx f (List.flatten x)
-					| _ -> mkFx f x
+				let x = List.map reorder_sub_terms x in
+				let x = List.sort compare_term x in
+					Fx (f, x)
 
 		(**
 		 * Push negation toward the atomic.
@@ -1422,22 +1417,56 @@ module Logic = struct
 		(**
 		 * Simplify algebraic terms and equations
 		 * making use of:
+		 * (iii) unit element
+		 *     0 + x = x + 0 = x
+		 *     0 * x = x * 0 = 0
+		 *     1 * x = x * 1 = x
+		 * (iv) distributivity
+		 *     c * x + d * x = (c + d) * x
+		 *     
+		 * TODO implement
+		 *)
+		let rec alg_simplify t = match t with
+			| Top | Bot | Num _ -> t
+			| Fx (f, x) -> 
+				let x = List.map alg_simplify x in
+				let x = match f with
+						| Add -> List.filter (fun y -> not (y = Num 0)) x
+						| Mul -> 
+							let x = List.filter (fun y -> not (y = Num 1)) x in
+							(try 
+								List.find (fun y -> y = Num 0) x;
+								[Num 0]
+							with Not_found -> x)
+						| _ -> x in
+				match f with
+					| Add -> (match x with
+						| [] -> Num 0
+						| [y] -> y
+						| _ -> Fx (f, x))
+					| Mul -> (match x with
+						| [] -> Num 1
+						| [Num 0] -> Num 0
+						| [y] -> y
+						| _ -> Fx (f, x))
+					| _ -> Fx (f, x)
+		
+		(**
+		 * Simplify algebraic equations
+		 * 
 		 * (i) integral domain property of Z
 		 *     ab = 0 --> a = 0 \/ b = 0
 		 * (ii) constant factorization
 		 *     ab = n for numeral n --> 
 		 *	   \/ {a = d & b = n / d : d divides n}
-		 * (iii) unit elements
-		 *     0 + x = x + 0 = x
-		 *     0 * x = x * 0 = 0
-		 *     1 * x = x * 1 = x
-		 * (iv) distributivity
-		 *     
-		 *     
+		 *
 		 * TODO implement
 		 *)
-		let rec alg_simplify t = match t with
+		let rec eqn_simplify t = match t with
 			| _ -> t
+
+		(*let rec logical_simplify t = match t with
+			| _ -> t*)
 
 		(**
 		 * Normalize terms
@@ -1447,7 +1476,14 @@ module Logic = struct
 			let t = replace_uncomm t in
 			let t = collapse_assoc t in
 			let t = push_neg t in
+			let t = alg_simplify t in
 				t
+		
+		(**
+		 * General term rewriting rewriting
+		 * TODO implement
+		 *)
+		let rec rewrite rs t = t
 
 	end
 		
@@ -1461,6 +1497,28 @@ module Logic = struct
 		let skolemize st t =
 			(st, t)
 			
+	end
+	
+	module DPLL = struct
+		
+		(**
+		 * 
+		 *)
+		let rec apply_rule_one_literal t = match t with
+			| _ -> t
+
+		(**
+		 * 
+		 *)
+		let rec apply_rule_affirmative_negative t = match t with
+			| _ -> t
+
+		(**
+		 * 
+		 *)
+		let rec apply_atomic_elimination t = match t with
+			| _ -> t
+		
 	end
 	
 	(*
