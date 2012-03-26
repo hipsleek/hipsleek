@@ -3299,7 +3299,7 @@ and move_expl_inst_estate_x es (f : MCP.mix_formula) =
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
-      es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars;
+      es_ante_evars = es.es_ante_evars @ (* es.es_gen_impl_vars @ *) es.es_evars;
       (* below cause problem for universal lemma sleek7,8,9 *)
       (* es_gen_expl_vars = []; *)
       es_formula = nf;
