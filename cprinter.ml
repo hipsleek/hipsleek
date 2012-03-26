@@ -2594,6 +2594,7 @@ Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_pure_f := string_of_pure_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 (* Cformula.print_mix_formula := string_of_mix_formula;; *)

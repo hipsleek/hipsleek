@@ -716,7 +716,7 @@ and bfv (bf : b_formula) =
           let vid = r in
 		  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 		      (* An Hoa *)
-  | VarPerm (t,ls,_) -> [] (*TO CHECK*)
+    | VarPerm (t,ls,_) -> ls (*TO CHECK*)
     | LexVar l_info ->
         List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
 

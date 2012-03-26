@@ -498,6 +498,14 @@ $output_file = "log";
                                 "seq_fib","SUCCESS",
                                 "para_fib2","SUCCESS"
 								],
+				["vperm/global-var-norace.ss",2,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "func","SUCCESS"
+								],
+				["vperm/global-var-race.ss",2,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "func","FAIL"
+								],
 				["vperm/mergesort.ss",5,  "--ann-vp", 
                                 "count","SUCCESS",
                                 "split_func","SUCCESS",

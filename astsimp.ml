@@ -1802,6 +1802,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     (*check and add VPERM when need*)
     let static_specs_list = 
       if (!Globals.ann_vp) then
+        (* (\*add primeness to distinguish*\) *)
+	    (* let by_names = List.map (fun sv ->  *)
+        (*     match sv with *)
+        (*       | CP.SpecVar (v,t,_) -> CP.SpecVar (v, t, Primed)) by_names  *)
+        (* in *)
         CF.norm_struc_vperm static_specs_list by_names by_val
       else
         static_specs_list

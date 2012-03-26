@@ -10,7 +10,7 @@ data cell{
 //valid
 void inc(ref int i)
   requires true //@full[i]
-  ensures true; //@full[i]; //' check for VPERM only
+  ensures i'=i+1; //@full[i]; //' check for VPERM only
 {
   i++;
 }

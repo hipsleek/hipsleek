@@ -1,4 +1,3 @@
-
 (*
   Created 21-Feb-2006
 
@@ -223,6 +222,7 @@ approx_formula_and_a2 : approx_formula }
 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
@@ -7698,12 +7698,115 @@ let has_formula_and (f : formula) : bool =
           (helper f1) || (helper f2) (*approximation*)
   in helper f
 
+let rec norm_one_formula_vperm one_f ref_vars :(one_formula * CP.spec_var list) =
+  Debug.no_2 "norm_one_formula_vperm" 
+      !print_one_formula !print_svl (pr_pair !print_one_formula !print_svl)
+      norm_one_formula_vperm_x one_f ref_vars
+
+and norm_one_formula_vperm_x one_f ref_vars :(one_formula * CP.spec_var list) =
+  let h = one_f.formula_heap in
+  let p = one_f.formula_pure in
+  let pos = one_f.formula_pos in
+  (*note that for each child formula x, only @full is allowed*)
+  let r_vars = MCP.get_varperm_mix_formula p VP_Full in
+  let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
+  if (diff_r_vars!=[]) then
+    let msg = "@val permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
+    Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_one_formula one_f)}
+  else
+    let child_fv = (h_fv h @ MCP.mfv p)in
+    (*Detect @full variables by its name and primedness*)
+    let child_r_vars = Gen.BList.intersect_eq CP.eq_spec_var_ident child_fv ref_vars in
+    let child_r_vars = Gen.BList.remove_dups_eq CP.eq_spec_var_ident child_r_vars in
+    let new_p = MCP.drop_varperm_mix_formula p in
+    let ref_f = CP.mk_varperm VP_Full child_r_vars pos in
+    let new_p = add_pure_formula_to_mix_formula ref_f new_p in
+    (*remaining ref vars*)
+    let new_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident ref_vars child_r_vars in
+    ({one_f with formula_pure = new_p},new_ref_vars)
+
+let norm_formula_and_vperm (a:one_formula list) (ref_vars : CP.spec_var list) =
+  let rec helper a ref_vars= 
+  match a with
+    | [] -> ([],ref_vars)
+    | one_f::one_fs ->
+        let new_one, new_r_vars = norm_one_formula_vperm one_f ref_vars in
+        let new_fs, new_r_vars2 = helper one_fs new_r_vars in
+        (new_one::new_fs,new_r_vars2)
+  in helper a ref_vars
+
+(*Automatically infer VPERM spec for sequential spec*)
+let rec norm_formula_vperm f ref_vars val_vars =
+  Debug.no_3 "norm_formula_vperm" 
+      !print_formula !print_svl !print_svl !print_formula
+      norm_formula_vperm_x f ref_vars val_vars
+
+(*
+  Note: main thread -> @value[val_vars] & @full[...]
+  But child thread -> @full[] only (don't have @value)
+*)
+and norm_formula_vperm_x f ref_vars val_vars =
+  let rec helper f = match f with
+    | Base ({formula_base_heap =h;
+            formula_base_pure = p;
+            formula_base_and =a;
+            formula_base_pos =pos} as b)->
+        (*infer VPERM for the main thread*)
+        (*First, @value*)
+        let v_vars = MCP.get_varperm_mix_formula p VP_Value in
+        let diff_v_vars = Gen.BList.difference_eq CP.eq_spec_var_ident v_vars val_vars in
+        (*The specification of VPERM @value[] is not correct*)
+        if (diff_v_vars!=[]) then
+          let msg = "@val permissions not matched. Variables " ^ (!print_svl diff_v_vars) ^ " are not passed by value" in
+          Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
+        else
+          let new_p = MCP.drop_varperm_mix_formula p in
+          let val_f = CP.mk_varperm VP_Value val_vars pos in
+          let new_p = add_pure_formula_to_mix_formula val_f new_p in
+          (*Second, @full[...]*)
+          (*INFER @full for child threads first*)
+          (* child threads first, remaining ref vars in ref_vars1*)
+          let new_a, new_ref_vars = norm_formula_and_vperm a ref_vars in
+          (*Then, main thread*)
+          let r_vars = MCP.get_varperm_mix_formula p VP_Full in
+          let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars new_ref_vars in
+          if (diff_r_vars!=[]) then
+            let msg = "@full[...] permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
+            Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
+          else
+            (*The remaining ref vars belong to the main thread*)
+            let ref_f = CP.mk_varperm VP_Full new_ref_vars pos in
+            let new_p = add_pure_formula_to_mix_formula ref_f new_p in
+            Base {b with formula_base_pure = new_p; formula_base_and = new_a}
+    | Exists e ->
+        let b = Base  {  
+            formula_base_heap = e.formula_exists_heap;
+            formula_base_pure = e.formula_exists_pure;
+            formula_base_type = e.formula_exists_type;
+            formula_base_and = e.formula_exists_and;
+            formula_base_flow = e.formula_exists_flow;
+            formula_base_label = e.formula_exists_label;
+            formula_base_pos = e.formula_exists_pos}
+        in
+        let new_b = helper b in
+        (add_quantifiers e.formula_exists_qvars new_b)
+    | Or ({formula_or_f1 = f1; formula_or_f2 =f2} as o) ->
+        let new_f1 = helper f1 in
+        let new_f2 = helper f2 in
+        Or {o with formula_or_f1 = new_f1; formula_or_f2 = new_f2}
+  in helper f
+
 (*Automatically infer VPERM spec for sequential spec*)
 let rec norm_struc_vperm struc_f ref_vars val_vars =
   Debug.no_3 "norm_ext_vperm" 
       !print_struc_formula !print_svl !print_svl !print_struc_formula
       norm_struc_vperm_x struc_f ref_vars val_vars
 
+(*
+  Users provide partial (or no) vperm annotations.
+  Partial -> consistency check and infer the rest
+  No -> infer all
+*)
 and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
   | ECase ({ formula_case_branches = cl } as ef) ->
       let n_cl = List.map (fun (c, sf) -> 
@@ -7715,6 +7818,7 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
       let pos = ef.formula_struc_pos in
       if not (has_formula_and b) then
         (*sequential pre-condition*)
+        (*INDEED, we can also use "norm_formula_vperm" in this case*)
         let r_vars = get_varperm_formula b VP_Full in
         let v_vars = get_varperm_formula b VP_Value in
         let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
@@ -7735,8 +7839,9 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
       else
         (*concurrency spec. USERS specify this precondition.
           Proceed to check for post-condition*)
+        let new_b = norm_formula_vperm ef.formula_struc_base ref_vars val_vars in
         let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
-          EBase{ef with formula_struc_continuation = n_cont}
+          EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont}
   | EAssume (vars,post,lb) ->
       (*We have (ref) vars in the post-condition*)
       let pos = pos_of_formula post in
@@ -7752,10 +7857,12 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
           let new_post = add_pure_formula_to_formula ref_f new_post in
           EAssume (vars,new_post,lb)
       else
+        let new_post = norm_formula_vperm post vars [] in
+        EAssume (vars,new_post,lb)
         (*concurrency spec. USERS specify this*)
-        struc_f
   | EInfer ({ formula_inf_continuation = cont }) ->struc_f (*Not handle this at the moment*)
   | EOr b -> EOr {b with 
 				formula_struc_or_f1= norm_struc_vperm_x b.formula_struc_or_f1 ref_vars val_vars;
 				formula_struc_or_f2= norm_struc_vperm_x b.formula_struc_or_f2 ref_vars val_vars;}
   | EList b-> EList (map_l_snd (fun c-> norm_struc_vperm_x c ref_vars val_vars) b)
+ 
