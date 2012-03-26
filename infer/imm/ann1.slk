@@ -8,6 +8,7 @@ pred p<v> == self::node<v,_>
 
 // (1)
 checkentail y::node<_,r>@M |- y::node<a,b>@v & v<:@M.
+print residue.
 /*
 PROBLEM : @M<:v instantiated instead of v=@M;
    implicit should be instantiated with the latter
@@ -22,7 +23,8 @@ Entail (1) : Fail.(may) cause: @M<:v |-  v<:@M. LOCS:[0;7] (may-bug)
 
 //(2) should valid
 checkentail y::node<_,r>@M |- y::node<a,b>@v & v<:@I.
-
+print residue.
+ 
 //(3) right instantiated as @I<:v
 checkentail y::node<_,_>@I |- [v] y::node<_,_>@v & v<:@M.
 
@@ -33,21 +35,52 @@ checkentail y::node<_,_>@I |- y::node<_,_>@v & v<:@M.
 checkentail y::node<_,_>@I |- y::node<_,_>@M.
 
 
-
-// (2)
+// (6)
 checkentail y::node<_,r>@M * x::node<_,_>@L 
-              |- y::node<_,b>@v * x::node<_,b>@v.
-/*
-PROBLEM : there should be only one implicit v
+              |- [v] y::node<_,_>@v * x::node<_,_>@v.
+print residue.
 
- y::node<Anon_13,r>@M[Orig] * x::node<Anon_14,Anon_15>@L[Orig]&true&
-{FLOW,(17,18)=__norm}[] [] |-  EBase exists (Expl)(Impl)[Anon_16; v; Anon_17; 
-       b](ex)EXISTS(b_49: y::node<Anon_16,b>@v[Orig] * 
-       x::node<Anon_17,b_49>@v[Orig]&b_49=b&{FLOW,(17,18)=__norm})[]
+// (7)
+checkentail y::node<_,r> |- y::node<_,_>.
+print residue.
+
+// (8)
+checkentail y::node<_,r>@L * x::node<_,_>@M 
+              |- y::node<_,_>@v * x::node<_,_>@v.
+print residue.
+
+
+// (9) fail cos of implicit instantiation
+checkentail y::node<_,r>@M * x::node<_,_>@L 
+              |- [v] y::node<_,_>@v * x::node<_,_>@v.
+print residue.
+
+// (10) fail cos of implicit instantiation
+checkentail y::node<_,r>@M * x::node<_,_>@L 
+              |- y::node<_,_>@v * x::node<_,_>@v.
+/*
+PROBLEM : currently two implicit v, but
+    there should be only one implicit v;
+   How come Anon also made implicit.
+   Anon var should e remoed from residue.
+
+ y::node<Anon_33,r>@M[Orig] * x::node<Anon_34,Anon_35>@L[Orig]&true&
+{FLOW,(17,18)=__norm}[] [] |-  EBase exists (Expl)(Impl)[Anon_36; Anon_37; v; Anon_38; 
+       Anon_39](ex)y::node<Anon_36,Anon_37>@v[Orig] * 
+       x::node<Anon_38,Anon_39>@v[Orig]&true&{FLOW,(17,18)=__norm}[]
+
 */
 
+// (11)
+checkentail y::node<_,r>@I & a=3 |- y::node<_,b>@v.
+print residue.
 
-checkentail y::node<_,r>@M & v=@I & a=3 |- y::node<a,b>@v & v<:@M.
+// (12)
+checkentail y::node<_,r>@I & v=@L & a=3 |- y::node<_,b>@v.
+print residue.
+
+// (13)
+checkentail y::node<_,r>@I & v=@M & a=3 |- y::node<_,b>@v.
 /*
 PROBLEM : expecting @v to be existentially quantified.
           normalization need to be fixed.
@@ -60,15 +93,18 @@ run_infer:
 //checkentail y::p<2>@M |- y::p<b>@v & b>1.
 //print residue.
 
+// (14)
 checkentail y::node<_,_>@M |- y::node<_,_>@v .
 print residue.
 
+// (15)
 checkentail y::node<_,_>@M |- (exists v: y::node<_,_>@v & v=@M) .
 print residue.
 
+// (16)
 checkentail y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@M.
 print residue.
 
-// (14) valid
+// (17) valid
 //infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
 

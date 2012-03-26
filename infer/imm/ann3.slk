@@ -1,0 +1,105 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+data node
+  { int val;
+    node prev;
+    node next;
+  }.
+
+pred dll<n,p,v1,v2,v3> ==
+     self=null & n=0
+  or self::node<v@v1,p@v2,q@v3>*q::dll<n-1,self,v1,v2,v3>
+inv n>=0.
+
+data pair
+  { int fst;
+    int snd;
+  }
+
+x::pair<a,b> |- x::pair<a,b>@(A,M)
+  ==> x::pair<a,b>@(M,A)
+
+x::pair<a,b>@(A,M) |- x::pair<a,b>@(A,M)
+  ==> emp
+
+x::pair<a,b>@M |- x::pair<a,b>@(L,M)
+  ==> x::pair<a,b>@(M,A)
+
+x::pair<a,b>@(A,M) |- x::pair<a,b>@(L,M)
+  ==> fail
+
+x::dll<n,p,@L,@A,@L,@L>
+
+  x::ll<n,@M,@M> |- x::ll<n,@L,@L> ==> x::ll<n,@M,@M>
+
+  x::ll<n,@M,@M> |- x::ll<n,@M,@L> ==> x::ll<n,@A,@M>
+
+  x::ll<n,@M,@M> |- x::ll<n,@L,@M> ==> x::ll<n,@M,@A>
+
+  x::ll<n,@M,@M> |- x::ll<n,@I,@I> ==> emp
+  x::ll<n,@M,@M> |- x::ll<n,@M,@I> ==> emp
+  x::ll<n,@M,@M> |- x::ll<n,@I,@M> ==> emp
+
+
+  x::ll<n,@M,@M> |- x::ll<n,@M,@v> & v<:@I ==> emp
+
+
+  x::node<3,q>*q::x::ll<n,@M,@M>
+    |- x::ll<n@L,@M,@v>(== H1)
+       [H1 = x::node<_,q>*q::x::ll<n,_,_>]
+
+   requires x::ll<n@L,@M,@v>@SI(=>H1) & v<:@I
+   ensures  H1;
+
+   requires x::ll<n>@L
+   ensures  res=n;
+
+   requires x::ll<n>@L(=>H1)
+   ensures  H1 & res=n;
+
+   requires x::ll<n>@M(=>H1) // shape immutable
+   ensures  H1 & res=n;
+
+   requires x::ll<n,@v,@M>(=>H1)
+   ensures  H1 & res=n;
+
+
+   requires x::ll<n,@M,@I>
+   ensures x::ll<n,@M,@I>;
+
+  x::ll<n,@M,@M> |- x::ll<n,@I,@M> ==> emp
+
+
+ x::ll<n,@M,@L>
+
+ x::ll<n,@M,@M>
+
+ x::ll<n,@L,@M>
+
+ |- x::ll<n,@M,@L> 
+
+
+pred dll<n,p,v1a,v1b,v2,v3> ==
+     self=null & n=0
+  or self::node<v,p,q>@(v1a,v2,v3)*q::dll<n-1,self,v1b,v1a,v2,v3>
+inv n>=0.
+
+/*
+pred ll<n,v1,v2> ==
+     self=null & n=0
+  or self::node<v,q>@(v1,v2)*q::ll<n-1,v1,v2>
+inv n>=0.
+
+UNSAT(x::(@M,@M) * x::(@M,@A))  ==> false
+
+UNSAT(x::(@A,@M) * x::(@M,(@M,@A)))  ==> true
+
+ P <--> (A,P) * (P,A)
+
+*/
+
