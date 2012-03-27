@@ -6949,95 +6949,208 @@ let rec simplify_post post_fml post_vars = match post_fml with
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl a no_pos in
     post_fml
 
-
-
               (*formula_ext_complete = true;*)
-						
-let rec simp_ann_x heap pures = match heap with
+					
+let rec simp_ann_x heap pures (pre: bool) = match heap with
   | Star {h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos} ->
-    let (h1,ps1) = simp_ann h1 pures in
-    let (h2,ps2) = simp_ann h2 ps1 in
+    let (h1,ps1) = simp_ann h1 pures pre in
+    let (h2,ps2) = simp_ann h2 ps1 pre in
     (mkStarH h1 h2 pos,ps2)
   | Conj {h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos} ->
-    let h1,ps1 = simp_ann h1 pures in
-    let h2,ps2 = simp_ann h2 ps1 in
+    let h1,ps1 = simp_ann h1 pures pre in
+    let h2,ps2 = simp_ann h2 ps1 pre in
     (mkConjH h1 h2 pos,ps2)
   | Phase {h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos} ->
-    let h1,ps1 = simp_ann h1 pures in
-    let h2,ps2 = simp_ann h2 ps1 in
+    let h1,ps1 = simp_ann h1 pures pre in
+    let h2,ps2 = simp_ann h2 ps1 pre in
     (mkPhaseH h1 h2 pos,ps2)
   | DataNode data ->
     let imm = data.h_formula_data_imm in
     let ann_var = fv_ann imm in
     if ann_var = [] then (heap,pures)
     else
-      let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
+      let p,_ = List.partition (fun p -> List.exists (fun x -> CP.eq_spec_var x (List.hd ann_var)) (CP.fv p)) pures in
+      let _ = print_string ("\n!!!! Pures: " ^ (pr_list !print_pure_f pures ) ) in
+      let _ = print_string ("\n!!!! p: " ^ (pr_list !print_pure_f p) ) in
       begin
-        match p with
-        | [] -> (DataNode {data with h_formula_data_imm = mkConstAnn 2},res)
-        | [hd] -> 
-          let is = CP.getAnn hd in
-          if is = [] then (heap,pures)
-          else (DataNode {data with h_formula_data_imm = mkConstAnn (List.hd is)},res)
-        | _ -> (heap,pures)
+	(* let ann_lst = *)
+        (*   match p with *)
+        (*     | [] -> if pre then [2] (\* @L in precond (weaker) *\) else [0] (\* @M in postcond (stronger) *\) *)
+        (*     | _ -> List.fold_left (fun x y -> x@(CP.getAnn y)) [] p *)
+	(*       (\* let rec helper p =  *\) *)
+	(*       (\* 	match p with  *\) *)
+	(*       (\* 	  | hd::[] -> let is = CP.getAnn hd in is *\) *)
+	(*       (\* 	  | hd::r  -> let is = CP.getAnn hd in *\) *)
+	(*       (\* 		      is@(helper r) in *\) *)
+	(*       (\* helper p *\) *)
+	(* in *)
+	(* let ann =  *)
+	(*   	if pre then List.fold_left (fun x y -> if x < y then x else y) 2 ann_lst (\* min of all inferred ann *\) *)
+	(* 	else List.fold_left (fun x y -> if x > y then x else y) 0 ann_lst (\* max of all inferred ann *\) in *)
+	(* let new_cond = CP.BForm((CP.Eq(CP.Var(List.hd ann_var, no_pos), CP.IConst(ann, no_pos), no_pos), None), None) in *)
+	(* (DataNode {data with h_formula_data_imm = mkConstAnn ann},(new_cond::pures)) *)
+      let data1, pures1 = 
+	let ann_lst =
+          match p with
+            | [] -> if pre then [2] (* @L in precond (weaker) *) else [0] (* @M in postcond (stronger) *)
+            | _ -> List.fold_left (fun x y -> x@(CP.getAnn y)) [] p in
+	if ((List.length ann_lst) > 0 || pre) then
+	  let ann = 
+	    if pre then List.fold_left (fun x y -> if x < y then x else y) 2 ann_lst (* min of all inferred ann *)
+	    else List.fold_left (fun x y -> if x > y then x else y) 0 ann_lst (* max of all inferred ann *)
+	  in
+	  let new_cond = CP.BForm((CP.Eq(CP.Var(List.hd ann_var, no_pos), CP.IConst(ann, no_pos), no_pos), None), None) in
+	  let pures = List.map (CP.subst_term_avoid_capture [(List.hd ann_var, CP.IConst(ann, no_pos))]) pures in
+	  (DataNode {data with h_formula_data_imm = mkConstAnn ann}, new_cond::pures)
+	else
+	  (heap, pures)
+      in
+      (data1,pures1)
       end
-  | ViewNode view ->
+  | ViewNode view -> 
     let imm = view.h_formula_view_imm in
     let ann_var = fv_ann imm in
     if ann_var = [] then (heap,pures)
     else
-      let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
+      let p,_ = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
-        match p with
-        | [] -> (ViewNode {view with h_formula_view_imm = mkConstAnn 2},res)
-        | [hd] ->
-          let is = CP.getAnn hd in
-          if is = [] then (heap,pures)
-          else
-            (ViewNode {view with h_formula_view_imm = mkConstAnn (List.hd is)},res)
-        | _ -> (heap,pures)
+	(* let rec helper0 p = *)
+        (*   match p with *)
+        (*     | [] -> if pre then [2] (\* @L in precond (weaker) *\) else [0] (\* @M in postcond (stronger) *\) *)
+        (*     | hd::r -> *)
+        (*       let is = CP.getAnn hd in *)
+	(*       is@(helper0 r) *)
+	(* in *)
+	let view1, pures1 = 
+	  let ann_lst =
+            match p with
+              | [] -> if pre then [2] (* @L in precond (weaker) *) else [0] (* @M in postcond (stronger) *)
+              | _ -> List.fold_left (fun x y -> x@(CP.getAnn y)) [] p in
+	  if ((List.length ann_lst) > 0) then
+	  let ann = 
+	    if pre then List.fold_left (fun x y -> if x < y then x else y) 2 ann_lst (* min of all inferred ann *)
+	    else List.fold_left (fun x y -> if x > y then x else y) 0 ann_lst (* max of all inferred ann *)
+	  in
+	  let new_cond = CP.BForm((CP.Eq(CP.Var(List.hd ann_var, no_pos), CP.IConst(ann, no_pos), no_pos), None), None) in
+	  let pures = List.map (CP.subst_term_avoid_capture [(List.hd ann_var, CP.IConst(ann, no_pos))]) pures in
+	  (ViewNode {view with h_formula_view_imm = mkConstAnn ann}, new_cond::pures)
+	  else
+	    (heap, pures)
+	in
+	(view1,pures1)
       end
   | _ -> (heap,pures)
      
-and simp_ann heap pures =
+and simp_ann heap pures (pre: bool) =
   let pr1 = !print_h_formula in
   let pr2 = pr_list !print_pure_f in
   let pr3 = pr_pair pr1 pr2 in
-  Debug.no_2 "simp_ann" pr1 pr2 pr3
-    (fun _ _ -> simp_ann_x heap pures) heap pures
+  Debug.ho_3 "simp_ann" pr1 pr2 string_of_bool pr3
+    (fun _ _ _ -> simp_ann_x heap pures pre) heap pures pre
      
-let rec simplify_fml_ann fml = match fml with
+(* let rec simplify_fml_ann fml aux_pure (pre: bool) =  *)
+(*   let new_f *)
+
+let rec simplify_fml_ann fml aux_pure (pre: bool) (pures : CP.formula list) = 
+  let _ = print_string("[AC]: simplify_fml_ann input = " ^ (!print_formula fml) ^ "\n") in
+  let _ = print_string("[AC]: simplify_fml_ann aux_pure = " ^ (!print_pure_f aux_pure) ^ "\n") in
+  match fml with
   | Or {formula_or_f1 = f1;
     formula_or_f2 = f2;
-    formula_or_pos = pos} ->
-    mkOr (simplify_fml_ann f1) (simplify_fml_ann f2) pos
+    formula_or_pos = pos} -> 
+    let f1n, _ = simplify_fml_ann f1 aux_pure pre pures in
+    let f2n, _ = simplify_fml_ann f2 aux_pure pre pures in
+    (mkOr f1n f2n pos, pures)
   | Base b -> 
-    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure)) in
-    let (h,ps) = simp_ann b.formula_base_heap sub_ann in
-    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
-    Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
-  | Exists e ->
+    (* let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure)) in *)
+    (* let aux_ann, pures2 = List.partition CP.isSubAnn (CP.list_of_conjs aux_pure) in *)
+    (* let (h,ps) = simp_ann b.formula_base_heap (sub_ann@aux_ann) pre in *)
+    let sub_ann = CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure) in
+    let aux_ann = CP.list_of_conjs aux_pure in
+    let (h,ps) = simp_ann b.formula_base_heap (sub_ann@aux_ann@pures) pre in
+    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) ps in (* andreeac: trebuei sa adaug si pures2? *)
+    (Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}, ps)
+  | Exists e -> 
     let exists_p = MCP.pure_of_mix e.formula_exists_pure in
-    let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs exists_p) in
-    let (h,ps) = simp_ann e.formula_exists_heap sub_ann in
-    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
+    (* let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs exists_p) in *)
+    (* let aux_ann, pures2 = List.partition CP.isSubAnn (CP.list_of_conjs aux_pure) in *)
+    (* let (h,ps) = simp_ann e.formula_exists_heap (sub_ann@aux_ann) pre in *)
+    let sub_ann = CP.list_of_conjs exists_p in
+    let aux_ann = CP.list_of_conjs aux_pure in
+    let (h,ps) = simp_ann e.formula_exists_heap (sub_ann@aux_ann@pures) pre in
+    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) ps in
     let rm_vars = CP.diff_svl (CP.fv exists_p) (CP.fv p) in
-    Exists {e with formula_exists_qvars = CP.diff_svl e.formula_exists_qvars rm_vars;
-    formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p}
+    (Exists {e with formula_exists_qvars = CP.diff_svl e.formula_exists_qvars rm_vars;
+    formula_exists_heap = h; formula_exists_pure = MCP.mix_of_pure p}, ps)
     
-let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
-    | ECase b -> ECase {b with formula_case_branches = map_l_snd simplify_ann b.formula_case_branches}
-    | EBase b -> EBase {b with formula_struc_base = simplify_fml_ann b.formula_struc_base; formula_struc_continuation = map_opt simplify_ann b.formula_struc_continuation}
-    | EAssume(svl,f,fl) -> EAssume(svl,remove_lend (simplify_fml_ann f),fl)
+let rec get_cont_pure (sp:struc_formula) = 
+  match sp with
+    | EBase b -> 
+      let p1 = 
+	match b.formula_struc_base with
+	  | Base b1 -> MCP.pure_of_mix b1.formula_base_pure
+	  | _ -> CP.mkTrue no_pos
+      in
+      let p2 = 
+	match b.formula_struc_continuation with
+	  | Some c -> get_cont_pure c
+	  | None -> CP.mkTrue no_pos 
+      in
+      CP.mkAnd p1 p2 no_pos
+    | _ -> CP.mkTrue no_pos
+
+let rec simplify_ann_x (precond: bool) (pures : CP.formula list) (sp:struc_formula) : (struc_formula * CP.formula list) = 
+  match sp with
+    | ECase b -> (ECase {b with formula_case_branches = map_l_snd (fun x -> fst (simplify_ann_x precond pures x)) b.formula_case_branches }, pures)
+    | EBase b -> 
+      let aux_pure = 
+	match b.formula_struc_continuation with
+	  | Some cont -> get_cont_pure cont 
+	  | None -> CP.mkTrue no_pos
+      in
+      let h, new_pures = simplify_fml_ann b.formula_struc_base aux_pure precond pures in
+      let l = map_opt (simplify_ann_x precond new_pures) b.formula_struc_continuation in
+      let h1, pures1 = 
+      match l with 
+	| None -> (None, [])
+	| Some (h,p) -> (Some h,p)
+      in
+      (* let h1, pures1 = List.split l in *)
+      (* let pures2 = List.flatten pures1 in *)
+      (EBase {b with formula_struc_base = h; formula_struc_continuation = h1 }, new_pures@pures1)
+    | EAssume(svl,f,fl) -> 
+      let h, new_pures = simplify_fml_ann f (CP.mkTrue no_pos) false (*not in precond*) pures in
+      (EAssume(svl,remove_lend (h),fl), new_pures)
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
-	| EList b -> mkEList (map_l_snd simplify_ann b)
-	| EOr b -> mkEOr (simplify_ann b.formula_struc_or_f1) (simplify_ann b.formula_struc_or_f2) b.formula_struc_or_pos
+    | EList b -> (mkEList (map_l_snd (fun x-> fst (simplify_ann_x precond pures x)) b), pures)
+    | EOr b -> 
+      let h1, _ = (simplify_ann_x precond pures b.formula_struc_or_f1) in
+      let h2, _ = (simplify_ann_x precond pures b.formula_struc_or_f2) in
+      ((mkEOr h1 h2 b.formula_struc_or_pos), pures)
+
+let simplify_ann (precond: bool) (sp:struc_formula) pures : (struc_formula * CP.formula list) =
+  let pr1 = string_of_bool in
+  let pr2 = !print_struc_formula in
+  let pr = (fun (x,y) -> "?" (* (!print_struc_formula x) ^ (print_list !print_pure_f y) *)) in
+  Debug.ho_2 "simplify_ann" pr1 pr2 pr
+    (fun _ _ -> simplify_ann_x precond pures sp) precond sp
+
+let rec fix_simplify_ann (precond: bool) (sp:struc_formula) (pures : CP.formula list) : (struc_formula * CP.formula list) =
+  let f, new_pures = simplify_ann precond sp pures in
+  if (noChange pures new_pures) then (f,pures)
+  else (fix_simplify_ann precond f new_pures)
+
+and noChange pures new_pures =
+  let pures = Gen.BList.remove_dups_eq CP.eq_pure_formula pures in
+  let new_pures = Gen.BList.remove_dups_eq CP.eq_pure_formula new_pures in
+  if (Gen.BList.list_subset_eq CP.eq_pure_formula pures new_pures) && (Gen.BList.list_subset_eq CP.eq_pure_formula new_pures pures) then true
+  else false
 
 let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->
