@@ -219,18 +219,50 @@ module Term = struct
 		| Top (* true > 0 *)
 		| Bot (* false <= 0 *)
 		| Num of int (* numeral constant *)
-		(* | Var of int (* variable *) *)
+(*		| Var of int (* variable *)*)
 		| Fx of func * (term list)
+			(* variable/function application *)
+			(* Note: when func is a quantifier, the *)
+			(* first term in the subsequent list    *)
+			(* represents the main subformula and   *)
+			(* the rests are quantified variables   *)
 	
 	and func =
-		| Add | Sub | Mul | Div | Mod
-		| Eq | Ne | Lt | Le (* | Gt | Ge *)
-		| And | Or | Neg | Implies | Iff
-		| Exists | Forall
-		| GF of int (* generic function of index *)
-								(* convention: positive for logical symbols (variable) *)
-								(* and negative for language parameters (constant/functions) *)
-
+		(* basic arithmetic: *)
+		(*  - addition and multiplication are *)
+		(*    arbitrary a-ry                  *)
+		(*  - the rest are all binary *)
+		| Add
+		| Sub 
+		| Mul
+		| Div 
+		| Mod
+		(* basic relation : equality, disequality, inequality *)
+		| Eq 
+		| Ne 
+		| Lt 
+		| Le 
+(*		| Gt *)
+(*		| Ge *)
+		(* logical connectives: *)
+		(*  - and/or are arbitrary a-ry *)
+		(*  - neg is unary *)
+		(*  - implies/iff are binary *)
+		| And 
+		| Or 
+		| Neg 
+		| Implies 
+		| Iff
+		(* quantifiers *)
+		| Exists
+		| Forall
+		(* generic user-defined function of index      *)
+		(* indexing convention:                        *)
+		(*  - positive : logical symbols (variable)    *)
+		(*  - negative : language parameters (constant *)
+		(*                and defined functions)       *)
+		| GF of int
+		
 	(* constructors *)
 	
 	let mkTop () = Top
@@ -249,16 +281,31 @@ module Term = struct
 	
 	(* compare *)
 	
+	(**
+	 * Syntactical comparison of two terms
+	 * TODO implement
+	 *)
+	let compare t1 t2 = 0
+	
 	(* query *)
 	
+	(**
+	 * Check if a term is a ground term i.e.
+	 * contains no logical variable.
+	 *)
 	let rec is_ground t = match t with
-		| Top | Bot | Num _ -> true
+		| Top
+		| Bot
+		| Num _ -> true
 		| Fx (f, x) -> match f with
 			| GF _ -> false
 			| _ -> List.for_all is_ground x
 	
+	(**
+	 * Check if a term is a logical variable
+	 *)
 	let is_var t = match t with
-		| Fx (GF _, []) -> true
+		| Fx (GF i, []) -> i >= 0
 		| _ -> false
 	
 	(* getter *)
@@ -267,30 +314,70 @@ module Term = struct
 		| Fx (GF i, x) -> i
 		| _ -> 0
 	
-	let rec av t = match t with
+	(**
+	 * Retrieve all indices occurred in a term.
+	 *)
+	let rec get_all_indices t = match t with
 		| Top
 		| Bot
 		| Num _ -> []
 		(* | Var v -> [t] *)
 		| Fx (f, x) ->
-			let r = List.flatten (List.map av x) in
+			let r = List.map get_all_indices x in
+			let r = List.flatten r in
 			match f with
 				| GF i -> i :: r
 				| _ -> r
-			
 	
-	(*let fv t = match t with
+	(**
+	 * Get all free variables in a term.
+	 *)
+	let get_free_vars t = match t with
 		| Top
 		| Bot
 		| Num _ -> []
 		| Var v -> [t]
 		| Fx (f, x) -> 
-			let r = List.map fv x in
+			let r = List.map get_free_vars x in
 			match f with
-				| Exists | Forall ->
+				| Exists 
+				| Forall ->
 					let q = List.flatten (List.tl r) in
 						GList.remove eq_var (List.hd r) q
 				| _ -> List.flatten r
+	
+	(* Term transform *)
+	
+	(**
+	 * Reindex the term by replacing all symbol
+	 * i by j in the term t for all pair (i,j) 
+	 * as specified in the input list d.
+	 *)
+	let rec reindex d t = match t with
+		| Top
+		| Bot
+		| Num _ -> t
+		| Fx (f, x) -> 
+			let x = List.map (reindex d) x in
+			match f with
+				| GF i -> 
+					let j = try 
+							List.assoc i d
+						with 
+							| Not_found -> i in
+					Fx (GF j, x)
+				| _ -> Fx (f, x)
+
+	(**
+	 * Standardize variable indexing.
+	 *)
+	let rec standardize_index t = match t with
+		| Top
+		| Bot
+		| Num _ -> t
+		| Fx (f, x) -> t 
+	
+	(*
 
 	(*let fv t = (fv t)*)
 	
@@ -461,14 +548,16 @@ module Proof = struct
 	open Term
 	
 	type proof_step =
-		| HYP (* hypothesis *)
+		| HYP 
+			(* trivial as being hypothesis *)
 		| RW of term * term
+			(* rewrite *)
 		| IND of term * proof * proof
-			(* induction on a term;*)
+			(* induction on a term; *)
 			(* proof for base case and *)
 			(* with inductive case *)
 		| MP of proof * proof
-			(* application of Modus Ponen*)
+			(* application of Modus Ponen rule *)
 			(* {p, p -> q} |- q *)
 			
 	and proof = proof_step list
@@ -519,6 +608,20 @@ module Theory = struct
 			hints = [];
 		}
 	
+	(**
+	 * Batch transform all terms in a 
+	 * theory thry using a term transform
+	 * function f : term -> term.
+	 *)
+	let transform_all_terms f thry =
+		{ thry with
+			axioms = List.map f thry.axioms;
+			theorems = List.map (fun t ->
+				{ t with 
+					content = f t.content 
+				}) thry.theorems; 
+		}
+	
 end
 
 (* Output *)
@@ -551,18 +654,32 @@ module StringBasePrinter : BasePrinter = struct
 	let rec print_domain d = match d with
 		| SBool -> "2"
 		| SInt -> "Z"
-		| SWild i -> "X_" ^ (string_of_int i)
-		| SMap d -> (String.concat "x" (List.map print_domain (List.tl d))) ^ "->" ^ (print_domain (List.hd d))
+		| SWild i -> 
+			"X_" ^ (string_of_int i)
+		| SMap d -> 
+			let dom = String.concat "x" (List.map print_domain (List.tl d)) in
+			let co_dom = print_domain (List.hd d) in
+				dom ^ "->" ^ co_dom
 	
 	let print_func print_symbol f = match f with
-		| Add -> "+" | Sub -> "-" | Mul -> "*" 
-		| Div -> "/" | Mod -> "mod"
-		| Eq -> "=" | Ne -> "!="
-		| Lt -> "<" | Le -> "<="
-		(* | Gt -> ">" | Ge -> ">=" *) 
+		| Add -> "+"
+		| Sub -> "-"
+		| Mul -> "*" 
+		| Div -> "/"
+		| Mod -> "mod"
+		| Eq -> "="
+		| Ne -> "!="
+		| Lt -> "<" 
+		| Le -> "<="
+(*		| Gt -> ">" *)
+(*		| Ge -> ">="*)
 		| And -> " /\\ " 
-		| Or -> " \\/ " | Neg -> "~" | Implies -> "->" 
-		| Iff -> "<->" | Exists -> "E" | Forall -> "A"
+		| Or -> " \\/ " 
+		| Neg -> "~" 
+		| Implies -> "->" 
+		| Iff -> "<->" 
+		| Exists -> "E" 
+		| Forall -> "A"
 		| GF i -> print_symbol i
 	
 	let print_int = string_of_int
@@ -585,23 +702,36 @@ module TexBasePrinter : BasePrinter = struct
 	open Term
 	
 	let rec print_domain d = match d with
-		| SBool -> "\\mathbb{B}"
-		| SInt -> "\\mathbb{Z}"
-		| SWild i -> "\\mathcal{X}_{" ^ (string_of_int i) ^ "}" 
-		| SMap d -> (String.concat "\\times" (List.map print_domain (List.tl d))) ^
-				" \\mapsto " ^ (print_domain (List.hd d))
+		| SBool -> 
+			"\\mathbb{B}"
+		| SInt -> 
+			"\\mathbb{Z}"
+		| SWild i -> 
+			"\\mathcal{X}_{" ^ (string_of_int i) ^ "}" 
+		| SMap d ->
+			let dom = String.concat "\\times" (List.map print_domain (List.tl d)) in
+			let co_dom = print_domain (List.hd d) in
+				dom ^ " \\mapsto " ^ co_dom
 	
 	let print_func print_symbol f = match f with
-		| Add -> "+" | Sub -> "-" | Mul -> "\\times"
-		| Div -> "\\div" | Mod -> "\\bmod"
-		| Eq -> "=" | Ne -> "\\not="
-		| Lt -> "<" | Le -> "\\leq"
-		(* | Gt -> ">" | Ge -> "\\geq" *)
+		| Add -> "+"
+		| Sub -> "-"
+		| Mul -> "\\times"
+		| Div -> "\\div" 
+		| Mod -> "\\bmod"
+		| Eq -> "=" 
+		| Ne -> "\\not="
+		| Lt -> "<" 
+		| Le -> "\\leq"
+(*		| Gt -> ">"    *)
+(*		| Ge -> "\\geq"*)
 		| And -> "\\land"
-		| Or -> "\\lor" | Neg -> "\\neg"
+		| Or -> "\\lor" 
+		| Neg -> "\\neg"
 		| Implies -> "\\rightarrow"
 		| Iff -> "\\leftrightarrow"
-		| Exists -> "\\exists" | Forall -> "\\forall"
+		| Exists -> "\\exists" 
+		| Forall -> "\\forall"
 		| GF i -> print_symbol i
 
 	let print_int i = "\\underline{\\mathsf{" ^ (string_of_int i) ^ "}}"
@@ -663,15 +793,26 @@ module Printer (BP : BasePrinter) = struct
 			"v_{" ^ (string_of_int i) ^ "}"
 			
 	let precedence_of f = match f with
-		| Add | Sub -> 8
-		| Mul | Div | Mod -> 9
-		| Eq | Ne | Lt | Le (* | Gt | Ge *) -> 7
-		(* | Top | Bot -> 10 *)
-		| And -> 3
+		| Implies
+		| Iff -> 1
 		| Or -> 2
+		| And -> 3
+		| Exists
+		| Forall -> 4
 		| Neg -> 5
-		| Implies | Iff -> 1
-		| Exists | Forall -> 4
+		| Eq
+		| Ne
+(*		| Gt *)
+(*		| Ge *)
+		| Lt
+		| Le -> 7
+		| Add
+		| Sub -> 8
+		| Mul
+		| Div
+		| Mod -> 9
+(*		| Top      *)
+(*		| Bot -> 10*)
 		| GF _ -> 10
 
 	let rec print_term_helper p t  = match t with
@@ -685,18 +826,32 @@ module Printer (BP : BasePrinter) = struct
 			let sx = List.map (print_term_helper xp) x in
 			let sf = BP.print_func print_symbol f in
 			let e = match f with
-				| Exists | Forall -> sf ^ " " ^ (String.concat "," (List.tl sx)) ^ " : " ^ (List.hd sx)
-				| GF _ -> sf (*(List.hd sx)*) ^ (match sx with
-					| [] -> ""
-					| _ -> "[" ^ (String.concat "," ((*List.tl*) sx)) ^ "]")
-				| Neg -> sf ^ " " ^ (List.hd sx)
-				| _ -> String.concat (" " ^ sf ^ " ") sx in
+				| Exists
+				| Forall ->
+					let qv = String.concat "," (List.tl sx) in
+						sf ^ " " ^ qv ^ " : " ^ (List.hd sx)
+				| GF _ ->
+					let args = String.concat "," ((*List.tl*) sx) in
+					sf (*(List.hd sx)*) ^ 
+					(match sx with
+						| [] -> ""
+						| _ -> "[" ^ args ^ "]")
+				| Neg ->
+					sf ^ " " ^ (List.hd sx)
+				| _ -> (* other pre-defined infix operators *)
+					String.concat (" " ^ sf ^ " ") sx in
 			if (pf >= p) then
 				e
 			else
-				"(" ^ e ^ ")" 
+				"(" ^ e ^ ")"
 	
 	let print_term t = print_term_helper 0 t
+	
+	let print_definition d = ""
+	
+	let print_proof p = ""
+	
+	let print_theorem t = ""
 	
 	let print_theory c =
 		let print_symbol s = "<b>Definition:</b> " ^ s.name ^ " ; id = " ^ (string_of_int s.id) ^ BP.newline in
@@ -938,10 +1093,46 @@ module Parser = struct
 		thry := {!thry with 
 			theorems = List.append !thry.theorems [thmt]
 		}
+		
+	(**
+	 * Generate id for language parameters
+	 * and replace them in every formulas.
+	 *)
+	let rename_lang_params thry =
+		(* allocate constants for defined symbols *)
+		let dsyms = thry.def_symbols in
+		let repl = GList.mapi (fun i x -> 
+				let sid = -(i+1) in
+					({ x with id = sid },
+					(x.id, sid))
+				) dsyms in
+(*		let _ = List.map (fun (s,(i,n)) ->    *)
+(*			print_endline ("Symbol " ^ s.name ^ *)
+(*			" old id = " ^ (string_of_int i) ^  *)
+(*			" new id = " ^ (string_of_int n)))  *)
+(*		repl in                               *)
+		let nsyms, repl = List.split repl in
+		let thry = transform_all_terms (replace_symbols repl) thry in
+			{ thry with def_symbols = nsyms }
 	
 	(** Zeta grammar **)
 	
 	let zeta = ZGram.Entry.mk "zeta";;
+
+	(**
+	 * Parse an input stream and pre-process 
+	 * to obtain information on defined 
+	 * symbol and theorems.
+	 *
+	 * @return A theory structure to encapsulate
+	 * the information in the input stream.
+	 *)
+	let parse n s =
+		(*let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
+		let defs, symtab = infer_sorts defs in
+			(symtab, get_theorems_list defs)*)
+		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
+			rename_lang_params !thry
 	
 	EXTEND ZGram GLOBAL : zeta;
 	
@@ -1040,73 +1231,6 @@ module Parser = struct
 	];
 	
 	END;;
-	
-	(**
-	 * Batch transform all terms in a 
-	 * theory thry using a term transform
-	 * function f : term -> term.
-	 *)
-	let transform_all_terms f thry =
-		{ thry with
-			axioms = List.map f thry.axioms;
-			theorems = List.map (fun t ->
-				{ t with content = f t.content })
-				thry.theorems; }
-	
-	(**
-	 * Replace all symbol i by j in the 
-	 * term t for all pair (i,j) in the
-	 * input list repl.
-	 *)
-	let rec replace_symbols repl t = match t with
-		| Top | Bot | Num _ -> t
-		| Fx (f, x) -> 
-			let x = List.map (replace_symbols repl) x in
-			match f with
-				| GF i -> 
-					let j = try 
-							List.assoc i repl
-						with 
-							| Not_found -> i in
-					Fx (GF j, x)
-				| _ -> Fx (f, x)
-
-	(**
-	 * Generate id for language parameters
-	 * and replace them in every formulas.
-	 *)
-	let rename_lang_params thry =
-		(* allocate constants for defined symbols *)
-		let dsyms = thry.def_symbols in
-		let repl = GList.mapi (fun i x -> 
-				let sid = -(i+1) in
-					({ x with id = sid },
-					(x.id, sid))
-				) dsyms in
-(*		let _ = List.map (fun (s,(i,n)) ->    *)
-(*			print_endline ("Symbol " ^ s.name ^ *)
-(*			" old id = " ^ (string_of_int i) ^  *)
-(*			" new id = " ^ (string_of_int n)))  *)
-(*		repl in                               *)
-		let nsyms, repl = List.split repl in
-		let thry = transform_all_terms (replace_symbols repl) thry in
-			{ thry with def_symbols = nsyms }
-			
-	(**
-	 * Parse an input stream and pre-process 
-	 * to obtain information on defined 
-	 * symbol and theorems.
-	 *
-	 * @return A hash table maps each symbol
-	 * to its information structure and a
-	 * list of theorems to be proved.
-	 *)
-	let parse n s =
-		(*let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
-		let defs, symtab = infer_sorts defs in
-			(symtab, get_theorems_list defs)*)
-		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
-			rename_lang_params !thry
 
 end
 
@@ -1492,6 +1616,7 @@ module Logic = struct
 		(**
 		 * Introduce additional Skolem functions and 
 		 * constants to remove existential quantifiers
+		 *
 		 * TODO implement
 		 *)
 		let skolemize st t =

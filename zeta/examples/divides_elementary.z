@@ -11,4 +11,4 @@ theorem divides(x,y) & divides(y,x) -> x = y | x = 0 - y.
 // Transitivity of divide relation
 theorem divides(x, y) & divides(y, z) -> divides(x, z).
 
-let isprime(x) be such that true.
+//let isprime(x) be such that true.

@@ -1,3 +1,5 @@
+theorem exists {x} (x = 1 & forall {x} (x * x = 1)).
+
 theorem 0 + x = x.
 
 theorem 1 * x * 1 * 1 * 1 = x.
