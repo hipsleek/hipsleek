@@ -255,7 +255,7 @@ let rec string_of_pure_formula = function
 
 (* TOCHECK : what is the purpose? *)
 let is_bool_f = function 
-  | F.HTrue | F.HFalse -> true 
+  | F.HTrue | F.HFalse | F.HEmp -> true 
   | _                  -> false 
 ;;
 
@@ -360,16 +360,9 @@ let rec string_of_formula = function
       let sa = if a == [] then "" else "\nAND " in
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
-        if (hf == F.HTrue) then
-          ((string_of_pure_formula pf)^" FLOW "^fl)
-        else if (hf == F.HFalse) then
-          let s = string_of_pure_formula pf in
-          (if s = "" then  (string_of_h_formula hf)
-           else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
-        else
-          let s = string_of_pure_formula pf in
-          (if s = "" then  (string_of_h_formula hf)
-           else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+        let s = string_of_pure_formula pf in
+        (if s = "" then  (string_of_h_formula hf)
+         else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
       in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
@@ -383,16 +376,9 @@ let rec string_of_formula = function
       let sa = if a==[] then "" else "\nAND " in
       let sa = sa ^ string_of_one_formula_list a in
       let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
-              ^ (if hf = F.HTrue then
-                   ("htrue & ")^string_of_pure_formula pf
-                 else if hf = F.HFalse then
-                   let s = string_of_pure_formula pf in
-                   (if s = "" then  (string_of_h_formula hf)
-                    else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
-                 else
-                   let s = string_of_pure_formula pf in
-                   (if s = "" then  (string_of_h_formula hf)
-                    else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
+              ^ (let s = string_of_pure_formula pf in
+                 if s = "" then  (string_of_h_formula hf)
+                 else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
               ^ ")"
       in rs^sa
 ;;

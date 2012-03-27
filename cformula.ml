@@ -430,7 +430,7 @@ and mkNormalFlow () = { formula_flow_interval = !norm_flow_int; formula_flow_lin
 
 and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_link = None;}
 
-and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
+and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HEmp p TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula = 
   let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
@@ -452,7 +452,7 @@ and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
   else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
-  mkBase HTrue mp TypeTrue (mkTrueFlow ()) [] pos
+  mkBase HEmp mp TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_of_pure_P (p:CP.formula) (pos:loc) :formula= formula_of_pure_aux p (-1) pos
   
@@ -478,7 +478,7 @@ and formula_of_pure_with_branches_fl_N p br fl pos = formula_of_pure_with_branch
 
 and formula_of_pure_with_branches_fl_P p br fl pos = formula_of_pure_with_branches_fl_aux p br fl (-1) pos*)
   
-and formula_of_mix_formula_with_fl (p:MCP.mix_formula) fl pos = mkBase HTrue p TypeTrue fl pos
+and formula_of_mix_formula_with_fl (p:MCP.mix_formula) fl pos = mkBase HEmp p TypeTrue fl pos
 and formula_of_base base = Base(base)
 
 and data_of_h_formula h = match h with
@@ -563,7 +563,7 @@ and isAnyConstTrue f = match f with
   | _ -> false
 
 and is_complex_heap (h : h_formula) : bool = match h with
-  | HTrue | HFalse | HEmp-> false
+  | HFalse | HEmp-> false
   | _ -> true
 
 and is_coercible_x (h : h_formula) : bool = match h with
@@ -1025,21 +1025,18 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | _ -> match f2 with
     | HFalse -> HFalse
     | HEmp -> f1
-    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue 
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue 
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
 
-and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
-  | HFalse -> HFalse
-  | HEmp -> f2
-  | _ -> match f2 with
-    | HFalse -> HFalse
-    | HEmp -> f1
-    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
-           else Conj ({h_formula_conj_h1 = f1; 
-                       h_formula_conj_h2 = f2; 
-                       h_formula_conj_pos = pos})
+and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else Conj ({h_formula_conj_h1 = f1; 
+              h_formula_conj_h2 = f2; 
+              h_formula_conj_pos = pos})
 
 and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
   match f1 with
@@ -1204,8 +1201,9 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
 	formula_exists_pos = pos})
-and is_true (h : h_formula) = match h with
-  | HTrue -> true
+
+and is_empty_heap (h : h_formula) = match h with
+  | HEmp -> true
   | _ -> false
 
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
@@ -1758,21 +1756,18 @@ and mk_Star f1 f2 pos = match f1 with
   | _ -> match f2 with
     | HFalse -> HFalse
     | HEmp -> f1
-    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
 
-and mk_Conj f1 f2 p = match f1 with
-  | HFalse -> HFalse
-  | HEmp -> f2
-  | _ -> match f2 with
-    | HFalse -> HFalse
-    | HEmp -> f1
-    | _ -> if (f1 = HTrue) & (f2 = HTrue) then HTrue
-           else Conj { h_formula_conj_h1 = f1;
-                       h_formula_conj_h2 = f2;
-                       h_formula_conj_pos = p }
+and mk_Conj f1 f2 p =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else Conj ({h_formula_conj_h1 = f1; 
+              h_formula_conj_h2 = f2; 
+              h_formula_conj_pos = p})
 
 and remove_h_lend (f:h_formula) : h_formula = 
   match f with
@@ -1788,7 +1783,7 @@ and remove_h_lend (f:h_formula) : h_formula =
         mk_Conj new_f1 new_f2 pos
     | DataNode {h_formula_data_imm = i} 
     | ViewNode {h_formula_view_imm = i} ->
-          if isLend i then HTrue else f
+          if isLend i then HEmp else f
     | _ -> f
 
 and remove_lend (f:formula) : formula = match f with
@@ -3207,7 +3202,7 @@ let empty_es flowt grp_lbl pos =
 	let x = mkTrue flowt pos in
 {
   es_formula = x;
-  es_heap = HTrue;
+  es_heap = HEmp;
   es_pure = MCP.mkMTrue pos;
   es_evars = [];
   (* es_must_match = false; *)
@@ -5239,7 +5234,7 @@ let rec struc_to_formula_gen (f:struc_formula):(formula*formula_label option lis
 					if (isConstEFalse c2) then []
 					else
 					let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
-					let npf = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+					let npf = mkBase HEmp np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
 					let l = struc_to_formula_gen c2 in
 					List.map (fun (c1,c2) -> (normalize_combine npf c1 no_pos,c2)) l) b.formula_case_branches) in
 			  List.map (fun (c1,c2)-> ( push_exists b.formula_case_exists c1,c2)) r 
@@ -5338,7 +5333,7 @@ let rec struc_to_formula_x (f:struc_formula):formula = match f with
 				if (isConstEFalse c2) then a
 				else
 					let c1 = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1 in
-					(mkOr a (normalize_combine (mkBase HTrue c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) (struc_to_formula_x c2) b.formula_case_pos) 
+					(mkOr a (normalize_combine (mkBase HEmp c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) (struc_to_formula_x c2) b.formula_case_pos) 
 						b.formula_case_pos) ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
 			else mkTrue (mkTrueFlow ()) b.formula_case_pos in
 		   push_exists b.formula_case_exists r 
@@ -5364,7 +5359,7 @@ let rec struc_to_precond_formula (f : struc_formula) : formula = match f with
 		let fold_function a (c1, c2) = if (isConstEFalse c2) then a 
 			else 
 				let c1 = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1 in 
-					(mkOr a (normalize_combine (mkBase HTrue c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos) (struc_to_precond_formula c2) b.formula_case_pos) 
+					(mkOr a (normalize_combine (mkBase HEmp c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos) (struc_to_precond_formula c2) b.formula_case_pos) 
 					     b.formula_case_pos) in
 		let r = if (List.length b.formula_case_branches) >0 then
 			List.fold_left fold_function (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
@@ -5375,7 +5370,7 @@ let rec struc_to_precond_formula (f : struc_formula) : formula = match f with
 			| None -> b.formula_struc_base 
 			| Some e-> normalize_combine b.formula_struc_base (struc_to_precond_formula e) b.formula_struc_pos in
 		push_exists (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) e 
-	| EAssume (_,b,_) -> (* Eliminate assume by making it true *) formula_of_heap HTrue no_pos 
+	| EAssume (_,b,_) -> (* Eliminate assume by making it true *) formula_of_heap HEmp no_pos 
     | EInfer b -> struc_to_precond_formula b.formula_inf_continuation
 	| EOr b -> mkOr (struc_to_precond_formula b.formula_struc_or_f1) (struc_to_precond_formula b.formula_struc_or_f2) b.formula_struc_or_pos
 	| EList b -> formula_of_disjuncts (fold_l_snd (fun c-> [struc_to_precond_formula c]) b)
@@ -6147,7 +6142,7 @@ let normalize_max_renaming_s f pos b ctx =
 *)
 
 let clear_entailment_vars (es :entail_state) : entail_state = 
-     {es with es_heap = HTrue;
+     {es with es_heap = HEmp;
           es_evars = [];
       es_ivars = [];
       es_gen_expl_vars = [];
@@ -6156,7 +6151,7 @@ let clear_entailment_vars (es :entail_state) : entail_state =
       }
 
 let clear_entailment_history_es_es (es :entail_state) : entail_state = 
-  {es with es_heap = HTrue}
+  {es with es_heap = HEmp}
 
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
@@ -6466,7 +6461,7 @@ let get_view_branches (f0:struc_formula):(formula * formula_label) list=
 		| ECase b-> List.concat 
 			(List.map (fun (c1,c2) -> 
 				let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
-				let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+				let g_f = mkBase HEmp np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
 				List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (struc_formula_br c2)) b.formula_case_branches)
 		| EBase b-> 
 			let l_e_v =(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) in
@@ -6498,7 +6493,7 @@ let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	(*formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
-	formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+	formula_struc_base = mkBase HEmp (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
 	formula_struc_continuation = cont;
 	formula_struc_pos = loc;
     (*formula_ext_complete = true;*)
@@ -6786,7 +6781,7 @@ and split_star_h f = match f with
  * TODO express using fold_left instead.
  **)
 and combine_star_h cs = match cs with
-	| [] -> HTrue
+	| [] -> HEmp
 	| h::t -> mkStarH h (combine_star_h t) no_pos
 
 
@@ -6796,7 +6791,7 @@ and combine_star_h cs = match cs with
  *          we are merging nothing. This case SHOULD NOT happen.)
  **)
 and merge_data_nodes_common_ptr dns = 
-	List.fold_left merge_two_nodes HTrue dns
+	List.fold_left merge_two_nodes HEmp dns
 
 (*LDK: TO CHECK ??? how to deal with perms correctly
 Permissions v.s pertial fields

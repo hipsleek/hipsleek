@@ -508,7 +508,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
             let ph, addrs, _ = xpure_heap_symbolic prog h 1 in
             let n_p = MCP.merge_mems p ph true in
 	        (* Set a complex heap formula to a simpler one *)
-	        let n_f0 = mkBase HTrue n_p TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
+	        let n_f0 = mkBase HEmp n_p TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
             (n_f0, addrs)
       | Exists e ->
 	        let ({ formula_exists_qvars = qvars;
@@ -519,7 +519,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
             let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
             let n_qp = MCP.merge_mems qp pqh true in
             (* Set a complex heap formula to a simpler one *)
-	        let n_f0 = mkExists qvars HTrue n_qp TypeTrue (mkTrueFlow ()) [] pos in
+	        let n_f0 = mkExists qvars HEmp n_qp TypeTrue (mkTrueFlow ()) [] pos in
             (n_f0, addrs)
   in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -1177,12 +1177,12 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     let l2r = List.map (fun (c1,c2)->(c1,constr h1 c2 pos)) l2 in
     l1r@l2r 
   and sln_helper h = match h with
-    | HTrue  
-    | HFalse 
-    | HEmp -> [(h,h)]
+    | HTrue -> [(HTrue, HEmp)]
+    | HFalse -> [(HFalse, HFalse)]
+    | HEmp -> [(HEmp,HEmp)]
     | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
     | DataNode _ 
-    | ViewNode _ -> [(h,HTrue)]
+    | ViewNode _ -> [(h,HEmp)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
     | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
     | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarH h.h_formula_star_pos in
@@ -1446,7 +1446,7 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf pos in
-  let pure_f = mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos in
+  let pure_f = mkBase HEmp p TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
@@ -3480,19 +3480,19 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
     CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
   let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     let h1, h2, h3 = split_phase h in
-    if(is_true h1) && (is_true h2) && (is_true h3) then (* no heap on the RHS *)
+    if(is_empty_heap h1) && (is_empty_heap h2) && (is_empty_heap h3) then (* no heap on the RHS *)
       heap_entail_conjunct prog is_folding ctx_00 conseq [] pos
     else(* only h2!=true *)
-      if ((is_true h1) && (is_true h3)) then
+      if ((is_empty_heap h1) && (is_empty_heap h3)) then
 	    heap_n_pure_entail prog is_folding  ctx_00 conseq h2 p func true pos
       else(* only h1!=true *)
-	    if ((is_true h2) && (is_true h3)) then
+	    if ((is_empty_heap h2) && (is_empty_heap h3)) then
 	      heap_n_pure_entail prog is_folding  ctx_00 conseq h1 p func false pos
 	    else(* only h3!=true *)
-	      if ((is_true h1) && (is_true h2)) then
+	      if ((is_empty_heap h1) && (is_empty_heap h2)) then
 	        let new_conseq = func h3 p in
 	        if not(Cformula.contains_phase h3) then (* h3 does not contain any nested phases *)
-	          heap_n_pure_entail prog is_folding  ctx_00  conseq (choose_not_true_heap h1 h2 h3) p func (consume_heap new_conseq) (*drop_read_phase*) pos
+	          heap_n_pure_entail prog is_folding  ctx_00  conseq (choose_not_empty_heap h1 h2 h3) p func (consume_heap new_conseq) (*drop_read_phase*) pos
  	        else (* h3 contains nested phases *)
 	          heap_entail_split_rhs_phases_x prog is_folding ctx_00 new_conseq (consume_heap new_conseq) pos
 	      else
@@ -3517,8 +3517,8 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		                let new_conseq, aux_conseq_from_fold = 
 		                  (match c with 
 		                    | Ctx(estate) -> 
-		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p), 
-		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
+		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp p), 
+		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp (MCP.mix_of_pure estate.es_aux_conseq))
 		                    | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
 		                in 
 		                let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
@@ -3652,9 +3652,9 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
   (match c with 
     | Ctx(estate) -> 
           (* TODO : es_aux_conseq is an input here *)
-          let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p) in
+          let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp p) in
           let aux_c = estate.es_aux_conseq in
-          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure aux_c)) in
+          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
           heap_entail_conjunct prog is_folding  c new_conseq []  pos
     | OCtx (c1, c2) -> 
@@ -3671,7 +3671,7 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
 and heap_entail_rhs_read_phase prog is_folding  ctx0 h1 h2 h3 func pos =
   (* entail the read phase heap *)
   let new_conseq =
-    if (is_true h2 && is_true h3) then func h1 (MCP.mkMTrue pos) 
+    if (is_empty_heap h2 && is_empty_heap h3) then func h1 (MCP.mkMTrue pos) 
     else func h1 (MCP.mkMTrue pos) in
   let (after_rd_ctx, after_rd_prf) = 
     heap_entail_split_lhs_phases prog is_folding  ctx0 new_conseq false pos 
@@ -3683,10 +3683,10 @@ and heap_entail_rhs_write_phase prog is_folding  after_rd_ctx after_rd_prf conse
     | SuccCtx (cl) -> 
           (* entail the write phase *)
           let new_conseq =
-	        if (is_true h3) then (func h2 (MCP.mkMTrue pos)) 
+	        if (is_empty_heap h3) then (func h2 (MCP.mkMTrue pos)) 
 	        else (func h2 (MCP.mkMTrue pos)) in
           let after_wr_ctx, after_wr_prfs =
-	        if not(is_true h2) then
+	        if not(is_empty_heap h2) then
 	          let after_wr = List.map (fun c -> heap_entail_split_lhs_phases prog is_folding  c new_conseq true pos) cl in
 	          let after_wr_ctx, after_wr_prfs = List.split after_wr in
 	          let after_wr_prfs = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) after_wr_prfs in
@@ -3757,9 +3757,9 @@ and insert_ho_frame ctx ho_frame =
 	      Ctx {f with es_formula =  insert_ho_frame_in2_formula f.es_formula ho_frame;}
     | OCtx(c1, c2) -> OCtx(insert_ho_frame c1 ho_frame, insert_ho_frame c2 ho_frame)
 
-and choose_not_true_heap h1 h2 h3 = 
-  if ((is_true h1) && (is_true h2)) then h3
-  else if ((is_true h1) && (is_true h3)) then h2
+and choose_not_empty_heap h1 h2 h3 = 
+  if ((is_empty_heap h1) && (is_empty_heap h2)) then h3
+  else if ((is_empty_heap h1) && (is_empty_heap h3)) then h2
   else h1
 
 (* swaps the heap in f by h; returns the new formula and the extracted heap *)
@@ -3800,10 +3800,10 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
          h3 = nested phase 
       *)
       let h1, h2, h3 = split_phase(*_debug_lhs*) h in
-      if ((is_true h1) && (is_true h3)) or ((is_true h2) && (is_true h3))
+      if ((is_empty_heap h1) && (is_empty_heap h3)) or ((is_empty_heap h2) && (is_empty_heap h3))
       then
         (* lhs contains only one phase (no need to split) *)
-        let new_ctx = CF.set_context_formula ctx0 (func (choose_not_true_heap h1 h2 h3)) in
+        let new_ctx = CF.set_context_formula ctx0 (func (choose_not_empty_heap h1 h2 h3)) in
 	    (* in this case we directly call heap_entail_conjunct *)
         let final_ctx, final_prf = heap_entail_conjunct prog is_folding  new_ctx conseq []  pos in
 	    match final_ctx with
@@ -3813,7 +3813,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		        (SuccCtx(cl1), final_prf)
 	      | FailCtx _ -> (final_ctx, final_prf)
       else
-        if ((is_true h1) && (is_true h2)) then
+        if ((is_empty_heap h1) && (is_empty_heap h2)) then
 	      (* only the nested phase is different from true;*)
 	      let new_ctx = CF.set_context_formula ctx0 (func h3) in
 	      let final_ctx, final_prf = 
@@ -4507,7 +4507,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                in the ante will be passed throught the entailment*)
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
-			                  | HTrue
+			                  (*| HTrue*)
 			                  | HEmp -> (
                             Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
                               ^ "conseq has an empty heap component"
@@ -5873,16 +5873,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 			  let new_l_holes = CF.compute_holes_list new_l_args in
 			  let new_r_holes = CF.compute_holes_list new_r_args in
 			  (* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
-			  let rem_l_node = if (CF.is_empty new_l_args) then HTrue
+			  let rem_l_node = if (CF.is_empty new_l_args) then HEmp
 			  else DataNode { dnl with
 				  h_formula_data_arguments = new_l_args;
 				  h_formula_data_holes = new_l_holes; } in
-			  let rem_r_node = if (CF.is_empty new_r_args) then HTrue 
+			  let rem_r_node = if (CF.is_empty new_r_args) then HEmp 
 			  else DataNode { dnr with
 				  h_formula_data_arguments = new_r_args;
 				  h_formula_data_holes = new_r_holes;	} in
 			  (rem_l_node,rem_r_node)
-	    | _ -> (HFalse,HTrue)
+	    | _ -> (HEmp,HEmp)
 	  in
 	  match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
 	    | DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -7407,7 +7407,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
     (match (extra_opt) with
       | None -> 
             let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-            CF.HTrue
+            CF.HEmp
       | Some res_f -> res_f)
   in
   match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
@@ -7574,7 +7574,7 @@ and apply_left_coercion_complex estate coer prog conseq ctx0 resth1 anode lhs_b 
 and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
   let rec helper ls =
     match ls with
-      | [] -> CF.HTrue,[]
+      | [] -> CF.HEmp,[]
       | x::xs ->
             match x with
               | ViewNode ({h_formula_view_node = c})
@@ -7635,7 +7635,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
           (match (extra_opt) with
             | None ->
                   let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-                  CF.HTrue
+                  CF.HEmp
             | Some res_f -> res_f)
         in
         let h_vars = CF.h_fv head_node in
@@ -7668,7 +7668,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
         (match (extra_opt) with
           | None ->
                 let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-                CF.HTrue
+                CF.HEmp
           | Some res_f -> res_f)
       in
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
@@ -8183,7 +8183,7 @@ let rec simplify_heap_x h p prog : CF.h_formula = match h with
     begin
       match res with
         | [] -> HEmp
-        | hd::[] -> HTrue
+        (*| hd::[] -> HTrue*)
         | _ -> h
     end 
   | _ -> h
@@ -8235,7 +8235,7 @@ let rec elim_heap h p pre_vars heap_vars = match h with
       && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var v.h_formula_view_node)
     in
-    if cond then HTrue else h
+    if cond then HEmp else h
   | DataNode d ->
     let node_als = MCP.ptr_equations_without_null (MCP.mix_of_pure p) in
     let node_aset = CP.EMapSV.build_eset node_als in
@@ -8244,7 +8244,7 @@ let rec elim_heap h p pre_vars heap_vars = match h with
       && (List.length (CP.intersect_x (CP.eq_spec_var_x) alias heap_vars) <= (List.length alias)) 
       && not (CP.is_res_spec_var d.h_formula_data_node)
     in
-    if cond then HTrue else h
+    if cond then HEmp else h
   | _ -> h
 
 let eqFormula f1 f2 = match (f1,f2) with

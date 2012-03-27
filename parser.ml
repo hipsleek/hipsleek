@@ -194,7 +194,7 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
 let apply_cexp_form2 fct form1 form2 =
-  DD.ho_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
+  DD.no_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
 let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
@@ -850,8 +850,8 @@ heap_constr:
   [[ `HTRUE; `SEMICOLON; hrw=heap_rw                        -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; `HTRUE      -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
-   | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)]]; 
+   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
+   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]]; 
 
 heap_rd: 
   [[ shi= simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
@@ -861,7 +861,7 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
-   | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos_camlp4 _loc 2)]];
+   | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
   [[   

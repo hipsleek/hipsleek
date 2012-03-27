@@ -337,7 +337,7 @@ and view_mater_match_x prog c vs1 aset imm f =
     if (isLend imm) then
       let hole_no = Globals.fresh_int() in
       [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
-    else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+    else [(HEmp, f, [], MaterializedArg (mv,View_mater))]
   with 
       _ ->  
           if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
@@ -346,7 +346,7 @@ and view_mater_match_x prog c vs1 aset imm f =
               if (isLend imm) then
                 let hole_no = Globals.fresh_int() in 
                 [(Hole hole_no, f, [(f, hole_no)], WArg)]
-              else [(HTrue, f, [], WArg)]
+              else [(HEmp, f, [], WArg)]
             else []
 
 (* and view_mater_match prog c vs1 aset imm f = *)
@@ -390,7 +390,7 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
     | Some t -> t::a) coercs [] in
-  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c))) pos_coercs in
+  let res = List.map (fun (c,mv) -> (HEmp, lhs_f, [], MaterializedArg (mv,Coerc_mater c))) pos_coercs in
   (* let pos_coercs = List.fold_left  *)
   (*   (fun a c->  *)
   (*       let args = List.tl (fv_simple_formula c.coercion_head) in  *)
@@ -444,7 +444,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
               let hole_no = Globals.fresh_int() in 
               [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
-              [(HTrue, f, [], Root)]
+              [(HEmp, f, [], Root)]
           else 
             []
     | ViewNode ({h_formula_view_node = p1;
@@ -461,7 +461,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
                 [(Hole hole_no, f, [(f, hole_no)], Root)]
               else
-                [(HTrue, f, [], Root)]
+                [(HEmp, f, [], Root)]
             else
               let vmm = view_mater_match prog c (p1::vs1) aset imm f in
               let cmm = coerc_mater_match prog c vs1 aset imm f in 
@@ -776,7 +776,7 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
           let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (2, M_base_case_fold {
-                match_res_lhs_node = HTrue;
+                match_res_lhs_node = HEmp;
                 match_res_lhs_rest = lhs_h;
                 match_res_holes = [];
                 match_res_type = Root;
@@ -1133,7 +1133,7 @@ let string_of_node_res e = poly_string_of_pr pr_node_res e
 
 let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
   let node = match node with | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v} | _ -> report_error pos "deprecated_find_node_one error" in
-  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in
+  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HEmp pos in
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches
 
