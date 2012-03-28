@@ -1778,7 +1778,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                     let new_spec, _ = CF.simplify_ann true [] new_spec in
-                    let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
+                    (* print_string ("\n!!!! SPECS (after specs_infer)" ^ (Cprinter.string_of_struc_formula new_spec) ^ "\n"); *)
+                   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
                     (*let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in*)
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in

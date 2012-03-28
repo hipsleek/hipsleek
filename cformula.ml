@@ -7024,20 +7024,26 @@ let rec simplify_fml_ann fml aux_pure (pre: bool) (pures : CP.formula list) =
   | Or {formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos} -> 
-    let f1n, _ = simplify_fml_ann f1 aux_pure pre pures in
-    let f2n, _ = simplify_fml_ann f2 aux_pure pre pures in
-    (mkOr f1n f2n pos, pures)
+    let f1n, new_pures = simplify_fml_ann f1 aux_pure pre pures in
+    let f2n, new_pures1 = simplify_fml_ann f2 aux_pure pre new_pures in
+    (mkOr f1n f2n pos, new_pures1)
   | Base b -> 
     let sub_ann = CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure) in
     let aux_ann = CP.list_of_conjs aux_pure in
     let (h,ps) = simp_ann b.formula_base_heap (sub_ann@aux_ann@pures) pre in
-    (Base {b with formula_base_heap = h; formula_base_pure = b.formula_base_pure}, ps)
+    (Base {b with formula_base_heap = h(*; formula_base_pure = b.formula_base_pure*)}, ps)
   | Exists e -> 
     let exists_p = MCP.pure_of_mix e.formula_exists_pure in
     let sub_ann = CP.list_of_conjs exists_p in
     let aux_ann = CP.list_of_conjs aux_pure in
     let (h,ps) = simp_ann e.formula_exists_heap (sub_ann@aux_ann@pures) pre in
-    (Exists {e with formula_exists_heap = h;}, ps)
+    (* (Exists {e with formula_exists_heap = h;}, ps) *)
+
+    let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
+    let rm_vars = CP.diff_svl (CP.fv exists_p) (CP.fv p) in
+    (Exists {e with formula_exists_qvars = CP.diff_svl e.formula_exists_qvars rm_vars;
+    formula_exists_heap = h; (*formula_exists_pure = MCP.mix_of_pure p*)}, ps)
+
     
 let rec get_cont_pure (sp:struc_formula) = 
   match sp with
