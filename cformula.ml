@@ -295,7 +295,7 @@ let mkConstAnn i = match i with
   | 1 -> ConstAnn Imm
   | 2 -> ConstAnn Lend
   | 3 -> ConstAnn Accs
-  | _ -> report_error no_pos "Const Ann is greater than 2"  
+  | _ -> report_error no_pos "Const Ann is greater than 3"  
 
 let mkPolyAnn v = PolyAnn v
 
@@ -6966,16 +6966,16 @@ let set_ann heap pures pre imm update_node =
 	else
 	  let ann = 
 	  if (List.length p == 0) then
-	    if pre then Some 2 (* @L in precond (weaker) *) else Some 0 (* @M in postcond (stronger) *)
+	    if pre then Some  (int_of_heap_ann Lend) (* @L in precond (weaker) *) else Some  (int_of_heap_ann Mutable) (* @M in postcond (stronger) *)
 	  else
 	    let max_ann_list = List.fold_left (fun x y -> x@(CP.getMaxAnn y)) [] p in
 	    let min_ann_list = List.fold_left (fun x y -> x@(CP.getMinAnn y)) [] p in
 	    if ((List.length max_ann_list) > 0 || (List.length min_ann_list) > 0) then 
-	      let max_ann = List.fold_left (fun x y -> if x < y then x else y) 2 max_ann_list in
-	      let min_ann = List.fold_left (fun x y -> if x > y then x else y) 0 min_ann_list in
+	      let max_ann = List.fold_left (fun x y -> if x < y then x else y) (int_of_heap_ann Lend) max_ann_list in
+	      let min_ann = List.fold_left (fun x y -> if x > y then x else y) (int_of_heap_ann Mutable) min_ann_list in
 	      if pre then Some max_ann else Some min_ann 
 	    else 
-	      if pre then Some 2 else None
+	      if pre then Some (int_of_heap_ann Lend) else None
 	  in
 	  match ann with
 	    | Some ann0 -> 

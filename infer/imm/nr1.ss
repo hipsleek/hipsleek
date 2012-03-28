@@ -2,7 +2,7 @@ data cell {int val;}
 
 int sum (cell i, cell j)
   infer[v1,v2,v3,v4]
-  requires i::cell<a>@v1*j::cell<b>@v2
+  requires i::cell<a>@v1*j::cell<b>@v2 * k::cell<c>@A
   ensures  i::cell<a>@v3*j::cell<b>@v4 & res=a+b;
 {
   return i.val + j.val;
