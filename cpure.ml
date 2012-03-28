@@ -853,9 +853,22 @@ and isSubAnn (p:formula) =
   | BForm ((Lte (Var (_,_), IConst(_,_), _),_),_) -> true
   | _ -> false
 
-and getAnn (p:formula) =
+and getMaxAnn (p:formula) =
   match p with
   | BForm ((Lte (Var (_,_), IConst(i,_), _),_),_) -> [i]
+  | BForm ((Gte (IConst(i,_), Var (_,_), _),_),_) -> [i]
+  | _ -> []
+
+and getMinAnn (p:formula) =
+  match p with
+  | BForm ((Gte (Var (_,_), IConst(i,_), _),_),_) -> [i]
+  | BForm ((Lte (IConst(i,_), Var (_,_),_), _),_) -> [i]
+  | _ -> []
+
+and getEqAnn (p:formula) =
+  match p with
+  | BForm ((Eq (IConst(i,_), Var (_,_),_), _),_) -> [i]
+  | BForm ((Eq (Var (_,_),IConst(i,_),_), _),_) -> [i]
   | _ -> []
 
 and is_null (e : exp) : bool =
@@ -1689,7 +1702,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   let (pf2,_) = f2 in
   match (pf1,pf2) with
     | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
-    | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
+    | (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var sv1 sv2)
     | (Lte(IConst(i1, _), e2, _), Lt(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
     | (Lte(e1, IConst(i2, _), _), Lt(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lt(IConst(i1, _), e2, _), Lte(IConst(i3, _), e4, _)) -> i1=i3-1 && eqExp_f eq e2 e4
