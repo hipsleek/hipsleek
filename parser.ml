@@ -238,6 +238,7 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
@@ -608,6 +609,7 @@ ann_heap:
     `MUT -> Some (F.ConstAnn(Mutable))
    | `IMM  -> Some (F.ConstAnn(Imm))
    | `LEND -> Some (F.ConstAnn(Lend))
+   | `ACCS -> Some (F.ConstAnn(Accs))
    | `AT; t=cid  -> Some (F.PolyAnn(t, get_pos_camlp4 _loc 1))
    | `DERV -> None
    ]];
@@ -1092,6 +1094,7 @@ cexp_w :
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
+      | `ACCS -> Pure_c (P.AConst(Accs, get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  

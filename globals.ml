@@ -54,7 +54,7 @@ and primed =
   | Primed
   | Unprimed
 
-and heap_ann = Lend | Imm | Mutable
+and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
@@ -128,12 +128,14 @@ let is_float_type (t:typ) = match t with
 
 let string_of_heap_ann a =
   match a with
+    | Accs -> "@A"
     | Lend -> "@L"
     | Imm -> "@I"
     | Mutable -> "@M"
 
 let int_of_heap_ann a =
   match a with
+    | Accs -> 3
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0

@@ -322,6 +322,7 @@ let rec string_of_h_formula = function
   | F.HFalse                        -> "false"
 
 and string_of_imm imm = match imm with
+  | Iformula.ConstAnn(Accs) -> "@A"
   | Iformula.ConstAnn(Imm) -> "@I"
   | Iformula.ConstAnn(Lend) -> "@L"
   | Iformula.ConstAnn(Mutable) -> "@M"

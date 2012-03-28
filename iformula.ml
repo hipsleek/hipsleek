@@ -1209,6 +1209,11 @@ and break_struc_formula (f : struc_formula) : P.b_formula list list = match f wi
 	| EList b-> Gen.fold_l_snd break_struc_formula b
 	| EOr b-> (break_struc_formula b.formula_struc_or_f1) @(break_struc_formula b.formula_struc_or_f2)
 
+let isAccs(a : ann) : bool = 
+  match a with
+    | ConstAnn(Accs) -> true
+    | _ -> false
+
 let isLend(a : ann) : bool = 
   match a with
     | ConstAnn(Lend) -> true

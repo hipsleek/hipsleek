@@ -266,7 +266,10 @@ module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;
 
 (* utility functions *)
 
-
+let isAccs(a : ann) : bool = 
+  match a with
+    | ConstAnn(Accs) -> true
+    | _ -> false
 
 let isLend(a : ann) : bool = 
   match a with
@@ -291,6 +294,7 @@ let mkConstAnn i = match i with
   | 0 -> ConstAnn Mutable
   | 1 -> ConstAnn Imm
   | 2 -> ConstAnn Lend
+  | 3 -> ConstAnn Accs
   | _ -> report_error no_pos "Const Ann is greater than 2"  
 
 let mkPolyAnn v = PolyAnn v

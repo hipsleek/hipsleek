@@ -488,6 +488,7 @@ let string_of_spec_var x =
             | Unprimed -> "" )^ts)
 
 let string_of_imm imm = match imm with
+  | ConstAnn(Accs) -> "@A"
   | ConstAnn(Imm) -> "@I"
   | ConstAnn(Lend) -> "@L"
   | ConstAnn(Mutable) -> "@M"
