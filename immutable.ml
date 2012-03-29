@@ -315,7 +315,6 @@ and validate_rd_phase (h : IF.h_formula) : bool = match h with
   | IF.HeapNode hf -> (IF.isLend hf.IF.h_formula_heap_imm)
   | _ -> true
 
-(* TrungTQ: Maybe BUG: Consider HEmp in this function *)
 and insert_wr_phase_x (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula = 
   match f with
     | IF.Phase ({IF.h_formula_phase_rd = h1;
@@ -355,7 +354,6 @@ and insert_wr_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
   let pr_h = Iprinter.string_of_h_formula in
   Debug.no_2 "Immutable.insert_wr_phase" pr_h pr_h pr_h insert_wr_phase_x f wr_phase
 
-(* TrungTQ: Maybe BUG: Consider HEmp in this function *)
 and insert_rd_phase_x (f : IF.h_formula) (rd_phase : IF.h_formula) : IF.h_formula = 
   match f with
     | IF.Phase ({IF.h_formula_phase_rd = h1;

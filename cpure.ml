@@ -602,6 +602,8 @@ let null_var = SpecVar (Named "", "null", Unprimed)
 
 let flow_var = SpecVar ((Int), flow , Unprimed)
 
+let htrue_var = SpecVar (Named "", "htrue", Unprimed)
+
 let full_name_of_spec_var (sv : spec_var) : ident = 
   match sv with
     | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v

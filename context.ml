@@ -275,6 +275,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   let imm,p= match rhs_node with
     | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
     | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
+    | HTrue -> (ConstAnn Imm, Cpure.htrue_var) 
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 
@@ -430,7 +431,7 @@ and spatial_ctx_extract p f a i rn rr =
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
-    | HTrue 
+    | HTrue -> [(HEmp, f, [], Root)]
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
@@ -686,7 +687,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (* if (vl_view_orig || vl_self_pts==[]) then ua *)
                     (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
                   else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
-            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
+            | HTrue, HTrue -> (0, M_match c)
+            | DataNode _, HTrue
+            | ViewNode _, HTrue
+            | HTrue, DataNode _
+            | HTrue, ViewNode _ -> let rhs_rest = c.match_res_rhs_rest in
+                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
+            | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
           )
     | MaterializedArg (mv,ms) ->
           (* let _ = print_string "\n materialized args  analysis here!\n" in  *)  
@@ -732,7 +739,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let l1 = [(1,M_base_case_unfold c)] in
                       (-1, (Search_action (a2::l1)))
                   in a1
-            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
+            | ViewNode _, HTrue -> let rhs_rest = c.match_res_rhs_rest in
+                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
+            | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
 
@@ -750,7 +759,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
+            | HTrue, HTrue -> (0, M_match c)
+            | DataNode _, HTrue
+            | ViewNode _, HTrue
+            | HTrue, DataNode _
+            | HTrue, ViewNode _ -> let rhs_rest = c.match_res_rhs_rest in
+                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
+            | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
           (* let _ = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)

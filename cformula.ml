@@ -303,6 +303,7 @@ let get_ptr_from_data h =
   match h with
     | DataNode f -> f.h_formula_data_node
     | ViewNode f -> f.h_formula_view_node
+    | HTrue -> CP.htrue_var
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_path_trace = ref(fun (pt: path_trace) -> "printer not initialized")

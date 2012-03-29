@@ -201,7 +201,8 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
         Debug.print_info "Warning: " "right hand side node is not specialized!" no_pos;
         (true, None)
       )
-          | _ -> (false, None)      
+  | HTrue, HTrue -> (true, None)
+  | _ -> (false, None)
 
 let prune_branches_subsume prog lhs_node rhs_node = 
   let pr1 = pr_pair Cprinter.string_of_pure_formula string_of_bool in
@@ -358,12 +359,11 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                    lookup_view_baga_with_subs ls vdef from_svs to_svs) in
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
             )
-      | Hole _
-      | HTrue
-      | HFalse
-      | HEmp  ->
-         (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
-         {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | HTrue  -> {mem_formula_mset = CP.DisjSetSV.singleton_dset (CP.htrue_var);}
+      | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+         
   in helper f
   
 let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
@@ -481,9 +481,10 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
             let ph1 = xpure_heap_helper prog h1 which_xpure in
             let ph2 = xpure_heap_helper prog h2 which_xpure in
             MCP.merge_mems ph1 ph2 true
-      | HTrue  -> MCP.mkMTrue no_pos
+      | HTrue  -> let non_null = CP.mkNeqNull CP.htrue_var no_pos in
+                  MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) non_null
       | HFalse -> MCP.mkMFalse no_pos
-      | HEmp -> MCP.mkMTrue no_pos
+      | HEmp   -> MCP.mkMTrue no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let memset = h_formula_2_mem h0 [] prog in
@@ -589,9 +590,10 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             let ph1 = xpure_heap_helper prog h1 which_xpure in
             let ph2 = xpure_heap_helper prog h2 which_xpure in
             MCP.merge_mems ph1 ph2 true
-      | HTrue  -> MCP.mkMTrue no_pos
+      | HTrue  -> let non_null = CP.mkNeqNull CP.htrue_var no_pos in
+                  MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) non_null 
       | HFalse -> MCP.mkMFalse no_pos
-      | HEmp -> MCP.mkMTrue no_pos
+      | HEmp   -> MCP.mkMTrue no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   (xpure_heap_helper prog h0 which_xpure, memset)
@@ -681,7 +683,8 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
     | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;}) 
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
-    | HTrue | Hole _ | HFalse | HEmp -> [] in
+    | HTrue -> [CP.htrue_var]
+    | Hole _ | HFalse | HEmp -> [] in
   helper h0
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * CP.spec_var list) = 
@@ -730,10 +733,11 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let ph2, addrs2 = helper h2 in
           let tmp1 = merge_mems ph1 ph2 true in
           (tmp1, addrs1 @ addrs2)	      
-    | HTrue -> (mkMTrue no_pos, [])
+    | HTrue  -> let non_null = CP.mkNeqNull CP.htrue_var no_pos in
+                (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) non_null , [CP.htrue_var])
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (mkMFalse no_pos, [])
-    | HEmp -> (mkMTrue no_pos, []) in
+    | HEmp   -> (mkMTrue no_pos, []) in
   helper h0
 
 (*xpure heap in the presence of imm and permissions*)
@@ -796,10 +800,11 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           (MCP.merge_mems ph1 ph2 true,  addrs1 @ addrs2)	      
-    | HTrue -> (MCP.mkMTrue no_pos, [])
+    | HTrue  -> let non_null = CP.mkNeqNull CP.htrue_var no_pos in
+                (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) non_null , [CP.htrue_var])
     | Hole _ -> (MCP.mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (MCP.mkMFalse no_pos, []) 
-    | HEmp -> (MCP.mkMTrue no_pos, []) in
+    | HEmp   -> (MCP.mkMTrue no_pos, []) in
   helper h0
 
 (* xpure of consumed precondition *)
@@ -837,9 +842,9 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
         let ph1 = xpure_consumed_pre_heap prog h1 in
         let ph2 = xpure_consumed_pre_heap prog h2 in
         CP.mkAnd ph1 ph2 pos
-  | HTrue  -> P.mkTrue no_pos
+  | HTrue  -> P.mkNeqNull P.htrue_var no_pos
   | HFalse -> P.mkFalse no_pos
-  | HEmp -> P.mkTrue no_pos
+  | HEmp   -> P.mkTrue no_pos
   | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
 
 and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
@@ -4515,51 +4520,45 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               ^ (Cprinter.string_of_context ctx0)
                               ^ "\nconseq:\n"
                               ^ (Cprinter.string_of_formula conseq))) pos;
-                            if (h1 = HEmp && h2 = HTrue)  then ( 
-                              (* The case HEmp |- HTrue is considered to be FAILD *)
-                              let msg = "emp |- htrue" in 
-                              (mkFailCtx_simple msg estate conseq pos , Failure)
-                            ) else (
-                              let b1 = { formula_base_heap = h1;
-                                         formula_base_pure = p1;
-                                         formula_base_type = t1;
-                                         formula_base_and = a1; (*TO CHECK: Done: pass a1 through*)
-                                         formula_base_flow = fl1;
-                                         formula_base_label = None;
-                                         formula_base_pos = pos } in
-                              (* 23.10.2008 *)
-                              (*+++++++++++++++++++++++++++++++++*)
-                              (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
-                              (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
-                              (*+++++++++++++++++++++++++++++++++*)
-                              (*LDK: remove duplicated conj from the p2*)
-                              let p2 = remove_dupl_conj_eq_mix_formula p2 in
-                              let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
-                              (* explicit instantiation this will move some constraint to the LHS*)
-                              (*LDK: 25/08/2011, also instatiate ivars*)
-                              (*this move_expl_inst call can occur at the end of folding and also 
-                                at the end of entailments of stages possibly leading to duplications of instantiations
-                                moving it would require the rhs pure to be moved as well...*)
-                              let new_ctx =
-                              (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
-                                (match ctx with
-                                 | FailCtx _ -> ctx
-                                 | SuccCtx cl ->
-                                     let new_cl =
-                                       List.map (fun c ->
-                                         (transform_context
-                                         (fun es ->
-                                            (* explicit inst *)
-                                            let l_inst = get_expl_inst es p2 in
-                                            let es = move_impl_inst_estate es p2 in
-                                            Ctx ( if (es.es_imm_last_phase) then
-                                                    move_expl_inst_estate es p2
-                                                  else
-                                                    add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
-                                         )  c)) cl in 
-                                       SuccCtx(new_cl)) in
-                                     (new_ctx, proof)
-                            )
+                            let b1 = { formula_base_heap = h1;
+                                       formula_base_pure = p1;
+                                       formula_base_type = t1;
+                                       formula_base_and = a1; (*TO CHECK: Done: pass a1 through*)
+                                       formula_base_flow = fl1;
+                                       formula_base_label = None;
+                                       formula_base_pos = pos } in
+                            (* 23.10.2008 *)
+                            (*+++++++++++++++++++++++++++++++++*)
+                            (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
+                            (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
+                            (*+++++++++++++++++++++++++++++++++*)
+                            (*LDK: remove duplicated conj from the p2*)
+                            let p2 = remove_dupl_conj_eq_mix_formula p2 in
+                            let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
+                            (* explicit instantiation this will move some constraint to the LHS*)
+                            (*LDK: 25/08/2011, also instatiate ivars*)
+                            (*this move_expl_inst call can occur at the end of folding and also 
+                              at the end of entailments of stages possibly leading to duplications of instantiations
+                              moving it would require the rhs pure to be moved as well...*)
+                            let new_ctx =
+                            (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
+                              (match ctx with
+                               | FailCtx _ -> ctx
+                               | SuccCtx cl ->
+                                   let new_cl =
+                                     List.map (fun c ->
+                                       (transform_context
+                                       (fun es ->
+                                          (* explicit inst *)
+                                          let l_inst = get_expl_inst es p2 in
+                                          let es = move_impl_inst_estate es p2 in
+                                          Ctx ( if (es.es_imm_last_phase) then
+                                                  move_expl_inst_estate es p2
+                                                else
+                                                  add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
+                                       )  c)) cl in 
+                                     SuccCtx(new_cl)) in
+                                   (new_ctx, proof)
                           )
 			                  | _ -> begin 
 				                  Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
@@ -5832,6 +5831,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args} ->
             (l_args, l_node_name,perm,ann)
+      | HTrue -> ([], "htrue", None, ConstAnn Imm)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
     let r_args, r_node_name, r_var, r_perm, r_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
@@ -5845,6 +5845,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} ->
             (r_args, r_node_name, r_var,perm,ann)
+      | HTrue -> ([], "htrue", CP.htrue_var, None, ConstAnn Imm)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
 
 	(* An Hoa : found out that the current design of do_match 
@@ -7786,6 +7787,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               let name = match anode with
                 | ViewNode vn -> vn.h_formula_view_name
                 | DataNode dn -> dn.h_formula_data_name
+                | HTrue -> "htrue"
                 | _ -> 
                       let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode \n") in
                       ""
