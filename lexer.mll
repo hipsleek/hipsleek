@@ -266,6 +266,7 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@A" { ACCS }  
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
