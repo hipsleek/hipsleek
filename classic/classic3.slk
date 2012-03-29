@@ -1,0 +1,64 @@
+data cell {
+    int val; 
+}.
+
+checkentail emp |- emp.
+print residue.
+
+checkentail emp |- htrue.
+print residue.
+
+checkentail htrue |- emp.
+print residue.
+
+checkentail htrue |- htrue.
+print residue.
+
+checkentail x::cell<_> |-  x::cell<_>.
+print residue.
+
+checkentail htrue |-  x::cell<_>.
+print residue.
+
+checkentail x::cell<_> |- htrue.
+print residue.
+
+checkentail emp & true |-  x::cell<_>.
+print residue.
+
+checkentail y::cell<_> |-  x::cell<_>.
+print residue.
+
+checkentail x::cell<_> * y::cell<_> & n>2 |-  y::cell<_> * x::cell<_> & n>0.
+print residue.
+
+checkentail x::cell<_> * y::cell<_> & n>2 |-  x::cell<_> & n>0.
+print residue.
+
+checkentail emp |- emp.              
+print residue.
+
+checkentail x::cell<_> |- htrue.          
+print residue.
+
+checkentail x::cell<_> |- emp.              
+print residue.
+
+checkentail emp |- x::cell<_>.              
+print residue.
+
+checkentail htrue * x::cell<_> |- htrue.  
+print residue.
+
+checkentail htrue |- x::cell<_>.          
+print residue.
+
+checkentail htrue |- emp.                 
+print residue.
+
+checkentail emp |- htrue.                 
+print residue.
+
+checkentail emp * x::cell<_> |- emp * x::cell<_>.   
+print residue.                                       // residue should be emp
+
