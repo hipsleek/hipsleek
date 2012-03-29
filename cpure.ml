@@ -7234,7 +7234,8 @@ let rec add_ann_constraints vrs f =
   match vrs with
     | v :: r -> 
           let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in
-          let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in
+          let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
+          (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Lend)), no_pos), no_pos), None), None) in  *)
           let c12 = mkAnd c1 c2 no_pos in
           let rf = add_ann_constraints r f in
           mkAnd c12  rf no_pos
