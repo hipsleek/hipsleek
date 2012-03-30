@@ -1760,34 +1760,46 @@ and mk_Conj f1 f2 p =
   else if f2==HTrue then f1
   else Conj {h_formula_conj_h1=f1; h_formula_conj_h2=f2; h_formula_conj_pos=p}
 
-and remove_h_lend (f:h_formula) : h_formula = 
+and remove_h_ann (f:h_formula) (annot : ann) : h_formula = 
   match f with
     | Star b -> 
-        let new_f1 = remove_h_lend b.h_formula_star_h1 in
-        let new_f2 = remove_h_lend b.h_formula_star_h2 in
+        let new_f1 = remove_h_ann b.h_formula_star_h1 annot in
+        let new_f2 = remove_h_ann b.h_formula_star_h2 annot in
         let pos = b.h_formula_star_pos in
         mk_Star new_f1 new_f2 pos
     | Conj b -> 
-        let new_f1 = remove_h_lend b.h_formula_conj_h1 in
-        let new_f2 = remove_h_lend b.h_formula_conj_h2 in
+        let new_f1 = remove_h_ann b.h_formula_conj_h1 annot in
+        let new_f2 = remove_h_ann b.h_formula_conj_h2 annot in
         let pos = b.h_formula_conj_pos in
         mk_Conj new_f1 new_f2 pos
     | DataNode {h_formula_data_imm = i} 
     | ViewNode {h_formula_view_imm = i} ->
-          if isLend i then HTrue else f
+          if (eq_ann i annot) then HTrue else f
     | _ -> f
 
-and remove_lend (f:formula) : formula = match f with
-  | Or b -> 
-        let new_f1 = remove_lend b.formula_or_f1 in
-        let new_f2 = remove_lend b.formula_or_f2 in
+and eq_ann (a1 : ann) (a2 : ann) : bool =
+  match a1, a2 with
+    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
+    | PolyAnn sv1, PolyAnn sv2 -> CP.eq_spec_var sv1 sv2
+    | _ -> false
+
+and remove_one_ann (f:formula) (annot : ann) : formula = 
+    match f with
+      | Or b -> 
+        let new_f1 = remove_one_ann b.formula_or_f1 annot in
+        let new_f2 = remove_one_ann b.formula_or_f2 annot in
         Or {b with formula_or_f1=new_f1; formula_or_f2=new_f2}
-  | Base b -> 
+      | Base b -> 
         let old_h = b.formula_base_heap in
-        Base {b with formula_base_heap = remove_h_lend old_h}
-  | Exists b -> 
+        Base {b with formula_base_heap = remove_h_ann old_h annot}
+      | Exists b -> 
         let old_h = b.formula_exists_heap in
-        Exists {b with formula_exists_heap = remove_h_lend old_h}
+        Exists {b with formula_exists_heap = remove_h_ann old_h annot}
+
+and remove_ann  (f:formula) (annot_lst : ann list) : formula = 
+  match annot_lst with 
+    | []       -> f
+    | annot::r -> remove_ann (remove_one_ann f annot) r  
 
 and one_formula_fv (f:one_formula) : CP.spec_var list =
   let base = formula_of_one_formula f in
@@ -6966,16 +6978,16 @@ let set_ann heap pures pre imm update_node =
 	else
 	  let ann = 
 	  if (List.length p == 0) then
-	    if pre then Some  (int_of_heap_ann Lend) (* @L in precond (weaker) *) else Some  (int_of_heap_ann Mutable) (* @M in postcond (stronger) *)
+	    if pre then Some  (int_of_heap_ann Accs) (* @L in precond (weaker) *) else Some  (int_of_heap_ann Mutable) (* @M in postcond (stronger) *)
 	  else
 	    let max_ann_list = List.fold_left (fun x y -> x@(CP.getMaxAnn y)) [] p in
 	    let min_ann_list = List.fold_left (fun x y -> x@(CP.getMinAnn y)) [] p in
 	    if ((List.length max_ann_list) > 0 || (List.length min_ann_list) > 0) then 
-	      let max_ann = List.fold_left (fun x y -> if x < y then x else y) (int_of_heap_ann Lend) max_ann_list in
+	      let max_ann = List.fold_left (fun x y -> if x < y then x else y) (int_of_heap_ann Accs) max_ann_list in
 	      let min_ann = List.fold_left (fun x y -> if x > y then x else y) (int_of_heap_ann Mutable) min_ann_list in
 	      if pre then Some max_ann else Some min_ann 
 	    else 
-	      if pre then Some (int_of_heap_ann Lend) else None
+	      if pre then Some (int_of_heap_ann Accs) else None
 	  in
 	  match ann with
 	    | Some ann0 -> 
@@ -7090,7 +7102,8 @@ let rec simplify_ann_x (precond: bool) (pures : CP.formula list) (sp:struc_formu
       (EBase {b with formula_struc_base = h; formula_struc_continuation = h1 }, new_pures@pures1)
     | EAssume(svl,f,fl) -> 
       let h, new_pures = simplify_fml_ann f (CP.mkTrue no_pos) false (*not in precond*) pures in
-      (EAssume(svl,remove_lend (h),fl), new_pures)
+      let h = remove_ann h ((ConstAnn(Lend))::[ConstAnn(Accs)])  in
+      (EAssume(svl,h,fl), new_pures) 
     | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
     | EList b ->  let simp = map_l_snd (fun x-> (simplify_ann precond pures x)) b in
 		  let rec split_simp simp = match simp with

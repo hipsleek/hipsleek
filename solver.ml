@@ -1842,7 +1842,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let renamed_view_formula = rename_struc_bound_vars form in
 	          (****)  
               let renamed_view_formula = 
-	            if (isImm imm) || (isLend imm) then 
+	            if (isImm imm) || (isLend imm) || (isAccs imm) then 
 	              propagate_imm_struc_formula renamed_view_formula imm
 	            else
 	              renamed_view_formula
@@ -6019,7 +6019,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   have to update the holes*)
                   subst_one_by_one_h rho_0 r_node)
             in
-            let new_consumed = if not(isLend (get_imm r_node)) then  mkStarH consumed_h estate.es_heap pos  else  estate.es_heap in
+	    let imm_n = get_imm r_node in
+            let new_consumed = if not(isLend imm_n || isAccs imm_n) then  mkStarH consumed_h estate.es_heap pos  else  estate.es_heap in
 	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)

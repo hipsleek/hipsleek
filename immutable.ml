@@ -115,7 +115,6 @@ and consume_heap_h_formula (f : h_formula) : bool =  match f with
 	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) or (consume_heap_h_formula h2)
   | _ -> false
 
-       
 and is_lend_debug f = 
   Debug.no_1 "is_lend"
       (!print_formula)

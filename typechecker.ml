@@ -564,7 +564,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 (* (\* add infer_vars *\) *)
                                 let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
-                                let flist = List.map CF.remove_lend flist in
+                                let flist = List.map (fun x -> CF.remove_ann x ((CF.ConstAnn(Lend)) :: [(CF.ConstAnn(Accs))])) flist in
                                 (*let _ = List.iter (fun f -> print_endline ("FLIST: " ^ Cprinter.string_of_formula f)) flist in*)
                                 let flist = Gen.BList.remove_dups_eq (=) (flist) in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)

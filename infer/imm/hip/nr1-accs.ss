@@ -19,16 +19,16 @@ int sum (cell i, cell j)
   return i.val + j.val;
 }
 
-int get_val (cell i)
+int get_val (cell i, cell j)
 
 /*  requires i::cell<a>@A //fails
     ensures  res=a;*/
 
 /*  requires i::cell<a>@L * j::cell<_>@A //success
-    ensures  res=a;*/
+  ensures  res=a;*/
 
-  infer [v]
-  requires i::cell<a>@L * j::cell<_>@v
+  infer [v,v1]
+  requires i::cell<a>@v1 * j::cell<_>@v
   ensures  res=a;
 
 /*  infer[v1,v3]
@@ -38,3 +38,5 @@ int get_val (cell i)
 {
   return i.val;
 }
+
+

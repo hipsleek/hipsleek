@@ -272,6 +272,7 @@ rule tokenizer file_name = parse
   | "@" { AT }
   | "@I" {IMM}
   | "@L" {LEND}
+  | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
   | "@pre" { PRE }
