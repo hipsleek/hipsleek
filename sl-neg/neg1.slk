@@ -7,13 +7,19 @@ pred ll<n> == self=null & n=0
   or self::node<v,q>*q::ll<n-1>
   inv n>=0.
 
-pred lsort<s,n> == self::node<s,null> & n=1
-  or self::node<s,q>*q::lsort<s2,n-1> & s<=s2 
-  inv n>=1.
+pred lsort<s,n> == self::node<s,q>*q::node<s2> & s<=s2 & n=2
+  or self::node<s2,q>*q::lsort<s,n-1> & s<=s2
+  inv n>=2.
 
+/*
+infer sl-neg
+- uniform_args ll<s,n>
+- infer _n_lsort<s,n>
+- simplify_args ==> _n_lsort<n>
+*/
 pred nlsort<n> == self=null & n=0
-  or self::node<s,q>*q::lsort<s2,n-1> & s>s2
-  or self::node<s,q>*q::nlsort<n-1>
+  or self::node<s2,q>*q::lsort<s,n-1> & s>s2
+  or self::node<s2,q>*q::nlsort<n-1>
   inv n>=0.
 
 lemma self::nlsort<n> -> self::lsort<_,n> & flow __Error.
