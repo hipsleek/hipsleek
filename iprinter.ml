@@ -28,7 +28,10 @@ let string_of_unary_op = function
   | OpPreDec       -> "--"
   | OpPostInc      -> "++"
   | OpPostDec      -> "--"
-  | OpNot          -> "!"                                   
+  | OpNot          -> "!"
+  (*For pointers: *v and &v *)
+  | OpVal -> "*"
+  | OpAddr -> "&"
 ;;    
 
 (* pretty priting for binary operators *)

@@ -170,6 +170,9 @@ and uni_op =
   | OpPostInc
   | OpPostDec
   | OpNot
+  (*For pointers: *v and &v *)
+  | OpVal (*value-of*)
+  | OpAddr (*address-off*)
 
 and bin_op = 
   | OpPlus

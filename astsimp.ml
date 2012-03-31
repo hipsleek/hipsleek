@@ -1040,12 +1040,15 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
       if not (Gen.is_empty dups) then
 		(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
+		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: before case_normalize" ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 		  let prog = case_normalize_program prog in
 
 		  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
-		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
-		  
+		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in	 *)
+          (***************************************************)
+          let prog = Pointers.trans_pointers prog in
+          (***************************************************)
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
@@ -3425,6 +3428,7 @@ and default_value (t :typ) pos : C.exp =
     | RelT ->
           failwith "default_value: RelT can only be used for constraints"
     | Named c -> C.Null pos
+    | Pointer ptr -> C.Null pos
 	| Array (t, d) ->
 		  C.EmptyArray { C.exp_emparray_type = t; 
 		  C.exp_emparray_dim = d; 

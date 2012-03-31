@@ -94,6 +94,7 @@ type typ =
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
   (* | FuncT (\* function type *\) *)
+  | Pointer of typ (* base type and dimension *)
 
 
 (*
@@ -255,6 +256,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | RelT        -> "RelT"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -276,6 +278,7 @@ let rec string_of_typ_alpha = function
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
   | RelT        -> "RelT"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)

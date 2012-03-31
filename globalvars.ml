@@ -327,7 +327,7 @@ let rec find_read_write_global_var
 		let (r0,w0) = find_read_write_global_var global_vars local_vars e.I.exp_unary_exp in
 		match e.I.exp_unary_op with
 		  I.OpUMinus | I.OpNot -> (r0,w0)
-		| I.OpPreInc | I.OpPreDec | I.OpPostInc | I.OpPostDec ->
+		| I.OpPreInc | I.OpPreDec | I.OpPostInc | I.OpPostDec | I.OpVal | I.OpAddr ->
 			begin
 			  match e.I.exp_unary_exp with
 				I.Var e1 ->

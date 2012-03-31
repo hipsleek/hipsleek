@@ -937,6 +937,7 @@ let rec find_free_read_write (e:exp) bound
       )
     | Unary b ->
         (match b.exp_unary_op with
+        | OpVal | OpAddr (*to check*)
         | OpUMinus | OpNot -> None
 	| OpPreInc | OpPreDec | OpPostInc | OpPostDec ->
             (match b.exp_unary_exp with
@@ -1263,7 +1264,7 @@ let add_globalv_to_mth_prog prog =
 
 (*iprims: primitives in the header files
 prog: current program*)  
-let pre_process_of_iprog iprims prog = 
+let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
@@ -1273,8 +1274,10 @@ let pre_process_of_iprog iprims prog =
           } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
+  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = rename_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in *)
+  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = add_globalv_to_mth_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in *)
   prog

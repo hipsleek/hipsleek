@@ -26,6 +26,7 @@ let rec coq_of_typ = function
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
+  | Pointer _
   | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}

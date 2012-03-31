@@ -305,6 +305,11 @@ let peek_try =
           | [INT,_;OSQUARE,_] -> ()
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
+          (* For pointer*)
+          | [INT,_;STAR,_] -> ()
+          | [FLOAT,_;STAR,_] -> ()
+          | [BOOL,_;STAR,_] -> ()
+          | [IDENTIFIER n,_;STAR,_] -> ()
           |  _ -> raise Stream.Failure)
 
  (* let peek_ensures =  *)
@@ -410,6 +415,13 @@ let peek_array_type =
        (fun strm ->
            match Stream.npeek 2 strm with
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
+             | _ -> raise Stream.Failure)
+
+let peek_pointer_type = 
+   SHGram.Entry.of_parser "peek_pointer_type"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
              | _ -> raise Stream.Failure)
 
 (* Slicing Utils *)
@@ -1213,6 +1225,7 @@ name:[[ `STRING(_,id)  -> id]];
 
 typ:
   [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
     | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
@@ -1221,6 +1234,18 @@ non_array_type:
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  
+
+pointer_type:
+  [[ t=non_array_type; r = star_list -> 
+  let rec create_pointer n =
+    if (n<=1) then (Pointer t) else (Pointer (create_pointer (n-1)))
+  in
+  let pointer_t = create_pointer r in
+  let _ = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in
+  pointer_t
+   ]];
+
+star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
@@ -1961,6 +1986,12 @@ unary_expression:
 		let zero = IntLit { exp_int_lit_val = 0;
                         exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
 		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
+  | `STAR; t=SELF ->   (*Pointers: value-of *v *)
+        let _ = print_endline ("Pointer: value-of") in
+        mkUnary OpVal t (get_pos_camlp4 _loc 1)
+  | `AND; t=SELF ->   (*Pointers: address-of *& *)
+        let _ = print_endline ("Pointer: address-of") in
+        mkUnary OpAddr t (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
 

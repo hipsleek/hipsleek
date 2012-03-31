@@ -91,7 +91,6 @@ let process_source_full source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
-
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -116,9 +115,13 @@ let process_source_full source =
     let iprims_list = process_intermediate_prims prims_list in
     let iprims = Iast.append_iprims_list_head iprims_list in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
+    (* let _ = print_endline (Iprinter.string_of_program prog) in *)
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    (* let _ = print_endline ("process_source_full: before label_procs_prog") in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
