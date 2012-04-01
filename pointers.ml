@@ -31,6 +31,7 @@ module Err = Error
 module E = Env
 
 let ptr_target : string = "val" 
+let ptr_delete : string = "delete" 
 
 (*roughly similar to Astsimp.trans_type*)
 let rec trans_type (prog : prog_decl) (t : typ) (pos : loc) : typ =
@@ -94,6 +95,12 @@ let convert_typ (t:typ) : typ =
         )
     | _ -> t
 
+let convert_prim_to_obj (t:typ) : typ =
+  (match t with
+    | Int -> Named "integer"
+    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
+  )
+
 (**
   Replace int* -> integer and other translation (STEP 1)
   @param e: expression
@@ -128,12 +135,15 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
                     (id,Some e1,pos)
           ) v.exp_var_decl_decls
           in
-          let new_e = VarDecl {v with exp_var_decl_decls =decls} in
           if (is_pointer_typ v.exp_var_decl_type) then
             let t = convert_typ v.exp_var_decl_type in
+            let new_e = VarDecl {v with exp_var_decl_type = t;
+                exp_var_decl_decls =decls} 
+            in
             let new_vars = List.map (fun (id,_,_) -> id) decls in
             (new_e,vars@new_vars)
           else
+            let new_e = VarDecl {v with exp_var_decl_decls =decls} in
             (new_e,vars)
       | ConstDecl c ->
           (*translate*)
@@ -142,12 +152,15 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
               (id,e1,pos)
           ) c.exp_const_decl_decls 
           in
-          let new_e = ConstDecl {c with exp_const_decl_decls =decls} in
           if (is_pointer_typ c.exp_const_decl_type) then 
             let t = convert_typ c.exp_const_decl_type in
+            let new_e = ConstDecl {c with exp_const_decl_type = t;
+                exp_const_decl_decls =decls}
+            in
             let new_vars = List.map (fun (id,_,_) -> id) decls in
             (new_e,vars@new_vars)
           else
+            let new_e = ConstDecl {c with exp_const_decl_decls =decls} in
             (new_e,vars)
       | Unary u ->
           (*translate*)
@@ -343,9 +356,36 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
 let trans_exp_ptr (e:exp) (vars: ident list) : exp * (ident list) =
   let pr1 ls = pr_list (fun id -> id) ls in
   let pr_out = pr_pair string_of_exp pr1 in
-  Debug.ho_2 "trans_exp_ptr" string_of_exp pr1 pr_out trans_exp_ptr_x e vars
+  Debug.no_2 "trans_exp_ptr" string_of_exp pr1 pr_out trans_exp_ptr_x e vars
+
+let mkDelete (var:ident) pos =
+  let arg = Var {exp_var_name =var; exp_var_pos = pos} in
+  let args = [arg] in
+  CallNRecv {
+      exp_call_nrecv_method = ptr_delete;
+      exp_call_nrecv_lock = None;
+      exp_call_nrecv_arguments = args;
+      exp_call_nrecv_path_id = None;
+      exp_call_nrecv_pos = pos;}
 
 (*
+  RULE of THUMP:
+  scope1{scope2}
+  addr_vars = find_add e(scope2);
+  vars_to_delete(scope2) = (vars(scope2) \diff vars(scope1)) \intesect addr_vars
+*)
+let compute_vars_to_delete_x addr_vars outer_vars inner_vars : ident list =
+  let new_vars = Gen.BList.difference_eq (=) inner_vars outer_vars in
+  Gen.BList.intersect_eq (=) new_vars addr_vars
+
+let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
+  let pr = string_of_ident_list in
+  Debug.no_3 "compute_vars_to_delete" 
+      pr pr pr pr
+      compute_vars_to_delete_x addr_vars outer_vars inner_vars
+
+(*
+  @trans_exp_addr
   Need typ information to delete x at the end.
 
   STEP2: translate address_of (&x) operators
@@ -358,39 +398,24 @@ let trans_exp_ptr (e:exp) (vars: ident list) : exp * (ident list) =
   intersect(E.visible_names,add_vars) --> those that need to be translated
   2) translate
 
-  RULE of THUMP:
-  scope1{scope2}
-  addr_vars = find_add e(scope2);
-  vars_to_delete(scope2) = (vars(scope2) \diff vars(scope1)) \intesect addr_vars
 *)
-
-let compute_vars_to_delete_x addr_vars outer_vars inner_vars : ident list =
-  let new_vars = Gen.BList.difference_eq (=) inner_vars outer_vars in
-  Gen.BList.intersect_eq (=) new_vars addr_vars
-
-let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
-  let pr = string_of_ident_list in
-  Debug.ho_3 "compute_vars_to_delete" 
-      pr pr pr pr
-      compute_vars_to_delete_x addr_vars outer_vars inner_vars
-
-let trans_exp_addr (e:exp) : exp =
+let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
   let rec helper (e:exp) (vars: ident list) : (exp) =
     match e with
       | Var { exp_var_name = v; exp_var_pos = pos } ->
           (*translate: x -> x.val*)
-
-            if (List.mem v vars) then
+          if (List.mem v vars) then
             (*x.val*)
-              let e1 = Member { exp_member_base = e;
-		                        exp_member_fields = [ptr_target];
-                                exp_member_path_id = None;
-                                exp_member_pos = pos}
-              in (e1)
-            else
-              e
+            let e1 = Member { exp_member_base = e;
+		                      exp_member_fields = [ptr_target];
+                              exp_member_path_id = None;
+                              exp_member_pos = pos}
+            in (e1)
+          else
+            e
       | VarDecl v ->
           (*Add variables into current scope*)
+          let _ = print_endline ("vars = " ^ (string_of_ident_list vars))in
           let org_t = v.exp_var_decl_type in
           let _ = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
@@ -402,22 +427,29 @@ let trans_exp_addr (e:exp) : exp =
           let decls = List.map (fun (id,e0,pos) -> 
               let e1 = match e0 with
                 | None -> None
-                | Some e0 -> Some (helper e0 vars) in
+                | Some e0 -> 
+                    let e1 = helper e0 vars in
+                    Some e1 in
               (id,e1,pos) ) v.exp_var_decl_decls 
           in
           let names = List.map (fun (id,e0,loc) -> id) decls in
           (*List of variables to convert*)
           let vs = intersect names vars in
-          if (vs=[]) then (e)
+          if (vs=[]) then 
+            let new_e = VarDecl {v with exp_var_decl_decls = decls} in
+            new_e
           else
-            let decls1,decls2 = List.partition (fun (id,_,_) -> List.mem id vs) v.exp_var_decl_decls in
-            let e1 = VarDecl {v with exp_var_decl_decls = decls2} in
+            let decls1,decls2 = List.partition (fun (id,_,_) -> List.mem id vs) decls in
+            let e1 = if (decls2!=[]) then 
+                  VarDecl {v with exp_var_decl_decls = decls2} 
+                else (Empty v.exp_var_decl_pos)
+            in
             (*int x --> integer x = new integer(0)*)
-            let new_t = convert_typ org_t in
+            let new_t = convert_prim_to_obj org_t in
             let func (id,eo,pos) =
               let nm = match new_t with
                 | Named id -> id
-                | _ -> Error.report_error 
+                | _ -> Error.report_error
                       {Err.error_loc = pos;
                        Err.error_text = "Expecting (Named ident) after convert_typ"}
               in
@@ -427,7 +459,7 @@ let trans_exp_addr (e:exp) : exp =
                 | Some e0 -> [e0]
               in
               (*new integer(0)*)
-              let e0 = New {exp_new_class_name = id;
+              let e0 = New {exp_new_class_name = nm;
                             exp_new_arguments = args;
                             exp_new_pos = pos;}
               in
@@ -459,23 +491,28 @@ let trans_exp_addr (e:exp) : exp =
           let names = List.map (fun (id,e0,loc) -> id) decls in
           (*List of variables to convert*)
           let vs = intersect names vars in
-          if (vs=[]) then (e)
+          if (vs=[]) then 
+            let new_e = ConstDecl {c with exp_const_decl_decls = decls} in
+            new_e
           else
-            let decls1,decls2 = List.partition (fun (id,_,_) -> List.mem id vs) c.exp_const_decl_decls in
-            let e1 = ConstDecl {c with exp_const_decl_decls = decls2} in
+            let decls1,decls2 = List.partition (fun (id,_,_) -> List.mem id vs) decls in
+            let e1 = if (decls2!=[]) then 
+                  ConstDecl {c with exp_const_decl_decls = decls2}
+                else (Empty c.exp_const_decl_pos)
+            in
             (*int x --> integer x = new integer(0)*)
             let org_t = c.exp_const_decl_type in
-            let new_t = convert_typ org_t in
+            let new_t = convert_prim_to_obj org_t in
             let func (id,eo,pos) =
               let nm = match new_t with
                 | Named id -> id
-                | _ -> Error.report_error 
+                | _ -> Error.report_error
                     {Err.error_loc = pos;
                      Err.error_text = "Expecting (Named ident) after convert_typ"}
               in
               (* (0) *)
               let args = [eo] in
-              let e0 = New {exp_new_class_name = id;
+              let e0 = New {exp_new_class_name = nm;
                             exp_new_arguments = args;
                             exp_new_pos = pos;}
               in
@@ -561,9 +598,10 @@ let trans_exp_addr (e:exp) : exp =
       | Bind b ->
           (*scoping*)
           let _,outer_vars = List.split (E.visible_names ()) in
+          (*addr vars of the inner scope*)
           let addr_vars = find_addr b.exp_bind_body in
           let _ = E.push_scope () in
-          let _ = List.map (fun v -> 
+          let _ = List.map (fun v ->
               let alpha = E.alpha_name v in
               E.add v (E.VarInfo{
                   E.var_name = v;
@@ -574,8 +612,12 @@ let trans_exp_addr (e:exp) : exp =
           (*scoping*)
           let _,inner_vars = List.split (E.visible_names ()) in
           let del_vars = compute_vars_to_delete addr_vars outer_vars inner_vars in
+          let new_body2 = List.fold_left (fun e var ->
+              let del_e = mkDelete var no_pos in
+              mkSeq e del_e no_pos) new_body del_vars
+          in
           let _ = E.pop_scope ()in
-          let new_e = Bind {b with exp_bind_body = new_body} in
+          let new_e = Bind {b with exp_bind_body = new_body2} in
           (new_e)
       | Block b ->
           (*Note: no more Block after case_normalize_program*)
@@ -705,12 +747,10 @@ let trans_exp_addr (e:exp) : exp =
       | Time _
       | Unfold _
       | Continue _ -> e
-  in 
-  let _ = helper e [] in
-  e
+  in helper e vars
 
 (*Find a list of variables with address_of &x*)
-let find_addr (e:exp) : ident list =
+and find_addr (e:exp) : ident list =
   let rec helper e =
     match e with
       | Var v -> []
@@ -729,7 +769,6 @@ let find_addr (e:exp) : ident list =
           vars
       | Unary u ->
           (*translate*)
-          let _ = print_endline ("Unary operations" ^ (string_of_exp e)) in
           (match u.exp_unary_op with
             | OpAddr -> 
                 let e0 = u.exp_unary_exp in
@@ -853,7 +892,7 @@ let trans_param (p:param) : param =
   let new_t = convert_typ t in
   {p with param_type = new_t}
 
-let trans_proc_decl prog (proc:proc_decl) : proc_decl =
+let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
   let params = proc.proc_args in
@@ -874,6 +913,7 @@ let trans_proc_decl prog (proc:proc_decl) : proc_decl =
     | Some e -> 
         let e1,_ = trans_exp_ptr e vars in
         (*Similar to Astsimp.trans_proc*)
+        let _ = E.clear () in
         let _ = E.push_scope () in
         let all_args = 
           if Gen.is_some proc.proc_data_decl then
@@ -893,18 +933,26 @@ let trans_proc_decl prog (proc:proc_decl) : proc_decl =
         let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
         (*vs contains variables that are taken adrress-of in e1*)
         let addr_vars = find_addr e1 in
-        let _ = print_endline ("vs = " ^ (string_of_ident_list addr_vars)) in
-        let e2 = trans_exp_addr e1 in
+        let e2 = trans_exp_addr e1 addr_vars in
         let _,inner_vars = List.split (E.visible_names ()) in
         (*those that were converted and need to be deleted*)
-        let vars = compute_vars_to_del addr_vars [] inner_vars in
-        let _ = print_endline ("vars = " ^ (string_of_ident_list vars)) in
+        let vars = compute_vars_to_delete addr_vars [] inner_vars in
+        (*e2;delete(..); .... *)
+        let new_body = List.fold_left (fun e var ->
+            let del_e = mkDelete var no_pos in
+            mkSeq e del_e no_pos) e2 vars
+        in
         let _ = E.pop_scope () in
-        Some e2
+        Some new_body
   in
   {proc with proc_return  = new_ret_t;
       proc_args = new_params;
       proc_body = new_body}
+
+let trans_proc_decl prog (proc:proc_decl) : proc_decl =
+  Debug.ho_1 "trans_proc_decl"
+      string_of_proc_decl string_of_proc_decl
+      (fun _ ->  trans_proc_decl_x prog proc) proc
 
 let trans_pointers_x (prog : prog_decl) : prog_decl =
   let gvar_decls = prog.prog_global_var_decls in
