@@ -283,6 +283,21 @@ void release()
 /* Concurrency  */
 /* ************ */
 
+
+/* ********>>>*************/
+/* Pointer translation  */
+/* ************************/
+data integer{
+  int val;
+}
+
+void delete(ref integer x)
+  requires x::integer<>
+  ensures true;
+/* ********<<<*************/
+/* Pointer translation  */
+/* ************************/
+
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]

@@ -19,6 +19,8 @@
     - For params, to be consistent with the specification, create a new variables pointing to the param.
       + For pass-by-ref variables, need to update to the param param = ptr_param.val before deleting ptr_param
 
+   Release notes: currently, assume no pointers inside try..catch..finally blocks
+
 *)
 open Globals
 open Iast
@@ -609,6 +611,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
                   E.var_type = UNK;})) b.exp_bind_fields in
           (*Assuming no pointer operations in exp_bind_bound_var*)
           let new_body = helper b.exp_bind_body vars in
+          (**********************>>>***********************)
           (*scoping*)
           let _,inner_vars = List.split (E.visible_names ()) in
           let del_vars = compute_vars_to_delete addr_vars outer_vars inner_vars in
@@ -616,6 +619,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
               let del_e = mkDelete var no_pos in
               mkSeq e del_e no_pos) new_body del_vars
           in
+          (**********************<<<***********************)
           let _ = E.pop_scope ()in
           let new_e = Bind {b with exp_bind_body = new_body2} in
           (new_e)
@@ -623,8 +627,19 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
           (*Note: no more Block after case_normalize_program*)
           let _ = print_endline ("Warning: unexpected Block: no more Block after case_normalize_program") in
           (*b.exp_block_local_vars is empty until IastUtil.float_var_decl*)
+          let _,outer_vars = List.split (E.visible_names ()) in
+          (*addr vars of the inner scope*)
+          let addr_vars = find_addr b.exp_block_body in
           let _ = E.push_scope () in
           let new_body = helper b.exp_block_body vars in
+          (********************>>>*************************)
+          let _,inner_vars = List.split (E.visible_names ()) in
+          let del_vars = compute_vars_to_delete addr_vars outer_vars inner_vars in
+          let new_body = List.fold_left (fun e var ->
+              let del_e = mkDelete var no_pos in
+              mkSeq e del_e no_pos) new_body del_vars
+          in
+          (***********************<<<**********************)
           let _ = E.pop_scope ()in
           let new_e = Block {b with exp_block_body = new_body} in
           (new_e) (* Block creates a new inner scope *)
@@ -645,15 +660,35 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
           let new_e = Cast {c with exp_cast_body = new_body} in
           (new_e)
       | Cond c ->
-          (*scope ???*)
+          (*scoping*)
+          let _,outer_vars = List.split (E.visible_names ()) in
           let cond_e = helper c.exp_cond_condition vars in
           (*then branch*)
+          (*addr vars of then branch*)
+          let then_addr_vars = find_addr c.exp_cond_then_arm in
           let _ = E.push_scope () in
           let then_e = helper c.exp_cond_then_arm vars in
+          (******************>>>**************************)
+          let _,then_inner_vars = List.split (E.visible_names ()) in
+          let del_vars = compute_vars_to_delete then_addr_vars outer_vars then_inner_vars in
+          let then_e = List.fold_left (fun e var ->
+              let del_e = mkDelete var no_pos in
+              mkSeq e del_e no_pos) then_e del_vars
+          in
+          (*******************<<<**************************)
           let _ = E.pop_scope ()in
           (*else branch*)
+          let else_addr_vars = find_addr c.exp_cond_else_arm in
           let _ = E.push_scope () in
           let else_e = helper c.exp_cond_else_arm vars in
+          (*******************>>>**************************)
+          let _,else_inner_vars = List.split (E.visible_names ()) in
+          let del_vars = compute_vars_to_delete else_addr_vars outer_vars else_inner_vars in
+          let else_e = List.fold_left (fun e var ->
+              let del_e = mkDelete var no_pos in
+              mkSeq e del_e no_pos) else_e del_vars
+          in
+          (********************<<<*************************)
           let _ = E.push_scope () in
           let new_e = Cond {c with 
               exp_cond_condition = cond_e;
@@ -719,9 +754,22 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
       | This _ -> (*assume no pointer *)
           e
       | While w ->
+          let _,outer_vars = List.split (E.visible_names ()) in
+          (*cond*)
           let cond = helper w.exp_while_condition vars in
+          (*body*)
+          let addr_vars = find_addr w.exp_while_body in
           let _ = E.push_scope () in
           let body = helper w.exp_while_body vars in
+          (**********************>>>***********************)
+          (*scoping*)
+          let _,inner_vars = List.split (E.visible_names ()) in
+          let del_vars = compute_vars_to_delete addr_vars outer_vars inner_vars in
+          let body = List.fold_left (fun e var ->
+              let del_e = mkDelete var no_pos in
+              mkSeq e del_e no_pos) body del_vars
+          in
+          (**********************<<<***********************)
           let _ = E.pop_scope ()in
           (*TO CHECK: not sure what exp_while_wrappings is for? *)
           let wrap =

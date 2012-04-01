@@ -1,14 +1,6 @@
-global int* p,q;
+global int* p;
 
-data integer{
-  int val;
-}
-
-void delete(ref integer x)
-  requires x::integer<>
-  ensures true;
-
-void inc()
+void inc(ref int* p)
   requires p::integer<v>
   ensures p::integer<v+1> & p'=p; //'
 {
@@ -20,11 +12,16 @@ void main()
    x= 7;
    p =&x;
    inc(p);
-   int* ptr;
-   ptr=&x;
+   while(true)
+     requires true
+     ensures true;
+   {
+     int z=7;
+     int* ptr2 = &z;
+     z = z +1;
+     //expecting delete(z) after translation
+   }
    int z = x;
-   //int z;
-   //z = x;
    assert(z'=8);
 }
 
