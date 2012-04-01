@@ -2660,7 +2660,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_block_body = seq_1;
                         C.exp_block_local_vars = local_vars;
                         C.exp_block_pos = pos; }),ret_ct)
-                with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");}))
+                with | Not_found -> 
+                    Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 1 " ^ (mingled_mn ^ " is not found");}))
             (*======== <<<<INIT ==========*)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
@@ -2700,7 +2701,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_block_body = seq_1;
                       C.exp_block_local_vars = local_vars;
                       C.exp_block_pos = pos; }),ret_ct)))
-            with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");})
+            with | Not_found -> 
+                Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 2 " ^ (mingled_mn ^ " is not found");})
       | I.Catch { I.exp_catch_var = cv;
 	    I.exp_catch_flow_type = cvt;
 	    I.exp_catch_flow_var = cfv;

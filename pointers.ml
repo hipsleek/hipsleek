@@ -627,7 +627,6 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
             e
       | VarDecl v ->
           (*Add variables into current scope*)
-          let _ = print_endline ("vars = " ^ (string_of_ident_list vars))in
           let org_t = v.exp_var_decl_type in
           let _ = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
@@ -1241,12 +1240,27 @@ let rec add_code_ref e (x,ptrx) =
   let new_e2 = mkSeq new_e1 e3 pos in
   new_e2
 
+(*similar to that in Astsimp.ml*)
+let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
+  match t with
+    | Named c ->
+	      (try let _ = look_up_enum_def_raw prog.prog_enum_decls c in "int"
+	      with | Not_found -> c)
+    |t -> string_of_typ t
+
+(*similar to that in Astsimp.ml*)
+let mingle_name_enum prog (m : ident) (targs : typ list) =
+  let param_tnames =
+    String.concat "~" (List.map (get_type_name_for_mingling prog) targs)
+  in m ^ ("$" ^ param_tnames)
 
 let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
   let params = proc.proc_args in
   let new_params = List.map trans_param params in
+  let ptypes = List.map (fun p -> p.param_type) new_params in
+  let new_mingled = mingle_name_enum prog proc.proc_name ptypes in
   (*List of params (typ*ident) that has been changed*)
   let func p = 
     let t = p.param_type in 
@@ -1364,6 +1378,7 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
         (Some new_body3)
   in
   {proc with proc_return  = new_ret_t;
+      proc_mingled_name = new_mingled;
       proc_args = new_params;
       proc_body = new_body}
 
@@ -1383,4 +1398,4 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
 let trans_pointers (prog : prog_decl) : prog_decl =
   (* let pr x = (pr_list string_of_global_var_decl) x.Iast.prog_global_var_decls in *)
   let pr x = (string_of_program x) in
-  Debug.ho_1 "trans_pointers" pr pr trans_pointers_x prog
+  Debug.no_1 "trans_pointers" pr pr trans_pointers_x prog

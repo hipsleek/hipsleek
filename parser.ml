@@ -1241,7 +1241,7 @@ pointer_type:
     if (n<=1) then (Pointer t) else (Pointer (create_pointer (n-1)))
   in
   let pointer_t = create_pointer r in
-  let _ = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in
+  (* let _ = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in *)
   pointer_t
    ]];
 
@@ -1987,10 +1987,10 @@ unary_expression:
                         exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
 		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
   | `STAR; t=SELF ->   (*Pointers: value-of *v *)
-        let _ = print_endline ("Pointer: value-of") in
+        (* let _ = print_endline ("Pointer: value-of") in *)
         mkUnary OpVal t (get_pos_camlp4 _loc 1)
   | `AND; t=SELF ->   (*Pointers: address-of *& *)
-        let _ = print_endline ("Pointer: address-of") in
+        (* let _ = print_endline ("Pointer: address-of") in *)
         mkUnary OpAddr t (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
