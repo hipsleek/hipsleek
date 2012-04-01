@@ -34,6 +34,7 @@ module E = Env
 
 let ptr_target : string = "val" 
 let ptr_delete : string = "delete" 
+let ptr_string : string = "ptr"
 
 (*roughly similar to Astsimp.trans_type*)
 let rec trans_type (prog : prog_decl) (t : typ) (pos : loc) : typ =
@@ -83,6 +84,9 @@ let default_value (t :typ) pos : exp =
 
 let string_of_ident_list vs = (pr_list (fun id ->id) vs)
 
+let string_of_subst (subst: (ident*ident) list) : string =
+  pr_list (pr_pair pr_id pr_id) subst
+
 let is_pointer_typ (t:typ) : bool =
   match t with
     | Pointer _ -> true
@@ -102,6 +106,212 @@ let convert_prim_to_obj (t:typ) : typ =
     | Int -> Named "integer"
     | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
   )
+
+let subst_var (v:ident) (subst:(ident*ident) list) : ident =
+  let rec helper subst =
+    match subst with
+      | [] -> v
+      | (fr,t)::xs ->
+          if (fr=v) then t
+          else helper xs
+  in helper subst
+
+(*substitute variables [from,to] *)
+let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
+  let rec helper (e:exp) (subst: (ident*ident) list) : (exp) =
+    match e with
+      | Var v ->
+          let id = subst_var v.exp_var_name subst  in
+          let new_e = Var {v with exp_var_name = id} in
+          (new_e)
+      | VarDecl v ->
+          let decls = List.map (fun (id,e0,pos) -> 
+              let e1 = match e0 with
+                | None -> None
+                | Some e0 -> 
+                    let e1 = helper e0 subst in
+                    Some e1 in
+              (id,e1,pos) ) v.exp_var_decl_decls 
+          in
+          let new_e = VarDecl {v with exp_var_decl_decls = decls} in
+          (new_e)
+      | ConstDecl c ->
+          let decls = List.map (fun (id,e0,pos) -> 
+              let e1 = helper e0 subst in
+              (id,e1,pos) ) c.exp_const_decl_decls 
+          in
+          let new_e = ConstDecl {c with exp_const_decl_decls = decls} in
+          (new_e)
+      | Unary u ->
+          (*translate*)
+          let e0 = helper u.exp_unary_exp subst in
+          let new_e = Unary {u with exp_unary_exp = e0} in
+          (new_e)
+	  | ArrayAt b ->
+          let new_base =  helper b.exp_arrayat_array_base subst in
+          let new_index = List.map (fun e -> helper e subst) b.exp_arrayat_index in
+          let new_e = ArrayAt {b with exp_arrayat_array_base = new_base;
+			  exp_arrayat_index = new_index;}
+          in (new_e)
+	  | ArrayAlloc a ->
+          let es = List.map (fun e -> helper e subst) a.exp_aalloc_dimensions in
+          let new_e = ArrayAlloc {a with exp_aalloc_dimensions = es;} in
+          (new_e)
+      | Assert _ -> (e) (*TO CHECK: need to rename formula after assert*)
+      | Assign a ->
+          let new_lhs = helper a.exp_assign_lhs subst in
+          let new_rhs = helper a.exp_assign_rhs subst in
+          let new_e = Assign {a with exp_assign_lhs = new_lhs;
+              exp_assign_rhs = new_rhs}
+          in (new_e)
+      | Binary b ->
+          let e1 = helper b.exp_binary_oper1 subst in
+          let e2 = helper b.exp_binary_oper2 subst in
+          let new_e = Binary {b with exp_binary_oper1 = e1;
+              exp_binary_oper2 = e2;}
+          in (new_e)
+      | Bind b ->
+          let bound_var = subst_var b.exp_bind_bound_var subst in
+          let new_body = helper b.exp_bind_body subst in
+          let new_e = Bind {b with exp_bind_bound_var = bound_var; 
+              exp_bind_body = new_body} 
+          in
+          (new_e)
+      | Block b ->
+          let vars = List.map (fun (id,t,pos) -> 
+              let new_id = subst_var id subst in
+              (new_id,t,pos)) b.exp_block_local_vars in
+          let new_body = helper b.exp_block_body subst in
+          let new_e = Block {b with exp_block_local_vars = vars;
+              exp_block_body = new_body} 
+          in
+          (new_e) (* Block creates a new inner scope *)
+      | BoolLit _ -> e
+      | Break _ -> e
+      | CallRecv c ->
+          let new_args = List.map (fun e -> helper e subst) c.exp_call_recv_arguments in
+          let new_rev = helper c.exp_call_recv_receiver subst in
+          let new_e = CallRecv {c with exp_call_recv_arguments = new_args;
+              exp_call_recv_receiver = new_rev;}
+          in (new_e)
+      | CallNRecv c ->
+          let new_args = List.map (fun e -> helper e subst) c.exp_call_nrecv_arguments in
+          let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in
+          (new_e)
+      | Cast c ->
+          let new_body = helper c.exp_cast_body subst in
+          let new_e = Cast {c with exp_cast_body = new_body} in
+          (new_e)
+      | Cond c ->
+          let cond_e = helper c.exp_cond_condition subst in
+          let then_e = helper c.exp_cond_then_arm subst in
+          let else_e = helper c.exp_cond_else_arm subst in
+          let new_e = Cond {c with 
+              exp_cond_condition = cond_e;
+              exp_cond_then_arm = then_e;
+              exp_cond_else_arm = else_e;} in
+          (new_e)
+      | Finally f ->
+          (*assume no pointers*)
+          let body = helper f.exp_finally_body subst in
+          let new_e = Finally {f with exp_finally_body = body} in
+          (new_e)
+      | Label ((pid,plbl),e0) ->
+          let e1 = helper e0 subst in
+          let new_e = Label ((pid,plbl),e1) in
+          (new_e)
+      | Member m ->
+          let base = helper m.exp_member_base subst in
+          let new_e = Member {m with exp_member_base = base} in
+          (new_e)
+      | New n ->
+          let args = List.map (fun e0 -> helper e0 subst) n.exp_new_arguments in
+          let new_e = New {n with exp_new_arguments = args} in
+          (new_e)
+      | Try t ->
+          let try_e = helper t.exp_try_block subst in
+          let catch_es = List.map (fun e0 -> helper e0 subst) t.exp_catch_clauses in
+          let finally_es = List.map (fun e0 -> helper e0 subst) t.exp_finally_clause in
+          let new_e = Try {t with exp_try_block = try_e;
+              exp_catch_clauses = catch_es;
+              exp_finally_clause = finally_es}
+          in
+          (new_e)
+      | Raise r ->
+          (match r.exp_raise_val with
+            | None -> e
+            | Some e0 ->
+                let e1 = helper e0 subst in
+                let new_e = Raise {r with exp_raise_val = Some e1} in
+                (new_e))
+      | Catch c -> 
+          (match c.exp_catch_var,c.exp_catch_flow_var with
+            | None,None -> e
+            | None, Some id0 ->
+                let id1 =  subst_var id0 subst in
+                let new_e = Catch {c with exp_catch_flow_var = Some id1} in
+                (new_e)
+            | Some id0, None ->
+                let id1 = subst_var id0 subst in
+                let new_e = Catch {c with exp_catch_var = Some id1} in
+                (new_e)
+            | Some e0,Some e1 ->
+                let e01 = subst_var e0 subst in
+                let e11 = subst_var e1 subst in
+                let new_e = Catch {c with exp_catch_var = Some e11; exp_catch_flow_var = Some e01} in
+                (new_e))
+      | Return r ->
+          (match r.exp_return_val with
+            | None -> (e)
+            | Some e0 ->
+                let e1 = helper e0 subst in
+                let new_e = Return {r with exp_return_val = Some e1} in
+                (new_e)
+          )
+      | Seq s ->
+          let e1 = helper s.exp_seq_exp1 subst in
+          let e2 = helper s.exp_seq_exp2 subst in
+          let new_e =  Seq {s with exp_seq_exp1 = e1;
+                            exp_seq_exp2 = e2} 
+          in
+          (new_e)
+      | This _ -> (*assume no pointer *)
+          e
+      | While w ->
+          let cond = helper w.exp_while_condition subst in
+          let body = helper w.exp_while_body subst in
+          (*TO CHECK: not sure what exp_while_wrappings is for? *)
+          let wrap =
+            (match w.exp_while_wrappings with
+              | None -> None
+              | Some e0 ->
+                  let e1 = helper e0 subst in
+                  Some e1
+            )
+          in
+          let new_e = While {w with exp_while_condition = cond;
+              exp_while_body = body;
+              exp_while_wrappings = wrap}
+          in
+          (new_e)
+      | Debug _
+      | Dprint _
+      | Empty _
+      | FloatLit _
+      | IntLit _
+      | Java _
+      | Null _
+      | Time _
+      | Unfold _
+      | Continue _ -> e
+  in helper e subst
+
+let subst_exp (e:exp) (subst:(ident*ident) list): exp =
+  Debug.no_2 "subst_exp"
+      string_of_exp string_of_subst string_of_exp
+      subst_exp_x e subst
+
+  
 
 (**
   Replace int* -> integer and other translation (STEP 1)
@@ -940,6 +1150,98 @@ let trans_param (p:param) : param =
   let new_t = convert_typ t in
   {p with param_type = new_t}
 
+(*Add code for pass-by-val variables that are addressed of*)
+let rec add_code_val e (x,ptrx) =
+  (*for each arg in val_params1:
+    integer ptrx = new integer(x);
+    ...
+    delete(ptrx);
+  *)
+  let pos = x.param_loc in
+  let nm = match ptrx.param_type with
+    | Named id -> id (*Name integer -> integer*)
+    | _ -> Error.report_error
+        {Err.error_loc = pos;
+         Err.error_text = "Expecting (Named ident) of ptrx"}
+  in
+  let args = [Var {exp_var_name = x.param_name; exp_var_pos = pos}] in
+  (*new integer(x)*)
+  let e0 = New {exp_new_class_name = nm;
+                exp_new_arguments = args;
+                exp_new_pos = pos;}
+  in
+  let decl = (ptrx.param_name,Some e0,no_pos) in
+  (*integer ptrx = new integer(x)*)
+  let e1 = VarDecl {exp_var_decl_type = ptrx.param_type;
+                    exp_var_decl_decls = [decl] ;
+                    exp_var_decl_pos = pos;
+                   }
+  in
+  let new_e = mkSeq e1 e pos in
+  (*delete(ptrx);*)
+  let e2 = mkDelete ptrx.param_name pos in
+  let new_e1 = mkSeq new_e e2 pos in
+  new_e1
+
+(*Add code for pass-by-ref variables that are addressed of*)
+let rec add_code_ref e (x,ptrx) =
+  (*for each arg in ref_params1:
+    integer ptrx = new integer(x);
+    ...
+    x = ptrx.val;
+    delete(ptrx);
+  *)
+  let pos = x.param_loc in
+  let nm = match ptrx.param_type with
+    | Named id -> id (*Name integer -> integer*)
+    | _ -> Error.report_error
+        {Err.error_loc = pos;
+         Err.error_text = "Expecting (Named ident) of ptrx"}
+  in
+  let arg = Var {exp_var_name = x.param_name; exp_var_pos = pos} in
+  let ptr_arg = Var {exp_var_name = ptrx.param_name; exp_var_pos = pos} in
+  let args = [arg] in
+  (*new integer(x)*)
+  let e0 = New {exp_new_class_name = nm;
+                exp_new_arguments = args;
+                exp_new_pos = pos;}
+  in
+  let decl = (ptrx.param_name,Some e0,no_pos) in
+  (*integer ptrx = new integer(x)
+    ...e
+  *)
+  let e1 = VarDecl {exp_var_decl_type = ptrx.param_type;
+                    exp_var_decl_decls = [decl] ;
+                    exp_var_decl_pos = pos;
+                   }
+  in
+  let new_e = mkSeq e1 e pos in
+  (*ptrx.val*)
+  let mem = Member { exp_member_base = ptr_arg;
+		            exp_member_fields = [ptr_target];
+                    exp_member_path_id = None;
+                    exp_member_pos = pos}
+  in
+  (*x = ptrx.val*)
+  let a = {
+      exp_assign_op = OpAssign;
+	  exp_assign_lhs = arg;
+	  exp_assign_rhs = mem;
+	  exp_assign_path_id = None;
+	  exp_assign_pos =pos;}
+  in
+  let e2 = Assign a in
+  (*
+    ...new_e
+    x = ptrx.val
+  *)
+  let new_e1 = mkSeq new_e e2 pos in
+  (*delete(ptrx);*)
+  let e3 = mkDelete ptrx.param_name pos in
+  let new_e2 = mkSeq new_e1 e3 pos in
+  new_e2
+
+
 let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
@@ -958,11 +1260,12 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let vars = List.map (fun v -> v.param_name) vars in
   let new_body = match proc.proc_body with
     | None -> None
-    | Some e -> 
-        let e1,_ = trans_exp_ptr e vars in
+    | Some body -> 
+        let body1,_ = trans_exp_ptr body vars in
         (*Similar to Astsimp.trans_proc*)
         let _ = E.clear () in
         let _ = E.push_scope () in
+        (*Note: ordering of args is important*)
         let all_args = 
           if Gen.is_some proc.proc_data_decl then
             (let cdef = Gen.unsome proc.proc_data_decl in
@@ -971,34 +1274,101 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
                  param_name = this;
                  param_mod = NoMod;
                  param_loc = proc.proc_loc;} in 
-             this_arg :: proc.proc_args)
-          else proc.proc_args in
+             this_arg :: new_params)
+          else new_params in
+        let val_params,ref_params = List.partition (fun p -> (p.param_mod = NoMod)) all_args in
+        (*addr_vars contains variables that are taken adrress-of in e1*)
+        let addr_vars = find_addr body1 in
+        (*List of pass-by-val/ref params that have been taken address-of*)
+        let val_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) val_params in
+        let ref_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) ref_params in
+        (*
+          for each arg in val_params1:
+          integer ptr_arg = new integer(arg);
+          sub(arg |-> ptr_arg)[e1]
+          delete(ptr_arg);
+
+          for each arg in ref_params1:
+          integer ptr_arg = new integer(arg);
+          sub(arg |-> ptr_arg)[e1]
+          arg = ptr_arg.val;
+          delete(ptr_arg);
+        *)
+        let val_ptrs = List.map (fun p ->
+                                 let name = (ptr_string^"_"^ p.param_name) in
+                                 let t = convert_prim_to_obj p.param_type in
+                                 {p with param_type=t; param_name = name}) val_params1 
+        in
+        let ref_ptrs = List.map (fun p ->
+                                 let name = (ptr_string^"_"^ p.param_name) in
+                                 let t = convert_prim_to_obj p.param_type in
+                                 {p with param_type=t; param_name = name}) ref_params1 
+        in
+        let val_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) val_params1 val_ptrs in
+        let ref_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) ref_params1 ref_ptrs in
+        let all_subst = val_subst@ref_subst in
+
+        (* let _ = print_endline ("val_subst = " ^ (string_of_subst val_subst)) in *)
+        (* let _ = print_endline ("ref_subst = " ^ (string_of_subst ref_subst)) in *)
+        let body2 = if (all_subst!=[]) then
+              subst_exp body1 all_subst 
+            else
+              body1
+        in
+        (* let _ = print_endline ("body2 (after all_subst) : \n" ^ (string_of_exp body2)) in *)
+
+        let addr_vars = List.map (fun id ->
+            subst_var id all_subst
+        ) addr_vars 
+        in
+
         let p2v (p : param) = {
             E.var_name = p.param_name;
             E.var_alpha = p.param_name;
-            E.var_type = p.param_type; } in
+            E.var_type = UNK; } (*Do not care about typ when translating*)
+        in
         let vinfos = List.map p2v all_args in
         let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
-        (*vs contains variables that are taken adrress-of in e1*)
-        let addr_vars = find_addr e1 in
-        let e2 = trans_exp_addr e1 addr_vars in
+        let body3 = trans_exp_addr body2 addr_vars in
         let _,inner_vars = List.split (E.visible_names ()) in
         (*those that were converted and need to be deleted*)
         let vars = compute_vars_to_delete addr_vars [] inner_vars in
-        (*e2;delete(..); .... *)
+        (*body3;delete(..); .... *)
         let new_body = List.fold_left (fun e var ->
             let del_e = mkDelete var no_pos in
-            mkSeq e del_e no_pos) e2 vars
+            mkSeq e del_e no_pos) body3 vars
         in
+        (*Add code for pass-by-val variables that are addressed of*)
+        let tmp_val = List.combine val_params1 val_ptrs in
+        let new_body2 = 
+          if (tmp_val!=[]) then
+            List.fold_left (fun e (x,ptrx) -> add_code_val e (x,ptrx)) new_body tmp_val
+          else
+            new_body
+        in
+        (* let _ = print_endline ("new_body2: \n " ^ (string_of_exp new_body2)) in *)
+        (* <<< Add code for pass-by-val variables that are addressed of*)
+        (*Add code for pass-by-ref variables that are addressed of*)
+        let tmp_ref = List.combine ref_params1 ref_ptrs in
+        let new_body3 = 
+          if (tmp_ref!=[]) then
+          List.fold_left (fun e (x,ptrx) -> add_code_ref e (x,ptrx)) new_body2 tmp_ref
+          else
+            new_body2
+        in
+        (* let _ = print_endline ("new_body3: \n " ^ (string_of_exp new_body3)) in *)
+        (* <<< Add code for pass-by-ref variables that are addressed of*)
+
         let _ = E.pop_scope () in
-        Some new_body
+        let _ = E.clear () in
+        (Some new_body3)
   in
   {proc with proc_return  = new_ret_t;
       proc_args = new_params;
       proc_body = new_body}
 
 let trans_proc_decl prog (proc:proc_decl) : proc_decl =
-  Debug.ho_1 "trans_proc_decl"
+  Debug.no_1 "trans_proc_decl"
       string_of_proc_decl string_of_proc_decl
       (fun _ ->  trans_proc_decl_x prog proc) proc
 
@@ -1013,4 +1383,4 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
 let trans_pointers (prog : prog_decl) : prog_decl =
   (* let pr x = (pr_list string_of_global_var_decl) x.Iast.prog_global_var_decls in *)
   let pr x = (string_of_program x) in
-  Debug.no_1 "trans_pointers" pr pr trans_pointers_x prog
+  Debug.ho_1 "trans_pointers" pr pr trans_pointers_x prog
