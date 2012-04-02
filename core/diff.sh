@@ -13,3 +13,7 @@ echo "======= ptr-local.ss ======"
 diff test/ptr-local.res test/ptr-local.n
 echo "======= ptr-ifthenelse.ss ======"
 diff test/ptr-ifthenelse.res test/ptr-ifthenelse.n
+echo "======= ptr-while.ss ======"
+diff test/ptr-while.res test/ptr-while.n
+echo "======= address-of-var.ss ======"
+diff test/address-of-var.res test/address-of-var.n

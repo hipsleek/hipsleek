@@ -13,5 +13,9 @@ echo "======= ptr-local.ss ======"
 ../hip ptr-local.ss > test/ptr-local.res
 echo "======= ptr-ifthenelse.ss ======"
 ../hip ptr-ifthenelse.ss > test/ptr-ifthenelse.res
+echo "======= ptr-while.ss ======"
+../hip ptr-while.ss > test/ptr-while.res
+echo "======= address-of-var.ss ======"
+../hip address-of-var.ss > test/address-of-var.res
 
 
