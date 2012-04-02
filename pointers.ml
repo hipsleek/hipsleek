@@ -116,6 +116,166 @@ let subst_var (v:ident) (subst:(ident*ident) list) : ident =
           else helper xs
   in helper subst
 
+(*Find a list of free variables accessed in expression e*)
+(*ArrayAt, ArrayAlloc, Bind, Raise,catch -> access var
+  VarDecl,ConstDecl -> bound var
+*)
+
+(*
+  @param expression e
+  @param list of bound variables bvars
+  @return list of NEW bound variables bvars * list of free vars
+
+  ASSUME: no name clashes among scopes
+*)
+and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
+  let rec helper e bvars =
+    match e with
+      | Var v -> 
+          let id = v.exp_var_name in
+          if (List.mem id bvars) then
+            (bvars,[]) (*access to variables*)
+          else
+            (bvars,[id])
+      | VarDecl v ->
+          let vars = List.map (fun (id,e0,pos) -> id) v.exp_var_decl_decls in
+          let new_bvars = vars@bvars in
+          (* let _ = print_endline ("new_bvars = " ^ (string_of_ident_list new_bvars)) in *)
+          (new_bvars,[])
+      | ConstDecl c ->
+          let vars = List.map (fun (id,e0,pos) -> id) c.exp_const_decl_decls in
+          let new_bvars = vars@bvars in
+          (new_bvars,[])
+      | Unary u ->
+          let _,fvars = helper u.exp_unary_exp bvars in
+          (bvars,fvars)
+	  | ArrayAt b ->
+          let _,fvars1 =  helper b.exp_arrayat_array_base bvars in
+          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) b.exp_arrayat_index) in
+          let fvars2 = List.concat fvars_l in
+          (bvars,fvars1@fvars2)
+	  | ArrayAlloc a ->
+          let _, fvars_l = List.split (List.map (fun e -> helper e bvars) a.exp_aalloc_dimensions) in
+          let fvars = List.concat fvars_l in
+          let a = a.exp_aalloc_etype_name in
+          (bvars,a::fvars)
+      | Assert _ -> (bvars,[])
+      | Assign a ->
+          let _,fvars1 = helper a.exp_assign_lhs bvars in
+          let _,fvars2 = helper a.exp_assign_rhs bvars in
+          (bvars,fvars1@fvars2)
+      | Binary b ->
+          let _,fvars1 = helper b.exp_binary_oper1 bvars in
+          let _,fvars2 = helper b.exp_binary_oper2 bvars in
+          (bvars,fvars1@fvars2)
+      | Bind b ->
+          let fvar = b.exp_bind_bound_var in
+          let fvars1 = if (List.mem fvar bvars) then [] else [fvar] in
+          let new_bvars = bvars@b.exp_bind_fields in
+          let _,fvars = helper b.exp_bind_body new_bvars in
+          (bvars,fvars1@fvars)
+      | Block b ->
+          (*Note: no more Block after case_normalize_program*)
+          let bvars1,fvars = helper b.exp_block_body bvars in
+          (bvars1,fvars)
+      | BoolLit _ -> (bvars,[])
+      | Break _ -> (bvars,[])
+      | CallRecv c ->
+          (*ignore exp_call_recv_method*)
+          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in
+          let fvars1 = List.concat fvars_l in
+          let _,fvars2 = helper c.exp_call_recv_receiver bvars in
+          (bvars,fvars1@fvars2)
+      | CallNRecv c ->
+          (*ignore exp_call_nrecv_method*)
+          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in
+          let fvars = List.concat fvars_l in
+          (bvars,fvars)
+      | Cast c ->
+          let _,fvars = helper c.exp_cast_body bvars in
+          (bvars,fvars)
+      | Cond c ->
+          let _,fvars1 = helper c.exp_cond_condition bvars in
+          let _,fvars2 = helper c.exp_cond_then_arm bvars in
+          let _,fvars3 = helper c.exp_cond_else_arm bvars in
+          (bvars,fvars1@fvars2@fvars3)
+      | Finally f ->
+          let _,fvars = helper f.exp_finally_body bvars in
+          (bvars,fvars)
+      | Label ((pid,plbl),e0) ->
+          let bvars1,fvars = helper e0 bvars in
+          (bvars1,fvars)
+      | Member m ->
+          let _,fvars = helper m.exp_member_base bvars in
+          (bvars,fvars)
+      | New n ->
+          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) n.exp_new_arguments) in
+          let fvars = List.concat fvars_l in
+          (bvars,fvars)
+      | Try t ->
+          let bvars1,fvars1 = helper t.exp_try_block bvars in
+          (*vars in try_block are still in scopes of catch_clauses
+            and finally clause*)
+          let _,fvars2_l = List.split (List.map (fun e -> helper e bvars1) t.exp_catch_clauses) in
+          let _,fvars3_l = List.split (List.map (fun e -> helper e bvars1) t.exp_finally_clause) in
+          let fvars2 = List.concat fvars2_l in
+          let fvars3 = List.concat fvars3_l in
+          (bvars1,fvars1@fvars2@fvars3)
+      | Raise r -> (*Assume no pointers*)
+          let _,fvars = match r.exp_raise_val with
+            | None -> (bvars,[])
+            | Some e ->
+                helper e bvars
+          in
+          (bvars,fvars)
+      | Catch c -> (*assume no pointer*)
+          let fvars = match c.exp_catch_var with
+            | None -> []
+            | Some v ->
+                if List.mem v bvars then [] else [v]
+          in
+          (bvars,fvars)
+      | Return r ->
+          let fvars = 
+            (match r.exp_return_val with
+              | None -> []
+              | Some e0 ->
+                  let _,vs = helper e0 bvars in
+                  vs
+            )
+          in
+          (bvars,fvars)
+      | Seq s ->
+          let bvars1,fvars1 = helper s.exp_seq_exp1 bvars in
+          let bvars2,fvars2 = helper s.exp_seq_exp2 bvars1 in
+          (bvars2,fvars1@fvars2)
+      | This _ -> (*assume no pointer *)
+          (bvars,[])
+      | While w ->
+          let _,fvars1 = helper w.exp_while_condition bvars in
+          let _,fvars2 = helper w.exp_while_body bvars in
+          (*TO CHECK: not sure what exp_while_wrappings is for? *)
+          let fvars3 =
+            (match w.exp_while_wrappings with
+              | None -> []
+              | Some e0 ->
+                  let _,vs =  (helper e0 bvars) in
+                  vs
+            )
+          in
+          (bvars,fvars1@fvars2@fvars3)
+      | Debug _
+      | Dprint _
+      | Empty _
+      | FloatLit _
+      | IntLit _
+      | Java _
+      | Null _
+      | Time _
+      | Unfold _
+      | Continue _ -> (bvars,[])
+  in helper e bvars
+
 (*substitute variables [from,to] *)
 let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
   let rec helper (e:exp) (subst: (ident*ident) list) : (exp) =
@@ -898,7 +1058,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) else_e del_vars
           in
           (********************<<<*************************)
-          let _ = E.push_scope () in
+          let _ = E.pop_scope () in
           let new_e = Cond {c with 
               exp_cond_condition = cond_e;
               exp_cond_then_arm = then_e;

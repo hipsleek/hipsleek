@@ -3148,6 +3148,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_while_pos = pos } ->
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
+            (*ONLY NEED THOSE that are modified in the body*)
+            let _,fvars = Pointers.modifies body [] in
+            (* let _ = print_endline ("fvars = " ^ (string_of_ident_list fvars)) in *)
+            let tvars = List.filter (fun (t,id) -> List.mem id fvars) tvars in
+            (************************************************)
             let w_args = List.map (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; }) tvars in
             let fn3 = fresh_name () in  
             let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore

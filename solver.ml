@@ -2912,9 +2912,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                       CF.transform_context add_vperm_full rs 
                     else rs
                 in
+                (* let _ = print_endline ("### rs = "^(Cprinter.string_of_context rs)) in *)
+
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
+                (* let _ = print_endline ("### rs1 = "^(Cprinter.string_of_context rs1)) in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                 if (!Globals.ann_vp) then
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
@@ -2922,7 +2925,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 let rs4 = prune_ctx prog rs3 in
                  (******************************************************)
                 (*foo5,foo6 in hip/err3.ss*)
-				
                 let helper ctx postcond= 
 				let es =  CF.estate_of_context ctx pos in
 				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
