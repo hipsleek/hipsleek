@@ -69,6 +69,13 @@ module GList = struct
 	 *)
 	let subset_eq eq l1 l2 =
 		List.for_all (memeq eq l2) l1
+	
+	(**
+	 * Collect common elements of two lists
+	 *)
+	let intersect_eq eq l1 l2 =
+		List.filter (fun x -> 
+			List.exists (eq x) l1) l2
 
 end
 
@@ -310,9 +317,24 @@ module Term = struct
 	
 	(* getter *)
 	
+	(**
+	 * Get the index of the top level functor
+	 * symbol; return 0 on default
+	 *)
 	let get_index t = match t with
 		| Fx (GF i, x) -> i
 		| _ -> 0
+	
+	(**
+	 * Get the list of top level quantified 
+	 * variables; should the top level is not
+	 * a quantification, return []
+	 *)
+	let rec get_top_qindex t = match t with
+		| Fx (Exists, x)
+		| Fx (Forall, x) -> 
+			List.map get_index (List.tl x)
+		| _ -> []
 	
 	(**
 	 * Retrieve all indices occurred in a term.
@@ -332,19 +354,57 @@ module Term = struct
 	(**
 	 * Get all free variables in a term.
 	 *)
-	let get_free_vars t = match t with
+	let rec get_free_vars t = match t with
 		| Top
 		| Bot
 		| Num _ -> []
-		| Var v -> [t]
-		| Fx (f, x) -> 
+(*		| Var v -> [t]*)
+		| Fx (f, x) ->
 			let r = List.map get_free_vars x in
+			let s = List.flatten r in
 			match f with
-				| Exists 
+				| Exists
 				| Forall ->
-					let q = List.flatten (List.tl r) in
-						GList.remove eq_var (List.hd r) q
-				| _ -> List.flatten r
+					let qv = List.flatten (List.tl r) in
+					let qf = List.hd r in
+						GList.remove_all_eq (=) qf qv
+				| GF i ->
+					if (i >= 0) then
+						i :: s
+					else 
+						s
+				| _ -> s
+
+	(**
+	 * Get all free variables in a term.
+	 *)
+	let rec get_quantified_vars t = match t with
+		| Top
+		| Bot
+		| Num _ -> []
+(*		| Var v -> [t]*)
+		| Fx (f, x) ->
+			let r = List.map get_quantified_vars x in
+			let s = List.flatten r in
+			match f with
+				| Exists
+				| Forall ->
+					let qv = List.flatten (List.tl r) in
+					let qf = List.hd r in
+						GList.remove_all_eq (=) qf qv
+				| _ -> []
+
+	(**
+	 * Convert a formula term into a sentence
+	 * by prefixing it with forall quantification
+	 *)
+	let convert_to_sentence t =
+		let fv = get_free_vars t in
+		match fv with
+			| [] -> t
+			| _ ->
+				let qv = List.map (fun i -> mkVar i) fv in
+					Fx (Forall, t::qv)
 	
 	(* Term transform *)
 	
@@ -362,24 +422,115 @@ module Term = struct
 			match f with
 				| GF i -> 
 					let j = try 
+(*						let _ = print_string ("associating " ^ (string_of_int i) ^ " in dictionary ") in*)
+(*						let _ = print_endline (String.concat ""                                         *)
+(*							(List.map (fun (x,y) ->                                                       *)
+(*								(string_of_int x) ^ " --> " ^ (string_of_int y)                             *)
+(*								) d)) in                                                                    *)
+(*						let t = List.assoc i d in                                                       *)
+(*						let _ = print_endline ("result = " ^ (string_of_int t)) in                      *)
+(*							t                                                                             *)
 							List.assoc i d
 						with 
 							| Not_found -> i in
 					Fx (GF j, x)
 				| _ -> Fx (f, x)
-
+	
 	(**
-	 * Standardize variable indexing.
+	 * Standardize all variables in a term by 
+	 * making all of them different; assuming
+	 * the indexing convention.
 	 *)
-	let rec standardize_index t = match t with
+	let rec standardize qv i t = match t with
 		| Top
 		| Bot
-		| Num _ -> t
-		| Fx (f, x) -> t 
+		| Num _ -> (qv, i, t)
+		| Fx (f, x) -> match f with
+			| Exists
+			| Forall -> 
+				(* rename clashed symbols *)
+				let qvs = get_top_qindex t in
+(*				let _ = print_string "quantified vars : " in                             *)
+(*				let _ = List.map (fun x -> print_string ((string_of_int x) ^ ",")) qvs in*)
+(*				let _ = print_endline "" in                                              *)
+				let clash_vars = GList.intersect_eq (=) qvs qv in
+(*				let _ = print_string "clashed vars : " in                                       *)
+(*				let _ = List.map (fun x -> print_string ((string_of_int x) ^ ",")) clash_vars in*)
+(*				let _ = print_endline "" in                                                     *)
+				let d = GList.mapi (fun j y -> (y, i + j)) clash_vars in
+(*				let _ = print_string "dictionary : " in                                                                  *)
+(*				let _ = List.map (fun (x,y) -> print_string ((string_of_int x) ^ " --> " ^ (string_of_int y) ^ ",")) d in*)
+(*				let _ = print_endline "" in                                                                              *)
+				let t = reindex d t in
+				let qvs = get_top_qindex t in
+(*				let _ = print_string "input collected quantified vars : " in             *)
+(*				let _ = List.map (fun x -> print_string ((string_of_int x) ^ ",")) qv in *)
+(*				let _ = print_endline "" in                                              *)
+(*				let _ = print_string "new top level quantified vars : " in               *)
+(*				let _ = List.map (fun x -> print_string ((string_of_int x) ^ ",")) qvs in*)
+(*				let _ = print_endline "" in                                              *)
+				let i = i + List.length d in
+				(* add new quantified vars and standardize the main formula *)
+				let qv = List.append qv qvs in
+(*				let _ = print_string "new list of quantified vars : " in                *)
+(*				let _ = List.map (fun x -> print_string ((string_of_int x) ^ ",")) qv in*)
+(*				let _ = print_endline "" in                                             *)
+				let x = match t with | Fx (_, x) -> x | _ -> x in
+				let qv, i, rf = standardize qv i (List.hd x) in
+					(qv, i, Fx (f, rf :: List.tl x))
+			| _ ->
+				let sx = List.fold_left (fun (qv, i, px) tx -> 
+					let qvr, ir, tx = standardize qv i tx in
+					let px = List.append px [tx] in
+						(qvr, ir, px)) (qv, i, []) x in
+				let qv, i, x = sx in
+					(qv, i, Fx (f, x))
+
+	let standardize t =
+		(* select an appropriate starting point *)
+		(* for variable renaming                *)
+		let is = get_all_indices t in
+		let i = List.fold_left max 0 is in
+		(* standardize using earlier helper function *)
+		let _,_,r = standardize [] (i + 1) t in
+		(* rename variable to smallest 0 to num variables - 1 *)
+			r
+	
+	(**
+	 * Substitute simultaneously [v/vt]
+	 * for all pairs (v,vt) in binding list
+	 * where
+	 * v is the variable index to be 
+	 * substituted, vt is the term to
+	 * substitute it with.
+	 *)
+	let rec subst sb t = if sb = [] then t
+		else match t with
+			| Top
+			| Bot
+			| Num _ -> t
+(*			| Var (_, v) -> begin   *)
+(*				try                   *)
+(*					List.assoc v stl    *)
+(*				with                  *)
+(*					| Not_found -> t end*)
+			| Fx (f, x) -> match f with
+				| Exists
+				| Forall ->
+					let fml = List.hd x in
+					let qv = List.tl x in
+					let qvi = List.map get_index qv in
+					let sb = GList.remove_all_eq (fun (v,_) q -> v = q) sb qvi in
+(*					let qvarsnames = List.map name_of_var qvars in*)
+(*					let stl = GList.remove_all_eq (fun (v,_) q -> v = q) stl qvarsnames in*)
+						Fx (f, (subst sb fml) :: qv)
+				| _ ->
+					let x = List.map (subst sb) x in
+						Fx (f, x)
 	
 	(*
 
-	(*let fv t = (fv t)*)
+	(* let fv t = (fv t) *)
 	
 	(* methods *)
 	
@@ -1112,7 +1263,7 @@ module Parser = struct
 (*			" new id = " ^ (string_of_int n)))  *)
 (*		repl in                               *)
 		let nsyms, repl = List.split repl in
-		let thry = transform_all_terms (replace_symbols repl) thry in
+		let thry = transform_all_terms (reindex repl) thry in
 			{ thry with def_symbols = nsyms }
 	
 	(** Zeta grammar **)
@@ -1132,7 +1283,8 @@ module Parser = struct
 		let defs, symtab = infer_sorts defs in
 			(symtab, get_theorems_list defs)*)
 		let defs = ZGram.parse zeta (PreCast.Loc.mk n) s in
-			rename_lang_params !thry
+		let thry = rename_lang_params !thry in
+			transform_all_terms standardize thry
 	
 	EXTEND ZGram GLOBAL : zeta;
 	
@@ -1405,7 +1557,9 @@ module Logic = struct
 		 * operations by commutative ones.
 		 *)
 		let rec replace_uncomm t = match t with
-			| Top | Bot | Num _ -> t
+			| Top 
+			| Bot 
+			| Num _ -> t
 			| Fx (f, x) ->
 				let x = List.map replace_uncomm x in
 				match f with
@@ -1448,7 +1602,9 @@ module Logic = struct
 		 * Collapse associative operations like AND, OR, +, * using associativity
 		 *)
 		let rec collapse_assoc t = match t with
-			| Top | Bot | Num _ (* | Var _ *) -> t
+			| Top 
+			| Bot 
+			| Num _ (* | Var _ *) -> t
 			| Fx (f, x) -> 
 				let x = List.map collapse_assoc x in
 				match f with
@@ -1490,7 +1646,9 @@ module Logic = struct
 		 * Reorder sub-terms for all commutative functors.
 		 *)
 		let rec reorder_sub_terms t = match t with
-			| Top | Bot | Num _ -> t
+			| Top 
+			| Bot 
+			| Num _ -> t
 			| Fx (f, x) -> 
 				let x = List.map reorder_sub_terms x in
 				let x = List.sort compare_term x in
@@ -1500,7 +1658,9 @@ module Logic = struct
 		 * Push negation toward the atomic.
 		 *)
 		let rec push_neg t = match t with
-			| Top | Bot | Num _ -> t
+			| Top 
+			| Bot 
+			| Num _ -> t
 			| Fx (f, x) -> match f with
 				| Neg -> 
 					let x = List.hd x in
@@ -1551,7 +1711,9 @@ module Logic = struct
 		 * TODO implement
 		 *)
 		let rec alg_simplify t = match t with
-			| Top | Bot | Num _ -> t
+			| Top 
+			| Bot 
+			| Num _ -> t
 			| Fx (f, x) -> 
 				let x = List.map alg_simplify x in
 				let x = match f with
@@ -1610,8 +1772,71 @@ module Logic = struct
 		let rec rewrite rs t = t
 
 	end
+	
+	module PrenexNormalForm = struct
+		
+		let to_pnf t = match t with
+			| Top
+			| Bot
+			| Num _ -> t
+			| Fx (f, x) -> match f with
+				| Exists -> t
+				| Forall -> t
+				| _ -> t
+		
+	end
 		
 	module Skolemize = struct
+		
+		(**
+		 * Collect symbols and skolemize them.
+		 * sc : list of universally quantified vars
+		 * q  : boolean to indicate whether 
+		 * we should take the dual quantifier
+		 * @return the list of (i, [v]) to
+		 * indicate that the variable i should
+		 * be replaced by the Skolem function F[v]
+		 * assume t has no -> and <->
+		 *)
+		let rec collect_skolem_function sc q t =
+			match t with
+				| Top
+				| Bot
+				| Num _ -> []
+				| Fx (f, x) -> match f with
+					| Exists ->
+						let qv = List.map get_index (List.tl x) in
+						let fml = List.hd x in
+							if q then (* take dual --> forall --> add to current scope *)
+								collect_skolem_function (List.append sc qv) q fml
+							else (* add skolem function for all vars under this *)
+								let r = collect_skolem_function sc q fml in
+								let sk = List.map (fun x -> (x, sc)) qv in
+									List.append sk r
+					| Forall ->
+						let qv = List.map get_index (List.tl x) in
+						let fml = List.hd x in
+							if q then (* skolemize if dual *)
+								let r = collect_skolem_function sc q fml in
+								let sk = List.map (fun x -> (x, sc)) qv in
+									List.append sk r
+							else (* no dual --> add new vars *)
+								collect_skolem_function (List.append sc qv) q fml
+					| And
+					| Or ->
+						let r = List.map (collect_skolem_function sc q) x in
+							List.flatten r
+					| Not ->
+						collect_skolem_function sc (not q) (List.hd x)
+					| _ -> []
+
+						
+		(**
+		 * Collect Skolem functions at the top level 
+		 *)
+		let collect_skolem_function t = 
+			collect_skolem_function [] 1 t
+		
 		
 		(**
 		 * Introduce additional Skolem functions and 
