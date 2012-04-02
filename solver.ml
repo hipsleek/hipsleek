@@ -4512,7 +4512,6 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                in the ante will be passed throught the entailment*)
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
-			                  (*| HTrue*)
 			                  | HEmp -> (
                             Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
                               ^ "conseq has an empty heap component"

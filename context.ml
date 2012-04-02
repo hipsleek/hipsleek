@@ -271,7 +271,6 @@ let comp_alias_part r_asets a_vars =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
-  let _ = Debug.devel_print ("Context.choose_context_x: " ^ (string_of_h_formula rhs_node)) in
   let imm,p= match rhs_node with
     | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
     | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)

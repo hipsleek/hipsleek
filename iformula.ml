@@ -451,7 +451,7 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
      let perm_vars =  fv_iperm perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
-  | HTrue -> [] 
+  | HTrue -> ["htrue", Unprimed]
   | HFalse -> [] 
   | HEmp -> [] 
 ;;

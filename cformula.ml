@@ -1061,8 +1061,8 @@ and is_simple_formula (f:formula) =
 and fv_simple_formula (f:formula) = 
   let h, _, _, _, _ = split_components f in
   match h with
-    | HTrue | HFalse -> []
-    | HEmp -> []
+    | HTrue -> []                       (*TRUNG TODO: should be [perm_of_htrue]*)
+    | HFalse | HEmp -> []
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
@@ -1079,8 +1079,8 @@ and fv_simple_formula (f:formula) =
 and fv_simple_formula_coerc (f:formula) = 
   let h, _, _, _, _ = split_components f in
   match h with
-    | HTrue | HFalse -> []
-    | HEmp -> []
+    | HTrue  -> [CP.htrue_var]
+    | HFalse | HEmp -> []
     | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
     | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
     | _ -> []
@@ -1863,7 +1863,8 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
       in
       let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
-  | HTrue | HFalse | HEmp | Hole _ -> []
+  | HTrue -> [CP.htrue_var]
+  | HFalse | HEmp | Hole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
@@ -1902,7 +1903,8 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
-  | HTrue | HFalse | HEmp | Hole _ -> []
+  | HTrue -> [CP.htrue_var]
+  | HFalse | HEmp | Hole _ -> []
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -3989,8 +3991,6 @@ let rec collect_term_err_msg_context ctx =
   | OCtx (ctx1, ctx2) -> 
       (collect_term_err_msg_context ctx1) @
       (collect_term_err_msg_context ctx2)
-
-
 
 (* let collect_term_err_msg_list_context ctx = *)
 (*   match ctx with *)
@@ -6865,14 +6865,14 @@ and merge_two_nodes dn1 dn2 =
 										h_formula_data_pruning_conditions = List.append pc1 pc2;
 										h_formula_data_pos = no_pos } in 
 								if not_clashed then res else HFalse
-			| HTrue -> dn1
+      (*| HTrue -> dn1*)
       | HEmp -> dn1
-			| HFalse -> HFalse
-			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn2))} )
-	| HTrue -> dn2
+      | HFalse -> HFalse
+      | _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HEmp or a DataNode but get " ^ (!print_h_formula dn2))} )
+  (*| HTrue -> dn2*)
   | HEmp -> dn2
-	| HFalse -> HFalse
-	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn1)) }
+  | HFalse -> HFalse
+  | _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HEmp or a DataNode but get " ^ (!print_h_formula dn1)) }
 
 
 (**

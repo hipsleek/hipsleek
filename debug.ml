@@ -22,9 +22,6 @@ let string_of_pos (pos:loc) =
 
 let print s = if !debug_on then (print_string ("\n\n!!!" ^ s); flush stdout) else ()
 
-(* no print *)
-let nprint s = ()
-
 let pprint msg (pos:loc) = 
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": "^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg in
 	print tmp
@@ -58,9 +55,6 @@ let devel_print s =
 (*     else *)
 (*       (print_string msg; flush stdout) *)
 (*   else () *)
-
-(* no printing *)
-let devel_nprint s = ()
 
 let prior_msg pos =
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
