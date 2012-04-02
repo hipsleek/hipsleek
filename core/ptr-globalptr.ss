@@ -9,8 +9,8 @@ Original Program
 global int* p;
 
 void inc()
-  requires p::integer<v>
-  ensures p'::integer<v+1> & p'=p; //'
+  requires p::int_ptr<v>
+  ensures p'::int_ptr<v+1> & p'=p; //'
 {
    (*p) = (*p) + 1;
 }
@@ -30,11 +30,11 @@ void main()
 Translated Program
 **********************************************/
 
-/* global integer p; */
+/* global int_ptr p; */
 
-/* void inc() // ghost "ref integer p" will be added */
-/*   requires p::integer<v> */
-/*   ensures p'::integer<v+1> & p'=p; //' */
+/* void inc() // ghost "ref int_ptr p" will be added */
+/*   requires p::int_ptr<v> */
+/*   ensures p'::int_ptr<v+1> & p'=p; //' */
 /* { */
 /*   p.val = p.val +1 ; */
 /* } */
@@ -43,7 +43,7 @@ Translated Program
 /*   requires true */
 /*   ensures true; */
 /* {  */
-/*   integer x = new integer(0); */
+/*   int_ptr x = new int_ptr(0); */
 /*   x.val = 5; */
 /*   p = x; */
 /*   inc(); //ghost "p" will be added */

@@ -8,8 +8,8 @@ Original Program
 **********************************************/
 
 void inc(int* p)
-  requires p::integer<v>
-  ensures p::integer<v+1>; //'
+  requires p::int_ptr<v>
+  ensures p::int_ptr<v+1>; //'
 {
    (*p) = (*p) + 1;
 }
@@ -32,9 +32,9 @@ void main()
 /**********************************************
 Translated Program
 **********************************************/
-/* void inc(integer i) */
-/*   requires i::integer<v> */
-/*   ensures i::integer<v+1>; */
+/* void inc(int_ptr i) */
+/*   requires i::int_ptr<v> */
+/*   ensures i::int_ptr<v+1>; */
 /* { */
 /*   i.val = i.val +1 ; */
 /* } */
@@ -44,11 +44,11 @@ Translated Program
 /*   ensures true; */
 /* { */
 /*   int y; */
-/*   integer x = new integer(0); */
+/*   int_ptr x = new int_ptr(0); */
 /*   x.val = 7; */
-/*   integer p1 =x; */
+/*   int_ptr p1 =x; */
 /*   inc(p1); */
-/*   integer p2; */
+/*   int_ptr p2; */
 /*   p2=x; */
 /*   inc(p2); */
 /*   int z = x.val; */

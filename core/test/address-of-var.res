@@ -1,8 +1,8 @@
 Starting Omega...oc
 Translating global variables to procedure parameters...
 
-Checking procedure inc$integer... 
-Procedure inc$integer SUCCESS
+Checking procedure inc$int_ptr... 
+Procedure inc$int_ptr SUCCESS
 
 Checking procedure address_of_global$int... 
 assert:address-of-var.ss:41: 2:  : ok
@@ -10,11 +10,11 @@ assert:address-of-var.ss:41: 2:  : ok
 
 Procedure address_of_global$int SUCCESS
 
-Checking procedure address_of_global2$integer~int... 
+Checking procedure address_of_global2$int_ptr~int... 
 assert:address-of-var.ss:52: 2:  : ok
 
 
-Procedure address_of_global2$integer~int SUCCESS
+Procedure address_of_global2$int_ptr~int SUCCESS
 
 Checking procedure address_of_local$... 
 assert:address-of-var.ss:30: 2:  : ok

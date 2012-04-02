@@ -3,19 +3,19 @@
    @param prog current program declaration
    @return new program declaration 
 
-   STEP 1: eliminate pointer type (e.g. int* )
-   - translate pointers into objects: int* p -> integer p;
+   STEP 1 (trans_exp_ptr): eliminate pointer type (e.g. int* )
+   - translate pointers into objects: int* p -> int_ptr p;
      + Translate global variables first
      + For each proc, go forward, find (param + local) and replace.
 
-   STEP 2: eliminate address-of operator (e.g. &x )
+   STEP 2 (trans_exp_addr): eliminate address-of operator (e.g. &x )
    - Translate local vars + params that are addressed of (&x) into object
      + Pass 1: find
      + Pass 2: convert
 
    NOTE:
     - For local variables, can reuse the variable names
-      int x -> integer x;
+      int x -> int_ptr x;
     - For params, to be consistent with the specification, create a new variables pointing to the param.
       + For pass-by-ref variables, need to update to the param param = ptr_param.val before deleting ptr_param
 
@@ -96,14 +96,24 @@ let convert_typ (t:typ) : typ =
   match t with
     | Pointer t1 -> 
         (match t1 with
-          | Int -> Named "integer"
+          | Int -> Named "int_ptr"
+          | Pointer t2 ->
+              (match t2 with
+                | Int -> Named "int_ptr_ptr"
+                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
+              )
           | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
         )
     | _ -> t
 
 let convert_prim_to_obj (t:typ) : typ =
   (match t with
-    | Int -> Named "integer"
+    | Int -> Named "int_ptr"
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Named "int_ptr_ptr"
+          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
+        )
     | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
   )
 
@@ -474,7 +484,7 @@ let subst_exp (e:exp) (subst:(ident*ident) list): exp =
   
 
 (**
-  Replace int* -> integer and other translation (STEP 1)
+  Replace int* -> int_ptr and other translation (STEP 1)
   @param e: expression
   @param vars: list of identifiers that need to be translated
   @return e*vars: new expression * (new list of vars that need to
@@ -560,18 +570,21 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
                        Err.error_text = "Expecting Var after OpVal unary operation (*p)"})
             | OpAddr ->
                 (*address-off: &p --> p *)
-                (match e0 with
-                  | Var v ->
-                      let id = v.exp_var_name in
-                      if (List.mem id vars) then
-                        (u.exp_unary_exp,vars)
-                      else
-                        let e0,_ = helper u.exp_unary_exp vars in
-                        let new_e =  Unary {u with exp_unary_exp = e0} in
-                        (new_e,vars)
-                  | _ -> Error.report_error 
-                      {Err.error_loc = u.exp_unary_pos;
-                       Err.error_text = "Expecting Var after OpAddr unary operation (*p)"})
+                let e0,_ = helper u.exp_unary_exp vars in
+                let new_e =  Unary {u with exp_unary_exp = e0} in
+                (new_e,vars)
+                (* (match e0 with *)
+                (*   | Var v -> *)
+                (*       let id = v.exp_var_name in *)
+                (*       if (List.mem id vars) then *)
+                (*         (u.exp_unary_exp,vars) *)
+                (*       else *)
+                (*         let e0,_ = helper u.exp_unary_exp vars in *)
+                (*         let new_e =  Unary {u with exp_unary_exp = e0} in *)
+                (*         (new_e,vars) *)
+                (*   | _ -> Error.report_error  *)
+                (*       {Err.error_loc = u.exp_unary_pos; *)
+                (*        Err.error_text = "Expecting Var after OpAddr unary operation (\*p)"}) *)
             | _ ->
                 let e0,_ = helper u.exp_unary_exp vars in
                 let new_e =  Unary {u with exp_unary_exp = e0} in
@@ -652,7 +665,7 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
       | New n ->
           (*TO CHECK: handle malloc() ??? *)
           let args = List.map (fun e0 -> fst (helper e0 vars)) n.exp_new_arguments in
-          (*Assume int* ptr = new integer(...) --> do not need 
+          (*Assume int* ptr = new int_ptr(...) --> do not need 
             to change exp_new_class_name*)
           let new_e = New {n with exp_new_arguments = args} in
           (new_e,vars)
@@ -720,7 +733,7 @@ let trans_exp_ptr_x (e:exp) (vars: ident list) : exp * (ident list) =
   in helper e vars
 
 (*STEP 1: Translate pointers: 
-  int* p --> integer p 
+  int* p --> int_ptr p 
   p:int* -> p
   *( p:int* ) -> p.val
   &( p:int* ) -> p
@@ -761,7 +774,7 @@ let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
   Need typ information to delete x at the end.
 
   STEP2: translate address_of (&x) operators
-  int x --> integer x = new integer(0); ...; delete(x);
+  int x --> int_ptr x = new int_ptr(0); ...; delete(x);
   x:int --> x.val
   &(x:int) --> x
 
@@ -815,7 +828,8 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
                   VarDecl {v with exp_var_decl_decls = decls2} 
                 else (Empty v.exp_var_decl_pos)
             in
-            (*int x --> integer x = new integer(0)*)
+            (*int x --> int_ptr x = new int_ptr(0)*)
+            (*int* ptr -> int_ptr_ptr = new int_ptr_ptr(..);*)
             let new_t = convert_prim_to_obj org_t in
             let func (id,eo,pos) =
               let nm = match new_t with
@@ -829,13 +843,13 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
                 | None -> [default_value org_t pos]
                 | Some e0 -> [e0]
               in
-              (*new integer(0)*)
+              (*new int_ptr(0)*)
               let e0 = New {exp_new_class_name = nm;
                             exp_new_arguments = args;
                             exp_new_pos = pos;}
               in
               let decl = (id,Some e0,pos) in
-              (*int x --> integer x = new integer(0)*)
+              (*int x --> int_ptr x = new int_ptr(0)*)
               let e1 = VarDecl {exp_var_decl_type = new_t;
                                 exp_var_decl_decls = [decl] ;
                                 exp_var_decl_pos = pos;
@@ -871,7 +885,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
                   ConstDecl {c with exp_const_decl_decls = decls2}
                 else (Empty c.exp_const_decl_pos)
             in
-            (*int x --> integer x = new integer(0)*)
+            (*int x --> int_ptr x = new int_ptr(0)*)
             let org_t = c.exp_const_decl_type in
             let new_t = convert_prim_to_obj org_t in
             let func (id,eo,pos) =
@@ -888,7 +902,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
                             exp_new_pos = pos;}
               in
               let decl = (id,e0,pos) in
-              (*int x --> integer x = new integer(0)*)
+              (*int x --> int_ptr x = new int_ptr(0)*)
               let e1 = ConstDecl {exp_const_decl_type = new_t;
                                 exp_const_decl_decls = [decl] ;
                                 exp_const_decl_pos = pos;
@@ -1081,7 +1095,7 @@ let rec trans_exp_addr (e:exp) (vars: ident list) : exp =
       | New n ->
           (*TO CHECK: handle malloc() ??? *)
           let args = List.map (fun e0 -> helper e0 vars) n.exp_new_arguments in
-          (*Assume int* ptr = new integer(...) --> do not need 
+          (*Assume int* ptr = new int_ptr(...) --> do not need 
             to change exp_new_class_name*)
           let new_e = New {n with exp_new_arguments = args} in
           (new_e)
@@ -1172,6 +1186,7 @@ and find_addr (e:exp) : ident list =
     match e with
       | Var v -> []
       | VarDecl v ->
+          (* let _ = print_endline ("VarDecl: " ^ (string_of_exp e)) in *)
           let vars = List.map (fun (id,e0,pos) ->
               match e0 with
                 | None -> []
@@ -1188,6 +1203,7 @@ and find_addr (e:exp) : ident list =
           (*translate*)
           (match u.exp_unary_op with
             | OpAddr -> 
+                (* let _ = print_endline ("Unary: " ^ (string_of_exp e)) in *)
                 let e0 = u.exp_unary_exp in
                 (match e0 with
                   | Var v -> [v.exp_var_name] (*FOUND*)
@@ -1312,25 +1328,25 @@ let trans_param (p:param) : param =
 (*Add code for pass-by-val variables that are addressed of*)
 let rec add_code_val e (x,ptrx) =
   (*for each arg in val_params1:
-    integer ptrx = new integer(x);
+    int_ptr ptrx = new int_ptr(x);
     ...
     delete(ptrx);
   *)
   let pos = x.param_loc in
   let nm = match ptrx.param_type with
-    | Named id -> id (*Name integer -> integer*)
+    | Named id -> id (*Name int_ptr -> int_ptr*)
     | _ -> Error.report_error
         {Err.error_loc = pos;
          Err.error_text = "Expecting (Named ident) of ptrx"}
   in
   let args = [Var {exp_var_name = x.param_name; exp_var_pos = pos}] in
-  (*new integer(x)*)
+  (*new int_ptr(x)*)
   let e0 = New {exp_new_class_name = nm;
                 exp_new_arguments = args;
                 exp_new_pos = pos;}
   in
   let decl = (ptrx.param_name,Some e0,no_pos) in
-  (*integer ptrx = new integer(x)*)
+  (*int_ptr ptrx = new int_ptr(x)*)
   let e1 = VarDecl {exp_var_decl_type = ptrx.param_type;
                     exp_var_decl_decls = [decl] ;
                     exp_var_decl_pos = pos;
@@ -1345,14 +1361,14 @@ let rec add_code_val e (x,ptrx) =
 (*Add code for pass-by-ref variables that are addressed of*)
 let rec add_code_ref e (x,ptrx) =
   (*for each arg in ref_params1:
-    integer ptrx = new integer(x);
+    int_ptr ptrx = new int_ptr(x);
     ...
     x = ptrx.val;
     delete(ptrx);
   *)
   let pos = x.param_loc in
   let nm = match ptrx.param_type with
-    | Named id -> id (*Name integer -> integer*)
+    | Named id -> id (*Name int_ptr -> int_ptr*)
     | _ -> Error.report_error
         {Err.error_loc = pos;
          Err.error_text = "Expecting (Named ident) of ptrx"}
@@ -1360,13 +1376,13 @@ let rec add_code_ref e (x,ptrx) =
   let arg = Var {exp_var_name = x.param_name; exp_var_pos = pos} in
   let ptr_arg = Var {exp_var_name = ptrx.param_name; exp_var_pos = pos} in
   let args = [arg] in
-  (*new integer(x)*)
+  (*new int_ptr(x)*)
   let e0 = New {exp_new_class_name = nm;
                 exp_new_arguments = args;
                 exp_new_pos = pos;}
   in
   let decl = (ptrx.param_name,Some e0,no_pos) in
-  (*integer ptrx = new integer(x)
+  (*int_ptr ptrx = new int_ptr(x)
     ...e
   *)
   let e1 = VarDecl {exp_var_decl_type = ptrx.param_type;
@@ -1453,17 +1469,18 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
         let val_params,ref_params = List.partition (fun p -> (p.param_mod = NoMod)) all_args in
         (*addr_vars contains variables that are taken adrress-of in e1*)
         let addr_vars = find_addr body1 in
+        (* let _ = print_endline ("addr_vars = " ^ (string_of_ident_list addr_vars)) in *)
         (*List of pass-by-val/ref params that have been taken address-of*)
         let val_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) val_params in
         let ref_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) ref_params in
         (*
           for each arg in val_params1:
-          integer ptr_arg = new integer(arg);
+          int_ptr ptr_arg = new int_ptr(arg);
           sub(arg |-> ptr_arg)[e1]
           delete(ptr_arg);
 
           for each arg in ref_params1:
-          integer ptr_arg = new integer(arg);
+          int_ptr ptr_arg = new int_ptr(arg);
           sub(arg |-> ptr_arg)[e1]
           arg = ptr_arg.val;
           delete(ptr_arg);

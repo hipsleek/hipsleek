@@ -1,6 +1,6 @@
 void inc(ref int* p)
-  requires p::integer<v>
-  ensures p::integer<v+1> & p'=p; //'
+  requires p::int_ptr<v>
+  ensures p::int_ptr<v+1> & p'=p; //'
 {
    (*p) = (*p) + 1;
 }

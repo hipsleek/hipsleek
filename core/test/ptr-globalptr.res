@@ -1,14 +1,14 @@
 Starting Omega...oc
 Translating global variables to procedure parameters...
 
-Checking procedure inc$integer... 
-Procedure inc$integer SUCCESS
+Checking procedure inc$int_ptr... 
+Procedure inc$int_ptr SUCCESS
 
-Checking procedure main$integer... 
+Checking procedure main$int_ptr... 
 assert:ptr-globalptr.ss:26: 3:  : ok
 
 
-Procedure main$integer SUCCESS
+Procedure main$int_ptr SUCCESS
 
 Termination checking result:
 

@@ -2,8 +2,8 @@ global int g;
 global int* gptr;
 
 void inc(int* i)
-  requires i::integer<v>
-  ensures i::integer<v+1>;
+  requires i::int_ptr<v>
+  ensures i::int_ptr<v+1>;
 {
   (*i) = (*i) + 1;
 }

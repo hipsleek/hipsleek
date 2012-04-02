@@ -287,13 +287,22 @@ void release()
 /* ********>>>*************/
 /* Pointer translation  */
 /* ************************/
-data integer{
+data int_ptr{
   int val;
 }
 
-void delete(ref integer x)
-  requires x::integer<>
+data int_ptr_ptr{
+  int_ptr val;
+}
+
+void delete(ref int_ptr x)
+  requires x::int_ptr<>
   ensures true;
+
+void delete(ref int_ptr_ptr x)
+  requires x::int_ptr_ptr<>
+  ensures true;
+
 /* ********<<<*************/
 /* Pointer translation  */
 /* ************************/

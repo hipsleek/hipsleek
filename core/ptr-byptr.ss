@@ -5,9 +5,9 @@
 /**********************************************
 Translated Program
 **********************************************/
-/* void inc(integer i) */
-/*   requires i::integer<v> */
-/*   ensures i::integer<v+1>; */
+/* void inc(int_ptr i) */
+/*   requires i::int_ptr<v> */
+/*   ensures i::int_ptr<v+1>; */
 /* { */
 /*   i.val = i.val +1 ; */
 /* } */
@@ -15,9 +15,9 @@ Translated Program
 /* void main() */
 /*   requires true */
 /*   ensures true; */
-/* { integer x = new integer(0); */
+/* { int_ptr x = new int_ptr(0); */
 /*   x.val = 5; */
-/*   integer p ; */
+/*   int_ptr p ; */
 /*   p = x; */
 /*   inc(p); */
 /*   int z = x.val; */
@@ -29,8 +29,8 @@ Translated Program
 Original Program
 **********************************************/
 void inc(int *i)
-  requires i::integer<v>
-  ensures i::integer<v+1>;
+  requires i::int_ptr<v>
+  ensures i::int_ptr<v+1>;
 {
   (*i) = (*i) + 1;
 }

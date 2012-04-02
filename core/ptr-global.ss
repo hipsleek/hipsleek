@@ -8,8 +8,8 @@ global int x;
 Original Program
 **********************************************/
 void inc(int* i)
-  requires i::integer<v>
-  ensures i::integer<v+1>;
+  requires i::int_ptr<v>
+  ensures i::int_ptr<v+1>;
 {
   (*i) = (*i) +1 ;
 }
@@ -39,9 +39,9 @@ void main()
 /**********************************************
 Translated Program
 **********************************************/
-/* void inc(integer i) */
-/*   requires i::integer<v> */
-/*   ensures i::integer<v+1>; */
+/* void inc(int_ptr i) */
+/*   requires i::int_ptr<v> */
+/*   ensures i::int_ptr<v+1>; */
 /* { */
 /*   i.val = i.val +1 ; */
 /* } */
@@ -49,9 +49,9 @@ Translated Program
 /* void addr() //ghost "ref int x" will be added */
 /*   requires x=5 */
 /*   ensures x'=x+1; //' */
-/* { integer x_t = new integer(x); */
+/* { int_ptr x_t = new int_ptr(x); */
 /*   x_t.val = 5; */
-/*   integer p = x_t; */
+/*   int_ptr p = x_t; */
 /*   inc(p); */
 /*   int z = x_t.val; */
 /*   assert (z'=6); //' */
