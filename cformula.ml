@@ -1895,7 +1895,10 @@ and get_formula_pos (f : formula) = match f with
   | Or ({formula_or_pos = p}) -> p
   | Exists ({formula_exists_pos = p}) -> p 
 
-
+and get_formula_label (f : formula) = match f with
+  | Base ({formula_base_label = lbl}) -> lbl
+  | Or _ -> None
+  | Exists ({formula_exists_label = lbl}) -> lbl
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
