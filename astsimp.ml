@@ -2353,8 +2353,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_var_pos = pos;
                                 } in
                                 let (tmp_e, tmp_t) =
-			                      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable false pos 
-			                    in
+				  let _ = print_string "\n !!! trans_exp member: " in
+			          flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable false pos 
+			        in
 			                    
                                 let fn_decl = if new_var then C.VarDecl {
                                     C.exp_var_decl_type = rhs_t;
@@ -3463,13 +3464,14 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
-  Debug.no_2 "flatten_to_bind " 
-      (Iprinter.string_of_exp) 
-      (fun x -> match x with
-        | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
-      (fun _ -> "?")
-      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
+and flatten_to_bind prog proc b r rhs_o pid imm pos =
+  Debug.no_3 "flatten_to_bind " 
+    (Iprinter.string_of_exp) 
+    (fun x -> match x with
+      | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
+    (string_of_heap_ann)
+    (fun _ -> "?")
+    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm pos) b rhs_o imm
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given
@@ -3499,7 +3501,7 @@ and compact_field_access_sequence prog root_type field_seq =
   (* let _ = print_endline ("[compact_field_access_sequence] output = { " ^ (String.concat " ; " res) ^ " }") in *)
   res
 
-and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
+and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
   match rev_fs with
     | f :: rest ->
@@ -3576,6 +3578,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                   C.exp_block_pos = pos;}),bind_type)
             else (seq2, bind_type))
     | [] -> trans_exp prog proc base
+
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
       (rhs : C.exp option) pid imm read_only pos : trans_exp_type =
   match fs with

@@ -434,10 +434,25 @@ and propagate_imm_formula (f : formula) (imm : ann) : formula = match f with
         let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm in
         Exists({f1 with formula_exists_heap = f1_heap})
 
-and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula = 
+and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula = 
   match f with
-    | ViewNode f1 -> ViewNode({f1 with h_formula_view_imm = imm})
-    | DataNode f1 -> DataNode({f1 with h_formula_data_imm = imm})
+    | ViewNode f1 -> ViewNode({f1 with h_formula_view_imm = 
+	match f1.Cformula.h_formula_view_imm with
+	  | ConstAnn _ -> imm
+	  | _ -> 
+	    begin
+	      match imm with 
+		| ConstAnn _ -> imm
+		| _ -> f1.Cformula.h_formula_view_imm 
+	    end })
+    | DataNode f1 -> DataNode({f1 with h_formula_data_imm = 
+	match f1.Cformula.h_formula_data_imm with
+	  | ConstAnn _ -> imm
+	  | _ -> begin
+	    match imm with 
+	      | ConstAnn _ -> imm
+	      | _ -> f1.Cformula.h_formula_data_imm 
+	  end })
     | Star f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
@@ -451,6 +466,13 @@ and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula =
 	      let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm in
 	      mkPhaseH h1 h2 f1.h_formula_phase_pos
     | _ -> f
+
+and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula = 
+  Debug.no_2 "propagate_imm_h_formula" 
+    (Cprinter.string_of_h_formula) 
+    (Cprinter.string_of_imm) 
+    (Cprinter.string_of_h_formula) 
+    (fun _ _ -> propagate_imm_h_formula_x f imm) f imm 
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L *)

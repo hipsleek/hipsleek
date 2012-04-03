@@ -1,0 +1,16 @@
+1. Decide on consistency constraints for field annotations.
+   ex.
+
+   ll<n, v1, v2> == self = null & n = 0 
+	or self::node<a, q>@v1 * a::cell<_>@v2 * q::ll<n-1, v1, v2>@v1 
+   inv n >= 0;
+
+   usage: x::ll<n,v1,v2>@v3
+
+   What is the relation between v1, v2 and v3?
+
+2. Solve bug from ll-ann-param.ss with @M in postcondition.
+ 
+3. Implement field annotations.
+
+4. Add more examples.

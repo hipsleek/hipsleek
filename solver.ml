@@ -5896,6 +5896,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	   the remaining of the l_node and r_node after matching 
 	   (respectively. *)
     let es_impl_vars = estate.es_gen_impl_vars in
+    (* let _ = print_string("--C: r_node = " ^ (r_node_name) ^ "  spec var:" ^ (Cprinter.string_of_spec_var r_var) ^ "\n") in *)
+    (* let _ = print_string("--C: l_node = " ^ (l_node_name) ^ "\n") in *)
+    (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
+    (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     let (r,ann_lhs,ann_rhs) = subtype_ann_gen es_impl_vars l_ann r_ann in
     if r==false 
     then 
