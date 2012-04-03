@@ -975,7 +975,7 @@ let rec pr_h_formula h =
         let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
-          (* pr_formula_label_opt pid;  *)
+         (*  pr_formula_label_opt pid; *)
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
@@ -1841,6 +1841,7 @@ let pr_view_decl v =
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  (* pr_vwrap  "view_case_vars: "  pr_list_of_spec_var v.view_case_vars *)
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
@@ -1848,6 +1849,7 @@ let pr_view_decl v =
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
   pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
+   (* pr_vwrap "view_labels: " fmt_string ((Gen.Basic.pr_list (Label_only.Lab_List.string_of)) v.view_labels); *)
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
   pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
   pr_vwrap  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
