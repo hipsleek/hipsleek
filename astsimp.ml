@@ -1,4 +1,4 @@
- (* Created 21 Feb 2006 Simplify Iast to Cast *)
+(* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
 open Exc.GTable 
 open Printf
@@ -1047,7 +1047,14 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 
 		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in	 *)
           (***************************************************)
-          let prog = Pointers.trans_pointers prog in
+          let prog =
+            if (!Globals.allow_ptr) then 
+              let _ = print_string ("Eliminating pointers...\n"); flush stdout in
+              let new_prog = Pointers.trans_pointers prog in
+              let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
+              new_prog
+            else prog
+          in
           (***************************************************)
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)

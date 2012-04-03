@@ -441,6 +441,8 @@ let ann_derv = ref false
 
 let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 
+let allow_ptr = ref true (*true -> enable pointer translation*)
+
 let print_proc = ref false
 
 let check_all = ref true

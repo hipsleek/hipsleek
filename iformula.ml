@@ -8,6 +8,7 @@ open Globals
 open Exc.GTable
 open Perm
 open Label_only
+open Gen.Basic
 
 module P = Ipure
 
@@ -1131,7 +1132,7 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with
 	| EInfer b -> EInfer {b with formula_inf_continuation = float_out_struc_min_max b.formula_inf_continuation;}
 	| EList b -> EList (Gen.map_l_snd float_out_struc_min_max b)
 	| EOr b -> EOr {b with formula_struc_or_f1 = float_out_struc_min_max b.formula_struc_or_f1; formula_struc_or_f2 = float_out_struc_min_max b.formula_struc_or_f2;}
-		
+
 
 and view_node_types_struc (f:struc_formula):ident list = match f with
 	| ECase b -> Gen.fold_l_snd view_node_types_struc b.formula_case_branches
@@ -1325,3 +1326,64 @@ let float_out_thread_struc_formula (f:struc_formula):struc_formula =
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
       float_out_thread_struc_formula_x f
+
+let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
+  let rec helper f0 =
+    match f0 with
+      | Base b ->
+          let h = mkStar b.formula_base_heap h_f b.formula_base_pos in
+          (Base {b with formula_base_heap =h})
+      | Exists e ->
+          let h = mkStar e.formula_exists_heap h_f e.formula_exists_pos in
+          (Exists {e with formula_exists_heap =h})
+      | Or o ->
+          let o1 = helper o.formula_or_f1 in
+          let o2 = helper o.formula_or_f2 in
+          (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
+
+  in helper f0
+
+let add_h_formula_to_pre_x (h_f,impl_vars) (f0 : struc_formula): struc_formula =
+  let rec helper (f0:struc_formula) =
+    match f0 with
+	  | EAssume (b,tag) -> f0
+	  | ECase b-> ECase {b with 
+		  formula_case_branches = (List.map (fun (c1,c2)->(c1,(helper c2))) b.formula_case_branches)}
+	  | EBase b -> EBase {b with
+          formula_struc_explicit_inst = b.formula_struc_explicit_inst@impl_vars;
+		  formula_struc_base = add_h_formula_to_formula h_f  b.formula_struc_base;}
+	  | EInfer b -> EInfer {b with
+          formula_inf_continuation = helper b.formula_inf_continuation}
+	  | EList b -> EList (Gen.map_l_snd helper b)
+	  | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
+  in helper f0
+
+let add_h_formula_to_pre (h_f,impl_vars) (f0 : struc_formula): struc_formula =
+  let pr1 = pr_pair !print_h_formula string_of_spec_var_list in
+  Debug.no_2 "add_h_formula_to_pre"
+      pr1 !print_struc_formula !print_struc_formula
+      add_h_formula_to_pre_x (h_f,impl_vars) f0
+
+let add_h_formula_to_post_x (h_f,ex_vars) (f0 : struc_formula): struc_formula =
+  let rec helper (f0:struc_formula) =
+    match f0 with
+      | EAssume (b,tag) -> 
+          let new_f = (add_h_formula_to_formula h_f b) in
+          let new_f2 = add_quantifiers ex_vars new_f in
+          EAssume (new_f2,tag)
+      | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+      | EBase b-> EBase {b with
+		  formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
+	  }
+      | EInfer b -> EInfer ({b with formula_inf_continuation = helper b.formula_inf_continuation;})
+	  | EList b -> EList (Gen.map_l_snd helper b)
+	  | EOr b -> EOr {b with 
+		  formula_struc_or_f1 = helper b.formula_struc_or_f1; 
+		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
+  in helper f0
+
+let add_h_formula_to_post (h_f,ex_vars) (f0 : struc_formula): struc_formula =
+  let pr1 = pr_pair !print_h_formula string_of_spec_var_list in
+  Debug.no_2 "add_h_formula_to_post"
+      pr1 !print_struc_formula !print_struc_formula
+      add_h_formula_to_post_x (h_f,ex_vars) f0
