@@ -19,3 +19,5 @@ echo "======= address-of-var.ss ======"
 diff test/address-of-var.res test/address-of-var.n
 echo "======= ptr-of-ptr.ss ======"
 diff test/ptr-of-ptr.res test/ptr-of-ptr.n
+echo "======= ptr-proc.ss ======"
+diff test/ptr-proc.res test/ptr-proc.n

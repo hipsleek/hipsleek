@@ -20,3 +20,5 @@ echo "======= address-of-var.ss ======"
 ../hip address-of-var.ss > test/address-of-var.n
 echo "======= ptr-of-ptr.ss ======"
 ../hip ptr-of-ptr.ss > test/ptr-of-ptr.n
+echo "======= ptr-proc.ss ======"
+../hip ptr-proc.ss > test/ptr-proc.n
