@@ -54,6 +54,7 @@ module E = Env
   ****aux_inc()****
   delete(x);]
 *)
+(*can be duplicated. Deal later*)
 let aux_procs : (proc_decl list) ref = ref []
 
 let ptr_target : string = "val" 
@@ -1075,6 +1076,46 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               exp_call_recv_receiver = new_rev;}
           in (new_e)
       | CallNRecv c ->
+          if (c.exp_call_nrecv_method=Globals.fork_name) then
+            (*Construct the async call from parameters of the fork procedure*)
+            (*method name is the first arguments*)
+            try
+                let fn_exp = (List.hd c.exp_call_nrecv_arguments) in
+                let fn = match fn_exp with
+                  | Var v ->
+                      v.exp_var_name
+                  | _ -> 
+                      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("[Pointers.ml] expecting a method name as the first parameter of a fork")}
+                in
+                let args = List.tl c.exp_call_nrecv_arguments in
+                let new_e = CallNRecv {
+                    exp_call_nrecv_lock = c.exp_call_nrecv_lock;
+                    exp_call_nrecv_method = fn;
+		            exp_call_nrecv_arguments = args;
+		            exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
+		            exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
+                (*trans_exp_addr that asyn call*)
+                let new_e1 = helper new_e vars in
+                (*then get back the fork call*)
+                (* ================== *)
+                match new_e1 with
+                  | CallNRecv e1 ->
+                      let fn1 = Var { exp_var_name = e1.exp_call_nrecv_method;
+                                        exp_var_pos = e1.exp_call_nrecv_pos} 
+                      in
+                      let new_fork_exp = CallNRecv {
+                          exp_call_nrecv_lock = c.exp_call_nrecv_lock;
+                          exp_call_nrecv_method = c.exp_call_nrecv_method; (*fork_name*)
+		                  exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
+		                  exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
+		                  exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
+                      in
+                      new_fork_exp
+                  | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a CallNRecv")}
+            (* ================== *)
+            with _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("[Pointers.ml] expecting fork has at least 1 argument: method name")}
+          else
           (* trans_exp_addr *)
           (try
               let proc = look_up_proc_def_raw prog.prog_proc_decls c.exp_call_nrecv_method in
@@ -1112,6 +1153,18 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                   (name^"_"^aux_str^bitmap)
                 in
                 let new_proc_name = mk_aux_proc_name c.exp_call_nrecv_method flags in
+                let _ =
+                (*look for new_proc_name in*)
+                (*TO PREVENT redundant same new_aux_proc*)
+                (try
+                     look_up_proc_def_raw !aux_procs new_proc_name;()
+                    (*if found, do nothing*)
+                 with | Not_found ->
+                (*if not found -> create a new_proc*)
+                (********************************)
+                (*Creating a new aux_proc*)
+                (********************************)
+
                 (* let _ = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
                 (*inc(ref int x,int y) --> inc(ref int_ptr x, int_ptr y)*)
                 let new_params = List.map2 (fun param flag ->
@@ -1270,7 +1323,13 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                 (* let _ = print_endline ("### new_proc : " ^ (string_of_proc_decl new_proc)) in *)
                 (*UPDATE TO GLOBAL VARIABLE*)
                 let _ = (aux_procs := new_proc::!aux_procs) in
-                (*****************************)
+                ()
+                )
+                in (*after ensure that new_proc_name exists*)
+                (********************************)
+                (*Finish creating a new aux_proc*)
+                (********************************)
+                (*Call the new wrapper procedure instead of the old proc*)
                 let new_e = CallNRecv { c with
                     exp_call_nrecv_method = new_proc_name;
                     exp_call_nrecv_arguments = new_args;}
