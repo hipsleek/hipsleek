@@ -1246,6 +1246,8 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               exp_call_recv_receiver = new_rev;}
           in (new_e)
       | CallNRecv c ->
+          (*Do not need for Globals.join_name because join(id) is always
+          passed by value*)
           if (c.exp_call_nrecv_method=Globals.fork_name) then
             (*Construct the async call from parameters of the fork procedure*)
             (*method name is the first arguments*)

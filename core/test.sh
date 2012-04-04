@@ -21,4 +21,5 @@ echo "======= ptr-of-ptr.ss ======"
 ../hip ptr-of-ptr.ss > test/ptr-of-ptr.res
 echo "======= ptr-proc.ss ======"
 ../hip ptr-proc.ss > test/ptr-proc.res
-
+echo "======= ptr-proc-fork.ss ======"
+../hip ptr-proc-fork.ss > test/ptr-proc-fork.res
