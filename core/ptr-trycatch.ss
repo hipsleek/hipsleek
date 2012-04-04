@@ -96,10 +96,12 @@ void test_new(bool b)
       return;
       //dprint;
     }catch(__cflow e){
+      //translate all caught flows into norm flow -> lost orig flow info
       //dprint;
       delete(y);
       //dprint;
-      raise e;
+      raise e;//at this point, we just know __cflow. We lose the
+      // original flow info
     };
   }
   //dprint;
