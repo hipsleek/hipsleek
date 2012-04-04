@@ -60,25 +60,6 @@ let ptr_target : string = "val"
 let ptr_delete : string = "delete" 
 let ptr_string : string = "ptr"
 let aux_str : string = "aux"
-(*roughly similar to Astsimp.trans_type*)
-let rec trans_type (prog : prog_decl) (t : typ) (pos : loc) : typ =
-  match t with
-    | Named c ->
-	      (try
-            let _ = look_up_data_def_raw prog.prog_data_decls c
-            in Named c
-	      with
-	        | Not_found ->
-                  (try
-		            let _ = look_up_enum_def_raw prog.prog_enum_decls c
-		            in Int
-		          with
-		            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-                        let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-						Named c (* Store this temporarily *)
-				  ))
-    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
-    | p -> p
 
 let default_value (t :typ) pos : exp =
   match t with

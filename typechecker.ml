@@ -1492,9 +1492,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
-	          (* let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
-	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
-	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
+	        (*   let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
+	        (*   let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
+	        (*   let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
+            (* let _ = print_endline ("flow_store = " ^ (Cprinter.string_of_flow_store !flow_store)) in *)
 	          let nctx = match v with 
 	            | Sharp_var (t,v) ->
                       let b,res = (if !Globals.ann_vp then
@@ -1545,8 +1546,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let ctx1 = check_exp prog proc ctx body post_start_label in
               let ctx2 = CF.pop_esc_level_list ctx1 pid in
               let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in
+              (* let _ = print_endline ("WN:ESCAPE ctx3 :"^(Cprinter.string_of_list_failesc_context ctx3)) in *)
+              (*Decide which to escape, and which to be caught.
+              Caught exceptions become normal flows*)
               let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
                 (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
+              (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
 	    | _ -> 

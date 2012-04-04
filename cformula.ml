@@ -6231,7 +6231,8 @@ let rec splitter (c:context)
   let rec helper c = 
     match c with
       | Ctx b -> 
-	      let ff =(flow_formula_of_ctx c no_pos) in	
+	      let ff =(flow_formula_of_ctx c no_pos) in
+          (* if (is_eq_flow nf !c_flow_int) then (None,Some c) else *)
 	      if (subsume_flow nf ff.formula_flow_interval) then  (Some
             (conv_elim_res cvar b elim_ex_fn),None) (* change caught item to normal flow *)
 	      else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
