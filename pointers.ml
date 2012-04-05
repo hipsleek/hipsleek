@@ -1482,7 +1482,6 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                             exp_seq_exp2 = e2} 
           in
           (new_e)
-
       | This _ -> (*assume no pointer *)
           e
       | While w ->
@@ -1491,7 +1490,8 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           let cond = helper w.exp_while_condition vars in
           (*body*)
           let addr_vars = find_addr w.exp_while_body in
-          (* let _ = print_endline ("While : addr" ^ string_of_ident_list (vars@addr_vars)) in *)
+          let all_addr_vars = Gen.BList.remove_dups_eq (=) (vars@addr_vars) in
+          (* let _ = print_endline ("While : addr" ^ (string_of_ident_list all_addr_vars))  in *)
           let _ = E.push_scope () in
           let body = helper w.exp_while_body vars in
           (**********************>>>***********************)
@@ -1518,7 +1518,7 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
             transform while loop into recursive call in Astsimp.trans_loop_proc*)
           let new_e = While {w with exp_while_condition = cond;
               exp_while_body = body;
-              exp_while_orig_body = Some w.exp_while_body;
+              exp_while_addr_vars = all_addr_vars;
               exp_while_wrappings = wrap}
           in
           (new_e)

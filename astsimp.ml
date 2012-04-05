@@ -1719,30 +1719,29 @@ and check_valid_flows (f:IF.struc_formula) =
 (*
   This is for auxiliary procedures that represent loops.
 
-  old_body: loop body in iast so that we can decide
-  which arguments in the spec need to be translated
+  addr_vars: a list of addr_vars that need to be translated
+  in case they belong to args of the loop aux proc
 
   proc.proc_body has been processed to eliminate pointers.
   Here we only need to translate the specs and then call
   the original trans_proc
 
 *)
-and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (old_body:I.exp): C.proc_decl =
+and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars:ident list): C.proc_decl =
   let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
   let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
      Debug.no_1 "trans_loop_proc" 
          pr pr2 
-         (fun _ -> trans_loop_proc_x prog proc old_body) proc
+         (fun _ -> trans_loop_proc_x prog proc addr_vars) proc
 
-and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (old_body:I.exp): C.proc_decl =
+and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: ident list): C.proc_decl =
   (*variables that have been taken address-of*)
-  let vars = Pointers.find_addr old_body in
-  if (vars!=[]) then
+  if (addr_vars!=[]) then
     let pos = proc.I.proc_loc in
     let trans_arg_addr arg (* param *) =
       (*Maybe we only need to translate for primitive types*)
       (*If this argument var needs to be translate*)
-      if (List.mem arg.I.param_name vars) then
+      if (List.mem arg.I.param_name addr_vars) then
         (true) (*need to be processed*)
       else
         (false)
@@ -3214,7 +3213,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       | I.While{
             I.exp_while_condition = cond;
             I.exp_while_body = body;
-            I.exp_while_orig_body = orig_body;
+            exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
@@ -3295,10 +3294,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
             (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
-            let cw_proc = match orig_body with
-              | Some e -> trans_loop_proc new_prog w_proc e
-              | _ ->  trans_proc new_prog w_proc
-            in
+            let cw_proc = trans_loop_proc new_prog w_proc addr_vars in
             (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
             (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
@@ -6310,7 +6306,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           Iast.While{
               Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
               Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
-              Iast.exp_while_orig_body = map_opt (rename_exp ren) b.Iast.exp_while_orig_body;
+              Iast.exp_while_addr_vars = [];
               Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
               Iast.exp_while_f_name = b.Iast.exp_while_f_name;
               Iast.exp_while_wrappings = nw;
