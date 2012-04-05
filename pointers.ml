@@ -783,6 +783,9 @@ let trans_exp_ptr prog (e:exp) (vars: ident list) : exp * (ident list) =
       string_of_exp pr1 pr_out 
       (fun _ _ -> trans_exp_ptr_x prog e vars) e vars
 
+
+(* let trans_spec  *)
+
 (*
   Create a new auxiliary proc_decl for pointer translation
   proc : original proc_decl
@@ -821,7 +824,7 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
         let sub1 = (unprimed_param,old_param) in
         let sub2 = (primed_param,new_param) in
         (sub1::(sub2::sst))
-      else sst) [] tmp 
+      else sst) [] tmp
   in
   let new_static_specs = Iformula.subst_struc sst proc.proc_static_specs in
   let new_dynamic_specs = Iformula.subst_struc sst proc.proc_dynamic_specs in
@@ -890,6 +893,10 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   let new_dynamic_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_dynamic_specs in
   let new_static_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_static_specs2 in
   let new_dynamic_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_dynamic_specs2 in
+
+
+
+
   let ptypes = List.map (fun p -> p.param_type) new_params in
   let new_mingled = mingle_name_enum prog new_proc_name ptypes in
 

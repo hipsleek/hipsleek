@@ -3166,8 +3166,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_while_pos = pos } ->
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
-            (*ONLY NEED THOSE that are modified in the body*)
-            let _,fvars = Pointers.modifies body [] in
+            (*ONLY NEED THOSE that are modified in the body and condition*)
+            (*INDEED: we could identify readSET and writeSET. This will
+              help reduce annotation for read-only variables
+              However, this may not be important.*)
+            let _,fvars_body = Pointers.modifies body [] in
+            let _,fvars_cond = Pointers.modifies cond [] in
+            let fvars = Gen.BList.remove_dups_eq (=) (fvars_body@fvars_cond) in
             (* let _ = print_endline ("fvars = " ^ (string_of_ident_list fvars)) in *)
             let tvars = List.filter (fun (t,id) -> List.mem id fvars) tvars in
             (************************************************)
