@@ -14,10 +14,10 @@ void main()
   int i=0;
   int N = 10;
   while (i < N)
-    /* requires true */
-    /* case{ i<N ->  ensures i'=N & N'=N; */
-    /*       i>=N -> ensures i'=i & N'=N; */
-    /* } */
+    requires true
+    case{ i<N ->  ensures i'=N & N'=N;
+          i>=N -> ensures i'=i & N'=N;
+    }
     /* requires i<=N & N'=N */
     /* ensures i'=N & N'=N; //' */
   {
