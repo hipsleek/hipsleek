@@ -23,4 +23,5 @@ echo "======= ptr-proc.ss ======"
 diff test/ptr-proc.res test/ptr-proc.n
 echo "======= ptr-proc-fork.ss ======"
 diff test/ptr-proc-fork.res test/ptr-proc-fork.n
-
+echo "======= while-w-heap.ss ======"
+diff test/while-w-heap.res test/while-w-heap.n

@@ -1,6 +1,6 @@
 /*
 
-  BUG: do not how to translate specification with "case"
+  Example with complex specs including heap nodes in WHILE LOOP
  */
 
 void main()

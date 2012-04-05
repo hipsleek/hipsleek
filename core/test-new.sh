@@ -24,3 +24,5 @@ echo "======= ptr-proc.ss ======"
 ../hip ptr-proc.ss > test/ptr-proc.n
 echo "======= ptr-proc-fork.ss ======"
 ../hip ptr-proc-fork.ss > test/ptr-proc-fork.n
+echo "======= while-w-heap.ss ======"
+../hip while-w-heap.ss > test/while-w-heap.n
