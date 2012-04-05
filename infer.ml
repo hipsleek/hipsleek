@@ -1257,34 +1257,34 @@ let filter_var_heap keep_vars fml =
       List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
 (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   let fml = CF.subst subst_lst fml in
-  let heap,_,_,_,_ = CF.split_components fml in
-  heap
+  let heap,pure,_,_,_ = CF.split_components fml in
+  let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
+  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap
 
 let infer_shape input = 
-  let shape = Parse_shape.parse_shape input in
-  let keep_vars = ["lst1";"lst2";"NULL"] in
+  let fmls_orig = Parse_shape.parse_shape input in
+  let keep_vars = ["lst";"lst1";"lst2";"NULL"] in
   let keep_vars = List.map (fun s -> SpecVar (Named "GenNode", s, Unprimed)) keep_vars in
-  let fml1 = filter_var_heap keep_vars (fst shape) in
-  let fml2 = filter_var_heap keep_vars (snd shape) in
-(*  Debug.info_hprint (add_str "Shape: " (pr_pair !CF.print_formula !CF.print_formula)) shape no_pos;*)
-  Debug.info_hprint (add_str "Inferred shape " (pr_pair !CF.print_h_formula !CF.print_h_formula)) (fml1,fml2) no_pos;
+  let fmls = List.map (fun f -> filter_var_heap keep_vars f) fmls_orig in
+  Debug.info_hprint (add_str "Inferred shape (original) " (pr_list !CF.print_formula)) fmls_orig no_pos;
+  Debug.info_hprint (add_str "Inferred shape (filtered) " (pr_list !CF.print_formula)) fmls no_pos;
   print_newline ()
 
-(*let _ = *)
-(*  let syscall cmd =*)
-(*    let ic, oc = Unix.open_process cmd in*)
-(*    let buf = Buffer.create 16 in*)
-(*    (try*)
-(*       while true do*)
-(*         Buffer.add_channel buf ic 1*)
-(*       done*)
-(*     with End_of_file -> ());*)
-(*    let _ = Unix.close_process (ic, oc) in*)
-(*    (Buffer.contents buf)*)
-(*  in*)
-(*  let input_shape = "./infer/shape/ll-app.shape" in*)
-(*  let input_str = syscall ("cat " ^ input_shape) in*)
-(*  infer_shape input_str*)
+let _ = 
+  let syscall cmd =
+    let ic, oc = Unix.open_process cmd in
+    let buf = Buffer.create 16 in
+    (try
+       while true do
+         Buffer.add_channel buf ic 1
+       done
+     with End_of_file -> ());
+    let _ = Unix.close_process (ic, oc) in
+    (Buffer.contents buf)
+  in
+  let input_shape = "./infer/shape/ll-app.shape" in
+  let input_str = syscall ("cat " ^ input_shape) in
+  infer_shape input_str
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
