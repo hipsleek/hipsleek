@@ -1740,27 +1740,32 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (old_body:I.exp)
   if (vars!=[]) then
     let pos = proc.I.proc_loc in
     let trans_arg_addr arg (* param *) =
-    (*Maybe we only need to translate for primitive types*)
-    (*If this argument var needs to be translate*)
+      (*Maybe we only need to translate for primitive types*)
+      (*If this argument var needs to be translate*)
       if (List.mem arg.I.param_name vars) then
         (true) (*need to be processed*)
       else
         (false)
     in
     let flags = List.map (fun arg -> trans_arg_addr arg) proc.I.proc_args in
-  (*These params have correct types*)
-    let params = proc.I.proc_args in
-  (* let _ = print_endline ("params = " ^ (Iprinter.string_of_param_list params)) in *)
-  (******** translate specification >>> ****************)
-    let new_static_specs = Pointers.trans_specs proc.I.proc_static_specs params flags pos in
-    let new_dynamic_specs = Pointers.trans_specs proc.I.proc_dynamic_specs params flags pos in
-  (********<<< translate specification ****************)
-    let new_proc = {proc with
-        I.proc_static_specs = new_static_specs;
-        I.proc_dynamic_specs = new_dynamic_specs;
-    }
-    in
-    (trans_proc prog new_proc)
+    if not (List.exists (fun (b:bool) -> b) flags) then
+      (*IF NOT -> DO NOT NEED TO trans_spec*)
+      (trans_proc prog proc)
+    else
+      (*If there is some args to be convert -> DO IT*)
+      (*These params have correct types*)
+      let params = proc.I.proc_args in
+      (* let _ = print_endline ("params = " ^ (Iprinter.string_of_param_list params)) in *)
+      (******** translate specification >>> ****************)
+      let new_static_specs = Pointers.trans_specs proc.I.proc_static_specs params flags pos in
+      let new_dynamic_specs = Pointers.trans_specs proc.I.proc_dynamic_specs params flags pos in
+      (********<<< translate specification ****************)
+      let new_proc = {proc with
+          I.proc_static_specs = new_static_specs;
+          I.proc_dynamic_specs = new_dynamic_specs;
+      }
+      in
+      (trans_proc prog new_proc)
   else
     (trans_proc prog proc)
 

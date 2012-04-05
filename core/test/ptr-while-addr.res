@@ -6,19 +6,16 @@ Checking procedure f_r_557_ptr-while-addr_ss_16_2$int~int_ptr...
 Procedure f_r_557_ptr-while-addr_ss_16_2$int~int_ptr SUCCESS
 
 Checking procedure main$... 
-VarPerm Failure:ptr-while-addr.ss:27: 10: check_full_varperm: var [i_24'] MUST have full permission
+assert:ptr-while-addr.ss:28: 2:  : ok
 
 
-assert:ptr-while-addr.ss:28: 2: : unreachable
-
-
-Procedure main$ result FAIL-1
+Procedure main$ SUCCESS
 
 Termination checking result:
 
-Stop Omega... 23 invocations 
-0 false contexts at: ()
+Stop Omega... 48 invocations 
+7 false contexts at: ( (16,2)  (25,11)  (25,17)  (25,12)  (25,5)  (24,14)  (24,9) )
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.01 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.02 second(s)

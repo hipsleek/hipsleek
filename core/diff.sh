@@ -26,4 +26,4 @@ diff test/ptr-proc-fork.res test/ptr-proc-fork.n
 echo "======= while-w-heap.ss ======"
 diff test/while-w-heap.res test/while-w-heap.n
 echo "======= ptr-while-addr.ss ======"
-diff test/ptr-while-addr.res > test/ptr-while-addr.n
+diff test/ptr-while-addr.res test/ptr-while-addr.n

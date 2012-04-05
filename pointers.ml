@@ -1023,6 +1023,7 @@ let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
   intersect(E.visible_names,add_vars) --> those that need to be translated
   2) translate
 
+  vars: fordward a list of vars that has been taken address-off
 *)
 let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
   let rec helper (e:exp) (vars: ident list) : (exp) =
@@ -1490,6 +1491,7 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           let cond = helper w.exp_while_condition vars in
           (*body*)
           let addr_vars = find_addr w.exp_while_body in
+          (* let _ = print_endline ("While : addr" ^ string_of_ident_list (vars@addr_vars)) in *)
           let _ = E.push_scope () in
           let body = helper w.exp_while_body vars in
           (**********************>>>***********************)
