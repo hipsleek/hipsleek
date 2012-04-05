@@ -1052,7 +1052,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 
 		  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
-		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in	 *)
+		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
           (***************************************************)
           let prog =
             if (!Globals.allow_ptr) then 
@@ -1737,29 +1737,32 @@ and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (old_body:I.exp): 
 and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (old_body:I.exp): C.proc_decl =
   (*variables that have been taken address-of*)
   let vars = Pointers.find_addr old_body in
-  let pos = proc.I.proc_loc in
-  let trans_arg_addr arg (* param *) =
+  if (vars!=[]) then
+    let pos = proc.I.proc_loc in
+    let trans_arg_addr arg (* param *) =
     (*Maybe we only need to translate for primitive types*)
     (*If this argument var needs to be translate*)
-    if (List.mem arg.I.param_name vars) then
-      (true) (*need to be processed*)
-    else
-      (false)
-  in
-  let flags = List.map (fun arg -> trans_arg_addr arg) proc.I.proc_args in
+      if (List.mem arg.I.param_name vars) then
+        (true) (*need to be processed*)
+      else
+        (false)
+    in
+    let flags = List.map (fun arg -> trans_arg_addr arg) proc.I.proc_args in
   (*These params have correct types*)
-  let params = proc.I.proc_args in
+    let params = proc.I.proc_args in
   (* let _ = print_endline ("params = " ^ (Iprinter.string_of_param_list params)) in *)
   (******** translate specification >>> ****************)
-  let new_static_specs = Pointers.trans_specs proc.I.proc_static_specs params flags pos in
-  let new_dynamic_specs = Pointers.trans_specs proc.I.proc_dynamic_specs params flags pos in
+    let new_static_specs = Pointers.trans_specs proc.I.proc_static_specs params flags pos in
+    let new_dynamic_specs = Pointers.trans_specs proc.I.proc_dynamic_specs params flags pos in
   (********<<< translate specification ****************)
-  let new_proc = {proc with
-      I.proc_static_specs = new_static_specs;
-      I.proc_dynamic_specs = new_dynamic_specs;
-  }
-  in
-  (trans_proc prog new_proc)
+    let new_proc = {proc with
+        I.proc_static_specs = new_static_specs;
+        I.proc_dynamic_specs = new_dynamic_specs;
+    }
+    in
+    (trans_proc prog new_proc)
+  else
+    (trans_proc prog proc)
 
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
@@ -3284,6 +3287,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                       | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
             let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
+            (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
+            (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
             let cw_proc = match orig_body with
               | Some e -> trans_loop_proc new_prog w_proc e
@@ -6608,6 +6613,10 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               let strad = 
                 let pr,pst = IF.struc_split_fv b.Iast.exp_while_specs false in
                 Gen.BList.intersect_eq (=) pr pst in
+              (* let _ = print_endline ("h = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h)) in *)
+              (* let _ = print_endline ("p = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
+              (* let _ = print_endline ("strad = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad)) in *)
+              let h = List. map (fun (id,_) -> (id,Unprimed)) h in (*TO CHECK: we may need to modify h for all in case_normalize_exp *)
               let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
               (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
         | Iast.Try b-> 
@@ -6643,6 +6652,9 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
+  (* let _ = print_endline ("h (proc) = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h)) in *)
+  (* let _ = print_endline ("p (proc)= " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
+  (* let _ = print_endline ("strad_s = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad_s)) in *)
   let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false strad_s in
   let _ = check_eprim_in_struc_formula " is not allowed in precond " nst in 
   let strad_d = 
@@ -6656,10 +6668,11 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       None -> None 
     | Some f->
           let f,_ = case_rename_var_decls f in
+          (* let _ = print_endline ("h2 = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h2)) in *)
           let r,_,_ = (case_normalize_exp prog h2 [(res_name,Unprimed)] f) in
           Some r in
   {f with Iast.proc_static_specs =nst;
-      Iast.proc_dynamic_specs = ndn;			
+      Iast.proc_dynamic_specs = ndn;
       Iast.proc_body = nb;
   }
 
