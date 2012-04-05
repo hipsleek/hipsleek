@@ -1790,6 +1790,7 @@ while_statement:
   [[ `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
         While { exp_while_condition = bc;
             exp_while_body = es;
+            exp_while_orig_body = None;
             exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
@@ -1799,6 +1800,7 @@ while_statement:
    | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list_outer; es=embedded_statement ->
         While { exp_while_condition = bc;
           exp_while_body = es;
+          exp_while_orig_body = None;
           exp_while_specs = sl;(*List.map remove_spec_qualifier $5;*)
           exp_while_jump_label = NoJumpLabel;
           exp_while_path_id = None ;

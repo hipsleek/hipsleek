@@ -4523,6 +4523,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   (*LDK: remove duplicated conj from the p2*)
                                   let p2 = remove_dupl_conj_eq_mix_formula p2 in
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
+                                  let p2 = MCP.drop_varperm_mix_formula p2 in
                                   (* explicit instantiation this will move some constraint to the LHS*)
                                   (*LDK: 25/08/2011, also instatiate ivars*)                          
                                   (*this move_expl_inst call can occur at the end of folding and also 
@@ -4953,7 +4954,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*FILTER OUR VARPERM*)
   (*pre: the lhs can not have any VarPerm in lhs_p*)
   (* let rhs_p = MCP.normalize_varperm_mix_formula rhs_p in (\*may be redundant*\) *)
-  let rhs_vperms, _ = MCP.filter_varperm_mix_formula rhs_p in 
+  let rhs_vperms, _ = MCP.filter_varperm_mix_formula rhs_p in
+  let rhs_p = MCP.drop_varperm_mix_formula rhs_p in 
   (*IMPORTANT: DO NOT UPDATE rhs_p because of --eps *)
   (*TO CHECK: this may affect our current strategy*)
   (* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
@@ -5185,6 +5187,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         (*LDK: the rhs_p is considered a part of residue and 
           is added to es_pure only when folding.
           Rule F-EMP in Mr Hai thesis, p86*)
+        (*filter out vperm which has been proven in rhs_p*)
 	    let res_es = {estate with es_formula = res_delta; 
 		    es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 		    es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

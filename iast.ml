@@ -350,6 +350,9 @@ and exp_var_decl = { exp_var_decl_type : typ;
 
 and exp_while = { exp_while_condition : exp;
 		  exp_while_body : exp;
+          (*before pointer translation*)
+          (*need this information to translate specs of while loop*)
+		  exp_while_orig_body : exp option;
 		  exp_while_specs : Iformula.struc_formula (*multi_spec*);
 		  exp_while_jump_label : jump_label_type;
 		  exp_while_path_id : control_path_id;

@@ -106,6 +106,11 @@ let string_of_ident_list vs = (pr_list (fun id ->id) vs)
 let string_of_subst (subst: (ident*ident) list) : string =
   pr_list (pr_pair pr_id pr_id) subst
 
+let string_of_subst_primed (subst: ((ident*primed)*(ident * primed)) list) : string =
+  let pr (id,pr) = id^(string_of_primed pr) in
+  pr_list (pr_pair pr pr) subst
+
+
 let is_pointer_typ (t:typ) : bool =
   match t with
     | Pointer _ -> true
@@ -790,7 +795,7 @@ let trans_exp_ptr prog (e:exp) (vars: ident list) : exp * (ident list) =
   new_params: list of new params to translate
   pos: 
 *)
-let trans_specs specs new_params flags pos =
+let trans_specs_x specs new_params flags pos =
   (*
     inc(ref int x,int y) ensures x'=x+y ==>
     inc(ref int_ptr x, int_ptr y)
@@ -814,7 +819,10 @@ let trans_specs specs new_params flags pos =
         (sub1::(sub2::sst))
       else sst) [] tmp
   in
-  let new_specs = Iformula.subst_struc sst specs in
+  (* let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in *)
+  (* let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in *)
+
+  let new_specs = Iformula.subst_all_struc sst specs in
   (* let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
   (*create h_formula to add to pre-condition*)
   (* inc(ref int_ptr x, int_ptr y) *)
@@ -878,9 +886,16 @@ let trans_specs specs new_params flags pos =
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
   let new_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_specs2 in
   new_specs3
-  
 
-
+let trans_specs specs (new_params:param list) flags pos =
+  let pr = pr_list string_of_bool in
+  Debug.no_3 "trans_specs"
+      string_of_struc_formula string_of_param_list pr string_of_struc_formula
+      (fun _ _ _ -> trans_specs_x specs new_params flags pos) specs new_params flags
+(*****************************)
+(***<<<<< trans_specs ********)
+(*****************************)
+ 
 (*
   Create a new auxiliary proc_decl for pointer translation
   proc : original proc_decl
@@ -963,6 +978,9 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   (*UPDATE TO GLOBAL VARIABLE*)
   let _ = (aux_procs := new_proc::!aux_procs) in
   ()
+(*********************************)
+(***<<<<< create_aux_proc ********)
+(*********************************)
 
 
 let mkDelete (var:ident) pos =
@@ -1493,8 +1511,12 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                   Some e1
             )
           in
+          (*NOTE: the translation for while loop specification
+            requires type information -> delay the translation until we
+            transform while loop into recursive call in Astsimp.trans_loop_proc*)
           let new_e = While {w with exp_while_condition = cond;
               exp_while_body = body;
+              exp_while_orig_body = Some w.exp_while_body;
               exp_while_wrappings = wrap}
           in
           (new_e)
