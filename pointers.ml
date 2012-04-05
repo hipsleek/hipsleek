@@ -783,26 +783,14 @@ let trans_exp_ptr prog (e:exp) (vars: ident list) : exp * (ident list) =
       string_of_exp pr1 pr_out 
       (fun _ _ -> trans_exp_ptr_x prog e vars) e vars
 
-
-(* let trans_spec  *)
-
 (*
-  Create a new auxiliary proc_decl for pointer translation
-  proc : original proc_decl
-  c : orignal exp_call_nrecv
+  Translate specifications in the presence of pointer translation
+  specs: list of spec need to be transform
   flags: bitmap to decide which paramters to be translated
-  new_proc_name : name of the new auxiliary proc
+  new_params: list of new params to translate
+  pos: 
 *)
-let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) (new_proc_name:ident) pos =
-  (* let _ = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
-  (*inc(ref int x,int y) --> inc(ref int_ptr x, int_ptr y)*)
-  let params = proc.proc_args in
-  let new_params = List.map2 (fun param flag ->
-      if (flag) then
-        let new_t = convert_prim_to_obj param.param_type in
-        {param with param_type = new_t}
-      else param) params flags
-  in
+let trans_specs specs new_params flags pos =
   (*
     inc(ref int x,int y) ensures x'=x+y ==>
     inc(ref int_ptr x, int_ptr y)
@@ -826,10 +814,8 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
         (sub1::(sub2::sst))
       else sst) [] tmp
   in
-  let new_static_specs = Iformula.subst_struc sst proc.proc_static_specs in
-  let new_dynamic_specs = Iformula.subst_struc sst proc.proc_dynamic_specs in
-  (* let _ = print_endline ("proc.proc_static_specs: " ^ (string_of_struc_formula proc.proc_static_specs)) in *)
-  (* let _ = print_endline ("new_static_specs: " ^ (string_of_struc_formula new_static_specs)) in *)
+  let new_specs = Iformula.subst_struc sst specs in
+  (* let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
   (*create h_formula to add to pre-condition*)
   (* inc(ref int_ptr x, int_ptr y) *)
   (*   requires [old_x,old_y] x::node<old_x> * y::node<old_y> *)
@@ -855,7 +841,7 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
         let typ_name = match param.param_type with
           | Named t -> t
           | _ -> Error.report_error 
-              {Err.error_loc = c.exp_call_nrecv_pos;
+              {Err.error_loc = pos;
                Err.error_text = "Expecting Named t"}
         in
         let var_node,new_ex_vars = 
@@ -873,7 +859,7 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
             let typ_name = match param.param_type with
               | Named t -> t
               | _ -> Error.report_error 
-                  {Err.error_loc = c.exp_call_nrecv_pos;
+                  {Err.error_loc = pos;
                    Err.error_text = "Expecting Named t"}
             in
             let var = (param.param_name, Unprimed) in
@@ -889,10 +875,126 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   in
   (* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
   (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
-  let new_static_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_static_specs in
-  let new_dynamic_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_dynamic_specs in
-  let new_static_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_static_specs2 in
-  let new_dynamic_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_dynamic_specs2 in
+  let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
+  let new_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_specs2 in
+  new_specs3
+  
+
+
+(*
+  Create a new auxiliary proc_decl for pointer translation
+  proc : original proc_decl
+  c : orignal exp_call_nrecv
+  flags: bitmap to decide which paramters to be translated
+  new_proc_name : name of the new auxiliary proc
+*)
+let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) (new_proc_name:ident) pos =
+  (* let _ = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
+  (*inc(ref int x,int y) --> inc(ref int_ptr x, int_ptr y)*)
+  let params = proc.proc_args in
+  let new_params = List.map2 (fun param flag ->
+      if (flag) then
+        let new_t = convert_prim_to_obj param.param_type in
+        {param with param_type = new_t}
+      else param) params flags
+  in
+  let new_static_specs = trans_specs proc.proc_static_specs new_params flags pos in
+  let new_dynamic_specs = trans_specs proc.proc_dynamic_specs new_params flags pos in
+  (* let new_params = List.map2 (fun param flag -> *)
+  (*     if (flag) then *)
+  (*       let new_t = convert_prim_to_obj param.param_type in *)
+  (*       {param with param_type = new_t} *)
+  (*     else param) params flags *)
+  (* in *)
+  (* (\* *)
+  (*   inc(ref int x,int y) ensures x'=x+y ==> *)
+  (*   inc(ref int_ptr x, int_ptr y) *)
+  (*   requires x::node<old_x> * y::node<old_y> *)
+  (*   ensures x'::node<new_x> & new_x = old_x + old_y *)
+
+  (*   subst: x-->old_x; y--> old_y; x' --> new_x *)
+  (*   pre-condition: impl_vars = {old_x} *)
+  (*   post-condition: exists_vars = {new_x} *)
+  (* *\) *)
+  (* let sst = List.fold_left (fun sst (param,flag) -> *)
+  (*     if (flag) then *)
+  (*       let nm = param.param_name in *)
+  (*       let unprimed_param = (nm,Unprimed) in *)
+  (*       let primed_param = (nm,Primed) in *)
+  (*       let old_param = (nm^"_old",Unprimed) in *)
+  (*       let new_param = (nm^"_new",Unprimed) in *)
+  (*       let sub1 = (unprimed_param,old_param) in *)
+  (*       let sub2 = (primed_param,new_param) in *)
+  (*       (sub1::(sub2::sst)) *)
+  (*     else sst) [] tmp *)
+  (* in *)
+  (* (\* let _ = print_endline ("proc.proc_static_specs: " ^ (string_of_struc_formula proc.proc_static_specs)) in *\) *)
+  (* let new_static_specs = Iformula.subst_struc sst proc.proc_static_specs in *)
+  (* let new_dynamic_specs = Iformula.subst_struc sst proc.proc_dynamic_specs in *)
+  (* (\* let _ = print_endline ("new_static_specs: " ^ (string_of_struc_formula new_static_specs)) in *\) *)
+  (* (\*create h_formula to add to pre-condition*\) *)
+  (* (\* inc(ref int_ptr x, int_ptr y) *\) *)
+  (* (\*   requires [old_x,old_y] x::node<old_x> * y::node<old_y> *\) *)
+  (* let pre,impl_vars = List.fold_left (fun (h,impl_vars) (param,flag) -> *)
+  (*     if (flag) then *)
+  (*       let typ_name = name_of_typ param.param_type in *)
+  (*       let var = (param.param_name, Unprimed) in *)
+  (*       let old_var = (param.param_name^"_old",Unprimed) in *)
+  (*       let h_arg = Ipure.Var (old_var,no_pos) in *)
+  (*       let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in *)
+  (*       let new_h = Iformula.mkStar h var_node no_pos in *)
+  (*       (new_h,old_var::impl_vars) *)
+  (*     else (h,impl_vars) *)
+  (* ) (Iformula.HTrue,[]) tmp  *)
+  (* in *)
+  (* (\*create h_formula to add to post-condition *)
+  (*   Consider only REF param *)
+  (*   inc(ref int_ptr x, int_ptr y) *)
+  (*   requires ... *)
+  (*   ensures (Ex: new_x) x'::int_ptr<new_x> * y::int_ptr<old_y> & new_x = old_x + old_y *\) *)
+  (* let post,ex_vars = List.fold_left (fun (h,ex_vars) (param,flag) -> *)
+  (*     if (flag) then *)
+  (*       let typ_name = match param.param_type with *)
+  (*         | Named t -> t *)
+  (*         | _ -> Error.report_error  *)
+  (*             {Err.error_loc = c.exp_call_nrecv_pos; *)
+  (*              Err.error_text = "Expecting Named t"} *)
+  (*       in *)
+  (*       let var_node,new_ex_vars =  *)
+  (*         if (param.param_mod = RefMod) then *)
+  (*           (\*pass-by-ref*\) *)
+  (*           (\* x'::int_ptr<new_x> *\) *)
+  (*           let var = (param.param_name, Primed) in (\* PRIMED *\) *)
+  (*           let new_var = (param.param_name^"_new",Unprimed) in *)
+  (*           let h_arg = Ipure.Var (new_var,no_pos) in *)
+  (*           let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in *)
+  (*           (var_node,new_var::ex_vars) *)
+  (*         else *)
+  (*           (\*pass-by-value*\) *)
+  (*           (\* y::int_ptr<old_y> *\) *)
+  (*           let typ_name = match param.param_type with *)
+  (*             | Named t -> t *)
+  (*             | _ -> Error.report_error  *)
+  (*                 {Err.error_loc = c.exp_call_nrecv_pos; *)
+  (*                  Err.error_text = "Expecting Named t"} *)
+  (*           in *)
+  (*           let var = (param.param_name, Unprimed) in *)
+  (*           let old_var = (param.param_name^"_old",Unprimed) in *)
+  (*           let h_arg = Ipure.Var (old_var,no_pos) in *)
+  (*           let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in *)
+  (*           (var_node, ex_vars) *)
+  (*       in *)
+  (*       let new_h = Iformula.mkStar h var_node no_pos in *)
+  (*       (new_h,new_ex_vars) *)
+  (*     else (h,ex_vars) *)
+  (* ) (Iformula.HTrue,[]) tmp  *)
+  (* in *)
+  (* (\* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *\) *)
+  (* (\* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *\) *)
+  (* let new_static_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_static_specs in *)
+  (* let new_dynamic_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_dynamic_specs in *)
+  (* let new_static_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_static_specs2 in *)
+  (* let new_dynamic_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_dynamic_specs2 in *)
 
 
 
@@ -900,7 +1002,7 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   let ptypes = List.map (fun p -> p.param_type) new_params in
   let new_mingled = mingle_name_enum prog new_proc_name ptypes in
 
-
+  let tmp = List.combine new_params flags in
   let trans_tmp = List.map (fun (x,flag) -> 
       if (flag) then
         (*x.val*)
@@ -951,8 +1053,8 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
       proc_mingled_name = new_mingled;
       proc_args = new_params;
       proc_body = Some new_body;
-      proc_static_specs = new_static_specs3;
-      proc_dynamic_specs = new_dynamic_specs3;}
+      proc_static_specs = new_static_specs;
+      proc_dynamic_specs = new_dynamic_specs;}
   in
   (* let _ = print_endline ("### new_proc : " ^ (string_of_proc_decl new_proc)) in *)
   (*UPDATE TO GLOBAL VARIABLE*)
