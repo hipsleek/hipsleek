@@ -1235,6 +1235,11 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p pos) estate.es_infer_vars_rel xpure_lhs_h1 lhs_p rhs_p
 
+let rec string_of_elems elems string_of sep = match elems with 
+  | [] -> ""
+  | h::[] -> string_of h 
+  | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
+
 let rec create_alias_tbl svl keep_vars aset = match svl with
   | [] -> []
   | [hd] -> 
@@ -1259,16 +1264,26 @@ let filter_var_heap keep_vars fml =
   let fml = CF.subst subst_lst fml in
   let heap,pure,_,_,_ = CF.split_components fml in
   let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
-  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap
+(*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
+  (heap, pure)
 
 let infer_shape input = 
   let fmls_orig = Parse_shape.parse_shape input in
   let keep_vars = ["lst";"lst1";"lst2";"NULL"] in
   let keep_vars = List.map (fun s -> SpecVar (Named "GenNode", s, Unprimed)) keep_vars in
   let fmls = List.map (fun f -> filter_var_heap keep_vars f) fmls_orig in
-  Debug.info_hprint (add_str "Inferred shape (original) " (pr_list !CF.print_formula)) fmls_orig no_pos;
-  Debug.info_hprint (add_str "Inferred shape (filtered) " (pr_list !CF.print_formula)) fmls no_pos;
-  print_newline ()
+(*  Debug.info_hprint (add_str "Inferred shape (original) " (pr_list !CF.print_formula)) fmls_orig no_pos;*)
+(*  Debug.info_hprint (add_str "Inferred shape (filtered) " (pr_list !CF.print_formula)) fmls no_pos;*)
+(*  print_newline ()*)
+  let print_fun = fun (h,p) -> (!print_h_formula h) ^ " &" ^ (!CP.print_formula p) in
+  let pre = print_fun (List.hd fmls) in
+  let post = string_of_elems (List.tl fmls) print_fun " ||" in
+  let spec = "PRE:" ^ pre ^ "\nPOST:" ^ post ^ "\n" in
+  let output_spec = Sys.argv.(2) ^ ".spec" in
+  let oc = open_out output_spec in
+  Printf.fprintf oc "%s" spec;
+  flush oc;
+  close_out oc;;
 
 let _ = 
   let syscall cmd =
@@ -1282,7 +1297,7 @@ let _ =
     let _ = Unix.close_process (ic, oc) in
     (Buffer.contents buf)
   in
-  let input_shape = "./infer/shape/ll-app.shape" in
+  let input_shape = Sys.argv.(2) ^ ".shape" in
   let input_str = syscall ("cat " ^ input_shape) in
   infer_shape input_str
 
