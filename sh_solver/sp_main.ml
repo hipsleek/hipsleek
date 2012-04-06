@@ -1,4 +1,3 @@
-module M = Lexer.Make(Token.Token)
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
@@ -17,17 +16,16 @@ let print_version () =
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
     try
-      (*let prog = Parser.parse_sleek file_name (Stream.of_channel org_in_chnl) in*)
-	  let prog = Parser.parse_eq_syst file_name (Stream.of_channel org_in_chnl) in
+		let input = Lexing.from_channel org_in_chnl in
+		let prog = Spparser.eq_systs (Splexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
   		prog
     with
 		End_of_file -> exit 0
-    | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-      raise t)
 
-let solve_prog prog = ()
+let solve_prog prog = match prog with 
+	| Share_prover.Sat eqs -> print_string (string_of_bool (Share_prover.Solver.is_sat eqs))
+	| Share_prover.Imply (e1,e2) -> print_string (string_of_bool (Share_prover.Solver.imply e1 e2))
 	  
 let _ = 
   try
@@ -36,12 +34,8 @@ let _ =
 	 if !source_file = "" then print_string "Source file(s) not specified\n" ;
 	 flush stdout;
 	 Printexc.record_backtrace !trace_failure;
-	 let prog = parse_file_full !source_file in
-	 Tpdispatcher.start_prover ();
-	 solve_prog prog;
-	 Tpdispatcher.stop_prover ()
+	 solve_prog (parse_file_full !source_file)
   with _ as e -> begin
-    Tpdispatcher.stop_prover ();
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
