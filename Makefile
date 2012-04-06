@@ -7,12 +7,12 @@ JOBS = 0
 LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries
 
 FLAGS = $(INCLUDES),-g,-annot
 
 # -no-hygiene flag to disable "hygiene" rules
-OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
 OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
@@ -34,7 +34,7 @@ xml: xml/xml-light.cma
 
 xml/xml-light.cma:
 	$(XML)
-
+	
 hip.byte: xml
 	@ocamlbuild $(OB_FLAGS) main.byte
 	cp -u _build/main.byte hip

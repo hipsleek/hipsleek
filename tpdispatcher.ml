@@ -2465,4 +2465,3 @@ let imply_raw ante conseq =
 let imply_raw_mix ante conseq =
   let (res,_,_) = mix_imply ante conseq "99" in
   res
-
