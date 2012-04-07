@@ -518,17 +518,22 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           add_term_res_stk term_res;
+          add_term_err_stk (string_of_term_res term_res);
           let term_measures = match t_ann_d with
             | Loop 
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
             | Term -> failwith "unexpected Term in check_term_rhs"
-          in 
+          in
+          let term_err = match estate.es_term_err with
+            | None ->  Some (string_of_term_res term_res)
+            | Some _ -> estate.es_term_err 
+          in
           let n_estate = {estate with 
             es_var_measures = term_measures;
             (* es_var_stack = (string_of_term_res term_res)::estate.es_var_stack; *)
-            es_term_err = Some (string_of_term_res term_res);
+            es_term_err = term_err;
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->

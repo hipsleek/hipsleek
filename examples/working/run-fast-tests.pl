@@ -680,7 +680,7 @@ $output_file = "log";
 				["benchs/key/Flip3.ss", 1, "", "flip", "SUCCESS"],
 				["benchs/key/Flip.ss", 1, "", "flip", "SUCCESS"],
 				["benchs/key/Gauss.ss", 2, "", "sum", "SUCCESS", "loop", "SUCCESS"],
-				["benchs/key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop
+				["benchs/key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop #DONE
 				["benchs/key/Lcm.ss", 2, "", "lcm", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/Marbie1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/Marbie2.ss", 1, "", "loop", "SUCCESS"],
@@ -692,7 +692,8 @@ $output_file = "log";
 				["benchs/key/Narrowing.ss", 2, "", "narrowing", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/NarrowKonv.ss", 2, "", "narrowKonv", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/NegPos.ss", 1, "-tp redlog", "loop", "SUCCESS"],
-				["benchs/key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop
+				# ["benchs/key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop
+				["benchs/key/Plait-rec.ss", 2, "", "plait", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/Sunset.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/TrueDiv.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/TwoFloatInterv.ss", 1, "", "loop", "SUCCESS"],
@@ -722,7 +723,7 @@ $output_file = "log";
 				["benchs/aprove/Aprove_09/LogIterative.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
 				["benchs/aprove/Aprove_09/LogMult.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
 				["benchs/aprove/Aprove_09/Log.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
-				["benchs/aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop
+				["benchs/aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop # DONE
 				["benchs/aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
 				["benchs/aprove/Aprove_09/MinusBuiltIn.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Aprove_09/MinusMin.ss", 2, "", "main", "SUCCESS", "mn", "SUCCESS"],
