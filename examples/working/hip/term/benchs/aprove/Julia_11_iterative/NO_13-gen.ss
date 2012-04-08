@@ -1,3 +1,4 @@
+/* Generalize NO_13 */
 void loop (int i, int j, int n)
 requires i+j=n+n & i<j & Loop
 ensures false;

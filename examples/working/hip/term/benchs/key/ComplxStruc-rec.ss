@@ -1,14 +1,29 @@
 //This is a good example for case inference
 
 void complxStruc (int i)
-
+requires MayLoop
+ensures true;
 {
 	int j = i;
 	loop(i, j);
 }
 
-void loop (ref int i, ref int j)
-
+void loop (int i, int j)
+case {
+		i<=0 -> requires Term ensures true;
+		i>0 -> case {
+			i=1 -> case {
+				j>=(-3) & j<=1 -> requires Term ensures true;
+				j<(-3) -> requires Term[-j] ensures true;
+				j>1 -> requires MayLoop ensures true;
+			}
+			i=2 -> case {
+				j<=(-1) -> requires Term[-j] ensures true;
+				j>=0 -> requires MayLoop ensures true;
+			}
+			!(i=1 | i=2) -> requires MayLoop ensures true;
+		}
+}
 {
 	if (i > 0) {
 		if (i >= j) {
@@ -43,3 +58,4 @@ void loop (ref int i, ref int j)
 		loop(i, j);
 	}
 }
+

@@ -624,6 +624,9 @@ $output_file = "log";
         ["ex8.ss", 2, "", "loop2", "SUCCESS", "loop", "SUCCESS"],
         ["ex9.ss", 1, "", "loop", "SUCCESS"],
         ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"],
+				###########################################Others (27 - T 111 - L 19 - ML 15)
+				["benchs/lit/ase09-2.ss", 2, "", "find_r", "SUCCESS", "find", "SUCCESS"],
+				["benchs/lit/ase09-2a.ss", 2, "", "find", "SUCCESS"],
 				["benchs/lit/cav08-1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/cav08-2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/cav08-3.ss", 1, "", "loop", "SUCCESS"],
@@ -650,6 +653,7 @@ $output_file = "log";
 				["benchs/lit/vcc-1.ss", 2, "", "f", "SUCCESS", "g", "SUCCESS"],
 				["benchs/lit/vmcai05-1a.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/vmcai05-1b.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				######################### Invel (59 - T 136 - L 78 - ML 12)
 				["benchs/key/AlternatingIncr.ss", 1, "", "increase", "SUCCESS"],
 				["benchs/key/AlternDiv-invalid-1.ss", 1, "-tp redlog", "loop", "SUCCESS"],
 				["benchs/key/AlternDiv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
@@ -660,7 +664,9 @@ $output_file = "log";
 				["benchs/key/ComplInterv2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/ComplInterv3.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/ComplInterv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
-				["benchs/key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
+				# ["benchs/key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
+				["benchs/key/ComplxStruc-rec.ss", 2, "", "complxStruc", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/ComplxStruc1.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
 				["benchs/key/ComplxStruc2.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
 				["benchs/key/ConvLower.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/Cousot.ss", 1, "", "loop", "SUCCESS"],
@@ -680,7 +686,8 @@ $output_file = "log";
 				["benchs/key/Flip3.ss", 1, "", "flip", "SUCCESS"],
 				["benchs/key/Flip.ss", 1, "", "flip", "SUCCESS"],
 				["benchs/key/Gauss.ss", 2, "", "sum", "SUCCESS", "loop", "SUCCESS"],
-				["benchs/key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop #DONE
+				# ["benchs/key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop #DONE
+				["benchs/key/Gcd.ss", 1, "", "gcd", "SUCCESS"], 
 				["benchs/key/Lcm.ss", 2, "", "lcm", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/Marbie1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/Marbie2.ss", 1, "", "loop", "SUCCESS"],
@@ -692,7 +699,7 @@ $output_file = "log";
 				["benchs/key/Narrowing.ss", 2, "", "narrowing", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/NarrowKonv.ss", 2, "", "narrowKonv", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/NegPos.ss", 1, "-tp redlog", "loop", "SUCCESS"],
-				# ["benchs/key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop
+				# ["benchs/key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop #DONE
 				["benchs/key/Plait-rec.ss", 2, "", "plait", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/key/Sunset.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/TrueDiv.ss", 1, "", "loop", "SUCCESS"],
@@ -709,6 +716,7 @@ $output_file = "log";
 				["benchs/key/WhileSingle.ss", 1, "", "increase", "SUCCESS"],
 				["benchs/key/WhileSum.ss", 1, "", "increase", "SUCCESS"],
 				["benchs/key/WhileTrue.ss", 1, "", "endless", "SUCCESS"],
+				########################################### (22 - T 171 - L 10 - ML 0)
 				["benchs/aprove/Aprove_09/DivMinus2.ss", 3, "", "main", "SUCCESS", "div", "SUCCESS", "minus", "SUCCESS"],
 				["benchs/aprove/Aprove_09/DivMinus.ss", 2, "", "main", "SUCCESS", "div", "SUCCESS"],
 				["benchs/aprove/Aprove_09/DivWithoutMinus.ss", 1, "", "main", "SUCCESS"],
@@ -723,7 +731,7 @@ $output_file = "log";
 				["benchs/aprove/Aprove_09/LogIterative.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
 				["benchs/aprove/Aprove_09/LogMult.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
 				["benchs/aprove/Aprove_09/Log.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
-				["benchs/aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop # DONE
+				["benchs/aprove/Aprove_09/McCarthyIterative.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop # DONE
 				["benchs/aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
 				["benchs/aprove/Aprove_09/MinusBuiltIn.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Aprove_09/MinusMin.ss", 2, "", "main", "SUCCESS", "mn", "SUCCESS"],
@@ -731,15 +739,15 @@ $output_file = "log";
 				["benchs/aprove/Aprove_09/Mod.ss", 3, "", "main", "SUCCESS", "mod", "SUCCESS", "minus", "SUCCESS"],
 				["benchs/aprove/Aprove_09/PlusSwap.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/Aprove_09/Round3.ss", 1, "", "main", "SUCCESS"],
-		###############################################(1)
+		###############################################(1 - T 5 - L 0 - ML 0)
 				["benchs/aprove/AProVE_10/AG313.ss", 2, "", "main", "SUCCESS", "quot", "SUCCESS"],
-		###############################################(2)
+		###############################################(2 - T 9 - L 3 - ML 0)
 				["benchs/aprove/AProVE_11_iterative/RetValRec.ss", 3, "", "main", "SUCCESS", "ret", "SUCCESS", "test", "SUCCESS"],
 				["benchs/aprove/AProVE_11_iterative/RetVal.ss", 3, "", "main", "SUCCESS", "ret", "SUCCESS", "test", "SUCCESS"],
-		###############################################(2)
+		###############################################(2 - T 5 - L 1 - ML 3)
 				["benchs/aprove/AProVE11NO/LoopingNonTerm.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/AProVE11NO/NonPeriodicNonTerm2.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
-		###############################################(13)
+		###############################################(13 - T 56 - L 6 - ML 2)
 				["benchs/aprove/BOG_RTA_11/Avg.ss", 1, "", "avg", "SUCCESS"],
 				["benchs/aprove/BOG_RTA_11/EqUserDefRec.ss", 2, "", "main", "SUCCESS", "eq", "SUCCESS"],
 				["benchs/aprove/BOG_RTA_11/Fibonacci.ss", 2, "", "main", "SUCCESS", "fib", "SUCCESS"],
@@ -753,12 +761,11 @@ $output_file = "log";
 				["benchs/aprove/BOG_RTA_11/TerminatiorRec04.ss", 3, "", "main", "SUCCESS", "f", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/BOG_RTA_11/TimesPlusUserDef.ss", 3, "", "main", "SUCCESS", "times", "SUCCESS", "plus", "SUCCESS"],
 				["benchs/aprove/BOG_RTA_11/TwoWay.ss", 1, "-tp redlog", "twoWay", "SUCCESS"],
-		###############################################(28)
+		###############################################(22 - T 69 - L 14 - ML 0)
 				["benchs/aprove/Costa_Julia_09/Break.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Continue1.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Continue.ss", 1, "", "main", "SUCCESS"],
-				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS", 
-			"incr2", "SUCCESS", "add2", "SUCCESS", "incr3", "SUCCESS", "add3", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS", "incr2", "SUCCESS", "add2", "SUCCESS", "incr3", "SUCCESS", "add3", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_2.ss", 2, "", "main", "SUCCESS", "divBy", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_3.ss", 2, "", "main", "SUCCESS", "m", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Exc1-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
@@ -777,7 +784,7 @@ $output_file = "log";
 				["benchs/aprove/Costa_Julia_09/Nested.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Sequence.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/TestJulia4.ss", 1, "-tp redlog", "main", "SUCCESS"],
-		###############################################(11)
+		###############################################(11 - T 46 - L 0 - ML 0)
 				["benchs/aprove/Costa_Julia_09-recursive/Ackermann.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09-recursive/Double-1.ss", 2, "-tp redlog", "test", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09-recursive/Double2-1.ss", 3, "", "main", "SUCCESS", "test", "SUCCESS", "loop", "SUCCESS"],
@@ -789,24 +796,20 @@ $output_file = "log";
 				["benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss", 2, "-tp redlog", "doSum", "SUCCESS", "fact", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09-recursive/FactSum.ss", 2, "-tp redlog", "doSum", "SUCCESS", "fact", "SUCCESS", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09-recursive/Hanoi.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
-		###############################################(3)
+		###############################################(3 - T 12 - L 2 - ML 1)
 				["benchs/aprove/Julia_10_Iterative/NonPeriodic.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_10_Iterative/Test11.ss", 1, "-tp redlog", "main", "SUCCESS"],
 				["benchs/aprove/Julia_10_Iterative/Test2.ss", 3, "", "main", "SUCCESS", "iter", "SUCCESS", "add", "SUCCESS"],
-		###############################################(8)
+		###############################################(8 - T 52 - L 1 - ML 0)
 				["benchs/aprove/Julia_10_Recursive/AckR.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
-                # --eps caused problem below
-				["benchs/aprove/Julia_10_Recursive/FibSLR.ss", 4, "-tp redlog", 
-				"main", "SUCCESS", "fib", "SUCCESS", "doSum", "SUCCESS", "create", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/FibSLR.ss", 4, "-tp redlog", "main", "SUCCESS", "fib", "SUCCESS", "doSum", "SUCCESS", "create", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/HanR.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Power.ss", 3, "-tp redlog", "power", "SUCCESS", "even", "SUCCESS", "odd", "SUCCESS"],
-				["benchs/aprove/Julia_10_Recursive/Recursions.ss", 6, "", "main", "SUCCESS", "rec0", "SUCCESS", "rec1", "SUCCESS",
-			"rec2", "SUCCESS", "rec3", "SUCCESS", "rec4", "SUCCESS"],
-				["benchs/aprove/Julia_10_Recursive/Test10.ss", 4, "", "main", "SUCCESS", "rec", "SUCCESS", 
-			"test", "SUCCESS", "descend", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Recursions.ss", 6, "", "main", "SUCCESS", "rec0", "SUCCESS", "rec1", "SUCCESS", "rec2", "SUCCESS", "rec3", "SUCCESS", "rec4", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Test10.ss", 4, "", "main", "SUCCESS", "rec", "SUCCESS", "test", "SUCCESS", "descend", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Test12.ss", 2, "-tp redlog", "main", "SUCCESS", "rec", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Test1.ss", 2, "", "main", "SUCCESS", "rec", "SUCCESS"],
-		###############################################(21)
+		###############################################(23 - T 57 - L 62 - ML 1)
 				["benchs/aprove/Julia_11_iterative/ChooseLife.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/Choose.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/Continue.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
@@ -815,22 +818,22 @@ $output_file = "log";
 				["benchs/aprove/Julia_11_iterative/NO_01.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_02.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_03.ss", 1, "", "main", "SUCCESS"],
-				["benchs/aprove/Julia_11_iterative/NO_04.ss", 6, "", "main", "SUCCESS", "for_1", "SUCCESS", "for_2", "SUCCESS", 
-				"for_3", "SUCCESS", "for_4", "SUCCESS", "for_5", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_04.ss", 6, "", "main", "SUCCESS", "for_1", "SUCCESS", "for_2", "SUCCESS", "for_3", "SUCCESS", "for_4", "SUCCESS", "for_5", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_05.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_06.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_10.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_11.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_12.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_13.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_13-gen.ss", 3, "", "main", "SUCCESS", "loop", "SUCCESS", "loop2", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_20.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_21.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_22.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_23.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_24.ss", 1, "", "main", "SUCCESS"],
-				["benchs/aprove/Julia_11_iterative/Parts.ss", 6, "", "parts", "SUCCESS", "main", "SUCCESS", "for_1", "SUCCESS",
-				"loop_1", "SUCCESS", "for_2", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Parts.ss", 6, "", "parts", "SUCCESS", "main", "SUCCESS", "for_1", "SUCCESS", "loop_1", "SUCCESS", "for_2", "SUCCESS", "loop_2", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/Swingers.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
-		###############################################(44)
+		###############################################(44 - T 219 - L 10 - ML 3)
 				["benchs/aprove/pasta/PastaA10.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
 				["benchs/aprove/pasta/PastaA1.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
 				["benchs/aprove/pasta/PastaA4.ss", 1, "", "main", "SUCCESS"],
