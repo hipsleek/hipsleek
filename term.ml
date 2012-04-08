@@ -553,13 +553,20 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then
-    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-  else
-    (* Remove LexVar in RHS *)
+  if (!Globals.dis_term_chk) or (estate.es_term_err != None) then 
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
     let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
+  else
+    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos 
+
+  (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
+  (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos *)
+  (* else *)
+  (*   (* Remove LexVar in RHS *) *)
+  (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in *)
+  (*   let rhs_p = MCP.mix_of_pure rhs_p in *)
+  (*   (estate, lhs_p, rhs_p, None) *)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
