@@ -626,7 +626,7 @@ $output_file = "log";
         ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"],
 				###########################################Others (27 - T 111 - L 19 - ML 15)
 				["benchs/lit/ase09-2.ss", 2, "", "find_r", "SUCCESS", "find", "SUCCESS"],
-				["benchs/lit/ase09-2a.ss", 2, "", "find", "SUCCESS"],
+				["benchs/lit/ase09-2a.ss", 1, "", "find", "SUCCESS"],
 				["benchs/lit/cav08-1.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/cav08-2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/lit/cav08-3.ss", 1, "", "loop", "SUCCESS"],
