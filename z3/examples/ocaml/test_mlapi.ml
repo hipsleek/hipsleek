@@ -9,34 +9,23 @@
 *)
 let printf = Printf.printf;;
 
-(**
-   fprintf
-*)
+(** fprintf *)
 let fprintf = Printf.fprintf;;
 
-(**
-   Exit gracefully in case of error.
-*)
+(** Exit gracefully in case of error. *)
 let exitf message = fprintf stderr "BUG: %s.\n" message; exit 1;;
 
-(**
-   Create a logical context.  Enable model construction.
-   Also enable tracing to stderr.
-*)
+(** Create a logical context.  Enable model construction. Also enable tracing to stderr. *)
 let mk_context ctx = 
   let ctx = Z3.mk_context_x (Array.append [|("MODEL", "true")|] ctx) in
   (* You may comment out the following line to disable tracing: *)
   (* Z3.trace_to_stderr ctx; *)
   ctx;;
 
-(**
-   Create a variable using the given name and type.
-*)
+(** Create a variable using the given name and type. *)
 let mk_var ctx name ty = Z3.mk_const ctx (Z3.mk_string_symbol ctx name) ty;;
 
-(**
-   Create a boolean variable using the given name.
-*)
+(** Create a boolean variable using the given name. *)
 let mk_bool_var ctx name = mk_var ctx name (Z3.mk_bool_sort ctx);;
 
 (**

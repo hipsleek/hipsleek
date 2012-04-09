@@ -66,7 +66,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV) -> functo
 		let fv f = match f with 
 			| Vperm v -> [v]
 			| _ -> []
-			
+		
 		let mem_eq eq x l = List.exists (eq x) l
 		let rec remove_dups_eq eq n =  match n with [] -> [] | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)	
 		
@@ -408,7 +408,7 @@ module Sv =
     let fresh_var _ = cnt:=!cnt+1; "__ts_fv_"^(string_of_int !cnt)    
 end
 
-module Ss_Z3 = functor (Sv:SV) ->
+module Ss_triv = functor (Sv:SV) ->
   struct
 	type t_var = Sv.t
 	type nz_cons = t_var list list 
@@ -419,6 +419,108 @@ module Ss_Z3 = functor (Sv:SV) ->
 	let call_sat _ _ = true 
 	let call_imply _ _ _ _ _ _ _ _  = false 
 end;;
+
+
+module Ss_Z3 = functor (Sv:SV) ->
+  struct
+	type t_var = Sv.t
+	type nz_cons = t_var list list 
+	type p_var = (*include Gen.EQ_TYPE with type t=v*)
+		| PVar of t_var 
+		| C_top
+	type eq_syst = (t_var*t_var*p_var) list
+		
+		(**********Z3 interface **********)
+		
+		(** Create a boolean variable using the given name. *)
+		let mk_bool_var ctx name = Z3.mk_const ctx (Z3.mk_string_symbol ctx name) (Z3.mk_bool_sort ctx)
+		let mk_sv_bool_var ctx sv  =  mk_bool_var ctx (Sv.get_name sv)
+		
+		(** Create a logical context.  Enable model construction. Also enable tracing to stderr. *)
+		let mk_context ctx = 
+			let ctx = Z3.mk_context_x (Array.append [|("MODEL", "false")|] ctx) in
+			Z3.trace_to_stderr ctx;(* You may comment out this line to disable tracing: *)
+			ctx
+		
+		(** Check if  ctx is sat. if sat, then could get the model.*)
+		let check ctx =(match Z3.check ctx with
+			| Z3.L_FALSE -> false
+			| Z3.L_UNDEF ->  print_string "unknown\n"; failwith "unknown sat"
+			| Z3.L_TRUE -> true )
+		
+		let add_eqs ctx non_zeros eqs = 
+			List.iter (fun l-> Z3.assert_cnstr ctx (Z3.mk_or ctx (Array.of_list (List.map (mk_sv_bool_var ctx) l))) ) non_zeros;
+			List.iter (fun (v1,v2,v3)-> 
+				let bv1 = mk_sv_bool_var ctx v1 in
+				let bv2 = mk_sv_bool_var ctx v2 in
+				let xor12 = Z3.mk_xor ctx bv1 bv2 in
+				Z3.assert_cnstr ctx (Z3.mk_not ctx (Z3.mk_and ctx [|bv1;bv2|]));
+				match v3 with 
+					| PVar v3-> Z3.assert_cnstr ctx (Z3.mk_eq ctx xor12 (mk_sv_bool_var ctx v3))
+					| C_top  -> Z3.assert_cnstr ctx xor12
+				) eqs
+		
+	let call_sat non_zeros eqs = 
+		let ctx = mk_context [||] in
+		add_eqs ctx non_zeros eqs;
+		let r = check ctx in
+		Z3.del_context ctx;
+		r
+	
+	let call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars  = 
+		let ctx = mk_context [||] in
+		add_eqs ctx a_nz_cons a_l_eqs;
+			let tbl = Hashtbl.create 20 in
+			let bool_sort = Z3.mk_bool_sort ctx in
+			let _ = List.fold_left (fun c v-> Hashtbl.add tbl (Sv.get_name v) (Z3.mk_bound ctx c bool_sort); c+1) 1 c_ev in
+			let mk_sv_bool_var_ex v = 
+				let nm = Sv.get_name v in
+				try
+					Hashtbl.find tbl nm
+				with Not_found -> mk_bool_var ctx nm in	
+				
+		let conseq = 
+			let f_ccv = List.fold_left (fun a (v,c)-> 
+					let z3v = mk_sv_bool_var_ex v in
+					let z3v = if c then z3v else Z3.mk_not ctx z3v  in
+					Z3.mk_and ctx [| a ; z3v|])
+				(Z3.mk_true ctx) c_const_vars in
+			let f_sv = List.fold_left (fun a (v1,v2)-> 
+					let z3v1 = mk_sv_bool_var_ex v1 in
+					let z3v2 = mk_sv_bool_var_ex v2 in
+					let z3eq = Z3.mk_eq ctx z3v1 z3v2 in
+					Z3.mk_and ctx [|a; z3eq|])
+				f_ccv c_subst_vars in
+			let f_nz = List.fold_left (fun a l -> 
+					let nz_arr = Array.of_list (List.map mk_sv_bool_var_ex l) in
+					let and_arr = Array.append [|a|] nz_arr in
+					Z3.mk_and ctx and_arr
+				) f_sv c_nz_cons in
+			let f_eqs = List.fold_left (fun a (v1,v2,v3)-> 
+				let z3v1 = mk_sv_bool_var_ex v1 in
+				let z3v2 = mk_sv_bool_var_ex v2 in
+				let xor12 = Z3.mk_xor ctx z3v1 z3v2 in
+				let f1 = Z3.mk_not ctx (Z3.mk_and ctx [|z3v1;z3v2|]) in
+				let a  = Z3.mk_and ctx [|a;f1|] in
+				match v3 with
+					| PVar v3 -> Z3.mk_and ctx [| a;  Z3.mk_eq ctx xor12 (mk_sv_bool_var_ex v3) |]
+					| C_top -> Z3.mk_and ctx [| a;  xor12 |]
+			) f_nz c_l_eqs in
+				
+			let l = List.length c_ev in
+			let types = Array.init l (fun _ -> bool_sort) in
+			let names = Array.init l (Z3.mk_int_symbol ctx) in
+			Z3.mk_forall ctx 0 [||] types names f_eqs in
+			
+		Z3.assert_cnstr ctx (Z3.mk_not ctx conseq);	
+		let r = Z3.check ctx in
+		Z3.del_context ctx;
+		match r with
+				| Z3.L_FALSE ->	true			
+				| Z3.L_UNDEF ->	print_string "unknown\n"; false 
+				| Z3.L_TRUE  ->	false 
+end;;
+
 
 module Solver = Dfrac_s_solver(Ts)(Sv)(Ss_Z3)
 
