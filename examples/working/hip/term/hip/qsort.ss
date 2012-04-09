@@ -1,3 +1,4 @@
+/* LOC: 86 */
 /* quick sort */
 
 data node {
@@ -5,99 +6,90 @@ data node {
 	node next; 
 }
 
-bnd<n, sm, bg> == self = null & n = 0 or 
-                  self::node<d, p> * p::bnd<n1, sm, bg> & n= n1+1 & sm <= d < bg 
-               inv n >= 0;
+ll<n> == self =  null & n = 0
+	or self::node<v, r> * r::ll<n1> & n = 1 + n1 
+	inv n >= 0;
 
-sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or 
-                  self::node<sm, q> * q::sll<n1, qs, lg> & n= n1+1 &  sm <= qs 
-               inv n >= 1 & sm <= lg & self!=null ;
+sll<n> == self::node<v1, null> & n = 1 
+	or self::node<v2, r> * r::sll<n1> & r != null & n = n1 + 1
+  inv n >= 1 & self !=null;
 
-node partition(ref node xs, int c)
-	requires xs::bnd<n, sm, bg> & sm <= c <= bg
-    variance (1) [n]
-    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
+void partition1(node x, ref node y, ref node z, int c)
+	requires x::ll<n> & Term[n] 
+    ensures y'::ll<n1> * z'::ll<n2> & n = n1 + n2;
 {
 	node tmp1;
 	int v; 
 
-	if (xs == null)
-		return null;
-	else
-	{
-		if (xs.val >= c)
-		{
-            v = xs.val;
-			bind xs to (xsval, xsnext) in {
-				tmp1 = partition(xsnext, c);
-			}
-			xs = xs.next;
-			return new node(v, tmp1);
-		}
-		else {
-			bind xs to (xsval, xsnext) in {
-				tmp1 = partition(xsnext, c);
-			}
-			return tmp1;
-		}
+	if (x==null) {
+		y = null;
+		z = null;
+		return;
+	}
+	else {
+		partition1(x.next, y, z, c);
+		if (x.val <= c)	y = new node(x.val, y);
+		else z = new node(x.val, z);
+		return;
 	}
 }
 
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
-    requires y::sll<m,s2,b2> & x=null
-    variance (0)
-    ensures res::sll<m,s2,b2>;
-	requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2
-    variance (1) [nn]
-	ensures res::sll<nn+m, s0, b2>;
+	requires x::sll<n1> * y::sll<n2> & Term[n1]	
+	ensures res::sll<n3> & n3 = n1 + n2;
 
 {
-        node xn; 
+  node xn; 
+	if (x.next == null)
+    {
+		x.next = y;
+    }
+	else
+    {
+		xn = append_bll(x.next, y);
+        x.next = xn;
+    }
 
-        if (x==null) return y;
-        else {
-         xn = append_bll(x.next,y);
-         x.next = xn;
-         return x;
-        }
+	return x; 
 }
 
+void skip() requires Term ensures true;
 
-void qsort(ref node xs)
-    requires xs=null
-    variance (0)
-	ensures  xs'=null;
-	requires xs::bnd<n, sm, bg> & n>0
-    variance (1) [n]
-	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
+void qsort1(ref node xs)
+	requires xs::ll<n> & n > 0 & Term[n]
+	ensures xs'::sll<n>;
+
 {
-	node tmp;
-        int v;
+	node tmp, tmp1;
+	int v;
 	bool b;
-
-	if (xs != null)
+	if (xs != null) 
 	{
-        v = xs.val;
-		bind xs to (xsval, xsnext) in {
-			tmp = partition(xsnext, v);
-		}
-        b = (xs.next == null);
-		if (tmp != null)
-      {
-			qsort(tmp);}
-
+    v = xs.val;
+    bind xs to (xsval, xsnext) in 
+    {
+      partition1(xsnext, tmp1, tmp, xsval);
+      xsnext = tmp1;			
+    }
+    b = (xs.next == null);
+		if (tmp != null) qsort1(tmp);
 		tmp = new node(v, tmp);
-		if (b)
-			xs = tmp;
+		if (b) xs = tmp;
 		else
 		{
 			bind xs to (xsval, xsnext) in {
-				qsort(xsnext);
+				qsort1(xsnext);
 			}
-			//dprint;
 			xs = append_bll(xs.next, tmp);
 		}
 	}
-
 }
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            

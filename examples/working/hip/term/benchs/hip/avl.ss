@@ -157,8 +157,8 @@ node node_error() requires Term ensures false;
 node insert(node x, int a)
 
 	requires x::avl<m, n> & Term[m]
-	ensures res::avl<m + 1, n1> & n <= n1 <= n+1;
-//	ensures res::avl<m+1, _>;
+//	ensures res::avl<m + 1, n1>;
+	ensures res::avl<m+1, _>;
 
 {
 	node tmp, tmp_null = null;
@@ -532,18 +532,15 @@ case {
 	}
 }
 
+//Loop version of merge
 node merge2(node t1, node t2)
 case {
 	t1=null -> requires t2::avl<s2,h2> & Term ensures res::avl<s2,h2>;
-  t1!=null -> case {
-		t2=null -> requires t1::avl<s1,h1> & Term ensures res::avl<s1,h1>;
-		t2!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & MayLoop ensures res::avl<s1+s2,_>;
-	}
+  t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Loop ensures false;
 }
 {
  	if (t1 == null) return t2;
-  else if (t2 == null) return t1;
-	else {
+  else {
 	  node tmp = insert(t2, t1.val);
 		node tmp1 = merge2(tmp, t1.left);
 	  return merge2(tmp1, t1.right);

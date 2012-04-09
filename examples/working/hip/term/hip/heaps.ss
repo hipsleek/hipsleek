@@ -10,7 +10,7 @@ data node {
 
 /* view for a heap tree with positive integers 
 pq<n, mx> == self = null & n = 0 & mx = 0 
-	or self::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 
+	or self::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>& 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 
 	   & n = 1 + m1 + m2 & d >= 0, mx1, mx2 & mx >= d & 0 <= m1 - m2 <= 1
 	inv n >= 0 & mx >= 0;
 */
@@ -31,8 +31,7 @@ pq<n, mx> == self = null & n = 0 & mx = 0
 /* function to insert an element in a priority queue */
 node insert(node t, int v)
 
-	requires t::pq<n, mx> & v >= 0
-    variance (1) [n]
+	requires t::pq<n, mx> & v >= 0 & Term[n]
 	ensures res::pq<n1, ma> & n1 = n+1 & /*ma = max(v, mx);*/ (v>=mx & ma = v | ma = mx);
 {
 	node tmp, tmp_null = null; 
@@ -83,7 +82,7 @@ node insert(node t, int v)
 }
 
 /*node insert1(node t, int v)
-	requires t::pq1<n, S> & v >= 0
+	requires t::pq1<n, S> & v >= 0 & Term[n]
 	ensures res::pq1<n1, S1> & n1 = n+1 & S1 = union(S, {v});
 
 {
@@ -137,8 +136,7 @@ node insert(node t, int v)
 /* function to delete a leaf */
 int deleteoneel(ref node t)
 
-	requires t::pq<n, mx> & n > 0
-    variance (1) [2*n]
+	requires t::pq<n, mx> & n > 0 & Term[1, n]
 	ensures t'::pq<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
 	//ensures t'::pq<m, mx2> & 0 <= res & res <= mx & m = n-1 & mx2 <= mx;
 
@@ -193,10 +191,14 @@ int deleteoneel(ref node t)
 /* function to delete one element */
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 
-	requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
-    variance (1) [2*m1+2*m2+1]
+	requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1 & Term[1, m1, m2]
+	ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
+		& mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+  /*  
+    requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
 	ensures l'::pq<n3, mx3> * r'::pq<n4, mx4> & n3 + n4 + 1 = m1 + m2 & 0 <= n3 - n4 <= 1 & 
 		m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+    */
 {
 	if (m1 > m2)
 	{
@@ -232,7 +234,7 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 /* function to restore the heap property */
 void ripple(ref int d, int v, int m1, int m2, node l, node r)
 
-	requires l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
+	requires l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d & Term[m1]
 	ensures l::pq<m1, mx3> * r::pq<m2, mx4> & mx3 <= mx1 & mx4 <= mx2 & 
 	max1 = max(mx1, v) & max2 = max(mx2, max1) &  
 		d' <= max2 & d' >= mx3, mx4, 0;
@@ -240,7 +242,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 
 {
 	if (m1 == 0)
-	{
+      { //assume false;
 		if (m2 == 0)
 		{
 			d = v;
@@ -250,6 +252,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 	{
 		if (m2 == 0)
 		{
+          //assume false;
 			if (v >= l.val)
 				d = v;
 			else
@@ -265,7 +268,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= l.val)
 					d = v;
 				else 
-				{
+                  {   //assume false;
 					d = l.val;
 					ripple(l.val, v, l.nleft, l.nright, l.left, l.right);
 				}
@@ -275,8 +278,8 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= r.val)
 					d = v;
 				else
-				{
-
+                  {  //assume false;
+                    //dprint;
 					d = r.val;
 					ripple(r.val, v, r.nleft, r.nright, r.left, r.right);
 				}
@@ -343,7 +346,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 /* function to delete the root of a heap tree */
 int deletemax(ref node t)
 	
-	requires t::pq<n, mx> & n > 0 
+	requires t::pq<n, mx> & n > 0 & Term 
 	ensures t'::pq<n-1, mx2> & mx2 <= res <= mx;
 
 {
@@ -359,7 +362,9 @@ int deletemax(ref node t)
 	{
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
 			v = deleteone(tnleft, tnright, tleft, tright);
-			tmp = tval;
+			//dprint;
+      tmp = tval;
+      
 			ripple(tval, v, tnleft, tnright, tleft, tright);
 		}
 		return tmp;

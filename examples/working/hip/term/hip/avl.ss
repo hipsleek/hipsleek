@@ -1,6 +1,3 @@
-/* avl trees */
-
-/* representation of a node in an avl tree */
 data node {
 	int val;
 	int height;
@@ -8,55 +5,58 @@ data node {
 	node right;
 }
 
+data myint {
+  int val;
+}
+
 /* view for avl trees */
-avl<m, n> == self = null & m = 0 & n = 0 
-	or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & 
-        n2<=n1+1 & n1<=n2+1 & n = max(n1, n2) + 1 
-	inv m >= 0 & n >= 0;
+avl<n, h> == 
+	self = null & n = 0 & h = 0 or 
+	self::node<_, h, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
+		& n = 1+n1+n2
+		& h2<=h1+1 & h1<=h2+1 & h = max(h1, h2) + 1 
+	inv n >= 0 & h >= 0;
 
 /* function to return the height of an avl tree */
 int height(node x)
 
-	requires x::avl<m, n>
+	requires x::avl<m, n> & Term
 	ensures x::avl<m, n> & res = n;	
 
 {
 	if (x == null)
 		return 0;
 	else
-		return x.height;        
+		return x.height;
 }
 
-/*  function to rotate left */
+/* function to rotate left */
 node rotate_left(node l, node rl, node rr)
 
-	requires l::avl<lm, ln> * rl::avl<rlm, ln> * rr::avl<rrm, ln+1>
-    variance (0)
+	requires l::avl<lm, ln> * rl::avl<rlm, ln> * rr::avl<rrm, ln+1> & Term
 	ensures res::avl<2+lm+rlm+rrm, 2+ln>;	
 
 {
 	node tmp;
-	int v = 10, h;
-	
-	h = height(l) + 1;
+	int v = 10;
+	int	h = height(l) + 1;
+
 	tmp = new node(v, h, l, rl);	
 	h = h + 1;
 	return new node(v, h, tmp, rr);
 }
 
-
 /* function to rotate right */
 node rotate_right(node ll, node lr, node r)
 
-	requires ll::avl<llm, lln> * lr::avl<lrm, lln - 1> * r::avl<rm, lln - 1>
-    variance (0)
+	requires ll::avl<llm, lln> * lr::avl<lrm, lln - 1> * r::avl<rm, lln - 1> & Term 
 	ensures res::avl<2 + llm + lrm + rm, 1 + lln>; 
 
 {
 	node tmp; 
-	int v = 10, h;
+	int v = 10;
+	int h = height(r) + 1;
 	
-	h = height(r) + 1;
 	tmp = new node(v, h, lr, r);
 	h = h + 1;
 	return new node(v, h, ll, tmp);
@@ -64,7 +64,7 @@ node rotate_right(node ll, node lr, node r)
 
 int get_max(int a , int b)
 	
-	requires true 
+	requires Term 
 	ensures res = max(a, b);
 
 {
@@ -74,13 +74,11 @@ int get_max(int a , int b)
 		return b;
 }
 
-
 /* double left rotation */
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 
 	requires a::avl<am, an> * b::avl<bm, bn> * c::avl<cm, cn> * d::avl<dm, an> & an = max(bn, cn) 
-	         & -1 <= bn - cn <= 1
-    variance (0)
+	         & -1 <= bn - cn <= 1 & Term
 	ensures res::avl<3 + am + bm + cm + dm, an + 2>;
 
 {
@@ -100,13 +98,11 @@ node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 	return new node(v2, h, tmp1, tmp2);
 }
 
-
 /* double right rotation */
 node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 
 	requires a::avl<am, an> * b::avl<bm, bn> * c::avl<cm, cn> * d::avl<dm, an> 
-	         & an = max(bn, cn) & -1 <= cn - bn <= 1
-    variance (0)
+	         & an = max(bn, cn) & -1 <= cn - bn <= 1 & Term
 	ensures res::avl<3 + am + bm + cm + dm, 2 + an>;
 
 {
@@ -127,12 +123,10 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 
 }
 
-
 /* functions to build avl trees */
 node build_avl1(node x, node y)
 
-	requires x::avl<mx, nx> * y::avl<my, nx> & x != null
-    variance (0)
+	requires x::avl<mx, nx> * y::avl<my, nx> & x != null & Term
 	ensures res::avl<1 + mx + my, 1 + nx>;
 
 {
@@ -146,8 +140,7 @@ node build_avl1(node x, node y)
 
 void build_avl2(node x, node y, node z)
 	
-	requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null
-    variance (0)
+	requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null & Term
 	ensures  x::avl<1 + my + mz, 1 + ny>;
 
 {
@@ -158,13 +151,13 @@ void build_avl2(node x, node y, node z)
 	x.height = y.height  + 1;
 }
 
-node node_error() requires true ensures false;
+node node_error() requires Term ensures false;
 
 /* function to insert a node in an avl tree (using the rotate functions) */
 node insert(node x, int a)
 
-	requires x::avl<m, n>
-    variance (1) [n]
+	requires x::avl<m, n> & Term[m]
+//	ensures res::avl<m + 1, n1>;
 	ensures res::avl<m+1, _>;
 
 {
@@ -183,6 +176,7 @@ node insert(node x, int a)
 			{
 				if (height(x.left.left) > height(x.left.right))
 				{
+					//dprint;
 					return rotate_right(x.left.left, x.left.right, x.right);
 				}
 				else
@@ -223,8 +217,7 @@ node insert(node x, int a)
 /* function to insert in an avl tree (inline version) */
 node insert_inline(node x, int a)
 
-	requires x::avl<m, n>
-    variance (1) [n]
+	requires x::avl<m, n> & Term[m] 
 	ensures res::avl<m + 1, n1> & n <= n1 <= n+1;
 
 {
@@ -357,8 +350,7 @@ node insert_inline(node x, int a)
 /*
 /* function to delete the smallest element in an avl tree */
 int remove_min(ref node x)
-	requires x::avl<m,n> & x != null
-    variance (1) [n]
+	requires x::avl<m,n> & x != null & Term[m]
 	ensures x::avl<m-1, _>;
 {
 	int tmp, v;
@@ -385,13 +377,73 @@ int remove_min(ref node x)
 		return v;
 	}
 }
+*/
+/*
+node remove_min_add(node x)
+  requires x::avl<m, n> & x != null & Term[m]
+  ensures res::avl<m, n>;
+
+node remove_min(node x)
+  requires x::avl<m, n> & x != null
+  ensures res::avl<m - 1, n1> & n-1 <= n1 <= n;
+{
+  if (x.left == null) {
+    node t = x.right;
+    return t;
+  } else {
+    if (height(x.left) < height(x.right)) {
+      // assert x.right != null;
+      x.left = remove_min_add(x.left);
+      x.right = remove_min(x.right);
+      x.height = get_max(height(x.left), height(x.right)) + 1;
+      return x;
+    } else {
+      x.left = remove_min(x.left);
+      x.height = get_max(height(x.left), height(x.right)) + 1;
+      return x;
+    }
+  }
+}
+*/
+
+node remove_min_add(node x, ref myint a)
+  requires x::avl<m,n> * a::myint<vv> & x != null & Term[m]
+  ensures res::avl<m,n> * a'::myint<r> & r <= vv;
+
+node remove_min(node x, ref myint a)
+    requires x::avl<m, n> * a::myint<_> & x != null
+    ensures res::avl<m - 1, nn> * a'::myint<r> & n-1 <= nn <= n;
+{
+  myint ret = new myint(0),tmp = new myint(0);
+  //int hl, hr;
+  if (x.left == null) {
+    a.val = x.val;
+    node t = x.right;
+    return t;
+  } else {
+    if (height(x.left) < height(x.right)) {
+      // assert x.right != null;
+      ret.val = x.val;
+      x.left = remove_min_add(x.left, ret);
+      a.val = ret.val;
+      x.right = remove_min(x.right, tmp);
+      x.val = tmp.val;
+      x.height = get_max(height(x.left), height(x.right)) + 1;
+      return x;
+    } else {
+      x.left = remove_min(x.left, a);
+      x.height = get_max(height(x.left), height(x.right)) + 1;
+      return x;
+    }
+  }
+}
 
 
+/*
 /* function to delete a node in a an avl tree */
 void delete(ref node x, int a)
 
-	requires x::avl<m, n>
-    variance (1) [n]
+	requires x::avl<m, n> & Term[m] 
 	ensures x'::avl<m - 1, n1>; // or if m = 0 then the same
 
 {
@@ -451,3 +503,46 @@ void delete(ref node x, int a)
 }
 */
 
+node merge(node t1, node t2)
+/*requires t2::avl<s2,h2>
+case {
+      t1=null -> ensures res::avl<s2,h2>;
+      t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
+}*/
+
+case {
+      t1=null -> requires t2::avl<s2,h2> & Term ensures res::avl<s2,h2>;
+      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Term[s1] ensures res::avl<s1+s2,_>;
+}
+
+
+//requires t2::avl<s2,h2> & t1=null
+//ensures res::avl<s2,h2>;
+//requires t1::avl<s1,h1> * t2::avl<s2,h2> & t1!=null 
+//ensures res::avl<s2,h2>;
+
+{
+ 	if (t1 == null) return t2;
+  else {
+	  node tmp = insert(t2, t1.val);
+	  node tmp1 = merge (t1.left, tmp);
+	  return merge(t1.right, tmp1);
+		//node tmp1 = merge (tmp, t1.left);
+	  //return merge(tmp1, t1.right);
+	}
+}
+
+//Loop version of merge
+node merge2(node t1, node t2)
+case {
+	t1=null -> requires t2::avl<s2,h2> & Term ensures res::avl<s2,h2>;
+  t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> & Loop ensures false;
+}
+{
+ 	if (t1 == null) return t2;
+  else {
+	  node tmp = insert(t2, t1.val);
+		node tmp1 = merge2(tmp, t1.left);
+	  return merge2(tmp1, t1.right);
+	}
+}

@@ -13,30 +13,38 @@ data node {
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
+  
+lseg<p, n> == self=p & n=0
+	or self::node<_, q> * q::lseg<p, n-1>
+	inv n>=0;
 
-	
-	
-/*ll1<S> == self = null & S = {} 
-	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
+node append3(node x, node y)
+  requires x::lseg<null,n> & Term[n] 
+  ensures res=y & x=null & n=0// n=0
+  or res::lseg<y,m> & res=x & x!=null & m=n & n>0; //m>0
+{
+  if (x==null) return y;
+  //dprint;
+  node tmp=x.next;
+  //assume tmp'=null or tmp'!=null;
+  x.next = append3(tmp,y);
+  return x;
+}
 
-/*ll2<n, S> == self=null & n=0 & S={}
-	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
 /* append two singly linked lists */
 void append2(node x, node y)
-  requires x::ll<n1> * y::ll<n2> & n1>0 //x!=null // & n1>0 & x != null
-  variance (1) [n1]
-  ensures x::ll<m> & m<=n1+n2;
+  requires x::ll<n1> * y::ll<n2> & x!=null & Term[n1] // & n1>0 //x!=null // & n1>0 & x != null
+  ensures x::ll<n1+n2>;
 {    
 	if (x.next == null) 
-    x.next = y;
-	else   
-    append2(x.next, y);
+           x.next = y;
+	else
+           append2(x.next, y);
 }
 
 void append(node x, node y)
-  requires x::ll<n1> * y::ll<n2> & n1>0 // & x!=null // & n1>0 & x != null
-  variance (1) [n1]
+  requires x::ll<n1> * y::ll<n2> & n1>0 & Term[n1] // & x!=null // & n1>0 & x != null
   ensures x::ll<n1+n2>;
 {
 	if (x.next == null)
@@ -48,7 +56,7 @@ void append(node x, node y)
 /* return the first element of a singly linked list */
 node ret_first(node x)
 
-	requires x::ll<n> * y::ll<m> & n < m 
+	requires x::ll<n> * y::ll<m> & n < m & Term 
 	ensures x::ll<n>;
 
 {
@@ -58,13 +66,13 @@ node ret_first(node x)
 /* return the tail of a singly linked list */
 node get_next(node x)
 
-	requires x::ll<n> & n > 0
+	requires x::ll<n> & n > 0 & Term
 	ensures x::ll<1> * res::ll<n-1>; 
 
 {
   //dprint;
 	node tmp = x.next;
-  assume false;
+    //assume false;
 	x.next = null;
 	return tmp;
 }
@@ -73,7 +81,7 @@ node get_next(node x)
 /* function to set the tail of a list */
  void set_next(node x, node y)
 
-	requires x::ll<i> * y::ll<j> & i > 0 
+	requires x::ll<i> * y::ll<j> & i > 0 & Term 
 	ensures x::ll<j+1>; 
 
 {
@@ -82,7 +90,7 @@ node get_next(node x)
 
 void set_null2(node x)
 
-	requires x::ll<i> & i > 0 
+	requires x::ll<i> & i > 0 & Term 
 	ensures x::ll<1>;
 
 {
@@ -96,7 +104,7 @@ void set_null2(node x)
 /* function to set null the tail of a list */
 void set_null(node x)
 
-	requires x::ll<i> & i > 0 
+	requires x::ll<i> & i > 0 & Term 
 	ensures x::ll<1>;
 
 {
@@ -107,7 +115,7 @@ void set_null(node x)
 /* function to get the third element of a list */
 node get_next_next(node x) 
 
-	requires x::ll<n> & n > 1
+	requires x::ll<n> & n > 1 & Term
 	ensures res::ll<n-2>;
 
 {
@@ -116,8 +124,7 @@ node get_next_next(node x)
 
 /* function to insert a node in a singly linked list */
 void insert(node x, int a)
-	requires x::ll<n> & n > 0
-    variance (1) [n]
+	requires x::ll<n> & n > 0 & Term[n] 
 	ensures x::ll<n+1>;
 {
 			//dprint;
@@ -130,8 +137,7 @@ void insert(node x, int a)
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-	requires x::ll<n> & n > a & a > 0
-    variance (1) [n]
+	requires x::ll<n> & n > a & a > 0 & Term[n] 
 	ensures x::ll<n - 1>;
 {
         if (a == 1)
@@ -147,8 +153,7 @@ void delete(node x, int a)
 }
 
 /*node delete1(node x, int a)
-	requires x::ll1<S>
-    variance (1) [n]
+	requires x::ll1<S>  
 	ensures res::ll1<S1> & ((a notin S | S=union(S1, {a})) | S = S1);
 {
 	if (x == null) 
@@ -161,15 +166,14 @@ void delete(node x, int a)
 
 /* function to create a singly linked list with a nodes */
 node create_list(int a)
-	requires a >= 0
-    variance (1) [a]
+	requires a >= 0 & Term[a] 
 	ensures res::ll<a>;
 
 {
 	node tmp;
 
 	if (a == 0) {
-  assume false;
+      // assume false;
 		return null;
 	}
 	else {    
@@ -184,8 +188,7 @@ node create_list(int a)
 
 /* function to reverse a singly linked list */
 void reverse(ref node xs, ref node ys)
-	requires xs::ll<n> * ys::ll<m>
-    variance (1) [n]
+	requires xs::ll<n> * ys::ll<m> & Term[n] 
 	ensures ys'::ll<n+m> & xs' = null;
 {
 	if (xs != null) {
@@ -199,29 +202,3 @@ void reverse(ref node xs, ref node ys)
 		reverse(xs, ys);
 	}
 }
-/*
-void reverse1(ref node xs, ref node ys)
-	requires xs::ll1<S1> * ys::ll1<S2> 
-	ensures ys'::ll1<S3> & S3 = union(S1, S2) & xs' = null;
-{
-	if (xs != null) {
-		node tmp;
-		tmp = xs.next;
-		xs.next = ys;
-		ys = xs;
-		xs = tmp;
-		reverse1(xs, ys);
-	}
-}*/
-/*
-void test(node x)
-	requires x::ll<n> & n>=2 ensures x::ll<n-1>;
-{
-	node tmp = x.next.next;
-	x.next = tmp;
-}
-*/
-
-
-
-

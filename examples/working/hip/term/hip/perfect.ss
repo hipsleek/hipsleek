@@ -20,13 +20,13 @@ data node2 {
 Some of the nodes are just dummy nodes. To diferentiate between nodes which contain valuable information and dummy 
 nodes, each node contains a flag:
 	- flag = 0 => dummy node
-	= flag = 1 => valuable information
+	- flag = 1 => valuable information
 */ 
  
 /* view for a perfect tree */
-perfect<n> == self = null & n = 0
-	or self::node2<_, _, l, r> * l::perfect<n-1> * r::perfect<n-1>
-	inv n >= 0;
+perfect<n, s> == self = null & n = 0 & s = 0
+	or self::node2<_, _, l, r> * l::perfect<n-1, s1> * r::perfect<n-1, s2> & s = 1 + s1 + s2 //& s1 = s2
+	inv n >= 0 & s >= 0;
 
 
 /* 
@@ -34,9 +34,8 @@ perfect<n> == self = null & n = 0
 	- returns true if it managed to do the insertion, and false otherwise
 */
 bool simple_insert(node2 t, int a) 
-	requires t::perfect<n>
-    variance (1) [n]
-	ensures t::perfect<n>;
+	requires t::perfect<n, s> & Term[n]
+	ensures t::perfect<n, s>;
 {
 	if (t == null) {
 		return false;
@@ -61,11 +60,12 @@ bool simple_insert(node2 t, int a)
 	- creates a perfect tree of height n
 	- all the nodes are dummy nodes
 */	
-node2 create(int n) 
-	//requires n>=0
-    requires true //failed in termination checking
-    variance (1) [n]
-	ensures res::perfect<n>;
+node2 create(int n)
+	case {
+		n>=0 -> requires Term[n]
+						ensures res::perfect<n, s>;
+		n<0 -> requires Loop ensures false;
+	}
 {
 	if(n == 0)
 		return null;
@@ -75,8 +75,11 @@ node2 create(int n)
 }
 
 int maxim(int a, int b) 
-	requires true
-	ensures (a < b | res = a) & (a >= b | res = b);
+	requires Term
+	case {
+		a > b -> ensures res = a;
+		a <= b -> ensures res = b;
+	}
 {
 	if(a >= b)
 		return a;
@@ -85,9 +88,8 @@ int maxim(int a, int b)
 }
 
 int height(node2 t) 
-	requires t::perfect<n>
-    variance (1) [n]
-	ensures t::perfect<n> & res = n;
+	requires t::perfect<n, s> & Term[n]
+	ensures t::perfect<n, s> & res = n;
 {
 	if (t != null)
 		return maxim(height(t.left), height(t.right)) + 1;
@@ -98,8 +100,8 @@ int height(node2 t)
 	the full insert method
 */
 void insert(ref node2 t, int a)
-	requires t::perfect<n>
-	ensures t'::perfect<n1> & (n1 = n | n1 = n+1);
+	requires t::perfect<n, s> & Term
+	ensures t'::perfect<n1, s1> & (n1 = n | n1 = n+1);
 {
 	bool si = simple_insert(t, a);
 	if(si)
