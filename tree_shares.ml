@@ -26,27 +26,37 @@ struct
 	| Leaf _ -> true
 	| Node _ -> false
 	
-	
   let rleft = function 
     | Leaf b -> if b then Leaf true else Leaf false 
 	| Node (s,_) -> s
 	
   let rright = function 
-    | Leaf b -> if b then Leaf false else Leaf true 
+    | Leaf b -> if b then Leaf true else Leaf false
 	| Node (_,s) -> s
 	  
+  let rec string_of_tree_share ts = match ts with
+    | Leaf true -> "T"
+    | Leaf false -> ""
+    | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
+	
+  let string_of = string_of_tree_share
+  end     
+  
+  
+  (*
+  	
+  (*let depth = function
+	| Leaf _ -> 0
+	| Node (s1,s2)-> 
+		let d1,d2 = depth s1, depth s2 in
+		if d1>d2 then d1 else d2 	*)
   let rec avg l1 l2 = match l1,l2 with 
     | Leaf b1 , Leaf b2 -> if b1=b2 then Leaf b1 else mkNode l1 l2 
 	| Node (n11,n12) , Leaf _ -> mkNode (avg n11 l2) (avg n12 l2)
 	| Leaf _ , Node (n11,n12) -> mkNode (avg l1 n11) (avg l1 n12)
 	| Node (n11,n12) , Node (n21,n22) -> mkNode (avg n11 n21) (avg n12 n22)
-		  
-  let rec string_of_tree_share ts = match ts with
-    | Leaf true -> "T"
-    | Leaf false -> ""
-    | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
-  end     
-  (*let rec stree_eq t1 t2 = match t1,t2 with
+  
+  let rec stree_eq t1 t2 = match t1,t2 with
     | Leaf b1,Leaf b2  -> b1==b2
     | Node (l1, r1), Node (l2,r2) -> (stree_eq l1 l2)&&(stree_eq r1 r2)
     | _ -> false
