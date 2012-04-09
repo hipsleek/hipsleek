@@ -3,27 +3,26 @@ OCAMLBUILD = ocamlbuild
 # number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
-LIBS = nums,site-lib/batteries/batteries
-LIBS2 = nums,site-lib/batteries/batteries
+LIBS = nums,site-lib/batteries/batteries,z3
 INCLUDES = -I,+site-lib/batteries
+#-cclib -lz3stubs -cclib -lz3 /usr/local/lib/ocaml/libcamlidl.a
 
 FLAGS = $(INCLUDES),-g,-annot
+LFLAGS = $(FLAGS),-ccopt,-fopenmp,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
-OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OB_FLAGS = -no-links  -libs $(LIBS) -cflags $(FLAGS) -lflags $(LFLAGS) -lexflag -q -yaccflag -v
+all: spn
 
-OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
-all: spb 
-native: spn
-
-spb:
-	@ocamlbuild -verbose 10 $(OB_FLAGS) sp_main.byte
-	cp -u _build/sp_main.byte sp_main
-	cp -u _build/sp_main.byte b-sp_main
+#byte: spb
+#spb:
+#	@ocamlbuild $(OB_FLAGS) sp_main.byte
+#	cp -u _build/sp_main.byte sp_main
+#	cp -u _build/sp_main.byte b-sp_main
 
 spn:
-	@ocamlbuild -verbose 4 $(OB_FLAGS) sp_main.native
+	@ocamlbuild $(OB_FLAGS) sp_main.native
 	cp -u _build/sp_main.native sp_main
 	cp -u _build/sp_main.native n-sp_main
 
