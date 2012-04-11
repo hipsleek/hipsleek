@@ -4,44 +4,40 @@ data cell {
     int val; 
 }.
 
-/*
-checkentail htrue |- emp.                               // Valid
+checkentail htrue |- emp.
 
-checkentail emp |- htrue.                               // Fail
+checkentail emp |- htrue.
 
-checkentail emp * htrue & false|- true.                 // Valid
+checkentail emp * htrue & false|- true.
 
-checkentail emp * htrue & true|- false.                 // Fail
+checkentail emp * htrue & true|- false.
 
-checkentail emp & false|- htrue & false.                // Valid
+checkentail emp & n>1|- htrue & n>1.
 
-checkentail htrue * htrue |- emp.                       // Valid
+checkentail htrue * htrue |- emp.
 
-*/
 
-checkentail x::cell<_> |- htrue.           // Valid
+checkentail x::cell<_> |- htrue.
 print residue.
 
-checkentail emp * x::cell<_> |- htrue.           // Valid
+checkentail emp * x::cell<_> |- htrue.
 print residue.
 
 
-checkentail x::cell<_> |- x::cell<_>.           // Valid
+checkentail x::cell<_> |- x::cell<_>.
 print residue.
 
-/*checkentail emp * x::cell<_> |- emp * x::cell<_>.           // Valid
+checkentail emp * x::cell<_> |- emp * x::cell<_>.
 print residue.
 
-checkentail htrue * x::cell<_> |- emp * x::cell<_>.           // Valid
+checkentail htrue * x::cell<_> |- emp * x::cell<_>.
 print residue.
 
-checkentail emp * x::cell<_> |- htrue * x::cell<_>.           // Valid
+checkentail emp * x::cell<_> |- htrue * x::cell<_>.
 print residue.
 
-checkentail x::cell<_> * htrue |- x::cell<_>.           // Valid
+checkentail x::cell<_> * htrue |- x::cell<_>.
 
-checkentail emp * x::cell<_> |- x::cell<_>.             // Valid
+checkentail emp * x::cell<_> |- x::cell<_>.
 
-checkentail x::cell<_> * emp |- x::cell<_>.             // Valid 
-
-*/
+checkentail x::cell<_> * emp |- x::cell<_>. 
