@@ -17,20 +17,21 @@ checkentail x::cell<a> * y::cell<a> |- x::cell<n> .
 print residue.
 // invalid since y::cell<a> is unconsumed.
 
-
 checkentail x::cell<a> * htrue |- x::cell<n> * emp .
+print residue.
 // invalid since htrue does not match emp
 
-
 checkentail x::cell<a> * emp |- x::cell<n> * htrue .
+print residue.
 // valid with emp residue
 
 checkentail x::cell<a> * htrue |- x::cell<n> * htrue .
+print residue.
 // valid with htrue residue
 
 checkentail x::cell<a> * y::cell<b> * htrue |- x::cell<n> * htrue .
+print residue.
 // valid with y::cell<b> * htrue residue
-
 
 checkentail emp |- emp.
 print residue.
