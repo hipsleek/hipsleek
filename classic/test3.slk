@@ -1,0 +1,13 @@
+data cell {
+    int val; 
+}.
+
+
+// (3) do not allow residue heap
+checkentail x::cell<aa>  |- x::cell<4> .
+//print residue.
+// invalid since y::cell<aa> is unconsumed.
+// why is there a residue when failure occured?
+
+//checkentail y::cell<aa> |- x::cell<n> .
+print residue.

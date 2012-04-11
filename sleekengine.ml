@@ -632,9 +632,10 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (*     let _ =  Error.process_exct(e)in *)
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  DD.no_1 "print_entail_result" pr (fun _ -> "") 
-    (fun _ -> print_entail_result valid residue num_id) residue
+  DD.ho_2 "print_entail_result" pr0 pr (fun _ -> "") 
+    (fun _ _ -> print_entail_result valid residue num_id) valid residue
 
 
 let print_exc (check_id: string) =
@@ -720,8 +721,10 @@ let process_print_command pcmd0 = match pcmd0 with
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
+let get_residue () = !residues
+
 let get_residue () =
-  !residues
+  Debug.ho_1 "get_residue" pr_no (pr_opt pr_no) get_residue ()
   (*match !residues with*)
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
