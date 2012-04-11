@@ -1,15 +1,11 @@
-data cell {
-    int val; 
-}.
-
 checkentail htrue & true |- htrue & true.
 
-checkentail true & htrue |- true & htrue.
-
-checkentail false & htrue |- htrue & false.
-
-checkentail true & emp |- true & emp.
+checkentail htrue & false |- htrue & false.
 
 checkentail emp & true |- emp & true.
 
-checkentail false & emp |- emp & false.
+checkentail emp & false |- emp & false.
+
+checkentail htrue & a |- htrue & a.
+
+checkentail emp & a |- emp & a.

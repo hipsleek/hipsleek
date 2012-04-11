@@ -380,12 +380,6 @@ SHGram.Entry.of_parser "peek_print"
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
-             | [HTRUE,_;_;_] -> raise Stream.Failure
-             | [_;HTRUE,_;_] -> raise Stream.Failure
-             | [_;_;HTRUE,_] -> raise Stream.Failure
-             | [EMPTY,_;_;_] -> raise Stream.Failure
-             | [_;EMPTY,_;_] -> raise Stream.Failure
-             | [_;_;EMPTY,_] -> raise Stream.Failure
              | _ -> ())
 let peek_dc = 
    SHGram.Entry.of_parser "peek_dc"
