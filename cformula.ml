@@ -303,7 +303,6 @@ let get_ptr_from_data h =
   match h with
     | DataNode f -> f.h_formula_data_node
     | ViewNode f -> f.h_formula_view_node
-    | HTrue -> CP.htrue_var
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_path_trace = ref(fun (pt: path_trace) -> "printer not initialized")
@@ -1079,8 +1078,7 @@ and fv_simple_formula (f:formula) =
 and fv_simple_formula_coerc (f:formula) = 
   let h, _, _, _, _ = split_components f in
   match h with
-    | HTrue  -> [CP.htrue_var]
-    | HFalse | HEmp -> []
+    | HTrue | HFalse | HEmp -> []
     | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
     | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
     | _ -> []
@@ -1863,8 +1861,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
       in
       let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
-  | HTrue -> [CP.htrue_var]
-  | HFalse | HEmp | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
@@ -1903,8 +1900,7 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
-  | HTrue -> [CP.htrue_var]
-  | HFalse | HEmp | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ -> []
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -3082,6 +3078,9 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
+
+  (* allow residue in lhs formula *)
+  es_allow_residue: bool;
 }
 
 and context = 
@@ -3252,6 +3251,7 @@ let empty_es flowt grp_lbl pos =
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
+  es_allow_residue = false;
 }
 
 let is_one_context (c:context) =

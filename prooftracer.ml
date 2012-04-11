@@ -56,6 +56,8 @@ type proof =
   | PEAssume of assume_step
   | PEEx of eex_step
   | Search of proof list
+  | AllowResidue of allow_residue_step
+  | ForbidResidue of forbid_residue_step
   | Unknown 
 
 and ex_step = { ex_step_ante : CF.context;
@@ -135,6 +137,13 @@ and eex_step = {eex_context: CF.context;
 				eex_proof: proof}
 					 
 					 
+
+and allow_residue_step = { allow_residue_step_ctx : CF.context;
+                           allow_residue_step_conseq : CF.formula; }
+
+and forbid_residue_step = { forbid_residue_step_ctx : CF.context;
+                            forbid_residue_step_conseq : CF.formula; }
+
 let mkCoercionLeft ctx conseq clhs crhs prf name = CoercionLeft { coercion_step_name = name;
 																  coercion_step_ante = ctx;
 																  coercion_step_conseq = conseq;
@@ -220,7 +229,12 @@ let mkBaseStep bc bf bp cp = PEBase{ base_context=bc; base_form=bf; base_proof=b
 let mkAssumeStep ac af = PEAssume{ assume_context=ac; assume_formula=af}
 
 let mkEexStep ec ef ep = PEEx{eex_context=ec; eex_formula=ef; eex_proof=ep}
-												 
+
+let mkAllowResidue ctx conseq = AllowResidue { allow_residue_step_ctx = ctx;
+                                               allow_residue_step_conseq = conseq; }
+
+let mkForbidResidue ctx conseq = ForbidResidue { forbid_residue_step_ctx = ctx;
+                                                 forbid_residue_step_conseq = conseq; }
 
 let rec string_of_proof prf0 : string =
   let rec to_string buffer prf1 = match prf1 with
@@ -358,6 +372,14 @@ let rec string_of_proof prf0 : string =
 	| UnsatConseq -> Buffer.add_string buffer "<UnsatConseq></UnsatConseq>"
 	| TrueConseq -> Buffer.add_string buffer "<TrueConseq></TrueConseq>"
 	| Failure -> Buffer.add_string buffer "<Failure></Failure>" 
+  | AllowResidue ({ allow_residue_step_ctx = ctx;
+                    allow_residue_step_conseq = conseq; }) ->
+      let s = Cprinter.string_of_context ctx in
+      Buffer.add_string buffer ("<AllowResidue>\n<Info>" ^ s ^ "</Info>\n</AllowResidue>")
+  | ForbidResidue ({ forbid_residue_step_ctx = ctx;
+                     forbid_residue_step_conseq = conseq; }) ->
+      let s = Cprinter.string_of_context ctx in
+      Buffer.add_string buffer ("<ForbidResidue>\n<Info>" ^ s ^ "</Info>\n</ForbidResidue>")
 	| _ -> Buffer.add_string buffer "<Failure></Failure>" 
 	in
   let buffer = Buffer.create 1024 in

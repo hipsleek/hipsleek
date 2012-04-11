@@ -51,6 +51,7 @@ and action =
   | M_Nothing_to_do of string
   | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula)
+  | M_allow_residue of h_formula  (* h_formula is the residue *)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
   (*not handle yet*) 
@@ -131,6 +132,7 @@ let rec pr_action_name a = match a with
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
+  | M_allow_residue _ -> fmt_string "AllowResidue"
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
@@ -153,6 +155,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "=>SEARCH:" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> pr_mr e; fmt_string "=>LHSCaseAnalysis"
+  | M_allow_residue h -> fmt_string ("=>AllowResidue" ^ (string_of_h_formula h))
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -189,6 +192,7 @@ let action_get_holes a = match a with
   | Cond_action _
   | M_Nothing_to_do _  
   | M_unmatched_rhs_data_node _
+  | M_allow_residue _
   | M_infer_heap _
   | Search_action _ ->None
 
@@ -271,31 +275,43 @@ let comp_alias_part r_asets a_vars =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
-  let imm,p= match rhs_node with
-    | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
-    | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
-    | HTrue -> (ConstAnn Imm, Cpure.htrue_var) 
-    | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
-  let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-
-  let eqns' = MCP.ptr_equations_without_null lhs_p in
-  let r_eqns =
-    let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
-    let r_asets = alias_nth 2 eqns in
-    let a_vars = lhs_fv @ posib_r_aliases in
-    let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
-    let colaps l = List.fold_left (fun a c -> match a with 
-      | [] -> [(c,c)]
-      | h::_-> (c,(fst h))::a) [] l in
-    List.concat (List.map colaps fltr) in
-  let eqns = (p, p) :: eqns' in
-  let asets = alias_nth 3 (eqns@r_eqns) in
-  let paset = get_aset asets p in (* find the alias set containing p *)
-  if Gen.is_empty paset then  
-    failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
-  else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
-	(Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
-  else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
+  match rhs_node with
+  | DataNode{h_formula_data_node=p;h_formula_data_imm=imm}
+  | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} ->
+      let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
+      let eqns' = MCP.ptr_equations_without_null lhs_p in
+      let r_eqns =
+        let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
+        let r_asets = alias_nth 2 eqns in
+        let a_vars = lhs_fv @ posib_r_aliases in
+        let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
+        let colaps l = List.fold_left (fun a c -> match a with
+          | [] -> [(c,c)]
+          | h::_-> (c,(fst h))::a) [] l in
+      List.concat (List.map colaps fltr) in
+      let eqns = (p, p) :: eqns' in
+      let asets = alias_nth 3 (eqns@r_eqns) in
+      let paset = get_aset asets p in (* find the alias set containing p *)
+      if Gen.is_empty paset then
+        failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
+      else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
+        (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
+      else
+        (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest)
+  | HTrue -> (
+      if (rhs_rest = HEmp) then (
+        (* if rhs = HTrue, then allow residue in lhs *)
+        let mres = { match_res_lhs_node = lhs_h;
+                   match_res_lhs_rest = HEmp;
+                   match_res_holes = [];
+                   match_res_type = Root;
+                   match_res_rhs_node = HTrue;
+                   match_res_rhs_rest = HEmp; } in
+        [mres]
+      )
+      else []
+    )
+  | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   let psv =  Cprinter.string_of_spec_var in
@@ -430,7 +446,7 @@ and spatial_ctx_extract p f a i rn rr =
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
-    | HTrue -> [(HEmp, f, [], Root)]
+    | HTrue -> []
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
@@ -686,12 +702,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (* if (vl_view_orig || vl_self_pts==[]) then ua *)
                     (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
                   else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
-            | HTrue, HTrue -> (0, M_match c)
-            | DataNode _, HTrue
-            | ViewNode _, HTrue
-            | HTrue, DataNode _
-            | HTrue, ViewNode _ -> let rhs_rest = c.match_res_rhs_rest in
-                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
+            | _, HTrue -> let residue = c.match_res_lhs_node in
+                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
           )
     | MaterializedArg (mv,ms) ->
@@ -738,8 +750,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let l1 = [(1,M_base_case_unfold c)] in
                       (-1, (Search_action (a2::l1)))
                   in a1
-            | ViewNode _, HTrue -> let rhs_rest = c.match_res_rhs_rest in
-                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
@@ -758,19 +768,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | HTrue, HTrue -> (0, M_match c)
-            | DataNode _, HTrue
-            | ViewNode _, HTrue
-            | HTrue, DataNode _
-            | HTrue, ViewNode _ -> let rhs_rest = c.match_res_rhs_rest in
-                                   (2,M_unmatched_rhs_data_node (rhs_node, rhs_rest))
+            | _, HTrue -> let residue = c.match_res_lhs_node in
+                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
           (* let _ = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)
           (1,M_Nothing_to_do (string_of_match_res c))
-    | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
-  in
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   (*if in normalizing process => choose r1, otherwise, r*)
   if (is_normalizing) then r1
   else r

@@ -5803,12 +5803,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | [] -> (used_names, [], [], IP.mkTrue pos) in
 
   let rec flatten f = match f with
-    (* TRUNG TODO: consider HTrue and HEmp when flattening formula in order to normalizing *)
-    | IF.HTrue ->  []
-(*    | IF.HTrue ->  [IF.HTrue]*)
+    | IF.HTrue -> [IF.HTrue]
     | IF.HFalse -> []
     | IF.HEmp -> []
-(*    | IF.HEmp -> [IF.HEmp]*)
     | IF.Conj
 	        {  IF.h_formula_conj_h1 = f1;
 	        IF.h_formula_conj_h2 = f2;
