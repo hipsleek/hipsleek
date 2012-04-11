@@ -28,7 +28,7 @@ lemma self::sll<n, sm, lg> -> self::ll<n>;
 NEW RELS: [ ( res<=0) -->  A(res), ( res<=0) -->  B(res), ( tmp_42' & A(tmp_42') & 1<=res) -->  A(res), ( !(tmp_42') & res<=0 & A(tmp_42')) -->  A(res), ( A(tmp_42') & 1<=res & tmp_42') -->  A(res), ( A(tmp_42') & res<=0 & !(tmp_42')) -->  A(res), ( A(tmp_42') & 1<=res) -->  A(res), ( res<=0) -->  B(res), ( 1<=res) -->  B(res), ( res<=0) -->  B(res), ( 1<=res) -->  B(res), ( res<=0) -->  B(res), ( B(tmp_42') & 1<=res & tmp_42') -->  B(res), ( B(tmp_42') & res<=0 & !(tmp_42')) -->  B(res), ( 1<=res) -->  B(res), ( 1<=res) -->  B(res), ( B(tmp_42') & 1<=res) -->  B(res)]
 */
 bool bubble(node xs)
-     infer @pre[xs,A,B]
+     infer [xs,A,B]
      requires xs::ll<n> & xs!=null
      ensures xs::sll<n, s, l>  & A(res)//  &!res
 		or  xs::ll<n> & B(res);

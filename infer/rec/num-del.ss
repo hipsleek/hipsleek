@@ -1,7 +1,7 @@
 relation B(int n, int a, int r).
 
 int del(int n, int a)
-  infer @pre [n,B]
+  infer  [n,B]
   requires true
   ensures  B(n,a,res); 
 {  

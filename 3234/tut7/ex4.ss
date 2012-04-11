@@ -18,14 +18,17 @@ lseg<p,n> == self=p & n=0
 */
 
 int length(node x)
-  requires x::ll<n> 
-  ensures true;
-  requires x::lseg<null,n> 
-  ensures true;
+  requires x::ll<n> & Term[]
+  ensures x::ll<n> & res=n;
+  requires x::lseg<null,n> & Term[]
+  ensures x::lseg<null,n> & res=n;
+  /* requires x::lseg<p,n> */
+  /* ensures x::lseg<p,n> & res=n; */
 {
   if (x==null) {
        return 0;
   } else {
+       x.val = 0;
        int v = length(x.next);
        return 1+v;
   }

@@ -21,7 +21,7 @@ relation unitdec1(int[] a, int i, int j) ==
 relation unitdec2(int[] a, int i, int j) ==
 	forall(k, t: k < i | k > j | t < i | t > j | k > t | 
 			a[t] >= a[k] - (t - k)).
-
+    /*
 /*checkentail unitdec1(a,i,i) |- unitdec2(a,i,i).
 
 checkentail !(unitdec1(a,i,j)) |- !(unitdec1(a,i,j+1)).

@@ -32,7 +32,7 @@ bool bubble(node xs)
 
 
 void bsort(node xs)
-     infer @pre[xs]
+     infer [xs]
 	requires xs::ll<n> //& n>0
 	ensures xs::sll<n, _, _>;
 {

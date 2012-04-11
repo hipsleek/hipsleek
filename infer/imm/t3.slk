@@ -8,23 +8,25 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 
-// (1) expect n>0 & v<:@I
-// Inferred Pure:[ n!=0]
-infer [n] x::ll<n> |- x::node<a,b> .
+infer [a] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
 print residue.
 
-// TODO why a disjunction here? xpure1?
-// (2) 
-// Inferred Pure:[ n!=0, n=1 & 1<=c | 2<=n & 1<=c]
-infer [n,c] x::ll<n> |- x::node<a,b> & c>0.
+infer [a,c] x::node<c,_> |- x::node<a,b> & a>0.
+print residue.
+
+infer [a,c] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+infer [n,a] x::ll<n> |- x::node<a,b> & a>0.
+print residue.
+
+infer [n,a] x::ll<n> & a>0 |- x::node<a,b> & a>0.
 print residue.
 
 
-// TODO : why fail
-// (3) expect n>0 & v<:@I
-// Fail.(may) cause:(failure_code=213)
-infer [n] x::ll<n> |- x::node<a,b> & a>0.
-print residue.
+/*
+Entail  (1): Fail.(may) cause:(failure_code=213)  true |-  Anon_46=a;  true |-  0<a (may-bug).
+*/
 
 
 

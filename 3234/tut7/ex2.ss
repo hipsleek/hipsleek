@@ -7,12 +7,13 @@ data cell {
 
 int sum(cell x,cell y)
   requires x::cell<a> & x=y
-  ensures true;
+  ensures x::cell<a> & res=2*a & x=y;
   requires x::cell<a> * y::cell<b>
-  ensures true;
+  ensures x::cell<a> * y::cell<b> & res=a+b;
 {
   int v1 = x.val;
   int v2 = y.val;
+  dprint;
   return v1+v2;
 }
 
