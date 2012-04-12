@@ -2884,7 +2884,59 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flo
   let pr1 = !print_formula in
   let pr3 = !print_svl in
    Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
-	  
+
+(*compose formula when joined*)
+and normalize_keep_flow_join (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+        let eo1 = normalize_x o11 f2 pos in
+        let eo2 = normalize_x o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			  let eo1 = normalize_x f1 o21 pos in
+			  let eo2 = normalize_x f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+            (*When join, need not rename exist vars*)
+			(* let rf1 = rename_bound_vars f1 in *)
+			(* let rf2 = rename_bound_vars f2 in *)
+			let qvars1, base1 = split_quantifiers f1 in
+			let qvars2, base2 = split_quantifiers f2 in
+			let new_base = mkStar_combine base1 base2 flow_tr pos in
+			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			resform
+		  end
+    end
+
+(*compose formula when joined*)
+and compose_formula_join_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+  let rs = CP.fresh_spec_vars x in
+  (*--- 09.05.2000 *)
+  (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+  (*09.05.2000 ---*)
+  let rho1 = List.combine (List.map CP.to_unprimed x) rs in
+  let rho2 = List.combine (List.map CP.to_primed x) rs in
+  let new_delta = subst rho2 delta in
+  let new_phi = subst rho1 phi in
+  let new_f = normalize_keep_flow_join new_delta new_phi flow_tr pos in
+  let _ = must_consistent_formula "compose_formula 1" new_f in
+  let resform = push_exists rs new_f in
+  let _ = must_consistent_formula "compose_formula 2" resform in
+  resform
+
+(*compose formula when joined*)
+(*Different from compose_formula 
+due to the fact that do not rename
+existential variables because
+those variables belong to both
+formula*)
+and compose_formula_join (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+  let pr1 = !print_formula in
+  let pr3 = !print_svl in
+   Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_join_x delta phi x flow_tr pos) delta phi x
+
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
 	| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
@@ -7668,6 +7720,7 @@ let compose_context_formula_and (ctx : context) (phi : formula) (id: CP.spec_var
 			    res
 		    | _ -> 
                 (*collect @var for later use *)
+                (*NOTE THAT es.pure might not INCLUDE VARPERM INFO*)
                 let val_vars = MCP.get_varperm_mix_formula es.es_pure  VP_Value in
                 (*then clear entail_*)
                 let es = clear_entailment_history_es_es es in

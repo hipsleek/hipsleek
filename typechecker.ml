@@ -687,8 +687,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             in
             if (not b) then res (*do not have permission for variable v*)
             else
+		    (* let _ = print_endline ("\n### Assign (" ^ v ^ ") : ctx:\n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
-		    (* let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+		    (* let _ = print_endline ("\n### Assign (" ^ v ^ ") : ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
 	        let fct c1 = 
 	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
@@ -707,6 +708,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        resctx 
 	          else (CF.Ctx c1) in
 	        let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+		    (* let _ = print_endline ("\n### Assign: res:\n" ^ (Cprinter.string_of_list_failesc_context res)) in *)
             let _ = CF.must_consistent_list_failesc_context "assign final" res  in
             res
 	      end
@@ -865,12 +867,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
 	        let ctx1 = check_exp prog proc ctx e post_start_label in
-		    (* let _ = print_endline ("\ncheck_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+		    (* let _ = print_endline ("\n### check_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
-		    (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
-		    (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
-	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
+		    (* let _ = print_endline ("\n### check_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
+	        let ctx3 = if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2 in
+		    (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx3:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx3))) in *)
+            ctx3
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
           Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
@@ -1044,8 +1047,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
 				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     let _ = PTracer.log_proof prf in
-                    (* let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
-                                        if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                    (* let _ = print_endline (("\n ### fork: res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
+                    if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                       Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                     rs
                   in
@@ -1076,6 +1079,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             Tpdispatcher.restore_suppress_imply_output_state ();
                         (* print_endline "OK.\n" *)
                         end in
+                  (* let _ = print_endline (("\n ### fork: res (final) ctx: ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
                   res
                 (*=========================*)
                 (*===== <<< FORK ==========*)
@@ -1143,13 +1147,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
-                          let new_f = CF.compose_formula es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
+                          (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
+                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in
                           (*merge*)
                           CF.Ctx new_es
                 in
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
+		        (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") (before elim_unsat) \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
                 let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
 		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res

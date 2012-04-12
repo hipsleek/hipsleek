@@ -2880,12 +2880,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  | Some id ->
                       (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                           (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
+                          (* let _ = print_endline ("### ctx11 = " ^ (Cprinter.string_of_context ctx11)) in *)
                           let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
 	                      let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
                           (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
                           let rs2 = compose_context_formula_and rs1 post id ref_vars pos in
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in
+                          (* let _ = print_endline ("### rs4 = " ^ (Cprinter.string_of_context rs4)) in *)
 	                      ((SuccCtx [rs4]),TrueConseq)
                   | None ->
                       begin
@@ -4523,7 +4525,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   (*LDK: remove duplicated conj from the p2*)
                                   let p2 = remove_dupl_conj_eq_mix_formula p2 in
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
-                                  let p2 = MCP.drop_varperm_mix_formula p2 in
+                                  (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                                   (* explicit instantiation this will move some constraint to the LHS*)
                                   (*LDK: 25/08/2011, also instatiate ivars*)                          
                                   (*this move_expl_inst call can occur at the end of folding and also 
@@ -4955,7 +4957,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*pre: the lhs can not have any VarPerm in lhs_p*)
   (* let rhs_p = MCP.normalize_varperm_mix_formula rhs_p in (\*may be redundant*\) *)
   let rhs_vperms, _ = MCP.filter_varperm_mix_formula rhs_p in
-  let rhs_p = MCP.drop_varperm_mix_formula rhs_p in 
+  (* let rhs_p = MCP.drop_varperm_mix_formula rhs_p in *)
   (*IMPORTANT: DO NOT UPDATE rhs_p because of --eps *)
   (*TO CHECK: this may affect our current strategy*)
   (* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)

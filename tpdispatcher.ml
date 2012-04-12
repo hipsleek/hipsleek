@@ -35,10 +35,10 @@ type tp_type =
 
 let test_db = false
 
-let tp = ref OmegaCalc
+(* let tp = ref OmegaCalc *)
 (* let tp = ref OZ *)
 (* let tp = ref Redlog *)
-(* let tp = ref AUTO *)
+let tp = ref AUTO
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -908,10 +908,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
   let wf = f in
-  let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
-  let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
-  let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
-  let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in 
+  let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
+  let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
+  let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in
+  let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
 
   let _ = Gen.Profiling.push_time "tp_is_sat" in
