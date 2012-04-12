@@ -162,14 +162,20 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   (*TO DO: have to deal with OR *)
   (*Pickup variable permissions in both thread only*)
   Debug.devel_zprint (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition:  \n" ^ (Cprinter.string_of_struc_formula spec) ^ "\n")) pos;
-  let vp_list,_ = CF.filter_varperm_formula_all pre_f in
-  let val_list, vp_rest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in
-  let full_list, vp_rest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_rest in
-  let _ = if (vp_rest2!=[]) then
+  (* let vp_list,_ = CF.filter_varperm_formula_all pre_f in *)
+  (* let val_list, vp_rest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in *)
+  (* let full_list, vp_rest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_rest in *)
+  (* let _ = if (vp_rest2!=[]) then *)
+  (*       report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition") *)
+  (* in *)
+  (* let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in *)
+  (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in *)
+  let zero_vars = CF.get_varperm_formula_all pre_f VP_Zero in
+  let _ = if (zero_vars!=[]) then
         report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition")
   in
-  let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in
-  let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in
+  let val_vars = CF.get_varperm_formula_all pre_f VP_Value in
+  let full_vars = CF.get_varperm_formula_all pre_f VP_Full in
   let tmp = Gen.BList.intersect_eq CP.eq_spec_var_ident val_vars full_vars in
   let _ = if (tmp!=[]) then
         report_error pos ("\ncheck_specs: EBase: duplicated VarPerm: " ^ (Cprinter.string_of_spec_var_list tmp))
@@ -185,11 +191,14 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   (* in *)
   (*Find out @zero for the main thread*)
   (*Pickup variable permissions in the main thread only*)
-  let vp_list2,_ = CF.filter_varperm_formula pre_f in
-  let full_list2, vp_rest4 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_list2 in
-  let val_list2, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_rest4 in
-  let full_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list2) in
-  let val_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list2) in
+  (* let vp_list2,_ = CF.filter_varperm_formula pre_f in *)
+  (* let full_list2, vp_rest4 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_list2 in *)
+  (* let val_list2, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_rest4 in *)
+  (* let full_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list2) in *)
+  (* let val_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list2) in *)
+
+  let val_vars2 = CF.get_varperm_formula pre_f VP_Value in
+  let full_vars2 = CF.get_varperm_formula pre_f VP_Full in
   let all_vars2 = full_vars2@val_vars2 in
   (*@zero of the main thread*)
   let zero_vars = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars2 in
@@ -1130,8 +1139,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some one_f ->
                         let base = CF.formula_of_one_formula one_f in
                         (**********Compose variable permissions >>> *******)
-                        let ps,new_base = CF.filter_varperm_formula base in
-                        let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (*only pickup @full*)
+                        (* let ps,new_base = CF.filter_varperm_formula base in *)
+                        (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
+
+                        let full_vars = CF.get_varperm_formula base VP_Full in
+                        let new_base = CF.drop_varperm_formula base in
                         let zero_vars = es.CF.es_var_zero_perm in
                         let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
                         if (tmp!=[]) then

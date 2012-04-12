@@ -7117,39 +7117,6 @@ let normalize_varperm_formula (f:formula) : formula =
       !print_formula !print_formula
       normalize_varperm_formula_x f
 
-let filter_varperm_one_formula (f:one_formula) : CP.formula list * one_formula = 
-  let p = f.formula_pure in
-  let ls,mf = MCP.filter_varperm_mix_formula p in
-  (ls,{f with formula_pure=mf})
-
-(* only filter in the main formula, including those in formula_*_and *)
-let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula = 
-  let rec helper f = match f with
-    | Base b ->
-        let ls,mf = MCP.filter_varperm_mix_formula b.formula_base_pure in
-        let a = b.formula_base_and in
-        let fs,one_ls = List.split (List.map (filter_varperm_one_formula) a) in
-        let ls2=List.concat fs in
-        ls@ls2,Base {b with formula_base_pure = mf; 
-            formula_base_and = one_ls}
-    | Exists b ->
-        let ls,mf = MCP.filter_varperm_mix_formula b.formula_exists_pure in
-        let a = b.formula_exists_and in
-        let fs,one_ls = List.split (List.map (filter_varperm_one_formula) a) in
-        let ls2=List.concat fs in
-        ls@ls2,Exists {b with formula_exists_pure = mf;
-            formula_exists_and = one_ls}
-    | Or o ->
-        let ls1,f1 = helper o.formula_or_f1 in
-        let ls2,f2 = helper o.formula_or_f2 in
-        if (ls1=[] && ls2=[]) then
-         ( [],Or {o with formula_or_f1 = f1; formula_or_f2 = f2})
-        else
-        (*This case may only happen when there is PermVar annotations*)
-        report_error no_pos "filter_varperm_formula: disjunctive form"
-         (* TO CHECK : can use approximation *)
-  in helper f
-
 let rec partition_triple fun1 fun2 lst = match lst with
   | [] -> ([],[],[])
   | l::ls -> 
@@ -7183,34 +7150,67 @@ let rec get_pre_post_vars (pre_vars: CP.spec_var list) (sp:struc_formula): (CP.s
 		let pre1, post1, iv1 = get_pre_post_vars pre_vars b.formula_struc_or_f1 in
 		let pre2, post2, iv2 = get_pre_post_vars pre_vars b.formula_struc_or_f2 in
 		(pre1@pre2, post1@post2, iv1@iv2)
-		
-let filter_varperm_formula_all (f:formula) : CP.formula list * formula =
-  let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in
-  Debug.no_1 "filter_varperm_formula_all"  !print_formula pr_out filter_varperm_formula_all_x f
+
+(* let filter_varperm_one_formula (f:one_formula) : CP.formula list * one_formula =  *)
+(*   let p = f.formula_pure in *)
+(*   let ls,mf = MCP.filter_varperm_mix_formula p in *)
+(*   (ls,{f with formula_pure=mf}) *)
+
+(* (\* only filter in the main formula, including those in formula_*_and *\) *)
+(* let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula =  *)
+(*   let rec helper f = match f with *)
+(*     | Base b -> *)
+(*         let ls,mf = MCP.filter_varperm_mix_formula b.formula_base_pure in *)
+(*         let a = b.formula_base_and in *)
+(*         let fs,one_ls = List.split (List.map (filter_varperm_one_formula) a) in *)
+(*         let ls2=List.concat fs in *)
+(*         ls@ls2,Base {b with formula_base_pure = mf;  *)
+(*             formula_base_and = one_ls} *)
+(*     | Exists b -> *)
+(*         let ls,mf = MCP.filter_varperm_mix_formula b.formula_exists_pure in *)
+(*         let a = b.formula_exists_and in *)
+(*         let fs,one_ls = List.split (List.map (filter_varperm_one_formula) a) in *)
+(*         let ls2=List.concat fs in *)
+(*         ls@ls2,Exists {b with formula_exists_pure = mf; *)
+(*             formula_exists_and = one_ls} *)
+(*     | Or o -> *)
+(*         let ls1,f1 = helper o.formula_or_f1 in *)
+(*         let ls2,f2 = helper o.formula_or_f2 in *)
+(*         if (ls1=[] && ls2=[]) then *)
+(*          ( [],Or {o with formula_or_f1 = f1; formula_or_f2 = f2}) *)
+(*         else *)
+(*         (\*This case may only happen when there is PermVar annotations*\) *)
+(*         report_error no_pos "filter_varperm_formula_all: disjunctive form" *)
+(*          (\* TO CHECK : can use approximation *\) *)
+(*   in helper f *)
+
+(* let filter_varperm_formula_all (f:formula) : CP.formula list * formula = *)
+(*   let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in *)
+(*   Debug.no_1 "filter_varperm_formula_all"  !print_formula pr_out filter_varperm_formula_all_x f *)
 
 
 (* only filter the main formula, not filter formula_*_and *)
-let filter_varperm_formula_x (f:formula) : CP.formula list * formula = 
-  let rec helper f = match f with
-    | Base b ->
-        let ls,mf = MCP.filter_varperm_mix_formula b.formula_base_pure in
-        ls,Base {b with formula_base_pure = mf}
-    | Exists b ->
-        let ls,mf = MCP.filter_varperm_mix_formula b.formula_exists_pure in
-        ls,Exists {b with formula_exists_pure = mf}
-    | Or o ->
-        let ls1,f1 = helper o.formula_or_f1 in
-        let ls2,f2 = helper o.formula_or_f2 in
-        if (ls1=[] && ls2=[]) then
-         ( [],Or {o with formula_or_f1 = f1; formula_or_f2 = f2})
-        else (*This case may only happen when there is PermVar annotations*)
-        report_error no_pos "filter_varperm_formula: disjunctive form"
-  in helper f
+(* let filter_varperm_formula_x (f:formula) : CP.formula list * formula =  *)
+(*   let rec helper f = match f with *)
+(*     | Base b -> *)
+(*         let ls,mf = MCP.filter_varperm_mix_formula b.formula_base_pure in *)
+(*         ls,Base {b with formula_base_pure = mf} *)
+(*     | Exists b -> *)
+(*         let ls,mf = MCP.filter_varperm_mix_formula b.formula_exists_pure in *)
+(*         ls,Exists {b with formula_exists_pure = mf} *)
+(*     | Or o -> *)
+(*         let ls1,f1 = helper o.formula_or_f1 in *)
+(*         let ls2,f2 = helper o.formula_or_f2 in *)
+(*         if (ls1=[] && ls2=[]) then *)
+(*          ( [],Or {o with formula_or_f1 = f1; formula_or_f2 = f2}) *)
+(*         else (\*This case may only happen when there is PermVar annotations*\) *)
+(*         report_error no_pos "filter_varperm_formula: disjunctive form" *)
+(*   in helper f *)
 
 (* only filter the main formula, not filter formula_*_and *)
-let filter_varperm_formula (f:formula) : CP.formula list * formula =
-  let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in
-  Debug.no_1 "filter_varperm_formula"  !print_formula pr_out filter_varperm_formula_x f
+(* let filter_varperm_formula (f:formula) : CP.formula list * formula = *)
+(*   let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in *)
+(*   Debug.no_1 "filter_varperm_formula"  !print_formula pr_out filter_varperm_formula_x f *)
 
 let drop_varperm_formula (f:formula) = 
   let rec helper f =

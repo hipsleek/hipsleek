@@ -1388,9 +1388,10 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in
       let new_f = add_pure_formula_to_formula zero_f es.es_formula in
       let unfolded_f = unfold_nth 7 prog new_f v already_unsat 0 pos in
-      let vp_list, _ = filter_varperm_formula unfolded_f in
-      let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in
-      let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in
+      (* let vp_list, _ = filter_varperm_formula unfolded_f in *)
+      (* let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in *)
+      (* let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in *)
+      let new_zero_vars = CF.get_varperm_formula unfolded_f VP_Zero in
       let unfolded_f2 = drop_varperm_formula unfolded_f in
       let new_es = {es with es_var_zero_perm = new_zero_vars;} in
       let res = build_context (Ctx new_es) unfolded_f2 pos in
@@ -3067,12 +3068,15 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               (*FILTER OUR VarPerm formula*)
               let es_f = es.es_formula in
               let es_f = normalize_varperm_formula es_f in
-              let vperm_fs, _ = filter_varperm_formula es_f in
+              (* let vperm_fs, _ = filter_varperm_formula es_f in *)
+              (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)
+              let vars = CF.get_varperm_formula es_f VP_Zero in
+              let vars_val = CF.get_varperm_formula es_f VP_Value in
+              let vars_full = CF.get_varperm_formula es_f VP_Full in
               let new_f = drop_varperm_formula es_f in
-              let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in
-              let _ = if (ls2!=[]) then
+              let _ = if ((vars_val@vars_full)!=[]) then
                 print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.") in
-              let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in
+              (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *)
               let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
               {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}
             else es in
