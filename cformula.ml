@@ -3762,6 +3762,7 @@ let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option
           | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft) } ) 
           | _ ->  None
 
+(* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
     | FailCtx ft ->
