@@ -1,3 +1,5 @@
+// copy from examples/working/sleek/sleek2.slk
+
 data node { int val ; node next }.
 
 pred ll<n> == self = null & n = 0
@@ -25,18 +27,6 @@ print residue.
 
 //(4)
 checkentail x::node<_, null> * y::ll<1> |- x::ll<m> * htrue & m = 0.
-print residue.
-
-//(5)
-checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2> * htrue.
-print residue.
-
-//(6)
-checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<m> * htrue & m >= n+1.
-print residue.
-
-//(7)
-checkentail x::ll<n> & n > 0 |- x::ll<m> & m > 0.
 print residue.
 
 //(8)
