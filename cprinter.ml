@@ -1342,6 +1342,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 	              wrap_box ("B",0) pr_formula b) b	 
     | EInfer {
       formula_inf_post = postf;
+      formula_inf_xpost = postxf;
       formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
           let ps =if (lvars==[] && postf) then "@post " else "" in

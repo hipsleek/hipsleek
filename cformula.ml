@@ -1,4 +1,4 @@
-
+  
 (*
   Created 21-Feb-2006
 
@@ -65,6 +65,8 @@ and struc_or_formula =
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
+    formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
+    formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : Cpure.spec_var list;
     formula_inf_continuation : struc_formula;
     (* TODO : can we change this to struc_formula instead *)
@@ -7850,4 +7852,134 @@ let mkViewNode view_node view_name view_args pos = ViewNode
   h_formula_view_pruning_conditions = [];
   h_formula_view_label = None;
   h_formula_view_pos = pos}
+
+let rec take_tl lst n = 
+  if n=0 then lst
+  else
+    match lst with
+    | [] -> report_error no_pos "New predicate do not have enough arguments"
+    | l::ls -> take_tl ls (n-1)
+
+let tran_args ex_args args length = 
+  let new_args = take_tl args length in
+  let new_args = CP.fresh_spec_vars new_args in
+  (ex_args @ new_args, new_args)
+
+let rec tran_spec_heap h sub_pair = match h with
+  | Star {h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos} -> 
+    let res1 = tran_spec_heap h1 sub_pair in
+    let res2 = tran_spec_heap h2 sub_pair in
+    (mkStarH (fst res1) (fst res2) pos, snd res1 @ snd res2)
+  | Conj {h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos} -> 
+    let res1 = tran_spec_heap h1 sub_pair in
+    let res2 = tran_spec_heap h2 sub_pair in
+    (mkConjH (fst res1) (fst res2) pos, snd res1 @ snd res2)
+  | Phase { h_formula_phase_rd = h1;
+    h_formula_phase_rw = h2;
+    h_formula_phase_pos = pos} -> 
+    let res1 = tran_spec_heap h1 sub_pair in
+    let res2 = tran_spec_heap h2 sub_pair in
+    (mkPhaseH (fst res1) (fst res2) pos, snd res1 @ snd res2)
+  | ViewNode v ->
+    let ((old_view_name, old_view_vars),(new_view_name, new_view_vars)) = sub_pair in
+    if v.h_formula_view_name = old_view_name then
+      let new_args = tran_args v.h_formula_view_arguments new_view_vars 
+      (List.length old_view_vars) in
+      (ViewNode {v with h_formula_view_name = new_view_name;
+      h_formula_view_arguments = fst new_args}, snd new_args)
+    else (h,[])
+  | _ -> (h,[])
+
+let rec tran_spec_fml fml sub_pair is_ebase = match fml with
+  | Or {formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = p} ->
+    let res1 = tran_spec_fml f1 sub_pair is_ebase in
+    let res2 = tran_spec_fml f2 sub_pair is_ebase in
+    (mkOr (fst res1) (fst res2) p, snd res1 @ snd res2)
+  | Base b ->
+    let h, _, _, _, _ = split_components fml in
+    let new_h = tran_spec_heap h sub_pair in
+    let heap,evars = new_h in
+    if evars = [] || is_ebase then
+      (Base {b with formula_base_heap = heap}, evars)
+    else 
+      (mkExists_w_lbl evars heap b.formula_base_pure 
+      b.formula_base_type b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label, evars)
+  | Exists e ->
+    let h, _, _, _, _ = split_components fml in
+    let new_h = tran_spec_heap h sub_pair in
+    let heap,evars = new_h in
+    if evars = [] || is_ebase then
+      (Exists {e with formula_exists_heap = heap}, evars)
+    else
+      (Exists {e with formula_exists_heap = heap; formula_exists_qvars = e.formula_exists_qvars @ evars}, evars)
+
+let rec tran_spec (sp:struc_formula) sub_pair = match sp with
+  | ECase b -> 
+    let res = List.map (fun (p,c) -> 
+      let r = tran_spec c sub_pair in
+      ((p,fst r), snd r)) b.formula_case_branches in
+    let r1,r2 = List.split res in
+    (ECase {b with formula_case_branches = r1}, List.concat r2)
+  | EBase b -> 
+    let rbase = tran_spec_fml b.formula_struc_base sub_pair true in
+    let rcont = (match b.formula_struc_continuation with
+      | None -> (None,[])
+      | Some f -> let r = tran_spec f sub_pair in
+        (Some (fst r), snd r)) in
+    (EBase {b with 
+      formula_struc_implicit_inst = b.formula_struc_implicit_inst @ snd rbase;
+      formula_struc_base = fst rbase;
+      formula_struc_continuation = fst rcont},snd rbase @ snd rcont)
+  | EAssume(svl,f,fl) -> let r = tran_spec_fml f sub_pair false in
+    (EAssume(svl,fst r,fl),snd r)
+  | EInfer b -> let r = tran_spec b.formula_inf_continuation sub_pair in
+    (EInfer {b with formula_inf_continuation = fst r},snd r)
+  | EList b -> let r = List.map (fun (l,e) ->
+      let res = tran_spec e sub_pair in ((l,fst res),snd res)) b in
+    let r1,r2 = List.split r in
+    (EList r1, List.concat r2)
+  | EOr b -> 
+    let r1 = tran_spec b.formula_struc_or_f1 sub_pair in
+    let r2 = tran_spec b.formula_struc_or_f2 sub_pair in
+    (EOr {b with formula_struc_or_f1 = fst r1;
+                formula_struc_or_f2 = fst r2}, snd r1 @ snd r2)
+
+let rec add_pure_fml fml rel_fml = match fml with
+  | Or {formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = p} ->
+    mkOr (add_pure_fml f1 rel_fml) (add_pure_fml f2 rel_fml) p
+  | Base b ->
+    let _, p, _, _, _ = split_components fml in
+    let new_p = CP.mkAnd (MCP.pure_of_mix p) rel_fml no_pos in
+    Base {b with formula_base_pure = MCP.mix_of_pure new_p}
+  | Exists e ->
+    let _, p, _, _, _ = split_components fml in
+    let new_p = CP.mkAnd (MCP.pure_of_mix p) rel_fml no_pos in
+    Exists {e with formula_exists_pure = MCP.mix_of_pure new_p}
+
+let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
+  | ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) -> 
+    (p,add_pure c rel_fml_pre rel_fml_post)) b.formula_case_branches)}
+  | EBase b -> EBase {b with 
+    formula_struc_base = (match rel_fml_pre with
+      | None -> b.formula_struc_base
+      | Some fml -> add_pure_fml b.formula_struc_base fml);
+    formula_struc_continuation =
+    (match b.formula_struc_continuation with
+      | None -> None
+      | Some f -> Some (add_pure f rel_fml_pre rel_fml_post))}
+  | EAssume(svl,f,fl) -> (match rel_fml_post with
+      | None -> sp
+      | Some fml -> EAssume(svl,add_pure_fml f fml,fl))
+  | EInfer b -> EInfer {b with formula_inf_continuation = add_pure b.formula_inf_continuation rel_fml_pre rel_fml_post}
+  | EList b -> EList (List.map (fun (l,e) ->(l,add_pure e rel_fml_pre rel_fml_post)) b)
+  | EOr b -> EOr {b with formula_struc_or_f1 = add_pure b.formula_struc_or_f1 rel_fml_pre rel_fml_post;
+                         formula_struc_or_f2 = add_pure b.formula_struc_or_f2 rel_fml_pre rel_fml_post}
 

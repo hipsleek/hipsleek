@@ -672,7 +672,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
       let quan_var = CP.diff_svl args iv in
       let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
       (* vars overlap do not work - see infer/imm/t3a.slk *)
-      let quan_var = quan_var(* @vars_overlap *) in
+      let quan_var = quan_var @vars_overlap in
       let is_bag_cnt = TP.is_bag_constraint fml in
       let new_p,new_p_ass = 
         if is_bag_cnt then           
@@ -1285,21 +1285,21 @@ let infer_shape input =
   flush oc;
   close_out oc;;
 
-let _ = 
-  let syscall cmd =
-    let ic, oc = Unix.open_process cmd in
-    let buf = Buffer.create 16 in
-    (try
-       while true do
-         Buffer.add_channel buf ic 1
-       done
-     with End_of_file -> ());
-    let _ = Unix.close_process (ic, oc) in
-    (Buffer.contents buf)
-  in
-  let input_shape = Sys.argv.(2) ^ ".shape" in
-  let input_str = syscall ("cat " ^ input_shape) in
-  infer_shape input_str
+(*let _ = *)
+(*  let syscall cmd =*)
+(*    let ic, oc = Unix.open_process cmd in*)
+(*    let buf = Buffer.create 16 in*)
+(*    (try*)
+(*       while true do*)
+(*         Buffer.add_channel buf ic 1*)
+(*       done*)
+(*     with End_of_file -> ());*)
+(*    let _ = Unix.close_process (ic, oc) in*)
+(*    (Buffer.contents buf)*)
+(*  in*)
+(*  let input_shape = Sys.argv.(2) ^ ".shape" in*)
+(*  let input_str = syscall ("cat " ^ input_shape) in*)
+(*  infer_shape input_str*)
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate

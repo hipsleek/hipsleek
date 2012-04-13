@@ -34,6 +34,8 @@ and struc_or_formula =
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
+    formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
+    formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : (ident * primed) list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc
