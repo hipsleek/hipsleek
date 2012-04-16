@@ -2926,7 +2926,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
-                 (******************************************************)
+                (******************************************************)
                 (*foo5,foo6 in hip/err3.ss*)
                 let helper ctx postcond= 
 				let es =  CF.estate_of_context ctx pos in

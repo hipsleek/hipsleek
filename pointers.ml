@@ -36,6 +36,9 @@ module E = Env
 (* Addressable variables *)
 let h = Hashtbl.create 200
 
+(*List of proc that has been translated*)
+let procs = []
+
 (*
   Auxiliary procs due to translation
   [int x;
@@ -823,11 +826,11 @@ let rec trans_specs_x specs new_params flags pos =
         (sub1::(sub2::sst))
       else sst) [] tmp
   in
-  (* let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in *)
-  (* let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in *)
+  let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in
+  let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in
 
   let new_specs = Iformula.subst_all_struc sst specs in
-  (* let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
+  let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in
   (*create h_formula to add to pre-condition*)
   (* inc(ref int_ptr x, int_ptr y) *)
   (*   requires [old_x,old_y] x::node<old_x> * y::node<old_y> *)
@@ -848,7 +851,7 @@ let rec trans_specs_x specs new_params flags pos =
     inc(ref int_ptr x, int_ptr y)
     requires ...
     ensures (Ex: new_x) x'::int_ptr<new_x> * y::int_ptr<old_y> & new_x = old_x + old_y *)
-  let post,ex_vars = List.fold_left (fun (h,ex_vars) (param,flag) ->
+  let post_h,post_p,ex_vars = List.fold_left (fun (h,p,ex_vars) (param,flag) ->
       if (flag) then
         let typ_name = match param.param_type with
           | Named t -> t
@@ -856,7 +859,7 @@ let rec trans_specs_x specs new_params flags pos =
               {Err.error_loc = pos;
                Err.error_text = "Expecting Named t"}
         in
-        let var_node,new_ex_vars = 
+        let var_node,new_p,new_ex_vars = 
           if (param.param_mod = RefMod) then
             (*pass-by-ref*)
             (* x'::int_ptr<new_x> *)
@@ -864,9 +867,12 @@ let rec trans_specs_x specs new_params flags pos =
             let new_var = (param.param_name^"_new",Unprimed) in
             let h_arg = Ipure.Var (new_var,no_pos) in
             let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
-            (var_node,new_var::ex_vars)
+            let uvar = (param.param_name, Unprimed) in (* UNPRIMED *)
+            let new_p = Ipure.mkEqVarExp var uvar pos in
+            (var_node,new_p,new_var::ex_vars)
           else
-            (*pass-by-value*)
+            (*??? why consider pass-by-value parameters here ??? *)
+            (* pass-by-value*)
             (* y::int_ptr<old_y> *)
             let typ_name = match param.param_type with
               | Named t -> t
@@ -878,22 +884,24 @@ let rec trans_specs_x specs new_params flags pos =
             let old_var = (param.param_name^"_old",Unprimed) in
             let h_arg = Ipure.Var (old_var,no_pos) in
             let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
-            (var_node, ex_vars)
+            (var_node, Ipure.mkTrue pos, ex_vars)
         in
         let new_h = Iformula.mkStar h var_node no_pos in
-        (new_h,new_ex_vars)
-      else (h,ex_vars)
-  ) (Iformula.HTrue,[]) tmp 
+        let new_p1 = Ipure.mkAnd p new_p pos in
+        (new_h,new_p1,new_ex_vars)
+      else (h,p,ex_vars)
+  ) (Iformula.HTrue,Ipure.mkTrue pos,[]) tmp
   in
+  let post = Iformula.mkBase_wo_flow post_h post_p [] pos in
   (* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
   (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
-  let new_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_specs2 in
+  let new_specs3 = Iformula.add_formula_to_post (post,ex_vars) new_specs2 in
   new_specs3
 
 and trans_specs specs (new_params:param list) flags pos =
   let pr = pr_list string_of_bool in
-  Debug.ho_3 "trans_specs"
+  Debug.no_3 "trans_specs"
       string_of_struc_formula string_of_param_list pr string_of_struc_formula
       (fun _ _ _ -> trans_specs_x specs new_params flags pos) specs new_params flags
 (*****************************)
@@ -924,64 +932,73 @@ and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   let ptypes = List.map (fun p -> p.param_type) new_params in
   let new_mingled = mingle_name_enum prog new_proc_name ptypes in
 
-  let tmp = List.combine new_params flags in
-  let trans_tmp = List.map (fun (x,flag) -> 
-      if (flag) then
-        (*x.val*)
-        let var = Var { exp_var_name = x.param_name; exp_var_pos = pos;} in
-        let e1_mem = Member { exp_member_base = var;
-		                      exp_member_fields = [ptr_target];
-                              exp_member_path_id = None;
-                              exp_member_pos = pos}
-        in
-        let tmp_name = fresh_any_name aux_str in
-        let e1_decl = (tmp_name,Some e1_mem,no_pos) in
-        let t = revert_typ x.param_type in
-        (*t tmp_name = x.val*)
-        let e1 = VarDecl {exp_var_decl_type = t;
-                          exp_var_decl_decls = [e1_decl];
-                          exp_var_decl_pos = pos;
-                         }
-        in
-        let e3_lhs = e1_mem in
-        let e3_rhs = Var { exp_var_name = tmp_name; exp_var_pos = pos} in
-        (*x.val = tmp_name*)
-        let e3 = Assign { exp_assign_op = OpAssign;
-		                  exp_assign_lhs = e3_lhs;
-		                  exp_assign_rhs = e3_rhs;
-		                  exp_assign_path_id = None;
-		                  exp_assign_pos = pos }
-        in
-        (tmp_name,Some (e1,e3))
-      else
-        (x.param_name,None)
-  ) tmp
-  in
-  let names, es = List.split trans_tmp in
-  let vars = List.map (fun id -> Var {exp_var_name =id; exp_var_pos=pos}) names in
-  let orig_call =  CallNRecv {c with exp_call_nrecv_arguments = vars} in
-  (* let _ = print_endline ("### orig_call : " ^ (string_of_exp orig_call)) in *)
-  let new_body = List.fold_left (fun e2 eo ->
-      match eo with
-        | None -> e2
-        | Some (e1,e3) ->
-            let e12 = mkSeq e1 e2 no_pos in
-            let e123 = mkSeq e12 e3 no_pos in
-            e123
-  ) orig_call es
-  in
+  (* let tmp = List.combine new_params flags in *)
+  (* let trans_tmp = List.map (fun (x,flag) ->  *)
+  (*     if (flag) then *)
+  (*       (\*x.val*\) *)
+  (*       let var = Var { exp_var_name = x.param_name; exp_var_pos = pos;} in *)
+  (*       let e1_mem = Member { exp_member_base = var; *)
+  (*   	                      exp_member_fields = [ptr_target]; *)
+  (*                             exp_member_path_id = None; *)
+  (*                             exp_member_pos = pos} *)
+  (*       in *)
+  (*       let tmp_name = fresh_any_name aux_str in *)
+  (*       let e1_decl = (tmp_name,Some e1_mem,no_pos) in *)
+  (*       let t = revert_typ x.param_type in *)
+  (*       (\*t tmp_name = x.val*\) *)
+  (*       let e1 = VarDecl {exp_var_decl_type = t; *)
+  (*                         exp_var_decl_decls = [e1_decl]; *)
+  (*                         exp_var_decl_pos = pos; *)
+  (*                        } *)
+  (*       in *)
+  (*       let e3_lhs = e1_mem in *)
+  (*       let e3_rhs = Var { exp_var_name = tmp_name; exp_var_pos = pos} in *)
+  (*       (\*x.val = tmp_name*\) *)
+  (*       let e3 = Assign { exp_assign_op = OpAssign; *)
+  (*   	                  exp_assign_lhs = e3_lhs; *)
+  (*   	                  exp_assign_rhs = e3_rhs; *)
+  (*   	                  exp_assign_path_id = None; *)
+  (*   	                  exp_assign_pos = pos } *)
+  (*       in *)
+  (*       (tmp_name,Some (e1,e3)) *)
+  (*     else *)
+  (*       (x.param_name,None) *)
+  (* ) tmp *)
+  (* in *)
+  (* let names, es = List.split trans_tmp in *)
+  (* let vars = List.map (fun id -> Var {exp_var_name =id; exp_var_pos=pos}) names in *)
+  (* let orig_call =  CallNRecv {c with exp_call_nrecv_arguments = vars} in *)
+  (* (\* let _ = print_endline ("### orig_call : " ^ (string_of_exp orig_call)) in *\) *)
+  (* let new_body = List.fold_left (fun e2 eo -> *)
+  (*     match eo with *)
+  (*       | None -> e2 *)
+  (*       | Some (e1,e3) -> *)
+  (*           let e12 = mkSeq e1 e2 no_pos in *)
+  (*           let e123 = mkSeq e12 e3 no_pos in *)
+  (*           e123 *)
+  (* ) orig_call es *)
+  (* in *)
   (* let _ = print_endline ("### new_body : " ^ (string_of_exp new_body)) in *)
+  (* let new_body = match proc.proc_body with *)
+  (*   | None -> None *)
+  (*   | Some e -> *)
+  (*       let new_e = trans_exp_addr *)
+  (* in *)
   let new_proc = {proc with proc_name = new_proc_name;
       proc_mingled_name = new_mingled;
       proc_args = new_params;
-      proc_body = Some new_body;
+      proc_body = proc.proc_body;
       proc_static_specs = new_static_specs;
       proc_dynamic_specs = new_dynamic_specs;}
   in
-  (* let _ = print_endline ("### new_proc : " ^ (string_of_proc_decl new_proc)) in *)
-  (*UPDATE TO GLOBAL VARIABLE*)
-  let _ = (aux_procs := new_proc::!aux_procs) in
-  ()
+  let rvars = Hashtbl.find h proc.proc_name in
+  let _ = Hashtbl.replace h new_proc_name rvars in (*their ref vars are comparable*)
+  (*trans auxiliary variables*)
+  let new_proc1 = trans_proc_decl prog new_proc true in
+  let _ = print_endline ("### new_proc1 : " ^ (string_of_proc_decl new_proc1)) in
+  (* UPDATE TO GLOBAL VARIABLE *)
+  let _ = (aux_procs := new_proc1::!aux_procs) in
+  new_proc
 (*********************************)
 (***<<<<< create_aux_proc ********)
 (*********************************)
@@ -1045,6 +1062,8 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
             e
       | VarDecl v ->
           (*Add variables into current scope*)
+          (* let _ = print_endline ("Vardecl : " ^ (string_of_exp e)) in *)
+          (* let _ = print_endline ("Vardecl : before E.add") in *)
           let org_t = v.exp_var_decl_type in
           let _ = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
@@ -1053,6 +1072,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                   E.var_alpha = alpha;
                   E.var_type = UNK; }))
           ) v.exp_var_decl_decls in
+          (* let _ = print_endline ("Vardecl : after E.add") in *)
           let decls = List.map (fun (id,e0,pos) -> 
               let e1 = match e0 with
                 | None -> None
@@ -1328,6 +1348,12 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               let proc = look_up_proc_def_raw prog.prog_proc_decls c.exp_call_nrecv_method in
 
               let pos = c.exp_call_nrecv_pos in
+              let rvars = Hashtbl.find h proc.proc_name in
+              let args  =c.exp_call_nrecv_arguments in
+              (*
+                If there are some parameters that are not addressable
+                -> create auxiliary variables
+              *)
               let trans_arg_addr arg (* param *) =
                 match arg with
                   | Var e0 -> 
@@ -1342,52 +1368,53 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       (false,new_arg)
               in
               let flags,new_args = List.split (List.map (fun e -> trans_arg_addr e) c.exp_call_nrecv_arguments) in
-              if (List.exists (fun (b:bool) -> b) flags) then
-                (*if there are some args to be processed*)
-                let mk_aux_proc_name name (flags: bool list) : ident =
-                  let rec helper (flags:bool list) :ident =
-                    match flags with
-                      | [] -> ""
-                      | (x::xs) ->
-                          (*TO AVOIT proc_aux name clashes, if a variable needs 
-                            to be convert -> mark its bit as 1
-                          otherwise, 0*)
-                          let str1 = if (x) then "_1" else "_0" in
-                          let str2 = helper xs in
-                          (str1^str2)
-                  in
-                  let bitmap = helper flags in
-                  (name^"_"^aux_str^bitmap)
-                in
-                let new_proc_name = mk_aux_proc_name c.exp_call_nrecv_method flags in
-                let _ =
-                  (*look for new_proc_name in*)
-                  (*TO PREVENT redundant same new_aux_proc*)
-                  (try
-                       look_up_proc_def_raw !aux_procs new_proc_name;()
-                   (*if found, do nothing*)
-                   with | Not_found ->
-                       (*if not found -> create a new_proc*)
-                       (********************************)
-                       (*Creating a new aux_proc*)
-                       (********************************)
-                       create_aux_proc prog proc c (* params *) flags new_proc_name pos;()
-                  )
-                in (*after ensure that new_proc_name exists*)
-                (********************************)
-                (*Finish creating a new aux_proc*)
-                (********************************)
-                (*Call the new wrapper procedure instead of the old proc*)
-                let new_e = CallNRecv { c with
-                    exp_call_nrecv_method = new_proc_name;
-                    exp_call_nrecv_arguments = new_args;}
-                in
-                (* let _ = print_endline ("### new_e : " ^ (string_of_exp new_e)) in *)
-                new_e
-              else
-                let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in
-                (new_e)
-           with Not_found -> 
+              (* if (List.exists (fun (b:bool) -> b) flags) then *)
+              (*   (\*if there are some args to be processed*\) *)
+              (*   let mk_aux_proc_name name (flags: bool list) : ident = *)
+              (*     let rec helper (flags:bool list) :ident = *)
+              (*       match flags with *)
+              (*         | [] -> "" *)
+              (*         | (x::xs) -> *)
+              (*             (\*TO AVOIT proc_aux name clashes, if a variable needs  *)
+              (*               to be convert -> mark its bit as 1 *)
+              (*             otherwise, 0*\) *)
+              (*             let str1 = if (x) then "_1" else "_0" in *)
+              (*             let str2 = helper xs in *)
+              (*             (str1^str2) *)
+              (*     in *)
+              (*     let bitmap = helper flags in *)
+              (*     (name^"_"^aux_str^bitmap) *)
+              (*   in *)
+              (*   let new_proc_name = mk_aux_proc_name c.exp_call_nrecv_method flags in *)
+              (*   let new_proc = *)
+              (*     (\*look for new_proc_name in*\) *)
+              (*     (\*TO PREVENT redundant same new_aux_proc*\) *)
+              (*     (try *)
+              (*          look_up_proc_def_raw !aux_procs new_proc_name;() *)
+              (*      (\*if found, do nothing*\) *)
+              (*      with | Not_found -> *)
+              (*          (\*if not found -> create a new_proc*\) *)
+              (*          (\********************************\) *)
+              (*          (\*Creating a new aux_proc*\) *)
+              (*          (\********************************\) *)
+              (*          create_aux_proc prog proc c (\* params *\) flags new_proc_name pos;() *)
+              (*     ) *)
+              (*   in (\*after ensure that new_proc_name exists*\) *)
+              (*   (\********************************\) *)
+              (*   (\*Finish creating a new aux_proc*\) *)
+              (*   (\********************************\) *)
+              (*   (\*Call the new wrapper procedure instead of the old proc*\) *)
+              (*   let new_e = CallNRecv { c with *)
+              (*       exp_call_nrecv_method = new_proc_name; *)
+              (*       exp_call_nrecv_arguments = new_args;} *)
+              (*   in *)
+              (*   (\* let _ = print_endline ("### new_e : " ^ (string_of_exp new_e)) in *\) *)
+              (*   new_e *)
+              (* else *)
+              (*   let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in *)
+              (*   (new_e) *)
+              CallNRecv {c with exp_call_nrecv_arguments = new_args}
+           with Not_found ->
               Error.report_error 
                   {Err.error_loc = c.exp_call_nrecv_pos;
                    Err.error_text = "Procedure " ^ c.exp_call_nrecv_method ^ " not found!"})
@@ -1775,7 +1802,13 @@ and add_code_ref e (x,ptrx) =
   let new_e2 = mkSeq new_e1 e3 pos in
   new_e2
 
-and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
+(*
+  @param proc: the procedure needs to be transformed
+  @param is_aux: this proc is an auxiliary proc
+*)
+and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
+  (*update list of translated procs*)
+  let procs = proc::procs in
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
   let params = proc.proc_args in
@@ -1783,7 +1816,7 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let ptypes = List.map (fun p -> p.param_type) new_params in
   let new_mingled = mingle_name_enum prog proc.proc_name ptypes in
   (*List of params (typ*ident) that has been changed*)
-  let func p = 
+  let func p =
     let t = p.param_type in
     (match t with
       | Pointer _ -> true
@@ -1793,13 +1826,16 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let vars = List.filter func params in
   (*Keep track of names of changed params*)
   let vars = List.map (fun v -> v.param_name) vars in
-  let new_body = match proc.proc_body with
-    | None -> None
-    | Some body -> 
+  (match proc.proc_body with
+    | None ->
+        {proc with proc_return  = new_ret_t;
+            proc_mingled_name = new_mingled;
+            proc_args = new_params;}
+    | Some body ->
         let body1,_ = trans_exp_ptr prog body vars in
-        let _ = print_endline ("### [" ^ proc.proc_name ^ "] body1 (after trans_exp_ptr): \n " ^ (string_of_exp body1)) in
+        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] body1 (after trans_exp_ptr): \n " ^ (string_of_exp body1)) in *)
         (*Similar to Astsimp.trans_proc*)
-        let _ = E.clear () in
+        (* let _ = E.clear () in *)
         let _ = E.push_scope () in
         (*Note: ordering of args is important*)
         let all_args = 
@@ -1812,15 +1848,41 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
                  param_loc = proc.proc_loc;} in 
              this_arg :: new_params)
           else new_params in
-        (*addressable reference parameters*)
+        (*addressable reference variables*)
         let rvars = Hashtbl.find h proc.proc_name in
         let val_params,ref_params = List.partition (fun p -> (p.param_mod = NoMod)) all_args in
+        (*addressable reference parameters of this procedure only*)
+        let rrparams = List.filter (fun param -> List.mem param.param_name rvars) ref_params in
+        let rrvars = List.map (fun param -> param.param_name) rrparams in
         (*addr_vars contains variables that are taken adrress-of in e1*)
         let addr_vars = find_addr body1 in
+
+        (*=============TRANSPEC (if any)============>*)
+        let trans_p param =
+          if List.mem param.param_name rrvars then
+            let t = convert_prim_to_obj param.param_type in
+            let new_param = {param with param_type=t} in
+            (true,new_param)
+          else
+            (false,param)
+        in
+        let flags,new_params2 = List.split (List.map (fun param -> trans_p param) new_params) in
+        let (new_static_specs,new_dynamic_specs) =
+          (*If it is an orignal proc, then translate
+            Spec for aux_proc has been translated in advance*)
+          if (is_aux == false) && (List.exists (fun (b:bool) -> b) flags) then
+            let new_static_specs = trans_specs proc.proc_static_specs new_params2 flags no_pos in
+            let new_dynamic_specs = trans_specs proc.proc_dynamic_specs new_params2 flags no_pos in
+            (new_static_specs,new_dynamic_specs)
+          else
+            (proc.proc_static_specs,proc.proc_dynamic_specs)
+        in
+        (*<=============TRANSPEC (if any)============*)
         (* let _ = print_endline ("addr_vars = " ^ (string_of_ident_list addr_vars)) in *)
         (*List of pass-by-val/ref params that have been taken address-of*)
         let val_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) val_params in
-        let ref_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) ref_params in
+        (* let ref_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) ref_params in *)
+
         (*
           for each arg in val_params1:
           int_ptr ptr_arg = new int_ptr(arg);
@@ -1838,14 +1900,14 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
                                  let t = convert_prim_to_obj p.param_type in
                                  {p with param_type=t; param_name = name}) val_params1 
         in
-        let ref_ptrs = List.map (fun p ->
-                                 let name = (ptr_string^"_"^ p.param_name) in
-                                 let t = convert_prim_to_obj p.param_type in
-                                 {p with param_type=t; param_name = name}) ref_params1 
-        in
+        (* let ref_ptrs = List.map (fun p -> *)
+        (*                          let name = (ptr_string^"_"^ p.param_name) in *)
+        (*                          let t = convert_prim_to_obj p.param_type in *)
+        (*                          {p with param_type=t; param_name = name}) ref_params1  *)
+        (* in *)
         let val_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) val_params1 val_ptrs in
-        let ref_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) ref_params1 ref_ptrs in
-        let all_subst = val_subst@ref_subst in
+        (* let ref_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) ref_params1 ref_ptrs in *)
+        let all_subst = val_subst(* @ref_subst *) in
 
         (* let _ = print_endline ("val_subst = " ^ (string_of_subst val_subst)) in *)
         (* let _ = print_endline ("ref_subst = " ^ (string_of_subst ref_subst)) in *)
@@ -1858,7 +1920,7 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
 
         let addr_vars = List.map (fun id ->
             subst_var id all_subst
-        ) addr_vars 
+        ) addr_vars
         in
 
         let p2v (p : param) = {
@@ -1873,12 +1935,29 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
         and addressable local variables
           Note that (rvars - addr_vars) may be non-empty
         *)
-        let trans_vars = Gen.BList.remove_dups_eq (=) (rvars@addr_vars) in
-        let _ = print_endline ("### [" ^ proc.proc_name ^ "] trans_vars:  " ^ (string_of_ident_list trans_vars)) in
+
+        let trans_vars = 
+          if (is_aux) then
+            (*trans everything*)
+            Gen.BList.remove_dups_eq (=) (rvars@addr_vars)
+          else
+            (*
+              rvars : addressable reference variables (due to this proc and its callers,callees)
+              addr_vars : addressable variables of this procedure only
+              rrvars : addressable reference variables of this procedure only
+            *)
+            (*trans everything, except those that are reference parameters of this proc*)
+            Gen.BList.remove_dups_eq (=) (rvars@addr_vars)
+            (* Gen.BList.difference_eq (=) (rvars@addr_vars) rrvars *)
+        in
+        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] trans_vars:  " ^ (string_of_ident_list trans_vars)) in *)
         let body3 = trans_exp_addr prog body2 trans_vars in
         let _,inner_vars = List.split (E.visible_names ()) in
-        (*those that were converted and need to be deleted*)
-        let vars = compute_vars_to_delete addr_vars [] inner_vars in
+        (*those that were converted and need to be deleted
+          Do not delete addressable reference parameters
+        *)
+        let tmp_vars =  Gen.BList.difference_eq (=) (rvars@addr_vars) rrvars in
+        let vars = compute_vars_to_delete tmp_vars [] inner_vars in
         (*body3;delete(..); .... *)
         let new_body = List.fold_left (fun e var ->
             let del_e = mkDelete var no_pos in
@@ -1895,29 +1974,37 @@ and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
         (* let _ = print_endline ("new_body2: \n " ^ (string_of_exp new_body2)) in *)
         (* <<< Add code for pass-by-val variables that are addressed of*)
         (*Add code for pass-by-ref variables that are addressed of*)
-        let tmp_ref = List.combine ref_params1 ref_ptrs in
-        let new_body3 = 
-          if (tmp_ref!=[]) then
-          List.fold_left (fun e (x,ptrx) -> add_code_ref e (x,ptrx)) new_body2 tmp_ref
-          else
-            new_body2
-        in
-        let _ = print_endline ("### [" ^ proc.proc_name ^ "] new_body3: \n " ^ (string_of_exp new_body3)) in
+        (* let tmp_ref = List.combine ref_params1 ref_ptrs in *)
+        (* let new_body3 =  *)
+        (*   if (tmp_ref!=[]) then *)
+        (*   List.fold_left (fun e (x,ptrx) -> add_code_ref e (x,ptrx)) new_body2 tmp_ref *)
+        (*   else *)
+        (*     new_body2 *)
+        (* in *)
+        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] new_body3: \n " ^ (string_of_exp new_body3)) in *)
         (* <<< Add code for pass-by-ref variables that are addressed of*)
 
         let _ = E.pop_scope () in
-        let _ = E.clear () in
-        (Some new_body3)
-  in
-  {proc with proc_return  = new_ret_t;
-      proc_mingled_name = new_mingled;
-      proc_args = new_params;
-      proc_body = new_body}
+        (* let _ = E.clear () in *)
+        let ptypes2 = List.map (fun p -> p.param_type) new_params2 in
+        let new_mingled2 = mingle_name_enum prog proc.proc_name ptypes2 in
+        let new_proc = 
+        {proc with proc_return  = new_ret_t;
+            proc_mingled_name = new_mingled2;
+            proc_static_specs = new_static_specs;
+            proc_dynamic_specs = new_dynamic_specs;
+            proc_args = new_params2;
+            proc_body = (Some new_body2)}
+        in
+        (* let _ = print_endline ("new_proc = " ^ (string_of_proc_decl new_proc)) in *)
+        new_proc
+  )
 
-and trans_proc_decl prog (proc:proc_decl) : proc_decl =
+
+and trans_proc_decl prog (proc:proc_decl) (is_aux:bool): proc_decl =
   Debug.no_1 "trans_proc_decl"
       string_of_proc_decl string_of_proc_decl
-      (fun _ ->  trans_proc_decl_x prog proc) proc
+      (fun _ ->  trans_proc_decl_x prog proc is_aux) proc
 
 (*
   @param vs : addressable reference params
@@ -2212,7 +2299,7 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
              {Err.error_loc = no_pos;
               Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
   in
-  let new_procs = List.map (trans_proc_decl prog) prog.prog_proc_decls in
+  let new_procs = List.map (fun proc -> trans_proc_decl prog proc false) prog.prog_proc_decls in
   let new_procs1 = new_procs@(!aux_procs) in
   {prog with prog_global_var_decls = new_gvar_decls;
              prog_proc_decls = new_procs1;}

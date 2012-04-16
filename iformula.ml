@@ -292,7 +292,10 @@ and mkOr f1 f2 pos =
     else if (isConstFalse f2) then f1
     else raw
    else raw
-      
+
+and mkBase_wo_flow (h : h_formula) (p : P.formula) (a: one_formula list) pos =
+  mkBase h p top_flow a pos
+
 and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
   | HFalse -> mkFalse flow pos
   | _ -> 
@@ -1398,8 +1401,46 @@ let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
           let o1 = helper o.formula_or_f1 in
           let o2 = helper o.formula_or_f2 in
           (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
-
   in helper f0
+
+(*merge f1 into f2*)
+let mkStar_formula (f1 : formula) (f2 : formula) (pos : loc) = 
+  let h1, p1, fl1, a1 = split_components f1 in
+  let h2, p2, fl2, a2 = split_components f2 in
+  (*assume no phase*)
+  let h = mkStar h1 h2 pos in
+  let p = Ipure.mkAnd p1 p2 pos in
+  (*assume similar flow*)
+  let fl = fl2 in (*or fl1*)
+  let a = a1@a2 in (*combine a1 and a2: assuming merging a1 and a2*)
+  mkBase h p fl a pos (*TO CHECK: how about a1,a2: DONE*)
+
+(*merge f1 into f2*)
+let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) = 
+  let rec helper f1 f2 pos =
+  match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+        let eo1 = helper o11 f2 pos in
+        let eo2 = helper o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			  let eo1 = helper f1 o21 pos in
+			  let eo2 = helper f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar_formula base1 base2 pos in
+			let new_h, new_p, new_fl, new_a = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			resform
+		  end
+  end
+  in helper f1 f2 pos
 
 let add_h_formula_to_pre_x (h_f,impl_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
@@ -1422,11 +1463,11 @@ let add_h_formula_to_pre (h_f,impl_vars) (f0 : struc_formula): struc_formula =
       pr1 !print_struc_formula !print_struc_formula
       add_h_formula_to_pre_x (h_f,impl_vars) f0
 
-let add_h_formula_to_post_x (h_f,ex_vars) (f0 : struc_formula): struc_formula =
+let add_formula_to_post_x (f,ex_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
     match f0 with
       | EAssume (b,tag) -> 
-          let new_f = (add_h_formula_to_formula h_f b) in
+          let new_f = normalize_formula f b no_pos in
           let new_f2 = add_quantifiers ex_vars new_f in
           EAssume (new_f2,tag)
       | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
@@ -1440,8 +1481,8 @@ let add_h_formula_to_post_x (h_f,ex_vars) (f0 : struc_formula): struc_formula =
 		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
   in helper f0
 
-let add_h_formula_to_post (h_f,ex_vars) (f0 : struc_formula): struc_formula =
-  let pr1 = pr_pair !print_h_formula string_of_spec_var_list in
-  Debug.no_2 "add_h_formula_to_post"
+let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
+  let pr1 = pr_pair !print_formula string_of_spec_var_list in
+  Debug.no_2 "add_formula_to_post"
       pr1 !print_struc_formula !print_struc_formula
-      add_h_formula_to_post_x (h_f,ex_vars) f0
+      add_formula_to_post_x (f,ex_vars) f0

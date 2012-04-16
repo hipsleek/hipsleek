@@ -1059,6 +1059,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
               let _ = print_string ("Eliminating pointers...\n"); flush stdout in
               let new_prog = Pointers.trans_pointers prog in
               let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
+              (* let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in *)
               new_prog
             else prog
           in
@@ -2768,7 +2769,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_block_body = seq_1;
                       C.exp_block_local_vars = local_vars;
                       C.exp_block_pos = pos; }),ret_ct)))
-            with | Not_found -> 
+            with | Not_found ->
+                (* let _ = print_endline ("ERROR ie = " ^ (Iprinter.string_of_exp ie)) in *)
+                (* let _ = print_endline ("ERROR prog = " ^ (Iprinter.string_of_program prog)) in *)
                 Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 2 " ^ (mingled_mn ^ " is not found");})
       | I.Catch { I.exp_catch_var = cv;
 	    I.exp_catch_flow_type = cvt;

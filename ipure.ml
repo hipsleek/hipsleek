@@ -358,6 +358,11 @@ and mkOr f1 f2 lbl pos = match f1 with
       | BForm ((BConst (true, _), _), _) -> f2
       | _ -> Or (f1, f2, lbl, pos)
 
+and mkEqVarExp (v1 : (ident * primed)) (v2 : (ident * primed)) pos =
+  let e1 = Var (v1,pos) in
+  let e2 = Var (v2,pos) in
+  mkEqExp e1 e2 pos
+
 and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
