@@ -32,6 +32,10 @@ module F = Iformula
 module Err = Error
 module E = Env
 
+
+(* Addressable variables *)
+let h = Hashtbl.create 200
+
 (*
   Auxiliary procs due to translation
   [int x;
@@ -795,7 +799,7 @@ let trans_exp_ptr prog (e:exp) (vars: ident list) : exp * (ident list) =
   new_params: list of new params to translate
   pos: 
 *)
-let trans_specs_x specs new_params flags pos =
+let rec trans_specs_x specs new_params flags pos =
   (*
     inc(ref int x,int y) ensures x'=x+y ==>
     inc(ref int_ptr x, int_ptr y)
@@ -887,9 +891,9 @@ let trans_specs_x specs new_params flags pos =
   let new_specs3 = Iformula.add_h_formula_to_post (post,ex_vars) new_specs2 in
   new_specs3
 
-let trans_specs specs (new_params:param list) flags pos =
+and trans_specs specs (new_params:param list) flags pos =
   let pr = pr_list string_of_bool in
-  Debug.no_3 "trans_specs"
+  Debug.ho_3 "trans_specs"
       string_of_struc_formula string_of_param_list pr string_of_struc_formula
       (fun _ _ _ -> trans_specs_x specs new_params flags pos) specs new_params flags
 (*****************************)
@@ -903,7 +907,7 @@ let trans_specs specs (new_params:param list) flags pos =
   flags: bitmap to decide which paramters to be translated
   new_proc_name : name of the new auxiliary proc
 *)
-let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) (new_proc_name:ident) pos =
+and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) (new_proc_name:ident) pos =
   (* let _ = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
   (*inc(ref int x,int y) --> inc(ref int_ptr x, int_ptr y)*)
   let params = proc.proc_args in
@@ -983,7 +987,7 @@ let create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
 (*********************************)
 
 
-let mkDelete (var:ident) pos =
+and mkDelete (var:ident) pos =
   let arg = Var {exp_var_name =var; exp_var_pos = pos} in
   let args = [arg] in
   CallNRecv {
@@ -999,11 +1003,11 @@ let mkDelete (var:ident) pos =
   addr_vars = find_add e(scope2);
   vars_to_delete(scope2) = (vars(scope2) \diff vars(scope1)) \intesect addr_vars
 *)
-let compute_vars_to_delete_x addr_vars outer_vars inner_vars : ident list =
+and compute_vars_to_delete_x addr_vars outer_vars inner_vars : ident list =
   let new_vars = Gen.BList.difference_eq (=) inner_vars outer_vars in
   Gen.BList.intersect_eq (=) new_vars addr_vars
 
-let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
+and compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
   let pr = string_of_ident_list in
   Debug.no_3 "compute_vars_to_delete" 
       pr pr pr pr
@@ -1025,7 +1029,7 @@ let compute_vars_to_delete addr_vars outer_vars inner_vars : ident list =
 
   vars: fordward a list of vars that has been taken address-off
 *)
-let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
+and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
   let rec helper (e:exp) (vars: ident list) : (exp) =
     match e with
       | Var { exp_var_name = v; exp_var_pos = pos } ->
@@ -1535,6 +1539,7 @@ let rec trans_exp_addr prog (e:exp) (vars: ident list) : exp =
   in helper e vars
 
 (*Find a list of variables with address_of &x*)
+(*intra-procedural analysis*)
 and find_addr (e:exp) : ident list =
   let rec helper e =
     match e with
@@ -1669,18 +1674,18 @@ and find_addr (e:exp) : ident list =
   in helper e
   
 
-let trans_global_var_decl (decl:exp_var_decl) : exp_var_decl =
+and trans_global_var_decl (decl:exp_var_decl) : exp_var_decl =
   let t = decl.exp_var_decl_type in
   let new_t = convert_typ t in
   {decl with exp_var_decl_type = new_t}
 
-let trans_param (p:param) : param =
+and trans_param (p:param) : param =
   let t = p.param_type in
   let new_t = convert_typ t in
   {p with param_type = new_t}
 
 (*Add code for pass-by-val variables that are addressed of*)
-let rec add_code_val e (x,ptrx) =
+and add_code_val e (x,ptrx) =
   (*for each arg in val_params1:
     int_ptr ptrx = new int_ptr(x);
     ...
@@ -1713,7 +1718,7 @@ let rec add_code_val e (x,ptrx) =
   new_e1
 
 (*Add code for pass-by-ref variables that are addressed of*)
-let rec add_code_ref e (x,ptrx) =
+and add_code_ref e (x,ptrx) =
   (*for each arg in ref_params1:
     int_ptr ptrx = new int_ptr(x);
     ...
@@ -1770,7 +1775,7 @@ let rec add_code_ref e (x,ptrx) =
   let new_e2 = mkSeq new_e1 e3 pos in
   new_e2
 
-let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
+and trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
   let params = proc.proc_args in
@@ -1779,7 +1784,7 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
   let new_mingled = mingle_name_enum prog proc.proc_name ptypes in
   (*List of params (typ*ident) that has been changed*)
   let func p = 
-    let t = p.param_type in 
+    let t = p.param_type in
     (match t with
       | Pointer _ -> true
       | _ -> false)
@@ -1792,6 +1797,7 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
     | None -> None
     | Some body -> 
         let body1,_ = trans_exp_ptr prog body vars in
+        let _ = print_endline ("### [" ^ proc.proc_name ^ "] body1 (after trans_exp_ptr): \n " ^ (string_of_exp body1)) in
         (*Similar to Astsimp.trans_proc*)
         let _ = E.clear () in
         let _ = E.push_scope () in
@@ -1806,6 +1812,8 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
                  param_loc = proc.proc_loc;} in 
              this_arg :: new_params)
           else new_params in
+        (*addressable reference parameters*)
+        let rvars = Hashtbl.find h proc.proc_name in
         let val_params,ref_params = List.partition (fun p -> (p.param_mod = NoMod)) all_args in
         (*addr_vars contains variables that are taken adrress-of in e1*)
         let addr_vars = find_addr body1 in
@@ -1860,7 +1868,14 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
         in
         let vinfos = List.map p2v all_args in
         let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
-        let body3 = trans_exp_addr prog body2 addr_vars in
+        (*Need to trans_exp_addr of
+        addressable reference variables  : rvars (from hashtbl h)
+        and addressable local variables
+          Note that (rvars - addr_vars) may be non-empty
+        *)
+        let trans_vars = Gen.BList.remove_dups_eq (=) (rvars@addr_vars) in
+        let _ = print_endline ("### [" ^ proc.proc_name ^ "] trans_vars:  " ^ (string_of_ident_list trans_vars)) in
+        let body3 = trans_exp_addr prog body2 trans_vars in
         let _,inner_vars = List.split (E.visible_names ()) in
         (*those that were converted and need to be deleted*)
         let vars = compute_vars_to_delete addr_vars [] inner_vars in
@@ -1887,7 +1902,7 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
           else
             new_body2
         in
-        (* let _ = print_endline ("new_body3: \n " ^ (string_of_exp new_body3)) in *)
+        let _ = print_endline ("### [" ^ proc.proc_name ^ "] new_body3: \n " ^ (string_of_exp new_body3)) in
         (* <<< Add code for pass-by-ref variables that are addressed of*)
 
         let _ = E.pop_scope () in
@@ -1899,15 +1914,304 @@ let trans_proc_decl_x prog (proc:proc_decl) : proc_decl =
       proc_args = new_params;
       proc_body = new_body}
 
-let trans_proc_decl prog (proc:proc_decl) : proc_decl =
+and trans_proc_decl prog (proc:proc_decl) : proc_decl =
   Debug.no_1 "trans_proc_decl"
       string_of_proc_decl string_of_proc_decl
       (fun _ ->  trans_proc_decl_x prog proc) proc
+
+(*
+  @param vs : addressable reference params
+*)
+(*inter-procedural analysis*)
+let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
+  (*Identify list of addressable params ONLY inside proc_body*)
+  let mn = proc.proc_name in
+  let rvars,from_hashtbl = 
+  (try
+       (*look up*)
+       let rvars = Hashtbl.find h mn in
+       let dvars = Gen.BList.difference_eq (=) vs rvars in
+       if (dvars=[]) then 
+         (rvars,true) 
+       else
+         let new_rvars = (rvars@dvars) in
+         (new_rvars,false)
+   with | Not_found ->
+       (vs,false)
+  )
+  in
+  if (from_hashtbl) then rvars else
+    (*if not found -> find*)
+    (match proc.proc_body with
+      | None -> 
+          let _ = Hashtbl.replace h proc.proc_name [] in
+          []
+      | Some e ->
+          (* let _ = print_endline ("find_addr_inter_proc: proc_name = " ^ proc.proc_name) in *)
+          (*vars that have been taken address_of in proc body*)
+          let addr_vars = find_addr e in
+          (*params that have been taken address_of*)
+          let params = List.filter (fun param -> 
+              (List.mem param.param_name addr_vars) 
+              || (List.mem param.param_name rvars)
+          ) proc.proc_args in
+          (*create an entry for the hashtbl*)
+          let p_names = List.map (fun p -> p.param_name) params in
+          let _ = Hashtbl.replace h proc.proc_name p_names in
+          (*vars that have been passed as reference and 
+            are addressable in callees of this proc*)
+          (* let _ = print_endline (proc.proc_name ^ " : vs" ^ (string_of_ident_list vs)) in *)
+          (* let _ = print_endline (proc.proc_name ^ " : addr_vars" ^ (string_of_ident_list addr_vars)) in *)
+          (* let _ = print_endline (proc.proc_name ^ " : rvars" ^ (string_of_ident_list rvars)) in *)
+          (* let _ = print_endline (proc.proc_name ^ " : p_names" ^ (string_of_ident_list p_names)) in *)
+          let vars = find_addr_inter_exp prog e addr_vars in
+          (* let _ = print_endline (proc.proc_name ^ " : vars" ^ (string_of_ident_list vars)) in *)
+
+          let vars = Gen.BList.remove_dups_eq (=) (p_names@vars) in
+          let _ = Hashtbl.replace h proc.proc_name vars in
+          vars
+    )
+
+(*
+  @param vs : addressible variables in the entire method body
+  @return : addressible variables that are passed by reference
+*)
+and find_addr_inter_exp prog e (vs:ident list) : ident list =
+  let rec helper e vs=
+    match e with
+      | Var v -> []
+      | VarDecl v ->
+          let vars = List.map (fun (id,e0,pos) ->
+              match e0 with
+                | None -> []
+                | Some e0 -> helper e0 vs) v.exp_var_decl_decls
+          in
+          let vars = List.concat vars in
+          vars
+      | ConstDecl c ->
+          let vars = List.map (fun (id,e0,pos) -> helper e0 vs) c.exp_const_decl_decls in
+          let vars = List.concat vars in
+          vars
+      | Unary u ->
+          let vars = helper u.exp_unary_exp vs in
+          vars
+	  | ArrayAt b ->
+          let vars1 =  helper b.exp_arrayat_array_base vs in
+          let vars2 = List.concat (List.map (fun e -> helper e vs) b.exp_arrayat_index) in
+          (vars1@vars2)
+	  | ArrayAlloc a ->
+          let vars = List.concat (List.map (fun e -> helper e vs) a.exp_aalloc_dimensions) in
+          vars
+      | Assert _ -> []
+      | Assign a ->
+          let vs1 = helper a.exp_assign_lhs vs in
+          let vs2 = helper a.exp_assign_rhs vs in
+          (vs1@vs2)
+      | Binary b ->
+          let vs1 = helper b.exp_binary_oper1 vs in
+          let vs2 = helper b.exp_binary_oper2 vs in
+          (vs1@vs2)
+      | Bind b ->
+          let vars = helper b.exp_bind_body vs in 
+          vars
+      | Block b ->
+          (*Note: no more Block after case_normalize_program*)
+          let vars = helper b.exp_block_body vs in
+          vars
+      | BoolLit _ -> []
+      | Break _ -> []
+      | CallRecv {exp_call_recv_method = orig_mn;
+                  exp_call_recv_arguments = args;
+                  exp_call_recv_pos = pos}
+      | CallNRecv {exp_call_nrecv_method = orig_mn;
+                  exp_call_nrecv_arguments = args;
+                  exp_call_nrecv_pos = pos} ->
+          let mn,args =
+            if (orig_mn=Globals.fork_name) then
+              let fn_exp = (List.hd args) in
+              match fn_exp with
+                | Var v ->
+                    (v.exp_var_name,List.tl args)
+                | _ ->
+                    Error.report_error {Error.error_loc = no_pos; Error.error_text = ("[Pointers.ml] expecting a method name as the first parameter of a fork")}
+            else
+              (orig_mn,args)
+          in
+          let vars = List.concat (List.map (fun e -> helper e vs) args) in
+          (try
+               let decl = look_up_proc_def_raw prog.prog_proc_decls mn in
+               let params = decl.proc_args in
+               (*rvars is the old list of addressible variables in the hashtbl*)
+               let rvars,from_hashtbl =
+                 (try
+                      (*look up*)
+                      let rvars = Hashtbl.find h mn in
+                      (rvars,true)
+                  with | Not_found ->
+                      (*not found -> find*)
+                      ([],false)
+                 ) in
+               (*find list of addressible variables and their corresponding param 
+                 that are passed by reference to the procedure*)
+               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : vs = " ^ (string_of_ident_list vs)) in *)
+               let tmp =
+                 (try
+                      List.map2 (fun param arg ->
+                          if (param.param_mod = RefMod) then
+                            (match arg with
+                              | Var v ->
+                                  (*if the actual arg is an addressable variable*)
+                                  if (List.mem v.exp_var_name vs) then
+                                    [v.exp_var_name,param.param_name]
+                                  else
+                                    []
+                              | _ ->
+                                  Error.report_error 
+                                      {Err.error_loc = pos;
+                                       Err.error_text = "Expecting only variables are passed by reference in procedure " ^ mn ^ ": arg = " ^ string_of_exp arg})
+                          else []
+                      ) params args
+                  with | _ -> 
+                      Error.report_error 
+                          {Err.error_loc = pos;
+                           Err.error_text = "Procedure " ^ orig_mn ^ "Args and Params not matched "})
+               in
+               (*pvars is the new list of addressable params*)
+               let avars,pvars = List.split (List.concat tmp) in
+               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : avars = " ^ (string_of_ident_list avars)) in *)
+               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : pvars = " ^ (string_of_ident_list pvars)) in *)
+               (*TO CHECK: recursive call ??? *)
+               (*============FIXPOINT=========================>*)
+               let rvars =
+                 let dvars = Gen.BList.difference_eq (=) pvars rvars in
+                 if ((dvars=[]) && (from_hashtbl=true)) 
+                 then
+                   (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : fixed-point") in *)
+                   rvars  (*reach fix-point*)
+                 else
+                   let new_rvars = (rvars@dvars) in
+                   (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : new_rvars = " ^ (string_of_ident_list new_rvars)) in *)
+                   (*re-compute the list of addressible reference parameters
+                   for the proc decl*)
+                   find_addr_inter_proc prog decl new_rvars
+               in
+               (*<======================================*)
+               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
+               let fct param arg =
+                 if (List.mem param.param_name rvars) then
+                        (*identifer the variable name*)
+                   (match arg with
+                     | Var v ->
+                         [v.exp_var_name]
+                     | _ ->
+                         Error.report_error 
+                             {Err.error_loc = pos;
+                              Err.error_text = "Expecting only variables are passed by reference in procedure " ^ mn ^ ": arg = " ^ string_of_exp arg})
+                 else []
+               in
+               (*vars that are passed as addressable params*)
+               let vars = List.map2 fct params args in
+               let vars = List.concat vars in
+               vars
+           with Not_found ->
+               Error.report_error 
+                   {Err.error_loc = pos;
+                    Err.error_text = "Procedure " ^ mn ^ " not found!"})
+      | Cast c ->
+          let vs = helper c.exp_cast_body vs in
+          vs
+      | Cond c ->
+          let vs1 = helper c.exp_cond_condition vs in
+          let vs2 = helper c.exp_cond_then_arm vs in
+          let vs3 = helper c.exp_cond_else_arm vs in
+          (vs1@vs2@vs3)
+      | Finally f ->
+          let vs = helper f.exp_finally_body vs in
+          vs
+      | Label ((pid,plbl),e0) ->
+          let vs = helper e0 vs in
+          vs
+      | Member m ->
+          let vs = helper m.exp_member_base vs in
+          vs
+      | New n ->
+          let vs = List.concat (List.map (fun e -> helper e vs) n.exp_new_arguments) in
+          vs
+      | Try t ->
+          let vs1 = helper t.exp_try_block vs in
+          (*vars in try_block are still in scopes of catch_clauses
+            and finally clause*)
+          let vs2 = List.concat (List.map (fun e -> helper e vs) t.exp_catch_clauses) in
+          let vs3 = List.concat (List.map (fun e -> helper e vs) t.exp_finally_clause) in
+          (vs1@vs2@vs3)
+      | Raise r -> (*Assume no pointers*)
+          []
+      | Catch _ -> (*assume no pointer*)
+          []
+      | Return r ->
+          (match r.exp_return_val with
+            | None -> []
+            | Some e0 ->
+                let vs = helper e0 vs in
+                vs
+          )
+      | Seq s ->
+          let vs1 = helper s.exp_seq_exp1 vs in
+          let vs2 = helper s.exp_seq_exp2 (vs@vs1) in
+          (vs1@vs2) (*TO CHECK: ??? *)
+      | This _ -> (*assume no pointer *)
+          []
+      | While w ->
+          let vs1 = helper w.exp_while_condition vs in
+          let vs2 = helper w.exp_while_body vs in
+          (*TO CHECK: not sure what exp_while_wrappings is for? *)
+          let vs3 =
+            (match w.exp_while_wrappings with
+              | None -> []
+              | Some e0 ->
+                  helper e0 vs
+            )
+          in
+          (vs1@vs2@vs3)
+      | Debug _
+      | Dprint _
+      | Empty _
+      | FloatLit _
+      | IntLit _
+      | Java _
+      | Null _
+      | Time _
+      | Unfold _
+      | Continue _ -> []
+  in helper e vs
 
 let trans_pointers_x (prog : prog_decl) : prog_decl =
   let gvar_decls = prog.prog_global_var_decls in
   let new_gvar_decls = List.map trans_global_var_decl gvar_decls in
   (* let procs = prog.prog_proc_decls in *)
+  (*Empty hashtbl h*)
+  let _ = Hashtbl.clear h in
+  let _ =
+    (try
+         List.map (fun proc -> find_addr_inter_proc prog proc []) prog.prog_proc_decls
+
+     with | Not_found ->
+         Error.report_error
+             {Err.error_loc = no_pos;
+              Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
+  in
+  let _ =
+    (try
+         List.map (fun proc ->
+             let vars = Hashtbl.find h proc.proc_name in
+             if (vars!=[]) then
+             print_endline ("After find_addr_inter_proc --> " ^ proc.proc_name ^ " : " ^ string_of_ident_list vars)
+         ) prog.prog_proc_decls
+     with | Not_found ->
+         Error.report_error
+             {Err.error_loc = no_pos;
+              Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
+  in
   let new_procs = List.map (trans_proc_decl prog) prog.prog_proc_decls in
   let new_procs1 = new_procs@(!aux_procs) in
   {prog with prog_global_var_decls = new_gvar_decls;
