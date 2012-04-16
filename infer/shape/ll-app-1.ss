@@ -12,9 +12,8 @@ ll1<n> == self = null & n=0
   inv n>=0;
 
 void append(node x, node y)
-  infer {ll->ll1} @xpost []
-  requires x::ll<>*y::ll<> & x!=null
-  ensures x::ll<>;
+  requires true
+  ensures true;
 {
   if (x.next==null) {
     x.next=y; 

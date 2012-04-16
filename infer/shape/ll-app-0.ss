@@ -8,9 +8,8 @@ ll<> == self = null
   inv true;
 
 void append(node x, node y)
-  infer @xpre []
-  requires x::ll<>*y::ll<>
-  ensures x::ll<>;
+  requires true
+  ensures true;
 {
   if (x.next==null) {
     x.next=y; 

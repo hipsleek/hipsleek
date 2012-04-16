@@ -1,2 +1,2 @@
-PRE: lst2::ll@M[Orig][LHSCase] * lst1::ll@M[Orig][LHSCase] & true
-POST: lst1::ll@M[Orig][LHSCase] & lst1!=null
+requires lst2::ll<> * lst1::ll<> & true
+ensures lst1::ll<> & lst1!=null;

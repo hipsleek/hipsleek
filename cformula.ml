@@ -228,6 +228,7 @@ let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
+let print_h_formula_for_spec = ref(fun (c:h_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
 let print_mix_formula = print_mix_f
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
@@ -5350,6 +5351,43 @@ and struc_to_formula f0 :formula =
   let pr1 = !print_struc_formula in
   let pr2 = !print_formula in
   Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
+
+let rec normalize_struc cont base: struc_formula = match cont with
+  | ECase b -> 
+    ECase {b with formula_case_branches = 
+      List.map (fun (p,c) -> (p, normalize_struc c base)) b.formula_case_branches}
+  | EBase b ->
+    let new_base = normalize_combine base.formula_struc_base b.formula_struc_base base.formula_struc_pos in
+    (match b.formula_struc_continuation with
+      | None -> EBase base
+      | Some c -> normalize_struc c {b with formula_struc_base = new_base})
+  | EAssume _ -> EBase base
+  | EInfer b -> 
+    EInfer {b with formula_inf_continuation = normalize_struc b.formula_inf_continuation base}
+  | EOr b -> EOr {b with formula_struc_or_f1 = normalize_struc b.formula_struc_or_f1 base;
+                         formula_struc_or_f2 = normalize_struc b.formula_struc_or_f2 base}
+  | EList b -> EList (List.map (fun (l,c) -> (l,normalize_struc c base)) b)
+
+(* Convert struc_formula to pre/post structure *)
+let rec struc_to_prepost_x (f:struc_formula): struc_formula = match f with
+  | ECase b -> 
+    ECase {b with formula_case_branches = 
+      List.map (fun (p,c) -> (p, struc_to_prepost_x c)) b.formula_case_branches}
+  | EBase b ->
+    let new_b = match b.formula_struc_continuation with
+      | None -> f
+      | Some c -> normalize_struc c b
+    in
+    new_b
+  | EAssume _ -> f 
+  | EInfer b -> EInfer {b with formula_inf_continuation = struc_to_prepost b.formula_inf_continuation}
+  | EOr b -> EOr {b with formula_struc_or_f1 = struc_to_prepost_x b.formula_struc_or_f1;
+                         formula_struc_or_f2 = struc_to_prepost_x b.formula_struc_or_f2}
+  | EList b -> EList (List.map (fun (l,c) -> (l,struc_to_prepost_x c)) b)
+
+and struc_to_prepost f0 : struc_formula = 
+  let pr = !print_struc_formula in
+  Debug.no_1 "struc_to_prepost" pr pr struc_to_prepost_x f0
 
 (* An Hoa : construct pre-condition from a structured spec formula *)
 let rec struc_to_precond_formula (f : struc_formula) : formula = match f with

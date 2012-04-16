@@ -16,9 +16,8 @@ ll2<n, sm, lg> == self = null & n = 0 & sm <= lg
   inv n >= 0 & sm <= lg;
 
 void append(node x, node y)
-  infer {ll1->ll2} []
-  requires x::ll1<m>*y::ll1<n> & x!=null
-  ensures x::ll1<z> & z=m+n;
+  requires true
+  ensures true;
 {
   if (x.next==null) {
     x.next=y; 

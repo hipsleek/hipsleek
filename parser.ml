@@ -488,10 +488,10 @@ and get_heap_ann annl : F.ann =
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
-
+let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
@@ -616,11 +616,12 @@ opt_transpec: [[t=OPT transpec -> un_option t None ]];
 
 transpec:
   [[ `OBRACE; `IDENTIFIER old_view_name; `LEFTARROW; `IDENTIFIER new_view_name; `CBRACE ->
-    if not(view_names # mem old_view_name) then 
-      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ old_view_name ^ " is not initialized.")
-    else if not(view_names # mem new_view_name) then 
-      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ new_view_name ^ " is not initialized.")
-    else Some (old_view_name, new_view_name)
+(*    if not(view_names # mem old_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ old_view_name ^ " is not initialized.")*)
+(*    else if not(view_names # mem new_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ new_view_name ^ " is not initialized.")*)
+(*    else *)
+      Some (old_view_name, new_view_name)
   ]];
 
 
@@ -1507,6 +1508,10 @@ enumerator:
  
 (****Specs *******)
 opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
+
+opt_spec_list_file: [[t = LIST0 spec_list_file -> t]];
+
+spec_list_file: [[`IDENTIFIER id; t = opt_spec_list -> (id, t)]];
  
 opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
@@ -2134,5 +2139,5 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
-
+let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
  
