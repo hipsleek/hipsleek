@@ -96,6 +96,67 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let is_pointer (name:ident) = 
+  let slen = (String.length name) in
+  try  
+      let n = (String.rindex name '_') in
+      (* let _ = print_endline ((string_of_int n)) in *)
+      let l = (slen-(n+1)) in
+      if (l==0) then (false,name)
+      else 
+        let str = String.sub name (n+1) (slen-(n+1)) in
+        if (str = "ptr") then
+          let s = String.sub name 0 n in
+          (true,s)
+        else
+          (false,name)
+  with  _ -> (false,name)
+
+let is_pointer_typ (t:typ) : bool =
+  match t with
+    | Pointer _ -> true
+    | _ -> false
+
+let convert_typ (t:typ) : typ =
+  match t with
+    | Pointer t1 -> 
+        (match t1 with
+          | Int -> Named "int_ptr"
+          | Pointer t2 ->
+              (match t2 with
+                | Int -> Named "int_ptr_ptr"
+                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
+              )
+          | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t
+
+let revert_typ (t:typ) : typ =
+  (match t with
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Int
+          | "int_ptr_ptr" -> Named "int_ptr"
+          | _ -> Named "Not_Support")
+    | _ -> Named "Not_Support")
+
+let name_of_typ (t:typ) : string =
+  (match t with
+    | Named t1 ->
+        t1
+    | _ -> 
+        "Not_Support")
+
+let convert_prim_to_obj (t:typ) : typ =
+  (match t with
+    | Int -> Named "int_ptr"
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Named "int_ptr_ptr"
+          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
+  )
 
 (*
   Data types for code gen

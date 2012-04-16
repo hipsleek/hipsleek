@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open Gen.Basic
 open Label_only
 open Label
 
@@ -88,6 +89,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | UnionRel of (relation * relation)
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 
 module Exp_Pure =
 struct 
@@ -1186,4 +1188,106 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
 
+let find_equal_var (p:formula) : ((ident*primed) * (ident*primed)) list =
+  (match p with
+    | BForm ((p_f,_),_) ->
+        (match p_f with
+          | Eq (e1,e2,pos) ->
+              (match e1,e2 with
+                | Var (v1,_), Var (v2,_) ->
+                    [(v1,v2)]
+                | _ -> []
+              )
+          | _ -> []
+        )
+    | _ -> []
+  )
 
+let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) : (ident*primed) list = 
+  let rec helper (vs: (ident*primed) list) (vv:((ident*primed) * (ident*primed)) list) =
+    match vv with
+      | (v1,v2)::xs -> 
+          let v3 = if (List.exists (fun v -> eq_var v v1) vs) then Some v2
+              else if (List.exists (fun v -> eq_var v v2) vs) then Some v1
+              else 
+                None 
+          in
+          (match v3 with
+            | None -> helper vs xs
+            | Some x -> helper (x::vs) xs)
+      | [] -> vs
+  in
+  helper [v] vv
+
+let find_closure_pure_x (v:(ident*primed)) (f:formula) : (ident*primed) list =
+  let ps = list_of_conjs f in
+  let eqvars = List.map find_equal_var ps in
+  let eqvars = List.concat eqvars in
+  find_closure v eqvars
+
+(*find all variables that are equal to variable v*)
+let find_closure_pure (v:(ident*primed)) (f:formula) : (ident*primed) list =
+  let pr = pr_list !print_id in
+  Debug.no_2 "find_closure_pure"
+      !print_id !print_formula pr
+      find_closure_pure_x v f
+
+(*parition a formula f into those of vs and the rest*)
+let partition_pointer (vs:(ident*primed) list) (f:formula) : (formula list)* (formula list) =
+  let ps = list_of_conjs f in
+  let rec helper ps =
+    match ps with
+      | [] -> [],[]
+      | (e::es) ->
+          let ls1,ls2 = helper es in
+          let vars = find_equal_var e in
+          let vars = List.map (fun (v1,v2) -> [v1;v2]) vars in
+          let vars = List.concat vars in
+          if (vars!=[] & List.for_all (fun v -> Gen.BList.mem_eq eq_var v vs) vars) then
+            (*YES: belong to vs*)
+            (e::ls1),ls2
+          else
+            ls1,e::ls2
+  in
+  let ls1,ls2 = helper ps in
+  (ls1,ls2)
+
+and subst_var (fr, t) (o : (ident*primed)) = if (eq_var fr o) then t else o
+
+(*x'=x ==> x_new = x_old*)
+let trans_special_formula s (p:formula) vars =
+  (match p with
+    | BForm ((p_f,sth1),sth2) ->
+        (match p_f with
+          | Eq (e1,e2,pos) ->
+              (match e1,e2 with
+                | Var ((id1,p1),pos1), Var ((id2,p2),pos2) ->
+                    (*x'=x*)
+                    if (id1=id2) & (p1!=p2) then
+                      if (Gen.BList.mem_eq eq_var (id1,p1) vars) || (Gen.BList.mem_eq eq_var (id2,p2) vars) then
+                        let unprimed_param = (id1,Unprimed) in
+                        let primed_param = (id1,Primed) in
+                        let old_param = (id1^"_old",Unprimed) in
+                        let new_param = (id1^"_new",Unprimed) in
+                        let s1 = (unprimed_param,old_param) in
+                        let s2 = (primed_param,new_param) in
+                        (*??? QUICK TRICK*)
+                        (* let _ = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
+                        (* let _ = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
+                        let new_v1 = subst_var s1 (id1,p1) in
+                        let new_v1 = subst_var s2 new_v1 in
+                        let new_v2 = subst_var s1 (id2,p2) in
+                        let new_v2 = subst_var s2 new_v2 in
+                        let e1 = Var (new_v1,pos1) in
+                        let e2 = Var (new_v2,pos2) in
+                        let ee = Eq (e1,e2,pos) in
+                        BForm ((ee,sth1),sth2)
+                      else p
+                    else p
+                | _ -> p
+              )
+          | _ -> p
+        )
+    | _ -> p
+  )
+  

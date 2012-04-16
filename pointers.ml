@@ -118,55 +118,6 @@ let string_of_subst_primed (subst: ((ident*primed)*(ident * primed)) list) : str
   pr_list (pr_pair pr pr) subst
 
 
-let is_pointer_typ (t:typ) : bool =
-  match t with
-    | Pointer _ -> true
-    | _ -> false
-
-let convert_typ (t:typ) : typ =
-  match t with
-    | Pointer t1 -> 
-        (match t1 with
-          | Int -> Named "int_ptr"
-          | Pointer t2 ->
-              (match t2 with
-                | Int -> Named "int_ptr_ptr"
-                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
-              )
-          | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
-        )
-    | _ -> t
-
-let revert_typ (t:typ) : typ =
-  (match t with
-    | Named t1 ->
-        (match t1 with
-          | "int_ptr" -> Int
-          | "int_ptr_ptr" -> Named "int_ptr"
-          | _ -> Named "Not_Support")
-    | _ -> Error.report_error 
-        {Err.error_loc = no_pos;
-         Err.error_text = "Expecting Named t when revert_typ"})
-
-let name_of_typ (t:typ) : string =
-  (match t with
-    | Named t1 ->
-        t1
-    | _ -> Error.report_error 
-        {Err.error_loc = no_pos;
-         Err.error_text = "Expecting Named t when name_of_typ"})
-
-let convert_prim_to_obj (t:typ) : typ =
-  (match t with
-    | Int -> Named "int_ptr"
-    | Named t1 ->
-        (match t1 with
-          | "int_ptr" -> Named "int_ptr_ptr"
-          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
-        )
-    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
-  )
-
 let subst_var (v:ident) (subst:(ident*ident) list) : ident =
   let rec helper subst =
     match subst with
@@ -826,11 +777,19 @@ let rec trans_specs_x specs new_params flags pos =
         (sub1::(sub2::sst))
       else sst) [] tmp
   in
-  let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in
-  let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in
-
-  let new_specs = Iformula.subst_all_struc sst specs in
-  let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in
+  (* let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in *)
+  (* let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in *)
+  (*list of addressable reference parameters*)
+  let rvars = List.map (fun (param,flag) ->
+      if (flag) then [(param.param_name, Unprimed)] else []
+  ) tmp
+  in
+  let rvars = List.concat rvars in 
+  (*NEED to maintain point-to information
+    e.g. p::int_ptr(x) --> p=x
+  *)
+  let new_specs = Iformula.subst_pointer_struc sst specs rvars in
+  (* let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
   (*create h_formula to add to pre-condition*)
   (* inc(ref int_ptr x, int_ptr y) *)
   (*   requires [old_x,old_y] x::node<old_x> * y::node<old_y> *)
@@ -2287,18 +2246,18 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
              {Err.error_loc = no_pos;
               Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
   in
-  let _ =
-    (try
-         List.map (fun proc ->
-             let vars = Hashtbl.find h proc.proc_name in
-             if (vars!=[]) then
-             print_endline ("After find_addr_inter_proc --> " ^ proc.proc_name ^ " : " ^ string_of_ident_list vars)
-         ) prog.prog_proc_decls
-     with | Not_found ->
-         Error.report_error
-             {Err.error_loc = no_pos;
-              Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
-  in
+  (* let _ = *)
+  (*   (try *)
+  (*        List.map (fun proc -> *)
+  (*            let vars = Hashtbl.find h proc.proc_name in *)
+  (*            if (vars!=[]) then *)
+  (*            print_endline ("After find_addr_inter_proc --> " ^ proc.proc_name ^ " : " ^ string_of_ident_list vars) *)
+  (*        ) prog.prog_proc_decls *)
+  (*    with | Not_found -> *)
+  (*        Error.report_error *)
+  (*            {Err.error_loc = no_pos; *)
+  (*             Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"}) *)
+  (* in *)
   let new_procs = List.map (fun proc -> trans_proc_decl prog proc false) prog.prog_proc_decls in
   let new_procs1 = new_procs@(!aux_procs) in
   {prog with prog_global_var_decls = new_gvar_decls;
