@@ -300,7 +300,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
         (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest)
   | HTrue -> (
       if (rhs_rest = HEmp) then (
-        (* if rhs = HTrue, then allow residue in lhs *)
+        (* if whole RHS is HTrue then it matches with the whole LHS*)
         let mres = { match_res_lhs_node = lhs_h;
                    match_res_lhs_rest = HEmp;
                    match_res_holes = [];
@@ -792,31 +792,29 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
 and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   match l with
     | [] -> 
-          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-          let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
-          if (is_view rhs_node) && (get_view_original rhs_node) then
-            let r = (2, M_base_case_fold {
-                match_res_lhs_node = HEmp;
-                match_res_lhs_rest = lhs_h;
-                match_res_holes = [];
-                match_res_type = Root;
-                match_res_rhs_node = rhs_node;
-                match_res_rhs_rest = rhs_rest;}) in 
-        (* WN : why do we need to have a fold following a base-case fold?*)
-        (* changing to no_match found *)
-        (*(-1, Search_action [r])*)
-        (* let r1 = (2, M_fold { *)
-        (*     match_res_lhs_node = HTrue;  *)
-        (*     match_res_lhs_rest = lhs_h;  *)
-        (*     match_res_holes = []; *)
-        (*     match_res_type = Root; *)
-        (*     match_res_rhs_node = rhs_node; *)
-        (*     match_res_rhs_rest = rhs_rest; *)
-        (* }) in *)
-        (* temp removal of infer-heap and base-case fold *)
-
-       (-1, (Cond_action [ ri; r; r0]))
-      else (-1, Cond_action [ ri; r0])
+        let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+        let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
+        if (is_view rhs_node) && (get_view_original rhs_node) then
+          let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+                                         match_res_lhs_rest = lhs_h;
+                                         match_res_holes = [];
+                                         match_res_type = Root;
+                                         match_res_rhs_node = rhs_node;
+                                         match_res_rhs_rest = rhs_rest; }) in 
+          (* WN : why do we need to have a fold following a base-case fold?*)
+          (* changing to no_match found *)
+          (*(-1, Search_action [r])*)
+          (* let r1 = (2, M_fold { *)
+          (*     match_res_lhs_node = HTrue;  *)
+          (*     match_res_lhs_rest = lhs_h;  *)
+          (*     match_res_holes = []; *)
+          (*     match_res_type = Root; *)
+          (*     match_res_rhs_node = rhs_node; *)
+          (*     match_res_rhs_rest = rhs_rest; *)
+          (* }) in *)
+          (* temp removal of infer-heap and base-case fold *)
+          (-1, (Cond_action [ ri; r; r0]))
+        else (-1, Cond_action [ ri; r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
     | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
