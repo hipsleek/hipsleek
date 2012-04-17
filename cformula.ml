@@ -1216,6 +1216,28 @@ and is_data (h : h_formula) = match h with
   | DataNode _ -> true
   | _ -> false
 
+and is_hformula_contain_htrue (h: h_formula) : bool =
+  match h with
+  | Star { h_formula_star_h1 = h1;
+           h_formula_star_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
+  | Conj { h_formula_conj_h1 = h1;
+           h_formula_conj_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
+  | Phase { h_formula_phase_rd = h1;
+            h_formula_phase_rw = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
+  | HTrue -> true
+  | DataNode _
+  | ViewNode _
+  | Hole _
+  | HFalse
+  | HEmp -> false
+
+and is_formula_contain_htrue (h: formula) : bool =
+  match h with
+  | Base { formula_base_heap = h1; } -> is_hformula_contain_htrue h1
+  | Exists { formula_exists_heap = h1; } -> is_hformula_contain_htrue h1
+  | Or { formula_or_f1 = f1; 
+         formula_or_f2 = f2 } -> (is_formula_contain_htrue f1) || (is_formula_contain_htrue f2)
+
 and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c

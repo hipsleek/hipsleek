@@ -3101,7 +3101,13 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
-  
+  (* calculate the context when allowing residue in LHS *)
+  let ctx = match (is_formula_contain_htrue conseq) with
+    | false -> ctx
+    | true -> (match ctx with
+        | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
+        | Ctx estate -> Ctx {estate with es_allow_residue = true}
+      ) in 
   (** [Internal] Collect the data and view nodes in a h_formula. 
 	  @return The list of all DataNode and ViewNode **)
   let rec collect_data_view (f : h_formula) = match f with
@@ -6588,7 +6594,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     let estate = {estate with es_trace = action_name::estate.es_trace} in
     let r1, r2 = match a with  (* r1: list_context, r2: proof *)
       | Context.M_allow_residue residue ->
-          let new_estate = {estate with es_heap = HEmp; es_allow_residue = true} in
+          let new_estate = {estate with es_heap = HEmp;} in
           let ctx = Ctx new_estate in
           let ls_ctx = SuccCtx [ ctx ] in
           let prf = mkAllowResidue ctx conseq in
