@@ -1317,11 +1317,21 @@ let get_proc_name full_proc_name =
 (*  let input_str = syscall ("cat " ^ input_shape) in*)
 (*  infer_shape input_str file_name*)
 
+let get_cmd_from_file =
+  let input_cmd = (get_file_name Sys.argv.(1)) ^ ".cmd" in
+  let input_str = syscall ("cat " ^ input_cmd) in
+  let res = Parse_cmd.parse_cmd input_str in
+(*  print_endline ("SPEC" ^ ((pr_pair (fun x -> x) Cprinter.string_of_struc_formula) res));*)
+  res
+
 let get_spec_from_file = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
   let res = Parser.parse_spec input_str in
 (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
+  let id,cmd = get_cmd_from_file in
+  let res = List.map (fun (id1,spec) -> 
+    if id1=id then (id1,Iformula.merge_cmd cmd spec) else (id1,spec)) res in
   res
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

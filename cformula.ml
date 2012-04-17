@@ -8021,3 +8021,4 @@ let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
   | EOr b -> EOr {b with formula_struc_or_f1 = add_pure b.formula_struc_or_f1 rel_fml_pre rel_fml_post;
                          formula_struc_or_f2 = add_pure b.formula_struc_or_f2 rel_fml_pre rel_fml_post}
 
+

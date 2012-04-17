@@ -1327,3 +1327,17 @@ let float_out_thread_struc_formula (f:struc_formula):struc_formula =
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
       float_out_thread_struc_formula_x f
+
+let mkEInfer xpost transpec pos = EInfer { 
+    formula_inf_post = true;
+    formula_inf_xpost = xpost;
+    formula_inf_transpec = transpec;
+    formula_inf_vars = [];
+    formula_inf_continuation = EList [];
+    formula_inf_pos = pos}
+
+let merge_cmd einfer spec = match einfer with
+  | EInfer e -> EInfer {e with formula_inf_continuation = spec}
+  | _ -> Gen.report_error no_pos "Error in merge_cmd"
+
+

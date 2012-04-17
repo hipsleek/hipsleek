@@ -998,7 +998,7 @@ let rec pr_h_formula h =
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
 let rec pr_h_formula_for_spec h = 
-  let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e in
+  let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula_for_spec e in
   match h with
   | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
     let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
@@ -1479,7 +1479,8 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     );
   | EAssume (x,b,(y1,y2))->
     fmt_string "\n ensures ";
-    pr_formula_for_spec b
+    pr_formula_for_spec b;
+    fmt_string ";"
   | EInfer _ -> report_error no_pos "Do not expect EInfer at this level"
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
   | EOr b ->
