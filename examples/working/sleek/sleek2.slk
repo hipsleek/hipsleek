@@ -12,27 +12,27 @@ pred ll3<n> == self::node<next = r> * r::ll2<n-1>
 	inv n >= 1.
 
 //(1)
-checkentail x::node<_, null> * z::node<> * y::ll<_> |- x::ll<m> * htrue & m = 2.
+checkentail x::node<_, null> * z::node<> * y::ll<_> |- x::ll<m> & m = 2.
 print residue.
 
 //(2)
-checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 1 |- x::ll<m> * htrue.
+checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 1 |- x::ll<m>.
 print residue.
 
 //(3)
-checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 0 |- x::ll<m> * htrue.
+checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 0 |- x::ll<m>.
 print residue.
 
 //(4)
-checkentail x::node<_, null> * y::ll<1> |- x::ll<m> * htrue & m = 0.
+checkentail x::node<_, null> * y::ll<1> |- x::ll<m> & m = 0.
 print residue.
 
 //(5)
-checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2> * htrue.
+checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
 print residue.
 
 //(6)
-checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<m> * htrue & m >= n+1.
+checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<m> & m >= n+1.
 print residue.
 
 //(7)
