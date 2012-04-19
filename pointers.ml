@@ -856,6 +856,7 @@ let rec trans_specs_x specs new_params flags pos =
   (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
   let new_specs3 = Iformula.add_formula_to_post (post,ex_vars) new_specs2 in
+  (* let _ = print_endline ("new_specs3: " ^ (string_of_struc_formula new_specs3)) in *)
   new_specs3
 
 and trans_specs specs (new_params:param list) flags pos =
@@ -1313,20 +1314,25 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                 If there are some parameters that are not addressable
                 -> create auxiliary variables
               *)
-              let trans_arg_addr arg (* param *) =
+              let trans_arg_addr arg param =
                 match arg with
                   | Var e0 -> 
                       (*Maybe we only need to translate for primitive types*)
                       (*If this argument var needs to be translate*)
-                      if (List.mem e0.exp_var_name vars) then
+                      if (List.mem e0.exp_var_name vars)  
+                        & (param.param_mod = RefMod) then
+                        (*addressable variable that are passed by reference*)
                         (true,arg) (*need to be processed*)
                       else
-                        (false,arg)
+                        (*normal variables or addressible variables that are
+                        passed by value*)
+                        let new_arg = helper arg vars in
+                        (false,new_arg)
                   | _ ->
                       let new_arg = helper arg vars in
                       (false,new_arg)
               in
-              let flags,new_args = List.split (List.map (fun e -> trans_arg_addr e) c.exp_call_nrecv_arguments) in
+              let flags,new_args = List.split (List.map2 (fun arg param -> trans_arg_addr arg param) c.exp_call_nrecv_arguments proc.proc_args) in
               (* if (List.exists (fun (b:bool) -> b) flags) then *)
               (*   (\*if there are some args to be processed*\) *)
               (*   let mk_aux_proc_name name (flags: bool list) : ident = *)
@@ -1809,12 +1815,19 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
           else new_params in
         (*addressable reference variables*)
         let rvars = Hashtbl.find h proc.proc_name in
+        (*addr_vars contains variables that are taken adrress-of in e1*)
+        let addr_vars = find_addr body1 in
+        (* if ((rvars@addr_vars) =[]) then *)
+        (*   (\*no addresable variables --> for perf efficency*\) *)
+        (*   {proc with proc_return  = new_ret_t; *)
+        (*       proc_mingled_name = new_mingled; *)
+        (*       proc_args = new_params; *)
+        (*       proc_body = (Some body1)} *)
+        (* else *)
         let val_params,ref_params = List.partition (fun p -> (p.param_mod = NoMod)) all_args in
         (*addressable reference parameters of this procedure only*)
         let rrparams = List.filter (fun param -> List.mem param.param_name rvars) ref_params in
         let rrvars = List.map (fun param -> param.param_name) rrparams in
-        (*addr_vars contains variables that are taken adrress-of in e1*)
-        let addr_vars = find_addr body1 in
 
         (*=============TRANSPEC (if any)============>*)
         let trans_p param =
@@ -1996,10 +2009,14 @@ let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
           (* let _ = print_endline ("find_addr_inter_proc: proc_name = " ^ proc.proc_name) in *)
           (*vars that have been taken address_of in proc body*)
           let addr_vars = find_addr e in
-          (*params that have been taken address_of*)
-          let params = List.filter (fun param -> 
-              (List.mem param.param_name addr_vars) 
-              || (List.mem param.param_name rvars)
+          (* if ((rvars@addr_vars) = []) then  *)
+          (*   let _ = Hashtbl.replace h proc.proc_name [] in *)
+          (*   [] *)
+          (* else *)
+          (*reference params that have been taken address_of*)
+          let params = List.filter (fun param ->
+              (((List.mem param.param_name addr_vars) && (param.param_mod = RefMod))
+              || (List.mem param.param_name rvars))
           ) proc.proc_args in
           (*create an entry for the hashtbl*)
           let p_names = List.map (fun p -> p.param_name) params in
@@ -2010,9 +2027,8 @@ let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
           (* let _ = print_endline (proc.proc_name ^ " : addr_vars" ^ (string_of_ident_list addr_vars)) in *)
           (* let _ = print_endline (proc.proc_name ^ " : rvars" ^ (string_of_ident_list rvars)) in *)
           (* let _ = print_endline (proc.proc_name ^ " : p_names" ^ (string_of_ident_list p_names)) in *)
-          let vars = find_addr_inter_exp prog e addr_vars in
+          let vars = find_addr_inter_exp prog proc e addr_vars in
           (* let _ = print_endline (proc.proc_name ^ " : vars" ^ (string_of_ident_list vars)) in *)
-
           let vars = Gen.BList.remove_dups_eq (=) (p_names@vars) in
           let _ = Hashtbl.replace h proc.proc_name vars in
           vars
@@ -2022,7 +2038,7 @@ let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
   @param vs : addressible variables in the entire method body
   @return : addressible variables that are passed by reference
 *)
-and find_addr_inter_exp prog e (vs:ident list) : ident list =
+and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
   let rec helper e vs=
     match e with
       | Var v -> []
@@ -2117,15 +2133,15 @@ and find_addr_inter_exp prog e (vs:ident list) : ident list =
                                        Err.error_text = "Expecting only variables are passed by reference in procedure " ^ mn ^ ": arg = " ^ string_of_exp arg})
                           else []
                       ) params args
-                  with | _ -> 
+                  with | _ ->
                       Error.report_error 
                           {Err.error_loc = pos;
                            Err.error_text = "Procedure " ^ orig_mn ^ "Args and Params not matched "})
                in
                (*pvars is the new list of addressable params*)
                let avars,pvars = List.split (List.concat tmp) in
-               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : avars = " ^ (string_of_ident_list avars)) in *)
-               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : pvars = " ^ (string_of_ident_list pvars)) in *)
+               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : avars = " ^ (string_of_ident_list avars)) in *)
+               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : pvars = " ^ (string_of_ident_list pvars)) in *)
                (*TO CHECK: recursive call ??? *)
                (*============FIXPOINT=========================>*)
                let rvars =
@@ -2158,6 +2174,8 @@ and find_addr_inter_exp prog e (vs:ident list) : ident list =
                (*vars that are passed as addressable params*)
                let vars = List.map2 fct params args in
                let vars = List.concat vars in
+               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
+               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : vars = " ^ (string_of_ident_list vars)) in *)
                vars
            with Not_found ->
                Error.report_error 

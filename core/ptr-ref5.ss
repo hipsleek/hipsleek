@@ -1,7 +1,8 @@
 /*
-  Pointer translation: pass-by-ref
+  Pointer translation: Addressable reference paramters
+  of fork procedures.
+  Case 2 : addresable inside fork procedure
  */
-
 
 /**********************************************
 Original Program
@@ -24,12 +25,16 @@ void addr(ref int x)
 }
 
 void main()
+  requires true
+  ensures true;
 {  int x;
    x=5;
    addr(x);
-   int z=x;
+   int z = x;
    assert(z'=6); //'
 }
+
+
 
 
 /**********************************************
@@ -43,23 +48,23 @@ Translated Program
 /* } */
 
 /* void addr(ref int x) */
-/*   requires x=5 */
-/*   ensures x'=6; //' */
-/* { int_ptr x_t = new int_ptr(x); */
-/*   int_ptr p = x_t; */
+/*   requires x::int_ptr<old_x> */
+/*   ensures x'::int_ptr<new_x> & new_x = old_x + 1 & x'=x; //' */
+/* { */
+/*   int_ptr p = x; */
 /*   inc(p); */
-/*   int z = x_t.val; */
+/*   int z = x.val; */
 /*   assert (z'=6); //' */
-/*   x = x_t.val; */
-/*   delete(x_t); */
 /* } */
 
 /* void main() */
 /*   requires true */
 /*   ensures true; */
-/* { int x; */
-/*   x = 5; */
+/* { int_ptr x = new int_ptr(0); */
+/*   x.val = 5; */
 /*   addr(x); */
-/*   assert(x'=6); //' */
+/*   int z = x.val; */
+/*   assert(z'=6); //' */
+/*   delete(x); */
 /* } */
 

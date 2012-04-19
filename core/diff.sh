@@ -27,3 +27,13 @@ echo "======= while-w-heap.ss ======"
 diff test/while-w-heap.res test/while-w-heap.n
 echo "======= ptr-while-addr.ss ======"
 diff test/ptr-while-addr.res test/ptr-while-addr.n
+echo "======= ptr-ref1.ss ======"
+diff test/ptr-ref1.res test/ptr-ref1.n
+echo "======= ptr-ref2.ss ======"
+diff test/ptr-ref2.res test/ptr-ref2.n
+echo "======= ptr-ref3.ss ======"
+diff test/ptr-ref3.res test/ptr-ref3.n
+echo "======= ptr-ref4.ss ======"
+diff test/ptr-ref4.res test/ptr-ref4.n
+echo "======= ptr-ref5.ss ======"
+diff test/ptr-ref5.res test/ptr-ref5.n

@@ -759,18 +759,18 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
 	formula_base_flow = fl;
 	formula_base_and = a;
 	formula_base_pos = pos }) ->
-      let closure = List.map (fun v -> Ipure.find_closure_pure v p) vars in
-      let closure = List.concat closure in
-      let new_h,ps = h_apply_one_pointer s h closure in
-      let ps1,ps2 = Ipure.partition_pointer closure p in
-      (*do not rename those in ps1*)
-      let new_p = Ipure.conj_of_list ps2 in
-      let new_p1 =  Ipure.apply_one s new_p in
-      let ps1 = List.map (fun p -> P.trans_special_formula s p vars) ps1 in
-      let new_p2 = Ipure.conj_of_list ((new_p1::ps1)@ps) in
+      (* let closure = List.map (fun v -> Ipure.find_closure_pure v p) vars in *)
+      (* let closure = List.concat closure in *)
+      let new_h,ps = h_apply_one_pointer s h [] (* closure *) in
+      (* let ps1,ps2 = Ipure.partition_pointer [] (\* closure *\) p in *)
+      (* (\*do not rename those in ps1*\) *)
+      (* let new_p = Ipure.conj_of_list ps2 in *)
+      (* let new_p1 =  Ipure.apply_one s new_p in *)
+      (* let ps1 = List.map (fun p -> P.trans_special_formula s p vars) ps1 in *)
+      (* let new_p2 = Ipure.conj_of_list ((new_p1::ps1)@ps) in *)
       (***************)
         Base ({formula_base_heap = new_h;
-		formula_base_pure = new_p2;
+		formula_base_pure =  Ipure.apply_one s p (* new_p2 *);
 		formula_base_flow = fl;
 	    formula_base_and = List.map (fun f -> one_formula_apply_one_pointer s f vars) a;
 		formula_base_pos = pos})
@@ -782,6 +782,10 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
 	formula_exists_pos = pos}) ->
       let closure = List.map (fun v -> Ipure.find_closure_pure v qp) vars in
       let closure = List.concat closure in
+      (*only need to consider existential variables
+      that related to vars*)
+      let closure = List.filter (fun v -> Gen.BList.mem_eq Ipure.eq_var v (qsv@vars)) closure in
+      (* let closure = closure@vars in *)
       let new_h,ps = h_apply_one_pointer s qh closure in
       let ps1,ps2 = Ipure.partition_pointer closure qp in
       (*do not rename those in ps1*)

@@ -51,7 +51,7 @@ node split_func(ref node x, int a)
 	}
 }
 
-int div2(int c) requires @value[c] ensures res + res = c;
+int div_2(int c) requires @value[c] ensures res + res = c;
 
 node merge(node x1, node x2)
     requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> & @value[x1,x2]
@@ -113,7 +113,7 @@ void seq_merge_sort(node xs,ref node ys)
 	if (xs.next != null)
 	{
 		c = count(xs);
-		middle = div2(c);
+		middle = div_2(c);
 		s1 = split_func(xs, middle);
         // xs contains up to middle elements
         // s1 is the rest
@@ -148,7 +148,7 @@ void parallel_merge_sort(node xs,ref node ys)
 	if (xs.next != null)
 	{
 		c = count(xs);
-		middle = div2(c);
+		middle = div_2(c);
 		s1 = split_func(xs, middle);
         // xs contains up to middle elements
         // s1 is the rest
@@ -175,7 +175,7 @@ void parallel_merge_sort2(node xs,ref node ys)
 	if (xs.next != null)
 	{
 		c = count(xs);
-		middle = div2(c);
+		middle = div_2(c);
 		s1 = split_func(xs, middle);
         // xs contains up to middle elements
         // s1 is the rest
