@@ -1338,6 +1338,7 @@ let mkEInfer xpost transpec pos = EInfer {
 
 let merge_cmd einfer spec = match einfer with
   | EInfer e -> EInfer {e with formula_inf_continuation = spec}
+  | EBase _ -> einfer
   | _ -> Gen.report_error no_pos "Error in merge_cmd"
 
 

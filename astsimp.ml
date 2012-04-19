@@ -989,7 +989,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = 
     try
-      let id_spec_from_file = Infer.get_spec_from_file in
+      let id_spec_from_file = Infer.get_spec_from_file prog4 in
       let ids, specs = List.split id_spec_from_file in
       {prog4 with I.prog_proc_decls =
           let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in

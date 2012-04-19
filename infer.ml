@@ -13,7 +13,8 @@ module CP = Cpure
 module MCP = Mcpure
 module CF = Cformula
 module TP = Tpdispatcher
-
+module IF = Iformula
+module I = Iast
 
 (************************************************)
 let keep_dist f = match f with
@@ -1268,15 +1269,17 @@ let filter_var_heap keep_vars fml =
   (heap, pure)
 
 let print_spec spec file_name =
-  let output_spec = file_name ^ ".spec" in
+  let output_spec = file_name ^ ".new_spec.spec" in
   let oc = open_out output_spec in
   Printf.fprintf oc "%s" spec;
   flush oc;
   close_out oc;;
 
-let infer_shape input file_name = 
+let infer_shape input file_name view_node keep_vars proc_name = 
+  domain_name := view_node;
   let fmls_orig = Parse_shape.parse_shape input in
-  let keep_vars = ["lst";"lst1";"lst2";"NULL"] in
+  let keep_vars = keep_vars @ ["NULL"] in
+  Debug.tinfo_hprint (add_str "Keep vars: " (pr_list (fun x -> x))) keep_vars no_pos;
   let keep_vars = List.map (fun s -> SpecVar (Named "GenNode", s, Unprimed)) keep_vars in
   let fmls = List.map (fun f -> filter_var_heap keep_vars f) fmls_orig in
 (*  Debug.info_hprint (add_str "Inferred shape (original) " (pr_list !CF.print_formula)) fmls_orig no_pos;*)
@@ -1285,7 +1288,7 @@ let infer_shape input file_name =
   let print_fun = fun (h,p) -> (!print_h_formula_for_spec h) ^ " &" ^ (!CP.print_formula p) in
   let pre = print_fun (List.hd fmls) in
   let post = string_of_elems (List.tl fmls) print_fun " ||" in
-  let spec = "requires" ^ pre ^ "\nensures" ^ post ^ ";\n" in
+  let spec = proc_name ^ "\nrequires" ^ pre ^ "\nensures" ^ post ^ ";\n" in
   print_spec spec file_name;;
 
 let syscall cmd =
@@ -1311,11 +1314,15 @@ let get_proc_name full_proc_name =
     String.sub full_proc_name 0 pos
   with _ -> report_error no_pos "Proc name has wrong format"
 
-(*let _ = *)
-(*  let file_name = get_file_name Sys.argv.(1) in*)
-(*  let input_shape = file_name ^ ".shape" in*)
-(*  let input_str = syscall ("cat " ^ input_shape) in*)
-(*  infer_shape input_str file_name*)
+let get_shape_from_file view_node keep_vars proc_name = 
+  let file_name = get_file_name Sys.argv.(1) in
+  let input_c = file_name ^ ".c" in
+(*  let _ = syscall ". ./../../predator/src/register-paths.sh" in*)
+  let input_shape = file_name ^ ".shape" in
+  let _ = syscall ("rm -f " ^ input_shape) in
+  let _ = syscall ("gcc -fplugin=libsl.so -DPREDATOR " ^ input_c) in
+  let input_str = syscall ("cat " ^ input_shape) in
+  infer_shape input_str file_name view_node keep_vars proc_name
 
 let get_cmd_from_file =
   let input_cmd = (get_file_name Sys.argv.(1)) ^ ".cmd" in
@@ -1324,14 +1331,26 @@ let get_cmd_from_file =
 (*  print_endline ("SPEC" ^ ((pr_pair (fun x -> x) Cprinter.string_of_struc_formula) res));*)
   res
 
-let get_spec_from_file = 
+let get_spec_from_file prog = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
   let res = Parser.parse_spec input_str in
-(*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
-  let id,cmd = get_cmd_from_file in
+  (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
+  let id,command = get_cmd_from_file in
+  let cmd = match command with
+    | (true,_,Some view_node) -> 
+      let proc = List.filter (fun x -> x.I.proc_name=id) prog.I.prog_proc_decls in
+      let keep_vars = 
+        if List.length proc != 1 then report_error no_pos "Error in get_spec_from_file"
+        else 
+          List.map (fun x -> x.I.param_name) (List.hd proc).I.proc_args
+      in
+      let _ = get_shape_from_file view_node keep_vars id in
+      IF.mkETrue top_flow no_pos
+    | (false,Some cmd,_) -> cmd
+  in
   let res = List.map (fun (id1,spec) -> 
-    if id1=id then (id1,Iformula.merge_cmd cmd spec) else (id1,spec)) res in
+    if id1=id then (id1,IF.merge_cmd cmd spec) else (id1,spec)) res in
   res
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

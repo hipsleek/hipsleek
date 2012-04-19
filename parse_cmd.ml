@@ -16,10 +16,15 @@ EXTEND Gram
 GLOBAL: command;
   command:
   [ "command" LEFTA
-    [ "infer_spec"; x=id; "["; transpec=opt_transpec; postx=infer_xpost; "]" -> 
-      (x, mkEInfer postx transpec loc) 
+    [ "infer_spec"; x=id; "["; cmd=cmd; "]" -> 
+      (x, cmd) 
     ]
   ];
+
+  cmd:
+  [[ "<"; x=id; ","; "shape"; ">" -> (true, None, Some x)
+   | transpec=opt_transpec; postx=infer_xpost -> (false, Some (mkEInfer postx transpec loc), None)
+  ]];
 
   infer_xpost : 
   [[ "pre" -> Some false
