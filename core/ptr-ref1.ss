@@ -64,9 +64,9 @@ Translated Program
 /*   delete(x); */
 /* } */
 
-/* void initialize(ref int_ptr p, ref int_ptr x) */
+/* void initialize(ref int_ptr p, int_ptr x) */
 /*   requires x::int_ptr<old_x> */
-/*   ensures x'::int_ptr<new_x> & new_x=old_x & x'=p' & x'=x; //' */
+/*   ensures x::int_ptr<new_x> & new_x = old_x & p'=x; //' */
 /* { */
 /*   p=x; */
 /* } */

@@ -35,8 +35,6 @@ void main()
 }
 
 
-
-
 /**********************************************
 Translated Program
 **********************************************/
@@ -47,9 +45,9 @@ Translated Program
 /*   i.val = i.val +1 ; */
 /* } */
 
-/* void addr(ref int x) */
-/*   requires x::int_ptr<old_x> */
-/*   ensures x'::int_ptr<new_x> & new_x = old_x + 1 & x'=x; //' */
+/* void addr(int_ptr x) */
+/*   requires x::int_ptr<5> */
+/*   ensures x::int_ptr<6>; //' */
 /* { */
 /*   int_ptr p = x; */
 /*   inc(p); */

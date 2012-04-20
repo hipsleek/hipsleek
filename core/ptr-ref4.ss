@@ -20,8 +20,9 @@ void inc(int* i)
 */
 void initialize(ref int_ptr p, ref int x,int y)
   requires p::int_ptr<y>
-  ensures p'::int_ptr<x'> * p::int_ptr<y> & x'=x; //'
+  ensures p'::int_ptr<x'> * p::int_ptr<y> & x'=x+y; //'
 {
+  x = x + y;
   p=&x;
 }
 
@@ -37,7 +38,7 @@ void main()
   /* dprint; */
   inc(p);
   int z = x;
-  assert(z'=8); //'
+  assert(z'=17); //' 7 + 9 + 1
 }
 
 /**********************************************
@@ -56,18 +57,20 @@ Translated Program
 /*   ensures true; */
 /* { */
 /*   int_ptr x = new int_ptr(7); */
-/*   int_ptr y = new_int_ptr(9); */
+/*   int_ptr y = new int_ptr(9); */
 /*   int_ptr p = y; */
 /*   initialize(p,x,y.val); */
 /*   inc(p); */
 /*   int z = x.val; */
-/*   assert(z'=8); //' */
+/*   assert(z'=17); //' 7 + 9 + 1 */
 /*   delete(x); */
+/*   delete(y); */
 /* } */
 
-/* void initialize(ref int_ptr p, ref int_ptr x, int y) */
+/* void initialize(ref int_ptr p, int_ptr x, int y) */
 /*   requires x::int_ptr<old_x> * p::int_ptr<y> */
-/*   ensures x'::int_ptr<new_x> * p::int_ptr<y> & new_x=old_x & x'=p' & x'=x; //' */
+/*   ensures x::int_ptr<new_x> * p::int_ptr<y> & new_x=old_x+y & p'=x; //' */
 /* { */
+/*   x.val = x.val + y; */
 /*   p=x; */
 /* } */

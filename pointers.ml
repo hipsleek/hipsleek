@@ -840,10 +840,12 @@ let rec trans_specs_x specs new_params flags pos =
                    Err.error_text = "Expecting Named t"}
             in
             let var = (param.param_name, Unprimed) in
-            let old_var = (param.param_name^"_old",Unprimed) in
-            let h_arg = Ipure.Var (old_var,no_pos) in
+            (* let old_var = (param.param_name^"_old",Unprimed) in *)
+            let new_var = (param.param_name^"_new",Unprimed) in
+            (* let h_arg = Ipure.Var (old_var,no_pos) in *)
+            let h_arg = Ipure.Var (new_var,no_pos) in
             let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
-            (var_node, Ipure.mkTrue pos, ex_vars)
+            (var_node, Ipure.mkTrue pos, new_var::ex_vars)
         in
         let new_h = Iformula.mkStar h var_node no_pos in
         let new_p1 = Ipure.mkAnd p new_p pos in
@@ -1833,7 +1835,9 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
         let trans_p param =
           if List.mem param.param_name rrvars then
             let t = convert_prim_to_obj param.param_type in
-            let new_param = {param with param_type=t} in
+            let new_param = {param with
+                param_mod = NoMod;
+                param_type=t} in
             (true,new_param)
           else
             (false,param)

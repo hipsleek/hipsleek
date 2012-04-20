@@ -135,6 +135,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
 
+let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
@@ -685,6 +686,16 @@ and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*prime
   (*look for the special case where x'=x should be translated to x_new=x_old*)
   (*note that those formulas such as x'=x+1 are already captured in the new_p1*)
   let ps1 = List.map (fun p -> P.trans_special_formula s p vars) ps1 in
+  (*after all, convert x' to x to represent the fact that the original
+  node remain unchanged, only its value is changed*)
+  let new_sst = List.fold_left (fun sst (id,p) ->
+        let unprimed_param = (id,Unprimed) in
+        let primed_param = (id,Primed) in
+        let sub = (primed_param,primed_param) in
+        (sub::sst)
+  ) [] vars
+  in
+  let ps1 = List.map (fun p -> Ipure.subst new_sst p) ps1 in
   let new_p2 = Ipure.conj_of_list ((new_p1::ps1)@ps) in
   (***************)
   {formula_heap = new_h;
@@ -792,6 +803,18 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
       let new_p = Ipure.conj_of_list ps2 in
       let new_p1 =  Ipure.apply_one s new_p in
       let ps1 = List.map (fun p -> P.trans_special_formula s p vars) ps1 in
+      (*after all, convert x' to x to represent the fact that the original
+        node remain unchanged, only its value is changed*)
+      let new_sst = List.fold_left (fun sst (id,p) ->
+          let primed_param = (id,Primed) in
+          let unprimed_param = (id,Unprimed) in
+          let sub = (primed_param,unprimed_param) in
+          (sub::sst)
+      ) [] vars
+      in
+      let ps1 = List.map (fun p -> Ipure.subst new_sst p) ps1 in
+      (* let _ = print_endline ("new_p1 = " ^ (!print_pure_formula new_p1)) in *)
+      (* let _ = print_endline ("ps1 = " ^ (pr_list !print_pure_formula ps1)) in *)
       let new_p2 = Ipure.conj_of_list ((new_p1::ps1)@ps) in
       (***************)
       (*also substitute exist vars*)

@@ -35,9 +35,9 @@ void main2()
 /**********************************************
 Translated Program
 **********************************************/
-/* void inc(ref int_ptr x,int y) */
+/* void inc(int_ptr x,int y) */
 /*   requires x::int_ptr<old_x> */
-/*   ensures x'::int_ptr<new_x> & new_x= old_x+y & x'=x; //' */
+/*   ensures x::int_ptr<new_x> & new_x= old_x+y; //' */
 /* { */
 /*   x.val=x.val+y; */
 /* } */
@@ -47,12 +47,13 @@ Translated Program
 /*   ensures true; */
 /* { */
 /*   int_ptr x = new int_ptr(7); */
-/*   int_ptr y = new int_ptr(7); */
+/*   int_ptr y = new int_ptr(0); */
 /*   int id = fork(inc,x,1); */
-/*   y.val = ptr.val; //racy --> fail */
+/*   /\* y.val = ptr.val; //racy --> fail *\/ */
 /*   join(id); */
 /*   int z = x.val; */
 /*   assert(z'= 8); */
+/*   inc(y,2); */
 /*   int z2 = y.val; */
 /*   assert(z2'= 2); //' */
 /*   delete(x); */
