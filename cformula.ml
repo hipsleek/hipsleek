@@ -171,6 +171,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
 						h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
+                        (* h_formula_data_param_imm : ann list; *)
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;

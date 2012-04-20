@@ -358,7 +358,8 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode { 
+and mkHeapNode_x c id dr i f inv pd perm hl ofl l= 
+  HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
                    h_formula_heap_derv = dr;
@@ -370,8 +371,13 @@ and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode {
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
+
+and mkHeapNode  c id dr i f inv pd perm hl ofl l= 
+   Debug.no_1 "mkHeapNode" (fun _ -> "?") !print_h_formula 
+      (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl ofl l ) c
           
-and mkHeapNode2 c id dr i f inv pd perm ohl ofl l = HeapNode2 { 
+and mkHeapNode2 c id dr i f inv pd perm ohl ofl l = 
+  HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
                     h_formula_heap2_derv = dr;

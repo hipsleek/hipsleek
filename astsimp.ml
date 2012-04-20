@@ -2353,7 +2353,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_var_pos = pos;
                                 } in
                                 let (tmp_e, tmp_t) =
-				  let _ = print_string "\n !!! trans_exp member: " in
 			          flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable false pos 
 			        in
 			                    
