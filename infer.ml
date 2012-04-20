@@ -1269,7 +1269,7 @@ let filter_var_heap keep_vars fml =
   (heap, pure)
 
 let print_spec spec file_name =
-  let output_spec = file_name ^ ".new_spec.spec" in
+  let output_spec = file_name ^ ".spec" in
   let oc = open_out output_spec in
   Printf.fprintf oc "%s" spec;
   flush oc;
@@ -1336,7 +1336,8 @@ let get_spec_from_file prog =
   let input_str = syscall ("cat " ^ input_spec) in
   let res = Parser.parse_spec input_str in
   (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
-  let id,command = get_cmd_from_file in
+(*  let id,command = get_cmd_from_file in*)
+  let id, command = !(IF.cmd) in
   let cmd = match command with
     | (true,_,Some view_node) -> 
       let proc = List.filter (fun x -> x.I.proc_name=id) prog.I.prog_proc_decls in

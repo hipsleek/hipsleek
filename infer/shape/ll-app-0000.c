@@ -42,10 +42,10 @@ void main() {
    x = create_list();
    y = create_list();
    ___sl_plot("pre");
-   ___sl_summary("infer/shape/ll-app");
+   ___sl_summary("infer/shape/ll-app-0000");
    x = append(x, y);
    ___sl_plot("post");
-   ___sl_summary("infer/shape/ll-app");
+   ___sl_summary("infer/shape/ll-app-0000");
 }
 
 

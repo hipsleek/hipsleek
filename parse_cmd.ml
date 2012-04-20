@@ -18,6 +18,7 @@ GLOBAL: command;
   [ "command" LEFTA
     [ "infer_spec"; x=id; "["; cmd=cmd; "]" -> 
       (x, cmd) 
+    | "exit" -> ("", (false, None, None))
     ]
   ];
 
@@ -47,8 +48,9 @@ END
 	
 let parse_cmd s = Gram.parse_string command (Loc.mk "<string>") s
 
-
-
+(*let parse_cmd_i = *)
+(*  print_string "# ";*)
+(*  Gram.parse_string command (Loc.mk "<string>") (read_line ())*)
 
 
 

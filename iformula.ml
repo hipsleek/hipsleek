@@ -136,6 +136,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
 
+(* Interactive command line *)
+let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("", (false, None, None))
+
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
