@@ -114,6 +114,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_name : ident;
 		       h_formula_heap_derv : bool; 
 		       h_formula_heap_imm : ann;
+		       h_formula_heap_imm_param : ann option list;
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
 		       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -126,6 +127,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_name : ident;
 			h_formula_heap2_derv : bool;
 			h_formula_heap2_imm : ann;
+		    h_formula_heap2_imm_param : ann option list;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
 		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
@@ -358,12 +360,13 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-and mkHeapNode_x c id dr i f inv pd perm hl ofl l= 
+and mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l= 
   HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
                    h_formula_heap_derv = dr;
                    h_formula_heap_imm = i;
+                   h_formula_heap_imm_param = hl_i;
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
                    h_formula_heap_pseudo_data = pd;
@@ -372,16 +375,17 @@ and mkHeapNode_x c id dr i f inv pd perm hl ofl l=
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
 
-and mkHeapNode  c id dr i f inv pd perm hl ofl l= 
+and mkHeapNode  c id dr i f inv pd perm hl hl_i ofl l= 
    Debug.no_1 "mkHeapNode" (fun _ -> "?") !print_h_formula 
-      (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl ofl l ) c
+      (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l ) c
           
-and mkHeapNode2 c id dr i f inv pd perm ohl ofl l = 
+and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l = 
   HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
                     h_formula_heap2_derv = dr;
                     h_formula_heap2_imm = i;
+                    h_formula_heap2_imm_param = hl_i;
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
                     h_formula_heap2_pseudo_data = pd;
@@ -707,6 +711,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_name = c; 
 	h_formula_heap_derv = dr; 
 	h_formula_heap_imm = imm; 
+	h_formula_heap_imm_param = imm_p; 
 	h_formula_heap_full = full; 
 	h_formula_heap_with_inv = winv;
 	h_formula_heap_perm = perm; (*LDK*)
@@ -722,6 +727,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap_name = c;
 	    h_formula_heap_derv = dr; 
 		h_formula_heap_imm = imm; 
+	    h_formula_heap_imm_param = imm_p; 
 		h_formula_heap_full = full;
 		h_formula_heap_with_inv = winv;
 		h_formula_heap_perm = perm1 ; (*LDK*)
@@ -734,6 +740,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_name = c;
 	    h_formula_heap2_derv = dr; 
 		h_formula_heap2_imm = imm;
+	    h_formula_heap2_imm_param = imm_p; 
 		h_formula_heap2_full = full;
 		h_formula_heap2_with_inv = winv;
 		h_formula_heap2_arguments = args;
@@ -751,6 +758,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_name =c;
 	        h_formula_heap2_derv = dr; 
 		    h_formula_heap2_imm = imm;
+	        h_formula_heap2_imm_param = imm_p; 
 		    h_formula_heap2_full =full;
 		    h_formula_heap2_with_inv = winv;
 		    h_formula_heap2_perm = perm1; (*LDK*)

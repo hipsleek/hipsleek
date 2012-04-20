@@ -152,7 +152,7 @@ let bf_to_var p = match p with
 type pure_double =
   | Pure_f of P.formula
   | Pure_c of P.exp
-  | Pure_t of(P.exp * F.ann option) (* for data ann: var * ann, where var represents a data field *) (*andreeac*)
+  | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) (*andreeac*)
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
@@ -499,6 +499,11 @@ and get_heap_ann annl : F.ann =
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
     | [] ->  F.ConstAnn(Mutable)
+
+and get_heap_ann_opt annl : F.ann option = 
+  match annl with
+    | a :: r -> a
+    | [] ->  None
 
 				   
 let sprog = SHGram.Entry.mk "sprog" 
@@ -868,8 +873,8 @@ simple_heap_constr_imm:
   (* let _ = print_string ("\n(andreeac) simple_heap_constr_imm, node name: " ^ id) in *)
   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)]];
+        | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t [] ofl  (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)]];
 
 (* simple_heap_constr_param_imm: *) (*andreeac*)
 (*   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label -> *)
@@ -889,45 +894,45 @@ simple_heap_constr:
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
 	    (let imm_opt = get_heap_ann annl in
          match hl with
-           | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)
-           | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
+           | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+           | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2))
       | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
         (*ignore permission if applicable*)
         (* let _ = print_string ("\n(andreeac) simple_heap_constr, 1.5 node name: " ^ id) in *)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
 	    (let imm_opt = get_heap_ann annl in
          match hl with
-           | ([], t) ->  let t1, t2 = List.split t in  
-                         let t3, _ = List.split t2 in 
-                         let t4 = List.combine t1 t3 in  
-                         F.mkHeapNode2 c id dr imm_opt false false false frac t4 ofl (get_pos_camlp4 _loc 2)
-           | (t, _)  -> let t1, _ = List.split t in  F.mkHeapNode c id dr imm_opt false false false frac t1 ofl (get_pos_camlp4 _loc 2)  )
+           | ([], t) ->  let t11, t12 = List.split t in  
+                         let t21, t22 = List.split t12 in 
+                         let t3 = List.combine t11 t21 in  
+                         F.mkHeapNode2 c id dr imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
+           | (t, _)  -> let t1, t2 = List.split t in  F.mkHeapNode c id dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)  )
       | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
       let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
       (* let _ = print_string ("\n(andreeac) simple_heap_constr, 2 node name: " ^ id) in *)
       (match hal with
-        | ([],t) -> F.mkHeapNode2 c id dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+        | ([],t) -> F.mkHeapNode2 c id dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
       | t = ho_fct_header -> (*F.mkHeapNode ("",Primed) "" false Mutable false false false [] None  (get_pos_camlp4 _loc 1)*)
           let frac = if (Perm.allow_perm ()) then 
                 full_iperm ()
               else 
                 empty_iperm ()
           in
-	      F.mkHeapNode ("",Primed) "" false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] None  (get_pos_camlp4 _loc 1)
+	      F.mkHeapNode ("",Primed) "" false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
       (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
       | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
 	  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
       (* let _ = print_string ("\n(andreeac) simple_heap_constr, 3 node name: " ^ generic_pointer_type_name) in *)
       (let imm_opt = get_heap_ann annl in
        match hl with
-         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)
-         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
+         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2))
       | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
       (* let _ = print_string ("\n(andreeac) simple_heap_constr, 4 node name: " ^ generic_pointer_type_name) in *)
       (match hal with
-        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
     ]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)
@@ -1158,7 +1163,7 @@ cexp_w :
                 | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) 
                 Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
                 | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
-                | t = cid; ann0 = LIST1 ann_heap           -> (* print_string ("cexp:"^(fst t)^"\n"); *) (* let _ = print_string ("\n(andreeac) cexp_w cid: " ^ (fst t)) in  *) Pure_t ((P.Var (t, get_pos_camlp4 _loc 1)),  Some (get_heap_ann ann0) )
+                | t = cid; ann0 = LIST1 ann_heap           -> (* print_string ("cexp:"^(fst t)^"\n"); *) (* let _ = print_string ("\n(andreeac) cexp_w cid: " ^ (fst t)) in  *) Pure_t ((P.Var (t, get_pos_camlp4 _loc 1)),  (get_heap_ann_opt ann0 ))
                 | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
                 | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
                 | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
