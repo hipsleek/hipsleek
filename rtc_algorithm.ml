@@ -269,6 +269,7 @@ class rTC=
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
 														let _=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
+															let _= if((G.is_empty cpg)=false) then 
 															let _= bcc#add_diseq_edges cpg diseq_graph in 
 																let _= if((G.is_empty cpg)=false) then bcc#make_chordal cpg in
 (*																				let _= bcc#print_chordal_graph cpg in*)
@@ -276,7 +277,7 @@ class rTC=
 																	let _= self#generate_constraints cpg ve in
 																(*To do*)
 (*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in*)
-															()
+															() in ()
 		in 		
 			let _=G.iter_edges_e (fun e-> rtc_helper e) diseq_graph in (local_cache,allvars)
 															
