@@ -1841,6 +1841,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
+
+                    Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
+                    Debug.tinfo_hprint (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
+                    let new_spec = AS.add_pre prog new_spec in
+                    Debug.tinfo_hprint (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
+
                     if (pre_ctr # get> 0) 
                     then
                       begin
@@ -1875,8 +1881,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                                   new_spec
                                 end
                         in
-                        Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
-                        let new_spec = AS.add_pre prog new_spec in
                         (* TODO WN : what happen to the old MayLoop? *)
                         (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in

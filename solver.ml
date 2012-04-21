@@ -8418,7 +8418,7 @@ let simplify_pre pre_fml lst_assume =
 	let pr = !CF.print_formula in
 	Debug.no_1 "simplify_pre" pr pr simplify_pre pre_fml lst_assume
 	
-let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume: struc_formula * CP.formula list = 
+let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume: struc_formula * CP.formula list = 
   match sp with
   | ECase b ->
     let r = map_l_snd (fun s->
@@ -8459,5 +8459,8 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
 		let f2,l2 = simplify_relation b.formula_struc_or_f2 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
 		(EOr {b with formula_struc_or_f1 = f1; formula_struc_or_f2 = f2;}, l1@l2)
 
-
+and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
+	let pr = !print_struc_formula in
+	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula))
+      (fun _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp
 

@@ -597,6 +597,9 @@ let unable_to_fold_rhs_heap = ref false
 (* Used in parse_shape.ml *)
 let domain_name = ref ""
 
+(* Options for incremental spec *)
+let do_infer_inc = ref false
+
 (* Inference *)
 (*let call_graph : ((string list) list) ref = ref [[]]*)
 
