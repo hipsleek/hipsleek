@@ -16,7 +16,7 @@ do
 	echo "[z3][.eps] spaguetti-$i"
 	echo "[z3][.eps] spaguetti-$i" >> time.z3.out
 	kill_proc
-	(time ../../../../sleek --ufdp -tp z3 spaguetti-$i.slk --eps --dis-slicing -nofilter --dis-imm) 1> spaguetti-$i.z3.eps 2>> time.z3.out
+	(time ../../../../sleek --ufdp -tp z2 spaguetti-$i.slk --eps --dis-slicing -nofilter --dis-imm) 1> spaguetti-$i.z3.eps 2>> time.z3.out
 
 	echo "[z3][.slc.eps] spaguetti-$i"
 	echo "[z3][.slc.eps] spaguetti-$i" >> time.z3.out

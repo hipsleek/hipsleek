@@ -425,7 +425,7 @@ let domain_to_string_eq_logic f = let fvar=Cpure.fv f in
 (* sugar: output for csp format *)
 let to_sugar_csp (ante: Cpure.formula)  : string list=
   (*let _ = "** In function Spass.to_sugar_csp" in*)
-let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in
+(*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
 	let  res = if(!execute_eq_ineq=false) then 
 		(
 			let _= listVar := get_list_var ante in 
@@ -491,7 +491,7 @@ let sugar_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     let sugar_input = to_sugar f in
 (*		let _=List.map print_endline sugar_input in*)
  let eq_logic_input=Cprinter.string_of_pure_formula f in
-		let _ = print_endline eq_logic_input in
+		(*let _ = print_endline eq_logic_input in*)
     let validity =
       if (sugar_input_mode = "file") then
         check_problem_through_file sugar_input timeout
