@@ -32,7 +32,7 @@ module Dfs= Traverse.Dfs(G)
 module Adj=Oper.Neighbourhood(G)
 module MapDFS=Map.Make(String) 
 module MapDFSParent=Map.Make (RecordPair) 
-module Cliq=Cliquetree.CliqueTree(G)
+module Clt=Cliquetree.CliqueTree(G)
 
 
 (*let _= if(G.mem_edge_e g ed2) then print_endline "true" else print_endline "false" ;;*)
@@ -142,16 +142,6 @@ class graphFindBCC =
          			let _= rem_ver Dfs.postfix graph in ()
 					end					
 			else G.clear graph				
-			
-		method make_chordal graph=
-			let cpg=G.copy graph in 
-				let dfs f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in
-																				let _= List.map (fun x-> List.map (fun k-> if(k!=x) then 
-(*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
-																					let ed= G.E.create k "" x in let _ = G.add_edge_e graph_ ed in G.add_edge_e graph ed) neib) neib in
-																						G.remove_vertex graph_ v   
-				) cpg(*graph_*) in 
-					let  _ = dfs Dfs.postfix cpg in ()
 					
 		method add_diseq_edge (graph:G.t) (x: pairV)=
 			 if ((G.mem_vertex graph x.ver1) &(G.mem_vertex graph x.ver2)) then
@@ -193,93 +183,164 @@ class graphFindBCC =
 class rTC=
 	object (self)
 	val mutable allvars = G.create()
+	val mutable number_vars=0
 	val mutable local_cache = []
 	val bcc= new graphFindBCC
 	val mutable g_source= G.create ()
 (*	val src= MapDFS.empty*)
-	method generate_constraints graph e=
-		let rec loop_gc e=
-			let helper v= 
-				let source_e1 = G.E.create v (e.ver1^e.ver2) e.ver1 in
-					let source_e2= G.E.create v (e.ver1^e.ver2) e.ver2 in
-						let _= G.add_edge_e g_source source_e1 in
-							let _=G.add_edge_e g_source source_e2 in
+	
+	method make_chordal graph gr_e=
+			let cpg=G.copy graph in 
+				let dfs f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in
+																				let _= List.map (fun x-> List.map (fun k-> if(k!=x) then 
+(*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
+																					let ed= G.E.create k "" x in let _ = G.add_edge_e graph_ ed in 
+																					let _=G.add_edge_e graph ed in 
+																					try let _=G.find_edge gr_e k x in() with Not_found ->let _=number_vars<-number_vars+1 and ed_var=G.E.create k (string_of_int number_vars) x in G.add_edge_e gr_e ed_var ) neib) neib in
+																						G.remove_vertex graph_ v   
+				) cpg(*graph_*) in 
+					let  _ = dfs Dfs.postfix cpg in ()
+	
+	method get_var v1 v2 graph=
+		try let ed=G.find_edge graph v1 v2 in G.E.label ed
+		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
+	
+	method check_in_local_cache v v1 v2 gr_e=
+				let vv1=self#get_var v v1 gr_e and vv2= self#get_var v v2 gr_e and v1v2=self#get_var v1 v2 gr_e in
+					let set1=List.mem (vv1,vv2,v1v2) local_cache in
+						if(set1=true) then true
+							else let set2=List.mem (vv2,vv1,v1v2) local_cache in
+								if(set2=true) then true
+									else false
+	
+(*	method get_id gr_e v1 v2=*)
+																		
+	method generate_constraints graph es gr_e=
+		let helper v el= 
 							(*add to local cache*)
-								let vv1= (v^e.ver1) and vv2=(v^e.ver2) and v1v2=(e.ver1^e.ver2) in
-									let _=G.add_vertex allvars vv1 and _=G.add_vertex allvars vv2 and _=G.add_vertex allvars v1v2 in
-										let _= local_cache<-[(vv1,vv2,v1v2)]@local_cache in
-		(*						  		let _= print_endline ("Constraints in cache:---- "^(v^e.ver1)^" and "^(v^e.ver2)^" -> "^(e.ver1^e.ver2)) in *)
-									  		let e1={ver1=v;ver2=e.ver1} and e2={ver1=v;ver2=e.ver2} in 
-		(*								  		let _=print_endline ("edge to expand:"^v^e.ver1) in*)
-		(*											 	let _=print_endline ("edge to expand:"^v^e.ver2) in																																													*)
-															let _= loop_gc e1 and _= loop_gc e2 
-		  in () 
-		in	
+(*								let _=G.iter_edges_e (fun x-> print_endline ("g src 2:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
+							let vv1= ref "" and vv2=ref "" and v1v2= ref "" in
+								let _= try vv1:= G.E.label (G.find_edge gr_e v el.ver1)  
+									with Not_found->  begin let _=number_vars<-number_vars+1 and _= vv1 :=(string_of_int number_vars) in let cx1= G.E.create v !vv1 el.ver1 in G.add_edge_e gr_e cx1 end
+								in	 
+								let _= try vv2:=(G.E.label (G.find_edge gr_e v el.ver2)) 
+											with Not_found-> begin let _=number_vars<-number_vars+1 and _= vv2 :=(string_of_int number_vars) in let cx2= G.E.create v !vv2 el.ver2 in G.add_edge_e gr_e cx2 end
+								in
+								let	_= try v1v2:=(G.E.label (G.find_edge gr_e el.ver1 el.ver2))
+									with Not_found -> begin let _=number_vars<-number_vars+1 and _= v1v2 :=(string_of_int number_vars) in let cx3= G.E.create el.ver1 !v1v2 el.ver2 in G.add_edge_e gr_e cx3 end
+								in
+								let _=try let _= G.find_edge g_source  v el.ver1 in 
+										let _=G.remove_edge g_source  v el.ver1 in
+										let source_e1 = G.E.create v !v1v2 el.ver1 in
+																				let _= G.add_edge_e g_source source_e1 in() 
+										with Not_found->let source_e1 = G.E.create v !v1v2 el.ver1 in
+																				let _= G.add_edge_e g_source source_e1 in ()
+								in												
+								let _=try let _= G.find_edge g_source  v el.ver2 in
+										let _=G.remove_edge g_source  v el.ver2 in
+										let source_e2 = G.E.create v !v1v2 el.ver2 in
+																				let _= G.add_edge_e g_source source_e2 in	()	
+										with Not_found->let source_e2 = G.E.create v !v1v2 el.ver2 in 
+																				let _= G.add_edge_e g_source source_e2 in ()
+								in																								
+								let _= local_cache<-[(!vv1,!vv2,!v1v2)]@local_cache in
+(*						  		let _= print_endline ("Constraints in cache:---- "^ !vv1 ^" and "^ !vv2 ^" -> "^ !v1v2) in*)
+											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
+(*											let _=print_endline ("edge to expand:"^v^el.ver1) in   *)
+(*											 	let _=print_endline ("edge to expand:"^v^el.ver2) in*)
+											(e1,e2)
+								  		
+		in 
+		let rec loop_gc e=	
 (*			let _=print_endline ("executing edge:"^e.ver1^e.ver2) in*)
 			let neib_e1= Adj.list_from_vertex graph e.ver1 in
 				let neib_e2=Adj.list_from_vertex graph e.ver2 in
 					List.map (fun v-> if((List.mem v neib_e1)) then
 							begin
 							(*check local cache??*)
-							  let v1v2=e.ver1^e.ver2 and v2v1=e.ver2^e.ver1 and lb1=v^e.ver1 and lb11=e.ver1^v and lb2=v^e.ver2 and lb22=e.ver2^v in																													
-									try let ed_e= G.find_edge g_source e.ver1 e.ver2 in
-										let lbe=(G.E.label ed_e)in
-																																							
-										try let ed_e1=G.find_edge g_source v e.ver1 and ed_e2=G.find_edge g_source v e.ver2 in
-								  		let lb_ed_e1=(G.E.label ed_e1) and lb_ed_e2=(G.E.label ed_e2) in
-											if((lb_ed_e1<>v1v2 & lb_ed_e1 <>v2v1) || (lb_ed_e2<>v1v2 & lb_ed_e2<>v2v1)) then
-												if(lbe<>lb1 & lbe<>lb11 & lbe<>lb2 & lbe<>lb22) then
-													begin
-(*														let _= print_endline ("Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
-																helper v
-														end
-										with Not_found->	
-											if(lbe<>lb1 & lbe<>lb11 & lbe<>lb2 & lbe<>lb22) then
-													begin
-(*														let _= print_endline ("Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
-																helper v
-														end			
-									with Not_found->																															
-(*											let _= print_endline ("Source NOT FOUND edge: "^e.ver1^e.ver2) in*)
-												 helper v
+(*							let _= print_endline ("triangular: "^e.ver1^e.ver2^v) in*)
+								if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
+									begin
+									  let lb1=self#get_var v e.ver1 gr_e and lb2=self#get_var v e.ver2 gr_e in(*get label of e1 and e2=index of e1 e2*)																													
+											try let ed_e= G.find_edge g_source e.ver1 e.ver2 in
+												let lbe=(G.E.label ed_e)in(*find source of e*)
+																																									
+												try let ed_e1=G.find_edge g_source v e.ver1 and ed_e2=G.find_edge g_source v e.ver2 in
+										  		let lb_ed_e1=(G.E.label ed_e1) and lb_ed_e2=(G.E.label ed_e2) in(*find source of e1 and source of e2*)
+													if((lb_ed_e1<>lbe) & (lb_ed_e2<>lbe) &(lb_ed_e1<>lb_ed_e2)) then
+		(*											if(lbe<>lb1 & lbe<>lb11 & lbe<>lb2 & lbe<>lb22) then*)
+		(*												if(v1v2<>lb_ed_e1 & v1v2<>lb_ed_e2 & v2v1<>lb_ed_e1 & v2v1<>lb_ed_e2) then*)
+															begin
+(*																let _= print_endline ("1 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
+																		let (e1,e2)=helper v e in
+		(*																	let _=G.iter_edges_e (fun x-> print_endline ("g src 1:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
+																			let _= loop_gc e1 and _= loop_gc e2  in () 
+																end
+												with Not_found->
+													if(lbe<>lb1 & lbe<>lb2 ) then
+															begin
+		(*														let _= print_endline ("2 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
+																		let (e1,e2)=helper v e in
+																			let _= loop_gc e1 and _= loop_gc e2  in () 
+		(*																	let _=if(es.ver1="6" & es.ver2="4") then exit(0)*)
+																end			
+											 with Not_found->																															
+		(*											let _= print_endline ("Source NOT FOUND edge: "^e.ver1^e.ver2) in*)
+																		let (e1,e2)=helper v e in
+																			let _= loop_gc e1 and _= loop_gc e2 in () 
+									end								
 							end						
 					 ) neib_e2  
 
-			 in loop_gc e
+			 in loop_gc es
 	
 	
-	method rtc eq_graph diseq_list =
-		let _= List.map ( fun e-> let cpg= G.copy eq_graph in 
-																let check_add=bcc#add_diseq_edge cpg e in
-																if(check_add=true) then
-																	let _=bcc#getBCCGraph cpg e.ver1 e.ver2 in
-																	
-																		let _= bcc#add_list_diseq_edges cpg diseq_list in 
-																			let _= if((G.is_empty cpg)=false) then bcc#make_chordal cpg in
-(*																				let _= bcc#print_chordal_graph cpg in*)
-																			
-																				let _= self#generate_constraints cpg e in
-																			(*To do*)
-(*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in	*)
-																			()			
-																	) diseq_list in local_cache
+(*	method rtc eq_graph diseq_list =                                                                  *)
+(*		let _= List.map ( fun e-> let cpg= G.copy eq_graph in                                           *)
+(*																let check_add=bcc#add_diseq_edge cpg e in                           *)
+(*																if(check_add=true) then                                             *)
+(*																	let _=bcc#getBCCGraph cpg e.ver1 e.ver2 in                        *)
+(*																	                                                                  *)
+(*																		let _= bcc#add_list_diseq_edges cpg diseq_list in               *)
+(*																			let _= if((G.is_empty cpg)=false) then bcc#make_chordal cpg in*)
+(*(*																				let _= bcc#print_chordal_graph cpg in*)                   *)
+(*																			                                                              *)
+(*																				let _= self#generate_constraints cpg e in                   *)
+(*																			(*To do*)                                                     *)
+(*																				let _=G.clear g_source in                                   *)
+(*(*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in	*)        *)
+(*																			()			                                                      *)
+(*																	) diseq_list in local_cache                                       *)
+	method print_all graph =
+		let _=G.iter_edges_e (fun x->print_endline ("bach"^(G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph in let _=exit(0) in () 
 	
 	method rtc_v2 eq_graph diseq_graph =
+		let graph_e=G.create() in
+		let _=G.iter_edges_e (fun x->let _=number_vars<-number_vars+1 in 
+																	let cx=G.E.create (G.E.src x) (string_of_int number_vars) (G.E.dst x) in 
+																		G.add_edge_e graph_e cx) eq_graph in
+		let _=G.iter_edges_e (fun x->try let _=G.find_edge graph_e (G.E.src x) (G.E.dst x) in() 
+																			with Not_found-> let _=number_vars<-number_vars+1 in 
+																				let cx=G.E.create (G.E.src x) (string_of_int number_vars) (G.E.dst x) 
+																					in G.add_edge_e graph_e cx) diseq_graph in
+(*		let _=G.iter_edges_e (fun x->print_endline ((G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph_e in let _=exit(0) in*)
 		let rtc_helper e= let cpg= G.copy eq_graph in 
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
 														let _=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
 															let _= if((G.is_empty cpg)=false) then 
 															let _= bcc#add_diseq_edges cpg diseq_graph in 
-																let _= if((G.is_empty cpg)=false) then bcc#make_chordal cpg in
+																let _= if((G.is_empty cpg)=false) then (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
 (*																				let _= bcc#print_chordal_graph cpg in*)
 																  let ve={ver1=(G.E.src e);ver2=(G.E.dst e)} in
-																	let _= self#generate_constraints cpg ve in
+(*																	let _=print_endline ("bcc of:"^(G.E.src e)^(G.E.dst e)) in*)
+																	let _= self#generate_constraints cpg ve graph_e in
+(*																	let _=G.clear g_source in*)
 																(*To do*)
 (*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in*)
 															() in ()
 		in 		
-			let _=G.iter_edges_e (fun e-> rtc_helper e) diseq_graph in (local_cache,allvars)
+			let _=G.iter_edges_e (fun e-> rtc_helper e) diseq_graph in (local_cache,graph_e)
 															
 	end;;
 

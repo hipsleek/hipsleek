@@ -78,8 +78,8 @@ let rec minisat_of_exp e0 = match e0 with
 let  minisat_cnf_of_p_formula_for_helper (pf : Cpure.p_formula) map (allvars:G.t) (bconsts: G.t)=
   match pf with
   | LexVar _        -> ""
-  | BConst (c, _)   -> ""
-  | BVar (sv, _)    -> ""
+  | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
+  | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper Bvar EXIT!") in*) ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
@@ -87,18 +87,13 @@ let  minisat_cnf_of_p_formula_for_helper (pf : Cpure.p_formula) map (allvars:G.t
   | SubAnn _        -> ""
   | Eq (e1, e2, _)  -> (*Handle here*)let left=minisat_of_exp e1 and right=minisat_of_exp e2 in
 																				let li=check_inmap left map and ri=check_inmap right map in
-																				let _=if(li=ri) then (G.add_vertex bconsts (li^ri)) in(*add xx to the set of boolean constants *)
-																					let lr=li^ri and rl=ri^li in
-																						if(G.mem_vertex allvars lr) then lr
-																						else if(G.mem_vertex allvars rl) then rl
-																						else let _=G.add_vertex allvars lr in lr  
+																				if(li=ri) then (let _=G.add_vertex bconsts (li^ri) in (li^ri)) else(*add xx to the set of boolean constants *)
+																					let rtc=new rTC in let lr=rtc#get_var li ri allvars in lr
   | Neq (e1, e2, _) -> (*Handle here*)let left=minisat_of_exp e1 and right=minisat_of_exp e2 in
 																				let li=check_inmap left map and ri=check_inmap right map in
-																				let _=if(li=ri) then (G.add_vertex bconsts (li^ri)) in(*add xx to the set of boolean constants *)
-																					let lr=li^ri and rl=ri^li in
-																						if(G.mem_vertex allvars lr) then "-"^lr
-																						else if(G.mem_vertex allvars rl) then "-"^rl
-																						else let _=G.add_vertex allvars lr in "-"^lr
+																				if(li=ri) then (let _=G.add_vertex bconsts (li^ri) in ("-"^li^ri)) else(*add xx to the set of boolean constants *)
+																					let rtc=new rTC in let lr=rtc#get_var li ri allvars
+																				  in "-"^lr
   | EqMax _         -> ""
   | EqMin _         -> ""
   (* bag formulas *)
@@ -121,8 +116,8 @@ let minisat_cnf_of_b_formula_for_helper (bf : Cpure.b_formula) map (allvars:G.t)
 let  minisat_cnf_of_not_of_p_formula_for_helper (pf : Cpure.p_formula) map (allvars:G.t) (bconsts: G.t) =
   match pf with
   | LexVar _        -> ""
-  | BConst (c, _)   -> ""
-  | BVar (sv, _)    -> ""
+  | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper BConst EXIT!")  in*) ""
+  | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper Bvar EXIT!")  in*) ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
@@ -130,18 +125,16 @@ let  minisat_cnf_of_not_of_p_formula_for_helper (pf : Cpure.p_formula) map (allv
   | SubAnn _        -> ""
   | Eq (e1, e2, _)  -> (*Handle here*)let left=minisat_of_exp e1 and right=minisat_of_exp e2 in
 																				let li=check_inmap left map and ri=check_inmap right map in
-																					let _=if(li=ri) then (G.add_vertex bconsts ("-"^li^ri)) in(*add -xx to the set of boolean constants *)
-																					let lr=li^ri and rl=ri^li in
-																						if(G.mem_vertex allvars lr) then "-"^lr
-																						else if(G.mem_vertex allvars rl) then "-"^rl
-																						else let _=G.add_vertex allvars lr in "-"^lr 
+																					if(li=ri) then (let _=G.add_vertex bconsts ("-"^li^ri) in ("-"^li^ri))(*add -xx to the set of boolean constants *)
+																					else
+																						let rtc=new rTC in let lr=rtc#get_var li ri allvars in
+																						"-"^lr 
   | Neq (e1, e2, _) -> (*Handle here*)let left=minisat_of_exp e1 and right=minisat_of_exp e2 in
 																				let li=check_inmap left map and ri=check_inmap right map in
-																				let _=if(li=ri) then (G.add_vertex bconsts (li^ri)) in(*add xx to the set of boolean constants *)
-																					let lr=li^ri and rl=ri^li in
-																						if(G.mem_vertex allvars lr) then lr
-																						else if(G.mem_vertex allvars rl) then rl
-																						else let _=G.add_vertex allvars lr in lr 
+																				if(li=ri) then (let _=G.add_vertex bconsts (li^ri) in (li^ri)) (*add xx to the set of boolean constants *)
+																				else 
+																						let rtc=new rTC in let lr=rtc#get_var li ri allvars in
+																						lr 
   | EqMax _         -> ""
   | EqMin _         -> ""
   (* bag formulas *)
@@ -166,8 +159,9 @@ let minisat_cnf_of_not_of_b_formula_for_helper (bf : Cpure.b_formula) map (allva
 let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) map (ge:G.t) (gd:G.t) = 
   match pf with
   | LexVar _        -> ""
-  | BConst (c, _)   -> ""
-  | BVar (sv, _)    -> ""
+  | BConst (c, _)   -> (*let _=if(c) then print_endline (" True minisat_cnf_of_p_formula EXIT 1!")
+															else print_endline (" Flase minisat_cnf_of_p_formula EXIT 1!") in*) ""
+  | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_p_formula EXIT 2!")  in*) ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
@@ -208,8 +202,8 @@ let minisat_cnf_of_b_formula (bf : Cpure.b_formula) map (ge:G.t) (gd:G.t)=
 let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) map (ge:G.t) (gd:G.t) =
   match pf with
   | LexVar _        -> ""
-  | BConst (c, _)   -> ""
-  | BVar (sv, _)    -> ""
+  | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula EXIT 1!")  in*) ""
+  | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula EXIT 2!")  in*) ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
@@ -422,6 +416,7 @@ let rec collect_output (chn: in_channel)  : (string * bool) =
 let get_prover_result (output : string) :bool =
   let validity =
     if (output="SATISFIABLE") then
+(*			let _=print_endline output in*)
       true
     else
       false in 
@@ -524,9 +519,10 @@ let rtc_generate_T (f:Cpure.formula) (map: spec_var list) =
 			  |Or  (f1, f2, _, _)-> let _=cnf_to_string_to_file f1 map in let _=cnf_to_string_to_file f2 map in ()
 		in
 			let _=cnf_to_string_to_file f map in
-				let _=G.iter_edges_e (fun e-> print_endline ("GE: "^(G.E.src e)^(G.E.dst e))) ge in
-				let _=G.iter_edges_e (fun e-> print_endline ("GDisE: "^(G.E.src e)^(G.E.dst e))) gd in
+(*				let _=G.iter_edges_e (fun e-> print_endline ("GE: "^(G.E.src e)^(G.E.dst e))) ge in   *)
+(*				let _=G.iter_edges_e (fun e-> print_endline ("GDisE: "^(G.E.src e)^(G.E.dst e))) gd in*)
 				let testRTC= new rTC in 
+(*					let _=exit(0) in*)
 					let (cache,allvars) = testRTC#rtc_v2 ge gd in 
 						(cache,allvars)
 
@@ -540,8 +536,9 @@ let rec cnf_helper ante map allvars bconsts= (*allvars is returned after generat
 let to_minisat_cnf (ante: Cpure.formula) (mapvar: spec_var list) : string =
   (*let _ = "** In function Spass.to_minisat_cnf" in*)
 (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in *)
-let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in
+(*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
+(*		let _=exit(0) in*)
 			let (cache,allvars)=rtc_generate_T ante_cnf mapvar in
 				let res= ref "" in
 				let _=List.map (fun x-> let _=match x with 
@@ -551,7 +548,7 @@ let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf 
 (*				let _=(if(G.is_empty allvars) then print_endline "No need to generate T") in	*)(*debug*)
 				let bconsts=G.create() in (*start generating cnf for the given CNF formula*)
 				let ante_str	= (cnf_helper ante_cnf mapvar allvars bconsts) in		
-				  let temp= if(ante_str <> "0") then (ante_str^" 0") else "p cnf 0 0" in
+				  let temp= if(ante_str <> "0" &ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
 				  	let bv= if(temp ="p cnf 0 0") then true else false in
 				  		let result = if(bv=false) then
 				     	 "p cnf "^(string_of_int !number_var)^" "^ (string_of_int !number_clauses)
@@ -579,8 +576,8 @@ let to_minisat (ante : Cpure.formula): string =
 			let all_fvn = [mknull] @ all_fv in	
 	    let _= return_number_var (List.length all_fvn) in
 	    let cnf_res = to_minisat_cnf ante all_fvn 
-	in let _= List.map (fun x-> print_endline ("allfv: "^(minisat_cnf_of_spec_var x))) all_fvn 
-  in let _ = print_endline ("-- Input problem in cnf format:\n" ^ cnf_res) 
+(*	in let _= List.map (fun x-> print_endline ("allfv: "^(minisat_cnf_of_spec_var x))) all_fvn *)
+(*  in let _ = print_endline ("-- Input problem in cnf format:\n" ^ cnf_res)*)
       in cnf_res
     ) 
     else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
@@ -614,7 +611,6 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
       if (minisat_input_mode = "file") then
         check_problem_through_file minisat_input timeout
       else illegal_format "[minisat.ml] The value of minisat_input_mode is invalid!" in
- 		let _=if(validity) then print_endline ("SAT") else print_endline ("UNSAT") in
     let res =validity in
     res
   else
@@ -670,11 +666,13 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   (*let _ = print_endline "** In function minisat.imply:" in *)
   let ante_fv = Cpure.fv ante in
   let all=Gen.BList.remove_dups_eq (=) (ante_fv) in
-  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in
-  let cons=  (mkNot_s conseq) in
+(*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
+  let cons= (mkNot_s conseq) in
     let imply_f= mkAnd ante cons no_pos  in
     let res =is_sat imply_f ""
-    in if(res) then false else true
+    in 	
+(*		let _=if(res) then print_endline ("SAT") else print_endline ("UNSAT") in *)
+		if(res) then false else true
   
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function minisat.imply:" in *)

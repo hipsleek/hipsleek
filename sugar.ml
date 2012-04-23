@@ -491,12 +491,13 @@ let sugar_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     let sugar_input = to_sugar f in
 (*		let _=List.map print_endline sugar_input in*)
  let eq_logic_input=Cprinter.string_of_pure_formula f in
-		(*let _ = print_endline eq_logic_input in*)
+(* let _ = print_endline ("CHECK SAT formula:"^eq_logic_input) in*)
     let validity =
       if (sugar_input_mode = "file") then
         check_problem_through_file sugar_input timeout
       else illegal_format "[sugar.ml] The value of sugar_input_mode is invalid!" in
     (* let validity = check_problem_through_file sugar_input timeout in *)
+(*			let _=if(validity) then print_endline ("SAT") else print_endline ("UNSAT") in*)
     let res =validity in
     res
   else
