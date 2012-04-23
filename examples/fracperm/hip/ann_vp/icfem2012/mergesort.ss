@@ -2,6 +2,8 @@
 
    Description: Well-known parallel merge sort algorithm
 
+   Variable permissions are automatically inferred.
+
 */
 
 data node {

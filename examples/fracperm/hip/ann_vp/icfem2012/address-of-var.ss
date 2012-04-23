@@ -1,3 +1,9 @@
+/*
+  Examples of eliminating variable aliasing
+  by translating addressable variables
+  into pseudo-heap locations
+*/
+
 global int g;
 global int* gptr;
 
