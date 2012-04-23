@@ -1056,7 +1056,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           (***************************************************)
           let prog =
             if (!Globals.allow_ptr) then 
-              let _ = print_string ("Eliminating pointers...\n"); flush stdout in
+              let _ = print_string ("Eliminating variable aliasing...\n"); flush stdout in
               let new_prog = Pointers.trans_pointers prog in
               let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
               (* let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in *)

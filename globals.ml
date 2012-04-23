@@ -632,13 +632,13 @@ let disable_multiple_specs =ref false
   let do_sat_slice = ref false
 
 (* for Termination *)
-let dis_term_chk = ref false
+let dis_term_chk = ref true
 let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
 let term_reverify = ref false
 let dis_bnd_chk = ref false
-let dis_term_msg = ref false
+let dis_term_msg = ref true
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
   

@@ -5154,18 +5154,36 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* v@zero  |- v@full --> fail *)
       let tmp1 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_val_vars) in
       let tmp3 = Gen.BList.intersect_eq CP.eq_spec_var_ident lhs_zero_vars (rhs_full_vars) in
-      if (!Globals.ann_vp) && (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[]) then
+      let dup_vars = Gen.BList.find_dups_eq CP.eq_spec_var_ident rhs_full_vars in
+      if (!Globals.ann_vp) && (tmp1!=[] (* || tmp2!=[ ]*) || tmp3!=[] || dup_vars !=[]) then
         begin
             (*FAIL*)
-            let _ = if tmp1!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") pos in
-            let _ = if tmp3!=[] then Debug.devel_pprint ("heap_entail_empty_rhs_heap: full permission var " ^ (Cprinter.string_of_spec_var_list (tmp3))^ " cannot have possibly zero permission" ^ "\n") pos in
+            let msg1 = 
+              if (dup_vars !=[]) then 
+                let msg = (": full permission var " ^ (Cprinter.string_of_spec_var_list (dup_vars))^ " cannot be duplicated" ^ "\n") in
+                let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in
+                msg
+              else ""
+            in
+            let msg2 = if tmp1!=[] then
+                  let msg = (": pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1))^ " cannot have possibly zero permission" ^ "\n") in
+                  let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in
+                  msg
+                else ""
+            in
+            let msg3 = if tmp3!=[] then 
+                  let msg = (": full permission var " ^ (Cprinter.string_of_spec_var_list (tmp3))^ " cannot have possibly zero permission" ^ "\n") in
+                  let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in
+                  msg
+                else ""
+            in
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: failed in entailing variable permissions in conseq\n") pos;
             Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
             let rhs_p = List.fold_left (fun mix_f vperm -> memoise_add_pure_N mix_f vperm) rhs_p rhs_vperms in
             (* picking original conseq since not found here *)
             let conseq = (formula_of_mix_formula rhs_p pos) in
             let rhs_b = extr_rhs_b conseq in
-            let err_o = mkFailCtx_vperm "321" rhs_b estate conseq  pos in
+            let err_o = mkFailCtx_vperm (msg1 ^ "\n" ^ msg2 ^ "\n" ^ msg3) rhs_b estate conseq  pos in
             (err_o,Failure)
         end
       else

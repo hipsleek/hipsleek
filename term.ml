@@ -549,6 +549,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
 
+
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
@@ -1185,7 +1186,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 
 (* Main function of the termination checker *)
 let term_check_output () =
-  (* if not !Globals.dis_term_msg then *)
+  if not !Globals.dis_term_msg then
     (fmt_string "\nTermination checking result:\n";
     (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
     else pr_term_err_stk (term_err_stk # get_stk));
