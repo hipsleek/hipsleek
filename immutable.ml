@@ -80,8 +80,8 @@ and remove_true_rd_phase (h : CF.h_formula) : CF.h_formula =
 	  CF.h_formula_phase_rw = h2;
 	  CF.h_formula_phase_pos = pos
 	 }) -> 
-      if (h1 == CF.HTrue) then h2
-      else if (h2 == CF.HTrue) then h1
+      if (h1 == CF.HEmp) then h2
+      else if (h2 == CF.HEmp) then h1
       else h
     | CF.Star ({CF.h_formula_star_h1 = h1;
 	  CF.h_formula_star_h2 = h2;
@@ -228,7 +228,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
              IF.h_formula_star_pos = pos
             }) ->
       let r1, r2 = extract_inner_phase h2 in
-      if (r1 == IF.HTrue) || (r2 == IF.HTrue) then 
+      if (r1 == IF.HEmp) || (r2 == IF.HEmp) then 
         IF.Star({IF.h_formula_star_h1 = h1;
                  IF.h_formula_star_h2 = normalize_h_formula_x h2 false;
                  IF.h_formula_star_pos = pos

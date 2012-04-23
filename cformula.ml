@@ -523,7 +523,7 @@ and isConstEFalse f = (*List.for_all*) isConstDFalse f
 
 and isConstTrueFormula f =
     match f with
-      | Base b -> (b.formula_base_heap==HTrue) &&
+      | Base b -> (b.formula_base_heap==HEmp) &&
             (MCP.isConstMTrue b.formula_base_pure)
       | Exists _ -> false
       | Or b -> false
@@ -539,10 +539,10 @@ and isConstETrueSpecs f = match f with
 
           
 and isStrictConstTrue_x f = match f with
-  | Exists ({ formula_exists_heap = HTrue;
+  | Exists ({ formula_exists_heap = HEmp;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
-  | Base ({formula_base_heap = HTrue;
+  | Base ({formula_base_heap = HEmp;
     formula_base_pure = p;
     formula_base_flow = fl;}) -> 
         MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
@@ -553,10 +553,10 @@ and isStrictConstTrue (f:formula) =
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
 and isAnyConstTrue f = match f with
-  | Exists ({formula_exists_heap = HTrue;
+  | Exists ({formula_exists_heap = HEmp;
     formula_exists_pure = p;
 	formula_exists_flow = fl; })
-  | Base ({formula_base_heap = HTrue;
+  | Base ({formula_base_heap = HEmp;
 	formula_base_pure = p;
 	formula_base_flow = fl;}) -> 
         MCP.isConstMTrue p (* don't need to care about formula_base_type  *)
@@ -938,7 +938,7 @@ and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) : 
   List.fold_left (fun a (cond,lbl_lst) -> if (List.mem lbl lbl_lst) then cond::a else a) [] lst
       
 and mkTrue_b (flowt:flow_formula) pos = {
-		formula_base_heap = HTrue; 
+		formula_base_heap = HEmp; 
 		formula_base_pure = MCP.mkMTrue pos; 
 		formula_base_type = TypeTrue; 
 formula_base_and = [];
@@ -6901,11 +6901,9 @@ and merge_two_nodes dn1 dn2 =
 										h_formula_data_pruning_conditions = List.append pc1 pc2;
 										h_formula_data_pos = no_pos } in 
 								if not_clashed then res else HFalse
-      (*| HTrue -> dn1*)
       | HEmp -> dn1
       | HFalse -> HFalse
       | _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HEmp or a DataNode but get " ^ (!print_h_formula dn2))} )
-  (*| HTrue -> dn2*)
   | HEmp -> dn2
   | HFalse -> HFalse
   | _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HEmp or a DataNode but get " ^ (!print_h_formula dn1)) }
@@ -7862,8 +7860,9 @@ let rec no_of_cnts_heap heap = match heap with
   | DataNode _ -> 1
   | ViewNode _ -> 1
   | Hole _ -> 1
-  | HTrue -> 0
+  | HTrue -> 1
   | HFalse -> 1
+  | HEmp -> 0
 
 let rec no_of_cnts_fml fml = match fml with
   | Or f -> no_of_cnts_fml f.formula_or_f1 + no_of_cnts_fml f.formula_or_f2

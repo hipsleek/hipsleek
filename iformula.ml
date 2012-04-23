@@ -222,7 +222,7 @@ and isConstTrue f0 = match f0 with
   | Base f -> begin
 	  let h, p = f.formula_base_heap, f.formula_base_pure in
 		match h with
-		  | HTrue -> (P.isConstTrue p)
+		  | HEmp -> (P.isConstTrue p)
 		  | _ -> false
 	end
   | _ -> false
@@ -238,7 +238,7 @@ and isEConstTrue f0 = match f0 with
   | EList b -> List.exists (fun (_,c)-> isEConstTrue c) b
   | _ -> false
 
-and mkTrue flow pos = Base { formula_base_heap = HTrue;
+and mkTrue flow pos = Base { formula_base_heap = HEmp;
 						formula_base_pure = P.mkTrue pos;
 						formula_base_flow = flow;
                         formula_base_and = [];

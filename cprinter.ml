@@ -1939,6 +1939,7 @@ let rec string_of_t_formula = function
 	  (string_of_t_formula f1) ^ " & " ^ (string_of_t_formula f2)
   | TypeTrue -> "TypeTrue"
   | TypeFalse -> "TypeFalse"
+  | TypeEmpty -> "TypeEmpty"
 
 (* function to print a list of type F.formula * F.formula *)
 let rec string_of_formulae_list l = match l with 
