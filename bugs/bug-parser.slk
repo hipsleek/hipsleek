@@ -1,0 +1,11 @@
+checkentail htrue & true |- htrue & true.
+
+checkentail htrue & false |- htrue & false.
+
+checkentail emp & true |- emp & true.
+
+checkentail emp & false |- emp & false.
+
+checkentail htrue & a |- htrue & a.
+
+checkentail emp & a |- emp & a.

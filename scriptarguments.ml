@@ -269,6 +269,9 @@ let common_arguments = [
 
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
+
+  (* use classical reasoning in separation logic *)
+  ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
   ] 
 
 (* arguments/flags used only by hip *)	

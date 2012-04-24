@@ -1,0 +1,5 @@
+checkentail emp & false|- htrue & false.                // expect Valid because LHS is false
+
+checkentail htrue |- false & htrue.                     // error syntax, "false & htrue" should be rewritten as "htrue & false"
+
+checkentail emp & false|- htrue & false.                // expect Valid because LHS is false

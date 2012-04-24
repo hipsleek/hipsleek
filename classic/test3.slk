@@ -1,0 +1,19 @@
+data cell {
+    int val; 
+}.
+
+
+// (3) do not allow residue heap
+checkentail x::cell<a> * y::cell<b> |- x::cell<4> .
+print residue.
+// invalid since y::cell<aa> is unconsumed.
+// why is there a residue when failure occured?
+
+checkentail y::cell<aa> * x::cell<d> |- z::cell<d>.
+print residue.
+
+checkentail y::cell<aa> & n < 3 |- htrue  & n>4 .
+print residue.
+
+checkentail y::cell<aa> & n < 3 |- y::cell<d>  & n>4 .
+print residue.

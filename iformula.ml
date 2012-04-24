@@ -97,7 +97,8 @@ and h_formula = (* heap formula *)
 	  (* pointer * base type * list of dimensions *)
   | HTrue 
   | HFalse
-  
+  | HEmp (* emp for classical logic *)
+
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }
@@ -175,11 +176,11 @@ and string_of_spec_var = function
 
 let rec formula_of_heap_1 h pos = mkBase h (P.mkTrue pos) top_flow [] pos
 
-and formula_of_pure_1 p pos = mkBase HTrue p top_flow [] pos
+and formula_of_pure_1 p pos = mkBase HEmp p top_flow [] pos                (* pure formula has Empty heap *)
 
 and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
 
-and formula_of_pure_with_flow p f a pos = mkBase HTrue p f a pos
+and formula_of_pure_with_flow p f a pos = mkBase HEmp p f a pos            (* pure formula has Empty heap *)
 
 and one_formula_of_formula f =
   match f with
@@ -217,11 +218,12 @@ and isConstFalse f0 = match f0 with
 	end
   | _ -> false
 
+(* TRUNG TODO: should change name to isConstEmp ? *)
 and isConstTrue f0 = match f0 with
   | Base f -> begin
 	  let h, p = f.formula_base_heap, f.formula_base_pure in
 		match h with
-		  | HTrue -> (P.isConstTrue p)
+		  | HEmp -> (P.isConstTrue p)
 		  | _ -> false
 	end
   | _ -> false
@@ -237,7 +239,8 @@ and isEConstTrue f0 = match f0 with
   | EList b -> List.exists (fun (_,c)-> isEConstTrue c) b
   | _ -> false
 
-and mkTrue flow pos = Base { formula_base_heap = HTrue;
+(* TRUNG TODO: should change name to mkEmp ? *)
+and mkTrue flow pos = Base { formula_base_heap = HEmp;
 						formula_base_pure = P.mkTrue pos;
 						formula_base_flow = flow;
                         formula_base_and = [];
@@ -325,38 +328,31 @@ and mkOneFormula (h : h_formula) (p : P.formula) id pos =
 
 and mkStar f1 f2 pos = match f1 with
   | HFalse -> HFalse
-  | HTrue -> f2
+  | HEmp -> f2
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  | HTrue -> f1
-	  | _ -> Star { h_formula_star_h1 = f1;
-					h_formula_star_h2 = f2;
-					h_formula_star_pos = pos }
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue
+           else Star { h_formula_star_h1 = f1;
+                       h_formula_star_h2 = f2;
+                       h_formula_star_pos = pos }
 
+and mkConj f1 f2 pos =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else Conj { h_formula_conj_h1 = f1;
+              h_formula_conj_h2 = f2;
+              h_formula_conj_pos = pos }
 
-
-and mkConj f1 f2 pos = match f1 with
-  | HFalse -> HFalse
-  | HTrue -> f2
-  | _ -> match f2 with
-	  | HFalse -> HFalse
-	  | HTrue -> f1
-	  | _ -> Conj { h_formula_conj_h1 = f1;
-					h_formula_conj_h2 = f2;
-					h_formula_conj_pos = pos }
-
-
-
-and mkPhase f1 f2 pos = 
+and mkPhase f1 f2 pos =
   match f1 with
   | HFalse -> HFalse
-  (* | HTrue -> f2 *)
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  (* | HTrue -> f1 *)
-	  | _ -> Phase { h_formula_phase_rd = f1;
-					h_formula_phase_rw = f2;
-					h_formula_phase_pos = pos }
+    | HFalse -> HFalse
+    | _ -> Phase { h_formula_phase_rd = f1;
+                   h_formula_phase_rw = f2;
+                   h_formula_phase_pos = pos }
 
 and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode { 
                    h_formula_heap_node = c;
@@ -457,8 +453,9 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
      let perm_vars =  fv_iperm perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
-  | HTrue -> [] 
+  | HTrue -> []
   | HFalse -> [] 
+  | HEmp -> [] 
 ;;
 
 let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
@@ -754,6 +751,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
+  | HEmp -> f
 	    
 
 and rename_bound_vars (f : formula) = 
@@ -881,7 +879,8 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
     | HTrue -> (f,[])
-    | HFalse -> (f,[]) in
+    | HFalse -> (f,[]) 
+    | HEmp -> (f,[]) in
   let helper_one_formula (f:one_formula) =
     let rh,rl = float_out_exps f.formula_heap in
     if (List.length rl) == 0 then ([],f)
@@ -1119,6 +1118,7 @@ match h with
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
+    |  HEmp -> (h, None)
 	 
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with

@@ -1256,12 +1256,12 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext = F.mkStarH ext_h rest_exts pos in
 				  ext
 		  end
-		| _ -> F.HTrue in
+		| _ -> F.HEmp in
 	  let exts = gen_exts sup_ext_var sub_ext_var rest_fields cdefs0 in
 	  let res = F.mkStarH sup_h exts pos in
 		res
 	end
-  | _ -> F.HTrue
+  | _ -> F.HEmp
 
 
 (*
