@@ -19,5 +19,7 @@ pred lseg<n, p> == case {
 checkentail x::node<_,q>*q::node<_,r> |- x::lseg<n,z>.
 print residue.
 
+// Fail when run sleek with option --clasic and the cause "q != null |- r = q" is correct, 
+// so the problem reported in rev. 4951 is not really a bug. Do not need to fix.
 checkentail x::node<_,q>*q::node<_,r> |- x::lseg<n,q>.
 print residue.

@@ -300,7 +300,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
         (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest)
   | HTrue -> (
       if (rhs_rest = HEmp) then (
-        (* if whole RHS is HTrue then it matches with the whole LHS*)
+        (* if entire RHS is HTrue then it matches with the entire LHS*)
         let mres = { match_res_lhs_node = lhs_h;
                    match_res_lhs_rest = HEmp;
                    match_res_holes = [];

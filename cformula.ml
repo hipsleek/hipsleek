@@ -520,7 +520,7 @@ and isConstETrue f = (*List.exists*) isConstDTrue f
           
 and isConstEFalse f = (*List.for_all*) isConstDFalse f
 
-
+(* TRUNG TODO: should change name to isConstEmpFormula ? *)
 and isConstTrueFormula f =
     match f with
       | Base b -> (b.formula_base_heap==HEmp) &&
@@ -537,7 +537,7 @@ and isConstETrueSpecs f = match f with
             | _-> false)
 	| _ -> false
 
-          
+(* TRUNG TODO: should change name to isStrictConstEmp_x ? *)
 and isStrictConstTrue_x f = match f with
   | Exists ({ formula_exists_heap = HEmp;
     formula_exists_pure = p;
@@ -552,6 +552,7 @@ and isStrictConstTrue_x f = match f with
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
+(* TRUNG TODO: should change name to isAnyConstEmp ? *)
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HEmp;
     formula_exists_pure = p;
@@ -936,7 +937,8 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 
 and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) :  CP.b_formula list= 
   List.fold_left (fun a (cond,lbl_lst) -> if (List.mem lbl lbl_lst) then cond::a else a) [] lst
-      
+
+(* TRUNG TODO: should change name to mkEmp_b ? *)
 and mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_heap = HEmp; 
 		formula_base_pure = MCP.mkMTrue pos; 
