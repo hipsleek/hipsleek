@@ -276,15 +276,13 @@ let rec
 
 	(* - added 17.04.2008 - checks if the heap formula contains anonymous    *)
 	(* vars                                                                  *)
-  (* as h*) (* as h*)
-	(* let _ = print_string("[astsimpl.ml, line 163]: anonymous var: " ^ id  *)
-	(* ^ "\n") in                                                            *)
-  look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list =
+   look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list =
   match h0 with
   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
   | IF.HeapNode { IF.h_formula_heap_arguments = args;
+                  IF.h_formula_heap_name = name;
                   IF.h_formula_heap_perm = perm; (*LDK*)
                 } ->
       let ps = get_iperm perm in
@@ -4086,6 +4084,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               IF.h_formula_heap_name = c;
 	          IF.h_formula_heap_derv = dr;
 	          IF.h_formula_heap_imm = imm;
+	          IF.h_formula_heap_imm_param = imm_param;
 	          IF.h_formula_heap_perm = perm; (*LDK*)
               IF.h_formula_heap_arguments = exps;
               IF.h_formula_heap_full = full;
@@ -5610,6 +5609,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_perm = perm;
                 IF.h_formula_heap_name = c; (* data/pred name *)
                 IF.h_formula_heap_imm = ann; (* data/pred name *)
+                IF.h_formula_heap_imm_param = ann_param;
                 IF.h_formula_heap_pos = pos
 	        } ->
           Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
@@ -5622,7 +5622,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
             | Some e -> let _ = gather_type_info_exp e stab ft in () in
           let _ = gather_type_info_perm perm stab in
           let _ = gather_type_info_ann ann stab in
-		  (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
+		  (* let _ = print_string ("\n[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
 		  (* An Hoa : Deal with the generic pointer! *)
 		  if (c = Parser.generic_pointer_type_name) then 
 			(* Assumptions:
@@ -5686,7 +5686,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
               (try
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
-	            (* let _ = print_string ("\n searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" types:"^ss^"\n") in *)
+                let _ = if not (IF.is_param_ann_list_empty ann_param) then
+	                  (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
+                      report_error pos (" predicate parameters are not allowed to have imm annotations") in
                 try_unify_view_type_args prog c vdef v ies stab pos 
               with
                 | Not_found ->
@@ -5862,7 +5864,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        with
 	          | Not_found ->List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments in	
 	        let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
-	          report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
+	              report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
 	        in
             let perm_labels,perm_var = 
               match b.IF.h_formula_heap_perm with

@@ -172,6 +172,12 @@ and string_of_spec_var = function
   | (id, p) -> id ^ (match p with 
     | Primed   -> "'"
     | Unprimed -> "")
+
+let rec is_param_ann_list_empty (anns:  ann option list) : bool =
+  match anns with
+    | [] -> true
+    | (Some _)::t  -> false
+    | (None)::t    -> true  && (is_param_ann_list_empty t)
 	
 (* constructors *)
 
@@ -456,6 +462,7 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
              real information inside *)
               h_formula_heap_perm = perm; (*LDK*)
               h_formula_heap_imm = imm; 
+              h_formula_heap_imm_param = ann_param; 
               h_formula_heap_arguments = b} ->
      let perm_vars = fv_iperm perm in
      let imm_vars =  fv_imm imm in

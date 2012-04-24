@@ -95,6 +95,17 @@ let rec string_of_typed_var_list l = match l with
   | h::[] -> (string_of_typed_var h) 
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
+let string_of_imm imm = match imm with
+  | Iformula.ConstAnn(Accs) -> "@A"
+  | Iformula.ConstAnn(Imm) -> "@I"
+  | Iformula.ConstAnn(Lend) -> "@L"
+  | Iformula.ConstAnn(Mutable) -> "@M"
+  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+
+let string_of_imm_opt imm = match imm with
+  | Some ann -> string_of_imm ann
+  | None -> ""
+
 let string_of_id (id,p) = id ^ (string_of_primed p)
 ;;
 
@@ -161,9 +172,17 @@ and string_of_formula_exp_list l = match l with
   | []                         -> ""
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
+
+and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_imm_opt ann)
+  
+(* pretty printing for a list of pure formulae *)
+and string_of_data_param_list params anns = match (params, anns) with 
+  | ([], [])                   -> ""
+  | (h::[], a::[])             -> string_of_data_param h a
+  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ ", " ^ (string_of_data_param_list t1 t2)
+  | (_, _)                     -> ""
 ;;
 
-   
 (* pretty printing for boolean constraints *)
 let string_of_slicing_label sl =
   match sl with
@@ -301,15 +320,17 @@ let rec string_of_h_formula = function
          F.h_formula_heap_perm = perm; (*LDK*)
 		 F.h_formula_heap_arguments = pl;
 		 F.h_formula_heap_imm = imm;
+         F.h_formula_heap_imm_param = ann_param;
 		 F.h_formula_heap_label = pi;
 		 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
+    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid   ;
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
 		  F.h_formula_heap2_imm = imm;
+		  F.h_formula_heap2_imm_param = ann_param;
           F.h_formula_heap2_perm = perm; (*LDK*)
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
@@ -321,19 +342,6 @@ let rec string_of_h_formula = function
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 
-and string_of_imm imm = match imm with
-  | Iformula.ConstAnn(Accs) -> "@A"
-  | Iformula.ConstAnn(Imm) -> "@I"
-  | Iformula.ConstAnn(Lend) -> "@L"
-  | Iformula.ConstAnn(Mutable) -> "@M"
-  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
-
-(* and string_of_imm imm = match imm with *)
-(*   | Imm -> "@I" *)
-(*   | Lend -> "@L" *)
-(*   | _ -> "@M" *)
-;;
- 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 let string_of_one_formula (f:F.one_formula) =

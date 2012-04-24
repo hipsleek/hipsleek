@@ -152,7 +152,7 @@ let bf_to_var p = match p with
 type pure_double =
   | Pure_f of P.formula
   | Pure_c of P.exp
-  | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) (*andreeac*)
+  | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) 
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
@@ -674,13 +674,12 @@ view_header:
 cid: 
   [[ 
      (* `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed) *)
-   `IDENTIFIER t	-> (* print_string ("\n (andreeac) cid: "^t^"\n"); *)
-						if String.contains t '\'' then (* Remove the primed in the identifier *)
-							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
-						else (t,Unprimed)
-   | `RES _                 	->  (res_name, Unprimed)
-   | `SELFT _               	->  (self, Unprimed)
-   | `THIS _               		->  (this, Unprimed)]];
+   `IDENTIFIER t	-> if String.contains t '\'' then (* Remove the primed in the identifier *)
+		 (Str.global_replace (Str.regexp "[']") "" t,Primed) 
+	   else (t,Unprimed)
+    | `RES _                 	->  (res_name, Unprimed)
+    | `SELFT _               	->  (self, Unprimed)
+    | `THIS _               		->  (this, Unprimed)]];
 
 
 
@@ -697,11 +696,11 @@ view_body:
   
 (********** Constraints **********)
 
-opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> (* let _ = print_string ("\n(andreeac) opt_heap_arg_list") in *) t]];
+opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
 
-opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> (* let _ = print_string ("\n(andreeac) opt_heap_data_arg_list") in *) t]];
+opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> t]];
 
 opt_heap_data_arg_list2:[[t=LIST1 heap_arg2_data SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1) == (fst n2)) t (get_pos_camlp4 _loc 1)]]; 
   
@@ -870,27 +869,16 @@ simple2:  [[ t= opt_type_var_list -> ()]];
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_perm; `LT; hl= opt_general_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label ->
   let imm_opt = get_heap_ann annl in
-  (* let _ = print_string ("\n(andreeac) simple_heap_constr_imm, node name: " ^ id) in *)
   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
      match hl with
         | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t [] ofl  (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)]];
-
-(* simple_heap_constr_param_imm: *) (*andreeac*)
-(*   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label -> *)
-(*   let imm_opt = get_heap_ann annl in *)
-(*   let _ = print_string ("\n(andreeac) simple_heap_constr_param_data_imm, node name: " ^ id) in *)
-(*   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in *)
-(*      match hl with *)
-(*         | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2) *)
-(*         | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)]]; *)
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
     [[ 
         peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
         (*ignore permission if applicable*)
-        (* let _ = print_string ("\n(andreeac) simple_heap_constr, 1 node name: " ^ id) in *)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
 	    (let imm_opt = get_heap_ann annl in
          match hl with
@@ -898,7 +886,6 @@ simple_heap_constr:
            | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2))
       | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
         (*ignore permission if applicable*)
-        (* let _ = print_string ("\n(andreeac) simple_heap_constr, 1.5 node name: " ^ id) in *)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
 	    (let imm_opt = get_heap_ann annl in
          match hl with
@@ -909,7 +896,6 @@ simple_heap_constr:
            | (t, _)  -> let t1, t2 = List.split t in  F.mkHeapNode c id dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)  )
       | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
       let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
-      (* let _ = print_string ("\n(andreeac) simple_heap_constr, 2 node name: " ^ id) in *)
       (match hal with
         | ([],t) -> F.mkHeapNode2 c id dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
@@ -923,13 +909,11 @@ simple_heap_constr:
       (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
       | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
 	  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
-      (* let _ = print_string ("\n(andreeac) simple_heap_constr, 3 node name: " ^ generic_pointer_type_name) in *)
       (let imm_opt = get_heap_ann annl in
        match hl with
          | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
          | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2))
       | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
-      (* let _ = print_string ("\n(andreeac) simple_heap_constr, 4 node name: " ^ generic_pointer_type_name) in *)
       (match hal with
         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
@@ -978,23 +962,15 @@ ann_term:
       | `MAYLOOP -> MayLoop
     ]];
 
-
-(* cexp:  *)
-(*     [[t= cexp_w -> match t with *)
-(*       | Pure_c f ->  let _ = print_string ("\n(andreeac) cexp ") in  f *)
-(*       | Pure_t (f, _ ) ->  let _ = print_string ("\n(andreeac) cexp ") in  f *)
-(*       | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"] *)
-(*     ]; *)
-
 cexp:
     [[t = cexp_data_p -> match t with
-      | f, _ ->  (* let _ = print_string ("\n(andreeac) cexp ") in *)  f ]
+      | f, _ ->  f ]
     ];
 
 cexp_data_p: 
     [[t = cexp_w -> match t with
-      | Pure_c f ->  (* let _ = print_string ("\n(andreeac) cexp data ") in *) (f, None)
-      | Pure_t (f, ann_opt ) ->  (* let _ = print_string ("\n(andreeac) cexp data ") in *) (f, ann_opt)
+      | Pure_c f -> (f, None)
+      | Pure_t (f, ann_opt ) -> (f, ann_opt)
       | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
     ];
 
@@ -1004,7 +980,7 @@ slicing_label: [[ `DOLLAR -> true ]];
 
 cexp_w :
     [ "pure_lbl"
-            [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> (* let _ = print_string ("\n(andreeac) cexp_w pure_lbl") in *) apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+            [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          ->  apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
       | "slicing_label"
 	          [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
@@ -1163,7 +1139,7 @@ cexp_w :
                 | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) 
                 Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
                 | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
-                | t = cid; ann0 = LIST1 ann_heap           -> (* print_string ("cexp:"^(fst t)^"\n"); *) (* let _ = print_string ("\n(andreeac) cexp_w cid: " ^ (fst t)) in  *) Pure_t ((P.Var (t, get_pos_camlp4 _loc 1)),  (get_heap_ann_opt ann0 ))
+                | t = cid; ann0 = LIST1 ann_heap           -> Pure_t ((P.Var (t, get_pos_camlp4 _loc 1)),  (get_heap_ann_opt ann0 ))
                 | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
                 | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
                 | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
@@ -1194,16 +1170,6 @@ cexp_w :
 
 		      
 	];
-
-(* cexp_w_data : *)
-(*     [ *)
-(*         "cexp_w" *)
-(*             [  *)
-(*                 t = cexp_w -> t *)
-(*               | t = cid; anns_data = ann_heap_list            -> (\* print_string ("cexp:"^(fst t)^"\n"); *\) let _ = print_string ("\n(andreeac) cexp_w cid data: " ^ (fst t)) in  Pure_c (P.Var (t, get_pos_camlp4 _loc 1)) *)
-(*             ] *)
-            
-(*     ]; *)
 
 (* [[ *)
 (*     il=OPT measures2 -> un_option il [] *)
