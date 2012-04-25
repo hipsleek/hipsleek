@@ -149,22 +149,6 @@ class graphFindBCC =
          			let _= rem_ver Dfs.postfix graph in ()
 					end					
 			else G.clear graph				
-					
-(*		method add_diseq_edge (graph:G.t) (x: pairV)=                        *)
-(*			 if ((G.mem_vertex graph x.ver1) &(G.mem_vertex graph x.ver2)) then*)
-(*				begin                                                            *)
-(*					let ed=G.E.create x.ver1 "" x.ver2 in                          *)
-(*						let _= G.add_edge_e graph ed in true                         *)
-(*					end                                                            *)
-(*				else 	false                                                     *)
-					 
-(*		method add_list_diseq_edges (graph:G.t) (diseqs: pairV list)=                          *)
-(*			List.map (fun x-> if ((G.mem_vertex graph x.ver1) & (G.mem_vertex graph x.ver2)) then*)
-(*				begin                                                                              *)
-(*					let ed=G.E.create x.ver1 "" x.ver2 in                                            *)
-(*						G.add_edge_e graph ed                                                          *)
-(*					end                                                                              *)
-(*			) diseqs                                                                             *)
 		
 		method add_diseq_edgev2 (graph:G.t) e =
 				 if ((G.mem_vertex graph (G.E.src e)) &(G.mem_vertex graph (G.E.dst e))) then
@@ -175,8 +159,7 @@ class graphFindBCC =
 				
 		method add_diseq_edges (eq_graph:G.t)(diseq_graph:G.t)=
 			G.iter_edges_e (fun x->G.add_edge_e eq_graph x) diseq_graph
-(*		method get_v graph v=                                                                *)
-(*			if ((G.mem_vertex graph v)) then print_endline ("ex") else print_endline ("not ex")*)
+
 		method print_graph graph=
 			let print_graph f graph_= f (fun v -> print_endline v) graph_ in
 				let  _ = print_graph Dfs.postfix graph in ()
@@ -203,9 +186,11 @@ class rTC=
 (*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
 																					let _ = G.add_edge graph_ k x in 
 																					let _=G.add_edge graph k x in 
-																					try let _=Glabel.find_edge gr_e k x in() with Not_found ->let _=number_vars<-number_vars+1 and ed_var=Glabel.E.create k (ref (string_of_int number_vars)) x in Glabel.add_edge_e gr_e ed_var ) neib) neib in
+																					let mem=Glabel.mem_edge gr_e k x in 
+																					if(mem=false) then 
+																						let _=number_vars<-number_vars+1 and ed_var=Glabel.E.create k (ref (string_of_int number_vars)) x in Glabel.add_edge_e gr_e ed_var ) neib) neib in
 																						G.remove_vertex graph_ v   
-				) cpg(*graph_*) in 
+				) graph_ in 
 					let  _ = dfs Dfs.postfix cpg in ()
 	
 	method get_var v1 v2 graph=
@@ -297,23 +282,6 @@ class rTC=
 
 			 in loop_gc es
 	
-	
-(*	method rtc eq_graph diseq_list =                                                                  *)
-(*		let _= List.map ( fun e-> let cpg= G.copy eq_graph in                                           *)
-(*																let check_add=bcc#add_diseq_edge cpg e in                           *)
-(*																if(check_add=true) then                                             *)
-(*																	let _=bcc#getBCCGraph cpg e.ver1 e.ver2 in                        *)
-(*																	                                                                  *)
-(*																		let _= bcc#add_list_diseq_edges cpg diseq_list in               *)
-(*																			let _= if((G.is_empty cpg)=false) then bcc#make_chordal cpg in*)
-(*(*																				let _= bcc#print_chordal_graph cpg in*)                   *)
-(*																			                                                              *)
-(*																				let _= self#generate_constraints cpg e in                   *)
-(*																			(*To do*)                                                     *)
-(*																				let _=G.clear g_source in                                   *)
-(*(*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in	*)        *)
-(*																			()			                                                      *)
-(*																	) diseq_list in local_cache                                       *)
 	method print_all graph =
 		let _=Glabel.iter_edges_e (fun x->print_endline ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
 	

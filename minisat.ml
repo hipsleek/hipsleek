@@ -21,7 +21,7 @@ let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 (*minisat*)
 let minisat_path = "/usr/local/bin/minisat"
 let minisat_name = "minisat"
-let minisat_arg = "-pre"
+let minisat_arg = ""(*"-pre"*)
 let eq_path = "equality_logic"
 let eq_name = "equality_logic"
 let eq_arg = "equality_logic"
@@ -486,25 +486,32 @@ let rtc_generate_T (f:Cpure.formula) =
 			  |Or  (f1, f2, _, _)-> cnf_to_string_to_file f1 ^" "^ cnf_to_string_to_file f2 
 		in
 			let cnf_str =cnf_to_string_to_file f in
+			(cnf_str,ge,gd,gr_e)
 (*				let _=G.iter_edges_e (fun e-> print_endline ("GE: "^(G.E.src e)^(G.E.dst e))) ge in   *)
 (*				let _=G.iter_edges_e (fun e-> print_endline ("GDisE: "^(G.E.src e)^(G.E.dst e))) gd in*)
-				let testRTC= new rTC in 
-(*					let _=exit(0) in*)
-					let (cache,allvars) = testRTC#rtc_v2 ge gd gr_e !number_vars in 
-						(cnf_str,cache,allvars)
-		 
-let to_minisat_cnf (ante: Cpure.formula)  : string =
+(*				let testRTC= new rTC in                                           *)
+(*(*					let _=exit(0) in*)                                            *)
+(*					let (cache,allvars) = testRTC#rtc_v2 ge gd gr_e !number_vars in *)
+(*						(cnf_str,cache,allvars)                                       *)
+
+let get_cnf_from_cache ge gd gr_e=
+				let testRTC= new rTC in
+					let (cache,allvars) = testRTC#rtc_v2 ge gd gr_e !number_vars in
+				let res= ref "" in
+				let _=List.map (fun x-> let _=match x with 
+					| (a,b,c)-> let _= res:= !res^"-"^a^" "^"-"^b^" "^c^" 0"^"\n" in () (*a and b->c ~ -a or -b or c *)
+					in ()
+					) cache in !res 
+
+let to_minisat_cnf (ante: Cpure.formula)  =
   (*let _ = "** In function Spass.to_minisat_cnf" in*)
 (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in *)
 (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
 		let _=bcl :=[] and _= number_vars := 0 in
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
-			let (ante_str,cache,allvars)=rtc_generate_T ante_cnf in
+			let (ante_str,ge,gd,gr_e)=rtc_generate_T ante_cnf in
 				let res= ref "" in
-				let _=List.map (fun x-> let _=match x with 
-					| (a,b,c)-> let _= res:= !res^"-"^a^" "^"-"^b^" "^c^" 0"^"\n" in () (*a and b->c ~ -a or -b or c *)
-					in ()
-					) cache in 
+(*			*)
 (*				let _=(if(G.is_empty allvars) then print_endline "No need to generate T") in	*)(*debug*)
 			 (*start generating cnf for the given CNF formula*)
 				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
@@ -515,24 +522,26 @@ let to_minisat_cnf (ante: Cpure.formula)  : string =
 				    	else temp
 				  	in
 							let index= ref 0 in 
-							let _=List.map (fun v-> let _= res:= (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
-				  	let _= ""(*print_endline (result^"\n"^ !res)*)(*debug*) in result^"\n"^ !res
+							let _=List.map (fun v-> let _= res := (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
+				  	let final_res= result^"\n"^ !res in 
+							(final_res,ge,gd,gr_e)
+						
 (*bach*) 
 (***************************************************************
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 
-let to_minisat (ante : Cpure.formula): string =
+let to_minisat (ante : Cpure.formula)  =
   (* debug *)
   (*let _ = print_endline "** In function to_minisat:" in *)
  
   let res = 
     if (minisat_input_format = "cnf") then (
 	    (* if sending problem in cnf format to minisat *)
-	    let cnf_res = to_minisat_cnf ante 
+	    let (cnf_res,ge,gd,gr_e) = to_minisat_cnf ante 
 (*	in let _= List.map (fun x-> print_endline ("allfv: "^(minisat_cnf_of_spec_var x))) all_fvn *)
 (*  in let _ = print_endline ("-- Input problem in cnf format:\n" ^ cnf_res)*)
-      in cnf_res
+      in (cnf_res,ge,gd,gr_e)
     ) 
     else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
   res
@@ -547,28 +556,33 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 *)
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
-  let res, should_run_minisat =
-    if not (can_minisat_handle_formula f) then
-      try
-        let (pr_w,pr_s) = Cpure.drop_complex_ops in
-        let optr= Redlog.is_sat f sat_no(*(Omega.is_sat f sat_no)*) in
-        match optr with
-        | true -> (true, false)
-        | false -> (false, false)
-      with _ -> (false,false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
-    else (false, true) in
-  if (should_run_minisat) then
+(*  let res, should_run_minisat =                                                                                       *)
+(*    if not (can_minisat_handle_formula f) then                                                                        *)
+(*      try                                                                                                             *)
+(*        let (pr_w,pr_s) = Cpure.drop_complex_ops in                                                                   *)
+(*        let optr= Redlog.is_sat f sat_no(*(Omega.is_sat f sat_no)*) in                                                *)
+(*        match optr with                                                                                               *)
+(*        | true -> (true, false)                                                                                       *)
+(*        | false -> (false, false)                                                                                     *)
+(*      with _ -> (false,false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)*)
+(*    else (false, true) in                                                                                             *)
+(*  if (should_run_minisat) then*)
     (*let _ = print_endline "-- use minisat.check_problem..." in *)
     (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
-    let minisat_input = to_minisat f in
+    let (minisat_input,ge,gd,gr_e) = to_minisat f in
     let validity =
       if (minisat_input_mode = "file") then
         check_problem_through_file minisat_input timeout
       else illegal_format "[minisat.ml] The value of minisat_input_mode is invalid!" in
-    let res =validity in
-    res
-  else
-    res
+		if(validity=false) then	
+(*    		let _= print_endline "check sat1" in *)
+				validity
+		else
+(*			let _= print_endline "check sat2" in*)
+			let cnf_T = get_cnf_from_cache ge gd gr_e  in
+			  check_problem_through_file (minisat_input^cnf_T) timeout
+(*  else *)
+(*    res*)
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   minisat_is_sat f sat_no minisat_timeout_limit
@@ -618,9 +632,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
                        
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
   (*let _ = print_endline "** In function minisat.imply:" in *)
-  let ante_fv = Cpure.fv ante in
-  let all=Gen.BList.remove_dups_eq (=) (ante_fv) in
-(*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
+  (*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
   let cons= (mkNot_s conseq) in
     let imply_f= mkAnd ante cons no_pos  in
     let res =is_sat imply_f ""
