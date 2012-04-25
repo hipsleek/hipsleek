@@ -19,6 +19,13 @@ struct
 	let default = ""
 end
 
+module Ed1 =
+struct
+	type t= string ref
+	let compare = Pervasives.compare
+	let default = ref ""
+end
+
 type pairV= {ver1:string;ver2:string}	
 
 module RecordPair=
@@ -26,7 +33,8 @@ module RecordPair=
 		type t= pairV
 		let compare = Pervasives.compare
 		end
-module G = Imperative.Graph.ConcreteLabeled(Vt)(Ed)
+module G = Imperative.Graph.Concrete(Vt)
+module Glabel = Imperative.Graph.ConcreteLabeled(Vt)(Ed1)
 module Dfs= Traverse.Dfs(G)
 module Adj=Oper.Neighbourhood(G)
 module MapDFS=Map.Make(String) 
@@ -142,21 +150,21 @@ class graphFindBCC =
 					end					
 			else G.clear graph				
 					
-		method add_diseq_edge (graph:G.t) (x: pairV)=
-			 if ((G.mem_vertex graph x.ver1) &(G.mem_vertex graph x.ver2)) then
-				begin
-					let ed=G.E.create x.ver1 "" x.ver2 in
-						let _= G.add_edge_e graph ed in true 
-					end
-				else 	false
+(*		method add_diseq_edge (graph:G.t) (x: pairV)=                        *)
+(*			 if ((G.mem_vertex graph x.ver1) &(G.mem_vertex graph x.ver2)) then*)
+(*				begin                                                            *)
+(*					let ed=G.E.create x.ver1 "" x.ver2 in                          *)
+(*						let _= G.add_edge_e graph ed in true                         *)
+(*					end                                                            *)
+(*				else 	false                                                     *)
 					 
-		method add_list_diseq_edges (graph:G.t) (diseqs: pairV list)=
-			List.map (fun x-> if ((G.mem_vertex graph x.ver1) & (G.mem_vertex graph x.ver2)) then
-				begin
-					let ed=G.E.create x.ver1 "" x.ver2 in
-						G.add_edge_e graph ed 
-					end 
-			) diseqs
+(*		method add_list_diseq_edges (graph:G.t) (diseqs: pairV list)=                          *)
+(*			List.map (fun x-> if ((G.mem_vertex graph x.ver1) & (G.mem_vertex graph x.ver2)) then*)
+(*				begin                                                                              *)
+(*					let ed=G.E.create x.ver1 "" x.ver2 in                                            *)
+(*						G.add_edge_e graph ed                                                          *)
+(*					end                                                                              *)
+(*			) diseqs                                                                             *)
 		
 		method add_diseq_edgev2 (graph:G.t) e =
 				 if ((G.mem_vertex graph (G.E.src e)) &(G.mem_vertex graph (G.E.dst e))) then
@@ -185,7 +193,7 @@ class rTC=
 	val mutable number_vars=0
 	val mutable local_cache = []
 	val bcc= new graphFindBCC
-	val mutable g_source= G.create ()
+	val mutable g_source= Glabel.create ()
 (*	val src= MapDFS.empty*)
 	
 	method make_chordal graph gr_e=
@@ -193,15 +201,15 @@ class rTC=
 				let dfs f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in
 																				let _= List.map (fun x-> List.map (fun k-> if(k!=x) then 
 (*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
-																					let ed= G.E.create k "" x in let _ = G.add_edge_e graph_ ed in 
-																					let _=G.add_edge_e graph ed in 
-																					try let _=G.find_edge gr_e k x in() with Not_found ->let _=number_vars<-number_vars+1 and ed_var=G.E.create k (string_of_int number_vars) x in G.add_edge_e gr_e ed_var ) neib) neib in
+																					let _ = G.add_edge graph_ k x in 
+																					let _=G.add_edge graph k x in 
+																					try let _=Glabel.find_edge gr_e k x in() with Not_found ->let _=number_vars<-number_vars+1 and ed_var=Glabel.E.create k (ref (string_of_int number_vars)) x in Glabel.add_edge_e gr_e ed_var ) neib) neib in
 																						G.remove_vertex graph_ v   
 				) cpg(*graph_*) in 
 					let  _ = dfs Dfs.postfix cpg in ()
 	
 	method get_var v1 v2 graph=
-		try let ed=G.find_edge graph v1 v2 in G.E.label ed
+		try let ed=Glabel.find_edge graph v1 v2 in !(Glabel.E.label ed)
 		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
 	
 	method check_in_local_cache v v1 v2 gr_e=
@@ -219,31 +227,27 @@ class rTC=
 							(*add to local cache*)
 (*								let _=G.iter_edges_e (fun x-> print_endline ("g src 2:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
 							let vv1= ref "" and vv2=ref "" and v1v2= ref "" in
-								let _= try vv1:= G.E.label (G.find_edge gr_e v el.ver1)  
-									with Not_found->  begin let _=number_vars<-number_vars+1 and _= vv1 :=(string_of_int number_vars) in let cx1= G.E.create v !vv1 el.ver1 in G.add_edge_e gr_e cx1 end
+								let _= try vv1:= !(Glabel.E.label (Glabel.find_edge gr_e v el.ver1))  
+									with Not_found->  begin let _=number_vars<-number_vars+1 and _= vv1 :=(string_of_int number_vars) in let cx1= Glabel.E.create v vv1 el.ver1 in Glabel.add_edge_e gr_e cx1 end
 								in	 
-								let _= try vv2:=(G.E.label (G.find_edge gr_e v el.ver2)) 
-											with Not_found-> begin let _=number_vars<-number_vars+1 and _= vv2 :=(string_of_int number_vars) in let cx2= G.E.create v !vv2 el.ver2 in G.add_edge_e gr_e cx2 end
+								let _= try vv2:= !((Glabel.E.label (Glabel.find_edge gr_e v el.ver2))) 
+											with Not_found-> begin let _=number_vars<-number_vars+1 and _= vv2 :=(string_of_int number_vars) in let cx2= Glabel.E.create v vv2 el.ver2 in Glabel.add_edge_e gr_e cx2 end
 								in
-								let	_= try v1v2:=(G.E.label (G.find_edge gr_e el.ver1 el.ver2))
-									with Not_found -> begin let _=number_vars<-number_vars+1 and _= v1v2 :=(string_of_int number_vars) in let cx3= G.E.create el.ver1 !v1v2 el.ver2 in G.add_edge_e gr_e cx3 end
+								let	_= try v1v2:= !((Glabel.E.label (Glabel.find_edge gr_e el.ver1 el.ver2)))
+									with Not_found -> begin let _=number_vars<-number_vars+1 and _= v1v2 :=(string_of_int number_vars) in let cx3= Glabel.E.create el.ver1 v1v2 el.ver2 in Glabel.add_edge_e gr_e cx3 end
 								in
-								let _=try let _= G.find_edge g_source  v el.ver1 in 
-										let _=G.remove_edge g_source  v el.ver1 in
-										let source_e1 = G.E.create v !v1v2 el.ver1 in
-																				let _= G.add_edge_e g_source source_e1 in() 
-										with Not_found->let source_e1 = G.E.create v !v1v2 el.ver1 in
-																				let _= G.add_edge_e g_source source_e1 in ()
+								let _=try let ed1= Glabel.find_edge g_source  v el.ver1 in 
+										Glabel.E.label ed1 := !v1v2
+										with Not_found->let source_e1 = Glabel.E.create v v1v2 el.ver1 in
+																				let _= Glabel.add_edge_e g_source source_e1 in ()
 								in												
-								let _=try let _= G.find_edge g_source  v el.ver2 in
-										let _=G.remove_edge g_source  v el.ver2 in
-										let source_e2 = G.E.create v !v1v2 el.ver2 in
-																				let _= G.add_edge_e g_source source_e2 in	()	
-										with Not_found->let source_e2 = G.E.create v !v1v2 el.ver2 in 
-																				let _= G.add_edge_e g_source source_e2 in ()
+								let _=try let ed2= Glabel.find_edge g_source  v el.ver2 in
+															Glabel.E.label ed2 := !v1v2
+										with Not_found->let source_e2 = Glabel.E.create v v1v2 el.ver2 in 
+																				let _= Glabel.add_edge_e g_source source_e2 in ()
 								in																								
 								let _= local_cache<-[(!vv1,!vv2,!v1v2)]@local_cache in
-(*						  		let _= print_endline ("Constraints in cache:---- "^ !vv1 ^" and "^ !vv2 ^" -> "^ !v1v2) in*)
+(*						  		let _= print_endline ("Constraints in cache:---- "^ v^el.ver1 ^" and "^ v^el.ver2 ^" -> "^ el.ver1^el.ver2) in*)
 											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
 (*											let _=print_endline ("edge to expand:"^v^el.ver1) in   *)
 (*											 	let _=print_endline ("edge to expand:"^v^el.ver2) in*)
@@ -261,11 +265,11 @@ class rTC=
 								if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
 									begin
 									  let lb1=self#get_var v e.ver1 gr_e and lb2=self#get_var v e.ver2 gr_e in(*get label of e1 and e2=index of e1 e2*)																													
-											try let ed_e= G.find_edge g_source e.ver1 e.ver2 in
-												let lbe=(G.E.label ed_e)in(*find source of e*)
+											try let ed_e= Glabel.find_edge g_source e.ver1 e.ver2 in
+												let lbe= !(Glabel.E.label ed_e)in(*find source of e*)
 																																									
-												try let ed_e1=G.find_edge g_source v e.ver1 and ed_e2=G.find_edge g_source v e.ver2 in
-										  		let lb_ed_e1=(G.E.label ed_e1) and lb_ed_e2=(G.E.label ed_e2) in(*find source of e1 and source of e2*)
+												try let ed_e1=Glabel.find_edge g_source v e.ver1 and ed_e2=Glabel.find_edge g_source v e.ver2 in
+										  		let lb_ed_e1= !(Glabel.E.label ed_e1) and lb_ed_e2= !(Glabel.E.label ed_e2) in(*find source of e1 and source of e2*)
 													if((lb_ed_e1<>lbe) & (lb_ed_e2<>lbe) &(lb_ed_e1<>lb_ed_e2)) then
 		(*											if(lbe<>lb1 & lbe<>lb11 & lbe<>lb2 & lbe<>lb22) then*)
 		(*												if(v1v2<>lb_ed_e1 & v1v2<>lb_ed_e2 & v2v1<>lb_ed_e1 & v2v1<>lb_ed_e2) then*)
@@ -311,18 +315,11 @@ class rTC=
 (*																			()			                                                      *)
 (*																	) diseq_list in local_cache                                       *)
 	method print_all graph =
-		let _=G.iter_edges_e (fun x->print_endline ("bach"^(G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph in let _=exit(0) in () 
+		let _=Glabel.iter_edges_e (fun x->print_endline ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
 	
-	method rtc_v2 eq_graph diseq_graph =
-		let graph_e=G.create() in
-		let _=G.iter_edges_e (fun x->let _=number_vars<-number_vars+1 in 
-																	let cx=G.E.create (G.E.src x) (string_of_int number_vars) (G.E.dst x) in 
-																		G.add_edge_e graph_e cx) eq_graph in
-		let _=G.iter_edges_e (fun x->try let _=G.find_edge graph_e (G.E.src x) (G.E.dst x) in() 
-																			with Not_found-> let _=number_vars<-number_vars+1 in 
-																				let cx=G.E.create (G.E.src x) (string_of_int number_vars) (G.E.dst x) 
-																					in G.add_edge_e graph_e cx) diseq_graph in
+	method rtc_v2 eq_graph diseq_graph graph_e num_var=
 (*		let _=G.iter_edges_e (fun x->print_endline ((G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph_e in let _=exit(0) in*)
+		let _= number_vars<-num_var in
 		let rtc_helper e= let cpg= G.copy eq_graph in 
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
