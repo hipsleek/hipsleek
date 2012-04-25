@@ -81,8 +81,7 @@ class graphFindBCC =
 													loopFindBCC graph w v2;
 (*													print_endline ("new here with current temp" ^temp_edge.ver1^temp_edge.ver2);*)
 													let w_high = MapDFS.find w high in
-(*													let _= print_endline ("w_high: "^ (string_of_int w_high) ^ "of "^w^" v_dfs_num: " ^(string_of_int v_dfs_num)^" of "^v1) in*)
-														
+(*													let _= print_endline ("w_high: "^ (string_of_int w_high) ^ "of "^w^" v_dfs_num: " ^(string_of_int v_dfs_num)^" of "^v1) in*)													
 														let _= if(w_high <= v_dfs_num) then
 															begin
 																 (*modified here*)
@@ -128,19 +127,24 @@ class graphFindBCC =
 		method private transform graph v1 v2=
 			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in
 				let  _ = init_dfs_num Dfs.postfix graph in
-					let getBCC f graph = f (fun v->  if((MapDFS.find v dfs_num)=0) then
-												begin
-													converse_depth<-num_ver;
-													let _= "" in (self)#findBCC graph v1 v2;
-													if(num_ver - converse_depth =1) then
-														begin
-(*															(*modified here*) print_endline "BCC contains one v"*)
-															end
-													end
-													) graph
-						in
-						let _= getBCC Dfs.postfix graph in bcc
-			
+				let _= converse_depth<-num_ver in
+						let _= (self)#findBCC graph v1 v2 in bcc
+
+(*		method private transform graph v1 v2=                                                                 *)
+(*			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in*)
+(*				let  _ = init_dfs_num Dfs.postfix graph in                                                        *)
+(*					let getBCC f graph = f (fun v->  if((MapDFS.find v dfs_num)=0) then                             *)
+(*												begin                                                                             *)
+(*												  converse_depth<-num_ver;                                                        *)
+(*													let _= "" in (self)#findBCC graph v1 v2;                                        *)
+(*													if(num_ver - converse_depth =1) then                                            *)
+(*														begin                                                                         *)
+(*(*															(*modified here*) print_endline "BCC contains one v"*)                    *)
+(*															end                                                                         *)
+(*													end                                                                             *)
+(*													) graph                                                                         *)
+(*						in                                                                                            *)
+(*					let _= getBCC Dfs.postfix graph in bcc                                                          *)
 		method getBCCGraph graph v1 v2 =
 			let bcp = (self)#transform graph v1 v2 in
 			if(bcp != []) then 
