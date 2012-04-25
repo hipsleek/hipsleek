@@ -251,7 +251,7 @@ class rTC=
 							begin
 							(*check local cache??*)
 (*							let _= print_endline ("triangular: "^e.ver1^e.ver2^v) in*)
-								if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
+(*								if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then*)
 									begin
 									  let lb1=self#get_var v e.ver1 gr_e and lb2=self#get_var v e.ver2 gr_e in(*get label of e1 and e2=index of e1 e2*)																													
 											try let ed_e= Glabel.find_edge g_source e.ver1 e.ver2 in
@@ -264,6 +264,7 @@ class rTC=
 		(*												if(v1v2<>lb_ed_e1 & v1v2<>lb_ed_e2 & v2v1<>lb_ed_e1 & v2v1<>lb_ed_e2) then*)
 															begin
 (*																let _= print_endline ("1 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
+																		if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
 																		let (e1,e2)=helper v e in
 		(*																	let _=G.iter_edges_e (fun x-> print_endline ("g src 1:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
 																			let _= loop_gc e1 and _= loop_gc e2  in () 
