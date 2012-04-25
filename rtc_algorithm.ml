@@ -1,10 +1,9 @@
-(* Ocamlgraph demo program: solving the Sudoku puzzle using graph coloring *)
-
+(* Ocamlgraph RTC program: Find Biconnected component, *)
+(* RTC algorithm generating extra constraints for Equality Logic*)
+(* Xuan Bach-24/04/2012*)
 open Format
 open Graph
-(* We use undirected graphs with nodes containing a pair of integers
-   (the cell coordinates in 0..8 x 0..8).
-   The integer marks of the nodes will store the colors. *)
+
 
 module Vt =
 struct
@@ -330,7 +329,7 @@ class rTC=
 														let _=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
 															let _= if((G.is_empty cpg)=false) then 
 															let _= bcc#add_diseq_edges cpg diseq_graph in 
-																let _= if((G.is_empty cpg)=false) then (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
+																let _= (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
 (*																				let _= bcc#print_chordal_graph cpg in*)
 																  let ve={ver1=(G.E.src e);ver2=(G.E.dst e)} in
 (*																	let _=print_endline ("bcc of:"^(G.E.src e)^(G.E.dst e)) in*)
