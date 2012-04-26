@@ -30,6 +30,7 @@ let number_clauses = ref 1
 let number_vars = ref 0
 let len=1000
 let bcl= ref []
+let sat= ref true
 let minisat_process = ref {  name = "minisat";
                            pid = 0;
                            inchannel = stdin;
@@ -215,7 +216,7 @@ let return_pure bf f= match bf with
 						 | Eq _ -> f
 						 | Neq _ -> f   
 
-
+(*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
   match f with
   | BForm (b, _)         -> return_pure b f
@@ -242,6 +243,13 @@ let incr_cls= number_clauses:=1 + !number_clauses
 (*  |Or  (f1, f2, _, _)-> (cnf_to_string_to_file f1 map)^" "^(cnf_to_string_to_file f2 map)                       *)
 
 (*For CNF conversion*)
+let unsat_in_cnf (bf : Cpure.b_formula) =
+	match bf with
+  | (pf, _) -> match pf with
+		| Neq(e1,e2,_)->let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
+												let _=if(li=ri) then  sat:=false in ()
+		| _->()					
+	
 let rec has_and f =
 	match f with
 	|BForm _ -> false 
@@ -253,6 +261,8 @@ and is_cnf f =
   match f with
 	| BForm _ -> true
 	| Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
+	| And (BForm(b,_),f2,_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f2 else true
+	| And (f1,BForm(b,_),_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f1 else true
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
 
 
@@ -278,7 +288,7 @@ let nnf_to_cnf f= nnf_to_xxx f dist_1
 
 (*let to_cnf f = nnf_to_cnf (minisat_cnf_of_formula f)*)
 let rec to_cnf f = 
-	let cnf_form=(nnf_to_cnf (minisat_cnf_of_formula f) ) in
+	let cnf_form=(nnf_to_cnf ((*minisat_cnf_of_formula*) f) ) in
  		if(is_cnf cnf_form) then cnf_form  else to_cnf cnf_form(*(to_cnf cnf_form)*)
 
 let minisat_cnf_of_formula f =
@@ -490,19 +500,17 @@ let rtc_generate_T (f:Cpure.formula) =
 
 let get_cnf_from_cache ge gd gr_e=
 				let testRTC= new rTC in
-					let (cache,allvars) = testRTC#rtc_v2 ge gd gr_e !number_vars in
-				let res= ref "" in
-				let _=List.map (fun x-> let _=match x with 
-					| (a,b,c)-> let _= res:= !res^"-"^a^" "^"-"^b^" "^c^" 0"^"\n" in () (*a and b->c ~ -a or -b or c *)
-					in ()
-					) cache in !res 
+					let cache= testRTC#rtc_v2 ge gd gr_e !number_vars in
+						cache
 
 let to_minisat_cnf (ante: Cpure.formula)  =
   (*let _ = "** In function Spass.to_minisat_cnf" in*)
-(*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in *)
+(*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
 (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
 		let _=bcl :=[] and _= number_vars := 0  in
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
+		if(!sat=true) then
+(*			let _=print_endline "sat true" in*)
 			let (ante_str,ge,gd,gr_e)=rtc_generate_T ante_cnf in
 				let res= ref "" in
 			 (*start generating cnf for the given CNF formula*)
@@ -517,6 +525,9 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 							let _=List.map (fun v-> let _= res := (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
 				  	let final_res= result^"\n"^ !res in 
 							(final_res,ge,gd,gr_e)
+		else
+(*			let _=print_endline "sat false" in *)
+			let _=sat:=true in ("",G.create(),G.create(),Glabel.create())					
 						
 (*bach*) 
 (***************************************************************
@@ -550,18 +561,20 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
     let (minisat_input,ge,gd,gr_e) = to_minisat f in
-    let validity =
-      if ((List.length !bcl)>0 ) then
-        check_problem_through_file minisat_input timeout 
-			else true	
-		in
-		if(validity=false) then	
-(*    		let _= print_endline "check sat1" in *)
-				validity
-		else
-(*			let _= print_endline "check sat2" in*)
-			let cnf_T = get_cnf_from_cache ge gd gr_e  in
-			  check_problem_through_file (minisat_input^cnf_T) timeout
+		if(minisat_input<>"") then
+	    let validity =
+	      if ((List.length !bcl)>0 ) then
+	        check_problem_through_file minisat_input timeout
+				else true
+			in
+			if(validity=false) then
+	(*    		let _= print_endline "check sat1" in *)
+					validity
+			else
+	(*			let _= print_endline "check sat2" in*)
+				let cnf_T = get_cnf_from_cache ge gd gr_e  in
+				  check_problem_through_file (minisat_input^cnf_T) timeout
+		else false		
 
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =

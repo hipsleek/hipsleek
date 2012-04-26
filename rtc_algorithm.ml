@@ -68,7 +68,7 @@ class graphFindBCC =
 						let _= high <- MapDFS.add v1 v_dfs_num high in
 (*							let _= print_endline ("In :" ^v1^ " depth: "^(string_of_int (MapDFS.find v1 dfs_num)) ^ " high: "^(string_of_int ( MapDFS.find v1 high)) ) in*)
 							let neib= Adj.list_from_vertex graph v1 in
-									List.map (fun w-> let _=
+									List.map (fun w-> 
 										try
 										 let w_dfs_num = MapDFS.find w dfs_num in
 											 let temp_edge = {ver1=v1;ver2=w} in (*modified here*)
@@ -99,11 +99,11 @@ class graphFindBCC =
 																				end
 																			done;
 																			let _ = bcc<- !bcp 
-																				in let len=List.length bcc in let exist_v1 = List.mem v1 bcc in let exist_v2= List.mem v2 bcc in
+																				in let len=List.length bcc in (*let exist_v1 = List.mem v1 bcc in let exist_v2= List.mem v2 bcc*) 
 																				
 (*																							let _= List.map (fun x-> print_endline x) !bcp in*)
 (*																							let _= print_endline "bach" in                   *)
-																						let _= if(len=2||exist_v1 =false || exist_v2=false) then bcc <-[] in ()
+																						let _= if(len=2(*||exist_v1 =false || exist_v2=false*)) then bcc <-[] in ()
 																			 
 																			 
 																end
@@ -119,7 +119,7 @@ class graphFindBCC =
 															end	
 (*															else print_endline ("BACK EDGE "^ w ^ " "^v1)*)
 														in true
-											with Not_found -> false in ()
+											with Not_found -> false 	
 										) neib
 
 		in loopFindBCC graph v1 v2
@@ -130,29 +130,14 @@ class graphFindBCC =
 				let _= converse_depth<-num_ver in
 						let _= (self)#findBCC graph v1 v2 in bcc
 
-(*		method private transform graph v1 v2=                                                                 *)
-(*			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in*)
-(*				let  _ = init_dfs_num Dfs.postfix graph in                                                        *)
-(*					let getBCC f graph = f (fun v->  if((MapDFS.find v dfs_num)=0) then                             *)
-(*												begin                                                                             *)
-(*												  converse_depth<-num_ver;                                                        *)
-(*													let _= "" in (self)#findBCC graph v1 v2;                                        *)
-(*													if(num_ver - converse_depth =1) then                                            *)
-(*														begin                                                                         *)
-(*(*															(*modified here*) print_endline "BCC contains one v"*)                    *)
-(*															end                                                                         *)
-(*													end                                                                             *)
-(*													) graph                                                                         *)
-(*						in                                                                                            *)
-(*					let _= getBCC Dfs.postfix graph in bcc                                                          *)
 		method getBCCGraph graph v1 v2 =
 			let bcp = (self)#transform graph v1 v2 in
 			if(bcp != []) then 
 				begin
 					let rem_ver f graph= f (fun v -> let exist=List.mem v bcp in if(exist=false) then G.remove_vertex graph v) graph in                                                   
-         			let _= rem_ver Dfs.postfix graph in ()
+         			let _= rem_ver Dfs.postfix graph in true
 					end					
-			else G.clear graph				
+			else (*let _= print_endline "No BCC found..." in*) false				
 		
 		method add_diseq_edgev2 (graph:G.t) e =
 				 if ((G.mem_vertex graph (G.E.src e)) &(G.mem_vertex graph (G.E.dst e))) then
@@ -161,9 +146,12 @@ class graphFindBCC =
 					end
 				else 	false
 				
-		method add_diseq_edges (eq_graph:G.t)(diseq_graph:G.t)=
-			G.iter_edges_e (fun x->G.add_edge_e eq_graph x) diseq_graph
-
+(*		method add_diseq_edges (eq_graph:G.t)(diseq_graph:G.t)=      *)
+(*			G.iter_edges_e (fun x->G.add_edge_e eq_graph x) diseq_graph*)
+		
+		method add_list_diseq_edges (eq_graph:G.t)(diseq_edges:G.E.t list)=
+			List.map (fun x->G.add_edge_e eq_graph x) diseq_edges	
+		
 		method print_graph graph=
 			let print_graph f graph_= f (fun v -> print_endline v) graph_ in
 				let  _ = print_graph Dfs.postfix graph in ()
@@ -178,7 +166,7 @@ class rTC=
 	object (self)
 (*	val mutable allvars = G.create()*)
 	val mutable number_vars=0
-	val mutable local_cache = []
+	val mutable local_cache : string = ""
 	val mutable global_cache = G.create ()
 	val bcc= new graphFindBCC
 (*	val mutable g_source= Glabel.create ()*)
@@ -228,7 +216,7 @@ class rTC=
 	method generate_constraints graph es gr_e=	
 		let helper vv1 vv2 v1v2 v el= 
 							(*add to local cache*)				
-								let _= local_cache<-[(vv1,vv2,v1v2)]@local_cache in
+								let _= local_cache<- "-"^vv1^" "^"-"^vv2^" "^v1v2^" 0"^"\n"^local_cache in
 											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
 											(e1,e2)
 								  		
@@ -260,29 +248,45 @@ class rTC=
 	
 	method rtc_v2 eq_graph diseq_graph graph_e num_var=
 (*		let _=G.iter_edges_e (fun x->print_endline ((G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph_e in let _=exit(0) in*)
+		let diseq_edges= ref [] in
+		let _=G.iter_edges_e (fun e-> diseq_edges := [e]@ !diseq_edges) diseq_graph in
 		let _= number_vars<-num_var in
 		let rtc_helper e= let cpg= G.copy eq_graph in 
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
-														let _=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
-															let _= if((G.is_empty cpg)=false) then 
-															let _= bcc#add_diseq_edges cpg diseq_graph in 
+														let exist_bcc=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
+															let _= if(exist_bcc=true) then 
+															let _= bcc#add_list_diseq_edges cpg !diseq_edges in 
 																let _= (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
 (*																				let _= bcc#print_chordal_graph cpg in*)
 																  let ve={ver1=(G.E.src e);ver2=(G.E.dst e)} in
 (*																	let _=print_endline ("bcc of:"^(G.E.src e)^(G.E.dst e)) in*)
 																	let _= self#generate_constraints cpg ve graph_e in
-(*																	let _=G.clear g_source in*)
-																(*To do*)
 (*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in*)
 															() in ()
 		in 		
-			let _=G.iter_edges_e (fun e-> rtc_helper e) diseq_graph in (local_cache,graph_e)
+			let _=List.map (fun e-> rtc_helper e) !diseq_edges in local_cache
 															
 	end;;
 
 
 
+
+(*		method private transform graph v1 v2=                                                                 *)
+(*			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in*)
+(*				let  _ = init_dfs_num Dfs.postfix graph in                                                        *)
+(*					let getBCC f graph = f (fun v->  if((MapDFS.find v dfs_num)=0) then                             *)
+(*												begin                                                                             *)
+(*												  converse_depth<-num_ver;                                                        *)
+(*													let _= "" in (self)#findBCC graph v1 v2;                                        *)
+(*													if(num_ver - converse_depth =1) then                                            *)
+(*														begin                                                                         *)
+(*(*															(*modified here*) print_endline "BCC contains one v"*)                    *)
+(*															end                                                                         *)
+(*													end                                                                             *)
+(*													) graph                                                                         *)
+(*						in                                                                                            *)
+(*					let _= getBCC Dfs.postfix graph in bcc                                                          *)
 
 
 (*
