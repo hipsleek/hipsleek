@@ -158,7 +158,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
 																							end 
 																					else
 																						let diseq_edge=G.E.create li () ri in
-																						let _= G.add_edge_e gd diseq_edge in 
+																						let _= G.add_edge_e gd diseq_edge in
 																						let mem=Glabel.mem_edge allvars li ri in
 																						let _=if(mem=false)then
 																							begin
@@ -478,7 +478,7 @@ GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 (* minisat: output for cnf format *)
 let rtc_generate_T (f:Cpure.formula) =
 	let ge=G.create() and gd=G.create() and gr_e=Glabel.create() in (*ge is eq graph and gd is diseq graph*)
-		let rec cnf_to_string_to_file f = (*Aiming to get ge and gd*)                                                           
+		let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)                                                           
 			match f with
 			  |BForm (b,_)-> minisat_cnf_of_b_formula b gr_e ge gd 
 			  |Not ((BForm(b,_)),_,_)-> minisat_cnf_of_not_of_b_formula b gr_e ge gd 
@@ -487,12 +487,6 @@ let rtc_generate_T (f:Cpure.formula) =
 		in
 			let cnf_str =cnf_to_string_to_file f in
 			(cnf_str,ge,gd,gr_e)
-(*				let _=G.iter_edges_e (fun e-> print_endline ("GE: "^(G.E.src e)^(G.E.dst e))) ge in   *)
-(*				let _=G.iter_edges_e (fun e-> print_endline ("GDisE: "^(G.E.src e)^(G.E.dst e))) gd in*)
-(*				let testRTC= new rTC in                                           *)
-(*(*					let _=exit(0) in*)                                            *)
-(*					let (cache,allvars) = testRTC#rtc_v2 ge gd gr_e !number_vars in *)
-(*						(cnf_str,cache,allvars)                                       *)
 
 let get_cnf_from_cache ge gd gr_e=
 				let testRTC= new rTC in
@@ -507,12 +501,10 @@ let to_minisat_cnf (ante: Cpure.formula)  =
   (*let _ = "** In function Spass.to_minisat_cnf" in*)
 (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in *)
 (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
-		let _=bcl :=[] and _= number_vars := 0 in
+		let _=bcl :=[] and _= number_vars := 0  in
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
 			let (ante_str,ge,gd,gr_e)=rtc_generate_T ante_cnf in
 				let res= ref "" in
-(*			*)
-(*				let _=(if(G.is_empty allvars) then print_endline "No need to generate T") in	*)(*debug*)
 			 (*start generating cnf for the given CNF formula*)
 				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
 				  	let bv= if(temp ="p cnf 0 0") then true else false in
@@ -556,24 +548,13 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 *)
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
-(*  let res, should_run_minisat =                                                                                       *)
-(*    if not (can_minisat_handle_formula f) then                                                                        *)
-(*      try                                                                                                             *)
-(*        let (pr_w,pr_s) = Cpure.drop_complex_ops in                                                                   *)
-(*        let optr= Redlog.is_sat f sat_no(*(Omega.is_sat f sat_no)*) in                                                *)
-(*        match optr with                                                                                               *)
-(*        | true -> (true, false)                                                                                       *)
-(*        | false -> (false, false)                                                                                     *)
-(*      with _ -> (false,false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)*)
-(*    else (false, true) in                                                                                             *)
-(*  if (should_run_minisat) then*)
-    (*let _ = print_endline "-- use minisat.check_problem..." in *)
     (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
     let (minisat_input,ge,gd,gr_e) = to_minisat f in
     let validity =
-      if (minisat_input_mode = "file") then
-        check_problem_through_file minisat_input timeout
-      else illegal_format "[minisat.ml] The value of minisat_input_mode is invalid!" in
+      if ((List.length !bcl)>0 ) then
+        check_problem_through_file minisat_input timeout 
+			else true	
+		in
 		if(validity=false) then	
 (*    		let _= print_endline "check sat1" in *)
 				validity
@@ -581,8 +562,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 (*			let _= print_endline "check sat2" in*)
 			let cnf_T = get_cnf_from_cache ge gd gr_e  in
 			  check_problem_through_file (minisat_input^cnf_T) timeout
-(*  else *)
-(*    res*)
+
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   minisat_is_sat f sat_no minisat_timeout_limit
