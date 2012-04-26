@@ -176,11 +176,12 @@ class graphFindBCC =
 
 class rTC=
 	object (self)
-	val mutable allvars = G.create()
+(*	val mutable allvars = G.create()*)
 	val mutable number_vars=0
 	val mutable local_cache = []
+	val mutable global_cache = G.create ()
 	val bcc= new graphFindBCC
-	val mutable g_source= Glabel.create ()
+(*	val mutable g_source= Glabel.create ()*)
 (*	val src= MapDFS.empty*)
 	
 	method make_chordal graph gr_e=
@@ -201,14 +202,6 @@ class rTC=
 		try let ed=Glabel.find_edge graph v1 v2 in !(Glabel.E.label ed)
 		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
 	
-	method check_in_local_cache v v1 v2 gr_e=
-				let vv1=self#get_var v v1 gr_e and vv2= self#get_var v v2 gr_e and v1v2=self#get_var v1 v2 gr_e in
-					let set1=List.mem (vv1,vv2,v1v2) local_cache in
-						if(set1=true) then true
-							else let set2=List.mem (vv2,vv1,v1v2) local_cache in
-								if(set2=true) then true
-									else false
-	
 (*	method get_id gr_e v1 v2=*)
 	method get_var_triangular v el gr_e=
 		let vv1= ref "" and vv2=ref "" and v1v2= ref "" in
@@ -222,27 +215,21 @@ class rTC=
 									with Not_found -> begin let _=number_vars<-number_vars+1 and _= v1v2 :=(string_of_int number_vars) in let cx3= Glabel.E.create el.ver1 v1v2 el.ver2 in Glabel.add_edge_e gr_e cx3 end
 								in (!vv1,!vv2,!v1v2)
 	
-	method assign_source v el v1v2=
-			let _=try let ed1= Glabel.find_edge g_source  v el.ver1 in 
-										Glabel.E.label ed1 := v1v2
-										with Not_found->let source_e1 = Glabel.E.create v (ref v1v2) el.ver1 in
-																				let _= Glabel.add_edge_e g_source source_e1 in ()
-								in												
-								let _=try let ed2= Glabel.find_edge g_source  v el.ver2 in
-															Glabel.E.label ed2 := v1v2
-										with Not_found->let source_e2 = Glabel.E.create v (ref v1v2) el.ver2 in 
-																				let _= Glabel.add_edge_e g_source source_e2 in ()
-								in	()																																
+	method check_in_global (vv1:G.V.t) (vv2:G.V.t) (v1v2:G.V.t)=
+		try let neib_vv1= Adj.list_from_vertex global_cache vv1 in
+			if(List.mem vv2 neib_vv1 ) then (List.mem v1v2 neib_vv1 )
+			else false
+			with exn -> false
+	
+	method add_to_global vv1 vv2 v1v2=
+		let _=G.add_edge global_cache vv1 vv2 in
+			let _=G.add_edge global_cache vv1 v1v2 in
+				let _=G.add_edge global_cache vv2 v1v2 in ()
 	method generate_constraints graph es gr_e=	
 		let helper vv1 vv2 v1v2 v el= 
-							(*add to local cache*)
-(*								let _=G.iter_edges_e (fun x-> print_endline ("g src 2:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
-																						
+							(*add to local cache*)				
 								let _= local_cache<-[(vv1,vv2,v1v2)]@local_cache in
-(*						  		let _= print_endline ("Constraints in cache:---- "^ v^el.ver1 ^" and "^ v^el.ver2 ^" -> "^ el.ver1^el.ver2) in*)
 											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
-(*											let _=print_endline ("edge to expand:"^v^el.ver1) in   *)
-(*											 	let _=print_endline ("edge to expand:"^v^el.ver2) in*)
 											(e1,e2)
 								  		
 		in 
@@ -254,43 +241,14 @@ class rTC=
 							begin
 							(*check local cache??*)
 (*							let _= print_endline ("triangular: "^e.ver1^e.ver2^v) in*)
-(*								if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then*)
 									begin
-									 																								
-											try let ed_e= Glabel.find_edge g_source e.ver1 e.ver2 in
-												let lbe= !(Glabel.E.label ed_e)in(*find source of e*)
-																																									
-												try let ed_e1=Glabel.find_edge g_source v e.ver1 and ed_e2=Glabel.find_edge g_source v e.ver2 in
-										  		let lb_ed_e1= !(Glabel.E.label ed_e1) and lb_ed_e2= !(Glabel.E.label ed_e2) in(*find source of e1 and source of e2*)
-													if((lb_ed_e1<>lbe) & (lb_ed_e2<>lbe) &(lb_ed_e1<>lb_ed_e2)) then
-		(*											if(lbe<>lb1 & lbe<>lb11 & lbe<>lb2 & lbe<>lb22) then*)
-		(*												if(v1v2<>lb_ed_e1 & v1v2<>lb_ed_e2 & v2v1<>lb_ed_e1 & v2v1<>lb_ed_e2) then*)
-															begin
-(*																let _= print_endline ("1 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
-																		if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
-																		let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
-																		let _=self#assign_source v e v1v2 in
-																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
-		(*																	let _=G.iter_edges_e (fun x-> print_endline ("g src 1:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
-																			let _= loop_gc e1 and _= loop_gc e2  in () 
-																end
-												with Not_found->
-													let lb1=self#get_var v e.ver1 gr_e and lb2=self#get_var v e.ver2 gr_e in(*get label of e1 and e2=index of e1 e2*)					
-													if(lbe<>lb1 & lbe<>lb2 ) then
-															begin
-		(*														let _= print_endline ("2 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
-																		let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
-																		let _=self#assign_source v e v1v2 in
-																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
-																			let _= loop_gc e1 and _= loop_gc e2  in () 
-		(*																	let _=if(es.ver1="6" & es.ver2="4") then exit(0)*)
-																end			
-											 with Not_found->																															
-		(*											let _= print_endline ("Source NOT FOUND edge: "^e.ver1^e.ver2) in*)
-																	let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
-																		let _=self#assign_source v e v1v2 in
-																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
-																			let _= loop_gc e1 and _= loop_gc e2 in () 
+											let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
+											let check=self#check_in_global vv1 vv2 v1v2 in
+												if(check=false) then
+												let _=self#add_to_global vv1 vv2 v1v2 in
+												let (e1,e2)=helper vv1 vv2 v1v2 v e in
+												let _= loop_gc e1 and _= loop_gc e2  in ()
+(*												else 	let _=print_endline "check=true" (*in let _=exit(0)*) in ()*)
 									end								
 							end						
 					 ) neib_e2  
