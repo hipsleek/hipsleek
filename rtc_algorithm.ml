@@ -210,12 +210,8 @@ class rTC=
 									else false
 	
 (*	method get_id gr_e v1 v2=*)
-																		
-	method generate_constraints graph es gr_e=
-		let helper v el= 
-							(*add to local cache*)
-(*								let _=G.iter_edges_e (fun x-> print_endline ("g src 2:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
-							let vv1= ref "" and vv2=ref "" and v1v2= ref "" in
+	method get_var_triangular v el gr_e=
+		let vv1= ref "" and vv2=ref "" and v1v2= ref "" in
 								let _= try vv1:= !(Glabel.E.label (Glabel.find_edge gr_e v el.ver1))  
 									with Not_found->  begin let _=number_vars<-number_vars+1 and _= vv1 :=(string_of_int number_vars) in let cx1= Glabel.E.create v vv1 el.ver1 in Glabel.add_edge_e gr_e cx1 end
 								in	 
@@ -224,18 +220,25 @@ class rTC=
 								in
 								let	_= try v1v2:= !((Glabel.E.label (Glabel.find_edge gr_e el.ver1 el.ver2)))
 									with Not_found -> begin let _=number_vars<-number_vars+1 and _= v1v2 :=(string_of_int number_vars) in let cx3= Glabel.E.create el.ver1 v1v2 el.ver2 in Glabel.add_edge_e gr_e cx3 end
-								in
-								let _=try let ed1= Glabel.find_edge g_source  v el.ver1 in 
-										Glabel.E.label ed1 := !v1v2
-										with Not_found->let source_e1 = Glabel.E.create v v1v2 el.ver1 in
+								in (!vv1,!vv2,!v1v2)
+	
+	method assign_source v el v1v2=
+			let _=try let ed1= Glabel.find_edge g_source  v el.ver1 in 
+										Glabel.E.label ed1 := v1v2
+										with Not_found->let source_e1 = Glabel.E.create v (ref v1v2) el.ver1 in
 																				let _= Glabel.add_edge_e g_source source_e1 in ()
 								in												
 								let _=try let ed2= Glabel.find_edge g_source  v el.ver2 in
-															Glabel.E.label ed2 := !v1v2
-										with Not_found->let source_e2 = Glabel.E.create v v1v2 el.ver2 in 
+															Glabel.E.label ed2 := v1v2
+										with Not_found->let source_e2 = Glabel.E.create v (ref v1v2) el.ver2 in 
 																				let _= Glabel.add_edge_e g_source source_e2 in ()
-								in																								
-								let _= local_cache<-[(!vv1,!vv2,!v1v2)]@local_cache in
+								in	()																																
+	method generate_constraints graph es gr_e=	
+		let helper vv1 vv2 v1v2 v el= 
+							(*add to local cache*)
+(*								let _=G.iter_edges_e (fun x-> print_endline ("g src 2:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
+																						
+								let _= local_cache<-[(vv1,vv2,v1v2)]@local_cache in
 (*						  		let _= print_endline ("Constraints in cache:---- "^ v^el.ver1 ^" and "^ v^el.ver2 ^" -> "^ el.ver1^el.ver2) in*)
 											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
 (*											let _=print_endline ("edge to expand:"^v^el.ver1) in   *)
@@ -265,7 +268,9 @@ class rTC=
 															begin
 (*																let _= print_endline ("1 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
 																		if((self#check_in_local_cache v e.ver1 e.ver2 gr_e)=false) then
-																		let (e1,e2)=helper v e in
+																		let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
+																		let _=self#assign_source v e v1v2 in
+																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
 		(*																	let _=G.iter_edges_e (fun x-> print_endline ("g src 1:"^(G.E.src x)^(G.E.dst x)^(G.E.label x))) g_source in*)
 																			let _= loop_gc e1 and _= loop_gc e2  in () 
 																end
@@ -274,13 +279,17 @@ class rTC=
 													if(lbe<>lb1 & lbe<>lb2 ) then
 															begin
 		(*														let _= print_endline ("2 Source FOUND edge: "^e.ver1^e.ver2^" has source:"^lbe) in*)
-																		let (e1,e2)=helper v e in
+																		let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
+																		let _=self#assign_source v e v1v2 in
+																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
 																			let _= loop_gc e1 and _= loop_gc e2  in () 
 		(*																	let _=if(es.ver1="6" & es.ver2="4") then exit(0)*)
 																end			
 											 with Not_found->																															
 		(*											let _= print_endline ("Source NOT FOUND edge: "^e.ver1^e.ver2) in*)
-																		let (e1,e2)=helper v e in
+																	let (vv1,vv2,v1v2)=	self#get_var_triangular v e gr_e in
+																		let _=self#assign_source v e v1v2 in
+																		let (e1,e2)=helper vv1 vv2 v1v2 v e in
 																			let _= loop_gc e1 and _= loop_gc e2 in () 
 									end								
 							end						
