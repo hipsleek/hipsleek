@@ -631,6 +631,7 @@ let rec remove_subtract pure = match pure with
   | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
   | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
+  | AndList l -> AndList (map_l_snd remove_subtract l)
 
 let isComp pure = match pure with
   | BForm ((pf,_),_) ->
@@ -726,6 +727,7 @@ let rec no_of_cnts f = match f with
   | Not (f,_,_) -> no_of_cnts f
   | Forall (_,f,_,_) -> no_of_cnts f
   | Exists (_,f,_,_) -> no_of_cnts f
+  | AndList l -> List.fold_left (fun a (_,c)-> a+(no_of_cnts c)) 0 l 
 
 let helper input_pairs rel ante_vars = 
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in

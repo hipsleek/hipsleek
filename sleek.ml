@@ -96,6 +96,7 @@ let parse_file (parse) (source_file : string) =
     match c with
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
+	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
@@ -113,6 +114,7 @@ let parse_file (parse) (source_file : string) =
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _
 	  | PredDef _
+	  | BarrierCheck _
 	  | FuncDef _
       | RelDef _
       | AxiomDef _ (* An Hoa *)
@@ -132,11 +134,13 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
 	  | LetDef (lvar, lbody) -> put_var lvar lbody
+	  | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
 	  | DataDef _
 	  | PredDef _
+	  
 	  | FuncDef _
       | RelDef _
       | AxiomDef _ (* An Hoa *)
@@ -176,10 +180,12 @@ let main () =
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
+				I.prog_barrier_decls = [];
   } in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = exlist # compute_hierarchy  in
+  let _ = process_data_def (I.b_data_constr "barrier" []) in
   (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
@@ -208,6 +214,8 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
+					 | BarrierCheck bdef -> 
+							(process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef

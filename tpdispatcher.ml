@@ -555,7 +555,7 @@ let rec is_array_exp e = match e with
 											| _ -> is_array_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ 
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
 
@@ -586,7 +586,7 @@ let rec is_list_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-    | CP.Null _ | CP.AConst _
+    | CP.Null _ | CP.AConst _ | Tsconst _ 
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)
 	  
@@ -1043,9 +1043,17 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   in let _ = Gen.Profiling.pop_time "tp_is_sat" 
   in res
 
+  
+let tp_is_sat_perm f sat_no = 
+  if !use_dfracs && (CP.has_tscons f) then 
+	let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
+	let ss_wrap (e,f) = if f=[] then true else Share_prover_w.sleek_sat_wrapper (e,f) in
+	List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap (CP.tpd_drop_nperm f)) (CP.dnf_to_list f) 
+  else tp_is_sat_no_cache f sat_no
+ 
 let tp_is_sat (f:CP.formula) (sat_no :string) = 
   if !Globals.no_cache_formula then
-    tp_is_sat_no_cache f sat_no
+    tp_is_sat_perm f sat_no
   else
     (*let _ = Gen.Profiling.push_time "cache overhead" in*)
     let sf = simplify_var_name f in
@@ -1055,7 +1063,7 @@ let tp_is_sat (f:CP.formula) (sat_no :string) =
       try
         Hashtbl.find !sat_cache fstring
       with Not_found ->
-        let r = tp_is_sat_no_cache(*_debug*) f sat_no in
+        let r = tp_is_sat_perm(*_debug*) f sat_no in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
@@ -1502,9 +1510,19 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   Debug.no_2 "tp_imply_no_cache" pr pr string_of_bool
   (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
+let tp_imply_perm ante conseq imp_no timeout process = 
+ if !use_dfracs && (CP.has_tscons ante || CP.has_tscons conseq) then 
+	let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
+	let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
+	let antes = List.map (fun a-> CP.tpd_drop_perm a, CP.tpd_drop_nperm a) (CP.dnf_to_list ante) in
+	let conseqs = List.map (fun c-> CP.tpd_drop_perm c, CP.tpd_drop_nperm c) (CP.dnf_to_list conseq) in
+	List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
+  else tp_imply_no_cache ante conseq imp_no timeout process
+	
+  
 let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then
-    tp_imply_no_cache ante conseq imp_no timeout process
+    tp_imply_perm ante conseq imp_no timeout process
   else
     (*let _ = Gen.Profiling.push_time "cache overhead" in*)
     let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
@@ -1515,7 +1533,7 @@ let tp_imply ante conseq imp_no timeout process =
       try
         Hashtbl.find !imply_cache fstring
       with Not_found ->
-        let r = tp_imply_no_cache ante conseq imp_no timeout process in
+        let r = tp_imply_perm ante conseq imp_no timeout process in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !imply_cache fstring r in
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
@@ -2448,14 +2466,14 @@ let change_prover prover =
   start_prover ();;
 
 (*let imply_raw ante conseq  =*)
-(*  tp_imply_no_cache 999 ante conseq "999" (!imply_timeout_limit) None*)
+(*  tp_imply_perm 999 ante conseq "999" (!imply_timeout_limit) None*)
 
 (*let is_sat_raw_no_cache (f: CP.formula) =*)
-(*  tp_is_sat_no_cache f "999"*)
+(*  tp_is_sat_perm f "999"*)
 
 let is_sat_raw (f: MCP.mix_formula) =
 (* let f = drop_rel_formula f in *)
-(*  tp_is_sat_no_cache f "999"*)
+(*  tp_is_sat_perm f "999"*)
   is_sat_mix_sub_no f (ref 9) true true
 
 let imply_raw ante conseq =

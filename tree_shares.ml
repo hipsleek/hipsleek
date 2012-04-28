@@ -25,14 +25,30 @@ struct
   let depth_0 = function 
 	| Leaf _ -> true
 	| Node _ -> false
+  
+  let rec depth = function 
+	| Leaf _ -> 0
+	| Node (l,r)-> 
+		let l = depth l in
+		let r = depth r in
+		(if l>r then l else r)+1
 	
-  let rleft = function 
-    | Leaf b -> if b then Leaf true else Leaf false 
-	| Node (s,_) -> s
-	
-  let rright = function 
-    | Leaf b -> if b then Leaf true else Leaf false
-	| Node (_,s) -> s
+  let rleft n = 
+    let rec helper n c = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> if c=1 then l else mkNode (helper l (c-1)) (helper r (c-1)) in
+	helper n (depth n)
+   
+  let rright n = 
+    let rec helper n c = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> if c=1 then r else mkNode (helper l (c-1)) (helper r (c-1)) in
+	helper n (depth n)
+		  
+  let rec eq t1 t2 = match t1,t2 with
+    | Leaf b1,Leaf b2  -> b1==b2
+    | Node (l1, r1), Node (l2,r2) -> (eq l1 l2)&&(eq r1 r2)
+    | _ -> false
 	  
   let rec string_of_tree_share ts = match ts with
     | Leaf true -> "T"
@@ -40,27 +56,9 @@ struct
     | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
 	
   let string_of = string_of_tree_share
-  end     
   
   
-  (*
-  	
-  (*let depth = function
-	| Leaf _ -> 0
-	| Node (s1,s2)-> 
-		let d1,d2 = depth s1, depth s2 in
-		if d1>d2 then d1 else d2 	*)
-  let rec avg l1 l2 = match l1,l2 with 
-    | Leaf b1 , Leaf b2 -> if b1=b2 then Leaf b1 else mkNode l1 l2 
-	| Node (n11,n12) , Leaf _ -> mkNode (avg n11 l2) (avg n12 l2)
-	| Leaf _ , Node (n11,n12) -> mkNode (avg l1 n11) (avg l1 n12)
-	| Node (n11,n12) , Node (n21,n22) -> mkNode (avg n11 n21) (avg n12 n22)
-  
-  let rec stree_eq t1 t2 = match t1,t2 with
-    | Leaf b1,Leaf b2  -> b1==b2
-    | Node (l1, r1), Node (l2,r2) -> (stree_eq l1 l2)&&(stree_eq r1 r2)
-    | _ -> false
-  
+  (**********utilities , possibly needed **********)
   let rec stree_cmp t1 t2 = match t1,t2 with
 	| Leaf false, Leaf false 
 	| Leaf true, Leaf true -> 0
@@ -88,34 +86,52 @@ struct
         | Node (l2, r2) -> mkNode (helper l1 l2) (helper r1 r2) in
     if (can_join x y) then helper x y else bot
   
-  (*returns the smallest share contained in both, the largest tree*)
-  let rec intersect x y = match x with
-      | Leaf b -> if b then y else x
-      | Node (l1, r1) -> match y with
-        | Leaf b -> if b then x else y
-        | Node (l2, r2) -> mkNode (intersect l1 l2) (intersect r1 r2) 
-   
-  let rec neg_tree = function
-    | Leaf b -> Leaf (not b)
-    | Node (l, r) -> mkNode (neg_tree l) (neg_tree r)*)
-  
-  (*can_subtract*)
-  (*let rec contains x y = match x,y with
+  let rec contains x y = match x,y with
     | Leaf true, _ ->  true
     | _, Leaf false -> true
     | Leaf false, _ -> false
     | Node(l1,r1), Node(l2,r2) -> (contains l1 l2)&&(contains r1 r2)
     | Node _, Leaf true -> false
     
+   let rec neg_tree = function
+    | Leaf b -> Leaf (not b)
+    | Node (l, r) -> mkNode (neg_tree l) (neg_tree r)
+	
   let subtract x y = 
     let rec helper x y = match x,y with
       | Leaf true, _ -> neg_tree y
       | Leaf false, Leaf false -> y
-      | Leaf false, _ -> Gen.report_error no_pos "missmatch in contains"
+      | Leaf false, _ -> failwith "missmatch in contains"
       | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) 
       | Node _ , Leaf false -> x
-      | Node _ , Leaf true -> Gen.report_error no_pos "missmatch in contains" in      
+      | Node _ , Leaf true -> failwith "missmatch in contains" in      
    if contains x y then helper x y else bot
+  
+  end     
+  
+  
+  (*
+  	
+  (*let depth = function
+	| Leaf _ -> 0
+	| Node (s1,s2)-> 
+		let d1,d2 = depth s1, depth s2 in
+		if d1>d2 then d1 else d2 	*)
+  let rec avg l1 l2 = match l1,l2 with 
+    | Leaf b1 , Leaf b2 -> if b1=b2 then Leaf b1 else mkNode l1 l2 
+	| Node (n11,n12) , Leaf _ -> mkNode (avg n11 l2) (avg n12 l2)
+	| Leaf _ , Node (n11,n12) -> mkNode (avg l1 n11) (avg l1 n12)
+	| Node (n11,n12) , Node (n21,n22) -> mkNode (avg n11 n21) (avg n12 n22)
+   
+  (*returns the smallest share contained in both, the largest tree*)
+  let rec intersect x y = match x with
+      | Leaf b -> if b then y else x
+      | Node (l1, r1) -> match y with
+        | Leaf b -> if b then x else y
+        | Node (l2, r2) -> mkNode (intersect l1 l2) (intersect r1 r2) 
+   *)
+  
+  (*
    
   let rec union x y = match x with
 	| Leaf true -> x

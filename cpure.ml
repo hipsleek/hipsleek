@@ -125,6 +125,7 @@ and exp =
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
+  | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -567,6 +568,7 @@ let rec get_exp_type (e : exp) : typ =
   | IConst _ -> Int
   | FConst _ -> Float
   | AConst _ -> AnnT
+  | Tsconst _ -> Tree_sh
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -771,6 +773,7 @@ and afv (af : exp) : spec_var list =
     | Null _ 
     | IConst _ 
     | AConst _ 
+	| Tsconst _
     | FConst _ -> []
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Add (a1, a2, _) -> combine_avars a1 a2
@@ -1018,6 +1021,7 @@ and name_of_exp (e: exp): string =
   | Bag ([],_) -> "emptybag"
   | Bag (es,_)
   | BagUnion (es, _) -> (List.fold_left (fun x y -> x ^ name_of_exp y) "" es)
+  | _ -> ""
 
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
@@ -1253,6 +1257,7 @@ and is_exp_arith (e:exp) : bool=
               (* list expressions *)
     | List _ | ListCons _ | ListHead _ | ListTail _
     | ListLength _ | ListAppend _ | ListReverse _ -> false
+	| Tsconst _ -> false
     | Func _ -> true
     | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
           
@@ -1991,6 +1996,7 @@ and pos_of_exp (e : exp) = match e with
   | IConst (_, p) 
   | AConst (_, p) 
   | FConst (_, p) 
+  | Tsconst (_, p)
   | Add (_, _, p) 
   | Subtract (_, _, p) 
   | Mult (_, _, p) 
@@ -2121,6 +2127,8 @@ and fresh_old_name_x (s: string):string =
 and fresh_old_name s =
   Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
 
+and fresh_perm_var () = SpecVar(Tree_sh, fresh_old_name "perm",Unprimed)
+  
 and fresh_spec_var (sv : spec_var) =
   let old_name = name_of_spec_var sv in
   let name = fresh_old_name old_name in
@@ -2408,7 +2416,7 @@ and subs_one sst v =
   in helper sst v
 
 and e_apply_subs sst e = match e with
-  | Null _ | IConst _ | FConst _ | AConst _ -> e
+  | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
 	e_apply_subs sst a2, pos)
@@ -2462,7 +2470,7 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
   Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
       
 and e_apply_one (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _ | AConst _ -> e
+  | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
 	e_apply_one (fr, t) a2, pos)
@@ -2579,7 +2587,8 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Null _ 
   | IConst _ 
   | FConst _ 
-  | AConst _ -> e
+  | AConst _ 
+  | Tsconst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) ->
@@ -2667,7 +2676,8 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ 
   | IConst _ 
   | AConst _ 
-  | FConst _ -> e
+  | FConst _ 
+  | Tsconst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
@@ -2718,7 +2728,8 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | Null _   
     | IConst _ 
     | FConst _ 
-    | AConst _ -> (false,e)
+    | AConst _ 
+	| Tsconst _ -> (false,e)
     | Add (a1, a2, pos) -> 
           let b1, r1 = helper crt_var a1 in
           let b2, r2 = helper crt_var a2 in
@@ -3669,7 +3680,7 @@ and b_apply_one_exp (fr, t) bf =
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _| AConst _ -> e
+  | Null _ | IConst _ | FConst _| AConst _ | Tsconst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
@@ -3890,6 +3901,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 	| Var _ 
 	| IConst _ 
 	| AConst _ 
+	| Tsconst _ 
     | FConst _ -> true
 	| Add (e1,e2,_)
 	| Subtract (e1,e2,_) -> false
@@ -4015,7 +4027,8 @@ and simp_mult_x (e : exp) :  exp =
   let rec acc_mult m e0 =
     match e0 with
       | Null _ 
-      | AConst _ -> e0
+      | Tsconst _ 
+	  | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
               | None -> e0 
@@ -4063,8 +4076,8 @@ and simp_mult_x (e : exp) :  exp =
 	  |  ListReverse (_, l)
 	  |  ListHead (_, l)
 	  |  ListLength (_, l) 
-    |  Func (_, _, l)
-		|  ArrayAt (_, _, l) (* An Hoa *) -> 
+      |  Func (_, _, l)
+	  |  ArrayAt (_, _, l) (* An Hoa *) -> 
              match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
   in acc_mult None e
@@ -4078,6 +4091,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   match e with
     |  Null _ 
     |  Var _ 
+	|  Tsconst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
            if v >= 0 then 
@@ -4224,6 +4238,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  Var _ 
   |  IConst _ 
   |  AConst _ 
+  | Tsconst _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -4529,6 +4544,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
 	      | Var _ 
 	      | IConst _
 	      | AConst _
+		  | Tsconst _ 
 	      | FConst _ -> (e,f_comb [])
 	      | Add (e1,e2,l) ->
 	            let (ne1,r1) = helper new_arg e1 in
@@ -4622,6 +4638,7 @@ let rec transform_exp f e  =
 	    | Var _ 
 	    | IConst _
 	    | AConst _
+		| Tsconst _
 	    | FConst _ -> e
 	    | Add (e1,e2,l) ->
 	          let ne1 = transform_exp f e1 in
@@ -5038,6 +5055,7 @@ let rec get_head e = match e with
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
+	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -5091,7 +5109,7 @@ and norm_exp (e:exp) =
   (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
-    | Null _ | IConst _ | FConst _ | AConst _ -> e
+    | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -5571,6 +5589,7 @@ let is_diff e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<>i2
     | AConst (i1,_), AConst(i2,_) 
           -> (int_of_heap_ann i1)<>(int_of_heap_ann i2)
+    | Tsconst (t1,_), Tsconst (t2,_) -> not (Tree_shares.Ts.eq t1 t2)
     | _,_ -> false
 
 (* lhs |- e1<=e2 *)
@@ -6141,6 +6160,7 @@ module ArithNormalizer = struct
     | IConst (i, _) -> string_of_int i
     | FConst (f, _) -> string_of_float f
     | AConst (f, _) -> string_of_heap_ann f
+	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e1, e2, _) -> (string_of_exp e1) ^ " + " ^ (string_of_exp e2)
     | Subtract (e1, e2, _) -> (string_of_exp e1) ^ " - " ^ (string_of_exp e2)
     | Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
@@ -7163,6 +7183,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | IConst _
       | FConst _
       | AConst _
+	  | Tsconst _ 
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
@@ -7268,7 +7289,6 @@ let is_eq_const (f:formula) = match f with
 let is_eq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq _,_)
     | (Eq _,_) -> true
     | _ -> false)
   | _ -> false
@@ -7276,7 +7296,6 @@ let is_eq_exp (f:formula) = match f with
 let is_beq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq (_,BagUnion _,_),_)
     | (Eq (_,BagUnion _,_),_) -> true
     | _ -> false)
   | _ -> false
@@ -7902,6 +7921,7 @@ let rec remove_cnts exist_vars f = match f with
   | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+  | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec remove_cnts2 keep_vars f = match f with
   | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
@@ -7910,6 +7930,7 @@ let rec remove_cnts2 keep_vars f = match f with
   | Not (f,o,p) -> Not (remove_cnts2 keep_vars f,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_cnts2 keep_vars f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_cnts2 keep_vars f,o,p)
+  | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec is_num_dom_exp_0 e = match e with
   | IConst _ -> true
@@ -7960,6 +7981,7 @@ let rec get_num_dom f = match f with
   | Not (f,_,_) -> get_num_dom f
   | Forall (_,f,_,_) -> get_num_dom f
   | Exists (_,f,_,_) -> get_num_dom f
+  | AndList _ -> report_error no_pos "unexpected AndList"
 
 let order_var v1 v2 vs =
   if List.exists (eq_spec_var_nop v1) vs then
@@ -8030,3 +8052,42 @@ let rec andl_to_and f = match f with
 	| AndList b ->
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
+
+
+let rec has_e_tscons f = match f with
+  | Var (v,_) -> (type_of_spec_var v)=Tree_sh
+  | Tsconst _ -> true
+  | Add (e1,e2,_) -> (has_e_tscons e1)||(has_e_tscons e2)
+  | _ -> false
+		
+let has_b_tscons f = match f with 
+  | Eq (e1,e2,_) -> has_e_tscons e1 || has_e_tscons e2
+  | _ -> false 
+		
+let rec has_tscons f =  match f with 
+  | BForm ((f,_),_) -> has_b_tscons f
+  | Or (f1,f2,_,_)
+  | And (f1,f2,_)-> (has_tscons f1) ||  (has_tscons f2)
+  | AndList l -> exists_l_snd has_tscons l 
+  | Not (f,_,_)
+  | Forall (_,f,_,_) 
+  | Exists (_,f,_,_) -> has_tscons f 
+
+
+let rec tpd_drop_perm f = match f with 
+  | BForm ((b,_),_) -> if has_b_tscons b then mkTrue no_pos else f
+  | And (f1,f2,l) -> mkAnd (tpd_drop_perm f1) (tpd_drop_perm f2) l
+  | AndList l -> AndList (map_l_snd tpd_drop_perm l)
+  | Or _ -> report_error no_pos "to_dnf has failed "
+  | Not (b,l,p) -> mkNot (tpd_drop_perm b) l p 
+  | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
+  | Exists (_,f,_,_) -> tpd_drop_perm f
+
+let rec tpd_drop_nperm f = match f with 
+	| BForm ((b,_),_) -> if has_b_tscons b then ([],[b]) else ([],[])
+	| And (f1,f2,l) -> let l1,l2 = tpd_drop_nperm f1 in let r1,r2 = tpd_drop_nperm f2 in l1@r1, l2@r2 
+	| AndList l -> List.fold_left (fun (a1,a2) (_,c)-> let c1,c2 = tpd_drop_nperm c in a1@c1, a2@c2) ([],[]) l 
+	| Or _ -> report_error no_pos "to_dnf has failed "
+	| Not (b,_,_) -> if snd (tpd_drop_nperm b)=[] then ([],[]) else report_error no_pos "tree shares under negation"
+	| Forall (_,b,_,_) -> if snd (tpd_drop_nperm b)=[] then ([],[]) else report_error no_pos "tree shares under forall"
+	| Exists (s,f,_,_) -> let l1,l2 = tpd_drop_nperm f in (s::l1,l2)

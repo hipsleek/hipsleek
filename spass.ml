@@ -70,6 +70,7 @@ let rec smt_of_typ t =
 	match t with
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
+		| Tree_sh -> "Int"
 		| Int -> "Int"
 		| AnnT -> "Int"
 		| UNK -> 
@@ -118,6 +119,7 @@ let rec smt_of_exp a =
 	| Cpure.ListAppend _
 	| Cpure.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| Cpure.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
+	| Cpure.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
 	| Cpure.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -302,6 +304,7 @@ and collect_exp_info e = match e with
 	| Cpure.ListLength _
 	| Cpure.ListAppend _
 	| Cpure.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+	| Cpure.Tsconst _ -> default_formula_info
 	| Cpure.Func _ -> default_formula_info
 	| Cpure.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 

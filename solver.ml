@@ -6112,7 +6112,7 @@ and inst_before_fold_x estate rhs_p case_vars =
 		  let v_l = l_inter@r_inter in
 		  let cond = 				
 			let rec prop_e e = match e with 
-			  | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ -> true
+			  | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ -> true
 			  | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
 			  | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 			  | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
@@ -8460,4 +8460,184 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
 		(EOr {b with formula_struc_or_f1 = f1; formula_struc_or_f2 = f2;}, l1@l2)
 
 
+(*
+module frac_normaliz = struct
+	let normalize_frac_heap_deep prog (f:formula) = 
+					let rec m_find (f:h_formula list->bool) (l:h_formula list list) = match l with 
+						| [] -> ([],[])
+						| h::t -> 
+							if (f h) then (h,t) 
+							else let r,l = m_find f t in (r,h::l) in
+					let unfold_filter l = 
+						if (List.exists is_view l)&&(List.exists is_data l) then List.filter is_view l
+						else [] in
+					let rec h_a_grp_f aset l :(h_formula list list) = match l with 
+					   | [] -> []
+					   | h::t -> 
+						 let v = get_node_var h in
+						 let a = v::(MCP.get_aset aset v) in
+						 let t = h_a_grp_f aset t in
+						 let lha, lhna = m_find (fun c-> Gen.BList.mem_eq CP.eq_spec_var (get_node_var (List.hd c)) a) t in
+						 (h::lha):: lhna in	
+					let rec perm_folder (h,l) = match l with
+						| v1::v2::[]-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let pv2 = Pr.mkVPerm v2 in
+							(Pr.mkJoin pv1 pv2 (Pr.mkVPerm h) no_pos,[])
+						| v1::t-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let n_e = Pr.fresh_perm_var () in
+							let rf,rev = perm_folder (n_e,t) in
+							let nf = Pr.mkAnd rf (Pr.mkJoin pv1 (Pr.mkVPerm n_e) (Pr.mkVPerm h) no_pos) no_pos in
+							(nf,n_e::rev)
+						| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
+		let comb_hlp pos (ih,ip,ipr,iqv) l= match l with
+		    | [] -> report_error no_pos ("normalize_frac_heap: must have at least one node in the aliased list")
+			| h::[] -> (mkStarH_nn h ih pos,ip,ipr,iqv)
+			| h::dups -> 
+				if (List.exists (fun c->[]=(get_node_perm c))l) then (HFalse,ip,ipr,iqv)
+				else 
+					let n_p_v = Pr.fresh_perm_var () in
+					let n_h = set_perm_node (Some n_p_v) h in
+					let v = get_node_var h in
+					let args = v::(get_node_args h) in
+					let p,lpr = List.fold_left (fun (a1,a2) c ->
+						let lv = (get_node_var c)::(get_node_args c) in
+						let lp = List.fold_left2  (fun a v1 v2-> CP.mkAnd a (CP.mkEqVar v1 v2 pos) pos) a1 args lv in
+					   (lp,(get_node_perm c)@a2)) (ip,get_node_perm h) dups in	
+					let npr,n_e = perm_folder (n_p_v,lpr) in
+					let n_h = mkStarH_nn n_h ih pos in
+					let npr = Pr.mkAnd ipr npr pos in
+					(n_h, p, npr , n_p_v::n_e@iqv) in 
+		  let comb_hlp_l l f n_simpl_h :formula= 
+        let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+        let nh,np,npr,qv = List.fold_left (comb_hlp pos) (n_simpl_h,CP.mkTrue pos,pr,qv) l in
+        let np =  MCP.memoise_add_pure_N p np in
+        mkExists_w_lbl qv nh np t fl npr br pos lbl in
+				
+		  let appl_comb_lemmas f w_lem h_alias_grp n_simpl_h :formula= 
+        print_string "could have used a lemma for joining these predicates, for now join trivially";
+        comb_hlp_l h_alias_grp f n_simpl_h  in
+  let _ = 
+  if  not !Globals.enable_frac_perm then f
+  else 
+	 let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+   let aset = MCP.comp_aliases p in
+	 let l1 = split_h h in
+	 let simpl_h, n_simpl_h = List.partition (fun c-> match c with | DataNode _ | ViewNode _ -> true | _ -> false) l1 in
+	 let n_simpl_h = star_list n_simpl_h pos in
+	 let h_alias_grp = h_a_grp_f aset simpl_h in	 
+	 let n_unfold_l = List.concat (List.map unfold_filter h_alias_grp) in
+	 if n_unfold_l <>[] then 
+		let nf = List.fold_left (fun a c-> unfold_nth 8 (prog,None) a (get_node_var c) true 0 pos) f n_unfold_l in
+		normalize_frac_formula prog nf 
+	 else 
+		let w_lem, wo_lem = List.partition (fun l -> 
+			let hn,t = get_node_name (List.hd l), List.tl l in
+			List.exists (fun c -> (String.compare hn (get_node_name c))<>0) t) h_alias_grp in
+		if w_lem <>[] then 
+			let nf = appl_comb_lemmas f w_lem h_alias_grp n_simpl_h in
+			normalize_frac_formula prog nf 
+		else 
+		  let f = comb_hlp_l h_alias_grp f n_simpl_h in
+		  if List.exists (fun c-> (List.length c) >1) h_alias_grp then  normalize_frac_formula prog f
+		  else f in
+    f
+    
+    
+and normalize_frac_heap_shallow_a prog (f:formula) = 
+	let rec m_find (f:h_formula list->bool) (l:h_formula list list) = match l with 
+						| [] -> ([],[])
+						| h::t -> 
+							if (f h) then (h,t) 
+							else let r,l = m_find f t in (r,h::l) in
+					let rec h_a_grp_f aset l :(h_formula list list) = match l with 
+					   | [] -> []
+					   | h::t -> 
+						 let v = get_node_var h in
+						 let a = v::(MCP.get_aset aset v) in
+						 let t = h_a_grp_f aset t in
+						 let lha, lhna = m_find (fun c-> Gen.BList.mem_eq CP.eq_spec_var (get_node_var (List.hd c)) a) t in
+						 (h::lha):: lhna in	
+					let rec perm_folder (h,l) = match l with
+						| v1::v2::[]-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let pv2 = Pr.mkVPerm v2 in
+							(Pr.mkJoin pv1 pv2 (Pr.mkVPerm h) no_pos,[])
+						| v1::t-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let n_e = Pr.fresh_perm_var () in
+							let rf,rev = perm_folder (n_e,t) in
+							let nf = Pr.mkAnd rf (Pr.mkJoin pv1 (Pr.mkVPerm n_e) (Pr.mkVPerm h) no_pos) no_pos in
+							(nf,n_e::rev)
+						| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
+		let comb_hlp pos (ih,ip,ipr,iqv) l= match l with
+		    | [] -> report_error no_pos ("normalize_frac_heap: must have at least one node in the aliased list")
+			| h::[] -> (mkStarH_nn h ih pos,ip,ipr,iqv)
+			| h::dups -> 
+				if (List.exists (fun c->[]=(get_node_perm c))l) then (HFalse,ip,ipr,iqv)
+				else 
+					let n_p_v = Pr.fresh_perm_var () in
+					let n_h = set_perm_node (Some n_p_v) h in
+					let v = get_node_var h in
+					let args = v::(get_node_args h) in
+					let p,lpr = List.fold_left (fun (a1,a2) c ->
+						let lv = (get_node_var c)::(get_node_args c) in
+						let lp = List.fold_left2  (fun a v1 v2-> CP.mkAnd a (CP.mkEqVar v1 v2 pos) pos) a1 args lv in
+					   (lp,(get_node_perm c)@a2)) (ip,get_node_perm h) dups in	
+					let npr,n_e = perm_folder (n_p_v,lpr) in
+					let n_h = mkStarH_nn n_h ih pos in
+					let npr = Pr.mkAnd ipr npr pos in
+					(n_h, p, npr , n_p_v::n_e@iqv) in 
+		  let comb_hlp_l l f n_simpl_h :formula= 
+        let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+        let nh,np,npr,qv = List.fold_left (comb_hlp pos) (n_simpl_h,CP.mkTrue pos,pr,qv) l in
+        let np =  MCP.memoise_add_pure_N p np in
+        mkExists_w_lbl qv nh np t fl npr br pos lbl in
+				
+  let f = 
+  if  not !Globals.enable_frac_perm then f
+  else 
+	 let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+   let aset = MCP.comp_aliases p in
+	 let l1 = split_h h in
+	 let simpl_h, n_simpl_h = List.partition (fun c-> match c with | DataNode _ -> true | _ -> false) l1 in
+	 let n_simpl_h = star_list n_simpl_h pos in
+	 let h_alias_grp = h_a_grp_f aset simpl_h in	 
+	 let f = comb_hlp_l h_alias_grp f n_simpl_h in
+	 if List.exists (fun c-> (List.length c) >1) h_alias_grp then  normalize_frac_formula prog f
+	 else f in
+    f
 
+and normalize_frac_heap_shallow prog f = 
+  let pr  =Cprinter.string_of_formula in
+  Gen.Debug.no_1 "normalize_frac_heap_shallow" pr pr (normalize_frac_heap_shallow_a prog) f
+
+
+and normalize_frac_heap prog (f:formula) = normalize_frac_heap_shallow prog f
+  
+and normalize_frac_heap_w prog h p =  (*used after adding back the consumed heap*)
+   if  not !Globals.enable_frac_perm then (h,Cpr.mkTrue no_pos, MCP.mkMTrue no_pos,[])
+   else 
+      let f = normalize_frac_heap prog (mkBase h p TypeTrue (mkTrueFlow ()) (Pr.mkTrue no_pos) [] no_pos) in 
+      match f with
+        | Or _ -> Error.report_error {Err.error_loc = no_pos;Err.error_text = "normalize_frac_heap_w: adding the consumed heap should not yield OR"} 
+        | _ ->
+          let (qv, h, p, _, _, pr, _,_, _) = all_components f in	 
+          (h,pr,p,qv)
+  
+and normalize_frac_formula prog f = match f with
+ | Or b -> mkOr (normalize_frac_formula prog b.formula_or_f1) (normalize_frac_formula prog b.formula_or_f2) b.formula_or_pos
+ | Base b -> normalize_frac_heap prog f
+ | Exists e -> normalize_frac_heap prog f
+  
+and normalize_frac_struc prog f = 
+	let hlp f = match f with
+		| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,normalize_frac_struc prog c2)) b.formula_case_branches;}
+		| EBase b->  EBase{b with 
+			formula_ext_base = normalize_frac_formula prog b.formula_ext_base; 
+			formula_ext_continuation = normalize_frac_struc prog b.formula_ext_continuation }
+		| EAssume (l,f,lbl) -> EAssume (l,normalize_frac_formula prog f , lbl)
+		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
+	List.map hlp f
+	*)

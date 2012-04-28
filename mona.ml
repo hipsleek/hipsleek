@@ -28,6 +28,7 @@ let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdo
 (* pretty printing for primitive types *)
 let rec mona_of_typ = function
   | Bool          -> "int"
+  | Tree_sh 	  -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | AnnT          -> "AnnT"
@@ -466,6 +467,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
   | CP.AConst (i, _) -> ([], ("pconst(" ^ (string_of_int (int_of_heap_ann i))
                               ^ ")"), "")
+  | CP.Tsconst _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support tree_shares"^(Cprinter.string_of_formula_exp e0))
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in

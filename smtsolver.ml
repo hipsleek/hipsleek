@@ -16,7 +16,7 @@ let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
                   GLOBAL VARIABLES & TYPES
  **************************************************************)
 
-(* Types for relations and axioms*)
+(* Types for relations and ax(ioms*)
 type rel_def = {
 		rel_name : ident;
 		rel_vars : CP.spec_var list;
@@ -70,6 +70,7 @@ let rec smt_of_typ t =
 	match t with
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
+		| Tree_sh -> "Int"
 		| Int -> "Int"
 		| AnnT -> "Int"
 		| UNK -> 
@@ -124,6 +125,7 @@ let rec smt_of_exp a =
 	| CP.ListAppend _
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
+	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -315,7 +317,8 @@ and collect_exp_info e = match e with
   | CP.ListTail _
   | CP.ListLength _
   | CP.ListAppend _
-  | CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+  | CP.ListReverse _ 
+  | CP.Tsconst _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
   | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 

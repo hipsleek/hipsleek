@@ -7851,3 +7851,57 @@ let mkViewNode view_node view_name view_args pos = ViewNode
   h_formula_view_label = None;
   h_formula_view_pos = pos}
 
+
+let rec ctx_no_heap c = match c with 
+  | Ctx e-> 
+    let rec f_no_heap f = match f with
+	  | Base f ->  not (is_complex_heap f.formula_base_heap)
+	  | Exists f -> not (is_complex_heap f.formula_exists_heap)
+	  | Or f -> (f_no_heap f.formula_or_f1) & (f_no_heap f.formula_or_f2) in
+    f_no_heap e.es_formula
+  | OCtx (c1,c2) -> (ctx_no_heap c1) & (ctx_no_heap c2)
+  
+  
+  
+let rec find_barr bln v f = 
+  (*this is copied from context, actually it is general enough to be in cpure...*)
+	let rec alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
+	  match ptr_eqs with
+	  | (v1, v2) :: rest ->
+		  let search v asets = List.partition (fun aset -> CP.mem v aset) asets in
+		  let av1, rest1 = search v1 (alias rest) in
+		  let av2, rest2 = search v2 rest1 in
+		  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
+		  v1v2_set :: rest2
+	  | [] -> [] in
+    let tester r1 r2 = if r1=r2 then r1 else report_error no_pos ("barrier type mismatch for "^v) in
+    let rec p_bar_eq p = try 
+	List.map CP.name_of_spec_var
+	 (List.find (List.exists (fun c-> (String.compare v (CP.name_of_spec_var c)=0))) (alias (MCP.ptr_equations_without_null p))) with _ -> [v] in
+	
+	let rec h_bars eqs f = match f with 
+	  | Star h -> 
+	    let rd = h_bars eqs h.h_formula_star_h1 in
+		let rw = h_bars eqs h.h_formula_star_h2 in
+	   (match rd with | None -> rw | _ -> tester rd rw)	  
+	  | Conj c -> 
+	    let rd = h_bars eqs c.h_formula_conj_h1 in
+		let rw = h_bars eqs c.h_formula_conj_h2 in
+	   (match rd with | None -> rw | _ -> tester rd rw)	  
+	  | Phase p -> 
+		let rd = h_bars eqs p.h_formula_phase_rd in
+		let rw = h_bars eqs p.h_formula_phase_rw in
+	   (match rd with | None -> rw | _ -> tester rd rw)
+	  | DataNode d -> 
+		  let str_eq v1 v2 = (String.compare v1 v2 ) = 0 in
+		  let f1 = str_eq d.h_formula_data_name in
+		  let f2 = str_eq (CP.name_of_spec_var d.h_formula_data_node) in
+		  if (List.exists f1 bln)&&(List.exists f2 eqs) then 
+			Some (d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)
+ 		  else None
+	  | ViewNode _ | Hole _ | HTrue | HFalse -> None in
+    
+    match f with
+	  | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap
+	  | Exists f -> h_bars (p_bar_eq f.formula_exists_pure) f.formula_exists_heap
+	  | Or f -> report_error no_pos "unexpected or in find barr" 

@@ -69,10 +69,11 @@ and cvc3_of_exp a = match a with
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
         failwith ("Lists are not supported in cvc3")
-	| CP.Func _ -> failwith ("Functions are not supported in cvc3")
-	| CP.ArrayAt _ -> (* An Hoa *)
+  | CP.Func _ -> failwith ("Functions are not supported in cvc3")
+  | CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
-    | CP.AConst _ -> failwith ("aconst not supported in cvc3")
+  | CP.AConst _ -> failwith ("aconst not supported in cvc3")
+  | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
 
 and cvc3_of_b_formula b =
   let (pf,_) = b in

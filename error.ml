@@ -75,7 +75,7 @@ let report_warning e =
     end 
   else ()
   (* failwith "Error detected : error.ml B" *)
-
+exception Malformed_barrier of string
 (*
 let process_exct e=
   begin

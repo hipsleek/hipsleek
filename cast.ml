@@ -27,7 +27,9 @@ and prog_decl = {
   (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
 	mutable prog_left_coercions : coercion_decl list;
-	mutable prog_right_coercions : coercion_decl list; }
+	mutable prog_right_coercions : coercion_decl list;
+	prog_barrier_decls : barrier_decl list
+	}
 	
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
@@ -46,7 +48,14 @@ and mater_property = {
   mater_full_flag : bool;
   mater_target_view : ident list; (*the view to which it materializes*)
 }
-  
+
+and barrier_decl = {
+	barrier_thc : int;
+	barrier_name : ident;
+	barrier_shared_vars : P.spec_var list;
+	barrier_tr_list : (int*int* F.struc_formula list) list ;
+	barrier_def: F.struc_formula ;
+	}  
     
 and view_decl = { 
     view_name : ident; 
@@ -195,6 +204,8 @@ and exp_block = { exp_block_type : typ;
     exp_block_local_vars : typed_ident list;
     exp_block_pos : loc }
 
+and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
+	
 and exp_cast = { 
     exp_cast_target_type : typ;
     exp_cast_body : exp;
@@ -334,6 +345,7 @@ and exp = (* expressions keep their types *)
   | BConst of exp_bconst
   | Bind of exp_bind
   | Block of exp_block
+  | Barrier of exp_barrier
   | Cond of exp_cond
   | Cast of exp_cast
   | Catch of exp_catch
@@ -564,6 +576,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | Null _
 						| EmptyArray _ (* An Hoa *)
 	          | Print _
+			  | Barrier _
 	          | SCall _
 	          | This _
 	          | Time _
@@ -729,6 +742,7 @@ let rec type_of_exp (e : exp) = match e with
 	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
 	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
   | Assign _ -> Some void_type
+  | Barrier _ -> Some void_type
   | BConst _ -> Some bool_type
   | Bind ({exp_bind_type = t; 
 		   exp_bind_bound_var = _; 
@@ -1071,6 +1085,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_block_body = e;
 			exp_block_local_vars = _;
 			exp_block_pos = _}) -> callees_of_exp e
+  | Barrier _ -> [] 
   | Cast ({exp_cast_body = e}) -> callees_of_exp e
   | Catch e-> callees_of_exp e.exp_catch_body
   | Cond ({exp_cond_type = _;
@@ -1336,7 +1351,8 @@ and exp_to_check (e:exp) :bool = match e with
   | Try _ 
   | Time _ 
   | Java _ -> false
-        
+  
+  | Barrier _ 
   | BConst _
 	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
 	      (*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
@@ -1382,6 +1398,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
 	| EmptyArray b -> b.exp_emparray_pos (* An Hoa *)
   | Cond b -> b.exp_cond_pos
   | Block b -> b.exp_block_pos
+  | Barrier b -> b.exp_barrier_pos
   | Java b  -> b.exp_java_pos
   | Assert b -> b.exp_assert_pos
   | New b -> b.exp_new_pos

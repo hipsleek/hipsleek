@@ -93,9 +93,10 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
+  | Tree_sh
   (* | FuncT (\* function type *\) *)
 
-
+let barrierT = Named "barrier"
 (*
   Data types for code gen
 *)
@@ -254,6 +255,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
+  | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
@@ -272,6 +274,7 @@ let rec string_of_typ_alpha = function
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tree_sh		  -> "Tsh"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -380,6 +383,8 @@ let eres_name = "eres"
 let self = "self"
 
 let this = "this"
+
+let use_dfracs = ref false
 
 let is_self_ident id = self=id
 

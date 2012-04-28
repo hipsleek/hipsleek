@@ -30,6 +30,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
+				   prog_barrier_decls : barrier_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
@@ -85,6 +86,14 @@ and hopred_decl = { hopred_name : ident;
           hopred_shape    : Iformula.struc_formula list;
           hopred_invariant :P.formula
 }
+
+and barrier_decl = {
+	barrier_thc : int;
+	barrier_name : ident;
+	barrier_shared_vars : (typ*ident) list;
+	barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
+}
+
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 
@@ -149,8 +158,8 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
-          proc_is_main : bool;
-          proc_file : string;
+				  proc_is_main : bool;
+				  proc_file : string;
 				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -247,6 +256,8 @@ and exp_block = { exp_block_body : exp;
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
 		     exp_bool_lit_pos : loc }
+			 
+and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
                exp_call_nrecv_lock : ident option;
@@ -372,6 +383,7 @@ and exp =
   | Block of exp_block
   | BoolLit of exp_bool_lit
   | Break of exp_break
+  | Barrier of exp_barrier
   | CallRecv of exp_call_recv
   | CallNRecv of exp_call_nrecv
   | Cast of exp_cast
@@ -494,7 +506,7 @@ let is_var (e : exp) : bool = match e with
   | _ ->false
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
-	| ArrayAt e -> e.exp_arrayat_pos (* An oa *)
+  | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
@@ -503,6 +515,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Block e -> e.exp_block_pos
   | BoolLit e -> e.exp_bool_lit_pos
   | Break p -> p.exp_break_pos
+  | Barrier e -> e.exp_barrier_pos
   | CallRecv e -> e.exp_call_recv_pos
   | CallNRecv e -> e.exp_call_nrecv_pos
   | Cast e -> e.exp_cast_pos
@@ -698,6 +711,9 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Bind b -> 
                 let e1,r1 = helper n_arg b.exp_bind_body  in     
                 (Bind {b with exp_bind_body = e1; },r1)
+		  | Barrier _ -> (e,zero)
+				(*let e,r = helper n_arg b.exp_barrier_recv  in     
+                (Barrier {b with exp_barrier_recv = e},r)*)
           | Block b -> 
                 let e1,r1 = helper n_arg b.exp_block_body  in     
                 (Block {b with exp_block_body = e1;},r1)
@@ -1361,10 +1377,11 @@ let rec label_e e =
   let rec helper e = match e with
     | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}  
     | Block _
-		| ArrayAt _ (* AN HOA : no label for array access *)
+	| ArrayAt _ (* AN HOA : no label for array access *)
     | Cast _
     | ConstDecl _ 
     | BoolLit _ 
+	| Barrier _  (*Cristian: no label for barrier calls*)
     | Debug _ 
     | Dprint _ 
     | Empty _ 
@@ -1670,7 +1687,9 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;} in
+                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;
+				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
+				} in
              append_iprims_list new_iprims tl
 
 let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
@@ -1688,7 +1707,8 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];
-                prog_coercion_decls = [];}
+                prog_coercion_decls = [];
+				prog_barrier_decls = [];}
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 
@@ -1833,5 +1853,40 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
 		res
 
-
-
+let b_data_constr bn larg=
+		{ data_name = bn;
+		  data_fields =List.map (fun c-> c,no_pos,false) larg;
+		  data_parent_name = if bn = "barrier" then "Object" else "barrier";
+		  data_invs =[];
+		  data_methods =[]; }
+	
+let add_bar_inits prog = 
+  let b_data_def = (b_data_constr "barrier" []) :: 
+	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
+	
+  let b_proc_def = List.map (fun b-> 
+			let largs = (P.IConst (0,no_pos))::List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
+			let pre_hn = 
+				F.mkHeapNode ("b",Unprimed) "barrier" false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
+			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
+			let post_hn = 
+				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
+			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "") in
+			{ proc_name = "init_"^b.barrier_name;
+			  proc_mingled_name = "";
+			  proc_data_decl = None ;
+			  proc_constructor = false;
+			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
+				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
+								b.barrier_shared_vars);
+			  proc_return = Void;
+			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) true no_pos;
+			  proc_dynamic_specs = F.mkEFalseF ();
+			  proc_exceptions = [];
+			  proc_body = None;
+			  proc_is_main = false;
+			  proc_file = "";
+			  proc_loc = no_pos}) prog.prog_barrier_decls in
+ {prog with 
+	prog_data_decls = prog.prog_data_decls@b_data_def; 
+	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }

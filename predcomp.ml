@@ -117,6 +117,7 @@ and aug_class_name (t : typ) = match t with
   | Float -> "FloatAug"
   | NUM -> "NUMAug"
   | Void -> "void"
+  | Tree_sh -> "tree_share"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"

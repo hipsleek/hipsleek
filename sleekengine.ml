@@ -41,13 +41,14 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
-        I.prog_func_decls = [];
-        I.prog_rel_decls = [];
-        I.prog_rel_ids = [];
-        I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+			  I.prog_func_decls = [];
+			  I.prog_rel_decls = [];
+			  I.prog_rel_ids = [];
+			  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
+			  I. prog_barrier_decls = [];
 }
 
 let cobj_def = { C.data_name = "Object";
@@ -65,7 +66,8 @@ let cprog = ref { C.prog_data_decls = [];
 			  (*C.old_proc_decls = [];*)
 			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
 			  C.prog_left_coercions = [];
-			  C.prog_right_coercions = [] }
+			  C.prog_right_coercions = [];
+			  C. prog_barrier_decls = []}
 
 let residues =  ref (None : CF.list_context option)
 
@@ -319,6 +321,22 @@ let process_data_def ddef =
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
 
+let process_barrier_def bd = 
+    if !Globals.print_core then print_string (Iprinter.string_of_barrier_decl bd) else () ;
+	 try
+	    let bd = AS.case_normalize_barrier iprog bd in
+		let cbd = AS.trans_bdecl iprog bd in
+		(*let cbd = AS.normalize_barr_decl !cprog cbd in*)
+		AS.check_barrier_wf !cprog cbd;
+		print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
+	 with 
+		| Error.Malformed_barrier s -> print_string ("Barrrier "^bd.I.barrier_name^" Fail: "^s^"\n")
+    
+let process_barrier_def bd = 
+	Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def bd
+  
+
+	  
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 

@@ -4,12 +4,12 @@ OCAMLBUILD = ocamlbuild
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
+LIBS = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,z3
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/batteries
 
-FLAGS = $(INCLUDES),-g,-annot
+FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
