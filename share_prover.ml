@@ -45,7 +45,7 @@ sig
 	val call_imply: t_var list -> nz_cons -> eq_syst -> t_var list -> nz_cons -> eq_syst -> (t_var*bool) list -> (t_var*t_var) list-> bool
 	val mkTop : unit-> p_var
 	(*val mkVar : t_var-> p_var*)
-	val mkGVar : Sv.t -> p_var
+	val mkVar : t_var -> p_var
 	val getVar : p_var -> t_var option
 end;;
  
