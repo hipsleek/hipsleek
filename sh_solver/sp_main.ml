@@ -24,8 +24,8 @@ let parse_file_full file_name =
 		End_of_file -> exit 0
 
 let solve_prog prog = match prog with 
-	| Share_prover.Sat eqs -> print_string (string_of_bool (Share_prover.Solver.is_sat eqs))
-	| Share_prover.Imply (e1,e2) -> print_string (string_of_bool (Share_prover.Solver.imply e1 e2))
+	| Shares_z3_lib.Sat eqs -> print_string (string_of_bool (Shares_z3_lib.Solver.is_sat eqs))
+	| Shares_z3_lib.Imply (e1,e2) -> print_string (string_of_bool (Shares_z3_lib.Solver.imply e1 e2))
 	  
 let _ = 
   try

@@ -1,5 +1,5 @@
 %{
-  module Eqs = Share_prover.Eqs
+ module Eqs = Shares_z3_lib.Eqs
 %}
 
 %token <string> IDENTIFIER
@@ -15,12 +15,12 @@
 %token IMPL
 
 %start eq_systs
-%type <Share_prover.cmd> eq_systs
+%type <Shares_z3_lib.cmd> eq_systs
 
 %%
 eq_systs: 
-	SAT eq_syst {Share_prover.Sat $2}
-	| IMPL eq_syst eq_syst {Share_prover.Imply ($2,$3)};
+	SAT eq_syst {Shares_z3_lib.Sat $2}
+	| IMPL eq_syst eq_syst {Shares_z3_lib.Imply ($2,$3)};
 	
 eq_syst: var_list var_list pv_list vc_list eq_list {Eqs.mkEqS $1 $2 $3 $4 $5};	
 

@@ -1,4 +1,3 @@
-
 module type SV =
 sig 
   type t
@@ -377,13 +376,13 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				if c then List.filter (fun d-> not (mem_eq SV.eq v d)) nz
 				else List.map (fun d-> List.filter (fun v1-> not (SV.eq v v1)) d) nz) nz_cons vc_l in
 			if (List.exists (fun c-> c=[]) nz_cons) then raise_us "nz_cons"
-			else List.map (List.map SV.conv) nz_cons 
+			else (*List.map (List.map SV.conv)*) nz_cons 
 		
 		let simpl_vars r1 r2 r3 = 
 			if SV.eq r1 r2 then [(r1,false);(r3,false)],[]
 			else if SV.eq r1 r3 then [(r2,false)],[] 
 			else if SV.eq r2 r3 then [(r1,false)],[] 
-			else [],[(r1,r2,Ss.mkGVar r3)]
+			else [],[(r1,r2,Ss.mkVar r3)]
 		
 		let c_v_solver ex_l e = match e with
 			| Cperm d, Vperm v1, Vperm v2 
@@ -420,7 +419,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				let r2 = subst_ex p v2 in
 				match Ss.getVar v3 with  
 				| None -> if SV.eq r1 r2 then raise_us "subst_ex_eq" else ([],[(r1,r2,Ss.mkTop ())])
-				| Some v -> simpl_vars r1 r2 (subst_ex p (SV.rconv v)) in
+				| Some v -> simpl_vars r1 r2 (subst_ex p v(*(SV.rconv v)*)) in
 					
 			let solve_2 (v,c) (v1,v2,v3s) = 
 				let s1 = SV.eq v1 v in
@@ -432,7 +431,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 						| true, false ->([v2,not c],[],[])
 						| false, true ->([v1,not c],[],[]))
 					| Some v3t->
-						let v3 = SV.rconv v3t in
+						let v3 = (*SV.rconv*) v3t in
 						let s3 = SV.eq v3 v in
 						(match s1,s2,s3,c with 
 							| true,true,_,true -> raise_us "solve_2_1"
@@ -465,7 +464,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			check_eq_incons l_e;
 			l_c, l_s, l_e
 		
-		let conv_eq_s = List.map (fun (e1,e2,c)-> (SV.conv e1, SV.conv e2, c))
+		(*let conv_eq_s = List.map (fun (e1,e2,c)-> (SV.conv e1, SV.conv e2, c))*)
 		
 		let is_sat (eqs : eq_syst): bool = 			
 		    if eqs.eqs_eql=[] then (check_const_incons (apl_substs eqs).eqs_vc; true)
@@ -475,7 +474,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 					let dec_vars,nzv, _,_,eqs = decompose_sys eqs in
 					let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] [] [] eqs in
 					let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
-					Ss.call_sat nz_cons (conv_eq_s l_eqs)
+					Ss.call_sat nz_cons ((*conv_eq_s*) l_eqs)
 				with Unsat_exception -> false
 				
 		let is_sat (eqs:eq_syst):bool = 
@@ -522,14 +521,14 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			
 				let c_const_vars, c_subst_vars, c_l_eqs = solve_trivial_eq_l c_ev c_v_e c_v_c c_l_eqs in
 				let c_nz_cons = compute_nz_cons c_nzv c_dec_vars c_const_vars c_subst_vars in
-				let c_const_vars = List.map (fun (v,c)-> SV.conv v,c) c_const_vars in
+				(*let c_const_vars = List.map (fun (v,c)-> SV.conv v,c) c_const_vars in
 				let c_subst_vars = List.map (fun (v1,v2)-> SV.conv v1, SV.conv v2) c_subst_vars in
 				let a_ev = List.map SV.conv a_ev in
 				let c_ev = List.map SV.conv c_ev in
 				let a_l_eqs = conv_eq_s a_l_eqs in
-				let c_l_eqs = conv_eq_s c_l_eqs in
+				let c_l_eqs = conv_eq_s c_l_eqs in*)
 				Ss.call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
-			with | Unsat_exception -> not (Ss.call_sat a_nz_cons (conv_eq_s a_l_eqs))
+			with | Unsat_exception -> not (Ss.call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
 			
 				
 		let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
@@ -553,23 +552,23 @@ module Ts = Tree_shares.Ts
 module Sv = 
   struct
 	type t=string
-	type t_spec = string
+	(*type t_spec = string
 	let conv v=v
-	let rconv v=v
+	let rconv v=v*)
 	let cnt = ref 1
 	let eq v1 v2 = (String.compare v1 v2) = 0
     let string_of v1 = v1
-	let string_of_s v1 = v1
+	(*let string_of_s v1 = v1
+	let get_name_s v = v*)
 	let rename _ s = s
-    let get_name v = v
-	let get_name_s v = v
+    let get_name v = v	
 	let var_of v = v
     let fresh_var _ = cnt:=!cnt+1; "__ts_fv_"^(string_of_int !cnt)    
 end
 
 module Ss_triv:SAT_SLV = functor (Sv:SV) ->
   struct
-	type t_var = Sv.t_spec
+	type t_var = Sv.t
 	type nz_cons = t_var list list 
 	type p_var = (*include Gen.EQ_TYPE with type t=v*)
 		| PVar of t_var 
@@ -578,175 +577,8 @@ module Ss_triv:SAT_SLV = functor (Sv:SV) ->
 	let call_sat _ _ = true 
 	let call_imply _ _ _ _ _ _ _ _  = false 
 	let mkTop () = C_top
-	let mkGVar v = PVar (Sv.conv v)
+	let mkVar v = PVar v
 	let getVar v = match v with | C_top -> None | PVar v -> Some v
 end;;
 
-
-module Ss_Z3:SAT_SLV = functor (Sv:SV) ->
-  struct
-	type t_var = Sv.t_spec
-	type nz_cons = t_var list list 
-	type p_var = (*include Gen.EQ_TYPE with type t=v*)
-		| PVar of t_var 
-		| C_top
-	type eq_syst = (t_var*t_var*p_var) list
-	
-	let mkTop () = C_top
-	let mkGVar v = PVar (Sv.conv v)
-	let getVar v = match v with | C_top -> None | PVar v -> Some v		
-		
-	let string_of_eq (v1,v2,v3) = (Sv.string_of_s v1)^" * "^(Sv.string_of_s v2)^" = "^(match v3 with | PVar v3 ->  Sv.string_of_s v3 | _ -> " true")
-	let string_of_eq_l l = String.concat "\n" (List.map string_of_eq l)
-		
-		(**********Z3 interface **********)
-		
-		(** Create a boolean variable using the given name. *)
-		let mk_bool_var ctx name = Z3.mk_const ctx (Z3.mk_string_symbol ctx name) (Z3.mk_bool_sort ctx)
-		let mk_sv_bool_var ctx sv  =  mk_bool_var ctx (Sv.get_name_s sv)
-		
-		(** Create a logical context.  Enable model construction. Also enable tracing to stderr. *)
-		let mk_context ()= 
-			let cfg = Z3.mk_config () in
-			Z3.set_param_value cfg "MODEL" "false" ;
-			let ctx = Z3.mk_context cfg in
-			Z3.trace_to_stderr ctx;
-			ctx
-		
-		(** Check if  ctx is sat. if sat, then could get the model.*)
-		let check ctx =(match Z3.check ctx with
-			| Z3.L_FALSE -> false
-			| Z3.L_UNDEF ->  print_string "unknown\n"; failwith "unknown sat"
-			| Z3.L_TRUE -> true )
-		
-		let add_eqs ctx = 
-			List.iter (fun (v1,v2,v3)-> 
-				let bv1 = mk_sv_bool_var ctx v1 in
-				let bv2 = mk_sv_bool_var ctx v2 in
-				let xor12 = Z3.mk_xor ctx bv1 bv2 in				
-				match v3 with 
-					| PVar v3-> 
-						(Z3.assert_cnstr ctx (Z3.mk_not ctx (Z3.mk_and ctx [|bv1;bv2|]));
-						Z3.assert_cnstr ctx (Z3.mk_eq ctx xor12 (mk_sv_bool_var ctx v3)))
-					| C_top  -> Z3.assert_cnstr ctx xor12
-				)
-				
-		let add_one_nz ctx l= Z3.assert_cnstr ctx (Z3.mk_or ctx (Array.of_list (List.map (mk_sv_bool_var ctx) l)))
-		let add_nz ctx = List.iter (add_one_nz ctx)
-				
-	let check_sat_nz ctx non_zeros = 
-		Z3.push ctx;
-		add_nz ctx non_zeros;
-		if  check ctx then (Z3.pop ctx 1;true)
-		else 
-			(Z3.pop ctx 1;
-			List.for_all (fun l -> 
-				Z3.push ctx;
-				add_one_nz ctx l; 
-				let r= check ctx in 
-				Z3.pop ctx 1; 
-				r) non_zeros )
-		
-	let call_sat non_zeros eqs = 
-		let ctx = mk_context () in
-		add_eqs ctx eqs; 
-		let r = check_sat_nz ctx non_zeros in
-		Z3.del_context ctx; r
-		
-	let call_sat non_zeros eqs = 
-		let nzs = String.concat "," (List.map (fun l-> "{"^(String.concat "," (List.map Sv.string_of_s l))^"}") non_zeros) in
-		let eqss = string_of_eq_l eqs in
-		print_string ("Z3 SAT: "^nzs^"\n"^eqss^"\n");
-		let r = call_sat non_zeros eqs in
-		print_string ("r: "^(string_of_bool r)^"\n"); r
-	
-	let call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars  = 
-		let ctx = mk_context () in
-		add_eqs ctx a_l_eqs;
-		if not (check_sat_nz ctx a_nz_cons) then (Z3.del_context ctx;true)
-		else
-			let tbl = Hashtbl.create 20 in
-			let bool_sort = Z3.mk_bool_sort ctx in
-			let _ = List.fold_left (fun c v-> Hashtbl.add tbl (Sv.get_name_s v) (Z3.mk_bound ctx c bool_sort); c+1) 1 c_ev in
-			let mk_sv_bool_var_ex v = 
-				let nm = Sv.get_name_s v in
-				try
-					Hashtbl.find tbl nm
-				with Not_found -> mk_bool_var ctx nm in	
-				
-		let conseq = 
-			let f_ccv = List.fold_left (fun a (v,c)-> 
-					let z3v = mk_sv_bool_var_ex v in
-					let z3v = if c then z3v else Z3.mk_not ctx z3v  in
-					Z3.mk_and ctx [| a ; z3v|]
-				) (Z3.mk_true ctx) c_const_vars in
-			let f_sv = List.fold_left (fun a (v1,v2)-> 
-					let z3v1 = mk_sv_bool_var_ex v1 in
-					let z3v2 = mk_sv_bool_var_ex v2 in
-					let z3eq = Z3.mk_eq ctx z3v1 z3v2 in
-					Z3.mk_and ctx [|a; z3eq|]
-				) f_ccv c_subst_vars in
-			let f_nz = List.fold_left (fun a l -> 
-					let nz_arr = Array.of_list (List.map mk_sv_bool_var_ex l) in
-					Z3.mk_and ctx [|a;Z3.mk_or ctx nz_arr|]
-				) f_sv c_nz_cons in
-			let f_eqs = List.fold_left (fun a (v1,v2,v3)-> 
-				let z3v1 = mk_sv_bool_var_ex v1 in
-				let z3v2 = mk_sv_bool_var_ex v2 in
-				let xor12 = Z3.mk_xor ctx z3v1 z3v2 in
-				let f1 = Z3.mk_not ctx (Z3.mk_and ctx [|z3v1;z3v2|]) in
-				let a  = Z3.mk_and ctx [|a;f1|] in
-				match v3 with
-					| PVar v3 -> Z3.mk_and ctx [| a;  Z3.mk_eq ctx xor12 (mk_sv_bool_var_ex v3) |]
-					| C_top -> Z3.mk_and ctx [| a;  xor12 |]
-				) f_nz c_l_eqs in
-				
-			let l = List.length c_ev in
-			let types = Array.init l (fun _ -> bool_sort) in
-			let names = Array.init l (Z3.mk_int_symbol ctx) in
-			Z3.mk_forall ctx 0 [||] types names f_eqs in
-			
-		Z3.assert_cnstr ctx (Z3.mk_not ctx conseq);	
-		let r = Z3.check ctx in
-		Z3.del_context ctx;
-		match r with
-				| Z3.L_FALSE ->	true			
-				| Z3.L_UNDEF ->	print_string "unknown\n"; false 
-				| Z3.L_TRUE  ->	false 
-				
-		let call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars  = 
-			let nzs = 
-				String.concat "," (
-					List.map (fun l-> "{"^(String.concat "," (List.map Sv.string_of_s l))^"}") a_nz_cons) in
-			let eqss = string_of_eq_l a_l_eqs in
-			print_string ("Imply: "^nzs^"\n"^eqss^"\n");
-			let r = call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars in
-			print_string ("r: "^(string_of_bool r)); r
-end;;
-
 (*module Solver = Dfrac_s_solver(Ts)(Sv)(Ss_triv)*)
-module Solver = Dfrac_s_solver(Ts)(Sv)(Ss_Z3)
-
-
-
-module Eqs = 
-	struct 
-	type var = Sv.t
-	type const = Ts.stree
-	type pcvar = Solver.frac_perm
-	type eq = Solver.eq
-	type eq_syst = Solver.eq_syst
-	let mkVar = Sv.var_of
-	let mkEq v1 v2 v3 = (v1,v2,v3)
-	let mkEqS l1 l2 l3 l4 l5= {Solver.eqs_ex = l1; Solver.eqs_nzv = l2; Solver.eqs_ve=l3; Solver.eqs_vc=l4; Solver.eqs_eql = l5}
-	let mkcFull = Ts.top
-	let mkcEmpty = Ts.bot
-	let mkcNode = Ts.mkNode 
-	let mkpcCnst c = Solver.Cperm c
-	let mkpcVar v = Solver.Vperm v
-end
-    
-type cmd = 
-	| Sat of Eqs.eq_syst
-	| Imply of Eqs.eq_syst * Eqs.eq_syst
-	
