@@ -37,7 +37,7 @@ module type TREE_CONST =
  
 module type SAT_SLV = functor (Sv : SV) ->
 sig 
-	type t_var = Sv.t_spec
+	type t_var = Sv.t
 	type nz_cons = t_var list list
 	type p_var
 	type eq_syst = (t_var*t_var*p_var) list
