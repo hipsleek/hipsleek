@@ -672,6 +672,9 @@ and get_imm (f : h_formula) : ann =  match f with
   | ViewNode (h1) -> h1.h_formula_view_imm
   | _ -> ConstAnn(Mutable) (* we shouldn't get here *)
 
-
-
+and ann_opt_to_ann (ann_opt_lst: IF.ann option list) (default_ann: IF.ann) = 
+  match ann_opt_lst with
+    | [] -> []
+    | (Some ann0) :: t -> (iformula_ann_to_cformula_ann ann0) :: (ann_opt_to_ann t default_ann)
+    | (None) :: t      -> (iformula_ann_to_cformula_ann default_ann) :: (ann_opt_to_ann t default_ann) 
 

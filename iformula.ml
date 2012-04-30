@@ -148,6 +148,10 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 let apply_one_imm (fr,t) a = match a with
   | ConstAnn _ -> a
   | PolyAnn (sv, pos) -> PolyAnn ((if P.eq_var sv fr then t else sv), pos)
+
+let apply_one_opt_imm (fr,t) a = match a with
+  | Some annot -> Some (apply_one_imm (fr,t) annot)
+  | None -> None
   
 let rec string_of_spec_var_list l = match l with 
   | []               -> ""
@@ -399,7 +403,7 @@ and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l =
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
-          
+
 and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos
@@ -727,6 +731,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_label = l;
 	h_formula_heap_pos = pos}) -> 
       let imm = apply_one_imm s imm in
+      let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm s f)
         | None -> None
@@ -756,6 +761,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_label = l;
 		h_formula_heap2_pos= pos}) -> 
       let imm = apply_one_imm s imm in
+      let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm s f)
         | None -> None

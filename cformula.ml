@@ -171,7 +171,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
 						h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
-                        (* h_formula_data_param_imm : ann list; *)
+                        h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
@@ -1085,6 +1085,7 @@ and fv_simple_formula_coerc (f:formula) =
     | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
     | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
     | _ -> []
+
 and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, t1, a1 = split_components f1 in
   let h2, p2, fl2, t2, a2 = split_components f2 in
@@ -2234,6 +2235,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
 							h_formula_data_imm = imm; 
+	                        h_formula_data_param_imm = ann_param;
 							h_formula_data_perm = perm; (*LDK*)
 							h_formula_data_arguments = svs; 
 							h_formula_data_origins = orgs;
@@ -2247,6 +2249,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
 							h_formula_data_imm = subs_imm_par sst imm;  
+	                        h_formula_data_param_imm = List.map (subs_imm_par sst) ann_param;
 							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
@@ -2286,7 +2289,6 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
 and apply_one_imm (fr,t) a = match a with
   | ConstAnn _ -> a
   | PolyAnn sv ->  PolyAnn (if CP.eq_spec_var sv fr then t else sv)
-
 
 and subs_imm_par sst a = match a with
   | ConstAnn _ -> a
@@ -2425,6 +2427,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_name = c; 
     h_formula_data_derv = dr;
     h_formula_data_imm = imm; 
+	h_formula_data_param_imm = ann_param;
     h_formula_data_perm = perm; (*LDK*)
 	h_formula_data_origins = orgs;
 	h_formula_data_original = original;
@@ -2439,6 +2442,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         h_formula_data_derv = dr;
     	h_formula_data_perm = subst_var_perm s perm; (*LDK*)
         h_formula_data_imm = apply_one_imm s imm;  
+	    h_formula_data_param_imm = List.map (apply_one_imm s) ann_param;
 	    h_formula_data_origins = orgs;
 	    h_formula_data_original = original;
 		h_formula_data_arguments = List.map (subst_var s) svs;
@@ -6811,6 +6815,7 @@ and merge_two_nodes dn1 dn2 =
 		h_formula_data_name = n1;
 		h_formula_data_derv = dr1;
 		h_formula_data_imm = i1;
+        h_formula_data_param_imm = ann_p1;
 		h_formula_data_arguments = args1;
         h_formula_data_perm = perm1;
         h_formula_data_origins = origs1;
@@ -6824,6 +6829,7 @@ and merge_two_nodes dn1 dn2 =
 						h_formula_data_name = n2;
 						h_formula_data_derv = dr2;
 						h_formula_data_imm = i2;
+                        h_formula_data_param_imm = ann_p2;
 						h_formula_data_arguments = args2;
                         h_formula_data_perm = perm2;
                         h_formula_data_origins = origs2;
@@ -6849,11 +6855,18 @@ and merge_two_nodes dn1 dn2 =
 							in
 							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
 							let not_clashed = List.for_all (fun x -> x) not_clashes in
+                            let combine_param_ann ann_p1 ann_p2 =  (*(andreeac) TOTDO: check how to combine args annotations*)
+                              match (ann_p1, ann_p2) with
+                                | ([], [])     -> []
+                                | ([], ann2)   -> ann2
+                                | (ann1, [])   -> ann1
+                                | (ann1, ann2) -> ann1 in
                             (* let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 						                h_formula_data_derv = dr1; (*TO CHECK*)
 										h_formula_data_imm = i1;
+	                                    h_formula_data_param_imm = combine_param_ann ann_p1 ann_p2;
 										h_formula_data_arguments = args;
                                         h_formula_data_perm = None; (*perm1? perm2???*)
                                         h_formula_data_origins = origs1; (*??? how to merge??*)
@@ -7372,6 +7385,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_data_name = name;
 	  h_formula_data_derv = false;
 	  h_formula_data_imm = ConstAnn(Mutable);
+      h_formula_data_param_imm = []; (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
 	  h_formula_data_original = false; (*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
@@ -7429,6 +7443,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_data_name = name;
 	  h_formula_data_derv = false;
 	  h_formula_data_imm = ConstAnn(Mutable);
+      h_formula_data_param_imm = [];    (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
 	  h_formula_data_original = true; (*after finalize, allow SPLIT*)

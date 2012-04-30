@@ -801,6 +801,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
 			    CF.h_formula_data_imm = CF.ConstAnn(imm);
+                CF.h_formula_data_param_imm = List.map (fun _ ->  CF.ConstAnn(imm)) vs_prim; (* find out vs_prim ann => (andreeac) to check *)
 			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
@@ -978,6 +979,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false;
 		        CF.h_formula_data_imm = CF.ConstAnn(Mutable);
+                CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; (* (andreeac) to check: too weak *)
 		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)

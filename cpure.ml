@@ -7244,6 +7244,7 @@ let rec add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
@@ -7332,7 +7333,7 @@ let is_Rank (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != [] || (get_rank_bnd_id_list f) != []
   | _ -> false
 
-let is_Rank_Dec (f:formula) = match f with
+let is_Rank_ ec (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != []
   | _ -> false
 

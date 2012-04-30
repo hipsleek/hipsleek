@@ -1186,6 +1186,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
   | cdef1 :: _ -> begin
 	  (* generate the first node *)
 	  let sub_tvar = List.hd subnode.F.h_formula_data_arguments in
+	  (* let sub_tvar_ann = List.hd subnode.F.h_formula_data_param_imm in *)
 	  let sub_ext_var = List.hd (List.tl subnode.F.h_formula_data_arguments) in
 		(* call gen_exts with sup_ext_var to link the 
 		   head node with extensions *)
@@ -1202,6 +1203,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                               F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							   F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1222,6 +1224,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1243,6 +1246,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;

@@ -385,20 +385,20 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
   (* position-based arguments. If a parameter does not appear in args,     *)
   (* then it is instantiated to a fresh name.                              *)
-  let rec match_args (params : ident list) args : IP.exp list =
+  let rec match_args (params : ident list) args_ann :  (IP.exp * IF.ann option) list =
     match params with
       | p :: rest ->
-            let tmp1 = match_args rest args in
-            let tmp2 = List.filter (fun a -> (fst a) = p) args in
+            let tmp1 = match_args rest args_ann in
+            let tmp2 = List.filter (fun a -> fst((fst a)) = p) args_ann in
             let tmp3 =
               (match tmp2 with
-                | [ (_, IP.Var ((e1, e2), e3)) ] -> IP.Var ((e1, e2), e3)
+                | [ ((_, IP.Var ((e1, e2), e3)), ann) ] -> (IP.Var ((e1, e2), e3),ann)
                 | _ ->
                       let fn = ("Anon"^(fresh_trailer()))
                       in
 					  (* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
 					  (* name = " ^ fn ^ "\n")) in                               *)
-                      IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos)) in
+                      (IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos), None) ) in
             let tmp4 = tmp3 :: tmp1 in tmp4
       | [] -> []
   in
@@ -407,17 +407,18 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       I.look_up_view_def_raw prog.I.prog_view_decls
           h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
-    let hargs =
-      if args==[] then [] (* don't convert if empty *)
+    let hargs, hanns =
+      if args==[] then ([],[]) (* don't convert if empty *)
       else
-        match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
+        let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
+        List.split (match_args vdef.I.view_vars args_ann) in
     let h =
       {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
           IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
 	      IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
 	      IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-          IF.h_formula_heap_imm_param = h0.IF.h_formula_heap2_imm_param;
+          IF.h_formula_heap_imm_param = hanns;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
           IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
@@ -433,14 +434,15 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             I.look_up_data_def h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
                 h0.IF.h_formula_heap2_name in
           let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
-          let hargs = match_args params h0.IF.h_formula_heap2_arguments in
+          let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
+          let hargs, hanns = List.split (match_args params args_ann) in
           let h =
             {
                 IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
                 IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
 	            IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
 	            IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-                IF.h_formula_heap_imm_param = h0.IF.h_formula_heap2_imm_param;
+                IF.h_formula_heap_imm_param = hanns;
                 IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
                 IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
                 IF.h_formula_heap_arguments = hargs;
@@ -4084,7 +4086,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               IF.h_formula_heap_name = c;
 	          IF.h_formula_heap_derv = dr;
 	          IF.h_formula_heap_imm = imm;
-	          IF.h_formula_heap_imm_param = imm_param;
+	          IF.h_formula_heap_imm_param = ann_param;
 	          IF.h_formula_heap_perm = perm; (*LDK*)
               IF.h_formula_heap_arguments = exps;
               IF.h_formula_heap_full = full;
@@ -4137,11 +4139,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                         let permvars = match_exp (List.combine perms permlabels) pos in
                         Some (List.nth permvars 0) )
                 in
-				let result_heap = CF.DataNode {
+                let result_heap = CF.DataNode {
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
 		            CF.h_formula_data_derv = dr;
 					CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4217,6 +4220,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
 		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
 		                    CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
 		                    CF.h_formula_data_original = true;
