@@ -94,7 +94,7 @@ CILLY_LIBRARY_MODULES = pretty inthash errormsg alpha trace stats util clist \
 	      callgraph epicenter heapify \
               setp uref olf ptranal \
               canonicalize heap oneret partial simplemem simplify \
-	      dataslicing sfi expcompare\
+	      dataslicing sfi expcompare pcilhip\
               cfg liveness reachingdefs deadcodeelim availexps \
               availexpslv predabst\
               testcil \
@@ -106,7 +106,7 @@ CILLY_LIBRARY_MODULES = pretty inthash errormsg alpha trace stats util clist \
 CILLY_MODULES = $(CILLY_LIBRARY_MODULES) main
 CILLY_LIBS     = unix str nums
 
-SOURCEDIRS  += src src/frontc src/ext src/ext/pta ocamlutil 
+SOURCEDIRS  += src src/frontc src/ext src/ext/pta ocamlutil  ../..
 MLLS        += clexer.mll formatlex.mll
 MLYS        += cparser.mly formatparse.mly
 MODULES     += $(CILLY_MODULES)
