@@ -3915,6 +3915,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
     | GVar (vi, io, l) ->
         self#pLineDirective ~forcefile:true l ++
+          (* text ("global ") ++ *)
           self#pVDecl () vi
           ++ chr ' '
           ++ (match io.init with
@@ -4009,7 +4010,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
      | GVar (vi, {init = Some i}, l) -> begin
          fprint out !lineLength 
            (self#pLineDirective ~forcefile:true l ++
-              self#pVDecl () vi
+                self#pVDecl () vi
               ++ text " = " 
               ++ (let islong = 
                 match i with
