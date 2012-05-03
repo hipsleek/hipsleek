@@ -60,8 +60,15 @@ class graphFindBCC =
 	val mutable bcc= G.create()
 	val mutable num_ver=0
 
-	method private findBCC graph (v1:string) (v2:string)=
-		let rec loopFindBCC graph v1 v2=
+	method private findBCC graph (out_v1:string) (out_v2:string)=
+		let v_dfs_num=converse_depth in
+		 		let _= dfs_num <- MapDFS.add out_v1 v_dfs_num dfs_num in
+					let _= converse_depth<-converse_depth-1 in
+						let _= high <- MapDFS.add out_v1 v_dfs_num high in
+									let temp_edge = {ver1=out_v1;ver2=out_v2} in (*modified here*)
+										let _= parents <- MapDFS.add out_v2 out_v1 parents in
+												let _=Stack.push temp_edge stack in
+		let rec loopFindBCC graph v1=
 			let v_dfs_num=converse_depth in
 		 		let _= dfs_num <- MapDFS.add v1 v_dfs_num dfs_num in
 					let _= converse_depth<-converse_depth-1 in
@@ -73,20 +80,21 @@ class graphFindBCC =
 										 let w_dfs_num = MapDFS.find w dfs_num in
 											 let temp_edge = {ver1=v1;ver2=w} in (*modified here*)
 (*												let _= print_endline ("w_dfs_num:" ^(string_of_int w_dfs_num)^ "of "^w ) in*)
-												let _ = if(w_dfs_num =0 ) then
+												let _ = if(w_dfs_num =0) then
 													begin
 													parents <- MapDFS.add w v1 parents;
 (*													print_endline ("pushed:" ^ w ^ " " ^ v1);*)
 													Stack.push temp_edge stack;
-													loopFindBCC graph w v2;
+													loopFindBCC graph w ;
 (*													print_endline ("new here with current temp" ^temp_edge.ver1^temp_edge.ver2);*)
 													let w_high = MapDFS.find w high in
 (*													let _= print_endline ("w_high: "^ (string_of_int w_high) ^ "of "^w^" v_dfs_num: " ^(string_of_int v_dfs_num)^" of "^v1) in*)													
 														let _= if(w_high <= v_dfs_num) then
 															begin
 																 (*modified here*)
-																			let bcp=G.create() in
-																		 let break= ref false in 	
+																if((Stack.length stack)>1) then
+																		let bcp=G.create() in
+																		let break= ref false in
 																		 while(!break=false) do
 																			begin
 (*																					let _= Stack.iter (fun x-> print_endline ("STACK " ^x.ver1^ " " ^x.ver2)) stack in*)
@@ -98,8 +106,8 @@ class graphFindBCC =
 																						in ()
 																				end
 																			done;
-																				let exist_v1v2 =G.mem_edge bcp v1 v2 in 
-																						let _= if(exist_v1v2) then bcc<-bcp else bcc<-G.create() in ()
+																		  bcc<-bcp
+																	else (bcc<-G.create()) 
 																			 
 																			 
 																end
@@ -119,7 +127,7 @@ class graphFindBCC =
 											with Not_found -> false 	
 										) neib
 
-		in loopFindBCC graph v1 v2
+		in loopFindBCC graph out_v2
 
 		method private transform graph v1 v2=
 			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in
