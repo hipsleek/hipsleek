@@ -506,11 +506,15 @@ let get_cnf_from_cache ge gd gr_e=
 let to_minisat_cnf (ante: Cpure.formula)  =
   (*let _ = "** In function Spass.to_minisat_cnf" in*)
 (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
+(*let _ = read_line() in*)
 (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
 		let _=bcl :=[] and _= number_vars := 0  in
+		let _=Gen.Profiling.push_time("stat_CNF_conversion") in
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
+		let _=Gen.Profiling.pop_time("stat_CNF_conversion") in
 		if(!sat=true) then
 (*			let _=print_endline "sat true" in*)
+			let _=Gen.Profiling.push_time("stat_CNF_generation") in
 			let (ante_str,ge,gd,gr_e)=rtc_generate_T ante_cnf in
 				let res= ref "" in
 			 (*start generating cnf for the given CNF formula*)
@@ -523,7 +527,8 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 				  	in
 							let index= ref 0 in 
 							let _=List.map (fun v-> let _= res := (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
-				  	let final_res= result^"\n"^ !res in 
+				  	let final_res= result^"\n"^ !res in
+						let _=Gen.Profiling.pop_time("stat_CNF_generation") in 
 							(final_res,ge,gd,gr_e)
 		else
 (*			let _=print_endline "sat false" in *)
@@ -564,7 +569,9 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 		if(minisat_input<>"") then
 	    let validity =
 	      if ((List.length !bcl)>0 ) then
-	        check_problem_through_file minisat_input timeout
+					let _=Gen.Profiling.push_time("stat_check_sat_1") in
+	       let res=check_problem_through_file minisat_input timeout in 
+					let _=Gen.Profiling.pop_time("stat_check_sat_1") in res
 				else true
 			in
 			if(validity=false) then
@@ -572,8 +579,12 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 					validity
 			else
 	(*			let _= print_endline "check sat2" in*)
+				let _=Gen.Profiling.push_time("stat_RTC") in
 				let cnf_T = get_cnf_from_cache ge gd gr_e  in
-				  check_problem_through_file (minisat_input^cnf_T) timeout
+				let _=Gen.Profiling.pop_time("stat_RTC") in
+					let _=Gen.Profiling.push_time("stat_check_sat_2") in
+				  let res=check_problem_through_file (minisat_input^cnf_T) timeout in 
+					let _=Gen.Profiling.pop_time("stat_check_sat_2") in res
 		else false		
 
 (* minisat *)

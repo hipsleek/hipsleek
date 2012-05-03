@@ -57,7 +57,7 @@ class graphFindBCC =
 	val mutable dfs_num =MapDFS.empty(*need to be initialized later*)
 	val mutable high=MapDFS.empty
 	val mutable parents=MapDFS.empty
-	val mutable bcc= []
+	val mutable bcc= G.create()
 	val mutable num_ver=0
 
 	method private findBCC graph (v1:string) (v2:string)=
@@ -85,25 +85,21 @@ class graphFindBCC =
 														let _= if(w_high <= v_dfs_num) then
 															begin
 																 (*modified here*)
-																let  bcp= ref ([]: string list) in 
+																			let bcp=G.create() in
 																		 let break= ref false in 	
 																		 while(!break=false) do
 																			begin
 (*																					let _= Stack.iter (fun x-> print_endline ("STACK " ^x.ver1^ " " ^x.ver2)) stack in*)
 																				 let e=Stack.pop stack in
-(*																				let _= print_endline ("poped " ^ e.ver1 ^ " " ^ e.ver2)  in       *)
+(*																				let _= print_endline ("poped " ^ e.ver1 ^ " " ^ e.ver2)  in*)
 (*																									let _= print_endline ("arti point:" ^ temp_edge.ver1) in*)
-																					  let _= bcp := [e.ver1]@[e.ver2]@ !bcp in      
+																					 let _= G.add_edge bcp e.ver1 e.ver2 in       
 																						let _= if(e.ver1=temp_edge.ver1 && e.ver2=temp_edge.ver2) then ((*print_endline ("breaked"^temp_edge.ver1^temp_edge.ver2);*)break := true)
 																						in ()
 																				end
 																			done;
-																			let _ = bcc<- !bcp 
-																				in let len=List.length bcc in (*let exist_v1 = List.mem v1 bcc in let exist_v2= List.mem v2 bcc*) 
-																				
-(*																							let _= List.map (fun x-> print_endline x) !bcp in*)
-(*																							let _= print_endline "bach" in                   *)
-																						let _= if(len=2(*||exist_v1 =false || exist_v2=false*)) then bcc <-[] in ()
+																				let exist_v1v2 =G.mem_edge bcp v1 v2 in 
+																						let _= if(exist_v1v2) then bcc<-bcp else bcc<-G.create() in ()
 																			 
 																			 
 																end
@@ -111,9 +107,10 @@ class graphFindBCC =
 (*															print_endline ("***change high of"^ v1 ^"from"^string_of_int ((MapDFS.find v1 high)) ^"to " ^(string_of_int (max_of w_high (MapDFS.find v1 high))))	;*)
 															high <- MapDFS.add v1 (max_of w_high (MapDFS.find v1 high) ) high
 														end
-														else if(w != (MapDFS.find v1 parents)) then
+														else if(w != (MapDFS.find v1 parents)& (MapDFS.find v1 dfs_num)<(MapDFS.find w dfs_num)) then
 															begin
 (*																print_endline ("change high of"^ v1 ^"from"^string_of_int ((MapDFS.find v1 high)) ^"to " ^(string_of_int (max_of w_dfs_num (MapDFS.find v1 high))));*)
+															  let temp_v1w={ver1=v1;ver2=w} in Stack.push temp_v1w stack;		
 															 high <- MapDFS.add v1 (max_of w_dfs_num (MapDFS.find v1 high) ) high
 									
 															end	
@@ -131,12 +128,11 @@ class graphFindBCC =
 						let _= (self)#findBCC graph v1 v2 in bcc
 
 		method getBCCGraph graph v1 v2 =
-			let bcp = (self)#transform graph v1 v2 in
-			if(bcp != []) then 
-				begin
-					let rem_ver f graph= f (fun v -> let exist=List.mem v bcp in if(exist=false) then G.remove_vertex graph v) graph in                                                   
-         			let _= rem_ver Dfs.postfix graph in true
-					end					
+(*			let _=Gen.Profiling.push_time("stat_transform") in*)
+			let graph = (self)#transform graph v1 v2 in
+(*			let _=Gen.Profiling.pop_time("stat_transform") in*)
+			if((G.is_empty graph )=false) then 	 
+							true
 			else (*let _= print_endline "No BCC found..." in*) false				
 		
 		method add_diseq_edgev2 (graph:G.t) e =
@@ -254,14 +250,18 @@ class rTC=
 		let rtc_helper e= let cpg= G.copy eq_graph in 
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
+														let _=Gen.Profiling.push_time("stat_get_BCC") in
 														let exist_bcc=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
+														let _=Gen.Profiling.pop_time("stat_get_BCC") in
 															let _= if(exist_bcc=true) then 
 															let _= bcc#add_list_diseq_edges cpg !diseq_edges in 
 																let _= (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
 (*																				let _= bcc#print_chordal_graph cpg in*)
 																  let ve={ver1=(G.E.src e);ver2=(G.E.dst e)} in
 (*																	let _=print_endline ("bcc of:"^(G.E.src e)^(G.E.dst e)) in*)
+(*																	let _=Gen.Profiling.push_time("stat_ge_constr") in	*)
 																	let _= self#generate_constraints cpg ve graph_e in
+(*																	let _=Gen.Profiling.pop_time("stat_ge_constr") in*)
 (*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in*)
 															() in ()
 		in 		
