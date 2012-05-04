@@ -14,8 +14,10 @@ let _ =
   Cprint.printLn := false;
 
   (* use default printer *)
-  (* Cil.dumpFile (new Cil.defaultCilPrinterClass) stdout "output.cil" cil *)
+  let _ = print_endline "----- default cil printer -----" in
+  Cil.dumpFile (new Cil.defaultCilPrinterClass) stdout "output.cil" cil;
 
   (* use hip printer *)
+  let _ = print_endline "\n\n----- hip cil printer -----" in
   Cil.dumpFile (new Pcilhip.hipCilPrinterClass) stdout "output.cil" cil
 

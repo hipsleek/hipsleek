@@ -5,32 +5,29 @@ module E = Errormsg
 let debug = false
 
 (*printer*)
-class  hipCilPrinterClass = object (self)
-  inherit defaultCilPrinterClass
+class  hipCilPrinterClass =
+  object (self)
+    inherit defaultCilPrinterClass as super
 
-   method pGlobal () (g:global) : doc =       (* global (vars, types, etc.) *)
-     match g with 
-       | GVar (vi, io, l) ->
-           self#pLineDirective ~forcefile:true l ++
-               text ("global ") ++
-               self#pVDecl () vi
-           ++ chr ' '
-           ++ (match io.init with
-                   None -> nil
-             | Some i -> text " = " ++ 
-                 (let islong = 
-                    match i with
-                            CompoundInit (_, il) when List.length il >= 8 -> true
-                      | _ -> false 
-                  in
-                  if islong then 
-                    line ++ self#pLineDirective l ++ text "  " 
-                  else nil) ++
-                   (self#pInit () i))
-           ++ text ";\n"
-       | _ -> self#pGlobal () g
-
-end
+    method pGlobal () (g:global) : doc =       (* global (vars, types, etc.) *)
+      match g with 
+      | GVar (vi, io, l) ->
+          self#pLineDirective ~forcefile:true l 
+          ++ text ("global ") 
+          ++ self#pVDecl () vi
+          ++ chr ' '
+          ++ (match io.init with
+              | None -> nil
+              | Some i -> text " = " 
+                  ++ (let islong = match i with
+                                   | CompoundInit (_, il) when List.length il >= 8 -> true
+                                   | _ -> false in
+                     if islong then line ++ self#pLineDirective l ++ text "  " 
+                     else nil) 
+                  ++ (self#pInit () i))
+          ++ text ";\n"
+      | _ -> super#pGlobal () g
+  end (* end class hipCilPrinterClass *)
 
 class hipVisitor = object
   inherit nopCilVisitor
