@@ -12,5 +12,10 @@ let _ =
   let _ = Rmtmps.removeUnusedTemps cil in
   Cil.lineDirectiveStyle := None;
   Cprint.printLn := false;
-  Cil.dumpFile (new Cil.defaultCilPrinterClass) stdout "output.cil" cil 
+
+  (* use default printer *)
+  (* Cil.dumpFile (new Cil.defaultCilPrinterClass) stdout "output.cil" cil *)
+
+  (* use hip printer *)
+  Cil.dumpFile (new Pcilhip.hipCilPrinterClass) stdout "output.cil" cil
 
