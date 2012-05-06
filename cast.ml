@@ -55,6 +55,10 @@ and barrier_decl = {
 	barrier_shared_vars : P.spec_var list;
 	barrier_tr_list : (int*int* F.struc_formula list) list ;
 	barrier_def: F.struc_formula ;
+	barrier_prune_branches: formula_label list; (* all the branches of a view *)
+	barrier_prune_conditions: (P.b_formula * (formula_label list)) list;
+    barrier_prune_conditions_baga: ba_prun_cond list;
+    barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 	}  
     
 and view_decl = { 
@@ -985,6 +989,12 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 let lookup_view_invs rem_br v_def = 
   try 
     snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants))
+  with | Not_found -> []
+
+let lookup_bar_invs_with_subs rem_br b_def zip  = 
+  try 
+    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) b_def.barrier_prune_invariants)) in
+    List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
 

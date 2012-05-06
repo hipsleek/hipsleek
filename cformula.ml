@@ -6476,6 +6476,34 @@ let get_view_branches (f0:struc_formula):(formula * formula_label) list=
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
  
 	
+let get_bar_branches (f0:struc_formula):(formula * formula_label) list= 
+  let rec is_disj (f:formula) : bool = match f with
+    | Base _
+    | Exists _ -> false
+    | Or b -> true in
+	
+	let rec struc_formula_br (f:struc_formula):(formula * formula_label) list = match f with
+		| ECase b-> List.concat 
+			(List.map (fun (c1,c2) -> 
+				let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
+				let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+				List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (struc_formula_br c2)) b.formula_case_branches)
+		| EBase b-> 
+			let l_e_v =(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) in
+			if is_disj b.formula_struc_base then report_error b.formula_struc_pos "unexpected disjunction in requires clause of a barrier def " 
+			else (match b.formula_struc_continuation with 
+					| Some l ->List.map (fun (c1,c2)-> 
+					let r_f = normalize_combine b.formula_struc_base c1 b.formula_struc_pos in
+					((push_exists l_e_v r_f),c2)) (struc_formula_br l)
+					| None -> report_error b.formula_struc_pos "barrier branch does not have post conditions")
+		| EAssume (_,_,l)-> [(mkTrue_nf no_pos,l)]
+		| EInfer b -> struc_formula_br b.formula_inf_continuation
+		| EList b -> fold_l_snd struc_formula_br b
+		| EOr b -> (struc_formula_br b.formula_struc_or_f1)@(struc_formula_br b.formula_struc_or_f2)
+	in	
+  struc_formula_br f0
+
+	
 let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
   EBase	{
 	formula_struc_explicit_inst = [];

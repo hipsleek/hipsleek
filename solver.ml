@@ -982,18 +982,22 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
     | Hole _
     | HTrue 
     | HFalse -> (hp, old_mem, false) 
-    | DataNode d ->       
-          (match d.h_formula_data_remaining_branches with
-            | Some l -> (hp, old_mem, false)
-            | None -> 
-                  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
-                  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
-                  let br_lbl = [(1,"")] in
-                  let new_hp = DataNode{d with 
-	                  h_formula_data_remaining_branches = Some br_lbl;
-	                  h_formula_data_pruning_conditions = [ (null_form,br_lbl)];} in
-                  let new_mem = MCP.memoise_add_pure_P_m old_mem not_null_form in
-                  (new_hp, new_mem, true))           
+    | DataNode d -> 
+			(try 
+				let bd = List.find (fun c-> (String.compare c.barrier_name d.h_formula_data_name) = 0) prog.prog_barrier_decls in
+				prune_bar_node bd d old_mem ba_crt
+			with 
+			| Not_found  -> match d.h_formula_data_remaining_branches with
+					| Some l -> (hp, old_mem, false)
+					| None -> 
+						  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
+						  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
+						  let br_lbl = [(1,"")] in
+						  let new_hp = DataNode{d with 
+							  h_formula_data_remaining_branches = Some br_lbl;
+							  h_formula_data_pruning_conditions = [ (null_form,br_lbl)];} in
+						  let new_mem = MCP.memoise_add_pure_P_m old_mem not_null_form in
+						  (new_hp, new_mem, true))           
     | ViewNode v ->   
           let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
           let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
@@ -1014,61 +1018,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
             (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
             (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
-            let l_prune,l_no_prune, new_mem2 = List.fold_left 
-              (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
-                  if (Gen.BList.subset_eq (=) rem_br pr_branches) then (yes_prune, no_prune,new_mem)
-                  else
-                    if ((List.length (Gen.BList.intersect_eq (=) pr_branches rem_br))=0) then (yes_prune, no_prune,new_mem)
-                    else try
-                      let fv = CP.bfv p_cond in
-                      let corr = MCP.memo_find_relevant_slice fv new_mem in
-                      if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
-                      else 
-                        let p_cond_n = MCP.memo_f_neg_norm p_cond in
-                        let y_p = if !no_memoisation then None else
-                          (Gen.Profiling.inc_counter "syn_memo_count";
-                          MCP.memo_check_syn_fast(*_prun*)(*_debug*) (p_cond,p_cond_n, pr_branches) rem_br corr) in
-                        match y_p with
-                          | Some y_p ->
-                                (Gen.Profiling.inc_counter "syn_memo_hit";
-                                (*let _ = print_string ("found contra: "^(String.concat " ; "(List.map (fun (c,_) -> string_of_int c) y_p))^"-\n") in*)
-                                (y_p@yes_prune, no_prune,new_mem))
-                          | None -> 
-                                (*decide if i ^ a = false*)
-                                (* let _ = print_string ("memo miss: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
-                                   let _ = print_string (" memo formula: "^(Cprinter.string_of_memoised_list [corr])^"\n") in                    
-                                   let _ = print_string ("init mem: "^(Cprinter.string_of_memoised_list [corr])^"\n") in
-                                   let _ = print_string ("and_is: "^(Cprinter.string_of_pure_formula and_is)^"\n") in
-                                   let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
-                                *) 
-                                let imp = 
-                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.prune_with_slice in
-                                  let r = if (!Globals.enable_fast_imply) then 
-                                    (*let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
-                                      let _ = if r1 then 
-                                      print_string ("would have succeded:in proving: "^ (Cprinter.string_of_b_formula p_cond_n)^" (disproving "^
-                                      (Cprinter.string_of_b_formula p_cond)^")\n for: "^
-                                      (Cprinter.string_of_pure_formula and_is)^"\n")
-                                      else () in*)
-                                    false
-                                  else 
-                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
-                                    (if r1 then Gen.Profiling.inc_counter "imply_sem_prun_true"
-                                    else Gen.Profiling.inc_counter "imply_sem_prun_false";r1) in
-                                  r
-					                  (*| _ -> 
-                                        Gen.Profiling.inc_counter "fast_imply_likely_false";
-                                        false (*definitely false*) (*| -1 (*likely false*) | 0 (*don't know*)*)*)in
-                                      (*let and_is = MCP.fold_mem_lst_cons p_cond [corr] false true false  in
-                                        let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
-                                if imp then (*there was a contradiction*)
-                                  let nyp = pr_branches@yes_prune in
-                                  let mem_w_fail = MCP.memoise_add_failed_memo new_mem p_cond_n in
-                                  (nyp,no_prune,mem_w_fail)
-                                else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
-                    with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
-              ) ([],[], old_mem) prun_cond in
-            
+            let l_prune,l_no_prune, new_mem2 = filter_prun_cond old_mem prun_cond rem_br in            
             let l_prune' = 
               let aliases = MCP.memo_get_asets ba_crt new_mem2 in
               let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
@@ -1113,6 +1063,103 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
                 (new_hp, MCP.merge_mems_m new_mem2 gr_ai true, true) in
             (r_hp,r_memo,r_b)
 
+and filter_prun_cond old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
+    if (Gen.BList.subset_eq (=) rem_br pr_branches) then (yes_prune, no_prune,new_mem)
+	else if ((List.length (Gen.BList.intersect_eq (=) pr_branches rem_br))=0) then (yes_prune, no_prune,new_mem)
+	else try
+		let fv = CP.bfv p_cond in
+		let corr = MCP.memo_find_relevant_slice fv new_mem in
+		if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
+		else 
+			let p_cond_n = MCP.memo_f_neg_norm p_cond in
+			let y_p = if !no_memoisation then None else
+				(Gen.Profiling.inc_counter "syn_memo_count";
+                 MCP.memo_check_syn_fast(*_prun*)(*_debug*) (p_cond,p_cond_n, pr_branches) rem_br corr) in
+                 match y_p with
+					| Some y_p ->(Gen.Profiling.inc_counter "syn_memo_hit";(y_p@yes_prune, no_prune,new_mem))
+                    | None -> (*decide if i ^ a = false*)
+						let imp = 
+							let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.prune_with_slice in
+                            let r = if (!Globals.enable_fast_imply) then false
+                              else 
+                                let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
+                                (if r1 then Gen.Profiling.inc_counter "imply_sem_prun_true"
+                                 else Gen.Profiling.inc_counter "imply_sem_prun_false";r1) in
+                             r in
+						if imp then (*there was a contradiction*)
+							let nyp = pr_branches@yes_prune in
+                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem p_cond_n in
+                            (nyp,no_prune,mem_w_fail)
+						else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
+        with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
+    ) ([],[], old_mem) prun_cond
+			
+and  prune_bar_node bd dn old_mem ba_crt = (*(DataNode dn, old_mem, false)*)
+    let fr_vars = (CP.SpecVar (Named bd.barrier_name, self, Unprimed)):: bd.barrier_shared_vars in
+    let to_vars = dn.h_formula_data_node :: dn.h_formula_data_arguments in
+    let zip = List.combine fr_vars to_vars in 
+          let (rem_br, prun_cond, first_prune, chg) =  
+            match dn.h_formula_data_remaining_branches with
+              | Some l -> 
+                    let c = if (List.length l)<=1 then false else true in
+                    if !no_incremental then
+                      let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) bd.barrier_prune_conditions in         
+                      (bd.barrier_prune_branches,new_cond ,true,c)
+                    else (l, dn.h_formula_data_pruning_conditions,false,c)
+              | None ->
+                    let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) bd.barrier_prune_conditions in         
+                    (bd.barrier_prune_branches, new_cond ,true, true) in                   
+          if (not chg) then 
+            (DataNode{dn with h_formula_data_remaining_branches = Some rem_br; h_formula_data_pruning_conditions = [];}, old_mem,false)
+          else
+            (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
+            let l_prune,l_no_prune, new_mem2 = filter_prun_cond old_mem prun_cond rem_br in            
+            let l_prune' = 
+              let aliases = MCP.memo_get_asets ba_crt new_mem2 in
+              let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
+              let n_l = List.filter (fun c-> 
+                  let c_ba,_ = List.find (fun (_,d)-> c=d) bd.barrier_prune_conditions_baga in
+                  let c_ba = List.map (CP.subs_one zip) c_ba in
+                  not (Gen.BList.disjoint_eq CP.eq_spec_var ba_crt c_ba)) rem_br in
+              Gen.BList.remove_dups_eq (=) (l_prune@n_l) in
+            let l_prune = if (List.length l_prune')=(List.length rem_br) then l_prune else l_prune' in
+            
+            (*l_prune : branches that will be dropped*)
+            (*l_no_prune: constraints that overlap with the implied set or are part of the unknown, remaining prune conditions *)
+            (*rem_br : formula_label list  -> remaining branches *)         
+            (*let _ = print_string ("pruned cond active: "^(string_of_int (List.length l_prune))^"\n") in*)
+            let (r_hp, r_memo, r_b) = if ((List.length l_prune)>0) then  
+              let posib_dismised = Gen.BList.remove_dups_eq (=) l_prune in
+              let rem_br_lst = List.filter (fun c -> not (List.mem c posib_dismised)) rem_br in
+              if (rem_br_lst == []) then (HFalse, MCP.mkMFalse_no_mix no_pos, true)
+              else 
+                let l_no_prune = List.filter (fun (_,c)-> (List.length(Gen.BList.intersect_eq (=) c rem_br_lst))>0) l_no_prune in
+                (*let _ = print_endline " heap_prune_preds: ViewNode->Update branches" in *)
+                let new_hp = DataNode {dn with 
+                    h_formula_data_remaining_branches = Some rem_br_lst;
+                    h_formula_data_pruning_conditions = l_no_prune;} in
+                let dism_invs = if first_prune then [] else (lookup_bar_invs_with_subs rem_br bd zip) in
+                let added_invs = (lookup_bar_invs_with_subs rem_br_lst bd zip) in
+                let new_add_invs = Gen.BList.difference_eq CP.eq_b_formula_no_aset added_invs dism_invs in
+                let old_dism_invs = Gen.BList.difference_eq CP.eq_b_formula_no_aset dism_invs added_invs in
+                let ni = MCP.create_memo_group_wrapper new_add_invs Implied_P in
+                (*let _ = print_string ("adding: "^(Cprinter.string_of_memoised_list ni)^"\n") in*)
+                let mem_o_inv = MCP.memo_change_status old_dism_invs new_mem2 in 
+                ( Gen.Profiling.inc_counter "prune_cnt"; Gen.Profiling.add_to_counter "dropped_branches" (List.length l_prune);
+                (new_hp, MCP.merge_mems_m mem_o_inv ni true, true) )
+            else 
+              if not first_prune then 
+                (DataNode{dn with h_formula_data_pruning_conditions = l_no_prune;},new_mem2, false)
+              else 
+                let ai = (lookup_bar_invs_with_subs rem_br bd zip) in
+                let gr_ai = MCP.create_memo_group_wrapper ai Implied_P in     
+                let l_no_prune = List.filter (fun (_,c)-> (List.length(Gen.BList.intersect_eq (=) c rem_br))>0) l_no_prune in
+                let new_hp = DataNode {dn with  h_formula_data_remaining_branches = Some rem_br;h_formula_data_pruning_conditions = l_no_prune;} in
+                (new_hp, MCP.merge_mems_m new_mem2 gr_ai true, true) in
+            (r_hp,r_memo,r_b)
+(********************************************************)
+			
+			
 and split_linear_node (h : h_formula) : (h_formula * h_formula) list = split_linear_node_guided [] h
 
 (* and split_linear_node (h : h_formula) : (h_formula * h_formula) =  *)

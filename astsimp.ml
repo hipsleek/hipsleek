@@ -3982,7 +3982,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
         CF.formula_inf_vars = new_ivs;
         CF.formula_inf_continuation = ct;
         CF.formula_inf_pos = pos}
-	| IF.EList b -> CF.EList (map_l_snd (trans_struc_formula fvars stab) b) 
+	| IF.EList b -> CF.mkEList (map_l_snd (trans_struc_formula fvars stab) b) 
 	| IF.EOr b -> CF.EOr {
 			CF.formula_struc_or_f1 = trans_struc_formula fvars stab b.IF.formula_struc_or_f1;
 			CF.formula_struc_or_f2 = trans_struc_formula fvars stab b.IF.formula_struc_or_f2;
@@ -7049,7 +7049,18 @@ and view_prune_inv_inference_x cp vd =
       C.view_prune_conditions_baga = baga_cond;
       C.view_prune_invariants = invs;} in 
   v'    
-      
+
+and barrier_prune_inv_inference cp bd = 
+  let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in
+  let f_branches = CF.get_bar_branches  bd.C.barrier_def in 
+  let branches = List.map snd f_branches in
+  let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::bd.C.barrier_shared_vars) f_branches [] [] no_pos in    
+  { bd with  
+	C.barrier_prune_branches = branches; 
+	C.barrier_prune_conditions = conds ;
+    C.barrier_prune_conditions_baga = baga_cond;
+    C.barrier_prune_invariants = invs;}
+  
 and coerc_spec prog is_l c = 
   if not !Globals.allow_pred_spec then [c] 
   else 
@@ -7063,7 +7074,8 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
 and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =      
   Gen.Profiling.push_time "pred_inference";
     let preds = List.map (fun c-> view_prune_inv_inference cp c) cp.C.prog_view_decls in
-    let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
+	let bars = List.map (barrier_prune_inv_inference cp) cp.C.prog_barrier_decls in
+    let prog_views_inf = {cp with C.prog_view_decls  = preds;C.prog_barrier_decls = bars} in
     let preds = List.map (fun c-> 
         let unstruc = List.map (fun (c1,c2) ->
             (Solver.prune_preds(*_debug*) prog_views_inf true c1,c2))c.C.view_un_struc_formula in
@@ -7071,19 +7083,24 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
             C.view_formula =  CF.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
             C.view_un_struc_formula = unstruc;}) preds in
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
+	let bars = List.map (fun c-> { c with 
+		 C.barrier_tr_list = List.map (fun (a1,a2,c)-> a1,a2,List.map (Solver.prune_pred_struc prog_views_pruned true) c) c.C.barrier_tr_list;
+		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)}) bars in
+		 
+	let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
     let proc_spec f = 
       let simp_b = not ((String.compare f.C.proc_file "primitives")==0 or (f.C.proc_file="")) in
       {f with 
-          C.proc_static_specs= Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_static_specs;
-          C.proc_dynamic_specs=  Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_dynamic_specs;
+          C.proc_static_specs= Solver.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs;
+          C.proc_dynamic_specs=  Solver.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
       } in
-    let procs = C.proc_decls_map proc_spec prog_views_pruned.C.new_proc_decls in 
-    let l_coerc = List.concat (List.map (coerc_spec prog_views_pruned true) prog_views_pruned.C.prog_left_coercions) in
-    let r_coerc = List.concat (List.map (coerc_spec prog_views_pruned false) prog_views_pruned.C.prog_right_coercions) in
-    let r = { prog_views_pruned with 
-        C.new_proc_decls = procs;
-        C.prog_left_coercions  = l_coerc;
-        C.prog_right_coercions = r_coerc;} in
+    let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 
+    let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned true) prog_barriers_pruned.C.prog_left_coercions) in
+    let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned false) prog_barriers_pruned.C.prog_right_coercions) in
+    let r = { prog_barriers_pruned with 
+          C.new_proc_decls = procs;
+          C.prog_left_coercions  = l_coerc;
+          C.prog_right_coercions = r_coerc;} in
     Gen.Profiling.pop_time "pred_inference" ;r
    
 and pr_proc_call_order p = 
@@ -7490,15 +7507,19 @@ and trans_bdecl prog bd =
   let vl = self::(List.map snd bd.I.barrier_shared_vars) in
   let fct f = trans_I2C_struc_formula prog true vl f stab false in
   let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
+  let bdef = let fct a l = match l with 
+			| CF.EList l -> a@l 
+			| _ -> (empty_spec_label_def, l)::a in
+		CF.mkEList (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
   { C.barrier_thc = bd.I.barrier_thc;
 	C.barrier_name = bd.I.barrier_name;
 	C.barrier_shared_vars = List.map (fun (_,c)-> trans_var (c,Unprimed) stab no_pos) bd.I.barrier_shared_vars;
 	C.barrier_tr_list = l;
-	C.barrier_def = 
-		let fct a l = match l with 
-			| CF.EList l -> a@l 
-			| _ -> (empty_spec_label_def, l)::a in
-		CF.mkEList (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l);}
+	C.barrier_def = bdef;
+    C.barrier_prune_branches = [];
+	C.barrier_prune_conditions = []; 
+    C.barrier_prune_conditions_baga = [];
+    C.barrier_prune_invariants = [];}
   
   
 (*
