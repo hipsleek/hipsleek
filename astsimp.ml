@@ -179,7 +179,6 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
-
      let prog = Parser.parse_hip_string "primitives" all_prims in
 		(* An Hoa : print out the primitive relations parsed -- Problem : no relation parsed! *)
 		(* let _ = print_endline "Primitive relations : " in *)
@@ -1041,8 +1040,9 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
       } in
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
-        ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
-            (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
+        (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
+            (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)@
+			(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls) in
       let dups = Gen.BList.find_dups_eq (=) all_names in
       (* let _ = I.find_empty_static_specs prog in *)
       if not (Gen.is_empty dups) then

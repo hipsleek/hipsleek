@@ -1856,12 +1856,12 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 let b_data_constr bn larg=
 		{ data_name = bn;
 		  data_fields =List.map (fun c-> c,no_pos,false) larg;
-		  data_parent_name = if bn = "barrier" then "Object" else "barrier";
+		  data_parent_name = if bn = "barrier_def" then "Object" else "barrier_def";
 		  data_invs =[];
 		  data_methods =[]; }
 	
 let add_bar_inits prog = 
-  let b_data_def = (b_data_constr "barrier" []) :: 
+  let b_data_def = (b_data_constr "barrier_def" []) :: 
 	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
 	
   let b_proc_def = List.map (fun b-> 

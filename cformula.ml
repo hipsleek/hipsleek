@@ -6388,6 +6388,35 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 		| EList b -> fold_l_snd split_struc_formula_a b 
 		| EOr b -> (split_struc_formula_a b.formula_struc_or_f1)@ (split_struc_formula_a b.formula_struc_or_f2)
 
+let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
+    | None -> f0
+    | Some br -> 
+		let rec filter_formula (f:formula):formula list = match f with
+			| Base {formula_base_label = lbl} 
+			| Exists {formula_exists_label = lbl} -> (match lbl with
+			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
+			  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
+			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
+		let rec filter_helper (f:struc_formula):struc_formula = match f with
+			| EBase b -> (match b.formula_struc_continuation with
+				| None -> report_error no_pos "barrier is unlabeled \n"
+				| Some f -> 
+					let l = filter_helper f in
+					if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
+			| ECase b -> 
+				let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
+				let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
+				if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
+			| EAssume (x,b,l)-> if (List.mem l br) then f else mkEFalse (mkFalseFlow)  no_pos
+			| EInfer b ->
+			  let l = filter_helper b.formula_inf_continuation in(* Need to check again *)
+			  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
+			| EList b -> mkEList (map_l_snd filter_helper b) 
+			| EOr b -> mkEOr (filter_helper b.formula_struc_or_f1) (filter_helper b.formula_struc_or_f2) b.formula_struc_or_pos in
+		filter_helper f0
+  
+		
+		
 let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br -> 
