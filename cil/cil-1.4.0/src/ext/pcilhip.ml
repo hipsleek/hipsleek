@@ -10,27 +10,33 @@ class  hipCilPrinterClass =
     inherit defaultCilPrinterClass as super
 
     method pGlobal () (g:global) : doc =       (* global (vars, types, etc.) *)
-      match g with 
+      match g with
       | GVar (vi, io, l) ->
-          self#pLineDirective ~forcefile:true l 
-          ++ text ("global ") 
+          self#pLineDirective ~forcefile:true l
+          ++ text ("global ")
           ++ self#pVDecl () vi
           ++ chr ' '
           ++ (match io.init with
               | None -> nil
-              | Some i -> text " = " 
+              | Some i -> text " = "
                   ++ (let islong = match i with
                                    | CompoundInit (_, il) when List.length il >= 8 -> true
                                    | _ -> false in
-                     if islong then line ++ self#pLineDirective l ++ text "  " 
-                     else nil) 
+                     if islong then line ++ self#pLineDirective l ++ text "  "
+                     else nil)
                   ++ (self#pInit () i))
           ++ text ";\n"
- 
+
       | _ -> super#pGlobal () g
 
+    method private pLvalPrec (contextprec: int) () lv = 
+      if getParenthLevel (Lval(lv)) >= contextprec then
+        text "(" ++ self#pLval () lv ++ text ")"
+      else
+        self#pLval () lv
+
     (*** INSTRUCTIONS ****)
-    (*method pInstr () (i:instr) =       (* imperative instruction *)
+    method pInstr () (i:instr) =       (* imperative instruction *)
       match i with
       | Set(lv,e,l) -> (
           (* Be nice to some special cases *)
@@ -39,42 +45,30 @@ class  hipCilPrinterClass =
               when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
                 self#pLineDirective l
                   ++ self#pLvalPrec indexLevel () lv
-                  ++ text (" ++" ^ self#getPrintInstrTerminator())
-  
+                  ++ text (" = ")
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" + 1" ^ self#getPrintInstrTerminator())
+
           | BinOp((MinusA|MinusPI),Lval(lv'),
-                  Const(CInt64(one,_,_)), _) 
+                  Const(CInt64(one,_,_)), _)
               when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
-                    self#pLineDirective l
-                      ++ self#pLvalPrec indexLevel () lv
-                      ++ text (" --" ^ self#getPrintInstrTerminator()) 
-  
-          | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
-              when Util.equals lv lv' && mone = Int64.minus_one 
-                  && not !printCilAsIs ->
                 self#pLineDirective l
-                  ++ super#pLvalPrec indexLevel () lv
-                  ++ text (" --" ^ self#getPrintInstrTerminator())
-  
-          | BinOp((PlusA|PlusPI|IndexPI|MinusA|MinusPP|MinusPI|BAnd|BOr|BXor|
-            Mult|Div|Mod|Shiftlt|Shiftrt) as bop,
-                  Lval(lv'),e,_) when Util.equals lv lv' 
-                  && not !printCilAsIs ->
-                    self#pLineDirective l
-                      ++ self#pLval () lv
-                      ++ text " " ++ d_binop () bop
-                      ++ text "= "
-                      ++ self#pExp () e
-                      ++ text (self#getPrintInstrTerminator())
-                      
-          | _ ->
-              self#pLineDirective l
-                ++ self#pLval () lv
-                ++ text " = "
-                ++ self#pExp () e
-                ++ text (self#getPrintInstrTerminator())
-                
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" = ")
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" - 1" ^ self#getPrintInstrTerminator())
+
+          | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
+              when Util.equals lv lv' && mone = Int64.minus_one && not !printCilAsIs ->
+                self#pLineDirective l
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" = ")
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" - 1" ^ self#getPrintInstrTerminator())
+          | _ -> super#pInstr () i
         )
-      | _ -> super#pInstr () i *)
+
+      | _ -> super#pInstr () i
 
   end (* end class hipCilPrinterClass *)
 
@@ -97,9 +91,7 @@ class hipVisitor = object
 
   (* Global (vars, types, etc.)  *)
   method vglob (g : global) =
-    let _ = print_endline "global" in
-    let _ = 
-    match g with
+    let _ = match g with
       | GVarDecl (vinfo, p) ->
           print_endline "global variables"
       (*
