@@ -386,7 +386,7 @@ and mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l=
                    h_formula_heap_pos = l }
 
 and mkHeapNode  c id dr i f inv pd perm hl hl_i ofl l= 
-   Debug.no_1 "mkHeapNode" (fun _ -> "?") !print_h_formula 
+   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
       (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l ) c
           
 and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l = 

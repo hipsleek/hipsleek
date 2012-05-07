@@ -1442,7 +1442,7 @@ and mkAndList_x b =
 	else AndList (List.filter (fun (_,c)-> not (isConstTrue c)) b)
 	
 and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
-  
+
 and and_list_to_and l = match l with
 	| [] -> mkTrue no_pos
 	| (_,x)::t -> List.fold_left (fun a (_,c)-> mkAnd a c no_pos) x t

@@ -1274,6 +1274,71 @@ and fill_view_param_types (vdef : I.view_decl) =
 and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self 
   (* Gen.BList.difference_eq (=) vdef.I.view_pt_by_self [data_name] *)
 
+and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_f: MCP.mix_formula option) : MCP.mix_formula =
+  let p1 = add_param_ann_constraints_to_pure h1 None in
+  let p2 = add_param_ann_constraints_to_pure h2 None in
+  let p = CF.add_mix_formula_to_mix_formula p1 p2 in
+  (match p_f with 
+    | Some x -> CF.add_mix_formula_to_mix_formula p x
+    | None -> p)
+
+and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
+    match h_f with
+      | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
+      | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f 
+      | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
+      | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
+                         let helper1 (param_imm: CF.ann) = 
+                           let f = CP.BForm((CP.Gte(CF.mkExpAnn param_imm no_pos, CF.mkExpAnn data_ann no_pos, no_pos), None), None) in
+                           MCP.mix_of_pure f in
+                         let p = match p_f with
+                           | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
+                           | None   -> 
+                               let rec helper2 ann_lst = 
+                                 match ann_lst with 
+                                   | [] -> MCP.mkMTrue no_pos
+                                   | h1 :: [] -> helper1 h1
+                                   | h1 :: t  -> CF.add_mix_formula_to_mix_formula (helper1 h1) (helper2 t) in
+                               helper2 h.CF.h_formula_data_param_imm in
+                         p
+      | _          -> match p_f with
+            | Some x -> x
+            | None   -> MCP.mkMTrue no_pos
+
+and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
+  match cf with
+    | CF.Base f   -> CF.Base { f with
+        CF.formula_base_pure = add_param_ann_constraints_to_pure f.CF.formula_base_heap (Some f.CF.formula_base_pure); }
+    | CF.Or f     -> CF.Or { f with 
+        CF.formula_or_f1 =  add_param_ann_constraints_formula f.CF.formula_or_f1; 
+        CF.formula_or_f2 =  add_param_ann_constraints_formula f.CF.formula_or_f2; }
+    | CF.Exists f -> CF.Exists { f with
+        CF.formula_exists_pure = add_param_ann_constraints_to_pure f.CF.formula_exists_heap (Some f.CF.formula_exists_pure); }
+
+(* add data param ann constraints to pure formula. 
+   ex1. x::node<val1@A, val2@v, q@I>@I & n = 2 => 
+   (x::node<val1@A, val2@v, q@I>@I & @I<:@A & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=3 & 1<=v & 1<=1 & n = 2)
+   
+   ex2. x::node<val1@M, val2@v, q@I>@I & n = 2 => 
+   (x::node<val1@A, val2@v, q@I>@I & @I<:@M & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=0 & 1<=v & 1<=1 & n = 2)
+*)
+and add_param_ann_constraints_struc_x (cf: CF.struc_formula) : CF.struc_formula = 
+  match cf with
+    | CF.EOr b            -> CF.EOr {b with
+	    CF.formula_struc_or_f1 = add_param_ann_constraints_struc b.CF.formula_struc_or_f1;
+	    CF.formula_struc_or_f2 = add_param_ann_constraints_struc b.CF.formula_struc_or_f2;}
+    | CF.EList b          -> CF.EList (map_l_snd add_param_ann_constraints_struc b)
+    | CF.ECase b          -> CF.ECase {b with CF.formula_case_branches = map_l_snd add_param_ann_constraints_struc b.CF.formula_case_branches;}
+    | CF.EBase b          -> CF.EBase {b with
+        CF.formula_struc_base =  add_param_ann_constraints_formula b.CF.formula_struc_base;
+        CF.formula_struc_continuation = map_opt add_param_ann_constraints_struc b.CF.formula_struc_continuation; }
+    | CF.EAssume (x, b, y)-> CF.EAssume (x,(add_param_ann_constraints_formula b),y)
+    | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = add_param_ann_constraints_struc b.CF.formula_inf_continuation}
+
+and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
+  let pr =  Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
+
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
@@ -1295,6 +1360,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   (* let _ = vdef.I.view_typed_vars <- [] in (\* removing the typed arguments *\) *)
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = add_param_ann_constraints_struc cf in
   let inv_lock = vdef.I.view_inv_lock in
   let inv_lock = 
     (match inv_lock with
@@ -5621,11 +5687,17 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           let gather_type_info_ann c stab = match c with
             | IF.ConstAnn _ -> ()
             | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
+          let rec gather_type_info_param_ann lst stab = match lst with
+            | [] -> ()
+            | (Some h)::t -> gather_type_info_ann h stab;
+                gather_type_info_param_ann t stab
+            | (None)::t -> gather_type_info_param_ann t stab in
           let gather_type_info_perm p stab = match p with
             | None -> ()
             | Some e -> let _ = gather_type_info_exp e stab ft in () in
           let _ = gather_type_info_perm perm stab in
           let _ = gather_type_info_ann ann stab in
+          let _ = gather_type_info_param_ann ann_param stab in
 		  (* let _ = print_string ("\n[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
 		  (* An Hoa : Deal with the generic pointer! *)
 		  if (c = Parser.generic_pointer_type_name) then 

@@ -291,6 +291,10 @@ let fv_ann (a:ann) = match a with
   | ConstAnn _ -> []
   | PolyAnn v -> [v]
 
+let rec fv_ann_lst (a:ann list) = match a with
+  | [] -> []
+  | h :: t -> (fv_ann h) @ (fv_ann_lst t)
+
 let mkConstAnn i = match i with 
   | 0 -> ConstAnn Mutable
   | 1 -> ConstAnn Imm
@@ -299,6 +303,11 @@ let mkConstAnn i = match i with
   | _ -> report_error no_pos "Const Ann is greater than 3"  
 
 let mkPolyAnn v = PolyAnn v
+
+let mkExpAnn ann pos = 
+  match ann with
+    | ConstAnn a -> CP.IConst(int_of_heap_ann a, pos)
+    | PolyAnn v  -> CP.Var(v, pos)  
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -1068,7 +1077,7 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = fv_ann (h.h_formula_data_imm)  in
+        let ann_vars = (fv_ann (h.h_formula_data_imm)) @ (fv_ann_lst h.h_formula_data_param_imm)  in
         perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
@@ -1837,7 +1846,19 @@ and fv (f : formula) : CP.spec_var list = match f with
         let fvars = CP.remove_dups_svl (vars@fvars) in
 	    let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
-		    
+and h_fv_node v perm ann param_ann vs =
+  let pvars = fv_cperm perm in
+  let avars = (fv_ann ann) @ (fv_ann_lst param_ann) in
+  let pvars = 
+    if pvars==[] then 
+      pvars 
+    else 
+      let var = List.hd pvars in
+      if (List.mem var vs) then [] else pvars
+  in
+  let vs=avars@pvars@vs in
+  if List.mem v vs then vs else v :: vs
+
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2; 
@@ -1851,22 +1872,12 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
   | DataNode ({h_formula_data_node = v;
                h_formula_data_perm = perm;
                h_formula_data_imm = ann;
-               h_formula_data_arguments = vs})
+               h_formula_data_param_imm = param_ann;
+               h_formula_data_arguments = vs}) -> h_fv_node v perm ann param_ann vs
   | ViewNode ({h_formula_view_node = v; 
                h_formula_view_perm = perm; 
                h_formula_view_imm = ann;
-	           h_formula_view_arguments = vs}) -> 
-      let pvars = fv_cperm perm in
-      let avars = fv_ann ann in
-      let pvars = 
-        if pvars==[] then 
-          pvars 
-        else 
-          let var = List.hd pvars in
-          if (List.mem var vs) then [] else pvars
-      in
-      let vs=avars@pvars@vs in
-      if List.mem v vs then vs else v :: vs
+	           h_formula_view_arguments = vs}) ->  h_fv_node v perm ann [] vs
   | HTrue | HFalse | Hole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
