@@ -19,5 +19,8 @@ let _ =
 
   (* use hip printer *)
   let _ = print_endline "\n\n----- hip cil printer -----" in
-  Cil.dumpFile (new Pcilhip.hipCilPrinterClass) stdout "output.cil" cil
+  Cil.dumpFile (new Pcilhip.hipCilPrinterClass) stdout "output.cil" cil;
 
+  (* use hip printer 2 *)
+  let _ = print_endline "\n\n----- hip cil printer -----" in
+  Cil.dumpFile (new Pcilhip2.hipCilPrinterClass) stdout "output.cil" cil

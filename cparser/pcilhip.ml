@@ -26,7 +26,56 @@ class  hipCilPrinterClass =
                      else nil) 
                   ++ (self#pInit () i))
           ++ text ";\n"
+ 
       | _ -> super#pGlobal () g
+
+    (*** INSTRUCTIONS ****)
+    (*method pInstr () (i:instr) =       (* imperative instruction *)
+      match i with
+      | Set(lv,e,l) -> (
+          (* Be nice to some special cases *)
+          match e with
+          | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(one,_,_)),_)
+              when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
+                self#pLineDirective l
+                  ++ self#pLvalPrec indexLevel () lv
+                  ++ text (" ++" ^ self#getPrintInstrTerminator())
+  
+          | BinOp((MinusA|MinusPI),Lval(lv'),
+                  Const(CInt64(one,_,_)), _) 
+              when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
+                    self#pLineDirective l
+                      ++ self#pLvalPrec indexLevel () lv
+                      ++ text (" --" ^ self#getPrintInstrTerminator()) 
+  
+          | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
+              when Util.equals lv lv' && mone = Int64.minus_one 
+                  && not !printCilAsIs ->
+                self#pLineDirective l
+                  ++ super#pLvalPrec indexLevel () lv
+                  ++ text (" --" ^ self#getPrintInstrTerminator())
+  
+          | BinOp((PlusA|PlusPI|IndexPI|MinusA|MinusPP|MinusPI|BAnd|BOr|BXor|
+            Mult|Div|Mod|Shiftlt|Shiftrt) as bop,
+                  Lval(lv'),e,_) when Util.equals lv lv' 
+                  && not !printCilAsIs ->
+                    self#pLineDirective l
+                      ++ self#pLval () lv
+                      ++ text " " ++ d_binop () bop
+                      ++ text "= "
+                      ++ self#pExp () e
+                      ++ text (self#getPrintInstrTerminator())
+                      
+          | _ ->
+              self#pLineDirective l
+                ++ self#pLval () lv
+                ++ text " = "
+                ++ self#pExp () e
+                ++ text (self#getPrintInstrTerminator())
+                
+        )
+      | _ -> super#pInstr () i *)
+
   end (* end class hipCilPrinterClass *)
 
 class hipVisitor = object
