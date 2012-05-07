@@ -16,18 +16,20 @@ OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q
 
 OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
-all: byte
+CIL = cd $(CURDIR)/../cil/cil-1.4.0; make; cd ../../cparser
+
+all: clean byte
 
 native: cilhip.native
 
 byte: cilhip.byte
 
-cilhip.byte:
+cilhip.byte: cil
 	@ocamlbuild cilhip.byte $(OB_FLAGS)
 	cp -u _build/cilhip.byte cilhip
 	cp -u _build/cilhip.byte b-cilhip
 
-cilhip.native:
+cilhip.native: cil
 	@ocamlbuild cilhip.native $(OBG_FLAGS)
 	cp -u _build/cilhip.native cilhip
 	cp -u _build/cilhip.native n-cilhip
@@ -37,3 +39,5 @@ clean:
 	rm -f b-cilhip n-cilhip cilhip
 	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot
 
+cil:
+	$(CIL)
