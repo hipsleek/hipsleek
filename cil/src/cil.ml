@@ -4046,8 +4046,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        
   method private pFunDecl () f =
       self#pVDecl () f.svar
-      ++  line
-      ++ text "{ "
+      ++ line
+      ++ text "  requires true" ++ line
+      ++ text "  ensures true" ++ line
+      ++ text "{"
       ++ (align
             (* locals. *)
             ++ line

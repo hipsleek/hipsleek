@@ -17,7 +17,8 @@
 ECHO = @
 
 # It is important to build quickbuild first,to generate the proper dependencies
-all:  quickbuild setup
+# all:  quickbuild setup
+all:  ocamlbuild
 
 # Now add the defines for the CIL features
 include Makefile.features
@@ -120,6 +121,8 @@ include ocamlutil/Makefile.ocaml
 
 OBEXEEXT = $(EXEEXT:asm=native)
 IGNOREDIRS = obj,doc,test
+COMPILE_FLAGS = -annot
+LINK_FLAGS = -annot
 ocamlbuild:
 	ocamlbuild -cflags "$(COMPILE_FLAGS)" -lflags "$(LINK_FLAGS)" \
 	-Xs $(IGNOREDIRS) -no-links src/main$(OBEXEEXT) src/cil.$(CMXA)
