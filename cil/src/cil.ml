@@ -3421,21 +3421,27 @@ class defaultCilPrinterClass : cilPrinter = object (self)
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
-                ++ text (" ++" ^ printInstrTerminator)
+                ++ text (" = ")
+                ++ self#pLvalPrec indexLevel () lv
+                ++ text (" + 1" ^ printInstrTerminator)
 
         | BinOp((MinusA|MinusPI),Lval(lv'),
                 Const(CInt64(one,_,_)), _) 
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLvalPrec indexLevel () lv
-                    ++ text (" --" ^ printInstrTerminator) 
+                    ++ text (" = ")
+                    ++ self#pLvalPrec indexLevel () lv
+                    ++ text (" - 1" ^ printInstrTerminator)
 
         | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
             when Util.equals lv lv' && mone = Int64.minus_one 
                 && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
-                ++ text (" --" ^ printInstrTerminator)
+                ++ text (" = ")
+                ++ self#pLvalPrec indexLevel () lv
+                ++ text (" - 1" ^ printInstrTerminator)
 
         | BinOp((PlusA|PlusPI|IndexPI|MinusA|MinusPP|MinusPI|BAnd|BOr|BXor|
           Mult|Div|Mod|Shiftlt|Shiftrt) as bop,
@@ -3443,8 +3449,9 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                 && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLval () lv
-                    ++ text " " ++ d_binop () bop
-                    ++ text "= "
+                    ++ text " = "
+                    ++ self#pLval () lv
+                    ++ text (" ") ++ d_binop () bop ++ text (" ")
                     ++ self#pExp () e
                     ++ text printInstrTerminator
                     
@@ -3915,7 +3922,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
     | GVar (vi, io, l) ->
         self#pLineDirective ~forcefile:true l ++
-          (* text ("global ") ++ *)
+          text ("global ") ++
           self#pVDecl () vi
           ++ chr ' '
           ++ (match io.init with
