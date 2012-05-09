@@ -19,4 +19,4 @@ let _ =
 
   (* use hip printer *)
   let _ = print_endline "\n\n----- hip cil printer -----" in
-  Cil.dumpFile (new Pcilhip.hipCilPrinterClass) stdout "output.cil" cil;
+  Cil.dumpFile (new Pcilhip.hipVisitor) stdout "output.cil" cil;
