@@ -148,7 +148,7 @@ end
 
 let hip_transform (f : file) : unit =
   let _ = visitCilFile (new hipVisitor) f in ()
-  (* Cil.dumpFile (new hipCilPrinterClass) stdout "output.cil" f *)
+   (*Cil.dumpFile (new hipCilPrinterClass) stdout "output.cil" f*)
 
 let feature : featureDescr = 
   { fd_name = "hip";

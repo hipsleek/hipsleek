@@ -405,7 +405,7 @@ on `(hostname || uname -n) 2>/dev/null | sed 1q`
 "
 
 # Files that config.status was made for.
-config_files=" Makefile META config.mk test/llvm/Makefile src/machdep-ml.c"
+config_files=" Makefile META config.mk bin/cilly.bat bin/patcher.bat bin/CilConfig.pm doc/index.html doc/header.html test/llvm/Makefile src/machdep-ml.c"
 config_headers=" config.h"
 
 ac_cs_usage="\
@@ -445,7 +445,7 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/trungtq/Workspace/sleekex-cparser/cil'
+ac_pwd='/home/locle/workspace/hg/cparser/sleekex/cil/cil-1.4.0'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -637,7 +637,7 @@ S["CIL_VERSION_MAJOR"]="1"
 S["DEFAULT_CIL_MODE"]="GNUCC"
 S["DEFAULT_COMPILER"]="_GNUCC"
 S["HAS_MSVC"]="no"
-S["CILHOME"]="/home/trungtq/Workspace/sleekex-cparser/cil"
+S["CILHOME"]="/home/locle/workspace/hg/cparser/sleekex/cil/cil-1.4.0"
 S["FLEXLINK"]=""
 S["MINGW"]=""
 S["ARCHOS"]="x86_LINUX"
