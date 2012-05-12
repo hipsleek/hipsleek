@@ -1283,13 +1283,14 @@ and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_
     | None -> p)
 
 and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
+  let mix_f = 
     match h_f with
       | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
       | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f 
       | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
                          let helper1 (param_imm: CF.ann) = 
-                           let f = CP.BForm((CP.Gte(CF.mkExpAnn param_imm no_pos, CF.mkExpAnn data_ann no_pos, no_pos), None), None) in
+                           let f = CP.BForm((CP.Lte(CF.mkExpAnn data_ann no_pos, CF.mkExpAnn param_imm no_pos, no_pos), None), None) in
                            MCP.mix_of_pure f in
                          let p = match p_f with
                            | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
@@ -1303,7 +1304,8 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
                          p
       | _          -> match p_f with
             | Some x -> x
-            | None   -> MCP.mkMTrue no_pos
+            | None   -> MCP.mkMTrue no_pos 
+  in MCP.remove_dupl_conj_mix_formula mix_f
 
 and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
   match cf with
@@ -1360,7 +1362,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   (* let _ = vdef.I.view_typed_vars <- [] in (\* removing the typed arguments *\) *)
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
-  let cf = add_param_ann_constraints_struc cf in
+  (* let cf = add_param_ann_constraints_struc cf in *)
   let inv_lock = vdef.I.view_inv_lock in
   let inv_lock = 
     (match inv_lock with
@@ -1970,6 +1972,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = gather_type_info_formula prog coer.I.coercion_body stab false in
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
+  let c_lhs = add_param_ann_constraints_formula c_lhs in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
     let h, p, _, _,_ = CF.split_components c_lhs in
@@ -4052,6 +4055,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
     Err.report_error{ Err.error_loc = CF.pos_of_struc_formula r; Err.error_text = "res is not allowed in precondition";}
   else r  in
   let _ = type_store_clean_up r stab in
+  let r = add_param_ann_constraints_struc r in
   r
 
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect

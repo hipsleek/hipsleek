@@ -5864,29 +5864,29 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	  (Cprinter.string_of_h_formula r_node))) pos;
     Debug.devel_zprint (lazy ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate))) pos; 
     Debug.devel_zprint (lazy ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs))) pos; 
-    let l_args, l_node_name, l_perm, l_ann = match l_node with
+    let l_args, l_node_name, l_perm, l_ann, l_param_ann = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
-        h_formula_data_arguments = l_args}
+        h_formula_data_param_imm = param_ann;
+        h_formula_data_arguments = l_args} -> (l_args, l_node_name, perm, ann, param_ann)
       | ViewNode {h_formula_view_name = l_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
-        h_formula_view_arguments = l_args} ->
-            (l_args, l_node_name,perm,ann)
+        h_formula_view_arguments = l_args} -> (l_args, l_node_name, perm, ann, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
-    let r_args, r_node_name, r_var, r_perm, r_ann = match r_node with
+    let r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
+        h_formula_data_param_imm = param_ann;
         h_formula_data_arguments = r_args;
-        h_formula_data_node = r_var}
+        h_formula_data_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, param_ann)
       | ViewNode {h_formula_view_name = r_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
         h_formula_view_arguments = r_args;
-        h_formula_view_node = r_var} ->
-            (r_args, r_node_name, r_var,perm,ann)
+        h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
 
 	(* An Hoa : found out that the current design of do_match 
@@ -5901,7 +5901,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     let (r,ann_lhs,ann_rhs) = subtype_ann_gen es_impl_vars l_ann r_ann in
-    if r==false 
+    let (rl, param_ann_lhs, param_ann_rhs) = subtype_ann_list es_impl_vars l_param_ann r_param_ann in
+    let join_ann_constr ann ann_lst =
+      let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
+      List.fold_left Immutable.mkAndOpt None f_lst in
+    let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr ann_lhs param_ann_lhs, join_ann_constr ann_rhs param_ann_rhs) in
+    if r == false 
     then 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
       CF.mk_failure_must "911 : mismatched annotation" Globals.sl_error)), NoAlias)
@@ -7946,7 +7951,7 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let _,rhs_p,rhs_t,rhs_fl, rhs_a = CF.extr_formula_base rhs_b in
   let f = mkBase resth2 rhs_p rhs_t rhs_fl rhs_a pos in
-  let _ = Debug.devel_zprint (lazy ("do_right_coercion : c2 = "
+  let _ = Debug.devel_zprint (lazy ("do_t_coercion : c2 = "
   ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in

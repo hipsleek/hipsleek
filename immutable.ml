@@ -528,6 +528,25 @@ and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula opt
   let pr3 = pr_triple string_of_bool pr2a pr2a in
   Debug.no_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 
 
+and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
+  match (old_f, to_add) with
+    | (None, None)       -> None
+    | (Some f, None)
+    | (None, Some f)     -> Some f 
+    | (Some f1, Some f2) -> Some (CP.mkAnd f1 f2 no_pos)
+
+and subtype_ann_list impl_vars (ann1 : ann list) (ann2 : ann list) : bool * (CP.formula option list) * (CP.formula option list) =
+  match (ann1, ann2) with
+    | ([], [])         -> (true, [], [])
+    | (a1::[], a2::[]) -> 
+        let (r, f1, f2) = subtype_ann_gen impl_vars a1 a2 in
+        (r, [f1], [f2])
+    | (a1::t1, a2::t2) -> 
+        let (r, ann_lhs_new, ann_rhs_new) = subtype_ann_gen impl_vars a1 a2 in
+        let (res, ann_lhs, ann_rhs) = subtype_ann_list impl_vars t1 t2 in
+        (r&&res, ann_lhs_new::ann_lhs, ann_rhs_new::ann_rhs)
+        (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
+    | _ ->      (false, [], [])                        (* different lengths *)
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =

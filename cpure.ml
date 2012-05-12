@@ -7458,6 +7458,15 @@ let remove_dupl_conj_list (cnjlist:formula list):formula list =
   (* Gen.BList.remove_dups_eq fct cnjlist *)
 
 (*Eq, Lt, Lte, Gt, Gte*)
+let remove_dupl_conj_opt_list (cnjlist:formula option list):formula option list =
+  Gen.BList.remove_dups_eq (fun opt1 opt2 -> 
+      match (opt1, opt2) with 
+        | (None, None) 
+        | (Some _, None)
+        | (None, Some _)  -> false
+        | (Some f1, Some f2) -> equalFormula_f eq_spec_var f1 f2) cnjlist
+
+(*Eq, Lt, Lte, Gt, Gte*)
 let remove_dupl_conj_pure (p:formula) =
   let ps = split_conjunctions p in
   let ps1 = remove_dupl_conj_list ps in

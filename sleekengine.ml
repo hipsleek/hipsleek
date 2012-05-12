@@ -501,6 +501,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  (* let ante = AS.add_param_ann_constraints_formula ante in *)
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
 (*  let _ = flush stdout in*)
@@ -516,6 +517,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let conseq = meta_to_struc_formula iconseq0 false fv_idents (* (List.map CP.name_of_spec_var fvs) *) stab in
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -528,6 +530,10 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n")) no_pos in
+  (* let _ = print_string ("\n(andreeac) " ^ ("\nrun_entail_check: after normalization" *)
+  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
+  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
+  (*                       ^"\n\n")) in *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (* List of vars appearing in original formula *)
