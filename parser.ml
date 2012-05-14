@@ -1057,6 +1057,16 @@ cexp_w :
             ->
 	      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
 	      set_slicing_utils_pure_double f false
+      | t_ann = ann_term; param = measures_lim_dec ->
+          let (m, fp, lb, ub) = param in
+          let seq = P.SeqVar { P.element = m;
+                               P.fix_point = fp;
+                               P.lower_bound = lb;
+                               P.upper_bound = ub;
+                               P.variation = P.Dec;
+                               P.seq_loc = get_pos_camlp4 _loc 1} in
+          let f = Pure_f (P.BForm ((seq, None), None)) in
+          set_slicing_utils_pure_double f false
       ]
 	  
 	  
@@ -1180,6 +1190,9 @@ measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
 
 measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
+
+(* LimDec(measurement, fixpoint, lower_bound, upper_bound) *)
+measures_lim_dec: [[`OSQUARE; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `COMMA; ub = cexp; `CSQUARE -> (m, fp, lb, ub)]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

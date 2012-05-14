@@ -84,8 +84,22 @@ and lex_info = {
     lex_loc : loc; (* location of LexVar *)
 }
 
+and variation_type =
+  | Dec                  (* sequence decrease *)
+  | Osc                  (* sequence oscillate *)
+
+and sequence_info = {
+  element: exp;
+  fix_point: exp;
+  lower_bound: exp;
+  upper_bound: exp;
+  variation: variation_type; 
+  seq_loc : loc
+}
+
 and p_formula =
   | LexVar of lex_info
+  | SeqVar of sequence_info
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
@@ -760,6 +774,10 @@ and bfv (bf : b_formula) =
   | VarPerm (t,ls,_) -> [] (*TO CHECK*)
     | LexVar l_info ->
         List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
+    | SeqVar seq_info ->
+        let args = [seq_info.element; seq_info.fix_point; seq_info.lower_bound; seq_info.upper_bound] in
+        let args_fv = List.concat (List.map afv args) in
+        Gen.BList.remove_dups_eq (=) args_fv
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -1018,6 +1036,7 @@ and name_of_exp (e: exp): string =
   | Bag ([],_) -> "emptybag"
   | Bag (es,_)
   | BagUnion (es, _) -> (List.fold_left (fun x y -> x ^ name_of_exp y) "" es)
+  | _ -> "other_exp"
 
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
@@ -1240,7 +1259,8 @@ match pf with
   | VarPerm _
             (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
-  | RelForm _ -> false (* An Hoa *)
+  | RelForm _ 
+  | _ -> false (* An Hoa *)
 
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
@@ -2016,6 +2036,7 @@ and pos_of_b_formula (b: b_formula) =
 	let (p, _) = b in
  match p with
   | LexVar l_info -> l_info.lex_loc
+  | SeqVar seq_info -> seq_info.seq_loc
   | SubAnn (_, _, p) -> p
   | BConst (_, p) -> p
   | BVar (_, p) -> p
@@ -2065,6 +2086,7 @@ and list_pos_of_formula f rs: loc list=
 
 and subst_pos_pformula p pf= match pf with
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
+  | SeqVar seq_info -> SeqVar {seq_info with seq_loc = p}
   | SubAnn (e1, e2, _) -> SubAnn (e1, e2, p)
   | BConst (b,_) -> BConst (b,p)
   | BVar (sv, _) -> BVar (sv, p)
@@ -2344,7 +2366,13 @@ and b_apply_subs sst bf =
     | LexVar t_info -> 
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
+    | SeqVar seq_info -> 
+        let e =  e_apply_subs sst seq_info.element in
+        let fp = e_apply_subs sst seq_info.fix_point in
+        let lb = e_apply_subs sst seq_info.lower_bound in
+        let ub = e_apply_subs sst seq_info.upper_bound in
+        SeqVar {seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
    in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2396,6 +2424,12 @@ and b_apply_subs_varperm sst bf =
       LexVar { t_info with
 		  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+  | SeqVar seq_info -> 
+      let e =  e_apply_subs sst seq_info.element in
+      let fp = e_apply_subs sst seq_info.fix_point in
+      let lb = e_apply_subs sst seq_info.lower_bound in
+      let ub = e_apply_subs sst seq_info.upper_bound in
+      SeqVar {seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2570,7 +2604,13 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | LexVar t_info -> 
         LexVar { t_info with 
 				  lex_exp = a_apply_par_term_list sst t_info.lex_exp;
-					lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
+					lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
+    | SeqVar seq_info -> 
+        let e =  a_apply_par_term sst seq_info.element in
+        let fp = a_apply_par_term sst seq_info.fix_point in
+        let lb = a_apply_par_term sst seq_info.lower_bound in
+        let ub = a_apply_par_term sst seq_info.upper_bound in
+        SeqVar {seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -2660,7 +2700,13 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | LexVar t_info -> 
         LexVar { t_info with
 				  lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
-					lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
+					lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
+    | SeqVar seq_info -> 
+        let e =  a_apply_one_term (fr, t) seq_info.element in
+        let fp = a_apply_one_term (fr, t) seq_info.fix_point in
+        let lb = a_apply_one_term (fr, t) seq_info.lower_bound in
+        let ub = a_apply_one_term (fr, t) seq_info.upper_bound in
+        SeqVar {seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -3666,6 +3712,12 @@ and b_apply_one_exp (fr, t) bf =
       LexVar { t_info with
 			  lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
+  | SeqVar seq_info -> 
+      let e =  e_apply_one_exp (fr, t) seq_info.element in
+      let fp = e_apply_one_exp (fr, t) seq_info.fix_point in
+      let lb = e_apply_one_exp (fr, t) seq_info.lower_bound in
+      let ub = e_apply_one_exp (fr, t) seq_info.upper_bound in
+      SeqVar {seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -4380,7 +4432,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let (pf,il) = b in
   let npf = match pf with
     |  BConst _ 
-    |  SubAnn _ | LexVar _
+    |  SubAnn _ | LexVar _ | SeqVar _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -4771,6 +4823,14 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
               (LexVar { t_info with 
 							  lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;  
 							}, f_comb rs)
+          | SeqVar seq_info -> 
+              let (e, r1) = helper new_arg seq_info.element in
+              let (fp, r2) = helper new_arg seq_info.fix_point in
+              let (lb, r3) = helper new_arg seq_info.lower_bound in
+              let (ub, r4) = helper new_arg seq_info.upper_bound in
+              let new_seq = {seq_info with element = e; fix_point = fp;
+                                           lower_bound = lb; upper_bound = ub} in
+              (SeqVar new_seq, f_comb[r1; r2; r3; r4])
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -4866,6 +4926,12 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let nle = List.map (transform_exp f_exp) t_info.lex_exp in
 		  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+        | SeqVar seq_info -> 
+            let e = transform_exp f_exp seq_info.element in
+            let fp = transform_exp f_exp seq_info.fix_point in
+            let lb = transform_exp f_exp seq_info.lower_bound in
+            let ub = transform_exp f_exp seq_info.upper_bound in
+            SeqVar { seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -5195,6 +5261,12 @@ let norm_bform_a (bf:b_formula) : b_formula =
               let nle = List.map norm_exp t_info.lex_exp in
               let nlt = List.map norm_exp t_info.lex_tmp in
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+        | SeqVar seq_info -> 
+            let e = norm_exp seq_info.element in
+            let fp = norm_exp seq_info.fix_point in
+            let lb = norm_exp seq_info.lower_bound in
+            let ub = norm_exp seq_info.upper_bound in
+            SeqVar { seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
@@ -6111,6 +6183,12 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | LexVar t_info -> LexVar { t_info with
 		    lex_exp = List.map norm_exp t_info.lex_exp; 
 				lex_tmp = List.map norm_exp t_info.lex_tmp; }
+    | SeqVar seq_info -> 
+        let e = norm_exp seq_info.element in
+        let fp = norm_exp seq_info.fix_point in
+        let lb = norm_exp seq_info.lower_bound in
+        let ub = norm_exp seq_info.upper_bound in
+        SeqVar { seq_info with element = e; fix_point = fp; lower_bound = lb; upper_bound = ub}
     | SubAnn _
     | VarPerm _
     | BConst _ | BVar _ | EqMax _ 
@@ -7268,7 +7346,6 @@ let is_eq_const (f:formula) = match f with
 let is_eq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq _,_)
     | (Eq _,_) -> true
     | _ -> false)
   | _ -> false
@@ -7276,7 +7353,6 @@ let is_eq_exp (f:formula) = match f with
 let is_beq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq (_,BagUnion _,_),_)
     | (Eq (_,BagUnion _,_),_) -> true
     | _ -> false)
   | _ -> false

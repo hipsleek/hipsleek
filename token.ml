@@ -30,7 +30,7 @@ type sleek_token =
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
-  | TERM | LOOP | MAYLOOP
+  | TERM | LOOP | MAYLOOP | LIMDEC
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -98,6 +98,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+    | LIMDEC -> "LimDec"
 
 
   let print ppf x = pp_print_string ppf (to_string x)
