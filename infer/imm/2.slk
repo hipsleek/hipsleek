@@ -20,6 +20,14 @@ checkentail v<:@M |- v=@M.
 print residue.
 
 // (6)
+checkentail v<:@L |- v=@L.
+print residue.
+
+// (7)
 checkentail v<:@M & v!=@M |- false.
+print residue.
+
+// (8)
+checkentail v1=@M & v2=@I |- v1<:v2.
 print residue.
 

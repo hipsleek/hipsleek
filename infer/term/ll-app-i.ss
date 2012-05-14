@@ -9,10 +9,13 @@ ll<n> == self = null & n = 0
 
 ranking r(int n, int m).
 
+relation p(int n, int m).
+
+
 void append(node x, node y)
-  infer @pre [r]
-  requires x::ll<n>*y::ll<m> & n>0 & Term[r(n,m)]
-  ensures x::ll<z> & z=m+n;
+  infer [r,p,n]
+  requires x::ll<n>*y::ll<m> & Term[r(n,m)]
+  ensures x::ll<z> & p(z,n);
 {
   if (x.next==null) {
     x.next=y; 

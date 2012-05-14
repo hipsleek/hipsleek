@@ -28,7 +28,7 @@ B(n,a) =
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-    infer @pre [n,a,B]
+    infer  [n,a,B]
     requires x::ll<n> & B(n,a) //& (n!=0 | 2>a) & (n!=0 | a>0)
 	ensures x::ll<m> & n>=2 & n=m+1;
 {

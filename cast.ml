@@ -30,7 +30,7 @@ and prog_decl = {
 	mutable prog_right_coercions : coercion_decl list; }
 	
 and prog_or_branches = (prog_decl * 
-    ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
+    ((MP.mix_formula * (ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
   data_name : ident;
@@ -53,20 +53,21 @@ and view_decl = {
     view_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : branch_label list;
+    view_labels : Label_only.spec_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
-    view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-    mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+    view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    view_inv_lock : F.formula option;
+    mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
     (* if view has only a single eqn, then place complex subpart into complex_inv *)  
-    view_complex_inv : (MP.mix_formula * (branch_label * P.formula) list) option; (*COMPLEX INV for --eps option*)
+    view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-    view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+    view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
     view_pt_by_self : ident list;
@@ -79,33 +80,18 @@ and view_decl = {
 and rel_decl = { 
     rel_name : ident; 
     rel_vars : P.spec_var list;
-    rel_formula : P.formula;
-    (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
-       rel_labels : branch_label list;
-       rel_modes : mode list;
-       mutable rel_partially_bound_vars : bool list;
-       mutable rel_materialized_vars : P.spec_var list; (* rel vars that can point to objects *)
-       rel_formula : F.struc_formula;
-       rel_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-       mutable rel_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
-       mutable rel_addr_vars : P.spec_var list;
-       rel_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-       rel_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
-       rel_prune_branches: formula_label list;
-       rel_prune_conditions: (P.b_formula * (formula_label list)) list;
-       rel_prune_invariants : (formula_label list * P.b_formula list) list ;
-       rel_raw_base_case: Cformula.formula option; *)}
+    rel_formula : P.formula;}
 
 (** An Hoa : axiom *)
 and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
     
-and proc_decl = { 
+and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
 		proc_return : typ;
-		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
+	mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
     (* this puts invariant of pre into the post-condition *)
@@ -257,6 +243,7 @@ and exp_return = { exp_return_type : typ;
 (* static call *)
 and exp_scall = { exp_scall_type : typ;
    exp_scall_method_name : ident;
+   exp_scall_lock : ident option;
     exp_scall_arguments : ident list;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
@@ -1269,12 +1256,12 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext = F.mkStarH ext_h rest_exts pos in
 				  ext
 		  end
-		| _ -> F.HTrue in
+		| _ -> F.HEmp in
 	  let exts = gen_exts sup_ext_var sub_ext_var rest_fields cdefs0 in
 	  let res = F.mkStarH sup_h exts pos in
 		res
 	end
-  | _ -> F.HTrue
+  | _ -> F.HEmp
 
 
 (*
@@ -1420,7 +1407,8 @@ let check_proper_return cret_type exc_list f =
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		  if b_rez then
+		  if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
+            & not(F.equal_flow_interval !top_flow_int fl_int) then
 			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
@@ -1507,7 +1495,7 @@ let get_xpure_one vdef rm_br  =
     | None -> Some vdef.view_x_formula 
 
 let get_xpure_one vdef rm_br  =
-  let pr (mf,_) = !print_mix_formula mf in
+  let pr mf = !print_mix_formula mf in
   Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 
@@ -1761,8 +1749,6 @@ and add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: boo
   let pvs = List.concat pvs in
   let n_procs = List.map (fun proc -> { proc with
     (* Option 1: Add logical variables of scc group into specifications for inference *)
-    (* proc_static_specs = F.add_infer_struc pvs proc.proc_static_specs; *)
-    (* proc_dynamic_specs = F.add_infer_struc pvs proc.proc_dynamic_specs; *)
     (* Option 2: Store the set of logical variables into proc_logical_vars 
      * It will be added into the initial context in check_proc *)
        proc_logical_vars = pvs;

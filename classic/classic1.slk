@@ -1,0 +1,43 @@
+/* representation of a cell node */
+
+data cell {
+    int val; 
+}.
+
+checkentail htrue |- emp.
+
+checkentail emp |- htrue.
+
+checkentail emp * htrue & false|- true.
+
+checkentail emp * htrue & true|- false.
+
+checkentail emp & n>1|- htrue & n>1.
+
+checkentail htrue * htrue |- emp.
+
+
+checkentail x::cell<_> |- htrue.
+print residue.
+
+checkentail emp * x::cell<_> |- htrue.
+print residue.
+
+
+checkentail x::cell<_> |- x::cell<_>.
+print residue.
+
+checkentail emp * x::cell<_> |- emp * x::cell<_>.
+print residue.
+
+checkentail htrue * x::cell<_> |- emp * x::cell<_>.
+print residue.
+
+checkentail emp * x::cell<_> |- htrue * x::cell<_>.
+print residue.
+
+checkentail x::cell<_> * htrue |- x::cell<_>.
+
+checkentail emp * x::cell<_> |- x::cell<_>.
+
+checkentail x::cell<_> * emp |- x::cell<_>. 

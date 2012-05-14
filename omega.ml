@@ -17,7 +17,7 @@ let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
 let omega_restart_interval = ref (-1)
-let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all = open_log_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (* currently not used --should be removed*)
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
@@ -119,26 +119,10 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
- 
-(* and omega_of_formula f  = *)
-(*   let rec helper f =  *)
-(*     match f with *)
-(*   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")" *)
-(*   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")" *)
-(*   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")" *)
-(*   | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	 *)
-(*   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) " *)
-(*   in helper f *)
-
-and omega_of_formula_old f  =
-  let (pr_w,pr_s) = no_drop_ops in
-  try 
-    Some(omega_of_formula pr_w pr_s f)
-  with | _ -> None
 
 and omega_of_formula pr_w pr_s f  =
   let rec helper f = 
@@ -149,18 +133,32 @@ and omega_of_formula pr_w pr_s f  =
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
             | Some f -> helper f
         end
+  | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
+  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  in helper f
+  in 
+  try
+	helper f
+  with _ as e -> 
+      let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
+      raise e
 
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 
       pr pr_id (fun _ -> omega_of_formula pr_w pr_s f) f
 
+and omega_of_formula_old f  =
+  let (pr_w,pr_s) = no_drop_ops in
+  try 
+    Some(omega_of_formula pr_w pr_s f)
+  with | _ -> None
+
+
+	  
 (* let omega_of_formula_old i f  = *)
 (*   let pr = !print_formula in *)
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
@@ -304,7 +302,7 @@ let check_formula f timeout =
         !result
       in
       let fail_with_timeout () = 
-        restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+        restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
       let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
       res
@@ -374,12 +372,13 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
+    let pe = drop_varperm_formula pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
       begin
           omega_subst_lst := [];
           let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-          let fstr = omega_of_formula 1 pr_weak pr_strong pe in
+          let fstr = omega_of_formula  1 pr_weak  pr_strong  pe in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
           if !log_all_flag then begin
@@ -427,7 +426,20 @@ let is_sat_weaken (pe : formula)  (sat_no : string): bool =
   is_sat pe sat_no
 
 let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
-  do_with_check "" (fun x -> is_sat_ops pr_weak pr_strong x sat_no) pe 
+  do_with_check "" (fun x -> is_sat_ops pr_weak pr_strong x sat_no) pe
+
+let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  (fun _ -> is_sat_with_check pr_weak pr_strong pe sat_no) pe
+
+let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
+  do_with_check "" (fun x -> is_sat_ops pr_weak pr_strong x sat_no) pe
+
+let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  (fun _ -> is_sat_with_check_ops pr_weak pr_strong pe sat_no) pe
 
 let is_sat (pe : formula) sat_no : bool =
   try
@@ -443,6 +455,7 @@ let is_sat (pe : formula) sat_no : bool =
 let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
+      let pe = drop_varperm_formula pe in
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
@@ -484,19 +497,23 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
         end
   end
 
-(* let is_valid (pe : formula) timeout: bool = *)
-(*   let pr x = None in *)
-(*   is_valid_ops pr pr pe timeout *)
+(* let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool = *)
+(* 	Debug.no_1 "Omega:is_valid_ops " !print_formula string_of_bool (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe *)
+(* (\* let is_valid (pe : formula) timeout: bool = *\) *)
+(* (\*   let pr x = None in *\) *)
+(* (\*   is_valid_ops pr pr pe timeout *\) *)
 
 let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   let pf = !print_pure in
   Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
 
-let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
-  do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe
+let is_valid_with_check (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid_ops (fun _ -> None) (fun _ -> None) x timeout) pe
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool =
-  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
+(*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
+
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -513,7 +530,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     not (is_valid tmp2)
    *)
   
-  let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in
   	
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
@@ -524,11 +541,19 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
   end else ();
   result
 
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  let pr = !print_formula in
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
+
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
   imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
 let imply_with_check pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "" (fun a c -> imply_ops pr_weak pr_strong a c imp_no timeout) ante conseq
+
+let imply_with_check_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
   do_with_check2 "" (fun a c -> imply_ops pr_weak pr_strong a c imp_no timeout) ante conseq
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
@@ -542,6 +567,11 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
         flush stdout;
         failwith s
       end
+
+let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  let pr = !print_formula in
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let is_valid (pe : formula) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
@@ -571,7 +601,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
         let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-        let tmp2 = mkAnd tmp1 restf no_pos in
+        let tmp2 = mkAnd_dumb tmp1 restf no_pos in
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then
@@ -592,6 +622,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
   (* let _ = print_string ("\nomega_simplify: f before"^(!print_formula pe)) in *)
   begin
+    let pe = drop_varperm_formula pe in
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
       Some (omega_of_formula 8 pr_weak pr_strong pe)
@@ -745,6 +776,7 @@ let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
 	omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     match (omega_of_formula_old pe) with
       | None -> pe
       | Some fstr ->
@@ -768,6 +800,7 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
+    let pe = drop_varperm_formula pe in
     match omega_of_formula_old pe with
       | None -> pe
       | Some fstr ->
@@ -791,6 +824,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
 	omega_subst_lst := [];
+    let pe1 = drop_varperm_formula pe1 in
     let fstr1 = omega_of_formula_old pe1 in
     let fstr2 = omega_of_formula_old pe2 in
     match fstr1,fstr2 with
@@ -811,8 +845,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 	          match_vars vars_list rel
             end
       | _, _ -> pe1
-  end
-
+            end
 
 let log_mark (mark : string) =
   if !log_all_flag then begin

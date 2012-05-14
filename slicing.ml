@@ -1,6 +1,9 @@
 open Globals
 open Cpure
 open Mcpure_D
+open Gen
+
+module CP = Cpure
 
 (************************************)
 (* Signatures for Slicing Framework *)
@@ -16,6 +19,7 @@ sig
    * and weakly linking variables of the input *)
   val afv: t -> (spec_var list * spec_var list)
   val atom_of_formula: formula -> t
+  val string_of: t -> string
 end;;
 
 (* Signature of Label *)
@@ -35,6 +39,7 @@ sig
   (* fv_of_label returns list of strongly and weakly linking variables *)
   val fv_of_label: t -> (spec_var list * spec_var list)
   val label_of_fv: spec_var list -> t
+  val string_of: t -> string
 end;;
 
 (* Atomic Constraint with Label *)
@@ -55,6 +60,11 @@ struct
 
   let constr_of_atom_list (al: Atom.t list) : t list =
     List.map constr_of_atom al
+
+  let string_of (c: t): string = 
+    let (l, a) = c in
+    "[" ^ (Gen.pr_option ALabel.string_of l) ^ "]" ^ 
+    (Atom.string_of a)
 end;;
 
 (* Slice - List of Atomic Constraints *)  
@@ -81,6 +91,11 @@ struct
     (Some (ALabel.label_of_atom a), [a])
 
   let atom_of_slice (s: t) : Atom.t list = snd s
+
+  let string_of (s: t) : string =
+    let (l, al) = s in
+    "[" ^ (Gen.pr_option ALabel.string_of l) ^ "]" ^ 
+    (Gen.pr_list Atom.string_of al)
 end;;
 
 (* Signature of Slicing Framework *)  
@@ -160,7 +175,7 @@ struct
     let ls = Constr.get_label s in
     ALabel.rel_is_rel lf ls
   
-  let rec get_ctr_n (n: int) (f: slice) (ps: constr list) : slice =
+  let rec get_ctr_n_x (n: int) (f: slice) (ps: constr list) : slice =
     if (n = 0) then Slice.empty 
     else
       let rel_ctr, non_rel_ctr = List.partition (fun s -> is_relevant f s) ps in
@@ -169,6 +184,12 @@ struct
         let r1 = merge_constr_by_slice f rel_ctr in
         let r2 = get_ctr_n (n-1) r1 non_rel_ctr in
         Slice.merge r1 r2
+
+  and get_ctr_n  (n: int) (f: slice) (ps: constr list) : slice =
+    let pr_s = Slice.string_of in
+    Debug.no_3 "get_ctr_n" (string_of_int) pr_s
+    (fun cl -> pr_list (Constr.string_of) cl) pr_s
+    (fun _ _ _ -> get_ctr_n_x n f ps) n f ps
 
   let rec get_ctr (f: slice) (ps: constr list) : slice =
     let rel_ctr, non_rel_ctr = List.partition (fun s -> is_relevant f s) ps in
@@ -210,7 +231,10 @@ struct
 
   let fv_of_label (l: t) : (spec_var list * spec_var list) = (l, [])
 
-  let label_of_fv (v: spec_var list) : t = v 
+  let label_of_fv (v: spec_var list) : t = v
+
+  let string_of (l: t) = 
+    pr_list (!CP.print_sv) l
 end;;
 
 (* Syntatic Label for Annotated Slicing *
@@ -265,7 +289,10 @@ struct
 
   let fv_of_label (l: t) : (spec_var list * spec_var list) = l
 
-  let label_of_fv (v: spec_var list) : t = (v, []) 
+  let label_of_fv (v: spec_var list) : t = (v, [])
+
+  let string_of (l: t) : string =
+    pr_pair (!CP.print_svl) (!CP.print_svl) l
 end;;
 
 module Pure_Constr =
@@ -287,6 +314,11 @@ struct
   let atom_of_b_formula (b: b_formula) : t = Pure_B b
 
   let atom_of_formula (f: formula) : t = Pure_F f
+
+  let string_of (c: t) : string =
+    match c with
+    | Pure_B bf -> !CP.print_b_formula bf
+    | Pure_F f -> !CP.print_formula f
 end;;
 
 module Memo_Constr =
@@ -295,7 +327,7 @@ struct
   type t =
     | Memo_B of b_formula * prune_status
     | Memo_F of formula
-    | Memo_E of spec_var * spec_var (* For equality constraints *)
+    | Memo_E of (spec_var * spec_var) (* For equality constraints *)
 
   let fv (constr: t) : spec_var list = 
     match constr with
@@ -337,6 +369,13 @@ struct
     | Memo_E (v1, v2) -> BForm (((form_bform_eq_with_const v1 v2), None), None)
 
   let atom_of_formula (f: formula) : t = Memo_F f
+
+  let string_of (c: t) : string =
+    match c with
+     | Memo_B (bf, _) -> !CP.print_b_formula bf
+     | Memo_F f -> !CP.print_formula f
+     | Memo_E e -> pr_pair (!CP.print_sv) (!CP.print_sv) e
+
 end;;
 
 module Memo_Group = 
@@ -361,6 +400,8 @@ struct
       memo_group_aset = empty_var_aset;
     }
 
+  let string_of (c: t) : string = 
+    !Mcpure_D.print_mg_f c
 end;;
  
 module Memo_Formula =
@@ -476,7 +517,7 @@ struct
   module MF_S           = Memo_Formula(Label)
 
   let regroup_memo_group (lst: memo_pure) : memo_pure =
-    if !f_1_slice then 
+    if !f_1_slice || !dis_slicing then 
       (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
@@ -484,7 +525,7 @@ struct
       MF_S.memo_pure_of_mg_slice sl None
 
   let group_mem_by_fv (lst: memo_pure) : memo_pure =
-    if !f_1_slice then
+    if !f_1_slice || !dis_slicing then
       (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
     else 
       let l = MG_Constr_S.constr_of_atom_list lst in
@@ -493,7 +534,7 @@ struct
 
   let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
     let r = 
-      if !f_1_slice then 
+      if !f_1_slice  || !dis_slicing then 
 		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
         let h1, h2 = (List.hd l1, List.hd l2) in
 		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
@@ -526,7 +567,7 @@ struct
     let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
     let sl =
       let l = l1 @ l2 in
-      if !f_1_slice then (* No slicing *)
+      if !f_1_slice  || !dis_slicing then (* No slicing *)
         let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
         let lbl = Pure_Label.label_of_fv (Gen.BList.remove_dups_eq eq_spec_var v) in
         [(Some lbl, l)] 
@@ -538,7 +579,7 @@ struct
     MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
 
   let split_mem_grp (g : memoised_group) : memo_pure = 
-    if !f_1_slice then [g]
+    if !f_1_slice  || !dis_slicing then [g]
     else
       let l =  Memo_Constr.memo_constr_of_memo_group g in
       let n_l = Memo_Constr_S.constr_of_atom_list l in 

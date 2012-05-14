@@ -115,6 +115,8 @@ let common_arguments = [
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
+	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
+	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
@@ -180,10 +182,10 @@ let common_arguments = [
 	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
 	"print input representation");
-	("--no-cache", Arg.Set Globals.no_cache_formula,
+	("--dis-cache", Arg.Set Globals.no_cache_formula,
     "Do not cache result of satisfiability and validity checking");
-	("--enable-cache", Arg.Clear Globals.no_cache_formula,
-    "Cache result of satisfiability and validity checking");
+	(*("--enable-cache", Arg.Clear Globals.no_cache_formula,
+    "Cache result of satisfiability and validity checking");*)
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
@@ -220,7 +222,7 @@ let common_arguments = [
     ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
     ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
-    ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
+    (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
@@ -255,6 +257,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  ("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
   ("--slc-opt-ineq", Arg.Set Globals.opt_ineq, "Enable optimal SAT checking with inequalities for forced slicing");
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
@@ -266,6 +269,9 @@ let common_arguments = [
 
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
+
+  (* use classical reasoning in separation logic *)
+  ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
   ] 
 
 (* arguments/flags used only by hip *)	
