@@ -293,6 +293,7 @@ and check_bounded_term_x prog ctx post_pos =
     let _ = Term.add_term_res_stk term_res in 
     n_es, rs
   in
+
   let check_bounded_one_measures m es =
     Debug.no_1 "check_bounded_one_measures"
       (pr_list !CP.print_exp) (fun _ -> "")
@@ -308,10 +309,8 @@ and check_bounded_term_x prog ctx post_pos =
             | None -> []
             | Some (_, ml, _) -> ml
           in 
-          let _ = Debug.trace_hprint (add_str "Measures" 
-            (pr_list !CP.print_exp)) m no_pos in
-          let _ = Debug.trace_hprint (add_str "Orig context" 
-            !CF.print_context) ctx no_pos in
+          let _ = Debug.trace_hprint (add_str "Measures" (pr_list !CP.print_exp)) m no_pos in
+          let _ = Debug.trace_hprint (add_str "Orig context" !CF.print_context) ctx no_pos in
           let n_es, rs = check_bounded_one_measures m es in
           (CF.Ctx n_es, Inf.collect_rel_list_context rs)
       | CF.OCtx (ctx1, ctx2) ->
@@ -1613,7 +1612,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
       else Term.check_loop_safety prog proc ctx post pos pid in
-  let fn_state=
+    let fn_state=
     if (!Globals.disable_failure_explaining) then
  let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
       proc.proc_args in

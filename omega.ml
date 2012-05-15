@@ -157,8 +157,6 @@ and omega_of_formula_old f  =
     Some(omega_of_formula pr_w pr_s f)
   with | _ -> None
 
-
-	  
 (* let omega_of_formula_old i f  = *)
 (*   let pr = !print_formula in *)
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
@@ -845,7 +843,8 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 	          match_vars vars_list rel
             end
       | _, _ -> pe1
-            end
+  end
+
 
 let log_mark (mark : string) =
   if !log_all_flag then begin

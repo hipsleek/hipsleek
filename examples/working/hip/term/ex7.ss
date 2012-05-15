@@ -10,7 +10,8 @@ case {
               ensures "tm1":y'<0; //ensures x'<x & x'<=0; //true;
     } 
     y<0 -> case {
-			z>=0 -> requires Term[-y] ensures "tm2": true;
+			z=0 -> requires Term[-y] ensures "tm2": true;
+			z>0 -> requires MayLoop ensures true;
       z<0 ->  requires Term[x]
               ensures "tm3":x'<x & y'<y & x'<=0;
     }

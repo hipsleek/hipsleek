@@ -24,18 +24,19 @@ data node2 {
 complete<n, nmin> == self = null & n = 0 & nmin = 0
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
-	inv nmin >= 0 & n >= nmin;
+	inv nmin >= 0 & (n >= nmin);
 
-/*complete<n, nmin> == 
+/*
+complete<n, nmin> == 
   self = null & n = 0 & nmin = 0
 	or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-1, n-1> & nmin = n
 	or self::node2<_, l, r> * l::complete<n-1, n-2> * r::complete<n-2, n-2> & nmin = n-1
   or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-2, n-2> & nmin = n-1
   or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-1, n-2> & nmin = n-1
-	inv nmin >= 0 & n >= nmin;*/
-
+	inv nmin >= 0 & n >= nmin;
+*/
 int maxim(int a, int b) 
-	requires true
+	requires Term
 	ensures (a < b | res = a) & (a >= b | res = b);
 {
 	if(a >= b)
@@ -45,7 +46,7 @@ int maxim(int a, int b)
 }
 
 int minim(int a, int b) 
-	requires true
+	requires Term
 	ensures (a < b | res = b) & (a >= b | res = a);
 {
 	if(a >= b)
@@ -55,7 +56,7 @@ int minim(int a, int b)
 }
 
 int height(node2 t) 
-	requires t::complete<n, nmin>
+	requires t::complete<n, nmin> & Term[n]
 	ensures t::complete<n, nmin> & res = n;
 {
 	if (t != null)
@@ -64,8 +65,7 @@ int height(node2 t)
 }
 
 int min_height(node2 t) 
-	requires t::complete<n, nmin>
-    variance (1) [n]
+	requires t::complete<n, nmin> & Term[n]
 	ensures t::complete<n, nmin> & res = nmin;
 {
 	if (t != null)
@@ -74,11 +74,9 @@ int min_height(node2 t)
 }
 
 void insert(ref node2 t, int v)
-	requires t::complete<n, nmin> & nmin < n // there is still place to insert
-    variance (1) [n]
+	requires t::complete<n, nmin> & nmin < n & Term[n] // there is still place to insert
 	ensures t'::complete<n, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
-	requires t::complete<n, nmin> & nmin = n // there is no empty place -> we need to increase the height
-    variance (1) [n]
+	requires t::complete<n, nmin> & nmin = n & Term[n] // there is no empty place -> we need to increase the height
 	ensures t'::complete<n+1, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
 {
 	node2 aux;
@@ -89,12 +87,12 @@ void insert(ref node2 t, int v)
 	}
 	else {
 		if(min_height(t.left) < height(t.left)) {		// there is still space in the left subtree
-      aux = t.left;
+			aux = t.left;
 			insert(aux, v);
 			t.left = aux;
 			return;	
 		}
-		else {
+	  else {
       if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree
         aux = t.right;
 				insert(aux, v);
@@ -120,9 +118,13 @@ void insert(ref node2 t, int v)
 	}
 }
 
-/*int is_perfect(node2 t) 
-	requires t::complete<n, nmin>
-	ensures t::complete<n, nmin> & (nmin != n | res = 1) & (nmin = n | res = 0);
+int is_perfect(node2 t) 
+	requires t::complete<n, nmin> & Term[n]
+	//ensures t::complete<n, nmin> & (nmin != n | res = 1) & (nmin = n | res = 0);
+	case {
+		nmin = n -> ensures t::complete<n, nmin> & res = 1;
+		nmin != n -> ensures t::complete<n, nmin> & res = 0;
+	}
 {
 	if(t == null)
 		return 1;
@@ -137,4 +139,4 @@ void insert(ref node2 t, int v)
 			
 		}				
 	}
-}*/
+}

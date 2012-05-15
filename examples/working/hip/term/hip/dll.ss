@@ -12,11 +12,8 @@ dll<p,n> == self = null & n = 0
   or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 
 	inv n >= 0;
 
-
-
 void insert(node2 x, int a)
-  requires x::dll<p, n> & n>0 //&  x!=null
-  variance (1) [n]
+  requires x::dll<p, n> & n>0 & Term[n] //&  x!=null  
   ensures x::dll<p, m> & m>n; 
 {
   bool l = x.next == null;
@@ -26,11 +23,9 @@ void insert(node2 x, int a)
       insert(x.next, a);
 }
 
-
 /* delete a node from a doubly linked list */
 void delete(node2 x, int a)
-	requires x::dll<p, n> & n > a & a > 0
-    variance (1) [n]
+	requires x::dll<p, n> & n > a & a > 0 & Term[n] 
 	ensures x::dll<p, n-1>;
 {
 	node2 tmp;
@@ -52,10 +47,8 @@ void delete(node2 x, int a)
 	}
 }
 
-/* NOT WORKING */
 void delete1(node2 x, int a)
-	requires x::dll<p, n> & n > a > 0
-    variance (1) [n]
+	requires x::dll<p, n> & n > a > 0 & Term[n] 
 	ensures x::dll<p, n-1>;
 
 {
@@ -68,24 +61,17 @@ void delete1(node2 x, int a)
      // assume false;
 		}
 		x.next = l;
-    //dprint;
-    //assert x::dll<_,_>;
-   // assume false;
 	}
 	else
   {
 		delete1(x.next, a-1);
     //assume false;
   }
-  //dprint;
-//  assert x::dll<_,_>;
-
-//  assume false;
 }
 
 
 void test_del(node2 x)
-	requires x::dll<p, n> & n>1
+	requires x::dll<p, n> & n>1 & Term
 	ensures x::dll<_,_>;
 {
 	node2 tmp1 = x.next;
@@ -97,20 +83,12 @@ void test_del(node2 x)
 		tmp2.prev = x;
 	}
 
-	//dprint;
-
-	//assert x'::node2<_,_,_> * tmp2'::dll<x', _> & tmp2'!=null or x'::node2<_,_,_> & tmp2'=null;
-
 	x.next = tmp2;
-
-	//assert /*true assume*/ x'::node2<_,_,tmp2'> * tmp2'::dll<x', _> & tmp2'!=null or x'::node2<_,_,tmp2'> & tmp2'=null;
-
-	//assert x'::dll<_,_>;
 }
 
 void test_del2(node2 x, node2 tmp2)
-	requires 	x::node2<_,_,_> * tmp2::dll<x, _> & tmp2!=null
-			or	x::node2<_,_,_> & tmp2=null
+	requires 	x::node2<_,_,_> * tmp2::dll<x, _> & tmp2!=null & Term
+			or	x::node2<_,_,_> & tmp2=null & Term
 	ensures		x::dll<_,_>;
 {
 	if (tmp2 != null) {
@@ -120,22 +98,16 @@ void test_del2(node2 x, node2 tmp2)
 }
 
 node2 test_fold()
-	requires true
+	requires Term
 	ensures res::dll<_, 3>;
 {
 	node2 tmp_null = null;
 	node2 tmp1 = new node2(10, tmp_null, tmp_null);
 
-	//debug on;
-	//assert tmp1'::dll<_,1>;
-	//debug off;
-
 	node2 tmp2 = new node2(20, tmp_null, tmp1);
 	tmp1.prev = tmp2;
 	node2 tmp3 = new node2(30, tmp_null, tmp2);
 	tmp2.prev = tmp3;
-
-	//dprint;
 
 	return tmp3;
 }
@@ -143,8 +115,7 @@ node2 test_fold()
 /* append 2 doubly linked lists */
 node2 append(node2 x, node2 y)
 
-	requires x::dll<q, m> * y::dll<p, n>
-    variance (1) [m]
+	requires x::dll<q, m> * y::dll<p, n> & Term[m]
 	ensures res::dll<_, m+n>;
 
 {
@@ -171,11 +142,9 @@ node2 append(node2 x, node2 y)
 	}
 }
 
-/* NOT WORKING */
 node2 append1(node2 x, node2 y)
 
-	requires x::dll<q, m> * y::dll<p, n>
-    variance (1) [m]
+	requires x::dll<q, m> * y::dll<p, n> & Term[m]
 	ensures res::dll<_, m+n>;	
 
 {
@@ -194,8 +163,7 @@ node2 append1(node2 x, node2 y)
 
 /* append 2 doubly linked lists */
 void append2(node2 x, node2 y)
-	requires x::dll<q, m> * y::dll<p, n> & m>0
-    variance (1) [m]
+	requires x::dll<q, m> * y::dll<p, n> & m>0 & Term[m]
 	ensures x::dll<q, m+n>;
 
 {
@@ -214,7 +182,7 @@ void append2(node2 x, node2 y)
 }
 
 void f1(node2 x)
-	requires x::dll<q, m> & m>0
+	requires x::dll<q, m> & m>0 & Term
 	ensures x::dll<q, m>;
 {
 	int t = 0;
@@ -222,50 +190,8 @@ void f1(node2 x)
 }
 
 void f2(node2 x)
-	requires x::dll<q, m> & m>0
+	requires x::dll<q, m> & m>0 & Term
 	ensures  x::dll<q, m> & m>0;
 {
 	f1(x);
 }
-
-
-/*
-dlseg<sf, lf, sb, lb, n> == self=sf & n=0
-			or self::node2<_, sf, r> * r::dlseg<self, lf, self, 
-
-dlseg<p, q, n> == self=q & n=0
-			or	self::node2<_, p, r> * r::dlseg<self, q, n-1>
-			inv n>=0;
-*/
-
-/*
-node2 append3(node2 x, node2 y)
-
-	requires x::dll<q, m> * y::dll<p, n>
-	ensures res::dll<_, m+n>;
-
-{
-	if (x == null)
-		return y;
-	else { 	
-		node2 tmp = find_last(x);
-		tmp.next = y;
-		return x;
-	}
-}
-*/
-
-/*
-node2 find_last(node2 x)
-	requires x::dll<q, m> & m>0
-	ensures res::node2<_,p,null> * x::dlseg<q, res, m-1>;
-{
-	if (x.next == null) return x;
-	else return find_last(x.next);
-}
-*/
-
-/*
-void id1(node2 x, node2 y)
-	requires x::dlseg<q, y, n> * y::node2<_,
-*/

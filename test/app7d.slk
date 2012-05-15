@@ -12,7 +12,7 @@ pred lseg<p, n> == self=p & n=0
 	inv n>=0.
 
 checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
-  |- Term[n-1] or Term[n] or Loop.
+  |- Term[n] or Term[n-1] or Loop.
 print residue.
 
 
