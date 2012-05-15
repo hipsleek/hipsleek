@@ -709,6 +709,7 @@ let rec pr_b_formula (e:P.b_formula) =
         (* ;if ls2!=[] then *)
         (*   pr_set pr_formula_exp ls2 *)
         (* else () *)
+    | P.SeqVar _ -> () (* TRUNG TODO: implement *)
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -2409,6 +2410,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
     | P.LexVar _ -> "LexVar(to be implemented)"
+    | P.SeqVar _ -> "SeqVar(to be implemented)"  (* TRUNG TODO: implement *)
   (* | P.Lexvar (ls1,ls2, l)        ->  *)
   (*       let opt = if ls2==[] then "" else *)
   (*         "{"^(pr_list html_of_formula_exp ls2)^"}" *)

@@ -123,6 +123,7 @@ and cvc3_of_b_formula b =
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
     | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
      | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+  | CP.SeqVar _ -> failwith ("SeqVar not supported in cvc3")
 	    
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

@@ -185,6 +185,7 @@ let string_of_b_formula (pf,il) =
             "{"^(pr_list string_of_formula_exp ls2)^"}"
           in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
       | _ -> ann)
+  | P.SeqVar _ -> "SeqVar: need to be implemented" (* TRUNG TODO: implement *)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

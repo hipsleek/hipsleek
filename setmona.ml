@@ -167,6 +167,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 					| RelForm _ -> failwith ("Relations are not supported in Mona")
 					| LexVar _ -> failwith ("LexVar are not supported in Mona")
+          | SeqVar _ -> failwith ("SeqVar are not supported in Mona")
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -365,6 +366,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | ListAllN _
 	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
+    | SeqVar _ -> failwith ("SeqVar are not supported in Mona")
 		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
 		  
 (*

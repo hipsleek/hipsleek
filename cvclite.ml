@@ -152,6 +152,7 @@ and cvcl_of_b_formula b =
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvclite")
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
 	| CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
+  | CP.SeqVar _ -> failwith ("SeqVar are not supported in cvclite")
 	| CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
 	  
 and cvcl_of_sv_type sv = match sv with

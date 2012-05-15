@@ -122,69 +122,66 @@ let rec smt_of_exp a =
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
 let rec smt_of_b_formula b =
-	let (pf,_) = b in
-	match pf with
-	| Cpure.BConst (c, _) -> if c then "true" else "false"
-	| Cpure.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-	| Cpure.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.Eq (a1, a2, _) -> 
-			if Cpure.is_null a2 then
-				"(< " ^(smt_of_exp a1)^ " 1)"
-			else if Cpure.is_null a1 then
-				"(< " ^(smt_of_exp a2)^ " 1)"
-			else
-				"(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| Cpure.Neq (a1, a2, _) ->
-			if Cpure.is_null a2 then
-				"(> " ^(smt_of_exp a1)^ " 0)"
-			else if Cpure.is_null a1 then
-				"(> " ^(smt_of_exp a2)^ " 0)"
-			else
-				"(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
-	| Cpure.EqMax (a1, a2, a3, _) ->
-			let a1str = smt_of_exp a1 in
-			let a2str = smt_of_exp a2 in
-			let a3str = smt_of_exp a3 in
-			"(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
-	| Cpure.EqMin (a1, a2, a3, _) ->
-			let a1str = smt_of_exp a1 in
-			let a2str = smt_of_exp a2 in
-			let a3str = smt_of_exp a3 in
-			"(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
-			(* UNHANDLED *)
-	| Cpure.BagIn (v, e, l)		-> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
-	| Cpure.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
-	| Cpure.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
-	| Cpure.BagMax _ | Cpure.BagMin _ -> 
-			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
-	| Cpure.ListIn _ | Cpure.ListNotIn _ | Cpure.ListAllN _ | Cpure.ListPerm _ -> 
-			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
-	| Cpure.LexVar _ -> 
-			illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
-	| Cpure.VarPerm _ -> 
-			illegal_format ("z3.smt_of_b_formula: VarPerm should not appear here.\n")
-	| Cpure.RelForm (r, args, l) ->
-		let smt_args = List.map smt_of_exp args in 
-		(* special relation 'update_array' translate to smt primitive store in array theory *)
-		if is_update_array_relation r then
-			let orig_array = List.nth smt_args 0 in
-			let new_array = List.nth smt_args 1 in
-			let value = List.nth smt_args 2 in
-			let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
-			let last_index = List.hd index in
-			let rem_index = List.rev (List.tl index) in
-			let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
-			let arr_select = List.rev arr_select in
-			let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
-			let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
-				"(= " ^ new_array ^ " " ^ result ^ ")"
-		else
-			"(" ^ (!CP.print_sv r) ^ " " ^ (String.concat " " smt_args) ^ ")"
-			
+  let (pf,_) = b in
+    match pf with
+    | Cpure.BConst (c, _) -> if c then "true" else "false"
+    | Cpure.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | Cpure.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.Eq (a1, a2, _) -> 
+        if Cpure.is_null a2 then
+          "(< " ^(smt_of_exp a1)^ " 1)"
+        else if Cpure.is_null a1 then
+          "(< " ^(smt_of_exp a2)^ " 1)"
+        else
+          "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | Cpure.Neq (a1, a2, _) ->
+        if Cpure.is_null a2 then
+          "(> " ^(smt_of_exp a1)^ " 0)"
+        else if Cpure.is_null a1 then
+          "(> " ^(smt_of_exp a2)^ " 0)"
+        else
+          "(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
+    | Cpure.EqMax (a1, a2, a3, _) ->
+        let a1str = smt_of_exp a1 in
+        let a2str = smt_of_exp a2 in
+        let a3str = smt_of_exp a3 in
+        "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
+    | Cpure.EqMin (a1, a2, a3, _) ->
+        let a1str = smt_of_exp a1 in
+        let a2str = smt_of_exp a2 in
+        let a3str = smt_of_exp a3 in
+        "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
+    (* UNHANDLED *)
+    | Cpure.BagIn (v, e, l)		-> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
+    | Cpure.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
+    | Cpure.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
+    | Cpure.BagMax _ | Cpure.BagMin _ -> illegal_format ("SPASS.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+    | Cpure.ListIn _ | Cpure.ListNotIn _ | Cpure.ListAllN _ | Cpure.ListPerm _ -> illegal_format ("SPASS.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+    | Cpure.LexVar _ -> illegal_format ("SPASS.smt_of_b_formula: LexVar should not appear here.\n")
+    | Cpure.SeqVar _ -> illegal_format ("SPASS.smt_of_b_formula: SeqVar should not appear here.\n")
+    | Cpure.VarPerm _ -> illegal_format ("SPASS.smt_of_b_formula: VarPerm should not appear here.\n")
+    | Cpure.RelForm (r, args, l) ->
+        let smt_args = List.map smt_of_exp args in 
+        (* special relation 'update_array' translate to smt primitive store in array theory *)
+        if is_update_array_relation r then
+          let orig_array = List.nth smt_args 0 in
+          let new_array = List.nth smt_args 1 in
+          let value = List.nth smt_args 2 in
+          let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
+          let last_index = List.hd index in
+          let rem_index = List.rev (List.tl index) in
+          let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
+          let arr_select = List.rev arr_select in
+          let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
+          let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
+          "(= " ^ new_array ^ " " ^ result ^ ")"
+        else
+          "(" ^ (!CP.print_sv r) ^ " " ^ (String.concat " " smt_args) ^ ")"
+
 and is_update_array_relation r =
    let r = CP.name_of_spec_var r in
 	let udrel = "update_array" in
