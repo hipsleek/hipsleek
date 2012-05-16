@@ -134,6 +134,7 @@ module Make (Token : SleekTokenS)
 	 ("diff", DIFF);
 	 ("dynamic", DYNAMIC);
 	 ("else", ELSE_TT);
+   ("emp", EMPTY);
 	 ("ensures", ENSURES);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
@@ -149,6 +150,7 @@ module Make (Token : SleekTokenS)
    ("logical", LOGICAL);
 	 ("head",HEAD);
    ("ho_pred",HPRED);
+   ("htrue", HTRUE);
    ("if", IF);
 	 ("in", IN_T);
    ("infer", INFER);
