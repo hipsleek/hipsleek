@@ -344,7 +344,7 @@ let full_perm_name () =   match !perm with
 (*     | Count -> CPERM.full_perm *)
 (*     | _ -> FPERM.full_perm *)
 
-let fv_iperm =   match !perm with
+let fv_iperm () =   match !perm with
     | Count -> CPERM.fv_iperm
 	| Dperm -> DPERM.fv_iperm
     | _ -> FPERM.fv_iperm
@@ -354,12 +354,12 @@ let get_iperm p =  match !perm with
 	| Dperm -> DPERM.get_iperm p
     | _ -> FPERM.get_iperm p
 
-let apply_one_iperm =   match !perm with
+let apply_one_iperm () =   match !perm with
     | Count -> CPERM.apply_one_iperm
 	| Dperm -> DPERM.apply_one_iperm
     | _ -> FPERM.apply_one_iperm
 
-let full_perm_var =  match !perm with
+let full_perm_var () =  match !perm with
     | Count -> CPERM.full_perm_var
 	| Dperm -> DPERM.full_perm_var
     | _ -> FPERM.full_perm_var
@@ -370,7 +370,7 @@ let full_perm_constraint () =   match !perm with
 	| Dperm -> DPERM.full_perm_constraint
     | _ -> FPERM.full_perm_constraint
 
-let mkFullPerm_pure =   match !perm with
+let mkFullPerm_pure () =   match !perm with
     | Count -> CPERM.mkFullPerm_pure
 	| Dperm -> DPERM.mkFullPerm_pure
     | _ -> FPERM.mkFullPerm_pure
@@ -380,22 +380,22 @@ let mkFullPerm_pure =   match !perm with
 (*     | _ -> FPERM.mkFullPerm_pure_from_ident *)
 
 (*create fractional permission invariant 0<f<=1*)
-let mkPermInv =   match !perm with
+let mkPermInv () =   match !perm with
     | Count -> CPERM.mkPermInv
 	| Dperm -> DPERM.mkPermInv
     | _ -> FPERM.mkPermInv
 
-let mkPermWrite =   match !perm with
+let mkPermWrite () =   match !perm with
     | Count -> CPERM.mkPermWrite
 	| Dperm -> DPERM.mkPermWrite
     | _ -> FPERM.mkPermWrite
 
-let float_out_iperm =   match !perm with
+let float_out_iperm () =   match !perm with
     | Count -> CPERM.float_out_iperm
 	| Dperm -> DPERM.float_out_iperm
     | _ -> FPERM.float_out_iperm
 
-let float_out_mix_max_iperm =   match !perm with
+let float_out_mix_max_iperm () =   match !perm with
     | Count -> CPERM.float_out_mix_max_iperm
 	| Dperm -> DPERM.float_out_mix_max_iperm
     | _ -> FPERM.float_out_mix_max_iperm
@@ -410,22 +410,22 @@ let get_cperm p = match !perm with
 	| Dperm -> DPERM.get_cperm p
     | _ -> FPERM.get_cperm p
 
-let subst_var_perm =   match !perm with
+let subst_var_perm () =   match !perm with
     | Count -> CPERM.subst_var_perm
 	| Dperm -> DPERM.subst_var_perm
     | _ -> FPERM.subst_var_perm
 
-let fresh_cperm_var =   match !perm with
+let fresh_cperm_var () =   match !perm with
     | Count -> CPERM.fresh_cperm_var
 	| Dperm -> DPERM.fresh_cperm_var
     | _ -> FPERM.fresh_cperm_var
 
-let mkEq_cperm =   match !perm with
+let mkEq_cperm () =   match !perm with
     | Count ->  CPERM.mkEq_cperm
 	| Dperm -> DPERM.mkEq_cperm
     | _ -> FPERM.mkEq_cperm
 
-let string_of_cperm = match !perm with
+let string_of_cperm () = match !perm with
   | Count ->  CPERM.string_of_cperm
   | Dperm -> DPERM.string_of_cperm
   | _ -> FPERM.string_of_cperm

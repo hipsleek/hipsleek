@@ -243,11 +243,6 @@ let normalize_list_failesc_context_w_lemma prog lctx =
     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
     res
 	
-(*let normalize_context_w_lemma prog ctx = 
-  if not (Perm.allow_perm ()) then ctx
-  else CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog 
-									        (CF.empty_es (CF.mkTrueFlow ()) (CF.clear_entailment_vars es).CF.es_group_lbl no_pos) 
-											es.CF.es_formula prog.prog_left_coercions}*)
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
@@ -870,10 +865,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*there exists fresh_frac statisfy ... *)
                 if (read_only)
                 then
-                  let read_f = mkPermInv fresh_frac in
+                  let read_f = mkPermInv () fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                 else
-                  let write_f = mkPermWrite fresh_frac in
+                  let write_f = mkPermWrite () fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
               else
                 vheap

@@ -1819,7 +1819,12 @@ and fv (f : formula) : CP.spec_var list = match f with
         let fvars = CP.remove_dups_svl (vars@fvars) in
 	    let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
-		    
+	
+and f_h_fv (f : formula) : CP.spec_var list = match f with
+  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
+  | Base b -> h_fv b.formula_base_heap
+  | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars 
+	
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2; 
@@ -2399,7 +2404,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
     h_formula_view_pruning_conditions = pcond;
 	h_formula_view_pos = pos} as g) -> 
         ViewNode {g with h_formula_view_node = subst_var s x; 
-        h_formula_view_perm = subst_var_perm s perm;  (*LDK*)
+        h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
         h_formula_view_imm = apply_one_imm s imm;  
 		h_formula_view_arguments = List.map (subst_var s) svs;
         h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
@@ -2420,7 +2425,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
         h_formula_data_derv = dr;
-    	h_formula_data_perm = subst_var_perm s perm; (*LDK*)
+    	h_formula_data_perm = subst_var_perm () s perm; (*LDK*)
         h_formula_data_imm = apply_one_imm s imm;  
 	    h_formula_data_origins = orgs;
 	    h_formula_data_original = original;
@@ -2746,7 +2751,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
   | Base f1 ->
         let f1_heap,vars = propagate_perm_h_formula f1.formula_base_heap permvar in
         let base_p = f1.formula_base_pure in
-        let mk_eq v = mkEq_cperm v permvar no_pos in
+        let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
         let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
@@ -2757,7 +2762,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
   | Exists f1 ->
         let f1_heap,vars = propagate_perm_h_formula f1.formula_exists_heap permvar in
         let base_p = f1.formula_exists_pure in
-        let mk_eq v = mkEq_cperm v permvar no_pos in
+        let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
         let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
@@ -2773,11 +2778,11 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
 and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (CP.spec_var list) = 
   match f with
     | ViewNode f1 -> 
-        let fresh_var = fresh_cperm_var permvar in
+        let fresh_var = fresh_cperm_var () permvar in
         let vn = ViewNode({f1 with h_formula_view_perm = Some fresh_var}) in
         (vn,[fresh_var])
     | DataNode f1 -> 
-        let fresh_var = fresh_cperm_var permvar in
+        let fresh_var = fresh_cperm_var () permvar in
         let dn = DataNode({f1 with h_formula_data_perm = Some fresh_var}) in
         (dn,[fresh_var])
     | Star f1 ->
@@ -5258,11 +5263,16 @@ let list_of_disjuncts f = split_conjuncts f
 let join_conjunct_opt l = match l with
   | [] -> None
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
+
+let join_star_conjunctions (hs : h_formula list) : h_formula  = 
+  List.fold_left(fun a c-> mkStarH a c no_pos) HTrue hs
+
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
     | [] -> None
     | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos ) x xs)
 
+	
 let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =  
   let rec pr1 xs = 
     match xs with
@@ -7459,7 +7469,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
-  let read_f = mkPermInv fresh_perm in
+  let read_f = mkPermInv () fresh_perm in
   let tmp = formula_of_heap lock_node pos in
   let post = normalize 5 inv tmp pos in
   let post = EAssume ([],post,lbl) in
@@ -7646,7 +7656,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_pos = pos })
   in
   let tmp = formula_of_heap lock_node pos in (*not allow SPLIT in pre*)
-  let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
+  let read_f = mkPermInv () fresh_perm in (*only need a certain permission to read*)
   let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in
   let tmp = add_original tmp true in  (*but allow SPLIT in post*)
   let post = EAssume ([],tmp,lbl) in

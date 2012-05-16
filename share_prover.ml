@@ -56,6 +56,8 @@ module type DFRAC_SOLVER =
 	 val e_elim : eq_syst -> eq_syst
   end;;
   
+  
+(*functor (S:SV) -> functor (S2:SV with type t = S.t) -> *)
 module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor (Ss1 : SAT_SLV) ->
 	struct
 		module Ss= Ss1(SV)
@@ -127,15 +129,21 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				eqs_vc = List.map (fun (v,c)-> ren_var v, c) eqs.eqs_vc;
 				eqs_eql = List.map ren_eq eqs.eqs_eql;}
 			
-			
-		let string_of_eq_l l = 
+		let string_of_eq (v1,v2,v3) = 
 			let f v = match v with | Vperm v -> SV.string_of v | Cperm t -> Ts.string_of t in
-			String.concat "\n" (List.map (fun (v1,v2,v3) -> (f v1)^ " * " ^(f v2) ^" = "^(f v3)) l)
+			(f v1)^ " * " ^(f v2) ^" = "^(f v3)
 			
+		let string_of_eq_l l = String.concat "\n" (List.map string_of_eq l)
+			
+		let pr_list f l = String.concat "\n" (List.map f l)
+		let pr_pair f1 f2 (e1,e2) = "("^(f1 e1)^" , "^f2 e2^")"
+		
+		let string_of_vc_l l = pr_list (pr_pair SV.string_of Ts.string_of) l	
+		
 		let string_of_eq_syst eqs = 
 			let seql = string_of_eq_l eqs.eqs_eql in
 			let sve = String.concat "\n" (List.map (fun (v1,v2)-> (SV.string_of v1)^" = "^(SV.string_of v2)) eqs.eqs_ve) in
-			let svc = String.concat "\n" (List.map (fun (v1,c)-> (SV.string_of v1)^" = "^(Ts.string_of c)) eqs.eqs_vc) in
+			let svc = string_of_vc_l eqs.eqs_vc in
 			(svc^"\n"^sve^"\n"^seql)
 			
 			
@@ -165,7 +173,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				t_vc,t_ve,t_eq_l) (t_vc,t_ve,t_eq_l) vv in
 				
 			let t_vc,t_ve,t_eq_l = List.fold_left (fun (t_vc,t_ve,t_eq_l) (v , c)-> 
-				List.iter (fun (v1,c1)-> if SV.eq v v1 && (c<>c1) then raise Unsat_exception else ()) t_vc;
+				let t_vc = List.filter (fun (v1,c1)-> if SV.eq v v1 then if c<>c1 then raise Unsat_exception else false else true) t_vc in
 				let t_vc1,t_ve = List.fold_left (fun (a1,a2) (d1,d2)-> match SV.eq d1 v, SV.eq d2 v with 
 					| false,false ->  a1,(d1,d2)::a2
 					| true, false ->  (d2,c)::a1, a2
@@ -196,11 +204,10 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 							| _ -> e in
 						let e1,e2,e3= subst e1, subst e2, subst e3 in
 						match e1,e2,e3 with 
-							| Cperm t1, Cperm t2, Cperm t3 -> if (Ts.can_join t1 t2)&& (Ts.eq (Ts.join t1 t2) t3) then lvc,(e1,e2,e3)::l_eqs else raise Unsat_exception
+							| Cperm t1, Cperm t2, Cperm t3 -> if (Ts.can_join t1 t2)&& (Ts.eq (Ts.join t1 t2) t3) then lvc,l_eqs else raise Unsat_exception
 							| Cperm t1, Cperm t2, Vperm v -> if (Ts.can_join t1 t2) then (v,Ts.join t1 t2)::lvc,l_eqs else raise Unsat_exception
 							| Cperm t, Vperm v, Cperm tr 
 							| Vperm v, Cperm t, Cperm tr -> if Ts.contains tr t  then (v,Ts.subtract tr t)::lvc,l_eqs else raise Unsat_exception 
-							(*| Vperm _, Vperm _, Vperm _ | Vperm _, Vperm _, Cperm _ | Vperm _, Cperm _, Vperm _ | Cperm _, Vperm _, Vperm _*)
 							| _ ->  lvc,(e1,e2,e3)::l_eqs) ([],[]) eqs.eqs_eql in
 					subst_vc l_vc {eqs with eqs_vc= eqs.eqs_vc@l_vc; eqs_eql = l_eqs} in
 			let eqs = subst_vc eqs.eqs_vc eqs in
@@ -233,7 +240,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			| Vperm _, Cperm d, Vperm _
 			| Vperm _, Vperm _, Cperm d -> Ts.depth_0 d
 			| Vperm _, Vperm _, Vperm _ -> true
-			| _ -> report_error "unexpected equation structure"
+			| _ -> report_error ("unexpected equation structure "^(string_of_eq ef)^"\n")
 			
 		let decompose_fp (f:frac_perm) = match f with 
 			| Vperm vp -> 
@@ -295,17 +302,20 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				let lv,leq,req = decomp_no_lim eq in
 				lv@a,leq::req::l) (l_vs,[]) leqs in *)
 			let eqs = apl_substs eqs in
+			let l_decomp_vs1, vc = fold_2_map decompose_vc eqs.eqs_vc in
+			let eqs = {eqs with eqs_vc=vc} in
 			let l_decomp_vs, leqs = fold_2_map decompose_eq eqs.eqs_eql in 
+			let l_decomp_vs = l_decomp_vs@l_decomp_vs1 in
 			(*due to substs, no need to decompose vc nor ve, if need be, it will happen in the imply during the meet*)
 			let l_decomp_vs, leqs = fix_helper l_decomp_vs leqs in
 			let l_decomp_vs = remove_dups_eq SV.eq l_decomp_vs in
-			let vc = List.map (fun (v,c)-> v, if Ts.full c then true else if Ts.empty c then false else report_error "unexpected constant") eqs.eqs_vc in
+			let vc = List.map (fun (v,c)-> v, if Ts.full c then true else if Ts.empty c then false else report_error ("unexpected constant"^(Ts.string_of c))) eqs.eqs_vc in
 			l_decomp_vs, eqs.eqs_nzv, eqs.eqs_ve, vc, leqs
 		
 		let decompose_sys eqs = 
 			print_string ("decompose syst: " ^ (string_of_eq_syst eqs)^"\n");
 			let (r1,r2,r3,r4,r5) = decompose_sys eqs in
-			print_string ("decomposed syst: " ^ (string_of_eq_l r5)^"\n");
+			print_string ("decomposed syst: " ^ (pr_list (pr_pair SV.string_of string_of_bool)r4)^"\n"^(string_of_eq_l r5)^"\n");
 			(r1,r2,r3,r4,r5)
 		
 		
@@ -378,12 +388,28 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			if (List.exists (fun c-> c=[]) nz_cons) then raise_us "nz_cons"
 			else (*List.map (List.map SV.conv)*) nz_cons 
 		
+		let tree_v_solver ex_l e = match e with
+			| Cperm d, Vperm v1, Vperm v2 
+			| Vperm v1, Cperm d, Vperm v2 -> 
+				if Ts.empty d then if mem_eq SV.eq v2 ex_l then ([],[(v2,v1)],[]) else ([],[(v1,v2)],[])
+				else if Ts.full d then ([(v1,Ts.bot);(v2,Ts.top)],[],[]) else [],[],[e]
+			| Vperm v1, Vperm v2, Cperm d -> if Ts.empty d then ([(v1,Ts.bot);(v2,Ts.bot)],[],[]) else ([],[],[e])
+			| Cperm d1, Cperm d2, Vperm v -> if (Ts.can_join d1 d2) then  [(v,Ts.join d1 d2)],[],[] else raise Unsat_exception
+			| Cperm d1, Vperm v, Cperm d2 
+			| Vperm v, Cperm d1, Cperm d2  -> if (Ts.contains d2 d1) then  [(v,Ts.subtract d2 d1)],[],[] else raise Unsat_exception
+			| Cperm d1, Cperm d2, Cperm d3 -> if (Ts.can_join d1 d2) && (Ts.eq (Ts.join d1 d2) d3) then [],[],[] else raise Unsat_exception
+			| Vperm v1, Vperm v2, Vperm v3 -> 
+				if SV.eq v1 v2 then [(v1,Ts.bot);(v2,Ts.bot);(v3,Ts.bot)],[],[]
+				else if SV.eq v1 v3 then [(v2,Ts.bot)],[],[] 
+				else if SV.eq v2 v3 then [(v1,Ts.bot)],[],[]
+				else [],[],[e]
+
 		let simpl_vars r1 r2 r3 = 
 			if SV.eq r1 r2 then [(r1,false);(r3,false)],[]
 			else if SV.eq r1 r3 then [(r2,false)],[] 
 			else if SV.eq r2 r3 then [(r1,false)],[] 
 			else [],[(r1,r2,Ss.mkVar r3)]
-		
+			
 		let c_v_solver ex_l e = match e with
 			| Cperm d, Vperm v1, Vperm v2 
 			| Vperm v1, Cperm d, Vperm v2 -> 
@@ -471,16 +497,18 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			else
 				try
 					(*decomposes the vars, returns the simplified syst to v*v=(v|1) and non-zero constraints*)
+					let const_vars, subst_vars,l_eqs = fold_3_map (tree_v_solver eqs.eqs_ex) eqs.eqs_eql in
+					let eqs = {eqs with eqs_eql = l_eqs; eqs_ve = subst_vars@eqs.eqs_ve; eqs_vc = const_vars@eqs.eqs_vc} in
 					let dec_vars,nzv, _,_,eqs = decompose_sys eqs in
 					let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] [] [] eqs in
 					let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
-					Ss.call_sat nz_cons ((*conv_eq_s*) l_eqs)
+					if l_eqs = [] then true else Ss.call_sat nz_cons ((*conv_eq_s*) l_eqs)
 				with Unsat_exception -> false
 				
 		let is_sat (eqs:eq_syst):bool = 
 			print_string ("Big Sat: "^(string_of_eq_syst eqs)^"\n");
 			let r = is_sat eqs in
-			print_string ("r: "^(string_of_bool r)); r
+			print_string ("Big Sat Res: "^(string_of_bool r)^"\n"); r
 		
 			
 		let to_formula_imply a_sys c_sys:bool =
@@ -527,7 +555,8 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				let c_ev = List.map SV.conv c_ev in
 				let a_l_eqs = conv_eq_s a_l_eqs in
 				let c_l_eqs = conv_eq_s c_l_eqs in*)
-				Ss.call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
+				if c_l_eqs=[] && c_const_vars=[] && c_subst_vars=[] then true
+				else Ss.call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
 			with | Unsat_exception -> not (Ss.call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
 			
 				
@@ -539,6 +568,12 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				with 
 				 | Unsat_exception -> true
 				 | Unsat_conseq b -> b
+		
+		let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
+			print_string ("Big Imply1: "^(string_of_eq_syst a_sys)^"\n");
+			print_string ("Big Imply2: "^(string_of_eq_syst c_sys)^"\n");
+			let r = imply a_sys c_sys in
+			print_string ("Big Imply Res: "^(string_of_bool r)^"\n");  r
 		
 		let e_elim (eqs : eq_syst) : eq_syst = eqs
 		

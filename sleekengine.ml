@@ -30,7 +30,7 @@ let sleek_proof_counter = new Gen.counter 0
   Global data structures. If we want to support push/pop commands,
   we'll need to make them into a stack of scopes.
 *)
-let iobj_def = { I.data_name = "Object";
+let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)

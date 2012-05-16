@@ -1854,20 +1854,23 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 		res
 
 let b_data_constr bn larg=
+	if bn = b_datan || (snd (List.hd larg))="state" then		
 		{ data_name = bn;
-		  data_fields =List.map (fun c-> c,no_pos,false) larg;
-		  data_parent_name = if bn = "barrier_def" then "Object" else "barrier_def";
+		  data_fields = List.map (fun c-> c,no_pos,false) larg ;
+		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];
 		  data_methods =[]; }
+	else report_error no_pos ("the first field of barrier "^bn^" is not state")
+	
 	
 let add_bar_inits prog = 
-  let b_data_def = (b_data_constr "barrier_def" []) :: 
+  let b_data_def = (b_data_constr b_datan []) :: 
 	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
 	
   let b_proc_def = List.map (fun b-> 
 			let largs = (P.IConst (0,no_pos))::List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) "barrier" false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in

@@ -509,6 +509,7 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
+  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize -> false | _ -> true) l in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
@@ -545,8 +546,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let l3 = if flag
                   then 
                     begin
-                      let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
-                      let right_ls = look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name in
+                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name) in
+                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name) in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                       if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
@@ -632,8 +633,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   let l3 = if flag
                   then begin
-                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
-                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
+                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name) in
+                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name) in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                     (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
@@ -675,7 +676,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_view_derv = vl.h_formula_view_derv in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
-                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name in
+                  let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name) in
                   let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)

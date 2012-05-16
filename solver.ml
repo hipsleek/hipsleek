@@ -550,7 +550,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             (match frac with
               | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null 
-              | Some f -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd non_null (mkPermInv f) no_pos)
+              | Some f -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd non_null (mkPermInv () f) no_pos)
             )
 
 	  (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
@@ -564,7 +564,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             let frac_inv = match frac with
                 | None -> CP.mkTrue pos
-                | Some f -> mkPermInv f in
+                | Some f -> mkPermInv () f in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
             (match inv_opt with
               | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv
@@ -755,7 +755,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           (match frac with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
             | Some f ->
-                  let res = CP.mkAnd non_zero (mkPermInv f) no_pos in
+                  let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
@@ -773,7 +773,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
                   (*LDK: add fractional invariant 0<f<=1, if applicable*)
                   let frac_inv = match frac with
                       | None -> CP.mkTrue pos
-                      | Some f -> mkPermInv f in
+                      | Some f -> mkPermInv () f in
                   let vinv = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
                   (*add fractional invariant*)
                   let frac_inv_mix = MCP.OnePF frac_inv in
@@ -5752,7 +5752,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
     begin
         if (Perm.allow_perm ()) then
           (match l_perm, r_perm with
@@ -5761,35 +5761,40 @@ and do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars
                 let label_list = (Label_only.Lab_List.unlabelled::label_list) in
                 (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
             | None, Some f2 ->
-                (if (List.mem f2 evars) then
+				let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
+                let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+				
+                (*(if (List.mem f2 evars) then
                       (*rename only*)
-                      let rho_0 = List.combine (f2::r_args) (full_perm_var::l_args) in
+                      let rho_0 = List.combine (f2::r_args) (full_perm_var () ::l_args) in
                       let label_list = (Label_only.Lab_List.unlabelled::label_list) in
                       (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
                  else if (List.mem f2 expl_vars) then
                    (*f2=full to RHS to inst later*)
                    let rho_0 = List.combine (r_args) (l_args) in
-                   let p_conseq = mkFullPerm_pure f2 in
+                   let p_conseq = mkFullPerm_pure () f2 in
                    let label_list = (label_list) in
                    (rho_0, label_list,CP.mkTrue no_pos,p_conseq)
                  else if (List.mem f2 impl_vars) then
                    (*instantiate: f2=full to LHS. REMEMBER to remove it from impl_vars*)
                    let rho_0 = List.combine (r_args) (l_args) in
-                   let p_ante = mkFullPerm_pure f2 in
+                   let p_ante = mkFullPerm_pure () f2 in
                    let label_list = (label_list) in
                    (rho_0, label_list,p_ante,CP.mkTrue no_pos)
                  else (*global vars*)
                    (*f2=full to RHS*)
                    let rho_0 = List.combine (r_args) (l_args) in
-                   let p_conseq = mkFullPerm_pure f2 in
+                   let p_conseq = mkFullPerm_pure () f2 in
                    let label_list = (label_list) in
-                   (rho_0, label_list,CP.mkTrue no_pos,p_conseq))
+                   (rho_0, label_list,CP.mkTrue no_pos,p_conseq))*)
             | Some f1, None ->
                 (*f1 is either ivar or global
                   if it is ivar, REMEMBER to convert it to expl_var*)
                 let rho_0 = List.combine r_args l_args in
                 let label_list = (label_list) in
-                let t_conseq = mkFullPerm_pure f1 in
+                let t_conseq = 
+				mkFullPerm_pure () f1 in
                 (rho_0, label_list,CP.mkTrue no_pos,t_conseq)
             | _ -> let rho_0 = List.combine r_args l_args in
                    (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
@@ -7013,9 +7018,9 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                       | Some f1, Some f2 ->
                             ([f1],[f2])
                       | Some f1, None ->
-                            ([f1],[full_perm_var])
+                            ([f1],[full_perm_var()])
                       | None, Some f2 ->
-                            ([full_perm_var],[f2])
+                            ([full_perm_var()],[f2])
                       | None, None ->
                             ([],[])
                   else
@@ -7174,9 +7179,9 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                       | Some f1, Some f2 ->
                             ([f1],[f2])
                       | Some f1, None ->
-                            ([f1],[full_perm_var])
+                            ([f1],[full_perm_var ()])
                       | None, Some f2 ->
-                            ([full_perm_var],[f2])
+                            ([full_perm_var ()],[f2])
                       | None, None ->
                             ([],[])
                   else
@@ -7304,10 +7309,10 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
 and find_coercions_x c1 c2 prog anode ln2 =
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
   let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
-  let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (* keep only non-cyclic coercion rule *)
+  let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && c.coercion_case<>Normalize) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
   let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
-  let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
+  let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && c.coercion_case<>Normalize) coers2  in (* keep only non-cyclic coercion rule *)
   let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
   ((coers1,coers2),univ_coers)
@@ -7472,7 +7477,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
   let extra_heap = 
     (match (extra_opt) with
       | None -> 
-            let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
+            let _ = print_string "[apply_left_coercion_complex] Warning: List of conjunctions can not be empty \n" in
             CF.HTrue
       | Some res_f -> res_f)
   in
@@ -7523,9 +7528,9 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                   | Some f1, Some f2 ->
                         ([f1],[f2])
                   | Some f1, None ->
-                        ([f1],[full_perm_var])
+                        ([f1],[full_perm_var ()])
                   | None, Some f2 ->
-                        ([full_perm_var],[f2])
+                        ([full_perm_var  ()],[f2])
                   | None, None ->
                         ([],[])
               else
@@ -7688,32 +7693,14 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let f = mkBase rest p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
       let coer_lhs = coer.coercion_head in
       let coer_rhs = coer.coercion_body in
-
       (*compute free vars in extra heap and guard*)
-      let compute_extra_vars () =
-        let lhs_heap, lhs_guard, _, _, lhs_a = split_components coer_lhs in
-        let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-        let head_node, rest = pick_up_node lhs_hs Globals.self in
-        (* let head_node = List.hd lhs_hs in *)
-        (* let extra_opt = join_star_conjunctions_opt (List.tl lhs_hs) in *)
-        let extra_opt = join_star_conjunctions_opt rest in
-        let extra_heap =
-          (match (extra_opt) with
-            | None ->
-                  let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-                  CF.HTrue
-            | Some res_f -> res_f)
-        in
-        let h_vars = CF.h_fv head_node in
-        let e_vars = CF.h_fv extra_heap in
-        let p_vars = MCP.mfv lhs_guard in
-        let vars = Gen.BList.difference_eq CP.eq_spec_var (e_vars@p_vars) h_vars in
-        Gen.BList.remove_dups_eq CP.eq_spec_var vars
-      in
+	  let extra_vars = 
+			let lhs_heap, lhs_guard, _, _, lhs_a = split_components coer_lhs in
+			let head_node= List.hd (CF.split_star_conjunctions lhs_heap) in
+			let vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap @ MCP.mfv lhs_guard) (CF.h_fv head_node) in
+			Gen.BList.remove_dups_eq CP.eq_spec_var vars  in
       (* rename the bound vars *)
-      let extra_vars = compute_extra_vars () in
-      let extra_vars_new =  CP.fresh_spec_vars extra_vars in
-      let tmp_rho = List.combine extra_vars extra_vars_new in
+      let tmp_rho = List.combine extra_vars (CP.fresh_spec_vars extra_vars) in
       let coer_lhs = CF.subst tmp_rho coer_lhs in
       let coer_rhs = CF.subst tmp_rho coer_rhs in
       (************************************************************************)
@@ -7724,19 +7711,11 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let coer_lhs = CF.subst tmp_rho coer_lhs in
       let coer_rhs = CF.subst tmp_rho coer_rhs in
       (************************************************************************)
-  
       let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
       let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
-      let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-      let head_node, rest = pick_up_node lhs_hs Globals.self in
-      let extra_opt = join_star_conjunctions_opt rest in
-      let extra_heap =
-        (match (extra_opt) with
-          | None ->
-                let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-                CF.HTrue
-          | Some res_f -> res_f)
-      in
+      let lhs_hs = CF.split_star_conjunctions lhs_heap in
+      let head_node = List.hd lhs_hs in
+      let extra_heap = join_star_conjunctions (List.tl lhs_hs) in
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
         | ViewNode ({ h_formula_view_node = p1;
           h_formula_view_name = c1;
@@ -7761,21 +7740,14 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
 	      h_formula_data_remaining_branches = br2;
 	      h_formula_data_perm = perm2; (*LDK*)
 	      h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name c1 c2 ->
-
-              let perms1,perms2 =
-                if (Perm.allow_perm ()) then
-                  match perm1,perm2 with
-                    | Some f1, Some f2 ->
-                          ([f1],[f2])
-                    | Some f1, None ->
-                          ([f1],[full_perm_var])
-                    | None, Some f2 ->
-                          ([full_perm_var],[f2])
-                    | None, None ->
-                          ([],[])
-                else
-                  ([],[])
-              in
+              let perms1,perms2 = 
+					if (Perm.allow_perm ()) then
+					  match perm1,perm2 with
+						| Some f1, Some f2 -> ([f1],[f2])
+						| Some f1, None -> ([f1],[full_perm_var ()])
+						| None, Some f2 -> ([full_perm_var ()],[f2])
+						| None, None -> ([],[])
+					else ([],[]) in
               let fr_vars = perms2@(p2 :: ps2)in
               let to_vars = perms1@(p1 :: ps1)in
               let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
@@ -7784,16 +7756,13 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               let coer_rhs_new1,extra_heap_new =
                 if (Perm.allow_perm ()) then
                   match perm1,perm2 with
-                    | Some f1, None ->
-                          (*propagate perm into coercion*)
+                    | Some f1, None -> (*propagate perm into coercion*)
                           let rhs = propagate_perm_formula coer_rhs_new1 f1 in
                           let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
                           (rhs,extra)
                     | _ -> (coer_rhs_new1, extra_heap_new)
-                else
-                  (coer_rhs_new1,extra_heap_new)
-              in
-		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name :: *)origs) in
+                else (coer_rhs_new1,extra_heap_new) in
+		      let coer_rhs_new = add_origins coer_rhs_new1 [coer.coercion_name] in
               let new_es_heap = anode in (*consumed*)
               let old_trace = estate.es_trace in
               let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
@@ -7803,33 +7772,23 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
 
 	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: check extra heap")) no_pos;
-	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: new_ctx: "
-		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		      ^ (Cprinter.string_of_context new_ctx1))) no_pos;
-	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n"
-		      ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
               let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
 
-	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: "
-		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		      ^ (Cprinter.string_of_list_context check_res))) no_pos;
+	          Debug.devel_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos;
 
               (*PROCCESS RESULT*)
               (match check_res with 
-                | FailCtx _ -> 
-                      (*false, return dummy h and p*)
-                      (false, estate, h,p)
-                | SuccCtx res -> 
-                      (*we expect only one result*)
-                      let ctx = List.hd res in
-                      match ctx with
+                | FailCtx _ -> (false, estate, h,p)(*false, return dummy h and p*)
+                | SuccCtx res -> match List.hd res with(*we expect only one result*)
                         | OCtx (c1, c2) ->
                               let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context \n") in
                               (false,estate,h,p)
                         | Ctx es ->
-                              let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
-                              let new_ante = add_mix_formula_to_formula p new_ante1 in
+                              let new_ante = normalize_combine coer_rhs_new es.es_formula no_pos in
+                              (*let new_ante = add_mix_formula_to_formula p new_ante in*)
                               let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
                               let h1,p1,_,_,_ = split_components new_ante in
                               let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
@@ -7838,8 +7797,8 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
     in
     let process_one estate anode rest coer h p =
       let pr (c1,c2,c3,c4) = string_of_bool c1 ^ "||" ^ Cprinter.string_of_entail_state c2 in 
-      Debug.no_5 "process_one" Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula  Cprinter.string_of_mix_formula pr  
-          (fun _ _ _ _ _ -> process_one_x estate anode rest coer h p) estate anode rest  h p 
+      Debug.no_5 "process_one_normalize" Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula  Cprinter.string_of_mix_formula pr  
+          (fun _ _ _ _ _ -> process_one_x estate anode rest coer h p) estate anode rest  h p
     in
     (*process a list of pairs (anode * rest) *)
     let rec process_one_h h_lst =
@@ -7854,7 +7813,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
                 | DataNode dn -> dn.h_formula_data_name
                 | _ -> 
                       let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode \n") in
-                      ""
+                      ""					  
               in
               let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)
               let lst = List.map (fun c -> (c,anode,rest)) c_lst in

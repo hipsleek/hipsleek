@@ -115,7 +115,7 @@ module Make (Token : SleekTokenS)
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
-     ("barrier", BARRIER);
+     ("Barrier", BARRIER);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
@@ -172,7 +172,7 @@ module Make (Token : SleekTokenS)
 	 ("on", ON);
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
-	 ("#MACRO",PMACRO);
+	 ("macro",PMACRO);
      ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);

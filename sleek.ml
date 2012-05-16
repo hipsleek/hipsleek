@@ -182,10 +182,10 @@ let main () =
                 I.prog_hopred_decls = [];
 				I.prog_barrier_decls = [];
   } in
+  let _ = process_data_def (I.b_data_constr b_datan []) in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = exlist # compute_hierarchy  in
-  let _ = process_data_def (I.b_data_constr "barrier" []) in
+  let _ = exlist # compute_hierarchy  in  
   (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =

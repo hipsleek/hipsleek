@@ -1193,3 +1193,14 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
 
 
+
+let rec find_p_val x v p = match p with 
+  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_) 
+  | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_) -> a=v && b=x
+  | BForm _ -> false
+  | And (f1,f2,_) -> (find_p_val x v f1) || (find_p_val x v f2)
+  | AndList l -> Gen.Basic.exists_l_snd (find_p_val x v) l 
+  | Or (f1,f2,_,_) -> (find_p_val x v f1) && (find_p_val x v f2)
+  | Not (f,_,_) 
+  | Forall (_,f,_,_)
+  | Exists (_,f,_,_)-> find_p_val x v f

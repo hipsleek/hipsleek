@@ -496,13 +496,11 @@ let sprog_int = SHGram.Entry.mk "sprog_int"
 
 EXTEND SHGram
   GLOBAL: sprog hprog sprog_int;
-  sprog:[[ _= macro_list; t = command_list; `EOF -> t ]];
-  sprog_int:[[ _= macro_list; t = command; `EOF -> t ]];
-  hprog:[[ _= macro_list; t = hprogn; `EOF ->  t ]];
+  sprog:[[ t = command_list; `EOF -> t ]];
+  sprog_int:[[ t = command; `EOF -> t ]];
+  hprog:[[ t = hprogn; `EOF ->  t ]];
   
-macro_list: [[ t=LIST0 macro -> List.iter(fun (c1,c2)-> Hashtbl.add !macros c1 c2) t]];
-  
-macro: [[`PMACRO; n=id; `eqeq ; tc=tree_const;`SEMICOLON -> (n,tc)]];
+macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Perm.perm=Dperm then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
   
@@ -513,8 +511,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-	  | t=barrier_decl         -> BarrierCheck t
-      | t = func_decl          -> FuncDef t
+	  | t=barrier_decl        -> BarrierCheck t
+      | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -523,7 +521,8 @@ non_empty_command:
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
-      | t=time_cmd            -> t ]];
+      | t=time_cmd            -> t 
+	  | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -584,7 +583,7 @@ field_list2:[[
  (********** Views **********)
  
 barrier_decl:
-	[[ `BARRIER; `LT;`IDENTIFIER n; `COMMA; thc=integer_literal;`COMMA; shv=LIST0 typed_id_list ;`GT;`EQEQ; bc=barrier_constr -> 
+	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
 		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
   
 
@@ -1112,7 +1111,7 @@ cexp_w :
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
-	  | `AT;t=tree_const  -> Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
+	  | `AT;t=tree_const  -> if !Perm.perm=Dperm then Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1)) else report_error (get_pos 1) ("distinct share reasoning not enabled")
 	  | `ATAT;t=id	-> 
 							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
 							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
@@ -1441,7 +1440,11 @@ hprogn:
       prog_hopred_decls = !hopred_defs;
 	  prog_barrier_decls = !barrier_defs; } ]];
 
-opt_decl_list: [[t=LIST0 decl -> t]];
+opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
+  
+mdecl: 
+	[[ t=macro -> []
+	  |t=decl -> [t]]];
   
 decl:
   [[ t=type_decl                  -> Type t

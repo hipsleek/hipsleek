@@ -984,6 +984,7 @@ let trans_logical_vars lvars =
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
+  print_string "trans_prog\n";
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -4373,7 +4374,10 @@ and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula =
 
 and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) then
 	match e1,e2 with 
-	| CP.Var _ , CP.Var _  -> ()
+	| CP.Var _ , CP.Var _ 
+	| CP.Var _, CP.Tsconst _
+    | CP.Tsconst _, CP.Var _
+	| CP.Tsconst _, CP.Tsconst _ -> ()
 	| CP.Add (e1,e2,_), CP.Var _ 
 	| CP.Var _ , CP.Add (e1,e2,_)-> 
 		(match e1,e2 with 
@@ -4381,8 +4385,8 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
 			  | CP.Var _, CP.Tsconst _
 			  | CP.Tsconst _, CP.Var _
 			  | CP.Tsconst _, CP.Tsconst _ -> ()
-			  | _,_ -> report_error pos "distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c ")
-	| _ -> report_error pos "distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "
+			  | _,_ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1)))
+	| _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
   else ()
   
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
@@ -7374,7 +7378,7 @@ and fm_main g lv =
 and check_barrier_wf prog bd = 
 	(*aux es *)
   
-  let rec wrapp_frac_fv f = match f with
+  (*let rec wrapp_frac_fv f = match f with
     | CF.Or ({CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; CF.formula_or_pos = pos}) ->
          CF.mkOr (wrapp_frac_fv f1) (wrapp_frac_fv f2) pos
     | CF.Base b -> 
@@ -7382,8 +7386,8 @@ and check_barrier_wf prog bd =
         CF.add_quantifiers l f
     | CF.Exists e -> 
         let l = Gen.BList.remove_dups_eq CP.eq_spec_var (MCP.mfv e.CF.formula_exists_pure) in
-        CF.add_quantifiers l f in
-      
+        CF.add_quantifiers l f in*)
+  let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let rec group_tr l =  match l with
     | [] -> []
     | (hf,ht,hp)::t -> 
@@ -7401,7 +7405,7 @@ and check_barrier_wf prog bd =
                         CF.h_formula_data_name = bd.C.barrier_name;
                         CF.h_formula_data_imm = CF.ConstAnn Mutable;
                         CF.h_formula_data_perm = Some v;
-                        CF.h_formula_data_arguments = [st_v];
+                        CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
                         CF.h_formula_data_label = None; 
                         CF.h_formula_data_remaining_branches = None ;
                         CF.h_formula_data_pruning_conditions = [] ;
@@ -7413,6 +7417,7 @@ and check_barrier_wf prog bd =
 	  let p2 = CP.mkEqVarInt st_v st no_pos in
 	  let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
 	  CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+	let f_gen_base st v perm = Debug.no_1 "f_gen_base" (fun c-> "") (fun c-> "") (f_gen_base st v) perm in
 	let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
 	let f_gen_tot st = 
 		let v = CP.fresh_perm_var () in
@@ -7426,18 +7431,22 @@ and check_barrier_wf prog bd =
 		let rs1, _ = Solver.heap_entail_init prog false (CF.SuccCtx[ctx]) f2 no_pos in
 		CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
 	
+	let one_entail f1 f2  = Debug.no_2 "one_entail" Cprinter.string_of_formula Cprinter.string_of_formula Cprinter.string_of_list_context one_entail f1 f2 in
+		
 	let one_ctx_entail c1 c2 =
-		let c2 = match c2 with | CF.SuccCtx l -> List.hd l | _ ->raise (Err.Malformed_barrier "error in check") in
     let r = 
       Gen.Profiling.inc_counter "barrier_proofs"; 
-      (*let f2 = (CF.context_to_formula c2) in
-      let _ = print_string ("entail: "^(Cprinter.string_of_list_context c1) ^" \n entails : "^(Cprinter.string_of_formula f2)^"\n") in*)
+	  let c1 = CF.set_context_formula (CF.Ctx empty_es) c1 in
+      (*let f2 = (CF.context_to_formula c2) in*)
+      (*let _ = print_string ("entail: "^(Cprinter.string_of_list_context c1) ^" \n entails : "^(Cprinter.string_of_formula f2)^"\n") in*)
       (*print_string "cica start\n";*)
-      fst (Solver.heap_entail_init prog false c1 (wrapp_frac_fv (CF.formula_of_context c2)) no_pos) in
+      fst (Solver.heap_entail_init prog false (CF.SuccCtx[c1]) (*wrapp_frac_fv*) c2 no_pos) in
     match r with
-     | CF.SuccCtx l ->  List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l      
+     | CF.SuccCtx l ->  (print_string "\nsuccesfull \n";List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l)
      | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
 	(*end auxes*)
+	
+	let one_ctx_entail c1 c2 = Debug.no_2 "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
 	  	
   let prep_t (fs,ts,fl) = 
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
@@ -7450,33 +7459,59 @@ and check_barrier_wf prog bd =
 		   if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
 		   else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
 		   else (*check precision P * P = false , shold be redundant at this point*)
+		   
         let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
+		let f = Solver.normalize_formula_w_coers prog empty_es f prog.C.prog_left_coercions in
         Gen.Profiling.inc_counter "barrier_proofs";
 			if Solver.unsat_base_nth "0" prog (ref 0) f then (p1,p2)  
 			else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
 	  | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
 	(*the pre sum totals full barrier fs get residue F1*)
 	let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
+	let tot_pre = Solver.normalize_formula_w_coers prog empty_es tot_pre prog.C.prog_left_coercions in
     (*let tot_pre = Solver.normalize_frac_formula prog tot_pre in*)
     (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
   Gen.Profiling.inc_counter "barrier_proofs";
 	if Solver.unsat_base_nth "0" prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
 	else
-		let fpre = one_entail tot_pre (f_gen_tot fs) in
+		let tot_pre_bar = f_gen_tot fs in
+		let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
+		let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
+		let fpre = one_entail tot_pre tot_pre_bar in
 		if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
 		else (*the post sum totals full barrier ts get residue F2*)
 			let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
+			let tot_post = Solver.normalize_formula_w_coers prog empty_es tot_post prog.C.prog_left_coercions in
             (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
 			Gen.Profiling.inc_counter "barrier_proofs";
 			if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
 			else 
-				let fpost = one_entail tot_post (f_gen_tot ts) in
+				let tot_post_bar = f_gen_tot ts in
+				let _ = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
+				let _ = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
+				let fpost = one_entail tot_post tot_post_bar in
 				if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
 				else (*show F1 = F2*)
+				let _ = Debug.devel_zprint (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
+				let _ = Debug.devel_zprint (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
+				
+				
+				let fpre,fpost  = 	(*add existential quantif for pure vars that do not appear on the other side*)
+					
+					let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
+					let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
+					let pre_pure_fv  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  (CF.f_h_fv fpre) in
+					let post_pure_fv = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) (CF.f_h_fv fpost) in
+					let pre_ex = Gen.BList.difference_eq CP.eq_spec_var pre_pure_fv post_pure_fv in
+					let post_ex = Gen.BList.difference_eq CP.eq_spec_var post_pure_fv pre_pure_fv in
+					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
+				
 				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
 				if r then () 
 				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
-  		
+  
+  let prep_t f = Debug.no_1 "prep_t" (fun c-> "") (fun c-> "") prep_t f in
+  
   let prep_grp (st,l) = 
     let incomp f1 f2 = 
       Gen.Profiling.inc_counter "barrier_proofs";
@@ -7485,12 +7520,15 @@ and check_barrier_wf prog bd =
       else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st))) in
 	  let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
     let rec helper l = match l with
-    | [] -> ()
-    | p::r -> helper r ; List.iter (check_one p) r in
+     | [] -> ()
+     | p::r -> helper r ; List.iter (check_one p) r in
     helper l in
-    
-   List.iter prep_t bd.C.barrier_tr_list;
-   List.iter prep_grp (group_tr bd.C.barrier_tr_list)
+   
+  let prep_grp f = Debug.no_1 "prep_grp" (fun c-> "") (fun c-> "") prep_grp f in
+  
+  List.iter prep_t bd.C.barrier_tr_list;
+  List.iter prep_grp (group_tr bd.C.barrier_tr_list)
+   
 
 				
 and trans_bdecl prog bd = 
@@ -7500,11 +7538,15 @@ and trans_bdecl prog bd =
    (*thread count consistency*)
   List.iter (fun (fs,ts,specl)-> if (List.length specl)<> bd.I.barrier_thc then 	
 		raise  (Err.Malformed_barrier (" eroneous thread specification number for transition : "^(string_of_int fs)^"->"^(string_of_int ts))) 
+	else ();
+	if not (List.for_all (IF.find_barr_node bd.I.barrier_name fs ts)  specl) then 
+		raise  (Err.Malformed_barrier (" eroneous thread specification pre/post cond bar states do not match : "^(string_of_int fs)^"->"^(string_of_int ts)))
 	else ()) bd.I.barrier_tr_list;
   let stab = H.create 103 in
   H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
   List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) bd.I.barrier_shared_vars ; 
   let vl = self::(List.map snd bd.I.barrier_shared_vars) in
+  
   let fct f = trans_I2C_struc_formula prog true vl f stab false in
   let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
   let bdef = let fct a l = match l with 
@@ -7521,6 +7563,10 @@ and trans_bdecl prog bd =
     C.barrier_prune_conditions_baga = [];
     C.barrier_prune_invariants = [];}
   
+let trans_bdecl prog bd =
+	let pr_in = Iprinter.string_of_barrier_decl in
+	let pr_out _ = "" in
+	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl prog) bd
   
 (*
 and normalize_barr_decl cprog p = 

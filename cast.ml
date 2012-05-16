@@ -1012,6 +1012,10 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers
+  
+let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
+	let pr1 l = string_of_int (List.length l) in
+	Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "") look_up_coercion_def_raw coers c
   (* match coers with *)
   (* | p :: rest -> begin *)
   (*     let tmp = look_up_coercion_def_raw rest c in *)
@@ -1022,34 +1026,21 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
 
 (*a coercion can be simple, complex or normalizing*)
 let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
-  let lhs_length = 
-    match lhs with
-      | Cformula.Base b  ->
-          let h = b.F.formula_base_heap in
+  let fct f = match f with
+      | Cformula.Base {F.formula_base_heap=h}
+	  | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
-          (List.length hs)
-      | Cformula.Exists e ->
-          let h = e.F.formula_exists_heap in
-          let hs = F.split_star_conjunctions h in
-          (List.length hs)
-      | _ -> 1
+          (List.length hs),List.map F.get_node_name hs
+      | _ -> 1,[]
   in
-  let rhs_length = 
-    match rhs with
-      | F.Base b  ->
-          let h = b.F.formula_base_heap in
-          let hs = F.split_star_conjunctions h in
-          (List.length hs)
-      | F.Exists e ->
-          let h = e.F.formula_exists_heap in
-          let hs = F.split_star_conjunctions h in
-          (List.length hs)
-      | _ -> 1
-  in
-  if (lhs_length=1) then Simple
-  else (**)
-    if (rhs_length<=lhs_length) then Normalize
-    else Complex
+  let lhs_length,lhs_typ = fct lhs in
+  let rhs_length,rhs_typ = fct rhs in
+  match lhs_typ@rhs_typ with
+	| [] -> Simple
+	| h::t -> 
+	    if lhs_length=1 then Simple
+		else if lhs_length=2 && rhs_length=1 && (List.for_all (fun c-> h=c) t) then Normalize
+		else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
     List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers

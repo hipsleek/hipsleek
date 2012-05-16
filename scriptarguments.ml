@@ -149,7 +149,7 @@ let common_arguments = [
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
-	("-perm", Arg.Symbol (["fperm"; "cperm"; "none"], Perm.set_perm),
+	("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
@@ -324,7 +324,7 @@ let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arg
 let check_option_consistency () =
   if !Globals.allow_imm && Perm.allow_perm() then
     begin
-    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at same time"
+    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
     end
 
 Astsimp.inter := !inter;;

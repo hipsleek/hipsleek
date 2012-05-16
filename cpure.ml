@@ -387,7 +387,7 @@ let remove_true_conj_eq (cnjlist:formula list):formula list =
   List.filter (fun x -> not (is_true_conj_eq x)) cnjlist
 
 (*LDK: check duplicated conjuncts of equalities*)
-let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
+(*let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
   match f1,f2 with
     | BForm (b1,_),BForm (b2,_) ->
         (match b1,b2 with
@@ -418,7 +418,7 @@ let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
                 | _ -> false)
           | _ -> false
         )
-    | _ -> false
+    | _ -> false*)
 
 (* (\*LDK: check duplicated conjuncts of equalities*\) *)
 (* let is_dupl_conj_lt (f1:formula) (f2:formula) : bool = *)
@@ -549,8 +549,6 @@ let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
 (*     | _ -> false *)
 
 (*LDK: remove duplicated conjuncts of equalities*)
-let remove_dupl_conj_eq (cnjlist:formula list):formula list =
-Gen.BList.remove_dups_eq is_dupl_conj_eq cnjlist
 
   (* let rec helper ls = *)
   (* match ls with *)
@@ -1400,7 +1398,7 @@ and mkAnd_dumb f1 f2 pos =
 	else if (isConstTrue f2) then f1
 	else And (f1, f2, pos)
 	
-and mkAnd_x f1 f2 pos = 
+and mkAnd_x f1 f2 (*b*) pos = 
   if (isConstFalse f1) then f1
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
@@ -1411,7 +1409,9 @@ and mkAnd_x f1 f2 pos =
 		| AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)])
 		| _ -> And (fal,fnl, pos) in
 	match no_andl f1 , no_andl f2 with 
-		| true, true -> And (f1, f2, pos)
+		| true, true -> And (f1, f2, pos) 
+			(*if b then And (f1, f2, pos) 
+			else 	join_disjunctions (Gen.BList.remove_dups_eq equalFormula ((split_disjunctions f1)@(split_disjunctions f2)))*)
 		| true, false -> helper f2 f1
 		| false, true -> helper f1 f2
 		| false, false ->
@@ -1426,6 +1426,10 @@ and mkAnd_x f1 f2 pos =
 		   | AndList b, f
 		   | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
 		   | _ -> And (f1, f2, pos)
+	  
+(*and mkAnd_chk f1 f2 pos = mkAnd_dups f1 f2 false pos
+	  
+and mkAnd_x f1 f2 pos = mkAnd_dups f1 f2 true pos*)
 	  
 and mkAnd f1 f2 pos = Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
   
@@ -1810,6 +1814,7 @@ and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp lis
   | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp_f eq e1 e2)
   | _ -> false
 *)	      
+and remove_dupl_conj_eq (cnjlist:formula list):formula list = Gen.BList.remove_dups_eq equalFormula cnjlist
 
 and equalFormula (f1:formula)(f2:formula):bool = equalFormula_f eq_spec_var  f1 f2
 
@@ -8054,28 +8059,43 @@ let rec andl_to_and f = match f with
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
 
 
+	
+		
+type tscons_res = 
+	| No_cons
+	| Can_split
+	| No_split
+	
+let join_res t1 t2 = match t1,t2 with
+	| Can_split, Can_split -> Can_split
+	| No_cons,_ -> t2
+	| _, No_cons -> t1
+	| No_split, _ 
+	| _, No_split -> No_split
+	
 let rec has_e_tscons f = match f with
   | Var (v,_) -> (type_of_spec_var v)=Tree_sh
   | Tsconst _ -> true
   | Add (e1,e2,_) -> (has_e_tscons e1)||(has_e_tscons e2)
   | _ -> false
-		
+	
 let has_b_tscons f = match f with 
-  | Eq (e1,e2,_) -> has_e_tscons e1 || has_e_tscons e2
-  | _ -> false 
-		
+  | Eq (e1,e2,_) -> if (has_e_tscons e1)|| (has_e_tscons e2) then Can_split else No_cons
+  | Neq (e1,e2,_)-> if (has_e_tscons e1)|| (has_e_tscons e2) then No_split else No_cons
+  | _ -> No_cons 
+  
 let rec has_tscons f =  match f with 
   | BForm ((f,_),_) -> has_b_tscons f
   | Or (f1,f2,_,_)
-  | And (f1,f2,_)-> (has_tscons f1) ||  (has_tscons f2)
-  | AndList l -> exists_l_snd has_tscons l 
+  | And (f1,f2,_)-> join_res (has_tscons f1)  (has_tscons f2)
+  | AndList l -> fold_l_snd_f join_res has_tscons No_cons l 
   | Not (f,_,_)
   | Forall (_,f,_,_) 
   | Exists (_,f,_,_) -> has_tscons f 
 
 
 let rec tpd_drop_perm f = match f with 
-  | BForm ((b,_),_) -> if has_b_tscons b then mkTrue no_pos else f
+  | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f
   | And (f1,f2,l) -> mkAnd (tpd_drop_perm f1) (tpd_drop_perm f2) l
   | AndList l -> AndList (map_l_snd tpd_drop_perm l)
   | Or _ -> report_error no_pos "to_dnf has failed "
@@ -8084,7 +8104,7 @@ let rec tpd_drop_perm f = match f with
   | Exists (_,f,_,_) -> tpd_drop_perm f
 
 let rec tpd_drop_nperm f = match f with 
-	| BForm ((b,_),_) -> if has_b_tscons b then ([],[b]) else ([],[])
+	| BForm ((b,_),_) -> if has_b_tscons b = Can_split then ([],[b]) else ([],[])
 	| And (f1,f2,l) -> let l1,l2 = tpd_drop_nperm f1 in let r1,r2 = tpd_drop_nperm f2 in l1@r1, l2@r2 
 	| AndList l -> List.fold_left (fun (a1,a2) (_,c)-> let c1,c2 = tpd_drop_nperm c in a1@c1, a2@c2) ([],[]) l 
 	| Or _ -> report_error no_pos "to_dnf has failed "
