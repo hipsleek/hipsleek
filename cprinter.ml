@@ -687,13 +687,20 @@ let pr_slicing_label sl =
 		fmt_string ("]");
 		fmt_string (">")
 
-let pr_var_measures (t_ann, ls1,ls2) = 
-  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-  fmt_string (string_of_term_ann t_ann);
-  pr_s "" pr_formula_exp ls1;
-  if ls2!=[] then
-    pr_set pr_formula_exp ls2
-  else ()
+let pr_var_measures measures =
+  match measures with
+  | TermLex lex -> (
+      let t_ann = lex.CP.lex_ann in
+      let ls1 = lex.CP.lex_exp in
+      let ls2 = lex.CP.lex_tmp in
+      let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+      fmt_string (string_of_term_ann t_ann);
+      pr_s "" pr_formula_exp ls1;
+      if ls2!=[] then
+        pr_set pr_formula_exp ls2
+      else ()
+    )
+  (* | TermSeq seq *) (* TRUNG TODO: implement later *)
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -1428,9 +1435,15 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
-  pr_vwrap "es_var_measures: " (pr_opt (fun (t_ann, l1, l2) ->
-    fmt_string (string_of_term_ann t_ann);
-    pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
+  pr_vwrap "es_var_measures: " (pr_opt (fun term ->
+    match term with
+    | TermLex lex ->
+        let t_ann = lex.CP.lex_ann in
+        let l1 = lex.CP.lex_exp in
+        let l2 = lex.CP.lex_tmp in
+        fmt_string (string_of_term_ann t_ann);
+        pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
+    (* | TermSeq seq  *) (* TRUNG TODO: implement later*)
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)
   pr_vwrap "es_term_err: " (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);

@@ -326,7 +326,8 @@ let find_lexvar_es (es: entail_state) :
   (term_ann * CP.exp list * CP.exp list) =
   match es.es_var_measures with
   | None -> raise LexVar_Not_found
-  | Some (t_ann, el, il) -> (t_ann, el, il)
+  | Some (TermLex lex) -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
+  | _ -> raise LexVar_Not_found
 
 let zero_exp = [CP.mkIConst 0 no_pos]
  
@@ -380,11 +381,11 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
            * and update es_term_err *)
           let term_measures, term_res, term_err_msg =
             if res then (* The measures are decreasing *)
-              Some (t_ann, ml, il), (* Residue of termination *)
+              Some (mkTermLex t_ann ml il no_pos), (* Residue of termination *)
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               None
             else 
-              Some (Fail TermErr_May, ml, il),
+              Some (mkTermLex (Fail TermErr_May) ml il no_pos),
               (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
               Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))) 
           in
@@ -435,13 +436,13 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let t_ann, ml, il = find_lexvar_es estate in
           let term_measures, term_res, term_err_msg, rank_formula =
             if entail_res then (* Decreasing *) 
-              Some (t_ann, ml, il), 
+              Some (mkTermLex t_ann ml il no_pos), 
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               None, 
               None
             else
               if Inf.no_infer_all estate then (* No inference at all *)
-                Some (Fail TermErr_May, ml, il),
+                Some (mkTermLex (Fail TermErr_May) ml il no_pos),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
                 None
@@ -452,7 +453,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * should be updated based on this result: 
                  * MayTerm_S -> Term_S *)
                 (* Assumming Inference will be successed *)
-                Some (t_ann, ml, il),
+                Some (mkTermLex t_ann ml il no_pos),
                 (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 None, 
                 Some rank_formula  
@@ -521,9 +522,9 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           add_term_err_stk (string_of_term_res term_res);
           let term_measures = match t_ann_d with
             | Loop 
-            | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
+            | Fail TermErr_Must -> Some (mkTermLex (Fail TermErr_Must) src_lv src_il no_pos)
             | MayLoop 
-            | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
+            | Fail TermErr_May -> Some (mkTermLex (Fail TermErr_May) src_lv src_il no_pos)
             | Term -> failwith "unexpected Term in check_term_rhs"
           in
           let term_err = match estate.es_term_err with
@@ -537,16 +538,16 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
-          let term_measures = Some (Loop, [], []) in 
+          let term_measures = Some (mkTermLex Loop [] [] no_pos) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (MayLoop, _) ->
-          let term_measures = Some (MayLoop, [], []) in 
+          let term_measures = Some (mkTermLex MayLoop [] [] no_pos) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Fail TermErr_Must, _) ->
           let n_estate = {estate with 
-            es_var_measures = Some (Fail TermErr_Must, src_lv, src_il);
+            es_var_measures = Some (mkTermLex (Fail TermErr_Must) src_lv src_il no_pos);
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
@@ -594,7 +595,7 @@ let strip_lexvar_lhs (ctx: context) : context =
         let t_ann, ml, il, _ = find_lexvar_formula lv in 
         Ctx { es with 
           es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
-          es_var_measures = Some (t_ann, ml, il); 
+          es_var_measures = Some (mkTermLex t_ann ml il no_pos); 
         }
     | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
   in transform_context es_strip_lexvar_lhs ctx
@@ -1209,7 +1210,8 @@ let rec get_loop_ctx c =
   match c with
     | Ctx es -> (match es.es_var_measures with
         | None -> []
-        | Some (a,_,_) -> if a==Loop then [es] else []
+        | Some (TermLex lex) -> if lex.CP.lex_ann == Loop then [es] else []
+        (* | Some (TermSeq seq) *) (* TRUNG TODO : implement later *)
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 

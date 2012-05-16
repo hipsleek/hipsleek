@@ -307,7 +307,8 @@ and check_bounded_term_x prog ctx post_pos =
       | CF.Ctx es ->  
           let m = match es.CF.es_var_measures with
             | None -> []
-            | Some (_, ml, _) -> ml
+            | Some (CF.TermLex lex) -> lex.CP.lex_exp
+            (* | Some (TermSeq seq) *) (* TRUNG TODO: implement later *)
           in 
           let _ = Debug.trace_hprint (add_str "Measures" (pr_list !CP.print_exp)) m no_pos in
           let _ = Debug.trace_hprint (add_str "Orig context" !CF.print_context) ctx no_pos in
