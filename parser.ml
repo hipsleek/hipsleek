@@ -1055,11 +1055,12 @@ cexp_w :
 	  set_slicing_utils_pure_double f false
       | t_ann = ann_term; param = measures_seq_dec ->
           let (m, fp, lb, ub) = param in
-          let seq = P.SeqVar { P.element = m;
-                               P.fix_point = fp;
-                               P.lower_bound = lb;
-                               P.upper_bound = ub;
-                               P.variation = P.Dec;
+          let seq = P.SeqVar { P.seq_ann = t_ann;
+                               P.seq_element = m;
+                               P.seq_fix_point = fp;
+                               P.seq_lower_bound = lb;
+                               P.seq_upper_bound = ub;
+                               P.seq_variation = P.Dec;
                                P.seq_loc = get_pos_camlp4 _loc 1} in
           let f = Pure_f (P.BForm ((seq, None), None)) in
           set_slicing_utils_pure_double f false
