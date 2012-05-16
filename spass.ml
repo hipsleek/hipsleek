@@ -247,35 +247,37 @@ and collect_combine_formula_info_raw f1 f2 =
 	combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
 
 and collect_bformula_info b = match b with
-	| Cpure.BConst _ | Cpure.BVar _ -> default_formula_info
-	| Cpure.Lt (e1,e2,_) | Cpure.Lte (e1,e2,_) | Cpure.SubAnn (e1,e2,_) | Cpure.Gt (e1,e2,_) 
-	| Cpure.Gte (e1,e2,_) | Cpure.Eq (e1,e2,_) | Cpure.Neq (e1,e2,_) -> 
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2
-	| Cpure.EqMax (e1,e2,e3,_) | Cpure.EqMin (e1,e2,e3,_) ->
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		let ef3 = collect_exp_info e3 in
-			combine_formula_info (combine_formula_info ef1 ef2) ef3
-	| Cpure.BagIn _ 
-	| Cpure.BagNotIn _ 
-	| Cpure.BagSub _
-	| Cpure.BagMin _
-	| Cpure.BagMax _ 
-	| Cpure.ListIn _
-	| Cpure.ListNotIn _
-	| Cpure.ListAllN _
-	| Cpure.VarPerm _
-	| Cpure.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-	| Cpure.LexVar _ -> default_formula_info
-	| Cpure.RelForm (r,args,_) ->
-          let r = CP.name_of_spec_var r in
-		if r = "update_array" then
-			default_formula_info 
-		else let rinfo = { default_formula_info with relations = [r]; } in
-			let args_infos = List.map collect_exp_info args in
-				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
+  | Cpure.BConst _ | Cpure.BVar _ -> default_formula_info
+  | Cpure.Lt (e1,e2,_) | Cpure.Lte (e1,e2,_) | Cpure.SubAnn (e1,e2,_) | Cpure.Gt (e1,e2,_) 
+  | Cpure.Gte (e1,e2,_) | Cpure.Eq (e1,e2,_) | Cpure.Neq (e1,e2,_) -> 
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      combine_formula_info ef1 ef2
+  | Cpure.EqMax (e1,e2,e3,_) | Cpure.EqMin (e1,e2,e3,_) ->
+    let ef1 = collect_exp_info e1 in
+    let ef2 = collect_exp_info e2 in
+    let ef3 = collect_exp_info e3 in
+    combine_formula_info (combine_formula_info ef1 ef2) ef3
+  | Cpure.BagIn _ 
+  | Cpure.BagNotIn _ 
+  | Cpure.BagSub _
+  | Cpure.BagMin _
+  | Cpure.BagMax _ 
+  | Cpure.ListIn _
+  | Cpure.ListNotIn _
+  | Cpure.ListAllN _
+  | Cpure.VarPerm _
+  | Cpure.ListPerm _
+  | Cpure.LexVar _
+  | Cpure.SeqVar _ -> default_formula_info
+  | Cpure.RelForm (r,args,_) -> 
+      let r = CP.name_of_spec_var r in
+      if r = "update_array" then
+        default_formula_info 
+      else
+        let rinfo = { default_formula_info with relations = [r]; } in
+        let args_infos = List.map collect_exp_info args in
+        combine_formula_info_list (rinfo :: args_infos)
 
 and collect_exp_info e = match e with
 	| Cpure.Null _ | Cpure.Var _ | Cpure.AConst _ | Cpure.IConst _ | Cpure.FConst _ -> default_formula_info
@@ -601,7 +603,7 @@ and start() =
 let stop () =
   if !is_z3_running then begin
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations\n"); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !prover_process num_tasks Sys.sigkill (fun () -> ()) in
     is_z3_running := false;
   end
@@ -609,11 +611,11 @@ let stop () =
 (* restart Z3 system *)
 let restart reason =
   if !is_z3_running then begin
-    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations ") in
+    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations\n") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
   end
   else begin
-    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in ()
+    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations\n") in ()
     end
 
 
