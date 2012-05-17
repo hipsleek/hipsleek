@@ -224,11 +224,6 @@ approx_disj_or_d2 : approx_disj }
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
-(* measurement for proving termination *)
-and term_measurement = 
-  | TermLex of CP.lex_info
-  | TermSeq of CP.sequence_info
-
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
@@ -452,19 +447,6 @@ and mkEBase f ct pos = EBase {
   }
 
 and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp h (MCP.mix_of_pure p)) ct no_pos
-
-and mkTermLex ann ml il pos = TermLex { CP.lex_ann = ann;
-                                        CP.lex_exp = ml;
-                                        CP.lex_tmp = il;
-                                        CP.lex_loc = pos; }
-
-and mkTermSeq ann elm fp lb ub vari pos = TermSeq { CP.seq_ann = ann;
-                                                    CP.seq_element = elm;
-                                                    CP.seq_fix_point = fp;
-                                                    CP.seq_lower_bound = lb;
-                                                    CP.seq_upper_bound = ub;
-                                                    CP.seq_variation = vari;
-                                                    CP.seq_loc = no_pos; }
 
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
@@ -3046,8 +3028,7 @@ think it is used to instantiate when folding.
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For Termination checking *)
-  (* Term ann with Lexical ordering *)
-  es_var_measures : term_measurement option;
+  es_var_measures : CP.p_formula option;
   (* es_var_stack :  string list; *)
   (* this should store first termination error detected *)
   (* in case an error has already been detected *)
@@ -4012,8 +3993,9 @@ let rec collect_term_ann_context ctx =
   | Ctx es -> (
       match es.es_var_measures with
       | None -> []
-      | Some (TermLex lex) -> [lex.CP.lex_ann]
-      | Some (TermSeq seq) -> [seq.CP.seq_ann]
+      | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
+      | Some (CP.SeqVar seq) -> [seq.CP.seq_ann]
+      | _ -> report_error no_pos "Invalid value for es_var_measures"
     )
   | OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
 
@@ -4053,8 +4035,9 @@ let rec collect_term_measures_context ctx =
   | Ctx es -> (
       match es.es_var_measures with
       | None -> []
-      | Some (TermLex lex) -> [lex.CP.lex_ann]
-      | Some (TermSeq seq) -> [seq.CP.seq_ann]
+      | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
+      | Some (CP.SeqVar seq) -> [seq.CP.seq_ann]
+      | _ -> report_error no_pos "Invalid value for es_var_measures"
     )
   | OCtx (ctx1, _) -> collect_term_measures_context ctx1
 
@@ -5100,17 +5083,18 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
 	  let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in
       let mix_f = match esvm with
         | None -> mix_f
-        | Some (TermLex lex) ->
+        | Some (CP.LexVar lex) ->
             let ta = lex.CP.lex_ann in
             let l1 = lex.CP.lex_exp in
             let l2 = lex.CP.lex_tmp in
             let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true
-        | Some (TermSeq seq) ->
+        | Some (CP.SeqVar seq) ->
             let m = CP.mkPure (CP.SeqVar seq) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
-            MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
+            MCP.merge_mems mix_f (MCP.mix_of_pure m) true
+        | _ -> report_error no_pos "Invalid value for esvm" in
       (*TO CHECK*)
       let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
@@ -7540,7 +7524,24 @@ let rec has_lexvar_formula f =
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
 
-     
+let rec has_seqvar_formula f =
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, a = split_components f in 
+      CP.has_seqvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      (has_seqvar_formula f1) || (has_seqvar_formula f2)
+
+let rec has_termvar_formula f =
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, a = split_components f in 
+      CP.has_termvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      (has_termvar_formula f1) || (has_termvar_formula f2)
+
 let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
   | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_lexvar is_primitive) ef.formula_case_branches }
   | EBase ef ->

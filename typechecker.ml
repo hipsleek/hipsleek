@@ -302,13 +302,14 @@ and check_bounded_term_x prog ctx post_pos =
   
   if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx, [])
   else 
-    let ctx = Term.strip_lexvar_lhs ctx in
+    let ctx = Term.strip_termvar_lhs ctx in
     match ctx with
       | CF.Ctx es ->  
           let m = match es.CF.es_var_measures with
             | None -> []
-            | Some (CF.TermLex lex) -> lex.CP.lex_exp
-            | Some (CF.TermSeq _) -> report_error no_pos ("Unexpect to check termination by sequence here")
+            | Some (CP.LexVar lex) -> lex.CP.lex_exp
+            | Some (CP.SeqVar _) -> report_error no_pos ("Unexpect to check termination by sequence here")
+            | _ -> report_error no_pos ("Invalid value of es_var_measures")
           in 
           let _ = Debug.trace_hprint (add_str "Measures" (pr_list !CP.print_exp)) m no_pos in
           let _ = Debug.trace_hprint (add_str "Orig context" !CF.print_context) ctx no_pos in
@@ -356,7 +357,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************) 
-            let ctx,ext_base = if (!Globals.ann_vp) && (not (CF.has_lexvar_formula b.CF.formula_struc_base)) then
+            let ctx,ext_base = if (!Globals.ann_vp) && (not (CF.has_termvar_formula b.CF.formula_struc_base)) then
                   check_varperm prog proc spec ctx b.CF.formula_struc_base pos_spec 
                 else (ctx,b.CF.formula_struc_base)
             in

@@ -122,6 +122,7 @@ and omega_of_b_formula b =
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
+  | SeqVar _ -> illegal_format ("Omega.omega_of_exp: SeqVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula pr_w pr_s f  =

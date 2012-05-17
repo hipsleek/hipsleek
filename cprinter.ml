@@ -692,9 +692,9 @@ let pr_slicing_label sl =
 		fmt_string ("]");
 		fmt_string (">")
 
-let pr_var_measures measures =
+let pr_var_measures (measures : CP.p_formula) : unit =
   match measures with
-  | TermLex lex -> (
+  | CP.LexVar lex -> (
       let t_ann = lex.CP.lex_ann in
       let ls1 = lex.CP.lex_exp in
       let ls2 = lex.CP.lex_tmp in
@@ -705,7 +705,7 @@ let pr_var_measures measures =
         pr_set pr_formula_exp ls2
       else ()
     )
-  | TermSeq seq -> (
+  | CP.SeqVar seq -> (
       let ann = seq.CP.seq_ann in
       let elm = seq.CP.seq_element in
       let fp = seq.CP.seq_fix_point in
@@ -716,8 +716,9 @@ let pr_var_measures measures =
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
       fmt_string ((string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
       pr_s "" pr_formula_exp ls;
-      fmt_string (")]");
+      fmt_string (")]")
     )
+  | _ -> failwith "Invalid value of measures"
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -1454,13 +1455,13 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_vwrap "es_var_measures: " (pr_opt (fun term ->
     match term with
-    | TermLex lex ->
+    | CP.LexVar lex ->
         let t_ann = lex.CP.lex_ann in
         let l1 = lex.CP.lex_exp in
         let l2 = lex.CP.lex_tmp in
         fmt_string (string_of_term_ann t_ann);
         pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
-    | TermSeq seq ->
+    | CP.SeqVar seq ->
         let ann = seq.CP.seq_ann in
         let elm = seq.CP.seq_element in
         let fp = seq.CP.seq_fix_point in
@@ -1471,6 +1472,7 @@ let pr_estate (es : entail_state) =
         fmt_string ((string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
         pr_seq "" pr_formula_exp ls;
         fmt_string "])"
+    | _ -> failwith "Invalid value of term"
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)
   pr_vwrap "es_term_err: " (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);

@@ -1265,6 +1265,7 @@ match pf with
             (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
   | RelForm _ 
+  | SeqVar _
   | _ -> false (* An Hoa *)
 
 (* Expression *)
@@ -7630,7 +7631,7 @@ let rec has_func_exp (e: exp) : bool = match e with
   | _ -> false
 
 and has_func_pf (pf: p_formula) : bool = match pf with
-  | LexVar _ -> false
+  | LexVar _ | SeqVar _ -> false
   | Lt (e1,e2,_)
   | Lte (e1,e2,_)
   | Gt (e1,e2,_)
@@ -7662,6 +7663,20 @@ let is_lexvar (f:formula) : bool =
                 | _ -> false)
     | _ -> false
 
+(** is sequence var *)
+let is_seqvar (f:formula) : bool =
+  match f with
+  | BForm ((b,_),_) -> ( 
+      match b with
+      | SeqVar _ -> true
+      | _ -> false
+    )
+  | _ -> false
+
+(** is termination var *)
+let is_termvar (f: formula) : bool = 
+  (is_lexvar f) || (is_seqvar f) 
+
 let rec has_lexvar (f: formula) : bool =
   match f with
   | BForm _ -> is_lexvar f
@@ -7671,6 +7686,21 @@ let rec has_lexvar (f: formula) : bool =
   | Not (f, _, _) -> has_lexvar f
   | Forall (_, f, _, _)
   | Exists (_, f, _, _) -> has_lexvar f
+
+(** has sequence var *)
+let rec has_seqvar (f: formula) : bool =
+  match f with
+  | BForm _ -> is_seqvar f
+  | And (f1, f2, _) -> (has_seqvar f1) || (has_seqvar f2)
+  | AndList b -> exists_l_snd has_seqvar b
+  | Or (f1, f2, _, _) -> (has_seqvar f1) && (has_seqvar f2)
+  | Not (f, _, _) -> has_seqvar f
+  | Forall (_, f, _, _)
+  | Exists (_, f, _, _) -> has_seqvar f
+
+(** has termination var *)
+let has_termvar (f: formula) : bool =
+  (has_lexvar f) || (has_seqvar f)
 
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
@@ -8007,6 +8037,10 @@ and count_term_b_formula bf =
   match pf with
   | LexVar t_info ->
       (match t_info.lex_ann with
+        | Term -> 1
+        | _ -> 0)
+  | SeqVar t_info ->
+      (match t_info.seq_ann with
         | Term -> 1
         | _ -> 0)
   | _ -> 0

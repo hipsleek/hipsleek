@@ -1,13 +1,13 @@
+open Gen.Basic
+open Globals
+open Cprinter
+open Cformula
+
 module CP = Cpure
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
 module Inf = Infer
-
-open Gen.Basic
-open Globals
-open Cprinter
-open Cformula
 
 type phase_trans = int * int
 
@@ -267,6 +267,8 @@ let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 
 (* To find a LexVar formula *)
 exception LexVar_Not_found;;
+exception SeqVar_Not_found;;
+exception TermVar_Not_found;;
 exception Invalid_Phase_Num;;
 
 (* let rec has_variance_struc struc_f = *)
@@ -295,19 +297,48 @@ exception Invalid_Phase_Num;;
 (*	 let vi = v.formula_var_infer in *)
 (*   (Term, vm, vi) *)
   
-let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list * loc) =
+let find_lexvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
-  | CP.LexVar t_info -> (t_info.CP.lex_ann, t_info.CP.lex_exp, t_info.CP.lex_tmp, t_info.CP.lex_loc)
+  | CP.LexVar _ -> pf
   | _ -> raise LexVar_Not_found
 
-let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list * loc) =
+let rec find_lexvar_formula (f: CP.formula) : CP.p_formula =
   match f with
   | CP.BForm (bf, _) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
   | _ -> raise LexVar_Not_found
+
+let find_seqvar_b_formula (bf: CP.b_formula) : CP.p_formula =
+  let (pf, _) = bf in
+  match pf with
+  | CP.SeqVar _ -> pf
+  | _ -> raise SeqVar_Not_found
+
+let rec find_seqvar_formula (f: CP.formula) : CP.p_formula =
+  match f with
+  | CP.BForm (bf, _) -> find_seqvar_b_formula bf
+  | CP.And (f1, f2, _) ->
+      (try find_seqvar_formula f1
+      with _ -> find_seqvar_formula f2)
+  | _ -> raise SeqVar_Not_found
+
+let find_termvar_b_formula (bf: CP.b_formula) : CP.p_formula =
+  let (pf, _) = bf in
+  match pf with
+  | CP.LexVar _
+  | CP.SeqVar _ -> pf
+  | _ -> raise TermVar_Not_found
+
+let rec find_termvar_formula (f: CP.formula) : CP.p_formula =
+  match f with
+  | CP.BForm (bf, _) -> find_termvar_b_formula bf
+  | CP.And (f1, f2, _) ->
+      (try find_termvar_formula f1
+      with _ -> find_termvar_formula f2)
+  | _ -> raise TermVar_Not_found
 
 (* To syntactically simplify LexVar formula *) 
 (* (false,[]) means not decreasing *)
@@ -326,8 +357,23 @@ let find_lexvar_es (es: entail_state) :
   (term_ann * CP.exp list * CP.exp list) =
   match es.es_var_measures with
   | None -> raise LexVar_Not_found
-  | Some (TermLex lex) -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
+  | Some (CP.LexVar lex) -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
   | _ -> raise LexVar_Not_found
+
+(** find sequence var in entail_state*)
+let find_seqvar_es (es: entail_state) : 
+  (term_ann * CP.exp * CP.exp * CP.exp * CP.exp * CP.sequence_variation_type) =
+  match es.es_var_measures with
+  | None -> raise SeqVar_Not_found
+  | Some (CP.SeqVar seq) ->
+      let ann = seq.CP.seq_ann in
+      let elm = seq.CP.seq_element in
+      let fp = seq.CP.seq_fix_point in
+      let lb = seq.CP.seq_lower_bound in
+      let ub = seq.CP.seq_upper_bound in
+      let v = seq.CP.seq_variation in
+      (ann, elm, fp, lb, ub, v) 
+  | _ -> raise SeqVar_Not_found
 
 let zero_exp = [CP.mkIConst 0 no_pos]
  
@@ -345,14 +391,38 @@ let norm_term_measures_by_length src dst =
     else Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
   else Some (src, Gen.BList.take sl dst)
 
+(** strip lexvar from a formula
+    return: lexvar * remained formula *)
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let mf_p = MCP.pure_of_mix mf in
   let mf_ls = CP.split_conjunctions mf_p in
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
+(** strip seqvar from a formula
+    return: seqvar * remained formula *)
+let strip_seqvar_mix_formula (mf: MCP.mix_formula) =
+  let mf_p = MCP.pure_of_mix mf in
+  let mf_ls = CP.split_conjunctions mf_p in
+  let (seqvar, other_p) = List.partition (CP.is_seqvar) mf_ls in
+  (seqvar, CP.join_conjunctions other_p)
+
+(** strip termination var from a formula
+    return: termvar * remained formula *)
+let strip_termvar_mix_formula (mf: MCP.mix_formula) =
+  let mf_p = MCP.pure_of_mix mf in
+  let mf_ls = CP.split_conjunctions mf_p in
+  let (termforms, other_p) = List.partition (CP.is_termvar) mf_ls in
+  let extract_termvar (f : CP.formula) : CP.p_formula =
+    match f with
+    | CP.BForm ((CP.LexVar lex,_),_) -> CP.LexVar lex
+    | CP.BForm ((CP.SeqVar lex,_),_) -> CP.SeqVar lex 
+    | _ -> failwith "Invalid value of f" in 
+  let termvars = List.map extract_termvar termforms in
+  (termvars, CP.join_conjunctions other_p)
+
 (* Termination: The boundedness checking for HIP has been done before *)  
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -381,11 +451,11 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
            * and update es_term_err *)
           let term_measures, term_res, term_err_msg =
             if res then (* The measures are decreasing *)
-              Some (mkTermLex t_ann ml il no_pos), (* Residue of termination *)
+              Some (CP.mkLexVar t_ann ml il no_pos), (* Residue of termination *)
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               None
             else 
-              Some (mkTermLex (Fail TermErr_May) ml il no_pos),
+              Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
               (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
               Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))) 
           in
@@ -436,13 +506,13 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let t_ann, ml, il = find_lexvar_es estate in
           let term_measures, term_res, term_err_msg, rank_formula =
             if entail_res then (* Decreasing *) 
-              Some (mkTermLex t_ann ml il no_pos), 
+              Some (CP.mkLexVar t_ann ml il no_pos), 
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               None, 
               None
             else
               if Inf.no_infer_all estate then (* No inference at all *)
-                Some (mkTermLex (Fail TermErr_May) ml il no_pos),
+                Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
                 None
@@ -453,7 +523,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * should be updated based on this result: 
                  * MayTerm_S -> Term_S *)
                 (* Assumming Inference will be successed *)
-                Some (mkTermLex t_ann ml il no_pos),
+                Some (CP.mkLexVar t_ann ml il no_pos),
                 (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 None, 
                 Some rank_formula  
@@ -474,7 +544,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -489,17 +559,20 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             (add_str "rhs" pr) 
             (add_str "rank_fml" (pr_option pr1)) 
             (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+      (fun _ _ _ _ _ -> check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
+      let lexvar = find_lexvar_formula conseq in
+      let t_ann_d, dst_lv, l_pos = match lexvar with
+        | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_loc)
+        | _ -> raise LexVar_Not_found in
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
@@ -512,7 +585,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
-          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
+          check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
@@ -522,10 +595,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           add_term_err_stk (string_of_term_res term_res);
           let term_measures = match t_ann_d with
             | Loop 
-            | Fail TermErr_Must -> Some (mkTermLex (Fail TermErr_Must) src_lv src_il no_pos)
+            | Fail TermErr_Must -> Some (CP.mkLexVar (Fail TermErr_Must) src_lv src_il no_pos)
             | MayLoop 
-            | Fail TermErr_May -> Some (mkTermLex (Fail TermErr_May) src_lv src_il no_pos)
-            | Term -> failwith "unexpected Term in check_term_rhs"
+            | Fail TermErr_May -> Some (CP.mkLexVar (Fail TermErr_May) src_lv src_il no_pos)
+            | Term -> failwith "unexpected Term in check_term_lexvar_rhs"
           in
           let term_err = match estate.es_term_err with
             | None ->  Some (string_of_term_res term_res)
@@ -538,28 +611,20 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
-          let term_measures = Some (mkTermLex Loop [] [] no_pos) in 
+          let term_measures = Some (CP.mkLexVar Loop [] [] no_pos) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (MayLoop, _) ->
-          let term_measures = Some (mkTermLex MayLoop [] [] no_pos) in 
+          let term_measures = Some (CP.mkLexVar MayLoop [] [] no_pos) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Fail TermErr_Must, _) ->
           let n_estate = {estate with 
-            es_var_measures = Some (mkTermLex (Fail TermErr_Must) src_lv src_il no_pos);
+            es_var_measures = Some (CP.mkLexVar (Fail TermErr_Must) src_lv src_il no_pos);
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
   with _ -> (estate, lhs_p, rhs_p, None)
-
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if (!Globals.dis_term_chk) or (estate.es_term_err != None) then 
-    let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-    let rhs_p = MCP.mix_of_pure rhs_p in
-    (estate, lhs_p, rhs_p, None)
-  else
-    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos 
 
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
   (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos *)
@@ -569,17 +634,113 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let rhs_p = MCP.mix_of_pure rhs_p in *)
   (*   (estate, lhs_p, rhs_p, None) *)
 
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
    Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+      (fun _ _ _ -> check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+
+(* To handle SeqVar formula *)
+(* Remember to remove SeqVar in RHS *)
+let check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  (estate, lhs_p, rhs_p, None)
+  (* try                                                                                           *)
+  (*   begin                                                                                       *)
+  (*     let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in                  *)
+  (*     let conseq = MCP.pure_of_mix rhs_p in                                                     *)
+  (*     let seqvar = find_seqvar_formula conseq in                                                *)
+  (*     let t_ann_d, dst_lv, l_pos = match seqvar with                                            *)
+  (*       | CP.SeqVar seq -> (seq.CP.seq_ann, seq.CP.seq_exp, seq.CP.seq_loc)                     *)
+  (*       | _ -> raise SeqVar_Not_found in                                                        *)
+  (*     let t_ann_s, src_lv, src_il = find_seqvar_es estate in                                    *)
+  (*     let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in                               *)
+  (*     let t_ann_trans_opt = Some t_ann_trans in                                                 *)
+  (*     let _, rhs_p = strip_seqvar_mix_formula rhs_p in                                          *)
+  (*     let rhs_p = MCP.mix_of_pure rhs_p in                                                      *)
+  (*     let p_pos = post_pos # get in                                                             *)
+  (*     let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *) *)
+  (*     let term_pos = (p_pos, proving_loc # get) in                                              *)
+  (*     match (t_ann_s, t_ann_d) with                                                             *)
+  (*     | (Term, Term)                                                                            *)
+  (*     | (Fail TermErr_May, Term) ->                                                             *)
+  (*         (* Check wellfoundedness of the transition *)                                         *)
+  (*         check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p               *)
+  (*           src_lv dst_lv t_ann_trans_opt l_pos                                                 *)
+  (*     | (Term, _)                                                                               *)
+  (*     | (Fail TermErr_May, _) ->                                                                *)
+  (*         let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,                    *)
+  (*           TermErr (Invalid_Status_Trans t_ann_trans)) in                                      *)
+  (*         add_term_res_stk term_res;                                                            *)
+  (*         add_term_err_stk (string_of_term_res term_res);                                       *)
+  (*         let term_measures = match t_ann_d with                                                *)
+  (*           | Loop                                                                              *)
+  (*           | Fail TermErr_Must -> Some (CP.mkSeqVar (Fail TermErr_Must) src_lv src_il no_pos)  *)
+  (*           | MayLoop                                                                           *)
+  (*           | Fail TermErr_May -> Some (CP.mkSeqVar (Fail TermErr_May) src_lv src_il no_pos)    *)
+  (*           | Term -> failwith "unexpected Term in check_term_seqvar_rhs"                       *)
+  (*         in                                                                                    *)
+  (*         let term_err = match estate.es_term_err with                                          *)
+  (*           | None ->  Some (string_of_term_res term_res)                                       *)
+  (*           | Some _ -> estate.es_term_err                                                      *)
+  (*         in                                                                                    *)
+  (*         let n_estate = {estate with                                                           *)
+  (*           es_var_measures = term_measures;                                                    *)
+  (*           (* es_var_stack = (string_of_term_res term_res)::estate.es_var_stack; *)            *)
+  (*           es_term_err = term_err;                                                             *)
+  (*         } in                                                                                  *)
+  (*         (n_estate, lhs_p, rhs_p, None)                                                        *)
+  (*     | (Loop, _) ->                                                                            *)
+  (*         let term_measures = Some (CP.mkSeqVar Loop [] [] no_pos) in                           *)
+  (*         let n_estate = {estate with es_var_measures = term_measures} in                       *)
+  (*         (n_estate, lhs_p, rhs_p, None)                                                        *)
+  (*     | (MayLoop, _) ->                                                                         *)
+  (*         let term_measures = Some (CP.mkSeqVar MayLoop [] [] no_pos) in                        *)
+  (*         let n_estate = {estate with es_var_measures = term_measures} in                       *)
+  (*         (n_estate, lhs_p, rhs_p, None)                                                        *)
+  (*     | (Fail TermErr_Must, _) ->                                                               *)
+  (*         let n_estate = {estate with                                                           *)
+  (*           es_var_measures = Some (CP.mkSeqVar (Fail TermErr_Must) src_lv src_il no_pos);      *)
+  (*         } in                                                                                  *)
+  (*         (n_estate, lhs_p, rhs_p, None)                                                        *)
+  (*   end                                                                                         *)
+  (* with _ -> (estate, lhs_p, rhs_p, None)                                                        *)
+
+
+let check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  let pr = !print_mix_formula in
+  let pr2 = !print_entail_state in
+   Debug.no_3 "trans_seqvar_rhs" pr2 pr pr
+    (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+      (fun _ _ _ -> check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+
+(* To handle Termination Var formula *)
+(* Remember to remove SeqVar in RHS *)
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  (estate, lhs_p, rhs_p, None)
+
+(* To handle Termination var formula *)
+(* Remember to remove SeqVar in RHS *)
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  if (!Globals.dis_term_chk) or (estate.es_term_err != None) then 
+    let _, rhs_p = strip_termvar_mix_formula rhs_p in
+    let rhs_p = MCP.mix_of_pure rhs_p in
+    (estate, lhs_p, rhs_p, None)
+  else
+    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos 
+
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  let pr = !print_mix_formula in
+  let pr2 = !print_entail_state in
+   Debug.no_3 "trans_termvar_rhs" pr2 pr pr
+    (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
-let strip_lexvar_lhs (ctx: context) : context =
-  let es_strip_lexvar_lhs (es: entail_state) : context =
+(** strip the termination var from lhs of a context and move it to es_var_measures *)
+let strip_termvar_lhs (ctx: context) : context =
+  let es_strip_termvar_lhs (es: entail_state) : context =
     let _, pure_f, _, _, _ = split_components es.es_formula in
-    let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
+    let (termvars, other_p) = strip_termvar_mix_formula pure_f in
     (* Using transform_formula to update the pure part of es_f *)
     let f_e_f _ = None in
     let f_f _ = None in
@@ -589,20 +750,19 @@ let strip_lexvar_lhs (ctx: context) : context =
     let f_p_f pf = Some other_p in
     let f_b _ = None in
     let f_e _ = None in
-    match lexvar with
+    match termvars with
     | [] -> Ctx es
-    | lv::[] -> 
-        let t_ann, ml, il, _ = find_lexvar_formula lv in 
+    | termvar::[] -> 
         Ctx { es with 
           es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
-          es_var_measures = Some (mkTermLex t_ann ml il no_pos); 
+          es_var_measures = Some (termvar); 
         }
-    | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-  in transform_context es_strip_lexvar_lhs ctx
+    | _ -> report_error no_pos "[term.ml][strip_termvar_lhs]: More than one LexVar to be stripped." 
+  in transform_context es_strip_termvar_lhs ctx
 
-let strip_lexvar_lhs (ctx: context) : context =
+let strip_termvar_lhs (ctx: context) : context =
   let pr = Cprinter.string_of_context in
-  Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
+  Debug.no_1 "strip_termvar_lhs" pr pr strip_termvar_lhs ctx
 
 (* End of LexVar handling *) 
 
@@ -1211,8 +1371,8 @@ let rec get_loop_ctx c =
     | Ctx es -> (
         match es.es_var_measures with
         | None -> []
-        | Some (TermLex lex) -> if lex.CP.lex_ann == Loop then [es] else []
-        | Some (TermSeq seq) -> if seq.CP.seq_ann == Loop then [es] else []
+        | Some (CP.LexVar lex) -> if lex.CP.lex_ann == Loop then [es] else []
+        | Some (CP.SeqVar seq) -> if seq.CP.seq_ann == Loop then [es] else []
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 

@@ -3198,8 +3198,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 			true)
 	  in (* End of process_entail_state *)
 
-  (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
-  let ctx = Term.strip_lexvar_lhs ctx in
+  (* Termination: Strip the Termination Var in the pure part of LHS - Move it to es_var_measures *)
+  let ctx = Term.strip_termvar_lhs ctx in
 
   (* Call the internal function to do the unfolding and do the checking *)
   let temp,dup = if !unfold_duplicated_pointers then
@@ -5004,7 +5004,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let t_ann, ml, il = Term.find_lexvar_es estate in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
               let term_measures, term_res, term_err_msg =
-                Some (mkTermLex (Fail TermErr_May) ml il no_pos),
+                Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                 Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
@@ -8406,7 +8406,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
 (*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
     let h, p, fl, t, a = split_components pre_fml in
-    let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
+    let p1,p2 = List.partition CP.is_termvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos in
     let p = if lst_assume = [] then p
       else
