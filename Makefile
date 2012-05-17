@@ -5,12 +5,14 @@ JOBS = 0
 
 # dynlink should precede camlp4lib
 LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries
-LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,z3
+LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries
+#,z3
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/batteries
 
-FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
+FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+# ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
 OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
