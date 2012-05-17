@@ -19,32 +19,21 @@ pred ll<n, v1, v2> == self = null & n = 0
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
 
-//lemma "tst1" self::ll<n,v1,v2> -> self::node<a,b>.
 
-/*
-pred ls<s,n, v1, v2> == self = null & n = 0 & s=0
-	or self::node<a, q>@v1 * a::cell<v>@v2 * q::ls<s-v,n-1, v1, v2>@v1 
-  inv n >= 0.*/
-
-data node2 {
-	int val; 
-	node next;	
-}.
-/*
-pred ll2<n> == self = null & n = 0 
-	or self::node2<next = q@A>@I * q::ll2<n-1>
-  inv n >= 0.
-*/
 
 // (1)
-checkentail x::node<p@I,q@I>@M |- x::node<a@I,b@M>@M.
+checkentail x::node<p@I,q@I> * y::node<c,d> |- x::node<a@I,b@I>@I.
 print residue.
 
 // (2)
-checkentail x::node<p@I,q@M>@M |- x::node<a@I,b@M>@I.
+checkentail x::node<p@I,q@M>@M |- x::node<a@M,b@M>@M.
 print residue.
 
 // (2)
+//checkentail x::node<p@I,q@M>@M |- x::node<a@I,b@M>@I.
+//print residue.
+
+// (3)
 //infer [v] x::node<p@I,q@v>@M |- x::node<a@I,b@M>@M.
 //print residue.
 
@@ -75,3 +64,20 @@ print residue.
 infer [n, v] x::ll2<n>@v & @A<:@I |- x::node2<a,b>.
 print residue.
  */
+
+//lemma "tst1" self::ll<n,v1,v2> -> self::node<a,b>.
+
+/*
+pred ls<s,n, v1, v2> == self = null & n = 0 & s=0
+	or self::node<a, q>@v1 * a::cell<v>@v2 * q::ls<s-v,n-1, v1, v2>@v1 
+  inv n >= 0.
+
+data node2 {
+	int val; 
+	node next;	
+}.
+
+pred ll2<n> == self = null & n = 0 
+	or self::node2<next = q@A>@I * q::ll2<n-1>
+  inv n >= 0.
+*/

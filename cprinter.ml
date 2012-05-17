@@ -2022,7 +2022,7 @@ let rec string_of_exp = function
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
+        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")[" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;

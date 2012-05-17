@@ -548,6 +548,26 @@ and subtype_ann_list impl_vars (ann1 : ann list) (ann2 : ann list) : bool * (CP.
         (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
     | _ ->      (false, [], [])                        (* different lengths *)
 
+and param_ann_equals_node_ann (ann_lst : ann list) (node_ann: ann): bool =
+  List.fold_left (fun res x -> res && (CF.eq_ann x node_ann)) true ann_lst
+
+and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+  match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> []
+    | (ann_l :: tl, ann_r :: tr ) ->
+      begin
+	match ann_r with 
+	  | ConstAnn(Mutable)	   
+	  | ConstAnn(Imm)     -> (ConstAnn(Accs)) :: (replace_list_ann tl tr)
+	  | ConstAnn(Lend)   
+	  | ConstAnn(Accs)    -> ann_l :: (replace_list_ann tl tr)
+	  | PolyAnn(v)        -> ann_l :: (replace_list_ann tl tr)
+	    
+      end
+    | (_, _) -> report_error no_pos ("[solver.ml] : nodes should have same no. of fields \n")
+
+
+
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
   match ctx with

@@ -47,8 +47,9 @@ void update (node x)
  
  if (x==null) return;
  else {
-     cell y = x.val; // check why x.val.val = x.val.val+1 fails?
-     y.val = y.val + 1;
+//     cell y = x.val; // check why x.val.val = x.val.val+1 fails?
+//     y.val = y.val + 1;
+     x.val.val = x.val.val+1;
      update(x.next);
  }
 }

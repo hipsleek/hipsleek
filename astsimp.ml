@@ -2190,8 +2190,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                   Err.error_text =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
               }
-and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
-      trans_exp_type =
+and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   Debug.no_1 "trans_exp"
       Iprinter.string_of_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
@@ -3534,14 +3533,14 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind prog proc b r rhs_o pid imm pos =
-  Debug.no_3 "flatten_to_bind " 
+and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  =
+  Debug.ho_3 "flatten_to_bind " 
     (Iprinter.string_of_exp) 
     (fun x -> match x with
       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
     (string_of_heap_ann)
-    (fun _ -> "?")
-    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm pos) b rhs_o imm
+    (pr_pair Cprinter.string_of_exp string_of_typ) 
+    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm read_only pos) b rhs_o imm
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given

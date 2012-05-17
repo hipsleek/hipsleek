@@ -796,6 +796,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*             None) *)
             (*     else None) *)
             (* in *)
+	    let _ = print_string("bind args: " ^ (Cprinter.string_of_spec_var_list vs_prim) ^ "\n") in
+	    let _ = print_string("bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ^ "\n") in
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;

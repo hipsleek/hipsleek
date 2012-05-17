@@ -436,6 +436,8 @@ let elim_exists = ref true
 (* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
+let allow_field_ann = ref false 
+
 let ann_derv = ref false
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)

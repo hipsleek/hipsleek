@@ -271,9 +271,9 @@ let comp_alias_part r_asets a_vars =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
-  let imm,p= match rhs_node with
-    | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
-    | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
+  let imm,pimm,p= match rhs_node with
+    | DataNode{h_formula_data_node=p;h_formula_data_imm=imm; h_formula_data_param_imm = pimm;} -> ( imm, pimm, p)
+    | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm, [], p)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 
@@ -294,7 +294,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
     failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
 	(Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
-  else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
+  else (spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest) 
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   let psv =  Cprinter.string_of_spec_var in
@@ -419,32 +419,42 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   rn - right node
   rr - right rest
 *)
-and spatial_ctx_extract p f a i rn rr = 
+and spatial_ctx_extract p f a i pi rn rr = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
-      (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
+      (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
+and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+  
+  f
+
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
-	  h_formula_data_imm = imm1}) ->
-      (* imm1 = imm annotation on the LHS
-	 imm = imm annotation on the RHS *) 
-      (* let subtyp = subtype_ann imm1 imm in *)
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if (isLend imm) || (isAccs imm) then (* not consuming the node *)
-              let hole_no = Globals.fresh_int() in 
-              [((Hole hole_no), f, [(f, hole_no)], Root)]
-            else
-              [(HTrue, f, [], Root)]
-          else 
-            []
+		 h_formula_data_imm = imm1;
+   		 h_formula_data_param_imm = pimm1}) ->
+	  (* imm1 = imm annotation on the LHS
+	     imm = imm annotation on the RHS *) 
+	  (* let subtyp = subtype_ann imm1 imm in *)
+      if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+	    (* let field_ann = false in *)
+	if not(!Globals.allow_field_ann) then
+          if (isLend imm) || (isAccs imm) then (* not consuming the node *)
+	    let hole_no = Globals.fresh_int() in 
+	    [((Hole hole_no), f, [(f, hole_no)], Root)]
+          else
+	    [(HTrue, f, [], Root)]
+	else
+	      (* with field level annotations *)
+	  [(update_ann f pimm1 pimm,f,[],Root)]
+      else 
+        []
     | ViewNode ({h_formula_view_node = p1;
 	  h_formula_view_imm = imm1;
 	  h_formula_view_perm = perm1;
