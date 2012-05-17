@@ -1055,6 +1055,8 @@ let tp_is_sat_perm f sat_no =
 		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap (CP.tpd_drop_nperm f)) (CP.dnf_to_list f) 
   else tp_is_sat_no_cache f sat_no
  
+let tp_is_sat_perm f sat_no =  Debug.no_1 "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
+ 
 let tp_is_sat (f:CP.formula) (sat_no :string) = 
   if !Globals.no_cache_formula then
     tp_is_sat_perm f sat_no
@@ -1520,13 +1522,16 @@ let tp_imply_perm ante conseq imp_no timeout process =
 		| No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
 		| No_split -> false
 		| Can_split -> 
-			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
-			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, CP.tpd_drop_nperm a) (CP.dnf_to_list ante) in
 			let conseqs = List.map (fun c-> CP.tpd_drop_perm c, CP.tpd_drop_nperm c) (CP.dnf_to_list conseq) in
+			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
+			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process
 	
+let tp_imply_perm ante conseq imp_no timeout process =  
+	let pr =  Cprinter.string_of_pure_formula in
+	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
 let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then

@@ -7446,7 +7446,7 @@ and check_barrier_wf prog bd =
       (*print_string "cica start\n";*)
       fst (Solver.heap_entail_init prog false (CF.SuccCtx[c1]) (*wrapp_frac_fv*) c2 no_pos) in
     match r with
-     | CF.SuccCtx l ->  (print_string "\nsuccesfull \n";List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l)
+     | CF.SuccCtx l ->  List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l
      | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
 	(*end auxes*)
 	
@@ -7504,10 +7504,11 @@ and check_barrier_wf prog bd =
 					
 					let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
 					let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
-					let pre_pure_fv  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  (CF.f_h_fv fpre) in
-					let post_pure_fv = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) (CF.f_h_fv fpost) in
-					let pre_ex = Gen.BList.difference_eq CP.eq_spec_var pre_pure_fv post_pure_fv in
-					let post_ex = Gen.BList.difference_eq CP.eq_spec_var post_pure_fv pre_pure_fv in
+					let h_fv = CF.f_h_fv fpre @ CF.f_h_fv fpre in
+					let pre_pure_fv  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
+					let post_pure_fv = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
+					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var pre_pure_fv  post_pure_fv in
+					let post_ex = Gen.BList.difference_eq CP.eq_spec_var post_pure_fv pre_pure_fv  in
 					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
 				
 				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in

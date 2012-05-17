@@ -1856,10 +1856,18 @@ and fv (f : formula) : CP.spec_var list = match f with
 	    let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
 	
-and f_h_fv (f : formula) : CP.spec_var list = match f with
-  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
-  | Base b -> h_fv b.formula_base_heap
-  | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars 
+and f_h_fv (f : formula) : CP.spec_var list = 
+	let rec helper h = match h with
+	  | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2)
+	  | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2)
+	  | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw)
+	  | DataNode b -> [b.h_formula_data_node]
+	  | ViewNode b -> [b.h_formula_view_node]
+	  | HTrue | HFalse | HEmp | Hole _ -> [] in
+	match f with
+	  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
+	  | Base b -> h_fv b.formula_base_heap
+	  | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars 
 	
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 

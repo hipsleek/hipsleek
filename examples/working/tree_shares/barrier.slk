@@ -6,6 +6,10 @@ macro R == (,#) .
 
 lemma "splitnode" self::cl(f1)<v> * self::cl(f2)<v1> -> self::cl(f)<v> & f1+f2=f & v=v1 .
 lemma "splitbarrier" self::b1n(f1)<v1,v2,v3,v4,v5,v6> * self::b1n(f2)<w1,w2,w3,w4,w5,w6> -> self::b1n(f)<v1,v2,v3,v4,v5,v6> & f1+f2=f & w1=v1 & w2=v2 & w3=v3 & w4=v4 & w5=v5 & w6=v6.
+lemma "splitbarrier" self::b2n(f1)<v1,v2,v3,v4,v5,v6> * self::b2n(f2)<w1,w2,w3,w4,w5,w6> -> self::b2n(f)<v1,v2,v3,v4,v5,v6> & f1+f2=f & w1=v1 & w2=v2 & w3=v3 & w4=v4 & w5=v5 & w6=v6.
+lemma "splitbarrier" self::b3n(f1)<v1,v2,v3,v4,v5,v6> * self::b3n(f2)<w1,w2,w3,w4,w5,w6> -> self::b3n(f)<v1,v2,v3,v4,v5,v6> & f1+f2=f & w1=v1 & w2=v2 & w3=v3 & w4=v4 & w5=v5 & w6=v6.
+lemma "splitbarrier" self::b4n(f1)<v1,v2,v3,v4,v5,v6> * self::b4n(f2)<w1,w2,w3,w4,w5,w6> -> self::b4n(f)<v1,v2,v3,v4,v5,v6> & f1+f2=f & w1=v1 & w2=v2 & w3=v3 & w4=v4 & w5=v5 & w6=v6.
+
 
 Barrier b1n[2]<int state, cl x1, cl x2, cl y1, cl y2, cl i> == [
 (0,1,[
@@ -97,4 +101,3 @@ Barrier b4n[2]<int state,cl x1, cl x2, cl y1, cl y2, cl i> == [(0,1,[
  requires x1::cl(@@R)<A>*x2::cl(@@R)<B>*i::cl(@@R)<T>*self::b4n(@@R)<1,x1,x2,y1,y2,i>& T>=30 
 	ensures x1::cl(@@R)<A>*x2::cl(@@R)<B>         *self::b4n(@@R)<3,x1,x2,y1,y2,i>;])].
  
-  

@@ -5752,9 +5752,9 @@ let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   let pr = pr_list !print_formula in
-  Debug.no_2 "imply_conj_orig" pr pr (fun (b,_,_) -> string_of_bool b)
-      (fun ante_disj0 ante_disj1 -> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
-      ante_disj0 ante_disj1
+  Debug.no_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj0 ante_disj1 conseq_conj-> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
+      ante_disj0 ante_disj1 conseq_conj
 
 and imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
@@ -7070,6 +7070,8 @@ let rec dnf_to_list f =
 	  let l_f2 = dnf_to_list f2 in
 	  l_f1 @ l_f2
 	| _ -> [dnf_f]
+	
+let dnf_to_list f = Debug.no_1_loop "dnf_to_list" !print_formula (pr_list !print_formula) dnf_to_list f
   	(*
 let rec partition_dnf_lhs f =
   match f with
@@ -8102,6 +8104,8 @@ let rec tpd_drop_perm f = match f with
   | Not (b,l,p) -> mkNot (tpd_drop_perm b) l p 
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
   | Exists (_,f,_,_) -> tpd_drop_perm f
+  
+let tpd_drop_perm f = Debug.no_1_loop "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
 
 let rec tpd_drop_nperm f = match f with 
 	| BForm ((b,_),_) -> if has_b_tscons b = Can_split then ([],[b]) else ([],[])
@@ -8111,3 +8115,6 @@ let rec tpd_drop_nperm f = match f with
 	| Not (b,_,_) -> if snd (tpd_drop_nperm b)=[] then ([],[]) else report_error no_pos "tree shares under negation"
 	| Forall (_,b,_,_) -> if snd (tpd_drop_nperm b)=[] then ([],[]) else report_error no_pos "tree shares under forall"
 	| Exists (s,f,_,_) -> let l1,l2 = tpd_drop_nperm f in (s::l1,l2)
+	
+	
+let tpd_drop_nperm f = Debug.no_1_loop "tpd_drop_nperm" !print_formula (pr_pair !print_svl (pr_list (fun c-> !print_b_formula (c,None)))) tpd_drop_nperm f
