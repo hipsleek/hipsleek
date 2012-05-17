@@ -1349,7 +1349,7 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 					| _ -> Bar_wrong_state)
 			else Bar_not_found 
 		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
-		 | HTrue | HFalse -> Bar_not_found in
+		 | HTrue | HEmp | HFalse -> Bar_not_found in
 	let rec find_node x f= match f with 
 		| Base {formula_base_heap = h; formula_base_pure = p} 
 		| Exists {formula_exists_heap = h; formula_exists_pure = p} -> 

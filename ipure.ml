@@ -1220,6 +1220,7 @@ let rec typ_of_exp (e: exp) : typ =
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | AConst _                  -> Globals.AnnT
+  | Tsconst _ 				  -> Globals.Tree_sh
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)

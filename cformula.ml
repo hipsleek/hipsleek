@@ -5308,7 +5308,7 @@ let join_conjunct_opt l = match l with
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
-  List.fold_left(fun a c-> mkStarH a c no_pos) HTrue hs
+  List.fold_left(fun a c-> mkStarH a c no_pos) HEmp hs
 
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
@@ -8017,7 +8017,7 @@ let rec find_barr bln v f =
 		  if (List.exists f1 bln)&&(List.exists f2 eqs) then 
 			Some (d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)
  		  else None
-	  | ViewNode _ | Hole _ | HTrue | HFalse -> None in
+	  | ViewNode _ | Hole _ | HTrue | HEmp | HFalse -> None in
     
     match f with
 	  | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap

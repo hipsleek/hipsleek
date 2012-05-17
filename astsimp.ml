@@ -7421,7 +7421,7 @@ and check_barrier_wf prog bd =
 	  let p2 = CP.mkEqVarInt st_v st no_pos in
 	  let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
 	  CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
-	let f_gen_base st v perm = Debug.no_1 "f_gen_base" (fun c-> "") (fun c-> "") (f_gen_base st v) perm in
+	let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
 	let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
 	let f_gen_tot st = 
 		let v = CP.fresh_perm_var () in
