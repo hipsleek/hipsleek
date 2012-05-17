@@ -4393,8 +4393,8 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         let lb = trans_pure_exp seq_info.IP.seq_lower_bound stab in
         let ub = trans_pure_exp seq_info.IP.seq_upper_bound stab in
         let vari = match seq_info.IP.seq_variation with
-                   | IP.Dec -> CP.Dec
-                   | IP.Osc -> CP.Osc in
+                   | IP.SeqDec -> CP.SeqDec
+                   | IP.SeqOsc -> CP.SeqOsc in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_fix_point = fp;

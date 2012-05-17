@@ -85,8 +85,8 @@ and lex_info = {
 }
 
 and sequence_variation_type =
-  | Dec                  (* sequence decrease *)
-  | Osc                  (* sequence oscillate *)
+  | SeqDec                  (* sequence decrease *)
+  | SeqOsc                  (* sequence oscillate *)
 
 and sequence_info = {
   seq_ann: term_ann;
@@ -1322,6 +1322,15 @@ and mkLexVar t_ann m i pos =
 		lex_tmp = i;
 		lex_loc = pos;
 	}
+
+and mkSeqVar ann element fix_point lower_bound upper_bound variation pos : p_formula= 
+  SeqVar { seq_ann = ann;
+           seq_element = element;
+           seq_fix_point = fix_point;
+           seq_lower_bound = lower_bound;
+           seq_upper_bound = upper_bound;
+           seq_variation = variation;
+           seq_loc = pos }
 
 and mkPure bf = BForm ((bf,None), None)
 

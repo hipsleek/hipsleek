@@ -1060,7 +1060,7 @@ cexp_w :
                                P.seq_fix_point = fp;
                                P.seq_lower_bound = lb;
                                P.seq_upper_bound = ub;
-                               P.seq_variation = P.Dec;
+                               P.seq_variation = P.SeqDec;
                                P.seq_loc = get_pos_camlp4 _loc 1} in
           let f = Pure_f (P.BForm ((seq, None), None)) in
           set_slicing_utils_pure_double f false

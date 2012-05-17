@@ -506,6 +506,11 @@ let string_of_cperm perm =
 let string_of_derv dr = 
   if dr then "@D" else ""
 
+let string_of_sequence_variation (v : P.sequence_variation_type) : string =
+  match v with
+  | P.SeqDec -> "SeqDec"
+  | P.SeqOsc -> "SeqOsc"
+
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
@@ -700,7 +705,19 @@ let pr_var_measures measures =
         pr_set pr_formula_exp ls2
       else ()
     )
-  (* | TermSeq seq *) (* TRUNG TODO: implement later *)
+  | TermSeq seq -> (
+      let ann = seq.CP.seq_ann in
+      let elm = seq.CP.seq_element in
+      let fp = seq.CP.seq_fix_point in
+      let lb = seq.CP.seq_lower_bound in
+      let ub = seq.CP.seq_upper_bound in
+      let v = seq.CP.seq_variation in
+      let ls = [elm; fp; lb; ub] in
+      let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+      fmt_string ((string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
+      pr_s "" pr_formula_exp ls;
+      fmt_string (")]");
+    )
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -1443,7 +1460,17 @@ let pr_estate (es : entail_state) =
         let l2 = lex.CP.lex_tmp in
         fmt_string (string_of_term_ann t_ann);
         pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
-    (* | TermSeq seq  *) (* TRUNG TODO: implement later*)
+    | TermSeq seq ->
+        let ann = seq.CP.seq_ann in
+        let elm = seq.CP.seq_element in
+        let fp = seq.CP.seq_fix_point in
+        let lb = seq.CP.seq_lower_bound in
+        let ub = seq.CP.seq_upper_bound in
+        let v = seq.CP.seq_variation in
+        let ls = [elm; fp; lb; ub] in
+        fmt_string ((string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
+        pr_seq "" pr_formula_exp ls;
+        fmt_string "])"
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)
   pr_vwrap "es_term_err: " (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);

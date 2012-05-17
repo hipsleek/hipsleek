@@ -5106,8 +5106,11 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
             let l2 = lex.CP.lex_tmp in
             let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+            MCP.merge_mems mix_f (MCP.mix_of_pure m) true
+        | Some (TermSeq seq) ->
+            let m = CP.mkPure (CP.SeqVar seq) in
+            Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
-        (* | Some (TermSeq seq) -> [seq.CP.seq_ann] *) (* TRUNG: TODO implement later *)
       (*TO CHECK*)
       let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in

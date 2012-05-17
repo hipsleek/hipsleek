@@ -1208,10 +1208,11 @@ let term_check_output () =
 
 let rec get_loop_ctx c =
   match c with
-    | Ctx es -> (match es.es_var_measures with
+    | Ctx es -> (
+        match es.es_var_measures with
         | None -> []
         | Some (TermLex lex) -> if lex.CP.lex_ann == Loop then [es] else []
-        (* | Some (TermSeq seq) *) (* TRUNG TODO : implement later *)
+        | Some (TermSeq seq) -> if seq.CP.seq_ann == Loop then [es] else []
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 
