@@ -231,10 +231,10 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			let c_sys = {c_sys with }*)
 				
 		(*decomposition functions*)
-		let gen_left_name n = n^"(" 
+		let gen_left_name n = n^"@" 
 		let gen_left_var v = SV.rename v (gen_left_name (SV.get_name v))
 		
-		let gen_right_name n = n^")" 
+		let gen_right_name n = n^"$" 
 		let gen_right_var v = SV.rename v (gen_right_name (SV.get_name v))
 		
 		let eq_depth_0 ef = match ef with
@@ -321,14 +321,18 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			(r1,r2,r3,r4,r5)
 		
 		
-		let all_decomps l_decs v = (*returns only the leafs of the decompositions*)
+		let all_decomps_1 l_decs v = (*returns only the leafs of the decompositions*)
 			let rec fp v = if mem_eq SV.eq v l_decs then (fp (gen_left_var v))@(fp (gen_right_var v)) else [v] in
 			if mem_eq SV.eq v l_decs then (fp (gen_left_var v))@(fp (gen_right_var v)) else [] 
+		
+		let all_decomps_2 l_decs v = (*returns only the leafs of the decompositions*)
+			let rec fp v = if mem_eq SV.eq v l_decs then (fp (gen_left_var v))@(fp (gen_right_var v)) else [v] in
+			fp v
 		
 		let all_decomps_l l_decs vl = 
 			(*let pr1 = pr_list_s SV.string_of in*)
 			(*let _ = print_string ("all_decomps_l in1: "^(pr1 l_decs)^"\n all_decomps_l in2: "^(pr1 vl)^"\n") in*)
-			let r = fold_1_map (all_decomps l_decs) vl in
+			let r = fold_1_map (all_decomps_2 l_decs) vl in
 			(*let _ = print_string ("all_decomps_l  out: "^(pr1 r)^"\n") in*)
 			r
 		
@@ -336,9 +340,12 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			(*find if there exists some var that needs decomposition in lst to get to v*)
 			(*finds the largest substring*)
 			let nv = SV.get_name dec_v in
+			let lnv = String.length nv in
 			let ac = List.fold_left (fun ac v-> 
 				let nvv = SV.get_name v in
 				let lnvv = String.length nvv in
+				if lnv=lnvv then ac 
+				else 
 				if BatString.starts_with nv nvv then 
 					match ac with 
 						| None -> Some (lnvv,v)
@@ -375,13 +382,12 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				List.fold_left expand_one (vl,ve,vc,el) exp_l in
 									
 			let rec fix (avl,ave,avc,ael) (cvl,cve,cvc,cel) a_int_vs (*decomposed in ante*) c_int_vs (*decomposed in conseq*) =
-				
 				(*let _ = print_string ("avl "^( pr_list_s SV.string_of avl)^"\n") in
 				let _ = print_string ("cvl "^( pr_list_s SV.string_of cvl)^"\n") in
 				let _ = print_string ("a_int_vs "^( pr_list_s SV.string_of a_int_vs)^"\n") in
 				let _ = print_string ("c_int_vs "^( pr_list_s SV.string_of c_int_vs)^"\n") in*)
-				let c_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst cvl) [] a_int_vs) in (*what needs decomposing in conseq*)
-				let a_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst avl) [] c_int_vs) in (*what needs decomposing in ante*)
+				let c_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst c_int_vs) [] a_int_vs) in (*what needs decomposing in conseq*)
+				let a_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst a_int_vs) [] c_int_vs) in (*what needs decomposing in ante*)
 				if a_exp=[] && c_exp=[] then avl,ael,ave,avc,cvl,cve,cvc,cel
 				else
 					(*let _ = print_string ("c_exp "^( pr_list_s SV.string_of c_exp)^"\n") in
@@ -395,14 +401,17 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 		(*let pr_vl = pr_list_s SV.string_of in
 		let pr_vel = pr_list_s (pr_pair SV.string_of SV.string_of) in
 		let pr_vcl = pr_list_s (pr_pair SV.string_of string_of_bool) in
-		let pr1 = pr_quad pr_vl pr_vel pr_vcl string_of_eq_l in*)
-		(*let _ = print_string ("meet_decompositions IN1: "^(pr1 ante)^"\n meet_decompositions IN2: "^(pr1 conseq)^"\n meet_decompositions IN3: "^(pr_vl int_vs)^"\n");flush_all in*)		
-		meet_decompositions ante conseq int_vs
-		
+		let pr1 = pr_quad pr_vl pr_vel pr_vcl string_of_eq_l in
+		let _ = print_string ("meet_decompositions IN1: "^(pr1 ante)^"\n meet_decompositions IN2: "^(pr1 conseq)^"\n meet_decompositions IN3: "^(pr_vl int_vs)^"\n");flush_all () in*)
+		let a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs = meet_decompositions ante conseq int_vs in
+		(*let rante = a_dec_vars, a_v_e, a_v_c, a_l_eqs in
+		let rconseq =  c_dec_vars, c_v_e, c_v_c, c_l_eqs in
+		let _ = print_string ("meet_decompositions OUT1: "^(pr1 rante)^"\n meet_decompositions OUT2: "^(pr1 rconseq)^"\n");flush_all () in*)
+		a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs
 		
 		(*simplification  functions, reductions to v*v=v*)
 		let compute_nz_cons nzv decomp_vs vc_l ve_l  = 
-			let nz_cons = List.map (fun c-> let t = all_decomps decomp_vs c in if t=[] then [c] else t) nzv in 
+			let nz_cons = List.map (fun c-> let t = all_decomps_1 decomp_vs c in if t=[] then [c] else t) nzv in 
 			let nz_cons = List.fold_left (fun nz (f,t) -> List.map (subst_ex_l (f,t)) nz) nz_cons ve_l in
 			let nz_cons	= List.fold_left (fun nz (v,c) -> 
 				if c then List.filter (fun d-> not (mem_eq SV.eq v d)) nz
@@ -515,6 +524,11 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			l_c, l_s, l_e
 		
 		(*let conv_eq_s = List.map (fun (e1,e2,c)-> (SV.conv e1, SV.conv e2, c))*)
+		let call_sat nz l_eqs = 
+		 (* let pr_vl c= "[ "^(pr_list_s SV.string_of c)^" ]\n "in
+		  let pr_eq (v1,v2,v3) = SV.string_of v1 ^" + "^(SV.string_of v2)^ " = " ^(match Ss.getVar v3 with | None -> "true" | Some v-> SV.string_of v) in
+   		  print_string ("sat: nz: "^(pr_list pr_vl nz)^"eqs:"^(pr_list pr_eq l_eqs));flush_all ();*)
+		  Ss.call_sat nz l_eqs 
 		
 		let is_sat (eqs : eq_syst): bool = 			
 		    if eqs.eqs_eql=[] then (check_const_incons (apl_substs eqs).eqs_vc; true)
@@ -526,7 +540,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 					let dec_vars,nzv, _,_,eqs = decompose_sys eqs in
 					let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] [] [] eqs in
 					let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
-					if l_eqs = [] then true else Ss.call_sat nz_cons ((*conv_eq_s*) l_eqs)
+					if l_eqs = [] then true else call_sat nz_cons ((*conv_eq_s*) l_eqs)
 				with Unsat_exception -> false
 				
 		let is_sat (eqs:eq_syst):bool = 
@@ -534,6 +548,17 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			let r = is_sat eqs in
 			(*print_string ("Big Sat Res: "^(string_of_bool r)^"\n");*) r
 		
+			
+		let call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars = 
+		 (* let pr_vl c= "[ "^(pr_list_s SV.string_of c)^" ]\n "in
+		  let pr_sub (v1,v2) = (SV.string_of v1)^" = "^(SV.string_of v2) in
+		  let pr_cns (v1,b) = (SV.string_of v1)^" = "^(string_of_bool b) in
+		  let pr_eq (v1,v2,v3) = SV.string_of v1 ^" + "^(SV.string_of v2)^ " = " ^(match Ss.getVar v3 with | None -> "true" | Some v-> SV.string_of v) in
+		  let print_syst ev nz eqs cns sub=
+			print_string ("ev: "^(pr_vl ev)^"nz: "^(pr_list pr_vl nz)^"\n eqs:"^(pr_list pr_eq eqs)^"\n cns: "^(pr_list pr_cns cns)^"\nsub: "^(pr_list pr_sub sub)^"\n")	 in
+		  print_syst a_ev a_nz_cons a_l_eqs [] [] ;
+		  print_syst c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars ;flush_all ();*)
+		  Ss.call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
 			
 		let to_formula_imply a_sys c_sys:bool =
 			(*decomposes the vars, returns the list of decomposed vars, var subst, var instantiations, simplified syst to v*v=(v|1) for both ante and conseq *)
@@ -558,8 +583,8 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			let a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs =  meet_decompositions  (a_d_vs,a_v_e, a_v_c,a_l_eqs)  (c_d_vs, c_v_e, c_v_c, c_l_eqs) int_fv in
 			
 			(*decomp the existentials as well*)
-			let a_ev = List.fold_left (fun a c-> a@(all_decomps a_dec_vars c)) [] a_sys.eqs_ex in
-			let c_ev = List.fold_left (fun a c-> a@(all_decomps c_dec_vars c)) [] c_sys.eqs_ex in
+			let a_ev = List.fold_left (fun a c-> a@(all_decomps_1 a_dec_vars c)) [] a_sys.eqs_ex in
+			let c_ev = List.fold_left (fun a c-> a@(all_decomps_1 c_dec_vars c)) [] c_sys.eqs_ex in
 			
 			(*simplify the antecedent*)
 			let a_const_vars, a_subst_vars, a_l_eqs = solve_trivial_eq_l a_ev a_v_e a_v_c a_l_eqs in
@@ -580,8 +605,8 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				let a_l_eqs = conv_eq_s a_l_eqs in
 				let c_l_eqs = conv_eq_s c_l_eqs in*)
 				if c_l_eqs=[] && c_const_vars=[] && c_subst_vars=[] then true
-				else Ss.call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
-			with | Unsat_exception -> not (Ss.call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
+				else call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
+			with | Unsat_exception -> not (call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
 			
 				
 		let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 

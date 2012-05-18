@@ -1030,16 +1030,17 @@ let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
       | Cformula.Base {F.formula_base_heap=h}
 	  | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
-          (List.length hs),List.map F.get_node_name hs
-      | _ -> 1,[]
+		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
+          (List.length hs),self_n, List.map F.get_node_name hs
+      | _ -> 1,false,[]
   in
-  let lhs_length,lhs_typ = fct lhs in
-  let rhs_length,rhs_typ = fct rhs in
+  let lhs_length,l_sn,lhs_typ = fct lhs in
+  let rhs_length,r_sn,rhs_typ = fct rhs in
   match lhs_typ@rhs_typ with
 	| [] -> Simple
 	| h::t -> 
 	    if lhs_length=1 then Simple
-		else if lhs_length=2 && rhs_length=1 && (List.for_all (fun c-> h=c) t) then Normalize
+		else if lhs_length=2 && l_sn && r_sn && rhs_length=1 && (List.for_all (fun c-> h=c) t) then Normalize
 		else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 

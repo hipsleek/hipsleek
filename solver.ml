@@ -7342,11 +7342,16 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   let c2 = get_node_name ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
     | None -> find_coercions c1 c2 prog anode ln2 
-    | Some c -> match c.coercion_type with
-        | Iast.Left -> if c.coercion_univ_vars == [] then (([c],[]),[])
-          else (([],[]),[c])
-        | Iast.Right -> (([],[c]),[])
-        | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
+    | Some c -> 		
+			match c.coercion_type with
+			| Iast.Left -> 
+				let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
+				
+				if !Perm.perm=Perm.NoPerm || c.coercion_case<>Normalize then r
+				else if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)   then (([],[]),[]) else r
+				
+			| Iast.Right -> (([],[c]),[])
+			| _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
     || not(is_original_match anode ln2)
@@ -7669,6 +7674,26 @@ and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_form
                     (res1,x::res2)
   in helper ls
 
+  
+and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = 
+	match r_perm with 
+		| None -> false
+		| Some v -> 
+			let r_perm = CP.Var (v,no_pos) in
+			let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+			let nfv = CP.fresh_spec_var v in
+			let add = CP.BForm ((CP.Eq (r_perm, CP.Add (CP.Var (nfv,no_pos),l_perm,no_pos), no_pos), None),None) in
+			let rhs_p = MCP.pure_of_mix rhs_p in
+			let rhs_p =  CP.And (rhs_p, add, no_pos) in
+			let n_pure =  CP.Exists (nfv, rhs_p, None, no_pos) in
+			xpure_imply prog false lhs n_pure !Globals.imply_timeout_limit
+			
+and test_frac_subsume prog lhs rhs_p l_perm r_perm = 
+	let pr1 = Cprinter.string_of_estate in
+	let pr2 = Cprinter.string_of_mix_formula in
+	let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
+	Debug.no_4 "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
+  
 (*pickup a node named "name" from a list of nodes*)
 and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
   let rec pr xs = 

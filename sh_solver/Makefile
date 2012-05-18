@@ -3,7 +3,7 @@ OCAMLBUILD = ocamlbuild
 # number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
-LIBS = nums,site-lib/batteries/batteries,z3
+LIBS = unix,str,nums,site-lib/batteries/batteries,z3
 INCLUDES = -I,+site-lib/batteries
 #-cclib -lz3stubs -cclib -lz3 /usr/local/lib/ocaml/libcamlidl.a
 

@@ -1052,7 +1052,7 @@ let tp_is_sat_perm f sat_no =
 		let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
 		let tp_wrap f = Debug.no_1 "tp_is_sat_perm_wrap" Cprinter.string_of_pure_formula (fun c-> "") tp_wrap f in
 		let ss_wrap (e,f) = if f=[] then true else Share_prover_w.sleek_sat_wrapper (e,f) in
-		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap (CP.tpd_drop_nperm f)) (CP.dnf_to_list f) 
+		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
  
 let tp_is_sat_perm f sat_no =  Debug.no_1 "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
@@ -1203,7 +1203,7 @@ let simplify (f:CP.formula):CP.formula =
 let rec simplify_raw (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
-    let new_f = trans_dnf f in
+    let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
         let rels = CP.get_RelForm disj in
@@ -1223,7 +1223,7 @@ let rec simplify_raw (f: CP.formula) =
 let simplify_raw_w_rel (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
-    let new_f = trans_dnf f in
+    let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
@@ -1240,7 +1240,7 @@ let simplify_raw f =
 let simplify_exists_raw exist_vars (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
   if is_bag_cnt then
-    let new_f = trans_dnf f in
+    let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
@@ -1522,8 +1522,10 @@ let tp_imply_perm ante conseq imp_no timeout process =
 		| No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
 		| No_split -> false
 		| Can_split -> 
-			let antes = List.map (fun a-> CP.tpd_drop_perm a, CP.tpd_drop_nperm a) (CP.dnf_to_list ante) in
-			let conseqs = List.map (fun c-> CP.tpd_drop_perm c, CP.tpd_drop_nperm c) (CP.dnf_to_list conseq) in
+			let ante_lex, antes= CP.dnf_to_list ante in
+			let conseq_lex, conseqs= CP.dnf_to_list conseq in
+			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
+			let conseqs = List.map (fun c-> CP.tpd_drop_perm c, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
@@ -1833,7 +1835,7 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 		(* A \/ B -> C <=> (A -> C) /\ (B -> C) *)
 		let imply_disj_lhs ante conseq =
 		  let ante = CP.elim_exists_with_simpl simplify ante in
-		  let l_ante = CP.dnf_to_list ante in
+		  let _,l_ante = CP.dnf_to_list ante in
 		  let pairs = List.map (fun ante -> (ante, conseq)) l_ante in
 		  let fold_fun (res1, res2, res3) (ante, cons) =
 			if res1 then
@@ -1862,7 +1864,7 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 		(* A -> B \/ C <=> (A -> B) \/ (A -> C) *)
 		let imply_disj_rhs ante conseq =
 		  let cons = CP.elim_exists_with_simpl simplify conseq in
-		  let l_cons = CP.dnf_to_list cons in (* Transform conseq into DNF *)
+		  let _,l_cons = CP.dnf_to_list cons in (* Transform conseq into DNF *)
 		  let pairs = List.map (fun cons -> (ante, cons)) l_cons in
 		  let fold_fun (res1, res2, res3) (ante, cons) =
 			if not res1 then
@@ -2026,7 +2028,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
   in
 
   let n_f = (*CP.elim_exists_with_fresh_vars*) CP.elim_exists_with_simpl simplify f in
-  let dnf_f = CP.dnf_to_list n_f in
+  let dnf_f = snd (CP.dnf_to_list n_f) in
   
   let is_related f1 f2 =
 	let (nlv1, lv1) = CP.fv_with_slicing_label f1 in

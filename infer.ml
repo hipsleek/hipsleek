@@ -946,7 +946,7 @@ let remove_contra_disjs f1s f2 =
 let lhs_simplifier lhs_h lhs_p =
   let disjs = CP.list_of_disjs lhs_h in
   let disjs = remove_contra_disjs disjs lhs_p in
-  trans_dnf (CP.mkAnd (disj_of_list disjs no_pos) lhs_p no_pos)
+  snd (trans_dnf (CP.mkAnd (disj_of_list disjs no_pos) lhs_p no_pos))
 
 (* TODO : proc below seems very inefficient *)
 (*let rec simplify_fml pf =                                         *)
