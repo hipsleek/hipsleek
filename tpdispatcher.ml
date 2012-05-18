@@ -1045,7 +1045,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
   
 let tp_is_sat_perm f sat_no = 
-  if !use_dfracs then match CP.has_tscons f with
+  if !Perm.perm=Perm.Dperm then match CP.has_tscons f with
 	| No_cons -> tp_is_sat_no_cache f sat_no
 	| No_split	-> true
 	| Can_split ->
@@ -1517,7 +1517,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
 let tp_imply_perm ante conseq imp_no timeout process = 
- if !use_dfracs then
+ if !Perm.perm=Perm.Dperm then
 	match join_res (CP.has_tscons ante )( CP.has_tscons conseq) with
 		| No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
 		| No_split -> false

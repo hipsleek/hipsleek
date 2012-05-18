@@ -10,29 +10,29 @@ pred ll<n> == self = null & n = 0
 
 checkentail x::node<_,q>*q::ll<n> |-  x::node(v)<_,q>*q::ll(v)<n>.
  print residue.
- //valid v = full or v<full x(1-v) q (1-v) ll 
+ //(1) valid v = full or v<full x(1-v) q (1-v) ll 
  //-> missing?
  
  
 checkentail x::ll(@@R)<n> & n>0 |- x::node(v)<_,_>.
  print residue.
- //valid v=R ll (n-1) or v<R x(R-v) ll (n-1)
+ //(2) valid v=R ll (n-1) or v<R x(R-v) ll (n-1)
  
 
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_>.
 print residue.
-//valid 
+//(3) valid 
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl<_>.
-//valid
+//(4) valid
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> & v=@@L+@(,(#,)).
 print residue.
-//valid v=L+(R,L) x[RR]
+//(5) valid v=L+(R,L) x[RR]
 
 checkentail x::cl(@@L)<_> * x::cl<_> |- x!=y.
-//valid
+//(6) valid
 checkentail x::cl(@@L)<_> * y::cl(@@R)<_> |- x=y.
-//fail
+//(7) fail
 checkentail x::cl(@@L)<_> * y::cl(@((,#),))<_> |- x!=y.
-//valid
+//(8) valid
 checkentail x::cl(@@L)<_> * y::cl(@((,#),))<_> |- x=y.
-//fail
+//(9) fail

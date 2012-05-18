@@ -384,8 +384,6 @@ let self = "self"
 
 let this = "this"
 
-let use_dfracs = ref false
-
 let is_self_ident id = self=id
 
 let thread_name = "thread"  (*special thread id*)

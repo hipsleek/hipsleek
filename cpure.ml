@@ -8105,7 +8105,7 @@ let rec tpd_drop_perm f = match f with
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
   | Exists (_,f,_,_) -> tpd_drop_perm f
   
-let tpd_drop_perm f = Debug.no_1_loop "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
+let tpd_drop_perm f = Debug.no_1 "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
 
 let rec tpd_drop_nperm f = match f with 
 	| BForm ((b,_),_) -> if has_b_tscons b = Can_split then ([],[b]) else ([],[])
@@ -8117,4 +8117,4 @@ let rec tpd_drop_nperm f = match f with
 	| Exists (s,f,_,_) -> let l1,l2 = tpd_drop_nperm f in (s::l1,l2)
 	
 	
-let tpd_drop_nperm f = Debug.no_1_loop "tpd_drop_nperm" !print_formula (pr_pair !print_svl (pr_list (fun c-> !print_b_formula (c,None)))) tpd_drop_nperm f
+let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_pair !print_svl (pr_list (fun c-> !print_b_formula (c,None)))) tpd_drop_nperm f

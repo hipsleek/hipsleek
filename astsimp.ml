@@ -4507,7 +4507,7 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
 and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
-	| IP.Tsconst (t,pos) -> (use_dfracs:=true ; CP.Tsconst (t,pos))
+	| IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
