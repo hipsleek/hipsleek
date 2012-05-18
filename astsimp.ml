@@ -4390,16 +4390,14 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.SeqVar seq_info ->
         let e = trans_pure_exp seq_info.IP.seq_element stab in
         let fp = trans_pure_exp seq_info.IP.seq_fix_point stab in
-        let lb = trans_pure_exp seq_info.IP.seq_lower_bound stab in
-        let ub = trans_pure_exp seq_info.IP.seq_upper_bound stab in
+        let b = List.map (fun x -> trans_pure_exp x stab) seq_info.IP.seq_bounds in
         let vari = match seq_info.IP.seq_variation with
                    | IP.SeqDec -> CP.SeqDec
                    | IP.SeqOsc -> CP.SeqOsc in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_fix_point = fp;
-                    CP.seq_lower_bound = lb;
-                    CP.seq_upper_bound = ub;
+                    CP.seq_bounds = b;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_variation = vari }
     | IP.Lt (e1, e2, pos) ->
@@ -5158,8 +5156,7 @@ and gather_type_info_b_formula_x prog b0 stab =
     | IP.SeqVar seq_info ->
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
         let _ =  gather_type_info_exp seq_info.IP.seq_fix_point stab (Float) in
-        let _ =  gather_type_info_exp seq_info.IP.seq_lower_bound stab (Float) in
-        let _ =  gather_type_info_exp seq_info.IP.seq_upper_bound stab (Float) in
+        let _ =  List.map (fun x -> gather_type_info_exp x stab (Float)) seq_info.IP.seq_bounds in
         ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->

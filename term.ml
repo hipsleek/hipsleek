@@ -362,17 +362,16 @@ let find_lexvar_es (es: entail_state) :
 
 (** find sequence var in entail_state*)
 let find_seqvar_es (es: entail_state) : 
-  (term_ann * CP.exp * CP.exp * CP.exp * CP.exp * CP.sequence_variation_type) =
+  (term_ann * CP.exp * CP.exp * CP.exp list * CP.sequence_variation_type) =
   match es.es_var_measures with
   | None -> raise SeqVar_Not_found
   | Some (CP.SeqVar seq) ->
       let ann = seq.CP.seq_ann in
       let elm = seq.CP.seq_element in
       let fp = seq.CP.seq_fix_point in
-      let lb = seq.CP.seq_lower_bound in
-      let ub = seq.CP.seq_upper_bound in
+      let b = seq.CP.seq_bounds in
       let v = seq.CP.seq_variation in
-      (ann, elm, fp, lb, ub, v) 
+      (ann, elm, fp, b, v) 
   | _ -> raise SeqVar_Not_found
 
 let zero_exp = [CP.mkIConst 0 no_pos]

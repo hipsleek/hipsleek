@@ -29,8 +29,8 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_fix_point: exp;
-  seq_lower_bound: exp;
-  seq_upper_bound: exp;
+  seq_bounds: exp list;  (* seq_bounds = [lower_bound] for decreasing sequences
+                                       = [lower_bound; upper_bound] for oscillating sequences *)  
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }
@@ -195,9 +195,8 @@ and bfv (bf : b_formula) =
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let lb = seq_info.seq_lower_bound in
-      let ub = seq_info.seq_upper_bound in
-      let args = [e; fp; lb; ub] in
+      let b = seq_info.seq_bounds in
+      let args = [e; fp] @ b in
       let args_fv = List.concat (List.map afv args) in
       Gen.BList.remove_dups_eq (=) args_fv
  
@@ -621,12 +620,10 @@ and b_apply_one (fr, t) bf =
   | SeqVar seq_info ->
       let e = e_apply_one (fr, t) seq_info.seq_element in
       let fp = e_apply_one (fr, t) seq_info.seq_fix_point in
-      let lb = e_apply_one (fr, t) seq_info.seq_lower_bound in
-      let ub = e_apply_one (fr, t) seq_info.seq_upper_bound in
+      let b = List.map (fun x -> e_apply_one (fr, t) x) seq_info.seq_bounds in
       SeqVar {seq_info with seq_element = e;
                             seq_fix_point = fp;
-                            seq_lower_bound = lb;
-                            seq_upper_bound = ub}
+                            seq_bounds = b;}
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -751,9 +748,8 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let lb = seq_info.seq_lower_bound in
-      let ub = seq_info.seq_upper_bound in
-      let exps = [e; fp; lb; ub] in
+      let b = seq_info.seq_bounds in
+      let exps = [e; fp] @ b in
       List.concat (List.map look_for_anonymous_exp exps)
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
@@ -806,9 +802,8 @@ and find_lexp_b_formula (bf: b_formula) ls =
   | SeqVar seq_info -> 
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let lb = seq_info.seq_lower_bound in
-      let ub = seq_info.seq_upper_bound in
-      let exps = [e; fp; lb; ub] in
+      let b = seq_info.seq_bounds in
+      let exps = [e; fp] @ b in
       List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] exps
 
 (* WN : what does this method do? *)

@@ -92,8 +92,8 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_fix_point: exp;
-  seq_lower_bound: exp;
-  seq_upper_bound: exp;
+  seq_bounds: exp list;  (* seq_bounds = [lower_bound] for decreasing sequences
+                                       = [lower_bound; upper_bound] for oscillating sequences *)  
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }
@@ -778,9 +778,8 @@ and bfv (bf : b_formula) =
     | SeqVar seq_info ->
         let e = seq_info.seq_element in
         let fp = seq_info.seq_fix_point in
-        let lb = seq_info.seq_lower_bound in
-        let ub = seq_info.seq_upper_bound in
-        let args = [e; fp; lb; ub] in
+        let b = seq_info.seq_bounds in
+        let args = [e; fp] @ b in
         let args_fv = List.concat (List.map afv args) in
         Gen.BList.remove_dups_eq (=) args_fv
 
@@ -1324,12 +1323,11 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element fix_point lower_bound upper_bound variation pos : p_formula= 
+and mkSeqVar ann element fix_point bounds variation pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
            seq_fix_point = fix_point;
-           seq_lower_bound = lower_bound;
-           seq_upper_bound = upper_bound;
+           seq_bounds = bounds;
            seq_variation = variation;
            seq_loc = pos }
 
@@ -2385,12 +2383,10 @@ and b_apply_subs sst bf =
     | SeqVar seq_info -> 
         let e =  e_apply_subs sst seq_info.seq_element in
         let fp = e_apply_subs sst seq_info.seq_fix_point in
-        let lb = e_apply_subs sst seq_info.seq_lower_bound in
-        let ub = e_apply_subs sst seq_info.seq_upper_bound in
+        let b = e_apply_subs_list sst seq_info.seq_bounds in
         SeqVar { seq_info with seq_element = e;
                                seq_fix_point = fp;
-                               seq_lower_bound = lb;
-                               seq_upper_bound = ub}
+                               seq_bounds = b; }
    in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2445,12 +2441,10 @@ and b_apply_subs_varperm sst bf =
   | SeqVar seq_info -> 
       let e =  e_apply_subs sst seq_info.seq_element in
       let fp = e_apply_subs sst seq_info.seq_fix_point in
-      let lb = e_apply_subs sst seq_info.seq_lower_bound in
-      let ub = e_apply_subs sst seq_info.seq_upper_bound in
+      let b = e_apply_subs_list sst seq_info.seq_bounds in
       SeqVar {seq_info with seq_element = e;
                             seq_fix_point = fp;
-                            seq_lower_bound = lb;
-                            seq_upper_bound = ub}
+                            seq_bounds = b; }
   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2629,12 +2623,10 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | SeqVar seq_info -> 
         let e =  a_apply_par_term sst seq_info.seq_element in
         let fp = a_apply_par_term sst seq_info.seq_fix_point in
-        let lb = a_apply_par_term sst seq_info.seq_lower_bound in
-        let ub = a_apply_par_term sst seq_info.seq_upper_bound in
+        let b = a_apply_par_term_list sst seq_info.seq_bounds in
         SeqVar {seq_info with seq_element = e;
                               seq_fix_point = fp;
-                              seq_lower_bound = lb;
-                              seq_upper_bound = ub}
+                              seq_bounds = b; }
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -2728,12 +2720,10 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | SeqVar seq_info -> 
         let e =  a_apply_one_term (fr, t) seq_info.seq_element in
         let fp = a_apply_one_term (fr, t) seq_info.seq_fix_point in
-        let lb = a_apply_one_term (fr, t) seq_info.seq_lower_bound in
-        let ub = a_apply_one_term (fr, t) seq_info.seq_upper_bound in
+        let b = List.map (a_apply_one_term (fr, t)) seq_info.seq_bounds in
         SeqVar {seq_info with seq_element = e;
                               seq_fix_point = fp;
-                              seq_lower_bound = lb;
-                              seq_upper_bound = ub}
+                              seq_bounds = b;}
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -3742,12 +3732,10 @@ and b_apply_one_exp (fr, t) bf =
   | SeqVar seq_info -> 
       let e =  e_apply_one_exp (fr, t) seq_info.seq_element in
       let fp = e_apply_one_exp (fr, t) seq_info.seq_fix_point in
-      let lb = e_apply_one_exp (fr, t) seq_info.seq_lower_bound in
-      let ub = e_apply_one_exp (fr, t) seq_info.seq_upper_bound in
+      let b = e_apply_one_list_exp (fr, t) seq_info.seq_bounds in
       SeqVar {seq_info with seq_element = e;
                             seq_fix_point = fp;
-                            seq_lower_bound = lb;
-                            seq_upper_bound = ub}
+                            seq_bounds = b;}
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -4856,13 +4844,13 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
           | SeqVar seq_info -> 
               let (e, r1) = helper new_arg seq_info.seq_element in
               let (fp, r2) = helper new_arg seq_info.seq_fix_point in
-              let (lb, r3) = helper new_arg seq_info.seq_lower_bound in
-              let (ub, r4) = helper new_arg seq_info.seq_upper_bound in
+              let tmp = List.map (helper new_arg) seq_info.seq_bounds in
+              let b = List.map fst tmp in
+              let r3 = List.map snd tmp in
               let new_seq = {seq_info with seq_element = e;
                                            seq_fix_point = fp;
-                                           seq_lower_bound = lb;
-                                           seq_upper_bound = ub} in
-              (SeqVar new_seq, f_comb[r1; r2; r3; r4])
+                                           seq_bounds = b;} in
+              (SeqVar new_seq, f_comb ([r1; r2] @ r3))
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -4961,12 +4949,10 @@ let transform_b_formula f (e:b_formula) :b_formula =
         | SeqVar seq_info -> 
             let e = transform_exp f_exp seq_info.seq_element in
             let fp = transform_exp f_exp seq_info.seq_fix_point in
-            let lb = transform_exp f_exp seq_info.seq_lower_bound in
-            let ub = transform_exp f_exp seq_info.seq_upper_bound in
+            let b = List.map (transform_exp f_exp) seq_info.seq_bounds in
             SeqVar { seq_info with seq_element = e;
                                    seq_fix_point = fp;
-                                   seq_lower_bound = lb;
-                                   seq_upper_bound = ub}
+                                   seq_bounds = b; }
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -5299,12 +5285,10 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | SeqVar seq_info -> 
             let e = norm_exp seq_info.seq_element in
             let fp = norm_exp seq_info.seq_fix_point in
-            let lb = norm_exp seq_info.seq_lower_bound in
-            let ub = norm_exp seq_info.seq_upper_bound in
+            let b = List.map norm_exp seq_info.seq_bounds in
             SeqVar { seq_info with seq_element = e;
                                    seq_fix_point = fp;
-                                   seq_lower_bound = lb;
-                                   seq_upper_bound = ub}
+                                   seq_bounds = b; }
    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
@@ -6224,12 +6208,10 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | SeqVar seq_info -> 
         let e = norm_exp seq_info.seq_element in
         let fp = norm_exp seq_info.seq_fix_point in
-        let lb = norm_exp seq_info.seq_lower_bound in
-        let ub = norm_exp seq_info.seq_upper_bound in
+        let b = List.map norm_exp seq_info.seq_bounds in
         SeqVar { seq_info with seq_element = e;
                                seq_fix_point = fp;
-                               seq_lower_bound = lb;
-                               seq_upper_bound = ub}
+                               seq_bounds = b; }
     | SubAnn _
     | VarPerm _
     | BConst _ | BVar _ | EqMax _ 

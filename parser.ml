@@ -1054,12 +1054,11 @@ cexp_w :
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
       | t_ann = ann_term; param = measures_seq_dec ->
-          let (m, fp, lb, ub) = param in
+          let (m, fp, lb) = param in
           let seq = P.SeqVar { P.seq_ann = t_ann;
                                P.seq_element = m;
                                P.seq_fix_point = fp;
-                               P.seq_lower_bound = lb;
-                               P.seq_upper_bound = ub;
+                               P.seq_bounds = [lb];
                                P.seq_variation = P.SeqDec;
                                P.seq_loc = get_pos_camlp4 _loc 1} in
           let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1191,15 +1190,14 @@ opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
 
 measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-(* LimDec(measurement, fixpoint, lower_bound, upper_bound) *)
-measures_seq_dec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `COMMA; ub = cexp; `CPAREN; `CSQUARE -> (m, fp, lb, ub)]];
+(* SeqDec(measurement, fixpoint, lower_bound) *)
+measures_seq_dec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `CPAREN; `CSQUARE -> (m, fp, lb)]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 (*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
 
 (********** Procedures and Coercion **********)
-
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
