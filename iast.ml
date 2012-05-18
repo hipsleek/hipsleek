@@ -1893,3 +1893,23 @@ let add_bar_inits prog =
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
+
+	
+let gen_normalize_lemma ddef = 
+ let self = (self,Unprimed) in
+ let lem_name = "s"^ddef.data_name in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl None no_pos in
+ let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
+ let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
+ let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
+ let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None)) args1 args2 in
+ {coercion_type = Left;
+  coercion_name = lem_name;
+  coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
+  coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+ }
+	
+let add_normalize_lemmas prog4 = 
+	if !Perm.perm = Perm.NoPerm then prog4
+	else {prog4 with prog_coercion_decls = (List.map gen_normalize_lemma prog4.prog_data_decls) @prog4.prog_coercion_decls}

@@ -126,25 +126,6 @@ let check_data_pred_name name :bool =
   let pr2 = string_of_bool in 
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
-(* let process_data_def ddef = *)
-(*   print_endline (Iprinter.string_of_data_decl ddef); *)
-(*   flush stdout; *)
-(*   if check_data_pred_name ddef.I.data_name then *)
-(*     let tmp = iprog.I.prog_data_decls in *)
-(*     try *)
-(*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
-(*       Iast.build_exc_hierarchy true iprog; *)
-(*       Exc.c_h (); *)
-(*       let cddef = AS.trans_data iprog ddef in *)
-(*       if !Globals.print_core then  *)
-(*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
-(*       !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls *)
-(*     with *)
-(*     | _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp *)
-(*   else begin *)
-(*     dummy_exception() ; *)
-(*     print_string (ddef.I.data_name ^ " is already defined.\n") *)
-(*   end *)
 
 let process_pred_def pdef = 
   (* TODO : how come this method not called? *)
@@ -299,6 +280,32 @@ let process_axiom_def adef = begin
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
 	
+
+let process_lemma ldef =
+  let ldef = AS.case_normalize_coerc iprog ldef in
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  (* TODO : WN print input_ast *)
+  let _ = if !Globals.print_input then print_string (Iprinter.string_of_coerc_decl ldef) in
+  let _ = if !Globals.print_core then 
+    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
+  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
+  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  let get_coercion c_lst = match c_lst with 
+    | [c] -> Some c
+    | _ -> None in
+  let l2r = get_coercion l2r in
+  let r2l = get_coercion r2l in
+  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  residues := (match res with
+               | None -> None;
+               | Some ls_ctx -> Some (ls_ctx, true))
+
+let process_lemma ldef =
+  Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
+
+	
 let process_data_def ddef =
   (*
     print_string (Iprinter.string_of_data_decl ddef);
@@ -313,7 +320,9 @@ let process_data_def ddef =
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
-	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
+	!cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
+	if !Perm.perm=Perm.NoPerm then () 
+	else process_lemma (Iast.gen_normalize_lemma ddef)	  
       with
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
       else begin
@@ -692,31 +701,6 @@ let process_capture_residue (lvar : ident) =
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
-let process_lemma ldef =
-  let ldef = AS.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
-  (* TODO : WN print input_ast *)
-  let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
-  let _ = if !Globals.print_core then 
-    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
-  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
-  let get_coercion c_lst = match c_lst with 
-    | [c] -> Some c
-    | _ -> None in
-  let l2r = get_coercion l2r in
-  let r2l = get_coercion r2l in
-  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
-  residues := (match res with
-               | None -> None;
-               | Some ls_ctx -> Some (ls_ctx, true))
-
-let process_lemma ldef =
-  Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
-
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->

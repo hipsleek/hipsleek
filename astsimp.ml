@@ -1007,7 +1007,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
-
+  let prog2 = I.add_normalize_lemmas prog2 in
   let prog1 = { prog2 with
 	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
 	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in

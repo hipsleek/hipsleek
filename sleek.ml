@@ -101,30 +101,13 @@ let parse_file (parse) (source_file : string) =
       | RelDef rdef -> process_rel_def rdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-	  | LemmaDef _
-      | Infer _
-	  | CaptureResidue _
-	  | LetDef _
-	  | EntailCheck _
-	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | PrintCmd _ 
+      | Time _ | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
-	  | DataDef _
-	  | PredDef _
-	  | BarrierCheck _
-	  | FuncDef _
-      | RelDef _
-      | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _
-	  | LetDef _
-	  | EntailCheck _
-    | Infer _
-	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
+	  | CaptureResidue _ | LetDef _ | EntailCheck _ | Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> 
@@ -138,14 +121,7 @@ let parse_file (parse) (source_file : string) =
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
-	  | DataDef _
-	  | PredDef _
-	  
-	  | FuncDef _
-      | RelDef _
-      | AxiomDef _ (* An Hoa *)
-	  | LemmaDef _
-	  | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
