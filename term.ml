@@ -716,7 +716,7 @@ let check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 (* To handle Termination Var formula *)
 (* Remember to remove SeqVar in RHS *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  (estate, lhs_p, rhs_p, None)
+    check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
 (* To handle Termination var formula *)
 (* Remember to remove SeqVar in RHS *)

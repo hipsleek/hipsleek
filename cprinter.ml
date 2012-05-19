@@ -733,7 +733,16 @@ let rec pr_b_formula (e:P.b_formula) =
         (* ;if ls2!=[] then *)
         (*   pr_set pr_formula_exp ls2 *)
         (* else () *)
-    | P.SeqVar _ -> () (* TRUNG TODO: implement *)
+    | P.SeqVar seq -> (
+          fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
+          fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
+          pr_formula_exp seq.CP.seq_element;
+          fmt_string ", ";
+          pr_formula_exp seq.CP.seq_fix_point;
+          fmt_string ", ";
+          pr_s "" pr_formula_exp seq.CP.seq_bounds;
+          fmt_string "]";
+        )
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2

@@ -171,6 +171,11 @@ let string_of_slicing_label sl =
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
+let string_of_sequence_variation (v: P.sequence_variation_type) : string =
+  match v with
+  | P.SeqDec -> "SeqDec"
+  | P.SeqOsc -> "SeqOsc"
+
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
@@ -185,7 +190,14 @@ let string_of_b_formula (pf,il) =
             "{"^(pr_list string_of_formula_exp ls2)^"}"
           in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
       | _ -> ann)
-  | P.SeqVar _ -> "SeqVar: need to be implemented" (* TRUNG TODO: implement *)
+  | P.SeqVar seq -> (
+      let ann = string_of_term_ann seq.P.seq_ann in
+      let seq_vari = string_of_sequence_variation seq.P.seq_variation in
+      let elm = string_of_formula_exp seq.P.seq_element in
+      let fp = string_of_formula_exp seq.P.seq_fix_point in
+      let b = pr_list string_of_formula_exp seq.P.seq_bounds in
+      ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ fp ^ ", " ^ b ^ ")"
+    )
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

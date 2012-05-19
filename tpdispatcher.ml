@@ -1849,7 +1849,7 @@ let is_sat f sat_no do_cache =
   end
 ;;
 
-let is_sat f sat_no do_cache = Debug.no_1 "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+let is_sat f sat_no do_cache = Debug.no_1 "Tpdispatcher.is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 
 let sat_no = ref 1 ;;

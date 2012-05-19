@@ -7720,6 +7720,7 @@ let is_update_array_relation (r:string) =
 let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | SeqVar t_info -> Some (mkTrue t_info.seq_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -7727,6 +7728,7 @@ let drop_complex_ops =
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
+        | SeqVar t_info -> Some (mkFalse t_info.seq_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -7734,16 +7736,18 @@ let drop_complex_ops =
         | _ -> None in
   (pr_weak,pr_strong)
 
-let drop_lexvar_ops =
+let drop_termvar_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | SeqVar t_info -> Some (mkTrue t_info.seq_loc)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
+        | SeqVar t_info -> Some (mkFalse t_info.seq_loc)
         | _ -> None in
   (pr_weak,pr_strong)
 
-let drop_complex_ops_z3 = drop_lexvar_ops
+let drop_complex_ops_z3 = drop_termvar_ops
 
 let memo_complex_ops stk bool_vars is_complex =
   let pr b = match b with

@@ -84,7 +84,7 @@ let rec omega_of_exp e0 = match e0 with
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 *)
 
-and omega_of_b_formula b =
+and omega_of_b_formula_x b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
@@ -125,10 +125,14 @@ and omega_of_b_formula b =
   | SeqVar _ -> illegal_format ("Omega.omega_of_exp: SeqVar")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
-and omega_of_formula pr_w pr_s f  =
+and omega_of_b_formula b  =
+  let pr = !print_b_formula in
+  Debug.no_1 "omega_of_b_formula" pr (fun x -> x) omega_of_b_formula_x b
+
+and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 		
+  | BForm ((b,_) as bf,_) -> 
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
@@ -150,12 +154,12 @@ and omega_of_formula pr_w pr_s f  =
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 
-      pr pr_id (fun _ -> omega_of_formula pr_w pr_s f) f
+      pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 and omega_of_formula_old f  =
   let (pr_w,pr_s) = no_drop_ops in
   try 
-    Some(omega_of_formula pr_w pr_s f)
+    Some(omega_of_formula_x pr_w pr_s f)
   with | _ -> None
 
 (* let omega_of_formula_old i f  = *)
