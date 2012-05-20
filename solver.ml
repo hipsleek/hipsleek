@@ -337,19 +337,23 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	        let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	        {mem_formula_mset = m;}
       | DataNode ({h_formula_data_node = p;
+		h_formula_data_perm = perm;
 	    h_formula_data_pos = pos}) ->
 	        let new_mset = 
-	          if List.mem p evars then CP.DisjSetSV.mkEmpty
+	          if List.mem p evars || perm<> None then CP.DisjSetSV.mkEmpty
 	          else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) in
 	        {mem_formula_mset = new_mset;}
       | ViewNode ({ h_formula_view_node = p;
         h_formula_view_name = c;
         h_formula_view_arguments = vs;
         h_formula_view_remaining_branches = lbl_lst;
+		h_formula_view_perm = perm;
         h_formula_view_pos = pos}) ->
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             (*TO DO: Temporarily ignore LOCK*)
+			if  perm<> None then {mem_formula_mset =[]}
+			else 
             (match vdef.view_inv_lock with
               | Some f -> 
                   {mem_formula_mset =[]}
@@ -5470,7 +5474,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 *)
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -7310,12 +7314,13 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
 (*******************************************************************************************************************************************************************************)
 
 and find_coercions_x c1 c2 prog anode ln2 =
+  let is_not_norm c = match c.coercion_case with | Normalize _ -> false | _ -> true in
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
-  let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
-  let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && c.coercion_case<>Normalize) coers1  in (* keep only non-cyclic coercion rule *)
+  let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in  
+  let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && is_not_norm c) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
   let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
-  let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && c.coercion_case<>Normalize) coers2  in (* keep only non-cyclic coercion rule *)
+  let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && is_not_norm c) coers2  in (* keep only non-cyclic coercion rule *)
   let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
   ((coers1,coers2),univ_coers)
@@ -7328,7 +7333,7 @@ and find_coercions c1 c2 prog anode ln2 =
 
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Debug.ho_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
@@ -7347,8 +7352,8 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 			| Iast.Left -> 
 				let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
 				
-				if !Perm.perm=Perm.NoPerm || c.coercion_case<>Normalize then r
-				else if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)   then (([],[]),[]) else r
+				if !Perm.perm=Perm.NoPerm || c.coercion_case<>(Normalize false) then if c.coercion_case<>(Normalize true) then r else (([],[]),[])
+				else if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)   then (([],[]),[]) else (print_string"\n splitting \n";r)
 				
 			| Iast.Right -> (([],[c]),[])
 			| _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
@@ -7397,9 +7402,9 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
-      (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
-      anode resth1 coer
+  Debug.ho_4 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula pr
+      (fun _ _ _ _-> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
+      anode resth1 coer conseq
       (* anode - LHS matched node
          resth1 - LHS remainder
          lhs_p - lhs mix pure
@@ -7790,7 +7795,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
                           (rhs,extra)
                     | _ -> (coer_rhs_new1, extra_heap_new)
                 else (coer_rhs_new1,extra_heap_new) in
-		      let coer_rhs_new = add_origins coer_rhs_new1 [coer.coercion_name] in
+		      let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
               let new_es_heap = anode in (*consumed*)
               let old_trace = estate.es_trace in
               let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
@@ -7877,7 +7882,8 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
         match c.coercion_case with
           | Cast.Simple -> false
           | Cast.Complex -> false
-          | Cast.Normalize -> true) coers
+		  | Cast.Normalize false -> false
+          | Cast.Normalize true -> true) coers
     in
     (* let _ = print_string ("normalize_formula_w_coers: "  *)
     (*                       ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) *)

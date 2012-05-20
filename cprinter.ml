@@ -2159,7 +2159,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
-  | Cast.Normalize -> "Normalize"
+  | Cast.Normalize b-> "Normalize "^(string_of_bool b)
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in

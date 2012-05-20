@@ -208,9 +208,9 @@ let rec smt_of_formula pr_w pr_s f =
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
 	| CP.Forall (sv, p, _,_) ->
-		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+		"(forall ((" ^ (smt_of_typed_spec_var sv) ^ ")) " ^ (helper p) ^ ")"
 	| CP.Exists (sv, p, _,_) ->
-		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+		"(exists ((" ^ (smt_of_typed_spec_var sv) ^ ")) " ^ (helper p) ^ ")"
   in
   helper f
 
@@ -757,6 +757,8 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
 	(*	| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv*)
 	in res
 	
+let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
+	Debug.no_1 "to_smt" (fun _ -> "") (fun c -> c) (fun c-> to_smt pr_weak pr_strong ante conseq prover) prover
 	
 (***************************************************************
                          CONSOLE OUTPUT                         

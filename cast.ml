@@ -129,7 +129,7 @@ and proc_decl = {
 and coercion_case =
   | Simple
   | Complex
-  | Normalize
+  | Normalize of bool
 
 and coercion_decl = { 
     coercion_type : coercion_type;
@@ -1040,7 +1040,10 @@ let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	| [] -> Simple
 	| h::t -> 
 	    if lhs_length=1 then Simple
-		else if lhs_length=2 && l_sn && r_sn && rhs_length=1 && (List.for_all (fun c-> h=c) t) then Normalize
+		else if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
+			if lhs_length=2 && rhs_length=1  then Normalize true
+			else if lhs_length=1 && rhs_length=2  then Normalize false
+			else Complex
 		else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 

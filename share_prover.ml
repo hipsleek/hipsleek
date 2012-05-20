@@ -231,10 +231,10 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			let c_sys = {c_sys with }*)
 				
 		(*decomposition functions*)
-		let gen_left_name n = n^"@" 
+		let gen_left_name n = n^"__L" 
 		let gen_left_var v = SV.rename v (gen_left_name (SV.get_name v))
 		
-		let gen_right_name n = n^"$" 
+		let gen_right_name n = n^"__R" 
 		let gen_right_var v = SV.rename v (gen_right_name (SV.get_name v))
 		
 		let eq_depth_0 ef = match ef with
@@ -647,7 +647,7 @@ module Sv =
 	let rename _ s = s
     let get_name v = v	
 	let var_of v = v
-    let fresh_var _ = cnt:=!cnt+1; "__ts_fv_"^(string_of_int !cnt)    
+    let fresh_var _ = cnt:=!cnt+1; "ts_fv_"^(string_of_int !cnt)    
 end
 
 module Ss_triv:SAT_SLV = functor (Sv:SV) ->
