@@ -5332,7 +5332,7 @@ and detect_false (ante : MCP.mix_formula) (memset : CF.mem_formula) : bool =
 	(* let neq_pairs = CF.generate_disj_pairs_from_memf memset in *)
 	(* List.fold_left *)
 	(*    (fun x y -> x || (CP.EMapSV.is_equiv eqset (fst y) (snd y))) false neq_pairs *)
-	let m = memset.mem_formula_mset in
+	let m = memset.mem_formula_mset in 
 	let rec helper l =
 	  match l with
 	    | h::r -> 
@@ -7919,6 +7919,20 @@ and normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list)
   Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
       
+and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_formula = 
+   let n_form f = normalize_formula_w_coers prog estate f coers in
+   let rec helper f = match f with 
+	  | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2}
+	  | EList b-> EList (map_l_snd helper b)
+	  | ECase b-> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}
+	  | EBase b-> EBase {b with formula_struc_base = n_form b.formula_struc_base; formula_struc_continuation = map_opt helper b.formula_struc_continuation}
+	  | EInfer b-> EInfer{b with formula_inf_continuation= helper b.formula_inf_continuation}
+	  | EAssume (a1,a2,a3)-> EAssume (a1, n_form a2, a3) in
+	helper f
+	  
+	  
+and normalize_perm_prog prog = prog
+	  
 (*******************************************************************************************************************************************************************************************)
 (* apply_right_coercion *)
 (*******************************************************************************************************************************************************************************************)

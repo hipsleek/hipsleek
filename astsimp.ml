@@ -1093,7 +1093,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
           ignore (C.build_hierarchy cprog1);
           let cprog1 = fill_base_case cprog1 in
-          let cprog2 = sat_warnings cprog1 in        
+          let cprog2 = sat_warnings cprog1 in   
+		  let cprog2 = Solver.normalize_perm_prog cprog2 in
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
 		  (*let cprog3 = normalize_fracs cprog3 in*)
           let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in   

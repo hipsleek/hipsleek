@@ -82,7 +82,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 		exception Unsat_exception
 		exception Unsat_conseq of bool
 		
-		let raise_us s = print_string ("exc: "^s^"\n"); raise Unsat_exception
+		let raise_us s = (*print_string ("exc: "^s^"\n");*) raise Unsat_exception
 		let report_error s = failwith s 
 		
 		(*aux functions*)
