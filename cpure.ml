@@ -12,7 +12,6 @@ open Exc.GTable
 open Label_only
 open Label
 
-
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
@@ -182,6 +181,8 @@ let print_rel_cat rel_cat = match rel_cat with
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
 let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+
+let full_perm_var_name = "Anon_full_perm"
 
 module Exp_Pure =
 struct 
@@ -1572,7 +1573,7 @@ and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Debug.ho_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
       (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
 
 and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
@@ -2937,6 +2938,35 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
     | _ -> ([], BForm (f,lbl))
           
           
+  
+and perm_bounds (e:exp) : bool = match e with
+	| Add (e1,e2,_) -> 
+		(match e1 with 
+			| Tsconst(f,_)-> Tree_shares.Ts.full f 
+			| Var(v,_)-> full_perm_var_name = name_of_spec_var v
+			|_-> false)||
+		(match e2 with 
+			| Tsconst(f,_)-> Tree_shares.Ts.full f 
+			| Var(v,_)-> full_perm_var_name = name_of_spec_var v
+			|_-> false)
+	| _ -> false
+	  
+and prune_perm_bounds f = 
+	let helper (f,p) = match f with 
+		| Eq (e1,e2,l) -> if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l),p else (f,p)
+		| _ -> (f,p) in
+		
+	let rec helper_f f = match f with
+	  | BForm (b,l)-> BForm (helper b, l)
+	  | And (f1,f2,l) -> mkAnd (helper_f f1) (helper_f f2) l
+	  | AndList b -> AndList (map_l_snd helper_f b)
+	  | Or (f1,f2,l,pos) -> mkOr (helper_f f1) (helper_f f2) l pos
+	  | Not (f,l,pos) -> mkNot (helper_f f) l pos
+	  | Forall (v,f,l,pos) -> mkForall [v] (helper_f f) l pos
+	  | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos
+	in
+	helper_f f 
+		  
 (* 
    Get a list of conjuncts, namely
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
@@ -3218,6 +3248,7 @@ and elim_exists_x (f0 : formula) : formula =
 	              let st, pp1 = get_subst_equation_formula with_qvars qvar false in
 	              if not (Gen.is_empty st) then
 	                let new_qf = subst_term st pp1 in
+					let new_qf = prune_perm_bounds new_qf in
 	                let new_qf = mkExists qvars0 new_qf lbl pos in
 	                let tmp3 = helper new_qf in
 	                let tmp4 = mkAnd no_qvars tmp3 pos in
@@ -3965,6 +3996,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
   )||((is_simple e2)&& match e1 with
 	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
 	| _ -> false) 				  
+	
 	  
 and drop_null (f:formula) self neg:formula = 
   let helper(f:b_formula) neg:b_formula =
@@ -4264,11 +4296,6 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
     | None -> ll,rl
     | Some e -> e::ll,e::rl in
   (add lhs ll, add rhs rl, add qhs ql)
-
-and perm_bounds (e:exp) : bool = match e with
-	| Add (e1,e2,_) -> (match e1 with | Tsconst(f,_)-> Tree_shares.Ts.full f |_-> false)||(match e2 with | Tsconst(f,_)-> Tree_shares.Ts.full f |_-> false)
-	| _ -> false
- 
   
 and purge_mult (e: exp) : exp =
   let pr = !print_exp in
@@ -4452,7 +4479,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
            let lh, rh = do_all e1 e2 l in
 		   Lte (rh, lh, l)
     |  Eq (e1, e2, l) ->
-		   if (*!Perm.perm=Perm.Dperm && *)(perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
+		   if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
 		   else
 			let lh, rh = do_all e1 e2 l in
 			Eq (lh, rh, l)
@@ -8119,8 +8146,8 @@ let rec andl_to_and f = match f with
 		
 type tscons_res = 
 	| No_cons
-	| Can_split
-	| No_split
+	| Can_split (*has tree share constraints but they can be separated*)
+	| No_split (*has tree share constraints but can not split*)
 	
 let join_res t1 t2 = match t1,t2 with
 	| Can_split, Can_split -> Can_split

@@ -2121,8 +2121,8 @@ and elim_exists_pure w f lump pos = elim_exists_mix_formula w f pos
 
 and elim_exists_mix_formula w f pos = 
   let pr = Cprinter.string_of_mix_formula in
-  Debug.no_1 "elim_exists_mix_formula" pr pr
-      (fun _ -> elim_exists_mix_formula_x w f pos) f
+  Debug.no_2 "elim_exists_mix_formula" pr !CP.print_svl pr
+      (fun _ _ -> elim_exists_mix_formula_x w f pos) f w
 
 and elim_exists_mix_formula_x w f pos = match f with
   | MCP.MemoF f -> MCP.MemoF (elim_exists_memo_pure w f pos)
@@ -5094,13 +5094,16 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 	    (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
-        let split_conseq =
+		DD.devel_hprint (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
+        DD.devel_hprint (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
+		let split_conseq =
 	      if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
 		  then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos
 	      else new_conseq0 in
         DD.devel_pprint ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
         DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
         DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
+		DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
         let i_res1,i_res2,i_res3 = 
           if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
@@ -7352,7 +7355,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 			| Iast.Left -> 
 				let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
 				
-				if !Perm.perm=Perm.NoPerm || c.coercion_case<>(Normalize false) then if c.coercion_case<>(Normalize true) then r else (([],[]),[])
+				if !perm=NoPerm || c.coercion_case<>(Normalize false) then if c.coercion_case<>(Normalize true) then r else (([],[]),[])
 				else if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)   then (([],[]),[]) else (print_string"\n splitting \n";r)
 				
 			| Iast.Right -> (([],[c]),[])

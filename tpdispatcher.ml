@@ -1045,7 +1045,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
   
 let tp_is_sat_perm f sat_no = 
-  if !Perm.perm=Perm.Dperm then match CP.has_tscons f with
+  if !perm=Dperm then match CP.has_tscons f with
 	| No_cons -> tp_is_sat_no_cache f sat_no
 	| No_split	-> true
 	| Can_split ->
@@ -1096,6 +1096,8 @@ let simplify_omega f =
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
+  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
+  else 
     let omega_simplify f = Omega.simplify f in
     (* this simplifcation will first remove complex formula
        as boolean vars but later restore them *)
@@ -1517,7 +1519,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
 let tp_imply_perm ante conseq imp_no timeout process = 
- if !Perm.perm=Perm.Dperm then
+ if !perm=Dperm then
 	match join_res (CP.has_tscons ante )( CP.has_tscons conseq) with
 		| No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
 		| No_split -> false

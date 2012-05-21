@@ -4,11 +4,7 @@ open Ipure
 open Cpure
 
 (*type of permissions*)
-type perm_type =
-  | NoPerm (*no permission at all*)
-  | Frac (*fractional permissions*)
-  | Count (*counting permissions*)
-  | Dperm (*distinct fractional shares*)
+
 
 type iperm = Ipure.exp option (*type of permission in iformula*)
 
@@ -25,8 +21,6 @@ let string_of_perm_type t =
     | NoPerm -> "NoPerm"
 	| Dperm  -> "Dperm"
 
-(* let perm = ref Frac *)
-let perm = ref NoPerm
 
 let allow_perm ():bool = 
   match !perm with
@@ -42,7 +36,7 @@ let set_perm perm_str =
 (*Some constants*)
 module PERM_const =
 struct
-  let full_perm_name = ("Anon_"^"full_perm")
+  let full_perm_name = full_perm_var_name 
   let perm_name = ("perm_")
 end;;
 

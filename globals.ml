@@ -104,6 +104,16 @@ let barrierT = Named "barrier"
 type mode = 
   | ModeIn
   | ModeOut
+  
+  
+
+type perm_type =
+  | NoPerm (*no permission at all*)
+  | Frac (*fractional permissions*)
+  | Count (*counting permissions*)
+  | Dperm (*distinct fractional shares*)
+  
+let perm = ref NoPerm
 
 (* let rec string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
