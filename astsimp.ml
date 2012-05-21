@@ -7504,11 +7504,9 @@ and check_barrier_wf prog bd =
 					
 					let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
 					let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
-					let h_fv = CF.f_h_fv fpre @ CF.f_h_fv fpre in
-					let pre_pure_fv  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
-					let post_pure_fv = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
-					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var pre_pure_fv  post_pure_fv in
-					let post_ex = Gen.BList.difference_eq CP.eq_spec_var post_pure_fv pre_pure_fv  in
+					let h_fv = List.tl bd.C.barrier_shared_vars in
+					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
+					let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
 					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
 				
 				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
