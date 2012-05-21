@@ -5001,7 +5001,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       begin
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
           | None ->     
-              let t_ann, ml, il = Term.find_lexvar_es estate in
+              let _ = print_endline ("== find lexvar") in
+              let lexvar = Term.find_lexvar_es estate in
+              let t_ann, ml, il = match lexvar with
+                                  | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
+                                  | _ -> raise Term.LexVar_Not_found in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
               let term_measures, term_res, term_err_msg =
                 Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),

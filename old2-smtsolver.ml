@@ -166,6 +166,8 @@ let rec smt_of_b_formula b =
 			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.LexVar _ ->
       illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+  | CP.SeqVar _ ->
+      illegal_format ("z3.smt_of_b_formula: SeqVar should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -249,6 +251,7 @@ and collect_combine_formula_info_raw f1 f2 =
 
 and collect_bformula_info b = match b with
   | CP.LexVar _ -> default_formula_info
+  | CP.SeqVar _ -> default_formula_info
   | CP.BConst _ | CP.BVar _ -> default_formula_info
   | CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
   | CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 

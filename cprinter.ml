@@ -719,65 +719,68 @@ let pr_var_measures (measures : CP.p_formula) : unit =
     )
   | _ -> failwith "Invalid value of measures"
 
-(** print a b_formula  to formatter *)
-let rec pr_b_formula (e:P.b_formula) =
+(** print a p_formula  to formatter *)
+let rec pr_p_formula (pf: P.p_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
+  match pf with
+  | P.LexVar t_info -> 
+      fmt_string (string_of_term_ann t_info.CP.lex_ann);
+      pr_s "" pr_formula_exp t_info.CP.lex_exp
+  | P.SeqVar seq ->
+      fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
+      fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
+      pr_formula_exp seq.CP.seq_element;
+      fmt_string ", ";
+      pr_formula_exp seq.CP.seq_fix_point;
+      fmt_string ", ";
+      pr_s "" pr_formula_exp seq.CP.seq_bounds;
+      fmt_string "]";
+  | P.BConst (b,l) -> fmt_bool b 
+  | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
+  | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
+  | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
+  | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
+  | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
+  | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
+  | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
+  | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2;
+  | P.EqMax (e1, e2, e3, l) ->   
+      let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
+      let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
+      let arg = arg2@arg3 in
+      (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
+  | P.EqMin (e1, e2, e3, l) ->   
+      let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
+      let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
+      let arg = arg2@arg3 in
+      (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
+  | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
+  | P.BagNotIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <notin> "  (fun ()-> pr_formula_exp e)
+  | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
+  | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
+  | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
+  | P.VarPerm (t,ls,l) -> 
+      fmt_string (string_of_vp_ann t); fmt_string ("[");
+      fmt_string (string_of_spec_var_list ls); fmt_string ("]")
+  | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
+  | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
+  | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
+  | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+  | P.RelForm (r, args, l) -> (
+      fmt_string ((string_of_spec_var r) ^ "("); 
+      match args with
+      | [] -> ()
+      | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+        let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")"
+    ) 
+
+(** print a b_formula  to formatter *)
+let rec pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
-  match pf with
-    | P.LexVar t_info -> 
-        fmt_string (string_of_term_ann t_info.CP.lex_ann);
-        pr_s "" pr_formula_exp t_info.CP.lex_exp
-        (* ;if ls2!=[] then *)
-        (*   pr_set pr_formula_exp ls2 *)
-        (* else () *)
-    | P.SeqVar seq -> (
-          fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
-          fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
-          pr_formula_exp seq.CP.seq_element;
-          fmt_string ", ";
-          pr_formula_exp seq.CP.seq_fix_point;
-          fmt_string ", ";
-          pr_s "" pr_formula_exp seq.CP.seq_bounds;
-          fmt_string "]";
-        )
-    | P.BConst (b,l) -> fmt_bool b 
-    | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
-    | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
-    | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
-    | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
-    | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
-    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
-    | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
-    | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
-    | P.EqMax (e1, e2, e3, l) ->   
-          let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
-          let arg = arg2@arg3 in
-          (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
-    | P.EqMin (e1, e2, e3, l) ->   
-          let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
-          let arg = arg2@arg3 in
-          (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
-    | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
-    | P.BagNotIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <notin> "  (fun ()-> pr_formula_exp e)
-    | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
-    | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
-    | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
-    | P.VarPerm (t,ls,l) -> 
-        fmt_string (string_of_vp_ann t); fmt_string ("[");
-        fmt_string (string_of_spec_var_list ls); fmt_string ("]")
-    | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
-    | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
-    | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
-    | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-		| [] -> ()
-		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+  pr_p_formula pf;
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2

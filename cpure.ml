@@ -1338,6 +1338,11 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure bf in
   p
 
+and mkSeqVar_pure ann element fix_point bounds variation =
+  let bf = mkSeqVar ann element fix_point bounds variation no_pos in
+  let p = mkPure bf in
+  p
+
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
 and mkVarNull v pos = 
