@@ -1572,7 +1572,7 @@ and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+  Debug.ho_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
       (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
 
 and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
@@ -1606,13 +1606,23 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		AndList (Label_Pure.norm l)
 	| Or (f1,f2,lbl,pos) -> 
 		Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
+	| And(f1,f2,pos) ->
+		let lconj = split_conjunctions f in
+		let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
+		let lrelf = join_conjunctions lrel in
+		let lunrelf = join_conjunctions lunrel in
+		let lrelf = 	
+			let fvs = fv lrelf in
+			let to_push = List.filter (fun c-> mem c fvs) vs in
+			List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
+		mkAnd_dumb lunrelf lrelf pos
 	| _ ->
 		let fvs = fv f in
 		let to_push = List.filter (fun c-> mem c fvs) vs in
 		List.fold_left (fun a v-> Exists (v,a,lbel,pos)) f to_push 
 
 and mkExists vs f lbel pos = 
-	Debug.no_1 "pure_mkExists" !print_formula !print_formula (fun _ -> mkExists_x vs f lbel pos) f
+	Debug.no_2 "pure_mkExists" !print_formula !print_svl !print_formula (fun _ _-> mkExists_x vs f lbel pos) f vs
 		
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
@@ -4253,6 +4263,11 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
     | Some e -> e::ll,e::rl in
   (add lhs ll, add rhs rl, add qhs ql)
 
+and perm_bounds (e:exp) : bool = match e with
+	| Add (e1,e2,_) -> (match e1 with | Tsconst(f,_)-> Tree_shares.Ts.full f |_-> false)||(match e2 with | Tsconst(f,_)-> Tree_shares.Ts.full f |_-> false)
+	| _ -> false
+ 
+  
 and purge_mult (e: exp) : exp =
   let pr = !print_exp in
   Debug.no_1 "purge_mult" pr pr purge_mult_x e
@@ -4435,8 +4450,10 @@ and b_form_simplify_x (b:b_formula) :b_formula =
            let lh, rh = do_all e1 e2 l in
 		   Lte (rh, lh, l)
     |  Eq (e1, e2, l) ->
-           let lh, rh = do_all e1 e2 l in
-		   Eq (lh, rh, l)
+		   if (*!Perm.perm=Perm.Dperm && *)(perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
+		   else
+			let lh, rh = do_all e1 e2 l in
+			Eq (lh, rh, l)
     |  Neq (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
 		   Neq (lh, rh, l)
@@ -5772,7 +5789,7 @@ let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   let pr = pr_list !print_formula in
-  Debug.ho_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
+  Debug.no_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
       (fun ante_disj0 ante_disj1 conseq_conj-> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
       ante_disj0 ante_disj1 conseq_conj
 
@@ -8135,7 +8152,7 @@ let rec tpd_drop_perm f = match f with
   | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f
   | And (f1,f2,l) -> mkAnd (tpd_drop_perm f1) (tpd_drop_perm f2) l
   | AndList l -> AndList (map_l_snd tpd_drop_perm l)
-  | Or _ -> report_error no_pos "to_dnf has failed "
+  | Or _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
   | Not (b,l,p) -> mkNot (tpd_drop_perm b) l p 
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
   | Exists (_,f,_,_) -> tpd_drop_perm f
@@ -8146,10 +8163,10 @@ let rec tpd_drop_nperm f = match f with
 	| BForm ((b,_),_) -> if has_b_tscons b = Can_split then [b] else []
 	| And (f1,f2,l) -> tpd_drop_nperm f1 @ tpd_drop_nperm f2 
 	| AndList l -> fold_l_snd tpd_drop_nperm l 
-	| Or _ -> report_error no_pos "to_dnf has failed "
+	| Or _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
 	| Not (b,_,_) ->  if tpd_drop_nperm b=[] then [] else report_error no_pos "tree shares under negation"
 	| Forall (_,b,_,_) -> if tpd_drop_nperm b =[] then [] else report_error no_pos "tree shares under forall"
-	| Exists _ -> report_error no_pos "to_dnf has failed "
+	| Exists _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
 	
 	
 let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_list (fun c-> !print_b_formula (c,None))) tpd_drop_nperm f

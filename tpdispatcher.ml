@@ -2480,15 +2480,8 @@ let change_prover prover =
   tp := prover;
   start_prover ();;
 
-(*let imply_raw ante conseq  =*)
-(*  tp_imply_perm 999 ante conseq "999" (!imply_timeout_limit) None*)
-
-(*let is_sat_raw_no_cache (f: CP.formula) =*)
-(*  tp_is_sat_perm f "999"*)
 
 let is_sat_raw (f: MCP.mix_formula) =
-(* let f = drop_rel_formula f in *)
-(*  tp_is_sat_perm f "999"*)
   is_sat_mix_sub_no f (ref 9) true true
 
 let imply_raw ante conseq =
