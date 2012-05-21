@@ -1,25 +1,28 @@
 theorem exists {x} (x = 1 & forall {x} (x * x = 1)).
 
-theorem exists {x} forall {y} (exists {z} z = x & exists {y} y = z).
+theorem exists {x} forall {y} 
+(exists {z} (z = x & x = y) & exists {y} y = z).
 
 theorem 0 * x = 0.
 
 theorem x * 0 = 0.
 
-//theorem 0 + x = x.
+theorem exists {x} x + 1 = 0.
 
-//theorem 1 * x * 1 * 1 * 1 = x.
+theorem 0 + x = x.
 
-//theorem x - x = 0.
+theorem 1 * x * 1 * 1 * 1 = x.
 
-//theorem x - x + x = x.
+theorem x - x = 0.
 
-//theorem x * y = 1 -> x = 1 | x = -1.
+theorem x - x + x = x.
 
-//theorem x * y = 0 -> x = 0 | y = 0.
+theorem x * y = 1 -> x = 1 | x = -1.
 
-//theorem y = x * n & z = y * m -> exists {p} (p = m * n & z = x * p).
+theorem x * y = 0 -> x = 0 | y = 0.
 
-//theorem y = x * n -> exists {m} (m = n + 1 & y + x = x * m).
+theorem y = x * n & z = y * m -> exists {p} (p = m * n & z = x * p).
 
-//theorem y = x * n -> exists {m} (m = -n & -y = x * m).
+theorem y = x * n -> exists {m} (m = n + 1 & y + x = x * m).
+
+theorem y = x * n -> exists {m} (m = -n & -y = x * m).
