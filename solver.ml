@@ -3839,6 +3839,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	      | SuccCtx(cl) ->
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 	            let cl1 = List.map subs_crt_holes_ctx cl in
+		    let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		        (SuccCtx(cl1), final_prf)
 	      | FailCtx _ -> (final_ctx, final_prf)
       else
@@ -3861,6 +3862,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		          (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		          (* let _ = print_string("Substitute the holes\n") in *)
 		          let cl1 = List.map subs_crt_holes_ctx cl in
+			  let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		          (SuccCtx(cl1), final_prf)
 	        | FailCtx _ -> (final_ctx, final_prf)
 
@@ -3880,6 +3882,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		            (* let _ = print_string("Substitute the holes \n") in *)
 		            let cl1 = List.map subs_crt_holes_ctx cl in
+			    let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		            (* in case of success, put back the frame consisting of h2*h3 *)
 		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
 		            SuccCtx(cl2))
@@ -3907,6 +3910,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		            (* let _ = print_string("Substitute the holes \n") in *)
 		            let cl = List.map subs_crt_holes_ctx cl in
+			    let cl =  List.map restore_tmp_ann_ctx cl in
 		            (* put back the frame consisting of h1 and h3 *)
 		            (* first add the frame []*h3 *) 
 		            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos)) cl in
@@ -3989,6 +3993,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                  (* let _ = print_string("Substitute the holes\n") in *)
 		                  let cl = List.map subs_crt_holes_ctx cl in
+				  let cl =  List.map restore_tmp_ann_ctx cl in
 			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
 			              (* first add the frame h2_rest*[] *) 
 		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos)) cl in
@@ -4034,6 +4039,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		                (* let _ = print_string("Substitute the holes \n") in *)
 
 		                let cl = List.map subs_crt_holes_ctx cl in   
+				let cl =  List.map restore_tmp_ann_ctx cl in
 		                (* in case of success, put back the frame consisting of h1;h2*[] *)
 		                (* first add the frame h2*[] *) 
 		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
@@ -6395,6 +6401,7 @@ and push_hole_action_x a1 r1=
   match Context.action_get_holes a1 with
     | None -> r1
     | Some h -> push_crt_holes_list_ctx r1 h
+
 and push_hole_action a1 r1=
   Debug.no_1_loop "push_hole_action" pr_no pr_no 
       (fun _ -> push_hole_action_x a1 r1) a1

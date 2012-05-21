@@ -495,12 +495,16 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
             | PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
           )
     | ConstAnn k1 ->
           (match imm2 with
             | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
              | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
+	     | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
           ) 
+    | TempAnn t1 -> (subtype_ann_pair (ConstAnn(Accs)) imm2)
+       
 
 and subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
@@ -551,22 +555,35 @@ and subtype_ann_list impl_vars (ann1 : ann list) (ann2 : ann list) : bool * (CP.
 and param_ann_equals_node_ann (ann_lst : ann list) (node_ann: ann): bool =
   List.fold_left (fun res x -> res && (CF.eq_ann x node_ann)) true ann_lst
 
-and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+(* during matching *)
+and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
     | (ann_l :: tl, ann_r :: tr ) ->
       begin
 	match ann_r with 
 	  | ConstAnn(Mutable)	   
-	  | ConstAnn(Imm)     -> (ConstAnn(Accs)) :: (replace_list_ann tl tr)
-	  | ConstAnn(Lend)   
-	  | ConstAnn(Accs)    -> ann_l :: (replace_list_ann tl tr)
-	  | PolyAnn(v)        -> ann_l :: (replace_list_ann tl tr)
-	    
+	  | ConstAnn(Imm)     -> (ConstAnn(Accs)) :: (replace_list_ann_x tl tr)
+	  | ConstAnn(Lend)    -> TempAnn(ann_l) :: (replace_list_ann_x tl tr)
+	  | TempAnn _
+	  | ConstAnn(Accs)    -> ann_l :: (replace_list_ann_x tl tr)
+	  | PolyAnn(v)        -> ann_l :: (replace_list_ann_x tl tr) (* TODO(ann): check if var ann is replaced or not *)
       end
-    | (_, _) -> report_error no_pos ("[solver.ml] : nodes should have same no. of fields \n")
+    | (_, _) -> ann_lst_l (* report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n") *)
 
+and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
+  Debug.ho_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
+and restore_tmp_ann (ann_lst: ann list) : ann list =
+  match ann_lst with
+    | [] -> []
+    | ann_l::tl ->
+      begin
+	match ann_l with 
+	  | TempAnn(t)     -> t :: (restore_tmp_ann tl)
+	  | _        -> ann_l :: (restore_tmp_ann tl)
+      end
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
@@ -634,6 +651,45 @@ and pop_holes_es (es : Cformula.entail_state) : Cformula.entail_state =
 		  es_hole_stk = stk;
 	      es_crt_holes = es.es_crt_holes @ c2;
 	  }
+
+(* restore temporarily removed annotations *)
+and restore_tmp_ann_list_ctx (ctx : list_context) : list_context = 
+  match ctx with
+    | FailCtx _ -> ctx
+    | SuccCtx(cl) ->
+	      SuccCtx(List.map restore_tmp_ann_ctx cl)
+
+and restore_tmp_ann_ctx (ctx : context) : context = 
+  match ctx with
+    | Ctx(es) -> Ctx(restore_tmp_ann_es es)
+    | OCtx(c1, c2) ->
+	      let nc1 = restore_tmp_ann_ctx c1 in
+	      let nc2 = restore_tmp_ann_ctx c2 in
+	      OCtx(nc1, nc2)
+
+and restore_tmp_ann_h_formula (f: h_formula): h_formula =
+    match f with
+      | CF.Star h  -> CF.Star {h with h_formula_star_h1 = restore_tmp_ann_h_formula h.CF.h_formula_star_h1; 
+	h_formula_star_h2 = restore_tmp_ann_h_formula h.CF.h_formula_star_h2;}
+      | CF.Conj h  -> CF.Conj {h with h_formula_conj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h1; 
+	h_formula_conj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h2;}
+      | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd; 
+	h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw;}
+      | CF.DataNode h -> CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm}
+      | _          -> f
+
+and restore_tmp_ann_formula (f: formula): formula =
+  match f with
+    | Base(bf) -> Base{bf with formula_base_heap = restore_tmp_ann_h_formula bf.formula_base_heap;}
+    | Exists(ef) -> Exists{ef with formula_exists_heap = restore_tmp_ann_h_formula ef.formula_exists_heap;}
+    | Or(orf) -> Or {orf with formula_or_f1 = restore_tmp_ann_formula orf.formula_or_f1; 
+      formula_or_f2 = restore_tmp_ann_formula orf.formula_or_f2;}
+
+and restore_tmp_ann_es (es : Cformula.entail_state) : Cformula.entail_state = 
+  (* subs away current hole list *)
+  {  es with
+      es_formula = restore_tmp_ann_formula es.es_formula;
+  }
 
 (* substitute *)
 and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 

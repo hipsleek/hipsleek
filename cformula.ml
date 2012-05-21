@@ -17,7 +17,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
-type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
+type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | TempAnn of ann
 
 type typed_ident = (typ * ident)
 
@@ -288,7 +288,8 @@ and isImm(a : ann) : bool =
     | _ -> false
 
 let fv_ann (a:ann) = match a with
-  | ConstAnn _ -> []
+  | ConstAnn _
+  | TempAnn _ -> []
   | PolyAnn v -> [v]
 
 let rec fv_ann_lst (a:ann list) = match a with
@@ -306,6 +307,7 @@ let mkPolyAnn v = PolyAnn v
 
 let mkExpAnn ann pos = 
   match ann with
+    | TempAnn _ -> CP.IConst(int_of_heap_ann Accs, pos)
     | ConstAnn a -> CP.IConst(int_of_heap_ann a, pos)
     | PolyAnn v  -> CP.Var(v, pos)  
 
@@ -2299,10 +2301,12 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
 
 and apply_one_imm (fr,t) a = match a with
   | ConstAnn _ -> a
+  | TempAnn t1 -> TempAnn(apply_one_imm (fr,t) t1)
   | PolyAnn sv ->  PolyAnn (if CP.eq_spec_var sv fr then t else sv)
 
 and subs_imm_par sst a = match a with
   | ConstAnn _ -> a
+  | TempAnn t1 -> TempAnn(subs_imm_par sst t1)
   | PolyAnn sv ->  PolyAnn (CP.subst_var_par sst sv)
 
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o

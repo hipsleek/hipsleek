@@ -487,11 +487,12 @@ let string_of_spec_var x =
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
-let string_of_imm imm = match imm with
+let rec string_of_imm imm = match imm with
   | ConstAnn(Accs) -> "@A"
   | ConstAnn(Imm) -> "@I"
   | ConstAnn(Lend) -> "@L"
   | ConstAnn(Mutable) -> "@M"
+  | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 

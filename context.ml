@@ -424,12 +424,20 @@ and spatial_ctx_extract p f a i pi rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
-  Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
+  Debug.ho_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  
-  f
+  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
+  Debug.ho_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+
+and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+  let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
+  let updated_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
+    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+  in
+  updated_f
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with

@@ -2202,79 +2202,79 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
   let rec helper ie =
     match ie with
       | I.Label (pid, e)-> 
-            let e1,t1 = (helper e) in
-            (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
+        let e1,t1 = (helper e) in
+        (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
       | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
-            ((C.Unfold {
-                C.exp_unfold_var = CP.SpecVar (Named "", v, p);
-                C.exp_unfold_pos = pos;
-            }), C.void_type)
-	            (* An Hoa MARKED *)
-	  | I.ArrayAt { I.exp_arrayat_array_base = a; 
-	    I.exp_arrayat_index = index;
-	    I.exp_arrayat_pos = pos } ->
-	  	    let r = List.length index in
-		    let new_e = I.CallNRecv {
-			    I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-                I.exp_call_nrecv_lock = None;
-			    I.exp_call_nrecv_arguments = a :: index;
-			    I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
-			    I.exp_call_nrecv_pos = pos;} in 
-	        helper new_e
-                (*(try
-                  let vinfo_tmp = E.look_up a in (* look up the array variable *)
-	              let ci,_ = helper i in (* translate the index exp *)
-                  match vinfo_tmp with
-                  | E.VarInfo vi ->
-                  let ct = trans_type prog vi.E.var_type pos in
-	              begin match ct with
-	              | CP.Array et -> ((C.ArrayAt {
-	              C.exp_arrayat_type = et;
-	              C.exp_arrayat_array_base = a;
-	              C.exp_arrayat_index = ci;
-	              C.exp_arrayat_pos = pos; }),et)
-	              | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
-	              end 
-                  | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
-                  with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
-	            (* An Hoa END *)
+        ((C.Unfold {
+          C.exp_unfold_var = CP.SpecVar (Named "", v, p);
+          C.exp_unfold_pos = pos;
+        }), C.void_type)
+	  (* An Hoa MARKED *)
+      | I.ArrayAt { I.exp_arrayat_array_base = a; 
+		    I.exp_arrayat_index = index;
+		    I.exp_arrayat_pos = pos } ->
+	let r = List.length index in
+	let new_e = I.CallNRecv {
+	  I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+          I.exp_call_nrecv_lock = None;
+	  I.exp_call_nrecv_arguments = a :: index;
+	  I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
+	  I.exp_call_nrecv_pos = pos;} in 
+	helper new_e
+      (*(try
+        let vinfo_tmp = E.look_up a in (* look up the array variable *)
+	let ci,_ = helper i in (* translate the index exp *)
+        match vinfo_tmp with
+        | E.VarInfo vi ->
+        let ct = trans_type prog vi.E.var_type pos in
+	begin match ct with
+	| CP.Array et -> ((C.ArrayAt {
+	C.exp_arrayat_type = et;
+	C.exp_arrayat_array_base = a;
+	C.exp_arrayat_index = ci;
+	C.exp_arrayat_pos = pos; }),et)
+	| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
+	end 
+        | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
+        with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
+      (* An Hoa END *)
       | I.Assert{
-            I.exp_assert_asserted_formula = assert_f_o;
-            I.exp_assert_assumed_formula = assume_f_o;
-            I.exp_assert_path_id = pi;
-            I.exp_assert_pos = pos} ->
-            let tmp_names = E.visible_names () in
-            let all_names =
-              List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
-            let free_vars = List.map snd all_names in
-            let stab = H.create 19
-            in
-            (ignore
-                (List.map (fun (t, n) -> H.add stab n { sv_info_kind = t;id = fresh_int () })
-                    all_names);
-            let assert_cf_o =
-              (match assert_f_o with
-                | Some f -> Some (trans_I2C_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
-                | None -> None) in
-            let assume_cf_o =
-              (match assume_f_o with
-                | None -> None
-                | Some f -> Some (trans_formula prog false free_vars true f stab false)) in
-            let assert_e =
-              C.Assert
-                  {
-                      C.exp_assert_asserted_formula = assert_cf_o;
-                      C.exp_assert_assumed_formula = assume_cf_o;
-                      C.exp_assert_path_id = pi;
-                      C.exp_assert_pos = pos;
-                  } in 
-            (assert_e, C.void_type))
-      | I.Assign	{
-            I.exp_assign_op = aop;
-            I.exp_assign_lhs = lhs;
-            I.exp_assign_rhs = rhs;
-            I.exp_assign_path_id = pid;
-            I.exp_assign_pos = pos_a	} ->
+        I.exp_assert_asserted_formula = assert_f_o;
+        I.exp_assert_assumed_formula = assume_f_o;
+        I.exp_assert_path_id = pi;
+        I.exp_assert_pos = pos} ->
+        let tmp_names = E.visible_names () in
+        let all_names =
+          List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
+        let free_vars = List.map snd all_names in
+        let stab = H.create 19
+        in
+        (ignore
+           (List.map (fun (t, n) -> H.add stab n { sv_info_kind = t;id = fresh_int () })
+              all_names);
+         let assert_cf_o =
+           (match assert_f_o with
+             | Some f -> Some (trans_I2C_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
+            | None -> None) in
+  let assume_cf_o =
+    (match assume_f_o with
+      | None -> None
+      | Some f -> Some (trans_formula prog false free_vars true f stab false)) in
+  let assert_e =
+    C.Assert
+      {
+        C.exp_assert_asserted_formula = assert_cf_o;
+        C.exp_assert_assumed_formula = assume_cf_o;
+        C.exp_assert_path_id = pi;
+        C.exp_assert_pos = pos;
+      } in 
+  (assert_e, C.void_type))
+	| I.Assign	{
+          I.exp_assign_op = aop;
+          I.exp_assign_lhs = lhs;
+          I.exp_assign_rhs = rhs;
+          I.exp_assign_path_id = pid;
+          I.exp_assign_pos = pos_a	} ->
 			(* An Hoa : WORKING *)
 		    (* let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in *)
 			(* An Hoa : pre-process the inline field access *)
@@ -2344,125 +2344,125 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				(I.Empty no_pos) assignments in
 			  helper expanded_exp
 			else (* An Hoa : end of additional pre-processing, continue as usual *)
-              (match aop with
-                | I.OpAssign ->
-                      (match lhs with
-                        | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
-                              let (ce1, te1) = trans_exp prog proc lhs in
-						      (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
-                              let (ce2, te2) = trans_exp prog proc rhs in
-						      (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
-                              if not (sub_type te2 te1) then  Err.report_error {
-                                  Err.error_loc = pos;
-                                  Err.error_text = "OpAssign : lhs and rhs do not match";  }
-                              else
-                                (let v = C.get_var ce1 in
-                                let assign_e = C.Assign{
-                                    C.exp_assign_lhs = v;
-                                    C.exp_assign_rhs = ce2;
-                                    C.exp_assign_pos = pos;} in
-                                if C.is_var ce1 then
-	                              (* let vsv = CP.SpecVar (te1, v, Primed) in
-                                  let _ = proc.I.proc_important_vars <- proc.I.proc_important_vars @ [vsv] in*)
-                                  (assign_e, C.void_type)
-                                else
-                                  (let seq_e = C.Seq{
-                                      C.exp_seq_type = C.void_type;
-                                      C.exp_seq_exp1 = ce1;
-                                      C.exp_seq_exp2 = assign_e;
-                                      C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
-								    (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
-								    (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
-					    | I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
+			  (match aop with
+			    | I.OpAssign ->
+			      (match lhs with
+				| I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
+				  let (ce1, te1) = trans_exp prog proc lhs in
+			      (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
+				  let (ce2, te2) = trans_exp prog proc rhs in
+			      (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
+				  if not (sub_type te2 te1) then  Err.report_error {
+                                    Err.error_loc = pos;
+                                    Err.error_text = "OpAssign : lhs and rhs do not match";  }
+				  else
+                                    (let v = C.get_var ce1 in
+                                     let assign_e = C.Assign{
+                                       C.exp_assign_lhs = v;
+                                       C.exp_assign_rhs = ce2;
+                                       C.exp_assign_pos = pos;} in
+                                     if C.is_var ce1 then
+	                          (* let vsv = CP.SpecVar (te1, v, Primed) in
+                                     let _ = proc.I.proc_important_vars <- proc.I.proc_important_vars @ [vsv] in*)
+                                       (assign_e, C.void_type)
+                                     else
+                                       (let seq_e = C.Seq{
+					 C.exp_seq_type = C.void_type;
+					 C.exp_seq_exp1 = ce1;
+					 C.exp_seq_exp2 = assign_e;
+					 C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
+					    (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
+					    (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
+				| I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
 						      (* Array variable *)
 						      (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
-						      let r = List.length index in
-						      let new_rhs = I.CallNRecv {
-			                      I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
-							      (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-                                  I.exp_call_nrecv_lock = None;
-			                      I.exp_call_nrecv_arguments = rhs :: a :: index;
-			                      I.exp_call_nrecv_path_id = pid;
-			                      I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
-						      let new_e = I.Assign {
-							      I.exp_assign_op = I.OpAssign;
-		   					      I.exp_assign_lhs = a; (* new_lhs; *)
-							      I.exp_assign_rhs = new_rhs;
-							      I.exp_assign_path_id = pid;
-							      I.exp_assign_pos = pos_a; } in
-			                  helper new_e
-							      (* let (ce1, te1) = helper lhs in
-	                                 let (ce2, te2) = helper rhs in
-								     if not (sub_type te2 te1) then  Err.report_error {
-                                     Err.error_loc = pos;
-                                     Err.error_text = "lhs and rhs do not match";  }
-                         	 	     else
-								     (C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
-							      (* AN HOA END *)
-                        | I.Member {
-                              I.exp_member_base = base_e;
-                              I.exp_member_fields = fs;
-                              I.exp_member_path_id = pid;
-                              I.exp_member_pos = pos } ->
+				  let r = List.length index in
+				  let new_rhs = I.CallNRecv {
+			            I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
+				  (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+                                    I.exp_call_nrecv_lock = None;
+			            I.exp_call_nrecv_arguments = rhs :: a :: index;
+			            I.exp_call_nrecv_path_id = pid;
+			            I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
+				  let new_e = I.Assign {
+				    I.exp_assign_op = I.OpAssign;
+		   		    I.exp_assign_lhs = a; (* new_lhs; *)
+				    I.exp_assign_rhs = new_rhs;
+				    I.exp_assign_path_id = pid;
+				    I.exp_assign_pos = pos_a; } in
+			          helper new_e
+			(* let (ce1, te1) = helper lhs in
+	                   let (ce2, te2) = helper rhs in
+			   if not (sub_type te2 te1) then  Err.report_error {
+                           Err.error_loc = pos;
+                           Err.error_text = "lhs and rhs do not match";  }
+                           else
+			   (C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
+			(* AN HOA END *)
+				| I.Member {
+				  I.exp_member_base = base_e;
+				  I.exp_member_fields = fs;
+				  I.exp_member_path_id = pid;
+				  I.exp_member_pos = pos } ->
 							  (* An Hoa : fix this case with inline field access *)
-							  let _,lhst = helper base_e in
-							  let fs,remf,_ = compact_field_access_sequence prog lhst fs in
-							  if not (remf = "") then
-								failwith "[trans_exp] expect non inline field access"
-							  else
-							    (* An Hoa : end *)
-                                let (rhs_c, rhs_t) = helper rhs in
-                                let (fn, new_var) =
-                                  (match rhs_c with
-                                    | C.Var { C.exp_var_name = v } -> (v, false)
-                                    | _ -> 
+				  let _,lhst = helper base_e in
+				  let fs,remf,_ = compact_field_access_sequence prog lhst fs in
+				  if not (remf = "") then
+				    failwith "[trans_exp] expect non inline field access"
+				  else
+				(* An Hoa : end *)
+                                    let (rhs_c, rhs_t) = helper rhs in
+                                    let (fn, new_var) =
+                                      (match rhs_c with
+					| C.Var { C.exp_var_name = v } -> (v, false)
+					| _ -> 
                                           let fn = (fresh_ty_var_name (rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
-                                let fn_var = C.Var {
-                                    C.exp_var_type = rhs_t;
-                                    C.exp_var_name = fn;
-                                    C.exp_var_pos = pos;
-                                } in
-                                let (tmp_e, tmp_t) =
-			          flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable false pos 
-			        in
-			                    
-                                let fn_decl = if new_var then C.VarDecl {
-                                    C.exp_var_decl_type = rhs_t;
-                                    C.exp_var_decl_name = fn;
-                                    C.exp_var_decl_pos = pos;}
-                                else C.Unit pos in
-                                let init_fn = if new_var then 
-                                  C.Assign{
-                                      C.exp_assign_lhs = fn;
-                                      C.exp_assign_rhs = rhs_c;
-                                      C.exp_assign_pos = pos; }
-                                else C.Unit pos in
-                                let seq1 = C.mkSeq tmp_t init_fn tmp_e pos in
-                                let seq2 = C.mkSeq tmp_t fn_decl seq1 pos in
-                                if new_var then
-                                  ((C.Block {
-                                      C.exp_block_type = tmp_t;
-                                      C.exp_block_body = seq2;
-                                      C.exp_block_local_vars = [ (rhs_t, fn) ];
-                                      C.exp_block_pos = pos;}), tmp_t)
-                                else (seq2, tmp_t)
-                        | _ -> Err.report_error { Err.error_loc = pos_a; Err.error_text = "lhs is not an lvalue"; }
-                      )
-                | _ ->
-                      let bop = bin_op_of_assign_op aop in
-                      let new_rhs = I.Binary {
-                          I.exp_binary_op = bop;
-                          I.exp_binary_oper1 = lhs;
-                          I.exp_binary_oper2 = rhs;
-                          I.exp_binary_path_id = pid;
-                          I.exp_binary_pos = pos_a;} in
-                      let new_assign = I.Assign {
-                          I.exp_assign_op = I.OpAssign;
-                          I.exp_assign_lhs = lhs;
-                          I.exp_assign_rhs = new_rhs;
-                          I.exp_assign_path_id = pid;
-                          I.exp_assign_pos = pos_a; } in helper new_assign
-              )
+                                    let fn_var = C.Var {
+                                      C.exp_var_type = rhs_t;
+                                      C.exp_var_name = fn;
+                                      C.exp_var_pos = pos;
+                                    } in
+                                    let (tmp_e, tmp_t) =
+			              flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable (List.map (fun _ -> Mutable) fs) false pos 
+			            in
+			            
+                                    let fn_decl = if new_var then C.VarDecl {
+                                      C.exp_var_decl_type = rhs_t;
+                                      C.exp_var_decl_name = fn;
+                                      C.exp_var_decl_pos = pos;}
+                                      else C.Unit pos in
+                                    let init_fn = if new_var then 
+					C.Assign{
+					  C.exp_assign_lhs = fn;
+					  C.exp_assign_rhs = rhs_c;
+					  C.exp_assign_pos = pos; }
+                                      else C.Unit pos in
+                                    let seq1 = C.mkSeq tmp_t init_fn tmp_e pos in
+                                    let seq2 = C.mkSeq tmp_t fn_decl seq1 pos in
+                                    if new_var then
+                                      ((C.Block {
+					C.exp_block_type = tmp_t;
+					C.exp_block_body = seq2;
+					C.exp_block_local_vars = [ (rhs_t, fn) ];
+					C.exp_block_pos = pos;}), tmp_t)
+                                    else (seq2, tmp_t)
+				| _ -> Err.report_error { Err.error_loc = pos_a; Err.error_text = "lhs is not an lvalue"; }
+			      )
+			    | _ ->
+			      let bop = bin_op_of_assign_op aop in
+			      let new_rhs = I.Binary {
+				I.exp_binary_op = bop;
+				I.exp_binary_oper1 = lhs;
+				I.exp_binary_oper2 = rhs;
+				I.exp_binary_path_id = pid;
+				I.exp_binary_pos = pos_a;} in
+			      let new_assign = I.Assign {
+				I.exp_assign_op = I.OpAssign;
+				I.exp_assign_lhs = lhs;
+				I.exp_assign_rhs = new_rhs;
+				I.exp_assign_path_id = pid;
+				I.exp_assign_pos = pos_a; } in helper new_assign
+			  )
       | I.Binary {
             I.exp_binary_op = b_op;
             I.exp_binary_oper1 = e1;
@@ -2527,7 +2527,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
-                                    C.exp_bind_imm = Mutable; (* can it be true? *)
+                                    C.exp_bind_imm = Lend; (* can it be true? *)
+				    C.exp_bind_param_imm = List.map (fun _ -> Lend) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
 				                    C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
@@ -2884,6 +2885,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_member_fields = fs;
             I.exp_member_path_id = pid;
             I.exp_member_pos = pos } -> 
+	let id_string f = List.fold_left (fun x y -> x ^ ";" ^ y) "" f in
+	let _ = print_string("[Cris]: Member field: " ^ (id_string fs) ^ "\n") in
+	let _ = print_string("[Cris]: Member base: " ^ (Iprinter.string_of_exp e) ^ "\n") in
            	(* An Hoa : compact the field access sequence *)
 			let et = snd (helper e) in
 			let fs,rem,_ = compact_field_access_sequence prog et fs in
@@ -3533,14 +3537,14 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  =
+and flatten_to_bind prog proc b r rhs_o pid imm ann_lst read_only pos  =
   Debug.ho_3 "flatten_to_bind " 
     (Iprinter.string_of_exp) 
     (fun x -> match x with
       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
     (string_of_heap_ann)
     (pr_pair Cprinter.string_of_exp string_of_typ) 
-    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm read_only pos) b rhs_o imm
+    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm ann_lst read_only pos) b rhs_o imm
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given
@@ -3571,10 +3575,10 @@ and compact_field_access_sequence prog root_type field_seq =
   res
 
 and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (ann_lst: heap_ann list) (read_only : bool) pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm ann_lst read_only pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3633,7 +3637,8 @@ and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-		        C.exp_bind_imm = imm;
+		C.exp_bind_imm = imm;
+		C.exp_bind_param_imm = ann_lst;
                 C.exp_bind_read_only = read_only;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
@@ -3647,7 +3652,7 @@ and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
                   C.exp_block_pos = pos;}),bind_type)
             else (seq2, bind_type))
     | [] -> trans_exp prog proc base
-
+(*
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
       (rhs : C.exp option) pid imm read_only pos : trans_exp_type =
   match fs with
@@ -3739,7 +3744,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 		                  Err.error_text = "can't follow field " ^ f;
 		              })
     | [] -> failwith "convert_to_bind: empty field list"
-
+      *)
 and trans_type_back (te : typ) : typ =
   match te with 
     | Named n -> Named n 

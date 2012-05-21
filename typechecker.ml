@@ -745,6 +745,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
+	  let id_string f = List.fold_left (fun x y -> x ^ ";" ^ (snd y)) "" f in
+  	  let _ = print_string("[andreea]: Member field: " ^ (id_string lvars) ^ "\n") in
+
             let b,res = (if !Globals.ann_vp then
                   (*check for access permissions*)
                   let var = (CP.SpecVar (v_t, v, Primed)) in
@@ -754,7 +757,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             in
             if (not b) then res (*do not have permission for variable v*)
             else
-            (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	        let _ = proving_loc#set pos in
             let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
 	        let field_types, vs = List.split lvars in
@@ -764,7 +766,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let link_pv = CF.formula_of_pure_N
 	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
 	       (* let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
-	        (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	        (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
 	        let tmp_ctx =
 	          if !Globals.large_bind then
@@ -776,26 +777,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
 	        (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
-	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
-	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
-            (*     ^ "\n") in *)
-
+	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *) (*     ^ "\n") in *)
 	        let c = string_of_typ v_t in
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
             let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
-            (* let perm = (if (Perm.allow_perm ()) then  *)
-            (*       (\*there exists fresh_frac statisfy ... *\) *)
-            (*       (if (read_only) then *)
-            (*             Some fresh_frac  *)
-            (*        else *)
-            (*             (\* writeable *\) *)
-            (*             None) *)
-            (*     else None) *)
-            (* in *)
 	    let _ = print_string("bind args: " ^ (Cprinter.string_of_spec_var_list vs_prim) ^ "\n") in
 	    let _ = print_string("bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ^ "\n") in
 	        let vdatanode = CF.DataNode ({
