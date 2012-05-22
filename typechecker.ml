@@ -742,6 +742,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_fields = lvars;
           exp_bind_body = body;
           exp_bind_imm = imm;
+          exp_bind_param_imm = pimm;
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
@@ -785,23 +786,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
             let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
-	    let _ = print_string("bind args: " ^ (Cprinter.string_of_spec_var_list vs_prim) ^ "\n") in
-	    let _ = print_string("bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ^ "\n") in
+	    (* let _ = print_string("bind args: " ^ (Cprinter.string_of_spec_var_list vs_prim) ^ "\n") in *)
+	    (* let _ = print_string("bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ^ "\n") in *)
 	        let vdatanode = CF.DataNode ({
-                CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
-                CF.h_formula_data_name = c;
-			    CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-			    CF.h_formula_data_imm = CF.ConstAnn(imm);
-                CF.h_formula_data_param_imm = List.map (fun _ ->  CF.ConstAnn(imm)) vs_prim; (* find out vs_prim ann => (andreeac) to check *)
-			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
-			    CF.h_formula_data_origins = []; (*deal later ???*)
-			    CF.h_formula_data_original = true; (*deal later ???*)
-                CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
-				CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
-                CF.h_formula_data_label = None;
-                CF.h_formula_data_remaining_branches = None;
-                CF.h_formula_data_pruning_conditions = [];
-                CF.h_formula_data_pos = pos}) in
+                  CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
+                  CF.h_formula_data_name = c;
+		  CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
+		  CF.h_formula_data_imm = CF.ConstAnn(imm);
+                  CF.h_formula_data_param_imm = List.map (fun x ->  CF.ConstAnn(x)) pimm;
+		  CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
+		  CF.h_formula_data_origins = []; (*deal later ???*)
+		  CF.h_formula_data_original = true; (*deal later ???*)
+                  CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
+		  CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
+                  CF.h_formula_data_label = None;
+                  CF.h_formula_data_remaining_branches = None;
+                  CF.h_formula_data_pruning_conditions = [];
+                  CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
 
             (*Test whether fresh_frac is full permission or not
@@ -833,6 +834,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
+	    let _ = print_string ("\n(andreea)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded

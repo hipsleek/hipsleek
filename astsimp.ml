@@ -2423,7 +2423,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                       C.exp_var_pos = pos;
                                     } in
                                     let (tmp_e, tmp_t) =
-			              flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable (List.map (fun _ -> Mutable) fs) false pos 
+			              flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable false pos
 			            in
 			            
                                     let fn_decl = if new_var then C.VarDecl {
@@ -3537,14 +3537,14 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind prog proc b r rhs_o pid imm ann_lst read_only pos  =
+and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  =
   Debug.ho_3 "flatten_to_bind " 
     (Iprinter.string_of_exp) 
     (fun x -> match x with
       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
     (string_of_heap_ann)
     (pr_pair Cprinter.string_of_exp string_of_typ) 
-    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm ann_lst read_only pos) b rhs_o imm
+    (fun b rhs_o _ -> flatten_to_bind_x prog proc b r rhs_o pid imm read_only pos) b rhs_o imm
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given
@@ -3574,11 +3574,29 @@ and compact_field_access_sequence prog root_type field_seq =
   (* let _ = print_endline ("[compact_field_access_sequence] output = { " ^ (String.concat " ; " res) ^ " }") in *)
   res
 
+and compute_ann_list all_fields (diff_fields : ident list) (default_ann : heap_ann) : heap_ann list =
+  let pr1 ls = 
+    let helper i = match i with
+    | ((_,h), _, _) -> h
+    | _ -> ""
+    in
+    List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
+  let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
+  let pr_out ls = List.fold_left (fun res id ->  res ^ ", " ^ (string_of_heap_ann id) ) "" ls in
+  Debug.ho_3 "compute_ann_list" pr1 pr2 string_of_heap_ann pr_out (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
+
+and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : heap_ann) : heap_ann list =
+  match all_fields with
+    | ((_,h),_,_) :: r ->
+      if (List.mem h diff_fields) then default_ann :: (compute_ann_list_x r diff_fields default_ann)
+      else Accs :: (compute_ann_list_x r diff_fields default_ann)
+    | [] -> []
+
 and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (ann_lst: heap_ann list) (read_only : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm ann_lst read_only pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3608,6 +3626,7 @@ and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
                     if (snd f) = fn then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                     else (tmp, (fresh_fn :: new_rest))) in
           let all_fields = I.look_up_all_fields prog ddef in
+	  let ann_list = compute_ann_list all_fields rev_fs imm in
           let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in
           let (tmp1, fresh_names) = gen_names f (List.map I.get_field_typed_id all_fields) in
           if not (Gen.is_some tmp1) then
@@ -3638,7 +3657,7 @@ and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
 		C.exp_bind_imm = imm;
-		C.exp_bind_param_imm = ann_lst;
+		C.exp_bind_param_imm = ann_list;
                 C.exp_bind_read_only = read_only;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in

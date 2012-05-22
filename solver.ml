@@ -4367,7 +4367,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.no_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Debug.ho_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -4986,7 +4986,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.ho_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -5036,6 +5036,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
+  let _ = print_string ("\n(andreeac)solver.ml  rhs_p: " ^ (Cprinter.string_of_mix_formula rhs_p)) in
   (* Termination: Try to prove rhs_wf with inference *)
   (* rhs_wf = None --> measure succeeded or no striggered inference *)
   (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
@@ -5912,6 +5913,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
       List.fold_left Immutable.mkAndOpt None f_lst in
     let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr ann_lhs param_ann_lhs, join_ann_constr ann_rhs param_ann_rhs) in
+    let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in
+    let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in
     if r == false 
     then 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -5996,6 +5999,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
+	      let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
@@ -6006,6 +6010,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (********************************************************************)
               let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
               let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
+	      let _ = print_string("cris: new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p) ^ "\n") in
               (*add instantiation for perm vars*)
               let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante ) in
               let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
@@ -6023,7 +6028,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
 
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
-            let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
+              let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
             let consumed_h =  (match rem_l_node with
@@ -6060,6 +6065,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
               Debug.devel_zprint (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx))) pos;
               Debug.devel_zprint (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
+	      let _ = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in
               let res_es1, prf1 = heap_entail_conjunct prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
               (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
@@ -8152,7 +8158,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
-  Debug.no_2 "heap_entail_struc_list_failesc_context_init"
+  Debug.ho_2 "heap_entail_struc_list_failesc_context_init"
 	Cprinter.string_of_list_failesc_context
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
