@@ -22,8 +22,20 @@ checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.1)] |- Term[SeqDec(x * 0.999, 0.0,
 // (8) expect Valid
 checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.1)] |- Term[SeqDec(x * 0.9999999999, 0.0, 0.1)].
 
-// (9) expect Valid
-checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.1)] |- Term[SeqDec(x * 0.9999999999999999999999999999999999999999999999999999999999999999999999999999999999999, 0.0, 0.1)].
-
-// (10) expect Fail
+// (9) expect Fail
 checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.1)] |- Term[SeqDec(x * 2.0, 0.0, 0.1)].
+
+// (10) expect Valid
+checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.001)] |- Term[SeqDec(x * 0.999999999999, 0.0, 0.001)].
+
+// (11) Expect Valid but Fail
+// SLEEK (Reduce or Omega ?) approximates 0.9999999999999 (13 digits) by 1.0
+// so it consider x * 0.9999999999999 = x * 1.0 --> sequence {x} does not decrease
+checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.001)] |- Term[SeqDec(x * 0.9999999999999, 0.0, 0.001)].
+
+// maximum floating-point number less than 1 can be represented by SLEEK is 0.999999999999 (12 digits)
+
+// (12) expect Valid
+checkentail (x > 0.1) & Term[SeqDec(x, 0.0, 0.00000000000000000001)] |- Term[SeqDec(x * 0.999999999, 0.0, 0.00000000000000000001)].
+
+
