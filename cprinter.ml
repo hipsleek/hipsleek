@@ -1054,6 +1054,8 @@ let string_of_mem_formula (e:Cformula.mem_formula) : string =  poly_string_of_pr
 (** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
 
+let string_of_p_formula (e:P.p_formula) : string =  poly_string_of_pr  pr_p_formula e
+
 let rec string_of_pure_formula_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_pure_formula h 
@@ -2646,6 +2648,7 @@ Mcpure.print_exp_f := string_of_formula_exp;;
 Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
+Cpure.print_p_formula := string_of_p_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
@@ -2687,6 +2690,7 @@ Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_list_int := string_of_list_int;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
+Cast.print_p_formula := string_of_p_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_prog_exp := string_of_exp;;
@@ -2706,6 +2710,7 @@ Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;
 Redlog.print_b_formula := string_of_b_formula;;
+Redlog.print_p_formula := string_of_p_formula;;
 Redlog.print_exp := string_of_formula_exp;;
 Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
