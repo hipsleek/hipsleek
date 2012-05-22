@@ -1250,6 +1250,11 @@ and get_node_perm (h : h_formula) = match h with
   | DataNode ({h_formula_data_perm = c}) -> c
   | _ -> failwith ("get_node_perm: invalid argument")
 
+and set_node_perm (h : h_formula) p= match h with
+  | ViewNode b -> ViewNode {b with h_formula_view_perm = p}
+  | DataNode b -> DataNode {b with h_formula_data_perm = p}
+  | _ -> failwith ("set_node_perm: invalid argument")
+  
 and get_node_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_arguments = c}) 
   | DataNode ({h_formula_data_arguments = c}) -> c

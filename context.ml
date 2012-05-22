@@ -41,6 +41,7 @@ and match_type =
   
 and action = 
   | M_match of match_res
+  | M_split_match of match_res
   | M_fold of match_res
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
@@ -118,6 +119,7 @@ let pr_simpl_match_res (c:match_res):unit =
 let rec pr_action_name a = match a with
   | Undefined_action e -> fmt_string "Undefined_action"
   | M_match e -> fmt_string "Match"
+  | M_split_match e -> fmt_string "Split&Match "
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
@@ -137,6 +139,7 @@ let rec pr_action_name a = match a with
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
   | M_match e -> pr_mr e; fmt_string "=>Match"
+  | M_split_match e -> pr_mr e; fmt_string "=>SplitMatch"
   | M_fold e -> pr_mr e; fmt_string "=>Fold"
   | M_unfold (e,i) -> pr_mr e; fmt_string ("=>Unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "=>BaseCaseUnfold"
@@ -181,6 +184,7 @@ let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action
 let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
+  | M_split_match e
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
@@ -527,7 +531,7 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
-  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize true-> false | _ -> true) l in
+  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b|| !use_split then false else true | _ -> true) l in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
@@ -553,6 +557,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
                   in
+				  let l2 = if !perm=Dperm && !use_split then (1,M_split_match c)::l2 else l2 in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
               (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
@@ -601,7 +606,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       [(0,M_match c)] (*force a MATCH after each lemma*)
                     else
                       let a1 = (1,M_base_case_unfold c) in
-                      let a2 = (1,M_match c) in
+					  let a2 = (1,M_match c) in
+                      let a2 = if !perm=Dperm && !use_split then (1,Search_action [a2;(1,M_split_match c)]) else a2 in
                       let a3 = 
                         if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
                         else None in

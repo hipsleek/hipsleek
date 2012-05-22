@@ -1,6 +1,7 @@
 data cl {int val;}.
 macro L == (#,) .
 macro R == (,#) .
+macro LR == (,#) .
 
  data node { int val ; node next }.
 
@@ -32,7 +33,7 @@ checkentail x::cl(@@L)<_> * x::cl<_> |- x!=y.
 //(6) valid
 checkentail x::cl(@@L)<_> * y::cl(@@R)<_> |- x=y.
 //(7) fail
-checkentail x::cl(@@L)<_> * y::cl(@((,#),))<_> |- x!=y.
+checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x!=y.
 //(8) valid
-checkentail x::cl(@@L)<_> * y::cl(@((,#),))<_> |- x=y.
+checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x=y.
 //(9) fail

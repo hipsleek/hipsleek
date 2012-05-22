@@ -431,6 +431,8 @@ let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
 
+let use_split = ref false
+
 let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)

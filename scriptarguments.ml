@@ -272,6 +272,8 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
+  
+  ("--dis-split", Arg.Set Globals.use_split, "Disable permission splitting lemma (use split match instead)");
   ] 
 
 (* arguments/flags used only by hip *)	

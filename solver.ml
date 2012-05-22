@@ -6667,10 +6667,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 		    if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
             else
               let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
-              (*add formula_*_and*)
-              (*REDUNDANT: because lhs_b is basically identical to estate.es_formula*)
-              (* let _,_,_,_,_,es_f_a = split_components estate.es_formula in *)
-              (* let new_es_formula = add_formula_and es_f_a new_es_formula in *)
               let new_estate = {estate with es_formula = new_es_formula} in
 			  (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
 			    if it succeeds and the flag from to_be_proven is true then make current context false*)
@@ -6680,6 +6676,40 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
               let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
               (res_es0,prf0)
+	   | Context.M_split_match {
+          Context.match_res_lhs_node = lhs_node;
+          Context.match_res_lhs_rest = lhs_rest;
+          Context.match_res_rhs_node = rhs_node;
+          Context.match_res_rhs_rest = rhs_rest;} -> 
+			let l_perm = get_node_perm lhs_node in
+			let r_perm = get_node_perm rhs_node in
+			let v_rest, v_consumed = 
+				let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> v in			
+				Perm.fresh_cperm_var () l_var , Perm.fresh_cperm_var () l_var in
+			if test_frac_subsume prog estate rhs_b.formula_base_pure l_perm r_perm then 
+				(CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error)), NoAlias)
+			else
+				let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
+				if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+				else
+					
+					let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos in
+					let n_lhs_pure =
+						let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+						let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
+						MCP.memoise_add_pure rhs_b.formula_base_pure npure in
+					let new_estate = {estate with 
+										es_formula = Base{ lhs_b with formula_base_heap = n_lhs_h; formula_base_pure = n_lhs_pure}; 
+										es_ante_evars = [v_rest;v_consumed]@estate.es_ante_evars } in
+					(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
+					  if it succeeds and the flag from to_be_proven is true then make current context false*)
+					let rhs_p = match to_be_proven with
+					  | None -> rhs_b.formula_base_pure
+					  | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
+					let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
+					let n_lhs_node = set_node_perm lhs_node (Some v_consumed) in
+					let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+					(res_es0,prf0)			  
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} -> 
@@ -7356,7 +7386,9 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 				let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
 				
 				if !perm=NoPerm || c.coercion_case<>(Normalize false) then if c.coercion_case<>(Normalize true) then r else (([],[]),[])
-				else if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)   then (([],[]),[]) else (print_string"\n splitting \n";r)
+				else 
+				if test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2) || !use_split   then (([],[]),[]) 
+				else (print_string"\n splitting \n";r)
 				
 			| Iast.Right -> (([],[c]),[])
 			| _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
@@ -7700,7 +7732,7 @@ and test_frac_subsume prog lhs rhs_p l_perm r_perm =
 	let pr1 = Cprinter.string_of_estate in
 	let pr2 = Cprinter.string_of_mix_formula in
 	let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
-	Debug.no_4 "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
+	Debug.ho_4_loop "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
   
 (*pickup a node named "name" from a list of nodes*)
 and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
