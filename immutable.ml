@@ -60,7 +60,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 	        | Star ({h_formula_star_h1 = sh1;
 		      h_formula_star_h2 = sh2;
 		      h_formula_star_pos = spos}) ->
-		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos) sh2 pos)
+		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos 14 ) sh2 pos 15 )
 	        | _ -> 
 		  (* if ((is_lend_h_formula h1) && is_lend_h_formula h2) then *)
 		  (*   (, h2) *)
@@ -89,7 +89,7 @@ and remove_true_rd_phase (h : CF.h_formula) : CF.h_formula =
 	 }) -> 
       let h1r = remove_true_rd_phase h1 in
       let h2r = remove_true_rd_phase h2 in
-      CF.mkStarH h1r h2r pos
+      CF.mkStarH h1r h2r pos 16 
     | _ -> h
 
 
@@ -456,7 +456,7 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula =
     | Star f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
-	      mkStarH h1 h2 f1.h_formula_star_pos
+	      mkStarH h1 h2 f1.h_formula_star_pos 17 
     | Conj f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in
@@ -573,7 +573,7 @@ and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
 
 and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.ho_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+  Debug.no_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
 and restore_tmp_ann (ann_lst: ann list) : ann list =
   match ann_lst with

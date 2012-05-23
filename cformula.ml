@@ -605,7 +605,7 @@ and drop_read_phase1 (f : h_formula) p : h_formula = match f with
 	h_formula_star_pos = pos;}) -> 
         let new_f1 = drop_read_phase1 h1 p in
         let new_f2 = drop_read_phase1 h2 p in
-	    mkStarH new_f1 new_f2 pos
+	    mkStarH new_f1 new_f2 pos 4 
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos;}) -> 
@@ -1032,7 +1032,11 @@ and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) lbl (
    formula_pos = pos;
   }
 
-and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
+and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) (no: int) = 
+  let pr = !print_h_formula in
+  Debug.ho_3 "mkStarH" string_of_int pr pr pr (fun _ _ _ -> mkStarH_x f1 f2 pos) no f1 f2
+
+and mkStarH_x (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
   | _ -> match f2 with
@@ -1100,7 +1104,7 @@ and fv_simple_formula_coerc (f:formula) =
 and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, t1, a1 = split_components f1 in
   let h2, p2, fl2, t2, a2 = split_components f2 in
-  let h = mkStarH h1 h2 pos in
+  let h = mkStarH h1 h2 pos 5 in
   let p = MCP.merge_mems p1 p2 true in
   let t = mkAndType t1 t2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
@@ -1124,7 +1128,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 		(MCP.memo_is_member_pure p pl)
 
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Debug.no_2 "mkstar_combine"
+  Debug.ho_2 "mkstar_combine"
       (!print_formula)
       (!print_formula)
       (!print_formula)
@@ -1137,10 +1141,10 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   (* i assume that at least one of the two formulae has only 1 phase *)
   let h = 
     if not(contains_phase h1) then
-      mkStarH h1 h2 pos
+      mkStarH h1 h2 pos 6
     else
       if not(contains_phase h2) then
-	    mkStarH h2 h1 pos
+	    mkStarH h2 h1 pos 7
       else
 	    report_error no_pos "[cformula.ml, mkstar_combine]: at least one of the formulae combined should not contain phases"
   in
@@ -2819,7 +2823,7 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
     | Star f1 ->
 	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_star_h1 permvar in
 	      let h2,xs2 = propagate_perm_h_formula f1.h_formula_star_h2 permvar in
-	      let star = mkStarH h1 h2 f1.h_formula_star_pos in
+	      let star = mkStarH h1 h2 f1.h_formula_star_pos 8 in
           let xs = List.append xs1 xs2 in
           (star,xs)
     | Conj f1 ->
@@ -4970,7 +4974,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+  Debug.ho_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
 (* and simplify_context_0 (ctx:context):context =  *)
@@ -5297,7 +5301,7 @@ let join_conjunct_opt l = match l with
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
     | [] -> None
-    | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos ) x xs)
+    | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos 9 ) x xs)
 
 let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =  
   let rec pr1 xs = 
@@ -6807,7 +6811,7 @@ and split_star_h f = match f with
  **)
 and combine_star_h cs = match cs with
 	| [] -> HTrue
-	| h::t -> mkStarH h (combine_star_h t) no_pos
+	| h::t -> mkStarH h (combine_star_h t) no_pos 10
 
 
 (**
@@ -7032,7 +7036,7 @@ let rec simp_ann_x heap pures (pre: bool) = match heap with
 	  h_formula_star_pos = pos} ->
     let (h1,ps1) = simp_ann h1 pures pre in
     let (h2,ps2) = simp_ann h2 ps1 pre in
-    (mkStarH h1 h2 pos,ps2)
+    (mkStarH h1 h2 pos 11 ,ps2)
   | Conj {h_formula_conj_h1 = h1;
 	  h_formula_conj_h2 = h2;
 	  h_formula_conj_pos = pos} ->

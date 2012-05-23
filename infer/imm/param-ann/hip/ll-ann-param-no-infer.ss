@@ -30,7 +30,7 @@ int sum_node (node x, node y)
 
 int sum (node x)
   requires x::ll<n,@L,@L>
-  ensures  x::ll<n,@L,@L>;
+  ensures  x::ll<n,@L,@A>;
 {
  
  if (x==null) return 0;
@@ -41,8 +41,8 @@ int sum (node x)
 
 
 void update (node x)
-  requires x::ll<a,@L,@L>
-  ensures  x::ll<a,@M,@L>;
+  requires x::ll<a,@M,@A>
+  ensures  x::ll<a,@M,@A>;
 {
  
  if (x==null) return;

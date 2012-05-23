@@ -960,7 +960,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
           let ba2 =ba_crt@(heap_baga prog s.h_formula_star_h2) in
           let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_star_h1 old_mem ba2 in
           let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_star_h2 mem1 ba1 in
-          (mkStarH h1 h2 s.h_formula_star_pos , mem2 , (changed1 or changed2))
+          (mkStarH h1 h2 s.h_formula_star_pos 17, mem2 , (changed1 or changed2))
     | Conj s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_conj_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_conj_h2) in
@@ -1183,7 +1183,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | ViewNode _ -> [(h,HTrue)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
     | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
-    | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarH h.h_formula_star_pos in
+    | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 (fun a b c -> mkStarH a b c 20) h.h_formula_star_pos in
   let l = sln_helper h in
   List.filter (fun (c1,_)-> Cformula.is_complex_heap c1) l 
 
@@ -3755,6 +3755,8 @@ and insert_ho_frame_in2_formula_debug f ho =
 
 (* insert an higher order frame into a formula *)
 and insert_ho_frame_in2_formula f ho_frame = 
+    (* if(!Globals.allow_field_ann) then f *)
+    (* else  *)
   match f with
     | Base({formula_base_heap = h;
 	  formula_base_pure = p;
@@ -3884,7 +3886,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		            let cl1 = List.map subs_crt_holes_ctx cl in
 			    let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		            (* in case of success, put back the frame consisting of h2*h3 *)
-		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
+		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos 21) pos)) cl1 in
 		            SuccCtx(cl2))
 	      in
 
@@ -3913,7 +3915,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 			    let cl =  List.map restore_tmp_ann_ctx cl in
 		            (* put back the frame consisting of h1 and h3 *)
 		            (* first add the frame []*h3 *) 
-		            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos)) cl in
+		            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos 22)) cl in
 		            let cl = 
 		              if not(consume_heap conseq) && not(drop_read_phase) then
 			            (* next add the frame h1;[]*)
@@ -3996,7 +3998,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 				  let cl =  List.map restore_tmp_ann_ctx cl in
 			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
 			              (* first add the frame h2_rest*[] *) 
-		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos)) cl in
+		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos 23)) cl in
 			              (* next add the frame h1;[]*)
 		                  let cl =
 			                if not(consume_heap conseq)  && not(drop_read_phase) then
@@ -4042,7 +4044,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 				let cl =  List.map restore_tmp_ann_ctx cl in
 		                (* in case of success, put back the frame consisting of h1;h2*[] *)
 		                (* first add the frame h2*[] *) 
-		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
+		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos 24)) cl in
                         (* next add the frame h1;[]*)
 
 		                let cl =
@@ -4367,7 +4369,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.ho_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Debug.no_3_loop "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -4752,7 +4754,7 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let lhs_h = r.formula_base_heap in  
   let lhs_p = r.formula_base_pure in
   let _ = reset_int2 () in
-  let xpure_lhs_h, _, memset = xpure_heap 4 prog (mkStarH lhs_h estate.es_heap pos) 1 in
+  let xpure_lhs_h, _, memset = xpure_heap 4 prog (mkStarH lhs_h estate.es_heap pos 25) 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
@@ -5020,7 +5022,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
-  let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
+  let _ = print_string ("\n(andreeac) heap_entail_empty_rhs_heap_x 0: " ^ (Cprinter.string_of_h_formula lhs_h)) in
+  let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos 26) in
+  let _ = print_string ("\n(andreeac) heap_entail_empty_rhs_heap_x 1: " ^ (Cprinter.string_of_h_formula curr_lhs_h)) in
   let xpure_lhs_h0, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
   let xpure_lhs_h1, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
   (* add the information about the dropped reading phases *)
@@ -5856,7 +5860,7 @@ and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Debug.ho_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list pr
       (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
       l_node r_node estate rhs rhs_matched_set
@@ -5922,6 +5926,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in
+      let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in
+      let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in
 	  let rem_l_node,rem_r_node = match (l_node,r_node) with
 	    | (DataNode dnl, DataNode dnr) -> 
 			  let new_args = List.combine l_args r_args in
@@ -5941,6 +5947,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 			  else DataNode { dnr with
 				  h_formula_data_arguments = new_r_args;
 				  h_formula_data_holes = new_r_holes;	} in
+			  let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in
+			  let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in
 			  (rem_l_node,rem_r_node)
 	    | _ -> (HFalse,HTrue)
 	  in
@@ -6010,6 +6018,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (********************************************************************)
               let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
               let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
+	      let _ = print_string("cris: new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p) ^ "\n") in
 	      let _ = print_string("cris: new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p) ^ "\n") in
               (*add instantiation for perm vars*)
               let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante ) in
@@ -6017,7 +6026,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	          let l_h = match rem_l_node with
 		        | HTrue | HFalse -> l_h
-		        | _ -> mkStarH rem_l_node l_h pos in
+		        | _ -> mkStarH rem_l_node l_h pos 27 in
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
 	          (* An Hoa : fix new_ante *)
               let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl r_a pos  in
@@ -6040,8 +6049,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   subst_one_by_one_h rho_0 r_node)
             in
 	    let imm_n = get_imm r_node in
-            let new_consumed = if not(isLend imm_n || isAccs imm_n) then  mkStarH consumed_h estate.es_heap pos  else  estate.es_heap in
-	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
+            let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
+	    let _ = print_string("cris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in
+	    let _ = print_string("cris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ^ "\n") in
+            let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)
                 |Some s1, None -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),estate.es_success_pts)
@@ -7564,7 +7575,8 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
             (*avoid apply a complex lemma twice*)
             let f = add_origins f [coer.coercion_name] in
             let f = add_original f false in
-            let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
+            let new_es_heap = CF.mkStarH anode estate.es_heap no_pos 30 in (*consumed*)
+	    
             (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
             let old_trace = estate.es_trace in
             let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in
@@ -8320,7 +8332,7 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     let heap_vars = CF.h_fv h1 @ CF.h_fv h2 in
     let h1 = elim_heap h1 p pre_vars heap_vars aset ref_vars in
     let h2 = elim_heap h2 p pre_vars heap_vars aset ref_vars in
-    mkStarH h1 h2 pos
+    mkStarH h1 h2 pos 32
   | Conj {h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos} -> 

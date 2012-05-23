@@ -1159,6 +1159,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+			  let _ = print_string ("\n(andreeac)check_exp_a es_f:" ^ (Cprinter.string_of_formula es_f)) in
+			  let _ = print_string ("\n(andreeac)check_exp_a new_base:" ^ (Cprinter.string_of_formula new_base)) in
                           let new_f = CF.compose_formula es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in
