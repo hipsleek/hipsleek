@@ -5010,8 +5010,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let term_measures, term_res, term_err_msg =
                 Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
                 (term_pos, t_ann_trans, orig_ante, 
-                  Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+                  Term.MayTerm_S (Term.Quantum_Technique_Measure_Not_Decreasing t_ann_trans)),
+                Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Quantum_Technique_Measure_Not_Decreasing t_ann_trans)))
               in
               (* let term_stack = match term_err_msg with *)
               (*  | None -> estate.CF.es_var_stack *)

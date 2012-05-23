@@ -4392,8 +4392,10 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         let fp = trans_pure_exp seq_info.IP.seq_fix_point stab in
         let b = List.map (fun x -> trans_pure_exp x stab) seq_info.IP.seq_bounds in
         let vari = match seq_info.IP.seq_variation with
-                   | IP.SeqDec -> CP.SeqDec
-                   | IP.SeqOsc -> CP.SeqOsc in
+                   | IP.SeqConDec -> CP.SeqConDec
+                   | IP.SeqCon -> CP.SeqCon
+                   | IP.SeqDivDec -> CP.SeqDivDec
+                   | IP.SeqDiv -> CP.SeqDiv in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_fix_point = fp;

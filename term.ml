@@ -17,16 +17,19 @@ type term_trans = CP.p_formula * CP.p_formula
 (* Transition on program location 
  * src: post_pos
  * dst: proving_loc *)
-type term_trans_loc = loc * loc 
+type term_trans_loc = loc * loc
 
 type term_reason =
-  (* The variance is not well-founded *)
-  | Not_Decreasing_Measure of term_trans option   
-  | Not_Bounded_Measure of CP.exp list
-  (* The variance is well-founded *)
-  | Decreasing_Measure of term_trans option
-  | Bounded_Measure
-  (* Reachability *)
+  (* Quantum Technique *)
+  | Quantum_Technique_Measure_Not_Decreasing of term_trans option
+  | Quantum_Technique_Measure_Not_Bounded of CP.exp list
+  | Quantum_Technique_Measure_Decreasing of term_trans option
+  | Quantum_Technique_Measure_Bounded
+  (* Limit Technique *)
+  | Limit_Technique_Invalid_Fixpoint of term_trans option
+  | Limit_Technique_Invalid_Bounds of term_trans option
+  | Limit_Technique_Measure_Wellfounded of term_trans option
+  (* General *)
   | Invalid_Status_Trans of term_trans
 
 (* The termination can only be determined when 
@@ -96,38 +99,54 @@ let pr_term_trans (term_src, term_dst) =
 let string_of_term_trans = poly_string_of_pr pr_term_trans
 
 let pr_term_reason = function
-  | Not_Decreasing_Measure _ -> fmt_string "The variance is not well-founded (not decreasing)."
-  | Not_Bounded_Measure _ -> fmt_string "The variance is not well-founded (not bounded)."
-  | Decreasing_Measure _ -> fmt_string "The variance is decreasing."
-  | Bounded_Measure -> fmt_string "The variance is bounded."
+  | Quantum_Technique_Measure_Not_Decreasing _ ->
+      fmt_string "Quantum Technique: The variance is not well-founded (not decreasing)."
+  | Quantum_Technique_Measure_Not_Bounded _ ->
+      fmt_string "Quantum Technique: The variance is not well-founded (not bounded)."
+  | Quantum_Technique_Measure_Decreasing _ ->
+      fmt_string "Quantum Technique: The variance is decreasing."
+  | Quantum_Technique_Measure_Bounded ->
+      fmt_string "Quantum Technique: The variance is bounded."
+  | Limit_Technique_Invalid_Fixpoint _ ->
+      fmt_string "Limit_Technique_Invalid_Fixpoint"
+  | Limit_Technique_Invalid_Bounds _ -> 
+      fmt_string "Limit_Technique_Invalid_Bounds"
+  | Limit_Technique_Measure_Wellfounded _ ->
+      fmt_string "Limit_Technique_Measure_Wellfounded"
   | Invalid_Status_Trans trans -> 
       pr_term_trans trans;
       fmt_string " transition is invalid."
-			
+
 let pr_term_reason_short = function
-  | Not_Decreasing_Measure ann_trans -> 
+  | Quantum_Technique_Measure_Not_Decreasing ann_trans -> 
       fmt_string "not decreasing)";
       (match ann_trans with
         | None -> ()
         | Some trans ->  
           fmt_string " ";
           pr_term_trans trans)
-  | Decreasing_Measure ann_trans -> 
+  | Quantum_Technique_Measure_Decreasing ann_trans -> 
       fmt_string "decreasing)";
       (match ann_trans with
         | None -> ()
         | Some trans ->  
           fmt_string " ";
           pr_term_trans trans)
-  | Not_Bounded_Measure le -> 
+  | Quantum_Technique_Measure_Not_Bounded le -> 
       fmt_string "not bounded)";
       pr_seq "" pr_formula_exp le;
-  | Bounded_Measure -> fmt_string "bounded)"
+  | Quantum_Technique_Measure_Bounded ->
+      fmt_string "bounded)"
+  | Limit_Technique_Invalid_Fixpoint _ ->
+      fmt_string "Limit_Technique_Invalid_Fixpoint)"
+  | Limit_Technique_Invalid_Bounds _ ->
+      fmt_string "Limit_Technique_Invalid_Bounds)"
+  | Limit_Technique_Measure_Wellfounded _ ->
+      fmt_string "Limit_Technique_Measure_Wellfounded)"
   | Invalid_Status_Trans ann_trans ->
       fmt_string "invalid transition)";
       fmt_string " ";
       pr_term_trans ann_trans
-  | _ -> ()
 
 let string_of_term_reason (reason: term_reason) =
   poly_string_of_pr pr_term_reason reason
@@ -409,12 +428,12 @@ let check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p sr
           let term_measures, term_res, term_err_msg =
             if res then (* The measures are decreasing *)
               Some (CP.mkLexVar t_ann ml il no_pos), (* Residue of termination *)
-              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Quantum_Technique_Measure_Decreasing t_ann_trans)),
               None
             else 
               Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
-              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
-              Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))) 
+              (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Quantum_Technique_Measure_Not_Decreasing t_ann_trans)),
+              Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Quantum_Technique_Measure_Not_Decreasing t_ann_trans))) 
           in
           (* let term_stack = match term_err_msg with *)
           (*  | None -> estate.es_var_stack *)
@@ -467,14 +486,14 @@ let check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p sr
           let term_measures, term_res, term_err_msg, rank_formula =
             if entail_res then (* Decreasing *) 
               Some (CP.mkLexVar t_ann ml il no_pos), 
-              (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
+              (term_pos, t_ann_trans, Some orig_ante, Term_S (Quantum_Technique_Measure_Decreasing t_ann_trans)),
               None, 
               None
             else
               if Inf.no_infer_all estate then (* No inference at all *)
                 Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
-                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
-                Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
+                (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Quantum_Technique_Measure_Not_Decreasing t_ann_trans)),
+                Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Quantum_Technique_Measure_Not_Decreasing t_ann_trans))),
                 None
               else
                 (* Inference: the es_var_measures will be
@@ -484,7 +503,7 @@ let check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p sr
                  * MayTerm_S -> Term_S *)
                 (* Assumming Inference will be successed *)
                 Some (CP.mkLexVar t_ann ml il no_pos),
-                (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
+                (term_pos, t_ann_trans, Some orig_ante, Term_S (Quantum_Technique_Measure_Decreasing t_ann_trans)),
                 None, 
                 Some rank_formula  
           in 
@@ -604,7 +623,7 @@ let check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
-let check_term_seqvar_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seq_src, seq_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
                            | _ -> raise SeqVar_Not_found in
@@ -618,44 +637,51 @@ let check_term_seqvar_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 r
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  (* constraint 1: fp_src = fp_dst *)
-  let cst1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
-  (* constraint 2: lb_src = lb_dst *)
-  let cst2 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
-  (* constraint 3: elm_src = fp_src => elm_dst = fp_dst *)
+  (* limit constraint 1: fp_src = fp_dst *)
+  let lim1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
+  (* limit constraint 2: lb_src = lb_dst *)
+  let lim2 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
+  (* limit constraint 3: elm_src = fp_src => elm_dst = fp_dst *)
   let tmp1 = CP.mkNot_s (CP.mkPure (CP.mkEq elm_src fp_src no_pos)) in
   let tmp2 = CP.mkPure (CP.mkEq elm_dst fp_dst no_pos) in
-  let cst3 = CP.mkOr tmp1 tmp2 None no_pos in
-  (* constraint 4: elm_src > elm_dst *)
-  let cst4 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
-  (* constraint 5: elm_src > lb_src *)
-  let cst5 = CP.mkPure (CP.mkGt elm_src lb_src no_pos) in
-  (* constraint 6: lb_src > fp_src *)
-  let cst6 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
-  (* constraint 7: (elm_dst - fp_dst) < K * (elm_src - fp_src) *)
+  let lim3 = CP.mkOr tmp1 tmp2 None no_pos in
+  (* limit constraint 4: elm_src > elm_dst *)
+  let lim4 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
+  (* limit constraint 5: elm_src > fp_src *)
+  let lim5 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
+  (* limit constraint 6: (elm_dst - fp_dst) < K * (elm_src - fp_src) *)
   (* the largest floating-point number less than 1 can be handled by SLEEK is 0.999999999999 (12 digits)
      larger number will be approximated to 1*)
   let k = CP.mkFConst 0.99999999999999 no_pos in
   (* let _ = print_endline ("k = " ^ (!CP.print_exp k)) in *)
   let tmp1 = CP.mkMult k (CP.mkSubtract elm_src fp_src no_pos) no_pos in
   let tmp2 = CP.mkSubtract elm_dst fp_dst no_pos in
-  let cst7 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
-  (* collect constraints *)
-  let cst_lst = [cst2; cst3; cst4; cst5; cst6; cst7] in
-  let constrains = List.fold_left (fun a b -> CP.mkAnd a b no_pos) cst1 cst_lst in
+  let lim6 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
+  (* check limit constrains *)
+  let lim_lst = [lim2; lim3; lim4; lim5; lim6] in
+  let lim_constrains = List.fold_left (fun a b -> CP.mkAnd a b no_pos) lim1 lim_lst in
   let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let entail_res, _, _ = TP.imply lhs constrains "" false None in
+  let lim_entail_res, _, _ = TP.imply lhs lim_constrains "" false None in
+  (* bound constraint 6: lb_src > fp_src *)
+  let bnd_constrains = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
+  let bnd_entail_res, _, _ = TP.imply lhs bnd_constrains "" false None in
+  (* collect constraints *)
   let orig_ante = estate.es_formula in 
   let term_measures, term_res, term_err_msg, rank_formula =
-    if entail_res then 
-      Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Decreasing_Measure trans)),
-      None, 
+    if not lim_entail_res then 
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))),
+      None
+    else if not bnd_entail_res then
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Bounds trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Bounds trans))),
       None
     else
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Not_Decreasing_Measure trans))),
+      Some (CP.SeqVar seq_src), 
+      (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
+      None, 
       None
   in 
   let term_err = match estate.es_term_err with
@@ -670,7 +696,7 @@ let check_term_seqvar_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 r
   add_term_res_stk term_res;
   (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_seqvar_oscillate_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+let check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seq_src, seq_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
                            | _ -> raise SeqVar_Not_found in
@@ -686,45 +712,51 @@ let check_term_seqvar_oscillate_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  (* constraint 1: fp_src = fp_dst *)
-  let cst1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
-  (* constraint 2: lb_src = lb_dst *)
-  let cst2 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
-  (* constraint 3: ub_src = ub_dst *)
-  let cst3 = CP.mkPure (CP.mkEq ub_src ub_dst no_pos) in
-  (* constraint 4: elm_src = fp_src => elm_dst = fp_dst *)
+  (* limit constraint 1: fp_src = fp_dst *)
+  let lim1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
+  (* limit constraint 2: lb_src = lb_dst *)
+  let lim2 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
+  (* limit constraint 3: elm_src = fp_src => elm_dst = fp_dst *)
   let tmp1 = CP.mkNot_s (CP.mkPure (CP.mkEq elm_src fp_src no_pos)) in
   let tmp2 = CP.mkPure (CP.mkEq elm_dst fp_dst no_pos) in
-  let cst4 = CP.mkOr tmp1 tmp2 None no_pos in
-  (* TRUNG TODO: cont. here *)
-  (* constraint 5: elm_src > lb_src *)
-  let cst5 = CP.mkPure (CP.mkGt elm_src lb_src no_pos) in
-  (* constraint 6: lb_src > fp_src *)
-  let cst6 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
-  (* constraint 7: (elm_dst - fp_dst) < K * (elm_src - fp_src) *)
+  let lim3 = CP.mkOr tmp1 tmp2 None no_pos in
+  (* limit constraint 4: elm_src > elm_dst *)
+  let lim4 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
+  (* limit constraint 5: elm_src > fp_src *)
+  let lim5 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
+  (* limit constraint 6: (elm_dst - fp_dst) < K * (elm_src - fp_src) *)
   (* the largest floating-point number less than 1 can be handled by SLEEK is 0.999999999999 (12 digits)
      larger number will be approximated to 1*)
   let k = CP.mkFConst 0.99999999999999 no_pos in
   (* let _ = print_endline ("k = " ^ (!CP.print_exp k)) in *)
   let tmp1 = CP.mkMult k (CP.mkSubtract elm_src fp_src no_pos) no_pos in
   let tmp2 = CP.mkSubtract elm_dst fp_dst no_pos in
-  let cst7 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
-  (* collect constraints *)
-  let cst_lst = [cst2; cst3; cst4; cst5; cst6; cst7] in
-  let constrains = List.fold_left (fun a b -> CP.mkAnd a b no_pos) cst1 cst_lst in
+  let lim6 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
+  (* check limit constrains *)
+  let lim_lst = [lim2; lim3; lim4; lim5; lim6] in
+  let lim_constrains = List.fold_left (fun a b -> CP.mkAnd a b no_pos) lim1 lim_lst in
   let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let entail_res, _, _ = TP.imply lhs constrains "" false None in
+  let lim_entail_res, _, _ = TP.imply lhs lim_constrains "" false None in
+  (* bound constraint 6: lb_src > fp_src *)
+  let bnd_constrains = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
+  let bnd_entail_res, _, _ = TP.imply lhs bnd_constrains "" false None in
+  (* collect constraints *)
   let orig_ante = estate.es_formula in 
   let term_measures, term_res, term_err_msg, rank_formula =
-    if entail_res then 
-      Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Decreasing_Measure trans)),
-      None, 
+    if not lim_entail_res then 
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))),
+      None
+    else if not bnd_entail_res then
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Bounds trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Bounds trans))),
       None
     else
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Not_Decreasing_Measure trans))),
+      Some (CP.SeqVar seq_src), 
+      (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
+      None, 
       None
   in 
   let term_err = match estate.es_term_err with
@@ -747,10 +779,10 @@ let check_term_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (t
                            | _ -> raise SeqVar_Not_found in
   let vari_src = seq_src.CP.seq_variation in
   let vari_dst = seq_dst.CP.seq_variation in
-  if (vari_src = vari_dst) && (vari_src = CP.SeqDec) then 
-    check_term_seqvar_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
-  else if (vari_src = vari_dst) && (vari_src = CP.SeqOsc) then
-    check_term_seqvar_oscillate_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
+  if (vari_src = vari_dst) && (vari_src = CP.SeqConDec) then 
+    check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
+  else if (vari_src = vari_dst) && (vari_src = CP.SeqCon) then
+    check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
   else
     report_error no_pos "[term.ml] Invalid variation of sequences."
 

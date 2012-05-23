@@ -281,12 +281,12 @@ and check_bounded_term_x prog ctx post_pos =
     let term_res, n_es =
       let f_ctx = CF.formula_of_context ctx in
       if (CF.isFailCtx rs) then 
-        let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m)) in
+        let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Quantum_Technique_Measure_Not_Bounded m)) in
         let err_msg = Term.string_of_term_res tr in
         let _ = Term.add_term_err_stk err_msg in
         tr, { es with CF.es_term_err = Some err_msg }
       else 
-        (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
+        (term_pos, None, Some f_ctx, Term.Term_S Term.Quantum_Technique_Measure_Bounded),
         es
     in
     let _ = Debug.trace_hprint (add_str "New es" !CF.print_entail_state) n_es no_pos in

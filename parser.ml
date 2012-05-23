@@ -1053,22 +1053,51 @@ cexp_w :
       | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
-      | t_ann = ann_term; param = measures_seq_dec ->
+      | t_ann = ann_term; param = measures_seq_con_dec ->
           let (m, fp, lb) = param in
           let seq = P.SeqVar { P.seq_ann = t_ann;
                                P.seq_element = m;
                                P.seq_fix_point = fp;
                                P.seq_bounds = [lb];
-                               P.seq_variation = P.SeqDec;
+                               P.seq_variation = P.SeqConDec;
                                P.seq_loc = get_pos_camlp4 _loc 1} in
           let f = Pure_f (P.BForm ((seq, None), None)) in
           set_slicing_utils_pure_double f false
-      | t_ann=ann_term; ls1=opt_measures_seq_sqr; ls2=opt_measures_seq ->
+      | t_ann = ann_term; param = measures_seq_con ->
+          let (m, fp, lb, ub) = param in
+          let seq = P.SeqVar { P.seq_ann = t_ann;
+                               P.seq_element = m;
+                               P.seq_fix_point = fp;
+                               P.seq_bounds = [lb; ub];
+                               P.seq_variation = P.SeqCon;
+                               P.seq_loc = get_pos_camlp4 _loc 1} in
+          let f = Pure_f (P.BForm ((seq, None), None)) in
+          set_slicing_utils_pure_double f false
+      | t_ann = ann_term; param = measures_seq_div_dec ->
+          let (m, fp, lb) = param in
+          let seq = P.SeqVar { P.seq_ann = t_ann;
+                               P.seq_element = m;
+                               P.seq_fix_point = fp;
+                               P.seq_bounds = [lb];
+                               P.seq_variation = P.SeqDivDec;
+                               P.seq_loc = get_pos_camlp4 _loc 1} in
+          let f = Pure_f (P.BForm ((seq, None), None)) in
+          set_slicing_utils_pure_double f false
+      | t_ann = ann_term; param = measures_seq_div ->
+          let (m, fp, lb, ub) = param in
+          let seq = P.SeqVar { P.seq_ann = t_ann;
+                               P.seq_element = m;
+                               P.seq_fix_point = fp;
+                               P.seq_bounds = [lb; ub];
+                               P.seq_variation = P.SeqDiv;
+                               P.seq_loc = get_pos_camlp4 _loc 1} in
+          let f = Pure_f (P.BForm ((seq, None), None)) in
+          set_slicing_utils_pure_double f false
+      | t_ann=ann_term; ls1=opt_measures_lex_sqr; ls2=opt_measures_lex ->
           let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
           set_slicing_utils_pure_double f false
       ]
-	  
-	  
+
   | "pure_paren" 
       [peek_pure; `OPAREN;  dc=SELF; `CPAREN -> dc ] 
 
@@ -1182,16 +1211,25 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
-opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
+opt_measures_lex :[[ il = OPT measures_lex -> un_option il [] ]];
 
-measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+measures_lex :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
+opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
 
-measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
+measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-(* SeqDec(measurement, fixpoint, lower_bound) *)
-measures_seq_dec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `CPAREN; `CSQUARE -> (m, fp, lb)]];
+(* SeqConDec(measurement, fixpoint, lower_bound) *)
+measures_seq_con_dec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `CPAREN; `CSQUARE -> (m, fp, lb)]];
+
+(* SeqCon(measurement, fixpoint, lower_bound, upper_bound) *)
+measures_seq_con: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `COMMA; ub = cexp; `CPAREN; `CSQUARE -> (m, fp, lb, ub)]];
+
+(* SeqDivDec(measurement, fixpoint, lower_bound) *)
+measures_seq_div_dec: [[`OSQUARE; `SEQDIVDEC; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `CPAREN; `CSQUARE -> (m, fp, lb)]];
+
+(* SeqDiv(measurement, fixpoint, lower_bound, upper_bound) *)
+measures_seq_div: [[`OSQUARE; `SEQDIV; `OPAREN; m = cexp; `COMMA; fp = cexp; `COMMA; lb = cexp; `COMMA; ub = cexp; `CPAREN; `CSQUARE -> (m, fp, lb, ub)]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

@@ -22,8 +22,10 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
 and sequence_variation_type =
-  | SeqDec                  (* sequence decrease *)
-  | SeqOsc                  (* sequence oscillate *)
+  | SeqConDec                  (* sequence converge & decrease *)
+  | SeqCon                     (* sequence converge *)
+  | SeqDivDec                  (* sequence diverge & decrease *)
+  | SeqDiv                     (* sequence diverge *)
 
 and sequence_info = {
   seq_ann: term_ann;

@@ -192,7 +192,10 @@ module Make (Token : SleekTokenS)
    ("Term", TERM);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
-   ("SeqDec", SEQDEC);
+   ("SeqConDec", SEQCONDEC);
+   ("SeqCon, SEQCON);
+   ("SeDivDec", SEQDIVDEC);
+   ("SeqDiv", SEQCDIV);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);

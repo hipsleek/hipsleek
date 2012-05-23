@@ -173,8 +173,10 @@ let string_of_slicing_label sl =
 
 let string_of_sequence_variation (v: P.sequence_variation_type) : string =
   match v with
-  | P.SeqDec -> "SeqDec"
-  | P.SeqOsc -> "SeqOsc"
+  | P.SeqConDec -> "SeqConDec"
+  | P.SeqCon -> "SeqCon"
+  | P.SeqDivDec -> "SeqDivDec"
+  | P.SeqDiv -> "SeqDiv"
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 

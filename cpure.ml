@@ -85,8 +85,10 @@ and lex_info = {
 }
 
 and sequence_variation_type =
-  | SeqDec                  (* sequence decrease *)
-  | SeqOsc                  (* sequence oscillate *)
+  | SeqConDec                  (* sequence converge & decrease *)
+  | SeqCon                     (* sequence converge *)
+  | SeqDivDec                  (* sequence diverge & decrease *)
+  | SeqDiv                     (* sequence diverge *)
 
 and sequence_info = {
   seq_ann: term_ann;
