@@ -1171,7 +1171,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
-    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
+    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Sqrt (e,_) | Pow (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
@@ -1199,6 +1199,14 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	      if (disc<>(-1)) then ([e],[])
 	      else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	      (lp1@lp2,ln1@ln2) 
+    | Sqrt (e,l)-> 
+        if (disc<>(-1)) then ([e],[])
+        else let (lp1,ln1) = get_lists e disc in
+        (lp1,ln1) 
+    | Pow (e1,e2,l)-> 
+        if (disc<>(-1)) then ([e],[])
+        else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
+        (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | AConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
 	| ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in

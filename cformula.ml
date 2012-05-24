@@ -7546,11 +7546,12 @@ let rec norm_struc_with_termvar is_primitive struc_f  = match struc_f with
   | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_termvar is_primitive) ef.formula_case_branches }
   | EBase ef ->
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
+      else if (has_seqvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_termvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
       let lexvar = 
         if is_primitive then  CP.mkLexVar Term [] [] no_pos
-        else CP.mkLexVar MayLoop [] [] no_pos in 
+        else ( let _ = print_endline "*** MayLoop" in CP.mkLexVar MayLoop [] [] no_pos) in 
       mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_termvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList (map_l_snd (norm_struc_with_termvar is_primitive) b)

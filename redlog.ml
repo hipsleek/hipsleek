@@ -255,6 +255,8 @@ let rec rl_of_exp e0 =
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
   | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
+  | CP.Sqrt(e, _) -> "sqrt(" ^ (rl_of_exp e) ^ ")"
+  | CP.Pow(e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ ") ^ (" ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
   | _ -> failwith ("redlog: bags/list is not supported")

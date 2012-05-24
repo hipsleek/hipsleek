@@ -81,6 +81,7 @@ and coq_of_exp e0 =
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
+  | CP.Sqrt _ | CP.Pow _ -> illegal_format "coq_of_exp : Sqrt, Pow cannot be handled"
   | CP.Max _
   | CP.Min _ -> 
 			illegal_format "coq_of_exp : min/max cannot be handled"

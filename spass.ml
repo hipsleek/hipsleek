@@ -102,6 +102,7 @@ let rec smt_of_exp a =
 	| Cpure.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| Cpure.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	(* UNHANDLED *)
+  | Cpure.Sqrt _ | Cpure.Pow _ -> illegal_format ("Spass: sqrt, pow is not supported.")
 	| Cpure.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
 	| Cpure.Bag ([], _) -> "0"
 	| Cpure.Max _
@@ -285,11 +286,12 @@ and collect_exp_info e = match e with
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 			combine_formula_info ef1 ef2
-	| Cpure.Mult (e1,e2,_) | Cpure.Div (e1,e2,_) ->
+	| Cpure.Mult (e1,e2,_) | Cpure.Div (e1,e2,_) | Cpure.Pow (e1,e2,_) ->
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 		let result = combine_formula_info ef1 ef2 in
 			{ result with is_linear = false; }
+  | Cpure.Sqrt (e,_) -> collect_exp_info e
 	| Cpure.Bag _
 	| Cpure.BagUnion _
 	| Cpure.BagIntersect _

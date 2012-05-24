@@ -70,6 +70,7 @@ let rec omega_of_exp e0 = match e0 with
             in rr
       in r
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
+  | Sqrt _ | Pow _ -> illegal_format "[omega.ml] sqrt, pow is not supported."
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)
       (*   Error.error_text ="[omega.ml] Divide is not supported." *)

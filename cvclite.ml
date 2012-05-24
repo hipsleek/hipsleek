@@ -97,6 +97,8 @@ and cvcl_of_exp a = match a with
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvcl_of_exp a1) ^ " * " ^ (cvcl_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")
+  | CP.Sqrt _ -> failwith ("[cvclite.ml]: sqrt is not supported.")
+  | CP.Pow _ -> failwith ("[cvclite.ml]: pow is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
   | CP.Bag ([], _) -> ""

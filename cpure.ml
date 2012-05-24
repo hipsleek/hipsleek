@@ -114,7 +114,7 @@ and p_formula =
   | Neq of (exp * exp * loc)
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
-	  (* bag formulas *)
+  (* bag formulas *)
   | BagIn of (spec_var * exp * loc)
   | BagNotIn of (spec_var * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -126,7 +126,7 @@ and p_formula =
         (* NOTE: currently work with Redlog only*)
         (* TO DO: filter out VarPerm before discharge*)
   | VarPerm of (vp_ann * (spec_var list) * loc)
-	  (* list formulas *)
+  (* list formulas *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
@@ -146,14 +146,16 @@ and exp =
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
   | Div of (exp * exp * loc)
+  | Sqrt of (exp * loc)
+  | Pow of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
-	  (* bag expressions *)
+  (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
-	  (* list expressions *)
+  (* list expressions *)
   | List of (exp list * loc)
   | ListCons of (exp * exp * loc)
   | ListHead of (exp * loc)
@@ -584,14 +586,14 @@ let rec get_exp_type (e : exp) : typ =
   | IConst _ -> Int
   | FConst _ -> Float
   | AConst _ -> AnnT
-  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) | Pow (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
         match get_exp_type e1, get_exp_type e2 with
         | Int, Int -> Int
         | _ -> Float
       end
-  | Div _ -> Float
+  | Div _ | Sqrt _-> Float
   | ListHead _ | ListLength _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
@@ -800,6 +802,8 @@ and afv (af : exp) : spec_var list =
     | Add (a1, a2, _) -> combine_avars a1 a2
     | Subtract (a1, a2, _) -> combine_avars a1 a2
     | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
+    | Sqrt (a, _) -> afv a
+    | Pow (a1, a2, _) -> combine_avars a1 a2
     | Max (a1, a2, _) -> combine_avars a1 a2
     | Min (a1, a2, _) -> combine_avars a1 a2
           (*| BagEmpty (_) -> []*)
@@ -1266,8 +1270,7 @@ match pf with
             (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
   | RelForm _ 
-  | SeqVar _
-  | _ -> false (* An Hoa *)
+  | SeqVar _ -> false
 
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
@@ -1275,6 +1278,8 @@ and is_exp_arith (e:exp) : bool=
     | Null _  | Var _ | IConst _ | AConst _ | FConst _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
+    | Sqrt (e, _) -> is_exp_arith e
+    | Pow (e1, e2, _) -> (is_exp_arith e1) && (is_exp_arith e2)
           (* bag expressions *)
     | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _
               (* list expressions *)
@@ -2035,6 +2040,8 @@ and pos_of_exp (e : exp) = match e with
   | Subtract (_, _, p) 
   | Mult (_, _, p) 
   | Div (_, _, p) 
+  | Sqrt (_, p)
+  | Pow (_, _, p)
   | Max (_, _, p) 
   | Min (_, _, p) 
           (*| BagEmpty (p) -> p*)
@@ -2467,23 +2474,27 @@ and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
+      e_apply_subs sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
-	e_apply_subs sst a2, pos)
+      e_apply_subs sst a2, pos)
   | Mult (a1, a2, pos) -> 
-        Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+      Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Div (a1, a2, pos) ->
-        Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+      Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | Sqrt (a, pos) ->
+      Sqrt (e_apply_subs sst a, pos)
+  | Pow (a1, a2, pos) ->
+      Pow (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
+      e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-        (*| BagEmpty (pos) -> BagEmpty (pos)*)
+      e_apply_subs sst a2, pos)
+  (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((e_apply_subs_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_subs_list sst alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_subs_list sst alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
+      e_apply_subs sst a2, pos)
   | List (alist, pos) -> List (e_apply_subs_list sst alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list sst alist, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -2521,23 +2532,27 @@ and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
-	e_apply_one (fr, t) a2, pos)
+      e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
-	e_apply_one (fr, t) a2, pos)
+      e_apply_one (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
-        Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+      Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
-        Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+      Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Sqrt (a, pos) ->
+      Sqrt (e_apply_one (fr, t) a, pos)
+  | Pow (a1, a2, pos) ->
+      Pow (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
-	e_apply_one (fr, t) a2, pos)
+      e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
-	e_apply_one (fr, t) a2, pos)
-        (*| BagEmpty (pos) -> BagEmpty (pos)*)
+      e_apply_one (fr, t) a2, pos)
+  (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag (e_apply_one_list (fr, t) alist, pos)
   | BagUnion (alist, pos) -> BagUnion (e_apply_one_list (fr, t) alist, pos)
   | BagIntersect (alist, pos) -> BagIntersect (e_apply_one_list (fr, t) alist, pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
-	e_apply_one (fr, t) a2, pos)
+      e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List (e_apply_one_list (fr, t) alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_one_list (fr, t) alist, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -2645,19 +2660,18 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | AConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-  | Mult (a1, a2, pos) ->
-        Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-  | Div (a1, a2, pos) ->
-        Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Mult (a1, a2, pos) -> Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Div (a1, a2, pos) -> Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Sqrt (a, pos) -> Sqrt (a_apply_par_term sst a, pos)
+  | Pow (a1, a2, pos) -> Pow (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-        (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((a_apply_par_term_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_par_term_list sst alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((a_apply_par_term_list sst alist), pos)
-  | BagDiff (a1, a2, pos) -> BagDiff (a_apply_par_term sst a1,
-	a_apply_par_term sst a2, pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | List (alist, pos) -> List ((a_apply_par_term_list sst alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_par_term_list sst alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -2666,15 +2680,15 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
   | Func (a, i, pos) ->
-		let a1 = subs_one_term sst a (Var (a,pos)) in
-		(match a1 with
-		  | Var (a2,_) -> Func (a2, a_apply_par_term_list sst i, pos) 
-		  | _ -> failwith "Cannot substitute a function by a non variable!\n")  
-  | ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
-		let a1 = subs_one_term sst a (Var (a,pos)) in
-		(match a1 with
-		  | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
-		  | _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
+      let a1 = subs_one_term sst a (Var (a,pos)) in
+      (match a1 with
+      | Var (a2,_) -> Func (a2, a_apply_par_term_list sst i, pos) 
+      | _ -> failwith "Cannot substitute a function by a non variable!\n")  
+      | ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
+          let a1 = subs_one_term sst a (Var (a,pos)) in
+          (match a1 with
+          | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
+          | _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
 
 and a_apply_par_term_list sst alist = match alist with
   |[] -> []
@@ -2740,19 +2754,18 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | FConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | Mult (a1, a2, pos) ->
-        Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | Div (a1, a2, pos) ->
-        Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Mult (a1, a2, pos) -> Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Div (a1, a2, pos) -> Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Sqrt (a, pos) -> Sqrt (a_apply_one_term (fr, t) a, pos)
+  | Pow (a1, a2, pos) -> Pow (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-        (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((a_apply_one_term_list (fr, t) alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_one_term_list (fr, t) alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((a_apply_one_term_list (fr, t) alist), pos)
-  | BagDiff (a1, a2, pos) -> BagDiff (a_apply_one_term (fr, t) a1,
-	a_apply_one_term (fr, t) a2, pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | List (alist, pos) -> List ((a_apply_one_term_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_one_term_list (fr, t) alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -2761,19 +2774,21 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_one_term (fr, t) a1, pos)
   | Func (a, i, pos) ->
-    let a1 = if eq_spec_var a fr then 
-		  (match t with
-			| Var (a2, _) -> a2
-			| _ -> failwith "Cannot apply a non-variable term to a function.")
-		else a in
-		Func (a1, a_apply_one_term_list (fr, t) i, pos)
+    let a1 = 
+      if eq_spec_var a fr then 
+        (match t with
+        | Var (a2, _) -> a2
+        | _ -> failwith "Cannot apply a non-variable term to a function.")
+      else a in
+        Func (a1, a_apply_one_term_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> 
-		let a1 = if eq_spec_var a fr then 
-		  (match t with
-			| Var (a2, _) -> a2
-			| _ -> failwith "Cannot apply a non-variable term to an array variable.")
-		else a in
-		ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *) 
+      let a1 = 
+        if eq_spec_var a fr then 
+          (match t with
+          | Var (a2, _) -> a2
+          | _ -> failwith "Cannot apply a non-variable term to an array variable.")
+        else a in
+      ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *) 
 
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
@@ -2805,6 +2820,13 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           let b1 , r1 = helper crt_var a1 in
           let b2 , r2 = helper (not crt_var) a2 in
           (b1||b2, Div (r1 , r2 , pos))
+    | Sqrt (a, pos) ->
+          let b, r = helper crt_var a in
+          (b, Sqrt (r, pos))
+    | Pow (a1, a2, pos) ->
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper (not crt_var) a2 in
+          (b1||b2, Pow (r1 , r2 , pos))
     | Var (sv, pos) -> if ((variance==crt_var)||(eq_spec_var sv fr)) then (true, t) else (false, e)
     | Max (a1, a2, pos) -> 
           let b1 , r1 = helper crt_var a1 in
@@ -3748,44 +3770,62 @@ and b_apply_one_exp (fr, t) bf =
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | FConst _| AConst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
-  | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
-							  e_apply_one_exp (fr, t) a2, pos)
-  | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1,
-										e_apply_one_exp (fr, t) a2, pos)
-  | Mult (a1, a2, pos) -> 
+  | Add (a1, a2, pos) -> 
+      Add (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Subtract (a1, a2, pos) ->
+      Subtract (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Mult (a1, a2, pos) ->
       Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
       Div (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
-  | Max (a1, a2, pos) -> Max (e_apply_one_exp (fr, t) a1,
-							  e_apply_one_exp (fr, t) a2, pos)
-  | Min (a1, a2, pos) -> Min (e_apply_one_exp (fr, t) a1,
-							  e_apply_one_exp (fr, t) a2, pos)
-	(*| BagEmpty (pos) -> BagEmpty (pos)*)
-  | Bag (alist, pos) -> Bag ((e_apply_one_list_exp (fr, t) alist), pos)
-  | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list_exp (fr, t) alist), pos)
-  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list_exp (fr, t) alist), pos)
-  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one_exp (fr, t) a1,
-							  e_apply_one_exp (fr, t) a2, pos)
-  | List (alist, pos) -> List ((e_apply_one_list_exp (fr, t) alist), pos)
-  | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list_exp (fr, t) alist), pos)
-  | ListCons (a1, a2, pos) -> ListCons (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
-  | ListHead (a1, pos) -> ListHead (e_apply_one_exp (fr, t) a1, pos)
-  | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
-  | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
-  | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
+  | Sqrt (a, pos) ->
+      Sqrt (e_apply_one_exp (fr, t) a, pos)
+  | Pow (a1, a2, pos) ->
+      Pow (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Max (a1, a2, pos) ->
+      Max (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Min (a1, a2, pos) ->
+      Min (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  | Bag (alist, pos) ->
+      Bag ((e_apply_one_list_exp (fr, t) alist), pos)
+  | BagUnion (alist, pos) ->
+      BagUnion ((e_apply_one_list_exp (fr, t) alist), pos)
+  | BagIntersect (alist, pos) ->
+      BagIntersect ((e_apply_one_list_exp (fr, t) alist), pos)
+  | BagDiff (a1, a2, pos) ->
+      BagDiff (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | List (alist, pos) ->
+      List ((e_apply_one_list_exp (fr, t) alist), pos)
+  | ListAppend (alist, pos) ->
+      ListAppend ((e_apply_one_list_exp (fr, t) alist), pos)
+  | ListCons (a1, a2, pos) ->
+      ListCons (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | ListHead (a1, pos) ->
+      ListHead (e_apply_one_exp (fr, t) a1, pos)
+  | ListTail (a1, pos) ->
+      ListTail (e_apply_one_exp (fr, t) a1, pos)
+  | ListLength (a1, pos) ->
+      ListLength (e_apply_one_exp (fr, t) a1, pos)
+  | ListReverse (a1, pos) ->
+      ListReverse (e_apply_one_exp (fr, t) a1, pos)
   | Func (a, i, pos) -> 
-    let a1 = 
-      if eq_spec_var a fr then 
-        (match t with 
+      let a1 = 
+        if eq_spec_var a fr then 
+          (match t with 
           | Var (s,_) -> s
           | _ -> failwith "Can only substitute ranking variable by ranking variable\n")  
-      else a 
-    in Func (a1, e_apply_one_list_exp (fr, t) i, pos)
-	| ArrayAt (a, i, pos) -> 
-            let a1 = if eq_spec_var a fr then (match t with 
-               | Var (s,_) -> s
-               | _ -> failwith "Can only substitute array variable by array variable\n")  else a in
-              ArrayAt (a1, e_apply_one_list_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
+        else a 
+      in Func (a1, e_apply_one_list_exp (fr, t) i, pos)
+  | ArrayAt (a, i, pos) -> 
+      let a1 = 
+        if eq_spec_var a fr then (
+          match t with 
+          | Var (s,_) -> s
+          | _ -> failwith "Can only substitute array variable by array variable\n"
+        )
+        else a in
+      ArrayAt (a1, e_apply_one_list_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -3962,38 +4002,42 @@ and check_not (f:formula):formula =
   else f 
 	
 and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool = 
-  let is_simple e = match e with
-	| Null _ 
-	| Var _ 
-	| IConst _ 
-	| AConst _ 
+  let is_simple e = 
+    match e with
+    | Null _ 
+    | Var _ 
+    | IConst _ 
+    | AConst _ 
     | FConst _ -> true
-	| Add (e1,e2,_)
-	| Subtract (e1,e2,_) -> false
-	| Mult _
+    | Add (e1,e2,_)
+    | Subtract (e1,e2,_) -> false
+    | Mult _
     | Div _
-	| Max _ 
-	| Min _
-	| Bag _
-	| BagUnion _
-	| BagIntersect _ 
-	| BagDiff _
-	| List _
-	| ListCons _
-	| ListTail _
-	| ListAppend _
-	| ListReverse _
-	| ListHead _
-	| ListLength _ 
-  | Func _
-	| ArrayAt _ -> false (* An Hoa *) in
+    | Sqrt _
+    | Pow _
+    | Max _ 
+    | Min _
+    | Bag _
+    | BagUnion _
+    | BagIntersect _ 
+    | BagDiff _
+    | List _
+    | ListCons _
+    | ListTail _
+    | ListAppend _
+    | ListReverse _
+    | ListHead _
+    | ListLength _ 
+    | Func _
+    | ArrayAt _ -> false
+  in
   ((is_simple e1)&& match e2 with
-	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
-	| _ -> false
+                    | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+                    | _ -> false
   )||((is_simple e2)&& match e1 with
-	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
-	| _ -> false) 				  
-	  
+                       | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+                       | _ -> false)
+
 and drop_null (f:formula) self neg:formula = 
   let helper(f:b_formula) neg:b_formula =
 	let (pf,il) = f in
@@ -4115,6 +4159,8 @@ and simp_mult_x (e : exp) :  exp =
                  l))
       | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
       | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
+      | Sqrt (e, l) -> Sqrt (acc_mult m e, l)
+      | Pow (e1, e2, l) -> Pow (acc_mult m e1, acc_mult None e2, l)
       |  Max (e1, e2, l) ->
              Error.report_error
                  {
@@ -4142,7 +4188,7 @@ and simp_mult_x (e : exp) :  exp =
 	  |  ListLength (_, l) 
     |  Func (_, _, l)
 		|  ArrayAt (_, _, l) (* An Hoa *) -> 
-             match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
+     match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
   in acc_mult None e
 
@@ -4623,6 +4669,13 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
 	            let (ne1,r1) = helper new_arg e1 in
 		        let (ne2,r2) = helper new_arg e2 in
 		        (Div (ne1,ne2,l),f_comb[r1;r2])
+          | Sqrt (e, l) ->
+              let (ne, r) = helper new_arg e in
+              (Sqrt (ne, l),f_comb[r])
+          | Pow (e1,e2,l) ->
+              let (ne1,r1) = helper new_arg e1 in
+              let (ne2,r2) = helper new_arg e2 in
+              (Div (ne1,ne2,l),f_comb[r1;r2])
 	      | Max (e1,e2,l) ->
 	            let (ne1,r1) = helper new_arg e1 in
 		        let (ne2,r2) = helper new_arg e2 in
@@ -4716,6 +4769,13 @@ let rec transform_exp f e  =
 	          let ne1 = transform_exp f e1 in
 		      let ne2 = transform_exp f e2 in
 		      Div (ne1,ne2,l)
+        | Sqrt (e, l) ->
+            let ne = transform_exp f e in
+            Sqrt (ne, l)
+        | Pow (e1,e2,l) ->
+            let ne1 = transform_exp f e1 in
+            let ne2 = transform_exp f e2 in
+            Div (ne1,ne2,l)
 	    | Max (e1,e2,l) ->
 	          let ne1 = transform_exp f e1 in
 		      let ne2 = transform_exp f e2 in
@@ -5132,7 +5192,7 @@ let rec get_head e = match e with
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
-    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
+    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Sqrt (e, _) | Pow (e, _, _)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
@@ -5195,6 +5255,8 @@ and norm_exp (e:exp) =
           else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
           else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
+    | Sqrt (e, l) -> Sqrt (helper e, l)
+    | Pow (e1, e2, l) -> Pow (helper e1, helper e2, l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
     | Min (e1,e2,l) -> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Min x) l
     | Bag (e,l)-> Bag ( List.sort e_cmp (List.map helper e), l)    
@@ -7277,6 +7339,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
       | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
+      | Sqrt _ | Pow _
 	  (* expressions that can not be transformed *)
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
       | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ -> raise Not_found in
@@ -7664,7 +7727,10 @@ let is_seqvar (f:formula) : bool =
 
 (** is termination var *)
 let is_termvar (f: formula) : bool = 
-  (is_lexvar f) || (is_seqvar f) 
+  match f with
+  | BForm((LexVar _,_),_)
+  | BForm((SeqVar _,_),_) -> true
+  | _ -> false
 
 let rec has_lexvar (f: formula) : bool =
   match f with

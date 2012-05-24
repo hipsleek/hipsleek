@@ -389,7 +389,7 @@ let strip_termvar_mix_formula (mf: MCP.mix_formula) =
   let extract_termvar (f : CP.formula) : CP.p_formula =
     match f with
     | CP.BForm ((CP.LexVar lex,_),_) -> CP.LexVar lex
-    | CP.BForm ((CP.SeqVar lex,_),_) -> CP.SeqVar lex 
+    | CP.BForm ((CP.SeqVar seq,_),_) -> CP.SeqVar seq 
     | _ -> failwith "Invalid value of f" in 
   let termvars = List.map extract_termvar termforms in
   (termvars, CP.join_conjunctions other_p)
@@ -948,6 +948,8 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let conseq = MCP.pure_of_mix rhs_p in
   let termvar_conseq = find_termvar_formula conseq in
   let termvar_es = estate.es_var_measures in
+  let _ = print_endline ("termvar_es: " ^ (match termvar_es with Some e -> Cprinter.string_of_p_formula e | None -> "")) in 
+  let _ = print_endline ("termvar_conseq: " ^ (match termvar_conseq with Some e -> Cprinter.string_of_p_formula e | None -> "")) in 
   match (termvar_es, termvar_conseq) with
   | (Some (CP.LexVar lex_es), Some (CP.LexVar lex_conseq)) ->
       check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
@@ -968,12 +970,12 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.no_3 "trans_termvar_rhs" pr2 pr pr
+   Debug.no_3 "check_term_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
 (** strip the termination var from lhs of a context and move it to es_var_measures *)
-let strip_termvar_lhs (ctx: context) : context =
+let strip_termvar_lhs_x (ctx: context) : context =
   let es_strip_termvar_lhs (es: entail_state) : context =
     let _, pure_f, _, _, _ = split_components es.es_formula in
     let (termvars, other_p) = strip_termvar_mix_formula pure_f in
@@ -986,6 +988,8 @@ let strip_termvar_lhs (ctx: context) : context =
     let f_p_f pf = Some other_p in
     let f_b _ = None in
     let f_e _ = None in
+    let _ = print_endline ("termvars = ") in
+    List.iter (fun p -> print_endline ("     " ^ (Cprinter.string_of_p_formula p))) termvars; 
     match termvars with
     | [] -> Ctx es
     | termvar::[] -> 
@@ -998,7 +1002,7 @@ let strip_termvar_lhs (ctx: context) : context =
 
 let strip_termvar_lhs (ctx: context) : context =
   let pr = Cprinter.string_of_context in
-  Debug.no_1 "strip_termvar_lhs" pr pr strip_termvar_lhs ctx
+  Debug.no_1 "strip_termvar_lhs" pr pr strip_termvar_lhs_x ctx
 
 (* End of Termination Var handling *) 
 

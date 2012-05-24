@@ -257,6 +257,8 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
                in rr
       in r
   | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."
+  | Sqrt _ -> failwith ("[setmona.ml]: sqrt is not supported.")
+  | Pow _ -> failwith ("[setmona.ml]: pow is not supported.")
   | Bag (es, _) ->
 	  if order = SO then
 		let r =	List.map (fun e -> compute_fo_exp e FO var_map) es in
