@@ -333,10 +333,10 @@ and view_mater_match_x prog c vs1 aset imm f =
   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
-    if (isLend imm) || (isAccs imm) then
-      let hole_no = Globals.fresh_int() in
-      [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
-    else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+      if (isLend imm) || (isAccs imm) then
+	let hole_no = Globals.fresh_int() in
+	[(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+      else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
   with 
       _ ->  
           if List.exists (CP.eq_spec_var CP.null_var) aset then [] 

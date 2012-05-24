@@ -747,9 +747,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
 	  let id_string f = List.fold_left (fun x y -> x ^ ";" ^ (snd y)) "" f in
-  	  let _ = print_string("[andreea]: Member field: " ^ (id_string lvars) ^ "\n") in
-
-            let b,res = (if !Globals.ann_vp then
+          let b,res = (if !Globals.ann_vp then
                   (*check for access permissions*)
                   let var = (CP.SpecVar (v_t, v, Primed)) in
                   check_full_varperm prog ctx [var] pos
@@ -859,9 +857,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   stk_vars # pop_list lsv;
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                   let tmp_res2 = 
-		            if (imm != Lend) then 
+		            if (imm != Lend) && (imm != Accs) && not(!Globals.allow_field_ann) then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
-    			          (* for Lend, it should not be added back *)
+    			          (* for Lend, Accs and field level annotations it should not be added back *)
 		            else tmp_res1
 		          in
                   let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
@@ -1159,8 +1157,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
-			  let _ = print_string ("\n(andreeac)check_exp_a es_f:" ^ (Cprinter.string_of_formula es_f)) in
-			  let _ = print_string ("\n(andreeac)check_exp_a new_base:" ^ (Cprinter.string_of_formula new_base)) in
+			  (* let _ = print_string ("\n(andreeac)check_exp_a es_f:" ^ (Cprinter.string_of_formula es_f)) in *)
+			  (* let _ = print_string ("\n(andreeac)check_exp_a new_base:" ^ (Cprinter.string_of_formula new_base)) in *)
                           let new_f = CF.compose_formula es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in

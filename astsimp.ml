@@ -3538,7 +3538,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | p -> p
 
 and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  =
-  Debug.ho_3 "flatten_to_bind " 
+  Debug.no_3 "flatten_to_bind " 
     (Iprinter.string_of_exp) 
     (fun x -> match x with
       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
@@ -3583,7 +3583,7 @@ and compute_ann_list all_fields (diff_fields : ident list) (default_ann : heap_a
     List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
   let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
   let pr_out ls = List.fold_left (fun res id ->  res ^ ", " ^ (string_of_heap_ann id) ) "" ls in
-  Debug.ho_3 "compute_ann_list" pr1 pr2 string_of_heap_ann pr_out (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
+  Debug.no_3 "compute_ann_list" pr1 pr2 string_of_heap_ann pr_out (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
 
 and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : heap_ann) : heap_ann list =
   match all_fields with

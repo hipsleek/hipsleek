@@ -12,7 +12,7 @@ ll<n,v1,v2> == self = null & n = 0
 
 int length(node x)
   requires x::ll<n,@A,@L>
-  ensures  x::ll<n,@A,@L> & res=n;
+  ensures  x::ll<n,@A,@L> & res=n; //bug - success with @M
 {
  if (x==null) return 0;
   else {
@@ -41,8 +41,8 @@ int sum (node x)
 
 
 void update (node x)
-  requires x::ll<a,@M,@A>
-  ensures  x::ll<a,@M,@A>;
+  requires x::ll<a,@M,@L>
+  ensures  x::ll<a,@M,@L>;
 {
  
  if (x==null) return;
@@ -54,15 +54,13 @@ void update (node x)
 
 
 /*void delete (ref node x)
-  infer [v1, v2]
-//  requires x::ll<a,v1,v2>@v1
-  requires x::ll<a,v1,v2>@L & v1<:@L & v2<:@L
+  requires x::ll<a,@L,@L>
   ensures  true;
 {
 
  if (x == null) return;
  else {
-       if (x.val.val == 0 ) {
+       if (x.val == 0 ) {
           x = x.next;
 	  delete (x);
        } else {
@@ -73,11 +71,9 @@ void update (node x)
 
 
 /* function to delete the a-th node in a singly linked list */
-/*void delete(node x, int a)
-infer  @pre [v1, v2]
-requires x::ll<n,v1,v2>@v1 & n > a & a > 0 
-//requires x::ll<n,v1,v2>@M & v1<:@M & v2<:@M & n > a & a > 0 
-ensures x::ll<n - 1,v1,v2>@M & v1<:@M & v2<:@M;
+void delete(node x, int a)
+  requires x::ll<n,@L,@L> & n > a & a > 0 
+  ensures x::ll<n - 1,@L,@L>;
 {
         if (a == 1)
 	{
@@ -91,4 +87,3 @@ ensures x::ll<n - 1,v1,v2>@M & v1<:@M & v2<:@M;
 	}	
 }
 
-*/

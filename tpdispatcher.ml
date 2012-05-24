@@ -1661,7 +1661,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.ho_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
