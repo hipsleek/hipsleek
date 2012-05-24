@@ -30,7 +30,7 @@ int sum_node (node x, node y)
 
 int sum (node x)
   requires x::ll<n,@L,@L>
-  ensures  x::ll<n,@L,@A>;
+  ensures  x::ll<n,@L,@L>;
 {
  
  if (x==null) return 0;
@@ -41,8 +41,8 @@ int sum (node x)
 
 
 void update (node x)
-  requires x::ll<a,@M,@L>
-  ensures  x::ll<a,@M,@L>;
+  requires x::ll<a,@M,@I>
+  ensures  x::ll<a,@M,@I>;
 {
  
  if (x==null) return;
@@ -72,8 +72,8 @@ void update (node x)
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-  requires x::ll<n,@L,@L> & n > a & a > 0 
-  ensures x::ll<n - 1,@L,@L>;
+  requires x::ll<n,@L,@M> & n > a & a > 0 
+  ensures x::ll<n - 1,@L,@M>;
 {
         if (a == 1)
 	{

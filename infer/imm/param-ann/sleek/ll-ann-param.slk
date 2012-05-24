@@ -19,6 +19,35 @@ pred ll<n, v1, v2> == self = null & n = 0
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
 
+checkentail x::node<p@L,q@A> * x::node<p@A,q@L>|- false.
+print residue.
+
+checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
+print residue.
+
+
+checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
+print residue.
+
+
+checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
+print residue.
+
+checkentail x::node<p@L,q@A>@M |- false.
+print residue.
+
+checkentail x::node<p,q@I> |- x::node<_@A,b@L>.
+print residue.
+
+checkentail x::node<p,q@L> |- x::node<_@A,b@L>.
+print residue.
+
+checkentail x::node<p,q>@M |- x::node<_@A,b@I>.
+print residue.
+
+checkentail x::node<p,q>@M |- x::node<_@A,b@L>.
+print residue.
+
 // (1)
 checkentail x::node<p@I,q@I> * y::node<c,d> |- x::node<a@I,b@I>@I.
 print residue.
@@ -28,8 +57,18 @@ checkentail x::node<p@I,q@L>@M |- x::node<a@I,b@L>@M.
 print residue.
 
 // (3)
-checkentail x::node<p@L,q@L>@M |- x::node<a@L,b@L>@M *  x::node<a@L,b@L>@M.
+checkentail x::node<p,q>@M |- x::node<_@A,b@M> * x::node<a@M,_@A>.
 print residue.
+
+checkentail x::node<p,q>@M |- x::node<_@A,b@M>.
+print residue.
+
+
+
+// (3)
+checkentail x::node<p,q>@M |- x::node<_@M,b@M> * x::node<a@M,_@A>.
+print residue.
+
 
 // (4)
 checkentail x::node<p@L,q@L>@M |- (x::node<a@L,b@L>@L & x::node<a@L,b@L>@L).
