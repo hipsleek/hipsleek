@@ -5001,14 +5001,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       begin
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
           | None ->     
-              let _ = print_endline ("== find lexvar") in
-              let lexvar = Term.find_lexvar_es estate in
-              let t_ann, ml, il = match lexvar with
-                                  | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
-                                  | _ -> raise Term.LexVar_Not_found in
+              let termvar = Term.find_termvar_es estate in
+              let term_measures = match termvar with
+                | CP.LexVar lex -> Some (CP.LexVar {lex with CP.lex_ann = Fail TermErr_May}) 
+                | CP.SeqVar seq -> Some (CP.SeqVar {seq with CP.seq_ann = Fail TermErr_May})
+                | CP.PrimTermVar prim -> Some (CP.PrimTermVar {prim with CP.prim_ann = Fail TermErr_May})
+                | _ -> raise Term.TermVar_Not_found in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-              let term_measures, term_res, term_err_msg =
-                Some (CP.mkLexVar (Fail TermErr_May) ml il no_pos),
+              let term_res, term_err_msg =
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Quantum_Technique_Measure_Not_Decreasing t_ann_trans)),
                 Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Quantum_Technique_Measure_Not_Decreasing t_ann_trans)))

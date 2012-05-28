@@ -1217,6 +1217,8 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Subtract (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Mult (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> (*print_string "called \n";*) Div d) (IConst (1,l))
     | Div (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> Div d) (IConst (1,l))
+    | Sqrt (_, l) -> report_error l "TRUNG TODO: check Sqrt case"
+    | Pow (_, _, l) -> report_error l "TRUNG TODO: check Pow case"
     | Max (e1,e2,l)->
 	      let e1,e2 = norm_expr e1, norm_expr e2 in
 	      if(e_cmp e1 e2)>0 then Max(e1,e2,l) else Max(e2,e1,l)

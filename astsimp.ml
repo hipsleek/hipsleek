@@ -4402,6 +4402,8 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
                     CP.seq_bounds = b;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_variation = vari }
+    | IP.PrimTermVar prim -> CP.PrimTermVar { CP.prim_ann = prim.IP.prim_ann;
+                                              CP.prim_loc = prim.IP.prim_loc }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -5160,6 +5162,7 @@ and gather_type_info_b_formula_x prog b0 stab =
         let _ =  gather_type_info_exp seq_info.IP.seq_fix_point stab (Float) in
         let _ =  List.map (fun x -> gather_type_info_exp x stab (Float)) seq_info.IP.seq_bounds in
         ()
+    | IP.PrimTermVar _ -> ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in

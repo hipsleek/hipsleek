@@ -200,6 +200,7 @@ let string_of_b_formula (pf,il) =
       let b = pr_list string_of_formula_exp seq.P.seq_bounds in
       ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ fp ^ ", " ^ b ^ ")"
     )
+  | P.PrimTermVar prim -> (string_of_term_ann prim.P.prim_ann) ^ "()";
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

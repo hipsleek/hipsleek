@@ -308,7 +308,8 @@ and check_bounded_term_x prog ctx post_pos =
           let m = match es.CF.es_var_measures with
             | None -> []
             | Some (CP.LexVar lex) -> lex.CP.lex_exp
-            | Some (CP.SeqVar _) -> report_error no_pos ("Unexpect to check termination by sequence here")
+            | Some (CP.SeqVar _) -> []
+            | Some (CP.PrimTermVar _) -> []
             | _ -> report_error no_pos ("Invalid value of es_var_measures")
           in 
           let _ = Debug.trace_hprint (add_str "Measures" (pr_list !CP.print_exp)) m no_pos in
@@ -609,14 +610,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         | 1 -> if CF.subsume_flow_f !error_flow_int fl then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                              (Err.report_error1 e "Proving precond failed")
+                              (Err.report_error1 e "Proving precond failed 1")
                         | 3 ->
                             if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                              (Err.report_error1 e "Proving precond failed")
+                              (Err.report_error1 e "Proving precond failed 2")
                         | _ -> let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                               (Err.report_error1 e "Proving precond failed")
+                               (Err.report_error1 e "Proving precond failed 3")
                       )
                   |_ as e ->
 	                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
