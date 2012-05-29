@@ -19,6 +19,9 @@ pred ll<n, v1, v2> == self = null & n = 0
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
 
+checkentail x::node<p,q>@A * y::node<p@A,q@L>|- x::node<p,q>@I.
+print residue.
+
 checkentail x::node<p@L,q@A> * x::node<p@A,q@L>|- false.
 print residue.
 
@@ -60,8 +63,6 @@ print residue.
 
 checkentail x::node<p,q>@M |- x::node<_@A,b@M>.
 print residue.
-
-
 
 // (3)
 checkentail x::node<p,q>@M |- x::node<_@M,b@M> * x::node<a@M,_@A>.

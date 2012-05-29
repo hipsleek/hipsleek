@@ -746,8 +746,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
-	  let id_string f = List.fold_left (fun x y -> x ^ ";" ^ (snd y)) "" f in
-          let b,res = (if !Globals.ann_vp then
+            let b,res = (if !Globals.ann_vp then
                   (*check for access permissions*)
                   let var = (CP.SpecVar (v_t, v, Primed)) in
                   check_full_varperm prog ctx [var] pos
@@ -832,7 +831,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
-	    let _ = print_string ("\n(andreea)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in
+	    (* let _ = print_string ("\n(andreea)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded

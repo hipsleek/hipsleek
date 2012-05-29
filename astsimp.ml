@@ -3577,7 +3577,6 @@ and compute_ann_list all_fields (diff_fields : ident list) (default_ann : heap_a
   let pr1 ls = 
     let helper i = match i with
     | ((_,h), _, _) -> h
-    | _ -> ""
     in
     List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
   let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
@@ -4239,7 +4238,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_name = rootptr_type_name;
 		            CF.h_formula_data_derv = dr;
 					CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
+                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param (IF.ConstAnn(Mutable));
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4315,7 +4314,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
 		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
+                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param (IF.ConstAnn(Mutable));
 		                    CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
 		                    CF.h_formula_data_original = true;

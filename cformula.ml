@@ -6151,24 +6151,24 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_faile
 
 	  
 let normalize_max_renaming_list_partial_context f pos b ctx = 
-  let _ = print_string("cris: normalize 11\n") in
+  (* let _ = print_string("cris: normalize 11\n") in *)
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
-  let _ = print_string("cris: normalize 12\n") in
+  (* let _ = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
-  let _ = print_string("cris: normalize 13\n") in
+  (* let _ = print_string("cris: normalize 13\n") in *)
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
 let normalize_max_renaming f pos b ctx = 
-  let _ = print_string("cris: normalize 14\n") in
+  (* let _ = print_string("cris: normalize 14\n") in *)
   if !max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
   else transform_list_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 
 let normalize_max_renaming_s f pos b ctx = 
-  let _ = print_string("cris: normalize 15\n") in
+  (* let _ = print_string("cris: normalize 15\n") in *)
   if !max_renaming then transform_context (normalize_es f pos b) ctx
   else transform_context (normalize_clash_es f pos b) ctx
 
