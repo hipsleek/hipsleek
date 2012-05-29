@@ -5253,6 +5253,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+	    let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 1 :\n" ^ (Cprinter.string_of_context res_ctx)) in
 	    (SuccCtx[res_ctx], prf)
 	  end
 	  else begin
@@ -5265,6 +5266,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 			  | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+	    let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :\n" ^ (Cprinter.string_of_context res_ctx)) in
 	    (SuccCtx[res_ctx], prf)
 	  end
   end
@@ -5909,8 +5911,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: l_node = " ^ (l_node_name) ^ "\n") in *)
     (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
-    let (r,ann_lhs,ann_rhs) = subtype_ann_gen es_impl_vars l_ann r_ann in
-    let (rl, param_ann_lhs, param_ann_rhs) = subtype_ann_list es_impl_vars l_param_ann r_param_ann in
+    let (r,ann_lhs,ann_rhs) = if not(!allow_field_ann) then subtype_ann_gen es_impl_vars l_ann r_ann else (true, None, None) in
+    let (rl, param_ann_lhs, param_ann_rhs) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars l_param_ann r_param_ann else (true, [], []) in
     let join_ann_constr ann ann_lst =
       let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
       List.fold_left Immutable.mkAndOpt None f_lst in
@@ -5920,7 +5922,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     if r == false 
     then 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
-      CF.mk_failure_must "911 : mismatched annotation" Globals.sl_error)), NoAlias)
+      CF.mk_failure_must " mismatched annotation" Globals.sl_error)), NoAlias)
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in

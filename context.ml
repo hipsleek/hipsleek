@@ -332,21 +332,21 @@ and view_mater_match_x prog c vs1 aset imm f =
   (* let vars =  vdef.view_vars in *)
   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
   try
-    let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
-      if (isLend imm) || (isAccs imm) then
-	let hole_no = Globals.fresh_int() in
-	[(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+      let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
+      if ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+	    let hole_no = Globals.fresh_int() in
+	    [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
       else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
   with 
-      _ ->  
-          if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
-          else
-            if List.exists (fun v -> CP.mem v aset) vs1 then
-              if (isLend imm) || (isAccs imm) then
-                let hole_no = Globals.fresh_int() in 
-                [(Hole hole_no, f, [(f, hole_no)], WArg)]
-              else [(HTrue, f, [], WArg)]
-            else []
+          _ ->  
+              if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
+              else
+                if List.exists (fun v -> CP.mem v aset) vs1 then
+                  if ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+                    let hole_no = Globals.fresh_int() in 
+                    [(Hole hole_no, f, [(f, hole_no)], WArg)]
+                  else [(HTrue, f, [], WArg)]
+                else []
 
 (* and view_mater_match prog c vs1 aset imm f = *)
 (*   let pr = fun v-> string_of_int (List.length v) in *)
@@ -445,47 +445,47 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HFalse -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
-		 h_formula_data_imm = imm1;
-   		 h_formula_data_param_imm = pimm1}) ->
+		         h_formula_data_imm = imm1;
+   		         h_formula_data_param_imm = pimm1}) ->
 	  (* imm1 = imm annotation on the LHS
 	     imm = imm annotation on the RHS *) 
 	  (* let subtyp = subtype_ann imm1 imm in *)
-      if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	    (* let field_ann = false in *)
-	if not(!Globals.allow_field_ann) then
-          if (isLend imm) || (isAccs imm) then (* not consuming the node *)
-	    let hole_no = Globals.fresh_int() in 
-	    [((Hole hole_no), f, [(f, hole_no)], Root)]
-          else
-	    [(HTrue, f, [], Root)]
-	else
-	      (* with field level annotations *)
-	  [(update_ann f pimm1 pimm,f,[],Root)]
-      else 
-        []
+        if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+	(* let field_ann = false in *)
+	      if not(!Globals.allow_field_ann) then
+            if (isLend imm) || (isAccs imm) then (* not consuming the node *)
+	          let hole_no = Globals.fresh_int() in 
+	          [((Hole hole_no), f, [(f, hole_no)], Root)]
+            else
+	          [(HTrue, f, [], Root)]
+	      else
+	  (* with field level annotations *)
+	        [(update_ann f pimm1 pimm,f,[],Root)]
+        else 
+          []
     | ViewNode ({h_formula_view_node = p1;
-	  h_formula_view_imm = imm1;
-	  h_formula_view_perm = perm1;
-	  h_formula_view_arguments = vs1;
-	  h_formula_view_name = c}) ->
-          (* if (subtype_ann imm1 imm) then *)
-            (if (CP.mem p1 aset) then
-          (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-              if (isLend imm) || (isAccs imm) then
-		(* let _ = print_string("imm = Lend " ^ "\n") in *)
+	             h_formula_view_imm = imm1;
+	             h_formula_view_perm = perm1;
+	             h_formula_view_arguments = vs1;
+	             h_formula_view_name = c}) ->
+            (* if (subtype_ann imm1 imm) then *)
+        (if (CP.mem p1 aset) then
+              (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
+              if ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+		        (* let _ = print_string("imm = Lend " ^ "\n") in *)
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
                 [(Hole hole_no, f, [(f, hole_no)], Root)]
               else
                 [(HTrue, f, [], Root)]
-            else
+         else
               let vmm = view_mater_match prog c (p1::vs1) aset imm f in
               let cmm = coerc_mater_match prog c vs1 aset imm f in 
               (*LDK: currently, assume that frac perm does not effect 
                 the choice of lemmas (coercions)*)
               vmm@cmm
-            )
-          (* else [] *)
+        )
+    (* else [] *)
     | Star ({h_formula_star_h1 = f1;
 	  h_formula_star_h2 = f2;
 	  h_formula_star_pos = pos}) ->

@@ -597,7 +597,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
             ((n_view @ rest_views), new_rest_decls)
       | [] -> ([], view_decls) in
   let (r1, r2) = reorder_views view_decls0 !view_names 
-  in r1 @ r2
+  in  r1 @ r2
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
@@ -1320,7 +1320,6 @@ and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
 (* add data param ann constraints to pure formula. 
    ex1. x::node<val1@A, val2@v, q@I>@I & n = 2 => 
    (x::node<val1@A, val2@v, q@I>@I & @I<:@A & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=3 & 1<=v & 1<=1 & n = 2)
-   
    ex2. x::node<val1@M, val2@v, q@I>@I & n = 2 => 
    (x::node<val1@A, val2@v, q@I>@I & @I<:@M & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=0 & 1<=v & 1<=1 & n = 2)
 *)
@@ -1337,9 +1336,9 @@ and add_param_ann_constraints_struc_x (cf: CF.struc_formula) : CF.struc_formula 
     | CF.EAssume (x, b, y)-> CF.EAssume (x,(add_param_ann_constraints_formula b),y)
     | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = add_param_ann_constraints_struc b.CF.formula_inf_continuation}
 
-and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
-  let pr =  Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
+and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = cf (* disabled inner <> outer annotation relation *)
+  (* let pr =  Cprinter.string_of_struc_formula in *)
+  (* Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf *)
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
@@ -3626,7 +3625,10 @@ and flatten_to_bind_x prog proc (base : I.exp) (rev_fs : ident list)
                     if (snd f) = fn then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                     else (tmp, (fresh_fn :: new_rest))) in
           let all_fields = I.look_up_all_fields prog ddef in
-	  let ann_list = compute_ann_list all_fields rev_fs imm in
+	      let ann_list = compute_ann_list all_fields rev_fs imm in
+          (* let id_string lst = List.fold_left (fun x (a,b,c) -> x ^ "," ^ (snd a)) "" lst in *)
+          (* let _ = print_string ("\n(andreeac) rev_fs: " ^ (id_string rev_fs) ) in *)
+          (* let _ = print_string ("\n(andreeac) all_fields: " ^ (id_string all_fields) ) in *)
           let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in
           let (tmp1, fresh_names) = gen_names f (List.map I.get_field_typed_id all_fields) in
           if not (Gen.is_some tmp1) then

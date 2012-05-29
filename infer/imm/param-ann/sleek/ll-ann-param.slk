@@ -25,10 +25,8 @@ print residue.
 checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
 print residue.
 
-
 checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
 print residue.
-
 
 checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
 print residue.
