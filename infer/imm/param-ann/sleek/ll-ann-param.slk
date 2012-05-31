@@ -11,20 +11,20 @@ data node {
 	cell val; 
 	node next;	
 }.
-
+/*
 pred ll<n, v1, v2> == self = null & n = 0 
 	or self::node<a, q> * 
     a::cell<_>@v2 * 
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
-
-checkentail x::node<p,q>@A * y::node<p@A,q@L>|- x::node<p,q>@I.
+*/
+/*checkentail x::node<p,q>@A * y::node<p@A,q@L>|- x::node<p,q>@I.
 print residue.
-
+*/
 checkentail x::node<p@L,q@A> * x::node<p@A,q@L>|- false.
 print residue.
 
-checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
+/*checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
 print residue.
 
 checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
@@ -79,3 +79,4 @@ print residue.
 //(6)
 checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M> .
 print residue.
+*/

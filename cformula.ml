@@ -84,7 +84,7 @@ and struc_base_formula =
 		formula_struc_explicit_inst : Cpure.spec_var list;
 		formula_struc_implicit_inst : Cpure.spec_var list;
         (* 
-           vars_free, vars_linking, vars_extracted 
+           vars_free, vars_linking, vars_astextracted 
         *)
 		formula_struc_exists : Cpure.spec_var list;
 		formula_struc_base : formula;
