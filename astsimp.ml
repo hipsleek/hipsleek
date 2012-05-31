@@ -4060,7 +4060,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
 	| IF.EOr b -> CF.EOr {
 			CF.formula_struc_or_f1 = trans_struc_formula fvars stab b.IF.formula_struc_or_f1;
 			CF.formula_struc_or_f2 = trans_struc_formula fvars stab b.IF.formula_struc_or_f2;
-			CF.formula_struc_or_pos = b.IF.formula_struc_or_pos;}in
+			CF.formula_struc_or_pos = b.IF.formula_struc_or_pos;} in
    
   (* let _ = collect_type_info_struc_f prog f0 stab in	 *)
   let _ = gather_type_info_struc_f prog f0 stab in
@@ -4080,12 +4080,15 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   else r  in
   let _ = type_store_clean_up r stab in
   let r = add_param_ann_constraints_struc r in
+  let r = compact_nodes_with_same_name r in
   r
+
+and compact_nodes_with_same_name f = f
 
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
-  Debug.no_eff_5 "trans_formula" [true] string_of_stab 
+  Debug.ho_eff_5 "trans_formula" [true] string_of_stab 
       (add_str "quantify" prb) 
       (add_str "cleanres" prb) Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect

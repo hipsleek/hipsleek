@@ -2501,14 +2501,14 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
     end
 
 and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
-  Debug.no_1_num i "normalize" (!print_formula) (!print_formula) (fun _ -> normalize_x f1 f2 pos) f1
+  Debug.ho_1_num i "normalize" (!print_formula) (!print_formula) (fun _ -> normalize_x f1 f2 pos) f1
 	    
 and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
 
 (*LDK*)
 and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
-  Debug.no_2 "normalize_replace" !print_formula !print_formula !print_formula
+  Debug.ho_2 "normalize_replace" !print_formula !print_formula !print_formula
       (fun _ _ -> normalize_replace_x f1 f2 pos) f1 f2
 
 and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
@@ -2545,7 +2545,7 @@ and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f
 
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
   let pr = !print_formula in
-  Debug.no_2 "normalize_combine_star" pr pr pr 
+  Debug.ho_2 "normalize_combine_star" pr pr pr 
       (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
 
 and normalize_combine_conj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -2598,7 +2598,7 @@ and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1
 (* normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) *)
 
 and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = 
-  Debug.no_2 "normalize_only_clash_rename" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_only_clash_rename_x f1 f2 pos) f1 f2
+  Debug.ho_2 "normalize_only_clash_rename" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_only_clash_rename_x f1 f2 pos) f1 f2
 
 and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
@@ -7221,7 +7221,7 @@ let normalize_varperm_formula_x (f:formula) : formula =
   in helper f
 
 let normalize_varperm_formula (f:formula) : formula = 
-  Debug.no_1 "normalize_varperm_formula"
+  Debug.ho_1 "normalize_varperm_formula"
       !print_formula !print_formula
       normalize_varperm_formula_x f
 
