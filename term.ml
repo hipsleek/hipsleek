@@ -116,6 +116,10 @@ let pr_term_reason = function
       fmt_string "Limit_Technique_Invalid_Bounds"
   | Limit_Technique_Measure_Wellfounded _ ->
       fmt_string "Limit_Technique_Measure_Wellfounded"
+  | Primitive_Term_Invalid _ ->
+      fmt_string "Primitive_Term_Invalid"
+  | Primitive_Term_Valid _ ->
+      fmt_string "Primitive_Term_Valid"
   | Invalid_Status_Trans trans -> 
       pr_term_trans trans;
       fmt_string " transition is invalid."
@@ -146,6 +150,10 @@ let pr_term_reason_short = function
       fmt_string "Limit_Technique_Invalid_Bounds)"
   | Limit_Technique_Measure_Wellfounded _ ->
       fmt_string "Limit_Technique_Measure_Wellfounded)"
+  | Primitive_Term_Invalid _ ->
+      fmt_string "Primitive_Term_Invalid"
+  | Primitive_Term_Valid _ ->
+      fmt_string "Primitive_Term_Valid"
   | Invalid_Status_Trans ann_trans ->
       fmt_string "invalid transition)";
       fmt_string " ";
@@ -735,7 +743,11 @@ let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
-  let pr3 = !CP.print_p_formula in
+  let pr3  trans =
+    match trans with
+    | None -> "None_term_trans"
+    | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
+                               ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
   Debug.no_4 "check_term_seqvar_converge_decrease_measures" pr2 
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
@@ -855,7 +867,11 @@ let check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 r
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
-  let pr3 = !CP.print_p_formula in
+  let pr3  trans =
+    match trans with
+    | None -> "None_term_trans"
+    | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
+                               ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
   Debug.no_4 "check_term_seqvar_converge_measures" pr2
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
@@ -888,7 +904,11 @@ let check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tra
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
-  let pr3 = !CP.print_p_formula in
+  let pr3  trans =
+    match trans with
+    | None -> "None_term_trans"
+    | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
+                               ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
   Debug.no_4 "check_term_seqvar_measures" pr2 
       (add_str "lhs_p" pr)
       (add_str "rhs_p" pr) 
@@ -1070,7 +1090,7 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         check_term_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | _ -> raise TermVar_Not_found
   ) 
-  with _ -> (estate, lhs_p, rhs_p, None)
+  with e -> (estate, lhs_p, rhs_p, None)
 
 (* To handle Termination var formula *)
 (* Remember to remove SeqVar in RHS *)

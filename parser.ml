@@ -1141,8 +1141,7 @@ cexp_w :
         apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
     ]
   | "minus"
-    [
-      `MINUS; c=SELF -> (
+    [ `MINUS; c=SELF -> (
         match c with
         | Pure_c (P.IConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
         | Pure_c (P.FConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.FConst (0.0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
@@ -1154,7 +1153,7 @@ cexp_w :
       e=SELF ; `COLON; ty=typ ->
         apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e
     ]
-  | "una"
+  | "unary"
     [
       `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
        (* An Hoa : Hole for partial structures, represented by the hash # character. *)
@@ -1192,6 +1191,10 @@ cexp_w :
         apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+    | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+        apply_cexp_form2 (fun c1 c2-> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+    | `SQRT; `OPAREN; c = SELF; `CPAREN ->
+        apply_cexp_form1 (fun x -> P.mkSqrt x (get_pos_camlp4 _loc 1)) c
     ]
   | "pure_base"
     [ `TRUE ->

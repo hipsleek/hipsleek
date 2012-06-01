@@ -174,6 +174,7 @@ module Make (Token : SleekTokenS)
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
    ("perm",PERM);
+   ("pow", POW);
 	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
@@ -196,6 +197,7 @@ module Make (Token : SleekTokenS)
    ("SeqCon", SEQCON);
    ("SeDivDec", SEQDIVDEC);
    ("SeqDiv", SEQDIV);
+   ("sqrt", SQRT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
