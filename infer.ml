@@ -466,16 +466,18 @@ let helper fml lhs_rhs_p weaken_flag =
       CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos)
   else CP.mkFalse no_pos
 
-let rec simplify_disjs pf lhs_rhs weaken_flag =
+let rec simplify_disjs_x pf lhs_rhs weaken_flag =
   match pf with
   | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs weaken_flag
   | And _ -> helper pf lhs_rhs weaken_flag
-  | Or (f1,f2,l,p) -> mkOr (simplify_disjs f1 lhs_rhs true) (simplify_disjs f2 lhs_rhs true) l p
-  | Forall (s,f,l,p) -> Forall (s,simplify_disjs f lhs_rhs weaken_flag,l,p)
-  | Exists (s,f,l,p) -> Exists (s,simplify_disjs f lhs_rhs weaken_flag,l,p)
+  | Or (f1,f2,l,p) -> mkOr (simplify_disjs_x f1 lhs_rhs true) (simplify_disjs_x f2 lhs_rhs true) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_disjs_x f lhs_rhs weaken_flag,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_disjs_x f lhs_rhs weaken_flag,l,p)
   | _ -> pf
 
-let simplify_disjs pf lhs_rhs = simplify_disjs pf lhs_rhs false
+let simplify_disjs pf lhs_rhs =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "simplify_disjs" pr pr pr (fun pf lhs_rhs -> simplify_disjs_x pf lhs_rhs false) pf lhs_rhs
 
 let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   (* if ivars==[] then None *)
@@ -608,7 +610,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
 
 
 (* lhs_rel denotes rel on LHS where rel assumption be inferred *)
-let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formula) lhs_wo_heap (rhs_xpure_orig:MCP.mix_formula) pos =
+let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formula) lhs_wo_heap (rhs_xpure_orig:MCP.mix_formula) pos =
   if (no_infer estate) && (lhs_rels==None) then (None,None,[])
   else
     if not (TP.is_sat_raw rhs_xpure_orig) then 
@@ -889,10 +891,10 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
 *)
 
 
-let infer_pure_m estate lhs_xpure_orig lhs_xpure0 lhs_wo_heap rhs_xpure_mix pos =
-  if (no_infer estate) && (no_infer_rel estate) then 
+let infer_pure_m_x estate lhs_xpure_orig lhs_xpure0 lhs_wo_heap rhs_xpure_mix pos =
+  if (no_infer estate) && (no_infer_rel estate) then
     (None,None,[])
-  else 
+  else
     let rhs_xpure = MCP.pure_of_mix rhs_xpure_mix in
 (*    let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in*)
     let lhs_xpure_orig = MCP.pure_of_mix lhs_xpure_orig in
@@ -913,7 +915,7 @@ let infer_pure_m estate lhs_xpure_orig lhs_xpure0 lhs_wo_heap rhs_xpure_mix pos 
     Debug.tinfo_hprint (add_str "lhs_xpure0" !print_mix_formula) lhs_xpure0 no_pos;
     Debug.tinfo_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels no_pos;
     Debug.tinfo_hprint (add_str "xp" !CP.print_formula) xp no_pos;
-    infer_pure_m estate lhs_rels xp lhs_xpure0 lhs_wo_heap rhs_xpure_mix pos
+    infer_pure_m_x_x estate lhs_rels xp lhs_xpure0 lhs_wo_heap rhs_xpure_mix pos
 
 let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   (* let _ = print_endline "WN : inside infer_pure_m" in *)
@@ -928,7 +930,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
           (add_str "lhs xpure0 " pr1)
           (add_str "rhs xpure " pr1)
           (add_str "(new es,inf pure,rel_ass) " pr_res)
-      (fun _ _ _ _ -> infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
+      (fun _ _ _ _ -> infer_pure_m_x estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) estate lhs_xpure lhs_xpure0 rhs_xpure   
 
 let remove_contra_disjs f1s f2 =
   let helper c1 c2 = 
