@@ -21,9 +21,12 @@ pred ll<n, v1, v2> == self = null & n = 0
 /*checkentail x::node<p,q>@A * y::node<p@A,q@L>|- x::node<p,q>@I.
 print residue.
 */
-checkentail x::node<p@L,q@A> * x::node<p@A,q@L>|- false.
+checkentail x::node<p@L,q@A> * x::node<p@A,q@L>  * x::node<p@A,q@A> * y::node<p@A,q@L>  * y::node<p@L,q@A> |- false.
 print residue.
 
+/*checkentail y::node<p@A,q@L>  * y::node<p@L,q@A>  |- false.
+print residue.
+*/
 /*checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
 print residue.
 
