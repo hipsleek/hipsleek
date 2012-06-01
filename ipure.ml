@@ -110,7 +110,9 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   |	BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
 
-let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:formula) -> "ipure printer has not been initialized")
+
+let print_exp = ref (fun (e:exp) -> "ipure printer has not been initialized")
 
 module Exp_Pure =
 struct 
@@ -1248,8 +1250,8 @@ let rec typ_of_exp (e: exp) : typ =
   match e with
   | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
                                  merge_types ty2 ty
-  | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
-  | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
+  | Null _                    -> Globals.UNK               (* TRUNG TODO: what is the type of Null? *) 
+  | Var  _                    -> Globals.UNK               (* TRUNG TODO: what is the type of Var? *)
   (* Const *)
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float

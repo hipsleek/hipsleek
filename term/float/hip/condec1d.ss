@@ -1,6 +1,6 @@
 float loop(float x)
   case {
-    x <= -0.1 -> requires Term[] ensures true;                        // BUG
+    x <= -0.1 -> requires Term[] ensures true;
     x > -0.1 -> requires Term[SeqConDec(x, 0.0, 0.1)] ensures true;   // BUG
   }
 {
