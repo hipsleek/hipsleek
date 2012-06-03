@@ -1,8 +1,8 @@
 float loop(float x)
   case {
     x <= 0.1 -> requires Term[] ensures true;
-    x > 0.1 -> requires Term[SeqConDec(x, 0.0, 0.1)] ensures true;
-//    x > 0.1 -> requires Term[SeqConDec(x, 0.0, sqrt(0.1))] ensures true;
+//    x > 0.1 -> requires Term[SeqConDec(x, 0.0, 0.1)] ensures true;
+    x > 0.1 -> requires Term[SeqConDec(x, 0.0, sqrt(0.1))] ensures true;
   }
 {
   if (x > (0.1))

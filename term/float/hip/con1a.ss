@@ -4,5 +4,5 @@ float loop(float x)
   if (x < 1.7)
     return x;
   else
-    return loop(1 + 1/x);
+    return loop(1.0 + 1.0/x);
 }    

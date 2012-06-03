@@ -38,9 +38,9 @@ let nonlinear_time = ref 0.0
 let linear_time = ref 0.0
 let cached_count = ref 0
 
-let prompt_regexp = Str.regexp "^[0-9]+:$"
+let matlab_prompt = ">>"
 
-let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+let process = ref {name = "MATLAB"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
@@ -72,11 +72,18 @@ let log level msg =
  * read from input channel until we found the matlab's prompt
  * return every lines read
  *)
-let rec read_till_prompt (channel: in_channel) : string = 
-  let line = Gen.trim_str (input_line channel) in
-  let match_prompt = Str.string_match prompt_regexp line 0 in
-  if match_prompt then ""
+let rec read_till_prompt (channel: in_channel) : string =
+  let line = input_line channel in 
+  let line = Gen.trim_str line in
+  if (line = matlab_prompt) then ""
   else line ^ (read_till_prompt channel)
+
+let rec read_till_ready (channel: in_channel)  =
+  let line = input_line channel in 
+  let line = Gen.trim_str line in
+  if (line = "For product information, visit www.mathworks.com.") then
+    let _ = input_line channel in ()
+  else (read_till_ready channel)
 
 (* 
  * send cmd to matlab
@@ -85,20 +92,23 @@ let rec read_till_prompt (channel: in_channel) : string =
  * to matlab, we read till the prompt (of this cmd) is found to discard it
  *)
 let send_cmd cmd =
-  if !is_matlab_running then
-    let cmd = cmd ^ ";\n" in
+  if !is_matlab_running then (
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
-    let _ = read_till_prompt !process.inchannel in
+    (* let _ = read_till_prompt !process.inchannel in *)
     ()
+  )
 
 (* start matlab in a separated process *)
 let start () =
   if not !is_matlab_running then (
-    let prelude () = () in
+    let prelude () = (
+      is_matlab_running := true;
+    ) in
     let set_process proc = process := proc in
-    let _ = Procutils.PrvComms.start !is_log_all log_file ("matlab", "matlab",  [|"-nodesktop"|] ) set_process prelude in
-    print_endline "Starting Matlab... "; flush stdout
+    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "matlab",  [|"-nodisplay"; "-nosplash"|] ) set_process prelude in
+    print_endline "Starting Matlab... "; flush stdout;
+    read_till_ready !process.inchannel;
   )
 
 (* stop matlab system *)
@@ -134,14 +144,17 @@ let restart reason =
  * return empty string if matlab is not running
  *)
 let send_and_receive f =
-  if not !is_matlab_running then start ();
+  if not !is_matlab_running then (
+    let _ = print_endline ("== start 2") in start ()
+  );
   if !is_matlab_running then (
     try
       let fnc () = (
         let _ = send_cmd f in
-        input_line !process.inchannel
+        read_till_prompt !process.inchannel
       ) in
       let fail_with_timeout () = (
+         let _ = print_endline ("== restart 1") in 
          restart "Timeout!";
         ""
       ) in
@@ -150,20 +163,27 @@ let send_and_receive f =
     with
     | ex ->
         print_endline (Printexc.to_string ex);
+        let _ = print_endline ("== restart 2") in
         (restart "Matlab crashed or something really bad happenned!"; "1")
   )
-  else
+  else (
+    let _ = print_endline ("== restart 3") in
     (restart "matlab has not started!!"; "2")
+  )
 
 (* send formula to matlab and receive result *)
 let send_and_receive f =
   Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
 let check_formula f =
-  let res = send_and_receive (f) in
-  if res = "true$" then
+  let output = send_and_receive (f) in
+  let res =
+    let l = String.length output in
+    if (l < 2) then ""
+    else String.sub output ((String.length output) - 2) 2 in
+  if res = " 1" then
     Some true
-  else if res = "false$" then
+  else if res = " 0" then
     Some false
   else
     None
@@ -260,22 +280,22 @@ let matlab_of_b_formula b =
   | CP.SubAnn (e1, e2, l) -> mk_bin_exp " <= " e1 e2
   | CP.Gt (e1, e2, l) -> mk_bin_exp " > " e1 e2
   | CP.Gte (e1, e2, l) -> mk_bin_exp " >= " e1 e2
-  | CP.Eq (e1, e2, _) -> mk_bin_exp " = " e1 e2
-  | CP.Neq (e1, e2, _) -> mk_bin_exp " <> " e1 e2
+  | CP.Eq (e1, e2, _) -> mk_bin_exp " == " e1 e2
+  | CP.Neq (e1, e2, _) -> mk_bin_exp " ~= " e1 e2
   | CP.EqMax (e1, e2, e3, _) ->
       (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
       let a1 = matlab_of_exp e1 in
       let a2 = matlab_of_exp e2 in
       let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " >= " ^ a3 ^ ") or ("
-      ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " <= " ^ a3 ^ "))"
+      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " >= " ^ a3 ^ ") or ("
+      ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " <= " ^ a3 ^ "))"
   | CP.EqMin (e1, e2, e3, _) ->
       (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
       let a1 = matlab_of_exp e1 in
       let a2 = matlab_of_exp e2 in
       let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
-      ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
+      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " <= " ^ a3 ^ ") or ("
+      ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " >= " ^ a3 ^ "))"
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "matlab: bags is not supported"
 
@@ -289,10 +309,10 @@ let rec matlab_of_formula pr_w pr_s f0 =
       )
     | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _, _) -> "(not " ^ (matlab_of_formula pr_s pr_w f) ^ ")"
-    | CP.Forall (sv, f, _, _) -> "(all (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
-    | CP.Exists (sv, f, _, _) -> "(ex (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
-    | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
-    | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
+    | CP.Forall (sv, f, _, _) -> "(isAlways (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+    | CP.Exists (sv, f, _, _) -> "(not (isAlways (not (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))))"
+    | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " & " ^ (helper f2) ^ ")"
+    | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " | " ^ (helper f2) ^ ")"
   ) in
   helper f0
 
@@ -982,8 +1002,12 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     let sf = 
       if (!no_pseudo_ops || CP.is_float_formula f) then f 
       else strengthen_formula f in
-    let fmatlab = matlab_of_formula pr_w pr_s sf in
-    let matlab_input = "rlex(" ^ fmatlab ^ ")" in
+    let vars = get_vars_formula sf in
+    let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
+    let vars_decl = "syms " ^ s ^ " real; " in 
+    let fmatlab = "disp(isAlways (" ^ (matlab_of_formula pr_w pr_s sf) ^ "));" in
+    let prompt = "disp(sprintf('>>'))\n" in
+    let matlab_input = vars_decl ^ fmatlab ^ prompt in
     let runner () = check_formula matlab_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -1009,8 +1033,12 @@ let is_sat f sat_no =
 
 let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
-  let fmatlab = matlab_of_formula pr_s pr_w f in
-  let matlab_input = "rlall(" ^ fmatlab ^")" in
+  let vars = get_vars_formula f in
+  let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
+  let vars_decl = "syms " ^ s ^ " real; " in 
+  let fmatlab = "disp(isAlways (" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
+  let prompt = "disp(sprintf('>>'))\n" in
+  let matlab_input = vars_decl ^ fmatlab ^ prompt in
   let runner () = check_formula matlab_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in

@@ -61,7 +61,7 @@ struct
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
     let _ = set_timer tsec in
     let answ = fnc arg in
-    set_timer 0.0;
+    (* set_timer 0.0; *)
     reset_sigalrm ();
     answ 
 
