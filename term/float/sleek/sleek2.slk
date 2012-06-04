@@ -1,6 +1,6 @@
 
 // (1) expect Fail because 1.6 is not the fixpoint. The fixpoint is (1 + sqrt(5))/2
-checkentail Term[SeqCon(x, 1.6, 0.0, 0.5)] |- Term[SeqCon(1.0 + (1.0 / x), 1.6, 0.0, 0.5)].
+//checkentail Term[SeqCon(x, 1.6, 0.0, 0.5)] |- Term[SeqCon(1.0 + (1.0 / x), 1.6, 0.0, 0.5)].
 
 // (2) can't recognize (1.0 + sqrt(5.0)) / 2.0
 checkentail Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, 0.0, 0.5)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 0.0, 0.5)].

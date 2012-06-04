@@ -74,12 +74,14 @@ let log level msg =
  *)
 let rec read_till_prompt (channel: in_channel) : string =
   let line = input_line channel in 
+  (* let _ = print_endline ("== in read_till_prompt: line = " ^ line) in  *)
   let line = Gen.trim_str line in
   if (line = matlab_prompt) then ""
   else line ^ (read_till_prompt channel)
 
 let rec read_till_ready (channel: in_channel)  =
-  let line = input_line channel in 
+  let line = input_line channel in
+  (* let _ = print_endline ("== in read_till_ready: line = " ^ line) in  *)
   let line = Gen.trim_str line in
   if (line = "For product information, visit www.mathworks.com.") then
     let _ = input_line channel in ()
@@ -173,7 +175,7 @@ let send_and_receive f =
 
 (* send formula to matlab and receive result *)
 let send_and_receive f =
-  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
+  Debug.ho_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
 let check_formula f =
   let output = send_and_receive (f) in
@@ -189,7 +191,7 @@ let check_formula f =
     None
 
 let check_formula f =
-  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
+  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -274,7 +276,7 @@ let matlab_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.BVar (bv, _) -> "(" ^ (matlab_of_spec_var bv) ^ " > 0)"
+  | CP.BVar (bv, _) -> (matlab_of_spec_var bv)
   | CP.Lt (e1, e2, l) -> mk_bin_exp " < " e1 e2
   | CP.Lte (e1, e2, l) -> mk_bin_exp " <= " e1 e2
   | CP.SubAnn (e1, e2, l) -> mk_bin_exp " <= " e1 e2
@@ -287,14 +289,14 @@ let matlab_of_b_formula b =
       let a1 = matlab_of_exp e1 in
       let a2 = matlab_of_exp e2 in
       let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " >= " ^ a3 ^ ") or ("
+      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " >= " ^ a3 ^ ") | ("
       ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " <= " ^ a3 ^ "))"
   | CP.EqMin (e1, e2, e3, _) ->
       (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
       let a1 = matlab_of_exp e1 in
       let a2 = matlab_of_exp e2 in
       let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " <= " ^ a3 ^ ") or ("
+      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " <= " ^ a3 ^ ") | ("
       ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " >= " ^ a3 ^ "))"
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "matlab: bags is not supported"
@@ -1004,8 +1006,11 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
       else strengthen_formula f in
     let vars = get_vars_formula sf in
     let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
-    let vars_decl = "syms " ^ s ^ " real; " in 
-    let fmatlab = "disp(isAlways (" ^ (matlab_of_formula pr_w pr_s sf) ^ "));" in
+    let vars_decl =
+      match Gen.trim_str s with
+      | "" -> "" 
+      | _ -> "syms " ^ s ^ " real; " in 
+    let fmatlab = "disp(" ^ (matlab_of_formula pr_w pr_s sf) ^ ");" in
     let prompt = "disp(sprintf('>>'))\n" in
     let matlab_input = vars_decl ^ fmatlab ^ prompt in
     let runner () = check_formula matlab_input in
@@ -1035,8 +1040,11 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let vars = get_vars_formula f in
   let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
-  let vars_decl = "syms " ^ s ^ " real; " in 
-  let fmatlab = "disp(isAlways (" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
+  let vars_decl =
+      match Gen.trim_str s with
+      | "" -> "" 
+      | _ -> "syms " ^ s ^ " real; " in 
+  let fmatlab = "disp(" ^ (matlab_of_formula pr_w pr_s f) ^ ");" in
   let prompt = "disp(sprintf('>>'))\n" in
   let matlab_input = vars_decl ^ fmatlab ^ prompt in
   let runner () = check_formula matlab_input in

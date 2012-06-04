@@ -1848,7 +1848,7 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
   | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
 let rec imply ante0 conseq0 imp_no do_cache process =
-Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
+Debug.ho_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
