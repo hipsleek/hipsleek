@@ -251,7 +251,9 @@ let matlab_of_spec_var (sv: CP.spec_var) =
   | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "PRMD" else "")
 
 let get_vars_formula (p : CP.formula) =
-  let svars = Cpure.fv p in List.map matlab_of_spec_var svars
+  let svars = Cpure.fv p in
+  let _ = print_endline ("== svars length = " ^ (string_of_int (List.length svars))) in 
+  List.map matlab_of_spec_var svars
 
 let rec matlab_of_exp e0 = 
   match e0 with
@@ -311,8 +313,8 @@ let rec matlab_of_formula pr_w pr_s f0 =
       )
     | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _, _) -> "(not " ^ (matlab_of_formula pr_s pr_w f) ^ ")"
-    | CP.Forall (sv, f, _, _) -> "(isAlways (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
-    | CP.Exists (sv, f, _, _) -> "(not (isAlways (not (" ^ (matlab_of_spec_var sv) ^ ", " ^ (helper f) ^ "))))"
+    | CP.Forall (sv, f, _, _) -> "(isAlways (" ^ (helper f) ^ "))"
+    | CP.Exists (sv, f, _, _) -> "(not (isAlways (not (" ^ (helper f) ^ "))))"
     | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " & " ^ (helper f2) ^ ")"
     | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " | " ^ (helper f2) ^ ")"
   ) in
@@ -1001,16 +1003,17 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else (
-    let sf = 
-      if (!no_pseudo_ops || CP.is_float_formula f) then f 
-      else strengthen_formula f in
-    let vars = get_vars_formula sf in
+    (* let sf =                                               *)
+    (*   if (!no_pseudo_ops || CP.is_float_formula f) then f  *)
+    (*   else strengthen_formula f in                         *)
+    let vars = get_vars_formula f in
     let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
+    let _ = print_endline ("=== s vars = " ^ s) in 
     let vars_decl =
       match Gen.trim_str s with
       | "" -> "" 
       | _ -> "syms " ^ s ^ " real; " in 
-    let fmatlab = "disp(" ^ (matlab_of_formula pr_w pr_s sf) ^ ");" in
+    let fmatlab = "disp(logical(" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
     let prompt = "disp(sprintf('>>'))\n" in
     let matlab_input = vars_decl ^ fmatlab ^ prompt in
     let runner () = check_formula matlab_input in
@@ -1037,14 +1040,16 @@ let is_sat f sat_no =
   Debug.no_2 "[matlab] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat f sat_no
 
 let is_valid_ops pr_w pr_s f imp_no =
-  let f = normalize_formula f in
+  (* let f = normalize_formula f in *)
   let vars = get_vars_formula f in
   let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
+  let _ = print_endline ("=== s 2 vars = " ^ s) in 
+  let _ = print_endline ("=== f = " ^ (string_of_formula f)) in
   let vars_decl =
       match Gen.trim_str s with
       | "" -> "" 
       | _ -> "syms " ^ s ^ " real; " in 
-  let fmatlab = "disp(" ^ (matlab_of_formula pr_w pr_s f) ^ ");" in
+  let fmatlab = "disp(logical(" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
   let prompt = "disp(sprintf('>>'))\n" in
   let matlab_input = vars_decl ^ fmatlab ^ prompt in
   let runner () = check_formula matlab_input in
@@ -1055,7 +1060,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.no_2 "[matlab] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.ho_2 "[matlab] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =

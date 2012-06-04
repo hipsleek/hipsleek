@@ -691,6 +691,8 @@ and fv_helper (f : formula) : spec_var list = match f with
   | Not (nf, _,_) -> fv_helper nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
+  | Forall (qid, qf, _,_) -> remove_qvar qid qf
+  | Exists (qid, qf, _,_) -> remove_qvar qid qf
   | AndList l -> fold_l_snd fv_helper l
 
 and combine_pvars p1 p2 = (fv_helper p1) @ (fv_helper p2)

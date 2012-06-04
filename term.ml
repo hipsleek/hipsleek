@@ -699,9 +699,13 @@ let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpu
   let lim5 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
   (* check limit constrains *)
   let lim_lst = [lim2; lim3; lim4; lim5] in
-  let lim_constraints = List.fold_left (fun a b -> CP.mkAnd a b no_pos) lim1 lim_lst in
+  let rhs = List.fold_left (fun a b -> CP.mkAnd a b no_pos) lim1 lim_lst in
   let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let lim_entail_res, _, _ = TP.imply lhs lim_constraints "" false None in
+  let lim_entail_res, _, _ = TP.imply lhs rhs "" false None in
+  (* let svars = CP.afv seq_src.CP.seq_element in                                                      *)
+  (* let lim_constraints = CP.mkForall svars (CP.mkOr (CP.mkNot_s lhs) rhs None no_pos) None no_pos in *)
+  (* let ftrue = CP.mkTrue no_pos in                                                                   *)
+  (* let lim_entail_res, _, _ = TP.imply ftrue lim_constraints "" false None in *)
   (* bound constraint 1: lb_src = lb_dst *)
   let bnd1 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
   (* bound constraint 2: lb_src > fp_src *)
@@ -785,43 +789,47 @@ let check_term_seqvar_converge_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1
   (* limit constraint 5: |elm_dst - fp_dst| < K * |elm_src - fp_src| *)
   (* the largest floating-point number less than 1 can be handled by SLEEK is 0.999999999999 (12 digits)
      larger number will be approximated to 1*)
-  let k = CP.mkFConst 0.99999999999999 no_pos in
+  let k = CP.mkFConst 0.999999999999 no_pos in
   (* let _ = print_endline ("k = " ^ (!CP.print_exp k)) in *)
-  (* elm_src >= fp_src & elm_dst >= fp_src *)
+  (* (elm_src >= fp_src & elm_dst >= fp_src) -> (k * (elm_src - fp_src) > (elm_dst - fp_src)) *)
   let tmp1 = CP.mkPure (CP.mkGte elm_src fp_src no_pos) in
   let tmp2 = CP.mkPure (CP.mkGte elm_dst fp_dst no_pos) in 
   let tmp31 = CP.mkMult k (CP.mkSubtract elm_src fp_src no_pos) no_pos in
   let tmp32 = CP.mkSubtract elm_dst fp_dst no_pos in
   let tmp3 = CP.mkPure (CP.mkGte tmp31 tmp32 no_pos) in
-  let lim31 = CP.mkAnd (CP.mkAnd tmp1 tmp2 no_pos) tmp3 no_pos in
-  (* elm_src >= fp_src & elm_dst < fp_src *)
+  let lim31 = CP.mkOr (CP.mkNot_s (CP.mkAnd tmp1 tmp2 no_pos)) tmp3 None no_pos in
+  (* (elm_src >= fp_src & elm_dst < fp_src) -> (k * (elm_src - fp_src) > (fp_src - elm_dst)) *)
   let tmp1 = CP.mkPure (CP.mkGte elm_src fp_src no_pos) in
   let tmp2 = CP.mkPure (CP.mkLt elm_dst fp_dst no_pos) in 
   let tmp31 = CP.mkMult k (CP.mkSubtract elm_src fp_src no_pos) no_pos in
   let tmp32 = CP.mkSubtract fp_dst elm_dst no_pos in
   let tmp3 = CP.mkPure (CP.mkGte tmp31 tmp32 no_pos) in
-  let lim32 = CP.mkAnd (CP.mkAnd tmp1 tmp2 no_pos) tmp3 no_pos in
-  (* elm_src < fp_src & elm_dst >= fp_src *)
+  let lim32 = CP.mkOr (CP.mkNot_s (CP.mkAnd tmp1 tmp2 no_pos)) tmp3 None no_pos in
+  (* (elm_src < fp_src & elm_dst >= fp_src) -> (k * (fp_src - elm_src) > (elm_dst - fp_src)) *)
   let tmp1 = CP.mkPure (CP.mkLt elm_src fp_src no_pos) in
   let tmp2 = CP.mkPure (CP.mkGte elm_dst fp_dst no_pos) in 
   let tmp31 = CP.mkMult k (CP.mkSubtract fp_src elm_src no_pos) no_pos in
   let tmp32 = CP.mkSubtract elm_dst fp_dst no_pos in
   let tmp3 = CP.mkPure (CP.mkGte tmp31 tmp32 no_pos) in
-  let lim33 = CP.mkAnd (CP.mkAnd tmp1 tmp2 no_pos) tmp3 no_pos in
-  (* elm_src < fp_src & elm_dst < fp_src *)
+  let lim33 = CP.mkOr (CP.mkNot_s (CP.mkAnd tmp1 tmp2 no_pos)) tmp3 None no_pos in
+  (* (elm_src < fp_src & elm_dst < fp_src) -> (k * (fp_src - elm_src) > (fp_src - elm_dst)) *)
   let tmp1 = CP.mkPure (CP.mkLt elm_src fp_src no_pos) in
   let tmp2 = CP.mkPure (CP.mkLt elm_dst fp_dst no_pos) in 
   let tmp31 = CP.mkMult k (CP.mkSubtract fp_src elm_src no_pos) no_pos in
   let tmp32 = CP.mkSubtract fp_dst elm_dst no_pos in
   let tmp3 = CP.mkPure (CP.mkGte tmp31 tmp32 no_pos) in
-  let lim34 = CP.mkAnd (CP.mkAnd tmp1 tmp2 no_pos) tmp3 no_pos in
+  let lim34 = CP.mkOr (CP.mkNot_s (CP.mkAnd tmp1 tmp2 no_pos)) tmp3 None no_pos in
   (* all constraints for |elm_dst - fp_dst| < K * |elm_src - fp_src| *)
   let lim3_lst = [lim32; lim33; lim34] in
   let lim3 = List.fold_left (fun a b -> CP.mkOr a b None no_pos) lim31 lim3_lst in
   (* check limit constrains *)
-  let lim_constraints = CP.mkAnd (CP.mkAnd lim1 lim2 no_pos) lim3 no_pos in
+  let rhs = CP.mkAnd (CP.mkAnd lim1 lim2 no_pos) lim3 no_pos in
   let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let lim_entail_res, _, _ = TP.imply lhs lim_constraints "" false None in
+  let lim_entail_res, _, _ = TP.imply lhs rhs "" false None in
+  (* let svars = CP.afv seq_src.CP.seq_element in                                                      *)
+  (* let lim_constraints = CP.mkForall svars (CP.mkOr (CP.mkNot_s lhs) rhs None no_pos) None no_pos in *)
+  (* let ftrue = CP.mkTrue no_pos in                                                                   *)
+  (* let lim_entail_res, _, _ = TP.imply ftrue lim_constraints "" false None in                        *)
   (* bound constraint 1: (lb_src = lb_dst) & (lb_src > fp_src)*)
   let bnd11 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
   let bnd12 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
