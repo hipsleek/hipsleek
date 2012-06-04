@@ -713,7 +713,9 @@ let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpu
   (* check bound constraint *)
   let bnd_constraints = CP.mkAnd bnd1 bnd2 no_pos in
   let bnd_entail_res, _, _ = TP.imply lhs bnd_constraints "" false None in
+  let _ = print_endline ("\n== bnd_constraints = " ^ (Cprinter.string_of_pure_formula bnd_constraints)) in 
   let orig_ante = estate.es_formula in
+  let _ = print_endline ("== bnd_entail_res = " ^ (string_of_bool bnd_entail_res)) in 
   let term_measures, term_res, term_err_msg, rank_formula =
     if not lim_entail_res then 
       Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),

@@ -255,68 +255,119 @@ let get_vars_formula (p : CP.formula) =
   let _ = print_endline ("== svars length = " ^ (string_of_int (List.length svars))) in 
   List.map matlab_of_spec_var svars
 
-let rec matlab_of_exp e0 = 
+let rec matlab_of_exp e0 : (string * CP.spec_var list)= 
   match e0 with
-  | CP.Null _ -> "0" (* TEMP *)
-  | CP.Var (v, _) -> matlab_of_spec_var v
-  | CP.IConst (i, _) -> string_of_int i
-  | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
-  | CP.FConst (f, _) -> string_of_float f
-  | CP.Add (e1, e2, _) -> "(" ^ (matlab_of_exp e1) ^ " + " ^ (matlab_of_exp e2) ^ ")"
-  | CP.Subtract (e1, e2, _) -> "(" ^ (matlab_of_exp e1) ^ " - " ^ (matlab_of_exp e2) ^ ")"
-  | CP.Mult (e1, e2, _) -> "(" ^ (matlab_of_exp e1) ^ " * " ^ (matlab_of_exp e2) ^ ")"
-  | CP.Div (e1, e2, _) -> "(" ^ (matlab_of_exp e1) ^ " / " ^ (matlab_of_exp e2) ^ ")"
-  | CP.Sqrt(e, _) -> "sqrt(" ^ (matlab_of_exp e) ^ ")"
-  | CP.Pow(e1, e2, _) -> "(" ^ (matlab_of_exp e1) ^ ") ^ (" ^ (matlab_of_exp e2) ^ ")"
+  | CP.Null _ -> ("0", [])
+  | CP.Var (v, _) -> (matlab_of_spec_var v, [v])
+  | CP.IConst (i, _) -> (string_of_int i, [])
+  | CP.AConst (i, _) -> (string_of_int (int_of_heap_ann i), [])
+  | CP.FConst (f, _) -> (string_of_float f, [])
+  | CP.Add (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " + " ^ s2 ^ ")", v1 @ v2)
+  | CP.Subtract (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " - " ^ s2 ^ ")", v1 @ v2)
+  | CP.Mult (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " * " ^ s2 ^ ")", v1 @ v2)
+  | CP.Div (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " / " ^ s2 ^ ")", v1 @ v2)
+  | CP.Sqrt(e, _) ->
+      let s, v = matlab_of_exp e in
+      ("sqrt(" ^ s ^ ")", v)
+  | CP.Pow(e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " ^ " ^ s2 ^ ")", v1 @ v2)
   | CP.Max _
   | CP.Min _ -> failwith ("matlab.matlab_of_exp: min/max can't appear here")
   | _ -> failwith ("matlab: bags/list is not supported")
 
-let matlab_of_b_formula b =
-  let mk_bin_exp opt e1 e2 = 
-    "(" ^ (matlab_of_exp e1) ^ opt ^ (matlab_of_exp e2) ^ ")" in
+let rec matlab_of_b_formula b : (string * CP.spec_var list) =
   let (pf,_) = b in
   match pf with
-  | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.BVar (bv, _) -> (matlab_of_spec_var bv)
-  | CP.Lt (e1, e2, l) -> mk_bin_exp " < " e1 e2
-  | CP.Lte (e1, e2, l) -> mk_bin_exp " <= " e1 e2
-  | CP.SubAnn (e1, e2, l) -> mk_bin_exp " <= " e1 e2
-  | CP.Gt (e1, e2, l) -> mk_bin_exp " > " e1 e2
-  | CP.Gte (e1, e2, l) -> mk_bin_exp " >= " e1 e2
-  | CP.Eq (e1, e2, _) -> mk_bin_exp " == " e1 e2
-  | CP.Neq (e1, e2, _) -> mk_bin_exp " ~= " e1 e2
+  | CP.BConst (c, _) ->
+      if c then ("true", [])
+      else ("false", [])
+  | CP.BVar (bv, _) -> (matlab_of_spec_var bv, [bv])
+  | CP.Lt (e1, e2, l) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " < " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.Lte (e1, e2, l) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " <= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.SubAnn (e1, e2, l) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " <= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.Gt (e1, e2, l) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " > " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.Gte (e1, e2, l) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " >= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.Eq (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " == " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+  | CP.Neq (e1, e2, _) ->
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      ("(" ^ s1 ^ " ~= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.EqMax (e1, e2, e3, _) ->
       (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
-      let a1 = matlab_of_exp e1 in
-      let a2 = matlab_of_exp e2 in
-      let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " >= " ^ a3 ^ ") | ("
-      ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " <= " ^ a3 ^ "))"
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      let s3, v3 = matlab_of_exp e3 in
+      let s = "((" ^ s1 ^ " == " ^ s2 ^ " & " ^ s2 ^ " >= " ^ s3 ^ ") | ("
+              ^ s1 ^ " == " ^ s3 ^ " & " ^ s2 ^ " <= " ^ s3 ^ "))" in
+      (s, CP.remove_dups_svl (v1 @ v2 @ v3))
   | CP.EqMin (e1, e2, e3, _) ->
       (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
-      let a1 = matlab_of_exp e1 in
-      let a2 = matlab_of_exp e2 in
-      let a3 = matlab_of_exp e3 in
-      "((" ^ a1 ^ " == " ^ a2 ^ " & " ^ a2 ^ " <= " ^ a3 ^ ") | ("
-      ^ a1 ^ " == " ^ a3 ^ " & " ^ a2 ^ " >= " ^ a3 ^ "))"
-  | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
-  | _ -> failwith "matlab: bags is not supported"
+      let s1, v1 = matlab_of_exp e1 in
+      let s2, v2 = matlab_of_exp e2 in
+      let s3, v3 = matlab_of_exp e3 in
+      let s = "((" ^ s1 ^ " == " ^ s2 ^ " & " ^ s2 ^ " <= " ^ s3 ^ ") | ("
+              ^ s1 ^ " == " ^ s3 ^ " & " ^ s2 ^ " >= " ^ s3 ^ "))" in
+      (s,  CP.remove_dups_svl (v1 @ v2 @ v3))
+  | _ -> failwith ("matlab: other b_formulae is not supported")
 
-let rec matlab_of_formula pr_w pr_s f0 =
+let rec matlab_of_formula pr_w pr_s f0 : (string * CP.spec_var list) =
   let rec helper f0 = (
     match f0 with
     | CP.BForm ((b,_) as bf,_) -> ( 
         match (pr_w b) with
-        | None -> "(" ^ (matlab_of_b_formula bf) ^ ")"
+        | None -> matlab_of_b_formula bf
         | Some f -> helper f
       )
     | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
-    | CP.Not (f, _, _) -> "(not " ^ (matlab_of_formula pr_s pr_w f) ^ ")"
-    | CP.Forall (sv, f, _, _) -> "(isAlways (" ^ (helper f) ^ "))"
-    | CP.Exists (sv, f, _, _) -> "(not (isAlways (not (" ^ (helper f) ^ "))))"
-    | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " & " ^ (helper f2) ^ ")"
-    | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " | " ^ (helper f2) ^ ")"
+    | CP.Not (f, _, _) ->
+        let s, v = matlab_of_formula pr_s pr_w f in 
+        ("(not " ^ s ^ ")", v)
+    | CP.Forall (sv, f, _, _) ->
+        let s, v = helper f in
+        ("(isAlways (" ^ s ^ "))", v)
+    | CP.Exists (sv, f, _, _) ->
+        let s, v = helper f in
+        ("(not (isAlways (not (" ^ s ^ "))))", v)
+    | CP.And (f1, f2, _) ->
+        let s1, v1 = helper f1 in
+        let s2, v2 = helper f2 in
+        ("(" ^ s1 ^ " & " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
+    | CP.Or (f1, f2, _, _) ->
+        let s1, v1 = helper f1 in
+        let s2, v2 = helper f2 in
+        ("(" ^ s1 ^ " | " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   ) in
   helper f0
 
@@ -590,8 +641,9 @@ let find_bound_linear_b_formula v f0 =
     match f with
     | Some f0 -> Some (int_of_float (floor (0. -. f0))) (* we find max by using matlab to find min of it neg val *)
     | None -> None in
-  let find_min_cmd = "rlopt({" ^ (matlab_of_b_formula f0) ^ "}, " ^ (matlab_of_spec_var v) ^ ")" in
-  let find_max_cmd = "rlopt({" ^ (matlab_of_b_formula f0) ^ "}, -" ^ (matlab_of_spec_var v) ^ ")" in
+  let sf0, _ = matlab_of_b_formula f0 in
+  let find_min_cmd = "rlopt({" ^ sf0 ^ "}, " ^ (matlab_of_spec_var v) ^ ")" in
+  let find_max_cmd = "rlopt({" ^ sf0 ^ "}, -" ^ (matlab_of_spec_var v) ^ ")" in
   let _ = send_cmd "on rounded" in
   let min_out = send_and_receive find_min_cmd in
   let max_out = send_and_receive find_max_cmd in
@@ -1003,17 +1055,19 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else (
-    (* let sf =                                               *)
-    (*   if (!no_pseudo_ops || CP.is_float_formula f) then f  *)
-    (*   else strengthen_formula f in                         *)
-    let vars = get_vars_formula f in
-    let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
-    let _ = print_endline ("=== s vars = " ^ s) in 
+    let sf =
+      if (!no_pseudo_ops || CP.is_float_formula f) then f
+      else strengthen_formula f in
+    let str_sf, v_sf = matlab_of_formula pr_w pr_s sf in
     let vars_decl =
-      match Gen.trim_str s with
-      | "" -> "" 
-      | _ -> "syms " ^ s ^ " real; " in 
-    let fmatlab = "disp(logical(" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
+      match v_sf with
+      | [] -> "" 
+      | _ -> let svars = List.fold_left (fun s var -> s ^ (matlab_of_spec_var var) ^ " ") " " v_sf in
+             "syms " ^ svars ^ " real; " in 
+    let fmatlab =
+      match v_sf with
+      | [] -> "disp(logical(" ^ str_sf ^ "));"
+      | _ -> "disp(isAlways(" ^ str_sf ^ "));" in
     let prompt = "disp(sprintf('>>'))\n" in
     let matlab_input = vars_decl ^ fmatlab ^ prompt in
     let runner () = check_formula matlab_input in
@@ -1040,16 +1094,17 @@ let is_sat f sat_no =
   Debug.no_2 "[matlab] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat f sat_no
 
 let is_valid_ops pr_w pr_s f imp_no =
-  (* let f = normalize_formula f in *)
-  let vars = get_vars_formula f in
-  let s = List.fold_left (fun s var -> s ^ var ^ " ") " " vars in
-  let _ = print_endline ("=== s 2 vars = " ^ s) in 
-  let _ = print_endline ("=== f = " ^ (string_of_formula f)) in
+  let f = normalize_formula f in
+  let sf, vf = matlab_of_formula pr_w pr_s f in
   let vars_decl =
-      match Gen.trim_str s with
-      | "" -> "" 
-      | _ -> "syms " ^ s ^ " real; " in 
-  let fmatlab = "disp(logical(" ^ (matlab_of_formula pr_w pr_s f) ^ "));" in
+    match vf with
+    | [] -> "" 
+    | _ -> let svars = List.fold_left (fun s var -> s ^ (matlab_of_spec_var var) ^ " ") " " vf in
+           "syms " ^ svars ^ " real; " in 
+  let fmatlab =
+    match vf with
+    | [] -> "disp(logical(" ^ sf ^ "));"
+    | _ -> "disp(isAlways(" ^ sf ^ "));" in
   let prompt = "disp(sprintf('>>'))\n" in
   let matlab_input = vars_decl ^ fmatlab ^ prompt in
   let runner () = check_formula matlab_input in
@@ -1151,7 +1206,7 @@ let simplify_with_matlab (f: CP.formula) : CP.formula  =
     (* do a manual existential elimination *)
     elim_exist_quantifier f
   else 
-    let matlabf = matlab_of_formula pr_n pr_n (normalize_formula f) in
+    let matlabf, _ = matlab_of_formula pr_n pr_n (normalize_formula f) in
     let _ = send_cmd "rlset pasf" in
     let matlab_result = send_and_receive ("rlsimpl " ^ matlabf) in 
     let _ = send_cmd "rlset ofsf" in

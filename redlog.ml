@@ -87,6 +87,8 @@ let rec read_till_prompt (channel: in_channel) : string =
 let send_cmd cmd =
   if !is_reduce_running then 
     let cmd = cmd ^ ";\n" in
+    let _ = print_endline ("== in redlog.send_cmd:") in 
+    let _ = print_endline ("== cmd = " ^ cmd) in
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
     let _ = read_till_prompt !process.inchannel in
@@ -172,13 +174,18 @@ let send_and_receive f =
       send_and_receive f
 
 let check_formula f =
+  let _ = print_endline ("== in redlog.check_formula:") in 
+  let _ = print_endline ("== f = " ^ f) in
   let res = send_and_receive ("rlqe " ^ f) in
   (* let _ = print_endline ("redlog out:"^res) in *)
   if res = "true$" then
+    let _ = print_endline ("== res = true") in
     Some true
   else if res = "false$" then
+    let _ = print_endline ("== res = false") in
     Some false
   else
+    let _ = print_endline ("== res = unknown") in
     None
 
 let check_formula f =
@@ -1129,6 +1136,7 @@ let imply_ops pr_w pr_s ante conseq imp_no =
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in
+  let _ = print_endline (" == in redlog.ml; fstring = " ^ fstring) in 
   log DEBUG ("\n#imply " ^ imp_no);
   log DEBUG ("ante: " ^ (string_of_formula ante));
   log DEBUG ("conseq: " ^ (string_of_formula conseq));
