@@ -1336,9 +1336,9 @@ and add_param_ann_constraints_struc_x (cf: CF.struc_formula) : CF.struc_formula 
     | CF.EAssume (x, b, y)-> CF.EAssume (x,(add_param_ann_constraints_formula b),y)
     | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = add_param_ann_constraints_struc b.CF.formula_inf_continuation}
 
-and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = cf (* disabled inner <> outer annotation relation *)
-  (* let pr =  Cprinter.string_of_struc_formula in *)
-  (* Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf *)
+and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula =  (*cf disabled inner <> outer annotation relation *)
+  let pr =  Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
@@ -3989,7 +3989,7 @@ and add_pre prog f =
       
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) stab (sp:bool): CF.struc_formula = 
   let prb = string_of_bool in
-  Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
+  Debug.ho_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
       (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
       (add_str "Output Struc:" Cprinter.string_of_struc_formula)
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog quantify fvars f0 stab sp) stab (* type table *) quantify (* quantified flag *) sp 
@@ -4080,7 +4080,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
     Err.report_error{ Err.error_loc = CF.pos_of_struc_formula r; Err.error_text = "res is not allowed in precondition";}
   else r  in
   let _ = type_store_clean_up r stab in
-  let r = add_param_ann_constraints_struc r in
+  (* let r = add_param_ann_constraints_struc r in *)
   r
 
 (* checks if two lists of annotation can be joint together. If so, it returns the list resulting after the combination of the input lists *)
@@ -4091,6 +4091,14 @@ and join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
     | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in
 				  (true && compatible, a::new_ann)
     | _ -> (false, [])
+
+(* and check_node_compatibility (n1: CF.h_formula) (n2: CF.h_formula): CP.spec_var list * CP.spec_var list =  *)
+  (* let helper n1 n2 =  *)
+  (*   match n1 with *)
+  (*     | CF.DataNode ->  *)
+          
+  (*     | CF.Star -> false *)
+  (*     | _ -> false *)
 
 and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = 
   match f with
@@ -4257,6 +4265,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   let cf = compact_nodes_with_same_name_in_formula cf in
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
+
+  let cf = add_param_ann_constraints_formula cf in
    cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
@@ -4341,7 +4351,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_name = rootptr_type_name;
 		            CF.h_formula_data_derv = dr;
 					CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param (IF.ConstAnn(Mutable));
+                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4417,7 +4427,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
 		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param (IF.ConstAnn(Mutable));
+                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
 		                    CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
 		                    CF.h_formula_data_original = true;

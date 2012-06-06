@@ -11,75 +11,88 @@ data node {
 	cell val; 
 	node next;	
 }.
-/*
-pred ll<n, v1, v2> == self = null & n = 0 
+
+/*pred ll<n, v1, v2> == self = null & n = 0 
 	or self::node<a, q> * 
     a::cell<_>@v2 * 
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
 */
-/*checkentail x::node<p,q>@A * y::node<p@A,q@L>|- x::node<p,q>@I.
-print residue.
-*/
-checkentail x::node<p@L,q@A> * x::node<p@A,q@L>  * x::node<p@A,q@A> * y::node<p@A,q@L>  * y::node<p@L,q@A> |- false.
+
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x != y.
 print residue.
 
-/*checkentail y::node<p@A,q@L>  * y::node<p@L,q@A>  |- false.
-print residue.
-*/
-/*checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
-print residue.
-
-checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
+/*
+// (1) - valid
+checkentail x::node<p@L,q@A> * x::node<p@A,q@L>  * x::node<p@A,q@A> * y::node<p@A,q@L>  * y::node<p@L,q@A> |- true.
 print residue.
 
-checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
+// (2) - fail
+checkentail y::node<p@A,q@L>  * y::node<p@L,q@A>  |- false.
 print residue.
 
-checkentail x::node<p@L,q@A>@M |- false.
+// (3) - valid ( false on lhs)
+checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
 print residue.
-
-checkentail x::node<p,q@I> |- x::node<_@A,b@L>.
-print residue.
-
-checkentail x::node<p,q@L> |- x::node<_@A,b@L>.
-print residue.
-
-checkentail x::node<p,q>@M |- x::node<_@A,b@I>.
-print residue.
-
-checkentail x::node<p,q>@M |- x::node<_@A,b@L>.
-print residue.
-
-// (1)
-checkentail x::node<p@I,q@I> * y::node<c,d> |- x::node<a@I,b@I>@I.
-print residue.
-
-// (2)
-checkentail x::node<p@I,q@L>@M |- x::node<a@I,b@L>@M.
-print residue.
-
-// (3)
-checkentail x::node<p,q>@M |- x::node<_@A,b@M> * x::node<a@M,_@A>.
-print residue.
-
-checkentail x::node<p,q>@M |- x::node<_@A,b@M>.
-print residue.
-
-// (3)
-checkentail x::node<p,q>@M |- x::node<_@M,b@M> * x::node<a@M,_@A>.
-print residue.
-
 
 // (4)
-checkentail x::node<p@L,q@L>@M |- (x::node<a@L,b@L>@L & x::node<a@L,b@L>@L).
+checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
 print residue.
 
 // (5)
+checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
+print residue.
+
+// (6)
+checkentail x::node<p@L,q@A>@M |- false.
+print residue.
+
+// (7)
+checkentail x::node<p,q@I> |- x::node<_@A,b@L>.
+print residue.
+
+// (8)
+checkentail x::node<p,q@L> |- x::node<_@A,b@L>.
+print residue.
+
+// (9)
+checkentail x::node<p,q>@M |- x::node<_@A,b@I>.
+print residue.
+
+// (10)
+checkentail x::node<p,q>@M |- x::node<_@A,b@L>.
+print residue.
+
+// (11)
+checkentail x::node<p@I,q@I> * y::node<c,d> |- x::node<a@I,b@I>@I.
+print residue.
+
+// (12)
+checkentail x::node<p@I,q@L>@M |- x::node<a@I,b@L>@M.
+print residue.
+
+// (13)
+checkentail x::node<p,q>@M |- x::node<_@A,b@M> * x::node<a@M,_@A>.
+print residue.
+
+// (14)
+checkentail x::node<p,q>@M |- x::node<_@A,b@M>.
+print residue.
+
+// (15)
+checkentail x::node<p,q>@M |- x::node<_@M,b@M> * x::node<a@M,_@A>.
+print residue.
+
+// (16)
+checkentail x::node<p@L,q@L>@M |- (x::node<a@L,b@L>@L & x::node<a@L,b@L>@L).
+print residue.
+
+// (17)
 checkentail x::node<p@L,q@L>@M * y::node<a1@I,b1@I>@M |-  x::node<a@L,b@L>@M * y::node<a2@I,b2@I>@I.
 print residue.
 
-//(6)
+//(18)
 checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M> .
 print residue.
+
 */

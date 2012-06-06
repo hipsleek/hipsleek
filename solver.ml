@@ -310,8 +310,16 @@ and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.m
       (fun f -> h_formula_2_mem f evars prog) f
 
 and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
-  Debug.no_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list 
+  Debug.ho_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list 
    Cprinter.string_of_mem_formula (fun f evars -> h_formula_2_mem_x f evars prog) f evars
+
+and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
+  match ann1, ann2 with
+    | [], [] -> true
+    | (CF.ConstAnn(Accs))::t1, a::t2 
+    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible = compatible_ann t1 t2 in
+				                        true && compatible
+    | _ -> false
 
 and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
     let rec helper f =
@@ -320,10 +328,75 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos}) -> 
-	        let m1 = helper h1  in
-	        let m2 = helper h2 in
-	        let m = (CP.DisjSetSV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
-	        let res = {mem_formula_mset = m;} in
+          let res = 
+          match h1 with
+            | CF.DataNode { (* CF.h_formula_data_name = name1; *)
+ 		                    CF.h_formula_data_node = v1;
+ 		                    CF.h_formula_data_param_imm = param_ann1;
+ 		                  } -> 
+                let res = 
+                match h2 with
+                  | CF.DataNode { (* CF.h_formula_data_name = name2; *)
+ 		                          CF.h_formula_data_node = v2;
+ 		                          CF.h_formula_data_param_imm = param_ann2; }  -> 
+                      let compatible = compatible_ann param_ann1 param_ann2 in
+                      let sg1 = CP.DisjSetSV.singleton_dset v1 in
+                      let sg2 = CP.DisjSetSV.singleton_dset v2 in
+                      let mset = if compatible then CP.DisjSetSV.merge_disj_set sg1 sg2
+                          else CP.DisjSetSV.star_disj_set sg1 sg2 in
+	                  {mem_formula_mset = mset;}
+                  | CF.Star {CF.h_formula_star_h1 = h3;
+			                CF.h_formula_star_h2 = h4} ->  
+                      let mset_h1h3 = helper (CF.mkStarH h1 h3 no_pos 20) in
+                      let mset_h1h4 = helper (CF.mkStarH h1 h4 no_pos 21) in
+                      let mset_h2 = helper h2 in
+                      let m = CP.DisjSetSV.merge_disj_set mset_h1h3.mem_formula_mset mset_h1h4.mem_formula_mset in
+                      let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                      {mem_formula_mset = mset2}
+                  | CF.Conj {CF.h_formula_conj_h1 = h3;
+			                 CF.h_formula_conj_h2 = h4} 
+                  | CF.Phase {CF.h_formula_phase_rd = h3;
+			                  CF.h_formula_phase_rw = h4}->  
+                      let mset_h1h3 = helper (CF.mkStarH h1 h3 no_pos 22) in
+                      let mset_h1h4 = helper (CF.mkStarH h1 h4 no_pos 23) in
+                      let mset_h2 = helper h2 in
+                      let m = CP.DisjSetSV.conj_disj_set mset_h1h3.mem_formula_mset mset_h1h4.mem_formula_mset in
+                      let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                      {mem_formula_mset = mset2}
+                  | _ -> 
+                      let mset_h2 = helper h2 in
+                      let sg = CP.DisjSetSV.singleton_dset v1 in
+                      let m = CP.DisjSetSV.merge_disj_set mset_h2.mem_formula_mset sg in
+                      {mem_formula_mset = m}
+                in
+                res
+            | CF.Star {CF.h_formula_star_h1 = h11;
+			           CF.h_formula_star_h2 = h12} ->
+                let mset_h11 = helper h11 in
+                let mset_h12 = helper h12 in
+                let mset_h2 = helper h2 in
+                let m = CP.DisjSetSV.merge_disj_set mset_h11.mem_formula_mset mset_h12.mem_formula_mset in
+                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                {mem_formula_mset = mset2}
+            | CF.Conj {CF.h_formula_conj_h1 = h11;
+			           CF.h_formula_conj_h2 = h12} 
+            | CF.Phase {CF.h_formula_phase_rd = h11;
+			            CF.h_formula_phase_rw = h12}->  
+                let mset_h11h2 = helper (CF.mkStarH h11 h2 no_pos 24) in
+                let mset_h12h2 = helper (CF.mkStarH h12 h2 no_pos 25) in
+                let mset_h1 = helper h1 in
+                let m = CP.DisjSetSV.conj_disj_set mset_h11h2.mem_formula_mset mset_h12h2.mem_formula_mset in
+                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h1.mem_formula_mset in
+                {mem_formula_mset = mset2}
+            | _ ->  
+                let mset_h1 = helper h1 in
+                let mset_h2 = helper h2 in
+                let m = CP.DisjSetSV.star_disj_set mset_h1.mem_formula_mset mset_h2.mem_formula_mset in
+                {mem_formula_mset = m} in
+	        (* let m1 = helper h1 in *)
+	        (* let m2 = helper h2 in *)
+	        (* let m = (CP.DisjSetSV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in *)
+	        (* let res = {mem_formula_mset = m;} in *)
 	        res
       | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2;
