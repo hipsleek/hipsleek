@@ -1,9 +1,11 @@
-open Globals
+(*open Globals*)
 
+module Ts = 
+struct
   type stree =
     | Leaf of bool (*false-> empty*)
     | Node of stree * stree
-    
+  type t_sh = stree
   let top = Leaf true
   let bot = Leaf false
     
@@ -19,11 +21,45 @@ open Globals
     | Leaf b -> b
     | Node (s0, s1) -> (full s0)&&(full s1)
     
-  let rec stree_eq t1 t2 = match t1,t2 with
-    | Leaf b1,Leaf b2  -> b1==b2
-    | Node (l1, r1), Node (l2,r2) -> (stree_eq l1 l2)&&(stree_eq r1 r2)
-    | _ -> false
+  let depth_0 = function 
+	| Leaf _ -> true
+	| Node _ -> false
   
+  let rec depth = function 
+	| Leaf _ -> 0
+	| Node (l,r)-> 
+		let l = depth l in
+		let r = depth r in
+		(if l>r then l else r)+1
+	
+  let rleft n = 
+    let rec helper n c = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> if c=1 then l else mkNode (helper l (c-1)) (helper r (c-1)) in
+	helper n (depth n)
+   
+  let rright n = 
+    let rec helper n c = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> if c=1 then r else mkNode (helper l (c-1)) (helper r (c-1)) in
+	helper n (depth n)
+		  
+  let rec eq t1 t2 = match t1,t2 with
+    | Leaf b1,Leaf b2  -> b1==b2
+    | Node (l1, r1), Node (l2,r2) -> (eq l1 l2)&&(eq r1 r2)
+    | _ -> false
+	 
+  let stree_eq = eq
+	  
+  let rec string_of_tree_share ts = match ts with
+    | Leaf true -> "T"
+    | Leaf false -> ""
+    | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
+	
+  let string_of = string_of_tree_share
+  
+  
+  (**********utilities , possibly needed **********)
   let rec stree_cmp t1 t2 = match t1,t2 with
 	| Leaf false, Leaf false 
 	| Leaf true, Leaf true -> 0
@@ -51,7 +87,7 @@ open Globals
         | Node (l2, r2) -> mkNode (helper l1 l2) (helper r1 r2) in
     if (can_join x y) then helper x y else bot
   
-  (*returns the smallest share contained in both, the largest tree*)
+(*returns the smallest share contained in both, the largest tree*)
   let rec intersect x y = match x with
       | Leaf b -> if b then y else x
       | Node (l1, r1) -> match y with
@@ -66,9 +102,7 @@ open Globals
     | Leaf true -> "T"
     | Leaf false -> ""
     | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
-       
-  
-  (*can_subtract*)
+	
   let rec contains x y = match x,y with
     | Leaf true, _ ->  true
     | _, Leaf false -> true
@@ -80,12 +114,11 @@ open Globals
     let rec helper x y = match x,y with
       | Leaf true, _ -> neg_tree y
       | Leaf false, Leaf false -> y
-      | Leaf false, _ -> Gen.report_error no_pos "missmatch in contains"
+      | Leaf false, _ -> failwith "missmatch in contains"
       | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) 
       | Node _ , Leaf false -> x
-      | Node _ , Leaf true -> Gen.report_error no_pos "missmatch in contains" in      
+      | Node _ , Leaf true -> failwith "missmatch in contains" in      
    if contains x y then helper x y else bot
-   
   let rec union x y = match x with
 	| Leaf true -> x
 	| Leaf false -> y
@@ -100,3 +133,5 @@ open Globals
   let rec latex_of_share s = match s with 
     | Leaf b -> if b then "\\bullet" else "\\circ"
     | Node (s1,s2) -> " \\Tree [ $"^(latex_of_share s1)^"$ $"^(latex_of_share s2)^"$ ] "
+  end     
+  

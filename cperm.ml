@@ -1,7 +1,7 @@
 open Globals
 
 module P = Cpure
-module Ts = Tree_shares
+module Ts = Tree_shares.Ts
 
 type share = Ts.stree
 
@@ -16,11 +16,12 @@ type perm_formula =
   | Or  of (perm_formula * perm_formula * loc)
   | Join of (frac_perm*frac_perm*frac_perm * loc) (*v1+v2 = v3*)
   | Eq of (frac_perm*frac_perm *loc)
-  | Exists of (P.spec_var  list * perm_formula *loc)
+  | Exists1 of (P.spec_var  list * perm_formula *loc)
   | Dom of (P.spec_var * share * share)
   | PTrue of loc
   | PFalse of loc
 
+let print_counter = ref 0
 let perm_log_name = "perm.log.tex" 
 let perm_log_file = ref (stdout)
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
@@ -33,9 +34,9 @@ let latex_print_sv v =
   let rec helper i = 
     if (i>=0) then 
       let c = String.get s i in 
-     (helper (i-1))^ (if c=='_' then "\\_" else if c=='\'' then "'" else Char.escaped c)
+     (helper (i-1))^ (if c=='_' then "\\_" else if c=='\'' then "'" else if c=='\\' then "\\" else Char.escaped c)
     else "" in
-  " "^(helper ((String.length s)-1))^" "
+  " \\ensuremath{ \\mathsf{"^(helper ((String.length s)-1))^"} } "
 
 
 let fresh_perm_var () = P.SpecVar (Named perm,fresh_name(),Unprimed)
@@ -105,16 +106,16 @@ let rec fv f = match f with
   | Or (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((fv f1)@(fv f2))
   | Join (f1,f2,f3,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
   | Eq (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((frac_fv f1)@(frac_fv f2))
-  | Exists (l1,f1,_) -> Gen.BList.difference_eq P.eq_spec_var (fv f1) l1
+  | Exists1 (l1,f1,_) -> Gen.BList.difference_eq P.eq_spec_var (fv f1) l1
   | Dom (v,_,_) -> [v]
   | PTrue _ | PFalse _ -> [] 
   
-let mkExists vl f pos =  match f with
+let mkExists1 vl f pos =  match f with
   | PFalse _
   | PTrue _ -> f
   | _ ->
     let nl = Gen.BList.intersect_eq P.eq_spec_var vl (fv f) in
-    if nl=[] then f else Exists (nl,f,pos)
+    if nl=[] then f else Exists1 (nl,f,pos) 
     
 and subst_perm (fr, t) o = match o with
   | PVar s -> PVar (P.subst_var (fr,t) s)
@@ -132,9 +133,9 @@ let rec apply_one_gen (fr,t) f f_s= match f with
   | Dom (v,d1,d2) -> (match f_s (fr,t) (PVar v) with
 	 | PVar v-> Dom (v,d1,d2)
 	 | PConst v-> if Ts.contains d2 v && Ts.contains v d1 then PTrue no_pos else PFalse no_pos)
-  | Exists (qsv,f1,p) ->  
+  | Exists1 (qsv,f1,p) ->  
       if Gen.BList.mem_eq P.eq_spec_var fr qsv then f 
-      else Exists (qsv, apply_one_gen (fr,t) f1 f_s , p)
+      else Exists1 (qsv, apply_one_gen (fr,t) f1 f_s , p)
   | _ -> f
 
 let apply_one s f = apply_one_gen s f subst_perm
@@ -159,14 +160,14 @@ and apply_subs (sst : (P.spec_var * 'b) list) (f : perm_formula) : perm_formula 
   | Join (f1,f2,f3,p) -> Join (apply_subs_frac sst f1, apply_subs_frac sst f2, apply_subs_frac sst f3, p)
   | Eq (f1,f2,p) -> Eq (apply_subs_frac sst f1, apply_subs_frac sst f2, p)
   | Dom (v,d1,d2) -> Dom (P.subs_one sst v, d1,d2)
-  | Exists (qsv,f1,p) -> 
+  | Exists1 (qsv,f1,p) -> 
       let nv,nf = List.fold_left (fun (av,af) v->
         let sst = P.diff sst v in
         if (P.var_in_target v sst) then
           let fresh_v = P.fresh_spec_var v in
           (fresh_v::av, apply_subs sst (apply_one (v, fresh_v) af))
         else (v::av, apply_subs sst af) ) ([],f1) qsv in
-      Exists (nv,nf,p)
+      Exists1 (nv,nf,p)
   | _ -> f 
     
 let cmp_fperm v1 v2 = match v1,v2 with
@@ -182,7 +183,7 @@ let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (
   | Join (f11,f12,f13,_), Join (f21,f22,f23,_) -> 
       ((eq_fperm f11 f21)&&(eq_fperm f12 f22)&&(eq_fperm f13 f23)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21)&&(eq_fperm f13 f23))
   | Eq (f11,f12,_) , Eq(f21,f22,_) -> ((eq_fperm f11 f21)&&(eq_fperm f12 f22)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21))
-  | Exists (l1,f1,_), Exists (l2,f2,_) -> (List.length l1 = List.length l2 ) && (List.for_all2 P.eq_spec_var l1 l2) && (eq_perm_formula f1 f2)
+  | Exists1 (l1,f1,_), Exists1 (l2,f2,_) -> (List.length l1 = List.length l2 ) && (List.for_all2 P.eq_spec_var l1 l2) && (eq_perm_formula f1 f2)
   | Dom (v1,d11,d12), Dom (v2,d21,d22) -> P.eq_spec_var v1 v2 && Ts.stree_eq d11 d21 && Ts.stree_eq d12 d22
   | PTrue _, PTrue _
   | PFalse _, PFalse _ -> true
@@ -211,7 +212,7 @@ let rec factor_comm f = match f with
   | Join _ -> f
   | Dom _ -> f
   | Eq _ -> f
-  | Exists (v,f,p)-> mkExists v (factor_comm f) p
+  | Exists1 (v,f,p)-> mkExists1 v (factor_comm f) p
   | _ -> f
   
 let var_get_subst f1 f2 v pos = match f1,f2 with 
@@ -286,9 +287,9 @@ let rec transform_perm (f:(perm_formula->perm_formula option)* (frac_perm -> fra
       let nfr2 = transform_frac f_frac fr2 in
       mkEq nfr1 nfr2 p
 	| Dom (v,d1,d2) -> e
-    | Exists (qv,fr,p) ->
+    | Exists1 (qv,fr,p) ->
       let nfr = transform_perm f fr in
-      mkExists qv nfr p 
+      mkExists1 qv nfr p 
       
 let fold_frac_perm (e:frac_perm) (arg: 'a) f f_arg (f_comb: (*frac_perm ->*) 'b list -> 'b) :(frac_perm * 'b) =
   let r = f arg e in
@@ -327,9 +328,9 @@ let trans_perm (e:perm_formula) (arg: 'a) f f_arg f_comb_a : (perm_formula * 'b)
         let nf1,r1 = foldr_frac new_arg f1 in
         let nf2,r2 = foldr_frac new_arg f2 in
         (mkEq nf1 nf2 p, f_comb [r1;r2])
-      | Exists (qv,f,p) ->
+      | Exists1 (qv,f,p) ->
          let nf,r = foldr_f new_arg f in
-         (mkExists qv nf p, f_comb [r]) 
+         (mkExists1 qv nf p, f_comb [r]) 
 	  | Dom (v,d1,d2) -> (e, f_comb [])
       | PTrue _ -> (e,f_comb [])
       | PFalse _ -> (e, f_comb []) in
@@ -368,9 +369,9 @@ let rec list_of_a_f b f : ((P.spec_var list * ( frac_perm*frac_perm)list * (frac
 		  | x, None -> x
 		  | Some l1, Some l2 -> Some (l1@l2))
 	| Join (f1,f2,f3,_) -> Some [([],[],[(f1,f2,f3)],[])]
-	| Eq  (f1,f2,_) -> Some [([],[(f1,f2)],[],[])]
+	| Eq  (f1,f2,_) -> (match f1,f2 with | PConst c1, PConst c2 -> if Ts.eq c1 c2 then Some [([],[],[],[])] else None | _-> Some [([],[(f1,f2)],[],[])])
 	| Dom (v,d1,d2) -> Some [([],[],[],[(v,d1,d2)])]
-    | Exists (vl,f,_) ->
+    | Exists1 (vl,f,_) ->
 		(match list_of_a_f true f with 
 		 | None -> None
 		 | Some l -> Some (List.map (fun (c1,c2,c3,c4)-> (vl@c1,c2,c3,c4)) l))
@@ -541,11 +542,22 @@ let is_sat_a f = match list_of_a_f false f with
     | None -> false (*f formula is false*)
     | Some l -> List.exists is_sat_p_t_w l 
       
-let is_sat f = 
-  if !Globals.enable_frac_print then 
-      output_string !perm_log_file ("\n \n is\\_sat "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n")
-  else ();
-  Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
+
+let gen_table lv =
+   let lv = Gen.BList.remove_dups_eq P.eq_spec_var lv  in
+   let nv = List.length lv in
+   let la = 
+    if (nv<24) then 
+      let l = 
+        ["\\alpha";"\\beta";"\\gamma";"\\delta";"\\epsilon";"\\zeta";"\\eta";"\\theta";"\\iota";"\\kappa";
+         "\\lambda";"\\mu";"\\nu";"\\xi";"o";"\\pi";"\\rho";"\\sigma";"\\tau";"\\upsilon";
+         "\\phi";"\\chi";"\\psi";"\\omega"] in
+      let rec helper i l = if i=0 then [] else (List.hd l)::(helper (i-1) (List.tl l)) in helper nv l
+    else let rec helper i = if i=0 then [] else ("v\\_{"^(string_of_int i)^"} ")::(helper (i-1)) in (helper nv) in
+   let la = List.map (fun s-> P.SpecVar (Named perm,s,Unprimed)) la in
+   List.combine lv la
+      
+let hline = "---------------------------- \n \n " 
 
 let solve_once2 f = match is_sat_p_t_w2 f with 
 		| (hl::[],_,_,_)::[]-> Some hl
@@ -560,7 +572,12 @@ let solve_once f =
       
 let solve_once f =
   if !Globals.enable_frac_print then 
-      output_string !perm_log_file ("\n \n solve "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n")
+    if not(isConstTrue f) then
+      (print_counter:=!print_counter+1;
+      let f = subst (gen_table (fv f)) f in
+      output_string !perm_log_file ("\n \n "^hline^
+      (string_of_int !print_counter)^") solve "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n"))
+    else ()
   else ();
   Gen.Debug.no_1 "solve_once" !print_perm_f (fun c-> match c with | None -> "None" | _ -> "Some")
    solve_once f
@@ -607,22 +624,141 @@ let imply_a glb_evs f1 f2 =
       
   List.for_all (one_imply f2) (is_sat_p_t_w2 f1) 
   
+(***bench wrappers *****)
+let loop_bound = 99
+
+let prof_harness1 str f1 f2 arg = 
+  if !Globals.perm_prof then
+		let rec f1_loop cnt r arg  = 
+			if cnt=loop_bound then f1 arg 
+			else 
+				let r = f1 arg  in
+				f1_loop (cnt+1) r arg  in
+		let rec f2_loop cnt r arg  = 
+			if cnt=loop_bound then f2 arg 
+			else 
+				let r = f2 arg  in
+				f2_loop (cnt+1) r arg  in
+		let r1 = Gen.Profiling.do_1 ("old_"^str) (f1_loop 0 false) arg in
+		let r2 = Gen.Profiling.do_1 ("new_"^str) (f2_loop 0 false) arg in
+		let _ = if r1==r2 then () else 
+		(print_string ("sat difs \n ante: "^(!print_perm_f arg)^"\n r old: "^(string_of_bool r1)^"\n r new: "^(string_of_bool r2)^"\n");
+		Gen.Profiling.inc_counter (str^"_err")) in
+		r1
+  else f1 arg		
+	
+let prof_harness2 str f1 f2 arg1 arg2 = 
+	if !Globals.perm_prof then
+		let rec f1_loop cnt r arg1 arg2 = 
+			if cnt=loop_bound then f1 arg1 arg2
+			else 
+				let r = f1 arg1 arg2 in
+				f1_loop (cnt+1) r arg1 arg2 in
+				
+		let rec f2_loop cnt r arg1 arg2 = 
+			if cnt=loop_bound then f2 arg1 arg2
+			else 
+				let r = f2 arg1 arg2 in
+				f2_loop (cnt+1) r arg1 arg2 in
+	
+		let r1 = Gen.Profiling.do_2 ("old_"^str) (f1_loop 0 false) arg1 arg2 in
+		let r2 = Gen.Profiling.do_2 ("new_"^str) (f2_loop 0 false) arg1 arg2 in
+		let _ = if r1==r2 then () else 
+			(print_string ("imply difs \n ante: "^(!print_perm_f arg1)^" \n conseq :"^(!print_perm_f arg2)^"\n r old: "^(string_of_bool r1)^"\n r new: "^(string_of_bool r2)^"\n");
+			Gen.Profiling.inc_counter (str^"_err")) in
+		r1
+	else f1 arg1 arg2 
+    
+module Share_prover_w = Share_prover_w
+	
+let trans_one_2_syst (exl,fef,ffef,doms) =
+	let lc,le = List.fold_left (fun (a1,a2) (v1,v2)-> match v1,v2 with 
+		| PConst c1, PConst c2 -> a1,a2
+		| PConst c, PVar v 
+		| PVar v, PConst c -> (Share_prover_w.tr_var v,c)::a1,a2
+		| PVar v1, PVar v2 -> a1,(Share_prover_w.tr_var v1,Share_prover_w.tr_var v2)::a2) ([],[]) fef in
+	let tr_one v= match v with | PConst c-> Share_prover_w.mkCperm c | PVar v-> Share_prover_w.mkVperm v in
+	let eqs = List.map (fun (c1,c2,c3)-> tr_one c1, tr_one c2, tr_one c3) ffef in
+	let domex, domeqs = List.fold_left (fun (a1,a2) (v,c1,c2)-> 
+		let v = Share_prover_w.mkVperm v in		
+		let a1,a2 = 
+			if c1=Ts.bot then a1,a2 
+			else 
+				let freshv = Share_prover.Sv.fresh_var () in
+				freshv::a1,(Share_prover_w.mkCperm c1, Share_prover_w.Solver.Vperm freshv,v)::a2 in			
+		if c2=Ts.top then a1,a2 
+		else 
+			let freshv = Share_prover.Sv.fresh_var () in
+			freshv::a1, (Share_prover_w.Solver.Vperm freshv, v, Share_prover_w.mkCperm c2)::a2 ) ([],[]) doms in
+	let tot_exv = (List.map Share_prover_w.tr_var exl)@domex in
+	let tot_eqs = eqs@domeqs in
+	let lve = let l1,l2 = List.split le in l1@l2 in
+	let clv = tot_exv@ (fst (List.split lc))@ lve @ (List.fold_left (fun a c-> (Share_prover_w.Solver.eq_fv c)@a) [] tot_eqs) in
+				{
+				Share_prover_w.Solver.eqs_ex = tot_exv ;
+				Share_prover_w.Solver.eqs_nzv = Gen.BList.remove_dups_eq Share_prover_w.sv_eq clv;
+				Share_prover_w.Solver.eqs_vc = lc;
+				Share_prover_w.Solver.eqs_ve = le;
+				Share_prover_w.Solver.eqs_eql = tot_eqs;}
+	
+	
+let new_impl_prov f1 f2 = 
+	match list_of_a_f false f1 with
+		| None -> true
+		| Some l_ante -> match list_of_a_f false f2 with
+			| None -> not (List.exists (fun c-> Share_prover_w.Solver.is_sat (trans_one_2_syst c)) l_ante)
+			| Some l_conseq -> 
+				let l_conseq = List.map trans_one_2_syst l_conseq in
+				let l_ante = List.map trans_one_2_syst l_ante in
+				List.for_all (fun c-> List.exists (fun a-> 
+					let new_ex = List.filter (fun c-> not (List.exists (Share_prover.Sv.eq c) a.Share_prover_w.Solver.eqs_nzv)) c.Share_prover_w.Solver.eqs_nzv in
+					Share_prover_w.Solver.imply a {c with Share_prover_w.Solver.eqs_ex = c.Share_prover_w.Solver.eqs_ex @ new_ex}) l_ante ) l_conseq
+	
+let new_sat_prov f = 
+	match list_of_a_f false f with
+		| None -> false
+		| Some l -> List.exists (fun c-> Share_prover_w.Solver.is_sat (trans_one_2_syst c)) l
+	
+let imply_w evs f1 f2 = prof_harness2 "imply" (imply_a evs) new_impl_prov f1 f2 
+
+let is_sat_w f = prof_harness1 "sat" is_sat_a new_sat_prov f
+
 let imply evs f1 f2 = 
   let pr = Gen.pr_list !print_sv in  
   if !Globals.enable_frac_print then 
-      output_string !perm_log_file ("\n \n imply "^(Gen.pr_lst latex_print_sv evs)^"\n \n "^(!latex_of_formula f1)^" \n \n $\\qquad \\qquad \\vdash $ "^
-      (!latex_of_formula f2)^" \n \n \n")
+    if not(isConstTrue f2) then
+      (print_counter:=!print_counter+1;
+      let tbl = gen_table ((fv f1)@(fv f2)@evs) in
+      let f1 = subst tbl f1 in
+      let f2 = subst tbl f2 in
+      let evs = List.map (P.subs_one tbl) evs in
+      output_string !perm_log_file ("\n \n "^hline^
+      (string_of_int !print_counter)^") imply "^(Gen.pr_lst latex_print_sv evs)^"\n \n "^(!latex_of_formula f1)^" \n \n $\\qquad \\qquad \\vdash $ "^
+      (!latex_of_formula f2)^" \n \n \n"))
+    else ()
    else ();
-  Gen.Debug.no_3 "perm imply" pr !print_perm_f !print_perm_f string_of_bool imply_a evs f1 f2 
-        
+  Gen.Debug.no_3 "perm imply" pr !print_perm_f !print_perm_f string_of_bool imply_w evs f1 f2 
+    
+let is_sat f = 
+  if !Globals.enable_frac_print then 
+    if not(isConstTrue f) then
+      (print_counter:=!print_counter+1;
+      let f = subst (gen_table (fv f)) f in
+      output_string !perm_log_file ("\n \n "^hline^
+      (string_of_int !print_counter)^") is\\_sat "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n"))
+    else ()
+  else ();
+  Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_w f
+	
+	
 (*elim exists*)
 (*solves f, returns vars without a unique value, and pairs of vars and values*)
  
  let get_perm_sol pr_sol pv = match pr_sol with
-  | None -> Tree_shares.top
+  | None -> Ts.top
   | Some l -> match pv with 
-    | None -> Tree_shares.top
-    | Some pv -> try fst (PMap.find pv l) with Not_found-> Tree_shares.bot 
+    | None -> Ts.top
+    | Some pv -> try fst (PMap.find pv l) with Not_found-> Ts.bot 
  
 let var_2_prop_var pr_sol (v:P.spec_var) pv = (v,(P.type_of_spec_var v, get_perm_sol pr_sol pv))
     
@@ -633,8 +769,8 @@ let var_2_prop_var_list pr_sol vl pv =
   let perm  = get_perm_sol pr_sol pv in
   List.map (fun v-> (v,(P.type_of_spec_var v, perm))) vl
   
-let var_2_prop_var_bot (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.bot))
-let var_2_prop_var_top (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.top))
+let var_2_prop_var_bot (v:P.spec_var) = (v,(P.type_of_spec_var v, Ts.bot))
+let var_2_prop_var_top (v:P.spec_var) = (v,(P.type_of_spec_var v, Ts.top))
  
 let solve_for_l_w w f = match w with
   | [] -> (w,[])
@@ -653,7 +789,14 @@ let solve_for_l_w w f = match w with
  
 let solve_for_l w f = 
 	 if !Globals.enable_frac_print then 
-      output_string !perm_log_file ("\n \n solve "^(Gen.pr_lst latex_print_sv w)^"\n \n "^(!latex_of_formula f)^"\n \n \n")
+    if not(isConstTrue f) then
+      (print_counter := !print_counter +1 ;
+        let tbl = gen_table ((fv f)@w) in
+        let f = subst tbl f in
+        let w = List.map (P.subs_one tbl) w in
+      output_string !perm_log_file ("\n \n "^hline^
+      (string_of_int !print_counter)^") solve "^(Gen.pr_lst latex_print_sv w)^"\n \n "^(!latex_of_formula f)^"\n \n \n"))
+    else ()
    else ();
    solve_for_l_w w f
  
@@ -664,14 +807,14 @@ let elim_exists_perm w f1 =
   (l1,(List.fold_left (fun a c-> apply_one_exp c a)f1 l2)) 
   
 (*try and eliminate vars from w, what can not be done, push as existentials-eliminate them*)
-let elim_pr_exists w f1 = 
+let elim_pr_exists1 w f1 = 
   let l1, l2 = solve_for_l w f1 in
-  (mkExists l1 (List.fold_left (fun a c-> apply_one_exp c a)f1 l2) no_pos) 
+  (mkExists1 l1 (List.fold_left (fun a c-> apply_one_exp c a)f1 l2) no_pos) 
     
-let rec elim_exists_exp_perm f = match f with 
-  | And (f1,f2,l) -> mkAnd (elim_exists_exp_perm f1) (elim_exists_exp_perm f2) l
-  | Or  (f1,f2,l) -> mkOr (elim_exists_exp_perm f1) (elim_exists_exp_perm f2) l
-  | Exists (vl,f,_) -> elim_pr_exists vl f      
+let rec elim_exists_exp_perm1 f = match f with 
+  | And (f1,f2,l) -> mkAnd (elim_exists_exp_perm1 f1) (elim_exists_exp_perm1 f2) l
+  | Or  (f1,f2,l) -> mkOr (elim_exists_exp_perm1 f1) (elim_exists_exp_perm1 f2) l
+  | Exists1 (vl,f,_) -> elim_pr_exists1 vl f      
   | Join _
   | Eq _  
   | Dom _
@@ -681,7 +824,7 @@ let rec elim_exists_exp_perm f = match f with
    
    (*end of todos*)
    
-let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_vars : P.spec_var list)(impl_inst_vars : P.spec_var list) (vvars : P.spec_var list) (pos : loc) 
+let split_universal1 (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_vars : P.spec_var list)(impl_inst_vars : P.spec_var list) (vvars : P.spec_var list) (pos : loc) 
       : perm_formula * perm_formula * (P.spec_var list) =
   let rec split f = match f with
 		| And (f1, f2, _) ->
@@ -697,7 +840,7 @@ let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_var
 	  | Eq _
 	  | Join _
 	  | Dom _
-	  | Exists _ ->
+	  | Exists1 _ ->
 			if P.disjoint (fv f) vvars then mkTrue no_pos else f
 	  | And(f1, f2, l) -> mkAnd (drop_cons f1 vvars) (drop_cons f2 vvars) l
 	  | Or(f1, f2, l) -> mkOr (drop_cons f1 vvars) (drop_cons f2 vvars)  l
@@ -708,14 +851,14 @@ let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_var
   let to_ante = find_rel_constraints to_ante vvars in
   let conseq_fv = fv to_conseq in
   let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) conseq_fv in
-  let wrapped_to_conseq = mkExists instantiate to_conseq pos in
+  let wrapped_to_conseq = mkExists1 instantiate to_conseq pos in
   let to_ante = if fv wrapped_to_conseq <> [] then mkAnd to_ante wrapped_to_conseq no_pos else to_ante in
   let fvars = fv f in
   if !Globals.move_exist_to_LHS & (not(Gen.is_empty (Gen.BList.difference_eq P.eq_spec_var fvars evars)) & not(Gen.is_empty evars))	then
     let new_f = drop_cons f vvars in
-	let new_f = mkAnd to_ante (mkExists evars new_f pos) pos in
+	let new_f = mkAnd to_ante (mkExists1 evars new_f pos) pos in
     (new_f,to_conseq, evars)
-  else (elim_exists_exp_perm to_ante, to_conseq, evars)
+  else (elim_exists_exp_perm1 to_ante, to_conseq, evars)
    
     
 let comp_perm_split_a lsp v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm = 
@@ -776,7 +919,14 @@ let solve_on_a f var = match var with
     
  let solve_on f var = 
 	 if !Globals.enable_frac_print then 
-      output_string !perm_log_file ("\n \n solve "^(Gen.pr_option latex_print_sv var)^" \n \n  \n"^(!latex_of_formula f)^" \n \n")
+    if not (isConstTrue f) then
+      (print_counter:= !print_counter +1;
+       let tbl = gen_table ((match var with | None -> [] | Some v-> [v])@(fv f)) in
+       let f = subst tbl f in
+       let var = match var with | None -> None | Some v -> Some (P.subs_one tbl v) in
+      output_string !perm_log_file ("\n \n "^hline^
+      (string_of_int !print_counter)^") solve "^(Gen.pr_option latex_print_sv var)^" \n \n  \n"^(!latex_of_formula f)^" \n \n"))
+    else ()
    else ();
    solve_on_a f var
    
@@ -802,21 +952,32 @@ let stop_printing _ =
      (output_string !perm_log_file " \\end{document}"; flush !perm_log_file; close_out !perm_log_file)
     else ()
    
+
 let latex_of_frac f = match f with 
   | PConst s -> Ts.latex_of_share s
 	| PVar v -> latex_print_sv v
   
+let printer_stop = ref 0
+  
 let rec latex_of_formula_w f = match f with
-  | And (f1,f2,_) -> (latex_of_formula_w f1)^" ~\\wedge \\\\ "^(latex_of_formula_w f2)
-  | Or  (f1,f2,_) -> " ( "^(latex_of_formula_w f1)^" ) ~\\vee \\\\ ( "^(latex_of_formula_w f2)^" ) "
-  | Join (f1,f2,f3,_) -> (latex_of_frac f1)^" ~\\oplus~ "^(latex_of_frac f2) ^" ~=~ "^(latex_of_frac f3)
-  | Eq (f1,f2,_) -> (latex_of_frac f1) ^" ~=~ "^ (latex_of_frac f2)
-  | Exists (l,f,_) -> "(\\exists ~"^(String.concat " ~" (List.map latex_print_sv l))^" . ~"^(latex_of_formula_w f)^" ) "
+  | And (f1,f2,_) -> (latex_of_formula_w f1)^" ~~\\wedge~~ "^(latex_of_formula_w f2)
+  | Or  (f1,f2,_) -> " ( "^(latex_of_formula_w f1)^" ) ~~\\vee~~ ( "^(latex_of_formula_w f2)^" ) "
+  | Join (f1,f2,f3,_) -> 
+       (printer_stop := !printer_stop +1;
+        (if ( !printer_stop mod 5 ==0 ) then "\\\\ ~~~~~" else "")^
+      (latex_of_frac f1)^" \\oplus "^(latex_of_frac f2) ^" = "^(latex_of_frac f3))
+  | Eq (f1,f2,_) -> 
+    (printer_stop := !printer_stop +1;
+      (if ( !printer_stop mod 5 ==0 ) then "\\\\ ~~~~~" else "")^
+    (latex_of_frac f1) ^" = "^ (latex_of_frac f2))
+  | Exists1 (l,f,_) -> "(\\exists ~"^(String.concat " ~" (List.map latex_print_sv l))^" . ~"^(latex_of_formula_w f)^" ) "
   | Dom (v,s1,s2) ->  (latex_print_sv v)^" ~\\in ~"^(Ts.latex_of_share s1)^" , "^(Ts.latex_of_share s2)
   | PTrue _ -> " True "
   | PFalse _ -> " False ";;
-
-latex_of_formula := fun f-> "$"^(latex_of_formula_w f)^"$"
+  
+latex_of_formula := fun f->
+   printer_stop:=0;
+ "$ \\noindent "^(latex_of_formula_w f)^"$"
    
    (*start of useless code*)
    

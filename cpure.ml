@@ -7,7 +7,7 @@
 open Globals
 open Gen.Basic
 
-module Ts = Tree_shares
+module Ts = Tree_shares.Ts
 
 (* spec var *)
 type spec_var =

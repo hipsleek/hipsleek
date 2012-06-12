@@ -239,6 +239,8 @@ let allow_imm = ref false
 
 let print_proc = ref false
 
+let perm_prof = ref false
+
 let check_all = ref true
 
 let use_field = ref false

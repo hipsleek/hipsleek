@@ -747,7 +747,7 @@ let look_up_view_baga prog (c : ident) (root:P.PtrSV.t) (args:P.BagaSV.baga) : P
   (*P.subst_var_list_avoid_capture from_svs to_svs ba*)
 
 let look_up_view_baga  prog (c : ident) (root:P.PtrSV.t) (args:P.BagaSV.baga) : P.BagaSV.baga = 
-    let pr_ptrSV = pr_pair !print_sv (fun (_,c)-> Tree_shares.string_of_tree_share c) in
+    let pr_ptrSV = pr_pair !print_sv (fun (_,c)-> Tree_shares.Ts.string_of_tree_share c) in
       let print_r = Gen.pr_list pr_ptrSV in
       Gen.Debug.no_2 "look_up_view_baga" pr_ptrSV print_r print_r
       (fun r a ->  look_up_view_baga prog c r a) root args

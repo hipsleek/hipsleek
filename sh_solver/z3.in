@@ -1,0 +1,6 @@
+(declare-fun __ts_fv_2$ () Bool)
+(declare-fun __ts_fv_2@ () Bool)
+;Antecedent
+;Negation of Consequence
+(assert (not (exists ((__ts_fv_2$ Bool)) (exists ((__ts_fv_2@ Bool)) (and (and true __ts_fv_2$) (not __ts_fv_2@ ))))))
+(check-sat)

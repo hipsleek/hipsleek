@@ -2062,7 +2062,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
 				  let (es_p, es_br, es_pr) = es.es_pure in
 		          let tmp_pure = 
 					let p,b = elim_exists_pure w (es_p,es_br) true pos in
-					let pr = Cpr.elim_pr_exists w es_pr in
+					let pr = Cpr.elim_pr_exists1 w es_pr in
 					(p,b,pr) in
 		          let res_rs = Ctx {es with es_evars = estate.es_evars;
 				      es_pure = tmp_pure; es_prior_steps = (ss @ es.es_prior_steps);} in
@@ -2114,7 +2114,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
 	      let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = 
             split_universal (e_pure, es_br) fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
 		  let to_ante_pr, to_conseq_pr, new_evars_pr = 
-			Cpr.split_universal es_pr fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
+			Cpr.split_universal1 es_pr fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
 		  let conseq_pr = Cpr.mkAnd perm2 to_conseq_pr pos in
 	      let tmp_conseq = mkBase resth2 pure2 type2 flow2 conseq_pr branches2 pos in
 	      let new_conseq = normalize tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in
@@ -3279,7 +3279,7 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula) (fp:Cperm.pe
     let f = MCP.find_rel_constraints f (es.es_gen_expl_vars@es.es_gen_impl_vars) in
 	let pr = Cperm.find_rel_constraints fp (es.es_gen_expl_vars@es.es_gen_impl_vars) in
     let nf = 
-      let f2,f2pr = if (es.es_evars = []) then f,pr else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos),(Cperm.elim_pr_exists es.es_evars pr) in
+      let f2,f2pr = if (es.es_evars = []) then f,pr else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos),(Cperm.elim_pr_exists1 es.es_evars pr) in
       CF.mkStar es.es_formula (formula_of_mix_formula f2 f2pr no_pos) Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {es with
@@ -5312,7 +5312,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
         if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
         else
 
-			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_h (Some v_rest) lhs_node) pos in				
+			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_node (Some v_rest) lhs_node) pos in				
 			let new_estate = {estate with 
 								es_formula = Base{ lhs_b with formula_base_heap = n_lhs_h; formula_base_perm = n_lhs_perm }; 
 								es_ante_evars = [v_rest;v_consumed]@estate.es_ante_evars } in
@@ -5322,7 +5322,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
               | None -> rhs_b.formula_base_pure
               | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
             let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-			let n_lhs_node = set_perm_h (Some v_consumed) lhs_node in
+			let n_lhs_node = set_perm_node (Some v_consumed) lhs_node in
             let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b is_folding pos in
             (res_es0,prf0)
 | Context.M_r_split_match {

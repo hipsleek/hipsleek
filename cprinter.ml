@@ -528,7 +528,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | _ -> false
 
 let perm_formula_wo_paren  (e:Cpr.perm_formula) = match e with
-    | Cpr.Exists _ | Cpr.Eq _ | Cpr.Join _ | Cpr.And _ |Cpr.Dom _ -> true 
+    | Cpr.Exists1 _ | Cpr.Eq _ | Cpr.Join _ | Cpr.And _ |Cpr.Dom _ -> true 
     | _ -> false
 	
 	
@@ -776,12 +776,12 @@ let pr_prunning_conditions cnd pcond = match cnd with
                     pcond;fmt_string "]") pcond *)
 
 let pr_ptrSV_list l = 
-  let str_pair (a,(_,b)) = "("^(string_of_spec_var a)^","^(Tree_shares.string_of_tree_share b)^")" in
+  let str_pair (a,(_,b)) = "("^(string_of_spec_var a)^","^(Tree_shares.Ts.string_of_tree_share b)^")" in
   fmt_string ("["^(String.concat "," (List.map str_pair l))^"]")
     
 let string_of_ptrSV_list l = poly_string_of_pr pr_ptrSV_list l
   
-let string_of_ms (m:((P.spec_var*('a*Tree_shares.stree)) list) list) : string =
+let string_of_ms (m:((P.spec_var*('a*Tree_shares.Ts.stree)) list) list) : string =
   let wrap s1 = "["^s1^"]" in
   let ls = List.map (fun l -> string_of_ptrSV_list l) m in
   wrap (String.concat ";" ls)
@@ -922,8 +922,8 @@ let rec string_of_flow_formula f c =
 	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
 
 let rec pr_share_tree t = match t with
-    | Tree_shares.Leaf b-> fmt_string (if b then "*" else " ")
-    | Tree_shares.Node (t1,t2) -> pr_pair pr_share_tree pr_share_tree (t1,t2)
+    | Tree_shares.Ts.Leaf b-> fmt_string (if b then "*" else " ")
+    | Tree_shares.Ts.Node (t1,t2) -> pr_pair pr_share_tree pr_share_tree (t1,t2)
 	  
 let rec pr_frac_formula f = match f with
 	| Cpr.PVar v -> pr_spec_var v
@@ -947,7 +947,7 @@ let pr_perm_formula f =
           pr_list_op op_or f_b args
 	| Cpr.Join (f1,f2,f3,_) -> (pr_frac_formula f1; fmt_string "+"; pr_frac_formula f2 ; fmt_string "="; pr_frac_formula f3)
 	| Cpr.Eq (f1,f2,_) -> (pr_frac_formula f1; fmt_string "="; pr_frac_formula f2)
-	| Cpr.Exists (ql,f,_)-> fmt_string "ex("; pr_list_of_spec_var ql; fmt_string ":"; helper f; fmt_string ")"
+	| Cpr.Exists1 (ql,f,_)-> fmt_string "ex("; pr_list_of_spec_var ql; fmt_string ":"; helper f; fmt_string ")"
 	| Cpr.Dom (v,d1,d2) -> pr_spec_var v; fmt_string " in "; pr_share_tree d1; fmt_string " ; "; pr_share_tree d2
 	| Cpr.PTrue _ -> fmt_string "T"
 	| Cpr.PFalse _ -> fmt_string "F" in

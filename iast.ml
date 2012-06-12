@@ -138,7 +138,7 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
-          proc_file : string;
+				  proc_file : string;
 				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;

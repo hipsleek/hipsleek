@@ -4040,8 +4040,8 @@ and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula =
       
 and trans_frac_const f = 
 	List.fold_right (fun c a-> match c with 
-		| PLeft -> Tree_shares.Node (a, Tree_shares.Leaf false)
-		| PRight -> Tree_shares.Node (Tree_shares.Leaf false,a)) f (Tree_shares.Leaf true)
+		| PLeft -> Tree_shares.Ts.Node (a, Tree_shares.Ts.Leaf false)
+		| PRight -> Tree_shares.Ts.Node (Tree_shares.Ts.Leaf false,a)) f (Tree_shares.Ts.Leaf true)
 	  
 and trans_frac_formula f = match f with
 	| Ipr.PConst f -> Cpr.PConst (trans_frac_const f)
@@ -4053,7 +4053,7 @@ and trans_perm_formula (f0:Ipr.perm_formula) : Cpr.perm_formula = match f0 with
   | Ipr.Or (f1,f2,p) -> Cpr.mkOr (trans_perm_formula f1) (trans_perm_formula f2) p
   | Ipr.Join (f1,f2,f3,p)-> Cpr.mkJoin (trans_frac_formula f1) (trans_frac_formula f2) (trans_frac_formula f3) p
   | Ipr.Eq (f1,f2,p) -> Cpr.mkEq (trans_frac_formula f1) (trans_frac_formula f2) p
-  | Ipr.Exists (l,f,p) -> Cpr.mkExists (List.map Cpr.mk_perm_var l) (trans_perm_formula f) p
+  | Ipr.Exists (l,f,p) -> Cpr.mkExists1 (List.map Cpr.mk_perm_var l) (trans_perm_formula f) p
   | Ipr.Dom (v,d1,d2) -> Cpr.mkDom (Cpr.mk_perm_var v) (trans_frac_const d1) (trans_frac_const d2)
   | Ipr.PTrue p -> Cpr.PTrue p
   | Ipr.PFalse p -> Cpr.PFalse p
