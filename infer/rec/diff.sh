@@ -52,9 +52,25 @@ echo "======= bug-num-del ======"
 diff bug-num-del.res bug-num-del.n
 echo "======= bsort-1 ======"
 diff bsort-1.res bsort-1.n
+echo "======= bsort-3 ======"
+diff bsort-3.res bsort-3.n
+echo "======= bsort-4 ======"
+diff bsort-4.res bsort-4.n
 echo "======= bst-del ======"
 diff bst-del.res bst-del.n
+echo "======= bst-del-a ======"
+diff bst-del-a.res bst-del-a.n
+echo "======= bst-del-b ======"
+diff bst-del-b.res bst-del-b.n
+echo "======= bst-del-c ======"
+diff bst-del-c.res bst-del-c.n
 echo "======= bst-insert ======"
 diff bst-insert.res bst-insert.n
+echo "======= bst-insert-a ======"
+diff bst-insert-a.res bst-insert-a.n
+echo "======= bst-insert-b ======"
+diff bst-insert-b.res bst-insert-b.n
+echo "======= bst-insert-c ======"
+diff bst-insert-c.res bst-insert-c.n
 echo "======= bst-remove-min ======"
 diff bst-remove-min.res bst-remove-min.n

@@ -10,7 +10,7 @@ ll<n> == self = null & n = 0
 relation R(int n, int m).
 
 int length(node x)
-  infer /* @pre */ [R]
+  infer /*  */ [R]
   requires x::ll<n>@L
   ensures R(res,n);
   // R(res,n) = res=n

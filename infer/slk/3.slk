@@ -8,7 +8,7 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 // (1) Valid
-infer [y] true |- y::node<a,b> * b::node<c,d>.
+infer [y] true |- y::node<a,b>@I * b::node<c,d>@I.
 print residue.
 
 // (2) Valid
@@ -27,8 +27,8 @@ print residue.
 Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48 |-  n_48=n (may-bug).
 */
 
-// (5) Fail
-// TODO we should infer n!=0 
+// (5) Valid
+//inferred pure: [n!=0]
 infer [n] n=0 |- y::ll<n>.
 print residue.
 /*
@@ -39,7 +39,12 @@ Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 
 infer [n] n=0 & y=null |- y::ll<n>.
 print residue.
 
-// (7) Valid & inferred n=0
+// (7) TODO need not infer n=0 which can be in
+//     the post-state
+// Entail  (7): Valid. 
+//
+// <1>true&y=null & n=0&{FLOW,(17,18)=__norm}
+// inferred pure: [n=0]
 infer [n] y=null |- y::ll<n>.  
 print residue.
 

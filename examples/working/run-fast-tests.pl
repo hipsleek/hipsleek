@@ -232,7 +232,7 @@ $output_file = "log";
          "sub", "SUCCESS",
          "mult_c", "SUCCESS",
          "shift_left", "SUCCESS",
-         "mult", "SUCCESS",
+         "mult2", "SUCCESS",
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
@@ -890,10 +890,13 @@ $output_file = "log";
         ["ll_nolists.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
         ["ll_test1.ss", 1, "", "reverse", "SUCCESS"],
         ["ll_test2.ss", 1, "", "delete", "SUCCESS"],
+        # above fails on postcondition!
         # ["ll_test3.ss", , "", ],
+        # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
-        ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        #["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        # above takes too long
         ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
         # ["lz_bak.ss", 0, ""],
@@ -932,6 +935,18 @@ $output_file = "log";
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer4.slk", "", "", "Fail."],
                       ["infer/infer5.slk", "", "", "Valid.Valid.Fail.Valid."],
+                      ["infer/infer6.slk", "", "", "Valid."],
+                      ["infer/infer7.slk", "", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
+                      ["infer/infer8.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer9.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid."],
+#                      ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail."],
+                      ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Valid."],
+                      ["infer/infer11.slk", "", "", "Fail."],
+#                      ["infer/infer12.slk", "", "", "Valid.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer12.slk", "", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer13.slk", "", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
                       ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
@@ -1064,6 +1079,26 @@ sub hip_process_file {
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
 			#print "\nbegin"."$output"."end\n";
+#            my @lines = split /\n/, $output;
+#            @results = [];
+#            foreach my $line (@lines) {
+#                for($i = 3; $i<$limit;$i+=2)
+#                {
+#                    #print $line . "\n";
+#                    if($line =~ /$procedure $test->[$i]/ && $line =~ m/SUCCESS/){
+#                        @results[$i] = "SUCCESS";
+#                    }
+#                    elsif($line =~ /$procedure $test->[$i]/  && $line =~ m/FAIL/ ){
+#                        @results[$i] = "FAIL";
+#                    }
+#                }
+#            }
+#            for ($i = 3; $i<$limit;$i+=2) {
+#                #print $test->[$i] ."\n";
+#                #print @results[$i] ."\n";
+#                #print $test->[$i+1] ."\n";
+#                if(@results[$i] ne $test->[$i+1])
+
 			for($i = 3; $i<$limit;$i+=2)
 			{
 				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
@@ -1079,7 +1114,7 @@ sub hip_process_file {
 				$error_count++;
 				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
 				print "term error at: $test->[0] $test->[$i]\n";
-			}
+            }
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
             }

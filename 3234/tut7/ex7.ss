@@ -16,10 +16,12 @@ lsort<s,n> == self::node<s,null> & n=1
 node insert(node x, node v)
   requires v::node<a,_>
   case {
-    x=null ->  requires true
-               ensures true;
-    x!=null -> requires x::lsort<mn,n> 
-               ensures true;
+    x=null ->  
+      requires true
+      ensures res::lsort<a,1>;
+    x!=null -> 
+      requires x::lsort<h,n> 
+      ensures res::lsort<min(a,h),n+1>;
   }
 {
   if (x==null) {
@@ -30,6 +32,7 @@ node insert(node x, node v)
            v.next = x;
            return v;
        } else {
+         //assume false;
           node r = insert(x.next, v);
           x.next = r;
           return x;

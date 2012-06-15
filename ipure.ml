@@ -1181,4 +1181,62 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
 
-
+(* get type of an expression *)
+let rec typ_of_exp (e: exp) : typ =
+  let pos = pos_of_exp e in
+  let merge_types typ1 typ2 =
+    if (typ1 = UNK) then typ2
+    else if (typ2 = UNK) || (typ1 = typ2) then typ1
+    else Gen.Basic.report_error pos "Ununified type in 2 expressions" in
+  match e with
+  | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
+                                 merge_types ty2 ty
+  | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
+  | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
+  (* Const *)
+  | IConst _                  -> Globals.Int
+  | FConst _                  -> Globals.Float
+  | AConst _                  -> Globals.AnnT
+  (* Arithmetic expressions *)
+  | Add (ex1, ex2, _)
+  | Subtract (ex1, ex2, _)
+  | Mult (ex1, ex2, _)
+  | Div (ex1, ex2, _)
+  | Max (ex1, ex2, _)
+  | Min (ex1, ex2, _)         -> let ty1 = typ_of_exp ex1 in
+                                 let ty2 = typ_of_exp ex2 in
+                                 merge_types ty1 ty2
+  (* bag expressions *)
+  | Bag (ex_list, _)
+  | BagUnion (ex_list, _)
+  | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in 
+                                 let ty = List.fold_left merge_types UNK ty_list in
+                                 Globals.BagT ty
+  | BagDiff (ex1, ex2, _)     -> let ty1 = typ_of_exp ex1 in
+                                 let ty2 = typ_of_exp ex2 in
+                                 let ty = merge_types ty1 ty2 in
+                                 Globals.BagT ty
+  (* list expressions *)
+  | List (ex_list, _)         -> let ty_list = List.map typ_of_exp ex_list in 
+                                 let ty = List.fold_left merge_types UNK ty_list in
+                                 Globals.List ty
+  | ListCons (ex1, ex2, _)    -> let ty1 = typ_of_exp ex1 in
+                                 let ty2 = typ_of_exp ex2 in
+                                 let ty = merge_types ty1 ty2 in
+                                 Globals.List ty
+  | ListHead (ex, _) 
+  | ListTail (ex, _)
+  | ListLength (ex, _)        -> let ty = typ_of_exp ex in
+                                 Globals.List ty
+  | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
+                                 let ty = List.fold_left merge_types UNK ty_list in
+                                 Globals.List ty
+  | ListReverse (ex, _)       -> let ty = typ_of_exp ex in
+                                 Globals.List ty
+  (* Array expressions *)
+  | ArrayAt (_, ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
+                                 let ty = List.fold_left merge_types UNK ty_list in
+                                 let len = List.length ex_list in
+                                 Globals.Array (ty, len)
+  (* Func expressions *)
+  | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func";

@@ -1,5 +1,6 @@
 module DD = Debug
 open Globals
+open Global_var
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Solver
@@ -349,6 +350,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (new_spec,[],rel,br)
             (* (new_spec,[],true) *)
 	  | CF.EBase b ->
+            let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
+            stk_vars # push_list vs;
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
@@ -365,10 +368,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	          then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
                 let (c,pre,rels,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],true) | Some l -> let r1,r2,r3,r4 = helper nctx l in (Some r1,r2,r3,r4) in
+            stk_vars # pop_list vs;
 	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
                 | [] -> b.CF.formula_struc_base
-                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 b.CF.formula_struc_base p pos_spec))
+                | [p] -> (pre_ctr # inc; Solver.simplify_pre (CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
                 | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
             Debug.trace_hprint (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
             Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
@@ -412,6 +416,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 			let s2,p2,r2,b2 = helper ctx b.CF.formula_struc_or_f2 in
 			(CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2, pr_id b1 && pr_id b2)
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
+            let curr_vars = stk_vars # get_stk in
+            (* let ovars = CF.fv post_cond in *)
+            (* let ov = CP.diff_svl ovars curr_vars in *)
+            in_vars # set curr_vars ;
+            Debug.tinfo_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
+            (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
+            (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
 	        else
@@ -467,6 +478,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             end;
                           (impl_vs,new_post)
                         else ([],post_cond) in
+                      stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
                       let pres, posts, _ = CF.get_pre_post_vars [] proc.proc_static_specs in
                       let pre_vars = CP.remove_dups_svl (pres @ (List.map 
@@ -493,16 +505,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
-                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in
-                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;
+(*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
+(*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
-                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;
+(*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
                       let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
                       let _ = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
-                      let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in
-                      let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in
-                      let res = CF.isSuccessListPartialCtx_new tmp_ctx in
+(*                      let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in*)
+(*                      let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in*)
+                      let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
+                      let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let lp = (* if not !do_abd_from_post then lp else ( *)
                           Debug.devel_zprint (lazy ("TMP CTX: " ^ (Cprinter.string_of_list_partial_context tmp_ctx) ^ "\n")) no_pos;
                           let lp_new = Inf.collect_pre_pure_list_partial_context tmp_ctx in
@@ -521,13 +534,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
                           let i_pre =
                             if infer_pre_flag then (
-                                DD.info_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
-                                DD.info_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) pos;
-                                DD.info_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
+                                DD.tinfo_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
+                                DD.tinfo_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) pos;
+                                DD.tinfo_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
                                 (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
                                 (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
-                                let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
+                                let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HEmp no_pos) lh in
                                 let fml = CF.normalize 1 fml (CF.formula_of_pure_formula (CP.arith_simplify_new (CP.conj_of_list lp no_pos)) no_pos) no_pos in
                                 if Solver.verify_pre_is_sat prog fml then [fml] else []
                             )
@@ -538,6 +551,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           in
                           let i_post =
                             if not(infer_post_flag) then spec
+                            else
+                            if rels!=[] then let _ = post_ctr # inc in spec
                             else
                               begin
                                 let _ = post_ctr # inc in
@@ -551,13 +566,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
                                 (*let _ = List.iter (fun f -> print_endline ("FLIST: " ^ Cprinter.string_of_formula f)) flist in*)
-                                let flist = Gen.BList.remove_dups_eq (=) (List.map (fun fml -> Solver.simplify_post_heap_only fml prog) flist) in
+                                let flist = Gen.BList.remove_dups_eq (=) (flist) in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
+                                let heap_vars_init = CF.fv_heap_of post_cond in
                                 (* ref parameters *)
                                 let vr = List.map CP.to_primed var_ref in
-                                let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@vr) in
+                                let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@heap_vars_init@vr) in
                                 (* filter out res *)
                                 let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
                                 let post_vars = CP.remove_dups_svl post_vars in
@@ -570,7 +586,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 else post_cond in
                                 (* TODO : What if we have multiple ensures in a spec? *)                                
                                 (* It may be too early to compute a fix-point. *)
-                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true in
+                                let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true [] [] in
                                 DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
                                 DD.devel_pprint ("Initial Residual post :"^(pr_list Cprinter.string_of_formula flist)) pos;
                                 DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
@@ -654,7 +670,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
                         if CF.isSuccessListFailescCtx rs then 
 				          (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
-				          Debug.pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
+				          Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
 				        else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
                         rs in 
 			    let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
@@ -740,6 +756,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else
             (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	        let _ = proving_loc#set pos in
+            let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
 	        let field_types, vs = List.split lvars in
 	        let v_prim = CP.SpecVar (v_t, v, Primed) in
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
@@ -843,7 +860,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 end
               else 
                 begin
+                  stk_vars # push_list lsv;
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
+                  stk_vars # pop_list lsv;
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                   let tmp_res2 = 
 		            if (imm != Lend) then 
@@ -864,8 +883,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_body = e;
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
+            let vss = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) local_vars in
+            stk_vars # push_list vss;
 	        let ctx1 = check_exp prog proc ctx e post_start_label in
-		    (* let _ = print_endline ("\ncheck_exp: Block: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+            stk_vars # pop_list vss;
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 		    (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
@@ -1711,6 +1732,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
 		    begin
+                stk_vars # reset;
+                (* push proc.proc_args *)
+                let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
+                stk_vars # push_list args;
                 let pr_flag = not(!phase_infer_ind) in
 			    if !Globals.print_proc && pr_flag then 
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
@@ -1739,7 +1764,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                 (* Termination: Add the set of logical variables into the initial context *)
                 let init_ctx = 
                   if !Globals.dis_term_chk then init_ctx
-                  else Inf.restore_infer_vars_ctx proc.proc_logical_vars init_ctx in
+                  else Inf.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
                 let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
 			    let _ = if !print_proof then begin 
 				  Prooftracer.push_proc proc;
@@ -1749,8 +1774,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let pp, exc = 
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
-                    let (new_spec,_,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                    let (new_spec,fm,rels,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
+                    Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                     let new_spec = CF.simplify_ann new_spec in
                     let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -1762,9 +1788,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     if (pre_ctr # get> 0) 
                     then
                       begin
-                        let new_spec = 
-                          if rels = [] then new_spec
-                          else
+                        let new_spec =                           
                             let inf_post_flag = post_ctr # get > 0 in
                             Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
                             let pres, posts, inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
@@ -1773,16 +1797,21 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             let post_vars = CP.remove_dups_svl posts in
                             try 
                               begin
-                            let triples (*(rel, post, pre)*) = Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
-                            let triples = List.map (fun (rel,post,pre) ->
-                                let exist_vars = CP.diff_svl (CP.fv rel) pre_vars (*inf_vars*) in
-                                let pre_new = TP.simplify_exists_raw (CP.mkExists exist_vars post None no_pos) pre_vars in
+                            let triples (*(rel, post)*) = if rels = [] then []
+                              else Fixcalc.compute_fixpoint 2 rels pre_vars proc.proc_static_specs in
+                            let triples = List.map (fun (rel,post) ->
+                                let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
+                                let pre_new = TP.simplify_exists_raw exist_vars post in
                                 (rel,post,pre_new)) triples in
+                            let evars = stk_evars # get_stk in
+(*                            let evars = [] in*)
                             let _ = List.iter (fun (rel,post,pre) ->
-                                Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
-                                Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
-                                Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
-                            fst (Solver.simplify_relation new_spec (Some triples) pre_vars post_vars prog inf_post_flag)
+                                Debug.tinfo_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
+                                Debug.tinfo_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
+                                Debug.tinfo_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
+                            if triples = [] then fst (Solver.simplify_relation new_spec None pre_vars post_vars prog inf_post_flag evars lst_assume)
+                            else fst (Solver.simplify_relation (CF.transform_spec new_spec (CF.list_of_posts proc.proc_static_specs)) 
+                              (Some triples) pre_vars post_vars prog inf_post_flag evars lst_assume)
                               end
                             with _ -> 
                                 begin
@@ -1795,17 +1824,47 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         (* TODO WN : what happen to the old MayLoop? *)
                         (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
-                        (*let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in*)
-                        (*let new_sp = Cprinter.string_of_struc_formula new_spec in*)
-                        (*let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in*)
+                        (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
+                        (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
+                        (* let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in *)
                         if !dis_post_chk then
                           (f,None)
                         else 
                           begin
+                            let vars = stk_vars # get_stk in
+                            (* let order_var v1 v2 vs = *)
+                            (*   if List.exists (CP.eq_spec_var_nop v1) vs then *)
+                            (*     if List.exists (CP.eq_spec_var_nop v2) vs then None *)
+                            (*     else Some (v2,v1) *)
+                            (*   else if List.exists (CP.eq_spec_var_nop v2) vs then Some (v1,v2) *)
+                            (*   else None in *)
+                            (* let rec extr_subs xs vs subs rest = match xs with  *)
+                            (*   | [] -> (vs,subs,rest) *)
+                            (*   | ((v1,v2) as p)::xs1 -> let m = order_var v1 v2 vs in *)
+                            (*     (match m with *)
+                            (*       | None -> extr_subs xs1 vs subs (p::rest)   *)
+                            (*       | Some ((fr,t) as p2) -> extr_subs xs1 (fr::vs) (p2::subs) rest) in *)
+                            (* let extr_subs xs vs subs rest =  *)
+                            (*   let pr_vars = !CP.print_svl in *)
+                            (*   let pr_subs = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+                            (*   let pr_res = pr_triple pr_vars pr_subs pr_subs in *)
+                            (*   Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs in *)
+                            (* let rec simplify_subs xs vs ans =  *)
+                            (*   let (vs1,subs,rest) = extr_subs xs vs [] [] in *)
+                            (*    if subs==[] then ans *)
+                            (*    else simplify_subs_f rest vs1 (subs@ans) *)
+                            (* in  *)
+                            (* let ra = List.map (fun (l,r) -> MCP.pure_ptr_equations l) lst_assume in *)
+                            (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
+                            (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
+                            (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
                             Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                             Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            Debug.dinfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                            Debug.dinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+                            Debug.tinfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.tinfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
+                            Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+                            Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
+                            stk_evars # reset;
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 

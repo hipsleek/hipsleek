@@ -774,7 +774,7 @@ let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
 let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
-
+let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
 let pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
 let pr_spec_label l  = fmt_string (Lab_List.string_of l)
 
@@ -989,8 +989,9 @@ let rec pr_h_formula h =
          pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
-    | HTrue -> fmt_bool true
-    | HFalse -> fmt_bool false
+    | HTrue -> fmt_string "htrue"
+    | HFalse -> fmt_string "hfalse"
+    | HEmp -> fmt_string "emp"
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
 (** convert formula exp to a string via pr_formula_exp *)
@@ -1290,6 +1291,8 @@ let pr_case_guard c =
   pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
   fmt_string "}"
 
+let string_of_case_guard c = poly_string_of_pr pr_case_guard c
+  
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list_noparen l = match l with 
   | [] -> ""
@@ -1938,6 +1941,7 @@ let rec string_of_t_formula = function
 	  (string_of_t_formula f1) ^ " & " ^ (string_of_t_formula f2)
   | TypeTrue -> "TypeTrue"
   | TypeFalse -> "TypeFalse"
+  | TypeEmpty -> "TypeEmpty"
 
 (* function to print a list of type F.formula * F.formula *)
 let rec string_of_formulae_list l = match l with 
@@ -2505,9 +2509,10 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
 			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
-	| HTrue -> "<b>true</b>"
-	| HFalse -> "<b>false</b>"
-	| Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
+  | HTrue -> "<b>htrue</b>"
+  | HFalse -> "<b>hfalse</b>"
+  | HEmp -> "<b>emp</b>"
+  | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
 
 let rec html_of_formula e = match e with
 	| Or ({formula_or_f1 = f1;

@@ -11,8 +11,8 @@ relation D(int a, int b, int c, int m, int n, int p, int q).
 relation C(int a, int b, int c).
 
 void append_sll(node x, node y)
-  infer [xl,ys,xn,D]
-  requires x::sll<xn,xs,xl> * y::sll<yn,ys,yl>
+  infer [xl,ys,D]
+  requires x::sll<xn,xs,xl> * y::sll<yn,ys,yl> & xn>=1
   //ensures x::sll<m,xs,yl> & m=xn+yn; 
   //ensures x::sll<m,xs,yl> & C(m,xn,yn);
   ensures x::sll<m,r,t> & D(r,xs,t,yl,m,xn,yn);
@@ -27,4 +27,5 @@ void append_sll(node x, node y)
     //dprint;
   }
 }
+
 

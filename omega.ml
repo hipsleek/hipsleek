@@ -142,7 +142,9 @@ and omega_of_formula pr_w pr_s f  =
   in 
   try
 	helper f
-  with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)
+  with _ as e -> 
+      let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
+      raise e
 
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in

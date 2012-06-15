@@ -1093,6 +1093,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
     end
   | Hole _ -> []
   | HTrue -> []
+  | HEmp -> []
   | HFalse -> [] (* what to do here? *)
 
 (* 
@@ -1582,7 +1583,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 		       exp_seq_pos = pos}) in
 	seq1
     end
-  | Hole _ | HTrue ->
+  | Hole _ | HTrue | HEmp->
       Empty no_pos
   | HFalse -> 
       return_false no_pos

@@ -21,12 +21,12 @@ relation B(node x, node y). // can i have?
 
 /* functions to count the number of nodes in a circular list */
 int count_rest(node rest, node h)
-    infer @pre[A]
+    infer [A]
     requires rest::cll<p, n> & h = p 
     ensures rest::cll<p, n> & res = n; 
 
 int count(node x)
-	infer @pre[A]
+	infer [A]
 	requires x::hd<n>
 	ensures x::hd<n> & A(res,n); //res = n; 
 	
