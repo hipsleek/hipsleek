@@ -1273,7 +1273,10 @@ object
   method print : unit = 
     let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
     let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+    let ot = 
+		try
+			let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in ot
+		with | Not_found -> 10000000. in
     let f a = (string_of_float ((floor(100. *.a))/.100.)) in
     let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
     let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 

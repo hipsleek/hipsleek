@@ -48,13 +48,14 @@ eq_list:
 	| eq DOT {[$1]}
 	| eq COMMA eq_list {$1::$3};   
 	
-eq: vc vc vc {Eqs.mkEq $1 $2 $3};
+eq: vc vc EQ vc {Eqs.mkEq $1 $2 $4};
 
 vc: shc {Eqs.mkpcCnst $1} 
 	| var {Eqs.mkpcVar $1};
 			
 shc:
    HASH {Eqs.mkcFull}
+   | OPAREN CPAREN {Eqs.mkcEmpty}
    | OPAREN shc COMMA CPAREN {Eqs.mkcNode $2 Eqs.mkcEmpty}
    | OPAREN COMMA shc CPAREN {Eqs.mkcNode Eqs.mkcEmpty $3}
    | OPAREN shc COMMA shc CPAREN {Eqs.mkcNode $2 $4};

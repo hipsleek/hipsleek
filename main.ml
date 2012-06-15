@@ -195,6 +195,8 @@ let _ =
     ()
   with _ as e -> begin
     finalize ();
+	let _ = print_string (Gen.Profiling.string_of_counters ()) in
+	let _ = Gen.Profiling.print_info () in
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
