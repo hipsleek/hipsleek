@@ -42,6 +42,7 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
+  | Neg of (meta_formula)
   | PInfer of (meta_formula * meta_formula)
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident

@@ -105,6 +105,7 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
+      | Neg _
       | PInfer _
 	  | PrintCmd _ 
       | Time _
@@ -120,6 +121,7 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
+      | Neg _
       | PInfer _
     | Infer _
 	  | PrintCmd _ 
@@ -130,6 +132,7 @@ let parse_file (parse) (source_file : string) =
 	  | EntailCheck (iante, iconseq) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
+      | Neg iform -> process_neg iform
       | PInfer (puniv, ph) -> process_pinfer puniv ph
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
@@ -215,6 +218,7 @@ let main () =
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | Neg iform -> process_neg iform
                      | PInfer (puniv, ph) -> process_pinfer puniv ph
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar

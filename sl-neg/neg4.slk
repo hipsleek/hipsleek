@@ -1,0 +1,4 @@
+data node { int val ;}.
+
+
+neg x::node<v> & v =3.

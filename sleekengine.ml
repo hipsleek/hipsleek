@@ -638,6 +638,25 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     (fun _ _ -> print_entail_result valid residue num_id) valid residue
 
 
+let run_neg iform =
+  let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### f = " ^ (string_of_meta_formula iform)) else () in
+  let _ = Debug.devel_pprint ("\nrun neg:"
+                              ^ "\n ### f = "^(string_of_meta_formula iform)
+                              ^"\n\n") no_pos in
+  let form = meta_to_formula iform false [] stab in
+  let form = Solver.prune_preds !cprog true form in
+  let fvs = CF.fv form in
+  (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
+  (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
+  (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  let fv_idents = (List.map CP.name_of_spec_var fvs) in
+  (* need to make ivars be global *)
+  ()
+
+let process_neg iform =
+  ()
+
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
