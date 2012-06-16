@@ -1,3 +1,6 @@
+let incomplete_extra_decomp = ref false
+
+
 module type SV =
 sig 
   type t
@@ -340,6 +343,8 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				
 			let get_extra_decomp_depth l_nz l_eqs = 
 				let l_nz = List.map SV.get_name l_nz in
+				if !incomplete_extra_decomp then List.map (fun c-> c,1) l_nz
+				else
 				let fct v = match v with | Vperm t -> [SV.get_name t] | Cperm _ -> [] in
 				let l_eqs = List.map (fun (c1,c2,c3)-> (fct c1)@(fct c2), fct c3) l_eqs in
 				let tbl_up = Hashtbl.create 20 in

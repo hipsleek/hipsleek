@@ -625,7 +625,7 @@ let imply_a glb_evs f1 f2 =
   List.for_all (one_imply f2) (is_sat_p_t_w2 f1) 
   
 (***bench wrappers *****)
-let loop_bound = 99
+let loop_bound = 0
 
 let prof_harness1 str f1 f2 arg = 
   if !Globals.perm_prof then
@@ -641,11 +641,17 @@ let prof_harness1 str f1 f2 arg =
 				f2_loop (cnt+1) r arg  in
 		let r1 = Gen.Profiling.do_1 ("old_"^str) (f1_loop 0 false) arg in
 		let r2 = Gen.Profiling.do_1 ("new_"^str) (f2_loop 0 false) arg in
+		(*Share_prover.incomplete_extra_decomp := not !Share_prover.incomplete_extra_decomp;
+		let r3 = Gen.Profiling.do_1 ("new_flip_"^str) (f2_loop 0 false) arg in
+		Share_prover.incomplete_extra_decomp := not !Share_prover.incomplete_extra_decomp;*)
 		let _ = if r1==r2 then () else 
-		(print_string ("sat difs \n ante: "^(!print_perm_f arg)^"\n r old: "^(string_of_bool r1)^"\n r new: "^(string_of_bool r2)^"\n");
-		Gen.Profiling.inc_counter (str^"_err")) in
-		r1
-  else f1 arg		
+			(print_string ("sat difs \n ante: "^(!print_perm_f arg)^"\n r old: "^(string_of_bool r1)^"\n r new: "^(string_of_bool r2)^"\n");
+			Gen.Profiling.inc_counter (str^"_err")) in
+		(*let _ = if r3==r2 then () else 
+			(print_string (" new sat difs \n ante: "^(!print_perm_f arg)^"\n r new: "^(string_of_bool r2)^"\n r new flipped: "^(string_of_bool r3)^"\n");
+			Gen.Profiling.inc_counter (str^"_err")) in*)
+		if !Globals.use_new then r2 else r1
+  else if !Globals.use_new then f2 arg else f1 arg		
 	
 let prof_harness2 str f1 f2 arg1 arg2 = 
 	if !Globals.perm_prof then
@@ -663,11 +669,17 @@ let prof_harness2 str f1 f2 arg1 arg2 =
 	
 		let r1 = Gen.Profiling.do_2 ("old_"^str) (f1_loop 0 false) arg1 arg2 in
 		let r2 = Gen.Profiling.do_2 ("new_"^str) (f2_loop 0 false) arg1 arg2 in
+		(*Share_prover.incomplete_extra_decomp := not !Share_prover.incomplete_extra_decomp;
+		let r3 = Gen.Profiling.do_2 ("new_flip_"^str) (f2_loop 0 false) arg1 arg2 in
+		Share_prover.incomplete_extra_decomp := not !Share_prover.incomplete_extra_decomp;*)
 		let _ = if r1==r2 then () else 
 			(print_string ("imply difs \n ante: "^(!print_perm_f arg1)^" \n conseq :"^(!print_perm_f arg2)^"\n r old: "^(string_of_bool r1)^"\n r new: "^(string_of_bool r2)^"\n");
 			Gen.Profiling.inc_counter (str^"_err")) in
-		r1
-	else f1 arg1 arg2 
+		(*let _ = if r3==r2 then () else 
+			(print_string ("new imply difs \n ante: "^(!print_perm_f arg1)^" \n conseq :"^(!print_perm_f arg2)^"\n r new: "^(string_of_bool r2)^"\n r new flipped: "^(string_of_bool r3)^"\n");
+			Gen.Profiling.inc_counter (str^"_n_err")) in*)
+			if !Globals.use_new then r2 else r1
+	else if !Globals.use_new then  f2 arg1 arg2 else f1 arg1 arg2 
     
 module Share_prover_w = Share_prover_w
 	

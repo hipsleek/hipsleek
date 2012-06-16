@@ -569,7 +569,7 @@ opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
 
-ct_perm: [[`OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE ->  t]];
+ct_perm: [[`OSQUARE; t = LIST0 one_perm SEP `COMMA ;`CSQUARE ->  t]];
 	
 perm : [[ t=ct_perm -> Pr.mkCPerm t
 		| t=cid -> Pr.mkVPerm t]];

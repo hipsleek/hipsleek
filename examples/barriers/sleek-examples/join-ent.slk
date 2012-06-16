@@ -1,0 +1,10 @@
+data cell {int val}.
+
+checkentail join(a,b,c) |- join(a,b,c). 
+//fails
+
+
+checkentail join(a,[L], c) |- join(a,[L],c). 
+
+
+checkentail x::cell@c<_> & join(a,[L], c) |- x::cell@d<_>  & join(a,[L],d). 

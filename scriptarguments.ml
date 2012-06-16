@@ -178,6 +178,8 @@ let common_arguments = [
 	("--efrp", Arg.Set Globals.enable_frac_perm,"enable reasoning about fractional permissions");
 	("--dfrp", Arg.Clear Globals.enable_frac_perm,"disable reasoning about fractional permissions");
     ("--efrpr", Arg.Set Globals.enable_frac_print,"enable fr printing");
+	("--enfrp", Arg.Set Globals.use_new,"enable the new frac prover");
+	("--incfrp", Arg.Set Share_prover.incomplete_extra_decomp, "disable full non-zero decomposition in the fractional prover");
     ("--permprof", Arg.Set Globals.perm_prof, "enable perm solv profiling");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
     (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
