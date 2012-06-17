@@ -1516,12 +1516,13 @@ and mkNot_dumb f lbl1 pos0:formula =  match f with
 	| _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-	if no_andl f then mkNot_dumb f lbl1 pos0
-	else 
+	if no_andl f then  let _ = print_endline "0" in mkNot_dumb f lbl1 pos0
+	else let _ = print_endline "1" in
 	 match f with
-	  | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
+	  | And (f1,f2,p) ->
+          mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
 	  | AndList b -> 
-			let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
+          let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
 			(match l with 
 				| []-> report_error pos0 "cpure mkNot, empty AndList list"
 				| x::t-> List.fold_left (fun a c-> mkOr a c lbl1 pos0) x t)

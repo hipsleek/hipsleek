@@ -84,6 +84,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | Neg _ -> "Neg"
   | PInfer _ -> "PInfer"
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  

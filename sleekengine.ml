@@ -23,6 +23,7 @@ module AS = Astsimp
 module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
+module NEG = Neg
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -638,9 +639,10 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     (fun _ _ -> print_entail_result valid residue num_id) valid residue
 
 
-let run_neg iform =
+let run_neg_x iform =
   let stab = H.create 103 in
-  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### f = " ^ (string_of_meta_formula iform)) else () in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### f = " ^
+ (string_of_meta_formula iform)) else () in
   let _ = Debug.devel_pprint ("\nrun neg:"
                               ^ "\n ### f = "^(string_of_meta_formula iform)
                               ^"\n\n") no_pos in
@@ -652,9 +654,15 @@ let run_neg iform =
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
   (* need to make ivars be global *)
-  ()
+  NEG.neg_formula form
+
+let run_neg iform =
+Debug.ho_1 "run_neg" string_of_meta_formula Cprinter.string_of_formula
+    (fun _ ->  run_neg_x iform) iform
 
 let process_neg iform =
+  let neg_f = run_neg iform in
+  (* let _ = print_endline ("neg:"^(Cprinter.string_of_formula neg_f)) in *)
   ()
 
 let print_exc (check_id: string) =
