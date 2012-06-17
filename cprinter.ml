@@ -959,6 +959,13 @@ let rec pr_h_formula h =
 	      else fmt_string "[Derv]";
           (match ann with | None -> () | Some _ -> fmt_string "[]");
           fmt_close();
+    | DangNode ({h_formula_dang_node = sv;
+                 h_formula_dang_name = c;
+                 h_formula_dang_pos = pos}) ->
+        fmt_open_hbox ();
+        pr_spec_var sv; fmt_string "::";
+        fmt_string (c^"@Dl") ;
+        fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
