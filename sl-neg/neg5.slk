@@ -16,3 +16,6 @@ neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=y.
 
 //5. not sat, dont do negation
 neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=x1 & y1=y & x1=y1.
+
+//6. elim x!=null
+neg x::node<v1> & v1 =3 & x!=null.
