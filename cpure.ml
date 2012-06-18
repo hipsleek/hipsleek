@@ -1335,6 +1335,26 @@ and mklsPtrNeqEqn vs pos =
         (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets)
   else None
 
+and mklsPtrEqEqn list_svs pos =
+  let lstEqs l1 l2= List.concat (List.map
+                  (fun v1 -> List.map (fun v2 -> mkPtrEqn v1 v2 pos) l2) l1) in
+  (*l0 is the first list, ll are remain lists*)
+  let rec helper1 l0 ll cur =
+    match ll with
+      | [] -> cur
+      | l1::ls -> let new_cur = cur@(lstEqs l0 l1) in
+                  helper1 l0 ls new_cur
+  in
+  (*ll: remain lists*)
+  let rec helper2 ll cur =
+    match ll with
+      | [] -> cur
+      | [l] -> cur
+      | l0::ls -> let new_cur = helper1 l0 ls cur in
+                  helper2 ls new_cur
+  in
+  helper2 list_svs []
+
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")

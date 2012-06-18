@@ -2,6 +2,6 @@
 
 data node { int val ;}.
 
-//1.
+//1. todo: simplify
 neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=x1
     or z::node<v3> & v3 >=0.
