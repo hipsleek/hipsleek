@@ -2,6 +2,18 @@
 
 data node { int val ;}.
 
-//1. todo: simplify
-neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=x1
-    or z::node<v3> & v3 >=0.
+//1.
+/*
+x::node<v1> * z::node<v3> & v1!=3 & 0>v3
+ or x::node@Dl * z::node@Dl&true
+ or emp * z::node@Dl&x=null
+ or x::node@Dl&z=null
+ or emp&x=null & z=null&{FLOW,(17,18)=__norm}[]
+
+*/
+neg x::node<v1> & v1 =3
+   or z::node<v3> & v3 >=0.
+
+//2. todo: simplify
+//neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=x1
+//    or z::node<v3> & v3 >=0.
