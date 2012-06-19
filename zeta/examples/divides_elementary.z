@@ -6,7 +6,9 @@ let [induction y] divides(x, y) be such that divides(x,y) <-> exists {z} y = x *
 theorem divides(x, x).
 
 // "Antisymmetric" property of divide
-theorem divides(x,y) & divides(y,x) -> x = y | x = 0 - y.
+theorem divides(x,y) & divides(y,x) -> x = y | x = -y.
+
+//theorem (exists {z} x = y * z) & (exists {z} y = x * z) -> x = y | x = -y. 
 
 // Transitivity of divide relation
 theorem divides(x, y) & divides(y, z) -> divides(x, z).

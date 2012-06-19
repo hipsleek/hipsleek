@@ -31,6 +31,17 @@ let rec fold d f t = match t with
 		let nc = List.map (fold d f) c in
 			f v nc
 
+(**
+ * Print a tree $t$ using a supplied node 
+ * printing function $pr_val$
+ *)
+let rec print_tree pr_val t = match t with
+	| EmptyTree -> ""
+	| Node (v, c) ->
+		let cs = List.map (print_tree pr_val) c in
+		let cs = List.map (fun x -> "\t" ^ x) cs in
+			(pr_val v) ^ "\n" ^ (String.concat "\n" cs)
+
 (* Tree traversal *)
 
 (* Tree folding *)

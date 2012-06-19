@@ -28,7 +28,7 @@ open Term
 	
 open Theory
 
-type rewrite_reason =
+(*type rewrite_reason =
 	| Arithmetic (* arithmetical/algebraic rewrite*)
 	| Tautology (* logical tautology *)
 	(* | Definition *)
@@ -38,7 +38,7 @@ type rewrite = {
 		origin : term;
 		target : term;
 		reason : rewrite_reason;
-	}
+	}*)
 
 module Rewrite = struct
 	
@@ -51,7 +51,7 @@ module Rewrite = struct
 		| Bot 
 		| Num _ -> t
 		| Fx (f, x) -> match f with
-			| Eq
+			(*| Eq*)
 			| Le 
 			| Lt ->
 				let lhs = List.nth x 0 in
@@ -501,8 +501,8 @@ let process_definitions (symtab, thms) =
 
 let preprocess_theorem thm =
 	let t = thm.theorem_content in
-	let t = Rewrite.normalize t in
-	(* let _,t = Skolemize.skolemize (- 100) t in *)
+	(*let t = Rewrite.normalize t in*)
+	(*let _,t = Skolemize.skolemize (- 100) t in*)
 	{
 		thm with theorem_content = t;
 	}

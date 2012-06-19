@@ -214,7 +214,7 @@ let rec reindex d t = match t with
 		match f with
 			| GF i -> 
 				let j = try 
-(*						let _ = print_string ("associating " ^ (string_of_int i) ^ " in dictionary ") in*)
+(*						let _  = print_string ("associating " ^ (string_of_int i) ^ " in dictionary ") in*)
 (*						let _ = print_endline (String.concat ""                                         *)
 (*							(List.map (fun (x,y) ->                                                       *)
 (*								(string_of_int x) ^ " --> " ^ (string_of_int y)                             *)
@@ -278,6 +278,9 @@ let rec standardize qv i t = match t with
 			let qv, i, x = sx in
 				(qv, i, Fx (f, x))
 
+(**
+ * Make free variables v_0, v_1, ...
+ *)
 let standardize t =
 	(* select an appropriate starting point *)
 	(* for variable renaming                *)

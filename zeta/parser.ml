@@ -233,7 +233,9 @@ let rename_lang_params thry =
 (*		repl in                               *)
 	let nsyms, repl = List.split repl in
 	let thry = transform_all_terms (reindex repl) thry in
-		{ thry with def_symbols = nsyms }
+		{ thry with 
+			def_symbols = nsyms 
+		}
 
 (** Zeta grammar **)
 

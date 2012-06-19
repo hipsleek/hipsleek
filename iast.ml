@@ -67,6 +67,7 @@ and axiom_decl = {
 			axiom_hypothesis : P.formula ;
 			axiom_conclusion : P.formula ;
 			axiom_derive_dir : derivation_direction;
+			
 		}
 
 

@@ -61,7 +61,8 @@ and theorem = {
 		theorem_proved_status : triary_bool;
 		
 		(* Proof of the theorem, should it be provable by the system *)
-		theorem_proof : Proof.proof;
+		(* Proof is valid if the theorem_proved_status is Proved *)
+		theorem_proof : Proof.proof_tree;
 	}
 	
 let axiom_count = ref 0
@@ -79,7 +80,7 @@ let mkThm t = {
 		theorem_content = t;
 		theorem_proved_status = Unknown;
 		theorem_symbol_domain = [];
-		theorem_proof = Proof.mkEmptyProof ();
+		theorem_proof = Proof.mkEmptyProofTree ();
 	}
 
 let symbol_count = ref 0

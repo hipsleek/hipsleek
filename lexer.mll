@@ -155,6 +155,7 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
    ("join", JOIN);
 	 ("lemma", LEMMA);
+	 (*("plemma", PLEMMA);*)
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
@@ -316,7 +317,9 @@ rule tokenizer file_name = parse
       store file_name; JAVA (parse_nested java file_name)
 		end else
 		  try Hashtbl.find sleek_keywords idstr
-		  with | _ -> IDENTIFIER idstr
+		  with | _ ->
+				let _ = print_endline ("Identifier :: " ^ idstr) in
+					IDENTIFIER idstr
 	  }
   | eof
       { let pos = lexbuf.lex_curr_p in

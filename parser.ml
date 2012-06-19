@@ -409,7 +409,8 @@ non_empty_command:
       | `PRED;t=view_decl     -> PredDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
-	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+	  	| t= axiom_decl         -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+			(*| `PLEMMA               -> PureLemmaDef t*)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
@@ -955,6 +956,12 @@ coercion_direction:
    | `EQUIV      -> Equiv 
    | `RIGHTARROW -> Right]];
 
+(* Lemma for pure logic, should be proved before use *)
+(*pure_lemma :
+	[[ 
+		f = pure_constr; `DERIVE; g = pure_constr -> (f, g)
+	]];*)
+
 opt_name: [[t= OPT name-> un_option t ""]];
 
 name:[[ `STRING(_,id)  -> id]];
@@ -1083,7 +1090,7 @@ ind_spec : [[
 ]];
 
 axiom_decl:[[
-	`AXIOM; lhs=pure_constr; `DERIVE; rhs=pure_constr ->
+	`AXIOM; lhs=pure_constr; `DERIVE; rhs=pure_constr; a=OPT axiom_annotation ->
 		{ axiom_hypothesis = lhs;
 		  axiom_conclusion = rhs; 
 			axiom_derive_dir = Implies; }
@@ -1091,6 +1098,15 @@ axiom_decl:[[
 		{ axiom_hypothesis = lhs;
 		  axiom_conclusion = rhs; 
 			axiom_derive_dir = Iff; }
+]];
+
+axiom_annotation : [[
+	`OBRACE; l = LIST0 axiom_annotation_item SEP `COMMA; `CBRACE -> l
+]];
+
+axiom_annotation_item : [[
+	"prove" -> true
+| "test" -> true
 ]];
 
  (*end of sleek part*)   

@@ -217,7 +217,10 @@ module Printer (BP : BasePrinter) = struct
 				| Neg ->
 					sf ^ " " ^ (List.hd sx)
 				| _ -> (* other pre-defined infix operators *)
-					String.concat (" " ^ sf ^ " ") sx in
+					if (f = Sub && List.length sx = 1) then
+						sf ^ (List.hd sx)
+					else
+						String.concat (" " ^ sf ^ " ") sx in
 			if (pf >= p) then
 				e
 			else

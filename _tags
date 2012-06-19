@@ -6,3 +6,4 @@
 <omega_modified/petit/obj/*.*>: not_hygienic
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
+<zeta/z3/*.*>: not_hygienic
