@@ -16,10 +16,15 @@ This article serves as documentation for a small theorem prover the author desig
 
 \section{Introduction}
 
-There are many successful automated theorem provers (ATP) today, such as ACL2, Isabelle. So why should we start a new project? They are mainly designed as proof \emph{checkers}, not \emph{discoverer}, as M. Kaufmann and J. S. Moore put it in \emph{Some Key Research Problems in Automated Theorem Proving
-for Hardware and Software Verification}. That means these systems require significant guidance from sufficiently experienced user and are general enough to capture almost every available mathematical theory. Moreover, we also want to utilize a prover to support our program verification system. In such situation, the theorems (generated from verification conditions) are usually not human-readable; a fact which greatly hinders interaction with users for proof hints.
+There are many successful automated theorem provers (ATP) today, such as ACL2, Isabelle, Vampire, iProver, etc. So why should we start a new projects?
 
-What we highly desire is a fully automated theorem proving system in the spirit of H. Wang of the 1960. His programs produced  proofs for more than 200 theorems about propositional and predicate logic (mainly $\forall^{*}\exists^{*}$ with equality) in Russell and Whitehead's {\it Principia Mathematica} automatically. Such a success prompts us to replicate and thus aims to support arithmetical problems. That is also one of the aims that H. Wang claimed he originally had for his system, but he would never have finished it.
+The field of automated theorem proving is divided into \emph{interactive theorem proving} and \emph{automated theorem proving}. The former requires users to produce the derivation of the theorem while the later handles the theorem by itself. As a matter of fact, there is little difference between the two nowadays: interactive theorem provers allow user to provide tactics so that it can apply and solve for theorem \emph{automatically} while automatic theorem provers actually \emph{requires user to provide important results as lemmas} to be used to prove the theorem. 
+
+Another difference is in the method of theorem proving. Interactive systems tend to perform \emph{reverse reasoning} i.e. starting from the goal theorem, find the necessary conditions to directly derive the theorem and then try to settle those conditions, etc. This is expected as it is easiest to interact with the user this way. On the other hand, most automated tools perform \emph{forward reasoning}: from the hypotheses, derive new knowledge until one can reach the theorem. Due to their nature of theorem proving, interactive tools are better implemented for \emph{intuitionistic/constructive logic}; while automated tools are more suitable for \emph{classical logic} where Robinson's resolution method is the best\footnote{Classical logic allows for clausal normal form. There is no normal form for intuitionistic logic.}. Combining the strength of forward and backward reasoning has been a challenge in this field. The technical challenge lies in the logic, system architecture, data structures, etc.
+
+%They are mainly designed as proof \emph{checkers}, not \emph{discoverer}, as M. Kaufmann and J. S. Moore put it in \emph{Some Key Research Problems in Automated Theorem Proving for Hardware and Software Verification}. That means these systems require significant guidance from sufficiently experienced user and are general enough to capture almost every available mathematical theory.
+
+We also want to utilize a prover to support our program verification system. In such situation, the theorems (generated from verification conditions) are usually not easily grasped; a fact which greatly hinders interaction with users for proof hints. What we highly desire is a fully automated theorem proving system in the spirit of H. Wang of the 1960, probably with the ability to derive new theorems. His programs produced  proofs for more than 200 theorems about propositional and predicate logic (mainly $\forall^{*}\exists^{*}$ with equality) in Russell and Whitehead's {\it Principia Mathematica} automatically. Such a success prompts us to replicate and thus aims to support arithmetical problems. That is also one of the aims that H. Wang claimed he originally had for his system, but he would never have finished it.
 
 Besides automated theorem provers, there are now Satisfiability Modulo Theory solvers. Yet their target is to find models and are thus so weak at theorem proving. As a result, we believe that building a \emph{specialized tool} for a particular (standard) theory of interest is necessarily the right approach.
 
@@ -172,6 +177,25 @@ which is to replace $\exists x_1, x_2, ..., x_t :\; \varphi$ where $\varphi$ con
 %\section{Technical details}
 
 Since the system is built to particularly support arithmetic, sort (type) information of functions and variables is usually deducible from the contexts they are used. Thus, we have a mechanism to perform automatic type inference so that user does not have to specify sorts all the time.
+
+\section{Implementation}
+
+\subsection{Data structures}
+
+\begin{itemize}
+\item Logical term
+\item Domain
+\item Input file items
+\begin{itemize}
+\item Symbol definition
+\item Theorems
+\item Axioms
+\end{itemize}
+\item Proof
+\end{itemize}
+
+\subsection{Normalization}
+
 
 \centering{
 \textit{MORE FEATURES TO APPEND}
