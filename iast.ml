@@ -1868,7 +1868,7 @@ let add_bar_inits prog =
 	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
 	
   let b_proc_def = List.map (fun b-> 
-			let largs = (P.IConst (0,no_pos))::List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
+			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
 				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 

@@ -107,6 +107,21 @@ struct
       | Node _ , Leaf true -> failwith "missmatch in contains" in      
    if contains x y then helper x y else bot
   
+  (*returns the smallest share contained in both, the largest tree*)
+  let rec intersect x y = match x with
+      | Leaf b -> if b then y else x
+      | Node (l1, r1) -> match y with
+        | Leaf b -> if b then x else y
+        | Node (l2, r2) -> mkNode (intersect l1 l2) (intersect r1 r2) 
+  
+   let rec union x y = match x with
+	| Leaf true -> x
+	| Leaf false -> y
+	| Node (x1,x2) -> match y with
+		| Leaf true -> y
+		| Leaf false -> x
+		| Node (y1,y2) -> mkNode (union x1 y1) (union x2 y2)
+  
   end     
   
   
@@ -123,23 +138,12 @@ struct
 	| Leaf _ , Node (n11,n12) -> mkNode (avg l1 n11) (avg l1 n12)
 	| Node (n11,n12) , Node (n21,n22) -> mkNode (avg n11 n21) (avg n12 n22)
    
-  (*returns the smallest share contained in both, the largest tree*)
-  let rec intersect x y = match x with
-      | Leaf b -> if b then y else x
-      | Node (l1, r1) -> match y with
-        | Leaf b -> if b then x else y
-        | Node (l2, r2) -> mkNode (intersect l1 l2) (intersect r1 r2) 
+  
    *)
   
   (*
    
-  let rec union x y = match x with
-	| Leaf true -> x
-	| Leaf false -> y
-	| Node (x1,x2) -> match y with
-		| Leaf true -> y
-		| Leaf false -> x
-		| Node (y1,y2) -> mkNode (union x1 y1) (union x2 y2)
+ 
     
     (*let leftTree = Node ((Leaf true), (Leaf false))  
   let rightTree = Node ((Leaf false), (Leaf true))*)

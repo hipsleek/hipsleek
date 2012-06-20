@@ -29,8 +29,10 @@ print residue.
 
 checkentail x::cl(@@LR)<_> |- x::cl<_>.
 //fail
+
 checkentail x::cl(@@RR)<_> |- x::cl(@@LR)<_>.
 //fail
+
 checkentail x::cl(v)<_> |- x::cl(v)<_>.
 print residue.
 //valid empty
@@ -177,5 +179,7 @@ checkentail x::cl(@@L)<_> * y::cl(@@R)<_> |- x=y.
 //fail
 checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x!=y.
 //valid
+
 checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x=y.
 //fail
+

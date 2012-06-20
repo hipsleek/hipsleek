@@ -1042,8 +1042,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
-            (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)@
-			(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls) in
+            (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
+			(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
       let dups = Gen.BList.find_dups_eq (=) all_names in
       (* let _ = I.find_empty_static_specs prog in *)
       if not (Gen.is_empty dups) then
@@ -1715,8 +1715,10 @@ and check_valid_flows (f:IF.struc_formula) =
 	helper f
      
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
-  let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
+  (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
   let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
+  *)let pr  = Iprinter.string_of_proc_decl in
+  let pr2 = Cprinter.string_of_proc_decl 5 in
      Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
 	 
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
@@ -5578,7 +5580,7 @@ and try_unify_data_type_args prog c ddef v ies stab pos =
               Err.error_loc = pos;
               Err.error_text =
                   "number of arguments for data " ^
-				      (c ^ " does not match");
+				      c ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
 		  }
   )
 

@@ -1579,7 +1579,8 @@ and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
   let r = mkExists vs f lbl pos in
   if contains_exists r then
-    simpl r
+	let r = simpl r in
+	if !perm=Dperm then dperm_subst_simpl r else r
   else r
 
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
@@ -1801,6 +1802,63 @@ and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp lis
   in
   (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
       
+	  
+and dperm_subst_simpl f = 
+	let comb l1 l2 = l1 @ l2 in 
+	let rec coll_eq f = match f with 
+		| And (f1,f2,_) -> comb (coll_eq f1) (coll_eq f2)			
+		| AndList b -> let l = List.map (fun (_,c)-> coll_eq c) b in List.fold_left comb (List.hd l) (List.tl l) 
+		| Or _ ->  []
+		| Not _ -> []
+		| Forall (v,f,_,_)
+		| Exists (v,f,_,_)-> coll_eq f
+		| BForm ((f,_),_)-> (match f with 
+			|Eq (Var (v,_),Tsconst (t,_),_)
+			|Eq (Tsconst (t,_),Var (v,_),_)-> [(v,t)]
+			(*|Eq (Var (v1,_),Var (v2,_),_) -> if (type_of_spec_var v1=Tree_sh) then [([v1;v2],None)] else []*)
+			| _ -> []) in
+	let rec helper flg lsubs f = match f with
+	  | Or (f1,f2,l,pos) ->
+			let lsubs1 = lsubs @ coll_eq f1 in
+			let lsubs2 = lsubs @ coll_eq f2 in
+			let f1 = if lsubs1=[] then f1 else helper flg lsubs1 f1  in
+			let f2 = if lsubs2=[] then f2 else helper flg lsubs2 f2  in
+			if lsubs1<>[] || lsubs2<>[] then mkOr f1 f2 l pos else f
+	  | And (f1,f2,l)-> if lsubs=[] then f  else mkAnd (helper flg lsubs f1) (helper flg lsubs f2) l
+	  | AndList b ->    if lsubs=[] then f  else mkAndList (map_l_snd (helper flg lsubs) b)
+	  | Not (f1,l,pos)->if lsubs=[] then f  else mkNot (helper flg lsubs f1) l pos
+	  | Forall (v,f1,l,pos) -> if lsubs=[] then f else mkForall [v] (helper flg lsubs f1) l pos
+	  | Exists (v,f1,l,pos) -> if lsubs=[] then f else mkExists [v] (helper true lsubs f1) l pos
+	  | BForm ((Eq(e1,e2,p1),p2),p3) -> if not flg then  f
+	     else
+			let fct t = match t with 
+				| Tsconst (t,_)-> Some t 
+				| Var (v,_)->
+					(try 
+						Some (snd (List.find (fun (c,_)-> eq_spec_var v c) lsubs)) 
+					with | Not_found -> None)
+				| _ -> None in
+		let r = match e1,e2 with					
+			| Var _ ,Add(a1,a2,_) 
+			| Tsconst _ , Add(a1,a2,_) -> Some (e1,a1,a2)
+			| Add(a1,a2,_), Tsconst _ 
+			| Add(a1,a2,_),Var _  -> Some (e2,a1,a2)			
+			| _ -> None  in
+		(match r with 
+			| None -> f 
+			| Some (e0,e1,e2) ->
+				let t0 = fct e0 in
+				let test t r = match t with 
+					| None -> f
+					| Some s -> if Tree_shares.Ts.contains s r then f else mkFalse  no_pos in
+				(match fct e1,fct e2 with 
+					| None, None -> f
+					| None, Some s 
+					| Some s, None -> test t0 s
+					| Some s1, Some s2 -> if Tree_shares.Ts.can_join s1 s2 then test t0 ( Tree_shares.Ts.join s1 s2) else mkFalse no_pos))
+	  | _ -> f in
+	helper false (coll_eq f) f
+	  
 (*
   match (e1,e2) with
   | (Null _ ,Null _ ) -> true
@@ -7152,7 +7210,7 @@ let rec dnf_to_list f =
 	  lex@lex1@lex2, l_f1 @ l_f2
 	| _ -> lex,[dnf_f]
 	
-let dnf_to_list f = Debug.no_1_loop "dnf_to_list" !print_formula (pr_pair !print_svl (pr_list !print_formula)) dnf_to_list f
+let dnf_to_list f = Debug.no_1 "dnf_to_list" !print_formula (pr_pair !print_svl (pr_list !print_formula)) dnf_to_list f
   	(*
 let rec partition_dnf_lhs f =
   match f with

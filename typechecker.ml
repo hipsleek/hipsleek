@@ -742,7 +742,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 							let bd = try List.find (fun c-> bn=c.barrier_name) prog.prog_barrier_decls with | _ -> failwith "error in barr find " in
 							let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
 							let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in
-							heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None (*r,proof*) in 
+							let helper c bd_spec = 
+								let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
+								let pr2 f = Cprinter.string_of_struc_formula f in
+								Debug.no_2 "barrier entail" pr1 pr2 (fun c-> "") 
+									(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) in 
+							helper c bd_spec in
 							
 			let barr_failesc_context (f,e,n) =  
 				let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in

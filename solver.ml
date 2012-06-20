@@ -7732,7 +7732,7 @@ and test_frac_subsume prog lhs rhs_p l_perm r_perm =
 	let pr1 = Cprinter.string_of_estate in
 	let pr2 = Cprinter.string_of_mix_formula in
 	let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
-	Debug.ho_4_loop "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
+	Debug.no_4_loop "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
   
 (*pickup a node named "name" from a list of nodes*)
 and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =

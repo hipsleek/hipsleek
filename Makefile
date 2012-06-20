@@ -4,12 +4,12 @@ OCAMLBUILD = ocamlbuild
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries
-LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries
+LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
 #,z3
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/batteries
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
 FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
@@ -38,6 +38,7 @@ xml: xml/xml-light.cma
 
 xml/xml-light.cma:
 	$(XML)
+	
 	
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte

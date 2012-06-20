@@ -572,6 +572,8 @@ let enable_incremental_proving = ref false
 
 let disable_multiple_specs =ref false
 
+let perm_prof = ref false
+
   (*for cav experiments*)
   let f_1_slice = ref false
   let f_2_slice = ref false

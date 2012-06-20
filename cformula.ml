@@ -8005,7 +8005,7 @@ let rec find_barr bln v f =
 		  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
 		  v1v2_set :: rest2
 	  | [] -> [] in
-    let tester r1 r2 = if r1=r2 then r1 else report_error no_pos ("barrier type mismatch for "^v) in
+    let tester r1 r2 = if r2=None then r1 else report_error no_pos ("formula not normalized for barrier "^v) in
     let rec p_bar_eq p = try 
 	List.map CP.name_of_spec_var
 	 (List.find (List.exists (fun c-> (String.compare v (CP.name_of_spec_var c)=0))) (alias (MCP.ptr_equations_without_null p))) with _ -> [v] in
@@ -8036,3 +8036,6 @@ let rec find_barr bln v f =
 	  | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap
 	  | Exists f -> h_bars (p_bar_eq f.formula_exists_pure) f.formula_exists_heap
 	  | Or f -> report_error no_pos "unexpected or in find barr" 
+
+let find_barr bln v f = 
+	Debug.no_2 "find_barr" (fun c->c) !print_formula (fun c-> "") (find_barr bln) v f
