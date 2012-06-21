@@ -15,6 +15,7 @@ open Perm
   module P = Ipure
   module E1 = Error
   module I = Iast
+  module Ts = Tree_shares.Ts
   
   module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
   
@@ -23,6 +24,7 @@ open Perm
 	| Enum of enum_decl
 	| View of view_decl
     | Hopred of hopred_decl
+	| Barrier of barrier_decl
 		
   type decl = 
     | Type of type_decl
@@ -33,7 +35,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
-		
+				
   type member = 
 	| Field of (typed_ident * loc)
 	| Inv of F.formula
@@ -46,6 +48,9 @@ open Perm
   type ann =
 	| AnnMode of mode
 	| AnnType of typ
+
+	
+let macros = ref (Hashtbl.create 19)
 
 (* An Hoa : Counting of holes "#" *)
 let hash_count = ref 0
@@ -530,6 +535,8 @@ EXTEND SHGram
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   
+macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
+
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
   
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
@@ -539,7 +546,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-      | t = func_decl          -> FuncDef t
+	  | t=barrier_decl        -> BarrierCheck t
+      | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -548,7 +556,8 @@ non_empty_command:
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
-      | t=time_cmd            -> t]];
+      | t=time_cmd            -> t 
+	  | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -607,7 +616,17 @@ field_list2:[[
 (*    ]];  *)
 
  (********** Views **********)
+ 
+barrier_decl:
+	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
+		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
+  
 
+  
+barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
+  
+b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
+ 
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
@@ -1130,10 +1149,14 @@ cexp_w :
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
+	  | `AT;t=tree_const  -> if !Globals.perm=Dperm then Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1)) else report_error (get_pos 1) ("distinct share reasoning not enabled")
+	  | `ATAT;t=id	-> 
+							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
+							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
-     |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
+      |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
       | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
         -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
       | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
@@ -1157,6 +1180,15 @@ cexp_w :
 		  
 	  ];
 
+	  
+tree_const:[[
+	 `OPAREN;`COMMA;`CPAREN->Ts.bot
+	| `HASH -> Ts.top 
+	|`OPAREN;l=tree_const; `COMMA;`CPAREN-> Ts.mkNode l Ts.bot
+	|`OPAREN;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode Ts.bot r
+	|`OPAREN;l=tree_const;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode l r
+]];
+	  
 (* [[ *)
 (*     il=OPT measures2 -> un_option il [] *)
 (* ]]; *)
@@ -1395,6 +1427,7 @@ hprogn:
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
+	  let barrier_defs = ref ([] : barrier_decl list) in
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
@@ -1409,6 +1442,7 @@ hprogn:
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
@@ -1441,9 +1475,14 @@ hprogn:
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;} ]];
+      prog_hopred_decls = !hopred_defs;
+	  prog_barrier_decls = !barrier_defs; } ]];
 
-opt_decl_list: [[t=LIST0 decl -> t]];
+opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
+  
+mdecl: 
+	[[ t=macro -> []
+	  |t=decl -> [t]]];
   
 decl:
   [[ t=type_decl                  -> Type t
@@ -1460,6 +1499,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+   | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
    
@@ -1724,6 +1764,7 @@ valid_declaration_statement:
   | t=debug_statement -> t
   | t=time_statement -> t
   | t=bind_statement -> t
+  | t=barr_statement -> t
   | t=unfold_statement -> t]
   | [t= empty_statement -> t]
 ];
@@ -1731,6 +1772,8 @@ valid_declaration_statement:
 empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
+ 
+barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; exp_barrier_pos = get_pos_camlp4 _loc 1}]];
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 

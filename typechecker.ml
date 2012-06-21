@@ -242,6 +242,7 @@ let normalize_list_failesc_context_w_lemma prog lctx =
     in
     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
     res
+	
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
@@ -726,6 +727,51 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let _ = CF.must_consistent_list_failesc_context "assign final" res  in
             res
 	      end
+		| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
+			let mkprf prf_l = PTracer.ContextList
+				{PTracer.context_list_ante = []; PTracer.context_list_conseq = CF.mkETrue (CF.mkTrueFlow ()) pos; PTracer.context_list_proofs = prf_l; } in
+			let rec process_ctx ctx = match ctx with
+				| CF.OCtx (c1, c2) ->
+                    let r1, p1  = process_ctx c1 in
+					let r2, p2  = process_ctx c2 in
+					(CF.or_list_context r1 r2),(PTracer.mkOrStrucLeft ctx (CF.mkETrue (CF.mkTrueFlow ()) pos) [p1;p2])
+				| CF.Ctx c -> 
+					match CF.find_barr (List.map (fun c-> c.barrier_name) prog.prog_barrier_decls) (snd b) c.CF.es_formula with 
+						| None -> report_error pos ("context does not contain any info on barrier "^(snd b)) 
+						| Some (bn,args,branches) -> 
+							let bd = try List.find (fun c-> bn=c.barrier_name) prog.prog_barrier_decls with | _ -> failwith "error in barr find " in
+							let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
+							let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in
+							let helper c bd_spec = 
+								let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
+								let pr2 f = Cprinter.string_of_struc_formula f in
+								Debug.no_2 "barrier entail" pr1 pr2 (fun c-> "") 
+									(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) in 
+							helper c bd_spec in
+							
+			let barr_failesc_context (f,e,n) =  
+				let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in
+				let res = List.map (fun (lbl,c2)-> 
+					let list_context_res,prf =process_ctx c2 in					
+					match list_context_res with
+						| CF.FailCtx t -> [([(lbl,t)],esc_skeletal,[])],prf
+						| CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls,prf) n in
+					let res_l,prf_l =List.split res in
+					let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in
+					(res, mkprf prf_l)  in
+					
+            let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^"\nBarrier call \n") in
+            Debug.devel_zprint (lazy (to_print^"\n")) pos;
+			
+			if (ctx==[]) then [] (*([],PTracer.UnsatAnte)*)
+			else 
+				let r = List.map barr_failesc_context ctx in
+				let r_ctx , prf_r = List.split r in
+				let rs = List.fold_left CF.list_failesc_context_union (List.hd r_ctx) (List.tl r_ctx) in
+				let _ = PTracer.log_proof (mkprf prf_r) in
+				if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then Debug.print_info "barrier call" (to_print^" has failed \n") pos else () ;
+				normalize_list_failesc_context_w_lemma prog rs
+			   
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
 	        let res_v = CP.mkRes bool_type in
@@ -824,10 +870,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*there exists fresh_frac statisfy ... *)
                 if (read_only)
                 then
-                  let read_f = mkPermInv fresh_frac in
+                  let read_f = mkPermInv () fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                 else
-                  let write_f = mkPermWrite fresh_frac in
+                  let write_f = mkPermWrite () fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
               else
                 vheap
@@ -1831,7 +1877,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
-                            let vars = stk_vars # get_stk in
+                            (*let vars = stk_vars # get_stk in*)
                             (* let order_var v1 v2 vs = *)
                             (*   if List.exists (CP.eq_spec_var_nop v1) vs then *)
                             (*     if List.exists (CP.eq_spec_var_nop v2) vs then None *)

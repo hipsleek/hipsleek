@@ -33,7 +33,8 @@ let gen_conj x y = normalize 1 x y loc;;
 
 let parse_lbl x = match x with
   | None -> ""
-  | Some (1,n) -> "ll";;
+  | Some (1,n) -> "ll"
+  | Some _ -> "" ;;
 
 EXTEND Gram
 GLOBAL: expression pre post fml pred preddef ptr lbl id;
