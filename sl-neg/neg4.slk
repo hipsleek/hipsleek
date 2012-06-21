@@ -42,4 +42,7 @@ x1::node<v1>&v1!=3 or x2::node<v1>&v1!=3
  or y1::node@Dl&true or emp&y1=null
  or x1 = y1 or x2=y1
 */
-neg x1::node<v1> * y1::node<v2> & v1 =3 & v2=4 & x1=x2.
+//neg x1::node<v1> * y1::node<v2> & v1 =3 & v2=4 & x1=x2.
+
+//10.
+neg x1=x2 & y1=y2 & x1!=y1.
