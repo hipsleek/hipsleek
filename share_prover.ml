@@ -708,7 +708,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			
 		let to_formula_imply a_sys c_sys:bool =
 			(*decomposes the vars, returns the list of decomposed vars, var subst, var instantiations, simplified syst to v*v=(v|1) for both ante and conseq *)
-						    (*let printer s (c_ev:t_var list) c_nz_cons c_l_eqs (c_const_vars:(t_var*bool) list) (c_subst_vars:(t_var*t_var) list)  =  			
+						   (* let printer s (c_ev:t_var list) c_nz_cons c_l_eqs (c_const_vars:(t_var*bool) list) (c_subst_vars:(t_var*t_var) list)  =  			
 									let pr_list f l = String.concat "\n" (List.map f l) in
 									let pr_pair f1 f2 (x1,x2) = "("^(f1 x1)^","^(f2 x2)^")" in
 									let consl = pr_list (pr_pair SV.string_of string_of_bool) c_const_vars in
@@ -822,7 +822,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			(*print_string ("Big Imply1: "^(string_of_eq_syst a_sys)^"\n");
 			print_string ("Big Imply2: "^(string_of_eq_syst c_sys)^"\n");*)
 			let r = imply a_sys c_sys in
-			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n");*)  r
+			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n"); *) r
 		
 		let e_elim (eqs : eq_syst) : eq_syst = eqs
 		

@@ -531,7 +531,7 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
-  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b|| !use_split then false else true | _ -> true) l in
+  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b || !use_split_match then false else true | _ -> true) l in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
@@ -557,7 +557,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
                   in
-				  let l2 = if !perm=Dperm && !use_split then (1,M_split_match c)::l2 else l2 in
+				  let l2 = if !perm=Dperm && !use_split_match then (1,M_split_match c)::l2 else l2 in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
               (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
@@ -607,7 +607,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     else
                       let a1 = (1,M_base_case_unfold c) in
 					  let a2 = (1,M_match c) in
-                      let a2 = if !perm=Dperm && !use_split then (1,Search_action [a2;(1,M_split_match c)]) else a2 in
+                      let a2 = if !perm=Dperm && !use_split_match then (1,Search_action [a2;(1,M_split_match c)]) else a2 in
                       let a3 = 
                         if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
                         else None in

@@ -33,7 +33,7 @@ struct
 		let r = depth r in
 		(if l>r then l else r)+1
 	
-  let rleft n = 
+ (* let rleft n = 
     let rec helper n c = match n with 
 		| Leaf _ -> n
 		| Node (l, r) -> if c=1 then l else mkNode (helper l (c-1)) (helper r (c-1)) in
@@ -43,7 +43,16 @@ struct
     let rec helper n c = match n with 
 		| Leaf _ -> n
 		| Node (l, r) -> if c=1 then r else mkNode (helper l (c-1)) (helper r (c-1)) in
-	helper n (depth n)
+	helper n (depth n)*)
+	
+	let rleft n = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> l
+   
+  let rright n = match n with 
+		| Leaf _ -> n
+		| Node (l, r) -> r
+	
 		  
   let rec eq t1 t2 = match t1,t2 with
     | Leaf b1,Leaf b2  -> b1==b2

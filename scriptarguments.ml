@@ -274,7 +274,8 @@ let common_arguments = [
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
   
-  ("--dis-split", Arg.Set Globals.use_split, "Disable permission splitting lemma (use split match instead)");
+  ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ] 
 
 (* arguments/flags used only by hip *)	
@@ -328,6 +329,7 @@ let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arg
 ;;
 
 let check_option_consistency () =
+  if !Globals.perm=Globals.Dperm then Globals.use_split_match:=true else () ;
   if !Globals.allow_imm && Perm.allow_perm() then
     begin
     Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"

@@ -1927,5 +1927,5 @@ let gen_normalize_lemma_comb ddef =
  }
 	
 let add_normalize_lemmas prog4 = 
-	if !perm = NoPerm then prog4
+	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
 	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}

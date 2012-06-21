@@ -1025,7 +1025,7 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (* | [] -> [] *)
 
 (*a coercion can be simple, complex or normalizing*)
-let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
+let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
 	  | Cformula.Exists {F.formula_exists_heap=h} ->      
@@ -1038,13 +1038,18 @@ let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let rhs_length,r_sn,rhs_typ = fct rhs in
   match lhs_typ@rhs_typ with
 	| [] -> Simple
-	| h::t -> 
-	    if lhs_length=1 then Simple
-		else if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
+	| h::t ->
+		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
 			if lhs_length=2 && rhs_length=1  then Normalize true
 			else if lhs_length=1 && rhs_length=2  then Normalize false
+			else if lhs_length=1 then Simple
 			else Complex
-		else Complex
+		else if lhs_length=1 then Simple
+			else Complex
+		
+let case_of_coercion lhs rhs =
+	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Normalize b-> "normalize "^string_of_bool b in
+	Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
     List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers

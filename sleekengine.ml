@@ -321,7 +321,7 @@ let process_data_def ddef =
 	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	!cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
-	if !perm=NoPerm then () 
+	if !perm=NoPerm || not !enable_split_lemma_gen then () 
 	else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef))
       with
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
