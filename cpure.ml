@@ -8264,7 +8264,8 @@ let rec tpd_drop_perm f = match f with
   | Or _ -> report_error no_pos ("tpd_drop_perm: to_dnf has failed "^(!print_formula f))
   | Not (b,l,p) -> mkNot (tpd_drop_perm b) l p 
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
-  | Exists (v,f,l,p) -> tpd_drop_perm f
+  | Exists (v,f,l,p) -> if (type_of_spec_var v)=Tree_sh then tpd_drop_perm f
+		else Exists (v, tpd_drop_perm f, l,p)
   
 let tpd_drop_perm f = Debug.no_1 "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
 

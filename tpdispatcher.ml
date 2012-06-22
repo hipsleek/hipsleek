@@ -1534,8 +1534,9 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let ante_lex, antes= CP.dnf_to_list ante in
 			let conseq_lex, conseqs= CP.dnf_to_list conseq in
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
-			let conseqs = List.map (fun c-> CP.tpd_drop_perm c, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
+			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
+			let tp_wrap fa fc = Debug.no_2 "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process

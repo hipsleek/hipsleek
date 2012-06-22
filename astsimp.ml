@@ -7453,7 +7453,7 @@ and check_barrier_wf prog bd =
      | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
 	(*end auxes*)
 	
-	let one_ctx_entail c1 c2 = Debug.no_2 "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
+	let one_ctx_entail c1 c2 = Debug.no_2_loop "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
 	  	
   let prep_t (fs,ts,fl) = 
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
