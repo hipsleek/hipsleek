@@ -7423,7 +7423,7 @@ and check_barrier_wf prog bd =
                         CF.h_formula_data_pos = no_pos } in
 	  let p2 = CP.mkEqVarInt st_v st no_pos in
 	  let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-	  CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+	  CF.mkExists [v;st_v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
 	let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
 	let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
 	let f_gen_tot st = 
@@ -7511,7 +7511,6 @@ and check_barrier_wf prog bd =
 					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
 					let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
 					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
-				
 				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
 				if r then () 
 				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in

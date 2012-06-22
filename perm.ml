@@ -423,3 +423,19 @@ let string_of_cperm () = match !perm with
   | Count ->  CPERM.string_of_cperm
   | Dperm -> DPERM.string_of_cperm
   | _ -> FPERM.string_of_cperm
+
+  
+  
+let drop_tauto f = 
+ let fv = full_perm_var () in
+ let rec helper f = match f with 
+  | BForm ((Eq (Tsconst (t,_), Var (v,_),_),_),_) 
+  | BForm ((Eq (Var (v,_), Tsconst (t,_),_),_),_) -> if eq_spec_var v fv && Tree_shares.Ts.full t then mkTrue no_pos else f
+  | BForm _ -> f
+  | And (f1,f2,l) -> mkAnd (helper f1) (helper f2) l
+  | AndList l -> AndList (map_l_snd helper l)
+  | Or (f1,f2,l,p) -> mkOr (helper f1) (helper f2) l p 
+  | Not (b,l,p) -> mkNot (helper b) l p 
+  | Forall (s,f,l,p) -> Forall (s, helper f, l,p) 
+  | Exists (v,f,l,p) -> Exists (v, helper f, l,p) in
+ helper f

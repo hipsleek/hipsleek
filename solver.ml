@@ -5032,7 +5032,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
-  let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
+  let curr_lhs_h   = mkStarH lhs_h estate_orig.es_heap pos in
+  let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in
   let xpure_lhs_h0, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
   let xpure_lhs_h1, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
   (* add the information about the dropped reading phases *)
@@ -8010,6 +8011,17 @@ and normalize_base_perm_x prog (f:formula) =
 and normalize_base_perm prog f = 
   let pr  =Cprinter.string_of_formula in
   Debug.no_1 "normalize_base_perm" pr pr (normalize_base_perm_x prog) f
+   
+
+and normalize_frac_heap prog h p =  (*used after adding back the consumed heap*)
+   if  !perm=NoPerm then (h, p)
+   else 
+      let f = normalize_base_perm prog (mkBase h p TypeTrue (mkTrueFlow ()) [] no_pos) in 
+      match f with
+        | Or _ -> Error.report_error {Err.error_loc = no_pos;Err.error_text = "normalize_frac_heap: adding the consumed heap should not yield OR"} 
+        | _ ->
+          let (_, h, p, _, _, _,_, _) = all_components f in	 
+          (h,p)
    
 and normalize_formula_perm prog f = match f with
  | Or b -> mkOr (normalize_formula_perm prog b.formula_or_f1) (normalize_formula_perm prog b.formula_or_f2) b.formula_or_pos

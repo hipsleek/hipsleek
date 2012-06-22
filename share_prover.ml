@@ -822,7 +822,8 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			(*print_string ("Big Imply1: "^(string_of_eq_syst a_sys)^"\n");
 			print_string ("Big Imply2: "^(string_of_eq_syst c_sys)^"\n");*)
 			let r = imply a_sys c_sys in
-			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n"); *) r
+			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n"); *)
+			r
 		
 		let e_elim (eqs : eq_syst) : eq_syst = eqs
 		

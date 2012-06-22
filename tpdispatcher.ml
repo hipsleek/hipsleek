@@ -1058,6 +1058,7 @@ let tp_is_sat_perm f sat_no =
 let tp_is_sat_perm f sat_no =  Debug.no_1 "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
  
 let tp_is_sat (f:CP.formula) (sat_no :string) = 
+  let f = CP.elim_idents f in
   if !Globals.no_cache_formula then
     tp_is_sat_perm f sat_no
   else
@@ -1520,7 +1521,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_perm ante conseq imp_no timeout process = 
  if !perm=Dperm then
-	match join_res (CP.has_tscons ante )( CP.has_tscons conseq) with
+	let conseq = Perm.drop_tauto conseq in
+	let r_cons = CP.has_tscons conseq in 
+	let l_cons = CP.has_tscons ante in
+	if r_cons = No_cons then
+	  if l_cons = No_cons then  tp_imply_no_cache ante conseq imp_no timeout process
+	  else tp_imply_no_cache (tpd_drop_all_perm ante) conseq imp_no timeout process
+	  else match join_res l_cons r_cons with
 		| No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
 		| No_split -> false
 		| Can_split -> 
@@ -1538,6 +1545,8 @@ let tp_imply_perm ante conseq imp_no timeout process =
 	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
 let tp_imply ante conseq imp_no timeout process =
+  let ante = CP.elim_idents ante in
+  let conseq = CP.elim_idents conseq in
   if !Globals.no_cache_formula then
     tp_imply_perm ante conseq imp_no timeout process
   else
@@ -1560,7 +1569,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.no_2 "tp_imply" 
+  Debug.no_2_loop "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -1712,6 +1721,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
       | None -> (false,[],None)
   else begin 
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
+	(*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
 	if CP.isConstTrue conseq then (true, [],None)
 	else
       let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
@@ -1719,6 +1729,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
+		(*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
 		let acpairs = imply_label_filter ante conseq in
 		let pairs = List.map (fun (ante,conseq) -> 
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -1787,9 +1798,11 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in (* conseq is Exists formula *)
+	(*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
 	if CP.isConstTrue conseq then (true, [], None)
 	else
 	  let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
+	  (*let _ = print_string ("imply_timeout: new_ante: " ^ (Cprinter.string_of_pure_formula ante) ^ "\n") in*)
 	  if CP.isConstFalse ante then (true, [], None)
 	  else
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
