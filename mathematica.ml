@@ -685,7 +685,7 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   )
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
-  Debug.no_1 "is_sat_no_cache (mathematica)" !print_formula 
+  Debug.ho_1 "is_sat_no_cache (mathematica)" !print_formula 
     (fun (b,_) -> string_of_bool b)
     (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
 
@@ -711,7 +711,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.no_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.ho_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =

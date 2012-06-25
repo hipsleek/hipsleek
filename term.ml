@@ -26,7 +26,7 @@ type term_reason =
   | Quantum_Technique_Measure_Decreasing of term_trans option
   | Quantum_Technique_Measure_Bounded
   (* Limit Technique *)
-  | Limit_Technique_Invalid_Fixpoint of term_trans option
+  | Limit_Technique_Invalid_Limit of term_trans option
   | Limit_Technique_Invalid_Bounds of term_trans option
   | Limit_Technique_Measure_Wellfounded of term_trans option
   (* Primitive Term Var *)
@@ -110,8 +110,8 @@ let pr_term_reason = function
       fmt_string "Quantum Technique: The variance is decreasing."
   | Quantum_Technique_Measure_Bounded ->
       fmt_string "Quantum Technique: The variance is bounded."
-  | Limit_Technique_Invalid_Fixpoint _ ->
-      fmt_string "Limit_Technique_Invalid_Fixpoint"
+  | Limit_Technique_Invalid_Limit _ ->
+      fmt_string "Limit_Technique_Invalid_Limit"
   | Limit_Technique_Invalid_Bounds _ -> 
       fmt_string "Limit_Technique_Invalid_Bounds"
   | Limit_Technique_Measure_Wellfounded _ ->
@@ -144,8 +144,8 @@ let pr_term_reason_short = function
       pr_seq "" pr_formula_exp le;
   | Quantum_Technique_Measure_Bounded ->
       fmt_string "bounded)"
-  | Limit_Technique_Invalid_Fixpoint _ ->
-      fmt_string "Limit_Technique_Invalid_Fixpoint)"
+  | Limit_Technique_Invalid_Limit _ ->
+      fmt_string "Limit_Technique_Invalid_Limit)"
   | Limit_Technique_Invalid_Bounds _ ->
       fmt_string "Limit_Technique_Invalid_Bounds)"
   | Limit_Technique_Measure_Wellfounded _ ->
@@ -679,50 +679,48 @@ let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpu
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  (* limit constraint 1: fp_src = fp_dst *)
-  let lim1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
-  (* limit constraint 2: elm_src = fp_src => elm_dst = fp_dst *)
-  let tmp1 = CP.mkNot_s (CP.mkPure (CP.mkEq elm_src fp_src no_pos)) in
+  (* fixpoint constraint 1: fp_src = fp_dst *)
+  let fp1 = CP.mkPure (CP.mkEq fp_src fp_dst no_pos) in 
+  (* fixpoint constraint 2: elm_src = fp_src => elm_dst = fp_dst *)
+  let tmp1 = CP.mkPure (CP.mkEq elm_src fp_src no_pos) in
   let tmp2 = CP.mkPure (CP.mkEq elm_dst fp_dst no_pos) in
-  let lim2 = CP.mkOr tmp1 tmp2 None no_pos in
-  (* limit constraint 3: elm_src > elm_dst *)
-  let lim3 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
-  (* limit constraint 4: elm_dst > fp_dst *)
-  let lim4 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
-  (* limit constraint 5: (elm_dst - fp_dst) < K * (elm_src - fp_src) *)
-  (* the largest floating-point number less than 1 can be handled by SLEEK is 0.999999999999 (12 digits)
-     larger number will be approximated to 1*)
-  let k = CP.mkFConst 0.99999999999999 no_pos in
-  (* let _ = print_endline ("k = " ^ (!CP.print_exp k)) in *)
-  let tmp1 = CP.mkMult k (CP.mkSubtract elm_src fp_src no_pos) no_pos in
+  let fp2 = CP.mkImply tmp1 tmp2 no_pos in
+  (* fixpoint constrains *)
+  let fp_constraint = CP.mkAnd fp1 fp2 no_pos in
+  (* decreasing constraint 1: elm_src > elm_dst *)
+  let dec1 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
+  (* decreasing constraint 2: elm_dst > fp_dst *)
+  let dec2 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
+  (* decreasing constraint 3: (elm_dst - fp_dst) < (elm_src - fp_src) *)
+  let tmp1 = CP.mkSubtract elm_src fp_src no_pos in
   let tmp2 = CP.mkSubtract elm_dst fp_dst no_pos in
-  let lim5 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
-  (* check limit constrains *)
-  let lim_lst = [lim2; lim3; lim4; lim5] in
-  let rhs = List.fold_left (fun a b -> CP.mkAnd a b no_pos) lim1 lim_lst in
-  let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let lim_entail_res, _, _ = TP.imply lhs rhs "" false None in
-  (* let svars = CP.afv seq_src.CP.seq_element in                                                      *)
-  (* let lim_constraints = CP.mkForall svars (CP.mkOr (CP.mkNot_s lhs) rhs None no_pos) None no_pos in *)
-  (* let ftrue = CP.mkTrue no_pos in                                                                   *)
-  (* let lim_entail_res, _, _ = TP.imply ftrue lim_constraints "" false None in *)
+  let dec3 = CP.mkPure (CP.mkGte tmp1 tmp2 no_pos) in
+  (* limit constrains *)
+  let decs = CP.mkAnd dec1 (CP.mkAnd dec2 dec3 no_pos) no_pos in
+  let lhs_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+  let dec_constraint = CP.mkImply lhs_constraint decs no_pos in
+  let limit_constraint = CP.mkAnd fp_constraint dec_constraint no_pos in
+  let limit_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
+  let _ = print_endline ("\n== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in 
+  let _ = print_endline ("== limit_entail_res = " ^ (string_of_bool limit_entail_res)) in 
   (* bound constraint 1: lb_src = lb_dst *)
-  let bnd1 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
+  let bound1 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
   (* bound constraint 2: lb_src > fp_src *)
-  let bnd2 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
+  let bound2 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
   (* check bound constraint *)
-  let bnd_constraints = CP.mkAnd bnd1 bnd2 no_pos in
-  let bnd_entail_res, _, _ = TP.imply lhs bnd_constraints "" false None in
-  let _ = print_endline ("\n== bnd_constraints = " ^ (Cprinter.string_of_pure_formula bnd_constraints)) in 
+  let bounds = CP.mkAnd bound1 bound2 no_pos in
+  let bound_constraint = CP.mkImply lhs_constraint bounds no_pos in
+  let bound_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) bound_constraint "" false None in
+  let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in 
+  let _ = print_endline ("== bound_entail_res = " ^ (string_of_bool bound_entail_res)) in 
   let orig_ante = estate.es_formula in
-  let _ = print_endline ("== bnd_entail_res = " ^ (string_of_bool bnd_entail_res)) in 
   let term_measures, term_res, term_err_msg, rank_formula =
-    if not lim_entail_res then 
+    if not limit_entail_res then 
       Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
       None
-    else if not bnd_entail_res then
+    else if not bound_entail_res then
       Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
       (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Bounds trans)),
       Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Bounds trans))),
@@ -754,7 +752,7 @@ let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure
     | None -> "None_term_trans"
     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
-  Debug.no_4 "check_term_seqvar_converge_decrease_measures" pr2 
+  Debug.ho_4 "check_term_seqvar_converge_decrease_measures" pr2 
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
     (add_str "term_trans" pr3)
@@ -847,8 +845,8 @@ let check_term_seqvar_converge_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1
   let term_measures, term_res, term_err_msg, rank_formula =
     if not lim_entail_res then 
       Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
       None
     else if not bnd_entail_res then
       Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
@@ -1115,7 +1113,7 @@ let check_term_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.no_3 "check_term_rhs" pr2 pr pr
+   Debug.ho_3 "check_term_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 

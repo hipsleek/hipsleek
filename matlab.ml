@@ -108,7 +108,7 @@ let start () =
       is_matlab_running := true;
     ) in
     let set_process proc = process := proc in
-    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "math",  [||] ) set_process prelude in
+    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "matlab",  [|"-nodisplay"; "-nosplash"|] ) set_process prelude in
     print_endline "Starting Matlab... "; flush stdout;
     read_till_ready !process.inchannel;
   )

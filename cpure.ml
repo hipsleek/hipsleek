@@ -1512,14 +1512,18 @@ and mkOr_x f1 f2 lbl pos=
   else if (isConstTrue f1) then f1
   else if (isConstFalse f2) then f1
   else if (isConstTrue f2) then f2
-  else (*match f1, f2 with 
-	| AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
-	| AndList l, f
-	| f, AndList l -> AndList (or_branches l [(empty_spec_label,f)] lbl pos)
-	| _ -> *)Or (f1, f2, lbl ,pos)
+  else Or (f1, f2, lbl ,pos)
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
-	
+
+and mkImply f1 f2 pos =
+  Debug.no_2 "pure_mkImply" !print_formula !print_formula !print_formula 
+             (fun _ _ -> mkImply_x f1 f2 pos) f1 f2
+
+and mkImply_x f1 f2 pos= 
+  let tmp = mkNot_s f2 in
+  mkOr f1 tmp None pos
+
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
