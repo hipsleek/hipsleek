@@ -187,7 +187,7 @@ let check_formula (f: string) : bool option =
   with _ -> None
 
 let check_formula f =
-  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
+  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -360,10 +360,7 @@ let rec mathematica_of_formula pr_w pr_s f0 : string =
         let sf2 = formula_to_string f2 in
         "(" ^ sf1 ^ " || " ^ sf2 ^ ")"
   ) in
-  let sf0 = formula_to_string f0 in
-  let var_list = CP.fv f0 in
-  let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
-  List.fold_left (fun sf sv -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]") sf0 sv_list
+  formula_to_string f0
 
 (***********************************
  pretty printer for pure formula
@@ -674,7 +671,10 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     let f =
       if (!no_pseudo_ops || CP.is_float_formula f) then f
       else strengthen_formula f in
-    let fmath = mathematica_of_formula pr_w pr_s f in
+    let sf = mathematica_of_formula pr_w pr_s f in
+    let var_list = CP.fv f in
+    let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
+    let fmath = List.fold_left (fun sf sv -> "Exists[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
     let mathematica_input = "Resolve[" ^ fmath ^ "]\n" in
     let runner () = check_formula mathematica_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
@@ -685,23 +685,30 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   )
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
-  Debug.ho_1 "is_sat_no_cache (mathematica)" !print_formula 
+  Debug.no_1 "is_sat_no_cache (mathematica)" !print_formula 
     (fun (b,_) -> string_of_bool b)
     (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
 
-let is_sat_ops pr_w pr_s f sat_no =
+let is_sat_ops_x pr_w pr_s f sat_no =
   fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
 
-let is_sat f sat_no =
+let is_sat_ops pr_w pr_s f sat_no =
+  Debug.no_2 "[mathematica] is_sat_ops" string_of_formula (fun c -> c) string_of_bool 
+             (fun f sat_no -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
+
+let is_sat_x f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   is_sat_ops pr_w pr_s f sat_no
 
-  let is_sat f sat_no =
-  Debug.no_2 "[mathematica] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat f sat_no
+let is_sat f sat_no =
+  Debug.no_2 "[mathematica] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat_x f sat_no
 
 let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
-  let fmath = mathematica_of_formula pr_w pr_s f in
+  let sf = mathematica_of_formula pr_w pr_s f in
+  let var_list = CP.fv f in
+  let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
+  let fmath = List.fold_left (fun sf sv -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
   let mathematica_input = "Resolve[" ^ fmath ^ "]\n" in
   let runner () = check_formula mathematica_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
@@ -711,7 +718,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.ho_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.no_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =

@@ -701,18 +701,17 @@ let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpu
   let dec_constraint = CP.mkImply lhs_constraint decs no_pos in
   let limit_constraint = CP.mkAnd fp_constraint dec_constraint no_pos in
   let limit_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
-  let _ = print_endline ("\n== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in 
-  let _ = print_endline ("== limit_entail_res = " ^ (string_of_bool limit_entail_res)) in 
+  let _ = print_endline ("\n== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in
+  let _ = print_endline ("== limit_entail_res = " ^ (string_of_bool limit_entail_res)) in
   (* bound constraint 1: lb_src = lb_dst *)
   let bound1 = CP.mkPure (CP.mkEq lb_src lb_dst no_pos) in
   (* bound constraint 2: lb_src > fp_src *)
   let bound2 = CP.mkPure (CP.mkGt lb_src fp_src no_pos) in
   (* check bound constraint *)
-  let bounds = CP.mkAnd bound1 bound2 no_pos in
-  let bound_constraint = CP.mkImply lhs_constraint bounds no_pos in
+  let bound_constraint = CP.mkAnd bound1 bound2 no_pos in
   let bound_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) bound_constraint "" false None in
-  let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in 
-  let _ = print_endline ("== bound_entail_res = " ^ (string_of_bool bound_entail_res)) in 
+  (* let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in  *)
+  (* let _ = print_endline ("== bound_entail_res = " ^ (string_of_bool bound_entail_res)) in                     *)
   let orig_ante = estate.es_formula in
   let term_measures, term_res, term_err_msg, rank_formula =
     if not limit_entail_res then 
@@ -752,7 +751,7 @@ let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure
     | None -> "None_term_trans"
     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
-  Debug.ho_4 "check_term_seqvar_converge_decrease_measures" pr2 
+  Debug.no_4 "check_term_seqvar_converge_decrease_measures" pr2 
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
     (add_str "term_trans" pr3)
@@ -1113,7 +1112,7 @@ let check_term_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.ho_3 "check_term_rhs" pr2 pr pr
+   Debug.no_3 "check_term_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_term_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
