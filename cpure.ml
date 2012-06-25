@@ -2992,6 +2992,13 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
                 if only_vars then ([], BForm (f,lbl))
                 else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
                 else ([], BForm (f,lbl))
+		  | Tsconst (t,_), Add (Var (sv,_),Tsconst (t1,_),_) 
+		  | Tsconst (t,_), Add (Tsconst (t1,_), Var (sv,_),_) -> 
+				if only_vars then ([],BForm(f,lbl))
+				else if (eq_spec_var sv v) then 
+					if (Tree_shares.Ts.contains t t1) then ([(v,Tsconst (Tree_shares.Ts.subtract t t1, no_pos))],mkTrue no_pos)
+					else ([],mkFalse no_pos)
+				else ([],BForm (f,lbl))
           | _ ->([], BForm (f,lbl))
       end
     | _ -> ([], BForm (f,lbl))
