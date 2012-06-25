@@ -108,7 +108,7 @@ let start () =
       is_matlab_running := true;
     ) in
     let set_process proc = process := proc in
-    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "matlab",  [|"-nodisplay"; "-nosplash"|] ) set_process prelude in
+    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "math",  [||] ) set_process prelude in
     print_endline "Starting Matlab... "; flush stdout;
     read_till_ready !process.inchannel;
   )
@@ -191,7 +191,7 @@ let check_formula f =
     None
 
 let check_formula f =
-  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
+  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -1115,7 +1115,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.ho_2 "[matlab] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.no_2 "[matlab] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
