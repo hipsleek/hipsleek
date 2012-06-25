@@ -114,6 +114,8 @@ let common_arguments = [
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--log-matlab", Arg.Set Matlab.is_log_all,
     "Log all formulae sent to Matlab in file allinput.matlab");
+  ("--log-mathematica", Arg.Set Mathematica.is_log_all,
+    "Log all formulae sent to Mathematica in file allinput.mathematica");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
@@ -149,7 +151,7 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "matlab"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
+	"oi"; "set"; "cm"; "redlog"; "matlab"; "mathematica"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--tp-batch-mode", Arg.Set Tpdispatcher.tp_batch_mode,
    "Run external prover (omega, z3, redlog, matlab...) in batch mode");
@@ -218,7 +220,17 @@ let common_arguments = [
   "Use cache for unsatisfiability and implication's checking with Matlab");
   ("--matlab-timeout", Arg.Set_float Matlab.timeout, 
   "Set timeout (in seconds) for is_sat or imply with Matlab");
-	("--failure-analysis",Arg.Set Globals.failure_analysis, 
+  ("--mathematica-no-pseudo-ops", Arg.Clear Mathematica.no_pseudo_ops, 
+  "Do not pseudo-strengthen/weaken formulas before send to Mathematica");
+  ("--mathematica-no-ee", Arg.Set Mathematica.no_elim_exists, 
+  "Do not try to eliminate existential quantifier with Mathematica");
+  ("--mathematica-no-simplify", Arg.Set Mathematica.no_simplify,
+  "Do not try to simplify non-linear formulas with Mathematica");
+  ("--mathematica-cache", Arg.Clear Mathematica.no_cache,
+  "Use cache for unsatisfiability and implication's checking with Mathematica");
+  ("--mathematica-timeout", Arg.Set_float Mathematica.timeout, 
+  "Set timeout (in seconds) for is_sat or imply with Mathematica");
+  	("--failure-analysis",Arg.Set Globals.failure_analysis, 
 	"Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
 	"Turn on exhaustive matching for base case of predicates"); 
@@ -238,6 +250,8 @@ let common_arguments = [
   (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
   ("--matlab-presburger", Arg.Set Matlab.is_presburger, "use presburger arithmetic for redlog");
   ("--matlab-timeout", Arg.Set_float Matlab.timeout, "<sec> checking a formula using matlab with a timeout after <sec> seconds");
+  ("--mathematica-presburger", Arg.Set Mathematica.is_presburger, "use presburger arithmetic for redlog");
+  ("--mathematica-timeout", Arg.Set_float Mathematica.timeout, "<sec> checking a formula using Mathematica with a timeout after <sec> seconds");
   ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");

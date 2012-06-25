@@ -1,6 +1,6 @@
 (*
- * Interact with matlab
- * Created on June 03, 2012
+ * Interact with Mathematica
+ * Created on June 23, 2012
  *)
 
 open Globals
@@ -18,10 +18,10 @@ let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_log_out "allinput.matlab"
+let log_file = open_log_out "allinput.mathematica"
 
 (* process management *)
-let is_matlab_running = ref false
+let is_mathematica_running = ref false
 
 (* cache *)
 (* let sat_cache = ref (Hashtbl.create 100) *)
@@ -31,16 +31,16 @@ let cache_threshold = 0.001 (* 1ms *)
 
 (* data collecting stuffs *)
 let omega_call_count = ref 0
-let matlab_call_count = ref 0
+let mathematica_call_count = ref 0
 let ee_call_count = ref 0
 let success_ee_count = ref 0
 let nonlinear_time = ref 0.0
 let linear_time = ref 0.0
 let cached_count = ref 0
 
-let matlab_prompt = ">>"
+let mathematica_prompt = ">>"
 
-let process = ref {name = "MATLAB"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+let process = ref {name = "MATHEMATICA"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
@@ -69,14 +69,14 @@ let log level msg =
   | DEBUG -> if !is_log_all then write_msg ()
 
 (*
- * read from input channel until we found the matlab's prompt
+ * read from input channel until we found the mathematica's prompt
  * return every lines read
  *)
 let rec read_till_prompt (channel: in_channel) : string =
   let line = input_line channel in 
   (* let _ = print_endline ("== in read_till_prompt: line = " ^ line) in  *)
   let line = Gen.trim_str line in
-  if (line = matlab_prompt) then ""
+  if (line = mathematica_prompt) then ""
   else line ^ (read_till_prompt channel)
 
 let rec read_till_ready (channel: in_channel)  =
@@ -88,68 +88,68 @@ let rec read_till_ready (channel: in_channel)  =
   else (read_till_ready channel)
 
 (* 
- * send cmd to matlab
- * for some weird i/o reasons, the matlab's prompt for this cmd
+ * send cmd to mathematica
+ * for some weird i/o reasons, the mathematica's prompt for this cmd
  * can only be read after we send this cmd, thus after send the cmd
- * to matlab, we read till the prompt (of this cmd) is found to discard it
+ * to mathematica, we read till the prompt (of this cmd) is found to discard it
  *)
 let send_cmd cmd =
-  if !is_matlab_running then (
+  if !is_mathematica_running then (
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
     (* let _ = read_till_prompt !process.inchannel in *)
     ()
   )
 
-(* start matlab in a separated process *)
+(* start mathematica in a separated process *)
 let start () =
-  if not !is_matlab_running then (
+  if not !is_mathematica_running then (
     let prelude () = (
-      is_matlab_running := true;
+      is_mathematica_running := true;
     ) in
     let set_process proc = process := proc in
-    let _ = Procutils.PrvComms.start !is_log_all log_file ("MATLAB", "matlab",  [|"-nodisplay"; "-nosplash"|] ) set_process prelude in
-    print_endline "Starting Matlab... "; flush stdout;
+    let _ = Procutils.PrvComms.start !is_log_all log_file ("mathematica", "mathematica",  [|"-nodisplay"; "-nosplash"|] ) set_process prelude in
+    print_endline "Starting mathematica... "; flush stdout;
     read_till_ready !process.inchannel;
   )
 
-(* stop matlab system *)
+(* stop mathematica system *)
 let stop () = 
-  if !is_matlab_running then (
+  if !is_mathematica_running then (
     let ending_fnc () = ( 
       let outchannel = !process.outchannel in
       output_string outchannel "quit;\n"; flush outchannel;
-      print_endline "Halting Matlab... "; flush stdout;
+      print_endline "Halting mathematica... "; flush stdout;
       log DEBUG "\n***************";
       log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
-      log DEBUG ("Number of Matlab calls: " ^ (string_of_int !matlab_call_count));
+      log DEBUG ("Number of mathematica calls: " ^ (string_of_int !mathematica_call_count));
       log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
       log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
       log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
       log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
       log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
     ) in
-    let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !matlab_call_count 9 ending_fnc in
-    is_matlab_running := false
+    let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !mathematica_call_count 9 ending_fnc in
+    is_mathematica_running := false
   )
 
 let restart reason =
-  if !is_matlab_running then (
+  if !is_mathematica_running then (
     print_string reason;
-    print_endline " Restarting Matlab... "; flush stdout;
-    Procutils.PrvComms.restart !is_log_all log_file "matlab" reason start stop
+    print_endline " Restarting mathematica... "; flush stdout;
+    Procutils.PrvComms.restart !is_log_all log_file "mathematica" reason start stop
   )
 
 (*
- * send cmd to matlab and get the result from matlab
+ * send cmd to mathematica and get the result from mathematica
  * assume result is the next line read from inchannel
- * return empty string if matlab is not running
+ * return empty string if mathematica is not running
  *)
 let send_and_receive f =
-  if not !is_matlab_running then (
+  if not !is_mathematica_running then (
     let _ = print_endline ("== start 2") in start ()
   );
-  if !is_matlab_running then (
+  if !is_mathematica_running then (
     try
       let fnc () = (
         let _ = send_cmd f in
@@ -166,14 +166,14 @@ let send_and_receive f =
     | ex ->
         print_endline (Printexc.to_string ex);
         let _ = print_endline ("== restart 2") in
-        (restart "Matlab crashed or something really bad happenned!"; "1")
+        (restart "mathematica crashed or something really bad happenned!"; "1")
   )
   else (
     let _ = print_endline ("== restart 3") in
-    (restart "matlab has not started!!"; "2")
+    (restart "mathematica has not started!!"; "2")
   )
 
-(* send formula to matlab and receive result *)
+(* send formula to mathematica and receive result *)
 let send_and_receive f =
   Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
@@ -212,9 +212,9 @@ let call_omega func =
   (*log DEBUG (string_of_float time);*)
   (res, time)
 
-(* call matlab's function func and collect the running time *)
-let call_matlab func =
-  let _ = incr matlab_call_count in
+(* call mathematica's function func and collect the running time *)
+let call_mathematica func =
+  let _ = incr mathematica_call_count in
   let res, time = time func in
   nonlinear_time := !nonlinear_time +. time;
   (*log DEBUG (string_of_float time);*)
@@ -237,122 +237,122 @@ let run_with_timeout func err_msg =
   res
 
 (**************************
- * cpure to matlab *
+ * cpure to mathematica *
  **************************)
 
-let rec matlab_of_var_list (vars : ident list) : string =
+let rec mathematica_of_var_list (vars : ident list) : string =
   match vars with
   | [] -> ""
   | [v] -> v
-  | v :: rest -> v ^ ", " ^ (matlab_of_var_list rest)
+  | v :: rest -> v ^ ", " ^ (mathematica_of_var_list rest)
 
-let matlab_of_spec_var (sv: CP.spec_var) = 
+let mathematica_of_spec_var (sv: CP.spec_var) = 
   match sv with
   | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "PRMD" else "")
 
 let get_vars_formula (p : CP.formula) =
   let svars = Cpure.fv p in
   let _ = print_endline ("== svars length = " ^ (string_of_int (List.length svars))) in 
-  List.map matlab_of_spec_var svars
+  List.map mathematica_of_spec_var svars
 
-let rec matlab_of_exp e0 : (string * CP.spec_var list)= 
+let rec mathematica_of_exp e0 : (string * CP.spec_var list)= 
   match e0 with
   | CP.Null _ -> ("0", [])
-  | CP.Var (v, _) -> (matlab_of_spec_var v, [v])
+  | CP.Var (v, _) -> (mathematica_of_spec_var v, [v])
   | CP.IConst (i, _) -> (string_of_int i, [])
   | CP.AConst (i, _) -> (string_of_int (int_of_heap_ann i), [])
   | CP.FConst (f, _) -> (string_of_float f, [])
   | CP.Add (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " + " ^ s2 ^ ")", v1 @ v2)
   | CP.Subtract (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " - " ^ s2 ^ ")", v1 @ v2)
   | CP.Mult (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " * " ^ s2 ^ ")", v1 @ v2)
   | CP.Div (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " / " ^ s2 ^ ")", v1 @ v2)
   | CP.Sqrt(e, _) ->
-      let s, v = matlab_of_exp e in
+      let s, v = mathematica_of_exp e in
       ("sqrt(" ^ s ^ ")", v)
   | CP.Pow(e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " ^ " ^ s2 ^ ")", v1 @ v2)
   | CP.Max _
-  | CP.Min _ -> failwith ("matlab.matlab_of_exp: min/max can't appear here")
-  | _ -> failwith ("matlab: bags/list is not supported")
+  | CP.Min _ -> failwith ("mathematica.mathematica_of_exp: min/max can't appear here")
+  | _ -> failwith ("mathematica: bags/list is not supported")
 
-let rec matlab_of_b_formula b : (string * CP.spec_var list) =
+let rec mathematica_of_b_formula b : (string * CP.spec_var list) =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) ->
       if c then ("true", [])
       else ("false", [])
-  | CP.BVar (bv, _) -> (matlab_of_spec_var bv, [bv])
+  | CP.BVar (bv, _) -> (mathematica_of_spec_var bv, [bv])
   | CP.Lt (e1, e2, l) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " < " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.Lte (e1, e2, l) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " <= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.SubAnn (e1, e2, l) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " <= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.Gt (e1, e2, l) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " > " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.Gte (e1, e2, l) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " >= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.Eq (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " == " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.Neq (e1, e2, _) ->
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
       ("(" ^ s1 ^ " ~= " ^ s2 ^ ")", CP.remove_dups_svl (v1 @ v2))
   | CP.EqMax (e1, e2, e3, _) ->
       (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
-      let s3, v3 = matlab_of_exp e3 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
+      let s3, v3 = mathematica_of_exp e3 in
       let s = "((" ^ s1 ^ " == " ^ s2 ^ " & " ^ s2 ^ " >= " ^ s3 ^ ") | ("
               ^ s1 ^ " == " ^ s3 ^ " & " ^ s2 ^ " <= " ^ s3 ^ "))" in
       (s, CP.remove_dups_svl (v1 @ v2 @ v3))
   | CP.EqMin (e1, e2, e3, _) ->
       (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
-      let s1, v1 = matlab_of_exp e1 in
-      let s2, v2 = matlab_of_exp e2 in
-      let s3, v3 = matlab_of_exp e3 in
+      let s1, v1 = mathematica_of_exp e1 in
+      let s2, v2 = mathematica_of_exp e2 in
+      let s3, v3 = mathematica_of_exp e3 in
       let s = "((" ^ s1 ^ " == " ^ s2 ^ " & " ^ s2 ^ " <= " ^ s3 ^ ") | ("
               ^ s1 ^ " == " ^ s3 ^ " & " ^ s2 ^ " >= " ^ s3 ^ "))" in
       (s,  CP.remove_dups_svl (v1 @ v2 @ v3))
-  | _ -> failwith ("matlab: other b_formulae is not supported")
+  | _ -> failwith ("mathematica: other b_formulae is not supported")
 
-let rec matlab_of_formula pr_w pr_s f0 : (string * CP.spec_var list) =
+let rec mathematica_of_formula pr_w pr_s f0 : (string * CP.spec_var list) =
   let rec helper f0 = (
     match f0 with
     | CP.BForm ((b,_) as bf,_) -> ( 
         match (pr_w b) with
-        | None -> matlab_of_b_formula bf
+        | None -> mathematica_of_b_formula bf
         | Some f -> helper f
       )
-    | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+    | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _, _) ->
-        let s, v = matlab_of_formula pr_s pr_w f in 
+        let s, v = mathematica_of_formula pr_s pr_w f in 
         ("(not " ^ s ^ ")", v)
     | CP.Forall (sv, f, _, _) ->
         let s, v = helper f in
@@ -416,7 +416,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
         CP.And (nf1, nf2, l)
-    | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+    | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | CP.Or (f1, f2, lbl, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
@@ -456,7 +456,7 @@ let is_linear_bformula b =
 let rec is_linear_formula f0 = 
   match f0 with
   | CP.BForm (b,_) -> is_linear_bformula b
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
       is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
@@ -501,7 +501,7 @@ let rec has_existential_quantifier f0 negation_bounded =
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (has_existential_quantifier f1 negation_bounded)
       || (has_existential_quantifier f2 negation_bounded)
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
 
 let rec has_existential_quantifier_of_int f0 negation_bounded =
@@ -516,7 +516,7 @@ let rec has_existential_quantifier_of_int f0 negation_bounded =
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (has_existential_quantifier_of_int f1 negation_bounded)
       || (has_existential_quantifier_of_int f2 negation_bounded)
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
 
 let has_exists2 f0 =
@@ -553,7 +553,7 @@ let rec strengthen_formula f0 =
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
 let strengthen_formula f =
@@ -595,7 +595,7 @@ let rec weaken_formula f0 =
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
 let weaken2 f0 =
@@ -618,11 +618,11 @@ let weaken2 f0 =
  existential quantifier elimination 
  **********************************)
 
-(* using matlab's linear optimization to find bound of a variable in linear formula *)
+(* using mathematica's linear optimization to find bound of a variable in linear formula *)
 let find_bound_linear_b_formula v f0 =
   let parse s = (
     try
-      (* parse the result string from matlab *)
+      (* parse the result string from mathematica *)
       if s.[0] = '{' then (
         let end_pos = String.index s ',' in
         let num = Gen.trim_str (String.sub s 1 (end_pos - 1)) in
@@ -639,11 +639,11 @@ let find_bound_linear_b_formula v f0 =
     | None -> None in
   let floor2 f =
     match f with
-    | Some f0 -> Some (int_of_float (floor (0. -. f0))) (* we find max by using matlab to find min of it neg val *)
+    | Some f0 -> Some (int_of_float (floor (0. -. f0))) (* we find max by using mathematica to find min of it neg val *)
     | None -> None in
-  let sf0, _ = matlab_of_b_formula f0 in
-  let find_min_cmd = "rlopt({" ^ sf0 ^ "}, " ^ (matlab_of_spec_var v) ^ ")" in
-  let find_max_cmd = "rlopt({" ^ sf0 ^ "}, -" ^ (matlab_of_spec_var v) ^ ")" in
+  let sf0, _ = mathematica_of_b_formula f0 in
+  let find_min_cmd = "rlopt({" ^ sf0 ^ "}, " ^ (mathematica_of_spec_var v) ^ ")" in
+  let find_max_cmd = "rlopt({" ^ sf0 ^ "}, -" ^ (mathematica_of_spec_var v) ^ ")" in
   let _ = send_cmd "on rounded" in
   let min_out = send_and_receive find_min_cmd in
   let max_out = send_and_receive find_max_cmd in
@@ -681,7 +681,7 @@ let rec find_bound v f0 =
         (min, max)
       )
     | CP.BForm (bf,_) -> find_bound_b_formula v bf
-    | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+    | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | _ -> None, None
   )
 
@@ -695,7 +695,7 @@ and get_subst_min f0 v =
       let st2, rf2 = get_subst_min f2 v in
       (st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm bf -> get_subst_min_b_formula bf v
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
 and get_subst_min_b_formula (bf,lbl) v =
@@ -719,7 +719,7 @@ and get_subst_max f0 v = match f0 with
         let st2, rf2 = get_subst_max f2 v in
         (st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm bf -> get_subst_max_b_formula bf v
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
   
 and get_subst_max_b_formula (bf,lbl) v =
@@ -804,7 +804,7 @@ let rec get_subst_equation f0 v =
         let st2, rf2 = get_subst_equation f2 v in
         (st2, CP.mkAnd f1 rf2 pos)
   | CP.BForm (bf, lbl) -> get_subst_equation_b_formula bf v lbl
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
 (* base of all elim_exits functions *)
@@ -846,7 +846,7 @@ let rec elim_exists_helper core f0 =
       res
     )
   | CP.BForm _ -> f0
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
 
 let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   let f_f f = (
@@ -1014,7 +1014,7 @@ let rec negate_formula f0 = match f0 with
       | None -> CP.Not (CP.BForm (bf, lbl), None, no_pos)
     )
   | CP.And (f1, f2, pos) -> CP.Or (negate_formula f1, negate_formula f2, None, pos)
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, pos) -> CP.And (negate_formula f1, negate_formula f2, pos)
   | CP.Not (f, lbl, pos) -> f
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
@@ -1027,7 +1027,7 @@ let negate_formula f0 =
 let rec normalize_formula f0 =
   match f0 with
   | CP.BForm _ -> f0
-  | CP.AndList _ -> Gen.report_error no_pos "matlab.ml: encountered AndList, should have been already handled"
+  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.And (f1, f2, pos) -> CP.And (normalize_formula f1, normalize_formula f2, pos)
   | CP.Or (f1, f2, lbl, pos) -> CP.Or (normalize_formula f1, normalize_formula f2, lbl, pos)
   | CP.Not (f1, lbl, pos) -> negate_formula f1
@@ -1058,28 +1058,28 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     let sf =
       if (!no_pseudo_ops || CP.is_float_formula f) then f
       else strengthen_formula f in
-    let str_sf, v_sf = matlab_of_formula pr_w pr_s sf in
+    let str_sf, v_sf = mathematica_of_formula pr_w pr_s sf in
     let vars_decl =
       match v_sf with
       | [] -> "" 
-      | _ -> let svars = List.fold_left (fun s var -> s ^ (matlab_of_spec_var var) ^ " ") " " v_sf in
+      | _ -> let svars = List.fold_left (fun s var -> s ^ (mathematica_of_spec_var var) ^ " ") " " v_sf in
              "syms " ^ svars ^ " real; " in 
-    let fmatlab =
+    let fmathematica =
       match v_sf with
       | [] -> "disp(logical(" ^ str_sf ^ "));"
       | _ -> "disp(isAlways(" ^ str_sf ^ "));" in
     let prompt = "disp(sprintf('>>'))\n" in
-    let matlab_input = vars_decl ^ fmatlab ^ prompt in
-    let runner () = check_formula matlab_input in
+    let mathematica_input = vars_decl ^ fmathematica ^ prompt in
+    let runner () = check_formula mathematica_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
-    let res, time = call_matlab proc in
+    let res, time = call_mathematica proc in
     let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
   )
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
-  Debug.no_1 "is_sat_no_cache (matlab)" !print_formula 
+  Debug.ho_1 "is_sat_no_cache (mathematica)" !print_formula 
     (fun (b,_) -> string_of_bool b)
     (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
 
@@ -1091,31 +1091,31 @@ let is_sat f sat_no =
   is_sat_ops pr_w pr_s f sat_no
 
   let is_sat f sat_no =
-  Debug.no_2 "[matlab] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat f sat_no
+  Debug.no_2 "[mathematica] is_sat" string_of_formula (fun c -> c) string_of_bool is_sat f sat_no
 
 let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
-  let sf, vf = matlab_of_formula pr_w pr_s f in
+  let sf, vf = mathematica_of_formula pr_w pr_s f in
   let vars_decl =
     match vf with
     | [] -> "" 
-    | _ -> let svars = List.fold_left (fun s var -> s ^ (matlab_of_spec_var var) ^ " ") " " vf in
+    | _ -> let svars = List.fold_left (fun s var -> s ^ (mathematica_of_spec_var var) ^ " ") " " vf in
            "syms " ^ svars ^ " real; " in 
-  let fmatlab =
+  let fmathematica =
     match vf with
     | [] -> "disp(logical(" ^ sf ^ "));"
     | _ -> "disp(isAlways(" ^ sf ^ "));" in
   let prompt = "disp(sprintf('>>'))\n" in
-  let matlab_input = vars_decl ^ fmatlab ^ prompt in
-  let runner () = check_formula matlab_input in
+  let mathematica_input = vars_decl ^ fmathematica ^ prompt in
+  let runner () = check_formula mathematica_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
-  let res, time = call_matlab proc in
+  let res, time = call_mathematica proc in
   let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.ho_2 "[matlab] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.ho_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
@@ -1139,7 +1139,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
         let eef = elim_eq f in
         if (has_eq_int eef) then (
           (* If there is exist quantified over integers, issue the warning*)
-          (print_string ("\n[matlab] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for matlab\n"));
+          (print_string ("\n[mathematica] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for mathematica\n"));
           valid eef
         )
         else
@@ -1151,7 +1151,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
   res
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
-  Debug.no_2 "[matlab] imply_no_cache" 
+  Debug.no_2 "[mathematica] imply_no_cache" 
     (add_str "formula" string_of_formula)
     (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
     (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
@@ -1186,7 +1186,7 @@ let imply_ops pr_w pr_s ante conseq imp_no =
 
 let imply_ops pr_w pr_s ante conseq imp_no =
   let pr = !CP.print_formula in
-  Debug.no_2 "[matlab.ml]imply_ops" pr pr string_of_bool
+  Debug.no_2 "[mathematica.ml]imply_ops" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
@@ -1194,29 +1194,29 @@ let imply f imp_no =
   imply_ops pr_w pr_s f imp_no
 
 let imply ante conseq imp_no =
-  Debug.no_3 "[matlab] imply" 
+  Debug.no_3 "[mathematica] imply" 
     (add_str "ante" string_of_formula) 
     (add_str "conseq" string_of_formula)
     (add_str "imp_no" (fun c -> c)) 
     string_of_bool imply ante conseq imp_no
 
-let simplify_with_matlab (f: CP.formula) : CP.formula  =
+let simplify_with_mathematica (f: CP.formula) : CP.formula  =
   let pr_n x = None in
   if (CP.is_float_formula f) then
     (* do a manual existential elimination *)
     elim_exist_quantifier f
   else 
-    let matlabf, _ = matlab_of_formula pr_n pr_n (normalize_formula f) in
+    let mathematicaf, _ = mathematica_of_formula pr_n pr_n (normalize_formula f) in
     let _ = send_cmd "rlset pasf" in
-    let matlab_result = send_and_receive ("rlsimpl " ^ matlabf) in 
+    let mathematica_result = send_and_receive ("rlsimpl " ^ mathematicaf) in 
     let _ = send_cmd "rlset ofsf" in
-    let lexbuf = Lexing.from_string matlab_result in
+    let lexbuf = Lexing.from_string mathematica_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
     simpler_f
 
-let simplify_with_matlab (f: CP.formula) : CP.formula  =
+let simplify_with_mathematica (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
-  Debug.no_1 "simplify_with_matlab" !print_formula !print_formula simplify_with_matlab f
+  Debug.no_1 "simplify_with_mathematica" !print_formula !print_formula simplify_with_mathematica f
 
 (*Note: a linear formula is passed to Omega only when
 it is not a float formula.
@@ -1229,7 +1229,7 @@ let simplify (f: CP.formula) : CP.formula =
     if (!no_simplify) then f
     else
       try
-        let simpler_f = simplify_with_matlab f in
+        let simpler_f = simplify_with_mathematica f in
         let simpler_f =
           if ( (is_linear_formula simpler_f) && not (CP.is_float_formula f)) then
             Omega.simplify simpler_f
@@ -1240,7 +1240,7 @@ let simplify (f: CP.formula) : CP.formula =
         log DEBUG ("simplified: " ^ (string_of_formula simpler_f));
         simpler_f
       with _ as e ->
-        log ERROR "Error while simplifying with matlab";
+        log ERROR "Error while simplifying with mathematica";
         log ERROR (Printexc.to_string e);
         f
 
@@ -1256,7 +1256,7 @@ let pairwisecheck (f: CP.formula): CP.formula =
 (** An Hoa : EQUATION SOLVING FACILITY **)
 
 (* An Hoa : Helper function to create a list of strings of form [prefix{n}, prefix{n-1},...,prefix{1}]
- @remark  Since matlab poses restrictions on the name of variables, this function is necessary to standardize variables to a safe form. In particular, we convert base variables to y1,y2,... (these variables will serve as parameters) and the rest to x1,x2,... (for unknowns). *)
+ @remark  Since mathematica poses restrictions on the name of variables, this function is necessary to standardize variables to a safe form. In particular, we convert base variables to y1,y2,... (these variables will serve as parameters) and the rest to x1,x2,... (for unknowns). *)
 let rec enum_str_prefix prefix n =
   if (n == 0) then []
   else
@@ -1265,12 +1265,12 @@ let rec enum_str_prefix prefix n =
 
 (* An Hoa : Map a list of spec var to red log vars
   @return The list of new variables, the correspondence between old variables and new vars (for instance (h',hprmd) to indicate h' --> hprmd), the reverse correspondence between new variable names & the original variables. *)
-let matlab_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
+let mathematica_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
   let helper prefix vars = 
   let numvars = List.length vars in
-    let matlabvarsnames = enum_str_prefix prefix numvars in
-    let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars matlabvarsnames in
-    let vars_map = List.map2 (fun v w -> (v,w)) vars matlabvarsnames in
+    let mathematicavarsnames = enum_str_prefix prefix numvars in
+    let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars mathematicavarsnames in
+    let vars_map = List.map2 (fun v w -> (v,w)) vars mathematicavarsnames in
     let vars_rev_map = List.map2 (fun v w -> (CP.name_of_spec_var w,v)) vars newvars in
     (*let _ = print_endline "Variable standardization :" in
     let _ = List.map (fun (x,y) -> print_endline (x ^ "<--->" ^ (!CP.print_sv y))) vars_rev_map in*)
@@ -1297,7 +1297,7 @@ let parse_assignment (assignment : string) : (string * string) =
 
 (* An Hoa : Group equal variables into lists *)
 let group_eq_vars (ass : (string * string) list) =
-  (* Since matlab already order the right hand side, we only need 
+  (* Since mathematica already order the right hand side, we only need 
   to group the variables according to the string representation of 
   the right hand side *)
   let ass_sorted = List.sort (fun (l1,r1) (l2,r2) -> String.compare r1 r2) ass in
@@ -1325,10 +1325,10 @@ let group_eq_vars (ass : (string * string) list) =
       grouped_vars in*)
   grouped_vars
 
-(* An Hoa : parse the solution given out by matlab. Assume that solution is of the form 
+(* An Hoa : parse the solution given out by mathematica. Assume that solution is of the form 
 { { (var = exp)* }+ }
 and that ONLY ONE root is obtained! *)
-let parse_matlab_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list * (CP.spec_var * string) list=
+let parse_mathematica_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list * (CP.spec_var * string) list=
   let l = String.length solution in
   (* Remove the braces { and } at the beginning & end of the list of solution *)
   if (l = 0 || solution.[0] = '*') then ([],[]) 
@@ -1398,7 +1398,7 @@ let parse_matlab_solution solution (bv : CP.spec_var list) (revmap : (string * C
     (sst, strrep)
   )
 
-(* An Hoa : Make use of matlab for equation solving facility.
+(* An Hoa : Make use of mathematica for equation solving facility.
   @param eqns -> List of equations; no max, min, inequality, ...
   @param bv -> List of equation parameters
   @return a list of binding (var,exp) indicating the root
@@ -1406,11 +1406,11 @@ let parse_matlab_solution solution (bv : CP.spec_var list) (revmap : (string * C
     approach because this is the final back-end
  *)
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
-  (* Start matlab UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
-  (*let _ = print_endline "solve_eqns :: starting matlab ..." in*)
+  (* Start mathematica UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
+  (*let _ = print_endline "solve_eqns :: starting mathematica ..." in*)
   (*let _ = print_endline "Initiating solving sequence ..." in*)
   let _ = start () in
-  (*let _ = print_endline "solve_eqns :: matlab started!" in*)
+  (*let _ = print_endline "solve_eqns :: mathematica started!" in*)
   (* filter out the array accesses *)
   let rec contains_no_arr e =
     match e with
@@ -1432,15 +1432,15 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
   (*let unks = List.append unks bv in*)
   (*let _ = print_endline ("Rearranged list of unknowns : " ^ (!CP.print_svl unks)) in*)
   (* Swap all primed variables *)
-  let red_unks, unksmap, unksrmap = matlab_vars_map unks bv in
-  (*let red_bv, bvmaps, bvrmap = matlab_vars_map bv in*)
-  (* Generate the matlab list of unknowns *)
+  let red_unks, unksmap, unksrmap = mathematica_vars_map unks bv in
+  (*let red_bv, bvmaps, bvrmap = mathematica_vars_map bv in*)
+  (* Generate the mathematica list of unknowns *)
   let input_unknowns = List.map CP.name_of_spec_var red_unks in
   let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
   (*let _ = print_endline "\nVariables to solve for : " in
   let _ = print_endline input_unknowns in*)
-  (* Internal function to generate matlab equations *)
-  let rec matlab_of_exp varsmap e =
+  (* Internal function to generate mathematica equations *)
+  let rec mathematica_of_exp varsmap e =
     match e with
     | CP.Null _ -> "null" (* null serves as a symbollic variable *)
     | CP.Var (v, _) -> (
@@ -1451,10 +1451,10 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
             failwith "solve : variable not found in variable mapping!")
     | CP.IConst (i, _) -> string_of_int i
     | CP.FConst (f, _) -> string_of_float f
-    | CP.Add (e1, e2, _) -> "(" ^ (matlab_of_exp varsmap e1) ^ " + " ^ (matlab_of_exp varsmap e2) ^ ")"
-    | CP.Subtract (e1, e2, _) -> "(" ^ (matlab_of_exp varsmap e1) ^ " - " ^ (matlab_of_exp varsmap e2) ^ ")"
+    | CP.Add (e1, e2, _) -> "(" ^ (mathematica_of_exp varsmap e1) ^ " + " ^ (mathematica_of_exp varsmap e2) ^ ")"
+    | CP.Subtract (e1, e2, _) -> "(" ^ (mathematica_of_exp varsmap e1) ^ " - " ^ (mathematica_of_exp varsmap e2) ^ ")"
     | _ -> failwith ("solve : unsupported expression!" ^ (!CP.print_exp e)) in
-  (* Internal function to read matlab output *)
+  (* Internal function to read mathematica output *)
   let rec read_stream () =
     let line = Gen.trim_str (input_line !process.inchannel) in
     let l = String.length line in
@@ -1465,19 +1465,19 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
     else 
       line ^ (read_stream ()) in
   try
-    let input_eqns = List.map (fun (e1,e2) -> (matlab_of_exp unksmap e1) ^ " = " ^ (matlab_of_exp unksmap e2)) eqns in
+    let input_eqns = List.map (fun (e1,e2) -> (mathematica_of_exp unksmap e1) ^ " = " ^ (mathematica_of_exp unksmap e2)) eqns in
     let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
     (*let _ = print_endline "\nInput equations: " in
     let _ = print_endline input_eqns in *)
 
-    (* Pipe the solve request to matlab process *)
+    (* Pipe the solve request to mathematica process *)
     let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
-    (*let _ = print_endline ("\nMatlab input command:" ^ input_command) in*)
+    (*let _ = print_endline ("\nmathematica input command:" ^ input_command) in*)
     let _ = send_cmd input_command in
     (* Read, parse and return *)
     let red_result = read_stream () in
     (*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
-    let sst,strrep = parse_matlab_solution red_result bv unksrmap in
+    let sst,strrep = parse_mathematica_solution red_result bv unksrmap in
     (sst,strrep)
   with
   | _ -> ([],[])

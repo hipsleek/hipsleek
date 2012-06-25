@@ -35,6 +35,7 @@ class mainwindow () =
           <menuitem action='Mona'/>\
           <menuitem action='Redlog'/>\
           <menuitem action='Matlab'/>\
+          <menuitem action='Mathematica'/>\
         </menu>\
         <menuitem action='EPS'/>\
         <menuitem action='EAP'/>\
@@ -175,7 +176,8 @@ class mainwindow () =
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
           ra "Redlog" 2 ~label:"_Redlog";
-          ra "Matlab" 2 ~label:"_Matlab";
+          ra "Matlab" 3 ~label:"_Matlab";
+          ra "Mathematica" 4 ~label:"_Mathematica";
         ];
       ];
       let ui = GAction.ui_manager () in
@@ -287,7 +289,7 @@ class mainwindow () =
       original_digest <> digest
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog; TP.Matlab] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog; TP.Matlab; TP.Mathematica] in
       let tp = List.nth provers id in
       TP.change_prover tp;
       let tp_name = TP.name_of_tp tp in

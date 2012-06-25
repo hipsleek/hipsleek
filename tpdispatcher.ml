@@ -27,6 +27,7 @@ type tp_type =
   | Z3
   | Redlog
   | Matlab
+  | Mathematica
   | RM (* Redlog and Mona *)
   | ZM (* Z3 and Mona *)
   | OZ (* Omega and Z3 *)
@@ -77,6 +78,7 @@ let string_of_prover prover = match prover with
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
   | Matlab -> "Matlab"
+  | Mathematica -> "Mathematica"
 	| RM -> ""
 	| ZM -> "Omega, z3"
 	| OZ -> "Omega, z3"
@@ -404,6 +406,8 @@ let set_tp tp_str =
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "matlab" then
     (tp := Matlab; prover_str := "matlab"::!prover_str;)
+  else if tp_str = "mathematica" then
+    (tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
   else if tp_str = "zm" then
@@ -444,6 +448,7 @@ let string_of_tp tp = match tp with
   | Z3 -> "z3"
   | Redlog -> "redlog"
   | Matlab -> "matlab"
+  | Mathematica -> "mathematica"
   | RM -> "rm"
   | ZM -> "zm"
   | OZ -> "oz"
@@ -467,6 +472,7 @@ let name_of_tp tp = match tp with
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
   | Matlab -> "Matlab"
+  | Mathematica -> "Mathematica"
   | RM -> "Redlog and Mona"
   | ZM -> "Z3 and Mona"
   | OZ -> "Omega, Z3"
@@ -482,6 +488,7 @@ let log_file_of_tp tp = match tp with
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
   | Matlab -> "allinput.matlab"
+  | Mathematica -> "allinput.mathematica"
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
@@ -922,6 +929,7 @@ let start_prover () =
   | Coq -> Coq.start ();
   | Redlog | RM -> Redlog.start (); Omega.start ()
   | Matlab -> Matlab.start(); Omega.start()
+  | Mathematica -> Mathematica.start(); Omega.start()
   | Cvc3 -> 
       provers_process := Some (Cvc3.start ()); (* because of incremental *)
       let _ = match !provers_process with 
@@ -943,6 +951,7 @@ let stop_prover () =
   | Coq -> Coq.stop ()
   | Redlog | RM -> Redlog.stop(); Omega.stop()
   | Matlab -> Matlab.stop(); Omega.stop();
+  | Mathematica -> Mathematica.stop(); Omega.stop();
   | Cvc3 ->
       (match !provers_process with
       |Some proc ->  Cvc3.stop proc;
@@ -967,6 +976,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let matlab_is_sat f = Matlab.is_sat_ops pr_weak pr_strong f sat_no in 
+  let mathematica_is_sat f = Mathematica.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
@@ -1030,6 +1040,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
     | Matlab -> matlab_is_sat wf
+    | Mathematica -> mathematica_is_sat wf
     | RM ->
         if (is_bag_constraint wf) then mona_is_sat wf
         else redlog_is_sat wf
@@ -1120,6 +1131,7 @@ let simplify (f : CP.formula) : CP.formula =
             | Z3 -> Smtsolver.simplify f
             | Redlog -> Redlog.simplify f
             | Matlab -> Matlab.simplify f
+            | Mathematica -> Mathematica.simplify f
             | RM -> 
                 if is_bag_constraint f then Mona.simplify f
                 else Redlog.simplify f
@@ -1254,6 +1266,7 @@ let hull (f : CP.formula) : CP.formula =
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
     | Matlab -> Matlab.hull f
+    | Mathematica -> Mathematica.hull f
     | RM -> if is_bag_constraint f then Mona.hull f
             else Redlog.hull f
     | ZM -> if is_bag_constraint f then Mona.hull f
@@ -1284,6 +1297,7 @@ let pairwisecheck (f : CP.formula) : CP.formula =
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | Matlab -> Matlab.pairwisecheck f
+    | Mathematica -> Mathematica.pairwisecheck f
     | RM -> if is_bag_constraint f then Mona.pairwisecheck f
             else Redlog.pairwisecheck f
     | ZM -> if is_bag_constraint f then Mona.pairwisecheck f
@@ -1347,6 +1361,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let matlab_imply a c = Matlab.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
+  let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong ante_w conseq_s in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
@@ -1424,6 +1439,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
     | Matlab -> matlab_imply ante_w conseq_s  
+    | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM -> 
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           mona_imply ante_w conseq_s
@@ -1848,7 +1864,7 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
   | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
 let rec imply ante0 conseq0 imp_no do_cache process =
-Debug.ho_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
+Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
