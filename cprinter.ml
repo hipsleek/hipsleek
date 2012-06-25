@@ -1835,8 +1835,8 @@ let pr_view_base_case bc =
 
 let pr_barrier_decl v = 
 	fmt_open_vbox 1;
-    wrap_box ("B",0) (fun ()-> "barrier "^v.barrier_name ^"<"^(string_of_int v.barrier_thc)^","^
-	(String.concat "," (List.map string_of_spec_var v.barrier_shared_vars))^"> = ") ();
+    wrap_box ("B",0) (fun ()-> fmt_string ("barrier "^v.barrier_name ^"<"^(string_of_int v.barrier_thc)^","^
+	(String.concat "," (List.map string_of_spec_var v.barrier_shared_vars))^"> = ")) ();
 	fmt_cut (); wrap_box ("B",0) pr_struc_formula v.barrier_def; 
 	pr_vwrap  "transitions:" 
 	(pr_seq "\n" (fun (f,t,sp)-> pr_int f; fmt_string "->";pr_int t; fmt_string " :"; pr_seq "\n" pr_struc_formula sp)) v.barrier_tr_list;

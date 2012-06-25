@@ -433,6 +433,8 @@ let input_file_name =ref ""
 
 let use_split_match = ref false
 
+let consume_all = ref false
+
 let enable_split_lemma_gen = ref false
 
 let procs_verified = ref ([] : string list)

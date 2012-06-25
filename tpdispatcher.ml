@@ -1516,7 +1516,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "tp_imply_no_cache" pr pr string_of_bool
+  Debug.no_2_loop "tp_imply_no_cache" pr pr string_of_bool
   (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
 
 let tp_imply_perm ante conseq imp_no timeout process = 
@@ -1536,7 +1536,7 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
 			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
-			let tp_wrap fa fc = Debug.no_2 "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
+			let tp_wrap fa fc = Debug.no_2_loop "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process
@@ -1779,7 +1779,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2_loop "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 
@@ -1905,7 +1905,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2_loop "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =

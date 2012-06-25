@@ -438,4 +438,5 @@ let drop_tauto f =
   | Not (b,l,p) -> mkNot (helper b) l p 
   | Forall (s,f,l,p) -> Forall (s, helper f, l,p) 
   | Exists (v,f,l,p) -> Exists (v, helper f, l,p) in
- helper f
+ let pr =  !print_formula in
+ Debug.no_1_loop "drop_tauto" pr pr helper f

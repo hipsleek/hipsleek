@@ -6643,12 +6643,19 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       Iast.proc_body = nb;
   }
 
-and case_normalize_barrier prog bd = 
-   let lv = bd.I.barrier_shared_vars in
+and case_normalize_barrier_x prog bd = 
+   (*let lv = bd.I.barrier_shared_vars in
    let u = (self,Unprimed)::(List.map (fun (_,c)-> (c,Unprimed)) lv) in
-   let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in
+   let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
+   let u = [(self,Unprimed)] in
+   let p = [(self,Primed)] in
    let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
   {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
+   
+and case_normalize_barrier prog bd =    
+	let pr_in = Iprinter.string_of_barrier_decl in
+	Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
+  
    
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
@@ -7536,7 +7543,7 @@ and check_barrier_wf prog bd =
    
 
 				
-and trans_bdecl prog bd = 
+and trans_bdecl_x prog bd = 
   if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
 	  raise  (Err.Malformed_barrier ("several descriptions for the same transition "))
    else (); 
@@ -7550,7 +7557,8 @@ and trans_bdecl prog bd =
   let stab = H.create 103 in
   H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
   List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) bd.I.barrier_shared_vars ; 
-  let vl = self::(List.map snd bd.I.barrier_shared_vars) in
+  (*let vl = self::(List.map snd bd.I.barrier_shared_vars) in*)
+  let vl = [self] in
   
   let fct f = trans_I2C_struc_formula prog true vl f stab false in
   let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
@@ -7568,10 +7576,10 @@ and trans_bdecl prog bd =
     C.barrier_prune_conditions_baga = [];
     C.barrier_prune_invariants = [];}
   
-let trans_bdecl prog bd =
+and trans_bdecl prog bd =
 	let pr_in = Iprinter.string_of_barrier_decl in
-	let pr_out _ = "" in
-	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl prog) bd
+	let pr_out c = Cprinter.string_of_barrier_decl c in
+	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
 (*
 and normalize_barr_decl cprog p = 
