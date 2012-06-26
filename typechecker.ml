@@ -738,7 +738,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				| CF.Ctx c -> 
 					match CF.find_barr (List.map (fun c-> c.barrier_name) prog.prog_barrier_decls) (snd b) c.CF.es_formula with 
 						| None -> report_error pos ("context does not contain any info on barrier "^(snd b)) 
-						| Some (bn,args,branches) -> 
+						| Some bar_dn -> 
+							 let bn,args,branches = bar_dn.CF.h_formula_data_name,bar_dn.CF.h_formula_data_node::bar_dn.CF.h_formula_data_arguments,bar_dn.CF.h_formula_data_remaining_branches in						
 							let bd = try List.find (fun c-> bn=c.barrier_name) prog.prog_barrier_decls with | _ -> failwith "error in barr find " in
 							let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
 							let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in

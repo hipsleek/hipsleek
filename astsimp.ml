@@ -7068,16 +7068,43 @@ and view_prune_inv_inference_x cp vd =
       C.view_prune_invariants = invs;} in 
   v'    
 
-and barrier_prune_inv_inference cp bd = 
-  let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in
+and barrier_prune_inv_inference_x cp bd = 
+  (*let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in*)
   let f_branches = CF.get_bar_branches  bd.C.barrier_def in 
   let branches = List.map snd f_branches in
-  let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::bd.C.barrier_shared_vars) f_branches [] [] no_pos in    
+  (*let _, baga_cond ,_ = prune_inv_inference_formula cp (sf::bd.C.barrier_shared_vars) f_branches [] [] no_pos in    *)
+  let state_conds,perm_conds = 
+	(*let state_var = List.hd bd.C.barrier_shared_vars in*)
+	let l = CF.get_bar_conds [bd.C.barrier_name] self f_branches in
+	let l_state,l_perm = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
+		let a1 = match c1 with | None -> a1 | Some v -> (v,c3)::a1 in
+		let a2 = match c2 with | None -> a2 | Some v -> (v,c3)::a2 in
+		(a1,a2)) ([],[]) l in
+	let rec fix_p_state l= match l with
+		| [] -> []
+		| (v,lbl)::t-> 
+			let l_v,l_nv = List.partition (fun (v2,_)-> v=v2) t in
+			(v, lbl:: (snd (List.split l_v)))::(fix_p_state l_nv) in
+	let rec fix_perm l= match l with
+		| [] -> []
+		| (v,lbl)::t-> 
+			let l_v,l_nv = List.partition (fun (v2,_)-> Tree_shares.Ts.eq v v2) t in
+			(v, lbl:: (snd (List.split l_v)))::(fix_perm l_nv) in		
+	fix_p_state l_state, fix_perm l_perm in
   { bd with  
 	C.barrier_prune_branches = branches; 
-	C.barrier_prune_conditions = conds ;
-    C.barrier_prune_conditions_baga = baga_cond;
-    C.barrier_prune_invariants = invs;}
+	C.barrier_prune_conditions_state = state_conds;
+	C.barrier_prune_conditions_perm = perm_conds;
+	C.barrier_prune_conditions = [] ;	
+    C.barrier_prune_conditions_baga = [];	
+    C.barrier_prune_invariants = [];}
+  
+and barrier_prune_inv_inference cp bd = 
+	let pr = Cprinter.string_of_barrier_decl in
+	Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
+
+
+  
   
 and coerc_spec prog is_l c = 
   if not !Globals.allow_pred_spec then [c] 
@@ -7101,9 +7128,11 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
             C.view_formula =  CF.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
             C.view_un_struc_formula = unstruc;}) preds in
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
-	let bars = List.map (fun c-> { c with 
+	let prune_bar c = { c with 
 		 C.barrier_tr_list = List.map (fun (a1,a2,c)-> a1,a2,List.map (Solver.prune_pred_struc prog_views_pruned true) c) c.C.barrier_tr_list;
-		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)}) bars in
+		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)} in
+	let prune_bar c = Debug.no_1 "prune_bar" Cprinter.string_of_barrier_decl Cprinter.string_of_barrier_decl prune_bar c in
+	let bars = List.map prune_bar bars in
 		 
 	let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
     let proc_spec f = 
@@ -7574,7 +7603,9 @@ and trans_bdecl_x prog bd =
     C.barrier_prune_branches = [];
 	C.barrier_prune_conditions = []; 
     C.barrier_prune_conditions_baga = [];
-    C.barrier_prune_invariants = [];}
+    C.barrier_prune_invariants = [];
+	C.barrier_prune_conditions_state = [];
+	C.barrier_prune_conditions_perm =[]}
   
 and trans_bdecl prog bd =
 	let pr_in = Iprinter.string_of_barrier_decl in

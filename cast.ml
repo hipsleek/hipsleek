@@ -57,6 +57,8 @@ and barrier_decl = {
 	barrier_def: F.struc_formula ;
 	barrier_prune_branches: formula_label list; (* all the branches of a view *)
 	barrier_prune_conditions: (P.b_formula * (formula_label list)) list;
+	barrier_prune_conditions_state: (int * (formula_label list)) list;
+	barrier_prune_conditions_perm: (Tree_shares.Ts.t_sh* (formula_label list)) list ;
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 	}  

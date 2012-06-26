@@ -957,7 +957,7 @@ let rec pr_h_formula h =
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
-          (match ann with | None -> () | Some _ -> fmt_string "[]");
+          pr_remaining_branches ann;
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
@@ -1835,11 +1835,18 @@ let pr_view_base_case bc =
 
 let pr_barrier_decl v = 
 	fmt_open_vbox 1;
-    wrap_box ("B",0) (fun ()-> fmt_string ("barrier "^v.barrier_name ^"<"^(string_of_int v.barrier_thc)^","^
+    wrap_box ("B",0) (fun ()-> fmt_string ("barrier "^v.barrier_name ^"["^(string_of_int v.barrier_thc)^"]<"^
 	(String.concat "," (List.map string_of_spec_var v.barrier_shared_vars))^"> = ")) ();
 	fmt_cut (); wrap_box ("B",0) pr_struc_formula v.barrier_def; 
 	pr_vwrap  "transitions:" 
 	(pr_seq "\n" (fun (f,t,sp)-> pr_int f; fmt_string "->";pr_int t; fmt_string " :"; pr_seq "\n" pr_struc_formula sp)) v.barrier_tr_list;
+	
+	pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.barrier_prune_branches;
+	pr_vwrap  "prune conditions: " pr_case_guard v.barrier_prune_conditions;
+	pr_vwrap  "prune perm conditions: " (fun c-> fmt_string "{"; pr_seq "\n" (fun (c1,c2)-> fmt_string (Tree_shares.Ts.string_of c1) ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c; fmt_string "}") v.barrier_prune_conditions_perm;
+	pr_vwrap  "prune state conditions: " (fun c-> fmt_string "{"; pr_seq "\n" (fun (c1,c2)-> fmt_string (string_of_int c1) ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c; fmt_string "}") v.barrier_prune_conditions_state;
+	pr_vwrap  "prune baga conditions: " (fun c-> fmt_string (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.barrier_prune_conditions_baga;
+	pr_vwrap  ("prune invs:"^( string_of_int(List.length v.barrier_prune_invariants) )^":") pr_prune_invariants v.barrier_prune_invariants;
 	fmt_close_box ()
 	  
 (* pretty printing for a view *)

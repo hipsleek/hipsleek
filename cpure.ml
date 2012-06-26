@@ -8288,3 +8288,31 @@ let rec tpd_drop_nperm f = match f with
 	
 let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_list (fun c-> !print_b_formula (c,None))) tpd_drop_nperm f
 
+
+let rec get_inst fct v f = match f with
+	| BForm ((f,_),_) -> (match f with
+		| Eq (Var _ , Var _, _) -> None
+		| Eq (e , Var (v1,_), _)
+		| Eq (Var (v1,_), e, _)-> if eq_spec_var v v1 then fct e else None
+		| _ -> None)
+	| And (f1,f2,_) -> (match get_inst fct v f1 with
+		| None -> get_inst fct v f2 
+		| Some v ->  Some v) 
+   | AndList l -> List.fold_left (fun a (_,c)-> match a with | None -> get_inst fct v c | Some _ -> a) None l 
+   | Not _
+   | Forall _
+   | Exists _
+   | Or _ -> None
+   
+let get_inst_tree v f =
+	let fct e = match e with
+		| Tsconst (t,_) -> Some t
+		| _ -> None in
+	get_inst fct v f
+	
+let get_inst_int v f = 
+	let fct e = match e with
+		| IConst (i,_) -> Some i
+		| _ -> None in
+	get_inst fct v f
+		
