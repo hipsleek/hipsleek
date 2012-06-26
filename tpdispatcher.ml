@@ -1611,7 +1611,7 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
-let is_sat (f : CP.formula) (sat_no : string): bool =
+let is_sat_no_cache (f : CP.formula) (sat_no : string): bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
@@ -1625,8 +1625,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 	sat_label_filter (fun c-> tp_is_sat c sat_no) f
 ;;
 
-let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+let is_sat_no_cache (f : CP.formula) (sat_no : string): bool =
+  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat_no_cache f sat_no) f
 
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
@@ -1882,7 +1882,7 @@ let is_sat f sat_no do_cache =
       | None -> false
   else  begin   
     disj_cnt f None "sat";
-    Gen.Profiling.do_1 "is_sat" (is_sat f) sat_no
+    Gen.Profiling.do_1 "is_sat" (is_sat_no_cache f) sat_no
   end
 ;;
 

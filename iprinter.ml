@@ -203,8 +203,7 @@ let string_of_b_formula (pf,il) =
       let seq_vari = string_of_sequence_variation seq.P.seq_variation in
       let elm = string_of_formula_exp seq.P.seq_element in
       let fp = string_of_formula_exp seq.P.seq_fix_point in
-      let b = pr_list string_of_formula_exp seq.P.seq_bounds in
-      ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ fp ^ ", " ^ b ^ ")"
+      ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ fp ^ ")"
     )
   | P.PrimTermVar prim -> (string_of_term_ann prim.P.prim_ann) ^ "()";
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 

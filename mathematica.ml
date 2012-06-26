@@ -82,11 +82,9 @@ let rec read_output (channel: in_channel) : string =
   let line = Gen.trim_str line in
   if (((String.length line) > 3) && ((String.sub line 0 4) = "Out[")) then line
   else (read_output channel)
+
 (* 
  * send cmd to mathematica
- * for some weird i/o reasons, the mathematica's prompt for this cmd
- * can only be read after we send this cmd, thus after send the cmd
- * to mathematica, we read till the prompt (of this cmd) is found to discard it
  *)
 let send_cmd cmd =
   if !is_mathematica_running then (
@@ -172,6 +170,14 @@ let send_and_receive (f : string) : string =
 let send_and_receive (f : string) : string =
   Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
+(* normalizing mathematica command by replacing all character underscore '_' by character 'N' *)
+(* because variables' name in mathematica don't contain underscore character *) 
+let normalize_mathematica_formula (formula : string) : string =
+  for i = 0 to (String.length formula) - 1 do
+    if formula.[i] = '_' then formula.[i] <- 'N'
+  done;
+  formula
+
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in
   try 
@@ -187,7 +193,8 @@ let check_formula (f: string) : bool option =
   with _ -> None
 
 let check_formula f =
-  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
+  let new_f = normalize_mathematica_formula f in
+  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula new_f
 
 (* 
  * run func and return its result together with running time 

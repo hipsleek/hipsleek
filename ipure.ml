@@ -31,8 +31,7 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_fix_point: exp;
-  seq_bounds: exp list;  (* seq_bounds = [lower_bound] for decreasing sequences
-                                       = [lower_bound; upper_bound] for oscillating sequences *)  
+  seq_term_cond: formula;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }
@@ -208,8 +207,7 @@ and bfv (bf : b_formula) =
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let b = seq_info.seq_bounds in
-      let args = [e; fp] @ b in
+      let args = [e; fp] in
       let args_fv = List.concat (List.map afv args) in
       Gen.BList.remove_dups_eq (=) args_fv
   | PrimTermVar _ -> []
@@ -642,10 +640,8 @@ and b_apply_one (fr, t) bf =
   | SeqVar seq_info ->
       let e = e_apply_one (fr, t) seq_info.seq_element in
       let fp = e_apply_one (fr, t) seq_info.seq_fix_point in
-      let b = List.map (fun x -> e_apply_one (fr, t) x) seq_info.seq_bounds in
       SeqVar {seq_info with seq_element = e;
-                            seq_fix_point = fp;
-                            seq_bounds = b;}
+                            seq_fix_point = fp; }
   | PrimTermVar _ -> pf
   in (npf,il)
 
@@ -766,8 +762,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let b = seq_info.seq_bounds in
-      let exps = [e; fp] @ b in
+      let exps = [e; fp] in
       List.concat (List.map look_for_anonymous_exp exps)
   | PrimTermVar _ -> []
   | RelForm (_,args,_) -> 
@@ -821,8 +816,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
   | SeqVar seq_info -> 
       let e = seq_info.seq_element in
       let fp = seq_info.seq_fix_point in
-      let b = seq_info.seq_bounds in
-      let exps = [e; fp] @ b in
+      let exps = [e; fp] in
       List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] exps
   | PrimTermVar _ -> []
 
