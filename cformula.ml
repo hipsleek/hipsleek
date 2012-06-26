@@ -6613,7 +6613,6 @@ let get_bar_branches (f0:struc_formula):(formula * formula_label) list=
 		| EOr b -> (struc_formula_br b.formula_struc_or_f1)@(struc_formula_br b.formula_struc_or_f2)
 	in	
   struc_formula_br f0
-
 	
 let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
   EBase	{
@@ -8037,7 +8036,7 @@ let rec find_barr bln v f =
 		  let f1 = str_eq d.h_formula_data_name in
 		  let f2 = str_eq (CP.name_of_spec_var d.h_formula_data_node) in
 		  if (List.exists f1 bln)&&(List.exists f2 eqs) then 
-			Some (d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)
+			Some d (*(d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)*)
  		  else None
 	  | ViewNode _ | Hole _ | HTrue | HEmp | HFalse -> None in
     
@@ -8048,3 +8047,25 @@ let rec find_barr bln v f =
 
 let find_barr bln v f = 
 	Debug.no_2 "find_barr" (fun c->c) !print_formula (fun c-> "") (find_barr bln) v f
+	
+
+let get_bar_conds b_name self (l_f:(formula * formula_label) list): ((int option * Tree_shares.Ts.t_sh option * formula_label) list) =
+	let helper (f,lbl) = match find_barr b_name self f with 
+		| None  -> (None,None,lbl)
+		| Some bd -> match f with
+			| Or _ -> report_error no_pos "unexpected or in find barr" 
+			| Base {formula_base_pure = p}
+			| Exists {formula_exists_pure = p} ->
+					let f = MCP.fold_mem_lst (CP.mkTrue no_pos) false false p in
+					let perm = match bd.h_formula_data_perm with
+						| None -> Some Tree_shares.Ts.top
+						| Some v -> CP.get_inst_tree v f in
+					(CP.get_inst_int (List.hd bd.h_formula_data_arguments) f, perm, lbl) in	
+	List.map helper l_f
+	
+let get_bar_conds b_name self l_f =
+	let string_of_lbl = (fun (c,_)-> string_of_int c) in
+	Debug.no_3 "get_bar_conds" (pr_list (fun c->c)) (fun c-> c) (pr_list (pr_pair !print_formula string_of_lbl)) (pr_list (pr_triple (pr_opt string_of_int) (pr_opt Tree_shares.Ts.string_of) string_of_lbl))
+	get_bar_conds b_name self l_f
+	
+  

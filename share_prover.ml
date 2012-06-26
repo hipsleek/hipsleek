@@ -764,9 +764,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				let ante_fv = List.map SV.get_name ante_fv in
 				let conseq_fv =  List.map SV.get_name conseq_fv in
 				List.filter (fun c-> let c = SV.get_name c in List.exists (fun d->BatString.starts_with d c) ante_fv && List.exists (fun d->BatString.starts_with d c) conseq_fv ) int_fv in
-				
 			let a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs =  meet_decompositions  (a_d_vs,a_v_e, a_v_c,a_l_eqs)  (c_d_vs, c_v_e, c_v_c, c_l_eqs) int_fv in
-			
 			(*decomp the existentials as well*)
 			let a_ev = List.fold_left (fun a c-> a@(all_decomps_1 a_dec_vars c)) [] a_sys.eqs_ex in
 			let c_ev = List.fold_left (fun a c-> a@(all_decomps_1 c_dec_vars c)) [] c_sys.eqs_ex in
@@ -776,14 +774,12 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			let a_const_vars, a_subst_vars, a_l_eqs = solve_trivial_eq_l a_ev a_v_e a_v_c a_l_eqs in
 			let a_subst_vars = vv_fix_point [] a_subst_vars false in
 			(*print_string ("triv_subst vv: "^pr_list (pr_pair SV.string_of SV.string_of) a_subst_vars);*)
-			
 			let a_nz_cons = compute_nz_cons a_nzv (a_dec_vars@c_dec_vars) a_const_vars a_subst_vars in
 						(*printer "ante_bef_subst: " a_ev a_nz_cons a_l_eqs a_const_vars a_subst_vars ;
 						printer2 "conseq_bef_subst: " c_ev [] c_l_eqs c_v_c c_v_e ;*)
 			(*apply the substitutions from the antecedent to the conseq*)
 			try
 				let c_v_e, c_v_c, c_l_eqs = triv_subst a_const_vars a_subst_vars c_v_c c_v_e c_l_eqs in
-			
 					(*printer2 "conseq_aft_subst: " c_ev [] c_l_eqs c_v_c c_v_e ;*)
 						
 			(*simplify the conseq*)
@@ -820,9 +816,11 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 		
 		let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
 			(*print_string ("Big Imply1: "^(string_of_eq_syst a_sys)^"\n");
-			print_string ("Big Imply2: "^(string_of_eq_syst c_sys)^"\n");*)
+			print_string ("Big Imply2: "^(string_of_eq_syst c_sys)^"\n");
+			flush stdout;*)
 			let r = imply a_sys c_sys in
-			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n"); *) r
+			(*print_string ("Big Imply Res: "^(string_of_bool r)^"\n"); *)
+			r
 		
 		let e_elim (eqs : eq_syst) : eq_syst = eqs
 		

@@ -6643,12 +6643,19 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       Iast.proc_body = nb;
   }
 
-and case_normalize_barrier prog bd = 
-   let lv = bd.I.barrier_shared_vars in
+and case_normalize_barrier_x prog bd = 
+   (*let lv = bd.I.barrier_shared_vars in
    let u = (self,Unprimed)::(List.map (fun (_,c)-> (c,Unprimed)) lv) in
-   let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in
+   let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
+   let u = [(self,Unprimed)] in
+   let p = [(self,Primed)] in
    let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
   {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
+   
+and case_normalize_barrier prog bd =    
+	let pr_in = Iprinter.string_of_barrier_decl in
+	Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
+  
    
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
@@ -7061,16 +7068,43 @@ and view_prune_inv_inference_x cp vd =
       C.view_prune_invariants = invs;} in 
   v'    
 
-and barrier_prune_inv_inference cp bd = 
-  let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in
+and barrier_prune_inv_inference_x cp bd = 
+  (*let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in*)
   let f_branches = CF.get_bar_branches  bd.C.barrier_def in 
   let branches = List.map snd f_branches in
-  let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::bd.C.barrier_shared_vars) f_branches [] [] no_pos in    
+  (*let _, baga_cond ,_ = prune_inv_inference_formula cp (sf::bd.C.barrier_shared_vars) f_branches [] [] no_pos in    *)
+  let state_conds,perm_conds = 
+	(*let state_var = List.hd bd.C.barrier_shared_vars in*)
+	let l = CF.get_bar_conds [bd.C.barrier_name] self f_branches in
+	let l_state,l_perm = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
+		let a1 = match c1 with | None -> a1 | Some v -> (v,c3)::a1 in
+		let a2 = match c2 with | None -> a2 | Some v -> (v,c3)::a2 in
+		(a1,a2)) ([],[]) l in
+	let rec fix_p_state l= match l with
+		| [] -> []
+		| (v,lbl)::t-> 
+			let l_v,l_nv = List.partition (fun (v2,_)-> v=v2) t in
+			(v, lbl:: (snd (List.split l_v)))::(fix_p_state l_nv) in
+	let rec fix_perm l= match l with
+		| [] -> []
+		| (v,lbl)::t-> 
+			let l_v,l_nv = List.partition (fun (v2,_)-> Tree_shares.Ts.eq v v2) t in
+			(v, lbl:: (snd (List.split l_v)))::(fix_perm l_nv) in		
+	fix_p_state l_state, fix_perm l_perm in
   { bd with  
 	C.barrier_prune_branches = branches; 
-	C.barrier_prune_conditions = conds ;
-    C.barrier_prune_conditions_baga = baga_cond;
-    C.barrier_prune_invariants = invs;}
+	C.barrier_prune_conditions_state = state_conds;
+	C.barrier_prune_conditions_perm = perm_conds;
+	C.barrier_prune_conditions = [] ;	
+    C.barrier_prune_conditions_baga = [];	
+    C.barrier_prune_invariants = [];}
+  
+and barrier_prune_inv_inference cp bd = 
+	let pr = Cprinter.string_of_barrier_decl in
+	Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
+
+
+  
   
 and coerc_spec prog is_l c = 
   if not !Globals.allow_pred_spec then [c] 
@@ -7094,9 +7128,11 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
             C.view_formula =  CF.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
             C.view_un_struc_formula = unstruc;}) preds in
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
-	let bars = List.map (fun c-> { c with 
+	let prune_bar c = { c with 
 		 C.barrier_tr_list = List.map (fun (a1,a2,c)-> a1,a2,List.map (Solver.prune_pred_struc prog_views_pruned true) c) c.C.barrier_tr_list;
-		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)}) bars in
+		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)} in
+	let prune_bar c = Debug.no_1 "prune_bar" Cprinter.string_of_barrier_decl Cprinter.string_of_barrier_decl prune_bar c in
+	let bars = List.map prune_bar bars in
 		 
 	let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
     let proc_spec f = 
@@ -7423,7 +7459,7 @@ and check_barrier_wf prog bd =
                         CF.h_formula_data_pos = no_pos } in
 	  let p2 = CP.mkEqVarInt st_v st no_pos in
 	  let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-	  CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+	  CF.mkExists [v;st_v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
 	let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
 	let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
 	let f_gen_tot st = 
@@ -7453,7 +7489,7 @@ and check_barrier_wf prog bd =
      | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
 	(*end auxes*)
 	
-	let one_ctx_entail c1 c2 = Debug.no_2 "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
+	let one_ctx_entail c1 c2 = Debug.no_2_loop "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
 	  	
   let prep_t (fs,ts,fl) = 
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
@@ -7511,7 +7547,6 @@ and check_barrier_wf prog bd =
 					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
 					let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
 					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
-				
 				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
 				if r then () 
 				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
@@ -7537,7 +7572,7 @@ and check_barrier_wf prog bd =
    
 
 				
-and trans_bdecl prog bd = 
+and trans_bdecl_x prog bd = 
   if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
 	  raise  (Err.Malformed_barrier ("several descriptions for the same transition "))
    else (); 
@@ -7551,7 +7586,8 @@ and trans_bdecl prog bd =
   let stab = H.create 103 in
   H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
   List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) bd.I.barrier_shared_vars ; 
-  let vl = self::(List.map snd bd.I.barrier_shared_vars) in
+  (*let vl = self::(List.map snd bd.I.barrier_shared_vars) in*)
+  let vl = [self] in
   
   let fct f = trans_I2C_struc_formula prog true vl f stab false in
   let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
@@ -7567,12 +7603,14 @@ and trans_bdecl prog bd =
     C.barrier_prune_branches = [];
 	C.barrier_prune_conditions = []; 
     C.barrier_prune_conditions_baga = [];
-    C.barrier_prune_invariants = [];}
+    C.barrier_prune_invariants = [];
+	C.barrier_prune_conditions_state = [];
+	C.barrier_prune_conditions_perm =[]}
   
-let trans_bdecl prog bd =
+and trans_bdecl prog bd =
 	let pr_in = Iprinter.string_of_barrier_decl in
-	let pr_out _ = "" in
-	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl prog) bd
+	let pr_out c = Cprinter.string_of_barrier_decl c in
+	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
 (*
 and normalize_barr_decl cprog p = 
