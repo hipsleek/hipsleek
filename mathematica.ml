@@ -187,7 +187,7 @@ let check_formula (f: string) : bool option =
   with _ -> None
 
 let check_formula f =
-  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
+  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -271,7 +271,7 @@ let rec mathematica_of_exp e0 : string=
       "(" ^ se1 ^ " / " ^ se2 ^ ")"
   | CP.Sqrt(e, _) ->
       let se = mathematica_of_exp e in
-      "sqrt(" ^ se ^ ")"
+      "Sqrt[" ^ se ^ "]"
   | CP.Pow(e1, e2, _) ->
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
