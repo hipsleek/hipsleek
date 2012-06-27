@@ -93,7 +93,7 @@ and sequence_variation_type =
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
-  seq_fix_point: exp;
+  seq_limit: exp;
   seq_term_cons: formula;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
@@ -789,9 +789,8 @@ and bfv (bf : b_formula) =
         List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
     | SeqVar seq_info ->
         let e = seq_info.seq_element in
-        let fp = seq_info.seq_fix_point in
-        let tc = seq_info.seq_term_cons in
-        let args = [e; fp] in
+        let lm = seq_info.seq_limit in
+        let args = [e; lm] in
         let args_fv = List.concat (List.map afv args) in
         Gen.BList.remove_dups_eq (=) args_fv
     | PrimTermVar _ -> []
@@ -1340,10 +1339,10 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element fix_point term_cons variation pos : p_formula= 
+and mkSeqVar ann element limit term_cons variation pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
-           seq_fix_point = fix_point;
+           seq_limit = limit;
            seq_term_cons = term_cons;
            seq_variation = variation;
            seq_loc = pos }
@@ -1358,8 +1357,8 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure bf in
   p
 
-and mkSeqVar_pure ann element fix_point bounds variation =
-  let bf = mkSeqVar ann element fix_point bounds variation no_pos in
+and mkSeqVar_pure ann element limit bounds variation =
+  let bf = mkSeqVar ann element limit bounds variation no_pos in
   let p = mkPure bf in
   p
 
@@ -2419,9 +2418,9 @@ and b_apply_subs sst bf =
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
     | SeqVar seq_info -> 
         let e =  e_apply_subs sst seq_info.seq_element in
-        let fp = e_apply_subs sst seq_info.seq_fix_point in
+        let lm = e_apply_subs sst seq_info.seq_limit in
         SeqVar { seq_info with seq_element = e;
-                               seq_fix_point = fp }
+                               seq_limit = lm }
     | PrimTermVar _ -> pf
    in let nsl = match sl with
 	| None -> None
@@ -2476,9 +2475,9 @@ and b_apply_subs_varperm sst bf =
 		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   | SeqVar seq_info -> 
       let e =  e_apply_subs sst seq_info.seq_element in
-      let fp = e_apply_subs sst seq_info.seq_fix_point in
+      let lm = e_apply_subs sst seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
-                            seq_fix_point = fp}
+                            seq_limit = lm}
   | PrimTermVar _ -> pf
   in let nsl = match sl with
 	| None -> None
@@ -2665,9 +2664,9 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
 					lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
     | SeqVar seq_info -> 
         let e =  a_apply_par_term sst seq_info.seq_element in
-        let fp = a_apply_par_term sst seq_info.seq_fix_point in
+        let lm = a_apply_par_term sst seq_info.seq_limit in
         SeqVar {seq_info with seq_element = e;
-                              seq_fix_point = fp;}
+                              seq_limit = lm;}
     | PrimTermVar _ -> pf
   in (npf,il)
 
@@ -2760,9 +2759,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
 					lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
     | SeqVar seq_info -> 
         let e =  a_apply_one_term (fr, t) seq_info.seq_element in
-        let fp = a_apply_one_term (fr, t) seq_info.seq_fix_point in
+        let lm = a_apply_one_term (fr, t) seq_info.seq_limit in
         SeqVar {seq_info with seq_element = e;
-                              seq_fix_point = fp;}
+                              seq_limit = lm;}
     | PrimTermVar _ -> pf
   in (npf,il)
 
@@ -3779,9 +3778,9 @@ and b_apply_one_exp (fr, t) bf =
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
   | SeqVar seq_info -> 
       let e =  e_apply_one_exp (fr, t) seq_info.seq_element in
-      let fp = e_apply_one_exp (fr, t) seq_info.seq_fix_point in
+      let lm = e_apply_one_exp (fr, t) seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
-                            seq_fix_point = fp;}
+                            seq_limit = lm;}
   | PrimTermVar _ -> pf
   in (npf,il)
 
@@ -4932,9 +4931,9 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 							}, f_comb rs)
           | SeqVar seq_info -> 
               let (e, r1) = helper new_arg seq_info.seq_element in
-              let (fp, r2) = helper new_arg seq_info.seq_fix_point in
+              let (lm, r2) = helper new_arg seq_info.seq_limit in
               let new_seq = {seq_info with seq_element = e;
-                                           seq_fix_point = fp;} in
+                                           seq_limit = lm;} in
               (SeqVar new_seq, f_comb [r1; r2])
           | PrimTermVar _ -> (pf,f_comb [])
 
@@ -5035,9 +5034,9 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
         | SeqVar seq_info -> 
             let e = transform_exp f_exp seq_info.seq_element in
-            let fp = transform_exp f_exp seq_info.seq_fix_point in
+            let lm = transform_exp f_exp seq_info.seq_limit in
             SeqVar { seq_info with seq_element = e;
-                                   seq_fix_point = fp; }
+                                   seq_limit = lm; }
         | PrimTermVar _ -> pf
 
 	  in (npf,il)
@@ -5373,9 +5372,9 @@ let norm_bform_a (bf:b_formula) : b_formula =
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
         | SeqVar seq_info -> 
             let e = norm_exp seq_info.seq_element in
-            let fp = norm_exp seq_info.seq_fix_point in
+            let lm = norm_exp seq_info.seq_limit in
             SeqVar { seq_info with seq_element = e;
-                                   seq_fix_point = fp; }
+                                   seq_limit = lm; }
         | PrimTermVar _ -> pf
    in (npf, il)
 
@@ -6295,9 +6294,9 @@ let norm_bform_b (bf:b_formula) : b_formula =
 				lex_tmp = List.map norm_exp t_info.lex_tmp; }
     | SeqVar seq_info -> 
         let e = norm_exp seq_info.seq_element in
-        let fp = norm_exp seq_info.seq_fix_point in
+        let lm = norm_exp seq_info.seq_limit in
         SeqVar { seq_info with seq_element = e;
-                               seq_fix_point = fp; }
+                               seq_limit = lm; }
     | PrimTermVar _
     | SubAnn _
     | VarPerm _

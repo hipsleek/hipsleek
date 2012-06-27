@@ -712,10 +712,9 @@ let pr_var_measures (measures : CP.p_formula) : unit =
   | CP.SeqVar seq -> (
       let ann = seq.CP.seq_ann in
       let elm = seq.CP.seq_element in
-      let fp = seq.CP.seq_fix_point in
-      let tc = seq.CP.seq_term_cons in
+      let lm = seq.CP.seq_limit in
       let v = seq.CP.seq_variation in
-      let ls = [elm; fp] in
+      let ls = [elm; lm] in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
       fmt_string ((string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
       pr_s "" pr_formula_exp ls;
@@ -738,7 +737,7 @@ let rec pr_p_formula (pf: P.p_formula) =
       fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
       pr_formula_exp seq.CP.seq_element;
       fmt_string ", ";
-      pr_formula_exp seq.CP.seq_fix_point;
+      pr_formula_exp seq.CP.seq_limit;
       fmt_string "]";
   | P.PrimTermVar prim -> fmt_string ((string_of_term_ann prim.CP.prim_ann) ^ "()");
   | P.BConst (b,l) -> fmt_bool b 
@@ -1481,10 +1480,9 @@ let pr_estate (es : entail_state) =
     | CP.SeqVar seq ->
         let ann = seq.CP.seq_ann in
         let elm = seq.CP.seq_element in
-        let fp = seq.CP.seq_fix_point in
-        let tc = seq.CP.seq_term_cons in
+        let lm = seq.CP.seq_limit in
         let v = seq.CP.seq_variation in
-        let ls = [elm; fp] in
+        let ls = [elm; lm] in
         fmt_string ((string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
         pr_seq "" pr_formula_exp ls;
         fmt_string "])"

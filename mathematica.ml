@@ -194,7 +194,7 @@ let check_formula (f: string) : bool option =
 
 let check_formula f =
   let new_f = normalize_mathematica_formula f in
-  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula new_f
+  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula new_f
 
 (* 
  * run func and return its result together with running time 
@@ -682,7 +682,7 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     let var_list = CP.fv f in
     let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
     let fmath = List.fold_left (fun sf sv -> "Exists[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
-    let mathematica_input = "Resolve[" ^ fmath ^ "]\n" in
+    let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in
     let runner () = check_formula mathematica_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -716,7 +716,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let var_list = CP.fv f in
   let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
   let fmath = List.fold_left (fun sf sv -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
-  let mathematica_input = "Resolve[" ^ fmath ^ "]\n" in
+  let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in
   let runner () = check_formula mathematica_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in

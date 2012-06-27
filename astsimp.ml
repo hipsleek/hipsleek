@@ -4389,7 +4389,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 						CP.lex_loc = pos; }
     | IP.SeqVar seq_info ->
         let e = trans_pure_exp seq_info.IP.seq_element stab in
-        let fp = trans_pure_exp seq_info.IP.seq_fix_point stab in
+        let lm = trans_pure_exp seq_info.IP.seq_limit stab in
         let tc = trans_pure_formula seq_info.IP.seq_term_cons stab in
         let vari = match seq_info.IP.seq_variation with
                    | IP.SeqConDec -> CP.SeqConDec
@@ -4398,7 +4398,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
                    | IP.SeqDiv -> CP.SeqDiv in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
-                    CP.seq_fix_point = fp;
+                    CP.seq_limit = lm;
                     CP.seq_term_cons = tc;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_variation = vari }
@@ -5163,7 +5163,7 @@ and gather_type_info_b_formula_x prog b0 stab =
         ()
     | IP.SeqVar seq_info ->
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
-        let _ =  gather_type_info_exp seq_info.IP.seq_fix_point stab (Float) in
+        let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in
         ()
     | IP.PrimTermVar _ -> ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |

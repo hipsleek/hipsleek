@@ -30,7 +30,7 @@ and sequence_variation_type =
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
-  seq_fix_point: exp;
+  seq_limit: exp;
   seq_term_cons: formula;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
@@ -206,8 +206,8 @@ and bfv (bf : b_formula) =
 		Gen.BList.remove_dups_eq (=) args_fv
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
-      let fp = seq_info.seq_fix_point in
-      let args = [e; fp] in
+      let lm = seq_info.seq_limit in
+      let args = [e; lm] in
       let args_fv = List.concat (List.map afv args) in
       Gen.BList.remove_dups_eq (=) args_fv
   | PrimTermVar _ -> []
@@ -639,9 +639,9 @@ and b_apply_one (fr, t) bf =
           LexVar (t_ann, args1,args2,pos)
   | SeqVar seq_info ->
       let e = e_apply_one (fr, t) seq_info.seq_element in
-      let fp = e_apply_one (fr, t) seq_info.seq_fix_point in
+      let lm = e_apply_one (fr, t) seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
-                            seq_fix_point = fp; }
+                            seq_limit = lm; }
   | PrimTermVar _ -> pf
   in (npf,il)
 
@@ -761,8 +761,8 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
         vs
   | SeqVar seq_info ->
       let e = seq_info.seq_element in
-      let fp = seq_info.seq_fix_point in
-      let exps = [e; fp] in
+      let lm = seq_info.seq_limit in
+      let exps = [e; lm] in
       List.concat (List.map look_for_anonymous_exp exps)
   | PrimTermVar _ -> []
   | RelForm (_,args,_) -> 
@@ -815,8 +815,8 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
   | SeqVar seq_info -> 
       let e = seq_info.seq_element in
-      let fp = seq_info.seq_fix_point in
-      let exps = [e; fp] in
+      let lm = seq_info.seq_limit in
+      let exps = [e; lm] in
       List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] exps
   | PrimTermVar _ -> []
 
