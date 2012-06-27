@@ -170,14 +170,6 @@ let send_and_receive (f : string) : string =
 let send_and_receive (f : string) : string =
   Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
-(* normalizing mathematica command by replacing all character underscore '_' by character 'N' *)
-(* because variables' name in mathematica don't contain underscore character *) 
-let normalize_mathematica_formula (formula : string) : string =
-  for i = 0 to (String.length formula) - 1 do
-    if formula.[i] = '_' then formula.[i] <- 'N'
-  done;
-  formula
-
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in
   try 
@@ -193,8 +185,7 @@ let check_formula (f: string) : bool option =
   with _ -> None
 
 let check_formula f =
-  let new_f = normalize_mathematica_formula f in
-  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula new_f
+  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
 
 (* 
  * run func and return its result together with running time 
@@ -249,9 +240,27 @@ let rec mathematica_of_var_list (vars : ident list) : string =
   | [v] -> v
   | v :: rest -> v ^ ", " ^ (mathematica_of_var_list rest)
 
+let normalize_var_name (varname : string) : string =
+  for i = 0 to (String.length varname) - 1 do
+    if varname.[i] = '_' then varname.[i] <- 'N'
+  done;
+  varname
+
+  
+
+let mathematica_of_float (f: float) =
+  let res = Printf.sprintf "%.30f" f in
+  res
+
 let mathematica_of_spec_var (v: CP.spec_var) = 
   match v with
-  | CP.SpecVar (_, sv, _) -> sv ^ (if CP.is_primed v then "PRMD" else "")
+  | CP.SpecVar (_, sv, _) ->
+      (* mathematica doesn't allow var name contains underschore '_', so replace them by 'N'*)
+      let new_sv = sv in
+      for i = 0 to (String.length new_sv) - 1 do
+        if new_sv.[i] = '_' then new_sv.[i] <- 'N'
+      done;
+      new_sv ^ (if CP.is_primed v then "PRMD" else "")
 
 let rec mathematica_of_exp e0 : string= 
   match e0 with
@@ -259,7 +268,7 @@ let rec mathematica_of_exp e0 : string=
   | CP.Var (v, _) -> mathematica_of_spec_var v
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
-  | CP.FConst (f, _) -> string_of_float f
+  | CP.FConst (f, _) -> mathematica_of_float f
   | CP.Add (e1, e2, _) ->
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
@@ -486,50 +495,6 @@ let is_linear2 f0 =
       | _ -> None
   ) in
   CP.fold_formula f0 (nonef, f_bf, f_e) and_list
-
-let rec has_existential_quantifier f0 negation_bounded =
-  match f0 with 
-  | CP.Exists (_, f, _, _) -> 
-      if negation_bounded then has_existential_quantifier f negation_bounded 
-      else true
-  | CP.Forall (_, f, _, _) ->
-      if negation_bounded then true
-      else has_existential_quantifier f negation_bounded
-  | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
-      (has_existential_quantifier f1 negation_bounded)
-      || (has_existential_quantifier f2 negation_bounded)
-  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
-  | CP.BForm _ -> false
-
-let rec has_existential_quantifier_of_int f0 negation_bounded =
-  match f0 with 
-  | CP.Exists (_, f, _, _) ->
-      if ( (not negation_bounded) && (not (CP.is_float_formula f))) then true
-      else has_existential_quantifier_of_int f negation_bounded 
-  | CP.Forall (_, f, _, _) ->
-      if (negation_bounded && (not (CP.is_float_formula f)) )then true
-      else has_existential_quantifier_of_int f negation_bounded
-  | CP.Not (f, _,  _) -> has_existential_quantifier_of_int f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
-      (has_existential_quantifier_of_int f1 negation_bounded)
-      || (has_existential_quantifier_of_int f2 negation_bounded)
-  | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
-  | CP.BForm _ -> false
-
-let has_exists2 f0 =
-  let f_f neg_bounded e =
-    match e with
-    | CP.Exists _ -> if not neg_bounded then Some true else None
-    | CP.Forall _ -> if neg_bounded then Some true else None
-    | _ -> None in
-  let f_f_arg neg_bounded e =
-    match e with
-    | CP.Not _ -> not neg_bounded
-    | _ -> neg_bounded in
-  let f_bf a e = Some false in
-  let f_e a e = Some false in
-  CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) or_list
 
 (* LDK: not hold when using fractional permission *)
 (* e1 < e2 ~> e1 <= e2 -1 *)

@@ -668,33 +668,40 @@ let check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_decreasing_seqvar_term_initial_constraint (init_constraint: CP.formula) (term_cons: CP.formula) : bool =
   (* initial termination constraint: (init_constraint -> term_cons is SAT *)
   let entail_res, _, _ = TP.imply init_constraint term_cons "" false None in
-  (* let _ = print_endline ("== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
-  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in
+  let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in
+  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
   entail_res
 
 let check_decreasing_seqvar_transition (init_constraint : CP.formula)
                                        (element_src: CP.exp) (limit_src: CP.exp)
                                        (element_dst: CP.exp) (limit_dst: CP.exp)
                                        : bool =
-  (* limit constraint: element_src = limit_src => element_dst = limit_dst *)
-  let lm_cons1 = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
-  let lm_cons2 = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-  let lm_constraint = CP.mkImply lm_cons1 lm_cons2 no_pos in
-  (* decreasing constraint 1: element_src > element_dst *)
-  let dec1 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-  (* decreasing constraint 2: element_src > limit_src *)
-  let dec2 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-  (* decreasing constraint 3: element_dst > limit_dst *)
-  let dec3 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-  (* decreasing constrains *)
-  let dec_constraint = CP.mkAnd dec1 (CP.mkAnd dec2 dec3 no_pos) no_pos in
-  let distance_constraint = CP.mkImply init_constraint dec_constraint no_pos in
-  let limit_constraint = CP.mkAnd lm_constraint distance_constraint no_pos in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
-  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
-  entail_res
+  (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
+  let plm_left = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
+  let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
+  let plm_constraint_res, _, _ = TP.imply init_constraint (CP.mkImply plm_left plm_right no_pos) "" false None in
+  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
+  let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
+  let _ = print_endline ("== plm_constraint_res = " ^ (string_of_bool plm_constraint_res)) in
+  if not plm_constraint_res then
+    plm_constraint_res
+  else (
+    (* decreasing constraint 1: element_src > element_dst *)
+    let dec1 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
+    (* decreasing constraint 2: element_src > limit_src *)
+    let dec2 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+    (* decreasing constraint 3: element_dst > limit_dst *)
+    let dec3 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+    (* decreasing constrains *)
+    let distance_constraint = CP.mkAnd dec1 (CP.mkAnd dec2 dec3 no_pos) no_pos in
+    (* let limit_constraint = CP.mkAnd lm_constraint distance_constraint no_pos in *)
+    let distance_constraint_res, _, _ = TP.imply init_constraint distance_constraint "" false None in
+    (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in       *)
+    (* let _ = print_endline ("== distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) in *)
+    (* let _ = print_endline ("== distance_constraint_res = " ^ (string_of_bool distance_constraint_res)) in          *)
+    distance_constraint_res
+  )
 
 let check_decreasing_seqvar_term_limit_constraint (init_constraint: CP.formula)
                                              (element: CP.exp) (limit: CP.exp)
@@ -709,8 +716,8 @@ let check_decreasing_seqvar_term_limit_constraint (init_constraint: CP.formula)
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
   let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
-  (* let _ = print_endline ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                            *)
+  let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in
+  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
   entail_res
 
 let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
@@ -795,47 +802,53 @@ let check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans 
 let check_general_seqvar_term_initial_constraint (init_constraint: CP.formula) (term_cons: CP.formula) : bool =
   (* initial termination constraint: (init_constraint -> term_cons) is SAT *)
   let entail_res, _, _ = TP.imply init_constraint term_cons "" false None in
-  (* let _ = print_endline ("== init_cond = " ^ (Cprinter.string_of_pure_formula lhs)) in *)
-  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
+  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in               *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res
 
 let check_general_seqvar_transition (init_constraint : CP.formula)
                                     (element_src: CP.exp) (limit_src: CP.exp)
                                     (element_dst: CP.exp) (limit_dst: CP.exp)
                                     : bool =
-  (* limit constraint: element_src = limit_src => element_dst = limit_dst *)
-  let lm_cons1 = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
-  let lm_cons2 = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-  let lm_constraint = CP.mkImply lm_cons1 lm_cons2 no_pos in
-  (* decreasing distance constraint 1: (element_src > limit_src) & (element_dst > limit_dst) & (element_src - limit_src > element_dst - limit_dst) *)
-  let dec11 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-  let dec12 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-  let dec13 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in
-  let dec1 = CP.mkAnd dec11 (CP.mkAnd dec12 dec13 no_pos) no_pos in
-  (* decreasing distance constraint 2: (element_src > limit_src) & (element_dst < lm_dst) & (element_src - limit_src > limit_dst - element_dst) *)
-  let dec21 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-  let dec22 = CP.mkPure (CP.mkLt element_dst limit_dst no_pos) in
-  let dec23 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in
-  let dec2 = CP.mkAnd dec21 (CP.mkAnd dec22 dec23 no_pos) no_pos in
-  (* decreasing distance constraint 3: (element_src < limit_src) & (element_dst > limit_dst) & (limit_src - element_src > element_dst - limit_dst) *)
-  let dec31 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in
-  let dec32 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-  let dec33 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in
-  let dec3 = CP.mkAnd dec31 (CP.mkAnd dec32 dec33 no_pos) no_pos in
-  (* decreasing distance constraint 4: (element_src < limit_src) & (element_dst < limit_dst) & (limit_src -element_src > limit_dst - element_dst) *)
-  let dec41 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in
-  let dec42 = CP.mkPure (CP.mkLt element_dst limit_dst no_pos) in
-  let dec43 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in
-  let dec4 = CP.mkAnd dec41 (CP.mkAnd dec42 dec43 no_pos) no_pos in
-  (* decreasing distance constrains *)
-  let decs = CP.mkOr dec1 (CP.mkOr dec2 (CP.mkOr dec3 dec4 None no_pos) None no_pos) None no_pos in
-  let distance_constraint = CP.mkImply init_constraint decs no_pos in
-  let limit_constraint = CP.mkAnd lm_constraint distance_constraint no_pos in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
-  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
-  entail_res
+  (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
+  let plm_left = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
+  let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
+  let plm_constraint_res, _, _ = TP.imply init_constraint (CP.mkImply plm_left plm_right no_pos) "" false None in
+  (* let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in  *)
+  (* let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in  *)
+  (* let _ = print_endline ("== plm_constraint_res = " ^ (string_of_bool plm_constraint_res)) in *)
+  if not plm_constraint_res then
+    plm_constraint_res
+  else (
+    (* decreasing distance constraint 1: (element_src > limit_src) & (element_dst > limit_dst) & (element_src - limit_src > element_dst - limit_dst) *)
+    let dec11 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+    let dec12 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+    let dec13 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in
+    let dec1 = CP.mkAnd dec11 (CP.mkAnd dec12 dec13 no_pos) no_pos in
+    (* decreasing distance constraint 2: (element_src > limit_src) & (element_dst < lm_dst) & (element_src - limit_src > limit_dst - element_dst) *)
+    let dec21 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+    let dec22 = CP.mkPure (CP.mkLt element_dst limit_dst no_pos) in
+    let dec23 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in
+    let dec2 = CP.mkAnd dec21 (CP.mkAnd dec22 dec23 no_pos) no_pos in
+    (* decreasing distance constraint 3: (element_src < limit_src) & (element_dst > limit_dst) & (limit_src - element_src > element_dst - limit_dst) *)
+    let dec31 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in
+    let dec32 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+    let dec33 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in
+    let dec3 = CP.mkAnd dec31 (CP.mkAnd dec32 dec33 no_pos) no_pos in
+    (* decreasing distance constraint 4: (element_src < limit_src) & (element_dst < limit_dst) & (limit_src -element_src > limit_dst - element_dst) *)
+    let dec41 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in
+    let dec42 = CP.mkPure (CP.mkLt element_dst limit_dst no_pos) in
+    let dec43 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in
+    let dec4 = CP.mkAnd dec41 (CP.mkAnd dec42 dec43 no_pos) no_pos in
+    (* decreasing distance constrains *)
+    let distance_constraint = CP.mkOr dec1 (CP.mkOr dec2 (CP.mkOr dec3 dec4 None no_pos) None no_pos) None no_pos in
+    let distance_constraint_res, _, _ = TP.imply init_constraint distance_constraint "" false None in
+    (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in       *)
+    (* let _ = print_endline ("== distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) in *)
+    (* let _ = print_endline ("== distance_constraint_res = " ^ (string_of_bool distance_constraint_res)) in          *)
+    distance_constraint_res
+  )
 
 
 let check_general_seqvar_term_limit_constraint (init_constraint: CP.formula)
@@ -851,8 +864,8 @@ let check_general_seqvar_term_limit_constraint (init_constraint: CP.formula)
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
   let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
-  (* let _ = print_endline ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                            *)
+  (* let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res
 
 let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
@@ -1044,7 +1057,7 @@ let check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr2 = !print_entail_state in
    Debug.no_3 "check_seqvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
-      (fun _ _ _ -> check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+    (fun _ _ _ -> check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
 let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try (
@@ -1058,7 +1071,7 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let primvar_src = find_primvar_es estate in
     let prim_src = match primvar_src with
                   | CP.PrimTermVar prim -> prim
-                  | _ -> raise PrimTermVar_Not_found in 
+                  | _ -> raise PrimTermVar_Not_found in
     let ann_src = prim_src.CP.prim_ann in
     let trans = (primvar_src, primvar_dst) in
     let trans_opt = Some trans in

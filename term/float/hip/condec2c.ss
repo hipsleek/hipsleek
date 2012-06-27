@@ -1,5 +1,5 @@
 float loop(float x)
-  requires Term[SeqConDec(x, 0.0, -0.1)] ensures true;     // Fail because of invalid lower bound
+  requires Term[SeqConDec(x, 0.0, x <= 0.0)] ensures true;     // Fail because of invalid lower bound
 {
   if (x > (0.0))
     return loop(x/2.0);
