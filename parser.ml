@@ -1054,7 +1054,7 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_fix_point = fp;
-                             P.seq_term_cond = tc;
+                             P.seq_term_cons = tc;
                              P.seq_variation = P.SeqConDec;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1064,7 +1064,7 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_fix_point = fp;
-                             P.seq_term_cond = tc;
+                             P.seq_term_cons = tc;
                              P.seq_variation = P.SeqCon;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1074,7 +1074,7 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_fix_point = fp;
-                             P.seq_term_cond = tc;
+                             P.seq_term_cons = tc;
                              P.seq_variation = P.SeqDivDec;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1084,7 +1084,7 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_fix_point = fp;
-                             P.seq_term_cond = tc;
+                             P.seq_term_cons = tc;
                              P.seq_variation = P.SeqDiv;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in

@@ -713,7 +713,7 @@ let pr_var_measures (measures : CP.p_formula) : unit =
       let ann = seq.CP.seq_ann in
       let elm = seq.CP.seq_element in
       let fp = seq.CP.seq_fix_point in
-      let tc = seq.CP.seq_term_cond in
+      let tc = seq.CP.seq_term_cons in
       let v = seq.CP.seq_variation in
       let ls = [elm; fp] in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -1482,7 +1482,7 @@ let pr_estate (es : entail_state) =
         let ann = seq.CP.seq_ann in
         let elm = seq.CP.seq_element in
         let fp = seq.CP.seq_fix_point in
-        let tc = seq.CP.seq_term_cond in
+        let tc = seq.CP.seq_term_cons in
         let v = seq.CP.seq_variation in
         let ls = [elm; fp] in
         fmt_string ((string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));

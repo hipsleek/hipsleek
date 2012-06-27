@@ -94,7 +94,7 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_fix_point: exp;
-  seq_term_cond: formula;  (* terminate condition *)
+  seq_term_cons: formula;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }
@@ -790,7 +790,7 @@ and bfv (bf : b_formula) =
     | SeqVar seq_info ->
         let e = seq_info.seq_element in
         let fp = seq_info.seq_fix_point in
-        let tc = seq_info.seq_term_cond in
+        let tc = seq_info.seq_term_cons in
         let args = [e; fp] in
         let args_fv = List.concat (List.map afv args) in
         Gen.BList.remove_dups_eq (=) args_fv
@@ -1340,11 +1340,11 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element fix_point term_cond variation pos : p_formula= 
+and mkSeqVar ann element fix_point term_cons variation pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
            seq_fix_point = fix_point;
-           seq_term_cond = term_cond;
+           seq_term_cons = term_cons;
            seq_variation = variation;
            seq_loc = pos }
 

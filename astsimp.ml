@@ -4390,7 +4390,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.SeqVar seq_info ->
         let e = trans_pure_exp seq_info.IP.seq_element stab in
         let fp = trans_pure_exp seq_info.IP.seq_fix_point stab in
-        let tc = trans_pure_formula seq_info.IP.seq_term_cond stab in
+        let tc = trans_pure_formula seq_info.IP.seq_term_cons stab in
         let vari = match seq_info.IP.seq_variation with
                    | IP.SeqConDec -> CP.SeqConDec
                    | IP.SeqCon -> CP.SeqCon
@@ -4399,7 +4399,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_fix_point = fp;
-                    CP.seq_term_cond = tc;
+                    CP.seq_term_cons = tc;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_variation = vari }
     | IP.PrimTermVar prim -> CP.PrimTermVar { CP.prim_ann = prim.IP.prim_ann;

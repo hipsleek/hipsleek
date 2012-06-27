@@ -31,7 +31,7 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_fix_point: exp;
-  seq_term_cond: formula;  (* terminate condition *)
+  seq_term_cons: formula;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }

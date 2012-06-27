@@ -7,7 +7,9 @@ checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x >
 
 checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x < 1.7)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 1.0 + (1.0 / x) < 1.7)].
 
-checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x > 1.5)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 1.0 + (1.0 / x) > 1.5)].
+checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x > 1.64)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 1.0 + (1.0 / x) > 1.68)].
+
+checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x > 1.5)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 1.0 + (1.0 / x) > 0.5)].
 
 checkentail (x > 1.65) & (x < 1.7) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, x < 0.5)] |- Term[SeqCon(1.0 + (1.0 / x), (1.0 + sqrt(5.0)) / 2.0, 1.0 + (1.0 / x) < 0.5)].
 

@@ -27,7 +27,7 @@ type term_reason =
   | Quantum_Technique_Measure_Bounded
   (* Limit Technique *)
   | Limit_Technique_Invalid_Limit of term_trans option
-  | Limit_Technique_Invalid_Term_Cond of term_trans option
+  | Limit_Technique_Unsat_Term_Constraint of term_trans option
   | Limit_Technique_Measure_Wellfounded of term_trans option
   (* Primitive Term Var *)
   | Primitive_Term_Valid of term_trans option
@@ -112,8 +112,8 @@ let pr_term_reason = function
       fmt_string "Quantum Technique: The variance is bounded."
   | Limit_Technique_Invalid_Limit _ ->
       fmt_string "Limit_Technique_Invalid_Limit"
-  | Limit_Technique_Invalid_Term_Cond _ -> 
-      fmt_string "Limit_Technique_Invalid_Term_Cond"
+  | Limit_Technique_Unsat_Term_Constraint _ -> 
+      fmt_string "Limit_Technique_Unsat_Term_Constraint"
   | Limit_Technique_Measure_Wellfounded _ ->
       fmt_string "Limit_Technique_Measure_Wellfounded"
   | Primitive_Term_Invalid _ ->
@@ -146,8 +146,8 @@ let pr_term_reason_short = function
       fmt_string "bounded)"
   | Limit_Technique_Invalid_Limit _ ->
       fmt_string "Limit_Technique_Invalid_Limit"
-  | Limit_Technique_Invalid_Term_Cond _ ->
-      fmt_string "Limit_Technique_Invalid_Term_Cond)"
+  | Limit_Technique_Unsat_Term_Constraint _ ->
+      fmt_string "Limit_Technique_Unsat_Term_Constraint)"
   | Limit_Technique_Measure_Wellfounded _ ->
       fmt_string "Limit_Technique_Measure_Wellfounded)"
   | Primitive_Term_Invalid _ ->
@@ -437,7 +437,7 @@ let strip_termvar_mix_formula (mf: MCP.mix_formula) =
   Debug.no_1 "strip_termvar_mix_formula" pr pr_out strip_termvar_mix_formula_x mf
 
 (* Termination: The boundedness checking for HIP has been done before *)  
-let check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_lexvar_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -565,12 +565,12 @@ let check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p sr
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
   let pr3 = pr_list !CP.print_exp in
-  Debug.no_5 "check_term_lexvar_measures" pr2 
+  Debug.no_5 "check_lexvar_measures" pr2 
       (add_str "lhs_p" pr) 
       (add_str "rhs_p" pr) 
       (add_str "src_lv" pr3) 
@@ -580,12 +580,12 @@ let check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_
             (add_str "rhs" pr) 
             (add_str "rank_fml" (pr_option pr1)) 
             (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ _ -> check_term_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+      (fun _ _ _ _ _ -> check_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
-let check_term_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
@@ -609,7 +609,7 @@ let check_term_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
-          check_term_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
+          check_lexvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
@@ -622,7 +622,7 @@ let check_term_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (CP.mkLexVar (Fail TermErr_Must) src_lv src_il no_pos)
             | MayLoop
             | Fail TermErr_May -> Some (CP.mkLexVar (Fail TermErr_May) src_lv src_il no_pos)
-            | Term -> failwith "unexpected Term in check_term_lexvar_rhs"
+            | Term -> failwith "unexpected Term in check_lexvar_rhs"
           in
           let term_err = match estate.es_term_err with
             | None ->  Some (string_of_term_res term_res)
@@ -658,94 +658,107 @@ let check_term_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let rhs_p = MCP.mix_of_pure rhs_p in *)
   (*   (estate, lhs_p, rhs_p, None) *)
 
-let check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
    Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
-      (fun _ _ _ -> check_term_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+      (fun _ _ _ -> check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
-let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+let check_decreasing_seqvar_initial_constraint (init_constraint: CP.formula) (term_cons: CP.formula) : bool =
+  (* initial termination constraint: (init_constraint -> term_cons is SAT *)
+  let entail_res, _, _ = TP.imply init_constraint term_cons "" false None in
+  (* let _ = print_endline ("== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
+  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  entail_res
+
+let check_decreasing_seqvar_transition (init_constraint : CP.formula)
+                                       (element_src: CP.exp) (fixpoint_src: CP.exp)
+                                       (element_dst: CP.exp) (fixpoint_dst: CP.exp)
+                                       : bool =
+  (* fixpoint constraint: element_src = fixpoint_src => element_dst = fixpoint_dst *)
+  let fp_cons1 = CP.mkPure (CP.mkEq element_src fixpoint_src no_pos) in
+  let fp_cons2 = CP.mkPure (CP.mkEq element_dst fixpoint_dst no_pos) in
+  let fp_constraint = CP.mkImply fp_cons1 fp_cons2 no_pos in
+  (* decreasing constraint 1: element_src > element_dst *)
+  let dec1 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
+  (* decreasing constraint 2: element_src > fixpoint_src *)
+  let dec2 = CP.mkPure (CP.mkGt element_src fixpoint_src no_pos) in
+  (* decreasing constraint 3: element_dst > fixpoint_dst *)
+  let dec3 = CP.mkPure (CP.mkGt element_dst fixpoint_dst no_pos) in
+  (* decreasing constrains *)
+  let dec_constraint = CP.mkAnd dec1 (CP.mkAnd dec2 dec3 no_pos) no_pos in
+  let distance_constraint = CP.mkImply init_constraint dec_constraint no_pos in
+  let limit_constraint = CP.mkAnd fp_constraint distance_constraint no_pos in
+  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
+  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  entail_res
+
+let check_decreasing_seqvar_limit_constraint (init_constraint: CP.formula)
+                                             (element: CP.exp) (fixpoint: CP.exp)
+                                             (term_cons: CP.formula)
+                                             : bool = 
+  let vars = CP.afv element in
+  let epsilon = CP.fresh_new_spec_var Float in
+  let range1 = CP.mkPure (CP.mkGt element fixpoint no_pos) in
+  let range2 = CP.mkPure (CP.mkLt element (CP.mkAdd fixpoint (CP.mkVar epsilon no_pos) no_pos) no_pos) in
+  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cons None no_pos in
+  let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
+  let limit_formula = CP.mkForall vars range None no_pos in
+  let limit_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula limit_formula no_pos) None no_pos in
+  let sat_res = TP.is_sat_no_cache limit_constraint "" in
+  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
+  (* let _ = print_endline ("== sat_res = " ^ (string_of_bool sat_res)) in                        *)
+  sat_res
+
+let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seq_src, seq_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
                            | _ -> raise SeqVar_Not_found in
   let elm_src = seq_src.CP.seq_element in
   let fp_src = seq_src.CP.seq_fix_point in
-  let term_cond_src = seq_src.CP.seq_term_cond in 
+  let term_cons_src = seq_src.CP.seq_term_cons in 
   let elm_dst = seq_dst.CP.seq_element in
   let fp_dst = seq_dst.CP.seq_fix_point in
-  let term_cond_dst = seq_dst.CP.seq_term_cond in
   let pos_dst = seq_dst.CP.seq_loc in
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  (* fixpoint constraint: elm_src = fp_src => elm_dst = fp_dst *)
-  let fp_left = CP.mkPure (CP.mkEq elm_src fp_src no_pos) in
-  let fp_right = CP.mkPure (CP.mkEq elm_dst fp_dst no_pos) in
-  let fp_constraint = CP.mkImply fp_left fp_right no_pos in
-  (* decreasing constraint 1: elm_src > elm_dst *)
-  let dec1 = CP.mkPure (CP.mkGt elm_src elm_dst no_pos) in
-  (* decreasing constraint 2: elm_src > fp_src *)
-  let dec2 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
-  (* decreasing constraint 3: elm_dst > fp_dst *)
-  let dec3 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
-  (* decreasing constrains *)
-  let decs = CP.mkAnd dec1 (CP.mkAnd dec2 dec3 no_pos) no_pos in
-  let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let distance_constraint = CP.mkImply lhs decs no_pos in
-  let limit_constraint = CP.mkAnd fp_constraint distance_constraint no_pos in
-  let limit_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
-  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
-  (* let _ = print_endline ("== limit_entail_res = " ^ (string_of_bool limit_entail_res)) in                  *)
-  (* terminate constraint in src and dst: exists (e : e > 0, forall (x : limit < x < limit + e, term_cond(x))) SAT *)
-  (* term src constraint *)
-  let vars_src = CP.afv elm_src in
-  let epsilon_src = CP.fresh_new_spec_var Float in
-  let range1 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
-  let range2 = CP.mkPure (CP.mkLt elm_src (CP.mkAdd fp_src (CP.mkVar epsilon_src no_pos) no_pos) no_pos) in
-  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cond_src None no_pos in
-  let eps1 = CP.mkPure (CP.mkGt (CP.mkVar epsilon_src no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-  let eps2 = CP.mkForall vars_src range None no_pos in
-  let eps = CP.mkAnd eps1 eps2 no_pos in
-  let term_src = CP.mkExists [epsilon_src] eps None no_pos in
-  (* term dst constraint *)
-  let vars_dst = CP.afv elm_dst in
-  let epsilon_dst = CP.fresh_new_spec_var Float in
-  let range1 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
-  let range2 = CP.mkPure (CP.mkLt elm_dst (CP.mkAdd fp_dst (CP.mkVar epsilon_dst no_pos) no_pos) no_pos) in
-  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cond_dst None no_pos in
-  let eps1 = CP.mkPure (CP.mkGt (CP.mkVar epsilon_dst no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-  let eps2 = CP.mkForall vars_dst range None no_pos in
-  let eps = CP.mkAnd eps1 eps2 no_pos in
-  let term_dst = CP.mkExists [epsilon_dst] eps None no_pos in
-  let term_constraint = CP.mkAnd term_src term_dst no_pos in
-  (* check SAT of terminate constraint *)
-  let term_sat_res = TP.is_sat_no_cache term_constraint "" in
-  (* let _ = print_endline ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
-  (* let _ = print_endline ("== term_sat_res = " ^ (string_of_bool term_sat_res)) in                        *)
+  let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
-  let term_measures, term_res, term_err_msg, rank_formula =
-    (* if not fixpoint_entail_res then                                                                          *)
-    (*   Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),                                         *)
-    (*   (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),                 *)
-    (*   Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))), *)
-    (*   None                                                                                                   *)
-    if not limit_entail_res then 
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
-      None
-    else if not term_sat_res then
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Term_Cond trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Term_Cond trans))),
-      None
-    else
+  let term_measures, term_res, term_err_msg, rank_formula = (
+    (* check termination based on initial constraint *)
+    let init_res = check_decreasing_seqvar_initial_constraint init_constraint term_cons_src in
+    if init_res then
       Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
+      (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
       None, 
       None
-  in 
+    else (
+      (* check transition *)
+      let trans_res = check_decreasing_seqvar_transition init_constraint elm_src fp_src elm_dst fp_dst in
+      if not trans_res then
+        Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
+        None
+      else (
+        let limit_res = check_decreasing_seqvar_limit_constraint init_constraint elm_src fp_src term_cons_src in
+        if not limit_res then
+          Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+          (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Unsat_Term_Constraint trans)),
+          Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Unsat_Term_Constraint trans))),
+          None
+        else
+          Some (CP.SeqVar seq_src), 
+          (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
+          None, 
+          None
+      )
+    )
+  ) in
   let term_err = match estate.es_term_err with
     | None -> term_err_msg
     | Some _ -> estate.es_term_err 
@@ -758,7 +771,7 @@ let check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpu
   add_term_res_stk term_res;
   (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+let check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -767,7 +780,7 @@ let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure
     | None -> "None_term_trans"
     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
-  Debug.no_4 "check_term_seqvar_converge_decrease_measures" pr2 
+  Debug.no_4 "check_decreasing_seqvar" pr2 
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
     (add_str "term_trans" pr3)
@@ -776,104 +789,118 @@ let check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure
        (add_str "rhs" pr)
        (add_str "rank_fml" (pr_option pr1))
        (es, lhs, rhs, rank_fml))
-    (fun _ _ _ _ -> check_term_seqvar_converge_decrease_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
+    (fun _ _ _ _ -> check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
     estate lhs_p rhs_p trans
 
-let check_term_seqvar_converge_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
-  let (seq_src, seq_dst) = match trans with
-                           | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
-                           | _ -> raise SeqVar_Not_found in
-  let elm_src = seq_src.CP.seq_element in
-  let fp_src = seq_src.CP.seq_fix_point in
-  let term_cond_src = seq_src.CP.seq_term_cond in
-  let elm_dst = seq_dst.CP.seq_element in
-  let fp_dst = seq_dst.CP.seq_fix_point in
-  let term_cond_dst = seq_dst.CP.seq_term_cond in
-  let pos_dst = seq_dst.CP.seq_loc in
-  let pos = post_pos # get in
-  let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
-  let term_pos = (pos, proving_loc # get) in
-  (* fixpoint constraint: elm_src = fp_src => elm_dst = fp_dst *)
-  let fp_left = CP.mkPure (CP.mkEq elm_src fp_src no_pos) in
-  let fp_right = CP.mkPure (CP.mkEq elm_dst fp_dst no_pos) in
-  let fp_constraint = CP.mkImply fp_left fp_right no_pos in
-  (* decreasing distance constraint 1: (elm_src > fp_src) & (elm_dst > fp_dst) & (elm_src - fp_src > elm_dst - fp_dst) *)
-  let dec11 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
-  let dec12 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
-  let dec13 = CP.mkPure (CP.mkGt (CP.mkSubtract elm_src fp_src no_pos) (CP.mkSubtract elm_dst fp_dst no_pos) no_pos) in
+let check_general_seqvar_initial_constraint (init_constraint: CP.formula) (term_cons: CP.formula) : bool =
+  (* initial termination constraint: (init_constraint -> term_cons) is SAT *)
+  let entail_res, _, _ = TP.imply init_constraint term_cons "" false None in
+  (* let _ = print_endline ("== init_cond = " ^ (Cprinter.string_of_pure_formula lhs)) in *)
+  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  entail_res
+
+let check_general_seqvar_transition (init_constraint : CP.formula)
+                                    (element_src: CP.exp) (fixpoint_src: CP.exp)
+                                    (element_dst: CP.exp) (fixpoint_dst: CP.exp)
+                                    : bool =
+  (* fixpoint constraint: element_src = fixpoint_src => element_dst = fixpoint_dst *)
+  let fp_cons1 = CP.mkPure (CP.mkEq element_src fixpoint_src no_pos) in
+  let fp_cons2 = CP.mkPure (CP.mkEq element_dst fixpoint_dst no_pos) in
+  let fp_constraint = CP.mkImply fp_cons1 fp_cons2 no_pos in
+  (* decreasing distance constraint 1: (element_src > fixpoint_src) & (element_dst > fixpoint_dst) & (element_src - fixpoint_src > element_dst - fixpoint_dst) *)
+  let dec11 = CP.mkPure (CP.mkGt element_src fixpoint_src no_pos) in
+  let dec12 = CP.mkPure (CP.mkGt element_dst fixpoint_dst no_pos) in
+  let dec13 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src fixpoint_src no_pos) (CP.mkSubtract element_dst fixpoint_dst no_pos) no_pos) in
   let dec1 = CP.mkAnd dec11 (CP.mkAnd dec12 dec13 no_pos) no_pos in
-  (* decreasing distance constraint 2: (elm_src > fp_src) & (elm_dst < fp_dst) & (elm_src - fp_src > fp_dst - elm_dst) *)
-  let dec21 = CP.mkPure (CP.mkGt elm_src fp_src no_pos) in
-  let dec22 = CP.mkPure (CP.mkLt elm_dst fp_dst no_pos) in
-  let dec23 = CP.mkPure (CP.mkGt (CP.mkSubtract elm_src fp_src no_pos) (CP.mkSubtract fp_dst elm_dst no_pos) no_pos) in
+  (* decreasing distance constraint 2: (element_src > fixpoint_src) & (element_dst < fp_dst) & (element_src - fixpoint_src > fixpoint_dst - element_dst) *)
+  let dec21 = CP.mkPure (CP.mkGt element_src fixpoint_src no_pos) in
+  let dec22 = CP.mkPure (CP.mkLt element_dst fixpoint_dst no_pos) in
+  let dec23 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src fixpoint_src no_pos) (CP.mkSubtract fixpoint_dst element_dst no_pos) no_pos) in
   let dec2 = CP.mkAnd dec21 (CP.mkAnd dec22 dec23 no_pos) no_pos in
-  (* decreasing distance constraint 3: (elm_src < fp_src) & (elm_dst > fp_dst) & (fp_src - elm_src > elm_dst - fp_dst) *)
-  let dec31 = CP.mkPure (CP.mkLt elm_src fp_src no_pos) in
-  let dec32 = CP.mkPure (CP.mkGt elm_dst fp_dst no_pos) in
-  let dec33 = CP.mkPure (CP.mkGt (CP.mkSubtract fp_src elm_src no_pos) (CP.mkSubtract elm_dst fp_dst no_pos) no_pos) in
+  (* decreasing distance constraint 3: (element_src < fixpoint_src) & (element_dst > fixpoint_dst) & (fixpoint_src - element_src > element_dst - fixpoint_dst) *)
+  let dec31 = CP.mkPure (CP.mkLt element_src fixpoint_src no_pos) in
+  let dec32 = CP.mkPure (CP.mkGt element_dst fixpoint_dst no_pos) in
+  let dec33 = CP.mkPure (CP.mkGt (CP.mkSubtract fixpoint_src element_src no_pos) (CP.mkSubtract element_dst fixpoint_dst no_pos) no_pos) in
   let dec3 = CP.mkAnd dec31 (CP.mkAnd dec32 dec33 no_pos) no_pos in
-  (* decreasing distance constraint 4: (elm_src < fp_src) & (elm_dst < fp_dst) & (fp_src -elm_src > fp_dst - elm_dst) *)
-  let dec41 = CP.mkPure (CP.mkLt elm_src fp_src no_pos) in
-  let dec42 = CP.mkPure (CP.mkLt elm_dst fp_dst no_pos) in
-  let dec43 = CP.mkPure (CP.mkGt (CP.mkSubtract fp_src elm_src no_pos) (CP.mkSubtract fp_dst elm_dst no_pos) no_pos) in
+  (* decreasing distance constraint 4: (element_src < fixpoint_src) & (element_dst < fixpoint_dst) & (fixpoint_src -element_src > fixpoint_dst - element_dst) *)
+  let dec41 = CP.mkPure (CP.mkLt element_src fixpoint_src no_pos) in
+  let dec42 = CP.mkPure (CP.mkLt element_dst fixpoint_dst no_pos) in
+  let dec43 = CP.mkPure (CP.mkGt (CP.mkSubtract fixpoint_src element_src no_pos) (CP.mkSubtract fixpoint_dst element_dst no_pos) no_pos) in
   let dec4 = CP.mkAnd dec41 (CP.mkAnd dec42 dec43 no_pos) no_pos in
   (* decreasing distance constrains *)
   let decs = CP.mkOr dec1 (CP.mkOr dec2 (CP.mkOr dec3 dec4 None no_pos) None no_pos) None no_pos in
-  let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let distance_constraint = CP.mkImply lhs decs no_pos in
+  let distance_constraint = CP.mkImply init_constraint decs no_pos in
   let limit_constraint = CP.mkAnd fp_constraint distance_constraint no_pos in
-  let limit_entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
+  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) limit_constraint "" false None in
   (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
-  (* let _ = print_endline ("== limit_entail_res = " ^ (string_of_bool limit_entail_res)) in                  *)
-  (* terminate constraint in src and dst: exists (e : e > 0, forall (x : limit - e < x < limit + e, term_cond(x))) SAT *)
-  (* term src constraint *)
-  let vars_src = CP.afv elm_src in
-  let epsilon_src = CP.fresh_new_spec_var Float in
-  let range1 = CP.mkPure (CP.mkGt elm_src (CP.mkSubtract fp_src (CP.mkVar epsilon_src no_pos) no_pos) no_pos) in
-  let range2 = CP.mkPure (CP.mkLt elm_src (CP.mkAdd fp_src (CP.mkVar epsilon_src no_pos) no_pos) no_pos) in
-  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cond_src None no_pos in
-  let eps1 = CP.mkPure (CP.mkGt (CP.mkVar epsilon_src no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-  let eps2 = CP.mkForall vars_src range None no_pos in
-  let eps = CP.mkAnd eps1 eps2 no_pos in
-  let term_src = CP.mkExists [epsilon_src] eps None no_pos in
-  (* term dst constraint *)
-  let vars_dst = CP.afv elm_dst in
-  let epsilon_dst = CP.fresh_new_spec_var Float in
-  let range1 = CP.mkPure (CP.mkGt elm_dst (CP.mkSubtract fp_dst (CP.mkVar epsilon_dst no_pos) no_pos) no_pos) in
-  let range2 = CP.mkPure (CP.mkLt elm_dst (CP.mkAdd fp_dst (CP.mkVar epsilon_dst no_pos) no_pos) no_pos) in
-  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cond_dst None no_pos in
-  let eps1 = CP.mkPure (CP.mkGt (CP.mkVar epsilon_dst no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-  let eps2 = CP.mkForall vars_dst range None no_pos in
-  let eps = CP.mkAnd eps1 eps2 no_pos in
-  let term_dst = CP.mkExists [epsilon_dst] eps None no_pos in
-  let term_constraint = CP.mkAnd term_src term_dst no_pos in
-  (* check SAT of terminate constraint *)
-  let term_sat_res = TP.is_sat_no_cache term_constraint "" in
-  let _ = print_endline ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in
-  let _ = print_endline ("== term_sat_res = " ^ (string_of_bool term_sat_res)) in
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in *)
+  entail_res
+
+
+let check_general_seqvar_limit_constraint (init_constraint: CP.formula)
+                                          (element: CP.exp) (fixpoint: CP.exp)
+                                          (term_cons: CP.formula)
+                                          : bool = 
+  let vars = CP.afv element in
+  let epsilon = CP.fresh_new_spec_var Float in
+  let range1 = CP.mkPure (CP.mkGt element fixpoint no_pos) in
+  let range2 = CP.mkPure (CP.mkLt element (CP.mkAdd fixpoint (CP.mkVar epsilon no_pos) no_pos) no_pos) in
+  let range = CP.mkOr (CP.mkNot_s (CP.mkAnd range1 range2 no_pos)) term_cons None no_pos in
+  let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
+  let limit_formula = CP.mkForall vars range None no_pos in
+  let limit_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula limit_formula no_pos) None no_pos in
+  let sat_res = TP.is_sat_no_cache limit_constraint "" in
+  (* let _ = print_endline ("== limit_constraint = " ^ (Cprinter.string_of_pure_formula limit_constraint)) in *)
+  (* let _ = print_endline ("== sat_res = " ^ (string_of_bool sat_res)) in                        *)
+  sat_res
+
+let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+  let (seq_src, seq_dst) = match trans with
+                           | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
+                           | _ -> raise SeqVar_Not_found in
+  let elm_src = seq_src.CP.seq_element in
+  let fp_src = seq_src.CP.seq_fix_point in
+  let term_cons_src = seq_src.CP.seq_term_cons in
+  let elm_dst = seq_dst.CP.seq_element in
+  let fp_dst = seq_dst.CP.seq_fix_point in
+  let pos_dst = seq_dst.CP.seq_loc in
+  let pos = post_pos # get in
+  let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
+  let term_pos = (pos, proving_loc # get) in
+  let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
-  let term_measures, term_res, term_err_msg, rank_formula =
-    (* if not fixpoint_entail_res then                                                                          *)
-    (*   Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),                                         *)
-    (*   (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans)),                 *)
-    (*   Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Fixpoint trans))), *)
-    (*   None                                                                                                   *)
-    if not limit_entail_res then 
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
-      None
-    else if not term_sat_res then
-      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Term_Cond trans)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Term_Cond trans))),
-      None
-    else
+  let term_measures, term_res, term_err_msg, rank_formula = (
+    (* check termination based on initial constraint *)
+    let init_res = check_general_seqvar_initial_constraint init_constraint term_cons_src in
+    if init_res then
       Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
-      None,
+      (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
+      None, 
       None
-  in 
+    else (
+      (* check transition *)
+      let trans_res = check_general_seqvar_transition init_constraint elm_src fp_src elm_dst fp_dst in
+      if not trans_res then
+        Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
+        None
+      else (
+        let limit_res = check_general_seqvar_limit_constraint init_constraint elm_src fp_src term_cons_src in
+        if not limit_res then
+          Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+          (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Unsat_Term_Constraint trans)),
+          Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Unsat_Term_Constraint trans))),
+          None
+        else
+          Some (CP.SeqVar seq_src), 
+          (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Measure_Wellfounded trans)),
+          None, 
+          None
+      )
+    )
+  ) in
   let term_err = match estate.es_term_err with
     | None -> term_err_msg
     | Some _ -> estate.es_term_err 
@@ -886,7 +913,7 @@ let check_term_seqvar_converge_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1
   add_term_res_stk term_res;
   (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans =
+let check_general_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -895,7 +922,7 @@ let check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 r
     | None -> "None_term_trans"
     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
-  Debug.no_4 "check_term_seqvar_converge_measures" pr2
+  Debug.no_4 "check_general_seqvar" pr2
     (add_str "lhs_p" pr)
     (add_str "rhs_p" pr) 
     (add_str "term_trans" pr3)
@@ -904,11 +931,11 @@ let check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 r
        (add_str "rhs" pr)
        (add_str "rank_fml" (pr_option pr1))
        (es, lhs, rhs, rank_fml))
-    (fun _ _ _ _ -> check_term_seqvar_converge_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
+    (fun _ _ _ _ -> check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
     estate lhs_p rhs_p trans
 
 (* Termination: check sequence var *)  
-let check_term_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option)  =
+let check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option)  =
   (* (estate, lhs_p, rhs_p, None) *)
   let ans = norm_seqvar_measures_trans trans in
   match ans with
@@ -916,14 +943,14 @@ let check_term_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (t
   | Some (seq_src, seq_dst) -> (
       let vari_src = seq_src.CP.seq_variation in
       if (vari_src = CP.SeqConDec) then 
-        check_term_seqvar_converge_decrease_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
+        check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
       else if (vari_src = CP.SeqCon) then
-        check_term_seqvar_converge_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
+        check_general_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
       else
         report_error no_pos "[term.ml] Invalid variation of sequences."
     )
 
-let check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
+let check_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -932,7 +959,7 @@ let check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tra
     | None -> "None_term_trans"
     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s) 
                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in
-  Debug.no_4 "check_term_seqvar_measures" pr2 
+  Debug.no_4 "check_seqvar_measures" pr2 
       (add_str "lhs_p" pr)
       (add_str "rhs_p" pr) 
       (add_str "term_trans" pr3)
@@ -941,12 +968,12 @@ let check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tra
             (add_str "rhs" pr) 
             (add_str "rank_fml" (pr_option pr1)) 
             (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ -> check_term_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
+      (fun _ _ _ _ -> check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
         estate lhs_p rhs_p trans
 
 (* To handle SeqVar formula *)
 (* Remember to remove SeqVar in RHS *)
-let check_term_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try (
     let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
     let conseq = MCP.pure_of_mix rhs_p in
@@ -972,7 +999,7 @@ let check_term_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     | (Term, Term)
     | (Fail TermErr_May, Term) ->
         (* Check wellfoundedness of the transition *)
-        check_term_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans_opt
+        check_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans_opt
     | (Term, _)
     | (Fail TermErr_May, _) ->
         let term_res = (term_pos, trans_opt, Some estate.es_formula,
@@ -984,7 +1011,7 @@ let check_term_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           | Fail TermErr_Must -> Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_Must})
           | MayLoop
           | Fail TermErr_May -> Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May})
-          | Term -> failwith "unexpected Term in check_term_seqvar_rhs"
+          | Term -> failwith "unexpected Term in check_seqvar_rhs"
         in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
@@ -1012,14 +1039,14 @@ let check_term_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   )
   with _ -> (estate, lhs_p, rhs_p, None)
 
-let check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.no_3 "check_term_seqvar_rhs" pr2 pr pr
+   Debug.no_3 "check_seqvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
-      (fun _ _ _ -> check_term_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+      (fun _ _ _ -> check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
-let check_term_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try (
     let conseq = MCP.pure_of_mix rhs_p in
     let primvar_dst = find_primvar_formula conseq in
@@ -1062,7 +1089,7 @@ let check_term_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           | Fail TermErr_Must -> Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_Must})
           | MayLoop
           | Fail TermErr_May -> Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_May})
-          | Term -> failwith "unexpected Term in check_term_primvar_rhs"
+          | Term -> failwith "unexpected Term in check_primvar_rhs"
         in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
@@ -1090,12 +1117,12 @@ let check_term_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   )
   with _ -> (estate, lhs_p, rhs_p, None)
 
-let check_term_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-   Debug.no_3 "check_term_primvar_rhs" pr2 pr pr
+   Debug.no_3 "check_primvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
-      (fun _ _ _ -> check_term_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+      (fun _ _ _ -> check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
 (* To handle Termination Var formula *)
 (* Remember to remove SeqVar in RHS *)
@@ -1106,11 +1133,11 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let termvar_es = estate.es_var_measures in
     match (termvar_es, termvar_conseq) with
     | (Some CP.LexVar _), _ ->
-        check_term_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+        check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | (Some CP.SeqVar _), _ ->
-        check_term_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+        check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | (Some CP.PrimTermVar _), _ ->
-        check_term_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+        check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | _ -> raise TermVar_Not_found
   ) 
   with e -> (estate, lhs_p, rhs_p, None)
