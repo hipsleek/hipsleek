@@ -678,14 +678,17 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
                                        (element_dst: CP.exp) (limit_dst: CP.exp)
                                        : bool =
   (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
-  let plm_left = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
+  let plm_left = CP.mkAnd init_constraint (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
+  let plm_sat_res = TP.is_sat_no_cache plm_left "" in
+  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
+  let _ = print_endline ("== plm_sat_res = " ^ (string_of_bool plm_sat_res)) in
   let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-  let plm_constraint_res, _, _ = TP.imply init_constraint (CP.mkImply plm_left plm_right no_pos) "" false None in
+  let plm_entail_res, _, _ = TP.imply plm_left plm_right "" false None in
   let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
   let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
-  let _ = print_endline ("== plm_constraint_res = " ^ (string_of_bool plm_constraint_res)) in
-  if not plm_constraint_res then
-    plm_constraint_res
+  let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in
+  if not (plm_sat_res && plm_entail_res) then
+    false
   else (
     (* decreasing constraint 1: element_src > element_dst *)
     let dec1 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
@@ -812,14 +815,17 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
                                     (element_dst: CP.exp) (limit_dst: CP.exp)
                                     : bool =
   (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
-  let plm_left = CP.mkPure (CP.mkEq element_src limit_src no_pos) in
+  let plm_left = CP.mkAnd init_constraint (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
+  let plm_sat_res = TP.is_sat_no_cache plm_left "" in
+  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
+  let _ = print_endline ("== plm_sat_res = " ^ (string_of_bool plm_sat_res)) in
   let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-  let plm_constraint_res, _, _ = TP.imply init_constraint (CP.mkImply plm_left plm_right no_pos) "" false None in
-  (* let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in  *)
-  (* let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in  *)
-  (* let _ = print_endline ("== plm_constraint_res = " ^ (string_of_bool plm_constraint_res)) in *)
-  if not plm_constraint_res then
-    plm_constraint_res
+  let plm_entail_res, _, _ = TP.imply plm_left plm_right "" false None in
+  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
+  let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
+  let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in
+  if not (plm_sat_res && plm_entail_res) then
+    false
   else (
     (* decreasing distance constraint 1: (element_src > limit_src) & (element_dst > limit_dst) & (element_src - limit_src > element_dst - limit_dst) *)
     let dec11 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
