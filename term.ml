@@ -665,29 +665,89 @@ let check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
       (fun _ _ _ -> check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
 
+(* collect the update function from a transition constraint *)
+(* by obtaining only the assignments (consider only Eq p_formula) *)
+let collect_update_function (transition_constraint: CP.formula) : CP.formula =
+  let is_assignment (pf: CP.p_formula) : bool =
+    match pf with
+    | CP.Eq _ -> true
+    | _ -> false in
+  let rec convert_formula (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm _ -> f
+    | CP.And (f1, f2, l) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.And (new_f1, new_f2, l)
+    | CP.AndList formula_list ->
+        let (ls, fs) = List.split formula_list in
+        let new_fs =
+          List.map (
+            fun f -> match f with
+            | CP.BForm ((pf, _), _) ->
+                if is_assignment pf then f
+                else CP.mkTrue no_pos
+            | _ -> convert_formula f
+          ) fs in
+        let new_formula_list = List.combine ls new_fs in
+        CP.AndList new_formula_list
+    | CP.Or (f1, f2, l1, l2) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f1
+              else CP.mkFalse no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f2
+              else CP.mkFalse no_pos
+          | _ -> convert_formula f2 in
+        CP.Or (new_f1, new_f2, l1, l2)
+    | CP.Not (f, l1, l2) ->
+        let new_f = convert_formula f in
+        CP.Not (new_f, l1, l2)
+    | CP.Forall (s, f, l1, l2) ->
+        let new_f = convert_formula f in
+        CP.Forall (s, new_f, l1, l2)
+    | CP.Exists (s, f, l1, l2) ->
+        let new_f = convert_formula f in
+        CP.Exists (s, new_f, l1, l2)
+  ) in
+  convert_formula transition_constraint
+
 let check_decreasing_seqvar_term_initial_constraint (init_constraint: CP.formula) (term_cons: CP.formula) : bool =
   (* initial termination constraint: (init_constraint -> term_cons is SAT *)
   let entail_res, _, _ = TP.imply init_constraint term_cons "" false None in
-  let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in
-  let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in
-  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
+  (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
+  (* let _ = print_endline ("== term_cons = " ^ (Cprinter.string_of_pure_formula term_cons)) in               *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res
 
 let check_decreasing_seqvar_transition (init_constraint : CP.formula)
                                        (element_src: CP.exp) (limit_src: CP.exp)
                                        (element_dst: CP.exp) (limit_dst: CP.exp)
                                        : bool =
-  (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
-  let plm_left = CP.mkAnd init_constraint (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
-  let plm_sat_res = TP.is_sat_no_cache plm_left "" in
-  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
-  let _ = print_endline ("== plm_sat_res = " ^ (string_of_bool plm_sat_res)) in
+  (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
+  let update_function = collect_update_function init_constraint in
+  let plm_left = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
   let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
   let plm_entail_res, _, _ = TP.imply plm_left plm_right "" false None in
-  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
-  let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
-  let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in
-  if not (plm_sat_res && plm_entail_res) then
+  (* let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in *)
+  (* let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in *)
+  (* let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in        *)
+  if not plm_entail_res then
     false
   else (
     (* decreasing constraint 1: element_src > element_dst *)
@@ -719,8 +779,8 @@ let check_decreasing_seqvar_term_limit_constraint (init_constraint: CP.formula)
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
   let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
-  let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in
-  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
+  (* let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
+  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res
 
 let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
@@ -814,17 +874,15 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
                                     (element_src: CP.exp) (limit_src: CP.exp)
                                     (element_dst: CP.exp) (limit_dst: CP.exp)
                                     : bool =
-  (* possible limit constraint: init_constraint & (element_src = limit_src) => element_dst = limit_dst *)
-  let plm_left = CP.mkAnd init_constraint (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
-  let plm_sat_res = TP.is_sat_no_cache plm_left "" in
-  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
-  let _ = print_endline ("== plm_sat_res = " ^ (string_of_bool plm_sat_res)) in
+  (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
+  let update_function = collect_update_function init_constraint in
+  let plm_left = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
   let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
   let plm_entail_res, _, _ = TP.imply plm_left plm_right "" false None in
-  let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
-  let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
-  let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in
-  if not (plm_sat_res && plm_entail_res) then
+  (* let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in *)
+  (* let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in *)
+  (* let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in        *)
+  if not plm_entail_res then
     false
   else (
     (* decreasing distance constraint 1: (element_src > limit_src) & (element_dst > limit_dst) & (element_src - limit_src > element_dst - limit_dst) *)

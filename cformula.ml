@@ -92,7 +92,7 @@ and struc_base_formula =
 		formula_struc_continuation : struc_formula option;
 		formula_struc_pos : loc
 	}
-	
+
 and formula =
   | Base of formula_base
   | Or of formula_or
@@ -107,7 +107,6 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_flow : flow_formula;
                       formula_base_label : formula_label option;
                       formula_base_pos : loc }
-
 
 and mem_formula = { 
   mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)

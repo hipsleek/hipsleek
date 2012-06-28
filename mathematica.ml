@@ -255,12 +255,25 @@ let mathematica_of_float (f: float) =
 let mathematica_of_spec_var (v: CP.spec_var) = 
   match v with
   | CP.SpecVar (_, sv, _) ->
-      (* mathematica doesn't allow var name contains underschore '_', so replace them by 'N'*)
-      let new_sv = sv in
-      for i = 0 to (String.length new_sv) - 1 do
-        if new_sv.[i] = '_' then new_sv.[i] <- 'N'
+      (* mathematica doesn't allow var name contains underscore '_'                        *)
+      (* so convert variable name from underscore style to capitalizing-first-letter style *)
+      let new_sv = ref "" in
+      let to_uppercase = ref false in
+      for i = 0 to (String.length sv) - 1 do
+        if sv.[i] = '_' then
+          to_uppercase := true
+        else (
+          let s = if not !to_uppercase then
+                    Char.escaped sv.[i]
+                  else if (sv.[i] >= '0' && sv.[i] <= '9') then
+                    "N" ^ Char.escaped (sv.[i])
+                  else
+                    Char.escaped (Char.uppercase sv.[i]) in
+          new_sv := !new_sv ^ s;
+          to_uppercase := false
+        )
       done;
-      new_sv ^ (if CP.is_primed v then "PRMD" else "")
+      !new_sv
 
 let rec mathematica_of_exp e0 : string= 
   match e0 with
