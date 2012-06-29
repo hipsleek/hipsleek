@@ -148,7 +148,7 @@ let pr_term_reason_short = function
   | Quantum_Technique_Measure_Bounded ->
       fmt_string "bounded)"
   | Limit_Technique_Invalid_Limit _ ->
-      fmt_string "Limit_Technique_Invalid_Limit"
+      fmt_string "Limit_Technique_Invalid_Limit)"
   | Limit_Technique_Invalid_Bound _ ->
       fmt_string "Limit_Technique_Invalid_Bound)"
   | Limit_Technique_Invalid_Term_Constraint _ ->
@@ -156,9 +156,9 @@ let pr_term_reason_short = function
   | Limit_Technique_Measure_Wellfounded _ ->
       fmt_string "Limit_Technique_Measure_Wellfounded)"
   | Primitive_Term_Invalid _ ->
-      fmt_string "Primitive_Term_Invalid"
+      fmt_string "Primitive_Term_Invalid)"
   | Primitive_Term_Valid _ ->
-      fmt_string "Primitive_Term_Valid"
+      fmt_string "Primitive_Term_Valid)"
   | Invalid_Status_Trans ann_trans ->
       fmt_string "invalid transition)";
       fmt_string " ";
