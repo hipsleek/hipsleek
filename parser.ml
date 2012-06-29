@@ -1049,22 +1049,46 @@ cexp_w :
     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seq_con_dec ->
-        let (m, lm, tc) = param in
+    | t_ann = ann_term; param = mesaures_seqcondec_lowerbound ->
+        let (m, lm, lb) = param in
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_limit = lm;
-                             P.seq_term_cons = tc;
+                             P.seq_bounds = [lb];
+                             P.seq_termcons = None;
                              P.seq_variation = P.SeqConDec;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seq_con ->
+    | t_ann = ann_term; param = mesaures_seqcondec_termcons ->
         let (m, lm, tc) = param in
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_limit = lm;
-                             P.seq_term_cons = tc;
+                             P.seq_bounds = [];
+                             P.seq_termcons = Some tc;
+                             P.seq_variation = P.SeqConDec;
+                             P.seq_loc = get_pos_camlp4 _loc 1} in
+        let f = Pure_f (P.BForm ((seq, None), None)) in
+        set_slicing_utils_pure_double f false
+    | t_ann = ann_term; param = measures_seqcon_bounds ->
+        let (m, lm, lb, ub) = param in
+        let seq = P.SeqVar { P.seq_ann = t_ann;
+                             P.seq_element = m;
+                             P.seq_limit = lm;
+                             P.seq_bounds = [lb; ub];
+                             P.seq_termcons = None;
+                             P.seq_variation = P.SeqCon;
+                             P.seq_loc = get_pos_camlp4 _loc 1} in
+        let f = Pure_f (P.BForm ((seq, None), None)) in
+        set_slicing_utils_pure_double f false
+    | t_ann = ann_term; param = measures_seqcon_termcons ->
+        let (m, lm, tc) = param in
+        let seq = P.SeqVar { P.seq_ann = t_ann;
+                             P.seq_element = m;
+                             P.seq_limit = lm;
+                             P.seq_bounds = [];
+                             P.seq_termcons = Some tc;
                              P.seq_variation = P.SeqCon;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1074,7 +1098,8 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_limit = lm;
-                             P.seq_term_cons = tc;
+                             P.seq_bounds = [];
+                             P.seq_termcons = Some tc;
                              P.seq_variation = P.SeqDivDec;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1084,7 +1109,8 @@ cexp_w :
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = m;
                              P.seq_limit = lm;
-                             P.seq_term_cons = tc;
+                             P.seq_bounds = [];
+                             P.seq_termcons = Some tc;
                              P.seq_variation = P.SeqDiv;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
@@ -1239,11 +1265,17 @@ measures_lex :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
 measures_lex_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
 
+(* SeqConDec(measurement, limit, lower-bound) *)
+mesaures_seqcondec_lowerbound: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb = cexp; `CPAREN; `CSQUARE -> (m, lm, lb)]];
+
 (* SeqConDec(measurement, limit, termination condition) *)
-measures_seq_con_dec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
+mesaures_seqcondec_termcons: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
+
+(* SeqCon(measurement, limit, lower-bound, upper-bound) *)
+measures_seqcon_bounds: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb = cexp; `CPAREN; ub = cexp; `CPAREN; `CSQUARE -> (m, lm, lb, ub)]];
 
 (* SeqCon(measurement, limit, termination condition) *)
-measures_seq_con: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
+measures_seqcon_termcons: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
 
 (* SeqDivDec(measurement, limit, termination condition) *)
 measures_seq_div_dec: [[`OSQUARE; `SEQDIVDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];

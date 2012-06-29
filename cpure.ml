@@ -94,7 +94,8 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_limit: exp;
-  seq_term_cons: formula;  (* terminate condition *)
+  seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
+  seq_termcons: formula option;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }
@@ -1339,11 +1340,12 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element limit term_cons variation pos : p_formula= 
+and mkSeqVar ann element limit bounds termcons variation pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
            seq_limit = limit;
-           seq_term_cons = term_cons;
+           seq_bounds = bounds;
+           seq_termcons = termcons;
            seq_variation = variation;
            seq_loc = pos }
 
@@ -1357,8 +1359,8 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure bf in
   p
 
-and mkSeqVar_pure ann element limit bounds variation =
-  let bf = mkSeqVar ann element limit bounds variation no_pos in
+and mkSeqVar_pure ann element limit bounds termcons variation =
+  let bf = mkSeqVar ann element limit bounds termcons variation no_pos in
   let p = mkPure bf in
   p
 

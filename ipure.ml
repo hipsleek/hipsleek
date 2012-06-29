@@ -31,7 +31,8 @@ and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
   seq_limit: exp;
-  seq_term_cons: formula;  (* terminate condition *)
+  seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
+  seq_termcons: formula option;  (* terminate condition *)
   seq_variation: sequence_variation_type; 
   seq_loc : loc
 }

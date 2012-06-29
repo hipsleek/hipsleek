@@ -1,6 +1,8 @@
 // (1) expect Valid
 checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, x < 0.1)] |- Term[SeqConDec(x / 2.0, 0.0, x < 0.1)].
 
+checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, 0.1)] |- Term[SeqConDec(x / 2.0, 0.0, 0.1)].
+
 // (2) expect Valid
 checkentail (x < 0.0) & Term[SeqConDec(x, 0.0, x < 0.1)] |- Term[SeqConDec(x / 2.0, 0.0, x < 0.1)].
 
