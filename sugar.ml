@@ -346,6 +346,7 @@ let check_problem_through_file (input: string list) (timeout: float) : bool =
   let out_stream = open_out infile in
   List.map (fun x-> output_string out_stream x) input;
   close_out out_stream;
+  let sugar_result="sugarres.txt" in
   let set_process proc = sugar_process := proc in
   let fnc () =
     if (sugar_input_format = "csp") then (

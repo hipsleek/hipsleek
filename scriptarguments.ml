@@ -269,6 +269,7 @@ let common_arguments = [
   ("--rlpa", Arg.Set Redlog.pasf, "Using Presburger Arithmetic of Redlog");
   ("--dis-decompose", Arg.Set Globals.dis_decompose, "Disable decomposition of implication checking");
   ("--getctr", Arg.Set_int Slicing.getctr_n, "Set the level of GetCtr for the annotated slicing");
+  ("--z3-simplify", Arg.Set Smtsolver.z3_simplify, "Enable Z3's simplification strategy");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");

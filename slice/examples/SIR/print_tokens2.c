@@ -253,6 +253,7 @@ int get_token_loop21(ref int[] buffer, int tp, int id,int ch, ref int i)
   if(!(is_token_end(id,ch))){
     //  if (i>=79) return ch;
     i = i+ 1;
+		dprint;
     buffer[i]=ch;
     ch=get_char(tp);
     return get_token_loop21(buffer, tp, id, ch, i);

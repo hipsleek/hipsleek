@@ -2526,6 +2526,10 @@ and elim_ante_evars (es:entail_state) : context =
 
 (*used for finding the unsat in the original pred defs formulas*)
 and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+  Debug.no_1 "find_unsat" (!print_formula) (fun _ -> "")
+  (fun _ -> find_unsat_x prog f) f
+
+and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =  
   let sat_subno = ref 1 in 
   match f with
     | Base _ | Exists _ ->
@@ -2558,7 +2562,7 @@ and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
       string_of_bool
       (fun hf mix -> is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno) hf mix
 
-and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
+and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno =
   (* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
   let (ph, phb) = xpure_f hf in
   let phb = CP.merge_branches phb br in    

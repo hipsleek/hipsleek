@@ -163,14 +163,20 @@ and filter_mem_triv lst =
 	  | _ -> true) lst
 
 and group_mem_by_fv (lst: memo_pure):memo_pure =
-  Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
-	
+  Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_p lst
+
+and group_mem_by_fv_p (lst: memo_pure):memo_pure =
+  Gen.Profiling.do_1 "stat_slicing" group_mem_by_fv_x lst
+ 
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then AnnoS.group_mem_by_fv lst
   else AutoS.group_mem_by_fv lst
 
 and regroup_memo_group (lst: memo_pure) : memo_pure =
-  Debug.no_1 "regroup_memo_group" !print_mp_f !print_mp_f regroup_memo_group_x lst
+  Debug.no_1 "regroup_memo_group" !print_mp_f !print_mp_f regroup_memo_group_p lst
+
+and regroup_memo_group_p (lst: memo_pure):memo_pure =
+  Gen.Profiling.do_1 "stat_slicing" regroup_memo_group_x lst
 
 and regroup_memo_group_x (lst: memo_pure) : memo_pure =
   if !do_slicing then AnnoS.regroup_memo_group lst
@@ -753,8 +759,10 @@ and merge_mems_nx_x (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure 
 and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
   let pr = !print_mp_f in
   Debug.no_2 "merge_mems_nx" pr pr pr 
-  (fun _ _ -> merge_mems_nx_x l1 l2 slice_check_dups) l1 l2 
+  (fun _ _ -> merge_mems_nx_p l1 l2 slice_check_dups) l1 l2 
 
+and merge_mems_nx_p (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
+  Gen.Profiling.do_1 "stat_slicing" (merge_mems_nx_x l1 l2) slice_check_dups 
 
 (*add cm to l_init and depending on the fnf flag
   true: add cm and also add the negation of cm as a fail condition
@@ -840,7 +848,10 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_p l1 l2 status
+
+and create_memo_group_p (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+  Gen.Profiling.do_1 "stat_slicing" (create_memo_group_x l1 l2) status
 
 and create_memo_group_x 
   (l1: (b_formula * (formula_label option)) list) 
@@ -859,7 +870,10 @@ and create_memo_group_x
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
+  Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_p g
+
+and split_mem_grp_p (g:memoised_group): memo_pure =
+  Gen.Profiling.do_1 "stat_slicing" split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
   if !do_slicing then AnnoS.split_mem_grp g
@@ -1484,13 +1498,11 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
     with_disj !Slicing.getctr_n ante_disj conseq
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
-  let n_ante =
-    (* if !dis_slicing then ante_disj
-    else *)
-    if !do_slicing then 
+  let n_ante = Gen.Profiling.do_1 "stat_slicing"
+    (fun b -> if b then 
       AnnoS.get_rel_ctr !Slicing.getctr_n conseq ante_disj
     else
-      AutoS.get_rel_ctr 1 conseq ante_disj
+      AutoS.get_rel_ctr 1 conseq ante_disj) !do_slicing
   in
   (* Assumption: ante_disj is SAT *)
   (* let n_ante = if n_ante == [] then ante_disj else n_ante in *)

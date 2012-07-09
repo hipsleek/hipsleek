@@ -2,6 +2,8 @@ open Globals
 open Error
 open Cpure
 
+module CP = Cpure
+
 type var_rep = string
 
 type sformula = 
@@ -201,35 +203,12 @@ let sat_check f =
     | SOr (f1,f2) -> (helper eqs neqs w_l f1) || (helper eqs neqs w_l f2) in
   helper [] [] [] f 
 
-(*     
-let z3_is_sat f sat_no =
-  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
-  Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no
-*)
-
 let is_sat f sat_no = 
   let h f = match trans_f false f with 
   | STrue -> true
   | SFalse -> false
   | SComp fc -> sat_check fc in
-  (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
-  (* Gen.Profiling.do_1 "stat_dp_sat" h f *)
-  let _ = Gen.Profiling.push_time "stat_dp_sat" in
-  (* let _ = for i = 0 to 50000 do print_string "" done in *)
-  let res = h f in
-  let _ = Gen.Profiling.pop_time "stat_dp_sat" in
-  res
-
-(*
-let is_sat f sat_no =
-(*  let z3_res = z3_is_sat f sat_no in
-  let dp_res = is_sat f sat_no in
-  let _ = if (z3_res != dp_res) then
-    print_endline ("z3-dp: " ^ !CP.print_formula f)
-  in
-  dp_res   *)
-  is_sat f sat_no
-*)
+  Gen.Profiling.do_1 "stat_dp_sat" h f
 
 let imply_test afc cfc =   
   let rec t_imply e_s n_s cfc = match cfc with 
@@ -254,13 +233,7 @@ let imply_test afc cfc =
 	| SOr (f1,f2) -> (icollect f1 e_s n_l w_l) && (icollect f2 e_s n_l w_l) in
   icollect afc [] [] [] 
 
-(*
-let z3_imply ante conseq impl_no timeout = 
-  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
-  Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout
-*)
-
-let imply ante conseq impl_no _ =
+let imply ante conseq impl_no timeout =
 	let h ante conseq = match trans_f true conseq with
 	  | SFalse -> false
 	  | STrue -> true 
@@ -268,28 +241,8 @@ let imply ante conseq impl_no _ =
 		 | STrue -> false
 		 | SFalse -> true
 		 | SComp afc -> imply_test afc cfc in
-	(* Gen.Profiling.do_2 "stat_dp_imply" h ante conseq *)
-  let _ = Gen.Profiling.push_time "stat_dp_imply" in
-  (* let _ = for i = 0 to 50000 do print_string "" done in *)
-  let res = h ante conseq in
-  let _ = Gen.Profiling.pop_time "stat_dp_imply" in
-  res
-
-(*
-let imply ante conseq impl_no timeout =
-  let z3_res = z3_imply ante conseq impl_no timeout in
-  let dp_res = imply ante conseq impl_no timeout in
-  let _ = if (z3_res != dp_res) then
-    print_endline ("z3-dp: " ^ (!CP.print_formula ante) ^ " |- " ^ (!CP.print_formula conseq))
-  in
-  dp_res
-  (* imply ante conseq impl_no timeout *)
-*)
-
-(*
-let imply ante conseq i f = Gen.Profiling.do_2 "dpimply" Smtsolver.imply ante conseq(* i f*)
-let is_sat f sn = Gen.Profiling.do_2 "dpsat" Smtsolver.is_sat f sn
-	*)  
+	Gen.Profiling.do_2 "stat_dp_imply" h ante conseq
+  
 let simplify f = (* Omega.simplify f *) f
 
 let hull f = (* Omega.hull f *) f
@@ -309,9 +262,6 @@ let pairwisecheck f = (* Omega.pairwisecheck f *) f
         else if (sat_check cfc) then 
      else *)
      imply_test afc cfc *)
-     
-     
-     
      
 (*
 and sets = (var_rep list list * Hashtbl.t)

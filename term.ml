@@ -536,7 +536,9 @@ let strip_lexvar_lhs (ctx: context) : context =
     let f_p_f pf = Some other_p in
     let f_b _ = None in
     let f_e _ = None in
-    match lexvar with
+    (* let _ = print_endline ("Stripped LexVar: " ^ (pr_list !CP.print_formula lexvar)) in *)
+    let lexvar = Gen.BList.remove_dups_eq (=) lexvar in 
+    (* match lexvar with
     | [] -> Ctx es
     | lv::[] -> 
         let t_ann, ml, il = find_lexvar_formula lv in 
@@ -544,7 +546,14 @@ let strip_lexvar_lhs (ctx: context) : context =
           es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
           es_var_measures = Some (t_ann, ml, il); 
         }
-    | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+    | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." *)
+    let es = List.fold_left (fun es lv -> 
+      let t_ann, ml, il = find_lexvar_formula lv in 
+      { es with 
+          es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
+          es_var_measures = Some (t_ann, ml, il); 
+      }) es lexvar
+    in Ctx es
   in transform_context es_strip_lexvar_lhs ctx
 
 let strip_lexvar_lhs (ctx: context) : context =

@@ -943,7 +943,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
-  let _ = Gen.Profiling.push_time "stat_tp_is_sat_no_cache" in
+  (* let _ = Gen.Profiling.push_time "stat_tp_is_sat_no_cache" in *)
   let res = 
   match !tp with
 	| DP -> 
@@ -1124,8 +1124,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           Sugar.is_sat f sat_no
 	  )
       ) 
-  in let _ = Gen.Profiling.pop_time "stat_tp_is_sat_no_cache" 
+  (* in let _ = Gen.Profiling.pop_time "stat_tp_is_sat_no_cache" *)
   in res
+
+let tp_is_sat_no_cache f sat_no =
+  Gen.Profiling.do_1 "stat_UNSAT" (fun _ -> tp_is_sat_no_cache f sat_no) f
 
 let tp_is_sat_no_cache f sat_no =
   Debug.no_1 "tp_is_sat_no_cache" Cprinter.string_of_pure_formula string_of_bool 
@@ -1611,7 +1614,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
-  let _ = Gen.Profiling.push_time "stat_tp_imply_no_cache" in
+  (* let _ = Gen.Profiling.push_time "stat_tp_imply_no_cache" in *)
   let r = match !tp with
     | DP ->
         let r = stat_tp (lazy (Dp.imply ante_w conseq_s (imp_no^"XX") timeout)) "dp" in
@@ -1776,7 +1779,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       ) 
        
   in
-  let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in
+  (* let _ = Gen.Profiling.pop_time "stat_tp_imply_no_cache" in *)
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;
@@ -1793,6 +1796,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	in
 		r
 ;;
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  Gen.Profiling.do_1 "stat_IMPLY" 
+  (fun _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante 
 
 let tp_imply_no_cache i ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
@@ -2525,9 +2532,10 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-  if !f_2_slice || !dis_slicing then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
+  if !f_2_slice || !dis_slicing then 
+    (* let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in *)
+    (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else
-	  (*not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)*)
 	  not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
