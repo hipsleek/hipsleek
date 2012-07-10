@@ -13,6 +13,8 @@ checkentail (x < 0.0) & Term[SeqConDec(x, -infinity, x < -100.0)] |- Term[SeqCon
 
 checkentail (x > 10.0) & Term[SeqConDec(x, -infinity, x < -100.0)] |- Term[SeqConDec(x * (-2.0), -infinity, x < -100.0)].
 
+// BUG
 checkentail (x > 10.0) & Term[SeqConDec(x, -infinity, x < -100.0)] |- Term[SeqConDec(x / (-2.0), -infinity, x < -100.0)].
 
-checkentail (x > 10.0) & Term[SeqConDec(x, 0.0, x < -100.0)] |- Term[SeqConDec(x / (-2.0), 0.0, x < -100.0)].
+checkentail (x > 10.0) & Term[SeqConDec(x, -infinity, x < -100.0)] |- Term[SeqConDec(x / (2.0), -infinity, x < -100.0)].
+

@@ -653,10 +653,10 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (
+  with e -> (
     let n_estate = {estate with
       es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
-      es_term_err = Some "An exception happened!";
+      es_term_err = Some ("!!!Exception while checking termination: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
   )
@@ -779,16 +779,30 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
     | CP.SConst (Pos_infinity, _), _
     | _, CP.SConst (Pos_infinity, _) ->
         report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity"
+    | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _)
+        (* let eps_var = CP.fresh_new_spec_var Float in                                                              *)
+        (* let epsilon = CP.mkVar eps_var no_pos in                                                                  *)
+        (* let sv_src = CP.afv element_src in                                                                        *)
+        (* let eps_cons = CP.mkPure (CP.mkGt element_src epsilon no_pos) in                                          *)
+        (* let plm_src = CP.mkNot_s (CP.mkExists [eps_var] (CP.mkForall sv_src eps_cons None no_pos) None no_pos) in *)
+        (* let sv_dst = CP.afv element_dst in                                                                        *)
+        (* let eps_cons = CP.mkPure (CP.mkGt element_dst epsilon no_pos) in                                          *)
+        (* let plm_dst = CP.mkNot_s (CP.mkExists [eps_var] (CP.mkForall sv_dst eps_cons None no_pos) None no_pos) in *)
+        (* let plm_entail_res, _, _ = TP.imply plm_src plm_dst "" false None in                                      *)
+        (* let _ = print_endline ("\n== plm_src = " ^ (Cprinter.string_of_pure_formula plm_src)) in                  *)
+        (* let _ = print_endline ("== plm_dst = " ^ (Cprinter.string_of_pure_formula plm_dst)) in                    *)
+        (* let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in                       *)
+        (* plm_entail_res                                                                                            *)
     | CP.SConst (Neg_infinity, _), _
     | _, CP.SConst (Neg_infinity, _) ->
         (* TRUNG TODO: consider the case when Neg_infinity appears in one or both two side of entailment *)
         true
     | _, _ ->
-        let plm_left = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
-        let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-        let plm_entail_res, _, _ = TP.imply plm_left plm_right "" false None in
-        let _ = print_endline ("\n== plm_left = " ^ (Cprinter.string_of_pure_formula plm_left)) in
-        let _ = print_endline ("== plm_right = " ^ (Cprinter.string_of_pure_formula plm_right)) in
+        let plm_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
+        let plm_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
+        let plm_entail_res, _, _ = TP.imply plm_src plm_dst "" false None in
+        let _ = print_endline ("\n== plm_src = " ^ (Cprinter.string_of_pure_formula plm_src)) in
+        let _ = print_endline ("== plm_dst = " ^ (Cprinter.string_of_pure_formula plm_dst)) in
         let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in
         plm_entail_res
   ) in
@@ -1306,10 +1320,10 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         } in
         (n_estate, lhs_p, rhs_p, None)
   )
-  with _ -> (
+  with e -> (
     let n_estate = {estate with
       es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
-      es_term_err = Some "An exception happened!";
+      es_term_err = Some ("!!!Exception while checking termination: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
   )
@@ -1390,10 +1404,10 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         } in
         (n_estate, lhs_p, rhs_p, None)
   )
-  with _ -> (
+  with e -> (
     let n_estate = {estate with
       es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
-      es_term_err = Some "An exception happened!";
+      es_term_err = Some ("!!!Exception while checking termination: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
   )
@@ -1421,10 +1435,10 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | _ -> raise TermVar_Not_found
   ) 
-  with _ -> (
+  with e -> (
     let n_estate = {estate with
       es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
-      es_term_err = Some "An exception happened!";
+      es_term_err = Some ("!!!Exception while checking termination: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
   )
