@@ -565,7 +565,7 @@ let rec is_array_exp e = match e with
         | Some true -> Some true
         | _ -> is_array_exp e2
       )
-    | CP.Sqrt (e,_) -> is_array_exp e
+    | CP.IAbs (e,_) | CP.FAbs (e,_) | CP.Sqrt (e,_) -> is_array_exp e
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (
@@ -576,7 +576,7 @@ let rec is_array_exp e = match e with
         )
     | CP.ArrayAt (_,_,_) -> Some true
     | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ 
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.SConst _
     | CP.Var _ | CP.Null _ -> Some false
 
   (* Method checking whether a formula contains list constraints *)
@@ -600,7 +600,7 @@ let rec is_list_exp e = match e with
         | Some true -> Some true
         | _ -> is_list_exp e2
       )
-    | CP.Sqrt (e, _) -> is_list_exp e
+    | CP.IAbs (e, _) | CP.FAbs (e, _) | CP.Sqrt (e, _) -> is_list_exp e
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (
@@ -609,7 +609,7 @@ let rec is_list_exp e = match e with
                           | _ -> is_list_exp exp)
                        (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-    | CP.Null _ | CP.AConst _
+    | CP.Null _ | CP.AConst _ | CP.SConst _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
 
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with

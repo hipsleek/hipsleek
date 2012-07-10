@@ -168,7 +168,7 @@ let send_and_receive (f : string) : string =
 
 (* send formula to mathematica and receive result *)
 let send_and_receive (f : string) : string =
-  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
+  Debug.ho_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in
@@ -252,6 +252,11 @@ let mathematica_of_float (f: float) =
   let res = Printf.sprintf "%.30f" f in
   res
 
+let mathematica_of_symbol (sym: symbol) =
+  match sym with
+  | Pos_infinity -> "+Infinity"
+  | Neg_infinity -> "-Infinity"
+
 let mathematica_of_spec_var (v: CP.spec_var) = 
   match v with
   | CP.SpecVar (_, sv, _) ->
@@ -282,6 +287,7 @@ let rec mathematica_of_exp e0 : string=
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> mathematica_of_float f
+  | CP.SConst (s, _) -> mathematica_of_symbol s
   | CP.Add (e1, e2, _) ->
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
@@ -298,6 +304,9 @@ let rec mathematica_of_exp e0 : string=
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
       "(" ^ se1 ^ " / " ^ se2 ^ ")"
+  | CP.IAbs(e, _) | CP.FAbs (e, _) ->
+      let se = mathematica_of_exp e in
+      "Abs[" ^ se ^ "]"
   | CP.Sqrt(e, _) ->
       let se = mathematica_of_exp e in
       "Sqrt[" ^ se ^ "]"
@@ -307,7 +316,20 @@ let rec mathematica_of_exp e0 : string=
       "(" ^ se1 ^ " ^ " ^ se2 ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("mathematica.mathematica_of_exp: min/max can't appear here")
-  | _ -> failwith ("mathematica: bags/list is not supported")
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _  -> failwith ("mathematica.mathematica_of_exp: cannot handle bag operator")
+  (* list expressions *)
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("mathematica.mathematica_of_exp: cannot handle list operator")
+  | CP.ArrayAt _ -> failwith ("mathematica.mathematica_of_exp: cannot handle array operator")
+  | CP.Func _ -> failwith ("mathematica.mathematica_of_exp: cannot handle func operator")
 
 let rec mathematica_of_b_formula b : string =
   let (pf,_) = b in
@@ -358,7 +380,20 @@ let rec mathematica_of_b_formula b : string =
       let se3 = mathematica_of_exp e3 in
       ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " <= " ^ se3 ^ ") || "
         ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " >= " ^ se3 ^ "))")
-  | _ -> failwith ("mathematica: other b_formulae is not supported")
+  | CP.PrimTermVar _
+  | CP.LexVar _
+  | CP.SeqVar _
+  | CP.BagIn _
+  | CP.BagNotIn _
+  | CP.BagSub _
+  | CP.BagMin _
+  | CP.BagMax _
+  | CP.VarPerm _
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _
+  | CP.RelForm _ -> failwith ("mathematica_of_b_formula: cannot handle bag, list, rel, perm formula")
 
 let rec mathematica_of_formula pr_w pr_s f0 : string =
   let rec formula_to_string f0 = (

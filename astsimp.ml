@@ -3411,6 +3411,9 @@ and default_value (t :typ) pos : C.exp =
 	      C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
     | Float ->
 	      C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
+    | Symbol _ ->
+          failwith
+              "default_value: Symbol in variable declaration should have been rejected"
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
@@ -4396,9 +4399,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
                  | Some t -> Some (trans_pure_formula t stab) in
         let vari = match seq_info.IP.seq_variation with
                    | IP.SeqConDec -> CP.SeqConDec
-                   | IP.SeqCon -> CP.SeqCon
-                   | IP.SeqDivDec -> CP.SeqDivDec
-                   | IP.SeqDiv -> CP.SeqDiv in
+                   | IP.SeqCon -> CP.SeqCon in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_limit = lm;
@@ -4494,10 +4495,13 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
+    | IP.SConst (c, pos) -> CP.SConst (c, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+    | IP.IAbs (e, pos) -> CP.IAbs (trans_pure_exp e stab, pos)
+    | IP.FAbs (e, pos) -> CP.FAbs (trans_pure_exp e stab, pos)
     | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Sqrt (e1, pos) -> CP.Sqrt (trans_pure_exp e1 stab, pos)
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
@@ -4574,6 +4578,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | NUM, Float -> Some Float
       | Int, Float -> Some Float (*LDK: support floating point*)
       | Float, Int -> Some Float (*LDK*)
+      | Float, Symbol -> Some Float
+      | Symbol, Float -> Some Float
       | t1, t2  -> 
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
             else if sub_type t2 t1 then Some k1
@@ -4627,6 +4633,8 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
       | Float, NUM -> Some Float (* give refined type *)
       | Int , Float -> Some Float (*LDK*)
       | Float , Int -> Some Float (*LDK*)
+      | Float, Symbol -> Some Float
+      | Symbol, Float -> Some Float
       | t1, t2  -> 
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
               (* else if sub_type t2 t1 then Some k1 *)
@@ -4826,6 +4834,10 @@ and gather_type_info_exp_x a0 stab et =
       let t = I.float_type in
       let _ = must_unify_expect t et stab pos in
       t
+  | IP.SConst (_,pos) -> 
+      let t = I.sym_type in
+      let _ = must_unify_expect t et stab pos in
+      t
   | IP.Add (a1, a2, pos)
   | IP.Subtract (a1, a2, pos)
   | IP.Max (a1, a2, pos)
@@ -4840,6 +4852,8 @@ and gather_type_info_exp_x a0 stab et =
       let t1 = must_unify_expect t1 et stab pos in
       let t2 = must_unify_expect t2 t1 stab pos in
       t2
+  | IP.IAbs (a1, pos)
+  | IP.FAbs (a1, pos)
   | IP.Sqrt (a1, pos) ->
       let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
       let new_et = fresh_tvar stab in

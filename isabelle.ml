@@ -38,9 +38,9 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM | TVar _ | Named _ | Array _ |RelT |AnnT->
+  | NUM | TVar _ | Named _ | Array _ |RelT |AnnT | Symbol->
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "type var, array and named type not supported for Isabelle"}
+        Error.error_text = "type var, array, named type and symbol not supported for Isabelle"}
 ;;
 
 (* pretty printing for spec_vars *)
@@ -97,10 +97,13 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (symbol should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> failwith "[isabelle.ml]: divide is not supported."
+  | CP.IAbs _ -> failwith ("[isabelle.ml]: IAbs is not supported.")
+  | CP.FAbs _ -> failwith ("[isabelle.ml]: FAbs is not supported.")
   | CP.Sqrt _ -> failwith ("[isabelle.ml]: sqrt is not supported.")
   | CP.Pow _ -> failwith ("[isabelle.ml]: pow is not supported.")
   | CP.Max _

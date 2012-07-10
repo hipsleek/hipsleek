@@ -416,6 +416,8 @@ let bool_type = Bool
 
 let bag_type = BagT Int
 
+let sym_type = Symbol
+
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")

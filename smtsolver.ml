@@ -72,6 +72,7 @@ let rec smt_of_typ t =
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
 		| AnnT -> "Int"
+    | Symbol-> report_error no_pos "Symbol should not appear here"
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
@@ -98,36 +99,38 @@ let smt_of_typed_spec_var sv =
 
 
 let rec smt_of_exp a =
-	match a with
-	| CP.Null _ -> "0"
-	| CP.Var (sv, _) -> smt_of_spec_var sv
-	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-	| CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
-	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
-	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-	| CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	(* UNHANDLED *)
-	| CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
+  match a with
+  | CP.Null _ -> "0"
+  | CP.Var (sv, _) -> smt_of_spec_var sv
+  | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
+  | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
+  | CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (symbol should not appear here)")
+  | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+  | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+  | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  (* UNHANDLED *)
+  | CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
+  | CP.IAbs _ | CP.FAbs _ -> illegal_format ("z3.smt_of_exp: IAbs, FAbs is not supported.")
   | CP.Sqrt _ -> failwith ("z3.smt_of_exp: sqrt is not supported.")
   | CP.Pow _ -> failwith ("z3.smt_of_exp: pow is not supported.")
-	| CP.Bag ([], _) -> "0"
-	| CP.Max _
-	| CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
-	| CP.Bag _
-	| CP.BagUnion _
-	| CP.BagIntersect _
-	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
-	| CP.List _ 
-	| CP.ListCons _
-	| CP.ListHead _
-	| CP.ListTail _
-	| CP.ListLength _
-	| CP.ListAppend _
-	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
-	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
-	| CP.ArrayAt (a, idx, l) -> 
-		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+  | CP.Bag ([], _) -> "0"
+  | CP.Max _
+  | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
+  | CP.List _ 
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+  | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
+  | CP.ArrayAt (a, idx, l) -> 
+      List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -303,16 +306,17 @@ and collect_bformula_info b = match b with
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
-  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
+  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ | CP.SConst _ -> default_formula_info
   | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		combine_formula_info ef1 ef2
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      combine_formula_info ef1 ef2
   | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) ->
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		let result = combine_formula_info ef1 ef2 in
-		{ result with is_linear = false; }
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      let result = combine_formula_info ef1 ef2 in
+      { result with is_linear = false; }
+  | CP.IAbs (e, _) | CP.FAbs(e, _) -> let ef = collect_exp_info e in {ef with is_linear = true} 
   | CP.Sqrt (e, _) -> let ef = collect_exp_info e in {ef with is_linear = false} 
   | CP.Pow (e1,e2,_) ->
       let ef1 = collect_exp_info e1 in

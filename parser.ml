@@ -1078,28 +1078,6 @@ cexp_w :
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seq_div_dec ->
-        let (m, lm, tc) = param in
-        let seq = P.SeqVar { P.seq_ann = t_ann;
-                             P.seq_element = m;
-                             P.seq_limit = lm;
-                             P.seq_bounds = [];
-                             P.seq_termcons = Some tc;
-                             P.seq_variation = P.SeqDivDec;
-                             P.seq_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((seq, None), None)) in
-        set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seq_div ->
-        let (m, lm, tc) = param in
-        let seq = P.SeqVar { P.seq_ann = t_ann;
-                             P.seq_element = m;
-                             P.seq_limit = lm;
-                             P.seq_bounds = [];
-                             P.seq_termcons = Some tc;
-                             P.seq_variation = P.SeqDiv;
-                             P.seq_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((seq, None), None)) in
-        set_slicing_utils_pure_double f false
     | t_ann=ann_term; ls1=measures_prim ->
         let prim = P.PrimTermVar { P.prim_ann = t_ann;
                                    P.prim_loc = get_pos_camlp4 _loc 1} in
@@ -1151,11 +1129,21 @@ cexp_w :
     | t1=SELF ; `DIV ; t2=SELF ->
         apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
     ]
+  | "plus"
+    [ `PLUS; c=SELF -> (
+        match c with
+        | Pure_c (P.SConst (Pos_infinity, l)) -> Pure_c (P.SConst (Pos_infinity, l))
+        | Pure_c (P.SConst (Neg_infinity, l)) -> Pure_c (P.SConst (Neg_infinity, l))
+        | _ -> apply_cexp_form1 (fun c-> P.mkAdd (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
+      )
+    ]
   | "minus"
     [ `MINUS; c=SELF -> (
         match c with
         | Pure_c (P.IConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
         | Pure_c (P.FConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.FConst (0.0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
+        | Pure_c (P.SConst (Pos_infinity, l)) -> Pure_c (P.SConst (Neg_infinity, l))
+        | Pure_c (P.SConst (Neg_infinity, l)) -> Pure_c (P.SConst (Pos_infinity, l))
         | _ -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
       )
     ]
@@ -1194,6 +1182,9 @@ cexp_w :
     | `FLOAT_LIT (f,_) ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
+    | `INFINITY ->
+        (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
+        Pure_c (P.SConst (Pos_infinity, get_pos_camlp4 _loc 1))
     | `OPAREN; t=SELF; `CPAREN -> t
     (* An Hoa : extend with multi-dimensional array access *)
     | i=cid; `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE ->
@@ -1255,12 +1246,6 @@ mesaures_seqcondec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp
 
 (* SeqCon(measurement, limit, lower-bound, upper-bound or termination condition) *)
 measures_seqcon: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; b_tc=LIST1 cexp_w SEP `COMMA; `CPAREN; `CSQUARE -> (m, lm, b_tc)]];
-
-(* SeqDivDec(measurement, limit, termination condition) *)
-measures_seq_div_dec: [[`OSQUARE; `SEQDIVDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
-
-(* SeqDiv(measurement, limit, termination condition) *)
-measures_seq_div: [[`OSQUARE; `SEQDIV; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; tc = pure_constr; `CPAREN; `CSQUARE -> (m, lm, tc)]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

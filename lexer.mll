@@ -153,6 +153,7 @@ module Make (Token : SleekTokenS)
    ("if", IF);
 	 ("in", IN_T);
    ("infer", INFER);
+   ("infinity", INFINITY);
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
@@ -195,8 +196,6 @@ module Make (Token : SleekTokenS)
    ("MayLoop", MAYLOOP);
    ("SeqConDec", SEQCONDEC);
    ("SeqCon", SEQCON);
-   ("SeDivDec", SEQDIVDEC);
-   ("SeqDiv", SEQDIV);
    ("sqrt", SQRT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);

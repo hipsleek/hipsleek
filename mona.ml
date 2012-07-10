@@ -30,6 +30,7 @@ let rec mona_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
+  | Symbol          -> "symbol"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
   | Void          -> "void" 	(* same as for float *)

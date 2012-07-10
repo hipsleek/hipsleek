@@ -58,10 +58,13 @@ and cvc3_of_exp a = match a with
   | CP.Var (sv, _) -> cvc3_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (symbol should not appear here)")
   | CP.Add (a1, a2, _) ->  (cvc3_of_exp a1) ^ " + " ^ (cvc3_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvc3_of_exp a1) ^ " - " ^ (cvc3_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvc3_of_exp a1) ^ " * " ^ (cvc3_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvc3.ml]: divide is not supported.")
+  | CP.IAbs _ -> failwith ("[cvc3.ml]: IAbs is not supported.")
+  | CP.FAbs _ -> failwith ("[cvc3.ml]: FAbs is not supported.")
   | CP.Sqrt _ -> failwith ("[cvc3.ml]: sqrt is not supported.")
   | CP.Pow _ -> failwith ("[cvc3.ml]: pow is not supported.")
   | CP.Max _ 

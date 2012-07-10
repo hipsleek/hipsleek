@@ -22,6 +22,7 @@ type sleek_token =
   | HTRUE
 	| IF 
   | IN_T | INT | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
+  | INFINITY
 	| LEMMA | LET
   | MAX | MIN 
   | NEW | NOTIN | NULL
@@ -30,7 +31,7 @@ type sleek_token =
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
-  | TERM | LOOP | MAYLOOP | SEQCONDEC | SEQCON | SEQDIVDEC | SEQDIV
+  | TERM | LOOP | MAYLOOP | SEQCONDEC | SEQCON
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -73,6 +74,7 @@ module Token = struct
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
+    | INFINITY -> "infinity"
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
@@ -101,9 +103,6 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | SEQCONDEC -> "SeqConDec"
     | SEQCON -> "SeqCon"
-    | SEQDIVDEC -> "SeqDivDec"
-    | SEQDIV -> "SeqDiv"
-
 
   let print ppf x = pp_print_string ppf (to_string x)
 

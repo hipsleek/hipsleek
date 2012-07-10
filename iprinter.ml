@@ -106,6 +106,7 @@ let rec string_of_formula_exp = function
   | P.IConst (i, l) -> string_of_int i
   | P.AConst (i, l) -> string_of_heap_ann i
   | P.FConst (f, _) -> string_of_float f
+  | P.SConst (s, _) -> string_of_symbol s
   | P.Add (e1, e2, l) -> (
       let s1 = (
         match e1 with 
@@ -130,6 +131,10 @@ let rec string_of_formula_exp = function
       "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
       "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
+  | P.IAbs (e1, _) ->
+      "iabs(" ^ (string_of_formula_exp e1) ^ ")"
+  | P.FAbs (e1, _) ->
+      "fabs(" ^ (string_of_formula_exp e1) ^ ")"
   | P.Pow (e1, e2, _) ->
       "pow(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Sqrt (e1, _) ->
@@ -181,8 +186,6 @@ let string_of_sequence_variation (v: P.sequence_variation_type) : string =
   match v with
   | P.SeqConDec -> "SeqConDec"
   | P.SeqCon -> "SeqCon"
-  | P.SeqDivDec -> "SeqDivDec"
-  | P.SeqDiv -> "SeqDiv"
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 

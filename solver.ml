@@ -6098,24 +6098,24 @@ and inst_before_fold_x estate rhs_p case_vars =
   
   let rec filter b = match (fst b) with 
     | CP.Eq (lhs_e, rhs_e, _) ->
-          let lfv = CP.afv lhs_e in
-		  let rfv = CP.afv rhs_e in
-		  let l_inter = Gen.BList.intersect_eq CP.eq_spec_var lfv of_interest in
-		  let r_inter = Gen.BList.intersect_eq CP.eq_spec_var rfv of_interest in
-		  let v_l = l_inter@r_inter in
-		  let cond = 				
-			let rec prop_e e = match e with 
-			  | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ -> true
-        | CP.Sqrt (e,_) -> prop_e e
-			  | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) | CP.Pow (e1,e2,_)-> prop_e e1 && prop_e e2
-			  | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
-			  | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
-			  | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
-			((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
-				((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
-				    (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in
-		  if cond then (false,[(b,List.hd v_l)]) (*the bool states if the constraint needs to be moved or not from the RHS*)
-          else (true,[])
+        let lfv = CP.afv lhs_e in
+        let rfv = CP.afv rhs_e in
+        let l_inter = Gen.BList.intersect_eq CP.eq_spec_var lfv of_interest in
+        let r_inter = Gen.BList.intersect_eq CP.eq_spec_var rfv of_interest in
+        let v_l = l_inter@r_inter in
+        let cond =
+        let rec prop_e e = match e with 
+          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.SConst _ -> true
+          | CP.IAbs (e,_) | CP.FAbs (e,_) | CP.Sqrt (e,_) -> prop_e e
+          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) | CP.Pow (e1,e2,_)-> prop_e e1 && prop_e e2
+          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
+          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
+          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
+        ((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
+        ((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
+            (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in
+        if cond then (false,[(b,List.hd v_l)]) (*the bool states if the constraint needs to be moved or not from the RHS*)
+            else (true,[])
     | _ -> (true,[])in
   let new_c,to_a = MCP.constraint_collector filter rhs_p in 
   let to_a_e,to_a_i = List.partition (fun (_,v)-> List.exists (CP.eq_spec_var v) estate.es_evars ) to_a in

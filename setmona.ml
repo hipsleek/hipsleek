@@ -240,6 +240,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
+  | SConst _ -> failwith ("[setmona.ml]: ERROR in constraints (symbol should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Add (e1, e2, _)
   | Subtract (e1, e2, _)
@@ -258,6 +259,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
                in rr
       in r
   | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."
+  | IAbs _ | FAbs _ -> failwith ("[setmona.ml]: IAbs, FAbs are not supported.")
   | Sqrt _ -> failwith ("[setmona.ml]: sqrt is not supported.")
   | Pow _ -> failwith ("[setmona.ml]: pow is not supported.")
   | Bag (es, _) ->

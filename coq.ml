@@ -26,9 +26,9 @@ let rec coq_of_typ = function
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
-  | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
+  | UNK | NUM | TVar _ | Named _ | Array _ |RelT | Symbol->
         Error.report_error {Err.error_loc = no_pos; 
-        Err.error_text = "type var, array and named type not supported for Coq"}
+        Err.error_text = "type var, array, named type and symbol not supported for Coq"}
 ;;
 
 (* pretty printing for spec_vars *)
@@ -74,13 +74,13 @@ and coq_of_exp e0 =
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_heap_ann i
-  | CP.FConst (f, _) -> 
-			illegal_format "coq_of_exp : float cannot be handled"
-        (* failwith ("coq.coq_of_exp: float can never appear here") *)
+  | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
+  | CP.SConst (s, _) -> illegal_format "coq_of_exp : symbol cannot be handled"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
+  | CP.IAbs _ | CP.FAbs _ -> illegal_format "coq_of_exp : IAbs, FAbs cannot be handled"
   | CP.Sqrt _ | CP.Pow _ -> illegal_format "coq_of_exp : Sqrt, Pow cannot be handled"
   | CP.Max _
   | CP.Min _ -> 

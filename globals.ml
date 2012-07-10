@@ -77,6 +77,10 @@ and term_fail =
 (*   | BagT of prim_type *)
 (*   | List *)
 
+type symbol =                (* symbolic value *)
+  | Neg_infinity
+  | Pos_infinity
+
 (* TODO : move typ here in future *)
 type typ =
   | UNK 
@@ -85,6 +89,7 @@ type typ =
   | Bool
   | Float
   | Int
+  | Symbol
   | NUM
   | Void
   | List of typ
@@ -168,6 +173,10 @@ let string_of_pos (p : Lexing.position) =
 	(p.Lexing.pos_cnum-p.Lexing.pos_bol)
 ;;
 
+let string_of_symbol (sym : symbol) : string =
+  match sym with
+  | Pos_infinity -> "+infinity"
+  | Neg_infinity -> "-infinity"
 (* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
 (* ;; *)
 
@@ -248,6 +257,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | Symbol          -> "symbol"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -269,6 +279,7 @@ let rec string_of_typ_alpha = function
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | Symbol          -> "symbol"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"

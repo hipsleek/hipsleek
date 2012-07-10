@@ -93,10 +93,13 @@ and cvcl_of_exp a = match a with
   | CP.Var (sv, _) -> cvcl_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst _ -> failwith ("[cvclite.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[cvclite.ml]: ERROR in constraints (symbol should not appear here)")
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvcl_of_exp a1) ^ " * " ^ (cvcl_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")
+  | CP.IAbs _ -> failwith ("[cvclite.ml]: IAbs is not supported.")
+  | CP.FAbs _ -> failwith ("[cvclite.ml]: FAbs is not supported.")
   | CP.Sqrt _ -> failwith ("[cvclite.ml]: sqrt is not supported.")
   | CP.Pow _ -> failwith ("[cvclite.ml]: pow is not supported.")
   | CP.Max _ 
