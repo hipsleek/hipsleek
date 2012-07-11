@@ -168,7 +168,7 @@ let send_and_receive (f : string) : string =
 
 (* send formula to mathematica and receive result *)
 let send_and_receive (f : string) : string =
-  Debug.ho_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in

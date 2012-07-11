@@ -778,29 +778,38 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
   (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
   let update_function = collect_update_function init_constraint in
   let possible_limit_check = (
+    (* We consider the possible limit of source and destination is *)
+    (* either both of them are real value                          *)
+    (*     or both of them are negative infinity                   *)
+    (* The other cases don't belong to the decreasing sequence     *)
     match limit_src, limit_dst with
     | CP.SConst (Pos_infinity, _), _
     | _, CP.SConst (Pos_infinity, _) ->
         let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
         raise Exception_SeqVar_Invalid
-    | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _)
-        (* let eps_var = CP.fresh_new_spec_var Float in                                                              *)
-        (* let epsilon = CP.mkVar eps_var no_pos in                                                                  *)
-        (* let sv_src = CP.afv element_src in                                                                        *)
-        (* let eps_cons = CP.mkPure (CP.mkGt element_src epsilon no_pos) in                                          *)
-        (* let plm_src = CP.mkNot_s (CP.mkExists [eps_var] (CP.mkForall sv_src eps_cons None no_pos) None no_pos) in *)
-        (* let sv_dst = CP.afv element_dst in                                                                        *)
-        (* let eps_cons = CP.mkPure (CP.mkGt element_dst epsilon no_pos) in                                          *)
-        (* let plm_dst = CP.mkNot_s (CP.mkExists [eps_var] (CP.mkForall sv_dst eps_cons None no_pos) None no_pos) in *)
-        (* let plm_entail_res, _, _ = TP.imply plm_src plm_dst "" false None in                                      *)
-        (* let _ = print_endline ("\n== plm_src = " ^ (Cprinter.string_of_pure_formula plm_src)) in                  *)
-        (* let _ = print_endline ("== plm_dst = " ^ (Cprinter.string_of_pure_formula plm_dst)) in                    *)
-        (* let _ = print_endline ("== plm_entail_res = " ^ (string_of_bool plm_entail_res)) in                       *)
-        (* plm_entail_res                                                                                            *)
+    | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+        (* when Neg_infinity appears in both two side of entailment    *)
+        (* check that the element_src and element_dst is unbounded*)
+        let bvar_src = CP.fresh_new_spec_var Float in
+        let bexp_src = CP.mkVar bvar_src no_pos in
+        let sv_src = CP.afv element_src in
+        let f = CP.mkPure (CP.mkGt element_src bexp_src no_pos) in
+        let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src f None no_pos) None no_pos) in
+        let unbound_src = CP.mkAnd update_function bc no_pos in
+        let bvar_dst = CP.fresh_new_spec_var Float in
+        let bexp_dst = CP.mkVar bvar_dst no_pos in
+        let sv_dst = CP.afv element_dst in
+        let f = CP.mkPure (CP.mkGt element_dst bexp_dst no_pos) in
+        let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst f None no_pos) None no_pos) in
+        let unbound_entail_res, _, _ = TP.imply unbound_src unbound_dst "" false None in
+        let _ = print_endline ("\n== unbound_src = " ^ (Cprinter.string_of_pure_formula unbound_src)) in
+        let _ = print_endline ("== unbound_dst = " ^ (Cprinter.string_of_pure_formula unbound_dst)) in
+        let _ = print_endline ("== unbound_entail_res = " ^ (string_of_bool unbound_entail_res)) in
+        unbound_entail_res
     | CP.SConst (Neg_infinity, _), _
     | _, CP.SConst (Neg_infinity, _) ->
-        (* TRUNG TODO: consider the case when Neg_infinity appears in one or both two side of entailment *)
-        true
+        let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
+        raise Exception_SeqVar_Invalid
     | _, _ ->
         let plm_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
         let plm_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
@@ -815,46 +824,17 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
   else (
     let distance_constraint = ( 
       match limit_src, limit_dst with
-      | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
-          (* Constraint: !Exists (b: init_constraint -> (element_src > b && element_dst > b)) *)
-          (*             && (element_src > elment_dst                                         *)
-          let bound_var = CP.fresh_new_spec_var Float in
-          let bound_exp = CP.mkVar bound_var no_pos in
-          let bc1 = CP.mkPure (CP.mkGt element_src bound_exp no_pos) in
-          let bc2 = CP.mkPure (CP.mkGt element_dst bound_exp no_pos) in
-          let bc = CP.mkImply init_constraint (CP.mkAnd bc1 bc2 no_pos) no_pos in
-          let sv = CP.afv_list [element_src; element_dst] in
-          let dc1 = CP.mkNot_s (CP.mkExists [bound_var] (CP.mkForall sv bc None no_pos) None no_pos) in
-          let dc2 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-          CP.mkAnd dc1 dc2 no_pos
       | CP.SConst (Pos_infinity, _), _
       | _, CP.SConst (Pos_infinity, _) ->
           let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
           raise Exception_SeqVar_Invalid
-      | CP.SConst (Neg_infinity, _), _ ->
-          (* Constraint: !Exists (b: init_constraint -> (element_src > b))  *)
-          (*             && (element_dst > limit_dst)                       *)
-          (*             && (element_src > element_dst)                     *)
-          let bound_var = CP.fresh_new_spec_var Float in
-          let bound_exp = CP.mkVar bound_var no_pos in
-          let bc = CP.mkImply init_constraint (CP.mkPure (CP.mkGt element_src bound_exp no_pos)) no_pos in
-          let sv = CP.afv element_src in
-          let dc1 = CP.mkNot_s (CP.mkExists [bound_var] (CP.mkForall sv bc None no_pos) None no_pos) in
-          let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-          let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-          CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
+      | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+          (* Constraint: element_src > elment_dst *)
+          CP.mkPure (CP.mkGt element_src element_dst no_pos)
+      | CP.SConst (Neg_infinity, _), _
       | _, CP.SConst (Neg_infinity, _) ->
-          (* Constraint: (element_src > limit_src)                           *)
-          (*             && !Exist (b: init_constraint -> (element_dst > b)) *)
-          (*             && (element_src > element_dst)                      *)
-          let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-          let bound_var = CP.fresh_new_spec_var Float in
-          let bound_exp = CP.mkVar bound_var no_pos in
-          let bc = CP.mkImply init_constraint (CP.mkPure (CP.mkGt element_dst bound_exp no_pos)) no_pos in
-          let sv = CP.afv element_dst in
-          let dc2 = CP.mkNot_s (CP.mkExists [bound_var] (CP.mkForall sv bc None no_pos) None no_pos) in
-          let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-          CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
+          let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
+          raise Exception_SeqVar_Invalid
       | _ ->
           (* Constraint: (element_src > limit_src)      *)
           (*             && (element_dst > limit_dst)   *)
