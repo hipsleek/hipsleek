@@ -2195,7 +2195,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.no_1 "unsat_base_nth" 
+  Debug.ho_1 "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
