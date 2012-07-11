@@ -5007,7 +5007,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             | CP.LexVar lex -> Some (CP.LexVar {lex with CP.lex_ann = Fail TermErr_May}) 
             | CP.SeqVar seq -> Some (CP.SeqVar {seq with CP.seq_ann = Fail TermErr_May})
             | CP.PrimTermVar prim -> Some (CP.PrimTermVar {prim with CP.prim_ann = Fail TermErr_May})
-            | _ -> raise Term.TermVar_Not_found in
+            | _ -> raise Term.Exception_TermVar_Not_found in
           let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
           let term_res, term_err_msg =
             ((term_pos, t_ann_trans, orig_ante, Term.MayTerm_S (Term.Quantum_Technique_Measure_Not_Decreasing t_ann_trans)),
