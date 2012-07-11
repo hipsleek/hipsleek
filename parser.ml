@@ -1049,7 +1049,7 @@ cexp_w :
     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = mesaures_seqcondec ->
+    | t_ann = ann_term; param = measures_seqcondec ->
         let (m, lm, lbtc) = param in
         let bounds, termcons = match lbtc with
                                | Pure_f f -> [], Some f
@@ -1083,7 +1083,7 @@ cexp_w :
                                    P.prim_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((prim, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann=ann_term; ls1=measures_lex_sqr; ls2=opt_measures_lex ->
+    | t_ann=ann_term; ls1=opt_measures_lex_sqr; ls2=opt_measures_lex ->
         let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
         set_slicing_utils_pure_double f false
     ]
@@ -1239,10 +1239,12 @@ opt_measures_lex :[[ il = OPT measures_lex -> un_option il [] ]];
 
 measures_lex :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-measures_lex_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
+opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
+
+measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 (* SeqConDec(measurement, limit, lower-bound or terminiation condition) *)
-mesaures_seqcondec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
+measures_seqcondec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
 
 (* SeqCon(measurement, limit, lower-bound, upper-bound or termination condition) *)
 measures_seqcon: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; b_tc=LIST1 cexp_w SEP `COMMA; `CPAREN; `CSQUARE -> (m, lm, b_tc)]];

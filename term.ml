@@ -261,9 +261,12 @@ let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 (* To find a LexVar formula *)
 exception Exception_LexVar_Not_found;;
 exception Exception_SeqVar_Not_found;;
-exception Exception_SeqVar_Invalid;;
-exception Exception_PrimVar_Not_found;;
+exception Exception_PrimTermVar_Not_found;;
 exception Exception_TermVar_Not_found;;
+exception Exception_LexVar_Invalid;;
+exception Exception_SeqVar_Invalid;;
+exception Exception_PrimTermVar_Invalid;;
+exception Exception_TermVar_Invalid;;
 exception Exception_Invalid_Phase_Num;;
 
 (* let rec has_variance_struc struc_f = *)
@@ -326,7 +329,7 @@ let find_primvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.PrimTermVar _ -> pf
-  | _ -> raise Exception_PrimVar_Not_found
+  | _ -> raise Exception_PrimTermVar_Not_found
 
 let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -334,7 +337,7 @@ let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   | CP.And (f1, f2, _) ->
       (try find_primvar_formula f1
       with _ -> find_primvar_formula f2)
-  | _ -> raise Exception_PrimVar_Not_found
+  | _ -> raise Exception_PrimTermVar_Not_found
 
 let find_termvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
@@ -381,7 +384,7 @@ let find_seqvar_es (es: entail_state) : CP.p_formula =
 let find_primvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.PrimTermVar prim) -> CP.PrimTermVar prim
-  | _ -> raise Exception_PrimVar_Not_found
+  | _ -> raise Exception_PrimTermVar_Not_found
 
 let find_termvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
@@ -430,7 +433,8 @@ let strip_termvar_mix_formula_x (mf: MCP.mix_formula) =
     | CP.BForm ((CP.LexVar lex,_),_) -> CP.LexVar lex
     | CP.BForm ((CP.SeqVar seq,_),_) -> CP.SeqVar seq 
     | CP.BForm ((CP.PrimTermVar prim,_),_) -> CP.PrimTermVar prim
-    | _ -> failwith "Invalid value of f" in 
+    | _ -> let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
+           raise Exception_TermVar_Invalid in
   let termvars = List.map extract_termvar termforms in
   (termvars, CP.join_conjunctions other_p)
 
@@ -623,13 +627,18 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           add_term_res_stk term_res;
           add_term_err_stk (string_of_term_res term_res);
-          let term_measures = match t_ann_d with
+          let term_measures = (
+            match t_ann_d with
             | Loop 
-            | Fail TermErr_Must -> Some (CP.mkLexVar (Fail TermErr_Must) src_lv src_il no_pos)
+            | Fail TermErr_Must ->
+                Some (CP.mkLexVar (Fail TermErr_Must) src_lv src_il no_pos)
             | MayLoop
-            | Fail TermErr_May -> Some (CP.mkLexVar (Fail TermErr_May) src_lv src_il no_pos)
-            | Term -> failwith "unexpected Term in check_lexvar_rhs"
-          in
+            | Fail TermErr_May ->
+                Some (CP.mkLexVar (Fail TermErr_May) src_lv src_il no_pos)
+            | Term ->
+                let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
+                raise Exception_LexVar_Invalid
+          ) in
           let term_err = match estate.es_term_err with
             | None ->  Some (string_of_term_res term_res)
             | Some _ -> estate.es_term_err 
@@ -1286,13 +1295,18 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           TermErr (Invalid_Status_Trans trans)) in
         add_term_res_stk term_res;
         add_term_err_stk (string_of_term_res term_res);
-        let term_measures = match ann_dst with
+        let term_measures = (
+          match ann_dst with
           | Loop
-          | Fail TermErr_Must -> Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_Must})
+          | Fail TermErr_Must ->
+              Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_Must})
           | MayLoop
-          | Fail TermErr_May -> Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May})
-          | Term -> failwith "unexpected Term in check_seqvar_rhs"
-        in
+          | Fail TermErr_May ->
+              Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May})
+          | Term ->
+              let _ = report_error no_pos "[term.ml] unexpected Term in check_seqvar_rhs" in
+              raise Exception_SeqVar_Invalid
+        ) in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
           | Some _ -> estate.es_term_err
@@ -1338,13 +1352,13 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let primvar_dst = find_primvar_formula conseq in
     let prim_dst = match primvar_dst with
                   | CP.PrimTermVar prim -> prim
-                  | _ -> raise Exception_PrimVar_Not_found in
+                  | _ -> raise Exception_PrimTermVar_Not_found in
     let ann_dst = prim_dst.CP.prim_ann in
     let pos_dst = prim_dst.CP.prim_loc in
     let primvar_src = find_primvar_es estate in
     let prim_src = match primvar_src with
                   | CP.PrimTermVar prim -> prim
-                  | _ -> raise Exception_PrimVar_Not_found in
+                  | _ -> raise Exception_PrimTermVar_Not_found in
     let ann_src = prim_src.CP.prim_ann in
     let trans = (primvar_src, primvar_dst) in
     let trans_opt = Some trans in
@@ -1370,13 +1384,18 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           TermErr (Invalid_Status_Trans trans)) in
         add_term_res_stk term_res;
         add_term_err_stk (string_of_term_res term_res);
-        let term_measures = match ann_dst with
+        let term_measures = (
+          match ann_dst with
           | Loop
-          | Fail TermErr_Must -> Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_Must})
+          | Fail TermErr_Must ->
+              Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_Must})
           | MayLoop
-          | Fail TermErr_May -> Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_May})
-          | Term -> failwith "unexpected Term in check_primvar_rhs"
-        in
+          | Fail TermErr_May ->
+              Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_May})
+          | Term ->
+              let _ = report_error no_pos "[term.ml] unexpected Term in check_primvar_rhs" in
+              raise Exception_PrimTermVar_Invalid
+        ) in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
           | Some _ -> estate.es_term_err

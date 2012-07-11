@@ -3381,12 +3381,12 @@ and get_node (sv : CP.spec_var) (f : CF.h_formula) : CF.h_formula =
     | DataNode({h_formula_data_node = sv1; h_formula_data_name = name}) ->
 	      if (CP.eq_spec_var sv sv1)
 	      then f
-	      else HFalse
+	      else HEmp
     | ViewNode({h_formula_view_node = sv1; h_formula_view_name = name}) ->
 	      if (CP.eq_spec_var sv sv1)
 	      then f
-	      else HFalse
-    | _ -> HFalse
+	      else HEmp
+    | _ -> HEmp
 
 and check_one_target prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
       : bool =
