@@ -140,7 +140,6 @@ let restart reason =
  *)
 let send_and_receive (f : string) : string =
   if not !is_mathematica_running then (
-    let _ = print_endline ("== start 2") in start ()
   );
   if !is_mathematica_running then (
     try
@@ -149,7 +148,6 @@ let send_and_receive (f : string) : string =
         read_output !process.inchannel
       ) in
       let fail_with_timeout () = (
-         let _ = print_endline ("== restart 1") in 
          restart "Timeout!";
         ""
       ) in
@@ -158,11 +156,9 @@ let send_and_receive (f : string) : string =
     with
     | ex ->
         print_endline (Printexc.to_string ex);
-        let _ = print_endline ("== restart 2") in
         (restart "mathematica crashed or something really bad happenned!"; "1")
   )
   else (
-    let _ = print_endline ("== restart 3") in
     (restart "mathematica has not started!!"; "2")
   )
 

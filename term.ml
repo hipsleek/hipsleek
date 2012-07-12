@@ -861,15 +861,15 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
     distance_constraint_res
   )
 
-let check_decreasing_seqvar_limit_and_lower_bound (limit: CP.exp) (bounds: CP.exp list) : bool =
+let check_decreasing_seqvar_limit_and_lower_bound (init_constraint: CP.formula) (limit: CP.exp) (bounds: CP.exp list) : bool =
   let lowerbound = match bounds with
                    | [lb] -> lb
                    | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound" in
                           raise Exception_SeqVar_Invalid in
   let bound_constraint = CP.mkPure (CP.mkLt limit lowerbound no_pos) in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) bound_constraint "" false None in
-  (* let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
+  let entail_res, _, _ = TP.imply init_constraint bound_constraint "" false None in
+  let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in
+  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
   entail_res 
 
 let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
@@ -906,9 +906,9 @@ let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formu
         let term_formula = CP.mkForall vars all_constraint None no_pos in
         CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos
   ) in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
-  (* let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
-  (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
+  let entail_res, _, _ = TP.imply init_constraint term_constraint "" false None in
+  let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in
+  let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in
   entail_res
 
 let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
@@ -951,7 +951,7 @@ let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tran
       else (
         (* check bound *)
         if (List.length bounds_src > 0) then (
-          let limit_res = check_decreasing_seqvar_limit_and_lower_bound lm_src bounds_src in
+          let limit_res = check_decreasing_seqvar_limit_and_lower_bound init_constraint lm_src bounds_src in
           if not limit_res then
             Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
             (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Bound trans)),
@@ -1085,7 +1085,7 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
     distance_constraint_res
   )
 
-let check_general_seqvar_limit_and_bounds (limit: CP.exp) (bounds: CP.exp list) : bool =
+let check_general_seqvar_limit_and_bounds (init_constraint: CP.formula) (limit: CP.exp) (bounds: CP.exp list) : bool =
   let lowerbound, upperbound = match bounds with
                                | [lb; ub] -> lb, ub
                                | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound & upper bound" in
@@ -1093,7 +1093,7 @@ let check_general_seqvar_limit_and_bounds (limit: CP.exp) (bounds: CP.exp list) 
   let lb_constraint = CP.mkPure (CP.mkLt limit lowerbound no_pos) in
   let ub_constraint = CP.mkPure (CP.mkGt limit upperbound no_pos) in
   let bound_constraint = CP.mkAnd lb_constraint ub_constraint no_pos in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) bound_constraint "" false None in
+  let entail_res, _, _ = TP.imply init_constraint bound_constraint "" false None in
   (* let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in *)
   (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res 
@@ -1114,7 +1114,7 @@ let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
   let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
-  let entail_res, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
+  let entail_res, _, _ = TP.imply init_constraint term_constraint "" false None in
   (* let _ = print_endline ("\n== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) in *)
   (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
   entail_res
@@ -1159,7 +1159,7 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
       else (
                 (* check bound *)
         if (List.length bounds_src > 0) then (
-          let limit_res = check_general_seqvar_limit_and_bounds lm_src bounds_src in
+          let limit_res = check_general_seqvar_limit_and_bounds init_constraint lm_src bounds_src in
           if not limit_res then
             Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
             (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Bound trans)),

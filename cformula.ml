@@ -957,7 +957,6 @@ and mkTrue_nf pos = Base (mkTrue_b_nf pos)
 and mkFalse_nf pos = mkFalse (mkTrueFlow ()) pos
 
 and mkFalse (flowt: flow_formula) pos =
-  let _ = print_endline ("== mkFalse ") in 
   Base ({
     formula_base_heap = HFalse; 
     formula_base_pure = MCP.mkMFalse pos; 
@@ -969,7 +968,6 @@ and mkFalse (flowt: flow_formula) pos =
   })
   
 and mkEFalse flowt pos =
-  let _ = print_endline ("== mkEFalse ") in 
   EBase ({
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
@@ -3877,12 +3875,7 @@ let must_consistent_list_failesc_context (s:string) l : unit =
 
 let isAnyFalseCtx (ctx:context) : bool =
   match ctx with
-  | Ctx es -> let r = isAnyConstFalse es.es_formula in
-              let _ =  if r then ( 
-                  print_endline ("== es_formula = " ^ (!print_formula es.es_formula));
-                  print_endline ("== false ctx = " ^ (!print_context ctx));
-              ) in
-              r 
+  | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false
 
 (* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
@@ -4265,7 +4258,6 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
-  let _ = print_endline ("== false_es_with_flow_and_orig_ante ") in 
   let new_f = mkFalse flowt pos in
     {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
@@ -4316,7 +4308,6 @@ let or_context_list cl10 cl20 =
   Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
   
 let mkFailContext msg estate conseq pid pos = 
-  let _ = print_endline ("== mkFailContext 1") in 
   {
     fc_prior_steps = estate.es_prior_steps ;
     fc_message = msg ;
@@ -4327,12 +4318,10 @@ let mkFailContext msg estate conseq pid pos =
   }
 
 let mkFailCtx_in (ft:fail_type) =
-  let _ = print_endline ("== mkFailCtx_in") in
   FailCtx ft
 
 (*simple concurrency*)
 let mkFailCtx_simple msg estate conseq pos = 
-  let _ = print_endline ("== mkFailCtx_simple") in
   let fail_ctx = 
     {
       fc_message = msg;
@@ -4347,7 +4336,6 @@ let mkFailCtx_simple msg estate conseq pos =
   mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex))
 
 let mkFailCtx_vperm msg rhs_b estate conseq pos =
-  let _ = print_endline ("== mkFailCtx_vperm") in
   let s = "variable permission mismatch "^msg in
   let new_estate = 
     {estate  with es_formula = substitute_flow_into_f !top_flow_int estate.es_formula} in
