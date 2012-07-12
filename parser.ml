@@ -2059,13 +2059,17 @@ post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUn
 unary_expression: 
  [[ t=unary_expression_not_plusminus -> t
   | `PLUS; t=SELF ->
-		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }in
-		  mkBinary OpPlus zero t (get_pos_camlp4 _loc 1)
+      let zero = IntLit { exp_int_lit_val = 0;
+                          exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
+      mkBinary OpPlus zero t (get_pos_camlp4 _loc 1)
   | `MINUS; t=SELF ->
-		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
-		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
+      let zero = IntLit { exp_int_lit_val = 0;
+                          exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
+      mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
+  | `SQRT; t=SELF ->
+      let zero = IntLit { exp_int_lit_val = 0;
+                          exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
+      mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
 
