@@ -100,12 +100,12 @@ bool eq___(bool a, bool b)
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
-/*
+
 bool eq___(float a, float b) 
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
-*/
+
 bool neq___(int a, int b) 
   case {
     a = b -> ensures !res;

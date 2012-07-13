@@ -2084,12 +2084,13 @@ postfix_expression:
   | t=post_decrement_expression -> t]];
 
 cast_expression:
- [[ `OPAREN; e=expression; `CPAREN; ue=unary_expression_not_plusminus ->
-	  (match e with
-		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
-                      exp_cast_body = ue;
-                      exp_cast_pos = get_pos_camlp4 _loc 1 }
-		| _ -> report_error (get_pos_camlp4 _loc 2) ("Expecting a type"))
+ [[ `OPAREN; e=expression; `CPAREN; ue=unary_expression_not_plusminus -> (
+      match e with
+      | Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
+                        exp_cast_body = ue;
+                        exp_cast_pos = get_pos_camlp4 _loc 1 }
+      | _ -> report_error (get_pos_camlp4 _loc 2) ("Expecting a type")
+    )
   | `OPAREN; `INT; `CPAREN; t=unary_expression ->
       Cast { exp_cast_target_type = Int;
              exp_cast_body = t;
@@ -2105,17 +2106,17 @@ cast_expression:
 
 invocation_expression:
  [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
-	  CallRecv { exp_call_recv_receiver = fst qi;
-               exp_call_recv_method = snd qi;
-               exp_call_recv_arguments = oal;
-               exp_call_recv_path_id = None;
-               exp_call_recv_pos = get_pos_camlp4 _loc 1 }
+      CallRecv { exp_call_recv_receiver = fst qi;
+                 exp_call_recv_method = snd qi;
+                 exp_call_recv_arguments = oal;
+                 exp_call_recv_path_id = None;
+                 exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
-    CallNRecv { exp_call_nrecv_method = id;
-                exp_call_nrecv_lock = l;
-                exp_call_nrecv_arguments = oal;
-                exp_call_nrecv_path_id = None;
-                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
+      CallNRecv { exp_call_nrecv_method = id;
+                  exp_call_nrecv_lock = l;
+                  exp_call_nrecv_arguments = oal;
+                  exp_call_nrecv_path_id = None;
+                  exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
   ]];
 
 opt_lock_info: [[t = OPT lock_info -> t ]];
@@ -2160,18 +2161,18 @@ primary_expression :
 parenthesized_expression : [[`OPAREN; e= expression; `CPAREN -> e]];
 
 primary_expression_no_parenthesis :
-	[[ peek_array_type; t = arrayaccess_expression -> t
-	|  t = primary_expression_no_array_no_parenthesis -> t ]];
+ [[ peek_array_type; t = arrayaccess_expression -> t
+  |  t = primary_expression_no_array_no_parenthesis -> t ]];
 
 primary_expression_no_array_no_parenthesis :
  [[ t= literal -> t
   (*| t= member_access -> t*)
   (*| t= member_name -> t*) 
   | t=SELF; `DOT; `IDENTIFIER id ->
-	Member { exp_member_base = t;
-           exp_member_fields = [id];
-           exp_member_path_id = None ;
-           exp_member_pos = get_pos_camlp4 _loc 3 }
+      Member { exp_member_base = t;
+             exp_member_fields = [id];
+             exp_member_path_id = None ;
+             exp_member_pos = get_pos_camlp4 _loc 3 }
   | t = invocation_expression -> t
   | t = new_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 

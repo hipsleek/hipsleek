@@ -1238,22 +1238,22 @@ and mkSeq e1 e2 l = match e1 with
 				   exp_seq_exp2 = e2;
 				   exp_seq_pos = l }
 
-and mkAssign op lhs rhs pos = 	Assign { exp_assign_op = op;
-										 exp_assign_lhs = lhs;
-										 exp_assign_rhs = rhs;
-										 exp_assign_path_id = (fresh_branch_point_id "") ;
-										 exp_assign_pos = pos }
+and mkAssign op lhs rhs pos = Assign { exp_assign_op = op;
+                                       exp_assign_lhs = lhs;
+                                       exp_assign_rhs = rhs;
+                                       exp_assign_path_id = (fresh_branch_point_id "") ;
+                                       exp_assign_pos = pos }
 
 and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
-										   exp_binary_oper1 = oper1;
-										   exp_binary_oper2 = oper2;
-										   exp_binary_path_id = (fresh_branch_point_id "") ;
-										   exp_binary_pos = pos }
+                                           exp_binary_oper1 = oper1;
+                                           exp_binary_oper2 = oper2;
+                                           exp_binary_path_id = (fresh_branch_point_id "") ;
+                                           exp_binary_pos = pos }
 
 and mkUnary op oper pos = Unary { exp_unary_op = op;
-								  exp_unary_exp = oper;
-								  exp_unary_path_id = (fresh_branch_point_id "") ;
-								  exp_unary_pos = pos }
+                                  exp_unary_exp = oper;
+                                  exp_unary_path_id = (fresh_branch_point_id "") ;
+                                  exp_unary_pos = pos }
 
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)

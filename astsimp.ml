@@ -2600,7 +2600,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_scall_method_name = mingled_mn;
                               C.exp_scall_lock = lock;
                               C.exp_scall_arguments = mingled_forked_mn::arg_vars;
-					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                              C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                               C.exp_scall_pos = pos;
                               C.exp_scall_path_id = pi; } in
                           let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2647,7 +2647,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_scall_method_name = mingled_mn;
                         C.exp_scall_lock = lock;
                         C.exp_scall_arguments = arg_vars;
-					    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                        C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                         C.exp_scall_pos = pos;
                         C.exp_scall_path_id = pi; } in
                     let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
