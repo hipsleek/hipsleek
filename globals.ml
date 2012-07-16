@@ -68,6 +68,8 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
+and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)

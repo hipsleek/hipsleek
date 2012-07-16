@@ -5,24 +5,19 @@
 @A - no access (3)
 */
 
-data cell {int val;}.
+//data cell {int val;}.
 
 data node {
-	cell val; 
+	int val; 
 	node next;	
 }.
 
-/*pred ll<n, v1, v2> == self = null & n = 0 
-	or self::node<a, q> * 
-    a::cell<_>@v2 * 
+pred ll<n, v1, v2> == self = null & n = 0 
+	or self::node<a@v2, q> * 
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
-*/
 
-checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x != y.
-print residue.
 
-/*
 // (1) - valid
 checkentail x::node<p@L,q@A> * x::node<p@A,q@L>  * x::node<p@A,q@A> * y::node<p@A,q@L>  * y::node<p@L,q@A> |- true.
 print residue.
@@ -31,11 +26,11 @@ print residue.
 checkentail y::node<p@A,q@L>  * y::node<p@L,q@A>  |- false.
 print residue.
 
-// (3) - valid ( false on lhs)
+// (3) - valid ( false on lhs )
 checkentail x::node<p@L,q@A>* x::node<p@L,q@A>|- false.
 print residue.
 
-// (4)
+// (4) valid ( false on lhs )
 checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
 print residue.
 
@@ -95,4 +90,31 @@ print residue.
 checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M> .
 print residue.
 
-*/
+// (19) fail
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x != y.
+print residue.
+
+// (20) valid
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@L>  |- x != y.
+print residue.
+
+// (21) valid
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x = y | x!=y.
+print residue.
+
+// (22) fail
+checkentail x::node<p@A,q@L>  * y::node<p@L,q@A> * z::node<a@A,b@A> |- x != z.
+print residue.
+
+// (23) valid
+checkentail x::node<p@A,q@L>  * y::node<p@L,q@A> * z::node<a@A,b@L> |- x != z.
+print residue.
+
+// (24) valid
+checkentail  (t::node<_,_>@L) ; z::node<a@A, b@L>@M * ((x::node<p@A,q@L>@L  & y::node<p@L,q@A>@L)) |- z != x.
+print residue.
+
+// (24) false
+checkentail  (t::node<_,_>@L) ; z::node<a@A, b@L>@M * ((x::node<p@A,q@L>@L  & y::node<p@L,q@A>@L)) |- z != y.
+print residue.
+

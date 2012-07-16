@@ -310,7 +310,7 @@ and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.m
       (fun f -> h_formula_2_mem f evars prog) f
 
 and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
-  Debug.ho_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list 
+  Debug.no_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list 
    Cprinter.string_of_mem_formula (fun f evars -> h_formula_2_mem_x f evars prog) f evars
 
 and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
@@ -2678,7 +2678,9 @@ and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (ha
   let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in
   if f1 && f2 then
     begin
+      let _ = print_string ("\n (andreeac) coseq init:" ^ (Cprinter.string_of_struc_formula conseq)) in
       let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
+      let _ = print_string ("\n (andreeac) coseq after:" ^ (Cprinter.string_of_struc_formula conseq)) in
       let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
       (CF.invert_outcome ans,prf)
     end
@@ -5638,14 +5640,15 @@ and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_foldi
   let pr x = match x with 
     | None -> "None"
     | Some _ -> "Some" in
-  Debug.no_3 "do_base_case_unfold_only" 
+  Debug.no_4 "do_base_case_unfold_only" 
       (* Cprinter.string_of_formula  *)
       (add_str "ante:" Cprinter.string_of_formula) 
+      (add_str "conseq:" Cprinter.string_of_formula) 
       (add_str "LHS node" Cprinter.string_of_h_formula) 
       (add_str "RHS node" Cprinter.string_of_h_formula) 
       pr
-      (fun _ _ _-> do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b) 
-      ante lhs_node rhs_node 
+      (fun _ _ _ _ -> do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b) 
+      ante conseq lhs_node rhs_node 
 
 and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b =
   if (is_data lhs_node) then None
@@ -5941,9 +5944,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-  (* print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
-  (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
-  (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
+  print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate));
+  print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));
+  print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
   Debug.devel_zprint (lazy ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node))) pos;
@@ -5985,11 +5988,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: l_node = " ^ (l_node_name) ^ "\n") in *)
     (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
+    (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
     let (r,ann_lhs,ann_rhs) = if not(!allow_field_ann) then subtype_ann_gen es_impl_vars l_ann r_ann else (true, None, None) in
+    (* check subtyping between lhs and rhs node fields ann, and collect info between ann vars and const vars *)
     let (rl, param_ann_lhs, param_ann_rhs) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars l_param_ann r_param_ann else (true, [], []) in
     let join_ann_constr ann ann_lst =
       let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
       List.fold_left Immutable.mkAndOpt None f_lst in
+    (* construct two formulae for lhs and, respectively rhs, combining the constraints collected from both node ann and field ann *)
     let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr ann_lhs param_ann_lhs, join_ann_constr ann_rhs param_ann_rhs) in
     (* let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in *)
     (* let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
@@ -6000,8 +6006,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in
-      (* let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in *)
-      (* let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in *)
+      let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in
+      let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in
 	  let rem_l_node,rem_r_node = match (l_node,r_node) with
 	    | (DataNode dnl, DataNode dnr) -> 
 			  let new_args = List.combine l_args r_args in
@@ -6081,7 +6087,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
-	      (* let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
+	      let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
@@ -6123,9 +6129,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   subst_one_by_one_h rho_0 r_node)
             in
 	    let imm_n = get_imm r_node in
-            let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
-	    (* let _ = print_string("cris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in *)
-	    (* let _ = print_string("cris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ^ "\n") in *)
+        let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
+	    let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in
+	    let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in
             let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)
@@ -6559,7 +6565,13 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 		  (res_rs, prf)
     | _ -> report_error no_pos ("process_unfold - expecting just unfold operation")
 
-and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
+    let pr1 = Cprinter.string_of_h_formula in
+    let pr2 = Cprinter.string_of_formula in
+    let pr3 = "???" in
+    Debug.no_5 " do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
+
+and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   if Inf.no_infer estate then
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
     CF.mk_failure_must ("Disabled Infer heap and pure 2") sl_error)), NoAlias) 
@@ -6753,7 +6765,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*REDUNDANT: because lhs_b is basically identical to estate.es_formula*)
               (* let _,_,_,_,_,es_f_a = split_components estate.es_formula in *)
               (* let new_es_formula = add_formula_and es_f_a new_es_formula in *)
+              let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in
+              let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in 
               let new_estate = {estate with es_formula = new_es_formula} in
+              let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in 
 			  (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
 			    if it succeeds and the flag from to_be_proven is true then make current context false*)
               let rhs_p = match to_be_proven with
@@ -6979,8 +6994,9 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
-  Debug.no_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
-      (fun _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq
+  let pr3 = Cprinter.string_of_formula in
+  Debug.no_6 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr3 pr3 pr2
+      (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq (Base lhs_b) (Base rhs_b) 
       
       
 (*******************************************************************************************************************************************************************************************)

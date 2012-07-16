@@ -696,7 +696,7 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
                 let e2,r2 = helper n_arg b.exp_binary_oper2  in
                 (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
           | Bind b -> 
-                let e1,r1 = helper n_arg b.exp_bind_body  in     
+                let e1,r1 = helper n_arg b.exp_bind_body  in
                 (Bind {b with exp_bind_body = e1; },r1)
           | Block b -> 
                 let e1,r1 = helper n_arg b.exp_block_body  in     

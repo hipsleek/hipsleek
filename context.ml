@@ -460,7 +460,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	          [(HTrue, f, [], Root)]
 	      else
 	  (* with field level annotations *)
-	        [(update_ann f pimm1 pimm,f,[],Root)]
+            let new_f = update_ann f pimm1 pimm in
+            let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper initial f: " ^ (Cprinter.string_of_h_formula f)) in
+            let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper new f: " ^ (Cprinter.string_of_h_formula new_f)) in
+	        [(new_f,f,[],Root)]
         else 
           []
     | ViewNode ({h_formula_view_node = p1;
@@ -505,6 +508,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
   in
   let l = helper f0 in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
+      let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in
       { match_res_lhs_node = lhs_node;
       match_res_lhs_rest = lhs_rest;
       match_res_holes = holes;
