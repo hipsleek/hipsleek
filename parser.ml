@@ -230,17 +230,22 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                       )
                                     )
                              )
-  | Pure_f f1 , Pure_c f2 ->(match f1  with 
-						    | P.BForm((pf,il),oe) -> (match pf with 
-                                               | P.Lt (a1, a2, _) 
-                                               | P.Lte (a1, a2, _) 
-                                               | P.Gt (a1, a2, _) 
-                                               | P.Gte (a1, a2, _)
-                                               | P.Eq (a1, a2, _) 
-                                               | P.Neq (a1, a2, _) -> let tmp = P.BForm(((fct a2 f2), None),None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
-                            | _ -> report_error (get_pos 1) "error should be a binary exp" )
+  | Pure_f f1 , Pure_c f2 -> (
+      match f1  with 
+      | P.BForm((pf,il),oe) -> (
+          match pf with 
+          | P.Lt (a1, a2, _) 
+          | P.Lte (a1, a2, _) 
+          | P.Gt (a1, a2, _) 
+          | P.Gte (a1, a2, _)
+          | P.Eq (a1, a2, _) 
+          | P.Neq (a1, a2, _) ->
+              let tmp = P.BForm(((fct a2 f2), None),None) in 
+              Pure_f (P.mkAnd f1 tmp (get_pos 2))
+          | _ -> report_error (get_pos 1) "error should be an equality exp" 
+        )
+      | _ -> report_error (get_pos 1) "error should be a binary exp" 
+    )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
 
