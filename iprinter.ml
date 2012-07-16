@@ -131,10 +131,8 @@ let rec string_of_formula_exp = function
       "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
       "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
-  | P.IAbs (e1, _) ->
-      "iabs(" ^ (string_of_formula_exp e1) ^ ")"
-  | P.FAbs (e1, _) ->
-      "fabs(" ^ (string_of_formula_exp e1) ^ ")"
+  | P.Abs (e1, _) ->
+      "abs(" ^ (string_of_formula_exp e1) ^ ")"
   | P.Pow (e1, e2, _) ->
       "pow(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Sqrt (e1, _) ->

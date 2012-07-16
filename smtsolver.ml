@@ -111,7 +111,7 @@ let rec smt_of_exp a =
   | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
   | CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
-  | CP.IAbs _ | CP.FAbs _ -> illegal_format ("z3.smt_of_exp: IAbs, FAbs is not supported.")
+  | CP.Abs _ -> illegal_format ("z3.smt_of_exp: Abs is not supported.")
   | CP.Sqrt _ -> failwith ("z3.smt_of_exp: sqrt is not supported.")
   | CP.Pow _ -> failwith ("z3.smt_of_exp: pow is not supported.")
   | CP.Bag ([], _) -> "0"
@@ -316,7 +316,7 @@ and collect_exp_info e = match e with
       let ef2 = collect_exp_info e2 in
       let result = combine_formula_info ef1 ef2 in
       { result with is_linear = false; }
-  | CP.IAbs (e, _) | CP.FAbs(e, _) -> let ef = collect_exp_info e in {ef with is_linear = true} 
+  | CP.Abs (e, _) -> let ef = collect_exp_info e in {ef with is_linear = true} 
   | CP.Sqrt (e, _) -> let ef = collect_exp_info e in {ef with is_linear = false} 
   | CP.Pow (e1,e2,_) ->
       let ef1 = collect_exp_info e1 in

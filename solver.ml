@@ -6106,7 +6106,7 @@ and inst_before_fold_x estate rhs_p case_vars =
         let cond =
         let rec prop_e e = match e with 
           | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.SConst _ -> true
-          | CP.IAbs (e,_) | CP.FAbs (e,_) | CP.Sqrt (e,_) -> prop_e e
+          | CP.Abs (e,_) | CP.Sqrt (e,_) -> prop_e e
           | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) | CP.Pow (e1,e2,_)-> prop_e e1 && prop_e e2
           | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
           | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 

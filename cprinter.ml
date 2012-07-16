@@ -666,7 +666,7 @@ let rec pr_formula_exp (e:P.exp) =
           f_b e1; pr_cut_after op_sub; f_b e2
     | P.Div (e1, e2, l) ->
           f_b e1; pr_cut_after op_div ; f_b e2
-    | P.IAbs (e, _) | P.FAbs (e, _) -> fmt_string "Abs("; pr_formula_exp e; fmt_string ")";
+    | P.Abs (e, _) -> fmt_string "Abs("; pr_formula_exp e; fmt_string ")";
     | P.Sqrt (e, _) -> fmt_string "sqrt("; pr_formula_exp e; fmt_string ")";
     | P.Pow (e1, e2, _) -> fmt_string "pow("; pr_formula_exp e1; fmt_string ","; pr_formula_exp e2; fmt_string ")";
     | P.BagDiff (e1, e2, l) -> 
@@ -2459,7 +2459,7 @@ let rec html_of_formula_exp e =
       (html_of_formula_exp e1) ^ html_op_sub ^ (html_of_formula_exp e2)
   | P.Div (e1, e2, l) ->
       (html_of_formula_exp e1) ^ html_op_div ^ (html_of_formula_exp e2)
-  | P.IAbs (e, _) | P.FAbs (e, _) -> "Abs(" ^ html_of_formula_exp e ^ ")"
+  | P.Abs (e, _) -> "Abs(" ^ html_of_formula_exp e ^ ")"
   | P.Sqrt (e, _) -> "sqrt(" ^ html_of_formula_exp e ^ ")";
   | P.Pow (e1, e2, _) -> "pow(" ^ html_of_formula_exp e1 ^ "," ^ html_of_formula_exp e2 ^ ")";
   | P.BagDiff (e1, e2, l) -> 

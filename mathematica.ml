@@ -300,7 +300,7 @@ let rec mathematica_of_exp e0 : string=
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
       "(" ^ se1 ^ " / " ^ se2 ^ ")"
-  | CP.IAbs(e, _) | CP.FAbs (e, _) ->
+  | CP.Abs(e, _) ->
       let se = mathematica_of_exp e in
       "Abs[" ^ se ^ "]"
   | CP.Sqrt(e, _) ->

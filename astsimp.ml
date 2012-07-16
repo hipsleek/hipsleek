@@ -3796,7 +3796,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 	      let r1,r2 = List.split b.CF.formula_case_branches in
 	      let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
 		  (** An Hoa Temporary Printing **)
-		  (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
+		  let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in
 	      let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
 	        let _ = print_string (
 	            (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^
@@ -4500,10 +4500,10 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-    | IP.IAbs (e, pos) -> CP.IAbs (trans_pure_exp e stab, pos)
-    | IP.FAbs (e, pos) -> CP.FAbs (trans_pure_exp e stab, pos)
+    | IP.Abs (e, pos) -> CP.Abs (trans_pure_exp e stab, pos)
     | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Sqrt (e1, pos) -> CP.Sqrt (trans_pure_exp e1 stab, pos)
+    | IP.Abs (e1, pos) -> CP.Abs (trans_pure_exp e1 stab, pos)
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist stab, pos)
@@ -4852,8 +4852,7 @@ and gather_type_info_exp_x a0 stab et =
       let t1 = must_unify_expect t1 et stab pos in
       let t2 = must_unify_expect t2 t1 stab pos in
       t2
-  | IP.IAbs (a1, pos)
-  | IP.FAbs (a1, pos)
+  | IP.Abs (a1, pos)
   | IP.Sqrt (a1, pos) ->
       let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
       let new_et = fresh_tvar stab in

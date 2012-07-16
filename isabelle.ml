@@ -102,8 +102,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> failwith "[isabelle.ml]: divide is not supported."
-  | CP.IAbs _ -> failwith ("[isabelle.ml]: IAbs is not supported.")
-  | CP.FAbs _ -> failwith ("[isabelle.ml]: FAbs is not supported.")
+  | CP.Abs _ -> failwith ("[isabelle.ml]: Abs is not supported.")
   | CP.Sqrt _ -> failwith ("[isabelle.ml]: sqrt is not supported.")
   | CP.Pow _ -> failwith ("[isabelle.ml]: pow is not supported.")
   | CP.Max _

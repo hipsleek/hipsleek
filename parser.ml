@@ -1202,6 +1202,8 @@ cexp_w :
         apply_cexp_form2 (fun c1 c2-> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     | `SQRT; `OPAREN; c = SELF; `CPAREN ->
         apply_cexp_form1 (fun x -> P.mkSqrt x (get_pos_camlp4 _loc 1)) c
+    | `ABS; `OPAREN; c = SELF; `CPAREN ->
+        apply_cexp_form1 (fun x -> P.mkAbs x (get_pos_camlp4 _loc 1)) c
     ]
   | "pure_base"
     [ `TRUE ->
@@ -2068,10 +2070,6 @@ unary_expression:
                           exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
       mkBinary OpPlus zero t (get_pos_camlp4 _loc 1)
   | `MINUS; t=SELF ->
-      let zero = IntLit { exp_int_lit_val = 0;
-                          exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
-      mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
-  | `SQRT; t=SELF ->
       let zero = IntLit { exp_int_lit_val = 0;
                           exp_int_lit_pos = get_pos_camlp4 _loc 1 } in
       mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)

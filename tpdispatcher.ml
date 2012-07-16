@@ -565,7 +565,7 @@ let rec is_array_exp e = match e with
         | Some true -> Some true
         | _ -> is_array_exp e2
       )
-    | CP.IAbs (e,_) | CP.FAbs (e,_) | CP.Sqrt (e,_) -> is_array_exp e
+    | CP.Abs (e,_) | CP.Sqrt (e,_) -> is_array_exp e
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (
@@ -600,7 +600,7 @@ let rec is_list_exp e = match e with
         | Some true -> Some true
         | _ -> is_list_exp e2
       )
-    | CP.IAbs (e, _) | CP.FAbs (e, _) | CP.Sqrt (e, _) -> is_list_exp e
+    | CP.Abs (e, _) | CP.Sqrt (e, _) -> is_list_exp e
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (

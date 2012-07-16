@@ -87,8 +87,7 @@ and exp =
   | Mult of (exp * exp * loc)
   | Div of (exp * exp * loc)
   | Sqrt of (exp * loc)
-  | IAbs of (exp * loc)
-  | FAbs of (exp * loc)
+  | Abs of (exp * loc)
   | Pow of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
@@ -233,8 +232,7 @@ and afv (af : exp) : (ident * primed) list =
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Pow (a1, a2, _) -> combine_avars a1 a2
-  | IAbs (a, _) -> afv a
-  | FAbs (a, _) -> afv a
+  | Abs (a, _) -> afv a
   | Sqrt (a, _) -> afv a
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
@@ -316,6 +314,8 @@ and mkMult a1 a2 pos = Mult (a1, a2, pos)
 and mkAnnExp a1 t pos = Ann_Exp (a1, t)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
+
+and mkAbs a pos = Abs (a, pos)
 
 and mkPow a1 a2 pos = Pow (a1, a2, pos)
 
@@ -534,8 +534,7 @@ and pos_of_exp (e : exp) = match e with
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
   | Div (_, _, p) -> p
-  | IAbs (_, p) -> p
-  | FAbs (_, p) -> p
+  | Abs (_, p) -> p
   | Pow (_, _, p) -> p
   | Sqrt (_, p) -> p
   | Max (_, _, p) -> p
@@ -664,8 +663,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1, e_apply_one p a2, pos)
   | Mult (a1, a2, pos) ->  Mult (e_apply_one p a1, e_apply_one p a2, pos)
   | Div (a1, a2, pos) -> Div (e_apply_one p a1, e_apply_one p a2, pos)
-  | IAbs (a, pos) -> IAbs (e_apply_one p a, pos)
-  | FAbs (a, pos) -> FAbs (e_apply_one p a, pos)
+  | Abs (a, pos) -> Abs (e_apply_one p a, pos)
   | Pow (a1, a2, pos) -> Pow (e_apply_one p a1, e_apply_one p a2, pos)
   | Sqrt (a, pos) -> Sqrt (e_apply_one p a, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one p a1, e_apply_one p a2, pos)
@@ -847,8 +845,7 @@ and find_lexp_exp (e: exp) ls =
     | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-    | IAbs (e1, _) -> find_lexp_exp e1 ls
-    | FAbs (e1, _) -> find_lexp_exp e1 ls
+    | Abs (e1, _) -> find_lexp_exp e1 ls
     | Pow (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Sqrt (e1, _) -> find_lexp_exp e1 ls
     | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -902,8 +899,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
-  | IAbs (exp1, _) -> contain_vars_exp exp1
-  | FAbs (exp1, _) -> contain_vars_exp exp1
+  | Abs (exp1, _) -> contain_vars_exp exp1
   | Pow (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Sqrt (exp1, _) -> contain_vars_exp exp1
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -976,10 +972,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) =
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
       in (Pow (ne1, ne2, l), r)
-  | IAbs (e, l) -> let ne, r = float_out_exp_min_max e in
-                   (IAbs (ne, l), r)
-  | FAbs (e, l) -> let ne, r = float_out_exp_min_max e in
-                   (FAbs (ne, l), r)
+  | Abs (e, l) -> let ne, r = float_out_exp_min_max e in
+                   (Abs (ne, l), r)
   | Sqrt (e, l) -> let ne, r = float_out_exp_min_max e in
                    (Sqrt (ne, l), r)
   | Max (e1, e2, l) ->
@@ -1302,8 +1296,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Min (ex1, ex2, _)         -> let ty1 = typ_of_exp ex1 in
                                  let ty2 = typ_of_exp ex2 in
                                  merge_types ty1 ty2
-  | IAbs (ex1, _)             -> typ_of_exp ex1
-  | FAbs (ex1, _)             -> typ_of_exp ex1
+  | Abs (ex1, _)             -> typ_of_exp ex1
   | Sqrt (ex1, _)             -> typ_of_exp ex1
   (* bag expressions *)
   | Bag (ex_list, _)

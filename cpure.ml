@@ -152,8 +152,7 @@ and exp =
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
   | Div of (exp * exp * loc)
-  | IAbs of (exp * loc)
-  | FAbs of (exp * loc)
+  | Abs of (exp * loc)
   | Sqrt of (exp * loc)
   | Pow of (exp * exp * loc)
   | Max of (exp * exp * loc)
@@ -595,8 +594,7 @@ let rec get_exp_type (e : exp) : typ =
   | FConst _ -> Float
   | AConst _ -> AnnT
   | SConst _ -> Symbol
-  | IAbs _ -> Int
-  | FAbs _ -> Float
+  | Abs (e1, _) -> get_exp_type e1
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) | Pow (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -816,7 +814,7 @@ and afv (af : exp) : spec_var list =
     | Add (a1, a2, _) -> combine_avars a1 a2
     | Subtract (a1, a2, _) -> combine_avars a1 a2
     | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
-    | IAbs (a, _) | FAbs (a, _) | Sqrt (a, _) -> afv a
+    | Abs (a, _) | Sqrt (a, _) -> afv a
     | Pow (a1, a2, _) -> combine_avars a1 a2
     | Max (a1, a2, _) -> combine_avars a1 a2
     | Min (a1, a2, _) -> combine_avars a1 a2
@@ -1293,7 +1291,7 @@ and is_exp_arith (e:exp) : bool=
     | Null _  | Var _ | IConst _ | AConst _ | FConst _ | SConst _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
-    | IAbs (e, _) | FAbs (e, _) | Sqrt (e, _) -> is_exp_arith e
+    | Abs (e, _) | Sqrt (e, _) -> is_exp_arith e
     | Pow (e1, e2, _) -> (is_exp_arith e1) && (is_exp_arith e2)
           (* bag expressions *)
     | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _
@@ -1329,9 +1327,7 @@ and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
-and mkIAbs a pos = IAbs (a, pos)
-
-and mkFAbs a pos = FAbs (a, pos)
+and mkAbs a pos = Abs (a, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
@@ -2068,8 +2064,7 @@ and pos_of_exp (e : exp) = match e with
   | Subtract (_, _, p) 
   | Mult (_, _, p) 
   | Div (_, _, p)
-  | IAbs (_, p)
-  | FAbs (_, p) 
+  | Abs (_, p)
   | Sqrt (_, p)
   | Pow (_, _, p)
   | Max (_, _, p) 
@@ -2507,18 +2502,16 @@ and subs_one sst v =
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ | SConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
-  | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
-      e_apply_subs sst a2, pos)
-  | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
-      e_apply_subs sst a2, pos)
+  | Add (a1, a2, pos) ->
+      Add (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | Subtract (a1, a2, pos) ->
+      Subtract (e_apply_subs sst  a1, e_apply_subs sst a2, pos)
   | Mult (a1, a2, pos) -> 
       Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Div (a1, a2, pos) ->
       Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | IAbs (a, pos) ->
-      IAbs (e_apply_subs sst a, pos)
-  | FAbs (a, pos) ->
-      FAbs (e_apply_subs sst a, pos)
+  | Abs (a, pos) ->
+      Abs (e_apply_subs sst a, pos)
   | Sqrt (a, pos) ->
       Sqrt (e_apply_subs sst a, pos)
   | Pow (a1, a2, pos) ->
@@ -2569,18 +2562,16 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ | SConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
-  | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
-      e_apply_one (fr, t) a2, pos)
-  | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
-      e_apply_one (fr, t) a2, pos)
+  | Add (a1, a2, pos) ->
+      Add (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Subtract (a1, a2, pos) ->
+      Subtract (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
       Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
       Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
-  | IAbs (a, pos) ->
-      IAbs (e_apply_one (fr, t) a, pos)
-  | FAbs (a, pos) ->
-      FAbs (e_apply_one (fr, t) a, pos)
+  | Abs (a, pos) ->
+      Abs (e_apply_one (fr, t) a, pos)
   | Sqrt (a, pos) ->
       Sqrt (e_apply_one (fr, t) a, pos)
   | Pow (a1, a2, pos) ->
@@ -2704,8 +2695,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Div (a1, a2, pos) -> Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-  | IAbs (a, pos) -> IAbs (a_apply_par_term sst a, pos)
-  | FAbs (a, pos) -> FAbs (a_apply_par_term sst a, pos)
+  | Abs (a, pos) -> Abs (a_apply_par_term sst a, pos)
   | Sqrt (a, pos) -> Sqrt (a_apply_par_term sst a, pos)
   | Pow (a1, a2, pos) -> Pow (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
@@ -2800,8 +2790,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Div (a1, a2, pos) -> Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | IAbs (a, pos) -> IAbs (a_apply_one_term (fr, t) a, pos)
-  | FAbs (a, pos) -> FAbs (a_apply_one_term (fr, t) a, pos)
+  | Abs (a, pos) -> Abs (a_apply_one_term (fr, t) a, pos)
   | Sqrt (a, pos) -> Sqrt (a_apply_one_term (fr, t) a, pos)
   | Pow (a1, a2, pos) -> Pow (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
@@ -2867,12 +2856,9 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           let b1 , r1 = helper crt_var a1 in
           let b2 , r2 = helper (not crt_var) a2 in
           (b1||b2, Div (r1 , r2 , pos))
-    | IAbs (a, pos) ->
+    | Abs (a, pos) ->
           let b, r = helper crt_var a in
-          (b, IAbs (r, pos))
-    | FAbs (a, pos) ->
-          let b, r = helper crt_var a in
-          (b, FAbs (r, pos))
+          (b, Abs (r, pos))
     | Sqrt (a, pos) ->
           let b, r = helper crt_var a in
           (b, Sqrt (r, pos))
@@ -3830,10 +3816,8 @@ and e_apply_one_exp (fr, t) e = match e with
       Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
       Div (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
-  | IAbs (a, pos) ->
-      IAbs (e_apply_one_exp (fr, t) a, pos)
-  | FAbs (a, pos) ->
-      FAbs (e_apply_one_exp (fr, t) a, pos)
+  | Abs (a, pos) ->
+      Abs (e_apply_one_exp (fr, t) a, pos)
   | Sqrt (a, pos) ->
       Sqrt (e_apply_one_exp (fr, t) a, pos)
   | Pow (a1, a2, pos) ->
@@ -4070,8 +4054,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | Subtract (e1,e2,_) -> false
     | Mult _
     | Div _
-    | IAbs _
-    | FAbs _
+    | Abs _
     | Sqrt _
     | Pow _
     | Max _ 
@@ -4184,7 +4167,7 @@ and b_form_list f: b_formula list = match f with
   
 and simp_mult (e: exp) : exp =
   let pr = !print_exp in
-  Debug.no_1 "simp_mult" pr pr simp_mult_x e 
+  Debug.ho_1 "simp_mult" pr pr simp_mult_x e 
 
 and simp_mult_x (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
@@ -4219,8 +4202,7 @@ and simp_mult_x (e : exp) :  exp =
                  l))
       | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
       | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
-      | IAbs (e, l) -> IAbs (acc_mult m e, l)
-      | FAbs (e, l) -> FAbs (acc_mult m e, l)
+      | Abs (e, l) -> Abs (acc_mult m e, l)
       | Sqrt (e, l) -> Sqrt (acc_mult m e, l)
       | Pow (e1, e2, l) -> Pow (acc_mult m e1, acc_mult None e2, l)
       |  Max (e1, e2, l) ->
@@ -4278,7 +4260,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
             (* if v < 0.0 then *)
             ((None, (Some (FConst (-. v, l)))))
           (* else (None, None) *)
-    | SConst (v, l) -> report_error l "Symbol type doesn't support sum operator"
+    | SConst (_, l) -> ((Some e), None)
     |  Add (e1, e2, l) ->
            let (ts1, tm1) = split_sums e1 in
            let (ts2, tm2) = split_sums e2 in
@@ -4329,10 +4311,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
               | None, Some r1, None, Some r2 -> Some (Div (r1, r2, l)), None
               | _ -> Some e, None
           in r
-    | IAbs (_, l) -> report_error l "TRUNG TODO: check IAbs case"
-    | FAbs (_, l) -> report_error l "TRUNG TODO: check FAbs case"
-    | Sqrt (_, l) -> report_error l "TRUNG TODO: check Sqrt case"
-    | Pow (_, _, l) -> report_error l "TRUNG TODO: check Pow case"
+    | Abs (_, l) | Sqrt (_, l) | Pow (_, _, l) -> ((Some e), None)
     |  Max (e1, e2, l) ->
            Error.report_error
                {
@@ -4520,10 +4499,9 @@ and purge_mult_x (e :  exp):  exp = match e with
                       | _ -> Div (t1, t2, l)
                   end
         end
-  | IAbs (_, l) -> report_error l "TRUNG TODO: check IAbs case"
-  | FAbs (_, l) -> report_error l "TRUNG TODO: check FAbs case"
-  | Sqrt (_, l) -> report_error l "TRUNG TODO: check Sqrt case"
-  | Pow (_, _, l) -> report_error l "TRUNG TODO: check Pow case"
+  | Abs (e, l) -> Abs ((purge_mult e), l)
+  | Sqrt (e, l) -> Sqrt ((purge_mult e), l)
+  | Pow (e1, e2, l) ->  Pow((purge_mult e1), (purge_mult e2), l)
   |  Max (e1, e2, l) ->  Max((purge_mult e1), (purge_mult e2), l)
   |  Min (e1, e2, l) ->  Min((purge_mult e1), (purge_mult e2), l)
   |  Bag (el, l) ->  Bag ((List.map purge_mult el), l)
@@ -4744,12 +4722,9 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
             let (ne1,r1) = helper new_arg e1 in
             let (ne2,r2) = helper new_arg e2 in
             (Div (ne1,ne2,l),f_comb[r1;r2])
-        | IAbs (e, l) ->
+        | Abs (e, l) ->
             let (ne, r) = helper new_arg e in
-            (IAbs (ne, l),f_comb[r])
-        | FAbs (e, l) ->
-            let (ne, r) = helper new_arg e in
-            (FAbs (ne, l),f_comb[r])
+            (Abs (ne, l),f_comb[r])
         | Sqrt (e, l) ->
             let (ne, r) = helper new_arg e in
             (Sqrt (ne, l),f_comb[r])
@@ -4851,12 +4826,9 @@ let rec transform_exp f e  =
           let ne1 = transform_exp f e1 in
           let ne2 = transform_exp f e2 in
           Div (ne1,ne2,l)
-      | IAbs (e, l) ->
+      | Abs (e, l) ->
           let ne = transform_exp f e in
-          IAbs (ne, l)
-      | FAbs (e, l) ->
-          let ne = transform_exp f e in
-          FAbs (ne, l)
+          Abs (ne, l)
       | Sqrt (e, l) ->
           let ne = transform_exp f e in
           Sqrt (ne, l)
@@ -5279,7 +5251,7 @@ let rec get_head e = match e with
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
     | SConst (s, _) -> string_of_symbol s
-    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | IAbs (e, _) | FAbs (e, _) | Sqrt (e, _) | Pow (e, _, _)
+    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Abs (e, _) | Sqrt (e, _) | Pow (e, _, _)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
@@ -5342,8 +5314,7 @@ and norm_exp (e:exp) =
           else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
           else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
-    | IAbs (e, l) -> IAbs (helper e, l)
-    | FAbs (e, l) -> FAbs (helper e, l)
+    | Abs (e, l) -> Abs (helper e, l)
     | Sqrt (e, l) -> Sqrt (helper e, l)
     | Pow (e1, e2, l) -> Pow (helper e1, helper e2, l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
@@ -7427,8 +7398,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
       | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
-      | IAbs _ | FAbs _
-      | Sqrt _ | Pow _
+      | Abs _ | Sqrt _ | Pow _
       (* expressions that can not be transformed *)
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
       | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ -> raise Not_found in

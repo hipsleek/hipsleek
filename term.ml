@@ -1074,8 +1074,8 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
           raise Exception_SeqVar_Invalid
       | _, _ ->
           (* decreasing distance constraint  |element_src - limit_src| > |element_dst - limit_dst| *)
-          let dist_src = CP.mkFAbs (CP.mkSubtract element_src limit_src no_pos) no_pos in
-          let dist_dst = CP.mkFAbs (CP.mkSubtract element_dst limit_dst no_pos) no_pos in
+          let dist_src = CP.mkAbs (CP.mkSubtract element_src limit_src no_pos) no_pos in
+          let dist_dst = CP.mkAbs (CP.mkSubtract element_dst limit_dst no_pos) no_pos in
           CP.mkPure (CP.mkGt dist_src dist_dst no_pos)
     ) in
     let distance_constraint_res, _, _ = TP.imply init_constraint distance_constraint "" false None in
