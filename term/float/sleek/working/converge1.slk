@@ -1,0 +1,46 @@
+/*
+  x' = x * 3
+  -1 < x0 < 1 & (x0 != 0)
+*/
+// lowerbound & upper bound
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, 0.1, -0.2)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, 0.1, -0.2)].
+
+// termination constraint
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x < 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) < 0.5)].
+
+// termination constraint
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x + x < 0.1)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) + (x*x*x) < 0.1)].
+
+// invalid limit
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.1, x * x < 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.1, (x*x*x) * (x*x*x) < 0.5)].
+
+// invalid bound 
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, -0.1, -0.2)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, -0.1, -0.2)].
+
+// invalid termination constraint
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x > 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) > 0.5)].
+
+/*
+  x' = 1 + 2/x
+*/
+// lowerbound & upper bound
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 2.2, 1.9 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 2.2, 1.9)].
+
+// termination constraint
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 1.0 / x < 0.6 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 1.0 / x < 0.6)].
+
+// invalid limit
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.1, 2.2, 1.9 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.1, 2.2, 1.9)].
+
+/*
+  x' = 1 + 1/x
+*/
+// lowerbound & upper bound
+checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + sqrt(5.0))/2.0) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, 1.7, 1.5)] |- Term[SeqCon(1.0 + 1.0/x, (1.0 + sqrt(5.0)) / 2.0, 1.7, 1.5)].
+
+
+// invalid limit
+checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + sqrt(5.0))/2.0) & Term[SeqCon(x, 1.6, 1.7, 1.5)] |- Term[SeqCon(1.0 + 1.0/x, 1.6, 1.7, 1.5)].
+
+
+

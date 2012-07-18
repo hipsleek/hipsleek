@@ -1,0 +1,64 @@
+/* 
+  x' = x/2; 
+  x0 > 0
+*/
+// lower bound  
+checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, 0.1)] |- (x/2.0 > 0.0) & Term[SeqConDec(x / 2.0, 0.0, 0.1)].
+
+// termination constraint
+checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, 2.0 * x + 1.0 < 1.1)] |- (x/2.0 > 0.0) & Term[SeqConDec(x / 2.0, 0.0, 2.0 * (x/2.0) + 1.0 < 1.1)].
+
+// termination constraint
+checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, x * x < 0.01)] |- (x/2.0 > 0.0) & Term[SeqConDec(x / 2.0, 0.0, (x/2.0) * (x/2.0) < 0.01)].
+
+// invalid limit
+checkentail (x > 0.0) & Term[SeqConDec(x, 1.0, 0.1)] |- (x/2.0 > 0.0) & Term[SeqConDec(x / 2.0, 1.0, 0.1)].
+
+// invalid lower bound
+checkentail (x > 0.0) & Term[SeqConDec(x, 0.0, -0.1)] |- (x/2.0 > 0.0) & Term[SeqConDec(x / 2.0, 0.0, -0.1)].
+
+/*
+  x' = x * 2
+  x0 > 0
+*/
+// lower bound  
+checkentail (x > 0.0) & Term[SeqConDec(-x, -infinity, -100.0)] |- (x * 2.0 > 0.0) & Term[SeqConDec(-x * 2.0, -infinity, -100.0)].
+
+// termination constraint
+checkentail (x > 0.0) & Term[SeqConDec(-x, -infinity, x > 100.0)] |- (x * 2.0 > 0.0) & Term[SeqConDec(-x * 2.0, -infinity, x * 2.0 > 100.0)].
+
+// termination constraint
+checkentail (x > 0.0) & Term[SeqConDec(-x, -infinity, x * x > 1000.0)] |- (x * 2.0 > 0.0) & Term[SeqConDec(-x*2.0, -infinity, x * x > 1000.0)].
+
+// invalid limit
+checkentail (x > 0.0) & Term[SeqConDec(-x, -1000.0, -100.0)] |- (x * 2.0 > 0.0) & Term[SeqConDec(-x*2.0, -1000.0, -100.0)].
+
+// invalid constraint
+checkentail (x > 0.0) & Term[SeqConDec(-x, -infinity, x < 100.0)] |- (x * 2.0 > 0.0) & Term[SeqConDec(-x*2.0, -infinity, x < 100.0)].
+
+/*
+  x' = x * 3
+  0 < x0 < 1
+*/
+// lowerbound
+checkentail (x > 0.0) & (x < 1.0) & Term[SeqConDec(x, 0.0, 0.1)] |- (x*x*x > 0.0) & (x*x*x < 1.0) & Term[SeqConDec(x*x*x, 0.0, 0.1)].
+
+// termination constraint
+checkentail (x > 0.0) & (x < 1.0) & Term[SeqConDec(x, 0.0, x/2.0 + 1.0 < 1.1)] |- (x*x*x > 0.0) & (x*x*x < 1.0) & Term[SeqConDec(x*x*x, 0.0, x*x*x/2.0 + 1.0 < 1.1)].
+
+// invalid limit
+checkentail (x > 0.0) & (x < 1.0) & Term[SeqConDec(x, 1.0, 0.1)] |- (x*x*x > 0.0) & (x*x*x < 1.0) & Term[SeqConDec(x*x*x, 1.0, 0.1)].
+
+/*
+  x' = x * 3
+  1 < x0 < +infinity
+*/
+// lowerbound
+checkentail (x > 1.0) & Term[SeqConDec(-x, -infinity, 0.1)] |- (x*x*x > 1.0) & Term[SeqConDec(-x*x*x, -infinity, 0.1)].
+
+// termination constraint
+checkentail (x > 1.0) & Term[SeqConDec(-x, -infinity, -1000)] |- (x*x*x > 1.0) & Term[SeqConDec(-x*x*x, -infinity, -1000)].
+
+// invalid limit
+checkentail (x > 1.0) & Term[SeqConDec(-x, -1.0, -1000)] |- (x*x*x > 1.0) & Term[SeqConDec(-x*x*x, -1.0, -1000)].
+

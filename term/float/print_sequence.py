@@ -1,14 +1,14 @@
 #!/usr/bin/python
 import math
 
-N = 200
+N = 20
 
 def f(x):
-  y = x * x  - 2.0
+  y = 1 + 2/x
   return y
   
-x = -0.6;
-fixpoint = -1
+x = 1.9;
+fixpoint = 2.0
 
 for i in range(N):
   # print distance 
