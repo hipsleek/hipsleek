@@ -1084,7 +1084,7 @@ cexp_w :
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
     | t_ann=ann_term; ls1=measures_prim ->
-        let prim = P.PrimTermVar { P.prim_ann = t_ann;
+        let prim = P.PrimVar { P.prim_ann = t_ann;
                                    P.prim_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((prim, None), None)) in
         set_slicing_utils_pure_double f false

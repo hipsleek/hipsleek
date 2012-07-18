@@ -128,7 +128,7 @@ and cvc3_of_b_formula b =
     | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
      | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
   | CP.SeqVar _ -> failwith ("SeqVar not supported in cvc3")
-  | CP.PrimTermVar _ -> failwith ("PrimTermVar not supported in cvc3")
+  | CP.PrimVar _ -> failwith ("PrimVar not supported in cvc3")
 	    
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

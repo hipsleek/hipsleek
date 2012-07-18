@@ -124,7 +124,7 @@ and omega_of_b_formula_x b =
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | SeqVar _ -> illegal_format ("Omega.omega_of_exp: SeqVar")
-  | PrimTermVar _ -> illegal_format ("Omega.omega_of_exp: PrimTermVar") 
+  | PrimVar _ -> illegal_format ("Omega.omega_of_exp: PrimVar") 
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_b_formula b  =

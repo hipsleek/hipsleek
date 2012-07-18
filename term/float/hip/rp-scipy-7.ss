@@ -33,9 +33,8 @@ void loop1 (float u, float t, float n, float b, float x, float a)
     ((u <= 0) | (t <= 0) | (b >=1) | (b <= 0) | (x <= 0) | (a <= 0) | (n <= 1)) -> 
         requires Term[] ensures true;
     !((u <= 0) | (t <= 0) | (b >=1) | (b <= 0) | (x <= 0) | (a <= 0) | (n <= 1)) -> 
-        requires Term[SeqConDec(-(t/(a+n)), infinity, t/(a+n) < 0.1)] ensures true;
+        requires Term[SeqConDec(-(t/(a+n)), -infinity, t/(a+n) < 0.1)] ensures true;
   }
-  requires false ensures true;
 {
   if ((u <= 0) || (t <= 0) || (b >=1) || (b <= 0) || (x <= 0) || (a <= 0) || (n <= 1))
     return;

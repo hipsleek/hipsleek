@@ -309,7 +309,7 @@ and check_bounded_term_x prog ctx post_pos =
             | None -> []
             | Some (CP.LexVar lex) -> lex.CP.lex_exp
             | Some (CP.SeqVar _) -> []
-            | Some (CP.PrimTermVar _) -> []
+            | Some (CP.PrimVar _) -> []
             | _ -> report_error no_pos ("Invalid value of es_var_measures")
           in 
           let _ = Debug.trace_hprint (add_str "Measures" (pr_list !CP.print_exp)) m no_pos in

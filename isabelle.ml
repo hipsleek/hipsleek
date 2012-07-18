@@ -207,7 +207,7 @@ and isabelle_of_b_formula b =
   | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
   | CP.SeqVar _ -> failwith ("Seqvar are not supported in Isabelle")
-  | CP.PrimTermVar _ -> failwith ("PrimTermVar are not supported in Isabelle")
+  | CP.PrimVar _ -> failwith ("PrimVar are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)

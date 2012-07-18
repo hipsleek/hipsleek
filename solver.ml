@@ -5006,7 +5006,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           let term_measures = match termvar with
             | CP.LexVar lex -> Some (CP.LexVar {lex with CP.lex_ann = Fail TermErr_May}) 
             | CP.SeqVar seq -> Some (CP.SeqVar {seq with CP.seq_ann = Fail TermErr_May})
-            | CP.PrimTermVar prim -> Some (CP.PrimTermVar {prim with CP.prim_ann = Fail TermErr_May})
+            | CP.PrimVar prim -> Some (CP.PrimVar {prim with CP.prim_ann = Fail TermErr_May})
             | _ -> raise Term.(Exn_TermVar "TermVar not found!") in
           let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
           let term_res, term_err_msg =

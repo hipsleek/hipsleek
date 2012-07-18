@@ -1,17 +1,23 @@
 #!/usr/bin/python
 import math
 
-N = 10
+N = 200
 
 def f(x):
-  y = x * x - 1.0
+  y = x * x  - 2.0
   return y
   
-fixpoint = (1 + math.sqrt(5)) / 2
- 
-x = 0.5;
+x = -0.6;
+fixpoint = -1
+
 for i in range(N):
-  distance = abs(x - fixpoint)
-  print distance
+  # print distance 
+  #distance = abs(x - fixpoint)
+  #print distance
+  
+  # print value
+  print x
+  
+  # update new value
   x = f(x)
 

@@ -164,7 +164,7 @@ let rec smt_of_b_formula b =
     | Cpure.ListIn _ | Cpure.ListNotIn _ | Cpure.ListAllN _ | Cpure.ListPerm _ -> illegal_format ("SPASS.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
     | Cpure.LexVar _ -> illegal_format ("SPASS.smt_of_b_formula: LexVar should not appear here.\n")
     | Cpure.SeqVar _ -> illegal_format ("SPASS.smt_of_b_formula: SeqVar should not appear here.\n")
-    | Cpure.PrimTermVar _ -> illegal_format ("SPASS.smt_of_b_formula: PrimTermVar should not appear here.\n")
+    | Cpure.PrimVar _ -> illegal_format ("SPASS.smt_of_b_formula: PrimVar should not appear here.\n")
     | Cpure.VarPerm _ -> illegal_format ("SPASS.smt_of_b_formula: VarPerm should not appear here.\n")
     | Cpure.RelForm (r, args, l) ->
         let smt_args = List.map smt_of_exp args in 
@@ -272,7 +272,7 @@ and collect_bformula_info b = match b with
   | Cpure.ListPerm _
   | Cpure.LexVar _
   | Cpure.SeqVar _
-  | Cpure.PrimTermVar _ -> default_formula_info
+  | Cpure.PrimVar _ -> default_formula_info
   | Cpure.RelForm (r,args,_) -> 
       let r = CP.name_of_spec_var r in
       if r = "update_array" then

@@ -294,7 +294,7 @@ let find_lexvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.LexVar _ -> pf
-  | CP.PrimTermVar prim -> CP.mkLexVar prim.CP.prim_ann [] [] prim.CP.prim_loc        (* primitive term var can be considered as a lex var with no measure *)
+  | CP.PrimVar prim -> CP.mkLexVar prim.CP.prim_ann [] [] prim.CP.prim_loc        (* primitive term var can be considered as a lex var with no measure *)
   | _ -> raise (Exn_LexVar "LexVar not found!")
 
 let rec find_lexvar_formula (f: CP.formula) : CP.p_formula =
@@ -309,7 +309,7 @@ let find_seqvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.SeqVar _ -> pf
-  | CP.PrimTermVar prim -> CP.mkSeqVar prim.CP.prim_ann (CP.Null no_pos) (CP.Null no_pos) [] None CP.SeqCon prim.CP.prim_loc        (* primitive term var can be considered as a seq var with no measure *)
+  | CP.PrimVar prim -> CP.mkSeqVar prim.CP.prim_ann (CP.Null no_pos) (CP.Null no_pos) [] None CP.SeqCon prim.CP.prim_loc        (* primitive term var can be considered as a seq var with no measure *)
   | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 let rec find_seqvar_formula (f: CP.formula) : CP.p_formula =
@@ -323,8 +323,10 @@ let rec find_seqvar_formula (f: CP.formula) : CP.p_formula =
 let find_primvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
-  | CP.PrimTermVar _ -> pf
-  | _ -> raise (Exn_PrimVar "PrimVar not found!")
+  | CP.PrimVar _ -> pf
+  | _ -> 
+      (* let _ = print_endline ("== bf = " ^ (Cprinter.string_of_b_formula bf)) in  *)
+      raise (Exn_PrimVar "PrimVar not found! 1")
 
 let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -332,14 +334,14 @@ let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   | CP.And (f1, f2, _) ->
       (try find_primvar_formula f1
       with _ -> find_primvar_formula f2)
-  | _ -> raise (Exn_PrimVar "PrimVar not found!")
+  | _ -> raise (Exn_PrimVar "PrimVar not found! 2")
 
 let find_termvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.LexVar _
   | CP.SeqVar _
-  | CP.PrimTermVar _ -> pf
+  | CP.PrimVar _ -> pf
   | _ -> raise (Exn_TermVar "TermVar not found!")
 
 let rec find_termvar_formula (f: CP.formula) : CP.p_formula =
@@ -378,14 +380,14 @@ let find_seqvar_es (es: entail_state) : CP.p_formula =
 (** find primitive term var in entail_state*)
 let find_primvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
-  | Some (CP.PrimTermVar prim) -> CP.PrimTermVar prim
-  | _ -> raise (Exn_PrimVar "PrimVar not found!")
+  | Some (CP.PrimVar prim) -> CP.PrimVar prim
+  | _ -> raise (Exn_PrimVar "PrimVar not found! 3")
 
 let find_termvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.LexVar lex) -> CP.LexVar lex
   | Some (CP.SeqVar seq) -> CP.SeqVar seq
-  | Some (CP.PrimTermVar prim) -> CP.PrimTermVar prim 
+  | Some (CP.PrimVar prim) -> CP.PrimVar prim 
   | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 let zero_exp = [CP.mkIConst 0 no_pos]
@@ -427,7 +429,7 @@ let strip_termvar_mix_formula_x (mf: MCP.mix_formula) =
     match f with
     | CP.BForm ((CP.LexVar lex,_),_) -> CP.LexVar lex
     | CP.BForm ((CP.SeqVar seq,_),_) -> CP.SeqVar seq 
-    | CP.BForm ((CP.PrimTermVar prim,_),_) -> CP.PrimTermVar prim
+    | CP.BForm ((CP.PrimVar prim,_),_) -> CP.PrimVar prim
     | _ -> let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
            raise (Exn_TermVar "TermVar invalid") in
   let termvars = List.map extract_termvar termforms in
@@ -645,11 +647,11 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
-          let term_measures = Some (CP.mkPrimTermVar Loop no_pos) in
+          let term_measures = Some (CP.mkPrimVar Loop no_pos) in
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (MayLoop, _) ->
-          let term_measures = Some (CP.mkPrimTermVar MayLoop no_pos) in 
+          let term_measures = Some (CP.mkPrimVar MayLoop no_pos) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Fail TermErr_Must, _) ->
@@ -660,7 +662,7 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     end
   with e -> (
     let n_estate = {estate with
-      es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
+      es_var_measures = Some (CP.PrimVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
       es_term_err = Some ("!!!Exception while checking termination 1: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
@@ -734,14 +736,17 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
           | _ -> convert_formula f2 in
         CP.Or (new_f1, new_f2, l1, l2)
     | CP.Not (f, l1, l2) ->
-        let new_f = convert_formula f in
-        CP.Not (new_f, l1, l2)
+        (* let new_f = convert_formula f in *)
+        (* CP.Not (new_f, l1, l2)           *)
+        CP.mkTrue no_pos
     | CP.Forall (s, f, l1, l2) ->
-        let new_f = convert_formula f in
-        CP.Forall (s, new_f, l1, l2)
+        (* let new_f = convert_formula f in *)
+        (* CP.Forall (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
     | CP.Exists (s, f, l1, l2) ->
-        let new_f = convert_formula f in
-        CP.Exists (s, new_f, l1, l2)
+        (* let new_f = convert_formula f in *)
+        (* CP.Exists (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
   ) in
   convert_formula transition_constraint
 
@@ -1060,6 +1065,8 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
   if not possible_limit_check then
     false
   else (
+    (* let _ = print_endline ("== element_dst = " ^ (!CP.print_exp element_dst)) in  *)
+    (* let _ = print_endline ("== limit_dst = " ^ (!CP.print_exp limit_dst)) in      *)
     let distance_constraint = (
       match limit_src, limit_dst with
       | CP.SConst _, _
@@ -1152,7 +1159,7 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
         Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
         None
       else (
-                (* check bound *)
+        (* check bound *)
         if (List.length bounds_src > 0) then (
           let limit_res = check_general_seqvar_limit_and_bounds init_constraint lm_src bounds_src in
           if not limit_res then
@@ -1262,6 +1269,7 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
     let conseq = MCP.pure_of_mix rhs_p in
     let seqvar_dst = find_seqvar_formula conseq in
+    (* let _ = print_endline ("== seqvar_dst = " ^ (Cprinter.string_of_p_formula seqvar_dst)) in  *)
     let seq_dst = match seqvar_dst with
                   | CP.SeqVar seq -> seq
                   | _ -> raise (Exn_SeqVar "SeqVar not found!") in
@@ -1328,7 +1336,7 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   )
   with e -> (
     let n_estate = {estate with
-      es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
+      es_var_measures = Some (CP.PrimVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
       es_term_err = Some ("!!!Exception while checking termination 2: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
@@ -1346,14 +1354,14 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let conseq = MCP.pure_of_mix rhs_p in
     let primvar_dst = find_primvar_formula conseq in
     let prim_dst = match primvar_dst with
-                  | CP.PrimTermVar prim -> prim
-                  | _ -> raise (Exn_PrimVar "PrimVar not found!") in
+                  | CP.PrimVar prim -> prim
+                  | _ -> raise (Exn_PrimVar "PrimVar not found! 4") in
     let ann_dst = prim_dst.CP.prim_ann in
     let pos_dst = prim_dst.CP.prim_loc in
     let primvar_src = find_primvar_es estate in
     let prim_src = match primvar_src with
-                  | CP.PrimTermVar prim -> prim
-                  | _ -> raise (Exn_PrimVar "PrimVar not found!") in
+                  | CP.PrimVar prim -> prim
+                  | _ -> raise (Exn_PrimVar "PrimVar not found! 5") in
     let ann_src = prim_src.CP.prim_ann in
     let trans = (primvar_src, primvar_dst) in
     let trans_opt = Some trans in
@@ -1367,7 +1375,7 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     | (Term, Term)
     | (Fail TermErr_May, Term) ->
         let term_measures, term_res =
-          Some (CP.PrimTermVar prim_src),
+          Some (CP.PrimVar prim_src),
           (term_pos, trans_opt, Some orig_ante, Term_S (Primitive_Term_Valid trans_opt)) in
         let n_estate = { estate with es_var_measures = term_measures;
                                      es_term_err = None} in
@@ -1383,10 +1391,10 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           match ann_dst with
           | Loop
           | Fail TermErr_Must ->
-              Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_Must})
+              Some (CP.PrimVar {prim_src with CP.prim_ann = Fail TermErr_Must})
           | MayLoop
           | Fail TermErr_May ->
-              Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_May})
+              Some (CP.PrimVar {prim_src with CP.prim_ann = Fail TermErr_May})
           | Term ->
               let _ = report_error no_pos "[term.ml] unexpected Term in check_primvar_rhs" in
               raise (Exn_PrimVar "PrimVar invalid")
@@ -1402,22 +1410,22 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         } in
         (n_estate, lhs_p, rhs_p, None)
     | (Loop, _) ->
-        let term_measures = Some (CP.PrimTermVar {prim_src with CP.prim_ann = Loop}) in
+        let term_measures = Some (CP.PrimVar {prim_src with CP.prim_ann = Loop}) in
         let n_estate = {estate with es_var_measures = term_measures} in
         (n_estate, lhs_p, rhs_p, None)
     | (MayLoop, _) ->
-        let term_measures = Some (CP.PrimTermVar {prim_src with CP.prim_ann = MayLoop}) in
+        let term_measures = Some (CP.PrimVar {prim_src with CP.prim_ann = MayLoop}) in
         let n_estate = {estate with es_var_measures = term_measures} in
         (n_estate, lhs_p, rhs_p, None)
     | (Fail TermErr_Must, _) ->
         let n_estate = {estate with
-          es_var_measures = Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_Must})
+          es_var_measures = Some (CP.PrimVar {prim_src with CP.prim_ann = Fail TermErr_Must})
         } in
         (n_estate, lhs_p, rhs_p, None)
   )
   with e -> (
     let n_estate = {estate with
-      es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
+      es_var_measures = Some (CP.PrimVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
       es_term_err = Some ("!!!Exception while checking termination 3: " ^ (Printexc.to_string e));
     } in
     (n_estate, lhs_p, rhs_p, None)
@@ -1442,8 +1450,15 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | (Some CP.SeqVar _), _ ->
         check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    | (Some CP.PrimTermVar _), _ ->
+    | (Some CP.PrimVar _), _ -> (
+        (* (match (termvar_es, termvar_conseq) with                                       *)
+        (* | Some p1, p2 ->                                                               *)
+        (*     let _ = print_endline ("== p1 = " ^ (Cprinter.string_of_p_formula p1)) in  *)
+        (*     let _ = print_endline ("== p2 = " ^ (Cprinter.string_of_p_formula p2)) in  *)
+        (*     ()                                                                         *)
+        (* | _ -> ());                                                                    *)
         check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+      )
     | _ -> raise (Exn_TermVar "TermVar not found!")
   ) 
   with e -> (
@@ -1451,7 +1466,7 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     | (Exn_SeqVar "SeqVar invalid") -> (
         (* let _ = print_endline ("== rhs_p = " ^ (Cprinter.string_of_mix_formula rhs_p)) in  *)
         let n_estate = {estate with
-          es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
+          es_var_measures = Some (CP.PrimVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
           es_term_err = Some ("!!!Exception while checking termination 4: " ^ (Printexc.to_string e));
         } in
         (n_estate, lhs_p, rhs_p, None)
@@ -1909,7 +1924,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
               | None -> true
               | Some v -> not(CP.mem_svl v rem_phase)) ml
         in Some (CP.mkLexVar t_ann n_ml ml pos, sl)
-      (* TRUNG TODO: check SeqVar & PrimTermVar case *)
+      (* TRUNG TODO: check SeqVar & PrimVar case *)
       | _ -> None
   in
   let f_pe _ = None in
@@ -2050,7 +2065,7 @@ let rec get_loop_ctx c =
         | None -> []
         | Some (CP.LexVar lex) -> if lex.CP.lex_ann == Loop then [es] else []
         | Some (CP.SeqVar seq) -> if seq.CP.seq_ann == Loop then [es] else []
-        | Some (CP.PrimTermVar prim) -> if prim.CP.prim_ann == Loop then [es] else []
+        | Some (CP.PrimVar prim) -> if prim.CP.prim_ann == Loop then [es] else []
         | _ -> report_error no_pos "Term.get_loop_ctx: Invalid value of es_var_measures.";
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)

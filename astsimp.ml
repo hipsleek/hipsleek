@@ -3796,7 +3796,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 	      let r1,r2 = List.split b.CF.formula_case_branches in
 	      let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
 		  (** An Hoa Temporary Printing **)
-		  let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in
+		  (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in *)
 	      let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
 	        let _ = print_string (
 	            (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^
@@ -4407,7 +4407,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
                     CP.seq_termcons = tc;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_variation = vari }
-    | IP.PrimTermVar prim -> CP.PrimTermVar { CP.prim_ann = prim.IP.prim_ann;
+    | IP.PrimVar prim -> CP.PrimVar { CP.prim_ann = prim.IP.prim_ann;
                                               CP.prim_loc = prim.IP.prim_loc }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
@@ -5182,7 +5182,7 @@ and gather_type_info_b_formula_x prog b0 stab =
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
         let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in
         ()
-    | IP.PrimTermVar _ -> ()
+    | IP.PrimVar _ -> ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in
