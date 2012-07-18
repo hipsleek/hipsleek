@@ -259,15 +259,10 @@ let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 (* End of Printing Utilities *)
 
 (* To find a LexVar formula *)
-exception Exception_LexVar_Not_found;;
-exception Exception_SeqVar_Not_found;;
-exception Exception_PrimTermVar_Not_found;;
-exception Exception_TermVar_Not_found;;
-exception Exception_LexVar_Invalid;;
-exception Exception_SeqVar_Invalid;;
-exception Exception_PrimTermVar_Invalid;;
-exception Exception_TermVar_Invalid;;
-exception Exception_Invalid_Phase_Num;;
+exception Exn_PrimVar of string;;
+exception Exn_TermVar of string;;
+exception Exn_LexVar of string;;
+exception Exn_SeqVar of string;;
 
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
@@ -300,7 +295,7 @@ let find_lexvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   match pf with
   | CP.LexVar _ -> pf
   | CP.PrimTermVar prim -> CP.mkLexVar prim.CP.prim_ann [] [] prim.CP.prim_loc        (* primitive term var can be considered as a lex var with no measure *)
-  | _ -> raise Exception_LexVar_Not_found
+  | _ -> raise (Exn_LexVar "LexVar not found!")
 
 let rec find_lexvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -308,14 +303,14 @@ let rec find_lexvar_formula (f: CP.formula) : CP.p_formula =
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
-  | _ -> raise Exception_LexVar_Not_found
+  | _ -> raise (Exn_LexVar "LexVar not found!")
 
 let find_seqvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.SeqVar _ -> pf
   | CP.PrimTermVar prim -> CP.mkSeqVar prim.CP.prim_ann (CP.Null no_pos) (CP.Null no_pos) [] None CP.SeqCon prim.CP.prim_loc        (* primitive term var can be considered as a seq var with no measure *)
-  | _ -> raise Exception_SeqVar_Not_found
+  | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 let rec find_seqvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -323,13 +318,13 @@ let rec find_seqvar_formula (f: CP.formula) : CP.p_formula =
   | CP.And (f1, f2, _) ->
       (try find_seqvar_formula f1
       with _ -> find_seqvar_formula f2)
-  | _ -> raise Exception_SeqVar_Not_found
+  | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 let find_primvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
   match pf with
   | CP.PrimTermVar _ -> pf
-  | _ -> raise Exception_PrimTermVar_Not_found
+  | _ -> raise (Exn_PrimVar "PrimVar not found!")
 
 let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -337,7 +332,7 @@ let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
   | CP.And (f1, f2, _) ->
       (try find_primvar_formula f1
       with _ -> find_primvar_formula f2)
-  | _ -> raise Exception_PrimTermVar_Not_found
+  | _ -> raise (Exn_PrimVar "PrimVar not found!")
 
 let find_termvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   let (pf, _) = bf in
@@ -345,7 +340,7 @@ let find_termvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   | CP.LexVar _
   | CP.SeqVar _
   | CP.PrimTermVar _ -> pf
-  | _ -> raise Exception_TermVar_Not_found
+  | _ -> raise (Exn_TermVar "TermVar not found!")
 
 let rec find_termvar_formula (f: CP.formula) : CP.p_formula =
   match f with
@@ -354,7 +349,7 @@ let rec find_termvar_formula (f: CP.formula) : CP.p_formula =
       try find_termvar_formula f1 
       with _ -> find_termvar_formula f2
     )
-  | _ -> raise Exception_TermVar_Not_found
+  | _ -> raise (Exn_TermVar "TermVar not found!")
 
 (* To syntactically simplify LexVar formula *) 
 (* (false,[]) means not decreasing *)
@@ -372,26 +367,26 @@ let rec syn_simplify_lexvar bnd_measures =
 let find_lexvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.LexVar lex) -> CP.LexVar lex
-  | _ -> raise Exception_LexVar_Not_found
+  | _ -> raise (Exn_LexVar "LexVar not found!")
 
 (** find sequence var in entail_state*)
 let find_seqvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.SeqVar seq) -> CP.SeqVar seq
-  | _ -> raise Exception_SeqVar_Not_found
+  | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 (** find primitive term var in entail_state*)
 let find_primvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.PrimTermVar prim) -> CP.PrimTermVar prim
-  | _ -> raise Exception_PrimTermVar_Not_found
+  | _ -> raise (Exn_PrimVar "PrimVar not found!")
 
 let find_termvar_es (es: entail_state) : CP.p_formula =
   match es.es_var_measures with
   | Some (CP.LexVar lex) -> CP.LexVar lex
   | Some (CP.SeqVar seq) -> CP.SeqVar seq
   | Some (CP.PrimTermVar prim) -> CP.PrimTermVar prim 
-  | _ -> raise Exception_SeqVar_Not_found
+  | _ -> raise (Exn_SeqVar "SeqVar not found!")
 
 let zero_exp = [CP.mkIConst 0 no_pos]
  
@@ -434,7 +429,7 @@ let strip_termvar_mix_formula_x (mf: MCP.mix_formula) =
     | CP.BForm ((CP.SeqVar seq,_),_) -> CP.SeqVar seq 
     | CP.BForm ((CP.PrimTermVar prim,_),_) -> CP.PrimTermVar prim
     | _ -> let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
-           raise Exception_TermVar_Invalid in
+           raise (Exn_TermVar "TermVar invalid") in
   let termvars = List.map extract_termvar termforms in
   (termvars, CP.join_conjunctions other_p)
 
@@ -471,7 +466,7 @@ let check_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv 
           let lexvar = find_lexvar_es estate in
           let t_ann, ml, il = match lexvar with
                               | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
-                              | _ -> raise Exception_LexVar_Not_found in
+                              | _ -> raise (Exn_LexVar "LexVar not found!") in
           (* Residue of the termination,
            * The termination checking result - 
            * For HIP: stored in term_res_stk
@@ -534,7 +529,7 @@ let check_lexvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv 
           let lexvar = find_lexvar_es estate in
           let t_ann, ml, il = match lexvar with
                               | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
-                              | _ -> raise Exception_LexVar_Not_found in
+                              | _ -> raise (Exn_LexVar "LexVar not found!") in
           let term_measures, term_res, term_err_msg, rank_formula =
             if entail_res then (* Decreasing *) 
               Some (CP.mkLexVar t_ann ml il no_pos), 
@@ -603,11 +598,11 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let lexvar_dst = find_lexvar_formula conseq in
       let t_ann_d, dst_lv, l_pos = match lexvar_dst with
                                    | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_loc)
-                                   | _ -> raise Exception_LexVar_Not_found in
+                                   | _ -> raise (Exn_LexVar "LexVar not found!") in
       let lexvar_src = find_lexvar_es estate in
       let t_ann_s, src_lv, src_il = match lexvar_src with
                           | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
-                          | _ -> raise Exception_LexVar_Not_found in
+                          | _ -> raise (Exn_LexVar "LexVar not found!") in
       let t_ann_trans = (lexvar_src, lexvar_dst) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_termvar_mix_formula rhs_p in
@@ -637,7 +632,7 @@ let check_lexvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
                 Some (CP.mkLexVar (Fail TermErr_May) src_lv src_il no_pos)
             | Term ->
                 let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
-                raise Exception_LexVar_Invalid
+                raise (Exn_LexVar "LexVar invalid")
           ) in
           let term_err = match estate.es_term_err with
             | None ->  Some (string_of_term_res term_res)
@@ -760,7 +755,7 @@ let check_decreasing_seqvar_init_and_lower_bound (init_constraint: CP.formula) (
   let lowerbound = match bounds with
                    | [b] -> b
                    | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound" in
-                          raise Exception_SeqVar_Invalid in
+                          raise (Exn_SeqVar "SeqVar invalid") in
   let bound_constraint = CP.mkPure (CP.mkLt element lowerbound no_pos) in
   let entail_res, _, _ = TP.imply init_constraint bound_constraint "" false None in
   (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
@@ -773,7 +768,7 @@ let check_decreasing_seqvar_init_and_term_constraint (init_constraint: CP.formul
   let tc = match termcons with
            | Some t -> t
            | _ -> let _ = report_error no_pos "[term.ml] invalid term constraint" in
-                  raise Exception_SeqVar_Invalid in
+                  raise (Exn_SeqVar "SeqVar invalid") in
   let entail_res, _, _ = TP.imply init_constraint tc "" false None in
   (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
   (* let _ = print_endline ("== termcons = " ^ (Cprinter.string_of_pure_formula tc)) in                       *)
@@ -795,7 +790,7 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
     | CP.SConst (Pos_infinity, _), _
     | _, CP.SConst (Pos_infinity, _) ->
         let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
-        raise Exception_SeqVar_Invalid
+        raise (Exn_SeqVar "SeqVar invalid")
     | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
         (* when Neg_infinity appears in both two side of entailment    *)
         (* check that the element_src and element_dst is unbounded*)
@@ -818,7 +813,7 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
     | CP.SConst (Neg_infinity, _), _
     | _, CP.SConst (Neg_infinity, _) ->
         let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
-        raise Exception_SeqVar_Invalid
+        raise (Exn_SeqVar "SeqVar invalid")
     | _, _ ->
         let plm_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
         let plm_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
@@ -836,14 +831,14 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
       | CP.SConst (Pos_infinity, _), _
       | _, CP.SConst (Pos_infinity, _) ->
           let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
-          raise Exception_SeqVar_Invalid
+          raise (Exn_SeqVar "SeqVar invalid")
       | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
           (* Constraint: element_src > elment_dst *)
           CP.mkPure (CP.mkGt element_src element_dst no_pos)
       | CP.SConst (Neg_infinity, _), _
       | _, CP.SConst (Neg_infinity, _) ->
           let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
-          raise Exception_SeqVar_Invalid
+          raise (Exn_SeqVar "SeqVar invalid")
       | _ ->
           (* Constraint: (element_src > limit_src)      *)
           (*             && (element_dst > limit_dst)   *)
@@ -865,7 +860,7 @@ let check_decreasing_seqvar_limit_and_lower_bound (init_constraint: CP.formula) 
   let lowerbound = match bounds with
                    | [lb] -> lb
                    | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound" in
-                          raise Exception_SeqVar_Invalid in
+                          raise (Exn_SeqVar "SeqVar invalid") in
   let bound_constraint = CP.mkPure (CP.mkLt limit lowerbound no_pos) in
   let entail_res, _, _ = TP.imply init_constraint bound_constraint "" false None in
   (* let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in *)
@@ -880,7 +875,7 @@ let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formu
     match limit with
     | CP.SConst (Pos_infinity, _) ->
         let _ = report_error no_pos "check_decreasing_seqvar_limit_and_term_constraint: limit can't be Pos_infinity" in
-        raise Exception_SeqVar_Invalid
+        raise (Exn_SeqVar "SeqVar invalid")
     | CP.SConst (Neg_infinity, _) ->
         let vars = CP.afv element in
         let bound_var = CP.fresh_new_spec_var Float in
@@ -888,7 +883,7 @@ let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formu
         let tc = match termcons with
                  | Some t -> t
                  | None -> let _ = report_error no_pos "[term.ml] invalid term constraint" in
-                           raise Exception_SeqVar_Invalid in
+                           raise (Exn_SeqVar "SeqVar invalid") in
         let all_constraint = CP.mkOr (CP.mkNot_s bound_exp) tc None no_pos in
         let term_formula = CP.mkForall vars all_constraint None no_pos in
         CP.mkExists [bound_var] term_formula None no_pos
@@ -900,7 +895,7 @@ let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formu
         let tc = match termcons with
                  | Some t -> t
                  | None -> let _ = report_error no_pos "[term.ml] invalid term constraint" in
-                           raise Exception_SeqVar_Invalid in
+                           raise (Exn_SeqVar "SeqVar invalid") in
         let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
         let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
         let term_formula = CP.mkForall vars all_constraint None no_pos in
@@ -914,7 +909,7 @@ let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formu
 let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seq_src, seq_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
-                           | _ -> raise Exception_SeqVar_Not_found in
+                           | _ -> raise (Exn_SeqVar "SeqVar not found!") in
   let elm_src = seq_src.CP.seq_element in
   let lm_src = seq_src.CP.seq_limit in
   let bounds_src = seq_src.CP.seq_bounds in 
@@ -1018,7 +1013,7 @@ let check_general_seqvar_init_and_bounds (init_constraint: CP.formula) (element:
   let lowerbound, upperbound = match bounds with
                                | [lb; ub] -> lb, ub
                                | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound & upper bound" in
-                                      raise Exception_SeqVar_Invalid in
+                                      raise (Exn_SeqVar "SeqVar invalid") in
   let lb_constraint = CP.mkPure (CP.mkLt element lowerbound no_pos) in
   let ub_constraint = CP.mkPure (CP.mkLt element upperbound no_pos) in
   let bound_constraint = CP.mkAnd lb_constraint ub_constraint no_pos in
@@ -1033,7 +1028,7 @@ let check_general_seqvar_init_and_term_constraint (init_constraint: CP.formula) 
   let tc = match termcons with
            | Some t -> t
            | None -> let _ = report_error no_pos "[term.ml] invalid term constraint" in
-                     raise Exception_SeqVar_Invalid in
+                     raise (Exn_SeqVar "SeqVar invalid") in
   let entail_res, _, _ = TP.imply init_constraint tc "" false None in
   (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in *)
   (* let _ = print_endline ("== termcons = " ^ (Cprinter.string_of_pure_formula termcons)) in               *)
@@ -1052,7 +1047,7 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
     | _, CP.SConst _ ->
         (* TRUNG TODO: consider the case when infinity appears in one or both two side of entailment *)
         let _ = report_error no_pos "check_general_seqvar_transition: the infinity is handled only in decreasing sequences" in
-        raise Exception_SeqVar_Invalid
+        raise (Exn_SeqVar "SeqVar invalid")
     | _, _ ->
         let plm_left = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
         let plm_right = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
@@ -1071,7 +1066,7 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
       | _, CP.SConst _ ->
           (* TRUNG TODO: consider the case when infinity appears in one or both two side of entailment *)
           let _ = report_error no_pos "check_general_seqvar_transition: the infinity is handled only in decreasing sequences" in
-          raise Exception_SeqVar_Invalid
+          raise (Exn_SeqVar "SeqVar invalid")
       | _, _ ->
           (* decreasing distance constraint  |element_src - limit_src| > |element_dst - limit_dst| *)
           let dist_src = CP.mkAbs (CP.mkSubtract element_src limit_src no_pos) no_pos in
@@ -1089,7 +1084,7 @@ let check_general_seqvar_limit_and_bounds (init_constraint: CP.formula) (limit: 
   let lowerbound, upperbound = match bounds with
                                | [lb; ub] -> lb, ub
                                | _ -> let _ = report_error no_pos "[term.ml] invalid lower bound & upper bound" in
-                                      raise Exception_SeqVar_Invalid in
+                                      raise (Exn_SeqVar "SeqVar invalid") in
   let lb_constraint = CP.mkPure (CP.mkLt limit lowerbound no_pos) in
   let ub_constraint = CP.mkPure (CP.mkGt limit upperbound no_pos) in
   let bound_constraint = CP.mkAnd lb_constraint ub_constraint no_pos in
@@ -1109,7 +1104,7 @@ let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
   let tc = match termcons with
            | Some t -> t
            | _ -> let _ = report_error no_pos "[term.ml] invalid term constraint" in
-                  raise Exception_SeqVar_Invalid in
+                  raise (Exn_SeqVar "SeqVar invalid") in
   let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
   let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
   let term_formula = CP.mkForall vars all_constraint None no_pos in
@@ -1122,7 +1117,7 @@ let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
 let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seq_src, seq_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
-                           | _ -> raise Exception_SeqVar_Not_found in
+                           | _ -> raise (Exn_SeqVar "SeqVar not found!") in
   let elm_src = seq_src.CP.seq_element in
   let lm_src = seq_src.CP.seq_limit in
   let bounds_src = seq_src.CP.seq_bounds in
@@ -1235,7 +1230,7 @@ let check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans 
         check_general_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
       else (
         let _ = report_error no_pos "[term.ml] Invalid variation of sequences." in
-        raise Exception_SeqVar_Invalid
+        raise (Exn_SeqVar "SeqVar invalid")
       )
     )
 
@@ -1269,13 +1264,13 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let seqvar_dst = find_seqvar_formula conseq in
     let seq_dst = match seqvar_dst with
                   | CP.SeqVar seq -> seq
-                  | _ -> raise Exception_SeqVar_Not_found in
+                  | _ -> raise (Exn_SeqVar "SeqVar not found!") in
     let ann_dst = seq_dst.CP.seq_ann in
     let pos_dst = seq_dst.CP.seq_loc in
     let seqvar_src = find_seqvar_es estate in
     let seq_src = match seqvar_src with
                   | CP.SeqVar seq -> seq
-                  | _ -> raise Exception_SeqVar_Not_found in 
+                  | _ -> raise (Exn_SeqVar "SeqVar not found!") in 
     let ann_src = seq_src.CP.seq_ann in
     let trans = (seqvar_src, seqvar_dst) in
     let trans_opt = Some trans in
@@ -1305,7 +1300,7 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
               Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May})
           | Term ->
               let _ = report_error no_pos "[term.ml] unexpected Term in check_seqvar_rhs" in
-              raise Exception_SeqVar_Invalid
+              raise (Exn_SeqVar "SeqVar invalid")
         ) in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
@@ -1352,13 +1347,13 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let primvar_dst = find_primvar_formula conseq in
     let prim_dst = match primvar_dst with
                   | CP.PrimTermVar prim -> prim
-                  | _ -> raise Exception_PrimTermVar_Not_found in
+                  | _ -> raise (Exn_PrimVar "PrimVar not found!") in
     let ann_dst = prim_dst.CP.prim_ann in
     let pos_dst = prim_dst.CP.prim_loc in
     let primvar_src = find_primvar_es estate in
     let prim_src = match primvar_src with
                   | CP.PrimTermVar prim -> prim
-                  | _ -> raise Exception_PrimTermVar_Not_found in
+                  | _ -> raise (Exn_PrimVar "PrimVar not found!") in
     let ann_src = prim_src.CP.prim_ann in
     let trans = (primvar_src, primvar_dst) in
     let trans_opt = Some trans in
@@ -1394,7 +1389,7 @@ let check_primvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
               Some (CP.PrimTermVar {prim_src with CP.prim_ann = Fail TermErr_May})
           | Term ->
               let _ = report_error no_pos "[term.ml] unexpected Term in check_primvar_rhs" in
-              raise Exception_PrimTermVar_Invalid
+              raise (Exn_PrimVar "PrimVar invalid")
         ) in
         let term_err = match estate.es_term_err with
           | None ->  Some (string_of_term_res term_res)
@@ -1449,11 +1444,11 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     | (Some CP.PrimTermVar _), _ ->
         check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    | _ -> raise Exception_TermVar_Not_found
+    | _ -> raise (Exn_TermVar "TermVar not found!")
   ) 
   with e -> (
     match e with
-    | Exception_SeqVar_Invalid -> (
+    | (Exn_SeqVar "SeqVar invalid") -> (
         (* let _ = print_endline ("== rhs_p = " ^ (Cprinter.string_of_mix_formula rhs_p)) in  *)
         let n_estate = {estate with
           es_var_measures = Some (CP.PrimTermVar {CP.prim_ann = Fail TermErr_May; CP.prim_loc = no_pos});
