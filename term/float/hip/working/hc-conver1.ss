@@ -1,5 +1,5 @@
 // update function: x = 2 - 1/x
-
+/*
 void loop1(float x)
   case
   {
@@ -12,7 +12,7 @@ void loop1(float x)
   else
     loop1(2.0 - 1.0 / x);
 }
-
+*/
 
 // BUG
 /*
@@ -50,7 +50,7 @@ void loop4(float x)
 }
 */
 
-/*
+
 void loop5(float x)
   requires (x != 0.0) ensures true;
 {
@@ -59,7 +59,7 @@ void loop5(float x)
   else
     loop5(2.0 - 1.0 / x);
 }
-*/
+
 
 
 void loop6(float x)
@@ -67,6 +67,9 @@ void loop6(float x)
 {
   if (x  > 1)
     return;
-  else
-    loop6(2.0 - 1.0 / x);
+  else {
+    if (x!=0.5) 
+      loop6(2.0 - 1.0 / x);
+      }
 }
+
