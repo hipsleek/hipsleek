@@ -2001,9 +2001,9 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | peek_invocation; `IDENTIFIER id; (* l = opt_lock_info ; *) `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
-                exp_call_nrecv_lock = l;
+                exp_call_nrecv_lock = None;
                 exp_call_nrecv_arguments = oal;
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }

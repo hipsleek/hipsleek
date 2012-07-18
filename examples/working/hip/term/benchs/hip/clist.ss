@@ -81,7 +81,7 @@ node insert (node x, int v)
 		return x;
 	}
 }
-
+/*
 node append(node x, node y)
  requires x::lseg<n,null,S> & Term[n]
  ensures  res::lseg<n,y,S>;
@@ -96,3 +96,4 @@ node append(node x, node y)
    return x;
  }
 }
+*/
