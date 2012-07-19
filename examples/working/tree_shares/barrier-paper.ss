@@ -29,9 +29,6 @@ Barrier bn[2]<int state, cl x1, cl x2, cl y1, cl y2, cl i> == [(0,1,[
     ensures x1::cl(@@R)<A>*x2::cl(@@R)<B>         *self::bn(@@R)<3,x1,x2,y1,y2,i>;])];
 
 
-void close (channel y) requires y::channel<> ensures true;
-channel close () requires true ensures res::channel<>;
- 
 void th2 (cl x1, cl x2, cl y1, cl y2, cl i, barrier b)
 requires x1::cl(@@R)<1>*x2::cl(@@R)<1>*y1::cl(@@R)<_>*y2::cl(@@R)<_>*i::cl(@@R)<1>*b::bn(@@R)<0,x1,x2,y1,y2,i> 
  ensures true;
