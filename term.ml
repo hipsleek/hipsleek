@@ -1120,7 +1120,7 @@ let check_general_seqvar_limit_and_bounds (init_constraint: CP.formula) (limit: 
   let entail_res, _, _ = TP.imply init_constraint bound_constraint "" false None in
   (* let _ = print_endline ("\n== bound_constraint = " ^ (Cprinter.string_of_pure_formula bound_constraint)) in *)
   (* let _ = print_endline ("== entail_res = " ^ (string_of_bool entail_res)) in                              *)
-  entail_res 
+  entail_res
 
 let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
                                           (element: CP.exp) (limit: CP.exp)

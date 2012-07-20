@@ -7,7 +7,6 @@ open Globals
 open Gen.Basic
 module CP = Cpure
 
-
 (* options *)
 let is_presburger = ref false
 let no_pseudo_ops = ref false
@@ -177,8 +176,10 @@ let check_formula (f: string) : bool option =
       Some true
     else if (result = "False") then
       Some false
-    else None
-  with _ -> None
+    else
+      failwith "Mathematica: Unexpected answer!"
+  with _ ->
+      failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
   Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
@@ -245,7 +246,7 @@ let normalize_var_name (varname : string) : string =
   
 
 let mathematica_of_float (f: float) =
-  let res = Printf.sprintf "%.30f" f in
+  let res = Printf.sprintf "%.8f" f in
   res
 
 let mathematica_of_symbol (sym: symbol) =
@@ -333,7 +334,7 @@ let rec mathematica_of_b_formula b : string =
   | CP.BConst (c, _) ->
       if c then "True"
       else "False"
-  | CP.BVar (bv, _) -> mathematica_of_spec_var bv
+  | CP.BVar (bv, _) -> "(" ^ mathematica_of_spec_var bv ^ " > 0)"
   | CP.Lt (e1, e2, l) ->
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
@@ -690,8 +691,16 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     let sf = mathematica_of_formula pr_w pr_s f in
     let var_list = CP.fv f in
     let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
-    let fmath = List.fold_left (fun sf sv -> "Exists[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
-    let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in
+    let fmath = (
+      match sv_list with
+      | [] -> sf
+      | [sv] -> "Exists[" ^ sv ^ ", " ^ sf ^ "]"
+      | _ ->
+          let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
+          "Exists[" ^ svar ^ ", " ^ sf ^ "]"
+    ) in
+    let mathematica_input = "Reduce[" ^ fmath ^ ", Reals]\n" in
+    (* let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in *)
     let runner () = check_formula mathematica_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -724,8 +733,16 @@ let is_valid_ops pr_w pr_s f imp_no =
   let sf = mathematica_of_formula pr_w pr_s f in
   let var_list = CP.fv f in
   let sv_list = List.map (fun v -> mathematica_of_spec_var v) var_list in
-  let fmath = List.fold_left (fun sf sv -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]") sf sv_list in
-  let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in
+  let fmath = (
+    match sv_list with
+    | [] -> sf
+    | [sv] -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]"
+    | _ ->
+        let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
+        "ForAll[" ^ svar ^ ", " ^ sf ^ "]"
+  ) in
+  let mathematica_input = "Reduce[" ^ fmath ^ ", Reals]\n" in
+  (* let mathematica_input = "Resolve[" ^ fmath ^ ", Reals]\n" in *)
   let runner () = check_formula mathematica_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
