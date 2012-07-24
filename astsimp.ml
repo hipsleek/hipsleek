@@ -7558,7 +7558,8 @@ and check_barrier_wf prog bd =
       Gen.Profiling.inc_counter "barrier_proofs";
       (*should be made to use "and" on xpures to detect the contradiction, probably by looking only at the pures after normalization*)
       if  Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar f1 f2 CF.Flow_combine no_pos) then () 
-      else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st))) in
+      else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st)^"  for preconditions: \n f1:   "^
+	  (Cprinter.string_of_formula f1)^"\n f2:    "^(Cprinter.string_of_formula f2))) in
 	  let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
     let rec helper l = match l with
      | [] -> ()
