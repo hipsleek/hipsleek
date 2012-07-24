@@ -13,10 +13,11 @@ x \item MISD approaches
 		-> increasingly more complex due to the feedback loop
 \item SIMD 
 	+ \item linear systolic machine for polynomials of various degrees using Horner's rule
-	\item video compression algorithm, variants - strong weak ..., various thread counts
+	+ \item video compression algorithm, variants - strong weak ...
 
-\item pipeline approach, barriers are used to synchronize and also mimic clock rising edge and falling edge,
-   each thread is a stage and one extra thread mimics the clock
++ \item pipeline approach, barriers are used to synchronize and also mimic clock rising edge and falling edge,
+     each thread is a stage and one extra thread mimics the clock
+
 \item a combination of misd and pipeline, alternating stages, centralizer, producer
 
 \item thesis example  
