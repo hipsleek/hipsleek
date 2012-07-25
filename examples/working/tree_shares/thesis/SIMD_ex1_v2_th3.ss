@@ -162,7 +162,6 @@ requires i::cl(@@C)<T1>*x1::cl2(@@C)<TX1,TP1>*x2::cl2(@@C)<TX2,TP2>*x3::cl2(@@C)
 void controll(cl i, cl2 x1, barrier b)
 requires i::cl(@@C)<T1>*x1::cl2(@@W1C)<TX1,TP1>*x2::cl2(@@W2C)<TX2,TP2>*x3::cl2(@@W3C)<TX3,TP3>*x4::cl2(@@W4C)<TX4,TP4>*x5::cl2<TX5,TP5>*b::bn(@@C)<1,i,x1,x2,x3,x4,x5>
   ensures i::cl<T1>*x1::cl2<TX1,TP1>*x2::cl2<TX2,TP2>*x3::cl2<TX3,TP3>*x4::cl2<TX4,TP4>*x5::cl2<TX5,TP5>*b::bn(@@C)<3,i,x1,x2,x3,x4,x5>& T1>=30;
-/*
   {
   if (i.val<30)
   {                               // stage 1
@@ -175,7 +174,7 @@ requires i::cl(@@C)<T1>*x1::cl2(@@W1C)<TX1,TP1>*x2::cl2(@@W2C)<TX2,TP2>*x3::cl2(
   }
   else Barrier b;                 // stage 1->3
 }
-*/
+
 
 
 

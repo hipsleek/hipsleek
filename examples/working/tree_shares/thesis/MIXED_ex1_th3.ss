@@ -133,6 +133,44 @@ void thl22(cl2 x1, cl2 x2, cl2 x3,cl2 x4, barrier b)
 		}
 }
 
+void startert3(cl2 x1, cl2 x2, cl2 x5, barrier b)
+requires x1::cl2(@@B3)<TX1>*x2::cl2(@@B3)<_>*x3::cl2(@@B3)<_>*x4::cl2(@@B3)<_>*x5::cl2(@@B3)<_>*b::bn(@@B3)<0,x1,x2,x3,x4,x5> 
+ensures x5::cl2<TX5>*b::bn(@@B3)<4,x1,x2,x3,x4,x5>;
+{
+	Barrier b;
+	thl31(x1,x2,x5,b);
+}
+ 
+void thl31(cl2 x1, cl2 x2, cl2 x5, barrier b)
+ requires x2::cl2(@@B3)<TX2>*x5::cl2<_>*b::bn(@@B3)<1,x1,x2,x3,x4,x5> ensures x5::cl2<_>*b::bn(@@B3)<4,x1,x2,x3,x4,x5>;
+{
+	int a,c;
+	if (x2.val<30)
+	{
+		Barrier b;			//1-2
+		thl32 (x1,x5, b);
+		Barrier b;  //2-1
+		thl31(x1,x2,x5,b);
+	}
+	else Barrier b;
+}
+
+void thl32(cl2 x1, cl2 x5, barrier b)
+ requires x1::cl2(@@B3)<_>*x5::cl2(@@D2)<_>*b::bn(@@B3)<2,x1,x2,x3,x4,x5> 
+	ensures x1::cl2(@@B3)<TX1>*x5::cl2(@@D2)<_>*b::bn(@@B3)<2,x1,x2,x3,x4,x5>  & TX1>=30;
+{
+	int a,c;
+		if (x1.val<30)
+		{
+			c = x1.val+x5.val;
+			Barrier b;	//2-3
+			x5.val = a+c;
+			Barrier b;	//3-2
+			thl32 (x1,x5, b);
+		}
+}
+
+
 
 void starterc(cl2 x1, cl2 x2,  barrier b)
  requires x1::cl2(@@BC)<TX1>*x2::cl2(@@BC)<TX2>*x3::cl2(@@BC)<TX3>*x4::cl2(@@BC)<TX4>*x5::cl2(@@BC)<TX5>*b::bn(@@BC)<0,x1,x2,x3,x4,x5>  
