@@ -25,3 +25,9 @@ x \item MISD approaches
 
 \end{itemize}
 
+
+as the number of threads increases so does the number of resources shared and tracked,
+therefore it is interesting to follow ..
+
+
+
