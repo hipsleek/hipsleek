@@ -83,7 +83,7 @@ module Token = struct
   (*operators*)
     | AND ->"&" | ANDAND ->"&&" | AT ->"@" | LEND->"@L" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#"
-    | POW -> "pow" | SQRT -> "sqrt" | ABS -> "abs"
+    | POW -> "__pow" | SQRT -> "__sqrt" | ABS -> "__abs"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
     | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||"
     | DERIVE -> "|-" | OSQUARE -> "[" | PERCENT ->"%" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | STAR -> "*"

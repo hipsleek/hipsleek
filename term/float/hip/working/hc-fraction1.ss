@@ -15,21 +15,37 @@ void loop1(float x)
 */
 
 // BUG
-/*
+
 void loop2(float x)
   case
   {
-    x = 0.0 -> requires true ensures true;
-    x != 0.0 -> requires Term[SeqCon(x, 1.0, x > -1)] ensures true;
+    x = 0.0 -> requires Term ensures true;
+    x = 1.0 -> requires Loop ensures false;
+    x > 1.0 -> requires Term[SeqCon(x, 1.0, x > -1.0)] ensures true;
+    0 < x < 1.0 -> requires Term[SeqCon(x, 1.0, x > -1.0)] ensures true;
+    -1 <= x < 0.0 -> requires Term ensures true;
+    x <  -1 -> requires Term ensures true;
   }
 {
-  if (x > -1)
+  if (x < -1.0)
     return;
-  else
+  else if (x != 0.0)
     loop2(2.0 - 1.0 / x);
 }
+/*
+void loop3(float x)
+  case
+  {
+    x = 0.0 -> requires Term ensures true;
+    x > 2.0 -> requires Term[SeqCon(x, 0.0, x > 1.0)] ensures true;
+    2.0 >= x > 0.0 -> requires Term ensures true;
+    x < 0.0 -> requires Term ensures true;
+  }
+{
+  if (x > 1.0)
+    loop3(x/2.0);
+}
 */
-
 /*
 void loop3(float x)
   requires x != 0.0 & Term[SeqCon(x, 1.0, x < -1)] ensures true;
@@ -50,7 +66,7 @@ void loop4(float x)
 }
 */
 
-
+/*
 void loop5(float x)
   requires (x != 0.0) ensures true;
 {
@@ -67,9 +83,7 @@ void loop6(float x)
 {
   if (x  > 1)
     return;
-  else {
-    if (x!=0.5) 
-      loop6(2.0 - 1.0 / x);
-      }
+  else if ((2.0 - 1.0/x) != 0.0)
+    loop6(2.0 - 1.0 / x);
 }
-
+*/

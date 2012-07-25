@@ -1083,13 +1083,13 @@ cexp_w :
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann=ann_term; ls1=measures_prim ->
-        let prim = P.PrimVar { P.prim_ann = t_ann;
-                                   P.prim_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((prim, None), None)) in
-        set_slicing_utils_pure_double f false
-    | t_ann=ann_term; ls1=opt_measures_lex_sqr; ls2=opt_measures_lex ->
+    | t_ann=ann_term; ls1=measures_lex_sqr; ls2=opt_measures_lex ->
         let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
+        set_slicing_utils_pure_double f false
+    | t_ann=ann_term ->
+        let prim = P.PrimVar { P.prim_ann = t_ann;
+                               P.prim_loc = get_pos_camlp4 _loc 1} in
+        let f = Pure_f (P.BForm ((prim, None), None)) in
         set_slicing_utils_pure_double f false
     ]
   | "pure_paren" 
@@ -1198,12 +1198,12 @@ cexp_w :
         apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-    | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
-        apply_cexp_form2 (fun c1 c2-> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-    | `SQRT; `OPAREN; c = SELF; `CPAREN ->
-        apply_cexp_form1 (fun x -> P.mkSqrt x (get_pos_camlp4 _loc 1)) c
     | `ABS; `OPAREN; c = SELF; `CPAREN ->
         apply_cexp_form1 (fun x -> P.mkAbs x (get_pos_camlp4 _loc 1)) c
+    | `SQRT; `OPAREN; c = SELF; `CPAREN ->
+        apply_cexp_form1 (fun x -> P.mkSqrt x (get_pos_camlp4 _loc 1)) c
+    | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+        apply_cexp_form2 (fun c1 c2-> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     ]
   | "pure_base"
     [ `TRUE ->
@@ -1240,15 +1240,11 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
-measures_prim : [[`OSQUARE; `CSQUARE]];
-
 opt_measures_lex :[[ il = OPT measures_lex -> un_option il [] ]];
 
 measures_lex :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
-
-measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
+measures_lex_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
 
 (* SeqConDec(measurement, limit, lower-bound or terminiation condition) *)
 measures_seqcondec: [[`OSQUARE; `SEQCONDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
@@ -1622,28 +1618,28 @@ spec_list_grp:
 spec: 
   [[
     `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
-     F.EInfer {
-       F.formula_inf_post = postf; 
-       F.formula_inf_vars = ivl;
-       F.formula_inf_continuation = s;
-       F.formula_inf_pos = get_pos_camlp4 _loc 1;
-     }
-    | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
-		 F.EBase {
-			 F.formula_struc_explicit_inst =cl;
-			 F.formula_struc_implicit_inst = [];
-			 F.formula_struc_exists = [];
-			 F.formula_struc_base = (F.subst_stub_flow n_flow dc);
-			 F.formula_struc_continuation = Some s;
-			 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
-	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
-	    	F.EBase {
-	    	 F.formula_struc_explicit_inst =cl;
-	    	 F.formula_struc_implicit_inst = [];
-	    	 F.formula_struc_exists = [];
-	    	 F.formula_struc_base =  (F.subst_stub_flow n_flow dc);
-	    	 F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
-	    	 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
+      F.EInfer {
+        F.formula_inf_post = postf; 
+        F.formula_inf_vars = ivl;
+        F.formula_inf_continuation = s;
+        F.formula_inf_pos = get_pos_camlp4 _loc 1;
+      }
+  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+      F.EBase {
+        F.formula_struc_explicit_inst =cl;
+        F.formula_struc_implicit_inst = [];
+        F.formula_struc_exists = [];
+        F.formula_struc_base = (F.subst_stub_flow n_flow dc);
+        F.formula_struc_continuation = Some s;
+        F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
+  | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
+      F.EBase {
+        F.formula_struc_explicit_inst =cl;
+        F.formula_struc_implicit_inst = [];
+        F.formula_struc_exists = [];
+        F.formula_struc_base =  (F.subst_stub_flow n_flow dc);
+        F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
+        F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
             (* F.formula_ext_complete = false;*)
    (*  | `REQUIRESC; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 F.EBase {
@@ -1665,9 +1661,10 @@ spec:
              F.formula_ext_complete = true;
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
   *)
-	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+  | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
-	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
+      F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

@@ -325,7 +325,6 @@ let find_primvar_b_formula (bf: CP.b_formula) : CP.p_formula =
   match pf with
   | CP.PrimVar _ -> pf
   | _ -> 
-      (* let _ = print_endline ("== bf = " ^ (Cprinter.string_of_b_formula bf)) in  *)
       raise (Exn_PrimVar "PrimVar not found! 1")
 
 let rec find_primvar_formula (f: CP.formula) : CP.p_formula =
@@ -406,18 +405,38 @@ let norm_lexvar_measures_by_length src dst =
     else Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
   else Some (src, Gen.BList.take sl dst)
 
-let norm_seqvar_measures_trans trans =
+let norm_seqvar_measures_trans_x trans =
+  (* TRUNG BUG*)
   match trans with
   | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> (
-      if ((seq1.CP.seq_ann = seq2.CP.seq_ann) 
-          && (seq1.CP.seq_variation = seq2.CP.seq_variation)
-          && (seq1.CP.seq_element != (CP.Null no_pos))
-          && (seq2.CP.seq_element != (CP.Null no_pos))) then
-        Some (seq1, seq2)
-      else
-        None
+      match seq1.CP.seq_element, seq2.CP.seq_element with
+      | CP.Null _, _ -> None
+      | _, CP.Null _ -> None
+      | _, _ -> (
+          if (seq1.CP.seq_ann = seq2.CP.seq_ann) && (seq1.CP.seq_variation = seq2.CP.seq_variation) then
+            Some (seq1, seq2)
+          else
+            None
+        )
     )
-  | _ -> None
+  | _ ->
+      None
+
+let norm_seqvar_measures_trans trans =
+  let pr_in trans = (
+    match trans with
+    | None -> "trans = None"
+    | Some (term_s, term_d) -> 
+        "trans = Some: " 
+        ^ "\n    trans_source = " ^ (Cprinter.string_of_p_formula term_s)
+        ^ "\n    trans_dest   = " ^ (Cprinter.string_of_p_formula term_d)
+  ) in
+  let pr_out res = (
+    match res with
+    | None -> "None"
+    | Some _ -> "Some"
+  ) in
+  Debug.no_1 "norm_seqvar_measures_trans" pr_in pr_out (fun t -> norm_seqvar_measures_trans_x t) trans
 
 (** strip termination var from a formula
     return: termvar * remained formula *)
@@ -928,25 +947,25 @@ let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tran
   let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
   let term_measures, term_res, term_err_msg, rank_formula = (
-    (* check termination based on initial constraint *)
-    let init_res = (
-      if List.length bounds_src > 0 then
-        check_decreasing_seqvar_init_and_lower_bound init_constraint elm_src bounds_src
-      else 
-        check_decreasing_seqvar_init_and_term_constraint init_constraint termcons_src
-    ) in
-    if init_res then
-      Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
-      None, 
+    (* check transition *)
+    let trans_res = check_decreasing_seqvar_transition init_constraint elm_src lm_src elm_dst lm_dst in
+    if not trans_res then
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
       None
     else (
-      (* check transition *)
-      let trans_res = check_decreasing_seqvar_transition init_constraint elm_src lm_src elm_dst lm_dst in
-      if not trans_res then
-        Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
-        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
+      (* check termination based on initial constraint *)
+      let init_res = (
+        if List.length bounds_src > 0 then
+          check_decreasing_seqvar_init_and_lower_bound init_constraint elm_src bounds_src
+        else 
+          check_decreasing_seqvar_init_and_term_constraint init_constraint termcons_src
+      ) in
+      if init_res then
+        Some (CP.SeqVar seq_src),
+        (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
+        None,
         None
       else (
         (* check bound *)
@@ -1079,28 +1098,6 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
           let dist_src = CP.mkAbs (CP.mkSubtract element_src limit_src no_pos) no_pos in
           let dist_dst = CP.mkAbs (CP.mkSubtract element_dst limit_dst no_pos) no_pos in
           CP.mkPure (CP.mkGt dist_src dist_dst no_pos)
-          (* (* *)                                                                                                                                *)
-          (* let dist11 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in                                                                     *)
-          (* let dist12 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in                                                                     *)
-          (* let dist13 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in *)
-          (* let dist1 = CP.mkAnd dist11 (CP.mkAnd dist12 dist13 no_pos) no_pos in                                                                *)
-          (* (* *)                                                                                                                                *)
-          (* let dist21 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in                                                                     *)
-          (* let dist22 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in                                                                     *)
-          (* let dist23 = CP.mkPure (CP.mkGt (CP.mkSubtract element_src limit_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in *)
-          (* let dist2 = CP.mkAnd dist21 (CP.mkAnd dist22 dist23 no_pos) no_pos in                                                                *)
-          (* (* *)                                                                                                                                *)
-          (* let dist31 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in                                                                     *)
-          (* let dist32 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in                                                                     *)
-          (* let dist33 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract element_dst limit_dst no_pos) no_pos) in *)
-          (* let dist3 = CP.mkAnd dist31 (CP.mkAnd dist32 dist33 no_pos) no_pos in                                                                *)
-          (* (* *)                                                                                                                                *)
-          (* let dist41 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in                                                                     *)
-          (* let dist42 = CP.mkPure (CP.mkLt element_src limit_src no_pos) in                                                                     *)
-          (* let dist43 = CP.mkPure (CP.mkGt (CP.mkSubtract limit_src element_src no_pos) (CP.mkSubtract limit_dst element_dst no_pos) no_pos) in *)
-          (* let dist4 = CP.mkAnd dist41 (CP.mkAnd dist42 dist43 no_pos) no_pos in                                                                *)
-          (* (* *)                                                                                                                                *)
-          (* CP.mkOr dist1 (CP.mkOr dist2 (CP.mkOr dist3 dist4 None no_pos) None no_pos) None no_pos                                              *)
     ) in
     let distance_constraint_res, _, _ = TP.imply init_constraint distance_constraint "" false None in
     (* let _ = print_endline ("\n== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) in       *)
@@ -1160,25 +1157,25 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
   let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
   let term_measures, term_res, term_err_msg, rank_formula = (
-    (* check termination based on initial constraint *)
-    let init_res = (
-      if List.length bounds_src > 0 then
-        check_general_seqvar_init_and_bounds init_constraint elm_src bounds_src
-      else 
-        check_general_seqvar_init_and_term_constraint init_constraint termcons_src 
-    ) in
-    if init_res then
-      Some (CP.SeqVar seq_src), 
-      (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
-      None, 
+    (* check transition *)
+    let trans_res = check_general_seqvar_transition init_constraint elm_src lm_src elm_dst lm_dst in
+    if not trans_res then
+      Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
       None
     else (
-      (* check transition *)
-      let trans_res = check_general_seqvar_transition init_constraint elm_src lm_src elm_dst lm_dst in
-      if not trans_res then
-        Some (CP.SeqVar {seq_src with CP.seq_ann = Fail TermErr_May}),
-        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Invalid_Limit trans)),
-        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Invalid_Limit trans))),
+      (* check termination based on initial constraint *)
+      let init_res = (
+        if List.length bounds_src > 0 then
+          check_general_seqvar_init_and_bounds init_constraint elm_src bounds_src
+        else 
+          check_general_seqvar_init_and_term_constraint init_constraint termcons_src 
+      ) in
+      if init_res then
+        Some (CP.SeqVar seq_src), 
+        (term_pos, trans, Some orig_ante, Term_S (Primitive_Term_Valid trans)),
+        None,
         None
       else (
         (* check bound *)
@@ -1250,7 +1247,9 @@ let check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans 
   (* (estate, lhs_p, rhs_p, None) *)
   let ans = norm_seqvar_measures_trans trans in
   match ans with
-  | None -> estate, lhs_p, rhs_p, None
+  | None ->
+      (* no need to check termination by seqvar transition*) 
+      (estate, lhs_p, rhs_p, None)
   | Some (seq_src, seq_dst) -> (
       let vari_src = seq_src.CP.seq_variation in
       if (vari_src = CP.SeqConDec) then 
@@ -1291,7 +1290,6 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
     let conseq = MCP.pure_of_mix rhs_p in
     let seqvar_dst = find_seqvar_formula conseq in
-    (* let _ = print_endline ("== seqvar_dst = " ^ (Cprinter.string_of_p_formula seqvar_dst)) in  *)
     let seq_dst = match seqvar_dst with
                   | CP.SeqVar seq -> seq
                   | _ -> raise (Exn_SeqVar "SeqVar not found!") in
@@ -1468,20 +1466,14 @@ let check_term_rhs_x_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let termvar_conseq = find_termvar_formula conseq in
     let termvar_es = estate.es_var_measures in
     match (termvar_es, termvar_conseq) with
-    | (Some CP.LexVar _), _ ->
+    | Some CP.LexVar _, CP.LexVar _ ->
         check_lexvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    | (Some CP.SeqVar _), _ ->
+    | Some CP.SeqVar _, CP.SeqVar _ ->
         check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    | (Some CP.PrimVar _), _ -> (
-        (* (match (termvar_es, termvar_conseq) with                                       *)
-        (* | Some p1, p2 ->                                                               *)
-        (*     let _ = print_endline ("== p1 = " ^ (Cprinter.string_of_p_formula p1)) in  *)
-        (*     let _ = print_endline ("== p2 = " ^ (Cprinter.string_of_p_formula p2)) in  *)
-        (*     ()                                                                         *)
-        (* | _ -> ());                                                                    *)
+    | Some CP.PrimVar _, CP.PrimVar _ -> (
         check_primvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
       )
-    | _ -> raise (Exn_TermVar "TermVar not found!")
+    | _ -> raise (Exn_TermVar "Invalid TermVar Transition!")
   ) 
   with e -> (
     match e with

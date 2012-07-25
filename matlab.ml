@@ -147,7 +147,7 @@ let restart reason =
  *)
 let send_and_receive f =
   if not !is_matlab_running then (
-    let _ = print_endline ("== start 2") in start ()
+    start ()
   );
   if !is_matlab_running then (
     try
@@ -156,7 +156,6 @@ let send_and_receive f =
         read_till_prompt !process.inchannel
       ) in
       let fail_with_timeout () = (
-         let _ = print_endline ("== restart 1") in 
          restart "Timeout!";
         ""
       ) in
@@ -165,11 +164,9 @@ let send_and_receive f =
     with
     | ex ->
         print_endline (Printexc.to_string ex);
-        let _ = print_endline ("== restart 2") in
         (restart "Matlab crashed or something really bad happenned!"; "1")
   )
   else (
-    let _ = print_endline ("== restart 3") in
     (restart "matlab has not started!!"; "2")
   )
 
@@ -252,7 +249,6 @@ let matlab_of_spec_var (sv: CP.spec_var) =
 
 let get_vars_formula (p : CP.formula) =
   let svars = Cpure.fv p in
-  let _ = print_endline ("== svars length = " ^ (string_of_int (List.length svars))) in 
   List.map matlab_of_spec_var svars
 
 let rec matlab_of_exp e0 : (string * CP.spec_var list)= 

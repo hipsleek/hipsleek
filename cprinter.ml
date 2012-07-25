@@ -709,11 +709,12 @@ let pr_var_measures (measures : CP.p_formula) : unit =
       let ls1 = lex.CP.lex_exp in
       let ls2 = lex.CP.lex_tmp in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string (string_of_term_ann t_ann);
+      fmt_string ("LexVar(" ^ string_of_term_ann t_ann);
       pr_s "" pr_formula_exp ls1;
       if ls2!=[] then
         pr_set pr_formula_exp ls2
-      else ()
+      else ();
+      fmt_string ")"
     )
   | CP.SeqVar seq -> (
       let ann = seq.CP.seq_ann in
@@ -722,11 +723,11 @@ let pr_var_measures (measures : CP.p_formula) : unit =
       let v = seq.CP.seq_variation in
       let ls = [elm; lm] in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string ((string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
+      fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
       pr_s "" pr_formula_exp ls;
-      fmt_string (")]")
+      fmt_string (")])")
     )
-  | CP.PrimVar prim -> fmt_string ((string_of_term_ann prim.CP.prim_ann) ^ "()")
+  | CP.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")")
   | _ -> failwith "Invalid value of measures"
 
 (** print a p_formula  to formatter *)
@@ -736,16 +737,19 @@ let rec pr_p_formula (pf: P.p_formula) =
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   match pf with
   | P.LexVar t_info -> 
+      fmt_string "LexVar(";
       fmt_string (string_of_term_ann t_info.CP.lex_ann);
-      pr_s "" pr_formula_exp t_info.CP.lex_exp
+      pr_s "" pr_formula_exp t_info.CP.lex_exp;
+      fmt_string ")"
   | P.SeqVar seq ->
+      fmt_string "SeqVar(";
       fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
       fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
       pr_formula_exp seq.CP.seq_element;
       fmt_string ", ";
       pr_formula_exp seq.CP.seq_limit;
-      fmt_string "]";
-  | P.PrimVar prim -> fmt_string ((string_of_term_ann prim.CP.prim_ann) ^ "()");
+      fmt_string "])"
+  | P.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")");
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
   | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -1481,18 +1485,19 @@ let pr_estate (es : entail_state) =
         let t_ann = lex.CP.lex_ann in
         let l1 = lex.CP.lex_exp in
         let l2 = lex.CP.lex_tmp in
-        fmt_string (string_of_term_ann t_ann);
+        fmt_string ("LexVar(" ^ (string_of_term_ann t_ann));
         pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
+        fmt_string ")"
     | CP.SeqVar seq ->
         let ann = seq.CP.seq_ann in
         let elm = seq.CP.seq_element in
         let lm = seq.CP.seq_limit in
         let v = seq.CP.seq_variation in
         let ls = [elm; lm] in
-        fmt_string ((string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
+        fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
         pr_seq "" pr_formula_exp ls;
-        fmt_string "])"
-    | CP.PrimVar prim -> fmt_string ((string_of_term_ann prim.CP.prim_ann) ^ "()")
+        fmt_string "]))"
+    | CP.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")")
     | _ -> failwith "Invalid value of term"
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)

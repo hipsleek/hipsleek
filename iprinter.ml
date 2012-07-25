@@ -197,16 +197,16 @@ let string_of_b_formula (pf,il) =
       | Term -> 
           let opt = if ls2==[] then "" else
             "{"^(pr_list string_of_formula_exp ls2)^"}"
-          in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
-      | _ -> ann)
+          in "LexVar(" ^ ann ^ "["^(pr_list string_of_formula_exp ls1)^"]"^opt^")"
+      | _ -> "LexVar(" ^ ann ^ ")")
   | P.SeqVar seq -> (
       let ann = string_of_term_ann seq.P.seq_ann in
       let seq_vari = string_of_sequence_variation seq.P.seq_variation in
       let elm = string_of_formula_exp seq.P.seq_element in
       let lm = string_of_formula_exp seq.P.seq_limit in
-      ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ lm ^ ")"
+      "SeqVar(" ^ ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ lm ^ "))"
     )
-  | P.PrimVar prim -> (string_of_term_ann prim.P.prim_ann) ^ "()";
+  | P.PrimVar prim -> "PrimVar(" ^ (string_of_term_ann prim.P.prim_ann) ^ ")";
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
