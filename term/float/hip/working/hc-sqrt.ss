@@ -1,7 +1,7 @@
 /* sqrt examples */
 
 float sqrt(float x)
-  requires x > 0 & Term
+  requires x >= 0 & Term
   ensures res = __sqrt(x);      // __sqrt(x) is the built-in function
 
 // correct
@@ -18,6 +18,35 @@ void foo_term1(float x)
   }
 }
 
+
+// correct
+void foo_term1a(float x)
+    case
+    {
+      x <= 2.0 -> requires Term ensures true;
+      x > 2.0  -> requires Term[SeqDec(x, 1.0, 1.1)] ensures true;
+    }
+{
+  if (x > 1.1)
+  {
+    foo_term1a(sqrt(x));
+  }
+}
+
+void foo_term1b(int x)
+    case
+    {
+      x <= 2 -> requires Term ensures true;
+      x > 2  -> requires Term[x] ensures true;
+    }
+{
+  if (x > 1)
+  {
+    foo_term1b(x-1);
+  }
+}
+
+/*
 // correct
 void foo_term2(float x)
     case
@@ -107,3 +136,4 @@ void foo_term6(float x)
 {
   foo_term6(sqrt(x));
 }
+*/

@@ -1083,13 +1083,8 @@ cexp_w :
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann=ann_term; ls1=measures_lex_sqr; ls2=opt_measures_lex ->
+    | t_ann=ann_term; ls1=opt_measures_lex_sqr; ls2=opt_measures_lex ->
         let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
-        set_slicing_utils_pure_double f false
-    | t_ann=ann_term ->
-        let prim = P.PrimVar { P.prim_ann = t_ann;
-                               P.prim_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((prim, None), None)) in
         set_slicing_utils_pure_double f false
     ]
   | "pure_paren" 
@@ -1244,7 +1239,9 @@ opt_measures_lex :[[ il = OPT measures_lex -> un_option il [] ]];
 
 measures_lex :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-measures_lex_sqr :[[`OSQUARE; t=LIST1 cexp SEP `COMMA; `CSQUARE -> t]];
+opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
+
+measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 (* SeqDec(measurement, limit, lower-bound or terminiation condition) *)
 measures_seqdec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
