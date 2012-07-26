@@ -4397,18 +4397,13 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         let tc = match seq_info.IP.seq_termcons with
                  | None -> None
                  | Some t -> Some (trans_pure_formula t stab) in
-        let vari = match seq_info.IP.seq_variation with
-                   | IP.SeqDec -> CP.SeqDec
-                   | IP.SeqCon -> CP.SeqCon in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;
                     CP.seq_limit = lm;
                     CP.seq_bounds = b;
                     CP.seq_termcons = tc;
                     CP.seq_loc = seq_info.IP.seq_loc;
-                    CP.seq_variation = vari }
-    | IP.PrimVar prim -> CP.PrimVar { CP.prim_ann = prim.IP.prim_ann;
-                                              CP.prim_loc = prim.IP.prim_loc }
+                    CP.seq_decrease = seq_info.IP.seq_decrease }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -5182,7 +5177,6 @@ and gather_type_info_b_formula_x prog b0 stab =
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
         let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in
         ()
-    | IP.PrimVar _ -> ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in

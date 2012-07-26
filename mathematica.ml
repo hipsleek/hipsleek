@@ -377,7 +377,6 @@ let rec mathematica_of_b_formula b : string =
       let se3 = mathematica_of_exp e3 in
       ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " <= " ^ se3 ^ ") || "
         ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " >= " ^ se3 ^ "))")
-  | CP.PrimVar _
   | CP.LexVar _
   | CP.SeqVar _
   | CP.BagIn _

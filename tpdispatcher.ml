@@ -626,7 +626,6 @@ let is_array_b_formula (pf,_) = match pf with
     | CP.SubAnn _
     | CP.LexVar _
     | CP.SeqVar _
-    | CP.PrimVar _
 		-> Some false    
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 

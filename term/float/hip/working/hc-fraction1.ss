@@ -4,7 +4,7 @@ void loop1(float x)
   case
   {
     x = 0.0 -> requires true ensures true;
-    x != 0.0 -> requires Term[SeqCon(x, 1.0, x < 1.1)] ensures true;
+    x != 0.0 -> requires Term[SeqGen(x, 1.0, x < 1.1)] ensures true;
   }
 {
   if (x < 1.1)
@@ -21,8 +21,8 @@ void loop2(float x)
   {
     x = 0.0 -> requires Term ensures true;
     x = 1.0 -> requires Loop ensures false;
-    x > 1.0 -> requires Term[SeqCon(x, 1.0, x > -1.0)] ensures true;
-    0 < x < 1.0 -> requires Term[SeqCon(x, 1.0, x > -1.0)] ensures true;
+    x > 1.0 -> requires Term[SeqGen(x, 1.0, x > -1.0)] ensures true;
+    0 < x < 1.0 -> requires Term[SeqGen(x, 1.0, x > -1.0)] ensures true;
     -1 <= x < 0.0 -> requires Term ensures true;
     x <  -1 -> requires Term ensures true;
   }
@@ -37,7 +37,7 @@ void loop3(float x)
   case
   {
     x = 0.0 -> requires Term ensures true;
-    x > 2.0 -> requires Term[SeqCon(x, 0.0, x > 1.0)] ensures true;
+    x > 2.0 -> requires Term[SeqGen(x, 0.0, x > 1.0)] ensures true;
     2.0 >= x > 0.0 -> requires Term ensures true;
     x < 0.0 -> requires Term ensures true;
   }
@@ -48,7 +48,7 @@ void loop3(float x)
 */
 /*
 void loop3(float x)
-  requires x != 0.0 & Term[SeqCon(x, 1.0, x < -1)] ensures true;
+  requires x != 0.0 & Term[SeqGen(x, 1.0, x < -1)] ensures true;
 {
   if (x < -1)
     return;
@@ -57,7 +57,7 @@ void loop3(float x)
 }
 
 void loop4(float x)
-  requires (x != 0.0) & Term[SeqCon(x, 1.0, x < -1)] ensures true;
+  requires (x != 0.0) & Term[SeqGen(x, 1.0, x < -1)] ensures true;
 {
   if (x  > 1)
     return;

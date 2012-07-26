@@ -23,7 +23,7 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 
 and sequence_variation_type =
   | SeqDec                  (* sequence converge & decrease *)
-  | SeqCon                     (* sequence converge *)
+  | SeqGen                     (* sequence converge *)
 
 and sequence_info = {
   seq_ann: term_ann;
@@ -31,7 +31,7 @@ and sequence_info = {
   seq_limit: exp;
   seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
   seq_termcons: formula option;  (* terminate condition *)
-  seq_variation: sequence_variation_type; 
+  seq_decrease: bool; 
   seq_loc : loc
 }
 
@@ -56,7 +56,6 @@ and p_formula =
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
   | LexVar of (term_ann * (exp list) * (exp list) * loc)
   | SeqVar of sequence_info
-  | PrimVar of prim_term_info                 (* primitive termination var *)
     (* bags and bag formulae *)
   | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
@@ -212,7 +211,6 @@ and bfv (bf : b_formula) =
       let args = [e; lm] in
       let args_fv = List.concat (List.map afv args) in
       Gen.BList.remove_dups_eq (=) args_fv
-  | PrimVar _ -> []
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -516,7 +514,6 @@ and pos_of_formula (f : formula) = match f with
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
 		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
       | SeqVar seq_info -> seq_info.seq_loc
-      | PrimVar prim -> prim.prim_loc
 		  | VarPerm (_,_,p) -> p
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
@@ -650,7 +647,6 @@ and b_apply_one (fr, t) bf =
       let lm = e_apply_one (fr, t) seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
                             seq_limit = lm; }
-  | PrimVar _ -> pf
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -774,7 +770,6 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
       let lm = seq_info.seq_limit in
       let exps = [e; lm] in
       List.concat (List.map look_for_anonymous_exp exps)
-  | PrimVar _ -> []
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
         vs
@@ -828,7 +823,6 @@ and find_lexp_b_formula (bf: b_formula) ls =
       let lm = seq_info.seq_limit in
       let exps = [e; lm] in
       List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] exps
-  | PrimVar _ -> []
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -1110,7 +1104,6 @@ and float_out_pure_min_max (p : formula) : formula =
 	  | BConst _ | BVar _ 
 	  | LexVar _ -> BForm (b,lbl)
     | SeqVar _ -> BForm (b,lbl)
-    | PrimVar _ -> BForm (b, lbl)
 	  | Lt (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

@@ -1064,11 +1064,11 @@ cexp_w :
                              P.seq_limit = lm;
                              P.seq_bounds = bounds;
                              P.seq_termcons = termcons;
-                             P.seq_variation = P.SeqDec;
+                             P.seq_decrease = true;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seqcon ->
+    | t_ann = ann_term; param = measures_seqgen ->
         let (m, lm, b_tc) = param in
         let bounds, termcons =  match b_tc with
                       | [Pure_c c1; Pure_c c2] -> [c1; c2], None
@@ -1079,7 +1079,7 @@ cexp_w :
                              P.seq_limit = lm;
                              P.seq_bounds = bounds;
                              P.seq_termcons = termcons;
-                             P.seq_variation = P.SeqCon;
+                             P.seq_decrease = false;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
         let f = Pure_f (P.BForm ((seq, None), None)) in
         set_slicing_utils_pure_double f false
@@ -1246,8 +1246,8 @@ measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 (* SeqDec(measurement, limit, lower-bound or terminiation condition) *)
 measures_seqdec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
 
-(* SeqCon(measurement, limit, lower-bound, upper-bound or termination condition) *)
-measures_seqcon: [[`OSQUARE; `SEQCON; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; b_tc=LIST1 cexp_w SEP `COMMA; `CPAREN; `CSQUARE -> (m, lm, b_tc)]];
+(* SeqGen(measurement, limit, lower-bound, upper-bound or termination condition) *)
+measures_seqgen: [[`OSQUARE; `SEQGEN; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; b_tc=LIST1 cexp_w SEP `COMMA; `CPAREN; `CSQUARE -> (m, lm, b_tc)]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

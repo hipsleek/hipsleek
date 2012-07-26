@@ -4003,7 +4003,6 @@ let rec collect_term_ann_context ctx =
       | None -> []
       | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
       | Some (CP.SeqVar seq) -> [seq.CP.seq_ann]
-      | Some (CP.PrimVar prim) -> [prim.CP.prim_ann]
       | _ -> report_error no_pos "Invalid value for es_var_measures"
     )
   | OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
@@ -4046,7 +4045,6 @@ let rec collect_term_measures_context ctx =
       | None -> []
       | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
       | Some (CP.SeqVar seq) -> [seq.CP.seq_ann]
-      | Some (CP.PrimVar prim) -> [prim.CP.prim_ann]
       | _ -> report_error no_pos "Invalid value for es_var_measures"
     )
   | OCtx (ctx1, _) -> collect_term_measures_context ctx1
@@ -5106,10 +5104,6 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true
         | Some (CP.SeqVar seq) ->
             let m = CP.mkPure (CP.SeqVar seq) in
-            Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
-            MCP.merge_mems mix_f (MCP.mix_of_pure m) true
-        | Some (CP.PrimVar prim) ->
-            let m = CP.mkPure (CP.PrimVar prim) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true
         | _ -> report_error no_pos "Invalid value for esvm" in
@@ -7567,8 +7561,8 @@ let rec norm_struc_with_termvar is_primitive struc_f  = match struc_f with
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_termvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
       let termvar = 
-        if is_primitive then  CP.mkPrimVar Term no_pos
-        else CP.mkPrimVar MayLoop no_pos in 
+        if is_primitive then  CP.mkLexVar Term [] [] no_pos
+        else CP.mkLexVar MayLoop [] [] no_pos in 
       mkEBase_with_cont (CP.mkPure termvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_termvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList (map_l_snd (norm_struc_with_termvar is_primitive) b)

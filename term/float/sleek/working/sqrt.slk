@@ -34,5 +34,5 @@ checkentail (x > 0.0) & (x < 1.0) & (upperbound < 1.0) & Term[SeqDec(-x, -1.0, x
   if (x > A)
     loop(sqrt(x))
 */
-checkentail (x > 0.0) & (x != 1.0) & (A < 1.0) & (A > 0.0) & Term[SeqCon(x, 1.0, x > A)] & (y = __sqrt(x)) 
-            |- (y > 0.0) & (y != 1.0) & Term[SeqCon(y, 1.0, y > A)].
+checkentail (x > 0.0) & (x != 1.0) & (A < 1.0) & (A > 0.0) & Term[SeqGen(x, 1.0, x > A)] & (y = __sqrt(x)) 
+            |- (y > 0.0) & (y != 1.0) & Term[SeqGen(y, 1.0, y > A)].

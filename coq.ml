@@ -177,7 +177,6 @@ and coq_of_b_formula b =
 			illegal_format "coq_of_exp : relation cannot be handled"
     | CP.LexVar _ -> illegal_format "coq_of_exp : LexVar cannot be handled"
     | CP.SeqVar _ -> illegal_format "coq_of_exp : SeqVar cannot be handled"
-    | CP.PrimVar _ -> illegal_format "coq_of_exp : PrimVar cannot be handled"
     | CP.VarPerm _ ->
 		illegal_format "coq_of_exp : VarPerm cannot be handled"
 

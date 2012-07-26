@@ -183,7 +183,7 @@ let string_of_slicing_label sl =
 let string_of_sequence_variation (v: P.sequence_variation_type) : string =
   match v with
   | P.SeqDec -> "SeqDec"
-  | P.SeqCon -> "SeqCon"
+  | P.SeqGen -> "SeqGen"
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
@@ -201,12 +201,11 @@ let string_of_b_formula (pf,il) =
       | _ -> "LexVar(" ^ ann ^ ")")
   | P.SeqVar seq -> (
       let ann = string_of_term_ann seq.P.seq_ann in
-      let seq_vari = string_of_sequence_variation seq.P.seq_variation in
-      let elm = string_of_formula_exp seq.P.seq_element in
-      let lm = string_of_formula_exp seq.P.seq_limit in
-      "SeqVar(" ^ ann ^ " " ^ seq_vari ^ "(" ^ elm ^ ", " ^ lm ^ "))"
+      let variation = if seq.P.seq_decrease then "decrease" else "general" in
+      let element = string_of_formula_exp seq.P.seq_element in
+      let limit = string_of_formula_exp seq.P.seq_limit in
+      "SeqVar(" ^ ann ^ " " ^ variation ^ "(" ^ element ^ ", " ^ limit ^ "))"
     )
-  | P.PrimVar prim -> "PrimVar(" ^ (string_of_term_ann prim.P.prim_ann) ^ ")";
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

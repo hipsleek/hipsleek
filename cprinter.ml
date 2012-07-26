@@ -510,7 +510,7 @@ let string_of_derv dr =
 let string_of_sequence_variation (v : P.sequence_variation_type) : string =
   match v with
   | P.SeqDec -> "SeqDec"
-  | P.SeqCon -> "SeqCon"
+  | P.SeqGen -> "SeqGen"
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
@@ -718,16 +718,15 @@ let pr_var_measures (measures : CP.p_formula) : unit =
     )
   | CP.SeqVar seq -> (
       let ann = seq.CP.seq_ann in
-      let elm = seq.CP.seq_element in
-      let lm = seq.CP.seq_limit in
-      let v = seq.CP.seq_variation in
-      let ls = [elm; lm] in
+      let element = seq.CP.seq_element in
+      let limit = seq.CP.seq_limit in
+      let variation = if (seq.CP.seq_decrease) then "decrease" else "general" in
+      let ls = [element; limit] in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "[" ^ (string_of_sequence_variation v));
+      fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "[" ^ variation);
       pr_s "" pr_formula_exp ls;
       fmt_string (")])")
     )
-  | CP.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")")
   | _ -> failwith "Invalid value of measures"
 
 (** print a p_formula  to formatter *)
@@ -744,12 +743,11 @@ let rec pr_p_formula (pf: P.p_formula) =
   | P.SeqVar seq ->
       fmt_string "SeqVar(";
       fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
-      fmt_string ((string_of_sequence_variation seq.CP.seq_variation) ^ "[");
+      fmt_string ((if seq.CP.seq_decrease then "decrease" else "converge") ^ "[");
       pr_formula_exp seq.CP.seq_element;
       fmt_string ", ";
       pr_formula_exp seq.CP.seq_limit;
       fmt_string "])"
-  | P.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")");
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
   | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -1490,14 +1488,13 @@ let pr_estate (es : entail_state) =
         fmt_string ")"
     | CP.SeqVar seq ->
         let ann = seq.CP.seq_ann in
-        let elm = seq.CP.seq_element in
-        let lm = seq.CP.seq_limit in
-        let v = seq.CP.seq_variation in
-        let ls = [elm; lm] in
-        fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "(" ^ (string_of_sequence_variation v));
+        let element = seq.CP.seq_element in
+        let limit = seq.CP.seq_limit in
+        let variation = if seq.CP.seq_decrease then "decrease" else "converge" in
+        let ls = [element; limit] in
+        fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "(" ^ variation);
         pr_seq "" pr_formula_exp ls;
         fmt_string "]))"
-    | CP.PrimVar prim -> fmt_string ("PrimVar(" ^ (string_of_term_ann prim.CP.prim_ann) ^ ")")
     | _ -> failwith "Invalid value of term"
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)
@@ -2487,7 +2484,6 @@ let rec html_of_pure_b_formula f = match f with
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
     | P.LexVar _ -> "LexVar(to be implemented)"
     | P.SeqVar _ -> "SeqVar(to be implemented)"  (* TRUNG TODO: implement *)
-    | P.PrimVar _ -> "PrimVar(to be implemented)"  (* TRUNG TODO: implement *)
     | P.Gt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gt ^ (html_of_formula_exp e2)
     | P.Gte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gte ^ (html_of_formula_exp e2)
     | P.Eq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_eq ^ (html_of_formula_exp e2)

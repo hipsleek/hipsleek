@@ -2,14 +2,14 @@
 checkentail (x > 0.0) & Term[SeqDec(x, -infinity, x < 0.1)] |- Term[SeqDec(x / 2.0, -infinity, x < 0.1)].
 
 // (2)
-checkentail (x > 0.0) & Term[SeqCon(x, -infinity, x < 0.1)] |- Term[SeqCon(x * (-2.0), -infinity, x < 0.1)].
+checkentail (x > 0.0) & Term[SeqGen(x, -infinity, x < 0.1)] |- Term[SeqGen(x * (-2.0), -infinity, x < 0.1)].
 
 // (3)
-//checkentail (x > 0.0) & Term[SeqCon(x, infinity, x < 0.1)] |- Term[SeqCon(x * (-2.0), infinity, x < 0.1)].
+//checkentail (x > 0.0) & Term[SeqGen(x, infinity, x < 0.1)] |- Term[SeqGen(x * (-2.0), infinity, x < 0.1)].
 
 // (4)
-//checkentail (x > 0.0) & Term[SeqCon(x, infinity, x < 0.1)] |- Term[SeqCon(x / (-2.0), infinity, x < 0.1)].
+//checkentail (x > 0.0) & Term[SeqGen(x, infinity, x < 0.1)] |- Term[SeqGen(x / (-2.0), infinity, x < 0.1)].
 
 // (5)
-checkentail (x > 1) & Term[SeqCon(x, infinity, x < 0.1)] |- Term[SeqCon(x / (-2.0), infinity, x < 0.1)].
+checkentail (x > 1) & Term[SeqGen(x, infinity, x < 0.1)] |- Term[SeqGen(x / (-2.0), infinity, x < 0.1)].
 

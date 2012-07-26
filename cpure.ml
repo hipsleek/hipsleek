@@ -86,7 +86,7 @@ and lex_info = {
 
 and sequence_variation_type =
   | SeqDec                  (* sequence converge & decrease *)
-  | SeqCon                     (* sequence converge *)
+  | SeqGen                     (* sequence converge *)
 
 and sequence_info = {
   seq_ann: term_ann;
@@ -94,7 +94,7 @@ and sequence_info = {
   seq_limit: exp;
   seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
   seq_termcons: formula option;  (* terminate condition *)
-  seq_variation: sequence_variation_type; 
+  seq_decrease: bool;            (* seq_decrease = true -> sequence decrease; otherwise don't consider the decrease *)
   seq_loc : loc
 }
 
@@ -107,7 +107,6 @@ and prim_term_info = {
 and p_formula =
   | LexVar of lex_info
   | SeqVar of sequence_info
-  | PrimVar of prim_term_info                 (* primitive termination var *)
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
@@ -797,7 +796,6 @@ and bfv (bf : b_formula) =
         let args = [e; lm] in
         let args_fv = List.concat (List.map afv args) in
         Gen.BList.remove_dups_eq (=) args_fv
-    | PrimVar _ -> []
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -1283,8 +1281,7 @@ match pf with
             (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
   | RelForm _ 
-  | SeqVar _
-  | PrimVar _ -> false
+  | SeqVar _ -> false
 
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
@@ -1346,17 +1343,14 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element limit bounds termcons variation pos : p_formula= 
+and mkSeqVar ann element limit bounds termcons decrease pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
            seq_limit = limit;
            seq_bounds = bounds;
            seq_termcons = termcons;
-           seq_variation = variation;
+           seq_decrease = decrease;
            seq_loc = pos }
-
-and mkPrimVar ann pos =
-  PrimVar { prim_ann = ann; prim_loc = pos}
 
 and mkPure bf = BForm ((bf,None), None)
 
@@ -2090,7 +2084,6 @@ and pos_of_b_formula (b: b_formula) =
  match p with
   | LexVar l_info -> l_info.lex_loc
   | SeqVar seq_info -> seq_info.seq_loc
-  | PrimVar prim -> prim.prim_loc
   | SubAnn (_, _, p) -> p
   | BConst (_, p) -> p
   | BVar (_, p) -> p
@@ -2141,7 +2134,6 @@ and list_pos_of_formula f rs: loc list=
 and subst_pos_pformula p pf= match pf with
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
   | SeqVar seq_info -> SeqVar {seq_info with seq_loc = p}
-  | PrimVar _ -> pf
   | SubAnn (e1, e2, _) -> SubAnn (e1, e2, p)
   | BConst (b,_) -> BConst (b,p)
   | BVar (sv, _) -> BVar (sv, p)
@@ -2431,7 +2423,6 @@ and b_apply_subs sst bf =
         let lm = e_apply_subs sst seq_info.seq_limit in
         SeqVar { seq_info with seq_element = e;
                                seq_limit = lm }
-    | PrimVar _ -> pf
    in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2488,7 +2479,6 @@ and b_apply_subs_varperm sst bf =
       let lm = e_apply_subs sst seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
                             seq_limit = lm}
-  | PrimVar _ -> pf
   in let nsl = match sl with
 	| None -> None
 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
@@ -2681,7 +2671,6 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
         let lm = a_apply_par_term sst seq_info.seq_limit in
         SeqVar {seq_info with seq_element = e;
                               seq_limit = lm;}
-    | PrimVar _ -> pf
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -2778,7 +2767,6 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
         let lm = a_apply_one_term (fr, t) seq_info.seq_limit in
         SeqVar {seq_info with seq_element = e;
                               seq_limit = lm;}
-    | PrimVar _ -> pf
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -3803,7 +3791,6 @@ and b_apply_one_exp (fr, t) bf =
       let lm = e_apply_one_exp (fr, t) seq_info.seq_limit in
       SeqVar {seq_info with seq_element = e;
                             seq_limit = lm;}
-  | PrimVar _ -> pf
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -4554,7 +4541,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let (pf,il) = b in
   let npf = match pf with
     |  BConst _ 
-    |  SubAnn _ | LexVar _ | SeqVar _ | PrimVar _
+    |  SubAnn _ | LexVar _ | SeqVar _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -4975,7 +4962,6 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
               let new_seq = {seq_info with seq_element = e;
                                            seq_limit = lm;} in
               (SeqVar new_seq, f_comb [r1; r2])
-          | PrimVar _ -> (pf,f_comb [])
 
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
@@ -5077,7 +5063,6 @@ let transform_b_formula f (e:b_formula) :b_formula =
             let lm = transform_exp f_exp seq_info.seq_limit in
             SeqVar { seq_info with seq_element = e;
                                    seq_limit = lm; }
-        | PrimVar _ -> pf
 
 	  in (npf,il)
 	  
@@ -5417,7 +5402,6 @@ let norm_bform_a (bf:b_formula) : b_formula =
             let lm = norm_exp seq_info.seq_limit in
             SeqVar { seq_info with seq_element = e;
                                    seq_limit = lm; }
-        | PrimVar _ -> pf
    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
@@ -6339,7 +6323,6 @@ let norm_bform_b (bf:b_formula) : b_formula =
         let lm = norm_exp seq_info.seq_limit in
         SeqVar { seq_info with seq_element = e;
                                seq_limit = lm; }
-    | PrimVar _
     | SubAnn _
     | VarPerm _
     | BConst _ | BVar _ | EqMax _ 
@@ -7743,7 +7726,7 @@ let rec has_func_exp (e: exp) : bool = match e with
   | _ -> false
 
 and has_func_pf (pf: p_formula) : bool = match pf with
-  | LexVar _ | SeqVar _ | PrimVar _ -> false
+  | LexVar _ | SeqVar _ -> false
   | Lt (e1,e2,_)
   | Lte (e1,e2,_)
   | Gt (e1,e2,_)
@@ -7789,8 +7772,7 @@ let is_seqvar (f:formula) : bool =
 let is_termvar (f: formula) : bool = 
   match f with
   | BForm((LexVar _,_),_)
-  | BForm((SeqVar _,_),_)
-  | BForm((PrimVar _, _), _) -> true
+  | BForm((SeqVar _,_),_) -> true
   | _ -> false
 
 let rec has_lexvar (f: formula) : bool =
@@ -7862,7 +7844,6 @@ let drop_complex_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
         | SeqVar t_info -> Some (mkTrue t_info.seq_loc)
-        | PrimVar t_info -> Some (mkTrue t_info.prim_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -7871,7 +7852,6 @@ let drop_complex_ops =
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
         | SeqVar t_info -> Some (mkFalse t_info.seq_loc)
-        | PrimVar t_info -> Some (mkFalse t_info.prim_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -7883,12 +7863,10 @@ let drop_termvar_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
         | SeqVar t_info -> Some (mkTrue t_info.seq_loc)
-        | PrimVar t_info -> Some (mkTrue t_info.prim_loc)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
         | SeqVar t_info -> Some (mkFalse t_info.seq_loc)
-        | PrimVar t_info -> Some (mkFalse t_info.prim_loc)
         | _ -> None in
   (pr_weak,pr_strong)
 
@@ -8139,7 +8117,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                   (c::v_ml,c::v_il)
               in (LexVar { t_info with lex_exp = n_ml; lex_tmp = n_il; }, pv)
           | _ -> (pf, []))
-    (* TRUNG TODO: check from SeqVar & PrimVar *)
+    (* TRUNG TODO: check from SeqVar *)
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
 
@@ -8173,10 +8151,6 @@ and count_term_b_formula bf =
         | _ -> 0)
   | SeqVar t_info ->
       (match t_info.seq_ann with
-        | Term -> 1
-        | _ -> 0)
-  | PrimVar t_info ->
-      (match t_info.prim_ann with
         | Term -> 1
         | _ -> 0)
   | _ -> 0
