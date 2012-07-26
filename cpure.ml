@@ -85,7 +85,7 @@ and lex_info = {
 }
 
 and sequence_variation_type =
-  | SeqConDec                  (* sequence converge & decrease *)
+  | SeqDec                  (* sequence converge & decrease *)
   | SeqCon                     (* sequence converge *)
 
 and sequence_info = {

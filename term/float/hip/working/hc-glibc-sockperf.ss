@@ -27,11 +27,11 @@ void loop1(float z)
   case
   {
     -4 < z < 4 -> requires Loop[] ensures true;
-    z >= 4 -> requires Term[SeqConDec(-z, -infinity, -4)] ensures true;
-    z <= -4 -> requires Term[SeqConDec(-z, -infinity, -4)] ensures true;
+    z >= 4 -> requires Term[SeqDec(-z, -infinity, -4)] ensures true;
+    z <= -4 -> requires Term[SeqDec(-z, -infinity, -4)] ensures true;
   }
 
-//  requires Term[SeqConDec(z, 0, s * mx < 1)] ensures true;
+//  requires Term[SeqDec(z, 0, s * mx < 1)] ensures true;
 {
   if ((z < 4.0) && (z > -4.0))
     loop1(z * z - 2);

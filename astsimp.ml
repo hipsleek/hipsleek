@@ -4398,7 +4398,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
                  | None -> None
                  | Some t -> Some (trans_pure_formula t stab) in
         let vari = match seq_info.IP.seq_variation with
-                   | IP.SeqConDec -> CP.SeqConDec
+                   | IP.SeqDec -> CP.SeqDec
                    | IP.SeqCon -> CP.SeqCon in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = e;

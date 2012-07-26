@@ -22,7 +22,7 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
 and sequence_variation_type =
-  | SeqConDec                  (* sequence converge & decrease *)
+  | SeqDec                  (* sequence converge & decrease *)
   | SeqCon                     (* sequence converge *)
 
 and sequence_info = {

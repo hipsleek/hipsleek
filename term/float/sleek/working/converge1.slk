@@ -1,4 +1,4 @@
-/*****************************************************************************************************************
+/***************************************************************************************************
   x' = x ^ 3
   -1 < x0 < 1 & (x0 != 0)
 */
@@ -9,7 +9,8 @@
     loop(x*x*x)
 */
 // lowerbound & upper bound
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, 0.1, -0.2)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, 0.1, -0.2)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, 0.1, -0.2)]
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, 0.1, -0.2)].
 
 /*
   // -1 < x < 1
@@ -19,7 +20,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, 0.1, -0.2)
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x < 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) < 0.5)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x < 0.5)] 
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) < 0.5)].
 
 /*
   // -1 < x < 1
@@ -29,7 +31,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x < 0.
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x + x < 0.1)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) + (x*x*x) < 0.1)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x + x < 0.1)] 
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) + (x*x*x) < 0.1)].
 
 /*
   // -1 < x < 1
@@ -39,7 +42,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x + x 
     loop(x*x*x)
 */
 // invalid limit
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.1, x * x < 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.1, (x*x*x) * (x*x*x) < 0.5)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.1, x * x < 0.5)] 
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.1, (x*x*x) * (x*x*x) < 0.5)].
 
 /*
   // -1 < x < 1
@@ -47,7 +51,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.1, x * x < 0.
     loop(x*x*x)
 */
 // invalid bound 
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, -0.1, -0.2)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, -0.1, -0.2)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, -0.1, -0.2)] 
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, -0.1, -0.2)].
 
 /*
   // -1 < x < 1
@@ -57,9 +62,10 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, -0.1, -0.2
     loop(x*x*x)
 */
 // invalid termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x > 0.5)] |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) > 0.5)].
+checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x > 0.5)] 
+            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqCon(x*x*x, 0.0, (x*x*x) * (x*x*x) > 0.5)].
 
-/*****************************************************************************************************************
+/***************************************************************************************************
   x' = 1 + 2/x
   limit = 2
 */
@@ -70,7 +76,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqCon(x, 0.0, x * x > 0.
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 2.2, 1.9 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 2.2, 1.9)].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 2.2, 1.9 )] 
+            |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 2.2, 1.9)].
 
 /*
   // x != 2
@@ -80,7 +87,8 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 2.2, 1.9 )] |- Te
     loop(1 + 2/x)
 */
 // termination constraint
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 1.0 / x < 0.6 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 1.0 / x < 0.6)].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 1.0 / x < 0.6 )] 
+            |- Term[SeqCon(1.0 + (2.0 / x), 2.0, 1.0 / x < 0.6)].
 
 /*
   // x != 2
@@ -88,9 +96,10 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.0, 1.0 / x < 0.6 )] 
     loop(1 + 2/x)
 */
 // invalid limit
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.1, 2.2, 1.9 )] |- Term[SeqCon(1.0 + (2.0 / x), 2.1, 2.2, 1.9)].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.1, 2.2, 1.9 )] 
+            |- Term[SeqCon(1.0 + (2.0 / x), 2.1, 2.2, 1.9)].
 
-/*****************************************************************************************************************
+/***************************************************************************************************
   x' = 1 + 1/x
   limit = (1+sqrt(5)) / 2
 */
@@ -101,7 +110,8 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqCon(x, 2.1, 2.2, 1.9 )] |- Te
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + sqrt(5.0))/2.0) & Term[SeqCon(x, (1.0 + sqrt(5.0)) / 2.0, 1.7, 1.5)] |- Term[SeqCon(1.0 + 1.0/x, (1.0 + sqrt(5.0)) / 2.0, 1.7, 1.5)].
+checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqCon(x, (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5)] 
+            |- Term[SeqCon(1.0 + 1.0/x, (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5)].
 
 /*
   // x != (1+sqrt(5))/2
@@ -109,7 +119,8 @@ checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + sqrt(5.0))/2.0) & Term[SeqCon(x
     loop(1 + 2/x)
 */
 // invalid limit
-checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + sqrt(5.0))/2.0) & Term[SeqCon(x, 1.6, 1.7, 1.5)] |- Term[SeqCon(1.0 + 1.0/x, 1.6, 1.7, 1.5)].
+checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqCon(x, 1.6, 1.7, 1.5)]
+            |- Term[SeqCon(1.0 + 1.0/x, 1.6, 1.7, 1.5)].
 
 
 

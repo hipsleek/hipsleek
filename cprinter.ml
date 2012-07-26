@@ -509,7 +509,7 @@ let string_of_derv dr =
 
 let string_of_sequence_variation (v : P.sequence_variation_type) : string =
   match v with
-  | P.SeqConDec -> "SeqConDec"
+  | P.SeqDec -> "SeqDec"
   | P.SeqCon -> "SeqCon"
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)

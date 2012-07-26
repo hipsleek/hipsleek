@@ -1,5 +1,5 @@
 // (1) expect Valid
-checkentail (x > 0.0) & Term[SeqConDec(x, -infinity, x < 0.1)] |- Term[SeqConDec(x / 2.0, -infinity, x < 0.1)].
+checkentail (x > 0.0) & Term[SeqDec(x, -infinity, x < 0.1)] |- Term[SeqDec(x / 2.0, -infinity, x < 0.1)].
 
 // (2)
 checkentail (x > 0.0) & Term[SeqCon(x, -infinity, x < 0.1)] |- Term[SeqCon(x * (-2.0), -infinity, x < 0.1)].

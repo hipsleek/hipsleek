@@ -1252,7 +1252,7 @@ let check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans 
       (estate, lhs_p, rhs_p, None)
   | Some (seq_src, seq_dst) -> (
       let vari_src = seq_src.CP.seq_variation in
-      if (vari_src = CP.SeqConDec) then 
+      if (vari_src = CP.SeqDec) then 
         check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
       else if (vari_src = CP.SeqCon) then
         check_general_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans
