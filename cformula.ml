@@ -389,6 +389,9 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   List.fold_left (fun x y -> x@(helper y)) [] m
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
+
+and formula_of_heap_w_normal_flow h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkNormalFlow ()) [] pos
+
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
 
 and struc_formula_of_heap h pos = EBase { 
@@ -419,7 +422,7 @@ and mkEList l =
 	else EList l
 and mkTrueFlow () = 
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
-	  
+
 
 and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 
@@ -4413,8 +4416,13 @@ let proc_left t1 t2 =
       | [] -> Some t2
       | [c1] -> 
             if isAnyFalseCtx c1 then
-              if is_inferred_pre_ctx c1 then Some t2 (* drop FalseCtx with Pre *)
-              else Some t1 (* keep FalseCtx wo Pre *)
+              let _ = print_endline ("FalseCtx") in
+              if is_inferred_pre_ctx c1 then 
+                let _ = print_endline ("Inferred") in
+                Some t2 (* drop FalseCtx with Pre *)
+              else 
+                let _ = print_endline ("NOT Inferred") in
+                Some t1 (* keep FalseCtx wo Pre *)
             else None
       | _ -> None 
 
@@ -4424,7 +4432,9 @@ let simplify_ctx_elim_false_dupl t1 t2 =
     | Some r1 -> r1
     | None -> 
           (match proc_left t2 t1 with
-            | Some r2 -> r2
+            (* | Some r2 -> r2 *) (*why t1 is missing???*)
+            (*LDK: what if t1=[true] and t2=[false]*)
+            | Some r2 -> t1 (*LDK: remove t2*)
             | None -> t1@t2)
 
 let simplify_ctx_elim_false_dupl t1 t2 =
@@ -4453,10 +4463,10 @@ match c1,c2 with
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
-  let pr = !print_list_context_short in
+  let pr = !print_list_context(* _short *) in
   Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
       pr pr pr
-      list_context_union_x c1 c2 
+      list_context_union_x c1 c2
 
 let rec union_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
@@ -7321,7 +7331,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_view_perm = None;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = true; (*??*)
+      h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = false;(*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
       h_formula_view_lhs_case = false;
@@ -7331,9 +7341,9 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
-  let post = formula_of_heap lock_node pos in
+  let post = formula_of_heap_w_normal_flow lock_node pos in
   let post = EAssume ([],post,lbl) in
-  let pre = formula_of_heap data_node pos in
+  let pre = formula_of_heap_w_normal_flow data_node pos in
   EBase { 
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [];
@@ -7378,7 +7388,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_view_perm = None;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = true; (*??*)
+      h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = false; (*NOT ALLOW SPLIT*)
       h_formula_view_lhs_case = false;
@@ -7388,9 +7398,9 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
-  let post = formula_of_heap data_node pos in
+  let post = formula_of_heap_w_normal_flow data_node pos in
   let post = EAssume ([],post,lbl) in
-  let pre = formula_of_heap lock_node pos in
+  let pre = formula_of_heap_w_normal_flow lock_node pos in
   EBase { 
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [];
@@ -7445,7 +7455,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_pos = pos })
   in
   let read_f = mkPermInv fresh_perm in
-  let tmp = formula_of_heap lock_node pos in
+  let tmp = formula_of_heap_w_normal_flow lock_node pos in
   let post = normalize 5 inv tmp pos in
   let post = EAssume ([],post,lbl) in
   let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in
@@ -7617,7 +7627,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_perm = Some fresh_perm;
       h_formula_view_arguments = args;
       h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = true; (*??*)
+      h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
       h_formula_view_original = false;(*NOT ALLOW SPLIT lemmas in pre, but allow in post*)
       h_formula_view_lhs_case = false;
@@ -7627,7 +7637,9 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
-  let tmp = formula_of_heap lock_node pos in (*not allow SPLIT in pre*)
+  let tmp = formula_of_heap_w_normal_flow lock_node pos in (*not allow SPLIT in pre*)
+  (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
+  (* let _ = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
   let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
   let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in
   let tmp = add_original tmp true in  (*but allow SPLIT in post*)

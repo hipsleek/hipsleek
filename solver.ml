@@ -2915,19 +2915,22 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                       CF.transform_context add_vperm_full rs 
                     else rs
                 in
-                (* let _ = print_endline ("### rs = "^(Cprinter.string_of_context rs)) in *)
+                (* let _ = print_endline ("\n### rs = "^(Cprinter.string_of_context rs)) in *)
 
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
-                (* let _ = print_endline ("### rs1 = "^(Cprinter.string_of_context rs1)) in *)
+                (* let _ = print_endline ("\n### rs1 = "^(Cprinter.string_of_context rs1)) in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+                (* let _ = print_endline ("\n### rs2 = "^(Cprinter.string_of_context rs2)) in *)
                 if (!Globals.ann_vp) then
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	            let rs3 = add_path_id rs2 (pid,i) in
+                (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
                 let rs4 = prune_ctx prog rs3 in
                 (******************************************************)
                 (*foo5,foo6 in hip/err3.ss*)
+                (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
                 let helper ctx postcond= 
 				let es =  CF.estate_of_context ctx pos in
 				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
@@ -2958,7 +2961,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                   else (SuccCtx [ctx])
                 in
                 (******************************************************)
-                if not !Globals.disable_failure_explaining then (invert_ctx rs4 post ,TrueConseq)
+                (* let _ = print_endline ("### rs4 (2) = "^(Cprinter.string_of_context rs4)) in *)
+                if not !Globals.disable_failure_explaining then 
+                  let tmp_lctx = invert_ctx rs4 new_post in
+                  (* let _ = print_endline ("### tmp_lctx = "^(Cprinter.string_of_list_context tmp_lctx)) in *)
+                  (tmp_lctx ,TrueConseq)
                 else (SuccCtx [rs4] ,TrueConseq)
                 end)
         | EInfer e -> helper_inner_x 22 ctx11 e.Cformula.formula_inf_continuation

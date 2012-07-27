@@ -624,10 +624,21 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   (* using || results in some repeated answers but still terminates *)
                   let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let is_l_lock = match vl_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
-                    else (vl_view_orig || vr_view_orig)
+                    (* else (vl_view_orig || vr_view_orig) *)
+                    else
+                      (*only apply a SPLIT lemma to a lock
+                      if both sides are original*)
+                      if (is_l_lock) then
+                        (vl_view_orig && vr_view_orig)
+                      else
+                        (vl_view_orig || vr_view_orig)
                   in
                   let l3 = if flag
                   then begin

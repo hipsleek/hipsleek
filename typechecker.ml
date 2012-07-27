@@ -1169,6 +1169,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
 		        (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") (before elim_unsat) \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
                 let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
+                let res = normalize_list_failesc_context_w_lemma prog res in
 		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res
                 else
@@ -1191,6 +1192,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
+                  (* let _ = print_endline ("before init ctx =  " ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx prepost None pos pid in
                   (* let _ = print_string (("\nSCall: init: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
@@ -1253,6 +1255,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
+                  (*TO CHECK: clear_entailment can effect reasoning??? *)
+	              let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx prepost None pos pid in
                   (* let _ = print_string (("\nSCall: acquire: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then

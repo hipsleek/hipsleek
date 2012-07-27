@@ -23,8 +23,8 @@ let string_of_perm_type t =
     | Count -> "Count"
     | NoPerm -> "NoPerm"
 
-(* let perm = ref Frac *)
-let perm = ref NoPerm
+let perm = ref Frac
+(* let perm = ref NoPerm *)
 
 let allow_perm ():bool = 
   match !perm with

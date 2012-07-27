@@ -1265,6 +1265,19 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       | CallNRecv c ->
           (*Do not need for Globals.join_name because join(id) is always
           passed by value*)
+          (* match c.exp_call_nrecv_method with *)
+          (*   | Globals.init_name *)
+          (*   | Globals.finalize_name *)
+          (*   | Globals.acquire_name *)
+          (*   | Globals.release_name -> e (\*ignore*\) *)
+          (*   | _ -> *)
+          if (c.exp_call_nrecv_method=Globals.init_name ||
+                  c.exp_call_nrecv_method=Globals.finalize_name ||
+                  c.exp_call_nrecv_method=Globals.acquire_name ||
+                  c.exp_call_nrecv_method=Globals.release_name) 
+          then
+            e  (* ignore *)
+          else
           if (c.exp_call_nrecv_method=Globals.fork_name) then
             (*Construct the async call from parameters of the fork procedure*)
             (*method name is the first arguments*)
@@ -2092,6 +2105,13 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
       | CallNRecv {exp_call_nrecv_method = orig_mn;
                   exp_call_nrecv_arguments = args;
                   exp_call_nrecv_pos = pos} ->
+          if (orig_mn=Globals.init_name ||
+                  orig_mn=Globals.finalize_name ||
+                  orig_mn=Globals.acquire_name ||
+                  orig_mn=Globals.release_name) 
+          then
+          []  (* ignore *)
+          else
           let mn,args =
             if (orig_mn=Globals.fork_name) then
               let fn_exp = (List.hd args) in
