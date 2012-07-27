@@ -65,7 +65,7 @@ let procs = []
 let aux_procs : (proc_decl list) ref = ref []
 
 let ptr_target : string = "val" 
-let ptr_delete : string = "delete" 
+let ptr_delete : string = "delete_ptr" 
 let ptr_string : string = "ptr"
 let aux_str : string = "aux"
 
@@ -1347,6 +1347,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       let new_arg = helper arg vars in
                       (false,new_arg)
               in
+              (* let _ = print_endline ("c.args = " ^ (pr_list string_of_exp c.exp_call_nrecv_arguments)) in *)
+              (* let _ = print_endline ("proc.proc_name = " ^ proc.proc_name) in *)
+              (* let _ = print_endline ("proc.args = " ^ (string_of_param_list proc.proc_args)) in *)
+
               let flags,new_args = List.split (List.map2 (fun arg param -> trans_arg_addr arg param) c.exp_call_nrecv_arguments proc.proc_args) in
               (* if (List.exists (fun (b:bool) -> b) flags) then *)
               (*   (\*if there are some args to be processed*\) *)
@@ -2151,6 +2155,8 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                                     [v.exp_var_name,param.param_name]
                                   else
                                     []
+                              | Member _ ->
+                                  [] (*TO CHECK: ignore at the moment*)
                               | _ ->
                                   Error.report_error 
                                       {Err.error_loc = pos;
@@ -2158,9 +2164,11 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                           else []
                       ) params args
                   with | _ ->
+                      let _ = print_endline ("args = " ^ (pr_list string_of_exp args)) in
+                      let _ = print_endline ("params = " ^ (string_of_param_list params)) in
                       Error.report_error 
                           {Err.error_loc = pos;
-                           Err.error_text = "Procedure " ^ orig_mn ^ "Args and Params not matched "})
+                           Err.error_text = "Procedure " ^ orig_mn ^ " Args and Params not matched "})
                in
                (*pvars is the new list of addressable params*)
                let avars,pvars = List.split (List.concat tmp) in
@@ -2300,6 +2308,7 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
   (*            {Err.error_loc = no_pos; *)
   (*             Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"}) *)
   (* in *)
+  (* let _ = print_endline ("start elimiating pointers in proc_decl..."); flush stdout in *)
   let new_procs = List.map (fun proc -> trans_proc_decl prog proc false) prog.prog_proc_decls in
   let new_procs1 = new_procs@(!aux_procs) in
   {prog with prog_global_var_decls = new_gvar_decls;

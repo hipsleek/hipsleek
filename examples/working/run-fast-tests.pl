@@ -543,7 +543,7 @@ $output_file = "log";
 				["vperm/tree_count.ss",1,  "--ann-vp", 
                                 "parallelCount2","SUCCESS"
 								],
-				["vperm/tree_search.ss",1,  "--ann-vp -tp mona", 
+				["vperm/tree_search.ss",1,  "--ann-vp -tp mona -perm none", 
                                 "para_search2","SUCCESS"
 								],
 				["vperm/vperm_check.ss",6,  "--ann-vp", 
