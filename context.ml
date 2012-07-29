@@ -571,6 +571,15 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vr_view_origs = vr.h_formula_view_origins in
                   let vl_view_derv =  vl.h_formula_view_derv in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  (*Are they in LOCKED state*)
+                  let is_l_lock = match vl_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
+                  let is_r_lock = match vr_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
                   (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
                   (*let en_num = !num_self_fold_search in*)
@@ -583,10 +592,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     else
                       let a1 = (1,M_base_case_unfold c) in
                       let a2 = (1,M_match c) in
-                      let a3 = 
+                      let a3 =
+                        (*Do not fold/unfold LOCKs, only match*)
+                        if (is_l_lock || is_r_lock) then Some a2 else 
                         if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
                         else None in
                       let a4 = 
+                        (*Do not fold/unfold LOCKs*)
+                        if (is_l_lock || is_r_lock) then None else 
                         if not(vl_is_rec) then Some (2,M_unfold (c,0))
                         else if not(vr_is_rec) then Some (2,M_fold c) 
                         else None in
@@ -594,10 +607,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                         if a4==None then
                           begin
                             let l1 =
+                              (*Do not fold/unfold LOCKs*)
+                              if (is_l_lock) then [] else 
                               if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                               then  [(2,M_fold c)] 
                               else [] in
                             let l2 =
+                              (*Do not fold/unfold LOCKs*)
+                              if (is_r_lock) then [] else
                               if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
                               then [(2,M_unfold (c,0))]
                               else [] in
@@ -617,17 +634,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
                       match a6 with
                         | Some a -> [a]
-                        | None -> 
+                        | None ->
+                              (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
                               [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)
                   let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-                  let is_l_lock = match vl_vdef.view_inv_lock with
-                    | Some _ -> true
-                    | None -> false
-                  in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
@@ -670,9 +684,17 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  (*Is it LOCKED state*)
+                  let is_r_lock = match vr_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
-                  let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
+                  (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in *)
+                  let a1 = 
+                    if is_r_lock then [] else
+                    if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
                   let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in
                   let a = a1@a2 in
                   if a!=[] then (-1,Search_action a)
@@ -683,10 +705,18 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vl_view_derv = vl.h_formula_view_derv in
+                  (*Is it LOCKED state*)
+                  let is_l_lock = match vl_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
                   let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name in
-                  let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
+                  (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
+                  let a1 = 
+                    if is_l_lock then [] else
+                    if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
