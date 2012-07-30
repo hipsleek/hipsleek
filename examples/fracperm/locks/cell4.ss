@@ -5,6 +5,11 @@
   Was able to prove inc with automatic split/combine
   NOTE: split/combine lemmas can be generated dynamically
   based on certain templates
+
+  Output:
+Procedure inc$lock~cell SUCCESS
+Procedure main$ SUCCESS
+
  */
 
 data lock{}
@@ -41,11 +46,11 @@ void main()
   int id;
   dprint;
   id = fork(inc,l,x); // there is an automatic split here
-  //dprint;
+  dprint;
   acquire[LOCK](l,x);
   //dprint;
   x.val++;
-  //dprint;
+  dprint;
   release[LOCK](l,x);
   //dprint;
   join(id);
