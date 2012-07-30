@@ -1276,7 +1276,7 @@ measures_seqdec:
       (element, domain, limit, termcons)
   ]];
 
-measures_seqdec_sqr : [[`OSQUARE; `SEQDEC; `OPAREN; m = measures_seqdec; `CPAREN; `CSQUARE -> m]]; 
+measures_seqdec_sqr : [[`OSQUARE; `SEQDEC; `OBRACE; m = measures_seqdec; `CBRACE; `CSQUARE -> m]]; 
 
 (* SeqGen(measurement, limit, lower-bound, upper-bound or termination condition) *)
 measures_seqgen:
@@ -1307,7 +1307,7 @@ measures_seqgen:
       (element, domain, limit, termcons)
   ]];
 
-measures_seqgen_sqr : [[`OSQUARE; `SEQGEN; `OPAREN; m = measures_seqgen; `CPAREN; `CSQUARE -> m]];
+measures_seqgen_sqr : [[`OSQUARE; `SEQGEN; `OBRACE; m = measures_seqgen; `CBRACE; `CSQUARE -> m]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
