@@ -4383,25 +4383,22 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
-          let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
-          CP.LexVar {
-					  CP.lex_ann = t_ann;
-						CP.lex_exp = cle;
-						CP.lex_tmp = clt;
-						CP.lex_loc = pos; }
+        let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
+        let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
+        CP.LexVar { CP.lex_ann = t_ann;
+                    CP.lex_exp = cle;
+                    CP.lex_tmp = clt;
+                    CP.lex_loc = pos; }
     | IP.SeqVar seq_info ->
-        let e = trans_pure_exp seq_info.IP.seq_element stab in
-        let lm = trans_pure_exp seq_info.IP.seq_limit stab in
-        let b = trans_pure_exp_list seq_info.IP.seq_bounds stab in
-        let tc = match seq_info.IP.seq_termcons with
-                 | None -> None
-                 | Some t -> Some (trans_pure_formula t stab) in
+        let element = trans_pure_exp seq_info.IP.seq_element stab in
+        let domain = trans_pure_formula seq_info.IP.seq_domain stab in
+        let limit = trans_pure_exp seq_info.IP.seq_limit stab in
+        let termcons = trans_pure_formula seq_info.IP.seq_termcons stab in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
-                    CP.seq_element = e;
-                    CP.seq_limit = lm;
-                    CP.seq_bounds = b;
-                    CP.seq_termcons = tc;
+                    CP.seq_element = element;
+                    CP.seq_domain = domain;
+                    CP.seq_limit = limit;
+                    CP.seq_termcons = termcons;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_decrease = seq_info.IP.seq_decrease }
     | IP.Lt (e1, e2, pos) ->
@@ -4496,9 +4493,8 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Abs (e, pos) -> CP.Abs (trans_pure_exp e stab, pos)
-    | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Sqrt (e1, pos) -> CP.Sqrt (trans_pure_exp e1 stab, pos)
-    | IP.Abs (e1, pos) -> CP.Abs (trans_pure_exp e1 stab, pos)
+    | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist stab, pos)

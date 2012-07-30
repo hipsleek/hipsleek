@@ -636,9 +636,9 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
-    | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
+    | P.FConst (f, l) -> (* fmt_string "FLOAT "; *) fmt_float f
     | P.SConst (sym, l) -> 
-        fmt_string "SYM ";
+        (* fmt_string "SYM "; *)
         let s = match sym with
                 | Pos_infinity -> "+Infinity"
                 | Neg_infinity -> "-Infinity" in
@@ -690,9 +690,8 @@ let rec pr_formula_exp (e:P.exp) =
 			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  ("]") (* An Hoa *)
-;;
 
-let pr_slicing_label sl =
+and pr_slicing_label sl =
   match sl with
 	| None -> fmt_string ""
 	| Some (il, lbl, el) ->
@@ -702,52 +701,37 @@ let pr_slicing_label sl =
 		fmt_string ("]");
 		fmt_string (">")
 
-let pr_var_measures (measures : CP.p_formula) : unit =
+and pr_var_measures (measures : CP.p_formula) : unit =
   match measures with
-  | CP.LexVar lex -> (
+  | CP.LexVar _
+  | CP.SeqVar _ -> pr_p_formula measures
+  | _ -> failwith "Invalid value of measures"
+
+(** print a p_formula  to formatter *)
+and pr_p_formula (pf: P.p_formula) =
+  let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
+  let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
+  match pf with
+  | P.LexVar lex -> 
       let t_ann = lex.CP.lex_ann in
       let ls1 = lex.CP.lex_exp in
       let ls2 = lex.CP.lex_tmp in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string ("LexVar(" ^ string_of_term_ann t_ann);
+      fmt_string ((string_of_term_ann t_ann) ^ "[LexVar(");
       pr_s "" pr_formula_exp ls1;
-      if ls2!=[] then
-        pr_set pr_formula_exp ls2
-      else ();
-      fmt_string ")"
-    )
-  | CP.SeqVar seq -> (
-      let ann = seq.CP.seq_ann in
-      let element = seq.CP.seq_element in
-      let limit = seq.CP.seq_limit in
-      let variation = if (seq.CP.seq_decrease) then "decrease" else "general" in
-      let ls = [element; limit] in
-      let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "[" ^ variation);
-      pr_s "" pr_formula_exp ls;
-      fmt_string (")])")
-    )
-  | _ -> failwith "Invalid value of measures"
-
-(** print a p_formula  to formatter *)
-let rec pr_p_formula (pf: P.p_formula) =
-  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-  let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
-  let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
-  match pf with
-  | P.LexVar t_info -> 
-      fmt_string "LexVar(";
-      fmt_string (string_of_term_ann t_info.CP.lex_ann);
-      pr_s "" pr_formula_exp t_info.CP.lex_exp;
-      fmt_string ")"
-  | P.SeqVar seq ->
-      fmt_string "SeqVar(";
-      fmt_string ((string_of_term_ann seq.CP.seq_ann) ^ " ");
-      fmt_string ((if seq.CP.seq_decrease then "decrease" else "converge") ^ "[");
-      pr_formula_exp seq.CP.seq_element;
+      if ls2!=[] then pr_set pr_formula_exp ls2 else ();
+      fmt_string ")]"
+  | P.SeqVar seqinfo ->
+      fmt_string ((string_of_term_ann seqinfo.CP.seq_ann) ^ "[");
+      if seqinfo.CP.seq_decrease then fmt_string "SeqDec(" else fmt_string "SeqGen(";
+      pr_formula_exp seqinfo.CP.seq_element;
       fmt_string ", ";
-      pr_formula_exp seq.CP.seq_limit;
-      fmt_string "])"
+      pr_pure_formula seqinfo.CP.seq_domain;
+      fmt_string ", ";
+      pr_formula_exp seqinfo.CP.seq_limit;
+      fmt_string ", ";
+      pr_pure_formula seqinfo.CP.seq_termcons;
+      fmt_string ")]"
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
   | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -788,23 +772,23 @@ let rec pr_p_formula (pf: P.p_formula) =
     ) 
 
 (** print a b_formula  to formatter *)
-let rec pr_b_formula (e:P.b_formula) =
+and pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   pr_p_formula pf;
-;;
 
-let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
-let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
-let string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
-let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
-let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
-let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
-let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
-let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
-let string_of_formula_label_only x :string = string_of_formula_label x ""
 
-let string_of_iast_label_table table =
+and string_of_int_label (i,s) s2:string = (string_of_int i)^s2
+and string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
+and string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
+and string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
+and string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
+and string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
+and string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
+and string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
+and string_of_formula_label_only x :string = string_of_formula_label x ""
+
+and string_of_iast_label_table table =
   let string_of_row row =
     let string_of_label_loc (_, path_label, loc) =
       Printf.sprintf "%d: %s" path_label (string_of_full_loc loc)
@@ -818,16 +802,16 @@ let string_of_iast_label_table table =
   List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
 
 
-let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
-let pr_formula_label l  = fmt_string (string_of_formula_label l "")
-let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
-let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
-let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
-let pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
-let pr_spec_label l  = fmt_string (Lab_List.string_of l)
+and pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
+and pr_formula_label l  = fmt_string (string_of_formula_label l "")
+and pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
+and pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
+and string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
+and pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
+and pr_spec_label l  = fmt_string (Lab_List.string_of l)
 
 (** print a pure formula to formatter *)
-let rec pr_pure_formula  (e:P.formula) = 
+and pr_pure_formula  (e:P.formula) = 
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 

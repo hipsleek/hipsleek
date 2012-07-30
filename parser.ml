@@ -1054,34 +1054,37 @@ cexp_w :
     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seqdec ->
-        let (m, lm, lbtc) = param in
-        let bounds, termcons = match lbtc with
-                               | Pure_f f -> [], Some f
-                               | Pure_c c -> [c], None in
+    | t_ann = ann_term; param = measures_seqdec_sqr ->
+        let (element, domain, limit, termcons) = param in
+        let tc = match termcons with
+                 | Pure_f f -> f
+                 | Pure_c c -> P.mkPure (P.mkLt element c no_pos) in
         let seq = P.SeqVar { P.seq_ann = t_ann;
-                             P.seq_element = m;
-                             P.seq_limit = lm;
-                             P.seq_bounds = bounds;
-                             P.seq_termcons = termcons;
+                             P.seq_element = element;
+                             P.seq_domain = domain;
+                             P.seq_limit = limit;
+                             P.seq_termcons = tc;
                              P.seq_decrease = true;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((seq, None), None)) in
+        let f = Pure_f (P.mkPure seq) in
         set_slicing_utils_pure_double f false
-    | t_ann = ann_term; param = measures_seqgen ->
-        let (m, lm, b_tc) = param in
-        let bounds, termcons =  match b_tc with
-                      | [Pure_c c1; Pure_c c2] -> [c1; c2], None
-                      | [Pure_f f] -> [], Some f
-                      | _ -> report_error (get_pos_camlp4 _loc 1) "expected [pures_cosntr] or [cexp1; cexp] but not meet" in
+    | t_ann = ann_term; param = measures_seqgen_sqr ->
+        let (element, domain, limit, termcons) = param in
+        let tc = match termcons with
+                       | [Pure_f f] -> f
+                       | [Pure_c c1; Pure_c c2] ->
+                           let tc1 = P.mkPure (P.mkLt element c1 no_pos) in
+                           let tc2 = P.mkPure (P.mkGt element c2 no_pos) in
+                           P.mkOr tc1 tc2  None no_pos
+                       | _ -> report_error (get_pos_camlp4 _loc 1) "expected [pures_cosntr] or [cexp; cexp] but not meet" in
         let seq = P.SeqVar { P.seq_ann = t_ann;
-                             P.seq_element = m;
-                             P.seq_limit = lm;
-                             P.seq_bounds = bounds;
-                             P.seq_termcons = termcons;
+                             P.seq_element = element;
+                             P.seq_domain = domain;
+                             P.seq_limit = limit;
+                             P.seq_termcons = tc;
                              P.seq_decrease = false;
                              P.seq_loc = get_pos_camlp4 _loc 1} in
-        let f = Pure_f (P.BForm ((seq, None), None)) in
+        let f = Pure_f (P.mkPure seq) in
         set_slicing_utils_pure_double f false
     | t_ann=ann_term; ls1=opt_measures_lex_sqr; ls2=opt_measures_lex ->
         let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
@@ -1243,11 +1246,68 @@ opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
 
 measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-(* SeqDec(measurement, limit, lower-bound or terminiation condition) *)
-measures_seqdec: [[`OSQUARE; `SEQDEC; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; lb_tc = cexp_w; `CPAREN; `CSQUARE -> (m, lm, lb_tc)]];
+(* SeqDec(element, domain, limit, lower-bound or terminiation condition) *)
+
+measures_seqdec: 
+  [[
+    element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
+                   `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
+      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
+                   `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
+      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
+                   `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
+      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
+                   `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
+      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  ]];
+
+measures_seqdec_sqr : [[`OSQUARE; `SEQDEC; `OPAREN; m = measures_seqdec; `CPAREN; `CSQUARE -> m]]; 
 
 (* SeqGen(measurement, limit, lower-bound, upper-bound or termination condition) *)
-measures_seqgen: [[`OSQUARE; `SEQGEN; `OPAREN; m = cexp; `COMMA; lm = cexp; `COMMA; b_tc=LIST1 cexp_w SEP `COMMA; `CPAREN; `CSQUARE -> (m, lm, b_tc)]];
+measures_seqgen:
+  [[
+    element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
+                   `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
+      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
+                   `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
+      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
+                   `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
+      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
+                   `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
+      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
+      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
+      (element, domain, limit, termcons)
+  ]];
+
+measures_seqgen_sqr : [[`OSQUARE; `SEQGEN; `OPAREN; m = measures_seqgen; `CPAREN; `CSQUARE -> m]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 

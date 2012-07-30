@@ -18,7 +18,7 @@ void foo_term1(float x)
   }
 }
 
-
+/*
 // correct
 void foo_term1a(float x)
     case
@@ -32,7 +32,9 @@ void foo_term1a(float x)
     foo_term1a(sqrt(x));
   }
 }
+*/
 
+/*
 void foo_term1b(int x)
     case
     {
@@ -45,7 +47,7 @@ void foo_term1b(int x)
     foo_term1b(x-1);
   }
 }
-
+*/
 /*
 // correct
 void foo_term2(float x)

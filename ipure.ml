@@ -28,9 +28,9 @@ and sequence_variation_type =
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
+  seq_domain: formula;
   seq_limit: exp;
-  seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
-  seq_termcons: formula option;  (* terminate condition *)
+  seq_termcons: formula;  (* terminate condition *)
   seq_decrease: bool; 
   seq_loc : loc
 }
@@ -417,6 +417,8 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | _ ->  BForm ((Neq (ae1, ae2, pos), None), None)
 
 and mkNot f lbl pos = Not (f, lbl, pos)
+
+and mkPure bf = BForm ((bf,None), None)
 
 (*
 and mkEqualVar (sv1 : spec_var) (sv2 : spec_var) =

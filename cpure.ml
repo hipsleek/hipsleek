@@ -91,9 +91,9 @@ and sequence_variation_type =
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
+  seq_domain: formula;
   seq_limit: exp;
-  seq_bounds: exp list;           (* bounds can be [], [lower-bound], [lower-bound; upper-bound] *)
-  seq_termcons: formula option;  (* terminate condition *)
+  seq_termcons: formula;  (* terminate condition *)
   seq_decrease: bool;            (* seq_decrease = true -> sequence decrease; otherwise don't consider the decrease *)
   seq_loc : loc
 }
@@ -1343,11 +1343,11 @@ and mkLexVar t_ann m i pos =
 		lex_loc = pos;
 	}
 
-and mkSeqVar ann element limit bounds termcons decrease pos : p_formula= 
+and mkSeqVar ann element domain limit bounds termcons decrease pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
+           seq_domain = domain;
            seq_limit = limit;
-           seq_bounds = bounds;
            seq_termcons = termcons;
            seq_decrease = decrease;
            seq_loc = pos }
@@ -1359,8 +1359,8 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure bf in
   p
 
-and mkSeqVar_pure ann element limit bounds termcons variation =
-  let bf = mkSeqVar ann element limit bounds termcons variation no_pos in
+and mkSeqVar_pure ann domain element limit bounds termcons variation =
+  let bf = mkSeqVar ann element domain limit bounds termcons variation no_pos in
   let p = mkPure bf in
   p
 
