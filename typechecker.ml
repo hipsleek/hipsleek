@@ -1249,7 +1249,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
                   let fr_vars = self_var::vdef.view_vars in
                   let to_vars = lock_var::new_args in
-                  let renamed_inv = CF.subst_avoid_capture fr_vars to_vars inv_lock in
+                  let renamed_inv = CF.subst_avoid_capture_all fr_vars to_vars inv_lock in
 
                   let prepost = CF.prepost_of_acquire lock_var lock_sort new_args renamed_inv post_start_label pos in
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
@@ -1282,13 +1282,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
+
                   let lock_data_name = vdef.view_data_name in
                   let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
                   let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
                   let fr_vars = self_var::vdef.view_vars in
                   let to_vars = lock_var::new_args in
-                  let renamed_inv = CF.subst_avoid_capture fr_vars to_vars inv_lock in
-
+                  let renamed_inv = CF.subst_avoid_capture_all fr_vars to_vars inv_lock in
+                  (* let _ = print_endline ("inv_lock = " ^ (Cprinter.string_of_formula inv_lock)) in *)
+                  (* let _ = print_endline ("renamed_inv = " ^ (Cprinter.string_of_formula renamed_inv)) in *)
                   let prepost = CF.prepost_of_release lock_var lock_sort new_args renamed_inv post_start_label pos in
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
@@ -1298,7 +1300,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                   let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
-                  tmp_res
+
+                  (*Those variables whose @full[] have been captured in the variant
+                  won't exist in pure constraint after release*)
+                  let full_vars = CF.get_varperm_formula renamed_inv VP_Full in
+                  let fresh_vars = CP.fresh_spec_vars full_vars in
+                  let fct (es:CF.entail_state) =
+                    let new_f = CF.subst_avoid_capture_pure full_vars fresh_vars es.CF.es_formula in
+                    let new_es = {es with CF.es_formula = new_f} in
+                    (* let _ = print_endline ("es_formula = " ^ (Cprinter.string_of_formula es.CF.es_formula)) in *)
+                    (* let _ = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
+                    CF.Ctx {es with CF.es_formula = new_f;}
+                  in
+                  let tmp_res2 = if (full_vars!=[]) then  CF.transform_list_failesc_context (idf,idf,fct) tmp_res else tmp_res in
+                  tmp_res2
                 else
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)

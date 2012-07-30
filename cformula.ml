@@ -1919,6 +1919,48 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   let f1 = subst_one_by_one st1 f in
   let f2 = subst_one_by_one st2 f1 in
   f2
+
+(*subst in pure formula only*)
+and subst_avoid_capture_pure (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+  Debug.no_3 "subst_avoid_capture_pure" 
+      (add_str "from vars:" !print_svl) 
+      (add_str "to vars:" !print_svl)
+      !print_formula 
+      !print_formula
+      (fun _ _ _ -> subst_avoid_capture_pure_x fr t f) fr t f
+
+and subst_avoid_capture_pure_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+  let fresh_fr = CP.fresh_spec_vars fr in
+  (*--- 09.05.2000 *)
+  (*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
+  (*09.05.2000 ---*)
+  let st1 = List.combine fr fresh_fr in
+  let st2 = List.combine fresh_fr t in
+  let f1 = subst_one_by_one_pure st1 f in
+  let f2 = subst_one_by_one_pure st2 f1 in
+  f2
+
+and subst_avoid_capture_all (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+  Debug.no_3 "subst_avoid_capture_all" 
+      (add_str "from vars:" !print_svl) 
+      (add_str "to vars:" !print_svl)
+      !print_formula 
+      !print_formula
+      (fun _ _ _ -> subst_avoid_capture_all_x fr t f) fr t f
+
+(*subst both formula and varperm*)
+and subst_avoid_capture_all_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+  let fresh_fr = CP.fresh_spec_vars fr in
+  (*--- 09.05.2000 *)
+  (*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
+  (*09.05.2000 ---*)
+  let st1 = List.combine fr fresh_fr in
+  let st2 = List.combine fresh_fr t in
+  let f1 = subst_one_by_one st1 f in
+  let f2 = subst_one_by_one_varperm st1 f1 in
+  let f3 = subst_one_by_one st2 f2 in
+  let f4 = subst_one_by_one_varperm st2 f3 in
+  f4
       
 and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
   Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
@@ -2208,7 +2250,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_label = lbl;
 							h_formula_view_remaining_branches = ann;
 							h_formula_view_pruning_conditions = pcond;
-							h_formula_view_pos = pos} as g) -> 
+							h_formula_view_pos = pos} as g) ->
 		ViewNode { g with 
 							h_formula_view_imm = subs_imm_par sst imm;  
 							h_formula_view_node = CP.subst_var_par sst x; 
@@ -2258,6 +2300,19 @@ and subst_one_by_one sst (f : formula) =
 
 and subst_one_by_one_x sst (f : formula) = match sst with
   | s :: rest -> subst_one_by_one_x rest (apply_one s f)
+  | [] -> f
+
+and subst_one_by_one_pure sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Debug.no_2 "subst_one_by_one_pure" pr1 pr2 pr2 subst_one_by_one_pure_x sst f 
+
+and subst_one_by_one_pure_x sst (f : formula) = match sst with
+  | s :: rest -> subst_one_by_one_pure_x rest (apply_one_pure s f)
+  | [] -> f
+
+and subst_one_by_one_varperm sst (f : formula) = match sst with
+  | s :: rest -> subst_one_by_one_varperm rest (apply_one_varperm s f)
   | [] -> f
 
 and subst_one_by_one_h sst (f : h_formula) = 
@@ -2324,6 +2379,42 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	    else Exists ({formula_exists_qvars = qsv; 
 		formula_exists_heap =  h_apply_one s qh; 
+		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
+		formula_exists_type = tconstr;
+        formula_exists_and = List.map (apply_one_one_formula s) a;
+		formula_exists_flow = fl;
+        formula_exists_label = lbl;
+		formula_exists_pos = pos})
+
+(*Only substitute pure formula*)
+and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+        Or ({formula_or_f1 = apply_one s f1; formula_or_f2 =  apply_one s f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+	formula_base_pure = p; 
+	formula_base_type = t;
+    formula_base_and = a;
+	formula_base_flow = fl;
+    formula_base_label = lbl;
+	formula_base_pos = pos}) -> 
+        Base ({formula_base_heap = h; 
+		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p); 
+		formula_base_type = t;
+        formula_base_and = List.map (apply_one_one_formula s) a;
+		formula_base_flow = fl;
+        formula_base_label = lbl;
+		formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+	formula_exists_heap = qh; 
+	formula_exists_pure = qp; 
+	formula_exists_type = tconstr;
+    formula_exists_and = a;
+	formula_exists_flow = fl;
+    formula_exists_label = lbl;
+	formula_exists_pos = pos}) -> 
+	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
+	    else Exists ({formula_exists_qvars = qsv; 
+		formula_exists_heap =  qh; 
 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
 		formula_exists_type = tconstr;
         formula_exists_and = List.map (apply_one_one_formula s) a;
@@ -7323,13 +7414,14 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
       h_formula_data_label = None;
       h_formula_data_pos = pos}) 
   in
+  let uargs = List.map CP.to_unprimed args in
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = None;
-      h_formula_view_arguments = args;
+      h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
@@ -7380,13 +7472,14 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
       h_formula_data_label = None;
       h_formula_data_pos = pos}) 
   in
+  let uargs = List.map CP.to_unprimed args in
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = None;
-      h_formula_view_arguments = args;
+      h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
@@ -7436,13 +7529,14 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let fresh_perm_name = Cpure.fresh_old_name "f" in
   let perm_t = cperm_typ () in
   let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
+  let uargs = List.map CP.to_unprimed args in
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = Some fresh_perm;
-      h_formula_view_arguments = args;
+      h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
@@ -7462,7 +7556,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   EBase {
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [fresh_perm]; (*instantiate f*)
-	formula_struc_exists = [];
+	formula_struc_exists = []; (*TO CHECK: [] or args*)
 	formula_struc_base = pre;
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
@@ -7619,13 +7713,14 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let fresh_perm_name = Cpure.fresh_old_name "f" in
   let perm_t = cperm_typ () in
   let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
+  let uargs = List.map CP.to_unprimed args in
   let lock_node = ViewNode ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = Some fresh_perm;
-      h_formula_view_arguments = args;
+      h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];

@@ -864,6 +864,13 @@ let is_rec_view_def prog (name : ident) : bool =
    (* let _ = collect_rhs_view vdef in *)
    vdef.view_is_rec
 
+(*check whether a view is a lock invariant*)
+let get_lock_inv prog (name : ident) : (bool * F.formula) =
+  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  match vdef.view_inv_lock with
+    | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
+    | Some f -> (true, f)
+
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
