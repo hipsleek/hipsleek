@@ -5947,14 +5947,24 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HeapNode2 b -> report_error b.IF.h_formula_heap2_pos "malfunction: heap node 2 still present"
       | IF.HeapNode b ->
 	        let pos = b.IF.h_formula_heap_pos in
-	        let labels = try
+            (*flag to check whether the heap node representing an invariant or not*)
+	        let isInv, labels = try
 	          let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
-	          vdef.I.view_labels
+              let flag = match vdef.I.view_inv_lock with
+                | None -> false
+                | Some _ -> true
+              in
+	          (flag,vdef.I.view_labels)
 	        with
-	          | Not_found ->List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments in	
+	          | Not_found -> (false,List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments)
+            in
 	        let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
 	          report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
 	        in
+            if (isInv) then
+              (*TO CHECK: if heap node is a LOCK invariant => do nothing*)
+              (used_names, [], f ,  IP.mkTrue no_pos)
+            else
             let perm_labels,perm_var = 
               match b.IF.h_formula_heap_perm with
                 | None -> [],[]

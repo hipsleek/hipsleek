@@ -39,6 +39,7 @@ let test_db = false
 (* let tp = ref OZ *)
 let tp = ref Redlog
 (* let tp = ref AUTO *)
+(* let tp = ref RM *)
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -72,7 +73,7 @@ let string_of_prover prover = match prover with
 	| Coq -> "COQ"
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
-	| RM -> ""
+	| RM -> "Redlog, Mona"
 	| ZM -> "Omega, z3"
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"

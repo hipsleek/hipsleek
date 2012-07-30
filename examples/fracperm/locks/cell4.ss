@@ -39,7 +39,7 @@ void main()
   release[LOCK](l,x);
   //dprint;
   int id;
-  //dprint;
+  dprint;
   id = fork(inc,l,x); // there is an automatic split here
   //dprint;
   acquire[LOCK](l,x);
@@ -62,11 +62,12 @@ void inc(lock l,cell x)
   requires [f] l::LOCK(f)<x> & @value[l,x]
      ensures l::LOCK(f)<x>;
 {
-  //dprint;
+  dprint;
   acquire[LOCK](l,x);
-  //dprint;
+  dprint;
   x.val++;
   //x.val--; //will make it fail because of the invariant
-  //dprint;
+  dprint;
   release[LOCK](l,x);
+  dprint;
 }

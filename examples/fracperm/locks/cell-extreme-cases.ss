@@ -20,6 +20,13 @@
     ensures  self::LOCKA(f)<>
 -------------------------------------------------
 
+Output:
+
+Procedure test$ result FAIL-1
+Procedure test2$ result FAIL-1
+Procedure test3$ SUCCESS
+Procedure test4$ result FAIL-1
+
 */
 
 data cell{
