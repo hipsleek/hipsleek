@@ -1,22 +1,22 @@
 #!/usr/bin/python
 import math
 
-N = 40
+N = 20
 
 def f(x):
-  y = 2 - 1/x
+  y = x*x - 2
   return y
   
-x = 0.2;
-fixpoint = 1.0
+x = 2.1;
+fixpoint = 2.0
 
 for i in range(N):
   # print distance 
-  distance = abs(x - fixpoint)
-  print distance
+  #distance = abs(x - fixpoint)
+  #print distance
   
   # print value
-  # print x
+  print x
   
   # update new value
   x = f(x)

@@ -765,16 +765,18 @@ let check_decreasing_seqvar_init_and_lower_bound (init_constraint: CP.formula) (
              (fun in1 in2 in3 -> check_decreasing_seqvar_init_and_lower_bound_x in1 in2 in3)
              init_constraint element bounds
 
-let check_decreasing_seqvar_init_and_term_constraint_x (init_constraint: CP.formula) (termcons: CP.formula) : bool =
+let check_decreasing_seqvar_init_and_term_constraint_x (init_constraint: CP.formula) (termcons: CP.p_formula list) : bool =
   (* initial termination constraint: (init_constraint -> termcons is SAT *)
-  let termcons_check, _, _ = TP.imply init_constraint termcons "" false None in
+  let lst = List.map CP.mkPure termcons in
+  let term_constraint = List.fold_left (fun x y -> CP.mkOr x y None no_pos) (CP.mkFalse no_pos) lst in 
+  let term_check, _, _ = TP.imply init_constraint term_constraint "" false None in
   let _ = Debug.dinfo_pprint ("== in function: check_decreasing_seqvar_init_and_term_constraint_x") no_pos in
   let _ = Debug.dinfo_pprint ("== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
-  let _ = Debug.dinfo_pprint ("== termcons = " ^ (Cprinter.string_of_pure_formula termcons)) no_pos in
-  let _ = Debug.dinfo_pprint ("== termcons_check = " ^ (string_of_bool termcons_check)) no_pos in
-  termcons_check
+  let _ = Debug.dinfo_pprint ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) no_pos in
+  let _ = Debug.dinfo_pprint ("== term_check = " ^ (string_of_bool term_check)) no_pos in
+  term_check
 
-let check_decreasing_seqvar_init_and_term_constraint (init_constraint: CP.formula) (termcons: CP.formula) : bool =
+let check_decreasing_seqvar_init_and_term_constraint (init_constraint: CP.formula) (termcons: CP.p_formula list) : bool =
   let pr_in = Cprinter.string_of_pure_formula in
   let pr_out = string_of_bool in
   Debug.no_2 "check_decreasing_seqvar_init_and_term_constraint"
@@ -787,10 +789,12 @@ let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
                                          (seqvar_dst: CP.sequence_info)
                                          : (bool * string) =
   let element_src = seqvar_src.CP.seq_element in
-  let domain_src = seqvar_src.CP.seq_domain in
+  let lst = List.map CP.mkPure seqvar_src.CP.seq_domain in
+  let domain_src = List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) lst in
   let limit_src = seqvar_src.CP.seq_limit in 
   let element_dst = seqvar_dst.CP.seq_element in
-  let domain_dst = seqvar_dst.CP.seq_domain in
+  let lst = List.map CP.mkPure seqvar_dst.CP.seq_domain in
+  let domain_dst = List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) lst in
   let limit_dst = seqvar_dst.CP.seq_limit in 
   (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
   let update_function = collect_update_function init_constraint in
@@ -843,12 +847,13 @@ let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
   else (
     (* domain check*)
     let domain_src_cons = CP.mkAnd update_function domain_src no_pos in
-    let domain_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
+    let domain_entail_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
     let _ = Debug.dinfo_pprint ("== in function: check_general_seqvar_transition_x") no_pos in
-    let _ = Debug.dinfo_pprint ("== domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in
+    let _ = Debug.dinfo_pprint ("== update_function = " ^ (Cprinter.string_of_pure_formula update_function)) no_pos in
+    let _ = Debug.dinfo_pprint ("== domain_src = " ^ (Cprinter.string_of_pure_formula domain_src)) no_pos in
     let _ = Debug.dinfo_pprint ("== domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in
-    let _ = Debug.dinfo_pprint ("== domain_check = " ^ (string_of_bool domain_check)) no_pos in
-    if not domain_check then
+    let _ = Debug.dinfo_pprint ("== domain_entail_check = " ^ (string_of_bool domain_entail_check)) no_pos in
+    if not domain_entail_check then
       (false, "Domain-entail checking fail")
     else (
       (* distance decrease check *)
@@ -908,7 +913,7 @@ let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
           let _ = Debug.dinfo_pprint ("== limit_src_constraint = " ^ (Cprinter.string_of_pure_formula limit_src_constraint))  no_pos in
           let _ = Debug.dinfo_pprint ("== limit_src_check = " ^ (string_of_bool limit_src_check)) no_pos in
           if not limit_src_check then
-            (false, "Limit checking fail")
+            (false, "Limit checking fail (fixpoint isn't the biggest lowerbound of domain)")
           else (
             let limit_dst_constraint = (
               let vars_dst = CP.afv element_dst in
@@ -925,7 +930,7 @@ let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
             let _ = Debug.dinfo_pprint ("== limit_dst_constraint = " ^ (Cprinter.string_of_pure_formula limit_dst_constraint))  no_pos in
             let _ = Debug.dinfo_pprint ("== limit_dst_check = " ^ (string_of_bool limit_dst_check)) no_pos in
             if not limit_dst_check then
-              (false, "Limit checking fail")
+              (false, "Limit checking fail (fixpoint isn't the biggest lowerbound of domain)")
             else
               (true, "Transition checking succeed")
           )
@@ -973,9 +978,11 @@ let check_decreasing_seqvar_limit_and_lower_bound (init_constraint: CP.formula) 
 let check_decreasing_seqvar_limit_and_term_constraint_x (init_constraint: CP.formula)
                                                         (element: CP.exp)
                                                         (limit: CP.exp)
-                                                        (termcons: CP.formula)
+                                                        (termcons: CP.p_formula list)
                                                         : bool =
   let term_constraint = (
+    let lst = List.map CP.mkPure termcons in
+    let tc = List.fold_left (fun x y -> CP.mkOr x y None no_pos) (CP.mkFalse no_pos) lst in 
     match limit with
     | CP.SConst (Pos_infinity, _) ->
         let _ = report_error no_pos "check_decreasing_seqvar_limit_and_term_constraint: limit can't be Pos_infinity" in
@@ -984,7 +991,7 @@ let check_decreasing_seqvar_limit_and_term_constraint_x (init_constraint: CP.for
         let vars = CP.afv element in
         let bound_var = CP.fresh_new_spec_var Float in
         let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var no_pos) no_pos) in
-        let all_constraint = CP.mkOr (CP.mkNot_s bound_exp) termcons None no_pos in
+        let all_constraint = CP.mkOr (CP.mkNot_s bound_exp) tc None no_pos in
         let term_formula = CP.mkForall vars all_constraint None no_pos in
         CP.mkExists [bound_var] term_formula None no_pos
     | _ ->
@@ -992,7 +999,7 @@ let check_decreasing_seqvar_limit_and_term_constraint_x (init_constraint: CP.for
         let epsilon = CP.fresh_new_spec_var Float in
         let constraint1 = CP.mkPure (CP.mkGt element limit no_pos) in
         let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in
-        let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcons None no_pos in
+        let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
         let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
         let term_formula = CP.mkForall vars all_constraint None no_pos in
         CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos
@@ -1007,7 +1014,8 @@ let check_decreasing_seqvar_limit_and_term_constraint_x (init_constraint: CP.for
 let check_decreasing_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
                                                       (element: CP.exp)
                                                       (limit: CP.exp)
-                                                      (termcons: CP.formula) : bool =
+                                                      (termcons: CP.p_formula list)
+                                                      : bool =
   let pr_in1 = Cprinter.string_of_pure_formula in
   let pr_in2 = Cprinter.string_of_formula_exp in
   let pr_in3 = Cprinter.string_of_formula_exp in
@@ -1122,16 +1130,18 @@ let check_general_seqvar_init_and_bounds (init_constraint: CP.formula) (element:
              (fun in1 in2 in3 -> check_general_seqvar_init_and_bounds_x in1 in2 in3)
              init_constraint element bounds
 
-let check_general_seqvar_init_and_term_constraint_x (init_constraint: CP.formula) (termcons: CP.formula) : bool =
+let check_general_seqvar_init_and_term_constraint_x (init_constraint: CP.formula) (termcons: CP.p_formula list) : bool =
   (* initial termination constraint: (init_constraint -> termcons) is SAT *)
-  let termcons_check, _, _ = TP.imply init_constraint termcons "" false None in
+  let lst = List.map CP.mkPure termcons in
+  let term_constraint = List.fold_left (fun x y -> CP.mkOr x y None no_pos) (CP.mkFalse no_pos) lst in 
+  let term_check, _, _ = TP.imply init_constraint term_constraint "" false None in
   let _ = Debug.dinfo_pprint ("== in function: check_general_seqvar_init_and_term_constraint_x") no_pos in
   let _ = Debug.dinfo_pprint ("== init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
-  let _ = Debug.dinfo_pprint ("== termcons = " ^ (Cprinter.string_of_pure_formula termcons)) no_pos in
-  let _ = Debug.dinfo_pprint ("== termcons_check = " ^ (string_of_bool termcons_check)) no_pos in
-  termcons_check
+  let _ = Debug.dinfo_pprint ("== term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) no_pos in
+  let _ = Debug.dinfo_pprint ("== term_check = " ^ (string_of_bool term_check)) no_pos in
+  term_check
 
-let check_general_seqvar_init_and_term_constraint (init_constraint: CP.formula) (termcons: CP.formula) : bool =
+let check_general_seqvar_init_and_term_constraint (init_constraint: CP.formula) (termcons: CP.p_formula list) : bool =
   let pr_in = Cprinter.string_of_pure_formula in
   let pr_out = string_of_bool in
   Debug.no_2 "check_general_seqvar_init_and_term_constraint"
@@ -1144,10 +1154,12 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
                                       (seqvar_dst: CP.sequence_info)
                                       : (bool * string) =
   let element_src = seqvar_src.CP.seq_element in
-  let domain_src = seqvar_src.CP.seq_domain in
+  let lst = List.map CP.mkPure seqvar_src.CP.seq_domain in
+  let domain_src = List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) lst in
   let limit_src = seqvar_src.CP.seq_limit in 
   let element_dst = seqvar_dst.CP.seq_element in
-  let domain_dst = seqvar_dst.CP.seq_domain in
+  let lst = List.map CP.mkPure seqvar_dst.CP.seq_domain in
+  let domain_dst = List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) lst in
   let limit_dst = seqvar_dst.CP.seq_limit in 
   (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
   let update_function = collect_update_function init_constraint in
@@ -1173,12 +1185,13 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
   else (
     (* domain check*)
     let domain_src_cons = CP.mkAnd update_function domain_src no_pos in
-    let domain_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
+    let domain_entail_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
     let _ = Debug.dinfo_pprint ("== in function: check_general_seqvar_transition_x") no_pos in
-    let _ = Debug.dinfo_pprint ("== domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in
+    let _ = Debug.dinfo_pprint ("== update_function = " ^ (Cprinter.string_of_pure_formula update_function)) no_pos in
+    let _ = Debug.dinfo_pprint ("== domain_src = " ^ (Cprinter.string_of_pure_formula domain_src)) no_pos in
     let _ = Debug.dinfo_pprint ("== domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in
-    let _ = Debug.dinfo_pprint ("== domain_check = " ^ (string_of_bool domain_check)) no_pos in
-    if not domain_check then
+    let _ = Debug.dinfo_pprint ("== domain_entail_check = " ^ (string_of_bool domain_entail_check)) no_pos in
+    if not domain_entail_check then
       (false, "Domain-entail checking fail")
     else (
       (* distance check *)
@@ -1230,7 +1243,7 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
           let _ = Debug.dinfo_pprint ("== limit_src_constraint = " ^ (Cprinter.string_of_pure_formula limit_src_constraint))  no_pos in
           let _ = Debug.dinfo_pprint ("== limit_src_check = " ^ (string_of_bool limit_src_check)) no_pos in
           if not limit_src_check then
-            (false, "Limit checking fail")
+            (false, "Limit checking fail (distance to fixpoint isn't the biggest lowerbound)")
           else (
             let limit_dst_constraint = (
               let vars_dst = CP.afv element_dst in
@@ -1248,7 +1261,7 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
             let _ = Debug.dinfo_pprint ("== limit_dst_constraint = " ^ (Cprinter.string_of_pure_formula limit_dst_constraint))  no_pos in
             let _ = Debug.dinfo_pprint ("== limit_dst_check = " ^ (string_of_bool limit_dst_check)) no_pos in
             if not limit_dst_check then
-              (false, "Limit checking fail")
+              (false, "Limit checking fail (distance to fixpoint isn't the biggest lowerbound)")
             else
               (true, "Transition checking succeed")          )
         )
@@ -1297,13 +1310,15 @@ let check_general_seqvar_limit_and_bounds (init_constraint: CP.formula) (limit: 
 let check_general_seqvar_limit_and_term_constraint_x (init_constraint: CP.formula)
                                                      (element: CP.exp)
                                                      (limit: CP.exp)
-                                                     (termcons: CP.formula)
+                                                     (termcons: CP.p_formula list)
                                                      : bool = 
   let vars = CP.afv element in
   let epsilon = CP.fresh_new_spec_var Float in
   let constraint1 = CP.mkPure (CP.mkGt element limit no_pos) in
   let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in
-  let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcons None no_pos in
+  let lst = List.map CP.mkPure termcons in
+  let tc = List.fold_left (fun x y -> CP.mkOr x y None no_pos) (CP.mkFalse no_pos) lst in 
+  let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
   let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
@@ -1317,7 +1332,7 @@ let check_general_seqvar_limit_and_term_constraint_x (init_constraint: CP.formul
 let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
                                                    (element: CP.exp)
                                                    (limit: CP.exp)
-                                                   (termcons: CP.formula)
+                                                   (termcons: CP.p_formula list)
                                                    : bool =
   let pr_in1 = Cprinter.string_of_pure_formula in
   let pr_in2 = Cprinter.string_of_formula_exp in
@@ -1458,7 +1473,10 @@ let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     let seqvar_src = find_seqvar_es estate in
     let seqinfo_src = match seqvar_src with
                   | CP.SeqVar seqinfo -> seqinfo
-                  | _ -> raise (Exn_SeqVar "SeqVar not found!") in 
+                  | _ -> raise (Exn_SeqVar "SeqVar not found!") in
+    let _ = Debug.dinfo_pprint ("== in function check_seqvar_rhs_x") no_pos in
+    let _ = Debug.dinfo_pprint ("== seqvar_src = " ^ (Cprinter.string_of_p_formula seqvar_src)) no_pos in 
+    let _ = Debug.dinfo_pprint ("== seqvar_dst = " ^ (Cprinter.string_of_p_formula seqvar_dst)) no_pos in 
     let ann_src = seqinfo_src.CP.seq_ann in
     let trans = (seqvar_src, seqvar_dst) in
     let trans_opt = Some trans in

@@ -45,7 +45,7 @@ void loop1 (float a, float b, float machep)
   case
   {
     a < 0.0 | b < 0.0 | machep < 0.0     ->   requires Term[] ensures true;
-    !(a < 0.0 | b < 0.0 | machep < 0.0)  ->   requires Term[SeqDec((a-b)/(2.0 * a), 0.0, machep)]
+    !(a < 0.0 | b < 0.0 | machep < 0.0)  ->   requires Term[SeqDec{(a-b)/(2.0 * a), 0.0, machep}]
                                                 ensures true;
   }
 {

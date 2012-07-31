@@ -12,7 +12,7 @@ void foo(float x)
     case
     {
       x <= 1.1 -> requires Term ensures true;
-      x > 1.1  -> requires Term[SeqDec(x, 1.0, 0.9)] ensures true;
+      x > 1.1  -> requires Term[SeqDec{x, 1.0, 0.9}] ensures true;
     }
 {
   if (x > 1.1)
@@ -29,13 +29,13 @@ checkentail (x <= 1.5) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= 1.5)
 
 // 2
 checkentail (x <= 1.5) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > 1.5)
-                      |- Term[SeqDec(x1, 1.0, 0.9)].
+                      |- Term[SeqDec{x1, 1.0, 0.9}].
                       
 // 3
-checkentail (x > 1.5) & Term[SeqDec(x, 1.0, 0.9)] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= 1.5)
+checkentail (x > 1.5) & Term[SeqDec{x, 1.0, 0.9}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= 1.5)
                       |- Term.
 
 // 4
-checkentail (x > 1.5) & Term[SeqDec(x, 1.0, 0.9)] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > 1.5)
-                      |- Term[SeqDec(x1, 1.0, 0.9)].
+checkentail (x > 1.5) & Term[SeqDec{x, 1.0, 0.9}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > 1.5)
+                      |- Term[SeqDec{x1, 1.0, 0.9}].
 */

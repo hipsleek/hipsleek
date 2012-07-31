@@ -12,8 +12,8 @@ void loop (float x)
   case
   {
     -0.1 <= x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1 -> requires Term[SeqDec(x, 0, x < 0.1)] ensures true;
-    x < -0.1 -> requires Term[SeqDec(-x, 0, x <= 0.1)] ensures true;
+    x > 0.1 -> requires Term[SeqDec{x, 0, x < 0.1}] ensures true;
+    x < -0.1 -> requires Term[SeqDec{-x, 0, x <= 0.1}] ensures true;
   }
 {
   if (fabs(x) > 0.1)

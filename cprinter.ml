@@ -507,11 +507,6 @@ let string_of_cperm perm =
 let string_of_derv dr = 
   if dr then "@D" else ""
 
-let string_of_sequence_variation (v : P.sequence_variation_type) : string =
-  match v with
-  | P.SeqDec -> "SeqDec"
-  | P.SeqGen -> "SeqGen"
-
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
@@ -722,15 +717,16 @@ and pr_p_formula (pf: P.p_formula) =
       if ls2!=[] then pr_set pr_formula_exp ls2 else ();
       fmt_string ")]"
   | P.SeqVar seqinfo ->
+      let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
       fmt_string ((string_of_term_ann seqinfo.CP.seq_ann) ^ "[");
       if seqinfo.CP.seq_decrease then fmt_string "SeqDec(" else fmt_string "SeqGen(";
       pr_formula_exp seqinfo.CP.seq_element;
       fmt_string ", ";
-      pr_pure_formula seqinfo.CP.seq_domain;
+      pr_s " & " pr_p_formula seqinfo.CP.seq_domain;
       fmt_string ", ";
       pr_formula_exp seqinfo.CP.seq_limit;
       fmt_string ", ";
-      pr_pure_formula seqinfo.CP.seq_termcons;
+      pr_s " | " pr_p_formula seqinfo.CP.seq_termcons;
       fmt_string ")]"
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)

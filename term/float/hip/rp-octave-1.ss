@@ -27,7 +27,7 @@ void loop1 (float y)
   {
     y <= 0.0            ->  requires Term[] ensures true;
     y >= 0.5            ->  requires Term[] ensures true;
-    y > 0.0 & y < 0.5   ->  requires Term[SeqDec(-y, -infinity, -1.0 / 65536.0 / 65536.0)] ensures true;
+    y > 0.0 & y < 0.5   ->  requires Term[SeqDec{-y, -infinity, -1.0 / 65536.0 / 65536.0}] ensures true;
   }
 {
   if (y <= 0.0)
@@ -50,7 +50,7 @@ void loop2 (float y)
   {
     y <= 0.0            ->  requires Term[] ensures true;
     y >= 0.5            ->  requires Term[] ensures true;
-    y > 0.0 & y < 0.5   ->  requires Term[SeqDec(-y, -infinity, y > 1.0 / 65536.0 / 65536.0)] ensures true;
+    y > 0.0 & y < 0.5   ->  requires Term[SeqDec{-y, -infinity, y > 1.0 / 65536.0 / 65536.0}] ensures true;
   }
 {
   if (y <= 0.0)

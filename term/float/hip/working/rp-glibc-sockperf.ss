@@ -27,11 +27,11 @@ float abs(float x)
 void loop1(float z)
   case
   {
-    z < (1 - sqrt(5))/2 -> requires Term[SeqDec(z, -infinity, -4 )] ensures true;
+    z < (1 - sqrt(5))/2 -> requires Term[SeqDec{z, -infinity, -4 }] ensures true;
     z >= (1 - sqrt(5))/2 -> requires false ensures true;
   }
 
-//  requires Term[SeqDec(z, 0, s * mx < 1)] ensures true;
+//  requires Term[SeqDec{z, 0, s * mx < 1}] ensures true;
 {
   if (abs(z) < 4.0)
     loop1(z * z - 1);

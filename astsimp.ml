@@ -5171,7 +5171,9 @@ and gather_type_info_b_formula_x prog b0 stab =
         ()
     | IP.SeqVar seq_info ->
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
+        let _ = gather_type_info_pure prog seq_info.IP.seq_domain stab in
         let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in
+        let _ = gather_type_info_pure prog seq_info.IP.seq_termcons stab in
         ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->

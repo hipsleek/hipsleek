@@ -1073,9 +1073,9 @@ cexp_w :
         let tc = match termcons with
                        | [Pure_f f] -> f
                        | [Pure_c c1; Pure_c c2] ->
-                           let tc1 = P.mkPure (P.mkLt element c1 no_pos) in
-                           let tc2 = P.mkPure (P.mkGt element c2 no_pos) in
-                           P.mkOr tc1 tc2  None no_pos
+                           let tc1 = P.mkLt element c1 no_pos in
+                           let tc2 = P.mkGt element c2 no_pos in
+                           [tc1; tc2]
                        | _ -> report_error (get_pos_camlp4 _loc 1) "expected [pures_cosntr] or [cexp; cexp] but not meet" in
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = element;
@@ -1252,31 +1252,31 @@ measures_seqdec:
   [[
     element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGt element bound1 no_pos in
+      let bcons2 = P.mkLt element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGt element bound1 no_pos in
+      let bcons2 = P.mkLte element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGte element bound1 no_pos in
+      let bcons2 = P.mkLt element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGte element bound1 no_pos in
+      let bcons2 = P.mkLte element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   ]];
 
@@ -1287,31 +1287,31 @@ measures_seqgen:
   [[
     element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGt element bound1 no_pos in
+      let bcons2 = P.mkLt element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGt element bound1 no_pos in
+      let bcons2 = P.mkLte element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGte element bound1 no_pos in
+      let bcons2 = P.mkLt element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = LIST1 cexp_w SEP `COMMA ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let bcons1 = P.mkGte element bound1 no_pos in
+      let bcons2 = P.mkLte element bound2 no_pos in
+      let lmcons = P.mkNeq element limit no_pos in
+      let domain = [bcons1; bcons2; lmcons] in
       (element, domain, limit, termcons)
   ]];
 

@@ -21,16 +21,12 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-and sequence_variation_type =
-  | SeqDec                  (* sequence converge & decrease *)
-  | SeqGen                     (* sequence converge *)
-
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
-  seq_domain: formula;
+  seq_domain: p_formula list;    (* conjunction of domain constraint *)
   seq_limit: exp;
-  seq_termcons: formula;  (* terminate condition *)
+  seq_termcons: p_formula list;  (* disjunction of terminate constraint *)
   seq_decrease: bool; 
   seq_loc : loc
 }

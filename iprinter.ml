@@ -180,11 +180,6 @@ let string_of_slicing_label sl =
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
-let string_of_sequence_variation (v: P.sequence_variation_type) : string =
-  match v with
-  | P.SeqDec -> "SeqDec"
-  | P.SeqGen -> "SeqGen"
-
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 

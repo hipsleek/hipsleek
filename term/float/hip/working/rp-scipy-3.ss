@@ -34,7 +34,7 @@ void loop1 (float uf, float f, float k, float z)
   case
   {
     (uf <= 0.0 | f < 1.0 | k <= 1.0 | z <= 0.0) -> requires Term[] ensures true;
-    !(uf <= 0.0 | f < 1.0 | k <= 1.0 | z <= 0.0) -> requires Term[SeqGen(uf/f, 1.0, uf/f < 0.1)] ensures true;
+    !(uf <= 0.0 | f < 1.0 | k <= 1.0 | z <= 0.0) -> requires Term[SeqGen{uf/f, 1.0, uf/f < 0.1}] ensures true;
   }
 {
   if ((uf <= 0.0) || (f < 1.0) || (k < 1.0) || (z <= 0.0)) 
