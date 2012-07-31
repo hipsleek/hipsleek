@@ -87,9 +87,11 @@ and lex_info = {
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
-  seq_domain: p_formula list;    (* conjunction of domain constraint *)
+  seq_domain: formula;
+  (* seq_domain: p_formula list;    (* conjunction of domain constraint *) *)
   seq_limit: exp;
-  seq_termcons: p_formula list;  (* disjunction of terminate constraint *)
+  seq_termcons: formula;
+  (* seq_termcons: p_formula list;  (* disjunction of terminate constraint *) *)
   seq_decrease: bool;            (* seq_decrease = true -> sequence decrease; otherwise don't consider the decrease *)
   seq_loc : loc
 }
@@ -786,12 +788,13 @@ and bfv (bf : b_formula) =
     | VarPerm (t,ls,_) -> [] (*TO CHECK*)
     | LexVar l_info ->
         List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
-    | SeqVar seq_info ->
-        let e = seq_info.seq_element in
-        let lm = seq_info.seq_limit in
-        let args = [e; lm] in
-        let args_fv = List.concat (List.map afv args) in
-        Gen.BList.remove_dups_eq (=) args_fv
+    | SeqVar seqinfo ->
+        let sv1 = afv seqinfo.seq_element in
+        let sv2 = fv seqinfo.seq_domain in
+        let sv3 = afv seqinfo.seq_limit in
+        let sv4 = fv seqinfo.seq_termcons in
+        let sv_list = sv1 @ sv2 @ sv3 @ sv4 in
+        Gen.BList.remove_dups_eq (=) sv_list
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -2409,9 +2412,11 @@ and p_apply_subs sst pf =
                            lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
   | SeqVar seq_info -> 
       let element = e_apply_subs sst seq_info.seq_element in
-      let domain = List.map (p_apply_subs sst) seq_info.seq_domain in
+      let domain = apply_subs sst seq_info.seq_domain in
+      (* let domain = List.map (p_apply_subs sst) seq_info.seq_domain in *)
       let limit = e_apply_subs sst seq_info.seq_limit in
-      let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in
+      let termcons = apply_subs sst seq_info.seq_termcons in
+      (* let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in *)
       SeqVar { seq_info with seq_element = element;
                              seq_domain = domain;
                              seq_limit = limit;
@@ -2460,9 +2465,11 @@ and p_apply_subs_varperm sst pf =
                            lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   | SeqVar seq_info -> 
       let element = e_apply_subs sst seq_info.seq_element in
-      let domain = List.map (p_apply_subs sst) seq_info.seq_domain in
+      let domain = apply_subs sst seq_info.seq_domain in
+      (* let domain = List.map (p_apply_subs sst) seq_info.seq_domain in *)
       let limit = e_apply_subs sst seq_info.seq_limit in
-      let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in
+      let termcons = apply_subs sst seq_info.seq_termcons in
+      (* let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
@@ -2655,9 +2662,11 @@ and p_apply_par_term sst pf =
                              lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
     | SeqVar seq_info -> 
         let element = a_apply_par_term sst seq_info.seq_element in
-        let domain = List.map (p_apply_par_term sst) seq_info.seq_domain in
+        let domain = apply_par_term sst seq_info.seq_domain in
+        (* let domain = List.map (p_apply_par_term sst) seq_info.seq_domain in *)
         let limit = a_apply_par_term sst seq_info.seq_limit in
-        let termcons = List.map (p_apply_par_term sst) seq_info.seq_termcons in
+        let termcons = apply_par_term sst seq_info.seq_termcons in
+        (* let termcons = List.map (p_apply_par_term sst) seq_info.seq_termcons in *)
         SeqVar {seq_info with seq_element = element;
                               seq_domain = domain;
                               seq_limit = limit;
@@ -2757,9 +2766,11 @@ and p_apply_one_term ((fr, t) : (spec_var * exp)) pf =
                            lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
   | SeqVar seq_info -> 
       let element = a_apply_one_term (fr, t) seq_info.seq_element in
-      let domain = List.map (p_apply_one_term (fr, t)) seq_info.seq_domain in
+      let domain = apply_one_term (fr, t) seq_info.seq_domain in
+      (* let domain = List.map (p_apply_one_term (fr, t)) seq_info.seq_domain in *)
       let limit = a_apply_one_term (fr, t) seq_info.seq_limit in
-      let termcons = List.map (p_apply_one_term (fr, t)) seq_info.seq_termcons in
+      let termcons = apply_one_term (fr, t) seq_info.seq_termcons in
+      (* let termcons = List.map (p_apply_one_term (fr, t)) seq_info.seq_termcons in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
@@ -3777,9 +3788,11 @@ and p_apply_one_exp (fr, t) pf =
                            lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
   | SeqVar seq_info -> 
       let element = e_apply_one_exp (fr, t) seq_info.seq_element in
-      let domain = List.map (p_apply_one_exp (fr, t)) seq_info.seq_domain in
+      let domain = apply_one_exp (fr, t) seq_info.seq_domain in
+      (* let domain = List.map (p_apply_one_exp (fr, t)) seq_info.seq_domain in *)
       let limit = e_apply_one_exp (fr, t) seq_info.seq_limit in
-      let termcons = List.map (p_apply_one_exp (fr, t)) seq_info.seq_termcons in
+      let termcons = apply_one_exp (fr, t) seq_info.seq_termcons in
+      (* let termcons = List.map (p_apply_one_exp (fr, t)) seq_info.seq_termcons in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;

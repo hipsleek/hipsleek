@@ -180,7 +180,7 @@ let string_of_slicing_label sl =
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
-let string_of_b_formula (pf,il) =
+let rec string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
@@ -192,14 +192,16 @@ let string_of_b_formula (pf,il) =
       | Term -> 
           let opt = if ls2==[] then "" else
             "{"^(pr_list string_of_formula_exp ls2)^"}"
-          in "LexVar(" ^ ann ^ "["^(pr_list string_of_formula_exp ls1)^"]"^opt^")"
-      | _ -> "LexVar(" ^ ann ^ ")")
-  | P.SeqVar seq -> (
-      let ann = string_of_term_ann seq.P.seq_ann in
-      let variation = if seq.P.seq_decrease then "decrease" else "general" in
-      let element = string_of_formula_exp seq.P.seq_element in
-      let limit = string_of_formula_exp seq.P.seq_limit in
-      "SeqVar(" ^ ann ^ " " ^ variation ^ "(" ^ element ^ ", " ^ limit ^ "))"
+          in ann ^ "["^"LexVar(" ^ (pr_list string_of_formula_exp ls1)^")"^opt^"]"
+      | _ -> ann ^ "LexVar()")
+  | P.SeqVar seqinfo -> (
+      let ann = string_of_term_ann seqinfo.P.seq_ann in
+      let seqsymbol = if seqinfo.P.seq_decrease then "SeqDec" else "SeqGen" in
+      let element = string_of_formula_exp seqinfo.P.seq_element in
+      let domain = string_of_pure_formula seqinfo.P.seq_domain in
+      let limit = string_of_formula_exp seqinfo.P.seq_limit in
+      let termcons = string_of_pure_formula seqinfo.P.seq_termcons in
+      ann ^ "[" ^ seqsymbol ^ "(" ^ element ^ ", " ^ domain ^ ", " ^ limit ^ ", " ^ termcons ^ ")]"
     )
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
@@ -241,7 +243,6 @@ let string_of_b_formula (pf,il) =
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
    (* | _ -> "bag constraint" *)
-;;
 
 (*  | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
@@ -251,11 +252,11 @@ let string_of_b_formula (pf,il) =
 	  (* lists and list formulae *)
 *)
 
-let concat_string_list_string strings =
+and concat_string_list_string strings =
     ""
 
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
+and string_of_pure_formula = function 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 

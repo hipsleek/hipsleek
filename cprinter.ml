@@ -717,16 +717,15 @@ and pr_p_formula (pf: P.p_formula) =
       if ls2!=[] then pr_set pr_formula_exp ls2 else ();
       fmt_string ")]"
   | P.SeqVar seqinfo ->
-      let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
       fmt_string ((string_of_term_ann seqinfo.CP.seq_ann) ^ "[");
       if seqinfo.CP.seq_decrease then fmt_string "SeqDec(" else fmt_string "SeqGen(";
       pr_formula_exp seqinfo.CP.seq_element;
       fmt_string ", ";
-      pr_s " & " pr_p_formula seqinfo.CP.seq_domain;
+      pr_pure_formula seqinfo.CP.seq_domain;
       fmt_string ", ";
       pr_formula_exp seqinfo.CP.seq_limit;
       fmt_string ", ";
-      pr_s " | " pr_p_formula seqinfo.CP.seq_termcons;
+      pr_pure_formula seqinfo.CP.seq_termcons;
       fmt_string ")]"
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
@@ -1459,22 +1458,8 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_vwrap "es_var_measures: " (pr_opt (fun term ->
     match term with
-    | CP.LexVar lex ->
-        let t_ann = lex.CP.lex_ann in
-        let l1 = lex.CP.lex_exp in
-        let l2 = lex.CP.lex_tmp in
-        fmt_string ("LexVar(" ^ (string_of_term_ann t_ann));
-        pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
-        fmt_string ")"
-    | CP.SeqVar seq ->
-        let ann = seq.CP.seq_ann in
-        let element = seq.CP.seq_element in
-        let limit = seq.CP.seq_limit in
-        let variation = if seq.CP.seq_decrease then "decrease" else "converge" in
-        let ls = [element; limit] in
-        fmt_string ("SeqVar(" ^ (string_of_term_ann ann) ^ "(" ^ variation);
-        pr_seq "" pr_formula_exp ls;
-        fmt_string "]))"
+    | CP.LexVar _ 
+    | CP.SeqVar _ -> pr_p_formula term
     | _ -> failwith "Invalid value of term"
   )) es.es_var_measures;
   (* pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack; *)

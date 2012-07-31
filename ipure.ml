@@ -24,9 +24,11 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 and sequence_info = {
   seq_ann: term_ann;
   seq_element: exp;
-  seq_domain: p_formula list;    (* conjunction of domain constraint *)
+  seq_domain: formula;
+  (* seq_domain: p_formula list;    (* conjunction of domain constraint *) *)
   seq_limit: exp;
-  seq_termcons: p_formula list;  (* disjunction of terminate constraint *)
+  seq_termcons: formula;
+  (* seq_termcons: p_formula list;  (* disjunction of terminate constraint *) *)
   seq_decrease: bool; 
   seq_loc : loc
 }
@@ -201,12 +203,13 @@ and bfv (bf : b_formula) =
   | LexVar (_, args1, args2, _) ->
 		let args_fv = List.concat (List.map afv (args1@args2)) in
 		Gen.BList.remove_dups_eq (=) args_fv
-  | SeqVar seq_info ->
-      let e = seq_info.seq_element in
-      let lm = seq_info.seq_limit in
-      let args = [e; lm] in
-      let args_fv = List.concat (List.map afv args) in
-      Gen.BList.remove_dups_eq (=) args_fv
+  | SeqVar seqinfo ->
+      let sv1 = afv seqinfo.seq_element in
+      let sv2 = fv seqinfo.seq_domain in
+      let sv3 = afv seqinfo.seq_limit in
+      let sv4 = fv seqinfo.seq_termcons in
+      let sv_list = sv1 @ sv2 @ sv3 @ sv4 in
+      Gen.BList.remove_dups_eq (=) sv_list
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -641,10 +644,14 @@ and b_apply_one (fr, t) bf =
         let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
           LexVar (t_ann, args1,args2,pos)
   | SeqVar seq_info ->
-      let e = e_apply_one (fr, t) seq_info.seq_element in
-      let lm = e_apply_one (fr, t) seq_info.seq_limit in
-      SeqVar {seq_info with seq_element = e;
-                            seq_limit = lm; }
+      let element = e_apply_one (fr, t) seq_info.seq_element in
+      let domain = apply_one (fr, t) seq_info.seq_domain in
+      let limit = e_apply_one (fr, t) seq_info.seq_limit in
+      let termcons = apply_one (fr, t) seq_info.seq_termcons in
+      SeqVar {seq_info with seq_element = element;
+                            seq_domain = domain;
+                            seq_limit = limit;
+                            seq_termcons = termcons }
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -761,13 +768,14 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | LexVar (_,args1, args2, _) -> 
-        let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
-        vs
+      let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
+      vs
   | SeqVar seq_info ->
-      let e = seq_info.seq_element in
-      let lm = seq_info.seq_limit in
-      let exps = [e; lm] in
-      List.concat (List.map look_for_anonymous_exp exps)
+      let a1 = look_for_anonymous_exp seq_info.seq_element in
+      let a2 = look_for_anonymous_pure_formula seq_info.seq_domain in
+      let a3 = look_for_anonymous_exp seq_info.seq_limit in
+      let a4 = look_for_anonymous_pure_formula seq_info.seq_termcons in
+      a1 @ a2 @ a3 @ a4
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
         vs
@@ -816,11 +824,12 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
-  | SeqVar seq_info -> 
-      let e = seq_info.seq_element in
-      let lm = seq_info.seq_limit in
-      let exps = [e; lm] in
-      List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] exps
+  | SeqVar seqinfo -> 
+      let l1 = find_lexp_exp seqinfo.seq_element ls in
+      let l2 = find_lexp_formula seqinfo.seq_domain ls in
+      let l3 = find_lexp_exp seqinfo.seq_limit ls in
+      let l4 = find_lexp_formula seqinfo.seq_termcons ls in
+      l1 @ l2 @ l3 @ l4
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =

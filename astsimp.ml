@@ -5170,10 +5170,11 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls2 in
         ()
     | IP.SeqVar seq_info ->
+        (* TRUNG: gather only the type of element *)
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
-        let _ = gather_type_info_pure prog seq_info.IP.seq_domain stab in
-        let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in
-        let _ = gather_type_info_pure prog seq_info.IP.seq_termcons stab in
+        (* let _ = gather_type_info_pure prog seq_info.IP.seq_domain stab in *)
+        (* let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in *)
+        (* let _ = gather_type_info_pure prog seq_info.IP.seq_termcons stab in *)
         ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
