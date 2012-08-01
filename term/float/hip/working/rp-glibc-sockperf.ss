@@ -15,23 +15,20 @@ File: glibc-2.16.0/nptl/sockperf.c
 */
 
 float abs(float x)
-{
-  if (x > 0)
-    return x;
-  else
-    return -x;
-}
+  requires Term
+  ensures res = __abs(x);
 
 
-// TRUNG: BUG with sqrt --> uninterpreted function
 void loop1(float z)
   case
   {
-    z < (1 - sqrt(5))/2 -> requires Term[SeqDec{z, -infinity, -4 }] ensures true;
-    z >= (1 - sqrt(5))/2 -> requires false ensures true;
+    z >= 4  -> requires Term ensures true;
+    (1 + __sqrt(5))/2 < z < 4 -> requires Term[SeqDec{-z, (-infinity, -(1+__sqrt(5))/2), -infinity, __abs(z) >= 4 }] ensures true;
+    z = (1 - __sqrt(5))/2 | z = (1+__sqrt(5))/2 -> requires Loop ensures false;
+    (1-__sqrt(5))/2 < z < (1+__sqrt(5))/2 -> requires true ensures true; // TRUNG: do further analysis here
+    -4 < z < (1 - __sqrt(5))/2 -> requires Term[SeqDec{-__abs(z), (-infinity, -(1+__sqrt(5))/2), -infinity, __abs(z) >= 4 }] ensures true;
+    z <= -4 -> requires Term ensures true;
   }
-
-//  requires Term[SeqDec{z, 0, s * mx < 1}] ensures true;
 {
   if (abs(z) < 4.0)
     loop1(z * z - 1);

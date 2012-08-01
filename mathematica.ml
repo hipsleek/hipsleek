@@ -177,8 +177,14 @@ let check_formula (f: string) : bool option =
     else if (result = "False") then
       Some false
     else
+      let _ = Debug.dinfo_pprint ("Mathematica unexpected anser: ") no_pos in
+      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
+      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
+      let _ = Debug.dinfo_pprint ("Mathematica unexpected anser: ") no_pos in
+      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
+      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
       failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =

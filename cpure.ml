@@ -4166,69 +4166,67 @@ and simp_mult (e: exp) : exp =
 and simp_mult_x (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
     match x with
-      |  Add (e1, e2, l) ->
-             let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
-      | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
+    |  Add (e1, e2, l) ->
+         let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
+    | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
   let rec acc_mult m e0 =
     match e0 with
-      | Null _ 
-      | AConst _ -> e0
-      | Var (v, l) ->
-            (match m with 
-              | None -> e0 
-              | Some c ->  Mult (IConst (c, l), e0, l))
-      | IConst (v, l) ->
-            (match m with 
-              | None -> e0 
-              | Some c ->  IConst (c * v, l))
-      | FConst (v, l) ->
-            (match m with
-              | None -> e0
-              | Some c -> FConst (v *. (float_of_int c), l))
-      | SConst (v, l) -> report_error l ("Symbol type doesn't support mutl operator")
-      |  Add (e1, e2, l) ->
-             normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
-      |  Subtract (e1, e2, l) ->
-             normalize_add None l
-                 ( Add (acc_mult m e1,
-                 acc_mult
-                     (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
+    | Null _ 
+    | AConst _ -> e0
+    | Var (v, l) -> (
+        match m with 
+        | None -> e0 
+        | Some c ->  Mult (IConst (c, l), e0, l)
+      )
+    | IConst (v, l) -> (
+        match m with 
+        | None -> e0 
+        | Some c ->  IConst (c * v, l)
+      )
+    | FConst (v, l) -> (
+        match m with
+        | None -> e0
+        | Some c -> FConst (v *. (float_of_int c), l)
+      )
+    | SConst (v, l) -> report_error l ("Symbol type doesn't support mutl operator")
+    | Add (e1, e2, l) ->
+        normalize_add None l (Add (acc_mult m e1, acc_mult m e2, l))
+    |  Subtract (e1, e2, l) ->
+         normalize_add None l
+           (Add (acc_mult m e1,
+                 acc_mult (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
                  l))
-      | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
-      | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
-      | Abs (e, l) -> Abs (acc_mult m e, l)
-      | Sqrt (e, l) -> Sqrt (acc_mult m e, l)
-      | Pow (e1, e2, l) -> Pow (acc_mult m e1, acc_mult None e2, l)
-      |  Max (e1, e2, l) ->
-             Error.report_error
-                 {
-                     Error.error_loc = l;
-                     Error.error_text =
-                         "got Max !! (Should have already been simplified )";
-                 }
-      |  Min (e1, e2, l) ->
-             Error.report_error
-                 {
-                     Error.error_loc = l;
-                     Error.error_text =
-                         "got Min !! (Should have already been simplified )";
-                 }
-      |  Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
-      |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
-      |  BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
-      |  BagDiff (e1, e2, l) -> BagDiff (acc_mult m e1, acc_mult m e2, l)
-      |  List (_, l)
-      |  ListAppend (_, l)
-	  |  ListCons (_, _, l)
-	  |  ListTail (_, l)
-	  |  ListReverse (_, l)
-	  |  ListHead (_, l)
-	  |  ListLength (_, l) 
-    |  Func (_, _, l)
-		|  ArrayAt (_, _, l) (* An Hoa *) -> 
-     match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
-
-  in acc_mult None e
+    | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
+    | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
+    | Abs (_, l) | Sqrt (_, l) | Pow (_, _, l) -> (
+        match m with 
+        | None -> e0 
+        | Some c ->  Mult (IConst (c, l), e0, l)
+      )
+    | Max (e1, e2, l) ->
+        Error.report_error { Error.error_loc = l;
+                             Error.error_text = "got Max !! (Should have already been simplified )"; }
+    | Min (e1, e2, l) ->
+        Error.report_error { Error.error_loc = l;
+                             Error.error_text = "got Min !! (Should have already been simplified )"; }
+    | Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
+    | BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
+    | BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
+    | BagDiff (e1, e2, l) -> BagDiff (acc_mult m e1, acc_mult m e2, l)
+    | List (_, l)
+    | ListAppend (_, l)
+    | ListCons (_, _, l)
+    | ListTail (_, l)
+    | ListReverse (_, l)
+    | ListHead (_, l)
+    | ListLength (_, l) 
+    | Func (_, _, l)
+    | ArrayAt (_, _, l) (* An Hoa *) -> (
+        match m with 
+        | None -> e0 
+        | Some c ->  Mult (IConst (c, l), e0, l)
+      ) in
+  acc_mult None e
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   let pr1 = pr_opt !print_exp in

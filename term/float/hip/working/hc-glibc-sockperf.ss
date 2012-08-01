@@ -30,11 +30,10 @@ float abs(float x)
 void loop1(float z)
   case
   {
-    2.0 < z < 4.0 -> requires Term[SeqDec{-z*z, (-infinity, -4.0), -infinity, __abs(z) >= 4.0}] ensures true;
-    //-4.0 < z < -2.0 -> requires Term[SeqDec{-__abs(z), (-infinity, -2.0), -infinity, __abs(z) >= 4.0}] ensures true;
-    -4.0 < z < -2.0 -> requires Term[SeqDec{-(z*z), (-infinity, -4.0), -infinity, __abs(z) >= 4.0}] ensures true;
+    2.0 < z < 4.0 -> requires Term[SeqDec{-z, (-infinity, -2.0), -infinity, __abs(z) >= 4.0}] ensures true;
+    -4.0 < z < -2.0 -> requires Term[SeqDec{-__abs(z), (-infinity, -2.0), -infinity, __abs(z) >= 4.0}] ensures true;
     z = 2.0 | z = -2.0 -> requires Loop ensures false;
-    -2.0 < z < 2.0 -> requires true ensures true; 
+    -2.0 < z < 2.0 -> requires Loop ensures false; 
     z >= 4.0 -> requires Term ensures true;
     z <= -4.0 -> requires Term ensures true;
   }
