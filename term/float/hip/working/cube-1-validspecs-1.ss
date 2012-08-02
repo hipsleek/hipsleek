@@ -27,6 +27,35 @@ void foo2(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
+      1 < x < 1.1 -> requires Term[SeqGen{-x, (-infinity, -1), -infinity, x >= 1.1}] ensures true;
+    }
+{
+  if (x < 1.1)
+  {
+    foo2(cube(x));
+  }
+}
+
+/*
+void foo1(float x)
+    case
+    {
+      x >= 1.1    -> requires Term ensures true;
+      x <= 1      -> requires Loop ensures false;
+      1 < x < 1.1 -> requires Term[SeqDec{-x, (-infinity, -1), -infinity, -1.1}] ensures true;
+    }
+{
+  if (x < 1.1)
+  {
+    foo1(cube(x));
+  }
+}
+
+void foo2(float x)
+    case
+    {
+      x >= 1.1    -> requires Term ensures true;
+      x <= 1      -> requires Loop ensures false;
       1 < x < 1.1 -> requires Term[SeqDec{-x, (-infinity, -1), -infinity, x >= 1.1}] ensures true;
     }
 {
@@ -35,3 +64,4 @@ void foo2(float x)
     foo2(cube(x));
   }
 }
+*/

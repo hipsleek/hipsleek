@@ -1254,29 +1254,25 @@ measures_seqdec:
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
       let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
       let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
       let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
       let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
       let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
       let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
       (element, domain, limit, termcons)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; limit = cexp; `COMMA; termcons = cexp_w ->
       let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
       let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let lmcons = P.mkPure (P.mkNeq element limit no_pos) in
-      let domain = P.mkAnd lmcons (P.mkAnd bcons1 bcons2 no_pos) no_pos in
+      let domain = P.mkAnd bcons1 bcons2 no_pos in
       (element, domain, limit, termcons)
   ]];
 
