@@ -8065,7 +8065,21 @@ let get_bar_conds b_name self (l_f:(formula * formula_label) list): ((int option
 	
 let get_bar_conds b_name self l_f =
 	let string_of_lbl = (fun (c,_)-> string_of_int c) in
-	Debug.no_3 "get_bar_conds" (pr_list (fun c->c)) (fun c-> c) (pr_list (pr_pair !print_formula string_of_lbl)) (pr_list (pr_triple (pr_opt string_of_int) (pr_opt Tree_shares.Ts.string_of) string_of_lbl))
+	Debug.no_3 "get_bar_conds" (pr_list (fun c->c)) (fun c-> c) 
+		(pr_list (pr_pair !print_formula string_of_lbl)) 
+		(pr_list (pr_triple (pr_opt string_of_int) (pr_opt Tree_shares.Ts.string_of) string_of_lbl))
 	get_bar_conds b_name self l_f
 	
-  
+	                      
+let rec is_error_flow f =  match f with
+  | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow
+  | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow
+  | Or b ->  is_error_flow b.formula_or_f1 && is_error_flow b.formula_or_f2 
+
+let rec is_top_flow f =   match f with
+  | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval
+  | Exists b-> equal_flow_interval !top_flow_int b.formula_exists_flow.formula_flow_interval
+  | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2 
+
+let get_error_flow f = flow_formula_of_formula f
+let get_top_flow f = flow_formula_of_formula f

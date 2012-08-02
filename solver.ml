@@ -3032,9 +3032,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				let es =  CF.estate_of_context ctx pos in
 				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
                 let invert_ctx ctx postcond=
-                  let fl = CF.flow_formula_of_formula postcond in
-                  if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
+                  if CF.is_top_flow postcond then
                     let es, ll = helper ctx postcond in
+					let fl = CF.get_top_flow postcond in
                     let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
                     let err_msg = "may_err (" ^ err_name ^ ") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_may err_msg Globals.fnc_error in
@@ -3044,8 +3044,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                                    fc_orig_conseq = f ;
 		                                    fc_current_conseq = post;
 		                                    fc_failure_pts =  [];}, fe))
-                  else if CF.subsume_flow_f !error_flow_int fl then
+                  else if CF.is_error_flow postcond then
                      let es, ll = helper ctx postcond in
+					 let fl = CF.get_error_flow postcond in
                      let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
                      let err_msg = "must_err (" ^ err_name ^") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_must err_msg Globals.fnc_error in

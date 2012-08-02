@@ -604,14 +604,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	              (spec_and_inferred_post,inferred_pre,inferred_rel,r)
 	            with
                   | Err.Ppf (e, ifk) ->
-                      let fl = CF.flow_formula_of_formula post_cond in
                       (match ifk with
-                        | 1 -> if CF.subsume_flow_f !error_flow_int fl then
+                        | 1 -> if CF.is_error_flow post_cond  then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
                         | 3 ->
-                            if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
+                            if CF.is_top_flow post_cond then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
