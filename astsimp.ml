@@ -2984,7 +2984,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 (Gen.replace_dot_with_uscore (string_of_loc pos)))) in
 			let prepost = match wrap with 
 				| None -> prepost
-				| Some (_,nb) -> IF.add_post_for_flow nb prepost in
+				| Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 

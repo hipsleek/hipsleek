@@ -1369,16 +1369,18 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 	helper false struc 
 
 	
-let add_post_for_flow fl_name f = 
+let add_post_for_flow fl_names f = 
 	let rec fct c = match c with
 		| Or b -> Or { formula_or_f1 = fct b.formula_or_f1; formula_or_f2 = fct b.formula_or_f2; formula_or_pos = b.formula_or_pos}
 		| Base b -> 
 			if (String.compare b.formula_base_flow n_flow) == 0 then  
-				 mkOr c (Base {b with formula_base_flow = fl_name}) b.formula_base_pos
+				let l = List.map (fun c-> Base {b with formula_base_flow = c}) fl_names in
+				List.fold_left (fun a c-> mkOr a c b.formula_base_pos) c l 
 			else c
 		| Exists b ->
 			if (String.compare b.formula_exists_flow n_flow) == 0 then  
-				 mkOr c (Exists {b with formula_exists_flow = fl_name}) b.formula_exists_pos
+				let l = List.map (fun c-> Exists {b with formula_exists_flow = c}) fl_names in
+				List.fold_left (fun a c-> mkOr a c b.formula_exists_pos) c l 
 			else c in	
 	let rec helper f =  match f with
 		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 

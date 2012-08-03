@@ -675,13 +675,15 @@ let mkAssert asrtf assmf pid pos =
                exp_assert_path_id = pid;
                exp_assert_pos = pos }
       
-let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:exp -> 'a list -> 'a) :(exp * 'a) =
+let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
 	  | Some e1 -> e1
-	  | None  ->   let n_arg = f_args in_arg e in 
+	  | None  ->
+		let n_arg = f_args in_arg e in 
         let comb_f = comb_f e in
-        let zero = comb_f [] in  match e with	
+        let zero = comb_f [] in  
+		match e with	
           | Assert _ 
           | BoolLit _ 
           | Break _
@@ -1952,3 +1954,20 @@ let gen_normalize_lemma_comb ddef =
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
 	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}
+	
+	
+let rec get_breaks e = 
+	let f e = match e with
+		| Raise {exp_raise_type = rt}-> (match rt with
+			| Const_flow fl -> if (is_subsume_flow (exlist # get_hash brk_top) (exlist # get_hash fl)) then Some [fl]
+								else Some []
+			| Var_flow _ -> Some [])
+		| Try { exp_try_block = body;
+				exp_catch_clauses = cl} ->
+				let lb = get_breaks body in
+				let lb = List.filter (fun l -> not (List.exists (fun c-> match c with | Catch c-> (String.compare c.exp_catch_flow_type l) == 0 | _-> false) cl)) lb in
+				let lbc = List.map get_breaks cl in
+				Some (List.concat (lb::lbc))
+		| _ -> None in
+	fold_exp e f (List.concat) [] 
+	
