@@ -1,10 +1,11 @@
 
 Processing file "bst-del.ss"
 Parsing bst-del.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
+
 Checking procedure delete$node2~int... 
 dprint: bst-del.ss:67: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(73::,0 ); (73::,0 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(73::,1 ); (73::,1 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(69::,0 ); (69::,0 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )];  [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )])]
 
@@ -28,34 +29,47 @@ Successful States:
        es_var_measures: MayLoop
  ]
 
-INF-POST-FLAG: false
-REL :  B(sm,s,l,lg)
-POST:  l>=sm & lg>=l & sm=s
-PRE :  sm<=lg
-OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 2::ref [x]
-                     EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&B(sm,s,l,lg)&
-                     {FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&sm<=lg & MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 2::ref [x]
-                   x'::bst<s,l>@M[Orig][LHSCase]&B(sm,s,l,lg) & sm<=lg&
-                   {FLOW,(20,21)=__norm}
-NEW RELS: [ (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg), (s=sm & sm<=l & l<=lg) --> B(sm,s,l,lg), (sm=s & l=lg & s<=lg) --> B(sm,s,l,lg), (s=sm & l=l_893 & lg_621=lg & sm<=sm_620 & sm_620<=s_892 & s_892<=l_893 & 
-  sm_620<=lg & B(sm_620,s_892,l_893,lg_621)) --> B(sm,s,l,lg), (s=s_965 & l=lg & sm_640=sm & s_965<=l_966 & l_966<=lg_641 & lg_641<=lg & 
-  sm<=lg_641 & B(sm_640,s_965,l_966,lg_641)) --> B(sm,s,l,lg), (s=sm & l=lg & sm<=lg) --> B(sm,s,l,lg)]
-
+!!! REL :  B(sm,s,l,lg)
+!!! POST:  l>=s & lg>=l & s=sm
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::ref [x]
+                                EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&
+                                B(sm,s,l,lg)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::ref [x]
+                              EXISTS(s_1005,
+                              l_1006: x'::bst<s_1005,l_1006>@M[Orig][LHSCase]&
+                              l_1006>=s_1005 & lg>=l_1006 & s_1005=sm & 
+                              sm<=lg&{FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (sm=s & s<=l & l<=lg) --> B(sm,s,l,lg),
+ (lg=l & sm=s & s<=l) --> B(sm,s,l,lg),
+ (sm=s & lg=lg_621 & l_893=l & s<=sm_620 & sm_620<=lg_621 & s_892<=l & 
+  B(sm_620,s_892,l_893,lg_621)) --> B(sm,s,l,lg),
+ (lg=l & sm=sm_640 & s_947=s & sm_640<=lg_641 & lg_641<=l & s<=l_948 & 
+  B(sm_640,s_947,l_948,lg_641)) --> B(sm,s,l,lg),
+ (sm=s & lg=l & s<=l) --> B(sm,s,l,lg)]
+!!! NEW ASSUME:[ RELASS [B]: ( B(sm_620,s_892,l_893,lg_621)) -->  lg_621<sm_620 | sm_620<=lg_621 & sm_620<=s_892 | l_893<s_892 & 
+s_892<sm_620 & sm_620<=lg_621,
+ RELASS [B]: ( B(sm_640,s_947,l_948,lg_641)) -->  l_948<s_947 | lg_641<sm_640 & s_947<=l_948 | s_947<=l_948 & l_948<=lg_641 & 
+sm_640<=lg_641]
+!!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 592 invocations 
+Stop Omega... 350 invocations 
 0 false contexts at: ()
 
-Total verification time: 3.06 second(s)
-	Time spent in main process: 1.44 second(s)
-	Time spent in child processes: 1.62 second(s)
+Total verification time: 1.32 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 1.17 second(s)

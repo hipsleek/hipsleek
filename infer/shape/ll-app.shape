@@ -1,0 +1,34 @@
+SUMMARY
+{
+	label=SLS 0+;
+	11 [label=11];
+	12 [label=next 12];
+	11 -> 12 [label=[+0]];
+};
+	19 [label=lst1];
+{
+	label=SLS 0+;
+	20 [label=20];
+	21 [label=next 21];
+	20 -> 21 [label=[+0]];
+};
+	23 [label=lst2];
+	lonely1 [label=NULL];
+	12 -> lonely1 [label=AuxValue];
+	19 -> 20 [label=hasValue];
+	lonely2 [label=NULL];
+	21 -> lonely2 [label=AuxValue];
+	23 -> 11 [label=hasValue];
+
+SUMMARY
+{
+	label=SLS 1+;
+	6 [label=6];
+	7 [label=next 7];
+	6 -> 7 [label=[+0]];
+};
+	21 [label=lst1];
+	lonely1 [label=NULL];
+	7 -> lonely1 [label=AuxValue];
+	21 -> 6 [label=hasValue];
+

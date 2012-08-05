@@ -1,0 +1,28 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+// 1.
+checksat x::node<a,_> & a >0.
+//2
+checksat x::node<a,_> & x=null.
+
+//3
+checksat x::ll<n> & n =1.
+
+//4
+checksat x::ll<n> & n =1 & x=null.
+
+//5. unsat. FAIL
+checksat x::ll<n>*x::node<a,_> & n >=1.
+
+//6.
+checksat x::ll<n> & y=x & y!=null & n =0.
+
+//7.
+checksat x::ll<n> & y=x & y=null & n =1.
+
+//8. unsat.
+checksat x::ll<n>*x::node<a,_> & n =0.

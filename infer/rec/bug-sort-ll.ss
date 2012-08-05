@@ -17,7 +17,7 @@ relation B(int x, int y, int a, int b).
 
 
 void delete(ref node x, int a)
-    infer @pre[B]
+    infer [B]
 	requires x::sll<sm, lg> 
     ensures x'::sll<s, l> & sm <= s & l <= lg;//' 
    //ensures x'::bst<s, l> & B(sm,s,l,lg); //'

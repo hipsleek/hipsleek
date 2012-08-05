@@ -621,7 +621,7 @@ struct
       | _ -> f1
   let intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
   let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
-  let compute_hierarchy_aux cnt elist =
+  let compute_hierarchy_aux_x cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
 	  if ((List.length l1)==0) then 
@@ -642,6 +642,11 @@ struct
     in
     let r,_ = (lrr top_flow "") in
     r
+	
+  let compute_hierarchy_aux cnt elist =
+	let pr = pr_list (pr_triple (fun c->c) (fun c->c) (pr_pair string_of_int string_of_int)) in
+	Debug.no_1 "compute_hierarchy_aux" pr pr (fun _ -> compute_hierarchy_aux_x cnt elist) elist
+	
   class exc =
   object (self)
     val mutable elist = ([]:flow_entry list)

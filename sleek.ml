@@ -96,52 +96,35 @@ let parse_file (parse) (source_file : string) =
     match c with
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
+	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-	  | LemmaDef _
-      | Infer _
-	  | CaptureResidue _
-	  | LetDef _
-	  | EntailCheck _
-	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ |
+              EntailCheck _ | SatCheck _ | PrintCmd _ 
+      | Time _ | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
-	  | DataDef _
-	  | PredDef _
-	  | FuncDef _
-      | RelDef _
-      | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _
-	  | LetDef _
-	  | EntailCheck _
-    | Infer _
-	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
+	  | CaptureResidue _ | LetDef _ | EntailCheck _ | SatCheck _| Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
+      | SatCheck (iante) -> 
+          process_sat_check iante
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
 	  | LetDef (lvar, lbody) -> put_var lvar lbody
+	  | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
-	  | DataDef _
-	  | PredDef _
-	  | FuncDef _
-      | RelDef _
-      | AxiomDef _ (* An Hoa *)
-	  | LemmaDef _
-	  | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
@@ -176,10 +159,12 @@ let main () =
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
+				I.prog_barrier_decls = [];
   } in
+  let _ = process_data_def (I.b_data_constr b_datan []) in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = exlist # compute_hierarchy  in
+  let _ = exlist # compute_hierarchy  in  
   (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
@@ -208,10 +193,13 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
+					 | BarrierCheck bdef -> 
+							(process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | SatCheck (iante) -> process_sat_check iante
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef

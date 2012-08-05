@@ -17,25 +17,26 @@ inferred pure: [x!=null]
 
 Entail  (4): Valid. 
 
-<1>EXISTS(flted_7_64: b::ll<flted_7_64>@M[Orig]&flted_7_64+1=n&{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_68: b::ll<flted_7_68>@M[Orig]&flted_7_68+1=n&{FLOW,(17,18)=__norm})
 inferred pure: [x!=null]
 
-Entail  (5): Fail.(may) cause:(failure_code=213)  flted_7_87+1=n & (q_89=null & flted_7_87=0 | q_89!=null & 1<=flted_7_87) |-  q_89=null (may-bug).
+Entail  (5): Fail.(may) cause:(failure_code=213)  flted_7_95+1=n & (q_97=null & flted_7_95=0 | q_97!=null & 1<=flted_7_95) |-  q_97=null (may-bug).
 
 
 Entail  (6): Valid. 
 
-<1>EXISTS(q_117,flted_7_115: q_117::ll<flted_7_115>@M[Orig]&flted_7_115+1=n & n=1&{FLOW,(17,18)=__norm})
+<1>EXISTS(q_129,flted_7_127: q_129::ll<flted_7_127>@M[Orig]&flted_7_127+1=n & n=1&{FLOW,(17,18)=__norm})
 inferred pure: [n=1; n!=0]
 
 Entail  (7): Valid. 
 
-<1>EXISTS(q_146,flted_7_144: q_146::ll<flted_7_144>@M[Orig]&flted_7_144+1=n & 0<n & n=1&{FLOW,(17,18)=__norm})
+<1>EXISTS(q_162,flted_7_160: q_162::ll<flted_7_160>@M[Orig]&flted_7_160+1=n & 0<n & n=1&{FLOW,(17,18)=__norm})
 inferred pure: [n=1]
 
-Entail  (8): Fail.(must) cause:(failure_code=213)  0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null (must-bug).
+Entail  (8): Valid. 
 
-<1>x::ll<n>@M[Orig][LHSCase]&0<n&{FLOW,(1,2)=__Error}
+<1>false&false&{FLOW,(17,18)=__norm}
+inferred pure: [n<=0]
 
 Entail  (9): Fail.(must) cause:(failure_code=213)  0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null (must-bug).
 
@@ -43,9 +44,9 @@ Entail  (9): Fail.(must) cause:(failure_code=213)  0<n & (x=null & n=0 | x!=null
 
 Entail  (10): Valid. 
 
-<1>true&a=inf_a_169 & q=inf_q_170 & b=inf_b_172 & c=inf_c_173 & inf_ann_171<=0 & inf_ann_168<=0&{FLOW,(17,18)=__norm}
-inferred heap: [x::node<inf_a_169,inf_q_170>@inf_ann_168[Orig]; 
-               inf_q_170::node<inf_b_172,inf_c_173>@inf_ann_171[Orig]]
-inferred pure: [inf_ann_168<=0; inf_ann_171<=0]
+<1>true&a=inf_a_187 & q=inf_q_188 & b=inf_b_190 & c=inf_c_191 & inf_ann_189<=0 & inf_ann_186<=0&{FLOW,(17,18)=__norm}
+inferred heap: [x::node<inf_a_187,inf_q_188>@inf_ann_186[Orig]; 
+               inf_q_188::node<inf_b_190,inf_c_191>@inf_ann_189[Orig]]
+inferred pure: [inf_ann_186<=0; inf_ann_189<=0]
 
-Stop Omega... 133 invocations 
+Stop Omega... 104 invocations 

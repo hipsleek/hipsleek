@@ -69,7 +69,25 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 
   pformula:
   [ "pformula" LEFTA
-    [ x = INT; "="; y = INT ->
+    [ _ = NATIVEINT; "="; _ = exp -> mkTrue loc
+    | _ = exp; "="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<="; _ = exp -> mkTrue loc
+    | _ = exp; "<="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">="; _ = exp -> mkTrue loc
+    | _ = exp; ">="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<"; _ = exp -> mkTrue loc
+    | _ = exp; "<"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">"; _ = exp -> mkTrue loc
+    | _ = exp; ">"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "!="; _ = exp -> mkTrue loc
+    | _ = exp; "!="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "!="; _ = NATIVEINT -> mkTrue loc
+    | x = INT; "="; y = INT ->
       let tmp = if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc) in
       BForm ((tmp, None), None)
     |	x = exp; "<"; y = exp ->
@@ -143,6 +161,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
     | x = SELF; "-"; y = SELF -> Subtract(x, y, loc)
     | x = specvar -> Var (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 
+    | _ = NATIVEINT -> Var (SpecVar (Named "abc", "abc", Unprimed),loc)
     ]
   ]; 
 		

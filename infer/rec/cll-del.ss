@@ -21,7 +21,7 @@ relation A(int x, int y).
 
 /* function to delete the node after the head in a circular list */
 void delete(ref node x)
-        infer @pre[n,A]
+        infer [n,A]
 	requires x::hd<n> & n > 0
 	ensures x'::hd<m> & A(m,n);
 

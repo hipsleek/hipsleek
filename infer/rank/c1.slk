@@ -1,0 +1,53 @@
+
+relation P(int x, int y).
+
+relation R(int x, int y,int a, int b,int c, int d).
+
+infer [P] (s1_583<=l1 & s1<=s1_583 & s2<=l2 & P(s2,l1))  |- s1<=s2.
+print residue.
+
+infer [s2,l1] (s1_583<=l1 & s1<=s1_583 & s2<=l2 & P(s2,l1))  |- s1<=s2.
+print residue.
+//l1<=s2
+
+infer [s3_667,l3_668,s1_583,l1,s2,l2] 
+  (s2<=l2 & s1_583<=l1 & s1_583<=l1 & s2<=l2 & P(s2,l1) & s1<=s1_583 & 
+  s3_667<=l2 & R(s3_667,l3_668,s1_583,l1,s2,l2)) |- s1<=s3_667.
+print residue.
+//s1_583<=s3_667
+
+/*
+
+(i) split pre-rel from post-rel
+       ? -> P(..) // pre-rel
+       ? -> R(..) // post-rel
+
+(ii) infer pre obligation of P & R without fixpoint // infer_pure_m
+
+  (s1_583<=l1 & s1<=s1_583 & s2<=l2 & P(s2,l1)) --> s1<=s2 [[1]]
+
+  (s2<=l2 & s1_583<=l1 & s1_583<=l1 & s2<=l2 & P(s2,l1) & s1<=s1_583 & 
+  s3_667<=l2 & R(s3_667,l3_668,s1_583,l1,s2,l2)) --> s1<=s3_667  [[2]]
+
+  From [[1]], obtain:   P(s2,l1) -> l1<=s2      
+  From [[2]], obtain:   R(s3_667,l3_668,s1_583,l1,s2,l2))  -> s1_583<=s3_667 !!!
+
+                          s1<=s1_583 [& s1_583<=s3_667] --> s1<=s3_667
+
+(iii) build relation R for fixpoint
+
+  (l1<=s2 & s2<=l2 & s1<=s2 & s3=s1 & exists(s1_583:s1<=s1_583 & 
+  s1_583<=l1)) --> R(s3,l3_628,s1,l1,s2,l2),
+
+ (l1_599=l1 & s2_601=s2 & s3=s1 & l2_602=l2 & s1<=s3_667 & s3_667<=l2 & 
+  s2<=l2 & l1<=s2 & R(s3_667,l3_668,s1_598,l1_599,s2_601,l2_602) & 
+  s1<=s1_598 & s1_598<=l1) --> R(s3,l3_669,s1,l1,s2,l2),
+
+
+(iv) test P is OK.
+   (P(s2,l1) & s2=s2_601 & l1_599=l1 & exists(l2:exists(s1_583:s2_601<=l2 & 
+     exists(s1:s1_583<=l1 & s1<=s1_583)))) --> P(s2_601,l1_599)]
+
+
+
+*/

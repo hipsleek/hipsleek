@@ -1,0 +1,35 @@
+
+
+
+We have composed a small benchmark of test programs with barriers 
+with various thread configurations and communication architectures:
+
+\begin{itemize}
+x \item MISD approaches
+    + \item one centralized producer several different workers consuming the same data. 
+		-> fast due to no feedback complexity
+    + \item one control thread managing an array of identical workers designed to provide error safety through
+		  redundant components, like in the space shuttle control system
+		-> increasingly more complex due to the feedback loop
+\item SIMD 
+	+ \item linear systolic machine for polynomials of various degrees using Horner's rule
+	+ \item video compression algorithm, variants - strong weak ...
+
++ \item pipeline approach, barriers are used to synchronize and also mimic clock rising edge and falling edge,
+     each thread is a stage and one extra thread mimics the clock
+
++ \item interleaved matrix traversal
+
+\item a combination of misd and pipeline, alternating stages, centralizer, producer
+
+\item thesis example  
+
+
+\end{itemize}
+
+
+as the number of threads increases so does the number of resources shared and tracked,
+therefore it is interesting to follow ..
+
+
+

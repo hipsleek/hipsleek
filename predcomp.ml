@@ -117,6 +117,7 @@ and aug_class_name (t : typ) = match t with
   | Float -> "FloatAug"
   | NUM -> "NUMAug"
   | Void -> "void"
+  | Tree_sh -> "tree_share"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
@@ -1093,6 +1094,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
     end
   | Hole _ -> []
   | HTrue -> []
+  | HEmp -> []
   | HFalse -> [] (* what to do here? *)
 
 (* 
@@ -1582,7 +1584,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 		       exp_seq_pos = pos}) in
 	seq1
     end
-  | Hole _ | HTrue ->
+  | Hole _ | HTrue | HEmp->
       Empty no_pos
   | HFalse -> 
       return_false no_pos

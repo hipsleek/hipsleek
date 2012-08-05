@@ -1,0 +1,61 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// (3)
+/*
+<1>true&a=Anon_16 & b=q & v1<:v2 & Anon_18=Anon_17 & Anon_19=r & v2<=1&{FLOW,(17,18)=__norm}
+inferred pure: [v2<=1]
+*/
+
+//(1)
+//inferred pure: [v1<=v2; v1<=1]
+infer [v1,v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+//(2)
+/*
+<1>true&a=Anon_15 & b=q & v1<:v2 & Anon_17=Anon_16 & Anon_18=r & v1<=1&{FLOW,(17,18)=__norm}
+inferred pure: [v1<=1]
+*/
+infer [v1] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+//(3) 2<=v2
+infer [v2] x::node<_,q>@v1 |- x::node<a,b>@v2.
+print residue.
+
+//(4)
+/*
+<1>true&v2<:@L & a=Anon_23 & b=q & Anon_25=Anon_24 & Anon_26=r & v2=2&{FLOW,(17,18)=__norm}
+inferred pure: [v2=2]
+*/
+infer [v2] x::node<_,q>@v1*q::node<_,r>@L & v2<:@L |- x::node<a,b>@v1*b::node<_,_>@v2.
+print residue.
+
+//(5) fail
+infer [v2] x::node<_,q>@v1*q::node<_,r>@v1 |- x::node<a,b>@I*b::node<_,_>@v2.
+print residue.
+
+
+//(5) fail
+infer [] x::node<_,q>@v1 |- x::node<a,b>@I.
+print residue.
+
+//(5) fail
+infer [v2] x::node<_,r>@v1 |- x::node<a,b>@v2.
+print residue.
+
+//(6) fail
+infer [d] x::node<a,b> |- x::node<c,d>.
+print residue.
+
+//(7)
+/*
+<1>true&c=a & b=d&{FLOW,(17,18)=__norm}
+inferred pure: [b=d]
+*/
+infer [b,d] x::node<a,b> |- x::node<c,d>.
+print residue.
+

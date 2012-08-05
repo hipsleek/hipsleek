@@ -12,15 +12,15 @@ pred ll3<n> == self::node<next = r> * r::ll2<n-1>
 	inv n >= 1.
 
 //(1)
-checkentail x::node<_, null> * z::node<> * y::ll<> |- x::ll<m> & m = 2.
+checkentail x::node<_, null> * z::node<> * y::ll<_> |- x::ll<m> & m = 2.
 print residue.
 
 //(2)
-checkentail x::node<_, null> * z::node<> * y::ll<> & m = 1 |- x::ll<m>.
+checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 1 |- x::ll<m>.
 print residue.
 
 //(3)
-checkentail x::node<_, null> * z::node<> * y::ll<> & m = 0 |- x::ll<m>.
+checkentail x::node<_, null> * z::node<> * y::ll<_> & m = 0 |- x::ll<m>.
 print residue.
 
 //(4)

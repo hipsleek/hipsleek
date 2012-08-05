@@ -236,19 +236,8 @@ node shift_left(node x)
   return t;
 }
 
-/*
-/* left shift all digits one pos (multiplied by ten) */
-node shift_left(node x)
-  requires x::bigint<v>@L
-  ensures res::bigint</*v*10*/_>@L;
-{
-  if (x == null) { return x;}
-  node t = new node(0, x);
-//  dprint;
-  return t;
-}*/
 
-node mult(node x, node y)
+node mult2(node x, node y)
   requires (x::bigint<v1>@L & y::bigint<v2>@L)
   ensures res::bigint<v1*v2>;
 /*
@@ -260,7 +249,7 @@ node mult(node x, node y)
     return null;
   } else {
     node t1 = mult_c(x, y.val, 0);
-    node t2 = shift_left(mult(x, y.next));
+    node t2 = shift_left(mult2(x, y.next));
     return add(t1, t2);
   }
 }

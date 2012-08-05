@@ -1,0 +1,24 @@
+/* representation of a cell node */
+
+data cell {
+    int val;
+}.
+
+checkentail emp & n>0 |- htrue * htrue.
+
+checkentail emp & n>0 |- htrue.
+
+checkentail emp & n>0 |- n>=0.
+
+checkentail emp & n>0 |- emp & n>=0.
+
+checkentail n>0 |- htrue.               // emp & n>0 |- htrue & true
+
+checkentail n>0 |- emp & true.          // emp & n>0 |- emp & true
+
+checkentail n>0 |- emp * htrue.         // emp & n>0 |- htrue & true
+
+checkentail n>0 |- htrue * emp .        // emp & n>0 |- htrue & true
+
+checkentail emp |- htrue * emp.
+
