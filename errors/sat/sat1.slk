@@ -26,3 +26,6 @@ checksat x::ll<n> & y=x & y=null & n =1.
 
 //8. unsat.
 checksat x::ll<n>*x::node<a,_> & n =0.
+
+//9. unsat. FAIL
+checksat y::node<_,_>*x::node<a,_>.
