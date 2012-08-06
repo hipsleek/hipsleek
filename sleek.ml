@@ -102,13 +102,14 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ |
-              EntailCheck _ | SatCheck _ | PrintCmd _ 
+              EntailCheck _ | SatCheck _ | PrintCmd _ | Neg _ | PInfer _
       | Time _ | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _ | LetDef _ | EntailCheck _ | SatCheck _| Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
+	  | CaptureResidue _ | LetDef _ | EntailCheck _ | SatCheck _| Infer _ | PrintCmd _ | Neg _ | PInfer _
+      | Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> 
@@ -116,6 +117,8 @@ let parse_file (parse) (source_file : string) =
           process_entail_check iante iconseq
       | SatCheck (iante) -> 
           process_sat_check iante
+      | Neg iform -> process_neg iform
+      | PInfer (puniv, ph) -> process_pinfer puniv ph
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
@@ -200,6 +203,8 @@ let main () =
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
                      | SatCheck (iante) -> process_sat_check iante
+                     | Neg iform -> process_neg iform
+                     | PInfer (puniv, ph) -> process_pinfer puniv ph
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef

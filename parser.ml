@@ -553,7 +553,9 @@ non_empty_command:
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=neg_cmd             -> Neg t
       | t=checksat_cmd        -> SatCheck t
+      | t=pinfer_cmd          -> PInfer t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1223,6 +1225,13 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
+
+neg_cmd:
+  [[ `NEG; t=meta_constr -> t]];
+
+pinfer_cmd:
+   [[ `PINFER; t=meta_constr; `EQUIV; b=meta_constr-> (t, b)]];
+(*  [[ `PINFER; t=meta_constr; `DERIVE; b=meta_constr ;`PLUS;  `DOLLAR -> (t, b)]];*)
 
 checksat_cmd:
   [[ `CHECKSAT; b=meta_constr -> (b)]];

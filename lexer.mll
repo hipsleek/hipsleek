@@ -123,6 +123,7 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
 	 ("checkentail", CHECKENTAIL);
      ("checksat", CHECKSAT);
+     ("neg", NEG);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
@@ -155,6 +156,7 @@ module Make (Token : SleekTokenS)
    ("if", IF);
 	 ("in", IN_T);
    ("infer", INFER);
+   ("pinfer", PINFER);
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
@@ -294,6 +296,7 @@ rule tokenizer file_name = parse
   | ')' { CPAREN }
   | ']' { CSQUARE }
   | '$' { DOLLAR }
+  (* | '?' { QMARK } *)
   | "." { DOT }
   | "\"" { DOUBLEQUOTE }
   | "=" { EQ }

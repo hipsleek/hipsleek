@@ -4,28 +4,34 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-// 1.
+/*
+// 1. sat
 checksat x::node<a,_> & a >0.
-//2
+
+//2. unsat
 checksat x::node<a,_> & x=null.
 
-//3
+//3. sat
 checksat x::ll<n> & n =1.
 
-//4
+//4. unsat
 checksat x::ll<n> & n =1 & x=null.
 
-//5. unsat. FAIL
+//5. unsat.
 checksat x::ll<n>*x::node<a,_> & n >=1.
-
-//6.
+*/
+//6a. unsat.
+checksat x::ll<n> & x!=null & n =0.
+/*
+//6. unsat. FAIL
 checksat x::ll<n> & y=x & y!=null & n =0.
 
-//7.
+//7. unsat
 checksat x::ll<n> & y=x & y=null & n =1.
 
 //8. unsat.
 checksat x::ll<n>*x::node<a,_> & n =0.
 
-//9. unsat. FAIL
-checksat y::node<_,_>*x::node<a,_>.
+//9. unsat.
+checksat y::node<_,_>*x::node<a,_> & x=y.
+*/

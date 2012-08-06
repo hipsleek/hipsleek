@@ -151,6 +151,7 @@ and h_formula = (* heap formula *)
   | Conj of h_formula_conj
   | Phase of h_formula_phase
   | DataNode of h_formula_data
+  | DangNode of h_formula_dang (*dangling node*)
   | ViewNode of h_formula_view
   | Hole of int
   | HTrue
@@ -184,6 +185,10 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_data_pos : loc }
+
+and h_formula_dang = {  h_formula_dang_node : CP.spec_var;
+                        h_formula_dang_name : ident;
+                        h_formula_dang_pos : loc }
 
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
@@ -1949,7 +1954,10 @@ and get_formula_pos (f : formula) = match f with
   | Or ({formula_or_pos = p}) -> p
   | Exists ({formula_exists_pos = p}) -> p 
 
-
+and get_formula_label (f : formula) = match f with
+  | Base ({formula_base_label = lbl}) -> lbl
+  | Or _ -> None
+  | Exists ({formula_exists_label = lbl}) -> lbl
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =

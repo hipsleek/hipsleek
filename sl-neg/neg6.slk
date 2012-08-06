@@ -1,0 +1,57 @@
+//include sDNF
+
+data node { int val ;}.
+
+//1.
+/*
+x::node<v1> * z::node<v3>&v1!=3 & 0>v3
+ or x::node<v1> * z::node@Dl&v1!=3
+ or x::node<v1>&v1!=3 & z=null
+ or x::node@Dl * z::node<v3>&0>v3
+ or x::node@Dl * z::node@Dl&true
+ or x::node@Dl&z=null
+ or emp * z::node<v3>&x=null & 0>v3
+ or emp * z::node@Dl&x=null
+ or emp&x=null & z=null
+*/
+//neg x::node<v1> & v1 =3
+//   or z::node<v3> & v3 >=0.
+
+//2.
+/*
+ x::node<v1> * z::node<v3>&v1!=3 & 0>v3
+ or x::node<v1> * z::node@Dl&v1!=3
+ or x::node<v1>&v1!=3 & z=null
+ or x1::node<v1> * z::node<v3>&v1!=3 & 0>v3
+ or x1::node<v1> * z::node@Dl&v1!=3
+ or x1::node<v1>&v1!=3 & z=null
+ or y::node<v2> * z::node<v3>&v2!=4 & 0>v3
+ or y::node<v2> * z::node@Dl&v2!=4
+ or y::node<v2> & v2!=4 & z=null
+ or x::node@Dl * z::node<v3>&0>v3
+ or x::node@Dl * z::node@Dl&true
+ or x::node@Dl&z=null
+ or x1::node@Dl * z::node<v3>&0>v3
+ or x1::node@Dl * z::node@Dl&true
+ or x1::node@Dl&z=null
+ or emp * z::node<v3>&x=null & 0>v3
+ or emp * z::node@Dl&x=null
+ or emp&x=null & z=null
+ or emp * z::node<v3>&x1=null & 0>v3
+ or emp * z::node@Dl&x1=null
+ or emp&x1=null & z=null
+ or y::node@Dl * z::node<v3>&0>v3
+ or y::node@Dl * z::node@Dl&true
+ or y::node@Dl&z=null
+ or emp * z::node<v3>&y=null & 0>v3
+ or emp * z::node@Dl&y=null
+ or emp&y=null & z=null
+ or emp * z::node<v3>&x=y & 0>v3
+ or emp * z::node@Dl&x=y
+ or emp&x=y & z=null
+ or emp * z::node<v3>]&x1=y & 0>v3
+ or emp * z::node@Dl&x1=y
+ or emp&x1=y & z=null
+*/
+neg x::node<v1> * y::node<v2> & v1 =3 & v2=4 & x=x1
+    or z::node<v3> & v3 >=0.

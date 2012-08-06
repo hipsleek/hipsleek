@@ -1339,6 +1339,26 @@ and mklsPtrNeqEqn vs pos =
         (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets)
   else None
 
+and mklsPtrEqEqn list_svs pos =
+  let lstEqs l1 l2= List.concat (List.map
+                  (fun v1 -> List.map (fun v2 -> mkPtrEqn v1 v2 pos) l2) l1) in
+  (*l0 is the first list, ll are remain lists*)
+  let rec helper1 l0 ll cur =
+    match ll with
+      | [] -> cur
+      | l1::ls -> let new_cur = cur@(lstEqs l0 l1) in
+                  helper1 l0 ls new_cur
+  in
+  (*ll: remain lists*)
+  let rec helper2 ll cur =
+    match ll with
+      | [] -> cur
+      | [l] -> cur
+      | l0::ls -> let new_cur = helper1 l0 ls cur in
+                  helper2 ls new_cur
+  in
+  helper2 list_svs []
+
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
@@ -1526,12 +1546,13 @@ and mkNot_dumb f lbl1 pos0:formula =  match f with
 	| _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-	if no_andl f then mkNot_dumb f lbl1 pos0
-	else 
+	if no_andl f then  let _ = print_endline "0" in mkNot_dumb f lbl1 pos0
+	else let _ = print_endline "1" in
 	 match f with
-	  | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
+	  | And (f1,f2,p) ->
+          mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
 	  | AndList b -> 
-			let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
+          let l = List.map (fun (l,c)-> AndList [(l,Not (c,lbl1,pos0))]) b in
 			(match l with 
 				| []-> report_error pos0 "cpure mkNot, empty AndList list"
 				| x::t-> List.fold_left (fun a c-> mkOr a c lbl1 pos0) x t)

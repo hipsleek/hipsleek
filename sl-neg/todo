@@ -1,0 +1,14 @@
+
+
+1. syn a counter-predicate for a inductive predicate wrt. a universal predicate
+
+2. prove:
+ - universal
+ - disjoint
+ - difficulties:
+    + infinite
+    + chose inductive parameter
+
+3. application
+ - prove completeness
+ - generate counterexample, test case

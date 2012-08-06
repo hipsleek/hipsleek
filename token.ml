@@ -24,7 +24,7 @@ type sleek_token =
   | IN_T | INT | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
 	| LEMMA | LET
   | MAX | MIN 
-  | NEW | NOTIN | NULL
+  | NEG | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
 	| PRED | DPRINT | PRINT
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
@@ -45,7 +45,7 @@ type sleek_token =
   | SEMICOLON 
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
-  | INFER | SUBANN | PRE | POST
+  | INFER | PINFER | SUBANN | PRE | POST
   | INVLOCK
   | LOGICAL
 
@@ -67,7 +67,7 @@ module Token = struct
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
     | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
-    | CASE ->"case" | CHECKENTAIL ->"checkentail" | CHECKSAT ->"checksat" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
+    | CASE ->"case" | CHECKENTAIL ->"checkentail" | CHECKSAT ->"checksat" | NEG -> "neg" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
@@ -88,6 +88,7 @@ module Token = struct
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
     | INFER -> "infer"
+    | PINFER ->"pinfer"
     | PRE -> "@pre"
     | MUT -> "@M"
     | POST -> "@post"

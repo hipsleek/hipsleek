@@ -23,6 +23,7 @@ module AS = Astsimp
 module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
+module NEG = Neg
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -598,12 +599,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
   residues := Some (rs, res);
-  (res, rs)
+  (res, rs,ante)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
-  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  let pr_2 = fun (v,r,_) -> pr_pair string_of_bool Cprinter.string_of_list_context (v,r) in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -622,7 +623,7 @@ let run_sat_check (iante0 : meta_formula) =
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^"\n\n") no_pos in
   let ante = meta_to_formula iante0 false [] stab in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Solver.prune_preds !cprog false ante in
   let fvs = CF.fv ante in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
   (* need to make ivars be global *)
@@ -646,15 +647,16 @@ let run_sat_check (iante0 : meta_formula) =
   (*     | CF.Or { CF.formula_or_f1 = f1; *)
   (*               CF.formula_or_f2 = f2; } -> (check_sat_or f1) or (check_sat_or f2) *)
   (* in *)
-   if (* (check_sat_or ante) *) (Solver.verify_pre_is_sat !cprog ante) then 1 else 0
+   (* if (\* (check_sat_or ante) *\) (Solver.verify_pre_is_sat !cprog ante) then 1 else 0 *)
+  NEG.check_sat !cprog ante
 
 let run_sat_check (iante0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = string_of_int in
-  Debug.no_1 "run_sat_check" pr pr_2 run_sat_check iante0
+  Debug.ho_1 "run_sat_check" pr pr_2 run_sat_check iante0
 
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result ante (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
@@ -671,7 +673,13 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s
+            | Some s ->
+                let sat = match NEG.check_sat !cprog ante with
+                  | 1 -> "sat"
+                  | 0 -> "bot"
+                  | _ -> "unknown"
+                in
+                ("(must: " ^ sat ^ ") cause:"^s)
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
@@ -699,12 +707,38 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result ante (valid: bool) (residue: CF.list_context) (num_id: string) =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
   DD.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
-    (fun _ _ -> print_entail_result valid residue num_id) valid residue
+    (fun _ _ -> print_entail_result ante valid residue num_id) valid residue
 
+
+let run_neg_x iform =
+  let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### f = " ^
+ (string_of_meta_formula iform)) else () in
+  let _ = Debug.devel_pprint ("\nrun neg:"
+                              ^ "\n ### f = "^(string_of_meta_formula iform)
+                              ^"\n\n") no_pos in
+  let form = meta_to_formula iform false [] stab in
+  let form = Solver.prune_preds !cprog true form in
+  let fvs = CF.fv form in
+  (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
+  (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
+  (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  let fv_idents = (List.map CP.name_of_spec_var fvs) in
+  (* need to make ivars be global *)
+  NEG.neg_formula !cprog form
+
+let run_neg iform =
+Debug.ho_1 "run_neg" string_of_meta_formula Cprinter.string_of_formula
+    (fun _ ->  run_neg_x iform) iform
+
+let process_neg iform =
+  let neg_f = run_neg iform in
+  (* let _ = print_endline ("neg:"^(Cprinter.string_of_formula neg_f)) in *)
+  ()
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
@@ -715,12 +749,39 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = run_entail_check iante0 iconseq0 in
-    print_entail_result valid rs num_id
+    let valid, rs,ante = run_entail_check iante0 iconseq0 in
+    print_entail_result ante valid rs num_id
   with ex -> 
          let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
          in ()
   (* with e -> print_exc num_id *)
+
+let process_pinfer_x p_univ0 ph0=
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let pred_univ = meta_to_formula  p_univ0 false [] stab in
+  let pred_univ = Solver.prune_preds !cprog true pred_univ in
+  let pd = meta_to_formula  ph0 false [] stab in
+  let pd = Solver.prune_preds !cprog true pd in
+
+  let h_u, mf_u,_,_,_ = CF.split_components pred_univ in
+  (* let p_u = Mcpure.pure_of_mix mf_u in *)
+  let h, mf,_,_,_ = CF.split_components pd in
+  (* let p = Mcpure.pure_of_mix mf in *)
+  (match h_u,h with
+    | CF.ViewNode hv_u , CF.ViewNode hv->
+        let _ = DD.devel_pprint "heap: View" no_pos in
+        let vd_u = C.look_up_view_def_raw !cprog.C.prog_view_decls hv_u.CF.h_formula_view_name in
+        let vd = C.look_up_view_def_raw !cprog.C.prog_view_decls hv.CF.h_formula_view_name in
+        let _ = Inferp.synthesize_neg_view_def vd_u vd in
+        print_endline "process_pinfer"
+    | _ -> print_endline "process_pinfer: not process"
+  )
+
+let process_pinfer puniv ph=
+ let pr = string_of_meta_formula in
+  let pr_2 = (fun _ -> "out") in
+  Debug.ho_2 "process_pinfer" pr pr pr_2 process_pinfer_x puniv ph
 
 let process_sat_check (iante0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
@@ -744,8 +805,8 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result valid rs num_id
+    let valid, rs, ante = run_infer_one_pass ivars iante0 iconseq0 in
+    print_entail_result ante valid rs num_id
   with ex -> 
       (* print_exc num_id *)
          let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 

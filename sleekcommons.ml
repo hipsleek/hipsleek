@@ -25,7 +25,7 @@ open Globals
 module I = Iast
 module C = Cast
 module CF = Cformula
-module CP = Cpure
+(*module CP = Cpure*)
 module IF = Iformula
 module IP = Ipure
 
@@ -44,6 +44,8 @@ type command =
   | EntailCheck of (meta_formula * meta_formula)
   | SatCheck of (meta_formula)
   | BarrierCheck of I.barrier_decl
+  | Neg of (meta_formula)
+  | PInfer of (meta_formula * meta_formula)
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
@@ -86,6 +88,8 @@ let string_of_command c = match c with
   | EntailCheck _ -> "EntailCheck"
   | SatCheck _ -> "SatCheck"
   | BarrierCheck _ -> "BarrierCheck"
+  | Neg _ -> "Neg"
+  | PInfer _ -> "PInfer"
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
