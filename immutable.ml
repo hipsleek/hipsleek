@@ -530,7 +530,7 @@ and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula opt
   let pr2 = pr_no in
   let pr2a = pr_option !CP.print_formula in
   let pr3 = pr_triple string_of_bool pr2a pr2a in
-  Debug.ho_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 
+  Debug.no_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 
 
 and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
   match (old_f, to_add) with
@@ -573,7 +573,7 @@ and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
 
 and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.ho_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+  Debug.no_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
 and restore_tmp_ann (ann_lst: ann list) : ann list =
   match ann_lst with

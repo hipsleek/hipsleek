@@ -2423,7 +2423,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                       C.exp_var_pos = pos;
                                     } in
                                     let (tmp_e, tmp_t) =
-			              flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.TempAnn(CF.ConstAnn(Mutable))) false pos
+			              (* flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.TempAnn(CF.ConstAnn(Mutable))) false pos (*(andreeac)to check, insertion.ss -p insert fails with CF.TempAnn(....)*)*) 
+			              flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.ConstAnn(Mutable)) false pos
+
 			            in
 			            
                                     let fn_decl = if new_var then C.VarDecl {
@@ -3539,7 +3541,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | p -> p
 
 (* and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  = *)
-(*   Debug.ho_3 "flatten_to_bind "  *)
+(*   Debug.no_3 "flatten_to_bind "  *)
 (*     (Iprinter.string_of_exp)  *)
 (*     (fun x -> match x with *)
 (*       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "") *)
@@ -3583,7 +3585,7 @@ and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann
     List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
   let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
   let pr_out ls = List.fold_left (fun res id ->  res ^ ", " ^ (Cprinter.string_of_imm id) ) "" ls in
-  Debug.ho_3 "compute_ann_list" pr1 pr2 (Cprinter.string_of_imm) pr_out (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
+  Debug.no_3 "compute_ann_list" pr1 pr2 (Cprinter.string_of_imm) pr_out (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
 
 and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
   match all_fields with

@@ -517,7 +517,9 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
-  let conseq = meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) (* (List.map CP.name_of_spec_var fvs) *) stab in
+  (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
+  let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) stab
+      else meta_to_struc_formula iconseq0 false fv_idents None stab in
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)

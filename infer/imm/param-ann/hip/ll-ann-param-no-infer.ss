@@ -157,19 +157,19 @@ void update21 (node x)
      }
 }
 
-//success - ok
+//success - BUG!!
 void update22 (node x)
-  requires x::ll2<n,@L>
-  ensures  x::ll2<n,@M>;
+  requires x::ll2<n,@I> //@I
+  ensures  x::ll2<n,@M>;//@I
 {
   if (x==null) return;
   else {
-    x.val = x.val + 1;
+    //x.val = x.val + 1;
     //int z = x.val;
-    node y = x.next;
+    //node y = x.next;
     dprint;
-    update22(y);
-    //update22(x.next);
+    //update22(y);
+    update22(x.next);
   }
 }
 
@@ -202,13 +202,13 @@ void update24 (node x)
 }
 
 void update2 (node x)
-  requires x::ll0<n,5>
+  requires x::ll0<n,8>
   ensures  x::ll0<n,8>;
 {
  
  if (x==null) return;
  else {
-     x.val = x.val + 1;
+   //x.val = x.val + 1;
      update2(x.next);
  }
 }
