@@ -228,7 +228,14 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) then 
+                                        let arr_check typ1 typ2 =
+                                          match typ1 with
+                                            | Array (t,_) -> if t = typ2 then true else false
+                                            | _ -> false
+                                        in
+                                        (* let _ = print_endline ("typ1: " ^ (string_of_typ typ1)) in *)
+                                        (* let _ = print_endline ("typ2: " ^ (string_of_typ typ2)) in *)
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK)||(arr_check typ1 typ2) then 
                                           Pure_f (P.BForm(((fct f1 f2), None), None))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
@@ -306,10 +313,10 @@ let peek_try =
  let peek_invocation = 
  SHGram.Entry.of_parser "peek_invocation" 
      (fun strm ->
-       match Stream.npeek 2 strm with
-          | [_; OPAREN,_] -> ()
+       match Stream.npeek 5 strm with
+          | [_; OPAREN,_;_;_;_] -> ()
           (* | [_; OBRACE,_] -> () *)
-          | [_; OSQUARE,_] -> ()
+          | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -445,7 +452,7 @@ let peek_star =
              |[STAR,_;OPAREN,_] -> raise Stream.Failure
              | _ -> ())
 
-let peek_array_type = 
+let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
@@ -1818,14 +1825,16 @@ bind_statement:
 
 java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_camlp4 _loc 1 }]];
 
+(*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
-        t= invocation_expression -> t
+       peek_invocation; t= invocation_expression -> t
       | t= object_creation_expression -> t
       | t= post_increment_expression -> t
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
       | t= pre_decrement_expression -> t
-      | peek_exp_st; t= assignment_expression -> t]]; 
+      | peek_exp_st; t= assignment_expression -> t
+]]; 
 
 (*statement_expression:
   [[
@@ -2089,13 +2098,13 @@ cast_expression:
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
 
 invocation_expression:
- [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
+ [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
@@ -2157,8 +2166,9 @@ primary_expression_no_array_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos_camlp4 _loc 3 }
-  | t = invocation_expression -> t
   | t = new_expression -> t
+  | peek_invocation; t = invocation_expression ->
+      t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 
   ]
   | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)

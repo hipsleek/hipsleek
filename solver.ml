@@ -852,6 +852,50 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
   | HEmp   -> P.mkTrue no_pos
   | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
 
+(*for neg.ml: negation and check sat*)
+and h_ptos (h: CF.h_formula)=
+  match h with
+    | CF.DataNode {CF.h_formula_data_node = v} -> [v]
+    | CF.Star { CF.h_formula_star_h1 = h1;
+                CF.h_formula_star_h2 = h2
+              } -> (h_ptos h1)@(h_ptos h2)
+    | CF.HEmp ->  []
+    | CF.ViewNode {CF.h_formula_view_node = v} -> []
+    | _ -> failwith ("neg.norm_conj: not handled yet")
+
+(*
+  v is pointer: add v!=null
+  v1,v2 point-to: v1!=v2
+*)
+and check_sat_base_f prog fb=
+  let h = fb.CF.formula_base_heap in
+  let ptos =  h_ptos h in
+  let dis_ps =
+    match (CP.mklsPtrNeqEqn ptos no_pos) with
+      | None -> []
+      | Some p -> [p]
+  in
+        (*check sat*)
+  let mf,_,_ = xpure prog (CF.Base fb) in
+  let p = MCP.pure_of_mix mf in
+  let r = ref (-9999) in
+  let p = CP.join_conjunctions ([p] @ dis_ps) in
+  (* let _ = print_endline ("pure: " ^ (!CP.print_formula p)) in *)
+        (* let _ = print_endline ("pure: " ^ (Cprinter.string_of_mix_formula mf)) in *)
+        (* if (check_conj_sat prog h p) then 1 else 0 *)
+  if TP.is_sat_sub_no p r (*TP.is_sat_raw p*)  (*should 3-value*) then 1 else 0
+
+and check_sat prog (f:CF.formula): int=
+  match f with
+    | CF.Or _ -> report_error no_pos "Do not expect disjunction in precondition"
+    | CF.Base fb -> check_sat_base_f prog fb
+    | CF.Exists e ->
+        let f = CF.normalize_combine_heap 
+          (CF.formula_of_mix_formula e.CF.formula_exists_pure no_pos) e.CF.formula_exists_heap
+        in check_sat prog f
+
+(*END. for neg.ml: negation and check sat*)
+
 and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
   let rec diff_one sv svars = match svars with
     | sv2 :: rest ->
@@ -2856,7 +2900,7 @@ and count_octx x = match x with
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) pos pid : (list_context * proof) = 
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
   let pr2 = pr_opt Cprinter.string_of_spec_var in
-  Debug.ho_3 "heap_entail_conjunct_lhs_struc"
+  Debug.no_3 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula) pr2
       (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid
@@ -3188,7 +3232,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.ho_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -4455,7 +4499,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
-  Debug.ho_1_num i "heap_entail_conjunct_helper" pr1 pr2
+  Debug.no_1_num i "heap_entail_conjunct_helper" pr1 pr2
       (fun _ -> heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
           (rhs_h_matched_set:CP.spec_var list) pos) ctx0
 
@@ -4537,7 +4581,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
           | _ -> (
               let h1, p1, fl1, t1, a1 = split_components ante in
               let h2, p2, fl2, t2, a2 = split_components conseq in
-              if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then
+              let nReachability = check_sat prog ante in
+              if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1)&&
+                (nReachability = 0) then
                 (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
               else
                 if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then (
@@ -4569,11 +4615,17 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       if CF.subsume_flow_f !error_flow_int fl1 then
                         (* let _ = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*)
                         let err_name = (exlist # get_closest fl1.CF.formula_flow_interval) in
-                        let err_msg = "1.1: " ^ err_name in
+                        let err_msg =
+                          if (nReachability = 1) then "1.1 (sat): " ^ err_name
+                          else "1.1:" ^ err_name
+                        in
                         (err_msg, mk_failure_must err_msg err_name)
                       else
                         let err_name = "conseq has an incompatible flow type" in
-                        let err_msg = "1.1: " ^ err_name in
+                        let err_msg =
+                          if (nReachability = 1) then "1.1 (sat): " ^ err_name
+                          else "1.1: " ^ err_name
+                        in
                         (err_msg, mk_failure_must err_msg undefined_error) in
                     (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
                                                      fc_current_lhs = estate;
@@ -4638,7 +4690,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             let new_ctx =
                             (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
                               (match ctx with
-                              | FailCtx _ -> ctx
+                              | FailCtx ft ->
+                                  if (nReachability = 1) then
+                                    (FailCtx (set_reachability_ft ft))
+                                  else ctx
                               | SuccCtx cl ->
                                   let new_cl =
                                   List.map (fun c ->

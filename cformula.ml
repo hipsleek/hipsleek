@@ -3379,6 +3379,31 @@ let isFailCtx_gen cl = match cl with
 	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
     (* | _ -> false *)
 
+let rec set_reachability_ft ft =
+  match ft with
+    | Basic_Reason (fctx , fe) -> 
+        Basic_Reason (set_reachability_fc fctx , set_reachability_fe fe)
+    | Trivial_Reason fe ->
+        Trivial_Reason (set_reachability_fe fe)
+    | Or_Reason (ft1, ft2) ->
+        Or_Reason (set_reachability_ft ft1, set_reachability_ft ft2)
+    | And_Reason (ft1, ft2) ->
+        And_Reason (set_reachability_ft ft1, set_reachability_ft ft2)
+    | Union_Reason (ft1,ft2)->
+        Union_Reason (set_reachability_ft ft1, set_reachability_ft ft2)
+    | ContinuationErr fc -> ContinuationErr (set_reachability_fc fc)
+    | Or_Continuation (ft1,ft2) ->Or_Continuation (set_reachability_ft ft1, set_reachability_ft ft2)
+
+and set_reachability_fc fc=
+   {fc with fc_message = fc.fc_message ^ " (sat)"}
+
+and set_reachability_fe fe=
+   {fe with fe_kind = 
+           match fe.fe_kind with
+             | Failure_Must s -> Failure_Must (s ^ " (sat)")
+             | _ -> fe.fe_kind
+   }
+
 let mk_failure_bot_raw msg = Failure_Bot msg
 
 let mk_failure_must_raw msg = Failure_Must msg

@@ -87,38 +87,13 @@ let rec slice_p ps vs remain_ps c_slice=
          slice_p ss vs remain_ps (c_slice@[p])
        else slice_p ss vs (remain_ps@[p]) c_slice
 
-let rec h_ptos (h: CF.h_formula)=
-  match h with
-    | CF.DataNode {CF.h_formula_data_node = v} -> [v]
-    | CF.Star { CF.h_formula_star_h1 = h1;
-                CF.h_formula_star_h2 = h2
-              } -> (h_ptos h1)@(h_ptos h2)
-    | CF.HEmp ->  []
-    | CF.ViewNode {CF.h_formula_view_node = v} -> []
-    | _ -> failwith ("neg.norm_conj: not handled yet")
-
+let h_ptos (h: CF.h_formula)=  S.h_ptos h
 (*
   v is pointer: add v!=null
   v1,v2 point-to: v1!=v2
 *)
-let check_conj_sat prog fb=
-  let h = fb.CF.formula_base_heap in
-  let ptos =  h_ptos h in
-  let dis_ps =
-    match (CP.mklsPtrNeqEqn ptos no_pos) with
-      | None -> []
-      | Some p -> [p]
-  in
-        (*check sat*)
-  let mf,_,_ = S.xpure prog (CF.Base fb) in
-  let p = MCP.pure_of_mix mf in
-  let r = ref (-9999) in
-  let p = CP.join_conjunctions ([p] @ dis_ps) in
-  (* let _ = print_endline ("pure: " ^ (!CP.print_formula p)) in *)
-        (* let _ = print_endline ("pure: " ^ (Cprinter.string_of_mix_formula mf)) in *)
-        (* if (check_conj_sat1 prog h p) then 1 else 0 *)
-  if TP.is_sat_sub_no p r (*TP.is_sat_raw p*)  (*should 3-value*) then 1 else 0
-
+let check_sat_base_f prog fb= S.check_sat_base_f prog fb
+  
   (* let ptos =  h_ptos h in *)
   (* (\*null*\) *)
   (* let null_p= CP.join_conjunctions (List.map (fun v -> CP.mkNeqNull v no_pos) ptos) in *)
@@ -152,7 +127,7 @@ and norm_disj_formula prog f branches=
         let h = fb.CF.formula_base_heap in
         let p = MCP.pure_of_mix fb.CF.formula_base_pure in
         (*check sat*)
-        if (check_conj_sat prog fb = 1) then
+        if (check_sat_base_f prog fb = 1) then
         (*rm_p: residue constraints after localization*)
           let (rm_p, hns) = norm_conj h (CP.list_of_conjs p) in
         (************************)
@@ -338,13 +313,7 @@ and combine_disj_neg bfs=
 
 (********************)
 let rec check_sat_x prog (f:CF.formula): int=
-  match f with
-    | CF.Or _ -> report_error no_pos "Do not expect disjunction in precondition"
-    | CF.Base fb -> check_conj_sat prog fb
-    | CF.Exists e ->
-        let f = CF.normalize_combine_heap 
-          (CF.formula_of_mix_formula e.CF.formula_exists_pure no_pos) e.CF.formula_exists_heap
-        in check_sat_x prog f
+  S.check_sat prog f
 
 let check_sat prog (f:CF.formula): int=
   let pr =  Cprinter.string_of_formula in
