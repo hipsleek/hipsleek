@@ -115,8 +115,7 @@ let parse_file (parse) (source_file : string) =
 	  | EntailCheck (iante, iconseq) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
-      | SatCheck (iante) -> 
-          process_sat_check iante
+      | SatCheck (iante) -> process_sat_check iante
       | Neg iform -> process_neg iform
       | PInfer (puniv, ph) -> process_pinfer puniv ph
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq

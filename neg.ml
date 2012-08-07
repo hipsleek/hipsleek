@@ -114,7 +114,7 @@ let check_conj_sat prog fb=
   let p = MCP.pure_of_mix mf in
   let r = ref (-9999) in
   let p = CP.join_conjunctions ([p] @ dis_ps) in
-  let _ = print_endline ("pure: " ^ (!CP.print_formula p)) in
+  (* let _ = print_endline ("pure: " ^ (!CP.print_formula p)) in *)
         (* let _ = print_endline ("pure: " ^ (Cprinter.string_of_mix_formula mf)) in *)
         (* if (check_conj_sat1 prog h p) then 1 else 0 *)
   if TP.is_sat_sub_no p r (*TP.is_sat_raw p*)  (*should 3-value*) then 1 else 0
@@ -337,16 +337,6 @@ and combine_disj_neg bfs=
 
 
 (********************)
-let rec h_ptos1 (h: CF.h_formula)=
-  match h with
-    | CF.DataNode {CF.h_formula_data_node = v} -> [v]
-    | CF.Star { CF.h_formula_star_h1 = h1;
-                CF.h_formula_star_h2 = h2
-              } -> (h_ptos h1)@(h_ptos h2)
-    | CF.HEmp ->  []
-    | CF.ViewNode _ -> []
-    | _ -> failwith ("neg.norm_conj: not handled yet")
-
 let rec check_sat_x prog (f:CF.formula): int=
   match f with
     | CF.Or _ -> report_error no_pos "Do not expect disjunction in precondition"
@@ -358,4 +348,4 @@ let rec check_sat_x prog (f:CF.formula): int=
 
 let check_sat prog (f:CF.formula): int=
   let pr =  Cprinter.string_of_formula in
-  Debug.ho_1 "check_sat" pr string_of_int (fun f -> check_sat_x prog f ) f
+  Debug.no_1 "check_sat" pr string_of_int (fun f -> check_sat_x prog f ) f

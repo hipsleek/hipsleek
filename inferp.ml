@@ -268,5 +268,5 @@ let synthesize_neg_view_def_x vd_u vd=
 
 let synthesize_neg_view_def vd_u vd=
   let pr1 = Cprinter.string_of_view_decl in
-   Debug.ho_2 "synthesize_neg_view_def" pr1 pr1 pr1
+   Debug.no_2 "synthesize_neg_view_def" pr1 pr1 pr1
        (fun _ _ -> synthesize_neg_view_def_x vd_u vd) vd_u vd

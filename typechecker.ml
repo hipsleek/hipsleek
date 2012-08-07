@@ -1123,7 +1123,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     let _ = PTracer.log_proof prf in
                     (* let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
-                                        if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                    if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                       Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                     rs
                   in
@@ -1488,6 +1488,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
                     let _ =
                       if not !Globals.disable_failure_explaining then
+                         (*todo: check reachability here*)
                         let s,fk= CF.get_failure_list_failesc_context res
           (*match CF.get_must_failure_list_partial_context rs with
             | Some s -> "(must) cause:\n"^s

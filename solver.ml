@@ -3306,7 +3306,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   else match conseq with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
-	  formula_or_pos = pos1}) ->
+	  formula_or_pos = pos1}) -> 
           Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: \nante:\n"
 		  ^ (Cprinter.string_of_context ctx)
 		  ^ "\nconseq:\n"
@@ -3324,7 +3324,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          (filter_set rs2, prf2)
 	        else
 	          (filter_set rs1, prf1)
-    | _ -> begin
+    | _ -> begin 
         let r1,p1 =
 	      if !Globals.allow_imm then
             begin
@@ -3333,7 +3333,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
             end
 	      else
-	        heap_entail_conjunct prog is_folding  ctx conseq [] pos     
+            heap_entail_conjunct prog is_folding  ctx conseq [] pos
         in
 	    (r1,p1)
       end
@@ -3611,7 +3611,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	              heap_entail_rhs_nested_phase prog is_folding  after_wr_ctx after_wr_prfs conseq h1 h2 h3 func drop_read_phase pos in 
 	        (* entail the pure part *)
 		    (* this is the last phase of the entailment *)
-		    let res_ctx = enable_imm_last_phase res_ctx in
+		    let res_ctx = enable_imm_last_phase res_ctx in 
 	        match res_ctx with
 	          | SuccCtx (cl) ->
 	                (* let _ = print_string("************************************************************************\n") in *)
@@ -3672,7 +3672,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	            (new_rs, prf)
 	      | _ -> begin
 	          match conseq with  
-	            | Base(bf) -> 
+	            | Base(bf) ->
 	                  let h, p, fl, t, a = CF.split_components conseq in
 	                  helper ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
 	            | Exists ({formula_exists_qvars = qvars;
@@ -4605,7 +4605,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                          carry on normally and the concurrent threads
                          in the ante will be passed throught the entailment*)
                       match h2 with
-                      | HFalse | HEmp -> (
+                      | HFalse | HEmp ->(
                           Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                                                     ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                                     ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
@@ -4657,7 +4657,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             (new_ctx, proof)
                           )
                         )
-                      | _ -> (
+                      | _ ->(
                           Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
                                                     ^ "conseq has an non-empty heap component"
                                                     ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
@@ -5147,11 +5147,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         DD.devel_pprint ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
         DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
         DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
-		DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
+		DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos; 
         let i_res1,i_res2,i_res3 = 
           if (MCP.isConstMTrue rhs_p)  then (true,[],None)
 		  else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-          (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) 
+               (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) 
         in
         let i_res1,i_res2,i_res3 =
           if i_res1==true then (i_res1,i_res2,i_res3)
@@ -5207,7 +5207,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    (res1, res2@succs,i_res3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list))))
     end (* end of fold_fun_impt *)
   in
-  
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) =  fold_fun_impt  (true,[],None, (Failure_Valid, ([],[],[]))) rhs_p in
   if r_rez then begin (* Entailment is valid *)
@@ -5556,7 +5555,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
 				 let a0l = List.filter is_sat (CP.split_disjunctions a0) in
 				 let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 				 (a0l,a1l) in
-	        CP.imply_conj_orig a0l a1l (CP.split_conjunctions c) TP.imply imp_no
+   	            CP.imply_conj_orig a0l a1l (CP.split_conjunctions c) TP.imply imp_no
                  (* original code	        
 	                  CP.imply_conj_orig
                 (CP.split_disjunctions a0) 

@@ -704,18 +704,22 @@ let elim_exists (f : CP.formula) : CP.formula =
   
 
 let sat_label_filter fct f = 
-  let test f1 = 
-	if no_andl f1 then  fct f1 
-	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(Cprinter.string_of_pure_formula f)) in
-  let rec helper f = match f with 
+  let test f1 =
+	if no_andl f1 then fct f1
+	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(Cprinter.string_of_pure_formula f))
+  in
+  let rec helper f =  match f with 
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
 			let fs = List.map (fun l -> 
-				let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) b in
-				List.fold_left (fun a c-> And (a,snd c,no_pos)) (mkTrue no_pos) lst) lbls in
+			let lst = List.filter (fun (c,_)-> 
+                Label_only.Lab_List.is_part_compatible c l) b
+            in
+			List.fold_left (fun a c-> And (a,snd c,no_pos)) (mkTrue no_pos) lst) lbls in
 			List.for_all test fs
 		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
-		| _ -> test f in 
+		| _ -> test f
+  in
 	helper f
   
 let sat_label_filter fct f =  Debug.no_1 "sat_label_filter" !print_formula string_of_bool (fun _ -> sat_label_filter fct f) f
@@ -1069,7 +1073,7 @@ let tp_is_sat (f:CP.formula) (sat_no :string) =
     let res =
       try
         Hashtbl.find !sat_cache fstring
-      with Not_found ->
+      with Not_found -> 
         let r = tp_is_sat_perm(*_debug*) f sat_no in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
@@ -1702,7 +1706,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
   else
 	let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-	sat_label_filter (fun c-> tp_is_sat c sat_no) f
+	sat_label_filter (fun c->  tp_is_sat c sat_no) f
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
@@ -1731,8 +1735,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
 		(*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
-		let acpairs = imply_label_filter ante conseq in
-		let pairs = List.map (fun (ante,conseq) -> 
+        let acpairs = imply_label_filter ante conseq in
+       	let pairs = List.map (fun (ante,conseq) -> 
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
 			let cons = split_conjunctions conseq in
 			List.map (fun cons-> 
@@ -1743,7 +1747,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 				match process with
 				  | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
 				  | _ -> assumption_filter ante cons  ) cons) acpairs in
-		let pairs = List.concat pairs in
+        let pairs = List.concat pairs in
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
@@ -1758,13 +1762,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             let ante = CP.drop_varperm_formula ante in
 			let res1 =
 			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
-				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
+                let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
 				if res1 then res1
 				else tp_imply(*_debug*) ante conseq imp_no timeout process
-			  else 
+			  else
                 tp_imply(*_debug*) ante conseq imp_no timeout process 
             in
-
 			let l1 = CP.get_pure_label ante in
             let l2 = CP.get_pure_label conseq in
 			if res1 then (res1,(l1,l2)::res2,None)
@@ -1899,8 +1902,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   if !do_slicing && !multi_provers then
 	imply_timeout_slicing ante0 conseq0 imp_no timeout process
   else
-	imply_timeout ante0 conseq0 imp_no timeout process
-
+    imply_timeout ante0 conseq0 imp_no timeout process
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)

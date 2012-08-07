@@ -19,10 +19,10 @@ checksat x::ll<n> & n =1 & x=null.
 
 //5. unsat.
 checksat x::ll<n>*x::node<a,_> & n >=1.
-*/
+
 //6a. unsat.
 checksat x::ll<n> & x!=null & n =0.
-/*
+
 //6. unsat. FAIL
 checksat x::ll<n> & y=x & y!=null & n =0.
 
@@ -35,3 +35,7 @@ checksat x::ll<n>*x::node<a,_> & n =0.
 //9. unsat.
 checksat y::node<_,_>*x::node<a,_> & x=y.
 */
+
+checksat x::node<a,_> * y::node<_,_>& x=y & a>3.
+
+checkentail x::node<a,_> * y::node<_,_>& x=y & a>3 |- x::node<b,_> & b < 0.

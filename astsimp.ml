@@ -1023,7 +1023,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
       compute_view_x_formula_x prog vdef n
 	  
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  (if n > 0 then
+  (if n > 0 then 
       (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
 
 	   if !do_slicing && !multi_provers then
@@ -1050,7 +1050,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 
 		 let (sxform', saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in
 		 let sxform = trans_exists_to_base sxform' in
-		 
 		 let addr_vars = CP.remove_dups_svl saddr_vars' in
 		 let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
 		 let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) sxform pos in
@@ -1064,7 +1063,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               compute_view_x_formula prog vdef (n - 1))
            else report_error pos "view formula does not entail supplied invariant\n" in ()
 	   else
-		 let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	 
+		 let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
 		 let addr_vars = CP.remove_dups_svl addr_vars' in
 		 let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
 		 let formula1 = CF.formula_of_mix_formula xform pos in

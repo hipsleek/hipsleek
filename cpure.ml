@@ -1546,7 +1546,7 @@ and mkNot_dumb f lbl1 pos0:formula =  match f with
 	| _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-	if no_andl f then  let _ = print_endline "0" in mkNot_dumb f lbl1 pos0
+	if no_andl f then  (* let _ = print_endline "0" in *) mkNot_dumb f lbl1 pos0
 	else let _ = print_endline "1" in
 	 match f with
 	  | And (f1,f2,p) ->
@@ -1697,7 +1697,7 @@ and disj_of_list (xs : formula list) pos : formula =
     | x::xs -> helper xs x
 
 	
-and no_andl  = function
+and no_andl f = match f with
 		| BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
 		| Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
 		| AndList _ -> false 
@@ -5879,11 +5879,11 @@ let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
   match ante_disj with
     | h :: rest ->
         Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
-	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
+        let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
         Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
 	    if r1 then
-	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
-	      (r1,r2@r22,r23)
+          let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
+          (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
 

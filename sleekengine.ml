@@ -204,16 +204,17 @@ let process_pred_def_4_iast pdef =
   Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
 
-let convert_pred_to_cast () = 
+let convert_pred_to_cast () =
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   let _ = !cprog.C.prog_view_decls <- cviews in
+  
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
   let cprog1 = AS.fill_base_case !cprog in
-  let cprog2 = AS.sat_warnings cprog1 in        
+  let cprog2 = AS.sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
@@ -653,7 +654,7 @@ let run_sat_check (iante0 : meta_formula) =
 let run_sat_check (iante0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = string_of_int in
-  Debug.ho_1 "run_sat_check" pr pr_2 run_sat_check iante0
+  Debug.no_1 "run_sat_check" pr pr_2 run_sat_check iante0
 
 
 let print_entail_result ante (valid: bool) (residue: CF.list_context) (num_id: string) =
@@ -732,7 +733,7 @@ let run_neg_x iform =
   NEG.neg_formula !cprog form
 
 let run_neg iform =
-Debug.ho_1 "run_neg" string_of_meta_formula Cprinter.string_of_formula
+Debug.no_1 "run_neg" string_of_meta_formula Cprinter.string_of_formula
     (fun _ ->  run_neg_x iform) iform
 
 let process_neg iform =
@@ -781,7 +782,7 @@ let process_pinfer_x p_univ0 ph0=
 let process_pinfer puniv ph=
  let pr = string_of_meta_formula in
   let pr_2 = (fun _ -> "out") in
-  Debug.ho_2 "process_pinfer" pr pr pr_2 process_pinfer_x puniv ph
+  Debug.no_2 "process_pinfer" pr pr pr_2 process_pinfer_x puniv ph
 
 let process_sat_check (iante0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
