@@ -6,7 +6,7 @@
  * */
 
 //#include <stdio.h>
-relation dom(int[] a, int x, int y) == true.
+//relation dom(int[] a, int x, int y) == true.
 
 //#define OLEV       600		/* in feets/minute */
 //#define MAXALTDIFF 600		/* max altitude difference in feet */

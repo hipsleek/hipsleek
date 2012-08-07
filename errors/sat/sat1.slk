@@ -38,4 +38,4 @@ checksat y::node<_,_>*x::node<a,_> & x=y.
 
 checksat x::node<a,_> * y::node<_,_>& x=y & a>3.
 
-checkentail x::node<a,_> * y::node<_,_>& x=y & a>3 |- x::node<b,_> & b < 0.
+checkentail x::node<a,null> * y::ll<n> & a>3 |- x::node<b,_> & b < 0.

@@ -349,3 +349,10 @@ let rec check_sat_x prog (f:CF.formula): int=
 let check_sat prog (f:CF.formula): int=
   let pr =  Cprinter.string_of_formula in
   Debug.no_1 "check_sat" pr string_of_int (fun f -> check_sat_x prog f ) f
+
+
+let rec check_sat_failesc_ctx proc ctx=
+ ""
+
+let check_sat_list_failesc_ctx proc ctx=
+ ""

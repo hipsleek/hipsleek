@@ -1488,16 +1488,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
                     let _ =
                       if not !Globals.disable_failure_explaining then
-                         (*todo: check reachability here*)
-                        let s,fk= CF.get_failure_list_failesc_context res
-          (*match CF.get_must_failure_list_partial_context rs with
+                        (*todo: check reachability here*)
+                        let s,fk= CF.get_failure_list_failesc_context res in
+                        (*match CF.get_must_failure_list_partial_context rs with
             | Some s -> "(must) cause:\n"^s
             | None -> (match CF.get_may_failure_list_partial_context rs with
             | Some s -> "(may) cause:\n"^s
             | None -> "INCONSISTENCY : expected failure but success instead"
             ) *)
           (*should check bot with is_bot_status*)
-                        in
                         if (String.length s) >  0 then
                           (* let _ = print_string (to_print ^s^"\n") in *)
                           (* Err.report_error { *)

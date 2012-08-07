@@ -2856,7 +2856,7 @@ and count_octx x = match x with
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) pos pid : (list_context * proof) = 
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
   let pr2 = pr_opt Cprinter.string_of_spec_var in
-  Debug.no_3 "heap_entail_conjunct_lhs_struc"
+  Debug.ho_3 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula) pr2
       (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid
@@ -3027,8 +3027,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                         let rs4 = prune_ctx prog rs3 in
                  (******************************************************)
                 (*foo5,foo6 in hip/err3.ss*)
-				
-                let helper ctx postcond= 
+				let helper ctx postcond= 
 				let es =  CF.estate_of_context ctx pos in
 				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
                 let invert_ctx ctx postcond=
@@ -3189,7 +3188,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Debug.ho_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -4456,7 +4455,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
-  Debug.no_1_num i "heap_entail_conjunct_helper" pr1 pr2
+  Debug.ho_1_num i "heap_entail_conjunct_helper" pr1 pr2
       (fun _ -> heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
           (rhs_h_matched_set:CP.spec_var list) pos) ctx0
 
