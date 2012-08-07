@@ -228,7 +228,12 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) then 
+                                        let arr_check typ1 typ2 =
+                                          match typ1 with
+                                            | Array (t,_) -> if t = typ2 then true else false
+                                            | _ -> false
+                                        in
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_check typ1 typ2) then 
                                           Pure_f (P.BForm(((fct f1 f2), None), None))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
