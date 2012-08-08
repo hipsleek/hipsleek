@@ -675,10 +675,13 @@ let print_entail_result ante (valid: bool) (residue: CF.list_context) (num_id: s
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
             | Some s ->
-                let sat = match NEG.check_sat !cprog ante with
-                  | 1 -> "sat"
-                  | 0 -> "bot"
-                  | _ -> "unknown"
+                let sat = if !Globals.check_sat then
+                      (match NEG.check_sat !cprog ante with
+                        | 1 -> "sat"
+                        | 0 -> "bot"
+                        | _ -> "unknown"
+                      )
+                    else ""
                 in
                 ("(must: " ^ sat ^ ") cause:"^s)
             | _ -> (match CF.get_may_failure residue with

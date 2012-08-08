@@ -548,6 +548,8 @@ let allow_pred_spec = ref false
 
 let disable_failure_explaining = ref false
 
+let check_sat = ref false
+
 let simplify_error = ref false
 
 let prune_cnt_limit = ref 2

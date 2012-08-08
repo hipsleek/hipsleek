@@ -215,6 +215,7 @@ let common_arguments = [
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
     ("-version", Arg.Set Globals.print_version_flag,"current version of software");
     ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
+    ("--cs", Arg.Set Globals.check_sat,"enable must error reachability checking");
     ("--refine-error", Arg.Set Globals.simplify_error,
 	"Simplify the error");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)

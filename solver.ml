@@ -856,12 +856,18 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
 and h_ptos (h: CF.h_formula)=
   match h with
     | CF.DataNode {CF.h_formula_data_node = v} -> [v]
+    | CF.Conj { CF.h_formula_conj_h1 = h1;
+                CF.h_formula_conj_h2 = h2
+              }
+    | CF.Phase { CF.h_formula_phase_rd = h1;
+                 CF.h_formula_phase_rw = h2
+               }
     | CF.Star { CF.h_formula_star_h1 = h1;
                 CF.h_formula_star_h2 = h2
               } -> (h_ptos h1)@(h_ptos h2)
     | CF.HEmp ->  []
     | CF.ViewNode {CF.h_formula_view_node = v} -> []
-    | _ -> failwith ("neg.norm_conj: not handled yet")
+    | CF.Hole _ | CF.HTrue | CF.HFalse | CF.HEmp | CF.DangNode _ -> []
 
 (*
   v is pointer: add v!=null
@@ -4581,7 +4587,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
           | _ -> (
               let h1, p1, fl1, t1, a1 = split_components ante in
               let h2, p2, fl2, t2, a2 = split_components conseq in
-              let nReachability = check_sat prog ante in
+              let nReachability = if !Globals.check_sat then check_sat prog ante
+                  else 0
+              in
               if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1)&&
                 (nReachability = 0) then
                 (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
