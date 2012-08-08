@@ -228,12 +228,22 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                        let arr_check typ1 typ2 =
-                                          match typ1 with
-                                            | Array (t,_) -> if t = typ2 then true else false
-                                            | _ -> false
+                                        (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+                                        (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+                                        let arr_typ_check typ1 typ2 =
+                                         ( match typ1 with
+                                            | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
+                                                  ( match typ2 with
+                                                    | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
+                                                    | _ -> false
+                                                  )
+                                            | _ -> ( match typ2 with
+                                                  | Array (t,_) -> if t== UNK then true else false
+                                                  | _ -> false
+                                            )
+                                         )
                                         in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_check typ1 typ2) then 
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
                                           Pure_f (P.BForm(((fct f1 f2), None), None))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
