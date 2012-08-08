@@ -212,7 +212,7 @@ let cexp_to_pure_slicing fct f sl = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
+let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
@@ -226,11 +226,15 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                    else P.BForm (((fct f1 f2), None), None)
                                       in Pure_f(res) 
                                     | _ -> (
-                                        let typ1 = P.typ_of_exp f1 in 
+                                        let typ1 = P.typ_of_exp f1 in
                                         let typ2 = P.typ_of_exp f2 in
+                                        (*a[k] ==> UNK[], cannot identify types of 
+                                          arrays at parser.ml or ipure.ml => UNK*)
+                                        (*temporarily ignore arrays at this check*)
                                         let arr_check typ1 typ2 =
-                                          match typ1 with
-                                            | Array (t,_) -> if t = typ2 then true else false
+                                          match typ1,typ2 with
+                                            | Array _ , _
+                                            | _ , Array _ -> true
                                             | _ -> false
                                         in
                                         if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_check typ1 typ2) then 
