@@ -37,7 +37,8 @@ let transform_exp
       | Null _ 
       | This _ 
       | Time _ 
-      | Unfold _ 
+      | Unfold _
+	  | Barrier _ 	  
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
 				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in

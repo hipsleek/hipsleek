@@ -41,6 +41,7 @@ and match_type =
   
 and action = 
   | M_match of match_res
+  | M_split_match of match_res
   | M_fold of match_res
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
@@ -118,6 +119,7 @@ let pr_simpl_match_res (c:match_res):unit =
 let rec pr_action_name a = match a with
   | Undefined_action e -> fmt_string "Undefined_action"
   | M_match e -> fmt_string "Match"
+  | M_split_match e -> fmt_string "Split&Match "
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
@@ -137,6 +139,7 @@ let rec pr_action_name a = match a with
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
   | M_match e -> pr_mr e; fmt_string "=>Match"
+  | M_split_match e -> pr_mr e; fmt_string "=>SplitMatch"
   | M_fold e -> pr_mr e; fmt_string "=>Fold"
   | M_unfold (e,i) -> pr_mr e; fmt_string ("=>Unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "=>BaseCaseUnfold"
@@ -181,6 +184,7 @@ let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action
 let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
+  | M_split_match e
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
@@ -527,6 +531,7 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
+  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b || !use_split_match then false else true | _ -> true) l in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
@@ -552,6 +557,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
                   in
+				  let l2 = if !perm=Dperm && !use_split_match then (1,M_split_match c)::l2 else l2 in
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
               (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
@@ -563,8 +569,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let l3 = if flag
                   then 
                     begin
-                      let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
-                      let right_ls = look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name in
+                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name) in
+                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name) in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                       if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
@@ -600,7 +606,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       [(0,M_match c)] (*force a MATCH after each lemma*)
                     else
                       let a1 = (1,M_base_case_unfold c) in
-                      let a2 = (1,M_match c) in
+					  let a2 = (1,M_match c) in
+                      let a2 = if !perm=Dperm && !use_split_match then (1,Search_action [a2;(1,M_split_match c)]) else a2 in
                       let a3 = 
                         if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
                         else None in
@@ -650,8 +657,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   let l3 = if flag
                   then begin
-                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
-                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
+                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name) in
+                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name) in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                     (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
@@ -661,14 +668,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     left_act@right_act
                   end
                   else  [] in
-                  let l4 = 
+                  (*let l4 = 
                     (* TODO WN : what is original?? *)
                     (* Without it, run-fast-test of big imm runs faster while
                      * still accurate. However, it fails with
                      * imm/imm1.slk imm/imm3.slk *)
                     if get_view_original rhs_node then 
                       [(2,M_base_case_fold c)] 
-                    else [] in
+                    else [] in*)
                     (* [] in *)
                   let src = (-1,norm_search_action (l2@l3  (* @l4 *) )) in
                   src (*Seq_action [l1;src]*)
@@ -693,7 +700,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_view_derv = vl.h_formula_view_derv in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
-                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name in
+                  let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name) in
                   let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)

@@ -59,6 +59,7 @@ and exp =
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
+  | Tsconst of (Tree_shares.Ts.t_sh * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -190,6 +191,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Null _ 
   | AConst _ 
   | IConst _ 
+  | Tsconst _ 
   | FConst _ -> []
   | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -482,6 +484,7 @@ and pos_of_exp (e : exp) = match e with
   | Var (_, p) 
   | IConst (_, p) 
   | FConst (_, p) 
+  | Tsconst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_) -> pos_of_exp e
   | Add (_, _, p) -> p
@@ -598,8 +601,10 @@ and b_apply_one (fr, t) bf =
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
-  | Null _ | IConst _ 
+  | Null _ 
+  | IConst _ 
   | FConst _ 
+  | Tsconst _
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
@@ -773,6 +778,7 @@ and find_lexp_exp (e: exp) ls =
 	| Var _
 	| IConst _
 	| AConst _
+	| Tsconst _
 	| FConst _ -> []
     | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -822,6 +828,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Var _ 
   | IConst _ 
   | AConst _ 
+  | Tsconst _
   | FConst _ -> false
   | Ann_Exp (exp,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -848,6 +855,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Var _ 
   | IConst _ 
   | AConst _ 
+  | Tsconst _
   | FConst _ -> (e, None)
   | Ann_Exp (e,_) -> float_out_exp_min_max e
   | Add (e1, e2, l) ->
@@ -1050,6 +1058,7 @@ and float_out_pure_min_max (p : formula) : formula =
 				  | IConst _
                   | FConst _
                   | AConst _
+				  | Tsconst _
 				  | Var _ ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
 						let ne2 , np2 = float_out_exp_min_max v2 in
@@ -1064,6 +1073,7 @@ and float_out_pure_min_max (p : formula) : formula =
 				  | Null _
 				  | IConst _
                   | AConst _
+				  | Tsconst _
 				  | Var _ ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
 						let ne2 , np2 = float_out_exp_min_max v2 in
@@ -1079,6 +1089,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			  | IConst _
               | FConst _
               | AConst _
+			  | Tsconst _
 			  | Var _ -> let r2 = match e2 with
 				  | Min (v1, v2, v3) ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
@@ -1181,6 +1192,18 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
 
+let rec find_p_val x v p = match p with 
+  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_) 
+  | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_) -> a=v && b=x
+  | BForm _ -> false
+  | And (f1,f2,_) -> (find_p_val x v f1) || (find_p_val x v f2)
+  | AndList l -> Gen.Basic.exists_l_snd (find_p_val x v) l 
+  | Or (f1,f2,_,_) -> (find_p_val x v f1) && (find_p_val x v f2)
+  | Not (f,_,_) 
+  | Forall (_,f,_,_)
+  | Exists (_,f,_,_)-> find_p_val x v f
+
+  	
 (* get type of an expression *)
 let rec typ_of_exp (e: exp) : typ =
   let pos = pos_of_exp e in
@@ -1203,6 +1226,7 @@ let rec typ_of_exp (e: exp) : typ =
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | AConst _                  -> Globals.AnnT
+  | Tsconst _ 				  -> Globals.Tree_sh
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)

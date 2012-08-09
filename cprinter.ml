@@ -541,8 +541,7 @@ let exp_wo_paren (e:P.exp) =
     | P.Var _ 
     | P.AConst _ 
     | P.IConst _ 
-    | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ 
- -> true
+    | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ | P.Tsconst _  -> true
     | _ -> false
 
 let b_formula_assoc_op (e:P.b_formula) : (string * P.exp list) option = None
@@ -630,6 +629,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
+	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -1234,11 +1234,11 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
         end
 
 let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) (count:int) =
-  let f b = begin
+(*  let f b = begin
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
-  end in
+  end in*)
   let f b = () in
   pr_numbered_list_formula_trace_ho (e) (count:int) f 
 
@@ -1833,6 +1833,15 @@ let pr_view_base_case bc =
 	  | None -> ()
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) () )
 
+let pr_barrier_decl v = 
+	fmt_open_vbox 1;
+    wrap_box ("B",0) (fun ()-> "barrier "^v.barrier_name ^"<"^(string_of_int v.barrier_thc)^","^
+	(String.concat "," (List.map string_of_spec_var v.barrier_shared_vars))^"> = ") ();
+	fmt_cut (); wrap_box ("B",0) pr_struc_formula v.barrier_def; 
+	pr_vwrap  "transitions:" 
+	(pr_seq "\n" (fun (f,t,sp)-> pr_int f; fmt_string "->";pr_int t; fmt_string " :"; pr_seq "\n" pr_struc_formula sp)) v.barrier_tr_list;
+	fmt_close_box ()
+	  
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -1886,6 +1895,8 @@ let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
 let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
+
+let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
@@ -2027,6 +2038,7 @@ let rec string_of_exp = function
 	exp_block_body = e;
 	exp_block_local_vars = _;
 	exp_block_pos = _}) -> "{\n" ^ (string_of_exp e) ^ "\n}"
+  | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
   | ICall ({exp_icall_type = _;
 	exp_icall_receiver = r;
 	exp_icall_method_name = id;
@@ -2147,7 +2159,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
-  | Cast.Normalize -> "Normalize"
+  | Cast.Normalize b-> "Normalize "^(string_of_bool b)
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
@@ -2231,6 +2243,11 @@ let rec string_of_view_decl_list l = match l with
   | h::[] -> (string_of_view_decl h) 
   | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
+let rec string_of_barrier_decl_list l = match l with 
+  | [] -> ""
+  | h::[] -> (string_of_barrier_decl h) 
+  | h::t -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
+;;
 
 (* An Hoa : print relations *)
 let string_of_rel_decl_list rdecls = 
@@ -2258,6 +2275,7 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
   (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
   (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
@@ -2367,6 +2385,7 @@ let rec html_of_formula_exp e =
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
+	| P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)

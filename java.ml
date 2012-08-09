@@ -241,6 +241,7 @@ and java_of_exp = function
   | Label (_,b) -> java_of_exp b
   | Unfold _ -> ""
   | Java ({exp_java_code = code}) -> code
+  | Barrier b -> "barrier "^b.exp_barrier_recv
   | Bind ({exp_bind_bound_var = v;
 		   exp_bind_fields = vs;
 		   exp_bind_body = e})      -> failwith "bind is not supported yet"

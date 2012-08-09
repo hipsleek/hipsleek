@@ -115,6 +115,7 @@ module Make (Token : SleekTokenS)
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
+     ("Barrier", BARRIER);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
@@ -173,7 +174,8 @@ module Make (Token : SleekTokenS)
 	 ("on", ON);
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
-   ("perm",PERM);
+	 ("macro",PMACRO);
+     ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
@@ -271,6 +273,7 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@@" { ATAT }
   | "@I" {IMM}
   | "@L" {LEND}
   | "@D" { DERV }
