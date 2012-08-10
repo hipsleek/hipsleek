@@ -362,7 +362,7 @@ and exp_while = { exp_while_condition : exp;
 		  exp_while_jump_label : jump_label_type;
 		  exp_while_path_id : control_path_id;
 		  exp_while_f_name: ident;
-		  exp_while_wrappings: exp option;
+		  exp_while_wrappings: (exp*ident) option;
 		  (*used temporary to store the break wrappers, these wrappers are catch clauses which will
 		    wrap the method so that it catches and converts the break flows with target jump_label_type*)
 		  exp_while_pos : loc }
@@ -675,13 +675,15 @@ let mkAssert asrtf assmf pid pos =
                exp_assert_path_id = pid;
                exp_assert_pos = pos }
       
-let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:exp -> 'a list -> 'a) :(exp * 'a) =
+let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
 	  | Some e1 -> e1
-	  | None  ->   let n_arg = f_args in_arg e in 
+	  | None  ->
+		let n_arg = f_args in_arg e in 
         let comb_f = comb_f e in
-        let zero = comb_f [] in  match e with	
+        let zero = comb_f [] in  
+		match e with	
           | Assert _ 
           | BoolLit _ 
           | Break _
@@ -807,9 +809,9 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | While b -> 
                 let wrp,r = match b.exp_while_wrappings with
                   | None -> (None,zero)
-                  | Some s -> 
+                  | Some (s,l) -> 
                         let wrp,r = helper n_arg s in
-                        ((Some wrp),r) in
+                        (Some (wrp,l),r) in
                 let ce,cr = helper n_arg b.exp_while_condition in
                 let be,br = helper n_arg b.exp_while_body in
                 let r = comb_f [r;cr;br] in
@@ -1269,6 +1271,29 @@ and mkUnary op oper pos = Unary { exp_unary_op = op;
 								  exp_unary_path_id = (fresh_branch_point_id "") ;
 								  exp_unary_pos = pos }
 
+and mkRaise ty rval final pid pos= Raise { exp_raise_type = ty ;
+										   exp_raise_val = rval;
+										   exp_raise_from_final = final;
+										   exp_raise_path_id = pid;
+										   exp_raise_pos = pos;}
+and mkCatch var fl_type fl_var body pos = Catch{  exp_catch_var = var; 
+												  exp_catch_flow_type = fl_type;
+												  exp_catch_flow_var = fl_var;
+												  exp_catch_body = body; 
+												  exp_catch_pos = pos}
+				
+and mkTry body catch finally pid pos = Try{ exp_try_block = body;
+											exp_catch_clauses = catch;
+											exp_finally_clause = finally;
+											exp_try_path_id = pid;
+											exp_try_pos = pos;}
+
+and mkVar name pos= Var {exp_var_name = name; exp_var_pos = pos;}
+
+(*and mkSeq f1 f2 pos = Seq {exp_seq_exp1 = f1; exp_seq_exp2 = f2; exp_seq_pos = pos;}*)
+
+and mkBlock body lbl local_vars pos = Block {exp_block_body = body; exp_block_jump_label = lbl; exp_block_local_vars = local_vars; exp_block_pos = pos}
+								  
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
 (*************************************************************)
@@ -1505,7 +1530,7 @@ let rec label_e e =
 			  exp_while_condition = label_e e.exp_while_condition;
 			  exp_while_body = label_e e.exp_while_body;
 			  exp_while_path_id = nl;
-			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some s-> Some (label_e s);}  
+			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
     | _ -> Error.report_error   
       {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
   in map_exp e helper
@@ -1929,3 +1954,20 @@ let gen_normalize_lemma_comb ddef =
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
 	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}
+	
+	
+let rec get_breaks e = 
+	let f e = match e with
+		| Raise {exp_raise_type = rt}-> (match rt with
+			| Const_flow fl -> if (is_subsume_flow (exlist # get_hash brk_top) (exlist # get_hash fl)) then Some [fl]
+								else Some []
+			| Var_flow _ -> Some [])
+		| Try { exp_try_block = body;
+				exp_catch_clauses = cl} ->
+				let lb = get_breaks body in
+				let lb = List.filter (fun l -> not (List.exists (fun c-> match c with | Catch c-> (String.compare c.exp_catch_flow_type l) == 0 | _-> false) cl)) lb in
+				let lbc = List.map get_breaks cl in
+				Some (List.concat (lb::lbc))
+		| _ -> None in
+	fold_exp e f (List.concat) [] 
+	

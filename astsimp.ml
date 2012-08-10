@@ -662,313 +662,123 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 should also check that 
 *)
 let rec while_labelling (e:I.exp):I.exp = 
-let rec label_breaks lb e :I.exp = match e with
-  | I.Label (l,e)-> I.Label(l, label_breaks lb e)
-  | I.Assert _ -> e
-	| I.ArrayAt b -> I.ArrayAt { b with I.exp_arrayat_index = List.map (label_breaks lb) b.I.exp_arrayat_index; } (* An Hoa *)
-  | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (label_breaks lb b.I.exp_assign_lhs);
-								   I.exp_assign_rhs = (label_breaks lb  b.I.exp_assign_rhs); }  
-  | I.Barrier _ -> e
-  | I.Binary b -> I.Binary {b with I.exp_binary_oper1 = (label_breaks lb  b.I.exp_binary_oper1);
-								   I.exp_binary_oper2 = (label_breaks lb  b.I.exp_binary_oper2);}
-  | I.Bind b ->  I.Bind {b with I.exp_bind_body = (label_breaks lb  b.I.exp_bind_body);}
-  | I.BoolLit _ -> e
-  | I.Break b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_jump_label with | I.NoJumpLabel -> "brk_"^lb | I.JumpLabel l-> "brk_"^l);
-						   I.exp_raise_val = None;
-						   I.exp_raise_from_final = false;
-						   I.exp_raise_path_id = b.I.exp_break_path_id;
-						   I.exp_raise_pos = b.I.exp_break_pos;}
-  | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (label_breaks lb  b.I.exp_call_recv_receiver);
-									   I.exp_call_recv_arguments  = List.map (label_breaks lb)  b.I.exp_call_recv_arguments;}
-  | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map (label_breaks lb)  b.I.exp_call_nrecv_arguments;}
-  | I.Block b-> e  
-  | I.Cast b -> I.Cast {b with I.exp_cast_body = (label_breaks lb  b.I.exp_cast_body)}
-  | I.Catch b -> I.Catch {b with I.exp_catch_body = (label_breaks lb b.I.exp_catch_body)}
-  | I.Cond b -> I.Cond {b with I.exp_cond_condition = (label_breaks lb  b.I.exp_cond_condition);
-							   I.exp_cond_then_arm  = (label_breaks lb  b.I.exp_cond_then_arm);
-							   I.exp_cond_else_arm  = (label_breaks lb  b.I.exp_cond_else_arm);}
-  | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(label_breaks lb  b),c)) b.I.exp_const_decl_decls}
-  | I.Continue b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_jump_label with | I.NoJumpLabel -> "cnt_"^lb | I.JumpLabel l-> "cnt_"^l);
-						   I.exp_raise_val = None;
-						   I.exp_raise_from_final = false;
-						   I.exp_raise_path_id = b.I.exp_continue_path_id;
-						   I.exp_raise_pos = b.I.exp_continue_pos;}
-  | I.Debug _ 
-  | I.Dprint _
-  | I.Empty _ 
-  | I.FloatLit _
-  | I.IntLit _ 
-  | I.Java _ -> e
-  | I.Finally b-> I.Finally {b with I.exp_finally_body = (label_breaks lb b.I.exp_finally_body)}
-  | I.Member b -> I.Member {b with I.exp_member_base = (label_breaks lb  b.I.exp_member_base)}
-	(* An Hoa *)
-	| I.ArrayAlloc a -> I.ArrayAlloc {a with I.exp_aalloc_dimensions = List.map (label_breaks lb) a.I.exp_aalloc_dimensions}
-  | I.New b -> I.New {b with I.exp_new_arguments = List.map (label_breaks lb)  b.I.exp_new_arguments}
-  | I.Null _ -> e
-  | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (label_breaks lb  b)}
-  | I.Return b -> I.Return {b with I.exp_return_val = match b.I.exp_return_val with | None -> None | Some b -> Some (label_breaks lb  b)}
-  | I.Seq b -> I.Seq {b with I.exp_seq_exp1 = label_breaks lb b.I.exp_seq_exp1 ;
-							 I.exp_seq_exp2 = label_breaks lb b.I.exp_seq_exp2 ;}
-  | I.This _ -> e
-  | I.Time _ -> e
-  | I.Try b -> I.Try {b with  
-				I.exp_try_block = label_breaks lb  b.I.exp_try_block;
-				I.exp_catch_clauses = List.map (label_breaks lb) b.I.exp_catch_clauses;
-				I.exp_finally_clause = List.map (label_breaks lb) b.I.exp_finally_clause;}
-  | I.Unary b -> I.Unary {b with I.exp_unary_exp = (label_breaks lb  b.I.exp_unary_exp)}
-  | I.Unfold _ -> e
-  | I.Var _ -> e
-  | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None | Some b-> Some (label_breaks lb  b)),c)) b.I.exp_var_decl_decls}
-  | I.While b -> e(*I.While {b with I.exp_while_condition = (label_breaks lb  b.I.exp_while_condition);	 I.exp_while_body = (label_breaks lb  b.I.exp_while_body);}	*)
-    
-and need_break_continue lb ne non_generated_label :bool = 
-	if not (non_generated_label) then 
-		match ne with 
-		| I.Break b-> (match b.I.exp_break_jump_label with 
-				| I.NoJumpLabel -> true
-				| I.JumpLabel l -> false)
-		| I.Continue b-> (match b.I.exp_continue_jump_label with 
-				| I.NoJumpLabel -> true
-				| I.JumpLabel l -> false)
-		| I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 false) ||(need_break_continue lb b.I.exp_seq_exp2 false)
-		| I.Label (_,e) -> need_break_continue lb e false
-		| _ -> false 
-	else match ne with
-		  | I.Assert _ -> false
-		  | I.Assign b -> (need_break_continue lb b.I.exp_assign_lhs true)||(need_break_continue lb  b.I.exp_assign_rhs true)
-		  | I.Barrier _ -> false
-		  | I.Binary b -> (need_break_continue lb  b.I.exp_binary_oper1 true)||(need_break_continue lb  b.I.exp_binary_oper2 true)
-		  | I.Bind b -> (need_break_continue lb  b.I.exp_bind_body true)
-		  | I.BoolLit _ -> false
-		  | I.Break b -> (match b.I.exp_break_jump_label with 
-				| I.NoJumpLabel -> false
-				| I.JumpLabel l -> ((String.compare lb l)==0))
-		  | I.CallRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) 
-									(need_break_continue lb  b.I.exp_call_recv_receiver true) 
-									b.I.exp_call_recv_arguments
-		  | I.CallNRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_call_nrecv_arguments
-		  | I.Block b-> begin (match b.I.exp_block_jump_label with
-							| I.NoJumpLabel -> ()
-							| I.JumpLabel l -> if (String.compare l lb) ==0 then 
-									Error.report_error {Error.error_loc = b.I.exp_block_pos; Error.error_text = ("label"^l^" is duplicated")}
-								else ());
-						(need_break_continue lb b.I.exp_block_body true)
-						end
-		  | I.Cast b -> (need_break_continue lb  b.I.exp_cast_body true)
-		  | I.Catch b -> need_break_continue lb  b.I.exp_catch_body true
-		  | I.Cond b -> (need_break_continue lb  b.I.exp_cond_condition true )||
-						(need_break_continue lb  b.I.exp_cond_then_arm true)||
-						(need_break_continue lb  b.I.exp_cond_else_arm true)
-		  | I.ConstDecl b -> List.fold_left (fun a (_,b,_)-> a||(need_break_continue lb b true)) false b.I.exp_const_decl_decls
-		  | I.Continue b ->(match b.I.exp_continue_jump_label with 
-				| I.NoJumpLabel -> false
-				| I.JumpLabel l -> ((String.compare lb l)==0))
-		  | I.Debug _ 
-		  | I.Dprint _
-		  | I.Empty _ 
-		  | I.FloatLit _
-		  | I.IntLit _ 
-		  | I.Java _ -> false
-		  | I.Finally b -> need_break_continue lb b.I.exp_finally_body true
-		  | I.Label (_,e) -> need_break_continue lb e true
-		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
-			(* An Hoa *)
-			| I.ArrayAlloc b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_aalloc_dimensions 
-			| I.ArrayAt b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_arrayat_index
-		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
-		  | I.Null _ -> false
-		  | I.Raise b -> (match b.I.exp_raise_val with | None -> false | Some b ->(need_break_continue lb b true))
-		  | I.Return b -> (match b.I.exp_return_val with | None -> false | Some b ->(need_break_continue lb b true))
-		  | I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 true) ||(need_break_continue lb b.I.exp_seq_exp2 true)
-		  | I.This _ -> false
-		  | I.Time _ -> false
-		  | I.Try b -> (need_break_continue lb  b.I.exp_try_block true)|| 
-					(List.fold_left (fun a c-> a||(need_break_continue lb c true)) false b.I.exp_catch_clauses)||
-					(List.fold_left (fun a c-> a||(need_break_continue lb c true)) false b.I.exp_finally_clause)
-		  | I.Unary b -> (need_break_continue lb b.I.exp_unary_exp true)
-		  | I.Unfold _ -> false
-		  | I.Var _ -> false
-		  | I.VarDecl b -> List.fold_left (fun a (_,b,_)-> match b with | None -> a | Some b-> a||(need_break_continue lb b true)) false b.I.exp_var_decl_decls
-		  | I.While b -> begin 
-		    (match b.I.exp_while_jump_label with
-					| I.NoJumpLabel -> ()
-					| I.JumpLabel l -> 
-						if (String.compare l lb) ==0 then 
-							Error.report_error {Error.error_loc = b.I.exp_while_pos; Error.error_text = ("label"^l^" is duplicated")}
-						else ());
-			(need_break_continue lb b.I.exp_while_body true)||(need_break_continue lb  b.I.exp_while_condition true)
-						end in
- match e with
-  | I.Assert _ -> e
-  | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (while_labelling b.I.exp_assign_lhs);
-								   I.exp_assign_rhs = (while_labelling b.I.exp_assign_rhs); }  
-  | I.Barrier _ -> e
-  | I.Binary b -> I.Binary {b with I.exp_binary_oper1 = (while_labelling b.I.exp_binary_oper1);
-								   I.exp_binary_oper2 = (while_labelling b.I.exp_binary_oper2);}
-  | I.Bind b ->  I.Bind {b with I.exp_bind_body = (while_labelling b.I.exp_bind_body);}
-  | I.BoolLit _ -> e
-  | I.Break b ->I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_jump_label with 
-													| I.NoJumpLabel -> Error.report_error {Error.error_loc = b.I.exp_break_pos; Error.error_text = ("there is no loop/block to break out of")}
-													| I.JumpLabel l-> l);
-						   I.exp_raise_val = None;
-						   I.exp_raise_from_final = false;
-						   I.exp_raise_path_id = b.I.exp_break_path_id;
-						   I.exp_raise_pos = b.I.exp_break_pos;}						
-  | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (while_labelling b.I.exp_call_recv_receiver);
-									   I.exp_call_recv_arguments  = List.map while_labelling b.I.exp_call_recv_arguments;}
-  | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map while_labelling b.I.exp_call_nrecv_arguments;}
-  | I.Block b-> 
-	let nl,b_rez = match b.I.exp_block_jump_label with
-				| I.NoJumpLabel -> ((fresh_label b.I.exp_block_pos),false)
-				| I.JumpLabel l -> (l ,true)in
-	if (need_break_continue nl b.I.exp_block_body b_rez) then
-		let ne = while_labelling (label_breaks nl b.I.exp_block_body) in
-		let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
-		let _  = exlist # add_edge nb brk_top in
-		let _  = exlist # add_edge nc cont_top in
-		let nl = fresh_branch_point_id "" in
-		let nl2 = fresh_branch_point_id "" in
-		let nit= I.Try ({
-						I.exp_try_block = ne;
-						I.exp_catch_clauses = [
-							  I.Catch{  I.exp_catch_var = None;(*fresh_name();*)
-										I.exp_catch_flow_type = nc;
-										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Label((nl,1),I.Empty b.I.exp_block_pos);	
-										I.exp_catch_pos = b.I.exp_block_pos };];
-						I.exp_finally_clause = [];
-						I.exp_try_path_id = nl;
-						I.exp_try_pos = b.I.exp_block_pos;}) in
-		let ne = I.Try ({
-						I.exp_try_block = nit;
-						I.exp_try_path_id = nl2;
-						I.exp_catch_clauses = [
-							  I.Catch{  I.exp_catch_var = None;(*fresh_name();*)
-										I.exp_catch_flow_type = nb;
-										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Label((nl2,1),I.Empty b.I.exp_block_pos);	
-										I.exp_catch_pos = b.I.exp_block_pos };];
-						I.exp_finally_clause = [];
-						I.exp_try_pos = b.I.exp_block_pos;})in		
-		ne
-	else while_labelling (label_breaks nl b.I.exp_block_body)
-  | I.Cast b -> I.Cast {b with I.exp_cast_body = (while_labelling b.I.exp_cast_body)}
-  | I.Catch b -> I.Catch {b with I.exp_catch_body = while_labelling b.I.exp_catch_body}
-  | I.Cond b -> I.Cond {b with I.exp_cond_condition = (while_labelling b.I.exp_cond_condition);
-							   I.exp_cond_then_arm  = (while_labelling b.I.exp_cond_then_arm);
-							   I.exp_cond_else_arm  = (while_labelling b.I.exp_cond_else_arm);}
-  | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(while_labelling b),c)) b.I.exp_const_decl_decls}
-  | I.Continue b ->  I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_jump_label with 
-													| I.NoJumpLabel -> Error.report_error {Error.error_loc = b.I.exp_continue_pos; Error.error_text = ("there is no loop to continue")}
-													| I.JumpLabel l-> l);
-							   I.exp_raise_val = None;
-							   I.exp_raise_from_final = false;
-							   I.exp_raise_path_id = b.I.exp_continue_path_id;
-						       I.exp_raise_pos = b.I.exp_continue_pos;}	
-  | I.Debug _ 
-  | I.Dprint _
-  | I.Empty _ 
-  | I.FloatLit _
-  | I.IntLit _ 
-  | I.Java _ -> e
-  | I.Finally b -> I.Finally {b with I.exp_finally_body = while_labelling b.I.exp_finally_body}
-  | I.Label (pid, e) -> I.Label (pid, (while_labelling e))
-  | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
-	(* An Hoa *)
-	| I.ArrayAlloc b -> I.ArrayAlloc {b with I.exp_aalloc_dimensions = List.map while_labelling b.I.exp_aalloc_dimensions}
-	| I.ArrayAt b -> I.ArrayAt {b with I.exp_arrayat_index = (List.map while_labelling b.I.exp_arrayat_index); } (* An Hoa *) 
-  | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
-  | I.Null _ -> e
-  | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (while_labelling b)}
-  | I.Return b -> I.Return {b with I.exp_return_val = match b.I.exp_return_val with | None -> None | Some b -> Some (while_labelling b)}
-  | I.Seq b -> I.Seq {b with I.exp_seq_exp1 = while_labelling b.I.exp_seq_exp1 ;
-							 I.exp_seq_exp2 = while_labelling b.I.exp_seq_exp2 ;}
-  | I.This _ -> e
-  | I.Time _ -> e
-  | I.Try b -> let ob = I.Try {b with  
-				I.exp_try_block = while_labelling b.I.exp_try_block;
-				I.exp_catch_clauses = (List.map while_labelling b.I.exp_catch_clauses); 
-				I.exp_finally_clause = [];} in
-				let nt = if (List.length b.I.exp_finally_clause)==0 then ob
-				else I.Try { 
-						I.exp_try_path_id = None;
-						I.exp_try_block = ob;
-						I.exp_catch_clauses =
-						(List.map (fun c-> 
-						let c = I.get_finally_of_exp c in
-						let f_body = (while_labelling c.I.exp_finally_body) in
-						let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
-						let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
-						I.Catch{
-							I.exp_catch_var = Some new_name;
-							I.exp_catch_flow_type = c_flow;
-							I.exp_catch_flow_var = Some new_flow_var_name;
-							I.exp_catch_body = (I.Block ({I.exp_block_body = (I.Seq({
-																					I.exp_seq_exp1 = f_body;
-																					I.exp_seq_exp2 = I.Raise({
-																								I.exp_raise_type = I.Var_flow new_flow_var_name;
-																								I.exp_raise_path_id = None;
-																								I.exp_raise_from_final = true;
-																								I.exp_raise_val =  Some (I.Var ({
-																												I.exp_var_name = new_name;
-																												I.exp_var_pos = b.I.exp_try_pos;}));
-																											I.exp_raise_pos = b.I.exp_try_pos });
-																						I.exp_seq_pos = b.I.exp_try_pos;
-																					}));
-																				I.exp_block_jump_label = I.NoJumpLabel;
-																				I.exp_block_local_vars = [];
-																				I.exp_block_pos = b.I.exp_try_pos}));
-							I.exp_catch_pos = b.I.exp_try_pos   }
-				) b.I.exp_finally_clause );
-						I.exp_finally_clause =[];
-						I.exp_try_pos = b.I.exp_try_pos} in
-				nt
-  | I.Unary b -> I.Unary {b with I.exp_unary_exp = (while_labelling b.I.exp_unary_exp)}
-  | I.Unfold _ -> e
-  | I.Var _ -> e
-  | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None |Some b-> Some(while_labelling b)),c)) b.I.exp_var_decl_decls}
-  | I.While b -> 
-				let nl1 = fresh_branch_point_id "" in
-				let nl2 = fresh_branch_point_id "" in
-				let nl,b_rez = match b.I.exp_while_jump_label with
-					| I.NoJumpLabel -> ((fresh_label b.I.exp_while_pos),false)
-					| I.JumpLabel l -> (l,true) in
+		let label_breaks lb e :I.exp = 		
+			I.map_exp e (fun c-> match c with 
+			   | I.Block _ -> None
+			   | I.While _ -> Some c
+			   | I.Break b -> 
+				    let ty = I.Const_flow (match b.I.exp_break_jump_label with | I.NoJumpLabel -> "brk_"^lb | I.JumpLabel l-> "brk_"^l) in
+					Some (I.mkRaise ty None false b.I.exp_break_path_id b.I.exp_break_pos)
+			   | I.Continue b -> 
+					let ty = I.Const_flow (match b.I.exp_continue_jump_label with | I.NoJumpLabel -> "cnt_"^lb | I.JumpLabel l-> "cnt_"^l) in
+					Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos )
+			   | _ -> None) in
+		let need_break_continue_x lb ne non_generated_label :bool = 
+			if not (non_generated_label) then 
+			 I.fold_exp ne (fun c-> match c with 
+				| I.While _ -> Some false
+				| I.Break {I.exp_break_jump_label=b}
+				| I.Continue {I.exp_continue_jump_label=b}-> Some (b=I.NoJumpLabel) 
+				| _ -> None) (fun c-> List.exists (fun c-> c) c) false 
+			else 
+			 I.fold_exp ne  (fun c-> match c with 
+				| I.Block {I.exp_block_jump_label=b; I.exp_block_pos = pos}
+				| I.While {I.exp_while_jump_label=b; I.exp_while_pos = pos}-> (match b with
+									| I.NoJumpLabel -> None 
+									| I.JumpLabel l -> if (String.compare l lb) ==0 then Gen.report_error pos("label"^l^" is duplicated")
+										else None)			 
+				| I.Break {I.exp_break_jump_label=b}
+				| I.Continue {I.exp_continue_jump_label=b}-> 
+					Some (match b with 
+							 |I.JumpLabel l ->  (String.compare lb l)==0
+							 |I.NoJumpLabel -> false)
+				| _ -> None) (fun c-> List.exists (fun c-> c) c) false  in
+		let  need_break_continue lb ne non_generated_label :bool = 
+			Debug.no_2 "need_break_continue" string_of_bool Iprinter.string_of_exp string_of_bool 
+			(fun _ _-> need_break_continue_x lb ne non_generated_label) non_generated_label ne in
+	
+	I.map_exp e (fun c-> match c with 
+		| I.Break b ->
+			let ty = I.Const_flow (match b.I.exp_break_jump_label with 
+					| I.NoJumpLabel -> Gen.report_error b.I.exp_break_pos "there is no loop/block to break out of"
+					| I.JumpLabel l-> l) in
+			Some (I.mkRaise ty None false b.I.exp_break_path_id b.I.exp_break_pos)
+		| I.Continue b ->  
+			let ty = I.Const_flow (match b.I.exp_continue_jump_label with 
+					| I.NoJumpLabel -> Gen.report_error b.I.exp_continue_pos "there is no loop to continue"
+					| I.JumpLabel l-> l) in
+			Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos)
+		| I.Block b-> None 
+			(*let pos = b.I.exp_block_pos in
+			let nl,b_rez = match b.I.exp_block_jump_label with
+					| I.NoJumpLabel -> ((fresh_label pos),false)
+					| I.JumpLabel l -> (l ,true)in
+			if (need_break_continue nl b.I.exp_block_body b_rez) then
+				let ne = while_labelling (label_breaks nl b.I.exp_block_body) in
 				let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
-				let r = if (need_break_continue nl b.I.exp_while_body b_rez) then				
-					 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
-					 let _  = exlist # add_edge nb brk_top in
-					 let _  = exlist # add_edge nc cont_top in 
-					 let continue_try = I.Try ({
-						I.exp_try_block = ne;
-						I.exp_try_path_id = nl1;	
-						I.exp_catch_clauses = [
-							   I.Catch{ I.exp_catch_var = None;(*fresh_name();*)
-										I.exp_catch_flow_type = nc;
-										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Label ((nl1,1),I.Empty b.I.exp_while_pos);	
-										I.exp_catch_pos = b.I.exp_while_pos }];
-						I.exp_finally_clause = [];
-						I.exp_try_pos = b.I.exp_while_pos;}) in	
-					 let break_try = I.Try {
-							I.exp_try_block = I.This ({I.exp_this_pos = b.I.exp_while_pos});
-							I.exp_try_path_id = nl2; (*b.I.exp_while_path_id;	*)
-							I.exp_catch_clauses = [
-									 I.Catch{ I.exp_catch_var = None;
-											  I.exp_catch_flow_type = nb;
-											  I.exp_catch_flow_var = None;
-											  I.exp_catch_body = I.Label ((nl2,1),I.Empty b.I.exp_while_pos);	
-											  I.exp_catch_pos = b.I.exp_while_pos }];
-							I.exp_finally_clause = [];
-							I.exp_try_pos = b.I.exp_while_pos; } in
-					(*let _ = print_string ("\n needed: "^(string_of_bool (need_break_continue nl b.I.exp_while_body b_rez))^"\n") in*)
-					I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some break_try}
-				else I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None} in
-				r
-						
+				let _  = exlist # add_edge nb brk_top in
+				let _  = exlist # add_edge nc cont_top in
+				let nl = fresh_branch_point_id "" in
+				let nl2 = fresh_branch_point_id "" in
+				let nit= I.mkTry ne [I.mkCatch None nc None (I.Label((nl,1),I.Empty pos)) pos] [] nl pos in
+				Some (I.mkTry nit [I.mkCatch None nb None (I.Label((nl2,1),I.Empty pos)) pos] [] nl2 pos)
+			else None*)
+		| I.While b -> 
+				let pos = b.I.exp_while_pos in
+				let nl,b_rez = match b.I.exp_while_jump_label with
+						| I.NoJumpLabel -> ((fresh_label pos),false)
+						| I.JumpLabel l -> (l,true) in
+				let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
+				if (need_break_continue nl b.I.exp_while_body b_rez) then				
+						 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
+						 let _  = exlist # add_edge nb brk_top in
+						 let _  = exlist # add_edge nc cont_top in 
+						 let nl1 = fresh_branch_point_id "" in
+						 let nl2 = fresh_branch_point_id "" in
+						 let continue_try = I.mkTry ne [I.mkCatch None nc None (I.Label ((nl1,1),I.Empty pos)) pos] [] nl1 pos in	
+						 let break_try = I.mkTry (I.This {I.exp_this_pos = pos}) [ I.mkCatch None nb None (I.Label ((nl2,1),I.Empty pos)) pos] [] nl2 pos in
+						 Some (I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some (break_try,nb)})
+				else Some (I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None})
+			
+		| I.Try b ->
+					let pos = b.I.exp_try_pos in
+					if (List.length b.I.exp_finally_clause)==0 then None
+					else 
+						let ob = I.mkTry ( while_labelling b.I.exp_try_block) (List.map while_labelling b.I.exp_catch_clauses) [] b.I.exp_try_path_id pos in
+						let l_catch = List.map (fun c-> 
+								let c = I.get_finally_of_exp c in
+								let f_body = while_labelling c.I.exp_finally_body in
+								let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
+								let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
+								let new_raise = I.mkRaise (I.Var_flow new_flow_var_name) (Some (I.mkVar new_name pos)) true  None pos in
+								let catch_body = I.mkBlock (I.mkSeq f_body new_raise pos) I.NoJumpLabel [] pos in
+								I.mkCatch (Some new_name) c_flow (Some new_flow_var_name) catch_body pos
+								) b.I.exp_finally_clause in
+						Some (I.mkTry ob l_catch [] None pos)
+		|_ -> None)
+	
    
-and prepare_labels_x (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
+and prepare_labels_x (fct: I.proc_decl): I.proc_decl = 
+  let rec syntax_err_breaks e in_loop l_lbl = 
+		let f_args (in_loop,l_lbl) e = match e with 
+			| I.While b -> (true, match b.I.exp_while_jump_label with I.NoJumpLabel -> l_lbl | I.JumpLabel l -> l::l_lbl) 
+			| _ -> (in_loop,l_lbl) in
+		let f (in_loop,l_lbl) e = match e with 
+			| I.Block b -> if (b.I.exp_block_jump_label<> I.NoJumpLabel) then Gen.report_error b.I.exp_block_pos "blocks should be unlabeled"
+						 else None
+			| I.Continue {I.exp_continue_jump_label = l1; I.exp_continue_pos = pos} 
+			| I.Break {I.exp_break_jump_label = l1; I.exp_break_pos = pos} -> 
+				if not in_loop then Gen.report_error  pos "break/continue statements are allowed only within loops"
+				else (match l1 with 
+						| I.NoJumpLabel-> None
+						| I.JumpLabel l -> 
+								if not (List.exists (fun c-> String.compare c l ==0) l_lbl) then Gen.report_error pos ("undefined label "^l)
+							else None)
+			| _ -> None in
+		  I.iter_exp_args e (in_loop,l_lbl) f f_args in
+  match fct.I.proc_body with
 	| None -> fct
-	| Some e-> {fct with I.proc_body = Some (while_labelling e)}
+	| Some e-> (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling e)})
 
 and prepare_labels (fct: I.proc_decl): I.proc_decl =
   let pr = Iprinter.string_of_proc_decl in
@@ -984,7 +794,7 @@ let trans_logical_vars lvars =
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
-  print_string "trans_prog\n";
+  (* print_string "trans_prog\n"; *)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -998,7 +808,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (*                      I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls; *)
   (*         } *)
   (* in *)
-  let _ = exlist # compute_hierarchy in
+  (*let _ = exlist # compute_hierarchy in*)
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
@@ -1011,6 +821,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   let prog1 = { prog2 with
 	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
 	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  let _ = exlist # compute_hierarchy in	  
   (* let _ = print_endline (Exc.string_of_exc_list (3)) in *)
   (* let _ = I.find_empty_static_specs prog1 in *)
   let prog0 = { prog1 with
@@ -3171,6 +2982,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let fn3 = fresh_name () in  
             let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore
                 (Gen.replace_dot_with_uscore (string_of_loc pos)))) in
+			let prepost = match wrap with 
+				| None -> prepost
+				| Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
@@ -3223,10 +3037,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_path_id = pi; } in
             let w_call = match wrap with
               | None -> temp_call
-              | Some e -> (*let e,et = helper e in*)
+              | Some (e,_) -> (*let e,et = helper e in*)
                     match e with
                       | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                       | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
+			let w_proc = case_normalize_proc prog w_proc in
             let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
             let cw_proc = trans_proc new_prog w_proc in 
@@ -6277,7 +6092,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.While b-> 
           let nw = match b.Iast.exp_while_wrappings with
             | None -> None
-            | Some e -> Some (rename_exp ren e)  in
+            | Some (e,l) -> Some ((rename_exp ren e),l)  in
           Iast.While{
               Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
               Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
@@ -6585,11 +6400,11 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.While b->
               let nc,nh,np = case_normalize_exp prog h p b.Iast.exp_while_condition in
               let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_while_body in
-              let strad = 
+              (*let strad = 
                 let pr,pst = IF.struc_split_fv b.Iast.exp_while_specs false in
-                Gen.BList.intersect_eq (=) pr pst in
-              let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
-              (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
+                Gen.BList.intersect_eq (=) pr pst in*)
+              (*let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in*)
+              (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;(*Iast.exp_while_specs = ns*)},h,p)
         | Iast.Try b-> 
               let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
 		      let f l =  List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c in nf) l in

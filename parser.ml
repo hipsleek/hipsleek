@@ -212,7 +212,7 @@ let cexp_to_pure_slicing fct f sl = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
+let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
@@ -463,7 +463,7 @@ let peek_star =
              |[STAR,_;OPAREN,_] -> raise Stream.Failure
              | _ -> ())
 
-let peek_array_type = 
+let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
@@ -1823,6 +1823,7 @@ bind_statement:
 
 java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_camlp4 _loc 1 }]];
 
+(*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
         (* t= invocation_expression -> t *)
         peek_invocation; t= invocation_expression -> t
@@ -1831,7 +1832,8 @@ expression_statement: [[(* t=statement_expression -> t *)
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
       | t= pre_decrement_expression -> t
-      | peek_exp_st; t= assignment_expression -> t]]; 
+      | peek_exp_st; t= assignment_expression -> t
+]]; 
 
 (*statement_expression:
   [[
