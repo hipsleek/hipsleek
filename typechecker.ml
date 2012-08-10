@@ -1432,7 +1432,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-                   (*we use new rules to judge the spec*)
+                   (* let _ = print_endline ("\nlocle: check_pre_post@SCall@sctx: " ^ *)
+                   (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
+                  (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
                  
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
