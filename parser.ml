@@ -228,9 +228,9 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                        (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
                                         (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
-                                        let arr_typ_check typ1 typ2 =
+                                         let arr_typ_check typ1 typ2 =
                                          ( match typ1 with
                                             | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
                                                   ( match typ2 with
@@ -321,10 +321,13 @@ let peek_try =
  let peek_invocation = 
  SHGram.Entry.of_parser "peek_invocation" 
      (fun strm ->
-       match Stream.npeek 5 strm with
-          | [_; OPAREN,_;_;_;_] -> ()
+         match Stream.npeek 5 strm with
+           | [_; OPAREN,_;_;_;_] -> ()
+       (* match Stream.npeek 2 strm with *)
+       (*    | [_; OPAREN,_] -> () *)
           (* | [_; OBRACE,_] -> () *)
-          | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
+           | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
+          (* | [_; OSQUARE,_] -> () *)
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -1822,7 +1825,8 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_ca
 
 (*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
-       peek_invocation; t= invocation_expression -> t
+        (* t= invocation_expression -> t *)
+        peek_invocation; t= invocation_expression -> t
       | t= object_creation_expression -> t
       | t= post_increment_expression -> t
       | t= post_decrement_expression -> t
@@ -2161,9 +2165,9 @@ primary_expression_no_array_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos_camlp4 _loc 3 }
+  (* | t = invocation_expression -> t *)
+  | peek_invocation; t = invocation_expression -> t
   | t = new_expression -> t
-  | peek_invocation; t = invocation_expression ->
-      t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 
   ]
   | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)
