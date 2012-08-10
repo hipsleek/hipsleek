@@ -1773,6 +1773,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
     | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
     | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
+	| (Tsconst(t1,_), Tsconst(t2,_)) -> Tree_shares.Ts.eq t1 t2
     | (Subtract(e11, e12, _), Subtract(e21, e22, _))
     | (Max(e11, e12, _), Max(e21, e22, _))
     | (Min(e11, e12, _), Min(e21, e22, _))
@@ -2991,6 +2992,13 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
                 if only_vars then ([], BForm (f,lbl))
                 else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
                 else ([], BForm (f,lbl))
+		  | Tsconst (t,_), Add (Var (sv,_),Tsconst (t1,_),_) 
+		  | Tsconst (t,_), Add (Tsconst (t1,_), Var (sv,_),_) -> 
+				if only_vars then ([],BForm(f,lbl))
+				else if (eq_spec_var sv v) then 
+					if (Tree_shares.Ts.contains t t1) then ([(v,Tsconst (Tree_shares.Ts.subtract t t1, no_pos))],mkTrue no_pos)
+					else ([],mkFalse no_pos)
+				else ([],BForm (f,lbl))
           | _ ->([], BForm (f,lbl))
       end
     | _ -> ([], BForm (f,lbl))
@@ -8215,15 +8223,21 @@ let join_res t1 t2 = match t1,t2 with
 	| _, No_split -> No_split
 	
 let rec has_e_tscons f = match f with
-  | Var (v,_) -> (type_of_spec_var v)=Tree_sh
-  | Tsconst _ -> true
+  | Var (v,_) -> (match type_of_spec_var v with | Tree_sh -> true | _ -> false)
+  | Tsconst c -> true
   | Add (e1,e2,_) -> (has_e_tscons e1)||(has_e_tscons e2)
   | _ -> false
+	
+let has_e_tscons f = Debug.no_1 "has_e_tscons" !print_exp string_of_bool has_e_tscons f
 	
 let has_b_tscons f = match f with 
   | Eq (e1,e2,_) -> if (has_e_tscons e1)|| (has_e_tscons e2) then Can_split else No_cons
   | Neq (e1,e2,_)-> if (has_e_tscons e1)|| (has_e_tscons e2) then No_split else No_cons
   | _ -> No_cons 
+
+let has_b_tscons f =
+	let pr f = match f with | No_cons -> "no_cons" | No_split -> "no_split" | Can_split -> "can_split" in
+	Debug.no_1 "has_b_tscons" (fun c-> !print_formula (BForm ((c,None),None))) pr has_b_tscons f
   
 let rec has_tscons f =  match f with 
   | BForm ((f,_),_) -> has_b_tscons f
@@ -8234,15 +8248,31 @@ let rec has_tscons f =  match f with
   | Forall (_,f,_,_) 
   | Exists (_,f,_,_) -> has_tscons f 
 
+let has_tscons f = 
+	let pr f = match f with | No_cons -> "no_cons" | No_split -> "no_split" | Can_split -> "can_split" in
+	Debug.no_1 "has_tscons" !print_formula pr has_tscons f
+
+let rec tpd_drop_all_perm f = match f with 
+  | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f
+  | And (f1,f2,l) -> mkAnd (tpd_drop_all_perm f1) (tpd_drop_all_perm f2) l
+  | AndList l -> AndList (map_l_snd tpd_drop_all_perm l)
+  | Or (f1,f2,l,p) -> mkOr (tpd_drop_all_perm f1) (tpd_drop_all_perm f2) l p 
+  | Not (b,l,p) -> mkNot (tpd_drop_all_perm b) l p 
+  | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_all_perm f) l p 
+  | Exists (v,f,l,p) -> 
+		if (type_of_spec_var v)=Tree_sh then tpd_drop_all_perm f
+		else Exists (v, tpd_drop_all_perm f, l,p)
+		
 
 let rec tpd_drop_perm f = match f with 
   | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f
   | And (f1,f2,l) -> mkAnd (tpd_drop_perm f1) (tpd_drop_perm f2) l
   | AndList l -> AndList (map_l_snd tpd_drop_perm l)
-  | Or _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
+  | Or _ -> report_error no_pos ("tpd_drop_perm: to_dnf has failed "^(!print_formula f))
   | Not (b,l,p) -> mkNot (tpd_drop_perm b) l p 
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p 
-  | Exists (_,f,_,_) -> tpd_drop_perm f
+  | Exists (v,f,l,p) -> if (type_of_spec_var v)=Tree_sh then tpd_drop_perm f
+		else Exists (v, tpd_drop_perm f, l,p)
   
 let tpd_drop_perm f = Debug.no_1 "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
 
@@ -8250,10 +8280,39 @@ let rec tpd_drop_nperm f = match f with
 	| BForm ((b,_),_) -> if has_b_tscons b = Can_split then [b] else []
 	| And (f1,f2,l) -> tpd_drop_nperm f1 @ tpd_drop_nperm f2 
 	| AndList l -> fold_l_snd tpd_drop_nperm l 
-	| Or _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
+	| Or _ -> report_error no_pos ("tpd_drop_nperm: to_dnf has failed "^(!print_formula f))
 	| Not (b,_,_) ->  if tpd_drop_nperm b=[] then [] else report_error no_pos "tree shares under negation"
 	| Forall (_,b,_,_) -> if tpd_drop_nperm b =[] then [] else report_error no_pos "tree shares under forall"
-	| Exists _ -> report_error no_pos ("to_dnf has failed "^(!print_formula f))
+	| Exists _ -> report_error no_pos ("tpd_drop_nperm: to_dnf has failed "^(!print_formula f))
 	
 	
 let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_list (fun c-> !print_b_formula (c,None))) tpd_drop_nperm f
+
+
+let rec get_inst fct v f = match f with
+	| BForm ((f,_),_) -> (match f with
+		| Eq (Var _ , Var _, _) -> None
+		| Eq (e , Var (v1,_), _)
+		| Eq (Var (v1,_), e, _)-> if eq_spec_var v v1 then fct e else None
+		| _ -> None)
+	| And (f1,f2,_) -> (match get_inst fct v f1 with
+		| None -> get_inst fct v f2 
+		| Some v ->  Some v) 
+   | AndList l -> List.fold_left (fun a (_,c)-> match a with | None -> get_inst fct v c | Some _ -> a) None l 
+   | Not _
+   | Forall _
+   | Exists _
+   | Or _ -> None
+   
+let get_inst_tree v f =
+	let fct e = match e with
+		| Tsconst (t,_) -> Some t
+		| _ -> None in
+	get_inst fct v f
+	
+let get_inst_int v f = 
+	let fct e = match e with
+		| IConst (i,_) -> Some i
+		| _ -> None in
+	get_inst fct v f
+		

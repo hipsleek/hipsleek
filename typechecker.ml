@@ -738,15 +738,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				| CF.Ctx c -> 
 					match CF.find_barr (List.map (fun c-> c.barrier_name) prog.prog_barrier_decls) (snd b) c.CF.es_formula with 
 						| None -> report_error pos ("context does not contain any info on barrier "^(snd b)) 
-						| Some (bn,args,branches) -> 
+						| Some bar_dn -> 
+							 let bn,args,branches = bar_dn.CF.h_formula_data_name,bar_dn.CF.h_formula_data_node::bar_dn.CF.h_formula_data_arguments,bar_dn.CF.h_formula_data_remaining_branches in						
 							let bd = try List.find (fun c-> bn=c.barrier_name) prog.prog_barrier_decls with | _ -> failwith "error in barr find " in
 							let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
 							let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in
 							let helper c bd_spec = 
 								let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
 								let pr2 f = Cprinter.string_of_struc_formula f in
-								Debug.no_2 "barrier entail" pr1 pr2 (fun c-> "") 
-									(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) in 
+								Debug.no_2_loop "barrier entail" pr1 pr2 (fun c-> "") 
+									(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
+								(*try
+								Printexc.record_backtrace true ;
+								with e ->
+									(print_string "gagamita\n"; let bt = Printexc.get_backtrace () in print_endline bt; raise e)*) in 
 							helper c bd_spec in
 							
 			let barr_failesc_context (f,e,n) =  
@@ -759,6 +764,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 					let res_l,prf_l =List.split res in
 					let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in
 					(res, mkprf prf_l)  in
+					
+			let barr_failesc_context (f,e,n) =
+				let pr1 (_,_,n) = pr_list (fun (_,c)-> Cprinter.string_of_context c) n in   
+				let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun c-> Cprinter.string_of_context (snd c)) c) l) in
+				Debug.no_1_loop "barrier_failesc_context" pr1 pr2 barr_failesc_context (f,e,n) in
 					
             let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^"\nBarrier call \n") in
             Debug.devel_zprint (lazy (to_print^"\n")) pos;
@@ -891,7 +901,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded
 			else
+			  let _ = consume_all := true in
 	          let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
+			  let _ = consume_all := false in
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
@@ -1440,7 +1452,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.string_of_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
-                  Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+                  Debug.ho_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
 				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin
