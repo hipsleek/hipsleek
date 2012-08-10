@@ -725,7 +725,7 @@ and pr_p_formula (pf: P.p_formula) =
       fmt_string ", ";
       pr_formula_exp seqinfo.CP.seq_limit;
       fmt_string ", ";
-      pr_pure_formula seqinfo.CP.seq_termcons;
+      pr_pure_formula seqinfo.CP.seq_loopcond;
       fmt_string ")]"
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)

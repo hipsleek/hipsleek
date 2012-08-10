@@ -90,8 +90,8 @@ and sequence_info = {
   seq_domain: formula;
   (* seq_domain: p_formula list;    (* conjunction of domain constraint *) *)
   seq_limit: exp;
-  seq_termcons: formula;
-  (* seq_termcons: p_formula list;  (* disjunction of terminate constraint *) *)
+  seq_loopcond: formula;
+  (* seq_loopcond: p_formula list;  (* disjunction of terminate constraint *) *)
   seq_decrease: bool;            (* seq_decrease = true -> sequence decrease; otherwise don't consider the decrease *)
   seq_loc : loc
 }
@@ -792,7 +792,7 @@ and bfv (bf : b_formula) =
         let sv1 = afv seqinfo.seq_element in
         let sv2 = fv seqinfo.seq_domain in
         let sv3 = afv seqinfo.seq_limit in
-        let sv4 = fv seqinfo.seq_termcons in
+        let sv4 = fv seqinfo.seq_loopcond in
         let sv_list = sv1 @ sv2 @ sv3 @ sv4 in
         Gen.BList.remove_dups_eq (=) sv_list
 
@@ -1340,12 +1340,12 @@ and mkLexVar t_ann m i pos =
            lex_tmp = i;
            lex_loc = pos; }
 
-and mkSeqVar ann element domain limit bounds termcons decrease pos : p_formula= 
+and mkSeqVar ann element domain limit bounds loopcond decrease pos : p_formula= 
   SeqVar { seq_ann = ann;
            seq_element = element;
            seq_domain = domain;
            seq_limit = limit;
-           seq_termcons = termcons;
+           seq_loopcond = loopcond;
            seq_decrease = decrease;
            seq_loc = pos }
 
@@ -1356,8 +1356,8 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure pf in
   p
 
-and mkSeqVar_pure ann domain element limit bounds termcons variation =
-  let pf = mkSeqVar ann element domain limit bounds termcons variation no_pos in
+and mkSeqVar_pure ann domain element limit bounds loopcond variation =
+  let pf = mkSeqVar ann element domain limit bounds loopcond variation no_pos in
   let p = mkPure pf in
   p
 
@@ -2415,12 +2415,12 @@ and p_apply_subs sst pf =
       let domain = apply_subs sst seq_info.seq_domain in
       (* let domain = List.map (p_apply_subs sst) seq_info.seq_domain in *)
       let limit = e_apply_subs sst seq_info.seq_limit in
-      let termcons = apply_subs sst seq_info.seq_termcons in
-      (* let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in *)
+      let loopcond = apply_subs sst seq_info.seq_loopcond in
+      (* let loopcond = List.map (p_apply_subs sst) seq_info.seq_loopcond in *)
       SeqVar { seq_info with seq_element = element;
                              seq_domain = domain;
                              seq_limit = limit;
-                             seq_termcons = termcons}
+                             seq_loopcond = loopcond}
 
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
@@ -2468,12 +2468,12 @@ and p_apply_subs_varperm sst pf =
       let domain = apply_subs sst seq_info.seq_domain in
       (* let domain = List.map (p_apply_subs sst) seq_info.seq_domain in *)
       let limit = e_apply_subs sst seq_info.seq_limit in
-      let termcons = apply_subs sst seq_info.seq_termcons in
-      (* let termcons = List.map (p_apply_subs sst) seq_info.seq_termcons in *)
+      let loopcond = apply_subs sst seq_info.seq_loopcond in
+      (* let loopcond = List.map (p_apply_subs sst) seq_info.seq_loopcond in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
-                            seq_termcons = termcons}
+                            seq_loopcond = loopcond}
 
 and subs_one sst v = 
   let rec helper sst v = match sst with
@@ -2665,12 +2665,12 @@ and p_apply_par_term sst pf =
         let domain = apply_par_term sst seq_info.seq_domain in
         (* let domain = List.map (p_apply_par_term sst) seq_info.seq_domain in *)
         let limit = a_apply_par_term sst seq_info.seq_limit in
-        let termcons = apply_par_term sst seq_info.seq_termcons in
-        (* let termcons = List.map (p_apply_par_term sst) seq_info.seq_termcons in *)
+        let loopcond = apply_par_term sst seq_info.seq_loopcond in
+        (* let loopcond = List.map (p_apply_par_term sst) seq_info.seq_loopcond in *)
         SeqVar {seq_info with seq_element = element;
                               seq_domain = domain;
                               seq_limit = limit;
-                              seq_termcons = termcons}
+                              seq_loopcond = loopcond}
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
 
@@ -2769,12 +2769,12 @@ and p_apply_one_term ((fr, t) : (spec_var * exp)) pf =
       let domain = apply_one_term (fr, t) seq_info.seq_domain in
       (* let domain = List.map (p_apply_one_term (fr, t)) seq_info.seq_domain in *)
       let limit = a_apply_one_term (fr, t) seq_info.seq_limit in
-      let termcons = apply_one_term (fr, t) seq_info.seq_termcons in
-      (* let termcons = List.map (p_apply_one_term (fr, t)) seq_info.seq_termcons in *)
+      let loopcond = apply_one_term (fr, t) seq_info.seq_loopcond in
+      (* let loopcond = List.map (p_apply_one_term (fr, t)) seq_info.seq_loopcond in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
-                            seq_termcons = termcons}
+                            seq_loopcond = loopcond}
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ 
@@ -3791,12 +3791,12 @@ and p_apply_one_exp (fr, t) pf =
       let domain = apply_one_exp (fr, t) seq_info.seq_domain in
       (* let domain = List.map (p_apply_one_exp (fr, t)) seq_info.seq_domain in *)
       let limit = e_apply_one_exp (fr, t) seq_info.seq_limit in
-      let termcons = apply_one_exp (fr, t) seq_info.seq_termcons in
-      (* let termcons = List.map (p_apply_one_exp (fr, t)) seq_info.seq_termcons in *)
+      let loopcond = apply_one_exp (fr, t) seq_info.seq_loopcond in
+      (* let loopcond = List.map (p_apply_one_exp (fr, t)) seq_info.seq_loopcond in *)
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
-                            seq_termcons = termcons}
+                            seq_loopcond = loopcond}
 
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -4188,7 +4188,6 @@ and simp_mult_x (e : exp) :  exp =
         | None -> e0
         | Some c -> FConst (v *. (float_of_int c), l)
       )
-    | SConst (v, l) -> report_error l ("Symbol type doesn't support mutl operator")
     | Add (e1, e2, l) ->
         normalize_add None l (Add (acc_mult m e1, acc_mult m e2, l))
     |  Subtract (e1, e2, l) ->
@@ -4198,7 +4197,7 @@ and simp_mult_x (e : exp) :  exp =
                  l))
     | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
     | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
-    | Abs (_, l) | Sqrt (_, l) | Pow (_, _, l) -> (
+    | SConst (_, l) | Abs (_, l) | Sqrt (_, l) | Pow (_, _, l) -> (
         match m with 
         | None -> e0 
         | Some c ->  Mult (IConst (c, l), e0, l)
@@ -4962,11 +4961,11 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
               let (element, r1) = helper new_arg seq_info.seq_element in
               (* let (domain, r2) = foldr_formula seq_info.seq_domain arg f_formula f_formula_args f_formula_comb in *)
               let (limit, r3) = helper new_arg seq_info.seq_limit in
-              (* let (termcons, r4) = foldr_formula seq_info.seq_termcons arg f_formula f_formula_args f_formula_comb in *)
+              (* let (loopcond, r4) = foldr_formula seq_info.seq_loopcond arg f_formula f_formula_args f_formula_comb in *)
               let new_seq = {seq_info with seq_element = element;
                                            (* seq_domain = domain; *)
                                            seq_limit = limit;
-                                           (* seq_termcons = termcons *)
+                                           (* seq_loopcond = loopcond *)
                                            } in
               (SeqVar new_seq, f_comb [r1; (*r2;*) r3(*; r4*)])
 
@@ -5069,11 +5068,11 @@ let transform_b_formula f (e:b_formula) :b_formula =
             let element = transform_exp f_exp seq_info.seq_element in
             (* let domain = transform_formula f_formula seq_info.seq_domain in *)
             let limit = transform_exp f_exp seq_info.seq_limit in
-            (* let termcons = transform_formula f_formula seq_info.seq_termcons in *)
+            (* let loopcond = transform_formula f_formula seq_info.seq_loopcond in *)
             SeqVar { seq_info with seq_element = element;
                                    (* seq_domain = domain; *)
                                    seq_limit = limit;
-                                   (*seq_termcons = termcons *)}
+                                   (*seq_loopcond = loopcond *)}
   in (npf,il)
 
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -5411,11 +5410,11 @@ let norm_bform_a (bf:b_formula) : b_formula =
           let element = norm_exp seq_info.seq_element in
           (* let domain = norm_exp seq_info.seq_domain in *)
           let limit = norm_exp seq_info.seq_limit in
-          (* let termcons = norm_exp seq_info.seq_termcons in *)
+          (* let loopcond = norm_exp seq_info.seq_loopcond in *)
           SeqVar { seq_info with seq_element = element;
                                  (* seq_domain = domain; *)
                                  seq_limit = limit;
-                                 (* seq_termcons = termcons *) }
+                                 (* seq_loopcond = loopcond *) }
    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
@@ -6336,11 +6335,11 @@ let norm_bform_b (bf:b_formula) : b_formula =
         let element = norm_exp seq_info.seq_element in
         (* let domain = norm_exp seq_info.seq_domain in *)
         let limit = norm_exp seq_info.seq_limit in
-        (* let termcons = norm_exp seq_info.seq_termcons in *)
+        (* let loopcond = norm_exp seq_info.seq_loopcond in *)
         SeqVar { seq_info with seq_element = element;
                                (* seq_domain = domain; *)
                                seq_limit = limit;
-                               (*seq_termcons = termcons *)}
+                               (*seq_loopcond = loopcond *)}
     | SubAnn _
     | VarPerm _
     | BConst _ | BVar _ | EqMax _ 

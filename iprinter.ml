@@ -200,8 +200,8 @@ let rec string_of_b_formula (pf,il) =
       let element = string_of_formula_exp seqinfo.P.seq_element in
       let domain = string_of_pure_formula seqinfo.P.seq_domain in
       let limit = string_of_formula_exp seqinfo.P.seq_limit in
-      let termcons = string_of_pure_formula seqinfo.P.seq_termcons in
-      ann ^ "[" ^ seqsymbol ^ "(" ^ element ^ ", " ^ domain ^ ", " ^ limit ^ ", " ^ termcons ^ ")]"
+      let loopcond = string_of_pure_formula seqinfo.P.seq_loopcond in
+      ann ^ "[" ^ seqsymbol ^ "(" ^ element ^ ", " ^ domain ^ ", " ^ limit ^ ", " ^ loopcond ^ ")]"
     )
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"

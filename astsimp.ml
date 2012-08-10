@@ -4393,12 +4393,12 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         let element = trans_pure_exp seq_info.IP.seq_element stab in
         let domain = trans_pure_formula seq_info.IP.seq_domain stab in
         let limit = trans_pure_exp seq_info.IP.seq_limit stab in
-        let termcons = trans_pure_formula seq_info.IP.seq_termcons stab in
+        let loopcond = trans_pure_formula seq_info.IP.seq_loopcond stab in
         CP.SeqVar { CP.seq_ann = seq_info.IP.seq_ann;
                     CP.seq_element = element;
                     CP.seq_domain = domain;
                     CP.seq_limit = limit;
-                    CP.seq_termcons = termcons;
+                    CP.seq_loopcond = loopcond;
                     CP.seq_loc = seq_info.IP.seq_loc;
                     CP.seq_decrease = seq_info.IP.seq_decrease }
     | IP.Lt (e1, e2, pos) ->
@@ -4626,6 +4626,10 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
       | Float , Int -> Some Float (*LDK*)
       | Float, Symbol -> Some Float
       | Symbol, Float -> Some Float
+      | TVar _, Symbol -> Some Float
+      | Symbol, TVar _ -> Some Float
+      | Int, Symbol -> Some Float
+      | Symbol, Int -> Some Float
       | t1, t2  -> 
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
               (* else if sub_type t2 t1 then Some k1 *)
@@ -5174,7 +5178,7 @@ and gather_type_info_b_formula_x prog b0 stab =
         let _ =  gather_type_info_exp seq_info.IP.seq_element stab (Float) in
         (* let _ = gather_type_info_pure prog seq_info.IP.seq_domain stab in *)
         (* let _ =  gather_type_info_exp seq_info.IP.seq_limit stab (Float) in *)
-        (* let _ = gather_type_info_pure prog seq_info.IP.seq_termcons stab in *)
+        (* let _ = gather_type_info_pure prog seq_info.IP.seq_loopcond stab in *)
         ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->

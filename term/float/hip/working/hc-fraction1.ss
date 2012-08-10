@@ -21,7 +21,7 @@ void loop2(float x)
   {
     x = 0.0 -> requires Term ensures true;
     x = 1.0 -> requires Loop ensures false;
-    x > 1.0 -> requires Term[SeqDec{x, (1.0, +infinity), 1.0, x > -1.0}] ensures true;
+    x > 1.0 -> requires Term[SeqDec{x, (1.0, +infinity), x > -1.0}] ensures true;
     0 < x < 1.0 -> requires true ensures true;               // cannot write specs for Termination at this case
     -1 <= x < 0.0 -> requires Term ensures true;
     x <  -1 -> requires Term ensures true;

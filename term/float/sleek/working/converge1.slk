@@ -9,8 +9,8 @@
     loop(x*x*x)
 */
 // lowerbound & upper bound
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.0, 0.1, -0.2}]
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, 0.1, -0.2}].
+checkentail (x > -1.0) & (x < 1.0) & ((x>0.1) | (x<(0.0-0.2))) & Term[SeqDec{__abs(x), (0.0, 1.0), ((x>0.1) | (x<(0.0-0.2)))}]
+            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x > 0.1)}].
 
 /*
   // -1 < x < 1
@@ -20,8 +20,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.0, x * x < 0.5}] 
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) < 0.5}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
+            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
 
 /*
   // -1 < x < 1
@@ -31,8 +31,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.0, x * x + x < 0.1}] 
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) + (x*x*x) < 0.1}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x +x > 0.1) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x + x >= 0.1}] 
+            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) + (x*x*x) >= 0.1}].
 
 /*
   // -1 < x < 1
@@ -42,8 +42,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(x*x*x)
 */
 // invalid limit
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.1, x * x < 0.5}] 
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.1, (x*x*x) * (x*x*x) < 0.5}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
+            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
 
 /*
   // -1 < x < 1
@@ -51,8 +51,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(x*x*x)
 */
 // invalid bound 
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.0, -0.1, -0.2}] 
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, -0.1, -0.2}].
+checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term[SeqDec{__abs(x), (0.0, 1.0), ((x > -0.1) | (x < -0.2))}] 
+            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), ((x*x*x > -0.1) | (x*x*x < -0.2))}].
 
 /*
   // -1 < x < 1
@@ -62,8 +62,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(x*x*x)
 */
 // invalid termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.0, x * x > 0.5}] 
-            |- (x*x*x > -1.0) & (x*x*x < 1.0) & (x*x*x != 0.0) & Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) > 0.5}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x <= 0.5) & (x!=0.0) & Term[SeqDec{__abs(x), (-1.0, 1.0), x * x <= 0.5}] 
+            |- Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) <= 0.5}].
 
 /***************************************************************************************************
   x' = 1 + 2/x
@@ -76,8 +76,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x != 0.0) & Term[SeqGen{x, (-1.0, 1.0), 0.
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.0, 2.2, 1.9 }] 
-            |- Term[SeqGen{1.0 + (2.0 / x), (1.0, +infinity), 2.0, 2.2, 1.9}].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqDec{__abs(x-2.0), (0.0, +infinity), ((x > 2.2) | (x < 1.9)) }] 
+            |- Term[SeqDec{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), ((1.0+2.0/x > 2.2) | (1.0+2.0/x < 1.9))}].
 
 /*
   // x != 2
@@ -87,17 +87,17 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.0,
     loop(1 + 2/x)
 */
 // termination constraint
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.0, 1.0 / x < 0.6 }] 
-            |- Term[SeqGen{1.0 + (2.0 / x), (1.0, +infinity), 2.0, 1.0 / x < 0.6}].
-
+checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[SeqDec{__abs(x-2.0), (0.0, +infinity), (1.0/x >= 0.6) }] 
+            |- Term[SeqDec{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), (1.0/(1.0+2.0/x) >= 0.6)}].
+            
 /*
   // x != 2
   if (x > 2.2) || (x < 1.9)
     loop(1 + 2/x)
 */
 // invalid limit
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.1, 2.2, 1.9 }] 
-            |- Term[SeqGen{1.0 + (2.0 / x), (1.0, +infinity), 2.1, 2.2, 1.9}].
+//checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.1, 2.2, 1.9 }] 
+//            |- Term[SeqGen{1.0 + (2.0 / x), (1.0, +infinity), 2.1, 2.2, 1.9}].
 
 /***************************************************************************************************
   x' = 1 + 1/x
@@ -110,8 +110,8 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.1,
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}] 
-            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}].
+//checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}] 
+//            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}].
 
 /*
   // x != (1+sqrt(5))/2
@@ -119,8 +119,8 @@ checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen
     loop(1 + 2/x)
 */
 // invalid limit
-checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}]
-            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}].
+//checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}]
+//            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}].
 
 
 

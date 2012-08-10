@@ -14,7 +14,7 @@ Line 8558:
 */
 
 void loop1(float s, float mx)
-  requires mx > 0 & s > 0 & Term[SeqDec{s, (0.0, +infinity), 0, s * mx < 1}] ensures true;
+  requires mx > 0 & s > 0 & Term[SeqDec{s, (0.0, +infinity), s * mx < 1}] ensures true;
 {
   if ( s * mx >= 1)
     loop1(s * 0.5, mx);
@@ -36,7 +36,7 @@ Line 8562:
 */
 
 void loop2(float s, float mx)
-  requires mx > 0 & s > 0 & Term[SeqDec{-s, (-infinity, 0.0), -infinity, s * mx > 0.5}] ensures true;
+  requires mx > 0 & s > 0 & Term[SeqDec{-s, (-infinity, 0.0), s * mx > 0.5}] ensures true;
 {
   if ( s * mx <= 0.5)
     loop2(s * 2, mx);

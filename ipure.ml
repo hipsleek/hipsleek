@@ -27,8 +27,8 @@ and sequence_info = {
   seq_domain: formula;
   (* seq_domain: p_formula list;    (* conjunction of domain constraint *) *)
   seq_limit: exp;
-  seq_termcons: formula;
-  (* seq_termcons: p_formula list;  (* disjunction of terminate constraint *) *)
+  seq_loopcond: formula;
+  (* seq_loopcond: p_formula list;  (* disjunction of terminate constraint *) *)
   seq_decrease: bool; 
   seq_loc : loc
 }
@@ -207,7 +207,7 @@ and bfv (bf : b_formula) =
       let sv1 = afv seqinfo.seq_element in
       let sv2 = fv seqinfo.seq_domain in
       let sv3 = afv seqinfo.seq_limit in
-      let sv4 = fv seqinfo.seq_termcons in
+      let sv4 = fv seqinfo.seq_loopcond in
       let sv_list = sv1 @ sv2 @ sv3 @ sv4 in
       Gen.BList.remove_dups_eq (=) sv_list
  
@@ -647,11 +647,11 @@ and b_apply_one (fr, t) bf =
       let element = e_apply_one (fr, t) seq_info.seq_element in
       let domain = apply_one (fr, t) seq_info.seq_domain in
       let limit = e_apply_one (fr, t) seq_info.seq_limit in
-      let termcons = apply_one (fr, t) seq_info.seq_termcons in
+      let loopcond = apply_one (fr, t) seq_info.seq_loopcond in
       SeqVar {seq_info with seq_element = element;
                             seq_domain = domain;
                             seq_limit = limit;
-                            seq_termcons = termcons }
+                            seq_loopcond = loopcond }
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -774,7 +774,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
       let a1 = look_for_anonymous_exp seq_info.seq_element in
       let a2 = look_for_anonymous_pure_formula seq_info.seq_domain in
       let a3 = look_for_anonymous_exp seq_info.seq_limit in
-      let a4 = look_for_anonymous_pure_formula seq_info.seq_termcons in
+      let a4 = look_for_anonymous_pure_formula seq_info.seq_loopcond in
       a1 @ a2 @ a3 @ a4
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
@@ -828,7 +828,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
       let l1 = find_lexp_exp seqinfo.seq_element ls in
       let l2 = find_lexp_formula seqinfo.seq_domain ls in
       let l3 = find_lexp_exp seqinfo.seq_limit ls in
-      let l4 = find_lexp_formula seqinfo.seq_termcons ls in
+      let l4 = find_lexp_formula seqinfo.seq_loopcond ls in
       l1 @ l2 @ l3 @ l4
 
 (* WN : what does this method do? *)

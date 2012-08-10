@@ -17,7 +17,7 @@ Line 94:
 void loop1(float d)
   case
   {
-    d > 0   ->  requires Term[SeqDec{d, (0, +infinity), 0, 32768}] ensures true;
+    d > 0   ->  requires Term[SeqDec{d, (0, +infinity), 32768}] ensures true;
     d <= 0  ->  requires Term[] ensures true;
   }
 {
@@ -43,7 +43,7 @@ Line 99:
 void loop2(float d)
   case
   {
-    d > 0   -> requires Term[SeqDec{d, (0, +infinity), 0, 1}] ensures true;
+    d > 0   -> requires Term[SeqDec{d, (0, +infinity), 1}] ensures true;
     d <= 0  -> requires Term[] ensures true;
   }
 {
@@ -78,7 +78,7 @@ void loop3(float d)
 */
   case
   {
-    d > 0.0   -> requires Term[SeqDec{-d, (-infinity, 0), -infinity, d > 1.0 / 65536.0}] ensures true;
+    d > 0.0   -> requires Term[SeqDec{-d, (-infinity, 0), d > 1.0 / 65536.0}] ensures true;
     d <= 0.0  -> requires true ensures true;
   }
 {
@@ -113,7 +113,7 @@ void loop4(float d)
 */
   case
   {
-    d > 0   -> requires Term[SeqDec{-d, (-infinity, 0), -infinity, d > 0.5}] ensures true;
+    d > 0   -> requires Term[SeqDec{-d, (-infinity, 0), d > 0.5}] ensures true;
     d <= 0  -> requires true ensures true;
   }
 {
