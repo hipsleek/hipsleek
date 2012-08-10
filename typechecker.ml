@@ -1433,7 +1433,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-                   (*we use new rules to judge the spec*)
+                   (* let _ = print_endline ("\nlocle: check_pre_post@SCall@sctx: " ^ *)
+                   (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
+                  (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
                  
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
@@ -1452,7 +1454,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.string_of_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
-                  Debug.ho_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+                  Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
 				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin

@@ -4462,6 +4462,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
 and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+     (* let _ = print_endline ("locle cons: " ^ (Cprinter.string_of_formula conseq)) in *)
   match ctx0 with
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
   | Ctx estate -> (
@@ -5034,7 +5035,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_loop "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
