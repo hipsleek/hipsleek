@@ -15,8 +15,6 @@ module P = Cpure
 module MP = Mcpure
 
 
-let print_term: bool ref = ref true;;
-
 let is_short n = (n==2);;
 
 let is_medium n = (n==1);;
@@ -706,13 +704,11 @@ let rec pr_b_formula (e:P.b_formula) =
   pr_slicing_label il;
   match pf with
     | P.LexVar t_info -> 
-      if not(!print_term) then fmt_string "true"
-      else
-        fmt_string (string_of_term_ann t_info.CP.lex_ann);
-        pr_s "" pr_formula_exp t_info.CP.lex_exp
-        (* ;if ls2!=[] then *)
-        (*   pr_set pr_formula_exp ls2 *)
-        (* else () *)
+      fmt_string (string_of_term_ann t_info.CP.lex_ann);
+      pr_s "" pr_formula_exp t_info.CP.lex_exp
+      (* ;if ls2!=[] then *)
+      (*   pr_set pr_formula_exp ls2 *)
+      (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -1461,7 +1457,6 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 	      pr_list_vbox_wrap "eor " f_b (arg1@arg2)
 	
 let rec pr_struc_formula_for_spec (e:struc_formula) = 
-  print_term := false;
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
     pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
@@ -1489,7 +1484,6 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     let f_b e = pr_bracket struc_formula_wo_paren pr_struc_formula_for_spec e in
     pr_list_vbox_wrap "eor " f_b (arg1@arg2) 
   in
-  print_term := true;
   res
 
 (*let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e

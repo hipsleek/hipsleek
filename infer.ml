@@ -457,7 +457,7 @@ let simplify f vars =
   Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
 let helper fml lhs_rhs_p weaken_flag = 
-  let new_fml = CP.mkAnd fml lhs_rhs_p no_pos in
+  let new_fml = CP.remove_dup_constraints (CP.mkAnd fml lhs_rhs_p no_pos) in
   if TP.is_sat_raw (MCP.mix_of_pure new_fml) then (
     if weaken_flag then fml
     else
@@ -705,6 +705,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
           let _ = DD.trace_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
           let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
           let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
+          (* TODO Thai : Should fml be lhs_pure only *)
           let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
           let _ = DD.trace_hprint (add_str "new_p2: " !CP.print_formula) new_p pos in
           (* TODO : simplify_raw seems to undo pairwisecheck *)
@@ -1124,6 +1125,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (* where other_constraints are not related to variable t *)
       let lhs_rec_vars = CP.fv lhs_p_memo in
       if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
+        DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
         DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
         (estate,lhs_p_orig,rhs_p_new))
       else
@@ -1324,12 +1326,12 @@ let get_shape_from_file view_node keep_vars proc_name =
   let input_str = syscall ("cat " ^ input_shape) in
   infer_shape input_str file_name view_node keep_vars proc_name
 
-let get_cmd_from_file =
-  let input_cmd = (get_file_name Sys.argv.(1)) ^ ".cmd" in
-  let input_str = syscall ("cat " ^ input_cmd) in
-  let res = Parse_cmd.parse_cmd input_str in
-(*  print_endline ("SPEC" ^ ((pr_pair (fun x -> x) Cprinter.string_of_struc_formula) res));*)
-  res
+(*let get_cmd_from_file =*)
+(*  let input_cmd = (get_file_name Sys.argv.(1)) ^ ".cmd" in*)
+(*  let input_str = syscall ("cat " ^ input_cmd) in*)
+(*  let res = Parse_cmd.parse_cmd input_str in*)
+(*(*  print_endline ("SPEC" ^ ((pr_pair (fun x -> x) Cprinter.string_of_struc_formula) res));*)*)
+(*  res*)
 
 let get_spec_from_file prog = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
