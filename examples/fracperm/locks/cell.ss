@@ -39,7 +39,7 @@ LOCKA<x> == self::lock<>
 
 LOCKB<x,y> == self::lock<>
   inv self!=null
-  inv_lock (exists v1,v2: x::cell<v1> * y::cell<v2> & v1+v2>=0);
+  inv_lock (exists v1,v2: x::cell<v1> * y::cell<v2> & v1+v2>=2);
 
 //valid
 // a lock protecting 1 location
@@ -73,8 +73,8 @@ void main1()
   cell y;
   lock l;
   l = new lock(); //dummy
-  x = new cell(0);
-  y = new cell(0);
+  x = new cell(1);
+  y = new cell(1);
   init[LOCKB](l,x,y); // lock l protext x and y
   dprint;
   x.val--;

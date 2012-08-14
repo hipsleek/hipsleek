@@ -487,6 +487,8 @@ let string_of_spec_var x =
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
+let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
+
 let string_of_imm imm = match imm with
   | ConstAnn(Imm) -> "@I"
   | ConstAnn(Lend) -> "@L"

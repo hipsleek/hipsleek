@@ -30,19 +30,19 @@ lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1
 
 LOCK<x> == self::lock<>
   inv self!=null
-  inv_lock (exists v: x::cell<self,v> & v>=0);
+  inv_lock (exists v: x::cell<self,v> & v>=2);
 
 void main()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   lock l = new lock();
-  cell x = new cell(l,0);
+  cell x = new cell(l,2);
   //print;
   init[LOCK](l,x);
-  //dprint;
+  dprint;
   release[LOCK](l,x);
-  //dprint;
+  dprint;
   int id;
   dprint;
   id = fork(inc,l,x); // there is an automatic split here
@@ -68,8 +68,8 @@ void main()
 
 //valid
 void inc(lock l,cell x)
-  requires [f] l::LOCK(f)<x> & @value[l,x]
-     ensures l::LOCK(f)<x>;
+  requires [f] l::LOCK(f)<x> & @value[l,x] & ls={}
+  ensures l::LOCK(f)<x> & ls'={}; //'
 {
   dprint;
   acquire[LOCK](l,x);

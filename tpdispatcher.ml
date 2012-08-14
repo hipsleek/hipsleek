@@ -1510,7 +1510,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | SetMONA -> Setmona.imply ante_w conseq_s 
   | Redlog -> 
       redlog_imply ante_w conseq_s  
-    | RM -> 
+    | RM ->
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             mona_imply ante_w conseq_s
           else

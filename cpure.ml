@@ -2169,12 +2169,13 @@ and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_sub
   (* | [] -> f *)
 
 (*LDK ???*) 
-and subst_var (fr, t) (o : spec_var) = if eq_spec_var fr o then t else o
+and subst_var (fr, t) (o : spec_var) = 
+  if eq_spec_var fr o then t else o
 
 (* should not use = since type of spec_var may have been different *)
 and subst_var_par (sst:(spec_var * spec_var) list) (o : spec_var) : spec_var = 
   try 
-    let (_,v2) = List.find (fun (v1,_) -> eq_spec_var o v1) sst in
+    let (_,v2) = List.find (fun (v1,_) -> (eq_spec_var o v1)) sst in
     v2
         (* List.assoc o sst *)
   with _ -> o
@@ -7828,3 +7829,43 @@ let rec andl_to_and f = match f with
 	| AndList b ->
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
+
+(* Method checking whether a formula contains bag constraints or BagT vars *)
+
+let is_bag_b_constraint (pf,_) = match pf with
+    | BConst _ 
+    | BVar _
+    | Lt _ 
+    | Lte _ 
+    | Gt _ 
+    | Gte _
+    | EqMax _ 
+    | EqMin _
+    | ListIn _ 
+    | ListNotIn _
+    | ListAllN _ 
+    | ListPerm _
+        -> Some false
+    | BagIn _ 
+    | BagNotIn _
+    | BagMin _ 
+    | BagMax _
+    | BagSub _
+        -> Some true
+    | _ -> None
+
+let is_bag_constraint (e: formula) : bool =  
+  let f_e e = match e with
+    | Bag _
+    | BagUnion _
+    | BagIntersect _
+    | BagDiff _ 
+        -> Some true
+    | Var (SpecVar (t, _, _), _) -> 
+        (match t with
+          | BagT _ -> Some true
+          | _ -> Some false)
+    | _ -> Some false
+  in
+  let or_list = List.fold_left (||) false in
+  fold_formula e (nonef, is_bag_b_constraint, f_e) or_list

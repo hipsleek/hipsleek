@@ -2333,7 +2333,8 @@ and subs_imm_par sst a = match a with
   | ConstAnn _ -> a
   | PolyAnn sv ->  PolyAnn (CP.subst_var_par sst sv)
 
-and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
+and subst_var (fr, t) (o : CP.spec_var) = 
+  if CP.eq_spec_var fr o then t else o
 
 and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_formula) = 
   let base = formula_of_one_formula f in
@@ -5317,7 +5318,8 @@ let rec subst_exp sst (f : formula) = match sst with
 			else*) new_f
   | [] -> f 
   
-and subst_var_exp (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
+and subst_var_exp (fr, t) (o : CP.spec_var) = 
+  if CP.eq_spec_var fr o then t else o
 
 and apply_one_exp_one_formula ((fr, t) as s : (CP.spec_var * CP.exp)) (f : one_formula) = 
   let base = formula_of_one_formula f in

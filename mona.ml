@@ -888,7 +888,7 @@ let create_failure_file (content: string) =
   flush fail_file;
   close_out fail_file
 
-let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
+let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
   let imp_sat_str = match is_sat_b with
     | true -> "sat"
     | false -> "imply" in
@@ -927,6 +927,14 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
                     end
   in
   answer
+
+let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
+  Debug.no_3 "check_answer"
+      (fun str -> str)
+      (fun str -> str)
+      string_of_bool
+      string_of_bool
+      check_answer_x mona_file_content answ is_sat_b
 
 let maybe_restart_mona () : unit =
   if !is_mona_running then begin
@@ -1030,7 +1038,24 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
-  (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
+  (****************)
+  let f,flag = 
+    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
+      let f_wo_float = CP.drop_float_formula f in
+      let f_wo_bag = CP.drop_bag_formula f in
+  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
+      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
+      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
+      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
+      let b_float = Redlog.is_sat f_wo_bag imp_no in
+      if (b_float) then (f_wo_float,true) else (f,false)
+    else (f,true)
+  in
+  (*IF float constraints are unsatisfiable/unsat 
+    => imply_sat_helper = false*)
+  if (not flag) then false
+  else
+  (****************)
   (* let _ = Hashtbl.iter (fun x y -> (print_string ("var " ^ (Cprinter.string_of_spec_var x) ^ " --> " ^ (string_of_int y) ^ "\n"))) vs in *)
   let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
       (CP.Var(sv, no_pos)) vs)) all_fv) in

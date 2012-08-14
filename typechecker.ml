@@ -1026,6 +1026,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                       (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
                            (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                    (*LOCKSET: ls is not free var*)
+                    let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
                     (* free vars get to be substituted by fresh vars *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                     let renamed_spec = 
@@ -1356,6 +1358,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* free vars get to be substituted by fresh vars *)
                   (* removing ranking var and unknown predicate from renaming *)
                   let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
+                  (*LOCKSET: ls is not free var*)
+                  let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
                   (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
