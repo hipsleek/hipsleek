@@ -1286,8 +1286,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let lock_data_name = vdef.view_data_name in
                   let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
                   let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
-                  let fr_vars = self_var::vdef.view_vars in
-                  let to_vars = lock_var::new_args in
+                  (*LOCKSET variables*)
+                  (* let ls_uvar = CP.mkLsVar Unprimed in *)
+                  (* let ls_pvar = CP.mkLsVar Primed in *)
+                  (*******************)
+                  let fr_vars = (* ls_uvar:: *)self_var::vdef.view_vars in
+                  let to_vars = (* ls_pvar:: *)lock_var::new_args in
                   let renamed_inv = CF.subst_avoid_capture_all fr_vars to_vars inv_lock in
                   (* let _ = print_endline ("inv_lock = " ^ (Cprinter.string_of_formula inv_lock)) in *)
                   (* let _ = print_endline ("renamed_inv = " ^ (Cprinter.string_of_formula renamed_inv)) in *)
@@ -1762,7 +1766,16 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			        Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 			        Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                   end;
-			    let ftypes, fnames = List.split proc.proc_args in
+                (*****LOCKSET variable: ls'=ls *********)
+                let args = 
+                  if (!allow_ls) then
+                    let ls_var = (BagT UNK,ls_name) in
+                     ls_var::proc.proc_args
+                  else
+                    proc.proc_args
+                in
+                (******************************)
+			    let ftypes, fnames = List.split args in
 			    (* fsvars are the spec vars corresponding to the parameters *)
 			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
 			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)

@@ -47,11 +47,15 @@ void main()
   dprint;
   id = fork(inc,l,x); // there is an automatic split here
   dprint;
+
   acquire[LOCK](l,x);
   //dprint;
   x.val++;
   dprint;
   release[LOCK](l,x);
+
+
+
   //dprint;
   join(id);
   //dprint;
@@ -70,6 +74,7 @@ void inc(lock l,cell x)
   dprint;
   acquire[LOCK](l,x);
   dprint;
+  x.val--;
   x.val++;
   //x.val--; //will make it fail because of the invariant
   dprint;

@@ -247,7 +247,7 @@ let assign_op_to_bin_op_map =
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
 
-let check_shallow_var = ref true
+let check_shallow_var = ref false (* true *) (*LDK: test*)
   
 (************************************************************
 AST translation
@@ -1795,7 +1795,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
             I.param_name = this;
             I.param_mod = I.NoMod;
             I.param_loc = proc.I.proc_loc;} in 
-        this_arg :: proc.I.proc_args)
+        let ls_arg ={
+            I.param_type = Globals.BagT UNK;
+            I.param_name = ls_name;
+            I.param_mod = I.NoMod;
+            I.param_loc = proc.I.proc_loc;} in 
+        ls_arg::this_arg :: proc.I.proc_args)
       else proc.I.proc_args in
     let p2v (p : I.param) = {
         E.var_name = p.I.param_name;
@@ -1863,6 +1868,9 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
 	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
+    (******LOCKSET variable*********)
+    (* let ls_var = CP.SpecVar (BagT UNK,ls_name, Unprimed) in *)
+    (* let by_names = ls_var::by_names in *)
 	let static_specs_list  = CF.plug_ref_vars by_names static_specs_list in
 	let dynamic_specs_list = CF.plug_ref_vars by_names dynamic_specs_list in
     (*=============================*)
@@ -1907,7 +1915,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       
       let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
       let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
-      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv ((cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
+      (*LOCKSET variable*********)
+      let ls_var = (BagT UNK,ls_name) in
+      (**************************)
+      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (ls_var::(cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -6113,8 +6124,8 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
     let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
-    let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then 
-          let vars = List.filter (fun (c1,c2)->c2==Primed) need_quant in
+    let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name)) need_quant in
+    let _ = if vars!=[] then 
           let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
           Err.report_error{ 
               Err.error_loc = IF.pos_of_formula f; 
@@ -6459,7 +6470,10 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
 
 and err_prim_l_vars s l pos= 
   List.iter (fun (c1,c2)-> match c2 with
-    | Primed  -> Error.report_error { 
+    | Primed  ->
+        (*LOCKSET: ignore "ghost" parameter ls*)
+        if (c1 = Globals.ls_name) then () else
+        Error.report_error { 
           Error.error_loc = pos;
           Error.error_text = c1^"' "^s}
     | Unprimed -> () ) l
@@ -6662,7 +6676,11 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let gl_proc_args = gl_v@ f.Iast.proc_args in
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
-  let p = (res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
+  (*LOCKSET variable*********)
+  let ls_pvar = (ls_name,Primed) in
+  let ls_uvar = (ls_name,Unprimed) in
+  (**************************)
+  let p = ls_uvar::ls_pvar::(res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in

@@ -459,6 +459,8 @@ let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
 
+let ls_name = "ls"
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
@@ -499,6 +501,8 @@ let elim_exists = ref true
 let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
+
+let allow_ls = ref true (*enable lockset during verification*)
 
 let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 

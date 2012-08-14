@@ -1052,6 +1052,8 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
     begin
       let _ = maybe_restart_mona () in
       let answer = send_cmd_with_answer !cmd_to_send in
+      (* let _ = print_endline("[Mona] cmd_to_send = " ^ !cmd_to_send) in *)
+      (* let _ = print_endline("[Mona] answer = " ^ answer) in *)
       check_answer content answer is_sat_b
     end
   with
@@ -1097,6 +1099,8 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   incr test_number;
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
+  (* let _ = print_endline("[Mona] f = " ^ (Cprinter.string_of_pure_formula f) ) in *)
+  (* let _ = print_endline("[Mona] f_fv = " ^ (Cprinter.string_of_spec_var_list f_fv) ) in *)
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)

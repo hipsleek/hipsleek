@@ -1177,6 +1177,21 @@ and is_formula_arith (f:formula) :bool = match f with
         
 (* smart constructor *)
 
+(*********BAG CONSTRAINT***************)
+(*create lockset var, primed or unprimed*)
+and mkLsVar p = (SpecVar (UNK, ls_name, p))
+
+and mkBag svl pos = Bag (svl,pos)
+
+and mkEmptyBag pos = mkBag [] pos
+
+(*exps: expression list*)
+and mkBagUnion exps pos = BagUnion (exps,pos) 
+
+(*x notin S*)
+and mkBagNotIn v exp pos = BagNotIn (v,exp,pos) 
+(******************************************)
+
 and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
@@ -3455,7 +3470,22 @@ and drop_bag_b_formula (bf : b_formula) : b_formula =
   | _ -> pf
   in (npf,il)
 
-  
+(*
+  Drop floating-point constraints
+*)
+let rec drop_float_formula (f0 : formula) : formula = match f0 with
+  | BForm (bf,lbl) -> BForm (drop_float_b_formula bf, lbl)
+  | And (f1, f2, pos) -> mkAnd (drop_float_formula f1) (drop_float_formula f2) pos 
+  | AndList b -> AndList (map_l_snd drop_float_formula b)
+  | Or (f1, f2, lbl, pos) ->mkOr (drop_float_formula f1) (drop_float_formula f2) lbl pos 
+  | Not (f1, lbl, pos) -> mkNot (drop_float_formula f1) lbl pos 
+  | Forall (qvar, qf,lbl, pos) -> mkForall [qvar] (drop_float_formula qf) lbl pos 
+  | Exists (qvar, qf,lbl, pos) -> mkExists [qvar] (drop_float_formula qf) lbl pos 
+
+and drop_float_b_formula (bf : b_formula) : b_formula =
+  if (is_float_bformula bf) then (BConst (true, no_pos),None)
+  else bf
+
 (*
   Drop VarPerm constraints for satisfiability checking.
 *)

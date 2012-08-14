@@ -643,7 +643,10 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Min (e1, e2, l) -> 
           let args = bin_op_to_list op_min_short exp_assoc_op e in
           pr_fn_args op_min pr_formula_exp  args
-    | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
+    | P.Bag (elist, l) 	-> 
+        fmt_string ("bag("); 
+        pr_set pr_formula_exp elist;
+        fmt_string (")")
     | P.BagUnion (args, l) -> 
           let args = bin_op_to_list op_union_short exp_assoc_op e in
           pr_fn_args op_union pr_formula_exp args

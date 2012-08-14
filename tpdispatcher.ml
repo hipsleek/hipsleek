@@ -694,7 +694,6 @@ let is_mix_list_constraint f = match f with
   | MCP.MemoF f -> is_memo_list_constraint f
   | MCP.OnePF f -> is_list_constraint f  
   
-
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
   ef
@@ -1031,6 +1030,17 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           redlog_is_sat wf
     | RM ->
           (* let f = CP.drop_rel_formula f in *)
+          if (is_bag_constraint wf) && (CP.is_float_formula wf) then
+            (* Mixed bag constraints and float constraints *)
+            (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
+            let f_no_float = CP.drop_float_formula wf in
+            let f_no_bag = CP.drop_bag_formula wf in
+            let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
+            in
+            let b1 = mona_is_sat f_no_float in
+            let b2 = redlog_is_sat f_no_bag in
+            (b1 && b2)
+          else
           if (is_bag_constraint wf) then
             mona_is_sat wf
           else

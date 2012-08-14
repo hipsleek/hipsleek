@@ -117,6 +117,8 @@ let common_arguments = [
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
 	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+	("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
+	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");

@@ -80,8 +80,8 @@ void testVar()
   //x'=0 * l::lock<>
   init[LOCKA](l,x);
   //l::LOCKA<x> * x'=0
-  x++;
-  //x--; //fail due to the invariant
+  //x++;
+  x--; //fail due to the invariant
   release[LOCKA](l,x);
   //l::LOCKA<x>
 
