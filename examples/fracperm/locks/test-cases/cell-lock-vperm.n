@@ -10,7 +10,7 @@ dprint: cell-lock-vperm.ss:110: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:x_24'::cell()<v_int_106_633>@M[Orig] * l_25'::LOCKB()<x_24>@M[Derv]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & l_25'!=null&{FLOW,(20,21)=__norm}[]
+ State:x_24'::cell()<v_int_106_633>@M[Orig] * l_25'::LOCKB()<x_24>@M[Derv]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & l_25'!=null & ls'=union(ls,bag({l_25'}))&{FLOW,(20,21)=__norm}[]
        es_var_measures: MayLoop
 
  ]
@@ -20,7 +20,7 @@ dprint: cell-lock-vperm.ss:112: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:EXISTS(v_int_111_611': l_25'::LOCKB()<x_24>@M[Orig] * x_24'::cell(f_644)<v_int_111_611'>@M[Orig]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & l_25'!=null & f_635=Anon_full_perm & f_635>FLOAT 0. & f_635<=FLOAT 1. & v_int_111_611'=1+v_int_106_633 & f_644=f_635 & f_644=FLOAT 1.&{FLOW,(20,21)=__norm})[]
+ State:EXISTS(v_int_111_611': l_25'::LOCKB()<x_24>@M[Orig] * x_24'::cell(f_645)<v_int_111_611'>@M[Orig]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & l_25'!=null & ls'=union(ls,bag({l_25'})) & f_636=Anon_full_perm & f_636>FLOAT 0. & f_636<=FLOAT 1. & v_int_111_611'=1+v_int_106_633 & f_645=f_636 & f_645=FLOAT 1.&{FLOW,(20,21)=__norm})[]
        es_var_measures: MayLoop
 
  ]
@@ -30,22 +30,57 @@ dprint: cell-lock-vperm.ss:115: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:l_25'::LOCKB(f_648)<x_24>@M[Orig]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & f_635=Anon_full_perm & f_635>FLOAT 0. & f_635<=FLOAT 1. & v_int_111_650=1+v_int_106_633 & f_644=f_635 & f_644=FLOAT 1. & f_648=Anon_full_perm & v_649=v_int_111_650 & x_24'!=null & l_25'!=null&{FLOW,(20,21)=__norm}[]
+ State:l_25'::LOCKB(f_649)<x_24>@M[Derv]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & f_636=Anon_full_perm & f_636>FLOAT 0. & f_636<=FLOAT 1. & v_int_111_651=1+v_int_106_633 & f_645=f_636 & f_645=FLOAT 1. & f_649=Anon_full_perm & v_650=v_int_111_651 & x_24'!=null & l_25'!=null & ls'=union(ls,bag({l_25'}))-bag({l_25'})&{FLOW,(20,21)=__norm}[]
        es_var_measures: MayLoop
 
  ]
 
-dprint: cell-lock-vperm.ss:129: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+procedure call:cell-lock-vperm.ss:118: 2: 
+Verification Context:(Line:101,Col:10)
+Proving precondition in method acquire$lock~cell for spec:
+ EBase exists (Expl)(Impl)[f_655](ex)l_25'::LOCKB(f_655)<x_24>@M[Derv]&
+       l_25' <notin> ls'  & f_655>FLOAT 0. & f_655<=FLOAT 1.&
+       {FLOW,(1,23)=__flow}[]
+         EAssume 6::ref [ls]
+           EXISTS(v_656: x_24'::cell()<v_656>@M[Orig] * 
+           l_25'::LOCKB(f_655)<x_24>@M[Derv]&0<=v_656 & ls'=union(ls,
+           bag({l_25'}))&{FLOW,(20,21)=__norm})[] has failed 
 
-Successful States:
-[
- Label: 
- State:x_24'::cell()<v_666>@M[Orig] * l_25'::lock()@M[Orig]&Anon_full_perm=FLOAT 1. & v_int_106_633=0 & f_635=Anon_full_perm & f_635>FLOAT 0. & f_635<=FLOAT 1. & v_int_111_650=1+v_int_106_633 & f_644=f_635 & f_644=FLOAT 1. & f_648=Anon_full_perm & v_649=v_int_111_650 & f_653=f_648 & 0<=v_660 & f_658=f_653 & v_659=v_660 & x_24'!=null & f_663=f_658 & 0<=v_666 & l_25'!=null&{FLOW,(20,21)=__norm}[]
-       es_var_measures: MayLoop
 
- ]
+procedure call:cell-lock-vperm.ss:121: 2: 
+Verification Context:(Line:101,Col:10)
+Proving precondition in method release$lock~cell for spec:
+ EBase exists (Expl)(Impl)[f_659; v_660](ex)x_24'::cell()<v_660>@M[Orig] * 
+       l_25'::LOCKB(f_659)<x_24>@M[Derv]&0<=v_660 & l_25' <in> ls'  & 
+       f_659>FLOAT 0. & f_659<=FLOAT 1.&{FLOW,(20,21)=__norm}[]
+         EAssume 6::ref [ls]
+           l_25'::LOCKB(f_659)<x_24>@M[Derv]&ls'=ls-bag({l_25'})&
+           {FLOW,(20,21)=__norm}[] has failed 
 
-Procedure testCell$ SUCCESS
+
+procedure call:cell-lock-vperm.ss:125: 2: 
+Verification Context:(Line:101,Col:10)
+Proving precondition in method acquire$lock~cell for spec:
+ EBase exists (Expl)(Impl)[f_663](ex)l_25'::LOCKB(f_663)<x_24>@M[Derv]&
+       l_25' <notin> ls'  & f_663>FLOAT 0. & f_663<=FLOAT 1.&
+       {FLOW,(1,23)=__flow}[]
+         EAssume 6::ref [ls]
+           EXISTS(v_664: x_24'::cell()<v_664>@M[Orig] * 
+           l_25'::LOCKB(f_663)<x_24>@M[Derv]&0<=v_664 & ls'=union(ls,
+           bag({l_25'}))&{FLOW,(20,21)=__norm})[] has failed 
+
+
+procedure call:cell-lock-vperm.ss:127: 2: 
+Verification Context:(Line:101,Col:10)
+Proving precondition in method finalize$lock~cell for spec:
+ EBase l_25'::LOCKB()<x_24>@M[Derv]&l_25' <in> ls' &{FLOW,(20,21)=__norm}[]
+         EAssume 6::ref [ls]
+           l_25'::LOCKB()<x_24>@M[Derv]&ls'=ls-bag({l_25'})&
+           {FLOW,(20,21)=__norm}[] has failed 
+
+
+dprint:cell-lock-vperm.ss:129 empty/false context
+Procedure testCell$ result FAIL-1
 
 Checking procedure testVar$... 
 dprint: cell-lock-vperm.ss:95: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
@@ -53,16 +88,16 @@ dprint: cell-lock-vperm.ss:95: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
 Successful States:
 [
  Label: 
- State:l_27'::lock()@M[Orig]&Anon_full_perm=FLOAT 1. & x_680=1+0 & f_679=Anon_full_perm & f_684=f_679 & 0<=v_int_76_693 & x_26'=1+v_int_76_693 & l_27'!=null&{FLOW,(20,21)=__norm}[]
+ State:false&false&{FLOW,(20,21)=__norm}[]
        es_var_measures: MayLoop
 
  ]
 
 Procedure testVar$ SUCCESS
 Halting Reduce... 
-Stop Omega... 28 invocations 
-0 false contexts at: ()
+Stop Omega... 26 invocations 
+7 false contexts at: ( (93,2)  (92,2)  (92,2)  (76,2)  (90,2)  (85,2)  (84,2) )
 
-Total verification time: 0.6 second(s)
-	Time spent in main process: 0.28 second(s)
-	Time spent in child processes: 0.32 second(s)
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.22 second(s)
+	Time spent in child processes: 0.17 second(s)

@@ -44,8 +44,8 @@ LOCKB<x,y> == self::lock<>
 //valid
 // a lock protecting 1 location
 void main()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   lock l;
@@ -66,8 +66,8 @@ void main()
 //fail
 // a lock protecting 2 location
 void main1()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   cell y;
@@ -76,9 +76,11 @@ void main1()
   x = new cell(0);
   y = new cell(0);
   init[LOCKB](l,x,y); // lock l protext x and y
+  dprint;
   x.val--;
+  dprint;
   release[LOCKB](l,x,y); //can not, invariant not hold
-
+  dprint;
   //finalize
   acquire[LOCKB](l,x,y);
   finalize[LOCKB](l,x,y);

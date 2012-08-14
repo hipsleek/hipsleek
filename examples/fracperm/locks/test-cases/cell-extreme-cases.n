@@ -10,16 +10,17 @@ dprint: cell-extreme-cases.ss:64: ctx:  List of Failesc Context: [FEC(0, 0, 1  )
 Successful States:
 [
  Label: 
- State:EXISTS(v_int_55_631: l_33'::lock()@M[Orig] * x_32'::cell()<v_int_55_631>@M[Orig]&Anon_full_perm=FLOAT 1. & MayLoop & v_int_55_631=0&{FLOW,(20,21)=__norm})[]
+ State:EXISTS(v_int_55_631: l_33'::lock()@M[Orig] * x_32'::cell()<v_int_55_631>@M[Orig]&Anon_full_perm=FLOAT 1. & ls'=ls & MayLoop & v_int_55_631=0&{FLOW,(20,21)=__norm})[]
 
  ]
 
 procedure call:cell-extreme-cases.ss:65: 2: 
 Verification Context:(Line:50,Col:10)
 Proving precondition in method finalize$lock~cell for spec:
- EBase l_33'::LOCKA()<x_32>@M[Derv]&true&{FLOW,(20,21)=__norm}[]
-         EAssume 1::
-           l_33'::lock()@M[Orig]&true&{FLOW,(20,21)=__norm}[] has failed 
+ EBase l_33'::LOCKA()<x_32>@M[Derv]&l_33' <in> ls' &{FLOW,(20,21)=__norm}[]
+         EAssume 1::ref [ls]
+           l_33'::LOCKA()<x_32>@M[Derv]&ls'=ls-bag({l_33'})&
+           {FLOW,(20,21)=__norm}[] has failed 
 
 
 dprint:cell-extreme-cases.ss:66 empty/false context
@@ -30,34 +31,60 @@ procedure call:cell-extreme-cases.ss:83: 2:
 Verification Context:(Line:73,Col:10)
 Proving precondition in method release$lock~cell for spec:
  EBase exists (Expl)(Impl)[f_639; v_640](ex)x_30'::cell()<v_640>@M[Orig] * 
-       l_31'::LOCKA(f_639)<x_30>@M[Derv]&0<=v_640 & f_639>FLOAT 0. & 
-       f_639<=FLOAT 1.&{FLOW,(20,21)=__norm}[]
-         EAssume 4::
-           l_31'::LOCKA(f_639)<x_30>@M[Orig]&true&{FLOW,(20,21)=__norm}[] has failed 
+       l_31'::LOCKA(f_639)<x_30>@M[Derv]&0<=v_640 & l_31' <in> ls'  & 
+       f_639>FLOAT 0. & f_639<=FLOAT 1.&{FLOW,(20,21)=__norm}[]
+         EAssume 4::ref [ls]
+           l_31'::LOCKA(f_639)<x_30>@M[Derv]&ls'=ls-bag({l_31'})&
+           {FLOW,(20,21)=__norm}[] has failed 
 
 
 Procedure test2$ result FAIL-1
 
 Checking procedure test3$... 
-Procedure test3$ SUCCESS
+procedure call:cell-extreme-cases.ss:108: 2: 
+Verification Context:(Line:96,Col:10)
+Proving precondition in method acquire$lock~cell for spec:
+ EBase exists (Expl)(Impl)[f_655](ex)l_29'::LOCKA(f_655)<x_28>@M[Derv]&
+       l_29' <notin> ls'  & f_655>FLOAT 0. & f_655<=FLOAT 1.&
+       {FLOW,(1,23)=__flow}[]
+         EAssume 7::ref [ls]
+           EXISTS(v_656: x_28'::cell()<v_656>@M[Orig] * 
+           l_29'::LOCKA(f_655)<x_28>@M[Derv]&0<=v_656 & ls'=union(ls,
+           bag({l_29'}))&{FLOW,(20,21)=__norm})[] has failed 
+
+
+procedure call:cell-extreme-cases.ss:109: 2: 
+Verification Context:(Line:96,Col:10)
+Proving precondition in method acquire$lock~cell for spec:
+ EBase exists (Expl)(Impl)[f_659](ex)l_29'::LOCKA(f_659)<x_28>@M[Derv]&
+       l_29' <notin> ls'  & f_659>FLOAT 0. & f_659<=FLOAT 1.&
+       {FLOW,(1,23)=__flow}[]
+         EAssume 7::ref [ls]
+           EXISTS(v_660: x_28'::cell()<v_660>@M[Orig] * 
+           l_29'::LOCKA(f_659)<x_28>@M[Derv]&0<=v_660 & ls'=union(ls,
+           bag({l_29'}))&{FLOW,(20,21)=__norm})[] has failed 
+
+
+Procedure test3$ result FAIL-1
 
 Checking procedure test4$... 
 procedure call:cell-extreme-cases.ss:133: 2: 
 Verification Context:(Line:122,Col:10)
 Proving precondition in method release$lock~cell for spec:
  EBase exists (Expl)(Impl)[f_674; v_675](ex)x_26'::cell()<v_675>@M[Orig] * 
-       l_27'::LOCKA(f_674)<x_26>@M[Derv]&0<=v_675 & f_674>FLOAT 0. & 
-       f_674<=FLOAT 1.&{FLOW,(20,21)=__norm}[]
-         EAssume 10::
-           l_27'::LOCKA(f_674)<x_26>@M[Orig]&true&{FLOW,(20,21)=__norm}[] has failed 
+       l_27'::LOCKA(f_674)<x_26>@M[Derv]&0<=v_675 & l_27' <in> ls'  & 
+       f_674>FLOAT 0. & f_674<=FLOAT 1.&{FLOW,(20,21)=__norm}[]
+         EAssume 10::ref [ls]
+           l_27'::LOCKA(f_674)<x_26>@M[Derv]&ls'=ls-bag({l_27'})&
+           {FLOW,(20,21)=__norm}[] has failed 
 
 
 dprint:cell-extreme-cases.ss:134 empty/false context
 Procedure test4$ result FAIL-1
 Halting Reduce... 
-Stop Omega... 34 invocations 
+Stop Omega... 30 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.55 second(s)
+Total verification time: 0.37 second(s)
 	Time spent in main process: 0.21 second(s)
-	Time spent in child processes: 0.34 second(s)
+	Time spent in child processes: 0.16 second(s)

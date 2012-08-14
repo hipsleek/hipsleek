@@ -7396,127 +7396,6 @@ let get_varperm_formula_all (f:formula) typ : CP.spec_var list =
   Debug.no_2 "get_varperm_formula_all"
       !print_formula string_of_vp_ann !print_svl
       get_varperm_formula_x f typ
-
-(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
-let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
-  let data_node = DataNode ({
-      h_formula_data_node = var;
-      h_formula_data_name = name;
-	  h_formula_data_derv = false;
-	  h_formula_data_imm = ConstAnn(Mutable);
-	  h_formula_data_perm = None;
-	  h_formula_data_origins = [];
-	  h_formula_data_original = false; (*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
-      h_formula_data_arguments = []; (*TO CHECK*)
-	  h_formula_data_holes = [];
-      h_formula_data_remaining_branches = None;
-      h_formula_data_pruning_conditions = [];
-      h_formula_data_label = None;
-      h_formula_data_pos = pos}) 
-  in
-  let uargs = List.map CP.to_unprimed args in
-  let lock_node = ViewNode ({  
-      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
-      h_formula_view_name = sort; (*lock_sort*)
-      h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = None;
-      h_formula_view_arguments = uargs;
-      h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
-      h_formula_view_origins = [];
-      h_formula_view_original = false;(*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
-      h_formula_view_lhs_case = false;
-      h_formula_view_unfold_num = 0;
-      h_formula_view_remaining_branches = None;
-      h_formula_view_pruning_conditions = [];
-      h_formula_view_label = None;
-      h_formula_view_pos = pos })
-  in
-  (****LOCKSET****)
-  let ls_uvar = CP.mkLsVar Unprimed in
-  let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
-  let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
-  let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
-  let ls_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
-  (**************)
-  let post = mkBase_simp lock_node (MCP.OnePF ls_f) in
-  (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
-  let post = EAssume ([ls_uvar],post,lbl) in
-  let pre = formula_of_heap_w_normal_flow data_node pos in
-  EBase { 
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	formula_struc_base = pre;
-	formula_struc_continuation = Some post;
-	formula_struc_pos = pos}
-  
-
-(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
-let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
-  Debug.no_4 "prepost_of_init"
-      !print_sv
-      (fun str -> str)
-      (fun str -> str)
-      !print_svl
-      !print_struc_formula
-      (fun _ _ _ _ -> prepost_of_init_x var name sort args lbl pos) var name sort args
-
-(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
-let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  let data_node = DataNode ({
-      h_formula_data_node = var;
-      h_formula_data_name = name;
-	  h_formula_data_derv = false;
-	  h_formula_data_imm = ConstAnn(Mutable);
-	  h_formula_data_perm = None;
-	  h_formula_data_origins = [];
-	  h_formula_data_original = true; (*after finalize, allow SPLIT*)
-      h_formula_data_arguments = []; (*TO CHECK*)
-	  h_formula_data_holes = [];
-      h_formula_data_remaining_branches = None;
-      h_formula_data_pruning_conditions = [];
-      h_formula_data_label = None;
-      h_formula_data_pos = pos}) 
-  in
-  let uargs = List.map CP.to_unprimed args in
-  let lock_node = ViewNode ({  
-      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
-      h_formula_view_name = sort; (*lock_sort*)
-      h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = None;
-      h_formula_view_arguments = uargs;
-      h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
-      h_formula_view_origins = [];
-      h_formula_view_original = false; (*NOT ALLOW SPLIT*)
-      h_formula_view_lhs_case = false;
-      h_formula_view_unfold_num = 0;
-      h_formula_view_remaining_branches = None;
-      h_formula_view_pruning_conditions = [];
-      h_formula_view_label = None;
-      h_formula_view_pos = pos })
-  in
-  let post = formula_of_heap_w_normal_flow data_node pos in
-  let post = EAssume ([],post,lbl) in
-  let pre = formula_of_heap_w_normal_flow lock_node pos in
-  EBase { 
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	formula_struc_base = pre;
-	formula_struc_continuation = Some post;
-	formula_struc_pos = pos}
-
-(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
-let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.no_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
-      !print_struc_formula       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
 		
 let rec get_or_post_x rel_id (sp:struc_formula): formula list =  match sp with
   | ECase b -> fold_l_snd (get_or_post_x rel_id) b.formula_case_branches
@@ -7536,59 +7415,6 @@ and get_or_post sp rel_id =
   Debug.no_2 "get_or_post" pr1 pr2 pr3
     (fun _ _ -> get_or_post_x rel_id sp) sp rel_id
 
-let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  let fresh_perm_name = Cpure.fresh_old_name "f" in
-  let perm_t = cperm_typ () in
-  let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
-  let uargs = List.map CP.to_unprimed args in
-  let lock_node = ViewNode ({  
-      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
-      h_formula_view_name = sort; (*lock_sort*)
-      h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = Some fresh_perm;
-      h_formula_view_arguments = uargs;
-      h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = true; (*??*)
-      h_formula_view_origins = [];
-      h_formula_view_original = false; (*NOT ALLOW SPLIT lemmas*)
-      h_formula_view_lhs_case = false;
-      h_formula_view_unfold_num = 0;
-      h_formula_view_remaining_branches = None;
-      h_formula_view_pruning_conditions = [];
-      h_formula_view_label = None;
-      h_formula_view_pos = pos })
-  in
-  (****LOCKSET****)
-  let ls_uvar = CP.mkLsVar Unprimed in
-  let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
-  let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
-  let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
-  let ls_post_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
-  let not_in_f = CP.BForm (((CP.mkBagNotIn var ls_pvar_exp pos),None),None) in (* l notin ls' *)
-  (**************)
-  let read_f = mkPermInv fresh_perm in
-  (*POST-CONDITION*)
-  let tmp = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
-  (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
-  let post = normalize 5 inv tmp pos in
-  let post = EAssume ([ls_uvar],post,lbl) in
-  (*PRE-CONDITION*)
-  let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.OnePF not_in_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
-  EBase {
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [fresh_perm]; (*instantiate f*)
-	formula_struc_exists = []; (*TO CHECK: [] or args*)
-	formula_struc_base = pre;
-	formula_struc_continuation = Some post;
-	formula_struc_pos = pos}
-
-let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  Debug.no_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
-      (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 let unwrap_exists f =
   let helper f =
     match f with
@@ -7733,6 +7559,210 @@ let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula =
 		| EOr b -> report_error no_pos "Do not expect EOr at merge_struc_pre"
 		| _ -> (match pre with | x::[] -> helper sp x | _ -> sp)
 
+(*-------------------------------------------------
+  init[LOCKA](self) -->
+    requires self::lock<_ >
+    ensures [ref ls] self::LOCKA(1)<> & ls'=union(S,{self})
+
+  finalize[LOCKA](self) -->
+    requires self::LOCKA(1)<> & (self in ls) 
+    ensures [ref ls] self::lock<_> & ls'=diff(ls,{self})
+
+  acquire(self) -->
+    requires [f] self::LOCKA(f)<n> & (self notin ls)
+    ensures  [ref ls] self::LOCKA(f)<n> * self::cellInv<> & ls'=union(ls,{self})
+
+  release(self) -->
+    requires self::LOCKA(f)<> * self::CellInv<> & (self in ls) & 0<f<=1
+    ensures  [ref ls] self::LOCKA(f)<> & ls'=diff(ls,{self})
+-------------------------------------------------*)
+(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
+let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
+  let data_node = DataNode ({
+      h_formula_data_node = var;
+      h_formula_data_name = name;
+	  h_formula_data_derv = false;
+	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_perm = None;
+	  h_formula_data_origins = [];
+	  h_formula_data_original = false; (*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
+      h_formula_data_arguments = []; (*TO CHECK*)
+	  h_formula_data_holes = [];
+      h_formula_data_remaining_branches = None;
+      h_formula_data_pruning_conditions = [];
+      h_formula_data_label = None;
+      h_formula_data_pos = pos}) 
+  in
+  let uargs = List.map CP.to_unprimed args in
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None;
+      h_formula_view_arguments = uargs;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = false;(*TO CHECK: tmporarily, to prohibit SPLITTING of permission*)
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  (****LOCKSET****)
+  let ls_uvar = CP.mkLsVar Unprimed in
+  let ls_pvar = CP.mkLsVar Primed in
+  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
+  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
+  let var_exp = CP.Var (var,pos)in
+  let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
+  let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
+  let ls_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
+  (**************)
+  let post = mkBase_simp lock_node (MCP.OnePF ls_f) in
+  (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
+  let post = EAssume ([ls_uvar],post,lbl) in
+  let pre = formula_of_heap_w_normal_flow data_node pos in
+  EBase { 
+	formula_struc_explicit_inst = [];
+	formula_struc_implicit_inst = [];
+	formula_struc_exists = [];
+	formula_struc_base = pre;
+	formula_struc_continuation = Some post;
+	formula_struc_pos = pos}
+  
+
+(*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
+let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
+  Debug.no_4 "prepost_of_init"
+      !print_sv
+      (fun str -> str)
+      (fun str -> str)
+      !print_svl
+      !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_init_x var name sort args lbl pos) var name sort args
+
+(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
+let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+  let data_node = DataNode ({
+      h_formula_data_node = var;
+      h_formula_data_name = name;
+	  h_formula_data_derv = false;
+	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_perm = None;
+	  h_formula_data_origins = [];
+	  h_formula_data_original = true; (*after finalize, allow SPLIT*)
+      h_formula_data_arguments = []; (*TO CHECK*)
+	  h_formula_data_holes = [];
+      h_formula_data_remaining_branches = None;
+      h_formula_data_pruning_conditions = [];
+      h_formula_data_label = None;
+      h_formula_data_pos = pos}) 
+  in
+  let uargs = List.map CP.to_unprimed args in
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = None;
+      h_formula_view_arguments = uargs;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = false; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = false; (*NOT ALLOW SPLIT*)
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  (****LOCKSET****)
+  let ls_uvar = CP.mkLsVar Unprimed in
+  let ls_pvar = CP.mkLsVar Primed in
+  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
+  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
+  let var_exp = CP.Var (var,pos)in
+  let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
+  let ls_pre_f = CP.BForm (((CP.mkBagIn var ls_pvar_exp pos),None),None) in (* l in ls' *)
+  let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
+  let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
+  (**************)
+  let post = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
+  (* let post = formula_of_heap_w_normal_flow data_node pos in *)
+  let post = EAssume ([ls_uvar],post,lbl) in
+  let pre =  mkBase_simp lock_node (MCP.OnePF ls_pre_f) in
+  (* let pre = formula_of_heap_w_normal_flow lock_node pos in *)
+  EBase { 
+	formula_struc_explicit_inst = [];
+	formula_struc_implicit_inst = [];
+	formula_struc_exists = [];
+	formula_struc_base = pre;
+	formula_struc_continuation = Some post;
+	formula_struc_pos = pos}
+
+(*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
+let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+  Debug.no_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
+      !print_struc_formula       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
+
+let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  let fresh_perm_name = Cpure.fresh_old_name "f" in
+  let perm_t = cperm_typ () in
+  let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
+  let uargs = List.map CP.to_unprimed args in
+  let lock_node = ViewNode ({  
+      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
+      h_formula_view_name = sort; (*lock_sort*)
+      h_formula_view_derv = false;
+      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_perm = Some fresh_perm;
+      h_formula_view_arguments = uargs;
+      h_formula_view_modes = []; (*???*)
+      h_formula_view_coercible = true; (*??*)
+      h_formula_view_origins = [];
+      h_formula_view_original = false; (*NOT ALLOW SPLIT lemmas*)
+      h_formula_view_lhs_case = false;
+      h_formula_view_unfold_num = 0;
+      h_formula_view_remaining_branches = None;
+      h_formula_view_pruning_conditions = [];
+      h_formula_view_label = None;
+      h_formula_view_pos = pos })
+  in
+  (****LOCKSET****)
+  let ls_uvar = CP.mkLsVar Unprimed in
+  let ls_pvar = CP.mkLsVar Primed in
+  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
+  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
+  let var_exp = CP.Var (var,pos)in
+  let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
+  let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
+  let ls_post_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
+  let not_in_f = CP.BForm (((CP.mkBagNotIn var ls_pvar_exp pos),None),None) in (* l notin ls' *)
+  (**************)
+  let read_f = mkPermInv fresh_perm in
+  (*POST-CONDITION*)
+  let tmp = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
+  (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
+  let post = normalize 5 inv tmp pos in
+  let post = EAssume ([ls_uvar],post,lbl) in
+  (*PRE-CONDITION*)
+  let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.OnePF not_in_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
+  EBase {
+	formula_struc_explicit_inst = [];
+	formula_struc_implicit_inst = [fresh_perm]; (*instantiate f*)
+	formula_struc_exists = []; (*TO CHECK: [] or args*)
+	formula_struc_base = pre;
+	formula_struc_continuation = Some post;
+	formula_struc_pos = pos}
+
+let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
+  Debug.no_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
+      (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
   let fresh_perm_name = Cpure.fresh_old_name "f" in
@@ -7764,12 +7794,9 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let ls_pvar_exp = CP.Var (ls_pvar,pos) in
   let var_exp = CP.Var (var,pos)in
   let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
-  let inst_var_name = CP.fresh_old_name "LS" in
-  let inst_var = (CP.SpecVar (UNK, inst_var_name, Unprimed)) in 
-  let inst_var_exp = CP.Var (inst_var,pos) in (* LS is the explicit instant var*)
-  let union_exp = CP.mkBagUnion [inst_var_exp;bag_exp] pos in (* union(LS,{l})*)
-  let ls_pre_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls = union(LS,{l})*)
-  let ls_post_f = CP.mkEqExp ls_pvar_exp inst_var_exp pos in (*ls' = LS*)
+  let ls_pre_f = CP.BForm (((CP.mkBagIn var ls_pvar_exp pos),None),None) in (* l in ls' *)
+  let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
+  let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
   (**************)
   let tmp = formula_of_heap_w_normal_flow lock_node pos in (*not allow SPLIT in pre*)
   (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
@@ -7785,7 +7812,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let post_f = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
   let post = EAssume ([ls_uvar],post_f,lbl) in
   EBase { 
-	formula_struc_explicit_inst = [inst_var]; (*instantiate LS*)
+	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = fresh_perm::pre_evars; (*instantiate*)
 	formula_struc_exists = [];
 	formula_struc_base = pre_base;

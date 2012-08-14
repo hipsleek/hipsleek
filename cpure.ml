@@ -1188,8 +1188,14 @@ and mkEmptyBag pos = mkBag [] pos
 (*exps: expression list*)
 and mkBagUnion exps pos = BagUnion (exps,pos) 
 
-(*x notin S*)
+(* E1\E2*)
+and mkBagDiff e1 e2 pos = BagDiff (e1,e2,pos) 
+
+(*v notin S*)
 and mkBagNotIn v exp pos = BagNotIn (v,exp,pos) 
+
+(* v in S*)
+and mkBagIn v exp pos = BagIn (v,exp,pos) 
 (******************************************)
 
 and mkRes t = SpecVar (t, res_name, Unprimed)

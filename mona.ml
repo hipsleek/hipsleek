@@ -13,7 +13,7 @@ let mona_cycle = ref 90
 let timeout = ref 11.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
-let log_all_flag = ref false
+let log_all_flag = ref true
 let log_all = open_log_out "allinput.mona"
 
 
@@ -789,7 +789,7 @@ let send_cmd_with_answer str =
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
-  Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr send_cmd_with_answer str
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
@@ -1091,7 +1091,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
-let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
@@ -1115,6 +1115,12 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 ;;
 
 (*let imply = imply (-1.);;*)
+
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
+
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin

@@ -37,9 +37,9 @@ let test_db = false
 
 (* let tp = ref OmegaCalc *)
 (* let tp = ref OZ *)
-let tp = ref Redlog
+(* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
-(* let tp = ref RM *)
+let tp = ref RM
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -1039,6 +1039,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             in
             let b1 = mona_is_sat f_no_float in
             let b2 = redlog_is_sat f_no_bag in
+            (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
             (b1 && b2)
           else
           if (is_bag_constraint wf) then
