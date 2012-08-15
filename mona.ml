@@ -24,6 +24,10 @@ let mona_pred_file_alternative_path = "/usr/local/lib/"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let string_of_hashtbl tab = Hashtbl.fold
+		(fun c1 c2 a ->
+			a^"; ("^(Cprinter.string_of_spec_var c1)^" "^
+			(string_of_int c2) ^")") tab ""
 
 (* pretty printing for primitive types *)
 let rec mona_of_typ = function
@@ -184,9 +188,14 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
 
 *)
 
-and find_order (f : CP.formula) vs = 
+and find_order_x (f : CP.formula) vs = 
   let r = find_order_formula f vs in
   if r then (find_order f vs)
+
+and find_order (f : CP.formula) vs = 
+  Debug.ho_2 "find_order" 
+      Cprinter.string_of_pure_formula string_of_hashtbl (fun f->"")
+      find_order_x f vs
 
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
@@ -198,7 +207,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
-and find_order_b_formula (bf : CP.b_formula) vs : bool =
+and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
       | CP.Var(sv, l) ->
@@ -206,7 +215,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
 	          try
 	            Hashtbl.find vs sv
 	          with
-	            | Not_found -> 0
+	            | Not_found -> 0 (* TO CHECK: 0 or 1*)
 	        end
       | CP.Add (e1, e2, l1) 
       | CP.Subtract (e1, e2, l1) ->
@@ -327,9 +336,13 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
     | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 0 vs)) false el
     | _ -> false
 
+and find_order_b_formula (bf : CP.b_formula) vs : bool =
+  Debug.ho_2 "find_order_b_formula" 
+      Cprinter.string_of_b_formula string_of_hashtbl string_of_bool
+      find_order_b_formula_x bf vs
 
 (*
-  order = 0 --> unknown
+  order = 0 --> unknown (* TO CHECK: is it considered first or second order ??? *)
   = 1 --> inside bag
   = 2 --> bag
 *)
@@ -387,7 +400,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) then true
+	          if (r == 1 || r == 0) then true
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -402,7 +415,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) then true
+	          if (r == 1 || r == 0) then true
 	          else false
             with 
 	          | Not_found -> false
@@ -929,7 +942,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
   answer
 
 let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
-  Debug.no_3 "check_answer"
+  Debug.ho_3 "check_answer"
       (fun str -> str)
       (fun str -> str)
       string_of_bool
@@ -1036,7 +1049,7 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 	string_of_bool
 	(fun _ _ -> write_to_file is_sat_b fv f imp_no vs) is_sat_b f
 
-let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (****************)
   let f,flag = 
@@ -1056,7 +1069,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
   if (not flag) then false
   else
   (****************)
-  (* let _ = Hashtbl.iter (fun x y -> (print_string ("var " ^ (Cprinter.string_of_spec_var x) ^ " --> " ^ (string_of_int y) ^ "\n"))) vs in *)
+  let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in
   let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
       (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
@@ -1093,6 +1106,14 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc
 
+let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+  Debug.ho_3 "imply_sat_helper"
+      Cprinter.string_of_spec_var_list
+      Cprinter.string_of_pure_formula
+      string_of_hashtbl
+      string_of_bool
+      (fun _ _ _ -> imply_sat_helper_x is_sat_b fv f imp_no vs) fv f vs
+
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
@@ -1113,7 +1134,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Debug.ho_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
@@ -1129,6 +1150,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   (* let _ = print_endline("[Mona] f_fv = " ^ (Cprinter.string_of_spec_var_list f_fv) ) in *)
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
+  let _ = print_endline("[Mona] is_sat_ops: vs = " ^ (string_of_hashtbl vs) ) in
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
@@ -1143,7 +1165,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  Debug.ho_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 
