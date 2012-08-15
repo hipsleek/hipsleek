@@ -649,8 +649,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     else
                       (*only apply a SPLIT lemma to a lock
                       if both sides are original*)
-                      if (is_l_lock) then
-                        (vl_view_orig && vr_view_orig)
+                      (* if (is_l_lock) then *)
+                      (*   (vl_view_orig && vr_view_orig) *)
+                      (*if RHS is original --> SPLIT*)
+                      if (is_l_lock && is_r_lock && vr_view_orig) then
+                        true
+                      else if (is_l_lock && is_r_lock && not vr_view_orig) then
+                        false
                       else
                         (vl_view_orig || vr_view_orig)
                   in

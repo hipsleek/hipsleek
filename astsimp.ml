@@ -1312,9 +1312,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let inv_lock = 
     (match inv_lock with
       | None -> None
-      | Some f -> 
+      | Some f ->
           let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in
-          Some new_f)
+          (*find existential variables*)
+          let fvars = CF.fv new_f in
+          let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
+          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
+          (****************************)
+          Some new_f2)
   in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in

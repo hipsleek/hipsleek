@@ -2710,7 +2710,7 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
 	formula_exists_pos = pos}) -> 
         (qvars, mkBase h p t fl a pos)
   | Base _ -> ([], f)
-  | _ -> failwith ("split_quantifiers: invalid argument")
+  | _ -> failwith ("split_quantifiers: invalid argument (formula_or)")
 
 and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
   | Base ({formula_base_heap = h; 
@@ -7577,7 +7577,27 @@ let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula =
   release(self) -->
     requires self::LOCKA(f)<> * self::CellInv<> & (self in ls) & 0<f<=1
     ensures  [ref ls] self::LOCKA(f)<> & ls'=diff(ls,{self})
+
+In order to control the number of automatic split, 
+we employ the following heuristics and the original field
+of LOCK
+
+            pre       post
+---------------------------------
+init     |   N/A    false
+finalize |   NO      N/A
+acquire  |   NO      NO
+release  |   YES     NO 
+
+In context.ml, we constraint the lemma application as follows:
+  if (is_l_lock && is_r_lock && vr_view_orig) then
+    true
+  else if (is_l_lock && is_r_lock && not vr_view_orig) then
+    false
+
+We only allow a SPLIT when the RHS is original
 -------------------------------------------------*)
+
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   let data_node = DataNode ({
@@ -7771,7 +7791,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let perm_t = cperm_typ () in
   let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
   let uargs = List.map CP.to_unprimed args in
-  let lock_node = ViewNode ({  
+  let heap = ({  
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
@@ -7789,6 +7809,8 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
+  let lock_node_post = ViewNode heap in (*not allow SPIT in POST*)
+  let lock_node_pre = ViewNode {heap with h_formula_view_original=true} in (*but allow SPLIT in PRE*)
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
@@ -7800,24 +7822,24 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
   let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
   (**************)
-  let tmp = formula_of_heap_w_normal_flow lock_node pos in (*not allow SPLIT in pre*)
+  (* let tmp = formula_of_heap_w_normal_flow lock_node pos in (\*not allow SPLIT in pre*\) *)
   (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
   (* let _ = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
   let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1*)
-  let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
+  let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
   (* let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
-  let tmp = add_original tmp true in  (*but allow SPLIT in post*)
+  (* let tmp = add_original tmp true in  (\*but allow SPLIT in post*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1 & inv*)
   let pre = normalize 5 inv tmp_pre pos in
-  let pre_evars, pre_base = split_quantifiers pre in
-  let post_f = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
+  (* let pre_evars, pre_base = split_quantifiers pre in *)
+  let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in
   let post = EAssume ([ls_uvar],post_f,lbl) in
   EBase { 
 	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = fresh_perm::pre_evars; (*instantiate*)
+	formula_struc_implicit_inst = [fresh_perm](* ::pre_evars *); (*instantiate*)
 	formula_struc_exists = [];
-	formula_struc_base = pre_base;
+	formula_struc_base = pre (* pre_base *);
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
 

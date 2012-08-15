@@ -193,7 +193,7 @@ and find_order_x (f : CP.formula) vs =
   if r then (find_order f vs)
 
 and find_order (f : CP.formula) vs = 
-  Debug.ho_2 "find_order" 
+  Debug.no_2 "find_order" 
       Cprinter.string_of_pure_formula string_of_hashtbl (fun f->"")
       find_order_x f vs
 
@@ -337,7 +337,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | _ -> false
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
-  Debug.ho_2 "find_order_b_formula" 
+  Debug.no_2 "find_order_b_formula" 
       Cprinter.string_of_b_formula string_of_hashtbl string_of_bool
       find_order_b_formula_x bf vs
 
@@ -942,7 +942,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
   answer
 
 let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
-  Debug.ho_3 "check_answer"
+  Debug.no_3 "check_answer"
       (fun str -> str)
       (fun str -> str)
       string_of_bool
@@ -1051,25 +1051,7 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
-  (****************)
-  let f,flag = 
-    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
-      let f_wo_float = CP.drop_float_formula f in
-      let f_wo_bag = CP.drop_bag_formula f in
-  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
-      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
-      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
-      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
-      let b_float = Redlog.is_sat f_wo_bag imp_no in
-      if (b_float) then (f_wo_float,true) else (f,false)
-    else (f,true)
-  in
-  (*IF float constraints are unsatisfiable/unsat 
-    => imply_sat_helper = false*)
-  if (not flag) then false
-  else
-  (****************)
-  let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in
+  (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
   let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
       (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
@@ -1107,7 +1089,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
           stop(); raise exc
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
-  Debug.ho_3 "imply_sat_helper"
+  Debug.no_3 "imply_sat_helper"
       Cprinter.string_of_spec_var_list
       Cprinter.string_of_pure_formula
       string_of_hashtbl
@@ -1125,6 +1107,27 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  (****************************)
+  (*Selectively float + bag***)
+  let f = tmp_form in
+  let f,flag = 
+    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
+      let f_wo_float = CP.drop_float_formula f in
+      let f_wo_bag = CP.drop_bag_formula f in
+  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
+      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
+      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
+      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
+      let b_float = Redlog.is_sat f_wo_bag imp_no in
+      if (b_float) then (f_wo_float,true) else (f,false)
+    else (f,true)
+  in
+  let tmp_form = f in
+  (*IF float constraints are unsatisfiable/unsat 
+    => imply_sat_helper = false*)
+  if (not flag) then false
+  else
+  (****************)
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
   if not !is_mona_running then
@@ -1134,7 +1137,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
@@ -1145,12 +1148,31 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   sat_optimize := true;
   incr test_number;
   let f = CP.drop_varperm_formula f in
+  (****************************)
+  (*Selectively float + bag***)
+  let f,flag = 
+    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
+      let f_wo_float = CP.drop_float_formula f in
+      let f_wo_bag = CP.drop_bag_formula f in
+  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
+      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
+      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
+      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
+      let b_float = Redlog.is_sat f_wo_bag sat_no in
+      if (b_float) then (f_wo_float,true) else (f,false)
+    else (f,true)
+  in
+  (*IF float constraints are unsatisfiable/unsat 
+    => imply_sat_helper = false*)
+  if (not flag) then false
+  else
+  (****************)
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   (* let _ = print_endline("[Mona] f = " ^ (Cprinter.string_of_pure_formula f) ) in *)
   (* let _ = print_endline("[Mona] f_fv = " ^ (Cprinter.string_of_spec_var_list f_fv) ) in *)
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
-  let _ = print_endline("[Mona] is_sat_ops: vs = " ^ (string_of_hashtbl vs) ) in
+  (* let _ = print_endline("[Mona] is_sat_ops: vs = " ^ (string_of_hashtbl vs) ) in *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
@@ -1165,7 +1187,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 
