@@ -1,30 +1,11 @@
 /*
   [working example]
 
-// Still need MAY/MUST to be sound
--------------------------------------------------
-  init[LOCKA](self) -->
-    requires self::lock<_ >
-    ensures self::LOCKA(1)<>
-
-  finalize[LOCKA](self) -->
-    requires self::LOCKA(1)<>
-    ensures self::lock<_>
-
-  acquire(self) -->
-    requires [f] self::LOCKA(f)<n>
-    ensures  self::LOCKA(f)<n> * self::cellInv<>
-
-  release(self) -->
-    requires self::LOCKA(f)<> * self::CellInv<>
-    ensures  self::LOCKA(f)<>
--------------------------------------------------
-
 Output:
 
 Procedure test$ result FAIL-1
 Procedure test2$ result FAIL-1
-Procedure test3$ SUCCESS
+Procedure test3$ result FAIL-1
 Procedure test4$ result FAIL-1
 
 */
@@ -46,54 +27,44 @@ LOCKA<x> == self::lock<>
 
 //finalize w/o init or acquire => FAIL
 void test()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   lock l;
   l = new lock(); //dummy
   x = new cell(0);
   //x::cell<0> * l::lock<>
-  //init[LOCKA](l,x);
-  //l::LOCKA<x> * x::cell<0>
-  //dprint;
-  //release[LOCKA](l,x);
-  //l::LOCKA<x>
-  //acquire[LOCKA](l,x);
-  //l::LOCKA<x> * x::cell<v> & v>=0
-  dprint;
-  finalize[LOCKA](l,x); //fail
-  dprint;
-  //l::lock<> *  x::cellInv<>
+
+  finalize[LOCKA](l,x); 
+  //fail because l is not in locked state
+  //LOCKA <> lock
+
 }
 
 //release w/o acquire or finalize -> FAIL
 void test2()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   lock l;
   l = new lock(); //dummy
   x = new cell(0);
   //x::cell<0> * l::lock<>
-  //init[LOCKA](l,x);
-  //l::LOCKA<x> * x::cell<0>
-  //dprint;
+
   release[LOCKA](l,x); //FAIL
-  //l::LOCKA<x>
-  //acquire[LOCKA](l,x);
-  //l::LOCKA<x> * x::cell<v> & v>=0
-  //dprint;
-  //finalize[LOCKA](l,x); //fail
-  //dprint;
-  //l::lock<> *  x::cellInv<>
+  //fail because l is not in locked state
+  //LOCKA <> lock
+
 }
 
-//acquiring twice -> false context -> success
+//acquiring twice 
+// w/o LOCKSET --> SUCCESS due to false ctx 
+// w LOCKSET --> FAIL
 void test3()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   lock l;
@@ -106,20 +77,21 @@ void test3()
   release[LOCKA](l,x);
   //l::LOCKA<x>
   acquire[LOCKA](l,x);
-  acquire[LOCKA](l,x); //still SUCESS
+  acquire[LOCKA](l,x); 
+  // w/o LOCKSET: still SUCESS
   //acquire invariant twice => false context in the presence of heap
-  //dprint;
-  //l::LOCKA<x> * x::cell<v> & v>=0
-  //dprint;
-  //finalize[LOCKA](l,x); //fail
-  //dprint;
-  //l::lock<> *  x::cellInv<>
+
+  // w LOCKSET: FAIL
+  // because ls is already in LOCKSET (non-reentrant locks)
+
 }
 
-//release twice => fail to entail the invariant -> FAIL
+//release twice => FAIL due to 2 reasons
+// (1) fail to entail the invariant
+// (2) not holding the lock -> cannot release 
 void test4()
-  requires true
-  ensures true;
+  requires ls={}
+  ensures ls'={}; //'
 {
   cell x;
   lock l;
@@ -128,8 +100,11 @@ void test4()
   //x::cell<0> * l::lock<>
   init[LOCKA](l,x);
   //l::LOCKA<x> * x::cell<0>
-  //dprint;
+
   release[LOCKA](l,x);
+
+  //l::LOCKA<x>
+  /* dprint; */
+
   release[LOCKA](l,x); //FAIL
-  dprint;
 }

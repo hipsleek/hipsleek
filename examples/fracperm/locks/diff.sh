@@ -7,3 +7,5 @@ echo "======= cell-lock-vperm.ss ======"
 diff test-cases/cell-lock-vperm.res test-cases/cell-lock-vperm.n
 echo "======= cell-extreme-cases.ss ======"
 diff test-cases/cell-extreme-cases.res test-cases/cell-extreme-cases.n
+echo "======= cell-w-ls.ss ======"
+diff test-cases/cell-w-ls.res test-cases/cell-w-ls.n

@@ -13,7 +13,7 @@ let mona_cycle = ref 90
 let timeout = ref 11.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
-let log_all_flag = ref true
+let log_all_flag = ref false
 let log_all = open_log_out "allinput.mona"
 
 

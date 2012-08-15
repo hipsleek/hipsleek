@@ -1,9 +1,13 @@
 #create a list of expected results
 echo "======= cell.ss ======"
-../../../hip cell.ss > test-cases/cell.res
+../../../hip cell.ss | grep -E 'Proc|assert' > test-cases/cell.res
 echo "======= cell4.ss ======"
-../../../hip cell4.ss > test-cases/cell4.res
+../../../hip cell4.ss | grep -E 'Proc|assert' > test-cases/cell4.res
 echo "======= cell-lock-vperm.ss ======"
-../../../hip cell-lock-vperm.ss > test-cases/cell-lock-vperm.res
+../../../hip cell-lock-vperm.ss | grep -E 'Proc|assert' > test-cases/cell-lock-vperm.res
 echo "======= cell-extreme-cases.ss ======"
-../../../hip cell-extreme-cases.ss > test-cases/cell-extreme-cases.res
+../../../hip cell-extreme-cases.ss | grep -E 'Proc|assert' > test-cases/cell-extreme-cases.res
+
+########### MOST IMPORTANT (rules + examples) ####################
+echo "======= cell-w-ls.ss ======"
+../../../hip cell-w-ls.ss | grep -E 'Proc|assert' > test-cases/cell-w-ls.res

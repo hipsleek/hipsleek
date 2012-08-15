@@ -1,7 +1,7 @@
 /*
   [working example]
 
-// Still need MAY/MUST to be sound
+// need MAY/MUST LOCKSET to be sound
 -------------------------------------------------
   init[LOCKA](self) -->
     requires self::lock<_ >
@@ -54,7 +54,7 @@ void main()
   //x::cell<0> * l::lock<>
   init[LOCKA](l,x);
   //l::LOCKA<x> * x::cell<0>
-  dprint;
+  /* dprint; */
   release[LOCKA](l,x);
   //l::LOCKA<x>
   acquire[LOCKA](l,x);
@@ -76,11 +76,11 @@ void main1()
   x = new cell(1);
   y = new cell(1);
   init[LOCKB](l,x,y); // lock l protext x and y
-  dprint;
+  /* dprint; */
   x.val--;
-  dprint;
+  /* dprint; */
   release[LOCKB](l,x,y); //can not, invariant not hold
-  dprint;
+  /* dprint; */
   //finalize
   acquire[LOCKB](l,x,y);
   finalize[LOCKB](l,x,y);

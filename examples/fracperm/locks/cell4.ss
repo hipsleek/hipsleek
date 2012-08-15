@@ -40,30 +40,22 @@ void main()
   cell x = new cell(l,2);
   //print;
   init[LOCK](l,x);
-  dprint;
+
   release[LOCK](l,x);
-  dprint;
+
   int id;
-  dprint;
   id = fork(inc,l,x); // there is an automatic split here
-  dprint;
 
   acquire[LOCK](l,x);
-  //dprint;
   x.val++;
-  dprint;
   release[LOCK](l,x);
 
-
-
-  //dprint;
   join(id);
-  //dprint;
 
   acquire[LOCK](l,x);
-  //dprint;
+
   finalize[LOCK](l,x);
-  //dprint;
+
 }
 
 //valid
@@ -71,13 +63,11 @@ void inc(lock l,cell x)
   requires [f] l::LOCK(f)<x> & @value[l,x] & ls={}
   ensures l::LOCK(f)<x> & ls'={}; //'
 {
-  dprint;
+
   acquire[LOCK](l,x);
-  dprint;
   x.val--;
   x.val++;
   //x.val--; //will make it fail because of the invariant
-  dprint;
   release[LOCK](l,x);
-  dprint;
+
 }
