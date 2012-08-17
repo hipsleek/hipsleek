@@ -3033,9 +3033,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				let es =  CF.estate_of_context ctx pos in
 				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
                 let invert_ctx ctx postcond=
-                  let fl = CF.flow_formula_of_formula postcond in
-                  if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
+                  if CF.is_top_flow postcond then
                     let es, ll = helper ctx postcond in
+					let fl = CF.get_top_flow postcond in
                     let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
                     let err_msg = "may_err (" ^ err_name ^ ") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_may err_msg Globals.fnc_error in
@@ -3045,8 +3045,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                                    fc_orig_conseq = f ;
 		                                    fc_current_conseq = post;
 		                                    fc_failure_pts =  [];}, fe))
-                  else if CF.subsume_flow_f !error_flow_int fl then
+                  else if CF.is_error_flow postcond then
                      let es, ll = helper ctx postcond in
+					 let fl = CF.get_error_flow postcond in
                      let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
                      let err_msg = "must_err (" ^ err_name ^") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                     let fe = mk_failure_must err_msg Globals.fnc_error in
@@ -4463,6 +4464,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
 and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+     (* let _ = print_endline ("locle cons: " ^ (Cprinter.string_of_formula conseq)) in *)
   match ctx0 with
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
   | Ctx estate -> (
@@ -5035,7 +5037,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_loop "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -5067,6 +5069,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
  	 		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
 	 		lhs_p
   in
+  (* remove variables that are already instantiated in the right hand side *)
+	let fvlhs = MCP.mfv lhs_p in
+	let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
   let curr_lhs_h   = mkStarH lhs_h estate_orig.es_heap pos in

@@ -1,0 +1,24 @@
+/*
+void foo_term1b(int x)
+    case
+    {
+      x <= 2 -> requires Term[] ensures true;
+      x > 2  -> requires Term[x] ensures true;
+    }
+{
+  if (x > 1)
+  {
+    foo_term1b(x-1);
+  }
+}
+*/
+
+
+checkentail x<=2 & Term[] & x>1 & x1=x-1 & x1<=2 |- Term[]. 
+
+checkentail x<=2 & Term[] & x>1 & x1=x-1 & x1>2 |- Term[x1]. 
+
+
+checkentail x<2 & Term[x] & x>1 & x1=x-1 & x1<=2 |- Term[]. 
+
+checkentail x<2 & Term[x] & x>1 & x1=x-1 & x1>2 |- Term[x1]. 

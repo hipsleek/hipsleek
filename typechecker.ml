@@ -604,14 +604,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	              (spec_and_inferred_post,inferred_pre,inferred_rel,r)
 	            with
                   | Err.Ppf (e, ifk) ->
-                      let fl = CF.flow_formula_of_formula post_cond in
                       (match ifk with
-                        | 1 -> if CF.subsume_flow_f !error_flow_int fl then
+                        | 1 -> if CF.is_error_flow post_cond  then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
                         | 3 ->
-                            if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
+                            if CF.is_top_flow post_cond then
                               (spec, [],[], true) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
@@ -1525,7 +1524,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-                   (*we use new rules to judge the spec*)
+                   (* let _ = print_endline ("\nlocle: check_pre_post@SCall@sctx: " ^ *)
+                   (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
+                  (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
                  
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
