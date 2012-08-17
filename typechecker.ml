@@ -1064,10 +1064,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_arguments = vs;
 			  exp_scall_is_rec = ir;
 			  exp_scall_path_id = pid;
+			  exp_scall_msg_name = msg;
 			  exp_scall_pos = pos}) ->
 		    begin
                 let mn_str = Cast.unmingle_name mn in
-                if (mn_str=Globals.fork_name) then
+		if (mn_str=Globals.fork_name) then
                   (*=========================*)
                   (*=== id=FORK(fn,args) ====*)
                   (*=========================*)
@@ -1355,10 +1356,102 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                   let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
                   tmp_res
-                else
+		  
+                  (*==========================================*)
+                  (*============= MESSAGE PASSING ============*)
+                  (*==========================================*)
+		else if (mn_str=Globals.send_name) || (mn_str = Globals.receive_name) || (mn_str = Globals.close_name) then 
+		begin
+(*		  let printer spec desc = 
+		      print_endline ("debug specs: "^ desc ^ " : " ^ Cprinter.string_of_struc_formula spec) 
+		  in*)
+		  let proc = look_up_proc_def pos prog.new_proc_decls mn in
+		  let rename_spec init_spec = 
+		    let renamed_contract = 
+		      if !Globals.max_renaming then (CF.rename_struc_bound_vars init_spec(*org_spec*))
+		      else (CF.rename_struc_clash_bound_vars init_spec  (CF.formula_of_list_failesc_context ctx))
+		    in
+	            let farg_types, farg_names = List.split proc.proc_args in
+	            let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+	            let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+		    let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
+		    let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+		    let renamed_contract = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_contract in
+		    let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
+                    let pre2 = CF.subst_struc_pre_varperm st2 renamed_contract in
+     		    pre2
+		  in
+		  let get_send_receive_entail_formula  msg_name op_type strong = 
+		    let contract_name = (*CF.*)get_contract_name ctx (List.hd vs) in
+		    let contract_name_complete = if strong then   contract_name ^ op_type ^ "str__" ^ msg_name 
+						else contract_name ^ op_type ^ msg_name in 
+		    let prepost = look_up_contract_formula prog.prog_contract_formulas contract_name_complete in
+		    let prepost = Gen.unsome prepost in 
+		    rename_spec prepost
+		  in
+		  let process_entailment_result res prf = 
+		    if (CF.isSuccessListFailescCtx_new res) then
+		      res                
+		    else begin
+		      let _ =   begin
+                            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context res)^") ") 
+                                ("Proving precondition in method failed\n") pos;
+	                        Debug.print_info ("(Cause of PreCond Failure)")
+                                (Cprinter.string_of_failure_list_failesc_context res) pos;
+                            Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving precondition in method failed."
+                            }
+				end
+		      in
+		      res
+		    end
+		  in
+		if (List.for_all CF.isAnyFalseFailescCtx ctx ) then ctx else 
+		if (mn_str=Globals.send_name) then
+		  let (msg_name, _) = match msg with 
+		    | Some (s, x) -> if x = 0 then (s, true) else (s, false);
+		    | None -> report_error no_pos ("rend method call does not have message field set") in 
+		    let send_formula = get_send_receive_entail_formula msg_name  Globals.send_tag false in
+		    (*let _ = printer send_formula "send formula: " in *)
+		    let res, prf = heap_entail_struc_list_failesc_context_init prog false true ctx send_formula None pos pid in
+		    (*let _ = print_endline ("\n!!! context after send entailment: " ^ (Cprinter.string_of_list_failesc_context res) ) in*)
+		    process_entailment_result res prf
+		else if (mn_str=Globals.receive_name) then
+		  let (msg_name, strong_receive_check) = match msg with 
+		    | Some (s, x) -> if x = 0 then (s, true) else (s, false);
+		    | None -> report_error no_pos ("receive method call does not have message field set") in 
+		  let _ = if strong_receive_check then
+			    let receive_formula_extra = get_send_receive_entail_formula msg_name Globals.receive_tag  true in
+			    let check_res, check_prf = heap_entail_struc_list_failesc_context_init prog false true ctx receive_formula_extra None pos pid in
+			   (* let _ = print_endline ("\ncontext after strong check receive: " ^ (Cprinter.string_of_list_failesc_context check_res) ) in*)
+			    if (CF.isSuccessListFailescCtx_new check_res) then
+			      report_error pos ("receive function call for msg type " ^ msg_name ^" is not exhaustive (in the current state)")
+			    else ()
+			  else ()
+		  in                 
+		  let receive_formula = get_send_receive_entail_formula msg_name Globals.receive_tag  false in
+		  (*  let _ = print_endline ("\ncontext for receive: " ^ (Cprinter.string_of_list_failesc_context ctx) ) in*)
+		 (* let _ = printer receive_formula "receive formula: " in *)
+		  let res, prf = heap_entail_struc_list_failesc_context_init prog false true ctx receive_formula None pos pid in
+		(*  let _ = print_endline ("\n!!! context after receive entailment: " ^ (Cprinter.string_of_list_failesc_context res) ) in*)
+		  process_entailment_result res prf
+		else   (*(mn_str=Globals.close_name)  *)
+		  let _ = if (check_closing_endpoints prog ctx vs) then ()
+			  else report_error pos ("close function call: endpoints are not in final state ") in
+		  let close_spec = proc.proc_stk_of_static_specs#top in
+		  let renamed_close_spec = rename_spec close_spec in 
+		  let res, prf = heap_entail_struc_list_failesc_context_init prog false true ctx renamed_close_spec None pos pid in
+		  (*let _ = print_endline ("\n!!! context after close entailment: " ^ (Cprinter.string_of_list_failesc_context res) ) in*)
+		  process_entailment_result res prf
+		end
+		  (*ctx*)
+		else
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)
                 (*=========================*)
+
                 let _ = proving_loc#set pos in
 	            let proc = look_up_proc_def pos prog.new_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
@@ -1393,7 +1486,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* free vars get to be substituted by fresh vars *)
                   (* removing ranking var and unknown predicate from renaming *)
                   let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
-                  (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
+                    (*let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in  *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
                     if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
@@ -1412,8 +1505,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-
-                  (* Termination: Store unreachable state *)
+                     (* Termination: Store unreachable state *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)
                       let _ = DD.devel_zprint 
@@ -1542,6 +1634,42 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in*)
             ctx2
 	      end
+	| SwitchReceive ({exp_switch_receive_type = t;
+			  exp_switch_receive_branches = brs;
+			  exp_switch_receive_pos = pos; }) -> begin
+			 
+	      
+	      (*let res, prf = heap_entail_struc_list_failesc_context_init prog false true ctx question None pos None in*)
+	     (* let _ = print_endline ("context after question: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
+	      let context_of_branch (rcv, blk) = 
+		let ctx1 = check_exp prog proc ctx rcv post_start_label in
+		let ctx2 = check_exp prog proc ctx1 blk post_start_label in
+		ctx2
+	      in
+	      let fun0 (rcv, blk) =
+		let rec alter_scall_exp e = match e with 
+		  | SCall rcv -> SCall {rcv with exp_scall_msg_name = Some (fst (Gen.unsome rcv.exp_scall_msg_name), 1)} ;
+		  | Block b -> Block {b with exp_block_body = alter_scall_exp b.exp_block_body} ;
+		  | Seq s -> Seq {s with exp_seq_exp1 = alter_scall_exp s.exp_seq_exp1;  exp_seq_exp2 = alter_scall_exp s.exp_seq_exp2; };
+		  | _ -> report_error no_pos ("alter_scall_exp: unexpected exp: "^ (Cprinter.string_of_exp e));
+		 in
+		((alter_scall_exp rcv), blk)
+	      in	     
+	      if (List.for_all CF.isAnyFalseFailescCtx ctx) then ctx else
+	      begin
+		let _ = get_switch_receive_states prog  ctx brs in
+		let marked_brs = List.map fun0 brs in
+		let context_list = List.map context_of_branch marked_brs in
+	      (* let _ = List.map (fun c -> print_endline  ("SWR debug after receive branch:  " ^ (Cprinter.string_of_list_failesc_context c) )) context_list in*)
+		let rec zip_contexts ctxts = match ctxts with
+		  | [x] -> x;
+		  | x::rest -> CF.list_failesc_context_or (Cprinter.string_of_esc_stack) x (zip_contexts rest)
+		  | [] -> report_error no_pos ("typechecker switch-receive - expected at least one valid context: " )
+		in
+		let ret_ctx = zip_contexts context_list in
+		ret_ctx
+	      end
+	    end
         | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
         | This ({exp_this_type = t;
           exp_this_pos = pos}) -> 
@@ -1764,6 +1892,110 @@ let _ = if !print_proof then
       in
       rs
     end
+		  
+and get_contract_name ctx endpoint_name =
+    let (node, contexts, node_args) =  CF.get_endpoint_node ctx endpoint_name in    
+    let es_form = match (List.hd contexts) with 
+      | CF.Ctx f -> f.CF.es_formula;
+      | _  -> report_error no_pos "get_contract_name: did not expect OCTX" in
+    let pure_part = match es_form with
+      | CF.Base { CF.formula_base_pure = p}
+      | CF.Exists {CF.formula_exists_pure = p} -> p;
+      | _ -> report_error no_pos "get_contract_name: did not expect Or"
+    in
+    let asets = Context.alias_nth 1 (MCP.ptr_equations_with_null pure_part) in
+    let win = Context.get_aset asets (List.nth node_args 2) in
+    let win = (List.nth node_args 2) :: win in
+    let pure_forms = List.map (fun id -> CP.mkEq (CP.Var (id, no_pos)) (CP.IConst (1, no_pos)) no_pos) win in
+    let p_forms = List.map (fun f -> CP.BForm ((f, None), None)) pure_forms in
+    let is_dual = List.exists (fun x -> CF.sintactic_search  es_form  x) p_forms in
+    (*let _ = print_endline ("aset:  " ^ (String.concat ", " (List.map CP.name_of_spec_var win)) ^ " ... " ^ (string_of_bool is_dual)) in*)
+    let suffix = if is_dual then Globals.dual_tag else "" in		    
+    let cname = match (List.hd node_args) with | CP.SpecVar (_, name, _) -> name in
+    let cname = (try  let pos = String.rindex cname '_' in
+		(String.sub cname 0 pos) 
+	      with Not_found -> cname) in
+   cname ^ suffix
+ 
+   
+and get_switch_receive_states  prog ctx branches = 
+  let (rcvs, blks) = List.split  branches in
+  let rec get_rcv_call_of_exp e = match e with 
+    | SCall c -> Some e;
+    | Block b -> get_rcv_call_of_exp b.exp_block_body;
+    | Seq s -> let tmp = get_rcv_call_of_exp s.exp_seq_exp1 in  
+	  if (Gen.is_some tmp) then tmp else get_rcv_call_of_exp s.exp_seq_exp1
+    | _ -> None;
+  in
+  let rcv_calls = List.map get_rcv_call_of_exp rcvs in
+  let fun0 rcv =
+    let rcv1 = if (Gen.is_some rcv) then (Gen.unsome rcv) else report_error no_pos ("could not find receive call in "^ (!print_prog_exp (List.hd rcvs))) in
+     match rcv1 with
+      | SCall x -> x ;
+      | Block _ ->  report_error no_pos ("get_switch_receive_states:  unexpected  block");
+      | _ -> report_error no_pos ("expected Receive call in switch_receive branch " ^ (!print_prog_exp (List.hd rcvs))) 
+  in
+  let rcv_exps = List.map fun0 rcv_calls in 
+  let some_rcv = List.hd rcv_exps in 
+  let endpoint_name = List.hd some_rcv.exp_scall_arguments in
+    let (nodes, contexts, node_args) = CF.get_endpoint_node ctx endpoint_name in
+  let state_var = List.nth node_args 1 in
+(*  let state_var_name = match state_var with | P.SpecVar (_, name, _) -> name in
+   let _ = print_endline ("DEBUG SWREC state_var name: " ^ state_var_name ) in*)
+  let c_name =  get_contract_name ctx endpoint_name in
+  let c_def = look_up_contract_decl prog.prog_contract_formulas c_name in
+  let test_formulas = List.map (fun state -> P.mkEq (P.Var (state_var, no_pos)) (P.IConst (state.state_index, no_pos)) no_pos) c_def.contract_decl_states in
+  let pairs = List.combine  c_def.contract_decl_states test_formulas in 
+  let es_form = match (List.hd contexts) with 
+    | CF.Ctx f -> f.CF.es_formula;
+    | _  -> report_error no_pos "checking switch_receive: did not expect OCTX" in
+  let winners = List.filter (fun (_, pure_form) -> CF.sintactic_search  es_form  (P.BForm ((pure_form, None), None))) pairs in
+  let (crt_state, _) = if (List.length winners = 1) then List.hd winners else report_error no_pos ("checking switch_receive: ambiguous current state" ) in
+(*  let _ = print_endline ("DEBUG SWREC crt_state name: " ^ crt_state.state_name ) in*)
+  let expecting_messages = List.map (fun tr -> (List. hd tr.trig_messages).message) crt_state.transitions in
+  let got_messages = List.map (fun rcv -> fst (Gen.unsome rcv.exp_scall_msg_name)) rcv_exps in
+  let _ = List.map (fun x -> if List.mem x expecting_messages then () else report_error no_pos (x ^ "is not expected in state " ^ crt_state.state_name) ) got_messages in
+  let _ = List.map ( fun x -> if List.mem x got_messages then () else report_error no_pos ("receiveing " ^ x ^ " is not covered in SwitchReceive - state is " ^ crt_state.state_name)) expecting_messages in
+ ()
+
+ 
+and check_closing_endpoints prog ctx vs =
+  let (ch1, ch2) = ((List.nth vs 0), (List.nth vs 1)) in 
+  let c_name1 = get_contract_name ctx ch1 in
+  let c_name2 = get_contract_name ctx ch2 in
+  let cleanup_contract_name name = 
+    let len = String.length name in
+    (try let pos =  String.rindex name '_' in
+	let suf1 = String.sub name pos (len - pos) in
+	let name1 = String.sub name 0 pos in
+	if (suf1 = Globals.dual_tag) then	  
+	  (try  let pos2 = String.rindex name1 '_' in
+	      ((String.sub name1 0 pos2) ^ suf1)
+	  with Not_found -> name)
+	else name1
+    with Not_found -> name)  
+  in	  
+(*  let c_name1 = try (String.sub c_name1 0 (String.rindex c_name1 '_' ) with Not_found -> c_name1 in
+  let c_name2 = try (String.sub c_name1 0 (String.rindex c_name2 '_' ) with Not_found -> c_name2 in*)
+  let (c_name1, c_name2) = (cleanup_contract_name c_name1, cleanup_contract_name c_name2) in 
+  if ( (c_name1 ^ Globals.dual_tag) <> c_name2) then report_error no_pos ("endpoints " ^   ch1  ^ " and " ^ ch2  ^ " are following different contracts: " ^ c_name1 ^ ",  " ^ c_name2)
+  else
+    let c_def = look_up_contract_decl prog.prog_contract_formulas c_name1 in
+    let final_state = List.find (fun st -> st.state_final) c_def.contract_decl_states in
+    let (node1, contexts, node_args1) =  CF.get_endpoint_node ctx ch1 in
+    let (node2, contexts, node_args2) =  CF.get_endpoint_node ctx ch2 in
+    let (state_var1, state_var2) = ((List.nth node_args1 1), (List.nth node_args2 1)) in
+    let test_formula1 = P.mkEq (P.Var (state_var1, no_pos)) (P.IConst (final_state.state_index, no_pos)) no_pos in
+    let test_formula2 = P.mkEq (P.Var (state_var2, no_pos)) (P.IConst (final_state.state_index, no_pos)) no_pos in
+    let es_form = match (List.hd contexts) with 
+      | CF.Ctx f -> f.CF.es_formula;
+      | _  -> report_error no_pos "checking switch_receive: did not expect OCTX" in
+    let is_final1 = CF.sintactic_search  es_form  (P.BForm ((test_formula1, None), None)) in
+    let is_final2 = CF.sintactic_search  es_form  (P.BForm ((test_formula2, None), None)) in
+    let _ = if not is_final1 then report_error no_pos (ch1 ^ "is not in final state") else () in
+    let _ = if not is_final2 then report_error no_pos (ch2 ^ "is not in final state") else () in
+    true
+
 
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)

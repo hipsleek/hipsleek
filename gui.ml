@@ -535,6 +535,7 @@ end
      	       exp_scall_arguments = vs;
      	       exp_scall_visible_names = p_svars;
 	       exp_scall_path_id = pid;
+	       exp_scall_msg_name = msg;
      	       exp_scall_pos = pos}) -> begin
      	 let proc1 = look_up_proc_def pos prog.prog_proc_decls mn in
      	   (* let l_iter_list = *)

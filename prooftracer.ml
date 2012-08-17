@@ -454,6 +454,7 @@ let push_pre fce = match fce with
 		Cast.exp_scall_arguments = args;
 		Cast.exp_scall_is_rec = ir;
 		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_msg_name = msg;
 		Cast.exp_scall_pos = pos } ->
 		let unmin_name = Cast.unmingle_name mn in
 		if List.mem unmin_name primitive_procs then false
@@ -597,6 +598,7 @@ let add_pre fce = match fce with
 		Cast.exp_scall_arguments = args;
 		Cast.exp_scall_is_rec = ir;
 		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_msg_name = msg;
 		Cast.exp_scall_pos = pos } ->
 		let unmin_name = Cast.unmingle_name mn in
 		let is_primitive = List.mem unmin_name primitive_procs in

@@ -176,7 +176,7 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     | [] -> ()
   in
     (
-     (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
+  (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)   
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
      let prog = Parser.parse_hip_string "primitives" all_prims in
@@ -645,6 +645,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 								C.exp_try_pos = b.C.exp_seq_pos })
 				else C.Seq {b with C.exp_seq_exp1 = seq_elim b.C.exp_seq_exp1 ;
 							 C.exp_seq_exp2 = seq_elim b.C.exp_seq_exp2 ;}
+  | C.SwitchReceive e -> C.SwitchReceive {e with C.exp_switch_receive_branches = List.map (fun (rcv, blk) -> (rcv, seq_elim blk)) e.C.exp_switch_receive_branches}
   | C.This _ -> e
   | C.Time _ -> e
   | C.Try b ->  C.Try {b with  
@@ -673,7 +674,7 @@ let rec while_labelling (e:I.exp):I.exp =
 					let ty = I.Const_flow (match b.I.exp_continue_jump_label with | I.NoJumpLabel -> "cnt_"^lb | I.JumpLabel l-> "cnt_"^l) in
 					Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos )
 			   | _ -> None) in
-		let need_break_continue_x lb ne non_generated_label :bool = 
+		let need_break_continue_x lb ne non_generated_label :bool =      
 			if not (non_generated_label) then 
 			 I.fold_exp ne (fun c-> match c with 
 				| I.While _ -> Some false
@@ -710,6 +711,10 @@ let rec while_labelling (e:I.exp):I.exp =
 			Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos)
 		| I.Block b-> None 
 			(*let pos = b.I.exp_block_pos in
+		  | I.SwitchReceive b -> let fun0 lst = List.fold_left (fun a c-> a || (need_break_continue lb c true)) false lst  in
+					  let ret0 = fun0 (List.map (fun (rcv, _) -> rcv) b.I.exp_switch_receive_branches) in
+					  let ret1 = fun0 (List.map (fun (_, blk) -> blk) b.I.exp_switch_receive_branches) in
+					  ret0 || ret1
 			let nl,b_rez = match b.I.exp_block_jump_label with
 					| I.NoJumpLabel -> ((fresh_label pos),false)
 					| I.JumpLabel l -> (l ,true)in
@@ -722,7 +727,7 @@ let rec while_labelling (e:I.exp):I.exp =
 				let nl2 = fresh_branch_point_id "" in
 				let nit= I.mkTry ne [I.mkCatch None nc None (I.Label((nl,1),I.Empty pos)) pos] [] nl pos in
 				Some (I.mkTry nit [I.mkCatch None nb None (I.Label((nl2,1),I.Empty pos)) pos] [] nl2 pos)
-			else None*)
+			else None*)            	                       
 		| I.While b -> 
 				let pos = b.I.exp_while_pos in
 				let nl,b_rez = match b.I.exp_while_jump_label with
@@ -790,17 +795,21 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
-  
+
+ 
+
+   
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
-  (* print_string "trans_prog\n"; *)
+ (* print_string "trans_prog\n";*)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
+  let prog4 = I.add_msg_send_receive prog4 Globals.send_name Globals.receive_name  in
   let prog4 = I.add_bar_inits prog4 in
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
@@ -824,6 +833,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   let _ = exlist # compute_hierarchy in	  
   (* let _ = print_endline (Exc.string_of_exc_list (3)) in *)
   (* let _ = I.find_empty_static_specs prog1 in *)
+
   let prog0 = { prog1 with
       I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
 
@@ -850,6 +860,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 		  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
 		  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
       } in
+        
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
@@ -877,14 +888,18 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
-		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
+		   (*let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 		  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
-		  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
+		 let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+		(*   let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
 		  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 		  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+		  let new_prog_contract_decls = check_contract_declarations prog.I.prog_contract_decls in 		  
+		  let ccontract_formulas = List.map (trans_contract_formula prog   new_prog_contract_decls (*prog.I.prog_contract_decls*) ) prog.I.prog_contract_formulas in
+		  let message_formulas =  List.map (trans_message_formula prog) prog.I.prog_message_decls in
+		 (*  let _ = print_string "trans_prog :: trans_contract_formulas PASSED\n" in *)
 		  let cprog = {
 			  C.prog_data_decls = cdata;
 			  C.prog_view_decls = cviews;
@@ -895,7 +910,9 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 			  (*C.old_proc_decls = cprocs;*)
 			  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
 			  C.prog_left_coercions = l2r_coers;
-			  C.prog_right_coercions = r2l_coers;} in
+			  C.prog_right_coercions = r2l_coers;
+			  C.prog_message_formulas = message_formulas;
+			  C.prog_contract_formulas = ccontract_formulas;} in
 	    let cprog1 = { cprog with			
 			  (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
         C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
@@ -1093,6 +1110,234 @@ and fill_view_param_types (vdef : I.view_decl) =
 and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self 
   (* Gen.BList.difference_eq (=) vdef.I.view_pt_by_self [data_name] *)
 
+and add_ref_vars_to_contract_formula contract = 
+  let rec helper2 h_form = match h_form with
+    | CF.DataNode ({CF.h_formula_data_node = var})
+    | CF.ViewNode ({CF.h_formula_view_node = var})  
+	-> let vname = match var with CP.SpecVar (_, name, _) -> name in
+	    if (vname <> Globals.channel_h_node) then [var] else [];
+    | CF.Star ({CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2})
+    | CF.Phase ({CF.h_formula_phase_rd = h1; CF.h_formula_phase_rw = h2})
+    | CF.Conj ({CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2})
+	-> (helper2 h1) @ (helper2 h2);
+    | _-> [];    
+  in
+  let helper1 form = match form with
+    | CF.Base ({CF.formula_base_heap = heap})
+    | CF.Exists ({CF.formula_exists_heap = heap})
+	-> helper2 heap;
+    | _ -> report_error no_pos ("add_ref_vars_to_contract_formula: expected EAssume to contain Base or Exists formula");
+  in
+  let rec helper form = match form with 
+     | CF.EAssume (_, form, lbl) -> CF.EAssume((helper1 form), form, lbl);
+     | CF.ECase c -> CF.ECase {c with CF.formula_case_branches = List.map (fun (pure, form)-> (pure, helper form)) c.CF.formula_case_branches};
+     | CF.EBase b -> if Gen.is_some b.CF.formula_struc_continuation then 
+			 CF.EBase {b with CF.formula_struc_continuation = Some (helper (Gen.unsome b.CF.formula_struc_continuation))}
+		      else (CF.EBase b);
+     | CF.EOr o -> CF.EOr {o with CF.formula_struc_or_f1 = (helper o.CF.formula_struc_or_f1); CF.formula_struc_or_f2 = (helper o.CF.formula_struc_or_f2)};
+     | CF.EList l -> let (lbls, forms) = List.split l in
+		CF.EList (List.combine lbls (List.map helper forms));
+     | _ ->  report_error no_pos ("add_ref_vars_to_contract_formula: unexpected struc_formula in contract ");
+  in
+  let ret = helper  contract in
+ (* let _ = print_endline ("new contract with ref_vars: " ^ (Cprinter.string_of_struc_formula ret)) in*)
+  ret
+  
+and check_contract_declarations  (contr_decls : I.contract_decl list)  = 
+    let reformat_contract contract =       
+      let trans_one_state st = 
+	let rec helper2 crt_name messages last_state index = match messages with 
+	  | [] -> report_error no_pos "reformat_contract: expected at list one message" ;
+	  | [m] -> 
+	    let new_trans = {I.trig_messages = [m]; I.next_state = last_state} in 
+	    let last_new_state = {I.state_name = crt_name;
+				  I.state_index = 0;
+				  I.state_initial = false;
+				  I.state_final = false;
+				  I.transitions = [new_trans];}  in
+	    ([last_new_state], (index + 1))
+	  | (m::rest) -> 
+	    let new_name = st.I.state_name ^ (string_of_int index) in
+	    let new_trans = {I.trig_messages = [m]; I.next_state = new_name} in
+	    let crt_new_state = {I.state_name = crt_name;
+				  I.state_index = 0;
+				  I.state_initial = false;
+				  I.state_final = false;
+				  I.transitions = [new_trans];}  in
+	    let (new_states, new_index) = helper2 new_name rest last_state (index + 1) in
+	    (crt_new_state :: new_states, new_index)
+	in
+	let helper1  transition index = 
+	  if (List.length transition.I.trig_messages = 1) then
+	    ([transition], [], index)
+	  else
+	     let new_state_name = st.I.state_name ^ (string_of_int index) in
+	     let new_trans = {I.trig_messages = [(List.hd transition.I.trig_messages)]; I.next_state = new_state_name;} in
+	     let (new_states, new_index) =  helper2  new_state_name (List.tl transition.I.trig_messages) transition.I.next_state  (index + 1) in    
+	     ([new_trans], new_states , new_index)
+	in
+	let rec builder ret_trans extra_states index transitions = 
+	  match transitions with
+	    | [] -> (ret_trans, extra_states) ;
+	    | (tr::tail) -> 
+	      let (one_new_tr, new_states, new_index) = helper1 tr index in
+	       builder (one_new_tr @ ret_trans) (new_states @ extra_states) new_index tail
+	in
+	let (new_trans, extra_states) =  builder [] [] 1 st.I.transitions  in
+	let new_state = {st with I.transitions = new_trans} in
+	[new_state] @ extra_states
+      in
+      let rec helper ret state_lst = match state_lst with
+	| [] -> ret;
+	| (s::tail) ->  (helper ((trans_one_state s) @ ret) tail)
+      in              
+      let rec update_index index states = match states with
+	| [] -> [] ;
+	| (s::tail) -> 
+	  let (one, new_index) =  if s.I.state_index > 0 then (s, index)
+		     else ({s with I.state_index = index}, (index + 1)) in
+	  one::(update_index new_index tail)
+      in
+      let base = (List.length contract.I.contract_states) + 1 in
+      let final_states = update_index base (helper [] contract.I.contract_states) in
+       {contract with I.contract_states = final_states;}
+    in
+    let check_contract_determinism c = 
+      let helper state = 
+	let msgs = List.map (fun tr -> List.hd tr.I.trig_messages) state.I.transitions in
+	let dir_msg_compare msg1 msg2 = 
+	  if msg1.I.message_direction = I.Send && msg2.I.message_direction = I.Receive then 1
+	  else if msg1.I.message_direction = I.Receive && msg2.I.message_direction = I.Send then -1
+	  else String.compare msg1.I.message msg2.I.message
+	in
+	let sorted_msgs = List.sort dir_msg_compare msgs in
+	let rec helper2 l = match l with 
+	  | [] -> ();
+	  | [x] -> ();
+	  | x::y::rest -> if (dir_msg_compare x y = 0)  then report_error no_pos ("duplicate message name: " ^ x.I.message ^ " in state " ^ state.I.state_name ^ " of contract " ^ c.I.contract_name)
+			  else  helper2 (y::rest)
+	in 
+	helper2 sorted_msgs
+      in
+    List.iter helper c.I.contract_states
+    in
+    let check_contract_uniform_choice c = 
+      let helper state = 
+	let msgs = List.map (fun tr -> List.hd tr.I.trig_messages) state.I.transitions in
+	if List.length msgs = 0 then ()
+	else
+	  let test = (List.hd msgs).I.message_direction in
+	  if (List.for_all (fun dir_msg -> dir_msg.I.message_direction = test) msgs) then ()
+	  else
+	    report_error no_pos ( " state [" ^ state.I.state_name ^ "] of contract " ^ c.I.contract_name ^ " has both send and receive transitions")
+      in
+      List.iter helper c.I.contract_states
+    in
+    let add_visited vis_list elem = 
+      if List.mem elem vis_list then vis_list else elem :: vis_list
+    in            
+    let rec test_dfs ret adj visited start node = 
+      if List.mem node visited then
+	if node = start then	 
+	  visited :: ret
+	else ret
+      else
+	let visited = add_visited visited node in
+	let children =  List.assoc node adj  in
+	let ret = List.concat (List.map (test_dfs ret adj visited start) children) in
+	ret
+    in
+    let check_contract_synchronizing_states contract = 
+      let mappings = List.map (fun st -> (st.I.state_name, st.I.state_index)) contract.I.contract_states in
+      let rev_mappings = List.map (fun st -> (st.I.state_index, st.I.state_name)) contract.I.contract_states in      
+      let nodes = snd (List.split mappings) in
+      let find_children state = 
+	let tmp = List.map (fun tr -> List.assoc tr.I.next_state mappings) state.I.transitions in
+	tmp
+      in
+      let adj = List.map (fun st -> (st.I.state_index, find_children st)) contract.I.contract_states in
+      let cycles = List.map (fun x -> test_dfs [] adj [] x x) nodes in
+      let cycles =    (List.map List.rev   (List.concat cycles)) in      
+      let cycles = remove_dups cycles in
+      let check_msg_of_cycles cycle =
+	let first = List.hd cycle in
+	let str = "( " ^ (String.concat ", " (List.map (fun x -> List.assoc x rev_mappings) cycle))^ ") in contract " ^ contract.I.contract_name in	
+	let crt_dir i1 i2 = 
+	  let name2 = List.assoc i2 rev_mappings in	  
+	  let state1 = List.find (fun st -> st.I.state_index = i1) contract.I.contract_states in	
+	  let trans = List.find (fun tr -> tr.I.next_state = name2) state1.I.transitions in	 
+	  (List.hd trans.I.trig_messages).I.message_direction
+	in
+	let rec helper one lst have_send have_receive = match lst with
+	  |	 [] -> if not have_send then report_error no_pos ("cycle " ^ str ^ " does not have any send messages")
+		    else if not have_receive then report_error no_pos ("cycle " ^ str ^ " does not have any receive messages") 
+		    else ();
+	  | (x::t) -> if crt_dir one x = I.Send then helper x t true have_receive
+		      else helper x t have_send true	
+	in    
+	helper first ((List.tl cycle)@[first]) false false 
+      in
+      List.iter check_msg_of_cycles cycles
+    in  
+    let helper contr = 
+      let contr_decl = reformat_contract contr in      
+      let _ = check_contract_determinism contr_decl in
+      let _ = check_contract_uniform_choice contr_decl in
+      let _ = check_contract_synchronizing_states contr_decl in
+      contr_decl
+    in
+    List.map helper contr_decls
+  
+and trans_contract_formula prog  (contr_decls : I.contract_decl list)  (contr_formula : I.contract_formula) : C.contract_formula_decl = 
+    let contr_decl = 
+      let base_str  =  contr_formula.I.contr_name in
+      let index = (String.index base_str '_') in
+      let index = if IastUtil.string_contains base_str Globals.dual_tag then
+		     (* String.index (String.sub base_str index ((String.length base_str)- index))  '_'*) index + (String.length Globals.dual_tag)
+	           else index in
+      let c_name = String.sub base_str 0 index in
+      (try List.find (fun dec -> dec.I.contract_name = c_name) contr_decls
+      with Not_found ->  report_error no_pos ("cannot find contract declaration for name " ^ c_name)) in
+    let stab = H.create 103 in    
+    let helper_msg msg = 
+      {C.message = msg.I.message; 
+      C.message_direction = if msg.I.message_direction = I.Send then C.Send else C.Receive}
+    in
+    let helper_trans trans = 
+      { C.trig_messages = List.map helper_msg trans.I.trig_messages;
+	C.next_state = trans.I.next_state; }
+    in
+    let helper_state state = 
+     { C.state_name = state.I.state_name;
+      C.state_index = state.I.state_index;
+      C.state_initial = state.I.state_initial;
+      C.state_final = state.I.state_final;
+      C.transitions = List.map helper_trans state.I.transitions; }
+    in
+    let cast_contract_def = {C.contract_decl_name = contr_decl.I.contract_name;
+			     C.contract_decl_states = List.map helper_state contr_decl.I.contract_states; }
+    in
+    let _ = H.add stab Globals.state_var_name {  sv_info_kind =  (trans_type prog Int no_pos);  id = fresh_int () } in
+    {C.contract_name = contr_formula.I.contr_name;
+    C.contract_cformula = Some (add_ref_vars_to_contract_formula  (trans_I2C_struc_formula prog true  (*[]*) [ Globals.state_var_name] (Gen.unsome contr_formula.I.contr_formula) stab true));
+    C.contract_def = cast_contract_def;
+     }
+    
+and trans_message_formula prog (msg: I.message_decl) : C.message_formula_decl = 
+  let stab = H.create 103 in
+  let _ = H.add stab self { sv_info_kind = (Named msg.I.message_name);id = fresh_int () }; in
+  let _ = List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) msg.I.message_args in
+ 
+(*  let _ = print_endline ("madi debug:  message formula IAST: " ^ (Iprinter.string_of_formula msg.I.message_content)) in*)
+  let cast_args = List.map (fun (_,c)-> trans_var (c,Unprimed) stab no_pos) msg.I.message_args in
+  let cast_formula = trans_formula prog true [] true msg.I.message_content stab true in
+  (*let _ = print_endline ("madi debug:  message formula CAST: " ^ (Cprinter.string_of_formula cast_formula)) in*)
+  { C.message_name = msg.I.message_name;
+   (*trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect  (f0 : IF.formula) stab (clean_res:bool)*)
+    C.message_content = cast_formula;
+    C.message_args = cast_args;
+  }
+  
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
@@ -1464,6 +1709,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.Null _ -> false
     | I.Return _ -> true
     | I.Seq e ->(all_paths_return e.I.exp_seq_exp1) || (all_paths_return e.I.exp_seq_exp2)
+    | I.SwitchReceive e -> List.fold_left (&&) true (List.map (fun (_, blk) -> all_paths_return blk) e.I.exp_switch_receive_branches)
     | I.This _ -> false
     | I.Time _ -> false
     | I.Unary _ -> false
@@ -1531,6 +1777,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   *)let pr  = Iprinter.string_of_proc_decl in
   let pr2 = Cprinter.string_of_proc_decl 5 in
      Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+
 	 
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
@@ -1579,7 +1826,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-    (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
+     (*let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula  proc.I.proc_static_specs )) in *)
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	(* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
@@ -1605,6 +1852,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	(* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
     (* let _ = print_endline "WN : removing result here" in *)
 	let _ = H.remove stab res_name in
+	 
 	let body =match proc.I.proc_body with
 	  | None -> None
 	  | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
@@ -1943,7 +2191,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                   Err.error_loc = pos;
                   Err.error_text =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
-              }
+            }
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       trans_exp_type =
   Debug.no_1 "trans_exp"
@@ -1971,9 +2219,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	  	    let r = List.length index in
 		    let new_e = I.CallNRecv {
 			    I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-                I.exp_call_nrecv_lock = None;
+			    I.exp_call_nrecv_lock = None;
 			    I.exp_call_nrecv_arguments = a :: index;
 			    I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
+			    I.exp_call_nrecv_msg_type = None;
 			    I.exp_call_nrecv_pos = pos;} in 
 	        helper new_e
                 (*(try
@@ -2133,12 +2382,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						      (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
 						      let r = List.length index in
 						      let new_rhs = I.CallNRecv {
-			                      I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
+							      I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
 							      (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-                                  I.exp_call_nrecv_lock = None;
-			                      I.exp_call_nrecv_arguments = rhs :: a :: index;
-			                      I.exp_call_nrecv_path_id = pid;
-			                      I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
+							      I.exp_call_nrecv_lock = None;
+							      I.exp_call_nrecv_arguments = rhs :: a :: index;
+							      I.exp_call_nrecv_path_id = pid;
+							      I.exp_call_nrecv_msg_type = None;
+							      I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
 						      let new_e = I.Assign {
 							      I.exp_assign_op = I.OpAssign;
 		   					      I.exp_assign_lhs = a; (* new_lhs; *)
@@ -2248,7 +2498,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1_prim ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
-                  I.exp_call_nrecv_pos = pos;}in 
+                  I.exp_call_nrecv_msg_type = None;
+		  I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
             else
               (let b_call = get_binop_call b_op in
@@ -2257,7 +2508,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
-                  I.exp_call_nrecv_pos = pos; } in 
+                  I.exp_call_nrecv_msg_type = None;
+		  I.exp_call_nrecv_pos = pos; } in 
               helper new_e)
       | I.Bind {
             I.exp_bind_bound_var = v;
@@ -2382,7 +2634,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_lock = lock;
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
-            I.exp_call_nrecv_pos = pos } ->
+            I.exp_call_nrecv_msg_type = msg;
+	    I.exp_call_nrecv_pos = pos } ->
 		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
@@ -2438,6 +2691,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_scall_arguments = mingled_forked_mn::arg_vars;
 					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                               C.exp_scall_pos = pos;
+                              C.exp_scall_msg_name = None;
                               C.exp_scall_path_id = pi; } in
                           let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                           ((C.Block {
@@ -2447,6 +2701,152 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_block_pos = pos; }),ret_ct))))
                     with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
             (*======== <<<<FORK ==========*)
+	    
+	      (*==================================================*)
+              (*========== MESSAGE PASSING OPERATIONS >>>=========*)
+              (*==================================================*)
+              
+	    else if (mn=Globals.open_name) || (mn=Globals.close_name) ||(mn=Globals.send_name) ||(mn=Globals.receive_name) then	
+	    let check_no_args method_name nr = 
+	      if (List.length cargs <> nr) then
+		Err.report_error { Err.error_loc = pos; Err.error_text = method_name ^ " does not have " ^ (string_of_int nr ) ^ " arguments"; }
+	      else ()
+	    in
+	    let check_contract opt_contract = 
+	      let contract_name = match opt_contract with
+		| Some name  -> name
+		| None->  Err.report_error { Err.error_loc = pos; Err.error_text = ("open: expecting Some exp_call_nrecv_msg_type parameter: a contract name"); } in
+	      try (
+		let contract = I.look_up_contract prog.I.prog_contract_decls contract_name  in
+		  (contract, contract_name))    
+	      with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "first parameter of open - " ^ contract_name ^ " is not a contract name"; }
+	    in
+	    let check_endpoint endpoint_var   = 
+	     let get_endpoint_name = match endpoint_var with
+	      | C.Var { C.exp_var_type = t ;    C.exp_var_name = name;  exp_var_pos = _ } -> 
+		if t=Named Globals.channel_h_name then name
+		else  Err.report_error { Err.error_loc = pos; Err.error_text =  name ^ " - parameter does not have type endpoint"; }  
+	      | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = ( "expected argument as a var: an endpoint"); } in
+	     get_endpoint_name 
+	    in
+	    let check_message opt_message = 
+	     let message_name = match  opt_message with
+		| Some name  -> name		  
+		| None ->  Err.report_error { Err.error_loc = pos; Err.error_text = ( "send/receive: expecting Some exp_call_nrecv_msg_type parameter: a contract name"); } in
+	     try (
+		let message = I.look_up_message_raw prog.I.prog_message_decls message_name  in
+		message)    
+	      with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = " parameter  - " ^ message_name ^ "is not a message name"; }
+	    in
+	    let build_cast_call ret_ct msg_name= 
+	      let positions = List.map I.get_exp_pos args in
+              let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+              
+              let call_e = C.SCall {
+		C.exp_scall_type = ret_ct;
+                C.exp_scall_method_name = mingled_mn;
+                C.exp_scall_lock = lock;
+                C.exp_scall_arguments = arg_vars;
+                C.exp_scall_is_rec = false; 
+                C.exp_scall_pos = pos;
+                C.exp_scall_msg_name = Some ( Gen.unsome msg_name, 0);   
+                C.exp_scall_path_id = pi; } in
+              let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+		((C.Block {
+		  C.exp_block_type = ret_ct;
+                  C.exp_block_body = seq_1;
+                  C.exp_block_local_vars = local_vars;
+                  C.exp_block_pos = pos; }),ret_ct)
+            in
+            let mk_new_endpoint contract contract_name endpoint role = 	     
+	      let state_int = I.IntLit {I.exp_int_lit_val = (I.look_up_initial_state_int contract);I.exp_int_lit_pos = no_pos} in
+	      let contract_var = I.Var {I.exp_var_name = contract_name; I.exp_var_pos = no_pos } in
+	      let new_args = [contract_var; state_int; (I.IntLit {I.exp_int_lit_val = role;   I.exp_int_lit_pos = pos} )] in
+	      let iast_new_exp = I.New {I.exp_new_class_name = Globals.channel_h_name ;
+				  I.exp_new_arguments = new_args;
+				  I.exp_new_pos = pos } in
+	      let new_exp, _ = helper iast_new_exp in
+              new_exp
+	    in
+	    (*open(contract_name, endpoint1, endpoint2)*)
+	    if (mn = Globals.open_name) then
+	      let _ = check_no_args mn 2 in
+	      let contract, contract_name = check_contract msg in
+	      let endpoint_1 = check_endpoint (List.nth cargs 0)  in
+	      let endpoint_2 = check_endpoint (List.nth cargs 1)  in
+	      let (contract_def, _) = helper (I.VarDecl{ I.exp_var_decl_type = Named "contract_typ";
+				    I.exp_var_decl_decls =[(contract_name, None, no_pos)];
+				    I.exp_var_decl_pos = no_pos }) in
+	       let (contract_def_dual, _) = helper (I.VarDecl{ I.exp_var_decl_type = Named "contract_typ";
+				    I.exp_var_decl_decls =[(contract_name^ Globals.dual_tag, None, no_pos)];
+				    I.exp_var_decl_pos = no_pos }) in
+	      let new_1 = mk_new_endpoint contract contract_name (List.nth args 0) 0 in
+	      let new_2 = mk_new_endpoint contract contract_name  (List.nth args 1) 1 in  
+	      let ret_ct = Globals.proc_typ in 
+	      let assign_1 = C.Assign {
+                          C.exp_assign_lhs = endpoint_1; 
+                          C.exp_assign_rhs = new_1;
+                          C.exp_assign_pos = pos;} in
+              let assign_2 = C.Assign {
+                          C.exp_assign_lhs = endpoint_2;
+                          C.exp_assign_rhs = new_2;
+                          C.exp_assign_pos = pos;} in
+              let seq1 = C.Seq {
+                          C.exp_seq_type = ret_ct;
+                          C.exp_seq_exp1 = assign_1;
+                          C.exp_seq_exp2 = assign_2;
+                          C.exp_seq_pos = pos; } in   
+	      let seq2 = C.Seq {
+                          C.exp_seq_type = ret_ct;
+                          C.exp_seq_exp1 = contract_def;
+                          C.exp_seq_exp2 = seq1;
+                          C.exp_seq_pos = pos; } in
+	      let seq = C.Seq {
+                          C.exp_seq_type = ret_ct;
+                          C.exp_seq_exp1 = contract_def_dual;
+                          C.exp_seq_exp2 = seq2;
+                          C.exp_seq_pos = pos; } in                          
+	       (seq, ret_ct)
+	       
+            (*send(packet_name, channel[, value])*)            
+	    else if (mn=Globals.send_name) then
+	      let msg2 = match msg with 
+		| Some s  -> s
+		| None -> report_error no_pos ("send method call does not have message field set") in
+	      let message = I.look_up_message_raw prog.I.prog_message_decls msg2 in
+	      let mingled_send =  I.get_send_receive_signature_of_message message mn in
+	      let test_send = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_send in
+	      let _ = check_no_args mn (List.length test_send.I.proc_args) in 
+	      let _ = check_message msg in
+	      let _ = check_endpoint (List.nth cargs 0)  in
+	      (*check for 3rd argument?*)
+	      let ret_ct = Globals.proc_typ in
+	      let cast_call = build_cast_call ret_ct msg in
+	      cast_call	
+	 
+	    (*close(endpoint1, endpoint2)*)
+	    else if (mn=Globals.close_name) then
+	      let _ = check_no_args mn 2 in 
+	      let _ = check_endpoint (List.nth cargs 0)  in
+	      let _ = check_endpoint (List.nth cargs 1)  in
+	      let ret_ct = Globals.proc_typ in
+	      let cast_call = build_cast_call ret_ct (Some "stub_contract") in
+	      cast_call
+	    (*receive(message_name, channel  value)*)
+	    else (*if (mn=Globals.receive_name) then*)
+	      let msg2 = match msg with 
+		| Some s -> s
+		| None -> report_error no_pos ("receive method call does not have message field set") in
+	      let message = I.look_up_message_raw prog.I.prog_message_decls msg2 in
+	      let mingled_receive =  I.get_send_receive_signature_of_message message mn in
+	      let test_receive = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_receive in
+	      let _ = check_no_args mn (List.length test_receive.I.proc_args) in 
+	      let _ = check_message msg in	      
+	      let _ = check_endpoint (List.nth cargs 0)  in
+	      let ret_ct = Globals.proc_typ in
+	      let cast_call = build_cast_call ret_ct msg in
+	      cast_call
+
             else if (mn=Globals.init_name) 
                   || (mn=Globals.finalize_name) 
                   || (mn=Globals.acquire_name)
@@ -2485,6 +2885,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_scall_arguments = arg_vars;
 					    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                         C.exp_scall_pos = pos;
+                        C.exp_scall_msg_name = None;
                         C.exp_scall_path_id = pi; } in
                     let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                     ((C.Block {
@@ -2525,6 +2926,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        * by mark_rec_and_call_order *)
                       C.exp_scall_is_rec = false; 
                       C.exp_scall_pos = pos;
+                       C.exp_scall_msg_name = None;
                       C.exp_scall_path_id = pi; } in
                   let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                   ((C.Block {
@@ -2678,8 +3080,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			(* simply translate "new int[n]" into "aalloc___(n)" *)
 			let newie = I.CallNRecv {
 				I.exp_call_nrecv_method = array_allocate_call;
-                I.exp_call_nrecv_lock = None;
+				I.exp_call_nrecv_lock = None;
 				I.exp_call_nrecv_arguments = [List.hd dims];
+				I.exp_call_nrecv_msg_type = None;
 				I.exp_call_nrecv_path_id = None;
 				I.exp_call_nrecv_pos = pos; }
 			in helper newie
@@ -2775,6 +3178,23 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 C.exp_seq_exp1 = ce1;
                 C.exp_seq_exp2 = ce2;
                 C.exp_seq_pos = pos; }), te2)
+      | I.SwitchReceive {I.exp_switch_receive_branches = br; I.exp_switch_receive_pos = pos} ->
+	  let _ = print_endline ("SWR debug: " ^ (Iprinter.string_of_exp ie)) in 
+	  let endpoint_names2 = List.map (fun (rcv, _) -> match rcv with 
+						| I.CallNRecv call -> if (call.I.exp_call_nrecv_method = Globals.receive_name) then List.hd call.I.exp_call_nrecv_arguments
+								  else report_error pos ((Iprinter.string_of_exp rcv) ^ "is not a 'receive' call");
+						| _ -> report_error pos ((Iprinter.string_of_exp rcv) ^ "is not a 'receive' call")) br in 
+ 	  let endpoint_names1 = List.filter (fun x -> match x with | I.Var _ -> true; | _ -> false) endpoint_names2 in 
+	  let endpoint_names1 = List.map (fun x -> match x with | I.Var v -> v.I.exp_var_name | _ -> report_error  no_pos "expected endpoint variable") endpoint_names1 in
+	  let endpoint_names = Gen.BList.remove_dups_eq (=) endpoint_names1 in
+	  let _ =  if List.length endpoint_names > 1 then
+	      report_error no_pos ("Switch_receive has more than one endpoint!" ^ (String.concat " " endpoint_names))    in
+  	  let new_branches_tmp = List.map (fun (rcv, blk) -> (trans_exp prog proc rcv, trans_exp prog proc blk)) br in
+	  let new_branches = List.map (fun ((r, _), (b, _)) -> (r,b)) new_branches_tmp in 
+	  ((C.SwitchReceive {
+	    C.exp_switch_receive_branches = new_branches;
+	    C.exp_switch_receive_pos = pos;
+	    C.exp_switch_receive_type = C.void_type}), C.void_type)
       | I.This { I.exp_this_pos = pos } ->
             if Gen.is_some proc.I.proc_data_decl then
               (let cdef = Gen.unsome proc.I.proc_data_decl in
@@ -2791,7 +3211,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_method = u_call;
                         I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = [ e ];
-                        I.exp_call_nrecv_path_id = pid;
+                        I.exp_call_nrecv_msg_type = None;
+			I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
@@ -2917,6 +3338,18 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_var_name = v;
                         C.exp_var_pos = pos; }), ct)
                   else
+		    let state_idents = 
+		      let fun1 (contract: I.contract_decl) : ident list = (*[contract.I.contract_name]*)
+			(List.map (fun state -> state.I.state_name) contract.I.contract_states)
+		      in List.fold_left (@) [] (List.map fun1 prog.I.prog_contract_decls)
+		    in if (List.mem v state_idents) then 
+		      (*contract state or contract name as an argument*)
+		      let ct = trans_type prog (Named "state_typ") pos in
+		      ((C.Var {
+                        C.exp_var_type = ct;
+                        C.exp_var_name = v;
+                        C.exp_var_pos = pos; }), ct)
+                  else
                     Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
       | I.VarDecl {
             I.exp_var_decl_type = t;
@@ -2995,6 +3428,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = w_args;
                         I.exp_call_nrecv_pos = pos;
+			I.exp_call_nrecv_msg_type = None;
                         I.exp_call_nrecv_path_id = pi; };
                     I.exp_seq_pos = pos; };
                 I.exp_block_local_vars = [];
@@ -3034,7 +3468,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_lock = None;
                 I.exp_call_nrecv_arguments = w_args;
                 I.exp_call_nrecv_pos = pos;
-                I.exp_call_nrecv_path_id = pi; } in
+                I.exp_call_nrecv_msg_type = None;
+		I.exp_call_nrecv_path_id = pi; } in
             let w_call = match wrap with
               | None -> temp_call
               | Some (e,_) -> (*let e,et = helper e in*)
@@ -3042,10 +3477,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                       | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
 			let w_proc = case_normalize_proc prog w_proc in
-            let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
+            let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in   
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
             let cw_proc = trans_proc new_prog w_proc in 
-            (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
+           (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
             (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
       | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";} 
@@ -3909,9 +4344,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
   let rec match_exp (hargs : (IP.exp * Label_only.spec_label) list) pos : (CP.spec_var list) =
     match hargs with
       | (e, _) :: rest ->
+	 
             let e_hvars = match e with
               | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK stab pos_e
-              | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
+              | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0) ^ " - " ^(Iprinter.string_of_formula_exp e))in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
 	        hvars
@@ -5380,6 +5816,9 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) stab =
   end
       
 
+and try_unify_message_type_args prog c mdef v ies stab pos = 
+  ()
+      
 and try_unify_data_type_args prog c ddef v ies stab pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
   let _ = gather_type_info_var v stab ((Named c)) pos in
@@ -5569,12 +6008,15 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                         let _ = try_unify_data_type_args prog c ddef v ies stab pos in ()
 		              with
 		                | Not_found ->
+				      if c= "message" then 
+					let _ = try_unify_message_type_args prog c "message" v ies stab pos in ()
+			              else
 			                  (*let _ = print_string (Iprinter.string_of_program prog) in*)
-			                  Err.report_error
-			                      {
-			                          Err.error_loc = pos;
-			                          Err.error_text = c ^ " is neither 2 a data nor view name";
-			                      })) in ()
+					    Err.report_error
+						{
+						    Err.error_loc = pos;
+						    Err.error_text = c ^ " is neither 2 a data nor view name";
+						})) in ()
     | IF.HTrue | IF.HFalse | IF.HEmp -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
@@ -6085,7 +6527,9 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Seq b -> Iast.Seq 
           { Iast.exp_seq_exp1 = rename_exp ren b.Iast.exp_seq_exp1;
           Iast.exp_seq_exp2 =rename_exp ren b.Iast.exp_seq_exp2;
-          Iast.exp_seq_pos = b.Iast.exp_seq_pos }	  	  
+          Iast.exp_seq_pos = b.Iast.exp_seq_pos }
+    | Iast.SwitchReceive b -> let new_branches = List.map (fun (rcv, blk) -> (rename_exp ren rcv, rename_exp ren blk)) b.Iast.exp_switch_receive_branches in
+	  Iast.SwitchReceive {b with Iast.exp_switch_receive_branches = new_branches}
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
@@ -6205,6 +6649,10 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
         let l2 = rename_exp ren l2 in      
         let aux_ren = (ren_list_concat ren ren2) in
         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
+  | Iast.SwitchReceive b -> let new_branches_tmp = List.map (fun (rcv, blk) -> (case_rename_var_decls rcv, case_rename_var_decls blk)) b.I.exp_switch_receive_branches in
+	let (rcvs, ren1) = (List.split (fst (List.split new_branches_tmp))) in
+	let (blks, ren2) = (List.split (snd (List.split new_branches_tmp))) in
+	(Iast.SwitchReceive ({b with I.exp_switch_receive_branches = List.combine rcvs blks}), ((List.concat ren1)@(List.concat ren2)))
   | Iast.Unary b -> 
         (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
   | Iast.VarDecl b -> 		
@@ -6383,6 +6831,10 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               let l1,nh,np = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
               let l2 ,nh,np = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
               (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np)
+        | Iast.SwitchReceive b ->
+	     let new_branches_tmp = List.map (fun (rcv, blk) -> (case_normalize_exp prog h p rcv, case_normalize_exp prog h p blk)) b.I.exp_switch_receive_branches in 
+	     let new_branches = List.map (fun ((r, _, _), (b, _, _)) -> (r,b)) new_branches_tmp in
+	     (I.SwitchReceive ({b with I.exp_switch_receive_branches = new_branches}), h, p)
         | Iast.Unary b -> 
               let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_unary_exp in
               (Iast.Unary {b with Iast.exp_unary_exp = l1},h,p)
@@ -7088,6 +7540,10 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
       let ex2, il2 = irf_traverse_exp cp e.C.exp_seq_exp2 scc in
       (C.Seq {e with
         C.exp_seq_exp1 = ex1; C.exp_seq_exp2 = ex2}, il1@il2)
+  | C.SwitchReceive e -> 
+      let rcvs, il1 = List.split (List.map (fun (rcv, _) -> irf_traverse_exp cp rcv scc) e.C.exp_switch_receive_branches) in
+      let blks, il2 = List.split (List.map (fun (_, blks) -> irf_traverse_exp cp blks scc) e.C.exp_switch_receive_branches) in
+    (C.SwitchReceive {e with C.exp_switch_receive_branches = List.combine rcvs blks}, (List.concat il1) @ (List.concat il2))
   | C.This _
   | C.Time _
   | C.Var _

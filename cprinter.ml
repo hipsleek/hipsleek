@@ -2121,6 +2121,9 @@ let rec string_of_exp = function
 	exp_seq_exp2 = e2;
 	exp_seq_pos = l}) -> 
         (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
+  | SwitchReceive ({exp_switch_receive_branches = br; exp_switch_receive_pos = pos}) ->
+      let branches = List.map (fun (rcv, blk) -> (string_of_exp rcv) ^": "^(string_of_exp blk) ^ "\n") br in
+      "switch_receive {\n" ^ (String.concat  "" branches) ^ "}"
   | This _ -> "this"
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Var ({exp_var_type = _;

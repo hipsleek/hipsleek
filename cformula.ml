@@ -7386,11 +7386,57 @@ let get_varperm_formula_all_x (f:formula) typ : CP.spec_var list =
   in
   helper f
 
+ 
+
 (*get varperm of all concurrent threads*)
 let get_varperm_formula_all (f:formula) typ : CP.spec_var list =
   Debug.no_2 "get_varperm_formula_all"
       !print_formula string_of_vp_ann !print_svl
       get_varperm_formula_x f typ
+
+
+let get_endpoint_node ctx endpoint_name = 
+  let helper1 f = 
+    let h, p, _ , _ , _ = split_components f in
+    let eq_ident_spec_var svar id = match svar with
+      | CP.SpecVar (_, x, _) -> x = id
+    in
+    let rec get_endpoint_nodes heap = match heap with
+      | DataNode  dn -> if ((eq_ident_spec_var dn.h_formula_data_node endpoint_name) && dn.h_formula_data_name = Globals.channel_h_name) then [DataNode dn] else []
+      | ViewNode  vn -> if ((eq_ident_spec_var vn.h_formula_view_node  endpoint_name) && vn.h_formula_view_name = Globals.channel_h_name) then [ViewNode vn] else []
+      | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+      | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
+      | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
+      -> (get_endpoint_nodes h1)@(get_endpoint_nodes h2)
+      | _ -> []
+    in
+    let endpoint_nodes = get_endpoint_nodes h in
+ (*   let _ = List.map (fun x -> print_endline ("getting contract name... " ^ (!print_h_formula x))) endpoint_nodes in*)
+    endpoint_nodes
+  in
+  let rec helper ctx  = match ctx with 
+    | Ctx  ctx -> helper1 ctx.es_formula;
+    | OCtx (c1, c2) -> (helper c1) @ (helper c2) 
+  in
+  let  cont = List.concat (List.map (fun (_, _, con) -> con) ctx) in
+  let cont1 = List.map (fun (_, con) -> con) cont in 
+  let different_nodes nds = 
+    let nds = List.map (fun h -> match h with | DataNode {h_formula_data_node = n} | ViewNode {h_formula_view_node = n} -> [n]; | _ -> []) nds in
+    let nds = List.concat nds in
+    let test = CP.name_of_spec_var (List.hd nds) in
+    let test_list =   List.filter (fun nod -> CP.name_of_spec_var nod <> test) nds in 
+    (List.length test_list) > 0
+  in
+  let nodes = List.concat (List.map helper cont1) in
+  let node = if (List.length nodes > 1)  && (different_nodes  nodes) then
+		report_error no_pos ( "get_contract_name: found more than one endpoint - " ^(string_of_int  (List.length nodes)) ) 
+	     else List.hd nodes in
+  let node_args = match  node	 with 
+    | DataNode {h_formula_data_arguments = args}
+    | ViewNode {h_formula_view_arguments = args} -> args
+    | _ -> report_error no_pos "get_contract_name: expected datanode" in
+ (node, cont1, node_args )
+
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 

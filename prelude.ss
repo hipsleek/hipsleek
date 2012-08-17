@@ -314,6 +314,39 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 int[] aalloc___(int dim) 
 	requires true 
 	ensures dom(res,0,dim-1);
+//////////////////////////////////////////////////////////////////
+// MESSAGE PASSING PRIMITIVE FUNCTIONS
+//////////////////////////////////////////////////////////////////
+ 
+
+data contract_typ {string name;}
+
+
+data message_typ {string name;}
+
+data endpoint{
+  contract_typ c;
+  int  s;
+  int role; 
+}
+
+void open(contract_typ c, endpoint e, endpoint f)
+  requires true
+  ensures true;
+
+
+void close(endpoint e, endpoint f)
+  requires e::endpoint<c1, _, 0> * f::endpoint<c2, _, 1> & c1=c2
+  ensures true;
+
+void send(endpoint e, int x)
+  requires true
+  ensures true;
+
+
+void receive( endpoint f, int x)
+  requires true
+  ensures true;
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

@@ -48,6 +48,9 @@ type sleek_token =
   | INFER | SUBANN | PRE | POST
   | INVLOCK
   | LOGICAL
+  (*message passing*)
+  | MESSAGE | CONTRACT | STATE | INITIAL | FINAL
+  | VALUE_MESSAGE | DUAL | RECEIVE_MSG | SWITCH_RECEIVE
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -98,6 +101,9 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+  (*message passing*)
+    | MESSAGE -> "message"| CONTRACT -> "contract"| STATE -> "state"| INITIAL -> "initial"| FINAL -> "final"
+    | VALUE_MESSAGE ->"msg" | DUAL -> "~" | RECEIVE_MSG -> "?" | SWITCH_RECEIVE -> "switch_receive"
 
 
   let print ppf x = pp_print_string ppf (to_string x)

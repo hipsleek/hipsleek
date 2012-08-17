@@ -227,6 +227,7 @@ let rec find_read_write_global_var
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
 		    I.exp_call_nrecv_arguments = args;
+		    I.exp_call_nrecv_msg_type = None;
 		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
 		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         find_read_write_global_var global_vars local_vars new_e
@@ -325,6 +326,13 @@ let rec find_read_write_global_var
 			let w = IdentSet.union w1 w2 in
 			(r,w)
 	  end
+  |I.SwitchReceive e -> 
+	  let brs = e.I.exp_switch_receive_branches in
+	  let (r1,w1) = List.split (List.map (find_read_write_global_var global_vars local_vars) (fst (List.split brs))) in
+	  let (r2,w2) = List.split (List.map (find_read_write_global_var global_vars local_vars) (snd (List.split brs))) in
+	  let r = IdentSet.union (union_all r1) (union_all r2) in
+	  let w = IdentSet.union (union_all w1) (union_all w2) in
+	  (r,w)
   | I.Unary e ->
 	  begin
 		let (r0,w0) = find_read_write_global_var global_vars local_vars e.I.exp_unary_exp in
@@ -458,7 +466,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
   )
   with Not_found ->
       let func_id = List.hd scc in
-      if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)) then
+      if ((func_id = Globals.fork_name) || (func_id = Globals.join_name) || (func_id = Globals.open_name) || (func_id = Globals.close_name) ||(func_id = Globals.send_name) || (func_id = Globals.receive_name)) then
         let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
         ()
       else
@@ -681,6 +689,13 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
 		I.Seq new_exp
 	  end
+  | I.SwitchReceive e -> 
+	  begin
+		let f0 = extend_body temp_procs in
+		let new_branches = List.map (fun (rcv, blk) -> (f0 rcv, f0 blk)) e.I.exp_switch_receive_branches in
+		let new_exp = { e with I.exp_switch_receive_branches = new_branches} in
+		I.SwitchReceive new_exp
+	  end
   | I.Unary e -> 
 	  begin
 		let new_subexp = extend_body temp_procs e.I.exp_unary_exp in
@@ -892,6 +907,14 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
 			I.Seq new_exp
 	  end
+  | I.SwitchReceive e -> 
+	  begin
+		let f0 = check_and_change global_vars in
+		let new_branches = List.map (fun (rcv, blk) -> (f0 rcv, f0 blk)) e.I.exp_switch_receive_branches in
+		let new_exp = { e with I.exp_switch_receive_branches = new_branches} in
+		I.SwitchReceive new_exp
+	  end
+
   | I.Unary e -> 
 	  begin
 		let new_subexp = check_and_change global_vars e.I.exp_unary_exp in

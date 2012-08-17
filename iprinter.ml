@@ -532,6 +532,9 @@ let rec string_of_exp = function
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2})-> 
           (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
+  | SwitchReceive ({exp_switch_receive_branches = br; exp_switch_receive_pos = pos}) ->
+      let branches = List.map (fun (rcv, blk) -> (string_of_exp rcv) ^": "^(string_of_exp blk) ^ "\n") br in
+      "switch_receive {\n" ^ (String.concat "" branches) ^ "}"
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_decls = l})
                                    -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
@@ -636,6 +639,27 @@ let string_of_coerc_type c = match c with
   | Equiv -> "<=>"
   | Right -> "=>"
 
+(* pretty printing for contract declaration*)
+let string_of_dir_message_decl m = (match m.message_direction with | Send -> "!" | Receive -> "?") ^ m.message ^ " -> "
+ 
+let string_of_transition_decl t = (List.fold_left (^) "" (List.map string_of_dir_message_decl t.trig_messages)) ^ t.next_state^";"
+
+let string_of_transition_decl_list ts = match (List.length ts) with
+					| 0 -> " "
+					| 1 -> (string_of_transition_decl (List.hd ts))
+					| _ -> (List.fold_left (^) "" (List.map (fun x ->  x ^ "\n") (List.map string_of_transition_decl ts)))
+
+let string_of_state_decl s = (match s.state_initial with | true -> "initial " | false -> "") ^
+                             (match s.state_final with | true -> "final " | false -> "")  ^
+                             "state " ^ s.state_name ^ " { " ^
+                              (string_of_transition_decl_list s.transitions) ^ "}\n"
+
+let string_of_contract_decl c = "contract "^c.contract_name^" {\n"^(List.fold_left (^) "" (List.map string_of_state_decl c.contract_states))^"}\n\n"
+
+(*pretty printing for message declaration*)
+
+let string_of_message_decl m = "message " ^ m.message_name ^ " [" ^(string_of_formula m.message_content) ^ "]\n"
+
 let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
 
@@ -716,6 +740,27 @@ let string_of_const_decl c = match c with
    | None   -> "" )
 ;;
 
+(* pretty printing for a list of contract_decl *)
+let rec string_of_contract_decl_list l = match l with 
+ | []        -> ""
+ | h::[]     -> (string_of_contract_decl h) 
+ | h::t      -> (string_of_contract_decl h) ^ "\n" ^ (string_of_contract_decl_list t)
+;;
+
+
+let rec string_of_contract_formula_list l = match l with 
+  | [] -> "";
+  | h::[]     -> (match h with | {contr_name=name; contr_formula = None} -> name ^ " []"; | {contr_name=name; contr_formula = Some cf} -> name ^ " <->\n " ^ (string_of_struc_formula cf)) 
+  | h::t      -> (match h with | {contr_name=name; contr_formula = None} -> name ^ " []"; | {contr_name=name; contr_formula = Some cf} -> name ^ " <->\n " ^ (string_of_struc_formula cf)) ^ "\n" ^ (string_of_contract_formula_list t)
+;;  
+(* pretty printing for a list of message_decl *)
+let rec string_of_message_decl_list l = match l with 
+ | []        -> ""
+ | h::[]     -> (string_of_message_decl h) 
+ | h::t      -> (string_of_message_decl h) ^ "\n" ^ (string_of_message_decl_list t)
+;;
+
+
 (* pretty printing for a list of elements of type (ident * int option) *)
 let rec string_of_const_decl_list l = match l with 
  | []       -> ""
@@ -768,6 +813,9 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
+  (string_of_message_decl_list p.prog_message_decls) ^ "\n\n" ^
+  (string_of_contract_decl_list p.prog_contract_decls) ^ "\n\n" ^ 
+  (string_of_contract_formula_list p.prog_contract_formulas) ^ "\n\n" ^
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
@@ -777,5 +825,6 @@ Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
+Iast.print_formula := string_of_formula;
 Ipure.print_formula :=string_of_pure_formula;
 
