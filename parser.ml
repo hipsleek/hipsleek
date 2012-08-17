@@ -35,6 +35,9 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
+    | Message of message_decl 
+    | Contract of contract_decl
+
 				
   type member = 
 	| Field of (typed_ident * loc)
@@ -1435,6 +1438,8 @@ hprogn:
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
+      let message_decls = ref ([] : message_decl list) in
+      let contract_decls = ref ([] : contract_decl list) in
       let choose d = match d with
         | Type tdef -> begin
           match tdef with
@@ -1450,7 +1455,10 @@ hprogn:
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
-      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs 
+      | Message msg ->   message_decls :=  msg :: !message_decls 
+      | Contract contract ->contract_decls := contract :: !contract_decls; 
+    in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
 					data_fields = [];
@@ -1463,6 +1471,11 @@ hprogn:
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
+     let sends, receives = List.split (List.map (get_struc_formula_of_contract !message_decls) !contract_decls) in
+    
+    let (c1, send_formulas) , (c2, receive_formulas) = (List.split sends), (List.split receives) in
+    let formulas = List.concat (send_formulas@receive_formulas) in
+    let contracts = c1 @ c2 in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_logical_var_decls = !logical_var_defs;
@@ -1476,7 +1489,11 @@ hprogn:
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;
-	  prog_barrier_decls = !barrier_defs; } ]];
+	  prog_barrier_decls = !barrier_defs; 
+      prog_message_decls = !message_decls;
+      prog_contract_formulas = formulas;
+      prog_contract_decls =   contracts;
+      } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -1491,6 +1508,8 @@ decl:
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
+  |  m=message_decl; `SEMICOLON -> Message m
+  |  c=contract_decl -> Contract c
   |  p=proc_decl                  -> Proc p
   | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
 
@@ -1689,6 +1708,53 @@ ref_t: [[REF -> RefMod]];
   
 proc_body: [[t=block-> t]];
 
+(***********Mesage Passing************)
+(*barrier_decl:
+	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
+		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];*)
+message_decl: [[`MESSAGE;  `IDENTIFIER name;  `LT; args=LIST0 typed_id_list SEP `COMMA; `GT;`EQEQ;  content= disjunctive_constr -> 
+		 {message_name = name;
+		  message_args = args;
+		 message_content= F.subst_stub_flow top_flow (I.mk_ex_msg_formula content)}]];
+
+contract_decl: [[`CONTRACT; name=id; `OBRACE; states=states_list; `CBRACE ->
+ 		{contract_name = name;
+		contract_states = states}]]; 
+
+states_list: [[t=LIST0 state -> t]];
+
+state: [[state1=initial_state -> state1;
+       | state2=final_state   -> state2;
+       | state3=normal_state  -> state3]];
+
+
+initial_state: [[`INITIAL; state=final_state -> {state with state_initial=true;}
+		 | state=final_state -> state]];
+
+final_state: [[`FINAL; state=normal_state -> {state with state_final=true;}
+		| state=normal_state -> state]];
+
+normal_state: [[`STATE; name = id; `OBRACE; transitions=state_transitions; `CBRACE ->
+	{state_name = name;
+	 state_index = -1;
+	state_initial = false;
+	state_final = false;
+	transitions = transitions}]];
+
+state_transitions: [[t=LIST0 transition -> t]];
+
+transition: [[t=LIST1 directed_message; next_state=id; `SEMICOLON ->
+	    { trig_messages = t;
+	      next_state = next_state}]];
+
+directed_message: [[d=msg_dir; name=id; `LEFTARROW ->
+		  {message=name;
+		   message_direction=d}]];
+
+msg_dir: [[`NOT -> Send
+	 | `RECEIVE_MSG -> Receive]];
+
+
 (*********** Statements ***************)
 
 block: 
@@ -1812,7 +1878,9 @@ expression_statement: [[(* t=statement_expression -> t *)
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
       | t= pre_decrement_expression -> t
-      | peek_exp_st; t= assignment_expression -> t]]; 
+      | t= switch_receive_expression -> t
+      | peek_exp_st; t= assignment_expression -> t
+]]; 
 
 (*statement_expression:
   [[
@@ -2075,6 +2143,14 @@ cast_expression:
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
 
+switch_receive_expression:
+  [[`SWITCH_RECEIVE; `OBRACE; branches = LIST1 switch_receive_branch; `CBRACE ->
+	SwitchReceive { exp_switch_receive_branches = branches;
+			exp_switch_receive_pos = get_pos_camlp4 _loc 1}]];
+
+switch_receive_branch:
+  [[rcv = invocation_expression; `COLON; blk = block -> (rcv, blk)]];
+
 invocation_expression:
  [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
@@ -2082,11 +2158,21 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
+ 
   | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
-    CallNRecv { exp_call_nrecv_method = id;
+	  let helper id oal = 
+	    if (id <> Globals.send_name && id <> Globals.receive_name && id <> Globals.open_name) then (oal, None)
+	    else let msg = match (List.hd oal) with
+	      | Var {exp_var_name = id; exp_var_pos =loc} -> id
+	      | _ -> "no_msg" in
+	      (List.tl oal, Some msg)
+	  in
+	  let (args, message) = helper id oal in
+	  CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
-                exp_call_nrecv_arguments = oal;
+                exp_call_nrecv_arguments = args;
                 exp_call_nrecv_path_id = None;
+		exp_call_nrecv_msg_type = message;
                 exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
   ]];
 

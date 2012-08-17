@@ -49,6 +49,9 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
 			  I. prog_barrier_decls = [];
+		      I.prog_message_decls = [];
+		      I.prog_contract_formulas = [];
+		      I.prog_contract_decls = [];
 }
 
 let cobj_def = { C.data_name = "Object";
@@ -67,7 +70,10 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [];
-			  C. prog_barrier_decls = []}
+			  C.prog_barrier_decls = [];
+			  C.prog_contract_formulas = [];
+			  C.prog_message_formulas = [];
+}
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 

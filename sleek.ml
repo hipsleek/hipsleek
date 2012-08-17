@@ -157,6 +157,10 @@ let main () =
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
 				I.prog_barrier_decls = [];
+				I.prog_message_decls = [];
+		        I.prog_contract_decls = [];
+				I.prog_contract_formulas = [];
+
   } in
   let _ = process_data_def (I.b_data_constr b_datan []) in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)

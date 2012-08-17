@@ -1134,7 +1134,8 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 						   exp_call_nrecv_arguments = [ce1; ce2];
                            exp_call_nrecv_lock = None;
 						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-						   exp_call_nrecv_pos = pos}) in
+						   exp_call_nrecv_msg_type = None;
+						    exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
   | CP.Min (e1, e2, pos) -> begin
@@ -1144,7 +1145,8 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
                            exp_call_nrecv_lock = None;
 						   exp_call_nrecv_arguments = [ce1; ce2];
 						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-						   exp_call_nrecv_pos = pos}) in
+						   exp_call_nrecv_msg_type = None;
+						  exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
   | CP.Var (sv, pos) -> begin
@@ -1423,6 +1425,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+							 exp_call_nrecv_msg_type = None;
 							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
@@ -1439,6 +1442,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+							 exp_call_nrecv_msg_type = None;
 							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
@@ -1719,11 +1723,13 @@ and combine_disj_results disj_results pos : exp = match disj_results with
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
 							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+							 exp_call_nrecv_msg_type = None;
 							 exp_call_nrecv_pos = pos}) in
 	  let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
                                    exp_call_nrecv_lock = None;
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+								  exp_call_nrecv_msg_type = None;
 								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];

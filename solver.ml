@@ -2861,6 +2861,7 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
       (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid
 
+(*madi debug*)
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
       (conseq : struc_formula) (tid: CP.spec_var option) pos pid : (list_context * proof) =
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
@@ -6125,7 +6126,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     process_action 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  (*LDK*)
+  (*LDK*) (*madi*)
   Debug.no_3_loop "heap_entail_non_empty_rhs_heap" 
       Cprinter.string_of_formula_base 
       Cprinter.string_of_formula
@@ -6649,6 +6650,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                   else
                     let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
                       ^ " (may-bug)."in
+		    let _ = print_endline ("Left: " ^ (!CP.print_formula lhs_p) ^ " Right: " ^ (!CP.print_formula rhs_p)) in 
                     let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                             !top_flow_int estate.CF.es_formula} in
                     (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,

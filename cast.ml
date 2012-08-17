@@ -28,7 +28,9 @@ and prog_decl = {
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list;
-	prog_barrier_decls : barrier_decl list
+	prog_barrier_decls : barrier_decl list;
+	mutable prog_contract_formulas : contract_formula_decl list;
+	mutable prog_message_formulas: message_formula_decl list;
 	}
 	
 and prog_or_branches = (prog_decl * 
@@ -62,7 +64,39 @@ and barrier_decl = {
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 	}  
-    
+
+
+and contract_decl = { contract_decl_name : ident;
+		      contract_decl_states : state_decl list; }
+
+and state_decl =  { state_name : ident;
+		    state_index : int;
+		    state_initial : bool;
+		    state_final : bool;
+		    transitions : transition_decl list; } 
+
+and transition_decl = { trig_messages : dir_message_decl list;
+			next_state : ident; }
+
+and dir_message_decl = { message : ident;
+			 message_direction : message_direction_type; }
+
+and message_direction_type = 
+  | Send
+  | Receive
+
+and contract_formula_decl = {
+    contract_name : ident;
+    contract_cformula : F.struc_formula option;
+    contract_def : contract_decl; 
+    }
+
+and message_formula_decl = {
+   message_name : ident;
+   message_content: F.formula; 
+   message_args : P.spec_var list;
+}
+
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -265,6 +299,7 @@ and exp_scall = { exp_scall_type : typ;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
     exp_scall_path_id : control_path_id;
+    exp_scall_msg_name : (ident * int) option;
     exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : typ;
@@ -272,6 +307,10 @@ and exp_seq = { exp_seq_type : typ;
     exp_seq_exp2 : exp;
     exp_seq_pos : loc }
     
+and exp_switch_receive = {exp_switch_receive_type : typ;
+			  exp_switch_receive_branches: (exp  * exp) list;
+			  exp_switch_receive_pos :loc}
+
 and exp_sharp = {
   exp_sharp_type : typ;
     exp_sharp_flow_type :sharp_flow;(*the new flow*)
@@ -374,6 +413,7 @@ and exp = (* expressions keep their types *)
         (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
+  | SwitchReceive of exp_switch_receive
   | This of exp_this
   | Time of (bool*string*loc)
   | Var of exp_var
@@ -629,7 +669,12 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 		            let e2,r2 = helper n_arg b.exp_seq_exp2 in 
 		            let r = comb_f [r1;r2] in
 		            (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
-
+		  | SwitchReceive b -> 
+			    let (receives, r1) = List.split (List.map (fun (rcv, _) -> helper n_arg rcv) b.exp_switch_receive_branches) in
+			    let (branches, r2) = List.split (List.map (fun (_, blks) -> helper n_arg blks) b.exp_switch_receive_branches) in	 
+			    let branches = List.combine receives branches in
+			    let r = comb_f (r1@r2) in
+			    (SwitchReceive {b with exp_switch_receive_branches = branches}, r)
 	          | While b ->
 		            let e1,r1 = helper n_arg b.exp_while_body in 
 		            (While { b with exp_while_body = e1; }, r1)
@@ -795,6 +840,7 @@ let rec type_of_exp (e : exp) = match e with
 			exp_scall_arguments = _;
 			exp_scall_pos = _}) -> Some t
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
+  | SwitchReceive _ -> Some void_type;
   | This ({exp_this_type = t}) -> Some t
   | Var ({exp_var_type = t; exp_var_name = _; exp_var_pos = _}) -> Some t
   | VarDecl _ -> Some void_type
@@ -1060,7 +1106,19 @@ let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl 
   let pr1 = pr_list !print_coercion in
   Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
     (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
+
+let look_up_contract_formula  contract_formula_decls (contract_name : ident): F.struc_formula option = 
+  try let x  = List.find (fun c-> c.contract_name  = contract_name)  contract_formula_decls in
+    x.contract_cformula
+  with Not_found -> Error.report_error {Err.error_loc = no_pos; Err.error_text = "coud not find cformula_contract for " ^ contract_name}
+
  
+let look_up_contract_decl  contract_formula_decls (contract_name : ident)  :  contract_decl = 
+  try let x  = List.find (fun c -> c.contract_def.contract_decl_name = contract_name)  contract_formula_decls in
+    x.contract_def
+  with Not_found -> Error.report_error {Err.error_loc = no_pos; Err.error_text = "coud not find contract decl for " ^ contract_name}
+
+
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
   (*let pdef = look_up_proc_def_no_mingling no_pos prog.old_proc_decls name in*)
   let pdef = look_up_proc_def_no_mingling no_pos prog.new_proc_decls name in
@@ -1130,6 +1188,10 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 		  exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2;
 		  exp_seq_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
+  | SwitchReceive sw -> 
+      let list1 = List.map (fun (rcvs, _) -> callees_of_exp rcvs) sw.exp_switch_receive_branches in
+      let list2 = List.map (fun (_, blks) -> callees_of_exp blks) sw.exp_switch_receive_branches in
+      Gen.BList.remove_dups_eq (=) ((List.concat list1)@(List.concat list2))
   | This _ -> []
   | Time _ -> []
   | Var _ -> []
@@ -1381,6 +1443,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Sharp _
   | SCall _
   | Label _
+  | SwitchReceive _ 
       -> true
   
   
@@ -1400,6 +1463,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | IConst b -> b.exp_iconst_pos
   | Print (_,b) -> b
   | Seq b -> b.exp_seq_pos
+  | SwitchReceive b -> b.exp_switch_receive_pos
   | VarDecl b -> b.exp_var_decl_pos
   | Unfold b -> b.exp_unfold_pos
   | Unit b -> b
@@ -1807,5 +1871,3 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       proc_static_specs = n_ss; 
       proc_dynamic_specs = n_ds; 
     }, pvl1 @ pvl2)
-
-

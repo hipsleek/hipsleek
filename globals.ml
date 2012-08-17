@@ -408,6 +408,21 @@ let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
 
+let open_name = "open"
+let close_name = "close"
+let send_name = "send"
+let receive_name = "receive"
+let send_suffix = "__send"
+let receive_suffix = "__receive"
+let send_tag = "__send__"
+let receive_tag = "__receive__"
+let state_var_name = "st"
+let role_var_name = "rl"
+let dual_tag = "_dual"
+let channel_h_node = "send_channel"
+let channel_h_name = "endpoint"
+
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)

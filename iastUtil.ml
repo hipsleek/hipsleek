@@ -113,6 +113,12 @@ let transform_exp
         let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
         let r = comb_f [r1;r2] in
         (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+      | SwitchReceive b -> 
+	 let brs = b.exp_switch_receive_branches in
+	 let (new_rcvs, r1) = List.split (List.map (fun (rcv, _) -> helper n_arg rcv) brs) in
+	 let (new_blks, r2) = List.split (List.map (fun (_, blk) -> helper n_arg blk) brs) in
+	 let r = comb_f (r1@r2) in
+	 (SwitchReceive {b with exp_switch_receive_branches = List.combine new_rcvs new_blks}, r)
       | Try b -> 
         let ecl = List.map (helper n_arg) b.exp_catch_clauses in
         let fcl = List.map (helper n_arg) b.exp_finally_clause in
@@ -1266,8 +1272,13 @@ let pre_process_of_iprog iprims prog =
   Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
-
-
+ 
+let string_contains s1 s2 =
+  let re = Str.regexp_string s2
+  in
+      try ignore (Str.search_forward re s1 0); true
+      with Not_found -> false
+ 
 
 (*
 

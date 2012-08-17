@@ -325,6 +325,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
+ 
   Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
@@ -512,6 +513,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
       
+
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in

@@ -127,6 +127,7 @@ module Make (Token : SleekTokenS)
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
    ("combine", COMBINE);
+	 ("contract", CONTRACT);
 	 ("const", CONST);
 	 ("continue", CONTINUE);
 	 ("data", DATA);
@@ -141,6 +142,7 @@ module Make (Token : SleekTokenS)
 	 ("exists", EXISTS);
 	 ("extends", EXTENDS);
 	 ("false", FALSE);
+	 ("final", FINAL);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
 	 ("float", FLOAT);
@@ -154,6 +156,7 @@ module Make (Token : SleekTokenS)
    ("if", IF);
 	 ("in", IN_T);
    ("infer", INFER);
+	("initial", INITIAL);
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
@@ -168,6 +171,8 @@ module Make (Token : SleekTokenS)
 	 ("min", MIN);
 	 ("new", NEW);
 	 ("notin", NOTIN);
+   ("message", MESSAGE);
+   ("msg", VALUE_MESSAGE);
    ("notinlist", NOTINLIST);
 	 ("null", NULL);
 	 ("off", OFF);
@@ -190,6 +195,8 @@ module Make (Token : SleekTokenS)
 	 ("self", SELFT "self");
    ("set",SET);
 	 ("split", SPLIT);
+	 ("state", STATE);
+	 ("switch_receive", SWITCH_RECEIVE);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
    ("Loop", LOOP);
@@ -294,6 +301,7 @@ rule tokenizer file_name = parse
   | ']' { CSQUARE }
   | '$' { DOLLAR }
   | "." { DOT }
+  | "~" {DUAL}
   | "\"" { DOUBLEQUOTE }
   | "=" { EQ }
   | "==" { EQEQ }
@@ -326,6 +334,7 @@ rule tokenizer file_name = parse
   | '%' { PERCENT }
   | '+' { PLUS }
   | '\'' { PRIME }
+  | "?" {RECEIVE_MSG}
   | ';' { SEMICOLON }
   | '*' { STAR }
   | "<:" { SUBANN }

@@ -31,7 +31,12 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
 				   prog_barrier_decls : barrier_decl list;
-                   mutable prog_coercion_decls : coercion_decl list }
+                   mutable prog_coercion_decls : coercion_decl list;
+					(* message passing *)
+				   mutable prog_message_decls : message_decl list;
+				   mutable prog_contract_decls : contract_decl list;
+				   mutable prog_contract_formulas : contract_formula list 
+ }
 
 and data_decl = { data_name : ident;
 		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
@@ -172,6 +177,41 @@ and coercion_type =
   | Equiv
   | Right
 
+and message_decl = { message_name : ident;
+		     message_content: F.formula; 
+		     message_args: (typ*ident) list;}
+		      
+and contract_decl = { contract_name : ident;
+		      contract_states : state_decl list; }
+
+and contract_formula = {contr_name : ident;
+			contr_formula : F.struc_formula option; } 
+
+and state_decl =  { state_name : ident;
+		    state_index : int;
+		    state_initial : bool;
+		    state_final : bool;
+		    transitions : transition_decl list; } 
+
+and transition_decl = { trig_messages : dir_message_decl list;
+			next_state : ident; }
+
+and dir_message_decl = { message : ident;
+			 message_direction : message_direction_type; }
+
+and message_direction_type = 
+  | Send
+  | Receive
+
+and transition_decl_int  = { trig_messages_int : dir_message_decl list;
+			     next_state_int : int }
+
+and state_decl_int = { state_name_int : int;
+		    state_initial_int : bool;
+		    state_final_int : bool;
+		    transitions_int : transition_decl_int list }
+
+
 and uni_op = 
   | OpUMinus
   | OpPreInc
@@ -260,9 +300,10 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
-               exp_call_nrecv_lock : ident option;
+		      exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
+		       exp_call_nrecv_msg_type : ident option; 
 		       exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
@@ -332,6 +373,9 @@ and exp_return = { exp_return_val : exp option;
 and exp_seq = { exp_seq_exp1 : exp;
 		exp_seq_exp2 : exp;
 		exp_seq_pos : loc }
+
+and exp_switch_receive = {exp_switch_receive_branches: (exp  * exp) list;
+			  exp_switch_receive_pos :loc}
 
 and exp_this = { exp_this_pos : loc }
 
@@ -405,6 +449,7 @@ and exp =
   | Raise of exp_raise 
   | Return of exp_return
   | Seq of exp_seq
+  | SwitchReceive of exp_switch_receive
   | This of exp_this
   | Time of (bool*string*loc)
   | Try of exp_try
@@ -432,7 +477,7 @@ let bag_type = BagT Int
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
-
+let print_formula = ref (fun (x:F.formula) -> "Uninitialised printer")
 
 let find_empty_static_specs iprog = 
   let er = List.filter (fun c-> F.isEConstTrue c.proc_static_specs) iprog.prog_proc_decls in
@@ -536,6 +581,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Null p -> p
   | Return e -> e.exp_return_pos
   | Seq e -> e.exp_seq_pos
+  | SwitchReceive e -> e.exp_switch_receive_pos;
   | This e -> e.exp_this_pos
   | Unary e -> e.exp_unary_pos
   | Var e -> e.exp_var_pos
@@ -774,6 +820,12 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
                 let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
                 let r = comb_f [r1;r2] in
                 (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+	  | SwitchReceive e ->
+		let (receives, r1) = List.split (List.map (fun (rcv, _) -> helper n_arg  rcv) e.exp_switch_receive_branches) in
+		let (branches, r2) = List.split (List.map (fun (_, blks) -> helper n_arg  blks) e.exp_switch_receive_branches) in	 
+		let branches = List.combine receives branches in
+		let r = comb_f (r1@r2) in
+		(SwitchReceive {e with exp_switch_receive_branches = branches}, r)
           | Try b -> 
                 let ecl = List.map (helper n_arg) b.exp_catch_clauses in
                 let fcl = List.map (helper n_arg) b.exp_finally_clause in
@@ -976,6 +1028,83 @@ and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) =
   else (look_up_proc_class_mingled_name rest name)
   | []	-> raise Not_found    
 *)
+
+and look_up_contract (contracts : contract_decl list) (name :string) = 
+  match contracts with 
+    | c :: cs ->
+	if c.contract_name = name then
+	    c
+	else
+	    look_up_contract cs name
+   | [] -> raise Not_found
+
+ 
+and look_up_initial_state (contract: contract_decl) : string = 
+  let rec fun0 states = 
+    match states with
+      | [] -> raise Not_found
+      | state::tail -> if state.state_initial = true then state.state_name else fun0 tail
+  in fun0 contract.contract_states
+
+and look_up_initial_state_int (contract_f: contract_decl) : int = 
+  let rec fun0 states = 
+    match states with
+      | [] -> raise Not_found
+      | state::tail -> if state.state_initial = true then state.state_index else fun0 tail
+  in fun0 contract_f.contract_states  
+
+and mk_ex_msg_formula (msg : F.formula) : F.formula = 
+  let base, hh, pp = match msg with
+	      | F.Base b -> (b, b.F.formula_base_heap, b.F.formula_base_pure)
+	      | _ -> report_error no_pos ("mk_ex_msg_formula expected message formula to have Base type")
+  in 
+  let rec unphase hh =  match hh with
+    | F.Phase ph -> unphase ph.F.h_formula_phase_rw;
+    | _ -> hh; 
+  in
+  let new_hh = unphase hh in 
+  let helper1 expl flag   = 
+    let fun0 exp1 = 
+      match exp1 with 
+	| P.Var ((id, pr), _) -> [(id, pr)];
+	| _ -> [];
+    in
+    List.fold_left (@) [] (List.map fun0 expl)
+  in
+  let helper2 expl flag   = 
+    let fun0 pair = 
+      match pair with 
+	(id, ex) -> [(id, Unprimed)]
+    in
+    List.fold_left (@) [] (List.map fun0 expl)
+  in  
+  let rec get_exists_h heap_f = 
+    match heap_f with 
+      | F.Phase form -> (get_exists_h form.F.h_formula_phase_rd) @ (get_exists_h form.F.h_formula_phase_rw);
+      | F.Conj form -> (get_exists_h form.F.h_formula_conj_h1) @ (get_exists_h form.F.h_formula_conj_h2);
+      | F.Star form -> (get_exists_h form.F.h_formula_star_h1) @ (get_exists_h form.F.h_formula_star_h2);
+      | F.HeapNode heap -> helper1 heap.F.h_formula_heap_arguments true;
+      | F.HeapNode2 heap2 -> helper2 heap2.F.h_formula_heap2_arguments false;
+      | _ -> [];
+   in
+   let existentials = get_exists_h new_hh in
+  let ret = { F.formula_exists_qvars = existentials; 
+              F.formula_exists_heap = new_hh;
+              F.formula_exists_pure = pp;
+              F.formula_exists_flow = base.F.formula_base_flow;
+              F.formula_exists_and = base.F.formula_base_and;
+              F.formula_exists_pos = base.F.formula_base_pos;} 
+  in
+  (F.Exists ret)
+
+and look_up_message_raw (messages: message_decl list) (name : string) = 
+  match messages with 
+    | m :: ms ->
+	if m.message_name = name then
+	    m
+	else
+	    look_up_message_raw ms name
+   | [] -> report_error no_pos ("message " ^ name ^ " is not found")  
 
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
 and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = match c.data_parent_name with 
@@ -1395,6 +1524,7 @@ let rec label_e e =
     | Null _ 
     | VarDecl _
     | Seq _
+    | SwitchReceive _
 		| ArrayAlloc _ (* An Hoa *)
     | New _ 
     | Finally _ 
@@ -1689,8 +1819,10 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
                 prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;
 				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
-				} in
-             append_iprims_list new_iprims tl
+				prog_message_decls = hd.prog_message_decls @ iprims.prog_message_decls;
+				prog_contract_decls = hd.prog_contract_decls @ iprims.prog_contract_decls;
+				prog_contract_formulas = hd.prog_contract_formulas @ iprims.prog_contract_formulas} in
+             	append_iprims_list new_iprims tl
 
 let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
   match iprims_list with
@@ -1708,7 +1840,10 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_hopred_decls = [];
                 prog_proc_decls = [];
                 prog_coercion_decls = [];
-				prog_barrier_decls = [];}
+				prog_barrier_decls = [];
+				prog_message_decls = [];
+				prog_contract_decls = [];
+				prog_contract_formulas = [];}
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 
@@ -1852,6 +1987,388 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 						0 field_sequence in
 	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
 		res
+
+(*message passing helper functions*)
+let change_state_name (state: state_decl) (mapping: (string * int) list) (new_int : int) : ((int * bool * bool * transition_decl list) * (string * int) list) = 
+  let new_mapping = (state.state_name, new_int)::mapping in
+  let new_state = (new_int, state.state_initial, state.state_final, state.transitions) in
+  (new_state, new_mapping)
+
+let change_transitions (mapping: (string * int) list) (state: (int * bool * bool * transition_decl list)) : state_decl_int = 
+  match state with 
+    | (name, initial, final, transitions) ->   
+      let new_next_state  next_state_name = try  snd (List.find (fun (name, value) ->  name = next_state_name) mapping) 
+    with | Not_found ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "change transition cannot find state id: " ^ fst ( List.hd mapping) ^  " - " ^next_state_name}  in 
+    let new_transition (trans : transition_decl ) : transition_decl_int = 
+      {trig_messages_int = trans.trig_messages; next_state_int = new_next_state trans.next_state } in
+    { state_name_int = name; 
+      state_initial_int = initial; 
+      state_final_int = final; 
+      transitions_int = List.map new_transition transitions; }
+ 
+let state_ident_to_int (states: state_decl list) : state_decl_int list = 
+    let rec fun0 states new_states mapping counter = 
+       match states with 
+	| [] -> (new_states, mapping);
+	| state::tail -> let (new_state, mapping1) = change_state_name state mapping counter in
+	  let (new_tail, new_mapping) = fun0 tail [] mapping1 (counter + 1) in
+	  (new_state::new_tail, new_mapping) in
+    let (states2, mapping2) = fun0 states [] [] 1 in
+   (* let _ = print_endline (List.fold_left (^) "" (List.map (fun (name, id) -> "(" ^ name ^ "," ^ string_of_int id ^ ") " ) mapping2)) in *)
+    let new_states = List.map (change_transitions mapping2) states2 in
+    new_states
+    
+let make_endpoint_heap_node contract_name heap_var_state heap_var_role= 
+  F.mkHeapNode (Globals.channel_h_node, Unprimed) Globals.channel_h_name false (F.ConstAnn  Mutable) false false false None [(P.Var ((contract_name, Unprimed), no_pos)); heap_var_state; heap_var_role] None no_pos
+
+let make_endpoint_pure_formula_role state_var state_val role_var role_val = 
+  P.mkAnd (P.BForm (((P.mkEq state_var (P.IConst (state_val, no_pos)) no_pos), None), None)) (P.BForm (((P.mkEq role_var (P.IConst (role_val, no_pos)) no_pos), None), None)) no_pos
+
+let make_endpoint_pure_formula  state_var state_val  = 
+ (P.BForm (((P.mkEq state_var (P.IConst (state_val, no_pos)) no_pos), None), None))  
+
+let heap_var_state = P.Var ((Globals.state_var_name, Unprimed), no_pos)
+let heap_var_role = P.Var ((Globals.role_var_name, Unprimed), no_pos)  
+
+let make_empty_spec state_name_int contract_name = 
+  let channel_heap_node_before_pure = make_endpoint_pure_formula heap_var_state state_name_int (*heap_var_role 0*) in
+  let channel_heap_node_after_pure = channel_heap_node_before_pure in
+  let channel_heap_node_before = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let channel_heap_node_after = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let ensures_formula = F.EAssume ((F.mkBase channel_heap_node_after channel_heap_node_after_pure n_flow [] no_pos), (fresh_formula_label "")) in
+  let base_branch_formula = F.mkBase channel_heap_node_before channel_heap_node_before_pure n_flow [] no_pos in 
+  (F.mkEBase [] [] [] base_branch_formula (Some ensures_formula) false no_pos)
+
+let make_empty_spec2 state_name_int contract_name = 
+  (*let channel_heap_node_before =F.mkBase F.HEmp (P.mkTrue no_pos) n_flow [] no_pos in*)
+  let channel_heap_node_after_pure = make_endpoint_pure_formula heap_var_state state_name_int (*heap_var_role 0*) in
+  let channel_heap_node_after = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let ensures_formula = F.EAssume ((F.mkExists [(Globals.state_var_name, Unprimed)] channel_heap_node_after channel_heap_node_after_pure n_flow [] no_pos), (fresh_formula_label "")) in
+  let base_branch_formula = F.mkBase F.HEmp (P.mkTrue no_pos) n_flow [] no_pos in 
+  (F.mkEBase [] [] [] base_branch_formula (Some ensures_formula) false no_pos)
+
+let make_guard_formulas (contract_name: ident) (int_states: state_decl_int list) : P.formula list = 
+  let rec helper states pos = 
+    match List.length states with 
+      | 0 ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "make guard formulas: need at least 2 states "};
+      | 1 -> [P.BForm (((P.Gt ((P.Var ((Globals.state_var_name, Unprimed), no_pos)), (P.IConst (pos, no_pos)), no_pos)), None), None)];
+      | _ -> let crt = P.BForm (((P.Eq ((P.Var ((Globals.state_var_name, Unprimed), no_pos)), (P.IConst ((List.hd states), no_pos)), no_pos)), None), None) in
+	      crt :: (helper (List.tl states) (List.hd states))
+  in
+  let ids = List.map (fun state -> state.state_name_int) int_states in
+  let first_id = List.hd ids in
+  let first = P.BForm (((P.Lte ((P.Var ((Globals.state_var_name, Unprimed), no_pos)), (P.IConst (first_id, no_pos)), no_pos)), None), None) in
+  first :: (helper (List.tl ids) first_id)
+
+let update_state_name_int  (contract:contract_decl) new_states = 
+  let new_c = {contract with contract_states = List.map2 (fun state state_x -> {state with state_index = state_x.state_name_int}) contract.contract_states new_states} in
+  new_c
+
+let make_single_send_branch_formula message_list state_name_int contract_name transition = 
+  let next_state_id = transition.next_state_int in
+  let channel_heap_node_after_pure = make_endpoint_pure_formula heap_var_state next_state_id  in
+  let channel_heap_node_after = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let msg_name = (List.hd transition.trig_messages_int).message in
+  let msg_form = try (List.find (fun m -> m.message_name = msg_name) message_list).message_content
+		 with | Not_found ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "cannot find message ["^ msg_name^"] in list: " ^ 
+		 (String.concat ", " (List.map (fun m -> m.message_name) message_list))}
+  in
+  let msg_formula = match msg_form with 
+    | F.Exists ex -> ex;
+    | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "message formula of " ^ msg_name ^ " is not Exists formula\n"};
+  in  
+  let new_message_heap_node = msg_formula.F.formula_exists_heap in
+  let new_heap_node_before_pure =    msg_formula.F.formula_exists_pure   in
+  let ensures_formula = F.EAssume ((F.mkExists [(Globals.state_var_name, Unprimed)] channel_heap_node_after channel_heap_node_after_pure n_flow [] no_pos), (fresh_formula_label "")) in
+  let msg_var_exists = msg_formula.F.formula_exists_qvars in
+  let base_branch_formula = F.mkBase new_message_heap_node new_heap_node_before_pure n_flow  [] no_pos in
+   let ret = (F.mkEBase [] [] msg_var_exists base_branch_formula (Some ensures_formula) false no_pos) in	    
+  ret
+  
+let make_single_receive_branch_formula message_list state_name_int contract_name transition = 
+  let next_state_id = transition.next_state_int in
+  let channel_heap_node_after_pure = make_endpoint_pure_formula heap_var_state next_state_id  in
+  let channel_heap_node_after = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let msg_name = (List.hd transition.trig_messages_int).message in
+  let msg_form = try (List.find (fun m -> m.message_name = msg_name) message_list).message_content
+		 with | Not_found ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "cannot find message ["^ msg_name^"] in list: " ^ 
+		 (String.concat ", " (List.map (fun m -> m.message_name) message_list))}
+  in
+  let msg_formula = match msg_form with 
+    | F.Exists ex -> ex;
+    | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "message formula of " ^ msg_name ^ " is not Exists formula\n"};
+  in   
+  let new_message_heap_node = msg_formula.F.formula_exists_heap in
+  let new_heap_node_before_pure =    msg_formula.F.formula_exists_pure   in
+  let channel_heap_node_after = F.mkStar channel_heap_node_after new_message_heap_node no_pos in
+  let channel_heap_node_after_pure = P.mkAnd channel_heap_node_after_pure new_heap_node_before_pure no_pos in
+  let ensures_formula = F.EAssume ((F.mkExists [(Globals.state_var_name, Unprimed)] channel_heap_node_after channel_heap_node_after_pure n_flow [] no_pos), (fresh_formula_label "")) in
+  let msg_var_exists = msg_formula.F.formula_exists_qvars in
+  let base_branch_formula = F.mkBase F.HEmp (P.mkTrue no_pos) n_flow [] no_pos in
+  (F.mkEBase [] [] msg_var_exists base_branch_formula (Some ensures_formula) false no_pos)	    
+
+let make_single_state_contract_formula (send: bool) (message_list: message_decl list) (contract_name : ident) (state: state_decl_int)  :   F.struc_formula = 
+   let no_transitions = List.length state.transitions_int in
+  let mk_branch_formula_function = if send then make_single_send_branch_formula else make_single_receive_branch_formula in
+    let branch_formula = 
+      if (no_transitions = 0) then 
+	  make_empty_spec state.state_name_int contract_name 
+      else if (no_transitions = 1) then
+	  mk_branch_formula_function   message_list state.state_name_int contract_name (List.hd state.transitions_int) 	
+      else  
+	  let list_elements = List.map (mk_branch_formula_function message_list state.state_name_int contract_name) state.transitions_int in 
+	  let list_elements1 = List.map (fun formula -> ((None, []), formula) ) list_elements in
+	  (F.EList (list_elements1)) in
+  branch_formula
+
+let make_initial_endpoint_match state_index contract_name =
+  let endpoint_node_before = make_endpoint_heap_node contract_name heap_var_state heap_var_role in 
+  let endpoint_heap_form = F.mkBase (*[(Globals.state_var_name, Unprimed)]*) endpoint_node_before   (P.mkTrue no_pos)  n_flow [] no_pos in
+  endpoint_heap_form
+  
+let make_case_branches (send : bool) (message_list: message_decl list) (contract_name : ident) (state: state_decl_int) (guard_formula: P.formula)  : (P.formula * F.struc_formula) = 
+  let no_transitions = List.length state.transitions_int in
+  let mk_branch_formula_function = if send then make_single_send_branch_formula else make_single_receive_branch_formula in
+  let branch_formula = 
+      if (no_transitions = 0) then 
+	  make_empty_spec2 state.state_name_int contract_name
+      else 
+	let list_elements = List.map (mk_branch_formula_function message_list state.state_name_int contract_name) state.transitions_int in   
+        if (no_transitions = 1) then
+	    (List.hd list_elements) 	
+	else  	  
+	    (F.EList (List.map (fun formula -> ((None, []), formula) ) list_elements))
+  in 
+  (guard_formula, branch_formula)
+
+let dual_of_contract contract = 
+  let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+        try ignore (Str.search_forward re s1 0); true
+        with Not_found -> false
+  in
+  let name = contract.contract_name in
+  let new_name = if contains name Globals.dual_tag then String.sub name 0 ((String.length name) -5)
+		 else (name ^ Globals.dual_tag)
+  in
+  let other_dir dir = 
+    match dir with 
+      | Send -> Receive ;
+      | Receive -> Send;
+  in
+  let dualize_transition t = 
+    {t with trig_messages = List.map (fun dir_msg -> {dir_msg with message_direction = other_dir dir_msg.message_direction}) t.trig_messages}
+  in
+    { contract_name = new_name;
+      contract_states = List.map (fun s -> {s with transitions = List.map dualize_transition s.transitions}) contract.contract_states;}
+
+ 
+let generate_weak_send_receive_formulas tag cont form = 
+  let test_dir = if tag = Globals.send_tag then Send else Receive in
+ (* let filter_transitions  trans = List.filter (fun tr -> (List.hd tr.trig_messages).message_direction = test_dir)  trans in *)
+  let receive_msgs = List.concat (List.map (fun st -> List.map (fun tr -> (List.hd tr.trig_messages).message)  st.transitions) cont.contract_states) in
+  let false_branch = Some (F.mkEFalse n_flow no_pos) in
+  let prune_formula tmp_form msg_name = 
+    let get_state_branch_for_message transitions case_branches =
+     (* let _ = print_endline ("XXX " ^ (string_of_int (List.length transitions)) ^ " ... " ^ (string_of_int (List.length case_branches))) in *)
+       if List.length transitions = 0 then Gen.unsome false_branch
+	else
+	 (* let _ = print_endline ("YYY " ^ msg_name ^ " " ^ (String.concat ", " (List.map (fun tr-> tr.next_state) transitions))) in*)
+	  let tmp = List.map2 (fun tr br -> if (List.hd tr.trig_messages).message = msg_name &&  (List.hd tr.trig_messages).message_direction = test_dir then Some br else None)  transitions case_branches in
+	  let winner = try List.find (fun x -> x <> None) tmp
+			with | Not_found -> false_branch in
+	  let winner = Gen.unsome winner in
+	    winner
+    in
+    let transform_case_branch  br_form state = 
+     (* let _ = print_endline ("XXX " ^ state.state_name) in*)
+      let lst = match br_form with 
+	| F.EBase base -> [((None, []), br_form)] ;
+	| F.EList choices -> choices; 
+	| _ -> report_error no_pos "generate_receive_formulas : expected branch to be either Ebase or Elist" in
+      let _, lst2 = List.split lst in
+      get_state_branch_for_message state.transitions lst2
+    in
+    let big_formula  = match tmp_form with
+      | None -> report_error no_pos ("nothing to prune for contract " ^ cont.contract_name);
+      | Some f -> f in
+    match big_formula with
+      | F.EBase ebase ->  transform_case_branch big_formula  (List.hd cont.contract_states);
+      | F.ECase case -> let same_guards, old_branches = List.split case.F.formula_case_branches in 
+			let new_branches = List.map2 transform_case_branch old_branches cont.contract_states in			
+		  F.ECase {case with F.formula_case_branches = List.combine same_guards new_branches}
+      | _ -> report_error no_pos ("generate_receive_formulas : expected contract formula to be either EBase or ECase" ^ (!print_struc_formula big_formula))
+  in 
+  let form = Gen.unsome form in
+  let base_form = match form with 
+    | F.EBase base ->  base;
+    | _ -> report_error no_pos "generate_receive_formulas: expected input receive contract as Ebase";
+  in
+  let core_form = base_form.F.formula_struc_continuation in
+  let receive_msgs = List.sort String.compare receive_msgs in
+  let rec fun0 lst = match lst with
+    | [] -> [];
+    | [x] -> [x];
+    | x::y::rest -> if x = y then fun0 (y::rest) else (x:: (fun0 (y::rest)));
+  in
+  let receive_msgs = fun0 receive_msgs in
+  let aux_list = List.map (prune_formula core_form) receive_msgs in
+ (* let _ = print_endline ("Debug receive formulas: " ^ (String.concat "\n" (List.map !print_struc_formula aux_list))) in*)
+  let fun1 receive_msg new_form = 
+    let new_contr_formula = Some (F.EBase {base_form with F.formula_struc_continuation = Some new_form}) in
+    {contr_name = cont.contract_name ^ tag ^ receive_msg; contr_formula = new_contr_formula}
+  in
+  List.map2 fun1 receive_msgs aux_list
+  
+
+
+let generate_strong_receive_formulas contract    = 
+  let false_formula =  F.mkEFalse n_flow no_pos in
+  let receive_msgs = List.concat (List.map (fun st -> List.map (fun tr -> (List.hd tr.trig_messages).message) st.transitions) contract.contract_states) in
+  let receive_msgs = List.sort String.compare receive_msgs in
+  let rec remove_dups lst = match lst with
+    | [] -> [];
+    | [x] -> [x];
+    | x::y::rest -> if x = y then remove_dups (y::rest) else (x:: (remove_dups (y::rest)));
+  in
+  let receive_msgs = remove_dups receive_msgs in
+  let make_one_receive_formula msg_name = 
+    let helper state = 
+      if List.length state.transitions = 1 then false
+      else
+	try let _ = List.find (fun tr -> (List.hd tr.trig_messages).message = msg_name && (List.hd tr.trig_messages).message_direction = Receive) state.transitions in
+	    true
+	with Not_found -> false
+    in
+   (* let contract = C.look_up_contract_formula prog.C.prog_contract_formulas contract_nama false in*)
+    let state_ints = List.map (fun st -> st.state_index) (List.filter helper contract.contract_states) in
+    if List.length state_ints = 0 then false_formula
+    else
+      let endpoint_node  = make_endpoint_heap_node contract.contract_name heap_var_state heap_var_role in 
+      let equalities = List.map (fun x -> (P.BForm (((P.mkEq heap_var_state (P.IConst (x, no_pos)) no_pos), None), None))) state_ints in
+      let rec helper1 ret lst = match lst with 
+	| [] -> ret;
+	| one::rest -> helper1 (P.mkOr ret one None no_pos) rest;
+      in
+      let or_equalities = helper1 (List.hd equalities) (List.tl equalities) in
+      let pure_formula = P.mkAnd or_equalities (P.BForm (((P.mkEq heap_var_role (P.IConst (1, no_pos)) no_pos), None), None)) no_pos in 
+      let base_ret = F.mkBase endpoint_node pure_formula n_flow  [] no_pos in
+      let ret_formula = (F.mkEBase [] [] [(Globals.role_var_name, Unprimed)] base_ret None (*(Some ensures_formula)*) false no_pos) in
+      ret_formula
+  in
+  let aux_list = List.map make_one_receive_formula receive_msgs in
+  let fun1 receive_msg new_form = 
+    let new_contr_formula = Some new_form  in
+    {contr_name = contract.contract_name ^ "__receive__str__" ^ receive_msg; contr_formula = new_contr_formula}
+  in
+  List.map2 fun1 receive_msgs aux_list
+
+let mk_ret_val new_contract suffix1 form1 suffix2 form2 = 
+  let dual_contract = dual_of_contract new_contract in
+  let bundle contr form_list form_list_dual = 
+     (contr, (form_list@form_list_dual))
+  in
+  let receive_formulas_weak = generate_weak_send_receive_formulas Globals.receive_tag dual_contract form2 in
+  let receive_formulas_weak_dual = generate_weak_send_receive_formulas Globals.receive_tag new_contract form2 in
+  let receive_formulas_strong = generate_strong_receive_formulas dual_contract in
+  let receive_formulas_strong_dual = generate_strong_receive_formulas new_contract in
+  let ret_receive_formulas =bundle dual_contract (receive_formulas_strong@receive_formulas_weak) (receive_formulas_strong_dual@receive_formulas_weak_dual)  in
+  let send_formulas = generate_weak_send_receive_formulas Globals.send_tag new_contract form1 in
+  let send_formulas_dual = generate_weak_send_receive_formulas Globals.send_tag dual_contract form1 in
+  let ret_send_formulas = bundle new_contract send_formulas send_formulas_dual in
+ (* let _ = print_endline ("Debug test send formulas: " ^ (String.concat "\n" (List.map (fun c -> (c.contr_name )^ "  --  " ^(!print_struc_formula (Gen.unsome c.contr_formula))) (send_formulas@send_formulas_dual)))) in*)
+ (* let _ = print_endline ("madi debug: send formula after def: \n" ^ (Iprinter.string_of_struc_formula send_form)) in*)
+   (ret_send_formulas , ret_receive_formulas )
+	    
+let get_struc_formula_of_contract  message_list c = 
+  let (name, states) = (c.contract_name, c.contract_states) in
+  let endpoint_f = make_initial_endpoint_match  1 name in
+  match states with
+  | []  ->  mk_ret_val c Globals.send_suffix None Globals.receive_suffix None
+  | [st] -> let new_state = List.hd (state_ident_to_int states) in
+    let new_c = update_state_name_int   c [new_state] in
+    let send_contract_f = make_single_state_contract_formula true  message_list name new_state in
+    let send_form = F.mkEBase [] [] [(Globals.state_var_name , Unprimed)] endpoint_f (Some send_contract_f) [] no_pos in
+    let receive_contract_f = make_single_state_contract_formula false  message_list name new_state in
+    let receive_form = F.mkEBase [] [] [(Globals.state_var_name , Unprimed)] endpoint_f (Some receive_contract_f) [] no_pos in
+    let _ = print_endline ( "single state send: " ^(!print_struc_formula   send_form)) in
+    let _ = print_endline ( "single state receive: " ^(!print_struc_formula  receive_form)) in
+   (* (new_c,  {contr_name = name ^ "__send"; contr_formula = form})*)
+     mk_ret_val new_c Globals.send_suffix (Some send_form) Globals.receive_suffix (Some receive_form)
+  | _ -> let new_states = state_ident_to_int states in
+    let new_c = update_state_name_int   c new_states in
+    let guards = make_guard_formulas name new_states in
+    (*let endpoint_f = make_initial_endpoint_match  1 name in*)
+    let send_branches = List.map2 (make_case_branches true message_list name) new_states guards  in 	   
+    let send_case_f = F.ECase {F.formula_case_branches = send_branches; F.formula_case_pos = no_pos}in
+    let send_form = F.mkEBase [] [] [(Globals.state_var_name , Unprimed)] endpoint_f (Some send_case_f) [] no_pos in
+    (*receive contract*)
+    let receive_branches = List.map2 (make_case_branches false message_list name) new_states guards  in 
+    let receive_case_f = F.ECase {F.formula_case_branches = receive_branches; F.formula_case_pos = no_pos}in
+    let receive_form = F.mkEBase [] [] [(Globals.state_var_name, Unprimed)] endpoint_f (Some receive_case_f) [] no_pos in
+    (*(new_c, {contr_name = name ^ "__send"; contr_formula = Some form})*)	 
+    mk_ret_val new_c Globals.send_suffix (Some send_form)  Globals.receive_suffix (Some receive_form)
+
+  
+let rec get_heap_types_ids_of_h_formula (f : F.h_formula) : (ident * ident) list = 
+  let rec helper f = match f with 
+      | F.Phase phase -> (helper phase.F.h_formula_phase_rd)@(helper phase.F.h_formula_phase_rw)
+      | F.Conj  conj ->  (helper conj.F.h_formula_conj_h1)@(helper conj.F.h_formula_conj_h2)
+      | F.Star star ->  (helper star.F.h_formula_star_h1)@(helper star.F.h_formula_star_h2)
+      | F.HeapNode   heap -> [(heap.F.h_formula_heap_name, fst heap.F.h_formula_heap_node)]
+      | F.HeapNode2   heap2 -> [(heap2.F.h_formula_heap2_name, fst heap2.F.h_formula_heap2_node)]
+      | _ -> []
+  in (Globals.channel_h_name, Globals.channel_h_node) :: (helper f)
+
+let get_h_content_of_message (message: message_decl) = 
+  let h_content = match message.message_content with
+      | F.Exists ex -> ex.F.formula_exists_heap
+      | _ -> report_error no_pos ("expected message formula to have Exists type")
+  in
+  h_content
+  
+let get_send_receive_signature_of_message (message: message_decl) fname= 
+  let h_content = get_h_content_of_message message in  
+  let param_list = fst (List.split (get_heap_types_ids_of_h_formula h_content)) in
+  let mn = fname ^ "$" ^ (String.concat "~" param_list) in
+  mn
+
+  
+let get_send_receive_def_of_message message fname=   
+  let make_proc_instance (message: F.h_formula) (mn : ident) : proc_decl = 
+    let pos =  no_pos in
+    let params = List.map (fun (typ, id) ->{  param_mod = NoMod;
+					      param_type = Named typ;
+					      param_loc = pos;
+					      param_name = id } ) (get_heap_types_ids_of_h_formula message) in
+    mkProc fname mn None false [] params Void (mkSpecTrue n_flow pos) (F.mkEFalseF ()) pos None
+  in  
+  let h_content = get_h_content_of_message message in     
+  let mn = get_send_receive_signature_of_message message fname in
+  let new_proc =   make_proc_instance h_content mn in
+  (mn, new_proc)	  
+
+let add_msg_send_receive prog send_name receive_name= 
+  let add_one_send_rec prog (message: message_decl) =   
+    let (mn1, send) = get_send_receive_def_of_message message send_name   in
+    let test_send = try Some (look_up_proc_def_mingled_name prog.prog_proc_decls mn1)
+	       with | Not_found -> None
+    in 
+    let tmp1 = match test_send with 
+      | Some _ -> prog
+      | None -> {prog with prog_proc_decls = prog.prog_proc_decls@[send]}
+    in let (mn2, receive) = get_send_receive_def_of_message message receive_name  in
+    let test_receive = try Some (look_up_proc_def_mingled_name prog.prog_proc_decls mn2)
+	       with | Not_found -> None
+    in 
+    let tmp2 = match test_receive with 
+      | Some _ -> tmp1
+      | None -> {tmp1 with prog_proc_decls = tmp1.prog_proc_decls@[receive]}
+    in tmp2
+  in
+  List.fold_left (add_one_send_rec) prog prog.prog_message_decls 
+    
 
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
