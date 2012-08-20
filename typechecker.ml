@@ -1218,10 +1218,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let lock_data_name = vdef.view_data_name in
                   let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
                   let prepost = CF.prepost_of_finalize lock_var lock_data_name lock_sort new_args post_start_label pos in
+                  let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in (*try to combine fractional permission before finalize*)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
-                  let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx prepost None pos pid in
+                  let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx1 prepost None pos pid in
                   (* let _ = print_string (("\nSCall: finalize: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
@@ -1298,6 +1299,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_endline ("inv_lock = " ^ (Cprinter.string_of_formula inv_lock)) in *)
                   (* let _ = print_endline ("renamed_inv = " ^ (Cprinter.string_of_formula renamed_inv)) in *)
                   let prepost = CF.prepost_of_release lock_var lock_sort new_args renamed_inv post_start_label pos in
+                  (* let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in (\*combine fractional permissions before release*\) *)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;

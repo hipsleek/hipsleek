@@ -1190,7 +1190,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
   formula_base_label = lbl;
   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
-  let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
+  let qvars = Gen.BList.intersect_eq (CP.eq_spec_var) svs fvars in (* used only these for the quantified formula *)
   if Gen.is_empty qvars then Base tmp_b 
   else
 	Exists ({formula_exists_qvars = qvars; 
@@ -7578,6 +7578,13 @@ let merge_struc_pre (sp:struc_formula) (pre:formula list): struc_formula =
     requires self::LOCKA(f)<> * self::CellInv<> & (self in ls) & 0<f<=1
     ensures  [ref ls] self::LOCKA(f)<> & ls'=diff(ls,{self})
 
+NEW !!!
+
+  release(self) -->
+    requires self::CellInv<> & (self in ls) & 0<f<=1
+    ensures  [ref ls] ls'=diff(ls,{self})
+
+
 In order to control the number of automatic split, 
 we employ the following heuristics and the original field
 of LOCK
@@ -7714,7 +7721,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
   let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
   (**************)
-  let post = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
+  let post = mkBase_simp data_node (MCP.OnePF ls_post_f) in
   (* let post = formula_of_heap_w_normal_flow data_node pos in *)
   let post = EAssume ([ls_uvar],post,lbl) in
   let pre =  mkBase_simp lock_node (MCP.OnePF ls_pre_f) in
@@ -7825,19 +7832,24 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in (\*not allow SPLIT in pre*\) *)
   (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
   (* let _ = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
-  let read_f = mkPermInv fresh_perm in (*only need a certain permission to read*)
+  (* let read_f = mkPermInv fresh_perm in (\*only need a certain permission to read*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1*)
-  let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
+  (* let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
+  (*TOCHECK: ??? donot need lock_node*)
+  (* let tmp_pre = mkBase HTrue (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
+  let tmp_pre = mkBase HTrue (MCP.OnePF ls_pre_f) TypeTrue (mkTrueFlow ()) [] pos in
   (* let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
   (* let tmp = add_original tmp true in  (\*but allow SPLIT in post*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1 & inv*)
   let pre = normalize 5 inv tmp_pre pos in
   (* let pre_evars, pre_base = split_quantifiers pre in *)
-  let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in
+  (* let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in *)
+  (*TOCHECK: ??? donot need lock_node*)
+  let post_f = mkBase_simp HTrue (MCP.OnePF ls_post_f) in
   let post = EAssume ([ls_uvar],post_f,lbl) in
   EBase { 
 	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [fresh_perm](* ::pre_evars *); (*instantiate*)
+	formula_struc_implicit_inst = [(* fresh_perm *)](* ::pre_evars *); (*instantiate*)
 	formula_struc_exists = [];
 	formula_struc_base = pre (* pre_base *);
 	formula_struc_continuation = Some post;

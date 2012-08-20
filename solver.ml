@@ -2932,8 +2932,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 (*foo5,foo6 in hip/err3.ss*)
                 (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
                 let helper ctx postcond= 
-				let es =  CF.estate_of_context ctx pos in
-				(CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) in
+				  let es =  CF.estate_of_context ctx pos in
+				  (CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) 
+                in
                 let invert_ctx ctx postcond=
                   let fl = CF.flow_formula_of_formula postcond in
                   if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then

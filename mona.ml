@@ -1114,11 +1114,13 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
     if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
       let f_wo_float = CP.drop_float_formula f in
       let f_wo_bag = CP.drop_bag_formula f in
-  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
+      (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
       (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
       (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
       (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
-      let b_float = Redlog.is_sat f_wo_bag imp_no in
+      let (pr_w,pr_s) = CP.drop_complex_ops in
+      let b_float,_ = Redlog.imply_no_cache_ops pr_w pr_s f_wo_bag imp_no in
+      (* let _ = print_endline("b_float = " ^ (string_of_bool b_float)) in *)
       if (b_float) then (f_wo_float,true) else (f,false)
     else (f,true)
   in
@@ -1154,7 +1156,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
     if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
       let f_wo_float = CP.drop_float_formula f in
       let f_wo_bag = CP.drop_bag_formula f in
-  (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
+      (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
       (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
       (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
       (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)

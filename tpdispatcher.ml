@@ -1409,7 +1409,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	let _ = if should_output () then
 		begin
 			reset_generated_prover_input ();
-			reset_prover_original_output ();
+ 		    reset_prover_original_output ();
 	  	end in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
@@ -1511,6 +1511,18 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | Redlog -> 
       redlog_imply ante_w conseq_s  
     | RM ->
+          (*use UNSOUND approximation
+          a & b -> c&d ~~~ (a->c) & (b->d)*)
+          (*TO CHECK*)
+          if (is_bag_constraint ante) && (is_float_formula ante) then
+            let ante_no_float = CP.drop_float_formula ante in
+            let ante_no_bag = CP.drop_bag_formula ante in
+            let conseq_no_float = CP.drop_float_formula conseq in
+            let conseq_no_bag = CP.drop_bag_formula conseq in
+            let b_no_float = mona_imply ante_no_float conseq_no_float in
+            let b_no_bag = mona_imply ante_no_bag conseq_no_bag in
+            (b_no_float && b_no_float)
+          else
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             mona_imply ante_w conseq_s
           else

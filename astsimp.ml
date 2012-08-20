@@ -1318,6 +1318,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           let fvars = CF.fv new_f in
           let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
           let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
+          (* let _ = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
+          (* let _ = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *)
+          (* let _ = print_endline ("fvars = " ^ (Cprinter.string_of_spec_var_list fvars)) in *)
+          (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
+
           (****************************)
           Some new_f2)
   in
