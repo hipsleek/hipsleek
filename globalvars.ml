@@ -229,7 +229,11 @@ let rec find_read_write_global_var
         find_read_write_global_var global_vars local_vars new_e
         with _ ->
                 Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
-      else if (e.I.exp_call_nrecv_method=Globals.join_name) then
+      else if (e.I.exp_call_nrecv_method=Globals.join_name
+                    || e.I.exp_call_nrecv_method=Globals.init_name
+                    || e.I.exp_call_nrecv_method=Globals.finalize_name
+                    || e.I.exp_call_nrecv_method=Globals.acquire_name
+                    || e.I.exp_call_nrecv_method=Globals.release_name) then
         try
         find_read_write_global_var global_vars local_vars (List.hd e.I.exp_call_nrecv_arguments)
         with _ ->
@@ -459,7 +463,9 @@ let merge_scc (scc : NG.V.t list ) : unit =
   )
   with Not_found ->
       let func_id = List.hd scc in
-      if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)) then
+      if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
+          || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
+          || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)) then
         let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
         ()
       else
@@ -479,7 +485,7 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 	let r = IdentSet.union r1 r2 in
 	let w = IdentSet.union w1 w2 in
 	let _ = Hashtbl.replace h v1 (r,w) in
-	merge_scc scc1	  
+	merge_scc scc1
 
 (** Find read write global variables for all procedures using graph data structure 
 	@param prog program declaration
@@ -653,8 +659,12 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         (* ================== *)
         with _ ->
                 Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
-      else if (e.I.exp_call_nrecv_method=Globals.join_name) then
-        (*no need for join*)
+      else if (e.I.exp_call_nrecv_method=Globals.join_name 
+              || e.I.exp_call_nrecv_method=Globals.init_name
+              || e.I.exp_call_nrecv_method=Globals.finalize_name
+              || e.I.exp_call_nrecv_method=Globals.acquire_name
+              || e.I.exp_call_nrecv_method=Globals.release_name) then
+        (*no need for join, init ...*)
         exp
       else
 	  begin

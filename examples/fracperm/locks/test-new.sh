@@ -9,3 +9,5 @@ echo "======= cell-extreme-cases.ss ======"
 ../../../hip cell-extreme-cases.ss | grep -E 'Proc|assert' > test-cases/cell-extreme-cases.n
 echo "======= cell-w-ls.ss ======"
 ../../../hip cell-w-ls.ss | grep -E 'Proc|assert' > test-cases/cell-w-ls.n
+echo "======= multicast.ss ======"
+../../../hip multicast.ss | grep -E 'Proc|assert' > test-cases/multicast.n

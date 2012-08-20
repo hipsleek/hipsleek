@@ -11,3 +11,6 @@ echo "======= cell-extreme-cases.ss ======"
 ########### MOST IMPORTANT (rules + examples) ####################
 echo "======= cell-w-ls.ss ======"
 ../../../hip cell-w-ls.ss | grep -E 'Proc|assert' > test-cases/cell-w-ls.res
+
+echo "======= multicast.ss ======"
+../../../hip multicast.ss | grep -E 'Proc|assert' > test-cases/multicast.res
