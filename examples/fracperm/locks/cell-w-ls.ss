@@ -18,8 +18,8 @@
     ensures  [ref ls] self::LOCKA(f)<n> * self::cellInv<> & ls'=union(ls,{self})
 
   release(self) -->
-    requires self::LOCKA(f)<> * self::CellInv<> & (self in ls) & 0<f<=1
-    ensures  [ref ls] self::LOCKA(f)<> & ls'=diff(ls,{self})
+    requires self::CellInv<> & (self in ls) & 0<f<=1
+    ensures  [ref ls] ls'=diff(ls,{self})
 -------------------------------------------------
 
 */

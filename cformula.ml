@@ -4508,12 +4508,12 @@ let proc_left t1 t2 =
       | [] -> Some t2
       | [c1] -> 
             if isAnyFalseCtx c1 then
-              let _ = print_endline ("FalseCtx") in
+              (* let _ = print_endline ("FalseCtx") in *)
               if is_inferred_pre_ctx c1 then 
-                let _ = print_endline ("Inferred") in
+                (* let _ = print_endline ("Inferred") in *)
                 Some t2 (* drop FalseCtx with Pre *)
               else 
-                let _ = print_endline ("NOT Inferred") in
+                (* let _ = print_endline ("NOT Inferred") in *)
                 Some t1 (* keep FalseCtx wo Pre *)
             else None
       | _ -> None 
