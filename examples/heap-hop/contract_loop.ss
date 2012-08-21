@@ -49,7 +49,6 @@ void put_get()
   x = new cell(44);
   y = new cell(88);
 
-  //x1 = new cell(44);
   y1 = new cell(88);
 
    	
@@ -80,9 +79,10 @@ endpoint get2(endpoint f)
   ensures res::endpoint<C, 4, 1>; 
 {
   cell x, y;
-  x = new cell(44);
+  x= new cell(44);
+   dprint;
   send(packet_one,f, x); 
-
+    dprint;
     switch_receive {
     
     receive(packet_one,f, x) : {return f; }
@@ -96,7 +96,7 @@ endpoint get(endpoint f)
  {
    
   cell x, y;
-
+ dprint;
   switch_receive {
     
     receive(packet ,f) : {return f; }

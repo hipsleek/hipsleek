@@ -39,7 +39,6 @@ contract C {
   state end1 {}
   state end2 {}
   state end3 {}
- 
 
 }
 
