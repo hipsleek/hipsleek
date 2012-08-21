@@ -1,0 +1,10 @@
+data lock{}.
+
+data intCell{
+  int val;
+}.
+
+lemma "splitCell" self::intCell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::intCell(f1)<v> * self::intCell(f2)<v> & 0.0<f<=1.0.
+
+checkentail y::intCell<v1> * z::intCell<v2> & v1=0 & v2=0 |- (exists v5: y::intCell(0.5)<v3> * z::intCell(0.5)<v4> & v5=v3+v4).
+print residue. //VALID: only 1 residue
