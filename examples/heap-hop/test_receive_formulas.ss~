@@ -1,0 +1,23 @@
+message packet_one <> == true  ;
+message packet_two <> == true  ;
+message packet_three <> == true  ;
+message packet_four <> == true  ;
+
+
+
+contract C { 
+  initial  state monday { !packet_one -> tuesday;  
+			 !packet_four -> sunday;
+			  } 
+
+  state tuesday {!packet_one -> friday;}
+
+  state friday {!packet_one -> sunday; 
+	      !packet_three -> tuesday;
+	      !packet_two -> friday;}
+ 
+  state saturday {packet_three -> tuesday;}
+
+  final state sunday {}
+
+}

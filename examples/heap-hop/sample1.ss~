@@ -1,0 +1,105 @@
+data node {
+	int val; 
+	node next;	
+}
+
+
+/* view for a singly linked list */
+
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
+
+// message definitions
+
+message finish <> == true  ;
+message ack <> == true  ;
+message send_node <node x> == x::node<_, _>  ;
+
+//contract definitions
+
+contract C { 
+  initial  state transfer { !send_node  -> transfer; //}
+			 !finish -> end;
+		       }  
+
+  state temp {!ack -> transfer;}
+
+  final state end {}
+
+}
+
+
+ 
+
+
+void put_get(node x) 
+   requires x::ll<_>
+   ensures true;
+{
+  endpoint e,f;
+   
+  open(C, e, f);
+ 
+  int t = fork(put, e, x);
+  get(f);
+  
+  join(t);
+ 
+  close(e,f);
+} 
+
+
+
+  
+void get(endpoint f) 
+  requires f::endpoint<C, 1, 1>
+  ensures f::endpoint<C, 3, 1>  ;
+ 
+ {
+   
+  node x;
+  int n = 0;
+    
+  while (n == 0)
+    case { 
+      n = 0 -> requires f::endpoint<C, 1, 1>  
+	    ensures f::endpoint<C, 3, 1>   ;
+      n != 0  ->    requires f::endpoint<C, 3, 1>  
+		    ensures f::endpoint<C, 3, 1>   ;
+      }
+  {        
+      switch_receive {
+	receive(finish,f) : {n = 1;}
+	receive(send_node,f, x) : { n = 0; send(ack, f); }
+      };
+  }
+   
+} 
+
+void put (endpoint e, node x)
+  requires e::endpoint<C, 1, 0> * x::ll<_ >
+  ensures e::endpoint<C, 3, 0> ;
+
+{
+  node tmp;
+ 
+  while (x != null)
+      requires e::endpoint<C, 1, 0> * x::ll<_>  
+      ensures e::endpoint<C, 1, 0>  * x'::ll <_> & e'=e;
+      
+  { 
+      tmp = x.next;
+      send(send_node, e, x);
+      x = tmp;   
+      dprint;
+      receive(ack, e);
+      dprint;
+     }
+ 
+  send(finish, e);
+ 
+}
+  
+
+

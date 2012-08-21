@@ -1,0 +1,19 @@
+data cell{
+  int val;
+}
+
+message foo <> == true  ;
+message bar <cell x> == x::cell<n> & n=44 ;
+
+contract C { 
+  initial  state start { !foo -> one;  
+			// !foo -> end;
+			   //!test ->one; 
+			 !bar -> end; } 
+  state one {!foo -> two;}
+  state two {!foo -> end; 
+	      !bar -> one;}
+ 
+  final state end {}
+
+}

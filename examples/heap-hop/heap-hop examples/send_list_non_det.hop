@@ -1,0 +1,60 @@
+/*
+ * Variant of : send_list.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Same code, but the first cell of the list is sent after all the
+ * other cells. This complicates a bit the contract, which becomes
+ * non-deterministic, and causes a memory leak warning. This example
+ * also illustrates how Heap-Hop traverses the contract
+ * non-deterministically to find the right step for the proof.
+ */
+
+message cell [val|->]
+message fin [val|->C{end} * val==src]
+
+contract C {
+  initial state transfer {
+  	  !cell -> transfer;
+  	  !cell -> head_transfered;
+	  !fin -> end;
+	}
+  state head_transfered {!fin -> end; }
+  final state end {}
+}
+
+put(e,head) [e|->C{transfer} * list(head)] {
+  local x,t;
+
+  if (head!=NULL) {
+    x=head->tl;
+    while(x != NULL) [e|->C{transfer} * list(x) * head|->] {
+        t = x->tl;
+        send(cell,e,x);
+        x = t;
+      }
+    send(cell,e,head);
+  }
+  send(fin,e,e);
+} [emp]
+
+get(f) [f|->~C{transfer}] {
+  local x, e;
+
+  e = NULL;
+  while(e == NULL) [if e==NULL then f|->~C{transfer} else e|->C{end} * f|->~C{end},pr:e] {
+    switch receive {
+    x = receive(cell,f): { dispose(x);}
+    e = receive(fin,f): {}
+    }
+  }
+  close(f,e);
+} [emp]
+
+send_list(x) [list(x)] {
+  local e,f;
+  
+  (e,f) = open(C);
+  put(e,x) || get(f);
+} [emp]

@@ -1,0 +1,114 @@
+/*
+ * Implementation of the MSI cache coherence protocol with bus snooping.
+ *
+ * a cache line l contains 3 fields:
+ *   - address: the address of the corresponding memory region
+ *   - data: the cached data
+ *   - msi: the cache line's state
+ *
+ * each cache line may be in one of 3 states:
+ *   - M: the line has been locally modified and should be written back to
+ *        memory before anyone else tries to read it (write back policy)
+ *   - S: the line is shared between several caches and is up-to-date with
+ *        memory
+ *   - I: the cache line is invalid and should be re-fetched from memory
+ */
+
+
+msi,data;
+
+message q_r [emp] /* read query */
+message a_r [emp] /* read answer */
+message q_w [emp] /* write query */
+message write_back(2) [val1|->] /* message to write back a cell in memory */
+message ack [emp] /* ack when nothing has to be written back */
+
+contract C { /* contract between the processor and its cache */
+  initial final state ip { ?q_r -> arp; ?q_w -> ip; }
+  state arp { !a_r -> ip; }
+}
+
+contract MEM { /* contract between the cache and the memory */
+  initial final state im {
+    ?q_r -> arm;
+    !q_r -> qrm;
+    ?q_w -> im;
+    !q_w -> im; }
+  state arm { !a_r -> im; }
+  state qrm {
+    ?write_back -> im;
+    ?ack -> im; }
+}
+
+processor(pid,ml) {
+  /* here be assembly instructions in the form of message passing */
+
+}
+
+in_cache(l;c,a) {
+  /* test if address a is in cache c and returns corresponding cache line l */
+  /* instead of implementing an array and an eviction policy, we create a new
+     cache line each time we're asked to look it up, which should be a sound
+     approximation...
+  */
+  local v;
+  l = new();
+  v = new();
+  l->data = v;
+} [l|->data:v * v|->]
+
+fill_line(l,a,v) [l|-> * v|->]{
+  /* fills cache line l with data v at address a */
+  l->data = v;
+} [l|->data:v * v|->]
+
+msi_cache(cid,pe,me) [pe|->C{ip}*me|->~MEM{im}] {
+  local a,l,cache,s,v;
+
+  switch receive {
+  a = receive(q_r,me): {
+    /* the memory reclaims reading permission to all caches */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s == M) {
+      /* if the cache line is dirty, write it back to memory and put it
+         in the shared state */
+      v = l->data;
+      send(write_back,me,a,v);
+      l->msi = S;
+    } else {
+      send(ack,me);
+    }
+  }
+  (a,v) = receive(q_w,me): {
+    /* the memory reclaims writing permission to all caches */
+    /* invalidate the corresponding cache line */
+    in_cache(l;cache,a);
+    l->msi = I;
+  }
+  a = receive(q_r,pe): {
+    /* the processor wants to read */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s == I) {
+      send(q_r,me,a);
+      v = receive(a_r,me);
+      fill_line(l,a,v);
+      l->mesi = S;
+    }
+    d = l->data;
+    send(a_r,pe,d);
+  }
+  a = receive(q_w,pe): {
+    /* the processor wants to write */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s != M) {
+      /* invalite other processors' caches */
+      send(q_w,m);
+    }
+    fill_line(l,a,v);
+    l->msi = M;
+  }
+  }
+}

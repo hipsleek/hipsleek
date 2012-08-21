@@ -1,0 +1,68 @@
+ 
+
+data cell{
+  int val;
+}
+
+
+// message definitions
+
+message packet <cell x3> == x3::cell<m> ;
+message packet2 <cell x3> == x3::cell<m> ;
+
+ 
+//contract definitions
+
+contract C { 
+  initial   state start { !packet -> ?packet2 -> !packet -> start; 
+			      !packet2 -> next;} 
+  state next {?packet -> !packet -> !packet -> last;}
+  final state last {!packet -> ?packet -> start; }
+//		    !packet2 -> next;}
+ // final state last {}
+}
+
+
+void put_get() 
+  requires true
+  ensures true;
+{
+  endpoint e,f;
+  cell x;
+
+
+  x = new cell(55);
+  open(C, e, f);
+ // dprint;
+  int t = fork(put, e, x);
+  get(f);
+  join(t);
+ // close(e,f);
+}
+
+  
+void get(endpoint f) 
+  requires f::endpoint<C, 1, 1>
+  ensures f::endpoint<C, 1, 1>;
+ {
+  cell y;
+ 
+ // dprint;
+  assert y'=null; 
+  receive(packet,f, y);
+  receive(packet,f, y);
+  assert y::cell<55>;
+ // dispose(y);
+} 
+
+void put(endpoint e, cell x) 
+  requires e::endpoint<C, 1, 0> * x::cell<n>  
+  ensures e::endpoint<C, 1, 0>; 
+ 
+{
+  x = new cell(55);
+  send(packet,e,x);
+} 
+
+
+ 

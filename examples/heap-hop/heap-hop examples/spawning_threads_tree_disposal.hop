@@ -1,0 +1,108 @@
+/*
+ * Variant of : load_balancing_parallel_tree_disposal.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Another parallel tree disposal using channels.  The main
+ * differences here are that the number of threads is not bounded, and
+ * left-disposers and right-disposers do not work the same.  Disposers
+ * threads spawn one new disposer thread when the tree they have to
+ * dispose is not empty, and pass it half of the tree. A disposer
+ * thread always works with an endpoint that connects it to the thread
+ * that disposes the brother tree.  There are still left-disposers and
+ * right-disposers, but they are not symmetric.
+ *
+ * As for the load-balancing example, termination and progress cannot
+ * be proved by Heap-Hop, and are here non-trivial. But thanks to the
+ * contract, Heap-Hop can prove the absence of memory leaks in this
+ * example.
+ */
+
+message chan     [val|->~C{start}]
+message work     [tree(val)]
+message done_l   [emp]
+message done_r   [val|->~C{end} * val==src]
+message all_done [val|-> C{end} * val==src]
+
+contract C {
+  initial state start { !chan   -> status_l;
+                        !all_done -> end; }
+  state status_l { !done_l -> status_r;
+                   !work   -> status_r; }
+  state status_r { ?done_r -> end;
+                   ?work   -> start; }
+  final state end {}
+}
+
+
+synchro_left(e,t) [e|->C{status_l} * tree(t)] {
+  local l,f;
+
+  send(work,e,t);
+  switch receive {
+  l = receive(work,e): { dispose_left(e,l); }
+  f = receive(done_r,e): { close(e,f); }
+  }
+} [emp]
+
+dispose_left(e,t) [e|->C{start} * tree(t)] {
+  local l,r,el,er,f;
+
+  (el,er) = open(C);
+  send(chan,e,er);
+
+  if (t != NULL) {
+    l = t->l;
+    r = t->r;
+    dispose(t);
+
+    dispose_left(el,l) || synchro_left(e,r);
+  } else {
+    send(done_l,e,0);
+    switch receive {
+    l = receive(work,e): { dispose_left(e,l) || dispose_left(el,t); }
+    f = receive(done_r,e): {
+      close(e,f);
+      send(all_done,el,el); }
+    }
+  }
+} [emp]
+
+dispose_right(e,t) [e|->~C{start} * tree(t)] {
+  local l,r,rr,er,el;
+
+  er = receive(chan,e);
+
+  if (t != NULL) {
+    l = t->l;
+    r = t->r;
+    dispose(t);
+
+    switch receive {
+    rr = receive(work,e): {
+      send(work,e,l);
+      dispose_right(er,r) || dispose_right(e,rr); }
+    rr = receive(done_l,e): {
+      send(work,e,l);
+      dispose_right(er,r) || dispose_right(e,0); }
+    }
+  } else {
+    switch receive {
+    rr = receive(work,e): {
+      send(done_r,e,e);
+      dispose_right(er,rr); }
+    rr = receive(done_l,e): {
+      send(done_r,e,e);
+      el = receive(all_done,er);
+      close(el,er); }
+    }
+  }
+} [emp]
+
+balanced_dispose_tree(t) [tree(t)] {
+  local e,f,l,r;
+
+  (e,f) = open(C);
+  dispose_left(e,t) || dispose_right(f,0);
+} [emp]

@@ -1,0 +1,97 @@
+/* Example of an Automatic Teller Machine
+ *
+ * Adapted from the session types version in
+ *   Kohei Honda, Vasco T. Vasconcelos and Makoto Kubo
+ *   Language Primitives and Type Discipline for Structured
+ *   Communication-Based Programming
+ *   ESOP'98
+ */
+
+
+message pin [emp]
+message deposit [emp]
+message balance [emp]
+message withdraw [emp]
+message deposit_u [emp]
+message balance_u [emp]
+message withdraw_u [emp]
+message receipt [emp]
+message success [emp]
+message failure [emp]
+message dispense [emp]
+message overdraft [emp]
+message user_connect [val|->~User_Session{i}]
+message bank_connect [val|->~Bank_Session{i}]
+message bank_init [emp]
+message fin_u [val|->~User_Session{end_end}]
+message fin_b [val|->~Bank_Session{end_end}]
+
+contract User {
+  initial state wait { !user_connect -> wait; }
+}
+
+contract Bank {
+  initial state wait { ?bank_init -> !bank_connect -> wait; }
+}
+
+contract User_Session {
+  initial state i { !pin -> operation; }
+  state operation {
+    !deposit_u -> end;
+    !withdraw_u -> wdraw;
+    !balance_u -> ?receipt -> end;
+  }
+  state wdraw {
+    ?dispense -> end;
+    ?overdraft -> end;
+  }
+  state end { ?fin_u -> end_end; }
+  final state end_end {}
+}
+
+contract Bank_Session {
+  initial state i {
+    ?deposit -> end;
+    ?withdraw -> wdraw;
+    ?balance -> !receipt -> end;
+  }
+  state wdraw {
+    !success -> end;
+    !failure -> end;
+  }
+  state end { ?fin_b -> end_end; }
+  final state end_end {}
+}
+
+atm(a,b) [a|->~User{wait} * b|->~Bank{wait}] {
+  local k,h,id,amt;
+
+  while (true) [a|->~User{wait} * b|->~Bank{wait}] {
+    k = receive(user_connect,a);
+    id = receive(pin,k);
+
+    send(bank_init,b,id);
+    h = receive(bank_connect,b);
+  
+    switch receive {
+      amt = receive(deposit_u,k): {
+        send(deposit,h,id,amt);
+      }
+      amt = receive(withdraw_u,k): {
+        send(withdraw,h,id,amt);
+        switch receive {
+          receive(success,h): { send(dispense,k,amt); }
+          receive(failure,h): { send(overdraft,k); }
+          }
+      }
+      receive(balance_u,k): {
+        send(balance,h);
+        amt = receive(receipt,h);
+        send(receipt,k,amt);
+      }
+      }
+
+    send(fin_u,k,k);
+    send(fin_b,h,h);
+  }
+} [a|->~User{wait} * b|->~Bank{wait}]

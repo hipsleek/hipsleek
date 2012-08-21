@@ -1,0 +1,78 @@
+ data cell{
+  int val;
+}
+ 
+// message definitions
+
+message dummy <> == true  ;
+message packet <> == true  ;
+message packet_one <cell x3> == x3::cell<m> & m=44 ;
+message packet_two <cell x1,cell x2> == x1::cell<n1> * x2::cell<_> & n1=55  ;
+
+
+//contract definitions
+
+contract C { 
+  initial  state start {   
+			 !packet_one -> end;
+			  } 
+
+  state middle {!packet_one -> next;
+		!packet_two -> middle;}
+
+  state next {!packet_one -> end; 
+	      !packet -> middle;
+	      !packet_two -> next;}
+ 
+  final state end {}
+
+}
+
+
+
+void put_get() 
+  requires true
+  ensures true;
+{
+  endpoint e,f;
+  cell x;
+  
+  x = new cell(44);
+  
+  open(C, e, f);
+ //   dprint;
+  int t = fork(put, e, x);
+  get(f);
+  
+  join(t);
+//  dprint;
+  close(e,f);
+  //dprint;
+}
+
+  
+void get(endpoint f) 
+  requires f::endpoint <C, 1, 1>
+  ensures f::endpoint <C, 4, 1>;
+ 
+ {
+  cell x, y;
+
+  receive(packet_one,f, y); 
+ // dprint;
+} 
+
+void put(endpoint e, cell c) 
+  requires e::endpoint<C, 1, 0> * c::cell<n> & n=44 
+  ensures e::endpoint<C, 4, 0>;  
+{ 
+ // assert c::cell<44>;
+//  dprint;
+  send(packet_one, e, c);
+  // send (msg_type, out_channel, parameters..)
+  //dprint;
+  assert c'::cell<_>;
+} 
+
+
+ 

@@ -1,0 +1,21 @@
+message external_choice [emp]
+message resolving [emp]
+
+contract C {
+  initial state init {
+    ?external_choice -> deadlock1;
+    ?external_choice -> progress;
+    ?external_choice -> deadlock2;
+  }
+  state deadlock1 {}
+  state deadlock2 {}
+  state progress {?resolving->end;}
+  state end {}
+}
+
+
+server(e) [e|->C{init}] {
+  receive(external_choice,e);
+  receive(resolving,e);
+} [e|->C{end} ]
+

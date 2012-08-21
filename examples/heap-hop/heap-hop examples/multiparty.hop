@@ -1,0 +1,42 @@
+message m1 [emp]
+message m2 [emp]
+message m3 [emp]
+message m4 [emp]
+message m5 [emp]
+message m6 [emp]
+
+
+/********************************/
+/* Example 1: A->B;A->C;B->C    */
+/********************************/
+protocol C1[A,B,C] {
+  initial state one {
+    A->B: m1;
+    A->C: m2;
+    two
+  }
+  state two {
+    B->C: m3;
+    end}
+}
+
+main1() [emp] {
+  (e,f,g) = open(C1);
+  A1() || B1() || C1 ();
+  close(e,f,g);
+} [emp]
+
+A1() [e|->pid:C1,st:{one},rl:0] {
+  send(m1,e.1);
+  send(m2,e.2);
+} [e|->pid:C1,st:{end}]
+
+B1() [f|->pid:C1,st:{one},rl:1] {
+  receive(m1,f.0);
+  send(m3,f.2);
+} [f|->pid:C1,st:{end}]
+
+C1() [g|->pid:C1,st:{one},rl:2] {
+  receive(m2,g.0);
+  receive(m3,g.1);
+} [g|->pid:C1,st:{end}]

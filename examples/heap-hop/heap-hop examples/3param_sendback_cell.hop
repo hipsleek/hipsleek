@@ -1,0 +1,49 @@
+
+message cell [val|-> * param0 == val * _nextparam0 == param0]
+message back [ param0 |-> * _nextparam0 == param0]
+
+contract C {
+  initial state start { !cell -> sback; }
+  state sback { ?back -> end; }
+  final state end {}
+}
+
+fmain() [emp] {
+  local e,f,x;
+
+  x = new();
+  /* [x |-> ] */
+  (e,f) = open(C,x);
+
+  /* [e|-> C{start}, p0:x * f|-> ~C{start}, p0:_x * x |-> ] */
+  put(e,x) || get(f);
+
+  /* [e|-> C{end}, p0:0 * f|-> ~C{end}, p0:0 ] */
+  close(e,f);
+} [emp]
+
+put(e,x) [e|-> C{start}, p0:x * x|-> ] {
+  
+  /* [e|-> C{start}, p0:x * x|-> * x == x]  */
+  send(cell,e,x);
+  /* [e|-> C{start}, p0:x]  */
+  receive(back, e);
+  /* [e|-> C{start}, p0:x' * x == x' * x |->]  */
+  /* [e|-> C{start}, p0:x * x |->]  */
+  dispose(x);
+  /* [e|-> C{start}, p0:x ]  */ 
+
+} [e|->C{end}, p0:x]
+
+
+get(f) [f|-> ~C{start},pr:_ee, p0:_x] {
+  local y;
+
+  y = receive(cell,f);
+  /* [f|-> ~C{start},pr:_ee, p0:_x * y|-> * y == _x] */
+  /* [f|-> ~C{start},pr:_ee, p0:y * y|-> *] */
+  /* [f|-> ~C{start},pr:_ee, p0:y * y|-> * y == y] */
+  send(back,f);
+  /* [f|-> ~C{start},pr:_ee, p0:y] */
+  
+} [f|-> ~C{end},pr:_ee, p0:y]

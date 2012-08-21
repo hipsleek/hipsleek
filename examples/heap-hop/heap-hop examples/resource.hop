@@ -1,0 +1,15 @@
+resource r (x) [x|->]
+
+incr_x() {
+  local y;
+  
+  with r when (true) {
+    y = x->tutu;
+    y = y + 1;
+    x->tutu = y;
+  }
+}
+
+init() {
+  x = new();
+}

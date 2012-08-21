@@ -1,0 +1,125 @@
+
+
+data cell{
+  int val;
+}
+ 
+//view definitions
+
+//cell_v<n> == self::cell<n>;
+//endpoint_v<c, s, r> == self::endpoint<c,s,r>;
+
+
+// message definitions
+
+message packet <> == true  ;
+message packet_one <cell x3> == x3::cell<m> ;
+message packet_two <cell x1,cell x2> == x1::cell<n> * x2::cell<_> & n=44  ;
+ 
+ 
+
+
+//message start [emp]
+ 
+//contract definitions
+
+contract C { 
+  initial  state start { !packet_two -> middle; //}
+			 !packet  -> end;
+		       } 
+  state middle {?packet_one -> next;}
+  state next {!packet_one -> end; 
+	      !packet_two -> middle;}
+ 
+  final state end {}
+
+}
+
+ 
+
+
+void put_get() 
+  requires true
+  ensures true;
+{
+  endpoint e,f;
+  cell x, y, x1, y1;
+  
+
+  x = new cell(44);
+  y = new cell(88);
+
+//  x1 = new cell(44);
+  y1 = new cell(88);
+
+   	
+  open(C, e, f);
+  assert e'::endpoint<C, 1, 0> * f'::endpoint<C, 1, 1>  ;
+  
+
+  send(packet_two,e,x, y);
+  assert e'::endpoint<C, 2, 0>;
+  dprint;
+  
+  
+   receive(packet_one,e, x1);
+   assert e'::endpoint<C, 3, 0>;
+   dprint;
+
+  send(packet_one,e, y1);
+  assert e'::endpoint<C, 4, 0>;
+  dprint; 
+  f = get(f);
+  close(e,f);
+  
+}
+
+  
+endpoint get2(endpoint f)
+  requires f::endpoint<C, 2, 1>
+  ensures res::endpoint<C, 4, 1>; 
+{
+  cell x, y;
+  x= new cell(44);
+   dprint;
+  send(packet_one,f, x); 
+    dprint;
+    switch_receive {
+    
+    receive(packet_one,f, x) : {return f; }
+    receive(packet_two,f, x, y) : {return get2(f);}
+  };
+}
+
+endpoint get(endpoint f) 
+  requires f::endpoint<C, 1, 1>
+  ensures res::endpoint<C, 4, 1>;
+ {
+   
+  cell x, y;
+
+  switch_receive {
+    
+    receive(packet ,f) : {return f; }
+    receive(packet_two,f, x, y) : {return get2(f);}
+  };
+ // dprint;
+ 
+} 
+
+
+
+void put(endpoint e) 
+  requires e::endpoint<C, 1, 0>  
+  ensures e::endpoint<C, 2, 0>; 
+
+{
+  cell x = new cell(44);
+  cell y = new cell(0);
+ 
+  send(packet_two,e,x, y);
+ // dprint;
+} 
+
+
+

@@ -1,0 +1,42 @@
+message acq
+message ack [x|->]
+message rel [x|->]
+
+contract Lock {
+  initial final state unlocked { ?acq -> waiting; }
+  state waiting { !ack -> locked; }
+  state locked { ?rel -> unlocked; }
+}
+
+lock_master(e1,e2) [e1|->Lock{unlocked} * e2|->Lock{unlocked} * x|->] {
+  while (true) [e1|->Lock{unlocked} * e2|->Lock{unlocked} * x|->] {
+  switch receive {
+    receive(acq,e1): {
+      send(ack,e1);
+      receive(rel,e1);
+    }
+    receive(acq,e2): {
+      send(ack,e2);
+      receive(rel,e2);
+    }
+  }}
+} [false]
+
+incr(e) [e|->~Lock{unlocked},pr:_e]{
+  local t;
+  
+  send(acq,e);
+  receive(ack,e);
+  t = x->data;    // critical...
+  x->data = t+1;  // ...section
+  send(rel,e);
+} [e|->~Lock{unlocked},pr:_e]
+
+main() {
+  local e1,e2,f1,f2;
+  
+  x = new();
+  (e1,f1) = open(Lock);
+  (e2,f2) = open(Lock);
+  lock_master(e1,e2) || incr(f1) || incr(f2); 
+} [false]

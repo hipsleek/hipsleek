@@ -1,0 +1,50 @@
+message ack  [emp]
+message cell [val|->tl:_x * _x!=val* val == reg0] updates(p) {p = val->tl;}
+message fin  [val|->C{end},pr:dest,reg0:0 * reg0 == 0]
+
+contract C {
+  initial state transfer { !cell -> ?ack -> transfer;
+                           !fin -> end; }
+  final state end {}
+}
+
+send_list(x) [list(x)] {
+  local e,f,y;
+  (e,f) = open(C, x);
+  put(e,x) || get(y;f);
+  x = y;
+} [list(x)]
+
+put(e,x) [e|->C{transfer}, reg0:x * list(x)] {
+  local t;
+
+  while(x != 0) [e|->C{transfer}, reg0:x * list(x)] {
+    t = x->tl;
+    send(cell,e,x);
+    x = t;
+    receive(ack,e);
+  }
+  send(fin,e,e);
+} [emp]
+
+get(l;f) [f|->~C{transfer}, reg0: _x] {
+  local e, y;
+
+  l = 0;
+  e = NULL;
+  while(e == NULL) [if e==NULL
+                    then f|->~C{transfer}, reg0:_y *
+                         if (l==0) then emp
+                         else lseg(l, _z) * _z|->tl:_y
+                    else e|->C{end}, reg0:0 * f|-> ~C{end}, pr:e, reg0:0 * lseg(l, 0)] {
+    switch receive {
+      y = receive(cell,f): {
+        if (l == 0)
+          l = y;
+        send(ack,f);
+      }
+      e = receive(fin,f): {}
+    }
+  }
+  close(e,f);
+} [list(l)]

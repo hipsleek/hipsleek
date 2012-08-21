@@ -1,0 +1,104 @@
+/*
+ * Variant of : tcp.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Here there is a fixed number of slaves. The slaves and the server
+ * form a communication ring: each slave is connected to a previous
+ * slave and a next slave, except the first and the last slave that
+ * are connected to one slave and to the server, closing the
+ * loop. Requests arrive at the server, which forwards them to the
+ * first slave.  A slave may receive requests from its predecessor at
+ * any time; if it is currently busy with some client, it may also
+ * receive tasks from its client at the same time, hence it performs a
+ * switch receive on different channels. A request that arrives might
+ * be either forwarded to the next slave if the slave is busy with
+ * some client, or it might be accepted, and the slave then becomes
+ * busy with the client that sent the request.  If all slaves are
+ * busy, the request is always forwarded and comes back to the server,
+ * that rejects the client.
+ */
+
+message connect [val|->~Serving{begin}]
+message search_connect [val|->~Serving{begin}]
+message accept [emp]
+message reject [val|->~Serving{closing} * src==val]
+message request [emp]
+message answer [emp]
+message fin [val|->Serving{closing} * val==src]
+
+contract Serving {
+  initial state begin {
+    ?accept->client;
+    ?reject->closing;}
+  state client {
+    !request->server;
+    !fin->closing;
+  }
+  state server {?answer->client;}
+  final state closing {}
+}
+
+contract Listening {
+  initial state listen {?connect->listen;}
+}
+
+contract Delegating {
+  initial state waiting{
+    ?search_connect->waiting;
+  }
+}
+
+
+server(last,first) [c|->Listening{listen}
+       	* last|->Delegating{waiting} * first|->~Delegating{waiting}] {
+  local f;
+  switch receive {
+    f = receive(connect,c) : {
+      send(search_connect,first,f);
+    }
+    f = receive(search_connect,last): {
+      send(reject,f,f);
+    }
+  }
+  server(last,first);
+} [c|->Listening{listen}
+       	* last|->Delegating{waiting} * first|->~Delegating{waiting}]
+
+client() [c|->~Listening{listen}] {
+  local e,f;
+  (e,f) = open(Serving);
+  send(connect,c,f);
+  switch receive {
+    receive(accept,e) : {
+      while (nondet2==0) [e|->Serving{client} * c|->~Listening{listen}] {
+        send(request,e);
+	receive(answer,e);
+      }
+      send(fin,e,e);
+    }
+    f = receive(reject,e) : {close(e,f);}
+  }
+} [c|->~Listening{listen}]
+
+slave(pred,succ) [pred|->Delegating{waiting} * succ|->~Delegating{waiting}] {
+  local e,ee,f;
+  f = receive(search_connect,pred);
+  send(accept,f);
+  ee=0;
+  while (ee==0) [
+  pred|->Delegating{waiting} * succ|->~Delegating{waiting} *
+  if (ee==0) then f|->~Serving{client}
+  else f|->~Serving{closing},pr:e *e|->Serving{closing},pr:f]
+  switch receive {
+      receive(request,f): { send(answer,f); }
+    e = receive(fin,f): { ee=1; }
+    ee = receive(search_connect,pred): {
+      send(search_connect,succ,ee);
+      ee=0;
+    }
+  }
+  close(e,f);
+  slave(pred,succ);
+} [pred|->Delegating{waiting} * succ|->~Delegating{waiting}]

@@ -1,0 +1,46 @@
+/*
+ * Variant of : send_list.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Same code, but the channel is now closed by the main function after
+ * the threads join.  The contract is simpler, but cannot ensure the
+ * absence of memory leaks (Heap-Hop gives a warning).
+ */
+
+message cell [if (val!=NULL) then val|-> else emp]
+
+contract C {
+  initial final state beginend {
+    ?cell -> beginend;}
+}
+
+put(e,x) [e|->~C{beginend},pr:_f * list(x)] {
+  local t;
+
+  while(x != NULL) [e|->~C{beginend},pr:_f * list(x)] {
+      t = x->tl;
+      send(cell,e,x);
+      x = t;
+    }
+  send(cell,e,x);
+} [e|->~C{beginend},pr:_f]
+
+get(f) [f|->C{beginend},pr:_e] {
+  local x;
+  x = receive(cell,f);
+  while(x != NULL)
+  [if (x!= NULL) then (x|-> * f|->C{beginend},pr:_e) else f|->C{beginend},pr:_e]
+  {
+    dispose(x);
+    x = receive(cell,f);
+  }
+} [f|->C{beginend},pr:_e]
+
+send_list(x) [list(x)] {
+  local e,f;
+  (f,e) = open(C);
+  put(e,x) || get(f);
+  close(e,f);
+} [emp]

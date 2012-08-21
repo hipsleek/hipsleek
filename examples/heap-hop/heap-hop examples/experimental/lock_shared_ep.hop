@@ -1,0 +1,98 @@
+/*
+Description
+--------------
+This program illustrates how one can encode locks
+using channels, and how threads sharing a lock
+can be authorized using permissions for endpoints.
+The locks library features four functions including
+(de)allocation of locks and (un)locking. The client
+code features two threads that are launched by a main,
+which allocate the lock and give half of it to each threads.
+The lock protects a global variable a.
+*/
+
+
+/*********************************/
+/* 1 - Lock-manipulation library */
+/*********************************/
+
+
+message lock [val|->~Lock{s} * val==src * a|->]
+
+contract Lock {
+  initial final state s {?lock->s;}
+}
+
+alloc_lock(x;) [a|->] {
+  local e;
+  (x,e) = open(Lock);
+  send(lock,e,e);
+} [x|->Lock{s},pr:e]
+
+dispose_lock(x;) [x|->Lock{s}] {
+  local e;
+  e = receive(lock,x);
+  close(x,e);
+} [a|->]
+
+/* NOTE : the two acquire functions are the same, except annotations...
+   to be solved later by using formulas for permissions
+*/
+
+acquire_xo(x) [x|-{xo}->Lock{s},pr:_e] {
+  local e;
+  e = receive(lock,x);
+} [x|-{xo}->Lock{s},pr:_e * _e|->~Lock{s} * a|->]
+
+acquire_ox(x) [x|-{ox}->Lock{s},pr:_e] {
+  local e;
+  e = receive(lock,x);
+} [x|-{ox}->Lock{s},pr:_e * _e|->~Lock{s} * a|->]
+
+/* NOTE: same note for release functions */
+
+release_xo(x) [x|-{xo}->Lock{s},pr:_e * _e|->~Lock{s} * a|->] {
+  local e;
+  e = x->pr;
+  send(lock,e,e);
+} [x|-{xo}->Lock{s},pr:_e]
+
+release_ox(x) [x|-{ox}->Lock{s},pr:_e * _e|->~Lock{s} * a|->] {
+  local e;
+  
+  e = x->pr;
+  send(lock,e,e);
+} [x|-{ox}->Lock{s},pr:_e]
+
+/*********************************/
+/* 2 - Client  code              */
+/*********************************/
+
+thread_xo(x) [x|-{xo}->Lock{s},pr:_e] {
+  local t;
+
+  acquire_xo(x);
+  t = a->cell;
+  a->cell = t; /* critical section here */
+  release_xo(x);
+  } [x|-{xo}->Lock{s},pr:_e]
+
+thread_ox(x) [x|-{ox}->Lock{s},pr:_e] {
+  local t;
+  
+  acquire_ox(x);
+  t = a->cell;
+  a->cell = t; /* critical section here */
+  release_ox(x);
+} [x|-{ox}->Lock{s},pr:_e]
+
+main() [emp] {
+  local x;
+
+  a = new(); /* allocation of the shared variable */
+
+  alloc_lock(x;);
+  thread_xo(x) || thread_ox(x);
+  dispose_lock(x;);
+  dispose(a);
+} [emp]

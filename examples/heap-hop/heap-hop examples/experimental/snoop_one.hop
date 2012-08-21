@@ -1,0 +1,147 @@
+/*
+ * Implementation of the MSI cache coherence protocol with bus snooping.
+ *
+ * a cache line l contains 3 fields:
+ *   - addr: the address of the corresponding memory region
+ *   - data: the cached data
+ *   - msi: the cache line's state
+ *
+ * each cache line may be in one of 3 states:
+ *   - M: the line has been locally modified and should be written back to
+ *        memory before anyone else tries to read it (write back policy)
+ *   - S: the line is shared between several caches and is up-to-date with
+ *        memory
+ *   - I: the cache line is invalid and should be re-fetched from memory
+ */
+
+
+addr,data,msi;
+
+message q_r [emp] /* read query */
+message a_r [val>->] /* read answer */
+message q_w [emp] /* write query */
+message invalidate [emp] /* cache line invalidation */
+message write_back(2) [val1|->] /* message to write back a cell in memory */
+message ack [emp] /* ack when nothing has to be written back */
+
+contract C { /* contract between the processor and its cache */
+  initial final state ip { ?q_r -> arp; ?q_w -> ip; }
+  state arp { !a_r -> ip; }
+}
+
+contract MEM { /* contract between the cache and the memory */
+  initial final state im {
+    ?q_r -> arm;
+    !q_r -> qrm;
+    ?invalidate -> im;
+    !invalidate -> im; }
+  state arm { !a_r -> im; }
+  state qrm {
+    ?write_back -> im;
+    ?ack -> im; }
+}
+
+processor(pid,ml) {
+  /* here be assembly instructions in the form of message passing */
+
+}
+
+in_cache(l;c,a) [c|->] {
+  /* test if address a is in cache c and returns corresponding cache line l */
+  local v,addr;
+
+  addr = c->addr;
+  if (addr != a) {
+    /* spill old cache line and replace it */
+    c->addr = a;
+    c->msi = I;
+  }
+  l = c;
+} [l|->addr:a * c==l]
+
+msi_cache(cid,pe,me) [pe|->C{ip} * me|->~MEM{im}] {
+  local a,l,cache,s,v;
+
+  I = 0; S = 1; M = 2;
+  cache = new(); /* cache of size 1 :) */
+  cache->msi = I;
+
+  while (true) [pe|->C{ip} * me|->~MEM{im}
+                * cache|->msi:_s,addr:_a,data:_v
+                * (if _s == S then _a>->data:_v
+                     else if _s == M then _a|->
+                       else // _s == I
+                         emp)] {
+  switch receive {
+  a = receive(q_r,me): {
+    /* the memory reclaims reading permission to all caches */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s == M) {
+      /* if the cache line is dirty, write it back to memory and put it
+         in the shared state */
+      v = l->data;
+      send(write_back,me,v);
+      l->msi = S;
+    } else {
+      send(ack,me);
+    }
+  }
+  (a,v) = receive(invalidate,me): {
+    /* the memory reclaims writing permission to all caches */
+    /* invalidate the corresponding cache line */
+    in_cache(l;cache,a);
+    l->msi = I;
+  }
+  a = receive(q_r,pe): {
+    /* the processor wants to read */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s == I) {
+      send(q_r,me,a);
+      v = receive(a_r,me);
+      l->data = v;
+      l->mesi = S;
+    }
+    d = l->data;
+    send(a_r,pe,d);
+  }
+  (a,v) = receive(q_w,pe): {
+    /* the processor wants to write */
+    in_cache(l;cache,a);
+    s = l->msi;
+    if (s != M) {
+      /* invalite other processors' caches */
+      send(q_w,m,a);
+    }
+    l->data = v;
+    l->msi = M;
+  }}}
+}
+
+memory(me1,me2) [me1|->MEM{im}*me2|->MEM{im}] {
+  local a,v,i,n,mem;
+
+  mem1 = new();
+  mem2 = new();
+  mem3 = new(); /* 3 bytes of RAM */
+  n = 2; /* 2 caches */
+
+  while (1) [(if _dummy1 then mem1|-_n1-> else emp)
+             * (if _dummy2 then mem2|-_n2-> else emp)
+             * (if _dummy3 then mem3|-_n3-> else emp)] {
+  switch receive {
+  a = receive(q_r,me1): {
+    /* should assert a == mem1 or a == mem2 or a == mem3 */
+    send(q_r,me2,a); /* should broadcast to all other processors (but here n=2) */
+    i = 0;
+    switch receive { /* should receive from all othe processors */
+    v = receive(write_back, me2): { a->data = v; }
+    receive(ack,me2): {}
+    }
+    v = a->data;
+    send(a_r,me1,v);
+  }
+  a = receive(q_w,me1): { send(invalidate,me2,a); /* broadcast, see above */}
+  }}
+}

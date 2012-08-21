@@ -1,0 +1,73 @@
+contract C { 
+  initial  state start { !packet_two -> middle;  
+			 !packet_one -> end;
+			 !packet -> end; } 
+
+  state middle {!packet_one -> next;}
+
+  state next {!packet_one -> end; 
+	      !packet -> middle;}
+ 
+  final state end {}
+
+}
+
+Spec for receive initial :  
+
+EBase exists (Expl)(Impl)(ex)[st]send_channel::endpoint<C,st,rl>@M[Orig]&
+       true&{FLOW,(20,21)=__norm}[]
+         ECase case {
+                st<=1 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                               {FLOW,(20,21)=__norm}[]
+                                 EAssume 16::
+                                   EXISTS(st: send_channel::endpoint<C,st,rl>@M[Orig] * 
+                                   (emp ; (emp ; x3::cell<m>@M[Orig]))&
+                                   st=4 & rl=1 & m=44&
+                                   {FLOW,(20,21)=__norm})[]
+                ;
+                st=2 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                              {FLOW,(20,21)=__norm}[]
+                                EAssume 18::
+                                  EXISTS(st: send_channel::endpoint<C,st,rl>@M[Orig] * 
+                                  (emp ; (emp ; x3::cell<m>@M[Orig]))&st=3 & 
+                                  rl=1 & m=44&{FLOW,(20,21)=__norm})[]
+                ;
+                st=3 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                              {FLOW,(20,21)=__norm}[]
+                                EAssume 19::
+                                  EXISTS(st: send_channel::endpoint<C,st,rl>@M[Orig] * 
+                                  (emp ; (emp ; x3::cell<m>@M[Orig]))&st=4 & 
+                                  rl=1 & m=44&{FLOW,(20,21)=__norm})[]
+                ;
+                3<st -> EBase hfalse&false&{FLOW,(20,21)=__norm}[] 
+                }
+
+Spec for receive final: 
+
+ EBase exists (Expl)(Impl)(ex)[st]f'::endpoint<C,st,rl>@M[Orig]&true&
+       {FLOW,(20,21)=__norm}[]
+         ECase case {
+                st<=1 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                               {FLOW,(20,21)=__norm}[]
+                                 EAssume 13::
+                                   EXISTS(st: f'::endpoint<C,st,rl>@M[Orig] * 
+                                   (emp ; (emp ; y_41'::cell<m>@M[Orig]))&
+                                   st=4 & rl=1 & m=44&
+                                   {FLOW,(20,21)=__norm})[]
+                ;
+                st=2 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                              {FLOW,(20,21)=__norm}[]
+                                EAssume 15::
+                                  EXISTS(st: f'::endpoint<C,st,rl>@M[Orig] * 
+                                  (emp ; (emp ; y_41'::cell<m>@M[Orig]))&
+                                  st=3 & rl=1 & m=44&{FLOW,(20,21)=__norm})[]
+                ;
+                st=3 -> EBase exists (Expl)(Impl)(ex)[m]emp&true&
+                              {FLOW,(20,21)=__norm}[]
+                                EAssume 16::
+                                  EXISTS(st: f'::endpoint<C,st,rl>@M[Orig] * 
+                                  (emp ; (emp ; y_41'::cell<m>@M[Orig]))&
+                                  st=4 & rl=1 & m=44&{FLOW,(20,21)=__norm})[]
+                ;
+                3<st -> EBase hfalse&false&{FLOW,(20,21)=__norm}[] 
+                }

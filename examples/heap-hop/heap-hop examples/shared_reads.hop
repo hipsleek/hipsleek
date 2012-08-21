@@ -1,0 +1,11 @@
+read(x) [x>->] {
+  local y;
+  y = x->data;
+} [x>->]
+
+shared_reading() {
+  local x;
+  x = new();
+  read(x) || read(x) || read(x) || read(x);
+  dispose(x);
+}

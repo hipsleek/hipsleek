@@ -1,0 +1,79 @@
+/*
+ * Description:
+ * ------------
+ *
+ * This code features a tcp like protocol.  The server uses an
+ * endpoint to listen to communication requests. When a connect
+ * message arrives, it non-deterministically decides either to accept
+ * a new client or to reject it. In the first case, it creates a new
+ * channel, sends one of the endpoints together with the accept
+ * message, and spawns a slave thread that will communicate with this
+ * client through the other endpoint.  The client sends its request,
+ * waits for accept, and then starts communicating with the slave. At
+ * the end of the communication, it sends a fin message to the
+ * slave.
+ */
+
+message connect [emp]
+message accept [val|->Serving{client}]
+message reject [emp]
+message request [emp]
+message answer [emp]
+message fin [val|->Serving{closing} * val==src]
+
+contract Serving {
+  initial state client {
+    !request->server;
+    !fin->closing;
+  }
+  state server {?answer->client;}
+  final state closing {}
+}
+
+contract Listening {
+  initial state listen {?connect->busy;}
+  state busy {
+    !accept->listen;
+    !reject->listen;}
+}
+
+server() [c|->Listening{listen}] {
+  local e,f;
+  receive(connect,c);
+  if (nondet==0) {
+    (e,f)=open(Serving);
+    send(accept,c,e);
+    server() || slave (f) ;
+  } else {
+    send(reject,c);
+    server();
+  }
+} [c|->Listening{listen}]
+
+
+client() [c|->~Listening{listen}] {
+  local e;
+  send(connect,c);
+  switch receive {
+    e = receive(accept,c) : {
+      while (nondet2==0) [e|->Serving{client} * c|->~Listening{listen}] {
+        send(request,e);
+	receive(answer,e);
+      }
+      send(fin,e,e);
+    }
+    receive(reject,c) : {}
+  }
+} [c|->~Listening{listen}]
+
+slave(f) [f|->~Serving{client}] {
+  local e;
+  e=0;
+  while (e==0) [if (e==0) then f|->~Serving{client}
+                          else f|->~Serving{closing},pr:e *e|->Serving{closing},pr:f]
+  switch receive {
+    receive(request,f):      { send(answer,f); }
+    e = receive(fin,f): {}
+  }
+  close(e,f);
+} [emp]

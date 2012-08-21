@@ -1,0 +1,13 @@
+contract NonPos {
+  initial state a { !m -> a;
+                    ?m -> a; }
+}
+
+contract NonDet {
+  initial state a { !m -> a;
+                    !m -> b; }
+}
+
+contract NonSynch {
+  initial final state a { !m -> a; }
+}

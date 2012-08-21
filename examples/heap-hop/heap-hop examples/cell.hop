@@ -1,0 +1,27 @@
+message cell [val|-> ]
+
+contract C {
+  initial final state start { !cell -> start; }
+}
+
+put_get() [emp] {
+  local e,f,x;
+
+  x = new();
+  (e,f) = open(C);
+
+  put(e,x) || get(f);
+
+  close(e,f);
+} [emp]
+
+put(e,x) [e|-> pid:C,rl:0,st:{start} * x|-> ] {
+  send(cell,e.1,x);
+} [e|->pid:C,st:{start},rl:0]
+
+get(f) [f|-> pid:C,st:{start},rl:1,pr0:_ee] {
+  local y;
+
+  y = receive(cell,f.0);
+  dispose(y);
+} [f|-> pid:C,st:{start},rl:1,pr0:_ee]

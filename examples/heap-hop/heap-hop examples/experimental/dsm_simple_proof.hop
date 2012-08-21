@@ -1,0 +1,277 @@
+s,addr,data;
+
+/** messages from and to the processor */
+message read [if val == mem1 then emp
+    else if val == mem2 then emp
+      else false]
+message a_r
+message write [if val0 == mem1 then emp
+    else if val0 == mem2 then emp
+      else false]
+
+/** messages from caches to the directory */
+message read_miss [if val == mem1 then emp
+    else if val == mem2 then emp
+      else false]
+message write_miss [if val == mem1 then emp
+    else if val == mem2 then emp
+      else false]
+message data_write_back [if val0 == mem1 then emp
+    else if val0 == mem2 then emp
+      else false]
+
+/** exchanges between the directory and the caches */
+message invalidate
+message ack
+message fetch [if val == mem1 then emp
+    else if val == mem2 then emp
+      else false]
+message fetch_invalidate [if val == mem1 then emp
+    else if val == mem2 then emp
+      else false]
+message data_value_reply
+message data_value_reply_w
+
+contract PROC {
+  initial state i_proc {
+    !read -> ?a_r -> i_proc;
+    !write -> i_proc;
+  }
+}
+
+contract CACHE {
+  initial state i_cache {
+    !read_miss -> ?data_value_reply -> i_cache;
+    !write_miss -> ?data_value_reply_w -> i_cache;
+    !data_write_back -> i_cache;
+  }
+}
+
+contract DIR {
+  initial state i_dir {
+    !fetch -> ?data_write_back -> i_dir;
+    !invalidate -> ?ack -> i_dir;
+    !fetch_invalidate -> ?data_write_back -> i_dir;
+  }
+}
+
+processor(pid,ce) [ce|->PROC{i_proc}] {
+  /* here be assembly instructions in the form of message passing
+   * e.g. send(read, ce, 1); v = receive(a_r, ce); send(write, ce, 1, v+1);
+   * (increment the value at address 1)
+   */
+  while (true) {}
+}
+
+get_state(s;a,state1,state2) [if a == mem1 then emp
+    else if a == mem2 then emp
+      else false] {
+  if (a == mem1)
+    s = state1;
+  else
+    s = state2;
+} [if a == mem1 then s == state1
+    else if a == mem2 then s == state2
+      else false]
+
+directory(id,d1,d2,c1,c2) [d1|->DIR{i_dir} * d2|->DIR{i_dir} *
+                     c1|->~CACHE{i_cache} * c2|->~CACHE{i_cache} *
+                     mem1|-> * mem2|-> *
+                     U!=E * U!=S * E!=S * U==I * E==M] {
+  local a,d,s,s1,s2,state1,state2;
+
+  state1 = new(); state1->s1 = U; state1->s2 = U; // state of the directory...
+  state2 = new(); state2->s1 = U; state2->s2 = U; // ...for each memory cell
+
+  while (true) [d1|->DIR{i_dir} * d2|->DIR{i_dir} *
+                c1|->~CACHE{i_cache} * c2|->~CACHE{i_cache} *
+                mem1|-> * mem2|-> *
+                state1|-> * state2|-> *
+                U!=E * U!=S * E!=S * U==I * E==M] {
+  switch receive {
+  a = receive(read_miss,c1): {
+    get_state(s;a,state1,state2);
+    s2 = s->s2;
+    /* request data and make pid a sharer */
+    if (s2 == U) {
+      d = a->data;
+    } else if (s2 == S) {
+      d = a->data;
+    } else if (s2 == E) {
+      send(fetch,d2,a);
+      (a,d) = receive(data_write_back,d2);
+      s2 = S;
+      s->s2 = s2;
+    }
+    s1 = S;
+    s->s1 = s1;
+    send(data_value_reply,c1,d);
+  }
+  a = receive(write_miss,c1): {
+    get_state(s;a,state1,state2);
+    s2 = s->s2;
+    /* request data and make pid the exclusive owner */
+    if (s2 == U) {
+      d = a->data;
+    } else if (s2 == S) {
+      send(invalidate,d2,a);
+      receive(ack,d2);
+      s2 = U;
+      s->s2 = s2;
+    } else if (s2 == E) {
+      send(fetch_invalidate,d2,a);
+      (a,d) = receive(data_write_back,d2);
+      a->data = d;
+      s2 = U;
+      s->s2 = s2;
+    }
+    s1 = E;
+    s->s1 = s1;
+    send(data_value_reply_w,c1,d);
+  }
+  (a,d) = receive(data_write_back,c1): {
+    get_state(s;a,state1,state2);
+    a->data = d;
+    s1 = U;
+    s->s1 = s1;
+  }
+  /* idem for p2 */
+  }
+  }
+} [false]
+
+get_line(l;cache,a) {
+  l = cache;
+} [l == cache]
+      
+get_dir(da;a,d) {
+  /* in a less simplified setting, should have a list of directories as input
+     and select the one in care of address a
+  */
+  da = d;
+} [da == d]
+
+cache(c,d,p) [c|->CACHE{i_cache} * d|->~DIR{i_dir} * p|->~PROC{i_proc} *
+            M!=S * M!=I * S!=I * U==I * E==M] {
+  local c1,l,a,data,da,old_d,b,s;
+
+  c1 = new(); // cache
+  c1->s = I; c1->addr = 0; // one line of cache
+
+  s = c1->s;
+  c1->addr = mem1;
+  while (true) [M!=S * M!=I * S!=I * U==I * E==M *
+                c|->CACHE{i_cache} * d|->~DIR{i_dir} * p|->~PROC{i_proc} *
+                c1|->s:s,addr:_a *
+                if _a == mem1 then emp
+      else if _a == mem2 then emp
+        else false] {
+  switch receive {
+  a = receive(invalidate,d): {
+    /* the memory reclaims writing permission to all caches */
+    /* invalidate the corresponding cache line */
+    get_line(l;c1,a);
+    b = l->addr;
+    if (b == a) {
+      l->s = I;
+      s = I;
+    }
+    send(ack,d);
+  }
+  a = receive(fetch_invalidate,d): {
+    /* the memory reclaims writing permission to all caches */
+    /* invalidate the corresponding cache line */
+    get_line(l;c1,a);
+    data = l->data;
+    l->s = I;
+    s = I;
+    send(data_write_back,d,a,data);
+  }
+  a = receive(fetch,d): {
+    get_line(l;c1,a);
+    data = l->data;
+    l->s = S;
+    s = S;
+    send(data_write_back,d,a,data);
+  }
+  /* same for d2 */
+  /* ... */
+
+  a = receive(read,p): {
+    /* the processor wants to read */
+    get_line(l;c1,a);
+    get_dir(da;a,c);
+    b = l->addr;
+    s = l->s;
+    if (b != a) {
+      if (s == M) {
+        data = l->data;
+        send(data_write_back,da,a,data);
+      }
+      s = I;
+    }
+    if (s == I) {
+      send(read_miss,da,a);
+      data = receive(data_value_reply,da);
+      l->data = data;
+      l->addr = a;
+      l->s = S;
+      s = S;
+    } else {
+      data = l->data;
+    }
+    send(a_r,p,data);
+  }
+  (a,data) = receive(write,p): {
+    /* the processor wants to write */
+    get_line(l;c1,a);
+    get_dir(da;a,c);
+    b = l->addr;
+    s = l->s;
+    if (b != a) {
+      if (s == M) {
+        data = l->data;
+        send(data_write_back,da,a,data);
+      }
+      l->s = I;
+      l->addr = a;
+    }
+    s = l->s;
+    if (s != M) {
+      send(write_miss,da,a);
+      old_d = receive(data_value_reply_w,da);
+      l->s = M;
+      s = M;
+    }
+    l->data = data;
+  }}}
+} [false]
+
+cache_2(c,d,p) [c|->CACHE{i_cache} * d|->~DIR{i_dir} * p|->~PROC{i_proc} *
+            M!=S * M!=I * S!=I * U==I * E==M] {
+  while (true) {
+    // ... idem cache_1 ...
+  }
+} [false]
+
+main() {
+  local p1,p2,p3,p4,d1,d2,d3,d4,c1,c2,c3,c4;
+
+  // constants
+  M = 0; S=1; I=2;
+  E = 0;      U=2;
+
+  // channels
+  (p1,p2) = open(PROC);
+  (p3,p4) = open(PROC);
+  (d1,d2) = open(DIR);
+  (d3,d4) = open(DIR);
+  (c1,c2) = open(CACHE);
+  (c3,c4) = open(CACHE);
+
+  mem1 = new(); mem2 = new(); // the global memory consists of 2 cells
+
+  directory(0,d1,d3,c2,c4)
+  || processor(0,p1) || cache(c1,d2,p2)
+  || processor(1,p3) || cache(c3,d4,p4);
+} [false]

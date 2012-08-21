@@ -1,0 +1,37 @@
+/*
+ * Variant of : send_list.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Same code, but simpler. Works for lists of length one only.
+ */
+
+message cell [val|->]
+
+contract C {
+  initial state start { !cell -> end; }
+  final state end {}
+}
+
+put(e,f) [e|->C{start},pr:f] {
+  local x;
+
+  x = new();
+  send(cell,e,x);
+} [e|->C{end},pr:f]
+
+get(f) [f|->~C{start}] {
+  local y;
+
+  y = receive(cell,f);
+  dispose(y);
+} [f|->~C{end}]
+
+main() [emp] {
+  local e,f;
+
+  (e,f) = open(C);
+  put(e,f) || get(f);
+  close(e,f);
+} [emp]

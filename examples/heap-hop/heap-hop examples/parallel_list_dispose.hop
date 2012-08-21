@@ -1,0 +1,10 @@
+dispose_cell(x) [x|-> ] {
+  dispose(x);
+} [emp]
+
+dispose_list(x) [list(x)] {
+  if (x != 0) {
+    tail = x->tl;
+    dispose_cell(x) || dispose_list(tail);
+  }
+} [emp]

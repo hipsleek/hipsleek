@@ -1,0 +1,50 @@
+
+message rand [array(x,val0,val1,4) * param0 == val0 * _nextparam0 == param0 * param1 == val1 * _nextparam1 == param1]
+message result [array(x,param0,param1,4) * _nextparam0 == param0 * _nextparam1 == param1]
+
+contract C {
+  initial state start { !rand -> compute; }
+  state compute { ?result -> end; }
+  final state end {}
+}
+
+m() [array(x,0,4,4)] {
+  local e1,f1,e2,f2;
+  (e1,f1) = open(C,0,3);
+  (e2,f2) = open(C,3,4);
+  put(e1,e2) || get(f1)|| get(f2);
+  close(e1,f1);
+  close(e2,f2);
+  dispose(x);
+} [emp]
+
+put(e1,e2) [e1|-> C{start}, p0:0, p1:3 * e2|-> C{start}, p0:3, p1:4 * array(x,0,4,4) ] {
+  local y, z, res;
+
+  send(rand,e1,0,3);
+  send(rand,e2,3,4);
+  y = receive(result, e1);
+  z = receive(result, e2);
+
+  res = (y+z)/2;
+} [e1|->C{end}, p0:0, p1:3 * e2|->C{end}, p0:3, p1:4 * array(x,0,4,4)]
+
+get(f) [f|-> ~C{start},pr:_ee, p0:_x, p1:_y] {
+  local k, i, j, res;
+  (i, j) = receive(rand,f);
+
+  k = i;
+  while(k != j)[if (k != j) then f|-> ~C{compute},pr:_ee, p0:_x, p1:_y * array(x,i,k,4) * array(x,k,j,4) 
+    else f|-> ~C{compute},pr:_ee, p0:_x, p1:_y * array(x,i,j,4)]{
+      x[k] = 1;
+      k = k+1;
+  }
+  
+  res = 3;
+
+  send(result,f,res);
+  
+} [f|-> ~C{end},pr:_ee, p0:_x1, p1:_y1 ]
+
+
+

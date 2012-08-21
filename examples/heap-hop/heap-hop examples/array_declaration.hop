@@ -1,0 +1,6 @@
+
+declare()[emp]{
+  x = new(2);
+  x[1] = 0;
+}[array(x,0,2,2)]
+

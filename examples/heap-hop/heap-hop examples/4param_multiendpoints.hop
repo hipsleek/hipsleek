@@ -1,0 +1,45 @@
+
+message cell [val|-> * param0 == val * _nextparam0 == 0]
+
+contract C {
+  initial state start { !cell -> end; }
+  final state end {}
+}
+
+fmain() [emp] {
+  local e1,f1,x, e2,f2,y;
+
+  x = new();
+  y = new();
+  (e1,f1) = open(C,x);
+  (e2,f2) = open(C,y,y);
+
+  put(e1,e2,x,y) || get1(f1) || get2(f2);
+
+  close(e1,f1);
+  close(e2,f2);
+
+} [emp]
+
+put(e1,e2,x,y) [e1|-> C{start}, p0:x * x|-> * e2|-> C{start}, p0:y, p1:y * y|->] {
+  send(cell,e1,x);
+  send(cell,e2,y);
+} [e1|->C{end}, p0:0 * e2|->C{end}, p0:0]
+
+
+get1(f) [f|-> ~C{start},pr:_ee, p0:_x] {
+  local y;
+
+  y = receive(cell,f);
+
+  dispose(y);
+} [f|-> ~C{end},pr:_ee, p0:0]
+
+get2(f) [f|-> ~C{start},pr:_ee, p0:_x, p1:_x] {
+  local y;
+
+  y = receive(cell,f);
+
+  dispose(y);
+} [f|-> ~C{end},pr:_ee, p0:0, p1:_x1]
+

@@ -1,0 +1,8 @@
+
+access_var()[emp]{
+  local y;
+  x = new(5);
+  y = 2;
+  x[y] = 2; 
+  dispose(x);
+}[emp]

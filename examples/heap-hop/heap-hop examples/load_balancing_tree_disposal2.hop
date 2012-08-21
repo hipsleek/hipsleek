@@ -1,0 +1,65 @@
+/*
+Variant of : load_balancing_parallel_tree_disposal.hop
+
+Description:
+------------
+same code, but only the code
+of the left thread, with a richer contract to be checked.
+Illustrates how non-determinism of contracts is handled by Heap-Hop.
+*/
+
+
+message work     [tree(val)]
+message ack   	 [emp]
+
+contract C {
+  initial state init{
+    ?work->working;
+  }
+  state working{
+    !work->working;
+    !ack->waiting;
+  }
+  state waiting{
+    ?ack->waiting;
+    ?ack->closing;
+    ?work->working;
+  }
+  final state closing{
+  }
+}
+
+dispose_left(e) [e|->C{init}] {
+  local l,r,t,i,i_is_null,is_waiting;
+
+  i=1;
+  i_is_null = 0;
+  is_waiting = 0;
+  t = receive(work,e);	
+  while(i_is_null==0)
+  [if (i_is_null!=0)
+   then e|->C{closing}
+   else (
+     if is_waiting==0
+     then e|->C{working} * tree(t)
+     else e|->C{waiting} )]
+  {
+    if (is_waiting==0) {
+      while (t!=0) [e|->C{working} * tree(t) * i_is_null == 0]
+      {
+        l = t->l;
+        r = t->r;
+        send(work,e,r);
+        i = i+1;
+	i_is_null = 0;
+        dispose(t);
+        t = l;
+      }
+      send(ack,e);
+      is_waiting = 1;
+    } else switch receive {
+        t = receive(work,e) : {is_waiting=0;}
+        receive(ack,e) : {i=i-1;i_is_null = random_bool;}
+      }
+ }
+} [e|->C{closing}]

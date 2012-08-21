@@ -1,0 +1,41 @@
+/*
+ * Variant of : send_list_dualized.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Same code, but now get only receives and disposes one cell once.
+ * There is a memory leak if the list is of length greater than 1, and
+ * a deadlock if the list is of length 0. There is a warning from
+ * Heap-Hop for the memory leaks.
+ */
+
+message cell [val|->]
+
+contract C {
+  initial final state beginend {
+  !cell -> beginend;}
+}
+
+put(e,x) [e|->C{beginend},pr:_f * list(x)] {
+  local t;
+
+  while(x != NULL) [e|->C{beginend},pr:_f * list(x)] {
+      t = x->tl;
+      send(cell,e,x);
+      x = t;
+    }
+} [e|->C{beginend},pr:_f]
+
+get(f) [f|->~C{beginend},pr:_e] {
+  local x;
+  x = receive(cell,f);
+  dispose(x);
+} [f|->~C{beginend},pr:_e]
+
+send_list(x) [list(x)] {
+  local e,f;
+  (e,f) = open(C);
+   put(e,x) || get(f);
+  close(e,f);
+} [emp]

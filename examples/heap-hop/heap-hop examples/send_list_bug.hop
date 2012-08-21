@@ -1,0 +1,59 @@
+/*
+ * Description:
+ * ------------
+ *
+ * This program is composed of two functions executed by two different
+ * threads, one called put, and the other get.  put sends a list, one
+ * cell at a time, to get, and eventually sends its endpoint for
+ * closing. get receives either a cell and delete it, or an endpoint,
+ * in which case it closes the channel.  Communications are weakly
+ * synchronized by an additional acknowledgment message between any
+ * cell messages. Both threads are launched by the main send_list
+ * function, which also allocates the two endpoints.
+ */
+
+message ack  [emp]
+message cell [val|->]
+message fin  [val|->C{end} * val==src]
+
+contract C {
+  initial state transfer { !cell -> wait;
+                           !fin -> end; }
+  state wait { ?ack -> transfer; }
+  final state end {}
+}
+
+/* We assume a linked list starting at x */
+put(e,x) [e|->C{transfer} * list(x)] {
+  local t;
+
+  while(x != NULL) [e|->C{transfer} * list(x)] {
+    send(cell,e,x);
+    t = x->tl;
+    x = t;
+    receive(ack,e);
+  }
+  send(fin,e,e);
+} [emp]
+
+get(f) [f|->~C{transfer}] {
+  local x, e;
+
+  e = NULL;
+  while(e == NULL) [if e==NULL
+                    then f|->~C{transfer}
+                    else e|->C{end} * f|->~C{end},pr:e] {
+    switch receive {
+    x = receive(cell,f): { dispose(x); send(ack,f); }
+    e = receive(fin,f): {}
+    }
+  }
+  close(e,f);
+} [emp]
+
+send_list(x) [list(x)] {
+  local e,f;
+  
+  (e,f) = open(C);
+  put(e,x) || get(f);
+} [emp]

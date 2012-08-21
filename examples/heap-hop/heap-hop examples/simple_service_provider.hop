@@ -1,0 +1,70 @@
+/*
+Description:
+------------
+The code features a http client and a ftp client
+that try to obtain the respective service from the service provider.
+They first create a channel, then send one of the endpoint to the server
+tagged with the message identifier that tells which service is requested.
+The following communications (abstracted) would
+be between the client on its remaining endpoint,
+and the appropriate server with the endpoint that has been sent.
+The code of the service provider is also rather abstract: the service
+provider continuously receives requests: once identified, they are forwarded
+to the appropriate server.
+
+This example illustrates the use of contracts for typing communications
+along one channel in protocols where several channels are used and dynamically
+allocated. There are contracts for the service protocols http and
+ftp, there is contract for service requests from clients to the
+service provider, and there is a contract for requests' forwards from service
+provider to servers.
+*/
+
+
+message http_connect [val|->Http{start}]
+message ftp_connect  [val|->Ftp{start}]
+message connect      [val|->rl:server,st:start]
+message fin          [val|->rl:client,st:end * val==src]
+
+contract Http {
+  initial state start { ?fin -> end; }
+  /* describe HTTP here */
+  final state end {}
+}
+
+contract Ftp {
+  initial state start { ?fin -> end; }
+  /* describe FTP here */
+  final state end {}
+}
+
+contract Services {
+  initial final state start { ?http_connect -> start;
+                              ?ftp_connect  -> start; }
+}
+
+contract Service {
+  initial final state start { ?connect -> start; }
+}
+
+server(e) [e|->Services{start}*he|->~Service{start}*fe|->~Service{start}] {
+  while (true) [e|->Services{start}*he|->~Service{start}*fe|->~Service{start}] {
+    switch receive {
+    ee = receive(http_connect,e): { send(connect,he,ee); }
+    ee = receive(ftp_connect,e):  { send(connect,fe,ee); }}
+  }
+} [e|->Services{start}]
+
+client_http(e) [e|->~Services{start}] {
+  (ee,ff) = open(Http);
+  send(http_connect,e,ee);
+  /* do some HTTP on ff */
+  send(fin,ff,ff);
+} [e|->~Services{start}]
+
+client_ftp(e) [e|->~Services{start}] {
+  (ee,ff) = open(Ftp);
+  send(ftp_connect,e,ee);
+  /* do some FTP on ff */
+  send(fin,ff,ff);
+} [e|->~Services{start}]

@@ -1,0 +1,10 @@
+store(x,y) [x|-> ] {
+  x->c = y;
+} [x|-> c:y]
+
+main() [emp] {
+  local x;
+  x = new();
+  x->c=3;
+  store(x,4);
+} [x|-> c:4]

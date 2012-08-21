@@ -2014,6 +2014,69 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 		res
 
 (*message passing helper functions*)
+let reformat_contract contract =       
+  let trans_one_state st = 
+  let rec helper2 crt_name messages last_state index = match messages with 
+  | [] -> report_error no_pos "reformat_contract: expected at list one message" ;
+  | [m] -> 
+    let new_trans = {trig_messages = [m]; next_state = last_state} in 
+    let last_new_state = {state_name = crt_name;
+			  state_index = 0;
+			  state_initial = false;
+			  state_final = false;
+			  transitions = [new_trans];}  in
+    ([last_new_state], (index + 1))
+  | (m::rest) -> 
+    let new_name = st.state_name ^ (string_of_int index) in
+    let new_trans = {trig_messages = [m]; next_state = new_name} in
+    let crt_new_state = {state_name = crt_name;
+			  state_index = 0;
+			  state_initial = false;
+			  state_final = false;
+			  transitions = [new_trans];}  in
+    let (new_states, new_index) = helper2 new_name rest last_state (index + 1) in
+    (crt_new_state :: new_states, new_index)
+    in
+    let helper1  transition index = 
+      if (List.length transition.trig_messages = 1) then
+	([transition], [], index)
+      else
+	let new_state_name = st.state_name ^ (string_of_int index) in
+	let new_trans = {trig_messages = [(List.hd transition.trig_messages)]; next_state = new_state_name;} in
+	let (new_states, new_index) =  helper2  new_state_name (List.tl transition.trig_messages) transition.next_state  (index + 1) in    
+	([new_trans], new_states , new_index)
+     in
+     let rec builder ret_trans extra_states index transitions = 
+      match transitions with
+	| [] -> (ret_trans, extra_states) ;
+	| (tr::tail) -> 
+	  let (one_new_tr, new_states, new_index) = helper1 tr index in
+	  builder (one_new_tr @ ret_trans) (new_states @ extra_states) new_index tail
+      in
+      let (new_trans, extra_states) =  builder [] [] 1 st.transitions  in
+      let new_state = {st with transitions = new_trans} in
+	([new_state] , extra_states)
+      in
+      let rec helper ret_old ret_new  state_lst = match state_lst with
+	| [] -> (ret_old, ret_new);
+	| (s::tail) ->  
+	    let (one_old, one_new) = (trans_one_state s) in
+	  (helper (ret_old @ one_old) (ret_new @ one_new)  tail)
+      in              
+      let rec update_index index states = match states with
+	| [] -> [] ;
+	| (s::tail) -> 
+	  let (one, new_index) =  if s.state_index > 0 then (s, index)
+		     else ({s with state_index = index}, (index + 1)) in
+	  one::(update_index new_index tail)
+      in
+      let base = (List.length contract.contract_states) + 1 in
+      let (old_states, extra_states) = (helper [] [] contract.contract_states) in
+      let final_states = update_index base (old_states @ extra_states) in
+       {contract with contract_states = final_states;}
+ 
+
+
 let change_state_name (state: state_decl) (mapping: (string * int) list) (new_int : int) : ((int * bool * bool * transition_decl list) * (string * int) list) = 
   let new_mapping = (state.state_name, new_int)::mapping in
   let new_state = (new_int, state.state_initial, state.state_final, state.transitions) in
@@ -2191,8 +2254,7 @@ let dual_of_contract contract =
  
 let generate_weak_send_receive_formulas tag cont form = 
   let test_dir = if tag = Globals.send_tag then Send else Receive in
- (* let filter_transitions  trans = List.filter (fun tr -> (List.hd tr.trig_messages).message_direction = test_dir)  trans in *)
-  let receive_msgs = List.concat (List.map (fun st -> List.map (fun tr -> (List.hd tr.trig_messages).message)  st.transitions) cont.contract_states) in
+  let receive_msgs = List.concat (List.concat (List.map (fun st -> List.map (fun tr -> List.map (fun tr_msg -> tr_msg.message) tr.trig_messages)   st.transitions) cont.contract_states)) in
   let false_branch = Some (F.mkEFalse n_flow no_pos) in
   let prune_formula tmp_form msg_name = 
     let get_state_branch_for_message transitions case_branches =
@@ -2250,7 +2312,7 @@ let generate_weak_send_receive_formulas tag cont form =
 
 let generate_strong_receive_formulas contract    = 
   let false_formula =  F.mkEFalse n_flow no_pos in
-  let receive_msgs = List.concat (List.map (fun st -> List.map (fun tr -> (List.hd tr.trig_messages).message) st.transitions) contract.contract_states) in
+  let receive_msgs = List.concat (List.concat (List.map (fun st -> List.map (fun tr -> List.map (fun tr_msg -> tr_msg.message) tr.trig_messages)   st.transitions) contract.contract_states)) in
   let receive_msgs = List.sort String.compare receive_msgs in
   let rec remove_dups lst = match lst with
     | [] -> [];
@@ -2307,6 +2369,7 @@ let mk_ret_val new_contract suffix1 form1 suffix2 form2 =
    (ret_send_formulas , ret_receive_formulas )
 	    
 let get_struc_formula_of_contract  message_list c = 
+  let c = reformat_contract c in 
   let (name, states) = (c.contract_name, c.contract_states) in
   let endpoint_f = make_initial_endpoint_match  1 name in
   match states with
@@ -2317,8 +2380,8 @@ let get_struc_formula_of_contract  message_list c =
     let send_form = F.mkEBase [] [] [(Globals.state_var_name , Unprimed)] endpoint_f (Some send_contract_f) [] no_pos in
     let receive_contract_f = make_single_state_contract_formula false  message_list name new_state in
     let receive_form = F.mkEBase [] [] [(Globals.state_var_name , Unprimed)] endpoint_f (Some receive_contract_f) [] no_pos in
-    let _ = print_endline ( "single state send: " ^(!print_struc_formula   send_form)) in
-    let _ = print_endline ( "single state receive: " ^(!print_struc_formula  receive_form)) in
+(*    let _ = print_endline ( "single state send: " ^(!print_struc_formula   send_form)) in
+    let _ = print_endline ( "single state receive: " ^(!print_struc_formula  receive_form)) in*)
    (* (new_c,  {contr_name = name ^ "__send"; contr_formula = form})*)
      mk_ret_val new_c Globals.send_suffix (Some send_form) Globals.receive_suffix (Some receive_form)
   | _ -> let new_states = state_ident_to_int states in

@@ -1,0 +1,48 @@
+/*
+ * Variant of : send_list.hop
+ *
+ * Description:
+ * ------------
+ *
+ * Same code, but without the acknowledgment message.
+ */
+
+message cell [val|->]
+message fin  [val|->C{end} * val==src]
+
+contract C {
+  initial state start { !cell -> start;
+                        !fin -> end; }
+  final state end {}
+}
+
+putter(e,x) [e|->C{start} * list(x)] {
+  local t;
+
+  while(x != NULL) [e|->C{start} * list(x)] {
+      t = x->tl;
+      send(cell,e,x);
+      x = t;
+    }
+  send(fin,e,e);
+} [emp]
+
+get(f) [f|->~C{start}] {
+  local x, e;
+
+  e = NULL;
+  while(e == NULL) [if e==NULL then f|->~C{start} else e|->C{end} * f|->~C{end},pr:e] {
+    switch receive {
+    x = receive(cell,f): { dispose(x);}
+    e = receive(fin,f): {}
+    }
+  }
+  close(f,e);
+} [emp]
+
+send_list(x) [list(x)] {
+  local e,f;
+  
+  (e,f) = open(C);
+  putter(e,x) || get(f);
+} [emp]

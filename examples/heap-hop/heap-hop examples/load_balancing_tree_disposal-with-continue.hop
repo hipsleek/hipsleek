@@ -1,0 +1,119 @@
+/*
+Description:
+------------
+this program disposes a binary tree using
+two threads. The tree is not assumed to be balanced, and
+the threads have to dynamically
+balance the load of their tasks. One of the threads will dispose the
+left children of all of the internal nodes of the tree, and the other thread
+will dispose all the right children. Initially, if the tree is not empty, the
+left thread starts with the left subtree (one step down). If this subtree is
+not empty, it disposes its root, sends its right subtree
+(two steps down), and goes on with the left subtree. The right thread behaves
+accordingly. If the tree it is working with becomes empty, the thread
+sends an acknowledgment, and waits for a message. It may either receive a
+new tree to be disposed, or an acknowledgment. The thread maintains a
+counter holding the number of tasks that it has sent, and that still
+haven't been processed and acknowledged by the other thread. When this
+counter comes to zero, the other thread is done, hence the communication can
+be stopped. Note that since Smallfoot does not support integers yet, we
+have added additional code to handle the counter appropriately by predicate
+abstraction (boolean i_is_null).
+
+Interesting questions about this code include:
+- whether it terminates,
+- whether it deadlocks,
+- and whether it is leak-free.
+
+However, we cannot establish any of these properties in our framework.
+Heap-Hop only proves that the program is safe with respect to
+memory management.
+*/
+
+message work [tree(val)]
+message ack  [emp]
+
+contract C {
+  initial state start { !work -> s;
+                        ?work -> s; }
+  final state s { !work->s;
+                  ?work->s;
+                  !ack->s;
+                  ?ack->s; }
+}
+  
+dispose_left(e) [e|->C{s},pr:_f] {
+  local l,r,t,i,i_is_null,is_waiting;
+
+  i = 1;
+  i_is_null = 0;
+  is_waiting = 0;
+  t = 0;
+  while (i_is_null == 0)
+  [if (i_is_null != 0)
+   then e|->C{s},pr:_f
+   else (if (is_waiting == 0)
+         then e|->C{s},pr:_f * tree(t)
+         else e|->C{s},pr:_f )] {
+    if (is_waiting == 0) {
+      while (t != NULL) [e|->C{s},pr:_f * tree(t)] {
+        l = t->l;
+        r = t->r;
+        send(work,e,r);
+        i = i +1;
+	i_is_null = 0;
+        dispose(t);
+        t = l;
+      }
+      send(ack,e);
+      is_waiting = 1;
+    } else switch receive {
+        t = receive(work,e) : { is_waiting = 0; }
+        receive(ack,e) : { i = i -1; i_is_null = random_bool; }
+      }
+ }
+} [e|->C{s},pr:_f]
+
+
+dispose_right(e) [e|->~C{start},pr:_f] {
+  local l,r,t,i,i_is_null,is_waiting;
+
+  i = 1;
+  i_is_null = 0;
+  is_waiting = 0;
+  t = receive(work,e);	
+  while (i_is_null == 0)
+  [if (i_is_null != 0)
+   then e|->~C{s},pr:_f
+   else (if (is_waiting == 0)
+         then e|->~C{s},pr:_f * tree(t)
+         else e|->~C{s},pr:_f )] {
+    if (is_waiting == 0) {
+      while (t != NULL) [e|->~C{s},pr:_f * tree(t)] {
+        l = t->l;
+        r = t->r;
+        send(work,e,l);
+        i = i +1;
+	i_is_null = 0;
+        dispose(t);
+        t = r;
+      }
+      send(ack,e);
+      is_waiting = 1;
+      continue;
+    } 
+    switch receive {
+      t = receive(work,e) : { is_waiting = 0;}
+      receive(ack,e) : { i = i -1; i_is_null = random_bool; }
+     }
+ }
+} [e|->~C{s},pr:_f]
+
+balancing_dispose_tree(t) [tree(t)] {
+  local e,f;
+
+  (e,f) = open(C);
+  send(work,e,t);
+  dispose_left(e) || dispose_right(f);
+  close(e,f);
+} [emp]

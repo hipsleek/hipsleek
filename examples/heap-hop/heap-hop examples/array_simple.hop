@@ -1,0 +1,59 @@
+dispose_array()[array(x,0,8,8)]{
+  x[3] = 1;
+  x[5] = 1;
+  dispose(x);
+}[emp]
+
+/* dispose_array_invalid()[array(x,1,8,8)]{ */
+/*   dispose(x); */
+/* }[emp] */
+
+dispose_array_also_invalid()[array(x,0,5,8)*array(x,2,8,8)]{
+  dispose(x);
+}[emp]
+
+write_one()[array(x,0,2,2)]{
+  x[1] = 2;
+ }[array(x,0,2,2)]
+
+ write_two()[array(x,0,3,5)]{
+  x[0] = 2;
+  }[array(x,0,3,5)]
+
+  write_three()[array(x,0,8,8)]{
+  x[3] = 3;
+  x[7] = 7;
+   }[array(x,0,8,8)]
+
+   read_one()[array(x,0,2,2)]{
+  local y;
+  y = x[1];
+
+    }[array(x,0,2,2)]
+
+read_two()[array(x,0,1,1)]{
+  local y;
+  y = x[0];
+
+ }[array(x,0,1,1)]
+
+read_three()[array(x,0,8,8)]{
+  local y;
+  y = x[3];
+  y = x[7];
+  y = x[1];
+
+ }[array(x,0,8,8)]
+
+empty_function()[array(x,0,3,3)]{
+  
+ }[array(x,0,3,3)]
+
+/* read_one_list()[list(x)* x!=0]{ */
+/*   local y; */
+/*   y = x->tl; */
+/*  }[list(x)] */
+
+/* list_manipulate()[list(x)]{ */
+  
+/* }[list(x)] */

@@ -1,0 +1,31 @@
+
+message rand [array(x,val0,val1,4) * param0 == val0 * _nextparam0 == param0 * param1 == val1 * _nextparam1 == param1]
+message back [array(x,param0,param1,4) * _nextparam0 == param0 * _nextparam1 == param1]
+
+contract C {
+  initial state start { !rand -> sback; }
+  state sback { ?back -> end; }
+  final state end {}
+}
+
+put_get() [array(x,0,4,4)] {
+  local e,f;
+  (e,f) = open(C,0,3);
+  put(e) || get(f);
+  close(e,f);
+} [emp]
+
+put(e) [e|-> C{start}, p0:0, p1:3 * array(x,0,4,4) ] {
+  send(rand,e,0,3);
+  receive(back,e);
+  dispose(x);
+  } [e|->C{end}, p0:0, p1:3]
+
+get(f) [f|-> ~C{start},pr:_ee, p0:_x, p1:_x1] {
+    local y,i,j;
+  (i,j) = receive(rand,f);
+  send(back,f);
+} [f|-> ~C{end},pr:_ee, p0:i, p1:j ]
+
+
+

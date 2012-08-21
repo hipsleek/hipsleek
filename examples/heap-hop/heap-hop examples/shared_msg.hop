@@ -1,0 +1,38 @@
+message rocell [x|-{ox}-> * x==val]
+message fin [val|->C{end} * val==src]
+
+contract C {
+  initial state start {
+    !rocell -> ?rocell -> start;
+    !fin -> end; }
+  final state end {}
+}
+
+client(f) [f|->~C{start}] {
+  local y,z,ee;
+  
+  z = receive(rocell,f);
+  y = z->data;
+  send(rocell,f,z);
+  ee = receive(fin,f);
+  close(ee,f);
+}
+
+server(e) [e|->C{start}] {
+  local y;
+
+  x = new();
+  x->data=1;
+  send(rocell,e,x);
+  y = x->data;
+  x = receive(rocell,e);
+  dispose(x);
+  send(fin,e,e);
+}
+
+main() {
+  local e,f;
+  
+  (e,f) = open(C);
+  server(e) || client(f);
+}

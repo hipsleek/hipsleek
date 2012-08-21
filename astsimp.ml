@@ -1140,64 +1140,6 @@ and add_ref_vars_to_contract_formula contract =
   ret
   
 and check_contract_declarations  (contr_decls : I.contract_decl list)  = 
-    let reformat_contract contract =       
-      let trans_one_state st = 
-	let rec helper2 crt_name messages last_state index = match messages with 
-	  | [] -> report_error no_pos "reformat_contract: expected at list one message" ;
-	  | [m] -> 
-	    let new_trans = {I.trig_messages = [m]; I.next_state = last_state} in 
-	    let last_new_state = {I.state_name = crt_name;
-				  I.state_index = 0;
-				  I.state_initial = false;
-				  I.state_final = false;
-				  I.transitions = [new_trans];}  in
-	    ([last_new_state], (index + 1))
-	  | (m::rest) -> 
-	    let new_name = st.I.state_name ^ (string_of_int index) in
-	    let new_trans = {I.trig_messages = [m]; I.next_state = new_name} in
-	    let crt_new_state = {I.state_name = crt_name;
-				  I.state_index = 0;
-				  I.state_initial = false;
-				  I.state_final = false;
-				  I.transitions = [new_trans];}  in
-	    let (new_states, new_index) = helper2 new_name rest last_state (index + 1) in
-	    (crt_new_state :: new_states, new_index)
-	in
-	let helper1  transition index = 
-	  if (List.length transition.I.trig_messages = 1) then
-	    ([transition], [], index)
-	  else
-	     let new_state_name = st.I.state_name ^ (string_of_int index) in
-	     let new_trans = {I.trig_messages = [(List.hd transition.I.trig_messages)]; I.next_state = new_state_name;} in
-	     let (new_states, new_index) =  helper2  new_state_name (List.tl transition.I.trig_messages) transition.I.next_state  (index + 1) in    
-	     ([new_trans], new_states , new_index)
-	in
-	let rec builder ret_trans extra_states index transitions = 
-	  match transitions with
-	    | [] -> (ret_trans, extra_states) ;
-	    | (tr::tail) -> 
-	      let (one_new_tr, new_states, new_index) = helper1 tr index in
-	       builder (one_new_tr @ ret_trans) (new_states @ extra_states) new_index tail
-	in
-	let (new_trans, extra_states) =  builder [] [] 1 st.I.transitions  in
-	let new_state = {st with I.transitions = new_trans} in
-	[new_state] @ extra_states
-      in
-      let rec helper ret state_lst = match state_lst with
-	| [] -> ret;
-	| (s::tail) ->  (helper ((trans_one_state s) @ ret) tail)
-      in              
-      let rec update_index index states = match states with
-	| [] -> [] ;
-	| (s::tail) -> 
-	  let (one, new_index) =  if s.I.state_index > 0 then (s, index)
-		     else ({s with I.state_index = index}, (index + 1)) in
-	  one::(update_index new_index tail)
-      in
-      let base = (List.length contract.I.contract_states) + 1 in
-      let final_states = update_index base (helper [] contract.I.contract_states) in
-       {contract with I.contract_states = final_states;}
-    in
     let check_contract_determinism c = 
       let helper state = 
 	let msgs = List.map (fun tr -> List.hd tr.I.trig_messages) state.I.transitions in
@@ -1275,8 +1217,8 @@ and check_contract_declarations  (contr_decls : I.contract_decl list)  =
       in
       List.iter check_msg_of_cycles cycles
     in  
-    let helper contr = 
-      let contr_decl = reformat_contract contr in      
+    let helper contr_decl = 
+      (*let contr_decl = reformat_contract contr in  *)    
       let _ = check_contract_determinism contr_decl in
       let _ = check_contract_uniform_choice contr_decl in
       let _ = check_contract_synchronizing_states contr_decl in
@@ -3175,7 +3117,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 C.exp_seq_exp2 = ce2;
                 C.exp_seq_pos = pos; }), te2)
       | I.SwitchReceive {I.exp_switch_receive_branches = br; I.exp_switch_receive_pos = pos} ->
-	  let _ = print_endline ("SWR debug: " ^ (Iprinter.string_of_exp ie)) in 
+	 (* let _ = print_endline ("SWR debug: " ^ (Iprinter.string_of_exp ie)) in *)
 	  let endpoint_names2 = List.map (fun (rcv, _) -> match rcv with 
 						| I.CallNRecv call -> if (call.I.exp_call_nrecv_method = Globals.receive_name) then List.hd call.I.exp_call_nrecv_arguments
 								  else report_error pos ((Iprinter.string_of_exp rcv) ^ "is not a 'receive' call");
