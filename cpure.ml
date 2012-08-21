@@ -1676,6 +1676,15 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
         else
           ef
 
+and mkForallStrong (vs : spec_var list) (f : formula) lbl pos = match vs with
+  | [] -> f
+  | v :: rest ->
+        let ef = mkForall rest f lbl pos in
+        if mem v (fv ef) then
+          Forall (v, ef, lbl, pos)
+        else
+          ef
+
 (* same of list_of_conjs *)
 and split_conjunctions =  function
     | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)

@@ -735,28 +735,115 @@ let collect_update_function (transition_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
 
-let check_decreasing_seqvar_precondition_x (init_constraint: CP.formula)
-                                           (precondition: CP.formula)
-                                           : bool =
-  (* (init_constraint -> precondition is VALID *)
-  let precondition_check, _, _ = TP.imply init_constraint precondition "" false None in
-  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_precondition_x") no_pos in
-  let _ = Debug.dinfo_pprint ("init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
-  let _ = Debug.dinfo_pprint ("precondition = " ^ (Cprinter.string_of_pure_formula precondition)) no_pos in
-  let _ = Debug.dinfo_pprint ("precondition_check = " ^ (string_of_bool precondition_check)) no_pos in
-  precondition_check
+(* collect the arithmetic constraint from a transition constraint *)
+(* by obtaining only the assignments or comparision formula *)
+let collect_arithmetic_constraint_x (transition_constraint: CP.formula) : CP.formula =
+  let is_arithmetic_formula (pf: CP.p_formula) : bool =
+    match pf with
+    | CP.Eq _ | CP.Neq _ | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ -> true
+    | _ -> false in
+  let rec convert_formula (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm ((pf, _), _) ->
+        if is_arithmetic_formula pf then f
+        else CP.mkTrue no_pos
+    | CP.And (f1, f2, l) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.And (new_f1, new_f2, l)
+    | CP.AndList formula_list ->
+        let (ls, fs) = List.split formula_list in
+        let new_fs =
+          List.map (
+            fun f -> match f with
+            | CP.BForm ((pf, _), _) ->
+                if is_arithmetic_formula pf then f
+                else CP.mkTrue no_pos
+            | _ -> convert_formula f
+          ) fs in
+        let new_formula_list = List.combine ls new_fs in
+        CP.AndList new_formula_list
+    | CP.Or (f1, f2, l1, l2) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.Or (new_f1, new_f2, l1, l2)
+    | CP.Not (f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Not (new_f, l1, l2)           *)
+        CP.mkTrue no_pos
+    | CP.Forall (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Forall (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+    | CP.Exists (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Exists (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+  ) in
+  convert_formula transition_constraint
 
-let check_decreasing_seqvar_precondition (init_constraint: CP.formula)
-                                         (precondition: CP.formula)
-                                         : bool =
+let collect_arithmetic_constraint (transition_constraint: CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_1 "collect_arithmetic_constraint" pr pr collect_arithmetic_constraint_x transition_constraint
+
+let check_decreasing_seqvar_precondition_x (assumption: CP.formula)
+                                           (domain_src: CP.formula)
+                                           (loopcond: CP.formula)
+                                           : (bool * string) =
+  (* initial constraint -> domain_src *)
+  let domain_src_check, _, _ = TP.imply assumption domain_src "" false None in
+  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_precondition_x") no_pos in
+  let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src = " ^ (Cprinter.string_of_pure_formula domain_src))  no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src_check = " ^ (string_of_bool domain_src_check))  no_pos in
+  if not domain_src_check then
+    (false, "Domain doesn't cover assumption!")
+  else (
+    (* (assumption -> precondition is VALID *)
+    let loopcond_check, _, _ = TP.imply assumption loopcond "" false None in
+    let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_precondition_x") no_pos in
+    let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
+    let _ = Debug.dinfo_pprint ("loopcond = " ^ (Cprinter.string_of_pure_formula loopcond)) no_pos in
+    let _ = Debug.dinfo_pprint ("loopcond_check = " ^ (string_of_bool loopcond_check)) no_pos in
+    if not loopcond_check then 
+      (false, "Loop condition isn't satisfiable! Program won't enter the loop.")
+    else
+      (true, "Precondition checking OK!")
+  )
+
+
+let check_decreasing_seqvar_precondition (assumption: CP.formula)
+                                         (domain_src: CP.formula)
+                                         (loopcond: CP.formula)
+                                         : (bool * string) =
   let pr_in = Cprinter.string_of_pure_formula in
   let pr_out = string_of_bool in
   Debug.no_2 "check_decreasing_seqvar_precondition"
              pr_in pr_in pr_out
              (fun p1 p2 -> check_decreasing_seqvar_precondition_x p1 p2)
-             init_constraint precondition
+             assumption domain_src loopcond
 
-let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
+let check_decreasing_seqvar_transition_x (assumption : CP.formula)
                                          (seqvar_src: CP.sequence_info)
                                          (seqvar_dst: CP.sequence_info)
                                          : (bool * string) =
@@ -766,112 +853,103 @@ let check_decreasing_seqvar_transition_x (init_constraint : CP.formula)
   let element_dst = seqvar_dst.CP.seq_element in
   let domain_dst = seqvar_dst.CP.seq_domain in
   let limit_dst = seqvar_dst.CP.seq_limit in 
-  (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
-  let update_function = collect_update_function init_constraint in
-  let fixpoint_check = (
-    (* We consider the possible limit of source and destination is *)
-    (* either both of them are real value                          *)
-    (*     or both of them are negative infinity                   *)
-    (* The other cases don't belong to the decreasing sequence     *)
-    match limit_src, limit_dst with
-    | CP.SConst (Pos_infinity, _), _
-    | _, CP.SConst (Pos_infinity, _) ->
-        let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
-        raise (Exn_SeqVar "SeqVar invalid")
-    | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
-        (* when Neg_infinity appears in both two side of entailment    *)
-        (* check that the element_src and element_dst is unbounded*)
-        let bvar_src = CP.fresh_new_spec_var Float in
-        let bexp_src = CP.mkVar bvar_src no_pos in
-        let sv_src = CP.afv element_src in
-        let f = CP.mkPure (CP.mkGt element_src bexp_src no_pos) in
-        let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src f None no_pos) None no_pos) in
-        let unbound_src = CP.mkAnd update_function bc no_pos in
-        let bvar_dst = CP.fresh_new_spec_var Float in
-        let bexp_dst = CP.mkVar bvar_dst no_pos in
-        let sv_dst = CP.afv element_dst in
-        let f = CP.mkPure (CP.mkGt element_dst bexp_dst no_pos) in
-        let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst f None no_pos) None no_pos) in
-        let unbound_check, _, _ = TP.imply unbound_src unbound_dst "" false None in
-        let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-        let _ = Debug.dinfo_pprint ("unbound_src = " ^ (Cprinter.string_of_pure_formula unbound_src)) no_pos in
-        let _ = Debug.dinfo_pprint ("unbound_dst = " ^ (Cprinter.string_of_pure_formula unbound_dst)) no_pos in
-        let _ = Debug.dinfo_pprint ("unbound_check = " ^ (string_of_bool unbound_check)) no_pos in
-        unbound_check
-    | CP.SConst (Neg_infinity, _), _
-    | _, CP.SConst (Neg_infinity, _) ->
-        let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
-        raise (Exn_SeqVar "SeqVar invalid")
-    | _, _ ->
-        let fixpoint_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
-        let fixpoint_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-        let fixpoint_check, _, _ = TP.imply fixpoint_src fixpoint_dst "" false None in
-        let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-        let _ = Debug.dinfo_pprint ("fixpoint_src = " ^ (Cprinter.string_of_pure_formula fixpoint_src)) no_pos in
-        let _ = Debug.dinfo_pprint ("fixpoint_dst = " ^ (Cprinter.string_of_pure_formula fixpoint_dst)) no_pos in
-        let _ = Debug.dinfo_pprint ("fixpoint_check = " ^ (string_of_bool fixpoint_check)) no_pos in
-        fixpoint_check
-  ) in
-  if not fixpoint_check then
-    (false, "The biggest lower-bound of measure's domain is not the fix-point of measure!")
+  (* domain coverage check*)
+  let init_constraint = collect_arithmetic_constraint assumption in
+  let domain_src_cons = CP.mkAnd init_constraint domain_src no_pos in
+  let domain_cover_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
+  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_cover_check = " ^ (string_of_bool domain_cover_check)) no_pos in
+  if not domain_cover_check then
+    (false, "Domain isn't covered in recursive call!")
   else (
-    (* domain check*)
-    let domain_src_cons = CP.mkAnd update_function domain_src no_pos in
-    let domain_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in 
+    (* distance decrease check *)
+    let distance_constraint = ( 
+      match limit_src, limit_dst with
+      | CP.SConst (Pos_infinity, _), _
+      | _, CP.SConst (Pos_infinity, _) ->
+          let _ = report_error no_pos "check_decreasing_seqvar_transition: the lower-bound of the domain can't be Pos_infinity" in
+          raise (Exn_SeqVar "The domain of measure is invalid")
+      | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+          (* Constraint: element_src > elment_dst *)
+          CP.mkPure (CP.mkGt element_src element_dst no_pos)
+      | CP.SConst (Neg_infinity, _), _
+      | _, CP.SConst (Neg_infinity, _) ->
+          let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side of transition" in
+          raise (Exn_SeqVar "The domain of measure is invalid")
+      | _ ->
+          (* Constraint: (element_src > limit_src)      *)
+          (*             && (element_dst > limit_dst)   *)
+          (*             && (element_src > element_dst) *)
+          let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+          let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+          let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
+          CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
+      ) in
+    let domain_constraint = CP.mkAnd init_constraint (CP.mkAnd domain_src domain_dst no_pos) no_pos in
+    let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" false None in
     let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-    let _ = Debug.dinfo_pprint ("domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in
-    let _ = Debug.dinfo_pprint ("domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in
-    let _ = Debug.dinfo_pprint ("domain_check = " ^ (string_of_bool domain_check)) no_pos in
-    if not domain_check then
-      (false, "The domain of measure doesn't satisfy initial constraint!")
+    let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in
+    let _ = Debug.dinfo_pprint ("distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) no_pos in
+    let _ = Debug.dinfo_pprint ("distance_decrease_check = " ^ (string_of_bool distance_decrease_check)) no_pos in
+    if not distance_decrease_check then
+      (false, "The measure doesn't decrease!")
     else (
-      (* distance decrease check *)
-      let distance_constraint = ( 
+      (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
+      let update_function = collect_update_function assumption in
+      let fixpoint_check = (
+        (* We consider the possible limit of source and destination is *)
+        (* either both of them are real value                          *)
+        (*     or both of them are negative infinity                   *)
+        (* The other cases don't belong to the decreasing sequence     *)
         match limit_src, limit_dst with
         | CP.SConst (Pos_infinity, _), _
         | _, CP.SConst (Pos_infinity, _) ->
-            let _ = report_error no_pos "check_decreasing_seqvar_transition: the lower-bound of the domain can't be Pos_infinity" in
-            raise (Exn_SeqVar "The domain of measure is invalid")
+            let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
+            raise (Exn_SeqVar "SeqVar invalid")
         | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
-            (* Constraint: element_src > elment_dst *)
-            CP.mkPure (CP.mkGt element_src element_dst no_pos)
+            (* when Neg_infinity appears in both two side of entailment    *)
+            (* check that the element_src and element_dst is unbounded*)
+            let bvar_src = CP.fresh_new_spec_var Float in
+            let bexp_src = CP.mkVar bvar_src no_pos in
+            let sv_src = CP.afv element_src in
+            let f = CP.mkPure (CP.mkGt element_src bexp_src no_pos) in
+            let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src f None no_pos) None no_pos) in
+            let unbound_src = CP.mkAnd update_function bc no_pos in
+            let bvar_dst = CP.fresh_new_spec_var Float in
+            let bexp_dst = CP.mkVar bvar_dst no_pos in
+            let sv_dst = CP.afv element_dst in
+            let f = CP.mkPure (CP.mkGt element_dst bexp_dst no_pos) in
+            let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst f None no_pos) None no_pos) in
+            let unbound_check, _, _ = TP.imply unbound_src unbound_dst "" false None in
+            let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
+            let _ = Debug.dinfo_pprint ("unbound_src = " ^ (Cprinter.string_of_pure_formula unbound_src)) no_pos in
+            let _ = Debug.dinfo_pprint ("unbound_dst = " ^ (Cprinter.string_of_pure_formula unbound_dst)) no_pos in
+            let _ = Debug.dinfo_pprint ("unbound_check = " ^ (string_of_bool unbound_check)) no_pos in
+            unbound_check
         | CP.SConst (Neg_infinity, _), _
         | _, CP.SConst (Neg_infinity, _) ->
-            let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side of transition" in
-            raise (Exn_SeqVar "The domain of measure is invalid")
-        | _ ->
-            (* Constraint: (element_src > limit_src)      *)
-            (*             && (element_dst > limit_dst)   *)
-            (*             && (element_src > element_dst) *)
-            let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-            let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-            let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-            CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
-        ) in
-      let domain_constraint = CP.mkAnd (CP.mkAnd domain_src domain_dst no_pos) update_function no_pos in
-      let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" false None in
-      let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-      let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in
-      let _ = Debug.dinfo_pprint ("distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) no_pos in
-      let _ = Debug.dinfo_pprint ("distance_decrease_check = " ^ (string_of_bool distance_decrease_check)) no_pos in
-      if not distance_decrease_check then
-        (false, "The measure does not decrease!")
-      else (
-        (* check the coverage of domain over the initial constraint *)
-        let domain_cover_check, _, _ = TP.imply init_constraint domain_constraint "" false None in
-        let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-        let _ = Debug.dinfo_pprint ("init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
-        let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint))  no_pos in
-        let _ = Debug.dinfo_pprint ("domain_cover_check = " ^ (string_of_bool domain_cover_check))  no_pos in
-        if not domain_cover_check then
-          (false, "The measure's domain is not covered in recurisive call!")
-        else
-          (true, "Transition checking succeed!")
-      )
+            let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
+            raise (Exn_SeqVar "SeqVar invalid")
+        | _, _ ->
+            let fixpoint_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
+            let fixpoint_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
+            let fixpoint_check, _, _ = TP.imply fixpoint_src fixpoint_dst "" false None in
+            let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
+            let _ = Debug.dinfo_pprint ("fixpoint_src = " ^ (Cprinter.string_of_pure_formula fixpoint_src)) no_pos in
+            let _ = Debug.dinfo_pprint ("fixpoint_dst = " ^ (Cprinter.string_of_pure_formula fixpoint_dst)) no_pos in
+            let _ = Debug.dinfo_pprint ("fixpoint_check = " ^ (string_of_bool fixpoint_check)) no_pos in
+            fixpoint_check
+      ) in
+      if not fixpoint_check then
+        (false, "The biggest lower-bound of measure's domain isn't the fix-point!")
+      else
+        (true, "Transition checking succeed!")
     )
   )
 
-let check_decreasing_seqvar_transition (init_constraint : CP.formula)
+let check_decreasing_seqvar_transition (assumption : CP.formula)
                                        (seqvar_src: CP.sequence_info)
                                        (seqvar_dst: CP.sequence_info)
                                        : (bool * string) =
@@ -882,9 +960,9 @@ let check_decreasing_seqvar_transition (init_constraint : CP.formula)
   Debug.no_3 "check_decreasing_seqvar_transition"
             pr_in1 pr_in2 pr_in3 pr_out
             (fun in1 in2 in3 -> check_decreasing_seqvar_transition_x in1 in2 in3)
-            init_constraint seqvar_src seqvar_dst 
+            assumption seqvar_src seqvar_dst 
 
-let check_decreasing_seqvar_terminability_x (init_constraint: CP.formula)
+let check_decreasing_seqvar_terminability_x (assumption: CP.formula)
                                             (element: CP.exp)
                                             (limit: CP.exp)
                                             (loop_condition: CP.formula)
@@ -911,6 +989,7 @@ let check_decreasing_seqvar_terminability_x (init_constraint: CP.formula)
         let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcond None no_pos in
         let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
         let term_formula = CP.mkForall vars all_constraint None no_pos in
+        (* let term_formula = all_constraint in *)
         CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos
   ) in
   let terminability_check, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
@@ -919,7 +998,7 @@ let check_decreasing_seqvar_terminability_x (init_constraint: CP.formula)
   let _ = Debug.dinfo_pprint ("terminability_check = " ^ (string_of_bool terminability_check))  no_pos in
   terminability_check
 
-let check_decreasing_seqvar_terminability (init_constraint: CP.formula)
+let check_decreasing_seqvar_terminability (assumption: CP.formula)
                                           (element: CP.exp)
                                           (limit: CP.exp)
                                           (loop_condition: CP.formula)
@@ -932,7 +1011,7 @@ let check_decreasing_seqvar_terminability (init_constraint: CP.formula)
   Debug.no_4 "check_decreasing_seqvar_terminability"
              pr_in1 pr_in2 pr_in3 pr_in4 pr_out
              (fun in1 in2 in3 in4 -> check_decreasing_seqvar_terminability_x in1 in2 in3 in4)
-             init_constraint element limit loop_condition
+             assumption element limit loop_condition
 
 let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seqvar_src, seqvar_dst) = match trans with
@@ -940,24 +1019,25 @@ let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tran
                            | _ -> raise (Exn_SeqVar "SeqVar not found!") in
   let element_src = seqvar_src.CP.seq_element in
   let limit_src = seqvar_src.CP.seq_limit in
-  let loopcond_src = seqvar_src.CP.seq_loopcond in 
+  let loopcond_src = seqvar_src.CP.seq_loopcond in
+  let domain_src = seqvar_src.CP.seq_domain in
   let pos_dst = seqvar_dst.CP.seq_loc in
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+  let assumption = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
   let term_measures, term_res, term_err_msg, rank_formula = (
     (* check precondition *)
-    let precondition_res = check_decreasing_seqvar_precondition init_constraint loopcond_src in
+    let precondition_res,detail_msg = check_decreasing_seqvar_precondition assumption domain_src loopcond_src in
     if not precondition_res then
       Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),
       (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Precondition_Invalid)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Precondition_Invalid))),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Precondition_Invalid)) ^ " - " ^ detail_msg),
       None
     else (
       (* check transition *)
-      let trans_res, detail_msg = check_decreasing_seqvar_transition init_constraint seqvar_src seqvar_dst in
+      let trans_res, detail_msg = check_decreasing_seqvar_transition assumption seqvar_src seqvar_dst in
       if not trans_res then
         Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),
         (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Transition_Invalid trans)),
@@ -965,7 +1045,7 @@ let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (tran
         None
       else (
         (* check terminability *)
-        let terminability_res = check_decreasing_seqvar_terminability init_constraint element_src limit_src loopcond_src in
+        let terminability_res = check_decreasing_seqvar_terminability assumption element_src limit_src loopcond_src in
         if not terminability_res then
           Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),
           (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans)),
@@ -1012,24 +1092,24 @@ let check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans 
     (fun _ _ _ _ -> check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans) 
     estate lhs_p rhs_p trans
 
-let check_general_seqvar_init_and_term_constraint_x (init_constraint: CP.formula) (loopcond: CP.formula) : bool =
-  (* initial termination constraint: (init_constraint -> loopcond) is SAT *)
-  let loopcond_check, _, _ = TP.imply init_constraint loopcond "" false None in
+let check_general_seqvar_init_and_term_constraint_x (assumption: CP.formula) (loopcond: CP.formula) : bool =
+  (* initial termination constraint: (assumption -> loopcond) is SAT *)
+  let loopcond_check, _, _ = TP.imply assumption loopcond "" false None in
   let _ = Debug.dinfo_pprint ("In function: check_general_seqvar_init_and_term_constraint_x") no_pos in
-  let _ = Debug.dinfo_pprint ("init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
+  let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
   let _ = Debug.dinfo_pprint ("loopcond = " ^ (Cprinter.string_of_pure_formula loopcond)) no_pos in
   let _ = Debug.dinfo_pprint ("loopcond_check = " ^ (string_of_bool loopcond_check)) no_pos in
   loopcond_check
 
-let check_general_seqvar_init_and_term_constraint (init_constraint: CP.formula) (loopcond: CP.formula) : bool =
+let check_general_seqvar_init_and_term_constraint (assumption: CP.formula) (loopcond: CP.formula) : bool =
   let pr_in = Cprinter.string_of_pure_formula in
   let pr_out = string_of_bool in
   Debug.no_2 "check_general_seqvar_init_and_term_constraint"
              pr_in pr_in pr_out
              (fun p1 p2 -> check_general_seqvar_init_and_term_constraint_x p1 p2)
-             init_constraint loopcond
+             assumption loopcond
 
-let check_general_seqvar_transition_x (init_constraint : CP.formula)
+let check_general_seqvar_transition_x (assumption : CP.formula)
                                       (seqvar_src: CP.sequence_info)
                                       (seqvar_dst: CP.sequence_info)
                                       : (bool * string) =
@@ -1040,7 +1120,7 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
   let domain_dst = seqvar_dst.CP.seq_domain in
   let limit_dst = seqvar_dst.CP.seq_limit in 
   (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
-  let update_function = collect_update_function init_constraint in
+  let update_function = collect_update_function assumption in
   let fixpoint_check = (
     match limit_src, limit_dst with
     | CP.SConst _, _
@@ -1096,9 +1176,9 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
         (false, "Decreasing-distance checking fail")
       else (
         (* check the coverage of domain over the initial constraint *)
-        let domain_cover_check, _, _ = TP.imply init_constraint domain_constraint "" false None in
+        let domain_cover_check, _, _ = TP.imply assumption domain_constraint "" false None in
         let _ = Debug.dinfo_pprint ("++ In function: check_general_seqvar_transition_x") no_pos in
-        let _ = Debug.dinfo_pprint ("init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
+        let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
         let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in
         let _ = Debug.dinfo_pprint ("domain_cover_check = " ^ (string_of_bool domain_cover_check)) no_pos in
         if not domain_cover_check then
@@ -1147,7 +1227,7 @@ let check_general_seqvar_transition_x (init_constraint : CP.formula)
     )
   )
 
-let check_general_seqvar_transition (init_constraint : CP.formula)
+let check_general_seqvar_transition (assumption : CP.formula)
                                     (seqvar_src: CP.sequence_info)
                                     (seqvar_dst: CP.sequence_info)
                                     : (bool * string) =
@@ -1158,9 +1238,9 @@ let check_general_seqvar_transition (init_constraint : CP.formula)
   Debug.no_3 "check_general_seqvar_transition"
             pr_in1 pr_in2 pr_in3 pr_out
             (fun in1 in2 in3 -> check_general_seqvar_transition_x in1 in2 in3)
-            init_constraint seqvar_src seqvar_dst 
+            assumption seqvar_src seqvar_dst 
 
-let check_general_seqvar_limit_and_term_constraint_x (init_constraint: CP.formula)
+let check_general_seqvar_limit_and_term_constraint_x (assumption: CP.formula)
                                                      (element: CP.exp)
                                                      (limit: CP.exp)
                                                      (loopcond: CP.p_formula list)
@@ -1175,14 +1255,14 @@ let check_general_seqvar_limit_and_term_constraint_x (init_constraint: CP.formul
   let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
   let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
-  let loopcond_check, _, _ = TP.imply init_constraint term_constraint "" false None in
+  let loopcond_check, _, _ = TP.imply assumption term_constraint "" false None in
   let _ = Debug.dinfo_pprint ("++ In function: check_general_seqvar_limit_and_term_constraint_x") no_pos in
-  let _ = Debug.dinfo_pprint ("init_constraint = " ^ (Cprinter.string_of_pure_formula init_constraint)) no_pos in
+  let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
   let _ = Debug.dinfo_pprint ("term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint)) no_pos in
   let _ = Debug.dinfo_pprint ("loopcond_check = " ^ (string_of_bool loopcond_check)) no_pos in
   loopcond_check
 
-let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
+let check_general_seqvar_limit_and_term_constraint (assumption: CP.formula)
                                                    (element: CP.exp)
                                                    (limit: CP.exp)
                                                    (loopcond: CP.p_formula list)
@@ -1195,7 +1275,7 @@ let check_general_seqvar_limit_and_term_constraint (init_constraint: CP.formula)
   Debug.no_4 "check_general_seqvar_limit_and_term_constraint"
              pr_in1 pr_in2 pr_in3 pr_in4 pr_out
              (fun in1 in2 in3 in4 -> check_general_seqvar_limit_and_term_constraint_x in1 in2 in3 in4)
-             init_constraint element limit loopcond
+             assumption element limit loopcond
 
 let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =
   let (seqvar_src, seqvar_dst) = match trans with
@@ -1208,11 +1288,11 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
   let pos = post_pos # get in
   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
   let term_pos = (pos, proving_loc # get) in
-  let init_constraint = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+  let assumption = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
   let orig_ante = estate.es_formula in
   let term_measures, term_res, term_err_msg, rank_formula = (
     (* check transition *)
-    let trans_res, detail_msg = check_general_seqvar_transition init_constraint seqvar_src seqvar_dst in
+    let trans_res, detail_msg = check_general_seqvar_transition assumption seqvar_src seqvar_dst in
     if not trans_res then
       Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),
       (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Transition_Invalid trans)),
@@ -1220,7 +1300,7 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
       None
     else (
       (* check termination based on initial constraint *)
-      let init_res = check_general_seqvar_init_and_term_constraint init_constraint loopcond_src in
+      let init_res = check_general_seqvar_init_and_term_constraint assumption loopcond_src in
       if init_res then
         Some (CP.SeqVar seqvar_src), 
         (term_pos, trans, Some orig_ante, Term_S Limit_Technique_Precondition_Invalid),
@@ -1228,7 +1308,7 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
         None
       else (
         (* check term cosntraint *)
-        (* let limit_res = check_general_seqvar_limit_and_term_constraint init_constraint element_src limit_src loopcond_src in *)
+        (* let limit_res = check_general_seqvar_limit_and_term_constraint assumption element_src limit_src loopcond_src in *)
         (* if not limit_res then                                                                                                *)
         (*   Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),                                                  *)
         (*   (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans)),                     *)
