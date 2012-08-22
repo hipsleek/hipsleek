@@ -848,6 +848,96 @@ and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
   |a :: rest -> afv a @ afv_list rest
 
+(* collect denominator from a formula and return a list of exp *)
+and collect_denominator_formula (f: formula): exp list =
+  match f with
+  | BForm (bf, _)        -> collect_denominator_bformula bf
+  | And (f1, f2, _)      -> List.concat (List.map collect_denominator_formula [f1; f2])
+  | AndList lbl_fs       -> let _, fs = List.split lbl_fs in
+                            List.concat (List.map collect_denominator_formula fs)
+  | Or (f1, f2, _, _)    -> List.concat (List.map collect_denominator_formula [f1; f2])
+  | Not (f0, _, _)       -> collect_denominator_formula f0
+  | Forall (_, f0, _, _) -> collect_denominator_formula f0
+  | Exists (_, f0, _, _) -> collect_denominator_formula f0
+
+(* collect denominator from a b_formula and return a list of exp *)
+and collect_denominator_bformula (bf: b_formula): exp list = 
+  let pf, _ = bf in
+  collect_denominator_pformula pf
+
+(* collect denominator from a p_formula and return a list of exp *)
+and collect_denominator_pformula (pf: p_formula): exp list =
+  match pf with
+  | LexVar _              -> []
+  | SeqVar _              -> []
+  | BConst _              -> []
+  | BVar _                -> []
+  | Lt (e1, e2, _)        -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Lte (e1, e2, _)       -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Gt (e1, e2, _)        -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Gte (e1, e2, _)       -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | SubAnn (e1, e2, _)    -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Eq (e1, e2, _)        -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Neq (e1, e2, _)       -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | EqMax (e1, e2, e3, _) -> List.concat (List.map collect_denominator_exp [e1; e2; e3])
+  | EqMin (e1, e2, e3, _) -> List.concat (List.map collect_denominator_exp [e1; e2; e3])
+  | BagIn (_, e0, _)      -> collect_denominator_exp e0
+  | BagNotIn (_, e0, _)   -> collect_denominator_exp e0
+  | BagSub (e1, e2, _)    -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | BagMin _              -> []
+  | BagMax _              -> []
+  | VarPerm _             -> []
+  | ListIn (e1, e2, _)    -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | ListNotIn (e1, e2, _) -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | ListAllN (e1, e2, _)  -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | ListPerm (e1, e2, _)  -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | RelForm (_, es, _)    -> List.concat (List.map collect_denominator_exp es)
+
+(* collect denominator from a exp and return a list of exp *)
+and collect_denominator_exp (e: exp): exp list = 
+  match e with
+  | Null _               -> []
+  | Var _                -> []
+  | IConst _             -> []
+  | FConst _             -> []
+  | AConst _             -> []
+  | SConst _             -> []
+  | Add (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Subtract (e1, e2, _) -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Mult (e1, e2, _)     -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Div (e1, e2, _)      -> (collect_denominator_exp e1) @ [e2]
+  | Max (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Min (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Abs (e0, _)          -> collect_denominator_exp e0
+  | Sqrt (e0, _)         -> collect_denominator_exp e0
+  | Pow (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Bag (es, _)          -> List.concat (List.map collect_denominator_exp es)
+  | BagUnion (es, _)     -> List.concat (List.map collect_denominator_exp es)
+  | BagIntersect (es, _) -> List.concat (List.map collect_denominator_exp es)
+  | BagDiff (e1, e2, _)  -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | List (es, _)         -> List.concat (List.map collect_denominator_exp es)
+  | ListCons (e1, e2, _) -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | ListHead (e0, _)     -> collect_denominator_exp e0
+  | ListTail (e0, _)     -> collect_denominator_exp e0
+  | ListLength (e0, _)   -> collect_denominator_exp e0
+  | ListAppend (es, _)   -> List.concat (List.map collect_denominator_exp es)
+  | ListReverse (e0, _)  -> collect_denominator_exp e0
+  | ArrayAt (_, es, _)   -> List.concat (List.map collect_denominator_exp es)
+  | Func (_, es, _)      -> List.concat (List.map collect_denominator_exp es)
+
+(* collect the domain of formula (conditions to make the formula meaningful) *)
+and collect_formula_domain (f: formula): formula =
+  let fdomain = 
+    (* all the denominator have to be different from zero *)
+    let denominators = collect_denominator_formula f in
+    let mkNeqZero (e: exp) : formula = mkNeqExp e (FConst (0.0, no_pos)) no_pos in
+    List.map mkNeqZero denominators in
+  match fdomain with
+  | []     -> mkTrue no_pos
+  | [hd]   -> hd
+  | hd::tl -> let makeAnd f1 f2 = mkAnd f1 f2 no_pos in
+              List.fold_left makeAnd hd tl
+
 and is_max_min e =
   match e with
     | Max _ | Min _ -> true
@@ -1668,15 +1758,6 @@ and mkExists vs f lbel pos =
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
 and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
-  | [] -> f
-  | v :: rest ->
-        let ef = mkForall rest f lbl pos in
-        if mem v (fv ef) then
-          Forall (v, ef, lbl, pos)
-        else
-          ef
-
-and mkForallStrong (vs : spec_var list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest ->
         let ef = mkForall rest f lbl pos in

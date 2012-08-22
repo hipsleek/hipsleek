@@ -915,13 +915,17 @@ let check_decreasing_seqvar_transition_x (assumption : CP.formula)
             let bexp_src = CP.mkVar bvar_src no_pos in
             let sv_src = CP.afv element_src in
             let f = CP.mkPure (CP.mkGt element_src bexp_src no_pos) in
-            let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src f None no_pos) None no_pos) in
+            let fdomain = CP.collect_formula_domain f in
+            let fForAll = CP.mkImply fdomain f no_pos in
+            let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src fForAll None no_pos) None no_pos) in
             let unbound_src = CP.mkAnd update_function bc no_pos in
             let bvar_dst = CP.fresh_new_spec_var Float in
             let bexp_dst = CP.mkVar bvar_dst no_pos in
             let sv_dst = CP.afv element_dst in
             let f = CP.mkPure (CP.mkGt element_dst bexp_dst no_pos) in
-            let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst f None no_pos) None no_pos) in
+            let fdomain = CP.collect_formula_domain f in
+            let fForAll = CP.mkImply fdomain f no_pos in
+            let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst fForAll None no_pos) None no_pos) in
             let unbound_check, _, _ = TP.imply unbound_src unbound_dst "" false None in
             let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
             let _ = Debug.dinfo_pprint ("unbound_src = " ^ (Cprinter.string_of_pure_formula unbound_src)) no_pos in
@@ -977,8 +981,10 @@ let check_decreasing_seqvar_terminability_x (assumption: CP.formula)
         let bound_var = CP.fresh_new_spec_var Float in
         let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var no_pos) no_pos) in
         let termcond = CP.mkNot_s loop_condition in
-        let all_constraint = CP.mkOr (CP.mkNot_s bound_exp) termcond None no_pos in
-        let term_formula = CP.mkForall vars all_constraint None no_pos in
+        let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None no_pos in
+        let fdomain = CP.collect_formula_domain f in
+        let fForAll = CP.mkImply fdomain f no_pos in
+        let term_formula = CP.mkForall vars fForAll None no_pos in
         CP.mkExists [bound_var] term_formula None no_pos
     | _ ->
         let vars = CP.afv element in
@@ -986,10 +992,11 @@ let check_decreasing_seqvar_terminability_x (assumption: CP.formula)
         let constraint1 = CP.mkPure (CP.mkGt element limit no_pos) in
         let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in
         let termcond = CP.mkNot_s loop_condition in
-        let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcond None no_pos in
+        let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcond None no_pos in
+        let fdomain = CP.collect_formula_domain f in
+        let fForAll = CP.mkImply fdomain f no_pos in
+        let term_formula = CP.mkForall vars fForAll None no_pos in
         let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-        let term_formula = CP.mkForall vars all_constraint None no_pos in
-        (* let term_formula = all_constraint in *)
         CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos
   ) in
   let terminability_check, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
@@ -1192,8 +1199,10 @@ let check_general_seqvar_transition_x (assumption : CP.formula)
             let cons1 = CP.mkPure (CP.mkGt newbound (CP.mkFConst 0.0 no_pos) no_pos) in
             let dist_src = CP.mkAbs (CP.mkSubtract element_src limit_src no_pos) no_pos in
             let cons2 = CP.mkPure (CP.mkGt dist_src newbound no_pos) in
-            let newbound_cons = CP.mkImply domain_src (CP.mkAnd cons1 cons2 no_pos)no_pos in
-            CP.mkNot_s (CP.mkExists [new_v] (CP.mkForall vars_src newbound_cons None no_pos) None no_pos)
+            let f = CP.mkImply domain_src (CP.mkAnd cons1 cons2 no_pos)no_pos in
+            let fdomain = CP.collect_formula_domain f in
+            let fForAll = CP.mkImply fdomain f no_pos in
+            CP.mkNot_s (CP.mkExists [new_v] (CP.mkForall vars_src fForAll None no_pos) None no_pos)
           ) in
           let limit_src_check, _, _ = TP.imply domain_src limit_src_constraint "" false None in
           let _ = Debug.dinfo_pprint ("++ In function: check_general_seqvar_transition_x") no_pos in
@@ -1210,8 +1219,10 @@ let check_general_seqvar_transition_x (assumption : CP.formula)
               let cons1 = CP.mkPure (CP.mkGt newbound (CP.mkFConst 0.0 no_pos) no_pos) in
               let dist_dst = CP.mkAbs (CP.mkSubtract element_dst limit_dst no_pos) no_pos in
               let cons2 = CP.mkPure (CP.mkGt dist_dst newbound no_pos) in
-              let newbound_cons = CP.mkImply domain_dst (CP.mkAnd cons1 cons2 no_pos)no_pos in
-              CP.mkNot_s (CP.mkExists [new_v] (CP.mkForall vars_dst newbound_cons None no_pos) None no_pos)
+              let f = CP.mkImply domain_dst (CP.mkAnd cons1 cons2 no_pos)no_pos in
+              let fdomain = CP.collect_formula_domain f in
+              let fForAll = CP.mkImply fdomain f no_pos in
+              CP.mkNot_s (CP.mkExists [new_v] (CP.mkForall vars_dst fForAll None no_pos) None no_pos)
             ) in
             let limit_dst_check, _, _ = TP.imply domain_dst limit_dst_constraint "" false None in
             let _ = Debug.dinfo_pprint ("++ In function: check_general_seqvar_transition_x") no_pos in
@@ -1251,9 +1262,11 @@ let check_general_seqvar_limit_and_term_constraint_x (assumption: CP.formula)
   let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in
   let lst = List.map CP.mkPure loopcond in
   let tc = List.fold_left (fun x y -> CP.mkOr x y None no_pos) (CP.mkFalse no_pos) lst in 
-  let all_constraint = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
+  let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) tc None no_pos in
+  let fdomain = CP.collect_formula_domain f in
+  let fForAll = CP.mkImply fdomain f no_pos in
+  let term_formula = CP.mkForall vars fForAll None no_pos in
   let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
-  let term_formula = CP.mkForall vars all_constraint None no_pos in
   let term_constraint = CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos in
   let loopcond_check, _, _ = TP.imply assumption term_constraint "" false None in
   let _ = Debug.dinfo_pprint ("++ In function: check_general_seqvar_limit_and_term_constraint_x") no_pos in
@@ -1281,8 +1294,6 @@ let check_general_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans :
   let (seqvar_src, seqvar_dst) = match trans with
                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2
                            | _ -> raise (Exn_SeqVar "SeqVar not found!") in
-  let element_src = seqvar_src.CP.seq_element in
-  let limit_src = seqvar_src.CP.seq_limit in
   let loopcond_src = seqvar_src.CP.seq_loopcond in
   let pos_dst = seqvar_dst.CP.seq_loc in
   let pos = post_pos # get in

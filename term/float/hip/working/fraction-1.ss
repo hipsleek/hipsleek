@@ -1,43 +1,37 @@
-// fraction: f(x) = 1 + 2/x
+// fraction: f(x) = 1.0 + 2.0/x
 
-/*
+float abs(float x)
+  requires Term
+  ensures res = __abs(x);
+
+
+// no using abs
 void loop1(float x)
   case {
-    x <= 3 -> requires Term ensures true;
-    x > 3  -> requires Term[SeqDec{__abs(x-2.0), (0.0, +infinity), x>3}] ensures true;
+    x > 2.01          -> requires Term[SeqDec{x-2.0, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    1.99 <= x <= 2.01 -> requires Term ensures true;
+    1.0 < x < 1.99    -> requires Term[SeqDec{2.0-x, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    0.0 < x <= 1.0    -> requires Term[SeqDec{(2.0-x)*2.0/x, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    x <= 0.0          -> requires Term ensures true;
   }
 {
-  if (x>3)
-    loop1(1+2/x);
-}
-*/
-/*
-void loop1b(float x)
-  case {
-    x <= 3 -> requires Term ensures true;
-    x > 3  -> requires Term[SeqDec{__abs(x-1.0), [0.0, +infinity), x>3.0}] ensures true;
-  }
-{
-  if (x>3)
-    loop1b(1+2/x);
+  if (((x>2.01) || (x<1.99)) && (x > 0.0))
+    loop1(1.0 + 2.0/x);
 }
 
-void loop1b1(float x)
+
+
+// using abs
+void loop2(float x)
   case {
-    x <= 3 -> requires Term ensures true;
-    x > 3  -> requires Term[SeqDec{__abs(x-2.0), [0.0, +infinity), x>3.0}] ensures true;
+    x > 2.01          -> requires Term[SeqDec{__abs(x-2.0), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    1.99 <= x <= 2.01 -> requires Term ensures true;
+    1.0 < x < 1.99    -> requires Term[SeqDec{__abs(x-2.0), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    0.0 < x <= 1.0    -> requires Term[SeqDec{__abs((x-2.0)*2.0/x), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    x <= 0.0          -> requires Term ensures true;
   }
 {
-  if (x>3)
-    loop1b1(1+x/2);
+  if ((abs(x-2.0) > 0.01) && (x > 0.0))
+    loop2(1.0 + 2.0/x);
 }
-*/
-void loop1c(float x)
-  case {
-    !((x>2.1) | (1.0<x<1.9)) -> requires Term ensures true;
-    ((x>2.1)  | (1.0<x<1.9)) -> requires Term[SeqDec{__abs(x-2.0), (0.0, +infinity), ((x>2.1) | (x<1.9))}] ensures true;
-  }
-{
-  if (((x>2.1) || ((x>1.0) && (x<1.9))) && (x != 0.0))
-    loop1c(1+2/x);
-}
+
