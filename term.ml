@@ -865,7 +865,7 @@ let check_decreasing_seqvar_transition_x (assumption : CP.formula)
     (false, "Domain isn't covered in recursive call!")
   else (
     (* distance decrease check *)
-    let distance_constraint = ( 
+    let distance_constraint = (
       match limit_src, limit_dst with
       | CP.SConst (Pos_infinity, _), _
       | _, CP.SConst (Pos_infinity, _) ->
@@ -895,62 +895,8 @@ let check_decreasing_seqvar_transition_x (assumption : CP.formula)
     let _ = Debug.dinfo_pprint ("distance_decrease_check = " ^ (string_of_bool distance_decrease_check)) no_pos in
     if not distance_decrease_check then
       (false, "The measure doesn't decrease!")
-    else (
-      (* possible limit constraint: update_function & (element_src = limit_src) => element_dst = limit_dst *)
-      let update_function = collect_update_function assumption in
-      let fixpoint_check = (
-        (* We consider the possible limit of source and destination is *)
-        (* either both of them are real value                          *)
-        (*     or both of them are negative infinity                   *)
-        (* The other cases don't belong to the decreasing sequence     *)
-        match limit_src, limit_dst with
-        | CP.SConst (Pos_infinity, _), _
-        | _, CP.SConst (Pos_infinity, _) ->
-            let _ = report_error no_pos "check_decreasing_seqvar_transition: the limit can't be Pos_infinity" in
-            raise (Exn_SeqVar "SeqVar invalid")
-        | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
-            (* when Neg_infinity appears in both two side of entailment    *)
-            (* check that the element_src and element_dst is unbounded*)
-            let bvar_src = CP.fresh_new_spec_var Float in
-            let bexp_src = CP.mkVar bvar_src no_pos in
-            let sv_src = CP.afv element_src in
-            let f = CP.mkPure (CP.mkGt element_src bexp_src no_pos) in
-            let fdomain = CP.collect_formula_domain f in
-            let fForAll = CP.mkImply fdomain f no_pos in
-            let bc = CP.mkNot_s (CP.mkExists [bvar_src] (CP.mkForall sv_src fForAll None no_pos) None no_pos) in
-            let unbound_src = CP.mkAnd update_function bc no_pos in
-            let bvar_dst = CP.fresh_new_spec_var Float in
-            let bexp_dst = CP.mkVar bvar_dst no_pos in
-            let sv_dst = CP.afv element_dst in
-            let f = CP.mkPure (CP.mkGt element_dst bexp_dst no_pos) in
-            let fdomain = CP.collect_formula_domain f in
-            let fForAll = CP.mkImply fdomain f no_pos in
-            let unbound_dst = CP.mkNot_s (CP.mkExists [bvar_dst] (CP.mkForall sv_dst fForAll None no_pos) None no_pos) in
-            let unbound_check, _, _ = TP.imply unbound_src unbound_dst "" false None in
-            let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-            let _ = Debug.dinfo_pprint ("unbound_src = " ^ (Cprinter.string_of_pure_formula unbound_src)) no_pos in
-            let _ = Debug.dinfo_pprint ("unbound_dst = " ^ (Cprinter.string_of_pure_formula unbound_dst)) no_pos in
-            let _ = Debug.dinfo_pprint ("unbound_check = " ^ (string_of_bool unbound_check)) no_pos in
-            unbound_check
-        | CP.SConst (Neg_infinity, _), _
-        | _, CP.SConst (Neg_infinity, _) ->
-            let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side" in
-            raise (Exn_SeqVar "SeqVar invalid")
-        | _, _ ->
-            let fixpoint_src = CP.mkAnd update_function (CP.mkPure (CP.mkEq element_src limit_src no_pos)) no_pos in
-            let fixpoint_dst = CP.mkPure (CP.mkEq element_dst limit_dst no_pos) in
-            let fixpoint_check, _, _ = TP.imply fixpoint_src fixpoint_dst "" false None in
-            let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in
-            let _ = Debug.dinfo_pprint ("fixpoint_src = " ^ (Cprinter.string_of_pure_formula fixpoint_src)) no_pos in
-            let _ = Debug.dinfo_pprint ("fixpoint_dst = " ^ (Cprinter.string_of_pure_formula fixpoint_dst)) no_pos in
-            let _ = Debug.dinfo_pprint ("fixpoint_check = " ^ (string_of_bool fixpoint_check)) no_pos in
-            fixpoint_check
-      ) in
-      if not fixpoint_check then
-        (false, "The biggest lower-bound of measure's domain isn't the fix-point!")
-      else
-        (true, "Transition checking succeed!")
-    )
+    else
+      (true, "Transition checking succeed!")
   )
 
 let check_decreasing_seqvar_transition (assumption : CP.formula)
