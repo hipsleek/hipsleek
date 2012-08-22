@@ -1058,7 +1058,7 @@ cexp_w :
         let (element, domain, limit, loopcond) = param in
         let tc = match loopcond with
                  | Pure_f f -> f
-                 | Pure_c c -> P.mkPure (P.mkGt element c no_pos) in
+                 | Pure_c c -> P.mkPure (P.mkGte element c no_pos) in
         let seq = P.SeqVar { P.seq_ann = t_ann;
                              P.seq_element = element;
                              P.seq_domain = domain;
@@ -1073,8 +1073,8 @@ cexp_w :
         let tc = match loopcond with
                        | [Pure_f f] -> f
                        | [Pure_c c1; Pure_c c2] ->
-                           let tc1 = P.mkPure (P.mkLt element c1 no_pos) in
-                           let tc2 = P.mkPure (P.mkGt element c2 no_pos) in
+                           let tc1 = P.mkPure (P.mkLte element c1 no_pos) in
+                           let tc2 = P.mkPure (P.mkGte element c2 no_pos) in
                            P.mkOr tc1 tc2  None no_pos
                        | _ -> report_error (get_pos_camlp4 _loc 1) "expected [pures_cosntr] or [cexp; cexp] but not meet" in
         let seq = P.SeqVar { P.seq_ann = t_ann;

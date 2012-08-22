@@ -19,7 +19,7 @@ void loop1(float x)
     loop1(1.0 + 2.0/x);
 }
 
-
+/*
 
 // using abs
 void loop2(float x)
@@ -34,4 +34,4 @@ void loop2(float x)
   if ((abs(x-2.0) > 0.01) && (x > 0.0))
     loop2(1.0 + 2.0/x);
 }
-
+*/
