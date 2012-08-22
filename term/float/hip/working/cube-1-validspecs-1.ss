@@ -27,7 +27,7 @@ void foo2(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[SeqGen{-x, (-infinity, -1), x >= 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[SeqDec{-x, (-infinity, -1), x < 1.1}] ensures true;
     }
 {
   if (x < 1.1)
