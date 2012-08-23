@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -951,6 +951,31 @@ $output_file = "log";
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
+		"sleek_fracperm"=>[["fracperm/sleek.slk"," -perm fperm -tp redlog", "","Valid.Valid.Valid.Fail."],
+					["fracperm/sleek1.slk"," -perm fperm -tp redlog", "", "Fail."],
+					["fracperm/sleek10.slk"," -perm fperm -tp redlog", "", "Valid.Fail."],
+					["fracperm/sleek2.slk"," -perm fperm -tp redlog", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+					["fracperm/sleek3.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid."],
+					["fracperm/sleek4.slk"," -perm fperm -tp redlog", "", "Valid.Valid."],
+					["fracperm/sleek6.slk"," -perm fperm -tp redlog", "", "Valid.Valid."],
+					["fracperm/sleek7.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                  # slow in sleek8.slk due to search
+				  ["fracperm/sleek8.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["fracperm/sleek9.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid.Valid."],
+
+                    ["fracperm/norm1.slk"," -perm fperm -tp redlog", "", "Fail.Valid.Fail.Valid."],
+					["fracperm/norm3.slk"," -perm fperm -tp redlog", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+					["fracperm/norm4.slk"," -perm fperm -tp redlog", "","Valid.Valid.Valid."],
+					["fracperm/uni_vars.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Fail."],
+					["fracperm/frac1.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid."],
+					["fracperm/frac2.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
+					["fracperm/frac3.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Fail.Fail."],
+					["fracperm/split_simple.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+					["fracperm/combine_data.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+					["fracperm/combine_simple.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+					["fracperm/split-combine.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                  ["fracperm/combine2.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
+           ],
     "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
