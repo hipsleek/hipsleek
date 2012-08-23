@@ -20,7 +20,12 @@ lemma "split1" self::cellp(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cellp(f1)
 lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p> & n>=0 .
 
 
-lemma "combine1" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0  <- self::cellp(f1)<v> * self::cellp(f2)<v> &  0.0<f<=1.0.
+// combining fractional permission should be implemented as a left coercion.
+// if we implemented it as a right coercion, it would lead to infinite loop
+// due to combine1/spli1 --> combine1/spli1 ...
+//lemma "combine1" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0  <- self::cellp(f1)<v> * self::cellp(f2)<v> &  0.0<f<=1.0.
+
+lemma "normalize" self::cellp(f1)<v> * self::cellp(f2)<v> -> self::cellp(f1+f2)<v>.
 
 lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p> & n>=0.
 
@@ -33,22 +38,25 @@ checkentail x::cellp(0.4)<v1> * x::cellp(0.6)<v1>  |- x::cellp(1.0)<v2>.
 print residue. //valid, COMBINE
 // succeeds with 2 answers
 // lossless combine --> one answer
+// 2012-08-23: Heuristic: NORMALIZE, 1 answer
 
 //(2)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.2)<v1> * x::cellp(0.2)<v1> * x::cellp(0.2)<v1>  |- x::cellp(1.0)<v2>.
-//print residue. //valid, COMBINE
+print residue. //valid, NORMALIZE
 // succeeds with 24 answers
 // lossless combine --> one answer
+// 2012-08-23: Heuristic: NORMALIZE, 1 answer
 
 //(3)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.6)<v3> |- x::cellp(1.0)<v2>.
 //print residue. 
-// fails as may failure
+// fails as may failure (not sure v1=v2=v3)
 // lossless combine --> would succeed ???
 
 //(4)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.6)<v3> & v1=v3 |- x::cellp(1.0)<v2>.
-//print residue. //valid, COMBINE
+print residue. //valid, COMBINE
+// 2012-08-23: Heuristic: NORMALIZE, 1 answer
 
 //(5)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.7)<v1>  |- false.
@@ -59,20 +67,26 @@ checkentail x::cellp(0.4)<v1> * x::cellp(0.7)<v1>  |- false.
 // if we can normalize the LHS, we will be able to
 // check for UNSAT
 
+// 2012-08-23: Heuristic: NORMALIZE, VALID, 1 answer
+// valid because LHS=false
+
+
 //(6)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.7)<v1>  |- x::cellp(f)<v>.
-//print residue. //valid, COMBINE
+print residue. //valid, COMBINE
 // succeeds with 6 answers
 // lossless combine --> would succeed with one false prestate
 // LDK: need UNSAT check in the LHS
+// 2012-08-23: Heuristic: NORMALIZE, 1 answer
+// LHS=false
 
 //(7)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.3)<v1>  |- x::cellp(f)<v>.
-//print residue. //valid, COMBINE
+print residue. //valid, COMBINE
 // succeeds with 8 answers
 // lossless combine --> would succeed with 2 answers
 
-
+// 2012-08-23: Heuristic: NORMALIZE, 1 answer (SPLIT only)
 
 
 

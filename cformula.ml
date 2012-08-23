@@ -1224,7 +1224,12 @@ and get_node_name (h : h_formula) = match h with
 and get_node_perm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_perm = c}) 
   | DataNode ({h_formula_data_perm = c}) -> c
-  | _ -> failwith ("get_node_perm: invalid argument")
+  | _ -> failwith ("get_node_perm: invalid argument. Expected ViewNode/DataNode")
+
+and get_node_original (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_original = c}) 
+  | DataNode ({h_formula_data_original = c}) -> c
+  | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode")
 
 and get_node_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_arguments = c}) 
@@ -1451,8 +1456,8 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 	           h_formula_view_original = false})
 
         else
-          (*otherwise, its origins unchange but its view_original=false*)
-	      (false, ViewNode {vn with h_formula_view_original = false})
+          (*otherwise, its origins unchange but its view_original=true*)
+	      (false, ViewNode {vn with h_formula_view_original = true})
 	      (* (false, ViewNode {vn with *)
           (*     h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
           (*     h_formula_view_original = true}) *)
@@ -1469,8 +1474,8 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 	           h_formula_data_original = false})
 
         else
-          (*otherwise, its origins unchange but its view_original=false*)
-	      (false, DataNode {dn with h_formula_data_original = false})
+          (*otherwise, its origins unchange but its view_original=true*)
+	      (false, DataNode {dn with h_formula_data_original = true})
 	      (* (false, DataNode {dn with  *)
 	      (*     h_formula_data_origins = origs @ dn.h_formula_data_origins; *)
           (*     h_formula_data_original = true}) *)

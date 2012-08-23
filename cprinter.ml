@@ -1239,11 +1239,12 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
 
 let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = begin
+            fmt_string "\n";
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
   end in
-  let f b = () in
+  (* let f b = () in *)
   pr_numbered_list_formula_trace_ho (e) (count:int) f 
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
@@ -1439,7 +1440,9 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
+  *)
   pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  (*
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
@@ -2146,6 +2149,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<==>" ;;
 
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
+  | Cast.Split -> "Split"
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
   | Cast.Normalize -> "Normalize"

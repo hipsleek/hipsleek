@@ -357,7 +357,7 @@ and view_mater_match_x prog c vs1 aset imm f =
               
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
-  if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
+  if not((c.coercion_case=Cast.Simple || c.coercion_case=Cast.Split) && c.coercion_head_view = l_vname) then None
   else 
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
@@ -489,7 +489,103 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       match_res_type = mt;
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
-      
+
+(*
+In the presence of permissions,
+LOOKING for actions on SPLIT/COMBINE lemmas to apply 
+because exact MATCH may fail*)
+and lookup_lemma_action prog (c:match_res) :action =
+  Debug.no_1 "lookup_lemma_action"
+      string_of_match_res string_of_action_res
+      (lookup_lemma_action_x prog) c
+
+and lookup_lemma_action_x prog (c:match_res) :action =
+  let rhs_node = c.match_res_rhs_node in
+  let lhs_node = c.match_res_lhs_node in
+  let view_decls = prog.prog_view_decls in
+  let i,act = match c.match_res_type with 
+    (*no need to prioritize => discount i, only return act*)
+    | Root ->
+        (match lhs_node,rhs_node with
+          | DataNode dl, DataNode dr ->
+              let dl_data_orig = dl.h_formula_data_original in
+              let dr_data_orig = dr.h_formula_data_original in
+              let dl_data_derv = dl.h_formula_data_derv in
+              let dr_data_derv = dr.h_formula_data_derv in
+              let flag = 
+                if !ann_derv 
+                then (not(dl_data_derv) && not(dr_data_derv)) 
+                else (dl_data_orig || dr_data_orig)
+              in
+              (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
+              let l = 
+                let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Split) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
+                let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Normalize) prog.prog_right_coercions) dr.h_formula_data_name dl.h_formula_data_name in
+                let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                left_act@right_act
+              in
+              if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+              else (-1,Search_action l)
+          | ViewNode vl, ViewNode vr ->
+              let vl_name = vl.h_formula_view_name in
+              let vr_name = vr.h_formula_view_name in
+              let vl_vdef = look_up_view_def_raw view_decls vl_name in
+              let vr_vdef = look_up_view_def_raw view_decls vr_name in
+              let vl_view_orig = vl.h_formula_view_original in
+              let vr_view_orig = vr.h_formula_view_original in
+              let vl_view_derv =  vl.h_formula_view_derv in
+              let vr_view_derv = vr.h_formula_view_derv in
+              (*Are they in LOCKED state*)
+              let is_l_lock = match vl_vdef.view_inv_lock with
+                | Some _ -> true
+                | None -> false
+              in
+              let is_r_lock = match vr_vdef.view_inv_lock with
+                | Some _ -> true
+                | None -> false
+              in
+              let flag = 
+                if !ann_derv 
+                then (not(vl_view_derv) && not(vr_view_derv)) 
+                (* else (vl_view_orig || vr_view_orig) *)
+                else
+                  (*only apply a SPLIT lemma to a lock
+                    if both sides are original*)
+                  (* if (is_l_lock) then *)
+                  (*   (vl_view_orig && vr_view_orig) *)
+                  (*if RHS is original --> SPLIT*)
+                  if (is_l_lock && is_r_lock && vr_view_orig) then
+                    true
+                  else if (is_l_lock && is_r_lock && not vr_view_orig) then
+                    false
+                  else
+                    (vl_view_orig || vr_view_orig)
+              in
+              let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+              let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+              let l = if flag
+                  then begin
+                      (*expecting ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)*)
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Split) prog.prog_left_coercions) vl_name vr_name in
+                      let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Normalize) prog.prog_right_coercions) vr_name vl_name in
+                      let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
+                      let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                      left_act@right_act
+                  end
+                  else  [] in
+              if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+              else (-1,Search_action l)
+          | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
+          | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
+          | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
+    | MaterializedArg (mv,ms) -> 
+        (*unexpected*)
+        (1,M_Nothing_to_do (string_of_match_res c))
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
+  in
+  act
+
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
@@ -545,7 +641,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let l3 = if flag
                   then 
                     begin
-                      let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Split) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
                       let right_ls = look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
@@ -661,7 +757,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   let l3 = if flag
                   then begin
-                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
+                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Split) prog.prog_left_coercions) vl_name vr_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
