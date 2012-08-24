@@ -1264,8 +1264,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_string (("\nSCall: acquire: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                  (*NORMALIZE after acquiring some new states*)
                   let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
-                  tmp_res
+                  (*CHECK for UNSAT states*)
+                  let unsat_check_fct es =
+                    let new_es = {es with CF.es_unsat_flag = false} in (*trigger unsat_check*)
+                    elim_unsat_es prog (ref 1) new_es
+                  in
+                  let tmp_res2 = CF.transform_list_failesc_context (idf,idf,unsat_check_fct) tmp_res in (*acquire() an invariant may cause UNSAT*)
+
+                  tmp_res2
                 else
                 if (mn_str=Globals.release_name) then
                   (*==========================================*)

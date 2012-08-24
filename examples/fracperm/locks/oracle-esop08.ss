@@ -40,12 +40,12 @@ data lock{
 LOCK<x> == /* self::cell<self,v1,v2,v3> & v1=v2 */ self::lock<>
   inv self!=null
   inv_lock x::cell<self,v1,v2,v3> & v1=v2 & v3=1
-  or x::cell<self,v1,v2,v3> * self::LOCK(1/2)<x> & v1=v2 & v3=0;
+  or x::cell<self,v1,v2,v3> * self::LOCK(0.6)<x> & v1=v2 & v3=0;
   //inv_lock x::cellInv<>;
 
 lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<x> * self::LOCK(f2)<x> & 0.0<f<=1.0;
 
-                                                                 lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
+lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
 //LOCK protecting a cell
 /* void main() */
@@ -119,21 +119,21 @@ lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1
 /* } */
 
 void thread(lock l, cell x)
-  requires l::LOCK(1/2)<x> & @value[l,x] & ls={}
-  ensures l::LOCK(1/2)<x> & ls'={}; //'
+  requires l::LOCK(0.6)<x> & ls={}
+  ensures l::LOCK(0.6)<x> & ls'={}; //'
 {
-  dprint;
   acquire[LOCK](l,x);
   dprint;
-  /* x.val1=1; */
-  /* x.val2=1; */
+  x.val1=x.val1*2;
+  dprint;
+  x.val2=x.val2*2;
   /* x.val3=0;  */
-  if (x.val1>10) {
-    x.val3=0;
-    release[LOCK](l,x); // should allow a split here
-    return;
-  }
-  else{
+  /* if (x.val1>10) { */
+  /*   x.val3=0; */
+  /*   release[LOCK](l,x); // should allow a split here */
+  /*   return; */
+  /* } */
+  /* else{ */
   /*   dprint; */
   // val3 = 0, this should FAIL because
   //   delta1 * 1/2 * val3=0 or delta1 * 1.0 * val3=0
@@ -145,6 +145,7 @@ void thread(lock l, cell x)
   //   was able to ENTAIL
   //   delta1 * 1/2 * val3=1 or delta1 * 1.0 * val3=0
     release[LOCK](l,x); // should allow a split here
-    dprint;
-  }
+  /*   dprint; */
+  /* } */
+  dprint;
 }

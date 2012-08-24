@@ -6860,14 +6860,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                      f1=f2 cannot be proven
                   *)
 
-                  (* let test = (flag && (not exact_flag) && (res=false) && tmp!=[]) in *)
+                  let test = (flag && (not exact_flag) && (res=false) (* && tmp!=[] *)) in
                   (* let _ = print_endline ("flag = " ^ (string_of_bool flag)) in *)
-                  (* let _ = print_endline ("exact_flag = " ^ (string_of_bool exact_flag)) in *)
+                  (* let _ = print_endline ("not exact_flag = " ^ (string_of_bool (not exact_flag))) in *)
                   (* let _ = print_endline ("tmp !=[] " ^ (string_of_bool (tmp!=[]))) in *)
+                  (* let _ = print_endline  ("tmp = " ^ (Cprinter.string_of_spec_var_list tmp)) in *)
                   (* let _ = print_endline ("res =false " ^ (string_of_bool (res=false))) in *)
-                  (* let _ = print_endline  ("\n tmp = " ^ (Cprinter.string_of_spec_var_list tmp)) in *)
+                  (* let _ = print_endline ("not is_folding " ^ (string_of_bool (not is_folding))) in *)
                   (* let _ = print_endline ("test = " ^ (string_of_bool test)) in *)
-                  if (flag && (not exact_flag) && (res=false) && (not is_folding) (* && tmp!=[] *)) then
+                  if (flag && (not exact_flag) && (res=false) (* && (not is_folding) *) (* && tmp!=[] *)) then
                     (*if guess that cannot match exactly, apply lemma*)
                     (*First, find lemma actions to apply*)
                     let new_act = Context.lookup_lemma_action prog m_res in
