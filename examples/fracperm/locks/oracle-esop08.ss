@@ -1,25 +1,25 @@
 /*
-  [nonworking example]
-  [Bug] - required distinguished fractional permissions
+  [working example]
 
-  This example tried to implement the motivating example in
+  This example implements the motivating example in
   Aquinas's paper [ESOP'08].
 
-  However, it is non-working because the paper requires
-  the notion of distinguished fractional permissions to 
-  distiguished bw left and right halves of a share.
+  However, there is a critical modification:
+  1. The original example is not correct due to the 
+  use of incorrect permissions (50% and 50%). Aquinas's
+  thesis uses distinguished permissions and therefore
+  avoid this issue.
 
-  Specifcally, (1) the invariant holds a left-permission
-  when v3=0, and (2) the main thread holds a right half 
-  and the child thread holds a left half; therefore, only
-  the main thread can join the lef-half permission in the
-  invariant to form a full permission and later finalize
-  the lock.
+  2. We, however, show that it is sufficient to just change 
+  the permissions to 40% and 60%.
 
-  In case of normal fractional permissions, the child thread
-  which holds a half of permission can also acquire another
-  half from the invariant and therefore breaks the semantics
-  of the program/invariant.
+  Note: we use exceptions to model return and break inside a loop
+
+  Some issues remain:
+  + partial correctness of loops
+  + handle locksets in more complex situation
+
+  TODO: formula slicing
 
 */
 
@@ -34,8 +34,9 @@ data cell{
 data lock{
 }
 
-//cellInv<> == self::cell<v> & v>=0
-//  inv self!=null;
+class rexc extends __Exc{} //exception when return from a loop
+
+class bexc extends __Exc{} //exception when break from a loop
 
 LOCK<x> == /* self::cell<self,v1,v2,v3> & v1=v2 */ self::lock<>
   inv self!=null
@@ -48,104 +49,77 @@ lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1
 lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
 //LOCK protecting a cell
-/* void main() */
-/*   requires ls={} */
-/*   ensures ls'={}; //' */
-/* { */
-/*   cell x; */
-/*   lock l; */
-/*   l = new lock(); //dummy */
-/*   x = new cell(l,0,0,0); */
+void main()
+  requires ls={}
+  ensures true; //'
+{
+  cell x;
+  lock l;
+  l = new lock(); //dummy
+  x = new cell(l,0,0,0);
+  int i=0;
+  init[LOCK](l,x);
+  /* dprint; */
+  x.val1=1;
+  x.val2=1;
+  int id;
+  id = fork(thread,l,x); // ??? consider drop ls,ls' when fork/join
+  // TO CHECK: how about ls
+  x.val3=1;
 
-/*   init[LOCK](l,x); */
-/*   /\* dprint; *\/ */
-/*   x.val1=1; */
-/*   x.val2=1; */
-/*   x.val3=1; */
-/*   /\* dprint; *\/ */
-/*   release[LOCK](l,x); // val3 = 1 => no need to SPLIT */
-/*                       // va3 = 0 => no to SPLIT */
-/*   /\* dprint; *\/ */
+  try{
 
-/*   int id; */
-/*   id = fork(thread,l,x); // ??? consider drop ls,ls' when fork/join */
-/*   dprint; */
+  while (true)
+    requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l}
+          or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 0.4 + 0.6 = 1.0'
+    ensures l'::LOCK(0.4)<x> * x'::cell<l,v11,v22,v33> & l'=l & v11=v22 & v33=1 & ls'={l'}
+    or l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'}
+    or l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//'
+  {
+    if (x.val3==0){
+      raise new bexc(); // break
+    };
+    x.val1=i;
+    x.val2=i;
+    release[LOCK](l,x);
+    /* dprint; */
+    i=i+1;
+    acquire[LOCK](l,x);
+  } //end TRY
+  }catch(bexc e){
+      finalize[LOCK](l,x);
+  };
+    /* /\* dprint; *\/ */
+    /* /\* finalize[LOCK](l,x); //cannot finalize here *\/ */
+    /* /\* //because the loop post-cond cannot finalize *\/ */
 
-/*   acquire[LOCK](l,x); */
-/*   dprint; */
-
-/*   while (true) */
-/*     requires l::LOCK(1/2)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l} */
-/*           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 1/2 + 1/2 = 1.0 */
-/*     ensures l::LOCK(1/2)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l} */
-/*     or l::LOCK(1/2)<x> * x::cell<self,v1,v2,v3> * l::LOCK(1/2)<x> & v1=v2 & v3=0 & ls={l}; */
-/*   { */
-
-/*     /\* dprint; *\/ */
-/*     x.val1=1; */
-/*     x.val2=1; */
-/*     /\* x.val3=2; *\/ */
-/*     /\* dprint; *\/ */
-/*     release[LOCK](l,x); */
-
-/*     acquire[LOCK](l,x); */
-/*     /\* dprint; *\/ */
-/*   } */
-
-/*   release[LOCK](l,x); */
-/*   /\* dprint; *\/ */
-
-/* } */
-
-/* void thread2(lock l, cell x) */
-/*   requires l::LOCK(1/2)<x> & @value[l,x] & ls={} */
-/*   ensures l::LOCK(1/2)<x> & ls'={}; //' */
-/* { */
-/*   dprint; */
-/*   while(true) */
-/*   requires l::LOCK(1/2)<x> & ls={} */
-/*   ensures l::LOCK(1/2)<x> & ls'={}; //' */
-/*   { */
-/*     acquire[LOCK](l,x); */
-/*     dprint; */
-/*     x.val1=1; */
-/*     x.val2=1; */
-/*     x.val3=1; */
-/*     dprint; */
-/*     release[LOCK](l,x); // should allow a split here */
-/*     dprint; */
-/*   } */
-/*   dprint; */
-/* } */
+}
 
 void thread(lock l, cell x)
   requires l::LOCK(0.6)<x> & ls={}
-  ensures l::LOCK(0.6)<x> & ls'={}; //'
+  ensures ls'={}; //'
 {
-  acquire[LOCK](l,x);
-  dprint;
-  x.val1=x.val1*2;
-  dprint;
-  x.val2=x.val2*2;
-  /* x.val3=0;  */
-  /* if (x.val1>10) { */
-  /*   x.val3=0; */
-  /*   release[LOCK](l,x); // should allow a split here */
-  /*   return; */
-  /* } */
-  /* else{ */
-  /*   dprint; */
-  // val3 = 0, this should FAIL because
-  //   delta1 * 1/2 * val3=0 or delta1 * 1.0 * val3=0
-  //   fail to ENTAIL
-  //   delta1 * 1/2 * val3=1 or delta1 * 1.0 * val3=0
-
-  // val1 = 1, this will be VALID because
-  //   delta1 * 1/2 * val3=1 or delta1 * 1.0 * val3=1
-  //   was able to ENTAIL
-  //   delta1 * 1/2 * val3=1 or delta1 * 1.0 * val3=0
-    release[LOCK](l,x); // should allow a split here
-  /*   dprint; */
-  /* } */
-  dprint;
+  try{
+    //syntatic sugar
+    while(true)
+      requires l::LOCK(0.6)<x> & ls={}
+      ensures l::LOCK(0.6)<x> & ls'={}
+        or ls'={} & flow rexc; //'
+    {
+      acquire[LOCK](l,x);
+      x.val1=x.val1 + x.val1;
+      x.val2=x.val2 + x.val2;
+      if (x.val1>10) {
+        x.val3=0;
+        release[LOCK](l,x);
+        raise new rexc(); //return;
+      }
+      release[LOCK](l,x);
+    };
+    // End Try
+  }catch (rexc e){
+    return;
+  };
+  /* dprint; // ??? is it reasonable to have 2 states here? */
+  /* // is considered memory-leak */
 }

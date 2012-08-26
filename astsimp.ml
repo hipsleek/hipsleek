@@ -1858,6 +1858,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	(if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then
 	  Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
 	else ()) ;
+	(* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
+	(* let _ = print_endline (Cprinter.string_of_struc_formula static_specs_list) in *)
 	let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
 	let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
 	(* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
@@ -1909,8 +1911,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     (*=============================*)
 	let final_static_specs_list = if CF.isConstDTrue static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc else static_specs_list in
 	(** An Hoa : print out final_static_specs_list for inspection **)
-	(* let _ = print_string "Static spec list : " in *)
-(*	let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in*)
+	(* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
+	(* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
 	let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
 	let imp_vars = List.append imp_vars imp_spec_vars in
 	let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)

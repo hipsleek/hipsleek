@@ -838,8 +838,10 @@ and flow_formula_of_formula (f:formula) (*pos*) : flow_formula =
 		let fl1 = flow_formula_of_formula b.formula_or_f1 in
 		let fl2 = flow_formula_of_formula b.formula_or_f2 in
 		if (equal_flow_interval fl1.formula_flow_interval fl2.formula_flow_interval) then fl1
-		else Err.report_error { Err.error_loc = no_pos;
-		Err.error_text = "flow_formula_of_formula: disjunctive formula"}
+        else (*TO CHECK: temporarily return !top_flow_int*)
+          mkTrueFlow ()
+		(* else Err.report_error { Err.error_loc = no_pos; *)
+		(* Err.error_text = "flow_formula_of_formula: disjunctive formula"} *)
 
 and flow_formula_of_struc_formula (f:struc_formula):flow_formula=
   let compare_flow ffi1 ffi2 =
@@ -4656,7 +4658,7 @@ and or_list_context c1 c2 =
 let isFailPartialCtx (fs,ss) =
   if (Gen.is_empty fs) then false else true
 
-let isFailFailescCtx (fs,es,ss) =
+let isFailFailescCtx ((fs,es,ss) as esc) =
   if (Gen.is_empty fs) then false else true
 (* if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false *)
 

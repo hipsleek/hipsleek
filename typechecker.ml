@@ -1027,6 +1027,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
                            (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
                     (*LOCKSET: ls is not free var*)
+                  (* let _ = print_endline (" ### pre_free_vars = " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) in *)
+                  (* let ls_vars = List.filter (fun v -> CP.name_of_spec_var v = Globals.ls_name) pre_free_vars in(\*LOCKSET variable ls - expecting a single var list*\) *)
                     let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
                     (* free vars get to be substituted by fresh vars *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
@@ -1042,6 +1044,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
                     let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
                     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
+                    (*ALSO rename ls to ls'*)
+                    (* let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_vars in *)
+                    (* let st3= st2@st_ls in (*TO CHECK*) *)
+                    (*how to handle LOCKSET when join*)
                     let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
@@ -1223,10 +1229,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx1 prepost None pos pid in
-                  (* let _ = print_string (("\nSCall: finalize: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
+                  (* let _ = print_endline (("\nSCall: finalize: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
+                  (* let _ = print_endline (("\nSCall: finalize: success ctx =  ") ^ (string_of_bool (CF.isSuccessListFailescCtx ctx))) in *)
+                  (* let _ = print_endline (("\nSCall: finalize: fail rs =  ") ^ (string_of_bool (CF.isFailListFailescCtx rs))) in *)
                   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                   let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+                  (* let _ = print_string (("\nSCall: finalize: tmp_res =  ") ^ (Cprinter.string_of_list_failesc_context tmp_res) ^ "\n") in *)
                   tmp_res
                 else
                 if (mn_str=Globals.acquire_name) then
@@ -1369,6 +1378,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* removing ranking var and unknown predicate from renaming *)
                   let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
                   (*LOCKSET: ls is not free var*)
+                  (* let _ = print_endline (" ### pre_free_vars = " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) in *)
+                  let ls_vars = List.filter (fun v -> CP.name_of_spec_var v = Globals.ls_name) pre_free_vars in(*LOCKSET variable ls - expecting a single var list*)
                   let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
                   (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
@@ -1387,9 +1398,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
                   let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
-                  let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
+                  (*ALSO rename ls to ls'*)
+                  let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_vars in
+                  let st3= st2@st_ls in
+                  let pre2 = CF.subst_struc_pre_varperm st3 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-
                   (* Termination: Store unreachable state *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)

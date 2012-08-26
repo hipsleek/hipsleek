@@ -3121,7 +3121,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  let es =  CF.estate_of_context ctx pos in
 				  (CF.estate_of_context ctx pos, CF.get_lines ((CF.list_pos_of_formula es.CF.es_formula) @ (CF.list_pos_of_formula postcond))) 
                 in
+                (*TO CHECK: this invert_ctx is supposed to deal with
+                non-disjunctive post-condition and non-OR ctx*)
                 let invert_ctx ctx postcond=
+                  (*TO CHECK: what if post-cond has disjuntive form??? __norm or __exc
+                    At the moment, flow_formula_of_formula throws an exception*)
+                  (* TO CHECK: temporarily ignore this invert_ctx if
+                  disj post-cond or Or-Ctx*)
+                  if ((disj_count postcond > 1) || (not (is_one_context ctx))) then (SuccCtx [ctx]) else
                   let fl = CF.flow_formula_of_formula postcond in
                   if CF.equal_flow_interval fl.CF.formula_flow_interval !top_flow_int then
                     let es, ll = helper ctx postcond in
@@ -5665,6 +5672,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
           DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+          DD.devel_pprint ("ante0 = " ^ Cprinter.string_of_pure_formula a0) no_pos;
+          DD.devel_pprint ("ante1 = " ^ Cprinter.string_of_pure_formula a1) no_pos;
+          DD.devel_pprint ("conseq = " ^ Cprinter.string_of_mix_formula conseq_m) no_pos;
 				let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
     				else 
 				 let r = ref (-8999) in
