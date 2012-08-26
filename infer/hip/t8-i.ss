@@ -13,7 +13,7 @@ void foo1(ref int i)
 }
 
 void foo1a(ref int i)
- infer @pre [i] // infer better pre/post
+ infer  [i] // infer better pre/post
  requires true
  ensures true; //'
 /*

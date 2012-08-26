@@ -18,6 +18,7 @@ lseg<p, n, S> == self=p & n=0 & S = {}
 	or self::node<v, q> * q::lseg<p, n-1, S1> & S = union(S1, {v})
 	inv n>=0;
 
+//recursive
 node append3(node x, node y)
   requires x::lseg<null, n, S>
   ensures res::lseg<y, n, S>;
@@ -32,6 +33,7 @@ node append3(node x, node y)
 	}
 }
 
+//recursive
 /* append two singly linked lists */
 void append2(node x, node y)
   requires x::ll<n1, S1> * y::ll<n2, S2> & x!=null
@@ -43,7 +45,7 @@ void append2(node x, node y)
            append2(x.next, y);
 }
 
-
+//recursive
 void append(node x, node y)
   requires x::ll<n1, S1> * y::ll<n2, S2> & n1>0
   ensures x::ll<n1+n2, S> & S = union(S1, S2);
@@ -54,16 +56,24 @@ void append(node x, node y)
 		append(x.next, y);
 }
 
-/* return the first element of a singly linked list */
-node ret_first(node x)
-	requires x::ll<n, S> * y::ll<m, _> & n < m 
-	ensures x::ll<n, S>;
-{
-	return x;
-}
-
 /* return the tail of a singly linked list */
 //success
+/*
+NEW SPECS: EBase exists (Expl)(Impl)[n; S](ex)x::ll<n,S>@M[Orig][LHSCase]&true&
+       {FLOW,(20,21)=__norm}
+         EBase true&(1<=n | n<=(0-1)) & MayLoop&{FLOW,(1,23)=__flow}
+                 EAssume 10::
+                   x::ll<flted_64_73,S1>@M[Orig][LHSCase] * 
+                   res::ll<flted_64_72,S2>@M[Orig][LHSCase]&
+                   tmp_74_991'=q_940_990 & res=q_940_990 & 
+                   v_node_68_772_992'=q_940_990 & v_939_993=v_949_998 & 
+                   next_67_771_995'=q_950_994 & S1_941_1003=S2_1002 & 
+                   flted_64_73_999=1 & flted_64_72_1000=flted_14_938_1001 & 
+                   n=1+flted_14_938_1001 & q_950_994=null & 
+                   S=union(S1_941_1003,{v_939_993}) & S1_951_997= & 
+                   S1_951_997= & S1_996=union(S1_951_997,{v_949_998}) & 0<=n&
+                   {FLOW,(20,21)=__norm}
+ */
 node get_next(node x)
   infer[n,res]
   requires x::ll<n, S> //& n > 0
@@ -73,7 +83,13 @@ node get_next(node x)
     x.next = null;
 	return tmp;
 }
-
+/*
+NEW SPECS: EBase x::node<inf_val_76_921,inf_next_76_922>@M[Orig]&MayLoop&
+       {FLOW,(1,23)=__flow}
+         EAssume 12::
+           x::node<inf_val_76_921,next_77_753'>@M[Orig]&inf_ann_920<=0 & 
+           res=inf_next_76_922 & next_77_753'=null&{FLOW,(20,21)=__norm}
+ */
 node get_next1(node x)
   infer[x,res]
   requires true//x::ll<n, S> & n > 0
@@ -85,9 +101,17 @@ node get_next1(node x)
 }
 
 /* function to set the tail of a list */
+/*
+NEW SPECS: EBase x::node<inf_val_87_921,inf_next_87_922>@M[Orig]&MayLoop&
+       {FLOW,(1,23)=__flow}
+         EAssume 14::
+           x::node<inf_val_87_921,y>@M[Orig]&inf_ann_920<=0&
+           {FLOW,(20,21)=__norm}
+ */
  void set_next(node x, node y)
-	requires x::node<v, _> * y::ll<j, S1>  
-	ensures x::ll<j+1, S> & S = union({v}, S2); 
+   infer[x,y]
+   requires true//x::node<v, _> * y::ll<j, S1>
+   ensures true;//x::ll<j+1, S> & S = union({v}, S2);
 {
 	x.next = y;
 }

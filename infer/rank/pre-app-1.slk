@@ -7,11 +7,18 @@ relation Q(int s1, int s2, int l1, int l2).
 infer [P2] s1<=l1 & P2(s2,l1,l2) & Q(s1,s2,l1,l2)  |- s1<=s2.
 print residue.
 
+
+infer [P2,l1,s2] s1<=l1 & P2(s2,l1,l2) & Q(s1,s2,l1,l2)  |- s1<=s2.
+print residue.
+
 //infer [Q] s1<=l1 & P(s1,s2,l1,l2)  |- s1<=s2 & Q(s1,s2,l1,l2) .
 //print residue.
 
 //infer [l1,s2,s1] s1<=l1 & s2a=s2 & s1a=s1  |- s1a<=s2a.
 //print residue.
+
+infer [l1,s2,l2] s1<=l1 & s2<=l2  |- s1<=s2.
+print residue.
 
 
 /*

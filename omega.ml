@@ -78,7 +78,7 @@ let rec omega_of_exp e0 = match e0 with
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
-  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint")
+  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
 (*
 (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
@@ -142,7 +142,9 @@ and omega_of_formula pr_w pr_s f  =
   in 
   try
 	helper f
-  with _ as e -> (print_string ((!print_formula f)^"\n"); raise e)
+  with _ as e -> 
+      let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
+      raise e
 
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in

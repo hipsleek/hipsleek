@@ -1,10 +1,11 @@
 
 Processing file "bst-del-c.ss"
 Parsing bst-del-c.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
+
 Checking procedure delete$node2~int... 
 dprint: bst-del-c.ss:66: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(73::,0 ); (73::,0 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(73::,1 ); (73::,1 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(69::,0 ); (69::,0 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )];  [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )])]
 
@@ -28,32 +29,38 @@ Successful States:
        es_var_measures: MayLoop
  ]
 
-INF-POST-FLAG: false
-REL :  B(s,sm)
-POST:  sm=s
-PRE :  true
-OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 2::ref [x]
-                     EXISTS(l,s: x'::bst<s,l>@M[Orig][LHSCase]&l<=lg & 
-                     B(s,sm)&{FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 2::ref [x]
-                   x'::bst<s,l>@M[Orig][LHSCase]&l<=lg & B(s,sm) & sm<=lg&
-                   {FLOW,(20,21)=__norm}
-NEW RELS: [ (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (s=sm) --> B(s,sm), (sm=s) --> B(s,sm), (s=sm & sm<=sm_619 & sm_619<=s_892 & B(s_892,sm_619)) --> B(s,sm), (sm_639=sm & s=s_958 & B(s_958,sm_639)) --> B(s,sm), (s=sm) --> B(s,sm)]
-
+!!! REL :  B(s,sm)
+!!! POST:  s=sm
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(20,21)=__norm}
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                              EAssume 2::ref [x]
+                                EXISTS(l,s: x'::bst<s,l>@M[Orig][LHSCase]&
+                                l<=lg & B(s,sm)&{FLOW,(20,21)=__norm}))
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(20,21)=__norm}
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}
+                            EAssume 2::ref [x]
+                              EXISTS(l_1004,
+                              s_1005: x'::bst<s_1005,l_1004>@M[Orig][LHSCase]&
+                              l_1004<=lg & s_1005=sm & sm<=lg&
+                              {FLOW,(20,21)=__norm}))
+!!! NEW RELS:[ (sm=s & s<=sm_619 & B(s_892,sm_619)) --> B(s,sm),
+ (sm=sm_639 & s_947=s & B(s_947,sm_639)) --> B(s,sm),
+ (sm=s) --> B(s,sm)]
+!!! NEW ASSUME:[ RELASS [B]: ( B(s_892,sm_619)) -->  sm_619<=s_892]
+!!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 556 invocations 
+Stop Omega... 351 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.93 second(s)
-	Time spent in main process: 1.47 second(s)
-	Time spent in child processes: 1.46 second(s)
+Total verification time: 0.81 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.66 second(s)

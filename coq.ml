@@ -26,6 +26,7 @@ let rec coq_of_typ = function
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
+  | Tree_sh 	  -> "int"
   | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
@@ -73,6 +74,7 @@ and coq_of_exp e0 =
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
+  | CP.Tsconst _ -> failwith ("tsconst not supported in coq, should have already been handled")
   | CP.AConst (i, _) -> string_of_heap_ann i
   | CP.FConst (f, _) -> 
 			illegal_format "coq_of_exp : float cannot be handled"

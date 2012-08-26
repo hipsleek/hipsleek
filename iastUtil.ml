@@ -37,7 +37,8 @@ let transform_exp
       | Null _ 
       | This _ 
       | Time _ 
-      | Unfold _ 
+      | Unfold _
+	  | Barrier _ 	  
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
 				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
@@ -145,9 +146,9 @@ let transform_exp
       | While b -> 
         let wrp,r = match b.exp_while_wrappings with
           | None -> (None,zero)
-          | Some s -> 
+          | Some (s,l) -> 
             let wrp,r = helper n_arg s in
-            ((Some wrp),r) in
+            (Some (wrp,l),r) in
         let ce,cr = helper n_arg b.exp_while_condition in
         let be,br = helper n_arg b.exp_while_body in
         let r = comb_f [r;cr;br] in

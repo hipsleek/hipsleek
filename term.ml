@@ -205,7 +205,7 @@ let pr_term_ctx (ctx: formula) =
   begin
     fmt_string "Current context";
     fmt_print_newline ();
-    pr_wrap_test "heap: " is_true pr_h_formula h_f;
+    pr_wrap_test "heap: " is_empty_heap pr_h_formula h_f;
     pr_wrap_test "pure: " MCP.isConstMTrue pr_mix_formula p_f;
     fmt_print_newline ();
   end 

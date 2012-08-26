@@ -24,7 +24,7 @@ Inferred Pure:[ n!=0 | a!=1, n!=0 | a!=1, n!=1 | a!=1, (n!=0 | 2>a) & (n!=0 | a>
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-    infer @pre [a,n]
+    infer  [a,n]
     requires x::ll<n> //& (n!=0 | 2>a) & (n!=0 | a>0)
 	ensures x::ll<m> & n>=2 & n=m+1;
 {

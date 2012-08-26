@@ -224,9 +224,12 @@ node shift_left(node x)
   /* requires x::bigint<v>@ */
   /* ensures res::bigint<v*10>@I; */
 {
-  if (x == null) return x;
-  return new node(0, x);
+  if (x == null) { return x;}
+  node t = new node(0, x);
+//  dprint;
+  return t;
 }
+
 
 node mult(node x, node y)
   requires x::bigint<v1>@L * y::bigint<v2>@L & true
@@ -284,7 +287,7 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires x::bigint<v1>@L * y::bigint<v2>@L
   ensures true & (res & v1 = v2 | !res & v1 != v2);
 {
   if (x == null) {

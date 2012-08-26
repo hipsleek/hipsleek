@@ -9,7 +9,6 @@ inferred pure: [inf_ann_26<=0]
 Entail  (2): Valid. 
 
 <1>true&q=null & n=0&{FLOW,(17,18)=__norm}
-inferred pure: [n=0]
 
 Entail  (3): Valid. 
 
@@ -22,9 +21,9 @@ Entail  (4): Fail.(may) cause:15.4 no match for rhs data node: q (may-bug).
 
 Entail  (5): Valid. 
 
-<1>true&n=0 & inf_ann_60<=0 & inf_n_61<=0&{FLOW,(17,18)=__norm}
-inferred heap: [q::ll<inf_n_61>@inf_ann_60[Orig][LHSCase]]
-inferred pure: [inf_n_61<=0; inf_ann_60<=0]
+<1>true&n=0 & inf_ann_63<=0 & inf_n_64<=0&{FLOW,(17,18)=__norm}
+inferred heap: [q::ll<inf_n_64>@inf_ann_63[Orig][LHSCase]]
+inferred pure: [inf_n_64<=0; inf_ann_63<=0]
 
 Entail  (6): Valid. 
 
@@ -33,19 +32,19 @@ inferred pure: [n!=0]
 
 Entail  (7): Valid. 
 
-<1>true&n=0 & inf_ann_85<=0 & n=inf_n_86&{FLOW,(17,18)=__norm}
-inferred heap: [q::ll<inf_n_86>@inf_ann_85[Orig][LHSCase]]
-inferred pure: [n=inf_n_86; inf_ann_85<=0]
+<1>true&n=0 & inf_ann_94<=0 & n=inf_n_95&{FLOW,(17,18)=__norm}
+inferred heap: [q::ll<inf_n_95>@inf_ann_94[Orig][LHSCase]]
+inferred pure: [n=inf_n_95; inf_ann_94<=0]
 
 Entail  (8): Valid. 
 
-<1>true&n=0 & inf_ann_99<=0 & n=inf_n_100&{FLOW,(17,18)=__norm}
-inferred heap: [q::ll<inf_n_100>@inf_ann_99[Orig][LHSCase]]
-inferred pure: [n=inf_n_100; inf_ann_99<=0]
+<1>true&n=0 & inf_ann_111<=0 & n=inf_n_112&{FLOW,(17,18)=__norm}
+inferred heap: [q::ll<inf_n_112>@inf_ann_111[Orig][LHSCase]]
+inferred pure: [n=inf_n_112; inf_ann_111<=0]
 
 Entail  (9): Valid. 
 
 <1>false&false&{FLOW,(17,18)=__norm}
 inferred pure: [n=0]
 
-Stop Omega... 180 invocations 
+Stop Omega... 135 invocations 

@@ -1,3 +1,5 @@
+
+
 data node {
 	int val; 
 	node next;	
@@ -72,9 +74,5 @@ infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>.
 print residue.
 
 //(17)
-infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>@L.
-print residue.
-
-//(18)
 infer [] x::ll<n>@L & n>1 |- x::node<a,b>*b::node<_,_>.
 print residue.

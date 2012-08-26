@@ -29,7 +29,7 @@ NEW RELS: [ ( res<=0) -->  A(res), ( res<=0) -->  B(res), ( tmp_42' & A(tmp_42')
 */
 // TODO: Use given specs to eliminate the unexpected branches while inferring B
 bool bubble(node xs)
-     infer @pre[A]
+     infer [A]
      requires xs::ll<n> & xs!=null
      ensures xs::sll<n, s, l> & A(res)
 		or  xs::ll<n> & res;
