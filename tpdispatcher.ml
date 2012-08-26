@@ -1237,7 +1237,7 @@ let simplify_raw_w_rel (f: CP.formula) =
 	
 let simplify_raw f =
 	let pr = !CP.print_formula in
-	Debug.no_1 "simplify_raw" pr pr simplify_raw f
+	Debug.ho_1 "simplify_raw" pr pr simplify_raw f
 
 (* such a simplifier loses information *)
 let simplify_exists_raw (f: CP.formula) pre_vars = 
