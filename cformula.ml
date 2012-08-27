@@ -3899,9 +3899,8 @@ let isAnyFalseCtx (ctx:context) : bool = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
 
-(* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
-(*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
-(*   | _ -> false *)
+let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = 
+	let _, c = ctx in isAnyFalseCtx c
 
 let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
@@ -3960,6 +3959,14 @@ let remove_dupl_false_fe_list (fs_list:list_failesc_context) =
   let ns = List.filter (fun (fl,_,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
   if ns==[] then [List.hd fs_list]
   else ns
+	
+let remove_empty_succ_ctx_list_failesc_context ctx =
+	List.filter (fun (_, _, b_ctx) -> not (b_ctx = [])) ctx 
+	
+let remove_unsat_succ_ctx_list_failesc_context ctx =
+	List.map (fun (fail_c, esc_c, succ_c) ->
+		(fail_c, esc_c, List.filter (fun b -> not (isAnyFalseBranchCtx b)) succ_c) 
+	) ctx
 
 let rec collect_term_err ctx =
   match ctx with
@@ -4069,6 +4076,17 @@ let collect_term_measures_branch_ctx_list br_ctx_l =
 let collect_term_measures_list_partial_context p_ctx_l =
   List.concat (List.map (fun (_, br_ctx_l) -> 
     collect_term_measures_branch_ctx_list br_ctx_l) p_ctx_l)
+		
+let collect_path_trace_branch_ctx ctx =
+	let pt, _ = ctx in
+	pt 
+		
+let collect_path_trace_failesc_context ctx =
+	let _, _, b_ctx = ctx in
+	List.map collect_path_trace_branch_ctx b_ctx
+					
+let collect_path_trace_list_failesc_context ctx =
+	List.concat (List.map collect_path_trace_failesc_context ctx)
 
 let rec add_pre_heap ctx = 
   match ctx with
@@ -4901,7 +4919,7 @@ and moving_ivars_to_evars (estate:entail_state) (anode:h_formula) : entail_state
 (*   | Ctx (es) -> Ctx(set_estate_must_match es) *)
 (*   | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2)) *)
 
-(* and set_context_must_match (ctx : context) : context =  *)
+(* and set_context_must_match (ctx : context) : context =       *)
 (*   set_context (fun es -> {es with es_must_match = true}) ctx *)
 
 and set_estate f (es: entail_state) : entail_state = 	

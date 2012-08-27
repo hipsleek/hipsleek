@@ -13,7 +13,7 @@ open Label_only
 
 module P = Cpure
 module MP = Mcpure
-
+module TInfer = Term_infer
 
 let is_short n = (n==2);;
 
@@ -2336,6 +2336,14 @@ let app_sv_print xs ys =
     end
 ;;
 
+let string_of_term_type = function
+	| TInfer.Base -> "Base"
+	| TInfer.Rec -> "Rec"
+
+let string_of_term_ctx tctx = 
+	(string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "@" ^ 
+	(string_of_term_type tctx.TInfer.t_type) 
+
 (* An Hoa : formula to HTML output facility *)
 
 (* HTML for operators *)
@@ -2683,3 +2691,4 @@ Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
 Redlog.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
+Term_infer.print_path_trace := string_of_path_trace;;

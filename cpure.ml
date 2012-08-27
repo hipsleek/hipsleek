@@ -1568,9 +1568,9 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 
 and mkTrue_p pos = BConst (true, pos)
 
-and mkTrue pos =  BForm ((BConst (true, pos), None),None)
+and mkTrue pos =  BForm ((BConst (true, pos), None), None)
 
-and mkFalse pos = BForm ((BConst (false, pos), None),None)
+and mkFalse pos = BForm ((BConst (false, pos), None), None)
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 

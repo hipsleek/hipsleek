@@ -2300,7 +2300,6 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   if (es.es_unsat_flag) then Ctx es
   else elim_unsat_es_now prog sat_subno es
 
-
 and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
     | Ctx es -> elim_unsat_es prog sat_subno es
