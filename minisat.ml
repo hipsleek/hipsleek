@@ -21,7 +21,12 @@ let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 (*minisat*)
 let minisat_path = "/usr/local/bin/minisat"
 let minisat_name = "minisat"
-let minisat_arg = ""(*"-pre"*)
+let minisat_arg = "-pre"(*"-pre"*)
+
+let minisat_path2 = "minisat"
+let minisat_name2 = "minisat"
+let minisat_arg2 = "-pre"(*"-pre"*)
+
 let eq_path = "equality_logic"
 let eq_name = "equality_logic"
 let eq_arg = "equality_logic"
@@ -85,7 +90,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   match pf with
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
-  | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper Bvar EXIT!") in*) ""
+  | BVar (sv, _)    -> let _=print_endline ("minisat_cnf_of_p_formula_for_helper Bvar EXIT!..."^minisat_cnf_of_spec_var sv) in ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
@@ -107,7 +112,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
 																							Glabel.add_edge_e allvars cx
 																							end
 																						in	   	
-																						let rtc=new rTC in let lr=rtc#get_var li ri allvars in lr
+																						(*let rtc=new rTC in*) let lr=get_var li ri allvars in lr
   | Neq (e1, e2, _) -> (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
 																				if(li=ri) then (let index=addBooleanConst (li) in ("-"^index)) 
 																				else(*add xx to the set of boolean constants *)
@@ -121,7 +126,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
 																							Glabel.add_edge_e allvars cx
 																							end
 																						in	   	 	
-																					let rtc=new rTC in let lr=rtc#get_var li ri allvars
+																					(*let rtc=new rTC in*) let lr=get_var li ri allvars
 																				  in "-"^lr
   | EqMax _         -> ""
   | EqMin _         -> ""
@@ -168,7 +173,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
 																							Glabel.add_edge_e allvars cx
 																							end
 																						in	   	 	
-																						let rtc=new rTC in let lr=rtc#get_var li ri allvars in
+																						(*let rtc=new rTC in *)let lr=get_var li ri allvars in
 																						"-"^lr 
   | Neq (e1, e2, _) -> (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
 																				if(li=ri) then (let index=addBooleanConst li in index ) (*add xx to the set of boolean constants *)
@@ -183,7 +188,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
 																							Glabel.add_edge_e allvars cx
 																							end
 																						in	   	 	 
-																						let rtc=new rTC in let lr=rtc#get_var li ri allvars in
+																						(*let rtc=new rTC in *) let lr=get_var li ri allvars in
 																						lr 
   | EqMax _         -> ""
   | EqMin _         -> ""
@@ -211,10 +216,10 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 (*---------------------------------------CNF conversion here-----------------------------------*)
 let return_pure bf f= match bf with
   | (pf,_)-> match pf with 
-             |BConst(_,_)->f
-	           |BVar(_,_)->f
 						 | Eq _ -> f
-						 | Neq _ -> f   
+						 | Neq _ -> f  
+						 |BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
+	           |BVar(_,_)->f
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -449,8 +454,8 @@ let restart reason =
 let check_problem_through_file (input: string) (timeout: float) : bool =
   (* debug *)
   (* let _ = print_endline "** In function minisat.check_problem" in *)
-  let file_suffix = "asdasd" in
-  let infile = "/tmp/in" ^ (file_suffix) ^ ".cnf" in
+  let file_suffix = "bach_eq_minisat" in
+  let infile ="/tmp/in" ^(file_suffix) ^ ".cnf" in
   (*let _ = print_endline ("-- input: \n" ^ input) in*) 
   let out_stream = open_out infile in
   output_string out_stream input;
@@ -458,8 +463,9 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
   let minisat_result="minisatres.txt" in
   let set_process proc = minisat_process := proc in
   let fnc () =
-    if (minisat_input_format = "cnf") then (
-      Procutils.PrvComms.start false stdout (minisat_name, minisat_path, [|minisat_arg;infile;minisat_result|]) set_process (fun () -> ());
+    if (minisat_input_format = "cnf") then ( 
+(*			let ch = Unix.execvp "/home/bachle/slicing_minisat/sleekex/minisat_static" [|"minisat_static";"bach_eq_minisat.cnf"|]  in *)
+      Procutils.PrvComms.start false stdout (minisat_name2, minisat_path2, [|minisat_arg2;infile;minisat_result|]) set_process (fun () -> ());
       minisat_call_count := !minisat_call_count + 1;
       let (prover_output, running_state) = get_answer !minisat_process.inchannel in
       is_minisat_running := running_state;
@@ -486,7 +492,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
 (* minisat: output for cnf format *)
-let rtc_generate_T (f:Cpure.formula) =
+let rtc_generate_B (f:Cpure.formula) =
 	let ge=G.create() and gd=G.create() and gr_e=Glabel.create() in (*ge is eq graph and gd is diseq graph*)
 		let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)                                                           
 			match f with
@@ -509,13 +515,13 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 (*let _ = read_line() in*)
 (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
 		let _=bcl :=[] and _= number_vars := 0  in
-		let _=Gen.Profiling.push_time("stat_CNF_conversion") in
+		let _=Gen.Profiling.push_time("stat_CNF_ori_conversion") in
 		let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*)
-		let _=Gen.Profiling.pop_time("stat_CNF_conversion") in
+		let _=Gen.Profiling.pop_time("stat_CNF_ori_conversion") in
 		if(!sat=true) then
 (*			let _=print_endline "sat true" in*)
-			let _=Gen.Profiling.push_time("stat_CNF_generation") in
-			let (ante_str,ge,gd,gr_e)=rtc_generate_T ante_cnf in
+			let _=Gen.Profiling.push_time("stat_CNF_generation_of_B") in
+			let (ante_str,ge,gd,gr_e)=rtc_generate_B ante_cnf in
 				let res= ref "" in
 			 (*start generating cnf for the given CNF formula*)
 				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
@@ -528,7 +534,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 							let index= ref 0 in 
 							let _=List.map (fun v-> let _= res := (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
 				  	let final_res= result^"\n"^ !res in
-						let _=Gen.Profiling.pop_time("stat_CNF_generation") in 
+						let _=Gen.Profiling.pop_time("stat_CNF_generation_of_B") in 
 							(final_res,ge,gd,gr_e)
 		else
 (*			let _=print_endline "sat false" in *)
@@ -579,12 +585,12 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 					validity
 			else
 	(*			let _= print_endline "check sat2" in*)
-				let _=Gen.Profiling.push_time("stat_RTC") in
-				let cnf_T = get_cnf_from_cache ge gd gr_e  in
-				let _=Gen.Profiling.pop_time("stat_RTC") in
-					let _=Gen.Profiling.push_time("stat_check_sat_2") in
-				  let res=check_problem_through_file (minisat_input^cnf_T) timeout in 
-					let _=Gen.Profiling.pop_time("stat_check_sat_2") in res
+				let _=Gen.Profiling.push_time("stat_generation_of_T") in
+				let cnf_T = get_cnf_from_cache ge gd gr_e in
+				let _=Gen.Profiling.pop_time("stat_generation_of_T") in
+				let _=Gen.Profiling.push_time("stat_check_sat_2") in
+				let res=check_problem_through_file (minisat_input^cnf_T) timeout in 
+				let _=Gen.Profiling.pop_time("stat_check_sat_2") in res
 		else false		
 
 (* minisat *)

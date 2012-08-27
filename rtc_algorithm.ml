@@ -49,6 +49,10 @@ module Clt=Cliquetree.CliqueTree(G)
 
 let max_of (x:int) (y:int)= if (x>y) then x else y
 
+let get_var v1 v2 graph=
+		try let ed=Glabel.find_edge graph v1 v2 in !(Glabel.E.label ed)
+		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
+
 class graphFindBCC =
 	object (self)
 
@@ -60,15 +64,8 @@ class graphFindBCC =
 	val mutable bcc= G.create()
 	val mutable num_ver=0
 
-	method private findBCC graph (out_v1:string) (out_v2:string)=
-		let v_dfs_num=converse_depth in
-		 		let _= dfs_num <- MapDFS.add out_v1 v_dfs_num dfs_num in
-					let _= converse_depth<-converse_depth-1 in
-						let _= high <- MapDFS.add out_v1 v_dfs_num high in
-									let temp_edge = {ver1=out_v1;ver2=out_v2} in (*modified here*)
-										let _= parents <- MapDFS.add out_v2 out_v1 parents in
-												let _=Stack.push temp_edge stack in
-		let rec loopFindBCC graph v1=
+	method private findBCC graph (v1:string) (v2:string)=
+		let rec loopFindBCC graph v1 v2=
 			let v_dfs_num=converse_depth in
 		 		let _= dfs_num <- MapDFS.add v1 v_dfs_num dfs_num in
 					let _= converse_depth<-converse_depth-1 in
@@ -80,21 +77,20 @@ class graphFindBCC =
 										 let w_dfs_num = MapDFS.find w dfs_num in
 											 let temp_edge = {ver1=v1;ver2=w} in (*modified here*)
 (*												let _= print_endline ("w_dfs_num:" ^(string_of_int w_dfs_num)^ "of "^w ) in*)
-												let _ = if(w_dfs_num =0) then
+												let _ = if(w_dfs_num =0 ) then
 													begin
 													parents <- MapDFS.add w v1 parents;
 (*													print_endline ("pushed:" ^ w ^ " " ^ v1);*)
 													Stack.push temp_edge stack;
-													loopFindBCC graph w ;
+													loopFindBCC graph w v2;
 (*													print_endline ("new here with current temp" ^temp_edge.ver1^temp_edge.ver2);*)
 													let w_high = MapDFS.find w high in
 (*													let _= print_endline ("w_high: "^ (string_of_int w_high) ^ "of "^w^" v_dfs_num: " ^(string_of_int v_dfs_num)^" of "^v1) in*)													
 														let _= if(w_high <= v_dfs_num) then
 															begin
 																 (*modified here*)
-																if((Stack.length stack)>1) then
-																		let bcp=G.create() in
-																		let break= ref false in
+																		 let bcp=G.create() in
+																		 let break= ref false in 	
 																		 while(!break=false) do
 																			begin
 (*																					let _= Stack.iter (fun x-> print_endline ("STACK " ^x.ver1^ " " ^x.ver2)) stack in*)
@@ -106,9 +102,8 @@ class graphFindBCC =
 																						in ()
 																				end
 																			done;
-																		  bcc<-bcp
-																	else (bcc<-G.create()) 
-																			 
+																				let exist_v1v2 =G.mem_edge bcp v1 v2 in 
+																						let _= if(exist_v1v2) then bcc<-bcp else bcc<-G.create() in ()
 																			 
 																end
 															in (*high <- MapDFS.add v1 (max_of w_high (MapDFS.find v1 high) ) high*) ();
@@ -127,7 +122,7 @@ class graphFindBCC =
 											with Not_found -> false 	
 										) neib
 
-		in loopFindBCC graph out_v2
+		in loopFindBCC graph v1 v2
 
 		method private transform graph v1 v2=
 			let init_dfs_num f graph= f (fun v -> dfs_num <- MapDFS.add v 0 dfs_num;num_ver<-num_ver+1) graph in
@@ -164,8 +159,7 @@ class graphFindBCC =
 					let print_graph_chordal f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in let _= let _= print_endline ("{"^v^"}")in List.map (fun x-> print_string (x^ "  {"^v^"} " )) neib in ()) graph_ in
 						let  _ = print_graph_chordal Dfs.postfix graph in ()
 	end;;
-
-
+		
 class rTC=
 	object (self)
 (*	val mutable allvars = G.create()*)
@@ -178,7 +172,8 @@ class rTC=
 	
 	method make_chordal graph gr_e=
 			let cpg=G.copy graph in (*traverse around the copy*)
-				let dfs f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in
+				let dfs f graph_= f (fun v -> if((G.in_degree graph_ v)<=2) then 
+																				let neib= Adj.list_from_vertex graph_ v in
 																				let _= List.map (fun x-> List.map (fun k-> if(k!=x) then 
 (*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
 																					let _ = G.add_edge graph_ k x in 
@@ -217,10 +212,13 @@ class rTC=
 		let _=G.add_edge global_cache vv1 vv2 in
 			let _=G.add_edge global_cache vv1 v1v2 in
 				let _=G.add_edge global_cache vv2 v1v2 in ()
+	
 	method generate_constraints graph es gr_e=	
 		let helper vv1 vv2 v1v2 v el= 
 							(*add to local cache*)				
 								let _= local_cache<- "-"^vv1^" "^"-"^vv2^" "^v1v2^" 0"^"\n"^local_cache in
+(*										let _= local_cache<- "-"^vv1^" "^"-"^v1v2^" "^vv2^" 0"^"\n"^local_cache in    *)
+(*												let _= local_cache<- "-"^v1v2^" "^"-"^vv2^" "^vv1^" 0"^"\n"^local_cache in*)
 											let e1={ver1=v;ver2=el.ver1} and e2={ver1=v;ver2=el.ver2} in 
 											(e1,e2)
 								  		
@@ -250,17 +248,30 @@ class rTC=
 	method print_all graph =
 		let _=Glabel.iter_edges_e (fun x->print_endline ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
 	
+	method simplify_input eq_graph diseq_graph graph_e=
+		let rm_edges_all_diseq eq_g diseq_g g_e =
+			G.iter_vertex 
+						(fun v->if((G.mem_vertex eq_g v)=false) 
+										then let _=G.remove_vertex diseq_g v and _=Glabel.remove_vertex g_e v in ()) diseq_g
+		in
+		let rm_edges_degree_1 eq_g diseq_g g_e =
+			Glabel.iter_vertex
+						(fun v-> if((Glabel.in_degree g_e v)=1)
+										then let _=Glabel.remove_vertex g_e v and _=G.remove_vertex eq_g v and _=G.remove_vertex diseq_g in ()) g_e																  
+		in let _=rm_edges_all_diseq eq_graph diseq_graph graph_e and _=	rm_edges_degree_1 eq_graph diseq_graph graph_e in ()
+	
 	method rtc_v2 eq_graph diseq_graph graph_e num_var=
 (*		let _=G.iter_edges_e (fun x->print_endline ((G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph_e in let _=exit(0) in*)
+		let _=self#simplify_input eq_graph diseq_graph graph_e in
 		let diseq_edges= ref [] in
 		let _=G.iter_edges_e (fun e-> diseq_edges := [e]@ !diseq_edges) diseq_graph in
 		let _= number_vars<-num_var in
 		let rtc_helper e= let cpg= G.copy eq_graph in 
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
-														let _=Gen.Profiling.push_time("stat_get_BCC") in
+(*														let _=Gen.Profiling.push_time("stat_get_BCC") in*)
 														let exist_bcc=bcc#getBCCGraph cpg (G.E.src e) (G.E.dst e) in(*BCC must contain at least 3 vertex*)
-														let _=Gen.Profiling.pop_time("stat_get_BCC") in
+(*														let _=Gen.Profiling.pop_time("stat_get_BCC") in*)
 															let _= if(exist_bcc=true) then 
 															let _= bcc#add_list_diseq_edges cpg !diseq_edges in 
 																let _= (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in
