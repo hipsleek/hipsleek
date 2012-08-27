@@ -16,7 +16,6 @@
   Note: we use exceptions to model return and break inside a loop
 
   Some issues remain:
-  + partial correctness of loops
   + handle locksets in more complex situation
 
   TODO: formula slicing
@@ -72,9 +71,7 @@ void main()
   while (true)
     requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l}
           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 0.4 + 0.6 = 1.0'
-    ensures l'::LOCK(0.4)<x> * x'::cell<l,v11,v22,v33> & l'=l & v11=v22 & v33=1 & ls'={l'}
-    or l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'}
-    or l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//'
+    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//'
   {
     if (x.val3==0){
       raise new bexc(); // break
@@ -87,12 +84,9 @@ void main()
     acquire[LOCK](l,x);
   } //end TRY
   }catch(bexc e){
-      finalize[LOCK](l,x);
+      ; //no-op
   };
-    /* /\* dprint; *\/ */
-    /* /\* finalize[LOCK](l,x); //cannot finalize here *\/ */
-    /* /\* //because the loop post-cond cannot finalize *\/ */
-
+    finalize[LOCK](l,x);
 }
 
 void thread(lock l, cell x)
@@ -103,8 +97,7 @@ void thread(lock l, cell x)
     //syntatic sugar
     while(true)
       requires l::LOCK(0.6)<x> & ls={}
-      ensures l::LOCK(0.6)<x> & ls'={}
-        or ls'={} & flow rexc; //'
+      ensures ls'={} & flow rexc; //'
     {
       acquire[LOCK](l,x);
       x.val1=x.val1 + x.val1;
@@ -118,8 +111,7 @@ void thread(lock l, cell x)
     };
     // End Try
   }catch (rexc e){
-    return;
+    ; //no-op
   };
-  /* dprint; // ??? is it reasonable to have 2 states here? */
-  /* // is considered memory-leak */
+  return;
 }
