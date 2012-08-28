@@ -566,7 +566,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let print_type = ref true
+let print_type = ref false
 
 (* let enable_sat_statistics = ref false *)
 

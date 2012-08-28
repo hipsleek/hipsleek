@@ -464,11 +464,11 @@ and mona_of_exp_x e0 f =
       | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
       | CP.BagUnion ([], _) -> ""
       | CP.BagUnion (e::[], _) -> (helper e)
-      | CP.BagUnion (e::rest, l) -> (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l)))
+      | CP.BagUnion (e::rest, l) -> " ( " ^ (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l))) ^ " ) "
       | CP.BagIntersect ([], _) -> ""
       | CP.BagIntersect (e::[], _) -> (helper e)
-      | CP.BagIntersect (e::rest, l)->(helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l)))
-      | CP.BagDiff (e1, e2, _)     -> (helper e1) ^ "\\" ^ (helper e2)
+      | CP.BagIntersect (e::rest, l)-> " ( " ^ (helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l))) ^ " ) "
+      | CP.BagDiff (e1, e2, _)     -> " ( " ^ (helper e1) ^ "\\" ^ (helper e2) ^ " ) "
       | CP.List _
       | CP.ListCons _
       | CP.ListHead _

@@ -1751,6 +1751,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
 			let ante = CP.remove_dup_constraints ante in
             let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
+            let _ = Debug.devel_hprint (add_str "cons 4: " Cprinter.string_of_pure_formula) cons no_pos in
 				match process with
 				  | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
 				  | _ -> assumption_filter ante cons  ) cons) acpairs in
