@@ -359,8 +359,55 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
     "lexvars = " ^ lexvars ^ "  ## " ^ "remained_rhs = " ^ remained_rhs in 
   Debug.no_1 "strip_lexvar_mix_formula" pr pr_out strip_lexvar_mix_formula_x mf
 
+let create_measure_constraint (flag: bool) (src: CP.exp) (dst: CP.dst) pos : CP.formula =
+  if flag then (
+    match src, dst with
+    | CP.Sequence seqsrc, CP.Sequence seqdst ->
+        let domain_src = seqsrc.CP.seq_domain in
+        let limit_src = seqsrc.CP.seq_limit in
+        let domain_dst = seqdst.CP.seq_domain in
+        let limit_dst = seqdst.CP.seq_limit in
+        let domain_constraint = CP.mkImply domain_src domain_dst pos in
+        let decrease_constraint = 
+          let decrease_rhs =
+            match limit_src, limit_dst with
+            | CP.SConst (Pos_infinity, _), _
+            | _, CP.SConst (Pos_infinity, _) ->
+                let _ = report_error no_pos "Invalid limit" in
+                raise (Exn_LexVarSequence "The domain of measure is invalid")
+            | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+                (* Constraint: element_src > elment_dst *)
+                CP.mkPure (CP.mkGt element_src element_dst no_pos)
+            | CP.SConst (Neg_infinity, _), _
+            | _, CP.SConst (Neg_infinity, _) ->
+                let _ = report_error no_pos "check_decreasing_seqexp_transition: Neg_infinity cannot appears in only 1 side of transition" in
+                raise (Exn_LexVarSequence "The domain of measure is invalid")
+            | _ ->
+                (* Constraint: (element_src > limit_src)      *)
+                (*             && (element_dst > limit_dst)   *)
+                (*             && (element_src > element_dst) *)
+                let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+                let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
+                CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
+              ) in
+          let decrease_lsh =
+          let domain_constraint = CP.mkAnd init_constraint (CP.mkAnd domain_src domain_dst no_pos) no_pos in
+          let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" 
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
+    | _, _ -> CP.BForm ((CP.mkGt src dst pos, None), None) (* src > dst *)
+  ) else (
+    match src, dst with
+    | CP.Sequence seqsrc, CP.Sequence seqdst ->
+        
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
+    | _, _ -> CP.BForm ((CP.mkEq src dst pos, None), None) (* src = dst *)
+  )
+
 (* Termination: The boundedness checking for HIP has been done before *)  
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -420,7 +467,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             let f = 
               if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
               else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
-              (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
+            (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
@@ -496,7 +543,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             (add_str "rhs" pr) 
             (add_str "rank_fml" (pr_option pr1)) 
             (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+      (fun _ _ _ _ _ -> check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
@@ -582,506 +629,376 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let rhs_p = MCP.mix_of_pure rhs_p in *)
   (*   (estate, lhs_p, rhs_p, None) *)
 
-(* (* collect the update function from a transition constraint *)                                                                          *)
-(* (* by obtaining only the assignments (consider only Eq p_formula) *)                                                                    *)
-(* let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =                                                        *)
-(*   let is_assignment (pf: CP.p_formula) : bool =                                                                                         *)
-(*     match pf with                                                                                                                       *)
-(*     | CP.Eq _ -> true                                                                                                                   *)
-(*     | _ -> false in                                                                                                                     *)
-(*   let rec convert_formula (f: CP.formula) : CP.formula = (                                                                              *)
-(*     match f with                                                                                                                        *)
-(*     | CP.BForm ((pf, _), _) ->                                                                                                          *)
-(*         if is_assignment pf then f                                                                                                      *)
-(*         else CP.mkTrue no_pos                                                                                                           *)
-(*     | CP.And (f1, f2, l) ->                                                                                                             *)
-(*         let new_f1 =                                                                                                                    *)
-(*           match f1 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_assignment pf then f1                                                                                               *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f1 in                                                                                                  *)
-(*         let new_f2 =                                                                                                                    *)
-(*           match f2 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_assignment pf then f2                                                                                               *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f2 in                                                                                                  *)
-(*         CP.And (new_f1, new_f2, l)                                                                                                      *)
-(*     | CP.AndList formula_list ->                                                                                                        *)
-(*         let (ls, fs) = List.split formula_list in                                                                                       *)
-(*         let new_fs =                                                                                                                    *)
-(*           List.map (                                                                                                                    *)
-(*             fun f -> match f with                                                                                                       *)
-(*             | CP.BForm ((pf, _), _) ->                                                                                                  *)
-(*                 if is_assignment pf then f                                                                                              *)
-(*                 else CP.mkTrue no_pos                                                                                                   *)
-(*             | _ -> convert_formula f                                                                                                    *)
-(*           ) fs in                                                                                                                       *)
-(*         let new_formula_list = List.combine ls new_fs in                                                                                *)
-(*         CP.AndList new_formula_list                                                                                                     *)
-(*     | CP.Or (f1, f2, l1, l2) ->                                                                                                         *)
-(*         let new_f1 =                                                                                                                    *)
-(*           match f1 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_assignment pf then f1                                                                                               *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f1 in                                                                                                  *)
-(*         let new_f2 =                                                                                                                    *)
-(*           match f2 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_assignment pf then f2                                                                                               *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f2 in                                                                                                  *)
-(*         CP.Or (new_f1, new_f2, l1, l2)                                                                                                  *)
-(*     | CP.Not (f, l1, l2) ->                                                                                                             *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Not (new_f, l1, l2)           *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*     | CP.Forall (s, f, l1, l2) ->                                                                                                       *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Forall (s, new_f, l1, l2)     *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*     | CP.Exists (s, f, l1, l2) ->                                                                                                       *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Exists (s, new_f, l1, l2)     *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*   ) in                                                                                                                                  *)
-(*   convert_formula transition_constraint                                                                                                 *)
+(* collect the update function from a transition constraint *)
+(* by obtaining only the assignments (consider only Eq p_formula) *)
+let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
+  let is_assignment (pf: CP.p_formula) : bool =
+    match pf with
+    | CP.Eq _ -> true
+    | _ -> false in
+  let rec convert_formula (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm ((pf, _), _) ->
+        if is_assignment pf then f
+        else CP.mkTrue no_pos
+    | CP.And (f1, f2, l) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.And (new_f1, new_f2, l)
+    | CP.AndList formula_list ->
+        let (ls, fs) = List.split formula_list in
+        let new_fs =
+          List.map (
+            fun f -> match f with
+            | CP.BForm ((pf, _), _) ->
+                if is_assignment pf then f
+                else CP.mkTrue no_pos
+            | _ -> convert_formula f
+          ) fs in
+        let new_formula_list = List.combine ls new_fs in
+        CP.AndList new_formula_list
+    | CP.Or (f1, f2, l1, l2) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_assignment pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.Or (new_f1, new_f2, l1, l2)
+    | CP.Not (f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Not (new_f, l1, l2)           *)
+        CP.mkTrue no_pos
+    | CP.Forall (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Forall (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+    | CP.Exists (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Exists (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+  ) in
+  convert_formula transition_constraint
 
-(* let collect_update_function (transition_constraint: CP.formula) : CP.formula =                                                          *)
-(*   let pr = !CP.print_formula in                                                                                                         *)
-(*   Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint                                            *)
+let collect_update_function (transition_constraint: CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
 
-(* (* collect the arithmetic constraint from a transition constraint *)                                                                    *)
-(* (* by obtaining only the assignments or comparision formula *)                                                                          *)
-(* let collect_arithmetic_constraint_x (transition_constraint: CP.formula) : CP.formula =                                                  *)
-(*   let is_arithmetic_formula (pf: CP.p_formula) : bool =                                                                                 *)
-(*     match pf with                                                                                                                       *)
-(*     | CP.Eq _ | CP.Neq _ | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ -> true                                                              *)
-(*     | _ -> false in                                                                                                                     *)
-(*   let rec convert_formula (f: CP.formula) : CP.formula = (                                                                              *)
-(*     match f with                                                                                                                        *)
-(*     | CP.BForm ((pf, _), _) ->                                                                                                          *)
-(*         if is_arithmetic_formula pf then f                                                                                              *)
-(*         else CP.mkTrue no_pos                                                                                                           *)
-(*     | CP.And (f1, f2, l) ->                                                                                                             *)
-(*         let new_f1 =                                                                                                                    *)
-(*           match f1 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_arithmetic_formula pf then f1                                                                                       *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f1 in                                                                                                  *)
-(*         let new_f2 =                                                                                                                    *)
-(*           match f2 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_arithmetic_formula pf then f2                                                                                       *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f2 in                                                                                                  *)
-(*         CP.And (new_f1, new_f2, l)                                                                                                      *)
-(*     | CP.AndList formula_list ->                                                                                                        *)
-(*         let (ls, fs) = List.split formula_list in                                                                                       *)
-(*         let new_fs =                                                                                                                    *)
-(*           List.map (                                                                                                                    *)
-(*             fun f -> match f with                                                                                                       *)
-(*             | CP.BForm ((pf, _), _) ->                                                                                                  *)
-(*                 if is_arithmetic_formula pf then f                                                                                      *)
-(*                 else CP.mkTrue no_pos                                                                                                   *)
-(*             | _ -> convert_formula f                                                                                                    *)
-(*           ) fs in                                                                                                                       *)
-(*         let new_formula_list = List.combine ls new_fs in                                                                                *)
-(*         CP.AndList new_formula_list                                                                                                     *)
-(*     | CP.Or (f1, f2, l1, l2) ->                                                                                                         *)
-(*         let new_f1 =                                                                                                                    *)
-(*           match f1 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_arithmetic_formula pf then f1                                                                                       *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f1 in                                                                                                  *)
-(*         let new_f2 =                                                                                                                    *)
-(*           match f2 with                                                                                                                 *)
-(*           | CP.BForm ((pf, _), _) ->                                                                                                    *)
-(*               if is_arithmetic_formula pf then f2                                                                                       *)
-(*               else CP.mkTrue no_pos                                                                                                     *)
-(*           | _ -> convert_formula f2 in                                                                                                  *)
-(*         CP.Or (new_f1, new_f2, l1, l2)                                                                                                  *)
-(*     | CP.Not (f, l1, l2) ->                                                                                                             *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Not (new_f, l1, l2)           *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*     | CP.Forall (s, f, l1, l2) ->                                                                                                       *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Forall (s, new_f, l1, l2)     *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*     | CP.Exists (s, f, l1, l2) ->                                                                                                       *)
-(*         (* let new_f = convert_formula f in *)                                                                                          *)
-(*         (* CP.Exists (s, new_f, l1, l2)     *)                                                                                          *)
-(*         CP.mkTrue no_pos                                                                                                                *)
-(*   ) in                                                                                                                                  *)
-(*   convert_formula transition_constraint                                                                                                 *)
+(* collect the arithmetic constraint from a transition constraint *)
+(* by obtaining only the assignments or comparision formula *)
+let collect_arithmetic_constraint_x (transition_constraint: CP.formula) : CP.formula =
+  let is_arithmetic_formula (pf: CP.p_formula) : bool =
+    match pf with
+    | CP.Eq _ | CP.Neq _ | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ -> true
+    | _ -> false in
+  let rec convert_formula (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm ((pf, _), _) ->
+        if is_arithmetic_formula pf then f
+        else CP.mkTrue no_pos
+    | CP.And (f1, f2, l) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.And (new_f1, new_f2, l)
+    | CP.AndList formula_list ->
+        let (ls, fs) = List.split formula_list in
+        let new_fs =
+          List.map (
+            fun f -> match f with
+            | CP.BForm ((pf, _), _) ->
+                if is_arithmetic_formula pf then f
+                else CP.mkTrue no_pos
+            | _ -> convert_formula f
+          ) fs in
+        let new_formula_list = List.combine ls new_fs in
+        CP.AndList new_formula_list
+    | CP.Or (f1, f2, l1, l2) ->
+        let new_f1 =
+          match f1 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f1
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f1 in
+        let new_f2 =
+          match f2 with
+          | CP.BForm ((pf, _), _) ->
+              if is_arithmetic_formula pf then f2
+              else CP.mkTrue no_pos
+          | _ -> convert_formula f2 in
+        CP.Or (new_f1, new_f2, l1, l2)
+    | CP.Not (f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Not (new_f, l1, l2)           *)
+        CP.mkTrue no_pos
+    | CP.Forall (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Forall (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+    | CP.Exists (s, f, l1, l2) ->
+        (* let new_f = convert_formula f in *)
+        (* CP.Exists (s, new_f, l1, l2)     *)
+        CP.mkTrue no_pos
+  ) in
+  convert_formula transition_constraint
 
-(* let collect_arithmetic_constraint (transition_constraint: CP.formula) : CP.formula =                                                    *)
-(*   let pr = !CP.print_formula in                                                                                                         *)
-(*   Debug.no_1 "collect_arithmetic_constraint" pr pr collect_arithmetic_constraint_x transition_constraint                                *)
+let collect_arithmetic_constraint (transition_constraint: CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_1 "collect_arithmetic_constraint" pr pr collect_arithmetic_constraint_x transition_constraint
 
-(* let check_decreasing_seqvar_precondition_x (assumption: CP.formula)                                                                     *)
-(*                                            (domain_src: CP.formula)                                                                     *)
-(*                                            (loopcond: CP.formula)                                                                       *)
-(*                                            : (bool * string) =                                                                          *)
-(*   (* initial constraint -> domain_src *)                                                                                                *)
-(*   let domain_src_check, _, _ = TP.imply assumption domain_src "" false None in                                                          *)
-(*   let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_precondition_x") no_pos in                                       *)
-(*   let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in                                 *)
-(*   let _ = Debug.dinfo_pprint ("domain_src = " ^ (Cprinter.string_of_pure_formula domain_src))  no_pos in                                *)
-(*   let _ = Debug.dinfo_pprint ("domain_src_check = " ^ (string_of_bool domain_src_check))  no_pos in                                     *)
-(*   if not domain_src_check then                                                                                                          *)
-(*     (false, "Domain doesn't cover assumption!")                                                                                         *)
-(*   else (                                                                                                                                *)
-(*     (* (assumption -> precondition is VALID *)                                                                                          *)
-(*     let loopcond_check, _, _ = TP.imply assumption loopcond "" false None in                                                            *)
-(*     let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_precondition_x") no_pos in                                     *)
-(*     let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in                               *)
-(*     let _ = Debug.dinfo_pprint ("loopcond = " ^ (Cprinter.string_of_pure_formula loopcond)) no_pos in                                   *)
-(*     let _ = Debug.dinfo_pprint ("loopcond_check = " ^ (string_of_bool loopcond_check)) no_pos in                                        *)
-(*     if not loopcond_check then                                                                                                          *)
-(*       (false, "Loop condition isn't satisfiable! Program won't enter the loop.")                                                        *)
-(*     else                                                                                                                                *)
-(*       (true, "Precondition checking OK!")                                                                                               *)
-(*   )                                                                                                                                     *)
+let check_decreasing_seqexp_precondition_x (assumption: CP.formula)
+                                           (domain_src: CP.formula)
+                                           (loopcond: CP.formula)
+                                           : (bool * string) =
+  (* initial constraint -> domain_src *)
+  let domain_src_check, _, _ = TP.imply assumption domain_src "" false None in
+  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqexp_precondition_x") no_pos in
+  let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src = " ^ (Cprinter.string_of_pure_formula domain_src))  no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src_check = " ^ (string_of_bool domain_src_check))  no_pos in
+  if not domain_src_check then
+    (false, "Domain doesn't cover assumption!")
+  else (
+    (* (assumption -> precondition is VALID *)
+    let loopcond_check, _, _ = TP.imply assumption loopcond "" false None in
+    let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqexp_precondition_x") no_pos in
+    let _ = Debug.dinfo_pprint ("assumption = " ^ (Cprinter.string_of_pure_formula assumption)) no_pos in
+    let _ = Debug.dinfo_pprint ("loopcond = " ^ (Cprinter.string_of_pure_formula loopcond)) no_pos in
+    let _ = Debug.dinfo_pprint ("loopcond_check = " ^ (string_of_bool loopcond_check)) no_pos in
+    if not loopcond_check then
+      (false, "Loop condition isn't satisfiable! Program won't enter the loop.")
+    else
+      (true, "Precondition checking OK!")
+  )
 
-(* let check_decreasing_seqvar_precondition (assumption: CP.formula)                                                                       *)
-(*                                          (domain_src: CP.formula)                                                                       *)
-(*                                          (loopcond: CP.formula)                                                                         *)
-(*                                          : (bool * string) =                                                                            *)
-(*   let pr_in = Cprinter.string_of_pure_formula in                                                                                        *)
-(*   let pr_out = string_of_bool in                                                                                                        *)
-(*   Debug.no_2 "check_decreasing_seqvar_precondition"                                                                                     *)
-(*              pr_in pr_in pr_out                                                                                                         *)
-(*              (fun p1 p2 -> check_decreasing_seqvar_precondition_x p1 p2)                                                                *)
-(*              assumption domain_src loopcond                                                                                             *)
+let check_decreasing_seqexp_precondition (assumption: CP.formula)
+                                         (domain_src: CP.formula)
+                                         (loopcond: CP.formula)
+                                         : (bool * string) =
+  let pr_in = Cprinter.string_of_pure_formula in
+  let pr_out = string_of_bool in
+  Debug.no_2 "check_decreasing_seqexp_precondition"
+             pr_in pr_in pr_out
+             (fun p1 p2 -> check_decreasing_seqexp_precondition_x p1 p2)
+             assumption domain_src loopcond
 
-(* let check_decreasing_seqvar_transition_x (assumption : CP.formula)                                                                      *)
-(*                                          (seqvar_src: CP.sequence)                                                                      *)
-(*                                          (seqvar_dst: CP.sequence)                                                                      *)
-(*                                          : (bool * string) =                                                                            *)
-(*   let element_src = seqvar_src.CP.seq_element in                                                                                        *)
-(*   let domain_src = seqvar_src.CP.seq_domain in                                                                                          *)
-(*   let limit_src = seqvar_src.CP.seq_limit in                                                                                            *)
-(*   let element_dst = seqvar_dst.CP.seq_element in                                                                                        *)
-(*   let domain_dst = seqvar_dst.CP.seq_domain in                                                                                          *)
-(*   let limit_dst = seqvar_dst.CP.seq_limit in                                                                                            *)
-(*   (* domain coverage check*)                                                                                                            *)
-(*   let init_constraint = collect_arithmetic_constraint assumption in                                                                     *)
-(*   let domain_src_cons = CP.mkAnd init_constraint domain_src no_pos in                                                                   *)
-(*   let domain_cover_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in                                                   *)
-(*   let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in                                         *)
-(*   let _ = Debug.dinfo_pprint ("domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in                       *)
-(*   let _ = Debug.dinfo_pprint ("domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in                                 *)
-(*   let _ = Debug.dinfo_pprint ("domain_cover_check = " ^ (string_of_bool domain_cover_check)) no_pos in                                  *)
-(*   if not domain_cover_check then                                                                                                        *)
-(*     (false, "Domain isn't covered in recursive call!")                                                                                  *)
-(*   else (                                                                                                                                *)
-(*     (* distance decrease check *)                                                                                                       *)
-(*     let distance_constraint = (                                                                                                         *)
-(*       match limit_src, limit_dst with                                                                                                   *)
-(*       | CP.SConst (Pos_infinity, _), _                                                                                                  *)
-(*       | _, CP.SConst (Pos_infinity, _) ->                                                                                               *)
-(*           let _ = report_error no_pos "check_decreasing_seqvar_transition: the lower-bound of the domain can't be Pos_infinity" in      *)
-(*           raise (Exn_LexVarSequence "The domain of measure is invalid")                                                                 *)
-(*       | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->                                                                     *)
-(*           (* Constraint: element_src > elment_dst *)                                                                                    *)
-(*           CP.mkPure (CP.mkGt element_src element_dst no_pos)                                                                            *)
-(*       | CP.SConst (Neg_infinity, _), _                                                                                                  *)
-(*       | _, CP.SConst (Neg_infinity, _) ->                                                                                               *)
-(*           let _ = report_error no_pos "check_decreasing_seqvar_transition: Neg_infinity cannot appears in only 1 side of transition" in *)
-(*           raise (Exn_LexVarSequence "The domain of measure is invalid")                                                                 *)
-(*       | _ ->                                                                                                                            *)
-(*           (* Constraint: (element_src > limit_src)      *)                                                                              *)
-(*           (*             && (element_dst > limit_dst)   *)                                                                              *)
-(*           (*             && (element_src > element_dst) *)                                                                              *)
-(*           let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in                                                                 *)
-(*           let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in                                                                 *)
-(*           let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in                                                               *)
-(*           CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos                                                                                 *)
-(*       ) in                                                                                                                              *)
-(*     let domain_constraint = CP.mkAnd init_constraint (CP.mkAnd domain_src domain_dst no_pos) no_pos in                                  *)
-(*     let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" false None in                                 *)
-(*     let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_transition_x") no_pos in                                       *)
-(*     let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in                 *)
-(*     let _ = Debug.dinfo_pprint ("distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) no_pos in             *)
-(*     let _ = Debug.dinfo_pprint ("distance_decrease_check = " ^ (string_of_bool distance_decrease_check)) no_pos in                      *)
-(*     if not distance_decrease_check then                                                                                                 *)
-(*       (false, "The measure doesn't decrease!")                                                                                          *)
-(*     else                                                                                                                                *)
-(*       (true, "Transition checking succeed!")                                                                                            *)
-(*   )                                                                                                                                     *)
+let check_decreasing_seqexp_transition_x (assumption : CP.formula)
+                                         (seqexp_src: CP.sequence)
+                                         (seqexp_dst: CP.sequence)
+                                         : (bool * string) =
+  let element_src = seqexp_src.CP.seq_element in
+  let domain_src = seqexp_src.CP.seq_domain in
+  let limit_src = seqexp_src.CP.seq_limit in
+  let element_dst = seqexp_dst.CP.seq_element in
+  let domain_dst = seqexp_dst.CP.seq_domain in
+  let limit_dst = seqexp_dst.CP.seq_limit in
+  (* domain coverage check*)
+  let init_constraint = collect_arithmetic_constraint assumption in
+  let domain_src_cons = CP.mkAnd init_constraint domain_src no_pos in
+  let domain_cover_check, _, _ = TP.imply domain_src_cons domain_dst "" false None in
+  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqexp_transition_x") no_pos in
+  let _ = Debug.dinfo_pprint ("domain_src_cons = " ^ (Cprinter.string_of_pure_formula domain_src_cons)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_dst = " ^ (Cprinter.string_of_pure_formula domain_dst)) no_pos in
+  let _ = Debug.dinfo_pprint ("domain_cover_check = " ^ (string_of_bool domain_cover_check)) no_pos in
+  if not domain_cover_check then
+    (false, "Domain isn't covered in recursive call!")
+  else (
+    (* distance decrease check *)
+    let distance_constraint = (
+      match limit_src, limit_dst with
+      | CP.SConst (Pos_infinity, _), _
+      | _, CP.SConst (Pos_infinity, _) ->
+          let _ = report_error no_pos "check_decreasing_seqexp_transition: the lower-bound of the domain can't be Pos_infinity" in
+          raise (Exn_LexVarSequence "The domain of measure is invalid")
+      | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+          (* Constraint: element_src > elment_dst *)
+          CP.mkPure (CP.mkGt element_src element_dst no_pos)
+      | CP.SConst (Neg_infinity, _), _
+      | _, CP.SConst (Neg_infinity, _) ->
+          let _ = report_error no_pos "check_decreasing_seqexp_transition: Neg_infinity cannot appears in only 1 side of transition" in
+          raise (Exn_LexVarSequence "The domain of measure is invalid")
+      | _ ->
+          (* Constraint: (element_src > limit_src)      *)
+          (*             && (element_dst > limit_dst)   *)
+          (*             && (element_src > element_dst) *)
+          let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
+          let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
+          let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
+          CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
+      ) in
+    let domain_constraint = CP.mkAnd init_constraint (CP.mkAnd domain_src domain_dst no_pos) no_pos in
+    let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" false None in
+    let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqexp_transition_x") no_pos in
+    let _ = Debug.dinfo_pprint ("domain_constraint = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in
+    let _ = Debug.dinfo_pprint ("distance_constraint = " ^ (Cprinter.string_of_pure_formula distance_constraint)) no_pos in
+    let _ = Debug.dinfo_pprint ("distance_decrease_check = " ^ (string_of_bool distance_decrease_check)) no_pos in
+    if not distance_decrease_check then
+      (false, "The measure doesn't decrease!")
+    else
+      (true, "Transition checking succeed!")
+  )
 
-(* let check_decreasing_seqvar_transition (assumption : CP.formula)                                                                        *)
-(*                                        (seqvar_src: CP.sequence)                                                                        *)
-(*                                        (seqvar_dst: CP.sequence)                                                                        *)
-(*                                        : (bool * string) =                                                                              *)
-(*   let pr_in1 = Cprinter.string_of_pure_formula in                                                                                       *)
-(*   let pr_in2 (seqinfo: CP.sequence) = Cprinter.string_of_p_formula (CP.SeqVar seqinfo) in                                               *)
-(*   let pr_in3 (seqinfo: CP.sequence) = Cprinter.string_of_p_formula (CP.SeqVar seqinfo) in                                               *)
-(*   let pr_out = string_of_bool in                                                                                                        *)
-(*   Debug.no_3 "check_decreasing_seqvar_transition"                                                                                       *)
-(*             pr_in1 pr_in2 pr_in3 pr_out                                                                                                 *)
-(*             (fun in1 in2 in3 -> check_decreasing_seqvar_transition_x in1 in2 in3)                                                       *)
-(*             assumption seqvar_src seqvar_dst                                                                                            *)
+let check_decreasing_seqexp_transition (assumption : CP.formula)
+                                       (seqexp_src: CP.sequence)
+                                       (seqexp_dst: CP.sequence)
+                                       : (bool * string) =
+  let pr_in1 = Cprinter.string_of_pure_formula in
+  let pr_in2 (seq: CP.sequence) = Cprinter.string_of_formula_exp (CP.Sequence seq) in
+  let pr_in3 (seq: CP.sequence) = Cprinter.string_of_formula_exp (CP.Sequence seq) in
+  let pr_out = string_of_bool in
+  Debug.no_3 "check_decreasing_seqexp_transition"
+            pr_in1 pr_in2 pr_in3 pr_out
+            (fun in1 in2 in3 -> check_decreasing_seqexp_transition_x in1 in2 in3)
+            assumption seqexp_src seqexp_dst
 
-(* let check_decreasing_seqvar_terminability_x (element: CP.exp)                                                                           *)
-(*                                             (limit: CP.exp)                                                                             *)
-(*                                             (loop_condition: CP.formula)                                                                *)
-(*                                             : bool =                                                                                    *)
-(*   let term_constraint = (                                                                                                               *)
-(*     match limit with                                                                                                                    *)
-(*     | CP.SConst (Pos_infinity, _) ->                                                                                                    *)
-(*         let _ = report_error no_pos "check_decreasing_seqvar_terminability_x: limit can't be Pos_infinity" in                           *)
-(*         raise (Exn_LexVarSequence "SeqVar invalid")                                                                                     *)
-(*     | CP.SConst (Neg_infinity, _) ->                                                                                                    *)
-(*         let vars = CP.afv element in                                                                                                    *)
-(*         let bound_var = CP.fresh_new_spec_var Float in                                                                                  *)
-(*         let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var no_pos) no_pos) in                                               *)
-(*         let termcond = CP.mkNot_s loop_condition in                                                                                     *)
-(*         let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None no_pos in                                                                  *)
-(*         let fdomain = CP.collect_formula_domain f in                                                                                    *)
-(*         let fForAll = CP.mkImply fdomain f no_pos in                                                                                    *)
-(*         let term_formula = CP.mkForall vars fForAll None no_pos in                                                                      *)
-(*         CP.mkExists [bound_var] term_formula None no_pos                                                                                *)
-(*     | _ ->                                                                                                                              *)
-(*         let vars = CP.afv element in                                                                                                    *)
-(*         let epsilon = CP.fresh_new_spec_var Float in                                                                                    *)
-(*         let constraint1 = CP.mkPure (CP.mkGt element limit no_pos) in                                                                   *)
-(*         let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in                       *)
-(*         let termcond = CP.mkNot_s loop_condition in                                                                                     *)
-(*         let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcond None no_pos in                                  *)
-(*         let fdomain = CP.collect_formula_domain f in                                                                                    *)
-(*         let fForAll = CP.mkImply fdomain f no_pos in                                                                                    *)
-(*         let term_formula = CP.mkForall vars fForAll None no_pos in                                                                      *)
-(*         let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in                              *)
-(*         CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos                                                    *)
-(*   ) in                                                                                                                                  *)
-(*   let terminability_check, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in                                          *)
-(*   let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqvar_terminability_x") no_pos in                                      *)
-(*   let _ = Debug.dinfo_pprint ("term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint))  no_pos in                      *)
-(*   let _ = Debug.dinfo_pprint ("terminability_check = " ^ (string_of_bool terminability_check))  no_pos in                               *)
-(*   terminability_check                                                                                                                   *)
+let check_decreasing_seqexp_terminability_x (element: CP.exp)
+                                            (limit: CP.exp)
+                                            (loop_condition: CP.formula)
+                                            : bool =
+  let term_constraint = (
+    match limit with
+    | CP.SConst (Pos_infinity, _) ->
+        let _ = report_error no_pos "check_decreasing_seqexp_terminability_x: limit can't be Pos_infinity" in
+        raise (Exn_LexVarSequence "SeqVar invalid")
+    | CP.SConst (Neg_infinity, _) ->
+        let vars = CP.afv element in
+        let bound_var = CP.fresh_new_spec_var Float in
+        let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var no_pos) no_pos) in
+        let termcond = CP.mkNot_s loop_condition in
+        let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None no_pos in
+        let fdomain = CP.collect_formula_domain f in
+        let fForAll = CP.mkImply fdomain f no_pos in
+        let term_formula = CP.mkForall vars fForAll None no_pos in
+        CP.mkExists [bound_var] term_formula None no_pos
+    | _ ->
+        let vars = CP.afv element in
+        let epsilon = CP.fresh_new_spec_var Float in
+        let constraint1 = CP.mkPure (CP.mkGt element limit no_pos) in
+        let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon no_pos) no_pos) no_pos) in
+        let termcond = CP.mkNot_s loop_condition in
+        let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 no_pos)) termcond None no_pos in
+        let fdomain = CP.collect_formula_domain f in
+        let fForAll = CP.mkImply fdomain f no_pos in
+        let term_formula = CP.mkForall vars fForAll None no_pos in
+        let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon no_pos) (CP.mkFConst 0.0 no_pos) no_pos) in
+        CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula no_pos) None no_pos
+  ) in
+  let terminability_check, _, _ = TP.imply (CP.mkTrue no_pos) term_constraint "" false None in
+  let _ = Debug.dinfo_pprint ("++ In function: check_decreasing_seqexp_terminability_x") no_pos in
+  let _ = Debug.dinfo_pprint ("term_constraint = " ^ (Cprinter.string_of_pure_formula term_constraint))  no_pos in
+  let _ = Debug.dinfo_pprint ("terminability_check = " ^ (string_of_bool terminability_check))  no_pos in
+  terminability_check
 
-(* let check_decreasing_seqvar_terminability (element: CP.exp)                                                                             *)
-(*                                           (limit: CP.exp)                                                                               *)
-(*                                           (loop_condition: CP.formula)                                                                  *)
-(*                                           : bool =                                                                                      *)
-(*   let pr_in1 = Cprinter.string_of_formula_exp in                                                                                        *)
-(*   let pr_in2 = Cprinter.string_of_formula_exp in                                                                                        *)
-(*   let pr_in3 = Cprinter.string_of_pure_formula in                                                                                       *)
-(*   let pr_out = string_of_bool in                                                                                                        *)
-(*   Debug.no_3 "check_decreasing_seqvar_terminability"                                                                                    *)
-(*              pr_in1 pr_in2 pr_in3 pr_out                                                                                                *)
-(*              (fun in1 in2 in3 -> check_decreasing_seqvar_terminability_x in1 in2 in3)                                                   *)
-(*              element limit loop_condition                                                                                               *)
+let check_decreasing_seqexp_terminability (element: CP.exp)
+                                          (limit: CP.exp)
+                                          (loop_condition: CP.formula)
+                                          : bool =
+  let pr_in1 = Cprinter.string_of_formula_exp in
+  let pr_in2 = Cprinter.string_of_formula_exp in
+  let pr_in3 = Cprinter.string_of_pure_formula in
+  let pr_out = string_of_bool in
+  Debug.no_3 "check_decreasing_seqexp_terminability"
+             pr_in1 pr_in2 pr_in3 pr_out
+             (fun in1 in2 in3 -> check_decreasing_seqexp_terminability_x in1 in2 in3)
+             element limit loop_condition
 
-(* let check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =                                *)
-(*   let (seqvar_src, seqvar_dst) = match trans with                                                                                       *)
-(*                            | Some (CP.SeqVar seq1, CP.SeqVar seq2) -> seq1, seq2                                                        *)
-(*                            | _ -> raise (Exn_LexVarSequence "SeqVar not found!") in                                                     *)
-(*   let element_src = seqvar_src.CP.seq_element in                                                                                        *)
-(*   let limit_src = seqvar_src.CP.seq_limit in                                                                                            *)
-(*   let loopcond_src = seqvar_src.CP.seq_loopcond in                                                                                      *)
-(*   let domain_src = seqvar_src.CP.seq_domain in                                                                                          *)
-(*   let pos_dst = seqvar_dst.CP.seq_loc in                                                                                                *)
-(*   let pos = post_pos # get in                                                                                                           *)
-(*   let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)                                                 *)
-(*   let term_pos = (pos, proving_loc # get) in                                                                                            *)
-(*   let assumption = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in                                                          *)
-(*   let orig_ante = estate.es_formula in                                                                                                  *)
-(*   let term_measures, term_res, term_err_msg, rank_formula = (                                                                           *)
-(*     (* check precondition *)                                                                                                            *)
-(*     let precondition_res,detail_msg = check_decreasing_seqvar_precondition assumption domain_src loopcond_src in                        *)
-(*     if not precondition_res then                                                                                                        *)
-(*       Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),                                                                 *)
-(*       (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Precondition_Invalid)),                                              *)
-(*       Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Precondition_Invalid)) ^ " - " ^ detail_msg),         *)
-(*       None                                                                                                                              *)
-(*     else (                                                                                                                              *)
-(*       (* check transition *)                                                                                                            *)
-(*       let trans_res, detail_msg = check_decreasing_seqvar_transition assumption seqvar_src seqvar_dst in                                *)
-(*       if not trans_res then                                                                                                             *)
-(*         Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),                                                               *)
-(*         (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Transition_Invalid trans)),                                        *)
-(*         Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Transition_Invalid trans)) ^ " - " ^ detail_msg),   *)
-(*         None                                                                                                                            *)
-(*       else (                                                                                                                            *)
-(*         (* check terminability *)                                                                                                       *)
-(*         let terminability_res = check_decreasing_seqvar_terminability element_src limit_src loopcond_src in                             *)
-(*         if not terminability_res then                                                                                                   *)
-(*           Some (CP.SeqVar {seqvar_src with CP.seq_ann = Fail TermErr_May}),                                                             *)
-(*           (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans)),                             *)
-(*           Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans))),             *)
-(*           None                                                                                                                          *)
-(*         else                                                                                                                            *)
-(*           Some (CP.SeqVar seqvar_src),                                                                                                  *)
-(*           (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Prove_Termination_Succeed trans)),                                  *)
-(*           None,                                                                                                                         *)
-(*           None                                                                                                                          *)
-(*       )                                                                                                                                 *)
-(*     )                                                                                                                                   *)
-(*   ) in                                                                                                                                  *)
-(*   let term_err = match estate.es_term_err with                                                                                          *)
-(*     | None -> term_err_msg                                                                                                              *)
-(*     | Some _ -> estate.es_term_err                                                                                                      *)
-(*   in                                                                                                                                    *)
-(*   let n_estate = { estate with                                                                                                          *)
-(*     es_var_measures = term_measures;                                                                                                    *)
-(*     (* es_var_stack = term_stack; *)                                                                                                    *)
-(*     es_term_err = term_err                                                                                                              *)
-(*   } in                                                                                                                                  *)
-(*   add_term_res_stk term_res;                                                                                                            *)
-(*   (n_estate, lhs_p, rhs_p, rank_formula)                                                                                                *)
+let check_decreasing_seqexp_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst =
+  let element_src = seqexp_src.CP.seq_element in
+  let limit_src = seqexp_src.CP.seq_limit in
+  let loopcond_src = seqexp_src.CP.seq_loopcond in
+  let domain_src = seqexp_src.CP.seq_domain in
+  let pos_dst = seqexp_dst.CP.seq_loc in
+  let pos = post_pos # get in
+  let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
+  let term_pos = (pos, proving_loc # get) in
+  let assumption = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
+  let orig_ante = estate.es_formula in
+  let term_measures, term_res, term_err_msg, rank_formula = (
+    (* check precondition *)
+    let precondition_res,detail_msg = check_decreasing_seqexp_precondition assumption domain_src loopcond_src in
+    if not precondition_res then
+      Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
+      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Precondition_Invalid)),
+      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Precondition_Invalid)) ^ " - " ^ detail_msg),
+      None
+    else (
+      (* check transition *)
+      let trans_res, detail_msg = check_decreasing_seqexp_transition assumption seqexp_src seqexp_dst in
+      if not trans_res then
+        Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
+        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Transition_Invalid trans)),
+        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Transition_Invalid trans)) ^ " - " ^ detail_msg),
+        None
+      else (
+        (* check terminability *)
+        let terminability_res = check_decreasing_seqexp_terminability element_src limit_src loopcond_src in
+        if not terminability_res then
+          Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
+          (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans)),
+          Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans))),
+          None
+        else
+          Some (CP.SeqVar seqexp_src),
+          (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Prove_Termination_Succeed trans)),
+          None,
+          None
+      )
+    )
+  ) in
+  let term_err = match estate.es_term_err with
+    | None -> term_err_msg
+    | Some _ -> estate.es_term_err
+  in
+  let n_estate = { estate with
+    es_var_measures = term_measures;
+    (* es_var_stack = term_stack; *)
+    es_term_err = term_err
+  } in
+  add_term_res_stk term_res;
+  (n_estate, lhs_p, rhs_p, rank_formula)
 
-(* let check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =                                  *)
-(*   let pr = !print_mix_formula in                                                                                                        *)
-(*   let pr1 = !CP.print_formula in                                                                                                        *)
-(*   let pr2 = !print_entail_state in                                                                                                      *)
-(*   let pr3  trans =                                                                                                                      *)
-(*     match trans with                                                                                                                    *)
-(*     | None -> "None_term_trans"                                                                                                         *)
-(*     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s)                                           *)
-(*                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in                                    *)
-(*   Debug.no_4 "check_decreasing_seqvar" pr2                                                                                              *)
-(*     (add_str "lhs_p" pr)                                                                                                                *)
-(*     (add_str "rhs_p" pr)                                                                                                                *)
-(*     (add_str "term_trans" pr3)                                                                                                          *)
-(*     (fun (es, lhs, rhs, rank_fml) ->                                                                                                    *)
-(*        pr_quad pr2 (add_str "lhs" pr)                                                                                                   *)
-(*        (add_str "rhs" pr)                                                                                                               *)
-(*        (add_str "rank_fml" (pr_option pr1))                                                                                             *)
-(*        (es, lhs, rhs, rank_fml))                                                                                                        *)
-(*     (fun _ _ _ _ -> check_decreasing_seqvar_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans)                                       *)
-(*     estate lhs_p rhs_p trans                                                                                                            *)
-
-(* (* Termination: check sequence var *)                                                                                                   *)
-(* let check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option)  =                                 *)
-(*   (* (estate, lhs_p, rhs_p, None) *)                                                                                                    *)
-(*   let ans = norm_seqvar_measures_trans trans in                                                                                         *)
-(*   match ans with                                                                                                                        *)
-(*   | None ->                                                                                                                             *)
-(*       (* no need to check termination by seqvar transition*)                                                                            *)
-(*       (estate, lhs_p, rhs_p, None)                                                                                                      *)
-(*   | Some (seqvar_src, seqvar_dst) ->                                                                                                    *)
-(*       check_decreasing_seqvar estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans                                                        *)
-
-(* let check_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p (trans : term_trans option) =                                    *)
-(*   let pr = !print_mix_formula in                                                                                                        *)
-(*   let pr1 = !CP.print_formula in                                                                                                        *)
-(*   let pr2 = !print_entail_state in                                                                                                      *)
-(*   let pr3  trans =                                                                                                                      *)
-(*     match trans with                                                                                                                    *)
-(*     | None -> "None_term_trans"                                                                                                         *)
-(*     | Some (term_s, term_d) -> "term_trans_source = " ^ (Cprinter.string_of_p_formula term_s)                                           *)
-(*                                ^ " && term_trans_dest = " ^ (Cprinter.string_of_p_formula term_d) in                                    *)
-(*   Debug.no_4 "check_seqvar_measures" pr2                                                                                                *)
-(*       (add_str "lhs_p" pr)                                                                                                              *)
-(*       (add_str "rhs_p" pr)                                                                                                              *)
-(*       (add_str "term_trans" pr3)                                                                                                        *)
-(*     (fun (es, lhs, rhs, rank_fml) ->                                                                                                    *)
-(*         pr_quad pr2 (add_str "lhs" pr)                                                                                                  *)
-(*             (add_str "rhs" pr)                                                                                                          *)
-(*             (add_str "rank_fml" (pr_option pr1))                                                                                        *)
-(*             (es, lhs, rhs, rank_fml))                                                                                                   *)
-(*       (fun _ _ _ _ -> check_seqvar_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans)                                       *)
-(*         estate lhs_p rhs_p trans                                                                                                        *)
-
-(* (* To handle SeqVar formula *)                                                                                                          *)
-(* (* Remember to remove SeqVar in RHS *)                                                                                                  *)
-(* let check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =                                                               *)
-(*   try (                                                                                                                                 *)
-(*     let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in                                                            *)
-(*     let conseq = MCP.pure_of_mix rhs_p in                                                                                               *)
-(*     let seqvar_dst = find_seqvar_formula conseq in                                                                                      *)
-(*     let seqinfo_dst = match seqvar_dst with                                                                                             *)
-(*                   | CP.SeqVar seqinfo -> seqinfo                                                                                        *)
-(*                   | _ -> raise (Exn_LexVarSequence "SeqVar not found!") in                                                              *)
-(*     let ann_dst = seqinfo_dst.CP.seq_ann in                                                                                             *)
-(*     let pos_dst = seqinfo_dst.CP.seq_loc in                                                                                             *)
-(*     let seqvar_src = find_seqvar_es estate in                                                                                           *)
-(*     let seqinfo_src = match seqvar_src with                                                                                             *)
-(*                   | CP.SeqVar seqinfo -> seqinfo                                                                                        *)
-(*                   | _ -> raise (Exn_LexVarSequence "SeqVar not found!") in                                                              *)
-(*     let _ = Debug.dinfo_pprint ("++ In function check_seqvar_rhs_x") no_pos in                                                          *)
-(*     let _ = Debug.dinfo_pprint ("seqvar_src = " ^ (Cprinter.string_of_p_formula seqvar_src)) no_pos in                                  *)
-(*     let _ = Debug.dinfo_pprint ("seqvar_dst = " ^ (Cprinter.string_of_p_formula seqvar_dst)) no_pos in                                  *)
-(*     let ann_src = seqinfo_src.CP.seq_ann in                                                                                             *)
-(*     let trans = (seqvar_src, seqvar_dst) in                                                                                             *)
-(*     let trans_opt = Some trans in                                                                                                       *)
-(*     let _, rhs_p = strip_termvar_mix_formula rhs_p in                                                                                   *)
-(*     let rhs_p = MCP.mix_of_pure rhs_p in                                                                                                *)
-(*     let p_pos = post_pos # get in                                                                                                       *)
-(*     let p_pos = if p_pos == no_pos then pos_dst else p_pos in (* Update pos for SLEEK output *)                                         *)
-(*     let term_pos = (p_pos, proving_loc # get) in                                                                                        *)
-(*     match (ann_src, ann_dst) with                                                                                                       *)
-(*     | (Term, Term)                                                                                                                      *)
-(*     | (Fail TermErr_May, Term) ->                                                                                                       *)
-(*         (* Check wellfoundedness of the transition *)                                                                                   *)
-(*         check_seqvar_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p trans_opt                                                    *)
-(*     | (Term, _)                                                                                                                         *)
-(*     | (Fail TermErr_May, _) ->                                                                                                          *)
-(*         let term_res = (term_pos, trans_opt, Some estate.es_formula,                                                                    *)
-(*           TermErr (Invalid_Status_Trans trans)) in                                                                                      *)
-(*         add_term_res_stk term_res;                                                                                                      *)
-(*         add_term_err_stk (string_of_term_res term_res);                                                                                 *)
-(*         let term_measures = (                                                                                                           *)
-(*           match ann_dst with                                                                                                            *)
-(*           | Loop                                                                                                                        *)
-(*           | Fail TermErr_Must ->                                                                                                        *)
-(*               Some (CP.SeqVar {seqinfo_src with CP.seq_ann = Fail TermErr_Must})                                                        *)
-(*           | MayLoop                                                                                                                     *)
-(*           | Fail TermErr_May ->                                                                                                         *)
-(*               Some (CP.SeqVar {seqinfo_src with CP.seq_ann = Fail TermErr_May})                                                         *)
-(*           | Term ->                                                                                                                     *)
-(*               let _ = report_error no_pos "[term.ml] unexpected Term in check_seqvar_rhs" in                                            *)
-(*               raise (Exn_LexVarSequence "SeqVar invalid")                                                                               *)
-(*         ) in                                                                                                                            *)
-(*         let term_err = match estate.es_term_err with                                                                                    *)
-(*           | None ->  Some (string_of_term_res term_res)                                                                                 *)
-(*           | Some _ -> estate.es_term_err                                                                                                *)
-(*         in                                                                                                                              *)
-(*         let n_estate = {estate with                                                                                                     *)
-(*           es_var_measures = term_measures;                                                                                              *)
-(*           (* es_var_stack = (string_of_term_res term_res)::estate.es_var_stack; *)                                                      *)
-(*           es_term_err = term_err;                                                                                                       *)
-(*         } in                                                                                                                            *)
-(*         (n_estate, lhs_p, rhs_p, None)                                                                                                  *)
-(*     | (Loop, _) ->                                                                                                                      *)
-(*         let term_measures = Some (CP.SeqVar {seqinfo_src with CP.seq_ann = Loop}) in                                                    *)
-(*         let n_estate = {estate with es_var_measures = term_measures} in                                                                 *)
-(*         (n_estate, lhs_p, rhs_p, None)                                                                                                  *)
-(*     | (MayLoop, _) ->                                                                                                                   *)
-(*         let term_measures = Some (CP.SeqVar {seqinfo_src with CP.seq_ann = MayLoop}) in                                                 *)
-(*         let n_estate = {estate with es_var_measures = term_measures} in                                                                 *)
-(*         (n_estate, lhs_p, rhs_p, None)                                                                                                  *)
-(*     | (Fail TermErr_Must, _) ->                                                                                                         *)
-(*         let n_estate = {estate with                                                                                                     *)
-(*           es_var_measures = Some (CP.SeqVar {seqinfo_src with CP.seq_ann = Fail TermErr_Must})                                          *)
-(*         } in                                                                                                                            *)
-(*         (n_estate, lhs_p, rhs_p, None)                                                                                                  *)
-(*   )                                                                                                                                     *)
-(*   with e -> (                                                                                                                           *)
-(*     let new_measures = match estate.es_var_measures with                                                                                *)
-(*       | Some (CP.SeqVar seqinfo) -> Some (CP.SeqVar {seqinfo with CP.seq_ann = Fail TermErr_May})                                       *)
-(*       | _ -> failwith "!!! Error: cannot find SeqVar in termination measurement" in                                                     *)
-(*     let n_estate = {estate with                                                                                                         *)
-(*       es_var_measures = new_measures;                                                                                                   *)
-(*       es_term_err = Some ("!!!Exception while checking termination 2: " ^ (Printexc.to_string e));                                      *)
-(*     } in                                                                                                                                *)
-(*     (n_estate, lhs_p, rhs_p, None)                                                                                                      *)
-(*   )                                                                                                                                     *)
-
-(* let check_seqvar_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =                                                                 *)
-(*   let pr = !print_mix_formula in                                                                                                        *)
-(*   let pr2 = !print_entail_state in                                                                                                      *)
-(*    Debug.no_3 "check_seqvar_rhs" pr2 pr pr                                                                                              *)
-(*     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))                                                                       *)
-(*     (fun _ _ _ -> check_seqvar_rhs_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p                               *)
+let check_decreasing_seqexp estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst =
+  let pr = !print_mix_formula in
+  let pr1 = !CP.print_formula in
+  let pr2 = !print_entail_state in
+  let pr3 = Cprinter.string_of_ormula_exp in
+  Debug.no_5 "check_decreasing_seqexp" pr2
+    (add_str "lhs_p" pr)
+    (add_str "rhs_p" pr)
+    (add_str "seqexp_src" pr3)
+    (add_str "seqexp_dst" pr3)
+    (fun (es, lhs, rhs, rank_fml) ->
+       pr_quad pr2 (add_str "lhs" pr)
+       (add_str "rhs" pr)
+       (add_str "rank_fml" (pr_option pr1))
+       (es, lhs, rhs, rank_fml))
+    (fun _ _ _ _ -> check_decreasing_seqexp_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst)
+    estate lhs_p rhs_p trans
 
 let strip_lexvar_lhs (ctx: context) : context =
   let es_strip_lexvar_lhs (es: entail_state) : context =

@@ -145,7 +145,7 @@ and exp =
   | Sqrt of (exp * loc)
   | Pow of (exp * exp * loc)
   (* sequence expression *)
-  (* | Seq of sequence *)
+  | Sequence of sequence
   (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
