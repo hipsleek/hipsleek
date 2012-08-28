@@ -1,0 +1,173 @@
+/*********************************************************************************************************
+  x' = x/2; 
+  x0 > 0
+*/
+
+/*
+  // x > 0
+  if (x > 0.1)
+    loop(x/2)
+*/
+// lower bound  
+checkentail (x > 0.1) & Term[SeqDec{x, (0.0, +infinity), 0.1}] |- (x/2.0 > 0.0) & Term[SeqDec{x/2.0, (0.0, +infinity), 0.1}].
+
+/*
+  // x > 0
+  if (2 * x + 1 < 1.1)
+    return;
+  else
+    loop(x/2)  
+*/
+// termination constraint
+checkentail (x >= 0.05) & Term[SeqDec{x, (0.0, +infinity), 2.0*x + 1.0 >= 1.1}] |- (x/2.0 > 0.0) & Term[SeqDec{x/2.0, (0.0, +infinity), 2.0 * (x/2.0) + 1.0 >= 1.1}].
+
+/*
+  // x > 0
+  if (x * x < 0.1)
+    return;
+  else
+    loop(x/2)  
+*/
+// termination constraint
+checkentail (x >= __sqrt(0.1)) & Term[SeqDec{x, (0.0, +infinity), x * x >= 0.01}] |- (x/2.0 > 0.0) & Term[SeqDec{x / 2.0, (0.0, +infinity), (x/2.0) * (x/2.0) >= 0.01}].
+
+/*
+  // x > 0
+  if (x * x >= 0.1)
+    return;
+  else
+    loop(x/2)  
+*/
+// termination constraint
+checkentail (x > 0.0) & (x < __sqrt(0.1)) & Term[SeqDec{x, (0.0, +infinity), x * x <= 0.1}] |- (x/2.0 > 0.0) & Term[SeqDec{x / 2.0, (0.0, +infinity), (x/2.0) * (x/2.0) <= 0.1}].
+
+/*
+  // x > 0
+  if (x > 0.1)
+    loop(x/2)
+*/
+// invalid limit
+checkentail (x > 0.1) & Term[SeqDec{x, (0.0, +infinity), x > 0.1}] |- (x/2.0 > 0.0) & Term[SeqDec{x / 2.0, (0.0, +infinity), x/2.0 > 0.1}].
+
+/*
+  // x > 0
+  if (x > 0.1)
+    loop(x/2)
+*/
+// invalid lower bound
+checkentail (x > 0.1) & Term[SeqDec{x, (0.0, +infinity), x > -0.1}] |- (x/2.0 > 0.0) & Term[SeqDec{x / 2.0, (0.0, +infinity), x > -0.1}].
+
+/*********************************************************************************************************
+  x' = x * 2
+  x0 > 0
+*/
+
+/*
+  // x > 0
+  if (x < 100)
+    loop(x * 2)
+*/
+// lower bound  
+checkentail (x > 0.0) & (x < 100.0) & Term[SeqDec{-x, (-infinity, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[SeqDec{-x * 2.0, (-infinity, 0), x* 2.0 < 100.0}].
+
+/*
+  // x > 0
+  if (x > 100)
+    return;
+  else
+    loop(x*2)
+*/
+// termination constraint
+checkentail (x > 0.0) & (x < 100.0) & Term[SeqDec{-x, (-infinity, 0), x <= 100.0}] |- (x * 2.0 > 0.0) & Term[SeqDec{-x * 2.0, (-infinity, 0), x * 2.0 <= 100.0}].
+
+/*
+  // x > 0
+  if (x * x > 1000)
+    return;
+  else
+    loop(x*2)
+*/
+// termination constraint
+checkentail (x > 0.0) & (x < __sqrt(1000.0)) & Term[SeqDec{-x, (-infinity, 0), x * x < 1000.0}] |- (x * 2.0 > 0.0) & Term[SeqDec{-x*2.0, (-infinity, 0), (2.0*x) * (2.0*x) < 1000.0}].
+
+/*
+  // x > 0
+  if (x < 100)
+    loop(x*2)
+*/
+// invalid limit
+checkentail (x > 0.0) & (x < 100.0) & Term[SeqDec{-x, (-infinity, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[SeqDec{-x*2.0, (-infinity, 0), x < 100.0}].
+
+/*
+  // x > 0
+  if (x < 100)
+    return;
+  else
+    loop(x*2)
+*/
+// invalid constraint
+checkentail (x >= 100.0) & Term[SeqDec{-x, (-infinity, 0), x >= 100.0}] |- (x * 2.0 > 0.0) & Term[SeqDec{-x*2.0, (-infinity, 0), x * 2.0 >= 100.0}].
+
+/*********************************************************************************************************
+  x' = x * 3
+  0 < x0 < 1
+*/
+
+
+/*
+  // 0.0 < x < 1.0
+  if (x < 0.1)
+    loop(x*x*x)
+*/
+// lowerbound
+checkentail (x > 0.0) & (x < 0.1) & Term[SeqDec{x, (0.0, 1.0), x < 0.1}] |- (x*x*x > 0.0) & (x*x*x < 1.0) & Term[SeqDec{x*x*x, (0.0, 1.0), x*x*x < 0.1}].
+
+/*
+  // 0.0 < x < 1.0
+  if (x/2 + 1 < 1.1)
+    return;
+  else
+    loop(x*x*x)
+*/
+// termination constraint
+checkentail (x < 1.0) & (x >= 0.2) & Term[SeqDec{x, (0.0, 1.0), x/2.0 + 1.0 >= 1.1}] |- Term[SeqDec{x*x*x, (0.0, 1.0), x*x*x/2.0 + 1.0 >= 1.1}].
+
+/*
+  // 0.0 < x < 1.0
+  if (x < 0.1)
+    loop(x*x*x)
+*/
+// invalid limit
+checkentail (x > 0.0) & (x < 0.1) & Term[SeqDec{x, (0.0, 1.0), x < 0.1}] |- (x*x*x > 0.0) & (x*x*x < 1.0) & Term[SeqDec{x*x*x, (0.0, 1.0), x*x*x < 0.1}].
+
+/*********************************************************************************************************
+  x' = x * 3
+  1 < x0 < +infinity
+*/
+
+/*
+  // x > 1
+  if (x < 1000)
+    loop(x*x*x)
+*/
+// lowerbound
+checkentail (x > 1.0) & (x < 1000.0) & Term[SeqDec{-x, (-infinity, -1), -1000}] |- (x*x*x > 1.0) & Term[SeqDec{-x*x*x, (-infinity, -1), -1000}].
+
+/*
+  // x > 1
+  if (x*x > 1000)
+    return;
+  else
+    loop(x*x*x)
+*/
+// termination constraint
+checkentail (x > 1.0) & (x < __sqrt(1000.0)) & Term[SeqDec{-x, (-infinity, -1), x * x <= 1000.0}] |- (x*x*x > 1.0) & Term[SeqDec{-x*x*x, (-infinity, -1), (x*x*x) * (x*x*x) <= 1000}].
+
+/*
+  // x > 1
+  if (x < 1000)
+    loop(x*x*x)
+*/
+// invalid limit
+checkentail (x > 1.0) & (x<1000.0) & Term[SeqDec{-x, (-infinity, -1), x < 1000}] |- (x*x*x > 1.0) & Term[SeqDec{-x*x*x, (-infinity, -1), x*x*x < 1000}].
+

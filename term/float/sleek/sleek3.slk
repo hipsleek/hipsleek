@@ -1,0 +1,3 @@
+checkentail (x > 1) & Term[ 2 * x] |- Term[x].
+
+checkentail (x > 1) & Term[  x] |- Term[-x].

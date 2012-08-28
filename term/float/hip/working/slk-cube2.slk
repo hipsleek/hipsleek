@@ -1,0 +1,47 @@
+
+//At start of precondition
+//========================
+
+checkentail 0.1<x<1.0 |- -0.0 <x<1.0.
+
+//checkentail 0.1<x<1.0 |- x > 0.0
+
+checkentail 0.1<=x<1.0 |- x>=0.1 .
+
+checkentail 0.1<=x<1.0 |- x>0.1 .
+
+checkentail 0.1<x<1.0 |- 0.0 < 0.1 .
+
+
+//For each recursive call
+//=======================
+
+checkentail 0.1<x<1.0 |- x>__pow(x,3).
+
+checkentail 0.1<x<1.0 |- x>__pow(x,3.0).
+
+// Domain ensures decrease
+//checkentail -1.0<x<1.0 |- x>__pow(x,3.0).
+
+// Domain ensures decrease
+checkentail 0.0<x<1.0 |- x>__pow(x,3.0).
+
+// limit is the largest fixpoint less than domain
+checkentail state |- 0.0=0.0.
+
+// test closure domain
+checkentail 0.0 < x < 1.0 & xx = __pow(x,3.0) |- 0.0 < xx < 1.0.
+
+//Fixpoint test at each recursive call
+//====================================
+
+//checkentail x=0.0 & xx=__pow(x,3.0) |- xx=0.0 .
+
+//checkentail x -infinity & xx=__pow(x,3.0) |- xx= -infinity .
+
+// biggest fixpoint less than the range?
+//not(exists(e: e>0.0 & forall(a:domain : a>e))
+
+//checkentail !(exists(e: (e > 0.0) & forall(a: !((0.0<a) & (a<1.0)) | (a>e))).
+
+checkentail true |- true.
