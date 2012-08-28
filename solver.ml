@@ -4574,7 +4574,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         let err_msg = "1.1: " ^ err_name in
                         (err_msg, mk_failure_must err_msg err_name)
                       else
-                        let err_name = "conseq has an incompatible flow type" in
+                        let err_name = "conseq has an incompatible flow type: got "^(exlist # get_closest fl1.CF.formula_flow_interval)^" expecting error" in
                         let err_msg = "1.1: " ^ err_name in
                         (err_msg, mk_failure_must err_msg undefined_error) in
                     (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;

@@ -1919,7 +1919,8 @@ return_statement:
 raise_statement:
 	[[ `RAISE; t=expression ->
       Raise { exp_raise_type = Const_flow "" ;
-						  exp_raise_val = Some t;
+			  exp_raise_val = Some t;
+			  exp_raise_use_type = false;
               exp_raise_from_final = false;
               exp_raise_path_id = None; 
               exp_raise_pos = get_pos_camlp4 _loc 1 }]];
@@ -1939,6 +1940,7 @@ catch_clause:
 		  Catch { exp_catch_var = Some id2;
               exp_catch_flow_type = id1;
               exp_catch_flow_var = None;
+			  exp_catch_alt_var_type = None;
               exp_catch_body = vds;																					   
               exp_catch_pos = get_pos_camlp4 _loc 1 }]];
 

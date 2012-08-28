@@ -2100,7 +2100,7 @@ let rec string_of_exp = function
 		              |Sharp_var e -> "return " ^ (snd e)
 		              | _ -> "return")
 	              else  (match eo with 
-		            | Sharp_var e -> "throw " ^ (snd e)
+		            | Sharp_var e -> "throw " ^ (snd e)^":"^(string_of_sharp st)
 		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
 		            | _ -> "throw "^(string_of_sharp st))
 	        | _ -> (match eo with 
