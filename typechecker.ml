@@ -444,7 +444,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    	          { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
 	                let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
                     (* need to add initial esc_stack *)
-                    let init_esc = [((0,""),[])] in
+                  let init_esc = [((0,""),[])] in
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
@@ -453,8 +453,20 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 										let res_ctx, tctx = check_exp prog proc lfe [] e0 post_label in
 										let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
 										let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
-										let _ = print_endline (pr_list (fun ctx -> (Cprinter.string_of_term_ctx ctx) ^ "\n=============\n") 
-											(TInfer.remove_empty_ctx_list_term_ctx tctx)) in
+										let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
+										let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
+										(* Termination Context (collected by Symbolic Execution) *)
+										let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
+										(* Initial Termination Spec *)
+										let t_case_spec = TInfer.term_case_spec_of_list_term_ctx t_ctx in
+										(***************************************)
+										(* let _ = print_endline (pr_list (fun ctx ->                               *)
+										(* 	"\n=============\n" ^ (Cprinter.string_of_term_ctx ctx)) t_ctx) in      *)
+										(* let _ = print_endline (Cprinter.string_of_term_case_spec t_case_spec) in *)
+										(***************************************)
+										let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in
+										let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_case_spec in
+										(* End of Termination Inference *)
 	    	        let res_ctx = CF.list_failesc_to_partial res_ctx in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
@@ -1079,7 +1091,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_is_rec = ir;
 			  exp_scall_path_id = pid;
 			  exp_scall_pos = pos}) ->
-		    let res_ctx = begin
+				let res_ctx =  
+		    begin
                 let mn_str = Cast.unmingle_name mn in
                 if (mn_str=Globals.fork_name) then
                   (*=========================*)
@@ -1373,7 +1386,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)
                 (*=========================*)
-                let _ = proving_loc#set pos in
+              let _ = proving_loc#set pos in
 	            let proc = look_up_proc_def pos prog.new_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
 	            let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
@@ -1542,17 +1555,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             }
                         end
                     in
-                    res
+										res
                 end
               end in
 							(* Termination Inference: Add call context of *)
-							(* recursive call into termination context *)
+							(* recursive call into termination context    *)
+							let proc = look_up_proc_def pos prog.new_proc_decls mn in
+	            let farg_types, farg_names = List.split proc.proc_args in
+							let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+	            let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Primed)) vs farg_types in
 							let n_tctx =
 								if not ir then tctx else
 								tctx @ [{
-									TInfer.t_type = TInfer.Rec; 
+									TInfer.t_type = TInfer.Rec mn; 
 									TInfer.t_ctx = ctx;
-									TInfer.t_cond_pure = CP.mkTrue no_pos;}] in
+									TInfer.t_params = (farg_spec_vars, actual_spec_vars);
+									TInfer.t_pure_ctx = [];
+									TInfer.t_cond_pure = [];}] in
 							(res_ctx, n_tctx)
         | Seq ({exp_seq_type = te2;
           exp_seq_exp1 = e1;
@@ -1642,7 +1661,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						let n_tctx = tctx @ [{
 							TInfer.t_type = TInfer.Base; 
 							TInfer.t_ctx = ctx;
-							TInfer.t_cond_pure = CP.mkTrue no_pos;}] in
+							TInfer.t_params = ([], []);
+							TInfer.t_pure_ctx = [];
+							TInfer.t_cond_pure = [];}] in
 	          (CF.add_path_id_ctx_failesc_list r (pid,0), n_tctx)
         | Try ({exp_try_body = body;
       	  exp_catch_clause = cc;
@@ -2185,7 +2206,8 @@ let check_prog (prog : prog_decl) =
   in 
   ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
-  Term.term_check_output ()
+  Term.term_check_output ();
+	TInfer.main (fun f -> TP.is_sat f "" true) sorted_proc_main
 	    
 let check_prog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 

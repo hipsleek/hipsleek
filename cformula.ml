@@ -4088,6 +4088,26 @@ let collect_path_trace_failesc_context ctx =
 let collect_path_trace_list_failesc_context ctx =
 	List.concat (List.map collect_path_trace_failesc_context ctx)
 
+let rec collect_formula_context ctx =
+	match ctx with
+	| Ctx es -> [es.es_formula]
+	| OCtx (ctx1, ctx2) -> (collect_formula_context ctx1) @ (collect_formula_context ctx2)
+
+let collect_formula_failesc_context ctx =
+	let _, _, b_ctx = ctx in
+	List.concat (List.map (fun (_, c) -> collect_formula_context c) b_ctx)	
+	
+let collect_formula_list_failesc_context ctx =
+	List.concat (List.map collect_formula_failesc_context ctx)
+	
+let rec pure_of_formula f = 
+	match f with
+	| Base { formula_base_pure = pf } -> [MCP.pure_of_mix pf]
+	| Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
+		(pure_of_formula f1) @ (pure_of_formula f2)
+	| Exists { formula_exists_qvars = qv; formula_exists_pure = pf; } ->
+		[CP.mkExists qv (MCP.pure_of_mix pf) None no_pos]
+
 let rec add_pre_heap ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_heap 

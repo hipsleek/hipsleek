@@ -2338,11 +2338,28 @@ let app_sv_print xs ys =
 
 let string_of_term_type = function
 	| TInfer.Base -> "Base"
-	| TInfer.Rec -> "Rec"
+	| TInfer.Rec mn -> "Rec{" ^ mn ^ "}"
+
+let string_of_term_res = function
+	| TInfer.Loop -> "Loop"
+	| TInfer.Term -> "Term"
+	| TInfer.Unknown s -> "UNK_" ^ s
 
 let string_of_term_ctx tctx = 
-	(string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "@" ^ 
-	(string_of_term_type tctx.TInfer.t_type) 
+	"\nTERMINATION CTX:\n" ^ 
+	"CTX: " ^ (string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "\n" ^
+	"PURE CTX: " ^ (pr_list string_of_pure_formula tctx.TInfer.t_pure_ctx) ^ "\n" ^
+	"PARAMS: " ^ (pr_pair string_of_spec_var_list string_of_spec_var_list tctx.TInfer.t_params) ^ "\n" ^
+	"COND: " ^ (pr_list (fun (f, r) -> (string_of_pure_formula f) ^ "[" ^ (string_of_term_res r) ^ "]") tctx.TInfer.t_cond_pure) ^
+	"@" ^ (string_of_term_type tctx.TInfer.t_type) 
+	
+let string_of_term_case_spec spec =
+	let string_of_case (lpf, t_res) = 
+		(pr_list string_of_pure_formula lpf) ^ " -> " ^ (string_of_term_res t_res) ^ "\n" 
+	in "\nTERMINATION SPEC:\n" ^ (pr_list string_of_case spec) 
+
+let string_of_term_trans_constraint (c1, c2) =
+	(string_of_term_res c1) ^ ">>" ^ (string_of_term_res c2)
 
 (* An Hoa : formula to HTML output facility *)
 
@@ -2691,4 +2708,8 @@ Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
 Redlog.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
-Term_infer.print_path_trace := string_of_path_trace;;
+TInfer.print_path_trace := string_of_path_trace;;
+TInfer.print_pure_formula := string_of_pure_formula;;
+TInfer.print_term_case_spec := string_of_term_case_spec;;
+TInfer.print_term_ctx := string_of_term_ctx;;
+TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;

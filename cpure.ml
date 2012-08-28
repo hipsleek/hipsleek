@@ -1665,7 +1665,7 @@ and conj_of_list (fs : formula list) pos : formula =
    F1 or F2 or .. or Fn ==> [F1,F2,..,FN] 
 *)
 (* 16.04.09 *)	
-and list_of_disjs (f0 : formula) : formula list =split_disjunctions f0
+and list_of_disjs (f0 : formula) : formula list = split_disjunctions f0
         
 and disj_of_list (xs : formula list) pos : formula = 
   let rec helper xs r = match xs with
