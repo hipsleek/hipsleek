@@ -2151,6 +2151,10 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
     | MCP.OnePF mix_f_pure ->  MCP.OnePF (add_formula_to_formula pure_f mix_f_pure) )
 
 and one_formula_subst sst (f : one_formula) = 
+  let sst = List.filter (fun (fr,t) -> 
+      if ((CP.name_of_spec_var fr)=Globals.ls_name) then false
+      else true
+  ) sst in (*donot rename ghost LOCKSET name*)
   let base = formula_of_one_formula f in
   let rs = subst sst base in
   let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in

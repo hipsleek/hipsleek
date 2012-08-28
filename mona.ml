@@ -190,7 +190,8 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
 
 and find_order_x (f : CP.formula) vs = 
   let r = find_order_formula f vs in
-  if r then (find_order f vs)
+  if r then (find_order f vs) 
+(*keep finding until reach fixed point*)
 
 and find_order (f : CP.formula) vs = 
   Debug.no_2 "find_order" 
@@ -210,6 +211,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
 and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
+      | CP.Null _ -> 1
       | CP.Var(sv, l) ->
 	        begin
 	          try
@@ -346,7 +348,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
   = 1 --> inside bag
   = 2 --> bag
 *)
-and find_order_exp (e : CP.exp) order vs = match e with
+and find_order_exp_x (e : CP.exp) order vs = match e with
   | CP.Var(sv1, l1) -> 
         begin
           try
@@ -384,6 +386,11 @@ and find_order_exp (e : CP.exp) order vs = match e with
   | CP.ListReverse(e, l) -> (find_order_exp e order vs)
   | CP.ArrayAt(sv, el, l) -> Error.report_error { Error.error_loc = l; Error.error_text = (" Mona does not handle arrays!\n")}
   | _ -> false
+
+and find_order_exp (e : CP.exp) order vs =
+  Debug.no_3 "find_order_exp"
+      Cprinter.string_of_formula_exp string_of_int string_of_hashtbl string_of_bool
+      find_order_exp_x e order vs
 
 (*
 

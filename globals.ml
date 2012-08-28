@@ -460,6 +460,8 @@ let release_name = "release"
 let lock_name = "lock"
 
 let ls_name = "ls"
+let ls_data_typ = "lock"
+let ls_typ = BagT (Named ls_data_typ)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -564,7 +566,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let print_type = ref false
+let print_type = ref true
 
 (* let enable_sat_statistics = ref false *)
 

@@ -1167,8 +1167,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+                          (*LOCKSET variable*********)
+                          let ls_var = CP.mkLsVar Primed in
                           (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
-                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) primed_full_vars CF.Flow_combine pos in
+                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (ls_var::primed_full_vars) CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in
                           (*merge*)
@@ -1796,7 +1798,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                 (*****LOCKSET variable: ls'=ls *********)
                 let args = 
                   if (!allow_ls) then
-                    let ls_var = (BagT UNK,ls_name) in
+                    let ls_var = (ls_typ,ls_name) in
                      ls_var::proc.proc_args
                   else
                     proc.proc_args

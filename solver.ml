@@ -3127,7 +3127,18 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
-	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
+                let ls_var = CP.mkLsVar Primed in
+                (*sequential spec does not have LOCKSET*)
+                (*this is similar to adding ls'=ls in the post-cond
+                of each spec*)
+                let post_fv = CF.fv new_post in
+                let new_ref_vars = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv 
+                    then (*if LOCKSET ghost var is in the post-condition*)
+                      (ls_var::ref_vars)
+                    else (*if not -> do not consider ls_var as a ref-vars*)
+                      ref_vars
+                in
+	            let rs1 = CF.compose_context_formula rs new_post new_ref_vars Flow_replace pos in
                 (* let _ = print_endline ("\n### rs1 = "^(Cprinter.string_of_context rs1)) in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                 (* let _ = print_endline ("\n### rs2 = "^(Cprinter.string_of_context rs2)) in *)

@@ -60,10 +60,10 @@ void main()
 
 //valid
 void inc(lock l,cell x)
-  requires [f] l::LOCK(f)<x> & @value[l,x] & ls={}
-  ensures l::LOCK(f)<x> & ls'={}; //'
+  requires [f] l::LOCK(f)<x> & @value[l,x] & l notin ls
+  ensures l::LOCK(f)<x> & ls'=ls; //'
 {
-
+  dprint;
   acquire[LOCK](l,x);
   x.val--;
   x.val++;

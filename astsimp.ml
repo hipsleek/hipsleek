@@ -1806,7 +1806,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
             I.param_mod = I.NoMod;
             I.param_loc = proc.I.proc_loc;} in 
         let ls_arg ={
-            I.param_type = Globals.BagT UNK;
+            I.param_type = ls_typ;
             I.param_name = ls_name;
             I.param_mod = I.NoMod;
             I.param_loc = proc.I.proc_loc;} in 
@@ -1928,7 +1928,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
       let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
       (*LOCKSET variable*********)
-      let ls_var = (BagT UNK,ls_name) in
+      let ls_var = (ls_typ,ls_name) in
       (**************************)
       let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (ls_var::(cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 

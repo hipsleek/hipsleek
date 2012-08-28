@@ -1179,7 +1179,7 @@ and is_formula_arith (f:formula) :bool = match f with
 
 (*********BAG CONSTRAINT***************)
 (*create lockset var, primed or unprimed*)
-and mkLsVar p = (SpecVar (UNK, ls_name, p))
+and mkLsVar p = (SpecVar (ls_typ, ls_name, p))
 
 and mkBag svl pos = Bag (svl,pos)
 
