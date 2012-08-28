@@ -376,6 +376,16 @@ let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
   (CP.DisjSetSV.is_sat_dset d)
 
+let is_mem_mem_formula_x (e:CP.spec_var) (mf:mem_formula) : bool =
+  let d = mf.mem_formula_mset in
+  (CP.DisjSetSV.is_mem_dset e d)
+
+(*check whether a spec var is a member of mem_formula*)
+let is_mem_mem_formula (e:CP.spec_var) (mf:mem_formula) : bool =
+  Debug.no_2 "is_mem_mem_formula"
+      !print_spec_var !print_mem_formula string_of_bool
+      is_mem_mem_formula_x e mf
+
 (* returns all the disjoint pairs from a mem formula *)
 let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) list  =
   let m = mf.mem_formula_mset in

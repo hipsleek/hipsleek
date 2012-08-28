@@ -1677,10 +1677,12 @@ let rec simpl_in_quant formula negated rid =
 
 let simpl_pair rid (ante, conseq) =
   let l1 = CP.bag_vars_formula ante in
+  (*l1 is bag vars in both ante and conseq*)
   let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
     | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+		if (List.mem v1 l1) then ((ante, conseq), fun x -> x) else
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
     | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
     | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
@@ -1693,6 +1695,13 @@ let simpl_pair rid (ante, conseq) =
   let ante2 = simpl_in_quant ante1 true rid in
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
+
+let simpl_pair rid (ante, conseq) =
+  let pr_o = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula in
+  Debug.no_2 "simpl_pair"
+      Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula pr_o
+      (fun _ _ -> simpl_pair rid (ante, conseq)) ante conseq
+
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
@@ -1740,7 +1749,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 			List.map (fun cons-> 
             let (ante,cons) = simpl_pair false (requant ante, requant cons) in
             let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
-				let ante = CP.remove_dup_constraints ante in
+			let ante = CP.remove_dup_constraints ante in
             let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
 				match process with
 				  | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)

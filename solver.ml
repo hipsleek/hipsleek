@@ -461,10 +461,10 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             (*TO DO: Temporarily ignore LOCK*)
-            (match vdef.view_inv_lock with
-              | Some f -> 
-                  {mem_formula_mset =[]}
-              | None ->
+            (* (match vdef.view_inv_lock with *)
+            (*   | Some f -> *)
+            (*       {mem_formula_mset =[]} *)
+            (*   | None -> *)
             let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
             (*In the presence of fractional permission,
@@ -504,7 +504,7 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                           lookup_view_baga_with_subs ls vdef from_svs to_svs) 
             in
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
-            )
+            (* ) *)
       | Hole _
       | HTrue
       | HFalse ->
@@ -719,19 +719,23 @@ and xpure_heap_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which
 
 and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula  * CF.mem_formula) =
   let memset = h_formula_2_mem_perm h0 p0 [] prog in
-  let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : MCP.mix_formula = 
+  let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula = 
     match h0 with
       | DataNode ({h_formula_data_node = p;
         h_formula_data_perm = frac;
 		h_formula_data_pos = pos}) ->
             let non_null = CP.mkNeqNull p pos in
-            (* let non_null = CP.mkEqVarInt p i pos in *)
+            let i = fresh_int2 () in
+            let eq_i = CP.mkEqVarInt p i pos in
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             (match frac with
-              | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null 
-              | Some f -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd non_null (mkPermInv f) no_pos)
+              | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
+              | Some f ->
+                  let inv = 
+                    if CF.is_mem_mem_formula p memset then eq_i else non_null
+                  in
+                  MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv f) no_pos)
             )
-
 	  (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
       | ViewNode ({ h_formula_view_node = p;
 		h_formula_view_name = c;
@@ -745,6 +749,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                 | None -> CP.mkTrue pos
                 | Some f -> mkPermInv f in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
+            let res = 
             (match inv_opt with
               | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv
               | Some xp1 ->
@@ -760,6 +765,23 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                     let frac_inv_mix = MCP.OnePF frac_inv in
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                     subst_m_fun (CF.add_mix_formula_to_mix_formula frac_inv_mix vinv))
+            in
+            (*res is the view invariant defined by users or
+            inferred by the system*)
+            (*if the ViewNode is a LOCK node, we add more information (p=i)
+            because LOCK is similar to a datanode*)
+            (*Handle LOCK ViewNode differently*)
+            (match vdef.view_inv_lock with
+              | Some f ->
+                  if CF.is_mem_mem_formula p memset then 
+                    (*full LOCK node*)
+                    let i = fresh_int2 () in
+                    let eq_i = CP.mkEqVarInt p i pos in
+                    MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
+                  else
+                    (*partial LOCK node*)
+                    res
+              | None -> res)
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos})
@@ -769,14 +791,14 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
       | Conj ({h_formula_conj_h1 = h1;
 	    h_formula_conj_h2 = h2;
 	    h_formula_conj_pos = pos}) ->
-            let ph1 = xpure_heap_helper prog h1 which_xpure in
-            let ph2 = xpure_heap_helper prog h2 which_xpure in
+            let ph1 = xpure_heap_helper prog h1 which_xpure memset in
+            let ph2 = xpure_heap_helper prog h2 which_xpure memset in
             MCP.merge_mems ph1 ph2 true
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
-  (xpure_heap_helper prog h0 which_xpure, memset)
+  (xpure_heap_helper prog h0 which_xpure memset, memset)
 
 and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
   Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 

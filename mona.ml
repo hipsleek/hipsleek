@@ -511,7 +511,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Bag (elist, _) -> ([],"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
   | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
   | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
-  | CP.BagIntersect (_, _) -> ([], mona_of_exp e0 f, "") (*TO CHECK: add non-empty case*)
+  | CP.BagIntersect (_, _) -> ([], mona_of_exp e0 f, "") (*TO CHECK: add non-empty case *)
   | CP.BagDiff (_,_,_) -> ([], mona_of_exp e0 f, "")
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
