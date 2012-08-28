@@ -158,8 +158,8 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
-				  proc_is_main : bool;
-				  proc_file : string;
+          proc_is_main : bool;
+          proc_file : string;
 				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -428,6 +428,8 @@ let bool_type = Bool
 
 let bag_type = BagT Int
 
+let sym_type = Symbol
+
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
@@ -679,11 +681,9 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
 	  | Some e1 -> e1
-	  | None  ->
-		let n_arg = f_args in_arg e in 
+	  | None  ->   let n_arg = f_args in_arg e in 
         let comb_f = comb_f e in
-        let zero = comb_f [] in  
-		match e with	
+        let zero = comb_f [] in  match e with	
           | Assert _ 
           | BoolLit _ 
           | Break _
@@ -1254,22 +1254,22 @@ and mkSeq e1 e2 l = match e1 with
 				   exp_seq_exp2 = e2;
 				   exp_seq_pos = l }
 
-and mkAssign op lhs rhs pos = 	Assign { exp_assign_op = op;
-										 exp_assign_lhs = lhs;
-										 exp_assign_rhs = rhs;
-										 exp_assign_path_id = (fresh_branch_point_id "") ;
-										 exp_assign_pos = pos }
+and mkAssign op lhs rhs pos = Assign { exp_assign_op = op;
+                                       exp_assign_lhs = lhs;
+                                       exp_assign_rhs = rhs;
+                                       exp_assign_path_id = (fresh_branch_point_id "") ;
+                                       exp_assign_pos = pos }
 
 and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
-										   exp_binary_oper1 = oper1;
-										   exp_binary_oper2 = oper2;
-										   exp_binary_path_id = (fresh_branch_point_id "") ;
-										   exp_binary_pos = pos }
+                                           exp_binary_oper1 = oper1;
+                                           exp_binary_oper2 = oper2;
+                                           exp_binary_path_id = (fresh_branch_point_id "") ;
+                                           exp_binary_pos = pos }
 
 and mkUnary op oper pos = Unary { exp_unary_op = op;
-								  exp_unary_exp = oper;
-								  exp_unary_path_id = (fresh_branch_point_id "") ;
-								  exp_unary_pos = pos }
+                                  exp_unary_exp = oper;
+                                  exp_unary_path_id = (fresh_branch_point_id "") ;
+                                  exp_unary_pos = pos }
 
 and mkRaise ty rval final pid pos= Raise { exp_raise_type = ty ;
 										   exp_raise_val = rval;
@@ -1402,7 +1402,7 @@ let rec label_e e =
   let rec helper e = match e with
     | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}  
     | Block _
-	| ArrayAt _ (* AN HOA : no label for array access *)
+		| ArrayAt _ (* AN HOA : no label for array access *)
     | Cast _
     | ConstDecl _ 
     | BoolLit _ 

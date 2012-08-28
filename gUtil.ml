@@ -221,10 +221,10 @@ let initialize () =
     raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
   (*TP.enable_log_for_all_provers ();*)
-  TP.start_prover ()
+  if (not !TP.tp_batch_mode) then TP.start_prover ()
 
 let finalize () =
-  TP.stop_prover ()
+  if (not !TP.tp_batch_mode) then TP.stop_prover ()
 
 
 (**

@@ -487,21 +487,23 @@ and data_of_h_formula h = match h with
 
 and isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
-    formula_exists_pure = p;
-    formula_exists_flow = fl;})
+             formula_exists_pure = p;
+             formula_exists_flow = fl;})
   | Base ({formula_base_heap = h;
-    formula_base_pure = p;
-    formula_base_flow = fl;}) -> h = HFalse || MCP.isConstMFalse p||is_false_flow fl.formula_flow_interval
+           formula_base_pure = p;
+           formula_base_flow = fl;}) ->
+      (h = HFalse) || (MCP.isConstMFalse p) || (is_false_flow fl.formula_flow_interval)
   | _ -> false
 
 
 and isAllConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
-    formula_exists_pure = p;
-    formula_exists_flow = fl;})
+             formula_exists_pure = p;
+             formula_exists_flow = fl;})
   | Base ({formula_base_heap = h;
-    formula_base_pure = p;
-    formula_base_flow = fl;}) -> (h = HFalse || MCP.isConstMFalse p)||(is_false_flow fl.formula_flow_interval)
+           formula_base_pure = p;
+           formula_base_flow = fl;}) ->
+      (h = HFalse) || (MCP.isConstMFalse p) || (is_false_flow fl.formula_flow_interval)
   | _ -> false
 
 and isConstDFalse f = 
@@ -956,31 +958,37 @@ and mkTrue_nf pos = Base (mkTrue_b_nf pos)
 
 and mkFalse_nf pos = mkFalse (mkTrueFlow ()) pos
 
-and mkFalse (flowt: flow_formula) pos = Base ({
-		formula_base_heap = HFalse; 
-		formula_base_pure = MCP.mkMFalse pos; 
-		formula_base_type = TypeFalse;
-formula_base_and = [];
-		formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
-		formula_base_label = None;
-		formula_base_pos = pos})
+and mkFalse (flowt: flow_formula) pos =
+  Base ({
+    formula_base_heap = HFalse; 
+    formula_base_pure = MCP.mkMFalse pos; 
+    formula_base_type = TypeFalse;
+    formula_base_and = [];
+    formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
+    formula_base_label = None;
+    formula_base_pos = pos
+  })
   
-and mkEFalse flowt pos = EBase({
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	formula_struc_base = mkFalse flowt pos;
-	formula_struc_continuation = None;
-	formula_struc_pos = pos})
+and mkEFalse flowt pos =
+  EBase ({
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkFalse flowt pos;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos
+  })
 
-and mkETrue flowt pos = EBase({
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	formula_struc_base = mkTrue flowt pos;
-	formula_struc_continuation = None;
-	formula_struc_pos = pos})
-  
+and mkETrue flowt pos =
+  EBase ({
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkTrue flowt pos;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos
+  })
+
 and mkOr f1 f2 pos =
   let rec liniarize_or c = match c with
 	| Or f -> 
@@ -3056,8 +3064,7 @@ think it is used to instantiate when folding.
   (*es_cache_no_list : formula_cache_no_list;*)
 
   (* For Termination checking *)
-  (* Term ann with Lexical ordering *)
-  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
+  es_var_measures : CP.p_formula option;
   es_var_stack :  string list; 
   (* this should store first termination error detected *)
   (* in case an error has already been detected *)
@@ -3896,9 +3903,10 @@ let must_consistent_list_failesc_context (s:string) l : unit =
   | Ctx es -> isStrictConstFalse es.es_formula
   | _ -> false*)
 
-let isAnyFalseCtx (ctx:context) : bool = match ctx with
+let isAnyFalseCtx (ctx:context) : bool =
+  match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false  
+  | _ -> false
 
 (* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
 (*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
@@ -4019,11 +4027,14 @@ let rec collect_orig_ante ctx =
 	| OCtx (ctx1, ctx2) -> (collect_orig_ante ctx1) @ (collect_orig_ante ctx2)
 
 let rec collect_term_ann_context ctx =
-	match ctx with
-	| Ctx es -> (match es.es_var_measures with
-		| None -> []
-		| Some (t_ann, _, _) -> [t_ann])
-	| OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
+  match ctx with
+  | Ctx es -> (
+      match es.es_var_measures with
+      | None -> []
+      | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
+      | _ -> report_error no_pos "Invalid value for es_var_measures"
+    )
+  | OCtx (ctx1, ctx2) -> (collect_term_ann_context ctx1) @ (collect_term_ann_context ctx2)
 
 let collect_term_ann_list_context ctx =
 	match ctx with
@@ -4033,7 +4044,9 @@ let collect_term_ann_list_context ctx =
 
 let rec collect_term_err_msg_context ctx =
   match ctx with
-  | Ctx es -> es.es_var_stack
+  | Ctx es -> (match es.es_term_err with
+		| None -> []
+		| Some msg -> [msg])
   | OCtx (ctx1, ctx2) -> 
       (collect_term_err_msg_context ctx1) @
       (collect_term_err_msg_context ctx2)
@@ -4054,11 +4067,14 @@ let collect_term_ann_and_msg_list_context ctx =
 (* Termination: The term_measures of an OR context
  * should only be collected once *)  
 let rec collect_term_measures_context ctx =
-	match ctx with
-	| Ctx es -> (match es.es_var_measures with
-		| None -> []
-    | Some (_, ml, _) -> [ml])
-	| OCtx (ctx1, _) -> collect_term_measures_context ctx1
+  match ctx with
+  | Ctx es -> (
+      match es.es_var_measures with
+      | None -> []
+      | Some (CP.LexVar lex) -> [lex.CP.lex_ann]
+      | _ -> report_error no_pos "Invalid value for es_var_measures"
+    )
+  | OCtx (ctx1, _) -> collect_term_measures_context ctx1
 
 let collect_term_measures_branch_ctx_list br_ctx_l =
   List.concat (List.map (fun (_, ctx) -> 
@@ -4267,7 +4283,7 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
-	let new_f = mkFalse flowt pos in
+  let new_f = mkFalse flowt pos in
     {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
@@ -4316,34 +4332,38 @@ let or_context_list cl10 cl20 =
   let pr = !print_context_list_short in
   Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
   
-let mkFailContext msg estate conseq pid pos = {
-  fc_prior_steps = estate.es_prior_steps ;
-  fc_message = msg ;
-  fc_current_lhs = estate;
-  fc_orig_conseq = estate.es_orig_conseq;
-  fc_failure_pts = (match pid with | Some s-> [s] | _ -> []);
-  fc_current_conseq = conseq;
-}   
-let mkFailCtx_in (ft:fail_type) = FailCtx ft
+let mkFailContext msg estate conseq pid pos = 
+  {
+    fc_prior_steps = estate.es_prior_steps ;
+    fc_message = msg ;
+    fc_current_lhs = estate;
+    fc_orig_conseq = estate.es_orig_conseq;
+    fc_failure_pts = (match pid with | Some s-> [s] | _ -> []);
+    fc_current_conseq = conseq; 
+  }
+
+let mkFailCtx_in (ft:fail_type) =
+  FailCtx ft
 
 (*simple concurrency*)
 let mkFailCtx_simple msg estate conseq pos = 
-  let fail_ctx = {
-	  fc_message = msg;
-	  fc_current_lhs  = estate;
-	  fc_prior_steps = estate.es_prior_steps;
-	  fc_orig_conseq  = struc_formula_of_formula conseq pos;
-	  fc_current_conseq = formula_of_heap HFalse pos;
-	  fc_failure_pts = [];} 
-  in
+  let fail_ctx = 
+    {
+      fc_message = msg;
+      fc_current_lhs  = estate;
+      fc_prior_steps = estate.es_prior_steps;
+      fc_orig_conseq  = struc_formula_of_formula conseq pos;
+      fc_current_conseq = formula_of_heap HFalse pos;
+      fc_failure_pts = [];
+    } in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
   mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex))
 
-let mkFailCtx_vperm msg rhs_b estate conseq pos = 
+let mkFailCtx_vperm msg rhs_b estate conseq pos =
   let s = "variable permission mismatch "^msg in
-  let new_estate = {estate  with es_formula = substitute_flow_into_f
-          !top_flow_int estate.es_formula} in
+  let new_estate = 
+    {estate  with es_formula = substitute_flow_into_f !top_flow_int estate.es_formula} in
   mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error))
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
@@ -5102,10 +5122,14 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
 	  let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in
       let mix_f = match esvm with
         | None -> mix_f
-        | Some (ta,l1,l2) ->
+        | Some (CP.LexVar lex) ->
+            let ta = lex.CP.lex_ann in
+            let l1 = lex.CP.lex_exp in
+            let l2 = lex.CP.lex_tmp in
             let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
-            MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
+            MCP.merge_mems mix_f (MCP.mix_of_pure m) true
+        | _ -> report_error no_pos "Invalid value for esvm" in
       (*TO CHECK*)
       let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
@@ -5483,21 +5507,21 @@ and plug_ref_vars (w:Cpure.spec_var list) (f:struc_formula) :struc_formula =
 
 
 and count_or c = match c with
-			| Ctx _ -> 1
-			| OCtx (c1,c2) -> (count_or c1)+(count_or c2)		
-			
+  | Ctx _ -> 1
+  | OCtx (c1,c2) -> (count_or c1)+(count_or c2)		
+
 and find_false_ctx ctx pos =
   match ctx with
-   | FailCtx _ -> ()
-   | SuccCtx ctx ->
-	if (List.exists isAnyFalseCtx ctx) then 
-    false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
+  | FailCtx _ -> ()
+  | SuccCtx ctx ->
+      if (List.exists isAnyFalseCtx ctx) then 
+        false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list)
+      else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
-    if (List.exists isAnyFalseFailescCtx ctx) then 
-      false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
-    else ()
-  
+  if (List.exists isAnyFalseFailescCtx ctx) then 
+    false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
+  else ()
 
 and guard_vars (f:struc_formula) = 
 	let rdv = Gen.BList.remove_dups_eq (=) in

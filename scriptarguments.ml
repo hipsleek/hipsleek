@@ -112,6 +112,8 @@ let common_arguments = [
 	"Log all formulae sent to Mona in file allinput.mona");
 	("--log-redlog", Arg.Set Redlog.is_log_all,
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
+  ("--log-mathematica", Arg.Set Mathematica.is_log_all,
+    "Log all formulae sent to Mathematica in file allinput.mathematica");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
@@ -147,7 +149,7 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
+	"oi"; "set"; "cm"; "redlog"; "mathematica"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
@@ -205,35 +207,45 @@ let common_arguments = [
     "Use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
-	("--failure-analysis",Arg.Set Globals.failure_analysis, 
+  ("--mathematica-no-pseudo-ops", Arg.Clear Mathematica.no_pseudo_ops, 
+  "Do not pseudo-strengthen/weaken formulas before send to Mathematica");
+  ("--mathematica-no-ee", Arg.Set Mathematica.no_elim_exists, 
+  "Do not try to eliminate existential quantifier with Mathematica");
+  ("--mathematica-no-simplify", Arg.Set Mathematica.no_simplify,
+  "Do not try to simplify non-linear formulas with Mathematica");
+  ("--mathematica-cache", Arg.Clear Mathematica.no_cache,
+  "Use cache for unsatisfiability and implication's checking with Mathematica");
+  ("--mathematica-timeout", Arg.Set_float Mathematica.timeout, 
+  "Set timeout (in seconds) for is_sat or imply with Mathematica");
+  	("--failure-analysis",Arg.Set Globals.failure_analysis, 
 	"Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
 	"Turn on exhaustive matching for base case of predicates"); 
 	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
-    ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
-    ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
-    ("-version", Arg.Set Globals.print_version_flag,"current version of software");
-    ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
-    ("--refine-error", Arg.Set Globals.simplify_error,
-	"Simplify the error");
-    (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
-    (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
-    *)
-    ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
-    ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
-    (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
-    (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
-    ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-    ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
-    ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-    ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
-    ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
-    ("--memo_print", Arg.Set_int Globals.memo_verbosity,
-    "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
-    ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
-    ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
-  
+  ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
+  ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+  ("-version", Arg.Set Globals.print_version_flag,"current version of software");
+  ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
+  ("--refine-error", Arg.Set Globals.simplify_error, "Simplify the error");
+  (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
+  (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
+  *)
+  ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
+  ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+  (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
+  (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
+  ("--mathematica-presburger", Arg.Set Mathematica.is_presburger, "use presburger arithmetic for redlog");
+  ("--mathematica-timeout", Arg.Set_float Mathematica.timeout, "<sec> checking a formula using Mathematica with a timeout after <sec> seconds");
+  ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
+  ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
+  ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
+  ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
+  ("--memo_print", Arg.Set_int Globals.memo_verbosity,
+  "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
+  ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
+  ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
   (*for cav experiments*)
   ("--force_one_slice", Arg.Set Globals.f_1_slice,"");
   ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
@@ -273,7 +285,6 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
-  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ] 

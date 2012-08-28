@@ -27,9 +27,9 @@ let rec coq_of_typ = function
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
   | Tree_sh 	  -> "int"
-  | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
+  | UNK | NUM | TVar _ | Named _ | Array _ |RelT | Symbol ->
         Error.report_error {Err.error_loc = no_pos; 
-        Err.error_text = "type var, array and named type not supported for Coq"}
+        Err.error_text = "type var, array, named type and symbol not supported for Coq"}
 ;;
 
 (* pretty printing for spec_vars *)
@@ -76,13 +76,14 @@ and coq_of_exp e0 =
   | CP.IConst (i, _) -> string_of_int i
   | CP.Tsconst _ -> failwith ("tsconst not supported in coq, should have already been handled")
   | CP.AConst (i, _) -> string_of_heap_ann i
-  | CP.FConst (f, _) -> 
-			illegal_format "coq_of_exp : float cannot be handled"
-        (* failwith ("coq.coq_of_exp: float can never appear here") *)
+  | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
+  | CP.SConst (s, _) -> illegal_format "coq_of_exp : symbol cannot be handled"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
+  | CP.Abs _ -> illegal_format "coq_of_exp : Abs cannot be handled"
+  | CP.Sqrt _ | CP.Pow _ -> illegal_format "coq_of_exp : Sqrt, Pow cannot be handled"
   | CP.Max _
   | CP.Min _ -> 
 			illegal_format "coq_of_exp : min/max cannot be handled"
@@ -176,7 +177,7 @@ and coq_of_b_formula b =
 	| CP.RelForm _ -> 
           (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
 			illegal_format "coq_of_exp : relation cannot be handled"
-    | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
+    | CP.LexVar _ -> illegal_format "coq_of_exp : LexVar cannot be handled"
     | CP.VarPerm _ ->
 		illegal_format "coq_of_exp : VarPerm cannot be handled"
 

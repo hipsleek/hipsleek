@@ -21,6 +21,13 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
+and sequence = {
+  seq_element: exp;
+  seq_domain: formula;
+  seq_limit: exp;
+  seq_loopcond: formula;
+  seq_loc : loc
+}
 
 and p_formula = 
   | BConst of (bool * loc)
@@ -35,8 +42,8 @@ and p_formula =
   | Neq of (exp * exp * loc)
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
-	  (* bags and bag formulae *)
   | LexVar of (term_ann * (exp list) * (exp list) * loc)
+  (* bags and bag formulae *)
   | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -59,6 +66,7 @@ and exp =
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
+  | SConst of (symbol * loc)          (* Symbolic constant *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
@@ -67,7 +75,13 @@ and exp =
   | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
-	  (* bag expressions *)
+  (* math built-in functions *)
+  | Abs of (exp * loc)
+  | Sqrt of (exp * loc)
+  | Pow of (exp * exp * loc)
+  (* sequence expression *)
+  (* | Seq of sequence *)
+  (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
@@ -89,6 +103,8 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | UnionRel of (relation * relation)
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+
+let print_exp = ref (fun (e:exp) -> "ipure printer has not been initialized")
 
 module Exp_Pure =
 struct 
@@ -185,41 +201,44 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
   let fv2 = afv a2 in
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 
-and afv (af : exp) : (ident * primed) list = match af with
+and afv (af : exp) : (ident * primed) list =
+  match af with
   | Var (sv, _) -> let id = fst sv in
-						if (id.[0] = '#') then [] else [sv]
+                   if (id.[0] = '#') then [] else [sv]
   | Null _ 
   | AConst _ 
-  | IConst _ 
+  | IConst _
   | Tsconst _ 
-  | FConst _ -> []
+  | FConst _
+  | SConst _ -> []
   | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
+  | Pow (a1, a2, _) -> combine_avars a1 a2
+  | Abs (a, _) -> afv a
+  | Sqrt (a, _) -> afv a
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
-  | BagUnion (d,_) ->  Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c-> a@(afv c)) [] d)
-  (*| BagDiff _|BagIntersect _|BagUnion _|Bag _ -> failwith ("afv: bag constraints are not expected")*)
+  | BagUnion (d,_) -> Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c-> a@(afv c)) [] d)
   | List (d, _)
   | ListAppend (d, _) -> Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c -> a@(afv c)) [] d)
-  | ListCons (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
-		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)  
+  | ListCons (a1, a2, _) -> let fv1 = afv a1 in
+                            let fv2 = afv a2 in
+                            Gen.BList.remove_dups_eq (=) (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
   | Func (a, i, _) -> 
-    let ifv = List.flatten (List.map afv i) in
-    Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
+      let ifv = List.flatten (List.map afv i) in
+      Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
   | ArrayAt (a, i, _) -> 
-	let ifv = List.flatten (List.map afv i) in
-	Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
+      let ifv = List.flatten (List.map afv i) in
+      Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -279,6 +298,12 @@ and mkMult a1 a2 pos = Mult (a1, a2, pos)
 and mkAnnExp a1 t pos = Ann_Exp (a1, t)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
+
+and mkAbs a pos = Abs (a, pos)
+
+and mkPow a1 a2 pos = Pow (a1, a2, pos)
+
+and mkSqrt a pos = Sqrt (a, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
@@ -377,6 +402,8 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | _ ->  BForm ((Neq (ae1, ae2, pos), None), None)
 
 and mkNot f lbl pos = Not (f, lbl, pos)
+
+and mkPure bf = BForm ((bf,None), None)
 
 (*
 and mkEqualVar (sv1 : spec_var) (sv2 : spec_var) =
@@ -485,12 +512,16 @@ and pos_of_exp (e : exp) = match e with
   | IConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
-  | AConst (_, p) -> p
+  | AConst (_, p)
+  | SConst (_, p) -> p
   | Ann_Exp (e,_) -> pos_of_exp e
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
   | Div (_, _, p) -> p
+  | Abs (_, p) -> p
+  | Pow (_, _, p) -> p
+  | Sqrt (_, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
   | Bag (_, p) -> p
@@ -601,31 +632,27 @@ and b_apply_one (fr, t) bf =
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
-  | Null _ 
-  | IConst _ 
+  | Null _ | IConst _ 
   | FConst _ 
   | Tsconst _
-  | AConst _ -> e
+  | AConst _
+  | SConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
-  | Add (a1, a2, pos) -> Add (e_apply_one p a1,
-							  e_apply_one p a2, pos)
-  | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1,
-										e_apply_one p a2, pos)
-  | Mult (a1, a2, pos) ->
-      Mult (e_apply_one p a1, e_apply_one p a2, pos)
-  | Div (a1, a2, pos) ->
-      Div (e_apply_one p a1, e_apply_one p a2, pos)
-  | Max (a1, a2, pos) -> Max (e_apply_one p a1,
-							  e_apply_one p a2, pos)
-  | Min (a1, a2, pos) -> Min (e_apply_one p a1,
-							  e_apply_one p a2, pos)
+  | Add (a1, a2, pos) -> Add (e_apply_one p a1, e_apply_one p a2, pos)
+  | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1, e_apply_one p a2, pos)
+  | Mult (a1, a2, pos) ->  Mult (e_apply_one p a1, e_apply_one p a2, pos)
+  | Div (a1, a2, pos) -> Div (e_apply_one p a1, e_apply_one p a2, pos)
+  | Abs (a, pos) -> Abs (e_apply_one p a, pos)
+  | Pow (a1, a2, pos) -> Pow (e_apply_one p a1, e_apply_one p a2, pos)
+  | Sqrt (a, pos) -> Sqrt (e_apply_one p a, pos)
+  | Max (a1, a2, pos) -> Max (e_apply_one p a1, e_apply_one p a2, pos)
+  | Min (a1, a2, pos) -> Min (e_apply_one p a1, e_apply_one p a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((e_apply_one_list p alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list p alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list p alist), pos)
-  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one p a1,
-							  e_apply_one p a2, pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one p a1, e_apply_one p a2, pos)
   | List (alist, pos) -> List ((e_apply_one_list p alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list p alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one p a1, e_apply_one p a2, pos)
@@ -719,8 +746,8 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | LexVar (_,args1, args2, _) -> 
-        let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
-        vs
+      let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
+      vs
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
         vs
@@ -772,34 +799,40 @@ and find_lexp_b_formula (bf: b_formula) ls =
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
-  if Hashtbl.mem ls e then [e] else
-  match e with
-	| Null _
-	| Var _
-	| IConst _
-	| AConst _
-	| Tsconst _
-	| FConst _ -> []
+  if Hashtbl.mem ls e then [e] 
+  else (
+    match e with
+    | Null _
+    | Var _
+    | IConst _
+    | AConst _
+    | FConst _
+    | Tsconst _
+    | SConst _ -> []
     | Ann_Exp(e,_) -> find_lexp_exp e ls
-	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| BagDiff (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| List (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| ListCons (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-	| ListHead (e, _) -> find_lexp_exp e ls
-	| ListTail (e, _) -> find_lexp_exp e ls
-	| ListLength (e, _) -> find_lexp_exp e ls
-	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| ListReverse (e, _) -> find_lexp_exp e ls
-  | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-	| ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Abs (e1, _) -> find_lexp_exp e1 ls
+    | Pow (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Sqrt (e1, _) -> find_lexp_exp e1 ls
+    | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | BagDiff (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | List (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | ListCons (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | ListHead (e, _) -> find_lexp_exp e ls
+    | ListTail (e, _) -> find_lexp_exp e ls
+    | ListLength (e, _) -> find_lexp_exp e ls
+    | ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | ListReverse (e, _) -> find_lexp_exp e ls
+    | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+    | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+  )
 ;;
 
 let rec break_pure_formula (f: formula) : b_formula list =
@@ -828,13 +861,17 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Var _ 
   | IConst _ 
   | AConst _ 
+  | FConst _
   | Tsconst _
-  | FConst _ -> false
+  | SConst _ -> false
   | Ann_Exp (exp,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Abs (exp1, _) -> contain_vars_exp exp1
+  | Pow (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Sqrt (exp1, _) -> contain_vars_exp exp1
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
@@ -849,170 +886,183 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
-  | ArrayAt _ -> true 
-and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
+  | ArrayAt _ -> true
+
+and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
+  match e with 
   | Null _ 
   | Var _ 
   | IConst _ 
   | AConst _ 
+  | FConst _
   | Tsconst _
-  | FConst _ -> (e, None)
+  | SConst _ -> (e, None)
   | Ann_Exp (e,_) -> float_out_exp_min_max e
   | Add (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let r = match (np1, np2) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
-		(Add (ne1, ne2, l), r) 
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
+      (Add (ne1, ne2, l), r)
   | Subtract (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let r = match (np1, np2) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
-		(Subtract (ne1, ne2, l), r) 
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+      (Subtract (ne1, ne2, l), r)
   | Mult (e1, e2, l) ->
-        let ne1, np1 = float_out_exp_min_max e1 in
-        let ne2, np2 = float_out_exp_min_max e2 in
-        let r = match np1, np2 with
-          | None, None -> None
-          | Some p, None -> Some p
-          | None, Some p -> Some p
-          | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
-        in (Mult (ne1, ne2, l), r)
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match np1, np2 with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+      in (Mult (ne1, ne2, l), r)
   | Div (e1, e2, l) ->
-        let ne1, np1 = float_out_exp_min_max e1 in
-        let ne2, np2 = float_out_exp_min_max e2 in
-        let r = match np1, np2 with
-          | None, None -> None
-          | Some p, None -> Some p
-          | None, Some p -> Some p
-          | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
-        in (Div (ne1, ne2, l), r)						 
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match np1, np2 with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+      in (Div (ne1, ne2, l), r)
+  | Pow (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match np1, np2 with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+      in (Pow (ne1, ne2, l), r)
+  | Abs (e, l) -> let ne, r = float_out_exp_min_max e in
+                   (Abs (ne, l), r)
+  | Sqrt (e, l) -> let ne, r = float_out_exp_min_max e in
+                   (Sqrt (ne, l), r)
   | Max (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let new_name = ("max"^(fresh_trailer())) in
-		let nv = Var((new_name, Unprimed), l) in
-		let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Max *)
-		let t = BForm ((EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in
-		(* $ h = 1 + max(h1, h2) -> <$,_> h = 1 + max_1 & <_,_> max_1 = max(h1, h2) ==> h is still separated from h1, h2 *)
-		let r = match (np1, np2) with
-		  | None, None -> Some (t,[new_name])
-		  | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
-		  | None, Some (p1, l1) -> Some ((And(p1, t, l)), (new_name:: l1))
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
-		(nv, r) 
-			
-			
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let new_name = ("max"^(fresh_trailer())) in
+      let nv = Var((new_name, Unprimed), l) in
+      let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Max *)
+      let t = BForm ((EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in
+      (* $ h = 1 + max(h1, h2) -> <$,_> h = 1 + max_1 & <_,_> max_1 = max(h1, h2) ==> h is still separated from h1, h2 *)
+      let r = match (np1, np2) with
+        | None, None -> Some (t,[new_name])
+        | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
+        | None, Some (p1, l1) -> Some ((And(p1, t, l)), (new_name:: l1))
+        | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
+      (nv, r) 
   | Min (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let new_name = ("min"^(fresh_trailer())) in
-		let nv = Var((new_name, Unprimed), l) in
-		let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Min *)
-		let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in 
-		let r = match (np1, np2) with
-		  | None, None -> Some (t,[new_name])
-		  | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
-		  | None, Some (p2, l2) -> Some ((And(p2, t, l)), (new_name:: l2))
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
-		(nv, r) 
-	        
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let new_name = ("min"^(fresh_trailer())) in
+      let nv = Var((new_name, Unprimed), l) in
+      let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Min *)
+      let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in 
+      let r = match (np1, np2) with
+        | None, None -> Some (t,[new_name])
+        | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
+        | None, Some (p2, l2) -> Some ((And(p2, t, l)), (new_name:: l2))
+        | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
+      (nv, r)
   (* bag expressions *)
   | Bag (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
-		let r = List.fold_left (fun a c -> match (a, c)with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-		(Bag (ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+      let r = List.fold_left (fun a c -> match (a, c)with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (Bag (ne1, l), r)
   | BagUnion (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
-		let r = List.fold_left (fun a c -> match (a, c)with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-		(BagUnion (ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+      let r = List.fold_left (fun a c -> match (a, c)with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (BagUnion (ne1, l), r)
   | BagIntersect (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
-		let r = List.fold_left (fun a c -> match (a, c)with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), List.rev_append l1 l2)) None np1 in
-		(BagIntersect (ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+      let r = List.fold_left (fun a c -> match (a, c)with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), List.rev_append l1 l2)) None np1 in
+      (BagIntersect (ne1, l), r)
   | BagDiff (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let r = match (np1, np2) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
-		(BagDiff (ne1, ne2, l), r) 
-		    (* list expressions *)
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
+      (BagDiff (ne1, ne2, l), r) 
+  (* list expressions *)
   | List (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
-		let r = List.fold_left (fun a c -> match (a, c) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-		(List (ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (List (ne1, l), r)
   | ListAppend (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
-		let r = List.fold_left (fun a c -> match (a, c) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-		(ListAppend (ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (ListAppend (ne1, l), r)
   | ListCons (e1, e2, l) -> 
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
-		let r = match (np1, np2) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
-		(ListCons (ne1, ne2, l), r) 
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
+      (ListCons (ne1, ne2, l), r) 
   | ListHead (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
-		(ListHead (ne1, l), np1)
+      let ne1, np1 = float_out_exp_min_max e in
+      (ListHead (ne1, l), np1)
   | ListTail (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
-		(ListTail (ne1, l), np1)
+      let ne1, np1 = float_out_exp_min_max e in
+      (ListTail (ne1, l), np1)
   | ListLength (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
-		(ListLength (ne1, l), np1)
+      let ne1, np1 = float_out_exp_min_max e in
+      (ListLength (ne1, l), np1)
   | ListReverse (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
-		(ListReverse (ne1, l), np1)
+      let ne1, np1 = float_out_exp_min_max e in
+      (ListReverse (ne1, l), np1)
   | Func (a, i, l) ->
-    let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
-    let r = List.fold_left (fun a c -> match (a, c) with
-      | None, None -> None
-      | Some p, None -> Some p
-      | None, Some p -> Some p
-      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-    (Func (a, ne1, l), r)
-	        (* An Hoa : get rid of min/max in a[i] *)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (Func (a, ne1, l), r)
+  (* An Hoa : get rid of min/max in a[i] *)
   | ArrayAt (a, i, l) ->
-  		let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
-		let r = List.fold_left (fun a c -> match (a, c) with
-		  | None, None -> None
-		  | Some p, None -> Some p
-		  | None, Some p -> Some p
-		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
-		(ArrayAt (a, ne1, l), r)
+      let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (ArrayAt (a, ne1, l), r)
 
 and float_out_pure_min_max (p : formula) : formula =
   
@@ -1220,8 +1270,8 @@ let rec typ_of_exp (e: exp) : typ =
   match e with
   | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
                                  merge_types ty2 ty
-  | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
-  | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
+  | Null _                    -> Globals.UNK               (* TRUNG TODO: what is the type of Null? *) 
+  | Var  _                    -> Globals.UNK               (* TRUNG TODO: what is the type of Var? *)
   (* Const *)
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
@@ -1232,10 +1282,13 @@ let rec typ_of_exp (e: exp) : typ =
   | Subtract (ex1, ex2, _)
   | Mult (ex1, ex2, _)
   | Div (ex1, ex2, _)
+  | Pow (ex1, ex2, _)
   | Max (ex1, ex2, _)
   | Min (ex1, ex2, _)         -> let ty1 = typ_of_exp ex1 in
                                  let ty2 = typ_of_exp ex2 in
                                  merge_types ty1 ty2
+  | Abs (ex1, _)             -> typ_of_exp ex1
+  | Sqrt (ex1, _)             -> typ_of_exp ex1
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)
@@ -1264,10 +1317,9 @@ let rec typ_of_exp (e: exp) : typ =
   | ListReverse (ex, _)       -> let ty = typ_of_exp ex in
                                  Globals.List ty
   (* Array expressions *)
-  | ArrayAt (_, ex_list, _)   -> 
-      let ty_list = List.map typ_of_exp ex_list in 
-      let ty = List.fold_left merge_types UNK ty_list in
-      let len = List.length ex_list in
-      Globals.Array (ty, len)
+  | ArrayAt (_, ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
+                                 let ty = List.fold_left merge_types UNK ty_list in
+                                 let len = List.length ex_list in
+                                 Globals.Array (ty, len)
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func";

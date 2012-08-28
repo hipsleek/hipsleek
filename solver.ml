@@ -3473,12 +3473,12 @@ and get_node (sv : CP.spec_var) (f : CF.h_formula) : CF.h_formula =
     | DataNode({h_formula_data_node = sv1; h_formula_data_name = name}) ->
 	      if (CP.eq_spec_var sv sv1)
 	      then f
-	      else HFalse
+	      else HEmp
     | ViewNode({h_formula_view_node = sv1; h_formula_view_name = name}) ->
 	      if (CP.eq_spec_var sv sv1)
 	      then f
-	      else HFalse
-    | _ -> HFalse
+	      else HEmp
+    | _ -> HEmp
 
 and check_one_target prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
       : bool =
@@ -5100,10 +5100,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       begin
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
           | None ->     
-              let t_ann, ml, il = Term.find_lexvar_es estate in
+              let lexvar = Term.find_lexvar_es estate in
+              let t_ann, ml, il = match lexvar with
+                | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
+                | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
               let term_measures, term_res, term_err_msg =
-                Some (Fail TermErr_May, ml, il),
+                Some (CP.mkLexVar t_ann ml il no_pos),
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                 Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
@@ -6211,23 +6214,24 @@ and inst_before_fold_x estate rhs_p case_vars =
   
   let rec filter b = match (fst b) with 
     | CP.Eq (lhs_e, rhs_e, _) ->
-          let lfv = CP.afv lhs_e in
-		  let rfv = CP.afv rhs_e in
-		  let l_inter = Gen.BList.intersect_eq CP.eq_spec_var lfv of_interest in
-		  let r_inter = Gen.BList.intersect_eq CP.eq_spec_var rfv of_interest in
-		  let v_l = l_inter@r_inter in
-		  let cond = 				
-			let rec prop_e e = match e with 
-			  | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ -> true
-			  | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
-			  | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
-			  | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
-			  | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
-			((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
-				((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
-				    (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in
-		  if cond then (false,[(b,List.hd v_l)]) (*the bool states if the constraint needs to be moved or not from the RHS*)
-          else (true,[])
+        let lfv = CP.afv lhs_e in
+        let rfv = CP.afv rhs_e in
+        let l_inter = Gen.BList.intersect_eq CP.eq_spec_var lfv of_interest in
+        let r_inter = Gen.BList.intersect_eq CP.eq_spec_var rfv of_interest in
+        let v_l = l_inter@r_inter in
+        let cond =
+        let rec prop_e e = match e with 
+          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.SConst _ | CP.Tsconst _ -> true
+          | CP.Abs (e,_) | CP.Sqrt (e,_) -> prop_e e
+          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) | CP.Pow (e1,e2,_)-> prop_e e1 && prop_e e2
+          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
+          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
+          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
+        ((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
+        ((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
+            (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in
+        if cond then (false,[(b,List.hd v_l)]) (*the bool states if the constraint needs to be moved or not from the RHS*)
+            else (true,[])
     | _ -> (true,[])in
   let new_c,to_a = MCP.constraint_collector filter rhs_p in 
   let to_a_e,to_a_i = List.partition (fun (_,v)-> List.exists (CP.eq_spec_var v) estate.es_evars ) to_a in

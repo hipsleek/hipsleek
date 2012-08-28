@@ -236,14 +236,15 @@ let _ =
 	print_version ()
   end else
     let _ = Printexc.record_backtrace !Globals.trace_failure in
-    (Tpdispatcher.start_prover ();
-    Gen.Profiling.push_time "Overall";
-    (* let _ = print_endline "before main" in *)
-    main ();
-    (* let _ = print_endline "after main" in *)
-    Gen.Profiling.pop_time "Overall";
-    let _ = 
+    (
+      if (not !Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
+      Gen.Profiling.push_time "Overall";
+      (* let _ = print_endline "before main" in *)
+      main ();
+      (* let _ = print_endline "after main" in *)
+      Gen.Profiling.pop_time "Overall";
       if (!Globals.profiling && not !inter) then 
-        ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
-    print_string "\n")
+        ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ()));
+      if (not !Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
+      print_string "\n"
+    )

@@ -238,6 +238,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
+  | SConst _ -> failwith ("[setmona.ml]: ERROR in constraints (symbol should not appear here)")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Add (e1, e2, _)
@@ -257,6 +258,9 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
                in rr
       in r
   | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."
+  | Abs _ -> failwith ("[setmona.ml]: Abs are not supported.")
+  | Sqrt _ -> failwith ("[setmona.ml]: sqrt is not supported.")
+  | Pow _ -> failwith ("[setmona.ml]: pow is not supported.")
   | Bag (es, _) ->
 	  if order = SO then
 		let r =	List.map (fun e -> compute_fo_exp e FO var_map) es in

@@ -58,10 +58,14 @@ and cvc3_of_exp a = match a with
   | CP.Var (sv, _) -> cvc3_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (symbol should not appear here)")
   | CP.Add (a1, a2, _) ->  (cvc3_of_exp a1) ^ " + " ^ (cvc3_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvc3_of_exp a1) ^ " - " ^ (cvc3_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvc3_of_exp a1) ^ " * " ^ (cvc3_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvc3.ml]: divide is not supported.")
+  | CP.Abs _ -> failwith ("[cvc3.ml]: Abs is not supported.")
+  | CP.Sqrt _ -> failwith ("[cvc3.ml]: sqrt is not supported.")
+  | CP.Pow _ -> failwith ("[cvc3.ml]: pow is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("cvc3.cvc3_of_exp: min/max should not appear here")
   | CP.Bag ([], _) -> ""
@@ -69,8 +73,8 @@ and cvc3_of_exp a = match a with
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
         failwith ("Lists are not supported in cvc3")
-  | CP.Func _ -> failwith ("Functions are not supported in cvc3")
-  | CP.ArrayAt _ -> (* An Hoa *)
+	| CP.Func _ -> failwith ("Functions are not supported in cvc3")
+	| CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
   | CP.AConst _ -> failwith ("aconst not supported in cvc3")
   | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
@@ -121,10 +125,10 @@ and cvc3_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
-	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
-    | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
-     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
-	    
+  | CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
+  | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
+  | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
   | CP.SpecVar ( Bool, _, _) -> "INT" (* "BOOLEAN" *)

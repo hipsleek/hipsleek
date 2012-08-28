@@ -176,6 +176,7 @@ class mainwindow () =
           ra "Cvc3" 2 ~label:"_Cvc3";
           ra "Redlog" 3 ~label:"_Redlog";
           ra "Coq" 4 ~label:"Co_q";
+          ra "Mathematica" 5 ~label:"_Mathematica";
         ];
       ];
       let ui = GAction.ui_manager () in
@@ -292,7 +293,7 @@ class mainwindow () =
       original_digest <> digest
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.Coq] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.Coq; TP.Mathematica] in
       let tp = List.nth provers id in
       args <- {args with HH.tp = tp};
       let tp_name = TP.name_of_tp tp in

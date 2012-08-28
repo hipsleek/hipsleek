@@ -3251,6 +3251,8 @@ and default_value (t :typ) pos : C.exp =
 	      C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
     | Float ->
 	      C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
+    | Symbol _ ->
+        failwith "default_value: Symbol in variable declaration should have been rejected"
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
@@ -4237,13 +4239,12 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
-          let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
-          let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
-          CP.LexVar {
-					  CP.lex_ann = t_ann;
-						CP.lex_exp = cle;
-						CP.lex_tmp = clt;
-						CP.lex_loc = pos; }
+        let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
+        let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
+        CP.LexVar { CP.lex_ann = t_ann;
+                    CP.lex_exp = cle;
+                    CP.lex_tmp = clt;
+                    CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -4261,8 +4262,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
           let pe2 = trans_pure_exp e2 stab in CP.mkGte pe1 pe2 pos
     | IP.Eq (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
-          let pe2 = trans_pure_exp e2 stab in 
-		  (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
+          let pe2 = trans_pure_exp e2 stab in CP.mkEq pe1 pe2 pos
     | IP.Neq (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkNeq pe1 pe2 pos
@@ -4327,15 +4327,18 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Null pos -> CP.Null pos
 	| IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
-    | IP.Var ((v, p), pos) -> 
-          CP.Var ((trans_var (v,p) stab pos),pos)
+    | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
+    | IP.SConst (c, pos) -> CP.SConst (c, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+    | IP.Abs (e, pos) -> CP.Abs (trans_pure_exp e stab, pos)
+    | IP.Sqrt (e1, pos) -> CP.Sqrt (trans_pure_exp e1 stab, pos)
+    | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist stab, pos)
@@ -4350,12 +4353,12 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
     | IP.Func (id, es, pos) ->
-		  let es = List.map (fun e -> trans_pure_exp e stab) es in
-		  CP.Func (CP.SpecVar (RelT, id, Unprimed), es, pos)
+        let es = List.map (fun e -> trans_pure_exp e stab) es in
+        CP.Func (CP.SpecVar (RelT, id, Unprimed), es, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
-		  let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
-		  let dim = List.length ind in (* currently only support int type array *)
-		  CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
+        let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
+        let dim = List.length ind in (* currently only support int type array *)
+        CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4470,6 +4473,12 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
       | Float, NUM -> Some Float (* give refined type *)
       | Int , Float -> Some Float (*LDK*)
       | Float , Int -> Some Float (*LDK*)
+      | Float, Symbol -> Some Float
+      | Symbol, Float -> Some Float
+      | TVar _, Symbol -> Some Float
+      | Symbol, TVar _ -> Some Float
+      | Int, Symbol -> Some Float
+      | Symbol, Int -> Some Float
       | t1, t2  -> 
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
               (* else if sub_type t2 t1 then Some k1 *)
@@ -4648,132 +4657,128 @@ and gather_type_info_exp a0 stab et =
 
 and gather_type_info_exp_x a0 stab et =
   match a0 with
-    | IP.Null pos -> 
-          let t = null_type in
-          must_unify_expect t et stab pos
-    | IP.Ann_Exp (e,t) -> 
-          (* TODO WN : check if t<:et *)
-          gather_type_info_exp_x e stab t
-    | IP.Var ((sv, sp), pos) -> 
-          let t = gather_type_info_var sv stab et pos
-          in t
-    | IP.Tsconst (_,pos) ->
-		  let t = Tree_sh in
-          let _ = must_unify_expect t et stab pos in
-          t
-    | IP.AConst (_,pos) -> 
-          let t = I.ann_type in
-          let _ = must_unify_expect t et stab pos in
-          t
-    | IP.IConst (_,pos) -> 
-          let t = I.int_type in
-          let _ = must_unify_expect t et stab pos in
-          t
-    | IP.FConst (_,pos) -> 
-          let t = I.float_type in
-          let _ = must_unify_expect t et stab pos in
-          t
-    | IP.Add (a1, a2, pos) -> 
-		  let _ = must_unify_expect_test_2 et NUM Tree_sh pos in (* UNK, Int, Float, NUm, Tvar *)
-          let new_et = fresh_tvar stab in
-	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
-	      let t2 = gather_type_info_exp_x a2 stab new_et in
-          let t1 = must_unify_expect t1 et stab pos in
-          let t2 = must_unify_expect t2 t1 stab pos in
-          t2
-	| IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
-    | IP.Mult (a1, a2, pos) -> (* Num t: t -> t -> t *)
-          let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
-          let new_et = fresh_tvar stab in
-	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
-	      let t2 = gather_type_info_exp_x a2 stab new_et in
-          let t1 = must_unify_expect t1 et stab pos in
-          let t2 = must_unify_expect t2 t1 stab pos in
-          t2
-    | IP.Div (a1, a2, pos) -> (* Num t: t -> t -> t *)
-          let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
-          let new_et = fresh_tvar stab in
-	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
-	      let t2 = gather_type_info_exp_x a2 stab new_et in
-          let t1 = must_unify_expect t1 et stab pos in
-          let t2 = must_unify_expect t2 t1 stab pos in
-          t2
-    | IP.BagDiff (a1,a2,pos) ->
-          let el_t = fresh_tvar stab in
-          let new_et = must_unify_expect_test (BagT el_t) et pos in 
-	      let t1 = gather_type_info_exp_x a1 stab new_et in 
-	      let t2 = gather_type_info_exp_x a2 stab new_et in
-          must_unify t1 t2 stab pos  
-    | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) ->
-          let el_t = fresh_tvar stab in
-          let new_et = must_unify_expect_test (BagT el_t) et pos in 
-	      let ts = List.map (fun e -> gather_type_info_exp_x e stab new_et) es in
-          List.fold_left (fun e a -> must_unify a e stab pos) new_et ts
-    | IP.Bag (es,pos) ->
-          let el_t = fresh_tvar stab in
-          let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
-          BagT t
-    | IP.Func (id, es, pos) -> 
-          let t = I.int_type in
-          let _ = must_unify_expect t et stab pos in
-          t
-    | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
-          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
-		  (* and hence, accessing the element at position i, we get the value of expected_type *)
-		  (* Furthermore, the expression of the index must be of type integer. *)
-		  let dim = List.length idx in
-          let new_et = Array (et, dim) in
-          let lt = gather_type_info_var a stab new_et pos in
-          let _ = List.map (fun i -> gather_type_info_exp_x i stab Int) idx in
-          (match lt with
-            | Array (r,_) -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
-		      (* let a_exp_type = match et with *)
-		      (*   | UNK -> UNK *)
-		      (*   | t -> Array (t, None) *)
-		      (* in *)
-		      (* collect_type_info_var a stab a_exp_type pos; *)
-		      (* collect_type_info_arith i stab (C.int_type) *)
-    | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) -> (* List t -> List t  *)
-          let fv = fresh_tvar stab in
-          let lt = List fv in
-          let new_et = must_unify lt et stab pos in
-          let lt = gather_type_info_exp_x a stab new_et in
-          lt
-    | IP.ListAppend (es,pos) -> (* [List t] -> List t *)
-          let fv = fresh_tvar stab in
-          let lt = List fv in
-          let new_et = must_unify lt et stab pos in
-          let rs = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) new_et es  in
-          rs
-    | IP.ListHead (a, pos) ->  (* List t -> t*)
-          let fv = fresh_tvar stab in
-          let new_et = List fv in
-          let lt = gather_type_info_exp_x a stab new_et in
-          let rs = must_unify lt (List et) stab pos in
-          (match rs with
-            | List r -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained "^(string_of_typ lt)))
-    | IP.ListCons (e,es,pos) -> (* t -> List t -> List t *)
-          let fv = fresh_tvar stab in
-          let e1 = gather_type_info_exp_x e stab fv in
-          let lt = List e1 in
-          let new_et = must_unify lt et stab pos in
-          let lt = gather_type_info_exp_x es stab new_et in
-          lt
-    | IP.List (es,pos) -> (* a,..,a -> List a *)
-          let fv = fresh_tvar stab in
-          let r = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) fv es  in
-          let lt = List r in
-          let r = must_unify lt et stab pos in
-          r
-    | IP.ListLength (a, pos) -> (* List t -> Int *)
-          let fv = fresh_tvar stab in
-          let new_et = List fv in
-          let r = must_unify Int et stab pos in
-          let _ = gather_type_info_exp_x a stab new_et in
-          r
-              
+  | IP.Null pos -> 
+      let t = null_type in
+      must_unify_expect t et stab pos
+  | IP.Ann_Exp (e,t) -> 
+      (* TODO WN : check if t<:et *)
+      gather_type_info_exp_x e stab t
+  | IP.Var ((sv, sp), pos) -> 
+      let t = gather_type_info_var sv stab et pos
+      in t
+  | IP.AConst (_,pos) -> 
+      let t = I.ann_type in
+      let _ = must_unify_expect t et stab pos in
+      t
+  | IP.IConst (_,pos) -> 
+      let t = I.int_type in
+      let _ = must_unify_expect t et stab pos in
+      t
+  | IP.FConst (_,pos) -> 
+      let t = I.float_type in
+      let _ = must_unify_expect t et stab pos in
+      t
+  | IP.SConst (_,pos) -> 
+      let t = I.sym_type in
+      let _ = must_unify_expect t et stab pos in
+      t
+  | IP.Add (a1, a2, pos)
+  | IP.Subtract (a1, a2, pos)
+  | IP.Max (a1, a2, pos)
+  | IP.Min (a1, a2, pos)
+  | IP.Mult (a1, a2, pos)
+  | IP.Div (a1, a2, pos)
+  | IP.Pow (a1, a2, pos) ->
+      let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
+      let new_et = fresh_tvar stab in
+      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
+      let t2 = gather_type_info_exp_x a2 stab new_et in
+      let t1 = must_unify_expect t1 et stab pos in
+      let t2 = must_unify_expect t2 t1 stab pos in
+      t2
+  | IP.Abs (a1, pos)
+  | IP.Sqrt (a1, pos) ->
+      let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
+      let new_et = fresh_tvar stab in
+      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
+      let t1 = must_unify_expect t1 et stab pos in
+      t1
+  | IP.BagDiff (a1,a2,pos) ->
+      let el_t = fresh_tvar stab in
+      let new_et = must_unify_expect_test (BagT el_t) et pos in 
+      let t1 = gather_type_info_exp_x a1 stab new_et in 
+      let t2 = gather_type_info_exp_x a2 stab new_et in
+      must_unify t1 t2 stab pos  
+  | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) ->
+      let el_t = fresh_tvar stab in
+      let new_et = must_unify_expect_test (BagT el_t) et pos in 
+      let ts = List.map (fun e -> gather_type_info_exp_x e stab new_et) es in
+      List.fold_left (fun e a -> must_unify a e stab pos) new_et ts
+  | IP.Bag (es,pos) ->
+      let el_t = fresh_tvar stab in
+      let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
+      BagT t
+  | IP.Func (id, es, pos) -> 
+      let t = I.int_type in
+      let _ = must_unify_expect t et stab pos in
+      t
+  | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
+      (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
+      (* and hence, accessing the element at position i, we get the value of expected_type *)
+      (* Furthermore, the expression of the index must be of type integer. *)
+      let dim = List.length idx in
+      let new_et = Array (et, dim) in
+      let lt = gather_type_info_var a stab new_et pos in
+      let _ = List.map (fun i -> gather_type_info_exp_x i stab Int) idx in
+      (match lt with
+        | Array (r,_) -> r
+        | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
+      (* let a_exp_type = match et with *)
+      (*   | UNK -> UNK *)
+      (*   | t -> Array (t, None) *)
+      (* in *)
+      (* collect_type_info_var a stab a_exp_type pos; *)
+      (* collect_type_info_arith i stab (C.int_type) *)
+  | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) -> (* List t -> List t  *)
+      let fv = fresh_tvar stab in
+      let lt = List fv in
+      let new_et = must_unify lt et stab pos in
+      let lt = gather_type_info_exp_x a stab new_et in
+      lt
+  | IP.ListAppend (es,pos) -> (* [List t] -> List t *)
+      let fv = fresh_tvar stab in
+      let lt = List fv in
+      let new_et = must_unify lt et stab pos in
+      let rs = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) new_et es  in
+      rs
+  | IP.ListHead (a, pos) ->  (* List t -> t*)
+      let fv = fresh_tvar stab in
+      let new_et = List fv in
+      let lt = gather_type_info_exp_x a stab new_et in
+      let rs = must_unify lt (List et) stab pos in
+      (match rs with
+        | List r -> r
+        | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained "^(string_of_typ lt)))
+  | IP.ListCons (e,es,pos) -> (* t -> List t -> List t *)
+      let fv = fresh_tvar stab in
+      let e1 = gather_type_info_exp_x e stab fv in
+      let lt = List e1 in
+      let new_et = must_unify lt et stab pos in
+      let lt = gather_type_info_exp_x es stab new_et in
+      lt
+  | IP.List (es,pos) -> (* a,..,a -> List a *)
+      let fv = fresh_tvar stab in
+      let r = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) fv es  in
+      let lt = List r in
+      let r = must_unify lt et stab pos in
+      r
+  | IP.ListLength (a, pos) -> (* List t -> Int *)
+      let fv = fresh_tvar stab in
+      let new_et = List fv in
+      let r = must_unify Int et stab pos in
+      let _ = gather_type_info_exp_x a stab new_et in
+      r
+
 and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
     | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab

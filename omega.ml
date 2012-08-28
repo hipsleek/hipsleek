@@ -70,6 +70,7 @@ let rec omega_of_exp e0 = match e0 with
             in rr
       in r
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
+  | Sqrt _ | Pow _ -> illegal_format "[omega.ml] sqrt, pow is not supported."
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)
       (*   Error.error_text ="[omega.ml] Divide is not supported." *)
@@ -78,13 +79,13 @@ let rec omega_of_exp e0 = match e0 with
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
-  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
+  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint")
 (*
 (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 *)
 
-and omega_of_b_formula b =
+and omega_of_b_formula_x b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
@@ -124,10 +125,14 @@ and omega_of_b_formula b =
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
-and omega_of_formula pr_w pr_s f  =
+and omega_of_b_formula b  =
+  let pr = !print_b_formula in
+  Debug.no_1 "omega_of_b_formula" pr (fun x -> x) omega_of_b_formula_x b
+
+and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 		
+  | BForm ((b,_) as bf,_) -> 
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
@@ -149,16 +154,14 @@ and omega_of_formula pr_w pr_s f  =
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 
-      pr pr_id (fun _ -> omega_of_formula pr_w pr_s f) f
+      pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 and omega_of_formula_old f  =
   let (pr_w,pr_s) = no_drop_ops in
   try 
-    Some(omega_of_formula pr_w pr_s f)
+    Some(omega_of_formula_x pr_w pr_s f)
   with | _ -> None
 
-
-	  
 (* let omega_of_formula_old i f  = *)
 (*   let pr = !print_formula in *)
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
@@ -200,7 +203,7 @@ let start() =
 let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
+    print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations\n"); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
@@ -208,11 +211,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations\n") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
   else begin
-    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations\n") in ()
     end
 
 (*
@@ -845,7 +848,8 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 	          match_vars vars_list rel
             end
       | _, _ -> pe1
-            end
+  end
+
 
 let log_mark (mark : string) =
   if !log_all_flag then begin

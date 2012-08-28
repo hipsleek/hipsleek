@@ -307,8 +307,8 @@ and check_bounded_term_x prog ctx post_pos =
       | CF.Ctx es ->  
           let m = match es.CF.es_var_measures with
             | None -> []
-            | Some (_, ml, _) -> ml
-          in 
+            | Some (CP.LexVar lv) -> lv.CP.lex_exp
+            | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
           let _ = Debug.trace_hprint (add_str "Measures" 
             (pr_list !CP.print_exp)) m no_pos in
           let _ = Debug.trace_hprint (add_str "Orig context" 

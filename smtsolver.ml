@@ -73,6 +73,7 @@ let rec smt_of_typ t =
 		| Tree_sh -> "Int"
 		| Int -> "Int"
 		| AnnT -> "Int"
+    | Symbol-> report_error no_pos "Symbol should not appear here"
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
@@ -99,35 +100,39 @@ let smt_of_typed_spec_var sv =
 
 
 let rec smt_of_exp a =
-	match a with
-	| CP.Null _ -> "0"
-	| CP.Var (sv, _) -> smt_of_spec_var sv
-	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-	| CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
-	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
-	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-	| CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	(* UNHANDLED *)
-	| CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
-	| CP.Bag ([], _) -> "0"
-	| CP.Max _
-	| CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
-	| CP.Bag _
-	| CP.BagUnion _
-	| CP.BagIntersect _
-	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
-	| CP.List _ 
-	| CP.ListCons _
-	| CP.ListHead _
-	| CP.ListTail _
-	| CP.ListLength _
-	| CP.ListAppend _
-	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
-	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
-	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.ArrayAt (a, idx, l) -> 
-		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+  match a with
+  | CP.Null _ -> "0"
+  | CP.Var (sv, _) -> smt_of_spec_var sv
+  | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
+  | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
+  | CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (symbol should not appear here)")
+  | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
+  | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+  | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+  | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  (* UNHANDLED *)
+  | CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
+  | CP.Abs _ -> illegal_format ("z3.smt_of_exp: Abs is not supported.")
+  | CP.Sqrt _ -> failwith ("z3.smt_of_exp: sqrt is not supported.")
+  | CP.Pow _ -> failwith ("z3.smt_of_exp: pow is not supported.")
+  | CP.Bag ([], _) -> "0"
+  | CP.Max _
+  | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
+  | CP.List _ 
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+  | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
+  | CP.ArrayAt (a, idx, l) -> 
+      List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -297,16 +302,23 @@ and collect_bformula_info b = match b with
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
-  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
+  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ | CP.SConst _ -> default_formula_info
   | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		combine_formula_info ef1 ef2
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      combine_formula_info ef1 ef2
   | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) ->
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		let result = combine_formula_info ef1 ef2 in
-		{ result with is_linear = false; }
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      let result = combine_formula_info ef1 ef2 in
+      { result with is_linear = false; }
+  | CP.Abs (e, _) -> let ef = collect_exp_info e in {ef with is_linear = true} 
+  | CP.Sqrt (e, _) -> let ef = collect_exp_info e in {ef with is_linear = false} 
+  | CP.Pow (e1,e2,_) ->
+      let ef1 = collect_exp_info e1 in
+      let ef2 = collect_exp_info e2 in
+      let result = combine_formula_info ef1 ef2 in
+      { result with is_linear = false; }
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
@@ -593,7 +605,7 @@ and start() =
 let stop () =
   if !is_z3_running then begin
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations\n"); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !prover_process num_tasks Sys.sigkill (fun () -> ()) in
     is_z3_running := false;
   end
@@ -601,11 +613,11 @@ let stop () =
 (* restart Z3 system *)
 let restart reason =
   if !is_z3_running then begin
-    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations ") in
+    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations\n") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
   end
   else begin
-    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in ()
+    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations\n") in ()
     end
 
 
@@ -937,7 +949,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.ho_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -1000,7 +1012,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Debug.ho_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -1053,7 +1065,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
-let is_sat f sat_no = Debug.ho_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

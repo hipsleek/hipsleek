@@ -100,57 +100,66 @@ let string_of_id (id,p) = id ^ (string_of_primed p)
 
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
-  | P.Null l                  -> "null"
+  | P.Null l -> "null"
   | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
-  | P.Var (x, l)        -> string_of_id x
-  | P.IConst (i, l)           -> string_of_int i
-  | P.AConst (i, l)           -> string_of_heap_ann i
-  | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
+  | P.Var (x, l) -> string_of_id x
+  | P.IConst (i, l) -> string_of_int i
+  | P.AConst (i, l) -> string_of_heap_ann i
+  | P.Tsconst (i,l) -> Tree_shares.Ts.string_of i
   | P.FConst (f, _) -> string_of_float f
-  | P.Add (e1, e2, l)	      -> (match e1 with 
-	  | P.Null _ 
-	  | P.Var _ 
-	  | P.IConst _ 
-	  | P.Max _ 
-	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
-	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
-		^ (match e2 with 
-		  | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
-		  | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
-  | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
-    then 
-      if need_parenthesis e2
-      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
-	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
-    else 
-	  (string_of_formula_exp e1) 
-	  ^ "-" ^ (string_of_formula_exp e2)										    
+  | P.SConst (s, _) -> string_of_symbol s
+  | P.Add (e1, e2, l) -> (
+      let s1 = (
+        match e1 with 
+        | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e1
+        | _ -> "(" ^ (string_of_formula_exp e1) ^ ")"
+      ) in (*^ ")+") *)
+      let s2 = (
+        match e2 with 
+        | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
+        | _ -> "(" ^ (string_of_formula_exp e2) ^ ")"
+      ) in
+      s1 ^ "+" ^ s2
+    )
+  | P.Subtract (e1, e2, l) -> (
+      if need_parenthesis e1 then 
+        if need_parenthesis e2 then
+          "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"
+        else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
+      else (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)
+    )
   | P.Mult (e1, e2, _) ->
-        "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
+      "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
-        "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
-  | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
-  | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
-  | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
+      "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
+  | P.Abs (e1, _) ->
+      "abs(" ^ (string_of_formula_exp e1) ^ ")"
+  | P.Pow (e1, e2, _) ->
+      "pow(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+  | P.Sqrt (e1, _) ->
+      "sqrt(" ^ (string_of_formula_exp e1) ^ ")"
+  | P.Max (e1, e2, l) ->
+      "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.Min (e1, e2, l) ->
+      "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+  | P.List (elist, l) -> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
-  | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
-  | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
-  | P.Func (a, i, _)     ->  
-        a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
-  | P.ArrayAt ((a, p), i, _)     ->  
-        (* An Hoa : print the array access *)
-        a ^ (match p with 
-          | Primed -> "'["
-          | Unprimed -> "[") 
-        ^ (string_of_formula_exp_list i) ^ "]"
-  | P.Bag (el, l)		-> "Bag("^(string_of_formula_exp_list el) ^ ")"
-  | P.BagUnion (el, l)		-> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
-  | P.BagIntersect (el, l)		-> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
-  | P.BagDiff (e1, e2, l)         -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
-        (* | _ -> "bag constraint"   *)
+  | P.ListCons (e1, e2, l) -> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
+  | P.ListHead (e, l) -> "head(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListTail (e, l) -> "tail(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l) -> "len(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l) -> "rev(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Func (a, i, _) -> a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
+  | P.ArrayAt ((a, p), i, _) ->
+      (* An Hoa : print the array access *)
+      a ^ (match p with 
+           | Primed -> "'["
+           | Unprimed -> "[") 
+      ^ (string_of_formula_exp_list i) ^ "]"
+  | P.Bag (el, l) -> "Bag("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagUnion (el, l) -> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagIntersect (el, l) -> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagDiff (e1, e2, l) -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
 
 (* | Bag of (exp list * loc) *)
 (* | BagUnion of (exp list * loc) *)
@@ -172,7 +181,7 @@ let string_of_slicing_label sl =
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
-let string_of_b_formula (pf,il) =
+let rec string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
@@ -184,8 +193,8 @@ let string_of_b_formula (pf,il) =
       | Term -> 
           let opt = if ls2==[] then "" else
             "{"^(pr_list string_of_formula_exp ls2)^"}"
-          in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
-      | _ -> ann)
+          in ann ^ "["^"LexVar(" ^ (pr_list string_of_formula_exp ls1)^")"^opt^"]"
+      | _ -> ann ^ "LexVar()")
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
@@ -778,4 +787,5 @@ Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_exp := string_of_formula_exp;
 

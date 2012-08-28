@@ -108,7 +108,7 @@ let process_source_full source =
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
-    let _ = Tpdispatcher.start_prover () in
+    let _ = if (not !Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover () in
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -187,7 +187,7 @@ let process_source_full source =
       raise e
     end);
     (* Stopping the prover *)
-    let _ = Tpdispatcher.stop_prover () in
+    let _ = if (not !Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover () in
     
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
@@ -258,7 +258,7 @@ let main1 () =
 (*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
-  Tpdispatcher.stop_prover ()
+  if (not !Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let _ = 
   try
