@@ -19,6 +19,7 @@ type term_ctx = {
 	t_type 				: term_type;
 	(* Original Context associating with base cases or recursive cases *)
 	t_ctx 				: list_failesc_context;	
+	(* Each element of t_pure_ctx is a separate context *)
 	t_pure_ctx		: CP.formula list;
 	(* Args list and Params list *)
 	t_params			: (spec_var list * spec_var list); 
@@ -31,7 +32,13 @@ type list_term_ctx = term_ctx list
 
 type term_case_spec = ((CP.formula list) * term_res) list
 
-type term_trans_constraint = (term_res * term_res)
+type term_trans_constraint = {
+	trans_src			: term_res;
+	trans_src_cond: CP.formula list;
+	trans_dst			: term_res;	
+	trans_dst_cond: CP.formula list;
+	trans_ctx			: CP.formula;
+}
 
 let term_spec_tbl : (ident, term_case_spec) Hashtbl.t = Hashtbl.create 10
 
@@ -94,6 +101,10 @@ let update_cond_pure_term_ctx	tctx =
 	
 let update_cond_pure_list_term_ctx tctx = 
 	List.map update_cond_pure_term_ctx tctx
+	
+let get_method_args proc =
+	let farg_types, farg_names = List.split proc.proc_args in	
+	List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types
 
 (* Simplify the termination context to get *)
 (* the conditions on method's arguments    *)
@@ -109,8 +120,7 @@ let simplify_cond_pure_term_ctx args tctx =
 	{tctx with t_cond_pure = List.concat (List.map (simplify_t_cond_pure args) tctx.t_cond_pure);}
 	
 let simplify_cond_pure_list_term_ctx proc tctx =
-	let farg_types, farg_names = List.split proc.proc_args in	
-	let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in 	
+	let farg_spec_vars = get_method_args proc in
 	List.map (simplify_cond_pure_term_ctx farg_spec_vars) tctx
 	
 (* Construct case spec of termination from termination context *)
@@ -137,12 +147,19 @@ let rename_term_spec (fsv, tsv) tspec =
 let collect_term_trans_constraints_one_case is_sat (cond, unk) (mn, ctx) =
 	let mn_tspec = look_up_term_spec mn in
 	let callee_tspec = rename_term_spec ctx.t_params mn_tspec in
-	let _ = print_endline (!print_term_case_spec callee_tspec) in
+	(* let _ = print_endline (!print_term_case_spec callee_tspec) in *)
 	List.fold_left (fun a (c_cond, c_tres) ->
-		(* if [cond] /\ [ctx] /\ [c_cond] is SAT then unk >> c_tres *)
-		let trans_ctx = join_conjunctions (cond @ ctx.t_pure_ctx @ c_cond) in
-		let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula trans_ctx) ^ "\n") in
-		if (is_sat trans_ctx) then a @ [(unk, c_tres)] else a) [] callee_tspec
+		(* if [cond] /\ ctx /\ [c_cond] is SAT then unk >> c_tres (REACHABLE) *)
+		let check_reachable ctx = 
+			let reach_ctx = join_conjunctions (cond @ [ctx] @ c_cond) in
+			(* let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula reach_ctx) ^ "\n") in *)
+			if (is_sat reach_ctx) then
+				[{trans_src = unk; trans_src_cond = cond;
+  				trans_dst = c_tres; trans_dst_cond = c_cond;
+  				trans_ctx = ctx;}] 
+			else []
+		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
+	) [] callee_tspec
 
 let collect_term_trans_constraints_one_method is_sat mn = 
 	let mn_tctx = look_up_term_ctx mn in
@@ -156,6 +173,65 @@ let collect_term_trans_constraints_one_method is_sat mn =
 		| Rec c -> a @ [(c, ctx)]) [] mn_tctx in
 	List.concat (List.map (fun c -> 
 		List.concat (List.map (collect_term_trans_constraints_one_case is_sat c) rec_ctx)) unk_cases)
+		
+(* TODO: collect termination constraints for each scc group *)
+
+let norm_src_cond sc =
+	match sc with
+	| BForm ((bf, _), _) -> (match bf with
+		| Lt (e1, e2, pos)	-> mkSubtract e2 e1 pos                              (* e1<e2  --> e2-e1>0   *)
+		| Lte (e1, e2, pos)	-> mkAdd (mkSubtract e2 e1 pos) (mkIConst 1 pos) pos (* e1<=e2 --> e2-e1+1>0 *)
+		| Gt (e1, e2, pos)	-> mkSubtract e1 e2 pos                              (* e1>e2  --> e1-e2>0   *)
+		| Gte (e1, e2, pos)	-> mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos (* e1>=e2 --> e1-e2+1>0 *)
+		| Eq (e1, e2, pos)	-> mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos (* e1=e2  --> e1-e2+1>0 *)
+		| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
+		)
+	| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
+
+let norm_dst_cond dc =
+	match dc with
+	| BForm ((bf, _), _) -> (match bf with
+		| Lt (e1, e2, pos)	-> mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos (* e1<e2  --> e1-e2+1<=0 *)
+		| Lte (e1, e2, pos)	-> mkSubtract e1 e2 pos                              (* e1<=e2 --> e1-e2<=0   *)
+		| Gt (e1, e2, pos)	-> mkAdd (mkSubtract e2 e1 pos) (mkIConst 1 pos) pos (* e1>e2  --> e2-e1+1<=0 *)
+		| Gte (e1, e2, pos)	-> mkSubtract e2 e1 pos                              (* e1>=e2 --> e2-e1<=0   *)
+		| Eq (e1, e2, pos)	-> mkSubtract e1 e2 pos                              (* e1=e2  --> e1-e2=0    *)
+		| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
+		)
+	| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
+
+
+(*| Solve termination constraints                                *)
+(*| Step 1: Build a graph to present termination constraints     *)
+(*| Step 2: Do inference bottom-up - Infer termination condition *)
+(*| at transition A>>B where A!=B                                *)
+
+(* ivars is the set of variables that the inferred condition is based on them *)
+let infer_term_condition ivars src_cond dst_cond ctx =
+	let sc = List.nth src_cond ((List.length src_cond) - 1) in
+	let dc = List.nth dst_cond ((List.length dst_cond) - 1) in
+	let sce = norm_src_cond sc in (* A in A>0  *)
+	let dce = norm_dst_cond dc in (* B in B<=0 *)
+	(* Termination Condition: A>B *)
+	let tcond = mkPure (mkGt sce dce no_pos) in
+	(* Find new generated constraints B, given A and A /\ B *)
+	(* (not A) /\ B = not(not(A /\ B) /\ A)                 *)
+	(* B = (A /\ B) \/ ((not A) /\ B)                       *)
+	(* B = (A /\ B) \/ (not(not(A /\ B) /\ A))              *)
+	(* A /\ B = inf_cond; A = ctx                           *)
+	(* B = inf_cond \/ (not((not inf_cond) /\ ctx))         *)
+	let mkNot f = mkNot f None no_pos in
+	let mkAnd f1 f2 = mkAnd f1 f2 no_pos in
+	let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos in
+	(* let inf_cond = mkAnd ctx tcond in                                                     *)
+	(* let qvars = diff_svl (CP.fv inf_cond) ivars in                                        *)
+	(* let simpl_inf_cond = mkExists_with_simpl Omega.simplify qvars inf_cond None no_pos in *)
+	(* let simpl_ctx = mkExists_with_simpl Omega.simplify qvars ctx None no_pos in           *)
+	(* Omega.simplify (mkOr simpl_inf_cond (mkNot (mkAnd (mkNot simpl_inf_cond) simpl_ctx))) *)
+	(* From CAV'08 paper: Proving Conditional Termination *)
+	let inf_cond = mkOr (mkNot ctx) tcond in
+	let qvars = diff_svl (CP.fv inf_cond) ivars in 
+	Omega.simplify (mkForall qvars inf_cond None no_pos)
 	
 let main is_sat procs =
 	List.iter (fun proc ->
@@ -164,7 +240,14 @@ let main is_sat procs =
 		let t_ctx = look_up_term_ctx mn in
 		let t_case_spec = look_up_term_spec mn in 
 		let t_constraints = collect_term_trans_constraints_one_method is_sat mn in
-		print_endline (pr_list !print_term_trans_constraint t_constraints)
+		(* let args = get_method_args proc in                                                 *)
+		(* let inf_conds = List.fold_left (fun a c ->                                         *)
+		(* 	if (c.trans_src != c.trans_dst) then                                              *)
+		(* 		a @ [(infer_term_condition args c.trans_src_cond c.trans_dst_cond c.trans_ctx)] *)
+		(* 	else a) [] t_constraints                                                          *)
+		(* in                                                                                 *)
+		print_endline (pr_list (fun c -> (!print_term_trans_constraint c) ^ "\n") t_constraints)
+		(* print_endline ("\nINFERRED COND:\n" ^ (pr_list !print_pure_formula inf_conds)) *)
 		(* print_endline (pr_list (fun ctx ->                                *)
 		(* 	"\n=============\n" ^ (!print_term_ctx ctx)) t_ctx); *)
 		(* print_endline (!print_term_case_spec t_case_spec)     *)

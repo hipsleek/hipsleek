@@ -2358,8 +2358,10 @@ let string_of_term_case_spec spec =
 		(pr_list string_of_pure_formula lpf) ^ " -> " ^ (string_of_term_res t_res) ^ "\n" 
 	in "\nTERMINATION SPEC:\n" ^ (pr_list string_of_case spec) 
 
-let string_of_term_trans_constraint (c1, c2) =
-	(string_of_term_res c1) ^ ">>" ^ (string_of_term_res c2)
+let string_of_term_trans_constraint trans_c =
+	let string_of_ele cond res = (string_of_term_res res) ^ (pr_list string_of_pure_formula cond) in
+	(string_of_ele trans_c.TInfer.trans_src_cond trans_c.TInfer.trans_src) ^ ">>" ^ 
+	(string_of_ele trans_c.TInfer.trans_dst_cond trans_c.TInfer.trans_dst)
 
 (* An Hoa : formula to HTML output facility *)
 
