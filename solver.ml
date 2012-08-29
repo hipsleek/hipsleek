@@ -6931,11 +6931,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
             let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
             let r = if CP.intersect rhs_als estate.es_infer_vars = []
-                && List.exists CP.is_node_typ estate.es_infer_vars then None 
-              else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
+                    && List.exists CP.is_node_typ estate.es_infer_vars then None
+                else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
             match r with
               | Some (new_estate,pf) ->
                     (* explicitly force unsat checking to be done here *)
+                   let _ = print_endline ("locle1: " ^ (Cprinter.string_of_estate new_estate)) in
                     let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
                     (* let ctx1 = set_unsat_flag ctx1 false in  *)
                     let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
@@ -6943,6 +6944,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     (r1,prf)
                 | None ->
                     begin
+                         let _ = print_endline ("locle2: ") in
                         let s = "15.5 no match for rhs data node: " ^
                           (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
                         let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f

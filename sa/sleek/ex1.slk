@@ -1,7 +1,12 @@
 data node { int val ; node next }.
 
+relation H(node a).
+relation G(node a, node b).
+
  //1. for x.next
- infer [H,G] H(x) |- x::node<a,b>@L.
+// infer [H,G] H(x) |- x::node<a,b>@L.
+
+ infer [H] H(x) |- x::node<a,b>@L.
 
 print residue.
 
