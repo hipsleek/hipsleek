@@ -1,0 +1,44 @@
+data node { int val ; node next }.
+
+ //1. for x.next
+ infer [H,G] H(x) |- x::node<a,b>@L.
+
+print residue.
+
+/*
+  --> [H,G,H1] x::node<a,b>*H1(x,b)
+   with H(x) -> x::node<a,b>*H1(x,b)
+*/
+
+//2. for if then branch
+// infer [H,G,H1] x::node<a,x'>*H1(x,x')  |- x'!=null.
+
+/*
+  --> [H,G,H1,H2] x::node<a,x'>*H2(x,x') & x'!=null
+   with H1(x,x') -> x'!=null -> H2(x,x')
+*/
+
+//3. for if else branch
+// infer [H,G,H1] x::node<a,x'>*H1(x,x')  |- x'=null.
+
+/*
+  --> [H,G,H1,H3] x::node<a,x'>*H3(x,x') & x'=null
+    with H1(x,x') -> x'=null -> H3(x,x')
+*/
+
+// for foo(x) call
+/*
+  [H,G,H1,H2] x::node<a,x'>*H2(x,x') & x'!=null  |- H(x') *-> G(x',x")
+  --> [H,G,H1,H2] x::node<a,x0> * G(x0,x') & x0!=null
+   with x'!=null & H2(x,x') -> H(x')
+*/
+
+/*
+// for postcond at then branch
+  [H,G,H1,H2] x::node<a,x0> * G(x0,x') & x0!=null
+     |- G(x,x')
+  with x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
+ // for postcond at else branch
+  [H,G,H1,H3] x::node<a,x'>*H3(x,x') & x'=null
+    with x::node<a,x'>*H3(x,x') & x'=null -> G(x,x')
+*/
