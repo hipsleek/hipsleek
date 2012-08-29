@@ -141,7 +141,10 @@ let rec string_of_formula_exp = function
   | P.Max (e1, e2, l) ->
       "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l) ->
-      "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+      "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.Sequence seq -> "Sequence{" ^ (string_of_formula_exp seq.P.seq_element)
+                                  ^ "; " ^ (string_of_pure_formula seq.P.seq_domain)
+                                  ^ "; " ^ (string_of_pure_formula seq.P.seq_loopcond) ^ "}"
   | P.List (elist, l) -> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (e1, e2, l) -> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
@@ -161,27 +164,21 @@ let rec string_of_formula_exp = function
   | P.BagIntersect (el, l) -> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
   | P.BagDiff (e1, e2, l) -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
 
-(* | Bag of (exp list * loc) *)
-(* | BagUnion of (exp list * loc) *)
-(* | BagIntersect of (exp list * loc) *)
-(* | BagDiff of (exp * exp * loc) *)
-
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
   | []                         -> ""
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
-;;
 
    
 (* pretty printing for boolean constraints *)
-let string_of_slicing_label sl =
+and string_of_slicing_label sl =
   match sl with
 	| None -> ""
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
-let rec string_of_b_formula (pf,il) =
+and string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
@@ -234,22 +231,12 @@ let rec string_of_b_formula (pf,il) =
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
-   (* | _ -> "bag constraint" *)
-;;
 
-(*  | BagIn of ((ident * primed) * exp * loc)
-  | BagNotIn of ((ident * primed) * exp * loc)
-  | BagSub of (exp * exp * loc)
-  | BagMin of ((ident * primed) * (ident * primed) * loc)
-  | BagMax of ((ident * primed) * (ident * primed) * loc)	
-	  (* lists and list formulae *)
-*)
-
-let concat_string_list_string strings =
+and concat_string_list_string strings =
     ""
 
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
+and string_of_pure_formula = function 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 

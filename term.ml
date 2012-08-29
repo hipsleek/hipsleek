@@ -359,48 +359,57 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
     "lexvars = " ^ lexvars ^ "  ## " ^ "remained_rhs = " ^ remained_rhs in 
   Debug.no_1 "strip_lexvar_mix_formula" pr pr_out strip_lexvar_mix_formula_x mf
 
-let create_measure_constraint (flag: bool) (src: CP.exp) (dst: CP.dst) pos : CP.formula =
+let create_measure_constraint (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
-    | CP.Sequence seqsrc, CP.Sequence seqdst ->
+    | CP.Sequence seqsrc, CP.Sequence seqdst -> (
+        let element_src = seqsrc.CP.seq_element in
         let domain_src = seqsrc.CP.seq_domain in
         let limit_src = seqsrc.CP.seq_limit in
+        let element_dst = seqdst.CP.seq_element in
         let domain_dst = seqdst.CP.seq_domain in
         let limit_dst = seqdst.CP.seq_limit in
         let domain_constraint = CP.mkImply domain_src domain_dst pos in
-        let decrease_constraint = 
-          let decrease_rhs =
+        let decrease_constraint = (
+          let decrease_rhs = (
             match limit_src, limit_dst with
             | CP.SConst (Pos_infinity, _), _
-            | _, CP.SConst (Pos_infinity, _) ->
-                let _ = report_error no_pos "Invalid limit" in
-                raise (Exn_LexVarSequence "The domain of measure is invalid")
+            | _, CP.SConst (Pos_infinity, _) -> CP.mkFalse pos
             | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
-                (* Constraint: element_src > elment_dst *)
-                CP.mkPure (CP.mkGt element_src element_dst no_pos)
+                (* es > ed *)
+                CP.mkPure (CP.mkGt element_src element_dst pos)
             | CP.SConst (Neg_infinity, _), _
-            | _, CP.SConst (Neg_infinity, _) ->
-                let _ = report_error no_pos "check_decreasing_seqexp_transition: Neg_infinity cannot appears in only 1 side of transition" in
-                raise (Exn_LexVarSequence "The domain of measure is invalid")
+            | _, CP.SConst (Neg_infinity, _) -> CP.mkFalse pos
             | _ ->
-                (* Constraint: (element_src > limit_src)      *)
-                (*             && (element_dst > limit_dst)   *)
-                (*             && (element_src > element_dst) *)
-                let dc1 = CP.mkPure (CP.mkGt element_src limit_src no_pos) in
-                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst no_pos) in
-                let dc3 = CP.mkPure (CP.mkGt element_src element_dst no_pos) in
-                CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) no_pos
-              ) in
-          let decrease_lsh =
-          let domain_constraint = CP.mkAnd init_constraint (CP.mkAnd domain_src domain_dst no_pos) no_pos in
-          let distance_decrease_check, _, _ = TP.imply domain_constraint distance_constraint "" 
+                (* (es > ls) & (ed > ld) & (es > ed) *)
+                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
+                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) in
+                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
+                CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
+          ) in
+          let decrease_lhs = CP.mkAnd domain_src domain_dst pos in
+          CP.mkImply decrease_lhs decrease_rhs pos
+        ) in
+        CP.mkAnd domain_constraint decrease_constraint pos
+      )
     | CP.Sequence _, _
     | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
     | _, _ -> CP.BForm ((CP.mkGt src dst pos, None), None) (* src > dst *)
   ) else (
     match src, dst with
-    | CP.Sequence seqsrc, CP.Sequence seqdst ->
-        
+    | CP.Sequence seqsrc, CP.Sequence seqdst -> (
+        let element_src = seqsrc.CP.seq_element in
+        let domain_src = seqsrc.CP.seq_domain in
+        let element_dst = seqdst.CP.seq_element in
+        let domain_dst = seqdst.CP.seq_domain in
+        let domain_constraint = CP.mkImply domain_src domain_dst pos in
+        let equal_constraint = (
+          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
+          let equal_lhs = CP.mkAnd domain_src domain_dst pos in
+          CP.mkImply equal_lhs equal_rhs pos
+        ) in
+        CP.mkAnd domain_constraint equal_constraint pos
+      )
     | CP.Sequence _, _
     | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
     | _, _ -> CP.BForm ((CP.mkEq src dst pos, None), None) (* src = dst *)
@@ -464,9 +473,9 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
             [bm]::(List.map (fun e -> bm::e) res)) bnd_measures [] in
           (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
           let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
-            let f = 
-              if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-              else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+            let f = create_measure_constraint flag s d pos in
+              (* if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *) *)
+              (* else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)      *)
             (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
@@ -926,79 +935,6 @@ let check_decreasing_seqexp_terminability (element: CP.exp)
              pr_in1 pr_in2 pr_in3 pr_out
              (fun in1 in2 in3 -> check_decreasing_seqexp_terminability_x in1 in2 in3)
              element limit loop_condition
-
-let check_decreasing_seqexp_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst =
-  let element_src = seqexp_src.CP.seq_element in
-  let limit_src = seqexp_src.CP.seq_limit in
-  let loopcond_src = seqexp_src.CP.seq_loopcond in
-  let domain_src = seqexp_src.CP.seq_domain in
-  let pos_dst = seqexp_dst.CP.seq_loc in
-  let pos = post_pos # get in
-  let pos = if pos == no_pos then pos_dst else pos in (* Update pos for SLEEK output *)
-  let term_pos = (pos, proving_loc # get) in
-  let assumption = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-  let orig_ante = estate.es_formula in
-  let term_measures, term_res, term_err_msg, rank_formula = (
-    (* check precondition *)
-    let precondition_res,detail_msg = check_decreasing_seqexp_precondition assumption domain_src loopcond_src in
-    if not precondition_res then
-      Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
-      (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Precondition_Invalid)),
-      Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Precondition_Invalid)) ^ " - " ^ detail_msg),
-      None
-    else (
-      (* check transition *)
-      let trans_res, detail_msg = check_decreasing_seqexp_transition assumption seqexp_src seqexp_dst in
-      if not trans_res then
-        Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
-        (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Transition_Invalid trans)),
-        Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Transition_Invalid trans)) ^ " - " ^ detail_msg),
-        None
-      else (
-        (* check terminability *)
-        let terminability_res = check_decreasing_seqexp_terminability element_src limit_src loopcond_src in
-        if not terminability_res then
-          Some (CP.SeqVar {seqexp_src with CP.seq_ann = Fail TermErr_May}),
-          (term_pos, trans, Some orig_ante, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans)),
-          Some (string_of_term_res (term_pos, trans, None, MayTerm_S (Limit_Technique_Loop_Condition_Always_Valid trans))),
-          None
-        else
-          Some (CP.SeqVar seqexp_src),
-          (term_pos, trans, Some orig_ante, Term_S (Limit_Technique_Prove_Termination_Succeed trans)),
-          None,
-          None
-      )
-    )
-  ) in
-  let term_err = match estate.es_term_err with
-    | None -> term_err_msg
-    | Some _ -> estate.es_term_err
-  in
-  let n_estate = { estate with
-    es_var_measures = term_measures;
-    (* es_var_stack = term_stack; *)
-    es_term_err = term_err
-  } in
-  add_term_res_stk term_res;
-  (n_estate, lhs_p, rhs_p, rank_formula)
-
-let check_decreasing_seqexp estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst =
-  let pr = !print_mix_formula in
-  let pr1 = !CP.print_formula in
-  let pr2 = !print_entail_state in
-  let pr3 = Cprinter.string_of_ormula_exp in
-  Debug.no_5 "check_decreasing_seqexp" pr2
-    (add_str "lhs_p" pr)
-    (add_str "rhs_p" pr)
-    (add_str "seqexp_src" pr3)
-    (add_str "seqexp_dst" pr3)
-    (fun (es, lhs, rhs, rank_fml) ->
-       pr_quad pr2 (add_str "lhs" pr)
-       (add_str "rhs" pr)
-       (add_str "rank_fml" (pr_option pr1))
-       (es, lhs, rhs, rank_fml))
-    (fun _ _ _ _ -> check_decreasing_seqexp_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p seqexp_src seqexp_dst)
-    estate lhs_p rhs_p trans
 
 let strip_lexvar_lhs (ctx: context) : context =
   let es_strip_lexvar_lhs (es: entail_state) : context =

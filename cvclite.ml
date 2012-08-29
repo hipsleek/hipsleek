@@ -103,6 +103,7 @@ and cvcl_of_exp a = match a with
   | CP.Pow _ -> failwith ("[cvclite.ml]: pow is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
+  | CP.Sequence _ -> failwith ("[cvclite.ml]: Sequence is not supported.")
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvcLite.ml]: ERROR in constraints (set should not appear here)");

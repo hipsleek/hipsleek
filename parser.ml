@@ -1193,8 +1193,7 @@ cexp_w :
         let tc = match loopcond with
                  | Pure_f f -> f
                  | Pure_c c -> P.mkPure (P.mkGte element c no_pos) in
-        let seq = P.Sequence { P.seq_ann = t_ann;
-                               P.seq_element = element;
+        let seq = P.Sequence { P.seq_element = element;
                                P.seq_domain = domain;
                                P.seq_limit = limit;
                                P.seq_loopcond = tc;

@@ -260,6 +260,8 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
+and create_bound_constraint = ()
+
 and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =
     (* Termination: filter the exp of phase variables 

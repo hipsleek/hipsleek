@@ -594,6 +594,7 @@ let rec get_exp_type (e : exp) : typ =
       end
   | Div _ | Sqrt _-> Float
   | ListHead _ | ListLength _ -> Int
+  | Sequence _ -> Float
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
   | Func _ -> Int
@@ -808,6 +809,7 @@ and afv (af : exp) : spec_var list =
     (*     let sv4 = fv seq.seq_loopcond in       *)
     (*     let sv_list = sv1 @ sv2 @ sv3 @ sv4 in *)
     (*     Gen.BList.remove_dups_eq (=) sv_list   *)
+    | Sequence seq -> afv seq.seq_element
     | Bag (alist, _) -> let svlist = afv_list alist in
   	  remove_dups_svl svlist
     | BagUnion (alist, _) -> let svlist = afv_list alist in
@@ -891,6 +893,7 @@ and collect_denominator_exp (e: exp): exp list =
   | IConst _             -> []
   | FConst _             -> []
   | AConst _             -> []
+  | Tsconst _             -> []
   | SConst _             -> []
   | Add (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
   | Subtract (e1, e2, _) -> List.concat (List.map collect_denominator_exp [e1; e2])
@@ -901,6 +904,7 @@ and collect_denominator_exp (e: exp): exp list =
   | Abs (e0, _)          -> collect_denominator_exp e0
   | Sqrt (e0, _)         -> collect_denominator_exp e0
   | Pow (e1, e2, _)      -> List.concat (List.map collect_denominator_exp [e1; e2])
+  | Sequence _           -> []
   | Bag (es, _)          -> List.concat (List.map collect_denominator_exp es)
   | BagUnion (es, _)     -> List.concat (List.map collect_denominator_exp es)
   | BagIntersect (es, _) -> List.concat (List.map collect_denominator_exp es)
@@ -1369,9 +1373,11 @@ and is_exp_arith (e:exp) : bool=
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
     | Abs (e, _) | Sqrt (e, _) -> is_exp_arith e
     | Pow (e1, e2, _) -> (is_exp_arith e1) && (is_exp_arith e2)
-          (* bag expressions *)
+    (* sequence *)
+    | Sequence _
+    (* bag expressions *)
     | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _
-              (* list expressions *)
+    (* list expressions *)
     | List _ | ListCons _ | ListHead _ | ListTail _
     | ListLength _ | ListAppend _ | ListReverse _ -> false
     | Tsconst _ -> false
@@ -2202,8 +2208,9 @@ and pos_of_exp (e : exp) = match e with
   | Sqrt (_, p)
   | Pow (_, _, p)
   | Max (_, _, p) 
-  | Min (_, _, p) 
+  | Min (_, _, p) -> p 
           (*| BagEmpty (p) -> p*)
+  | Sequence seq -> seq.seq_loc
   | Bag (_, p) 
   | BagUnion (_, p) 
   | BagIntersect (_, p) 
@@ -2633,6 +2640,13 @@ and e_apply_subs sst e = match e with
   | Pow (a1, a2, pos) -> Pow (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | Sequence seq ->
+      let newseq = { seq_element = e_apply_subs sst seq.seq_element;
+                     seq_domain = apply_subs sst seq.seq_domain;
+                     seq_limit = e_apply_subs sst seq.seq_limit;
+                     seq_loopcond = apply_subs sst seq.seq_loopcond;
+                     seq_loc = seq.seq_loc; } in
+      Sequence newseq
   (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((e_apply_subs_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_subs_list sst alist), pos)
@@ -2683,6 +2697,13 @@ and e_apply_one (fr, t) e = match e with
   | Pow (a1, a2, pos) -> Pow (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Sequence seq ->
+      let newseq = { seq_element = e_apply_one (fr, t) seq.seq_element;
+                     seq_domain = apply_one (fr, t) seq.seq_domain;
+                     seq_limit = e_apply_one (fr, t) seq.seq_limit;
+                     seq_loopcond = apply_one (fr, t) seq.seq_loopcond;
+                     seq_loc = seq.seq_loc; } in
+      Sequence newseq;
   (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag (e_apply_one_list (fr, t) alist, pos)
   | BagUnion (alist, pos) -> BagUnion (e_apply_one_list (fr, t) alist, pos)
@@ -2801,6 +2822,13 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  | Sequence seq ->
+      let newseq = { seq_element = a_apply_par_term sst seq.seq_element;
+                     seq_domain = apply_par_term sst seq.seq_domain;
+                     seq_limit = a_apply_par_term sst seq.seq_limit;
+                     seq_loopcond = apply_par_term sst seq.seq_loopcond;
+                     seq_loc = seq.seq_loc; } in
+      Sequence newseq
   | Bag (alist, pos) -> Bag ((a_apply_par_term_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_par_term_list sst alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((a_apply_par_term_list sst alist), pos)
@@ -2892,6 +2920,13 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Sequence seq ->
+      let newseq = { seq_element = a_apply_one_term (fr, t) seq.seq_element;
+                     seq_domain = apply_one_term (fr, t) seq.seq_domain;
+                     seq_limit = a_apply_one_term (fr, t) seq.seq_limit;
+                     seq_loopcond = apply_one_term (fr, t) seq.seq_loopcond;
+                     seq_loc = seq.seq_loc; } in
+      Sequence newseq;
   (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((a_apply_one_term_list (fr, t) alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_one_term_list (fr, t) alist), pos)
@@ -2973,6 +3008,14 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           let b2 , r2 = helper (not crt_var) a2 in
           (b1||b2, Min (r1 , r2 , pos))
               (*| BagEmpty (pos) -> BagEmpty (pos)*)
+    | Sequence seq ->
+          let b,r = helper (not crt_var) seq.seq_element in
+          let newseq = { seq_element = r;
+                         seq_domain = seq.seq_domain;
+                         seq_limit = seq.seq_limit;
+                         seq_loopcond = seq.seq_loopcond;
+                         seq_loc = seq.seq_loc } in
+          (b, Sequence newseq)
     | Bag (alist, pos) -> 
           let b1,r1 = (a_apply_one_term_list crt_var alist) in
           (b1,Bag (r1, pos))
@@ -3946,6 +3989,13 @@ and e_apply_one_exp (fr, t) e = match e with
       Max (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Min (a1, a2, pos) ->
       Min (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Sequence seq ->
+      let newseq = { seq_element = e_apply_one_exp (fr, t) seq.seq_element;
+                     seq_domain = apply_one_exp (fr, t) seq.seq_domain;
+                     seq_limit = e_apply_one_exp (fr, t) seq.seq_limit;
+                     seq_loopcond = apply_one_exp (fr, t) seq.seq_loopcond;
+                     seq_loc = seq.seq_loc } in
+      Sequence newseq
   (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) ->
       Bag ((e_apply_one_list_exp (fr, t) alist), pos)
@@ -4180,6 +4230,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | Pow _
     | Max _ 
     | Min _
+    | Sequence _
     | Bag _
     | BagUnion _
     | BagIntersect _ 
@@ -4336,6 +4387,9 @@ and simp_mult_x (e : exp) :  exp =
     | Min (e1, e2, l) ->
         Error.report_error { Error.error_loc = l;
                              Error.error_text = "got Min !! (Should have already been simplified )"; }
+    | Sequence seq ->
+        Error.report_error { Error.error_loc = seq.seq_loc;
+                             Error.error_text = "No applying simp_mult_x to sequence"; }
     | Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
     | BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
     | BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
@@ -4446,6 +4500,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
                    Error.error_text =
                        "got Min !! (Should have already been simplified )";
                }
+    |  Sequence _ -> ((Some e), None)
     |  Bag (e1, l) -> ((Some e), None)
     |  BagUnion (e1, l) -> ((Some e), None)
     |  BagIntersect (e1, l) -> ((Some e), None)
@@ -4625,6 +4680,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   | Pow (e1, e2, l) ->  Pow((purge_mult e1), (purge_mult e2), l)
   |  Max (e1, e2, l) ->  Max((purge_mult e1), (purge_mult e2), l)
   |  Min (e1, e2, l) ->  Min((purge_mult e1), (purge_mult e2), l)
+  |  Sequence seq -> report_error seq.seq_loc ("Cannot apply purge_mult to sequence")
   |  Bag (el, l) ->  Bag ((List.map purge_mult el), l)
   |  BagUnion (el, l) ->  BagUnion ((List.map purge_mult el), l)
   |  BagIntersect (el, l) ->  BagIntersect ((List.map purge_mult el), l)
@@ -4864,6 +4920,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
             let (ne1,r1) = helper new_arg e1 in
             let (ne2,r2) = helper new_arg e2 in
             (Min (ne1,ne2,l),f_comb[r1;r2])
+        | Sequence seq -> report_error seq.seq_loc ("Cannot apply foldr_exp to sequence")
         | Bag (le,l) -> 
             let el=List.map (fun c-> helper new_arg c) le in
             let (el,rl)=List.split el in 
@@ -4969,6 +5026,7 @@ let rec transform_exp f e  =
           let ne1 = transform_exp f e1 in
           let ne2 = transform_exp f e2 in
           Min (ne1,ne2,l)
+      | Sequence seq -> report_error seq.seq_loc "Cannot apply transform_exp to sequence"
       | Bag (le,l) -> 
           Bag (List.map (fun c-> transform_exp f c) le, l) 
       | BagUnion (le,l) -> 
@@ -5360,10 +5418,11 @@ let rec get_head e = match e with
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
     | SConst (s, _) -> string_of_symbol s
-	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
+    | Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Abs (e, _) | Sqrt (e, _) | Pow (e, _, _)
-    | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
+    | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_)
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
+    | Sequence seq -> report_error seq.seq_loc "Cannot apply get_head to sequence"
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
       if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func _ -> ""
@@ -5429,6 +5488,7 @@ and norm_exp (e:exp) =
     | Pow (e1, e2, l) -> Pow (helper e1, helper e2, l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
     | Min (e1,e2,l) -> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Min x) l
+    | Sequence _ -> e
     | Bag (e,l)-> Bag ( List.sort e_cmp (List.map helper e), l)    
     | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map helper e), l)    
     | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map helper e), l)    
@@ -7508,15 +7568,16 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | IConst _
       | FConst _
       | AConst _
-	  | Tsconst _ 
+      | SConst _
+      | Tsconst _ 
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
       | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
-      | Abs _ | Sqrt _ | Pow _
       (* expressions that can not be transformed *)
+      | Abs _ | Sqrt _ | Pow _ | Sequence _
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
       | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ -> raise Not_found in
     helper e rhs_e in

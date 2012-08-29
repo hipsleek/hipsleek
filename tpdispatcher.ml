@@ -32,7 +32,6 @@ type tp_type =
   | OZ (* Omega and Z3 *)
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
-  | SPASS
 
 let test_db = false
 
@@ -82,7 +81,6 @@ let string_of_prover prover = match prover with
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
-  | SPASS -> "SPASS"
 
 
 let sat_cache = ref (Hashtbl.create 200)
@@ -422,8 +420,6 @@ let set_tp tp_str =
     )
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
-  else if tp_str = "spass" then
-    (tp := SPASS; prover_str := "z3"::!prover_str;)
   else
 	();
   check_prover_existence !prover_str
@@ -449,7 +445,6 @@ let string_of_tp tp = match tp with
   | OZ -> "oz"
    | AUTO -> "auto"
   | DP -> "dp"
-  | SPASS -> "spass"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -472,7 +467,6 @@ let name_of_tp tp = match tp with
   | OZ -> "Omega, Z3"
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
-  | SPASS -> "SPASS"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -559,6 +553,7 @@ let rec is_array_exp e = match e with
         | _ -> is_array_exp e2
       )
     | CP.Abs (e,_) | CP.Sqrt (e,_) -> is_array_exp e
+    | CP.Sequence _ -> Some false
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (
@@ -602,7 +597,7 @@ let rec is_list_exp e = match e with
                           | Some true -> Some true
                           | _ -> is_list_exp exp)
                        (Some false) el)
-    | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
+    | CP.Sequence _ | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _ | Tsconst _ | CP.SConst _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)
@@ -1037,7 +1032,6 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | ZM ->
         if (is_bag_constraint wf) then mona_is_sat wf
         else z3_is_sat wf
-    | SPASS -> Spass.is_sat f sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat" in
   let _ = if (!tp_batch_mode) then stop_prover () in
   res
@@ -1450,8 +1444,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           (called_prover := "mona "; mona_imply ante_w conseq_s)
         else
-          z3_imply (* Smtsolver.imply *) ante conseq (* timeout *)
-    | SPASS -> z3_imply ante conseq in
+          z3_imply (* Smtsolver.imply *) ante conseq (* timeout *) in
   let _ = if should_output () then (
     Prooftracer.push_pure_imply ante conseq r;
     Prooftracer.push_pop_prover_input (get_generated_prover_input ()) (string_of_prover !tp);

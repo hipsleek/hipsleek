@@ -261,6 +261,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Abs _ -> failwith ("[setmona.ml]: Abs are not supported.")
   | Sqrt _ -> failwith ("[setmona.ml]: sqrt is not supported.")
   | Pow _ -> failwith ("[setmona.ml]: pow is not supported.")
+  | Sequence _ -> failwith ("[setmona.ml]: Sequence is not supported.")
   | Bag (es, _) ->
 	  if order = SO then
 		let r =	List.map (fun e -> compute_fo_exp e FO var_map) es in

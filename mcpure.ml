@@ -1178,6 +1178,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Abs (e,_) | Sqrt (e,_) | Pow (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
+    | Sequence seq -> get_head seq.seq_element
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
 		  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
@@ -1212,8 +1213,9 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
         else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
         (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | AConst _ | Tsconst _ | FConst _ | SConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
-    | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
-	| ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
+    | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _
+    | Sequence _ 
+    | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
     | Null _ | Var _ | IConst _ | FConst _ | AConst _ | SConst _ | Tsconst _ -> e
@@ -1228,6 +1230,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Min (e1,e2,l) ->
 	      let e1,e2 = norm_expr e1, norm_expr e2 in
 	      if(e_cmp e1 e2)>0 then Min(e1,e2,l) else Min(e2,e1,l)
+    | Sequence _ -> e
     | Bag (e,l)-> Bag ( List.sort e_cmp (List.map norm_expr e), l)    
     | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map norm_expr e), l)    
     | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map norm_expr e), l)    
@@ -1240,7 +1243,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_expr e), l)    
     | ListReverse (e,l)-> ListReverse(norm_expr e, l)
     | Func (a,i,l) -> Func (a, List.map norm_expr i, l)
-	| ArrayAt (a,i,l) -> ArrayAt (a, List.map norm_expr i, l) (* An Hoa *)
+    | ArrayAt (a,i,l) -> ArrayAt (a, List.map norm_expr i, l) (* An Hoa *)
 	      
   and cons_lsts (e:exp) (disc:int) cons1 cons2 (nel:exp) : exp=     
     let lp,ln = get_lists e disc in

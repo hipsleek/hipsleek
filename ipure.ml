@@ -21,14 +21,6 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-and sequence = {
-  seq_element: exp;
-  seq_domain: formula;
-  seq_limit: exp;
-  seq_loopcond: formula;
-  seq_loc : loc
-}
-
 and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
@@ -57,6 +49,15 @@ and p_formula =
   | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
+and sequence = {
+  seq_element: exp;
+  seq_domain: formula;
+  seq_limit: exp;
+  seq_loopcond: formula;
+  seq_loc : loc
+}
+
+
 (* Expression *)
 and exp = 
   | Ann_Exp of (exp * typ)
@@ -80,7 +81,7 @@ and exp =
   | Sqrt of (exp * loc)
   | Pow of (exp * exp * loc)
   (* sequence expression *)
-  (* | Seq of sequence *)
+  | Sequence of sequence
   (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
@@ -220,6 +221,7 @@ and afv (af : exp) : (ident * primed) list =
   | Sqrt (a, _) -> afv a
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
+  | Sequence seq -> afv seq.seq_element
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
@@ -524,6 +526,7 @@ and pos_of_exp (e : exp) = match e with
   | Sqrt (_, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
+  | Sequence seq -> seq.seq_loc
   | Bag (_, p) -> p
   | BagUnion (_, p) -> p
   | BagIntersect (_, p) -> p
@@ -649,6 +652,13 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Max (a1, a2, pos) -> Max (e_apply_one p a1, e_apply_one p a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one p a1, e_apply_one p a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
+  | Sequence seq ->
+      let newseq = { seq_element = e_apply_one p seq.seq_element;
+                     seq_domain = apply_one p seq.seq_domain;
+                     seq_limit = e_apply_one p seq.seq_limit;
+                     seq_loopcond = apply_one p seq.seq_loopcond;
+                     seq_loc = seq.seq_loc } in
+      Sequence newseq
   | Bag (alist, pos) -> Bag ((e_apply_one_list p alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list p alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list p alist), pos)
@@ -819,6 +829,7 @@ and find_lexp_exp (e: exp) ls =
     | Sqrt (e1, _) -> find_lexp_exp e1 ls
     | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Sequence seq -> find_lexp_exp seq.seq_element ls
     | Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
@@ -874,6 +885,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Sqrt (exp1, _) -> contain_vars_exp exp1
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Sequence seq -> contain_vars_exp seq.seq_element
   | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
@@ -974,6 +986,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) =
         | None, Some (p2, l2) -> Some ((And(p2, t, l)), (new_name:: l2))
         | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
       (nv, r)
+  | Sequence seq -> Gen.Basic.report_error seq.seq_loc "Cannot apply float_out_exp_min_max to sequence"
   (* bag expressions *)
   | Bag (le, l) ->
       let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
@@ -1276,6 +1289,7 @@ let rec typ_of_exp (e: exp) : typ =
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | AConst _                  -> Globals.AnnT
+  | SConst _                  -> Globals.Symbol
   | Tsconst _ 				  -> Globals.Tree_sh
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
@@ -1287,8 +1301,9 @@ let rec typ_of_exp (e: exp) : typ =
   | Min (ex1, ex2, _)         -> let ty1 = typ_of_exp ex1 in
                                  let ty2 = typ_of_exp ex2 in
                                  merge_types ty1 ty2
-  | Abs (ex1, _)             -> typ_of_exp ex1
+  | Abs (ex1, _)              -> typ_of_exp ex1
   | Sqrt (ex1, _)             -> typ_of_exp ex1
+  | Sequence seq              -> typ_of_exp seq.seq_element
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)
