@@ -260,7 +260,10 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
 (* In case of failure, please put message into term_msg stack *)
 (* The resulting ctx may contain inferred constraint *)
-and create_bound_constraint = ()
+and create_bound_constraint measure pos =
+  match measure with
+  | CP.Sequence seq -> CP.mkTrue pos (* TRUNG: CODE *)
+  | _ -> CP.mkPure (CP.mkGte measure (CP.mkIConst 0 pos) pos)
 
 and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =
@@ -273,8 +276,7 @@ and check_bounded_term_x prog ctx post_pos =
       | e::_ -> CP.pos_of_exp e 
     in
     let ctx = CF.Ctx es in
-    let bnd_formula_l = List.map (fun e ->
-        CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
+    let bnd_formula_l = List.map (fun e -> create_bound_constraint e m_pos) m in
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) m_pos in
     let rs, _ = heap_entail_one_context prog false ctx bnd_formula None post_pos in
