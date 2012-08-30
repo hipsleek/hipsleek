@@ -323,7 +323,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	    h_formula_star_pos = pos}) -> 
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
-	        let m = (CP.DisjSetSV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
+			let m = (CP.DisjSetSV.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	        let res = {mem_formula_mset = m;} in
 	        res
       | Phase ({h_formula_phase_rd = h1;
@@ -396,7 +396,7 @@ and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_f
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
-  if (!Globals.allow_imm) then 
+  if (!Globals.allow_imm) then 	
     if (Perm.allow_perm ()) then xpure_heap_symbolic_perm prog h0 which_xpure
     else xpure_heap_symbolic prog h0 which_xpure
   else
@@ -2761,9 +2761,10 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs tid pos pid
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs (tid: CP.spec_var option) pos pid =
-  Debug.no_1 "heap_entail_one_context_struc" 
-      Cprinter.string_of_context (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
-      (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs tid pos pid) cl
+  Debug.no_2 "heap_entail_one_context_struc" 
+      Cprinter.string_of_context Cprinter.string_of_struc_formula
+	  (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
+      (fun cl cs -> heap_entail_one_context_struc_x p i1 hp cl cs tid pos pid) cl cs
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;

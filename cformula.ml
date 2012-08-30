@@ -700,10 +700,10 @@ and get_flow_from_stack c l pos =
 	r.formula_store_value
   with Not_found -> Err.report_error { 
 	  Err.error_loc = pos;
-	  Err.error_text = "the flow var stack \n"^
+	  Err.error_text = "the flow var stack \n "^
 		  (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
 			  (string_of_flow (h.formula_store_value.formula_flow_interval) ^" "))) l))^
-		  "\ndoes not contain "^c
+		  "\n does not contain "^c
    }
 
 and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with

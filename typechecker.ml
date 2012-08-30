@@ -856,7 +856,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
 			    CF.h_formula_data_imm = CF.ConstAnn(imm);
-			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
+			    CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
