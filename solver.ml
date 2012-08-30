@@ -5098,11 +5098,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   | None -> estate 
   | Some rank ->
       begin
-        let _ = print_endline ("== enter inference phase") in 
-        let _ = print_endline ("== rank = " ^ (Cprinter.string_of_pure_formula rank)) in
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
           | None ->
-              let _ = print_endline ("== 3.1") in 
               let lexvar =  match estate.es_var_measures with
                             | Some (CP.LexVar lex) -> (CP.LexVar lex)
                             | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
@@ -5124,9 +5121,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                  CF.es_var_stack = term_stack; 
                  CF.es_term_err = term_err_msg;
               }
-          | Some es ->
-              let _ = print_endline ("== 3.2") in 
-              es
+          | Some es -> es
       end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
