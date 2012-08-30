@@ -564,7 +564,7 @@ let rec is_array_exp e = match e with
         )
     | CP.ArrayAt (_,_,_) -> Some true
     | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.SConst _
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.SConst _ | CP.Tsconst _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
 

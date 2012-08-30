@@ -5033,7 +5033,6 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
   Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
       (fun _ -> heap_infer_decreasing_wf_x prog estate rank is_folding lhs pos) rank
 
-
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
@@ -5098,15 +5097,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   | None -> estate 
   | Some rank ->
       begin
+        let _ = print_endline ("== enter inference phase") in 
+        let _ = print_endline ("== rank = " ^ (Cprinter.string_of_pure_formula rank)) in
         match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
-          | None ->     
-              let lexvar = Term.find_lexvar_es estate in
-              let t_ann, ml, il = match lexvar with
-                | CP.LexVar lex -> (lex.CP.lex_ann, lex.CP.lex_exp, lex.CP.lex_tmp)
-                | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
+          | None ->
+              let _ = print_endline ("== 3.1") in 
+              let lexvar =  match estate.es_var_measures with
+                            | Some (CP.LexVar lex) -> (CP.LexVar lex)
+                            | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
               let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
               let term_measures, term_res, term_err_msg =
-                Some (CP.mkLexVar t_ann ml il no_pos),
+                Some lexvar,
                 (term_pos, t_ann_trans, orig_ante, 
                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                 Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
@@ -5122,7 +5123,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                  CF.es_var_stack = term_stack; 
                  CF.es_term_err = term_err_msg;
               }
-          | Some es -> es
+          | Some es ->
+              let _ = print_endline ("== 3.2") in 
+              es
       end
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)

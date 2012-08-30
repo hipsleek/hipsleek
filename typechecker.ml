@@ -262,7 +262,40 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* The resulting ctx may contain inferred constraint *)
 and create_bound_constraint measure pos =
   match measure with
-  | CP.Sequence seq -> CP.mkTrue pos (* TRUNG: CODE *)
+  | CP.Sequence seq ->
+      let domain_constraint = seq.CP.seq_domain in
+      let loopcond_constraint = seq.CP.seq_loopcond in
+      let element = seq.CP.seq_element in
+      let limit = seq.CP.seq_limit in
+      let termination_constraint = (
+        match limit with
+        | CP.SConst (Pos_infinity, _) ->
+            let _ = report_error pos "Limit can't be Pos_infinity" in
+            CP.mkFalse pos
+        | CP.SConst (Neg_infinity, _) ->
+            let vars = CP.afv element in
+            let bound_var = CP.fresh_new_spec_var Float in
+            let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in
+            let termcond = CP.mkNot_s loopcond_constraint in
+            let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None pos in
+            let fdomain = CP.collect_formula_domain f in
+            let fForAll = CP.mkImply fdomain f pos in
+            let term_formula = CP.mkForall vars fForAll None pos in
+            CP.mkExists [bound_var] term_formula None pos
+        | _ ->
+            let vars = CP.afv element in
+            let epsilon = CP.fresh_new_spec_var Float in
+            let constraint1 = CP.mkPure (CP.mkGt element limit pos) in
+            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
+            let termcond = CP.mkNot_s loopcond_constraint in
+            let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 pos)) termcond None pos in
+            let fdomain = CP.collect_formula_domain f in
+            let fForAll = CP.mkImply fdomain f pos in
+            let term_formula = CP.mkForall vars fForAll None pos in
+            let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) in
+            CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula pos) None pos
+      ) in
+      CP.mkAnd (CP.mkAnd domain_constraint loopcond_constraint pos) termination_constraint pos
   | _ -> CP.mkPure (CP.mkGte measure (CP.mkIConst 0 pos) pos)
 
 and check_bounded_term_x prog ctx post_pos =
@@ -312,7 +345,7 @@ and check_bounded_term_x prog ctx post_pos =
           let m = match es.CF.es_var_measures with
             | None -> []
             | Some (CP.LexVar lv) -> lv.CP.lex_exp
-            | _ -> raise (Term.Exn_LexVar "LexVar not found!") in
+            | _ -> raise (Term.Exn_LexVar "LexVar not found 10!") in
           let _ = Debug.trace_hprint (add_str "Measures" 
             (pr_list !CP.print_exp)) m no_pos in
           let _ = Debug.trace_hprint (add_str "Orig context" 

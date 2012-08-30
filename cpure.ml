@@ -1426,6 +1426,15 @@ and mkLexVar t_ann m i pos =
            lex_tmp = i;
            lex_loc = pos; }
 
+and mkLexVarAnn (lexvar: p_formula) new_ann =
+  match lexvar with
+  | LexVar lex -> let newlex = { lex_ann = new_ann;
+                                 lex_exp = lex.lex_exp;
+                                 lex_tmp = lex.lex_tmp;
+                                 lex_loc = lex.lex_loc } in
+                  LexVar newlex
+  | _ -> report_error no_pos "Invalid input! Expect LexVar here!"
+
 and mkPure (pf: p_formula) : formula = BForm ((pf,None), None)
 
 and mkLexVar_pure a l1 l2 = 
@@ -4920,7 +4929,14 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
             let (ne1,r1) = helper new_arg e1 in
             let (ne2,r2) = helper new_arg e2 in
             (Min (ne1,ne2,l),f_comb[r1;r2])
-        | Sequence seq -> report_error seq.seq_loc ("Cannot apply foldr_exp to sequence")
+        | Sequence seq ->
+            let (ne, r) = helper new_arg seq.seq_element in
+            let newseq = { seq_element = ne;
+                           seq_domain = seq.seq_domain;
+                           seq_limit = seq.seq_limit;
+                           seq_loopcond = seq.seq_loopcond;
+                           seq_loc = seq.seq_loc } in
+            (Sequence newseq, f_comb[r])
         | Bag (le,l) -> 
             let el=List.map (fun c-> helper new_arg c) le in
             let (el,rl)=List.split el in 

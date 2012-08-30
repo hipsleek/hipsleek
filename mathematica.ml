@@ -161,7 +161,7 @@ let send_and_receive (f : string) : string =
 
 (* send formula to mathematica and receive result *)
 let send_and_receive (f : string) : string =
-  Debug.ho_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) send_and_receive f
 
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in
@@ -289,6 +289,7 @@ let rec mathematica_of_exp e0 : string=
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> mathematica_of_float f
   | CP.SConst (s, _) -> mathematica_of_symbol s
+  | CP.Tsconst _ -> failwith ("mathematica.mathematica_of_exp: Tsconst can't appear here")
   | CP.Add (e1, e2, _) ->
       let se1 = mathematica_of_exp e1 in
       let se2 = mathematica_of_exp e2 in
