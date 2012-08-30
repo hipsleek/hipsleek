@@ -15,7 +15,7 @@ void foo(float x)
       x >= 0.9      -> requires Term ensures true;
       x < 0         -> requires Term ensures true;
       x = 0         -> requires Loop ensures false;
-      0 < x < 0.9   -> requires Term[SeqDec{-x, (-1.0, 0.0), !((0 <= x) & (x < 0.9))}] ensures true;
+      0 < x < 0.9   -> requires Term[Seq{-x, (-1.0, 0.0), !((0 <= x) & (x < 0.9))}] ensures true;
     }
 {
   if ((0 <= x) && (x < 0.9))

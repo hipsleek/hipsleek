@@ -1188,7 +1188,7 @@ cexp_w :
     | `INFINITY ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.SConst (Pos_infinity, get_pos_camlp4 _loc 1))
-    | `SEQDEC; `OBRACE; param = measures_seqdec; `CBRACE ->
+    | `SEQ; `OBRACE; param = measures_seqdec; `CBRACE ->
         let (element, domain, limit, loopcond) = param in
         let tc = match loopcond with
                  | Pure_f f -> f
@@ -1265,7 +1265,7 @@ opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
 
 measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-(* SeqDec(element, domain, limit, lower-bound or terminiation condition) *)
+(* Seq(element, domain, limit, lower-bound or terminiation condition) *)
 
 measures_seqdec: 
   [[

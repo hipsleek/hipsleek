@@ -4,15 +4,15 @@
 
 //checkentail (x > 1.9) & (x < 2.1) & (x != 2) & Term[SeqGen(x, 2.0, x > 1.99}] |- Term[SeqGen(1.0 + (2.0 / x), 2.0, 1.0 + (2.0 / x) > 1.99}].
 
-checkentail Term[SeqDec{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[SeqDec{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
+checkentail Term[Seq{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[Seq{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
 
-checkentail x > 0.0 & Term[SeqDec{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[SeqDec{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
+checkentail x > 0.0 & Term[Seq{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[Seq{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
 
-checkentail x < 0.0 & Term[SeqDec{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[SeqDec{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
+checkentail x < 0.0 & Term[Seq{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[Seq{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
 
-checkentail x > 1.0 & Term[SeqDec{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[SeqDec{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
+checkentail x > 1.0 & Term[Seq{x, (0.0, infinity), 0.0, x < 0.1}] |- Term[Seq{x/2.0, (0.0, infinity), 0.0, x/2.0 < 0.1}].
 
-checkentail x > 1.0 & Term[SeqDec{x, (0.0, infinity), -infinity, x < 0.1}] |- Term[SeqDec{x/2.0, (0.0, infinity), -infinity, x/2.0 < 0.1}].
+checkentail x > 1.0 & Term[Seq{x, (0.0, infinity), -infinity, x < 0.1}] |- Term[Seq{x/2.0, (0.0, infinity), -infinity, x/2.0 < 0.1}].
 
 checkentail (x > 1.0) & (lowerbound > 1.0) & Term[SeqGen{x, (1.0, +infinity], 1.0, x < lowerbound}] & (y = __sqrt(x)) 
             |- (y > 1.0) & Term[SeqGen{y, (1.0, 100.0), 1.0, y < lowerbound}].

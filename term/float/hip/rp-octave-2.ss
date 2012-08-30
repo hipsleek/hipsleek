@@ -31,7 +31,7 @@ void loop1 (float t, float g, float runi)
     ((0.0 < runi) & (runi < 1.0) & (g >= 0.000006144) & (g <= 1.0)) & t <= 0.0 ->
         requires Term[] ensures true;
     (0.0 < runi) & (runi < 1.0) & (g >= 0.000006144) & (g <= 1.0) & t > 0.0 ->
-        requires Term[SeqDec{t, 0.0, g}] ensures true;
+        requires Term[Seq{t, 0.0, g}] ensures true;
   }
 {
   if ((0.0 < runi) && (runi < 1.0) && (g >= 0.000006144) && (g <= 1.0))
@@ -52,7 +52,7 @@ void loop2 (float t, float g, float runi)
     ((0.0 < runi) & (runi < 1.0) & (g >= 0.000006144) & (g <= 1.0)) & t <= 0.0 ->
         requires Term[] ensures true;
     (0.0 < runi) & (runi < 1.0) & (g >= 0.000006144) & (g <= 1.0) & t > 0.0 ->
-        requires Term[SeqDec{t, 0.0, t <= g}] ensures true;
+        requires Term[Seq{t, 0.0, t <= g}] ensures true;
   }
 {
   if ((0.0 < runi) && (runi < 1.0) && (g >= 0.000006144) && (g <= 1.0))

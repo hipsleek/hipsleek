@@ -10,11 +10,11 @@
     loop(sqrt(x))
 */
 
-checkentail (x > 1.0) & (lowerbound > 1.0) & Term[SeqDec{x, (1.0, +infinity], 1.0, lowerbound}] & (y = __sqrt(x)) 
-            |- (y > 1.0) & Term[SeqDec{y, (1.0, +infinity), 1.0, lowerbound}].
+checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infinity], 1.0, lowerbound}] & (y = __sqrt(x)) 
+            |- (y > 1.0) & Term[Seq{y, (1.0, +infinity), 1.0, lowerbound}].
 
-checkentail (x > 1.0) & (lowerbound > 1.0) & Term[SeqDec{x, (1.0, +infinity), 1.0, x < lowerbound}] & (y = __sqrt(x)) 
-            |- (y > 1.0) & Term[SeqDec{y, (1.0, +infinity), 1.0, y < lowerbound}].
+checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infinity), 1.0, x < lowerbound}] & (y = __sqrt(x)) 
+            |- (y > 1.0) & Term[Seq{y, (1.0, +infinity), 1.0, y < lowerbound}].
 
 
 /*------------
@@ -23,11 +23,11 @@ checkentail (x > 1.0) & (lowerbound > 1.0) & Term[SeqDec{x, (1.0, +infinity), 1.
     loop(sqrt(x))
 */
 
-checkentail (x > 0.0) & (x < 1.0) & (upperbound < 1.0) & Term[SeqDec{-x, (-1.0, 0.0), -1.0, -upperbound}] & (y = __sqrt(x)) 
-            |- (y > 0.0) & (y < 1.0) & Term[SeqDec{-y, (-1.0, 0.0), -1.0, -upperbound}].
+checkentail (x > 0.0) & (x < 1.0) & (upperbound < 1.0) & Term[Seq{-x, (-1.0, 0.0), -1.0, -upperbound}] & (y = __sqrt(x)) 
+            |- (y > 0.0) & (y < 1.0) & Term[Seq{-y, (-1.0, 0.0), -1.0, -upperbound}].
 
-checkentail (x > 0.0) & (x < 1.0) & (upperbound < 1.0) & Term[SeqDec{-x, (-1.0, 0.0), -1.0, x > upperbound}] & (y = __sqrt(x)) 
-            |- (y > 0.0) & (y < 1.0) & Term[SeqDec{-y, (-1.0, 0.0), -1.0, y > upperbound}].
+checkentail (x > 0.0) & (x < 1.0) & (upperbound < 1.0) & Term[Seq{-x, (-1.0, 0.0), -1.0, x > upperbound}] & (y = __sqrt(x)) 
+            |- (y > 0.0) & (y < 1.0) & Term[Seq{-y, (-1.0, 0.0), -1.0, y > upperbound}].
 
 
 /*------------

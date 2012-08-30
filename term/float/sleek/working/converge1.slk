@@ -9,8 +9,8 @@
     loop(x*x*x)
 */
 // lowerbound & upper bound
-checkentail (x > -1.0) & (x < 1.0) & ((x>0.1) | (x<(0.0-0.2))) & Term[SeqDec{__abs(x), (0.0, 1.0), ((x>0.1) | (x<(0.0-0.2)))}]
-            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x > 0.1)}].
+checkentail (x > -1.0) & (x < 1.0) & ((x>0.1) | (x<(0.0-0.2))) & Term[Seq{__abs(x), (0.0, 1.0), ((x>0.1) | (x<(0.0-0.2)))}]
+            |- Term[Seq{__abs(x*x*x), (0.0, 1.0), (x*x*x > 0.1)}].
 
 /*
   // -1 < x < 1
@@ -20,8 +20,8 @@ checkentail (x > -1.0) & (x < 1.0) & ((x>0.1) | (x<(0.0-0.2))) & Term[SeqDec{__a
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
-            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[Seq{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
+            |- Term[Seq{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
 
 /*
   // -1 < x < 1
@@ -31,8 +31,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x*x +x > 0.1) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x + x >= 0.1}] 
-            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) + (x*x*x) >= 0.1}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x +x > 0.1) & Term[Seq{__abs(x), (0.0, 1.0), x * x + x >= 0.1}] 
+            |- Term[Seq{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) + (x*x*x) >= 0.1}].
 
 /*
   // -1 < x < 1
@@ -42,8 +42,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x*x +x > 0.1) & Term[SeqDec{__abs(x), (0.0
     loop(x*x*x)
 */
 // invalid limit
-checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
-            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
+checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[Seq{__abs(x), (0.0, 1.0), x * x >= 0.5}] 
+            |- Term[Seq{__abs(x*x*x), (0.0, 1.0), (x*x*x) * (x*x*x) >= 0.5}].
 
 /*
   // -1 < x < 1
@@ -51,8 +51,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[SeqDec{__abs(x), (0.0, 
     loop(x*x*x)
 */
 // invalid bound 
-checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term[SeqDec{__abs(x), (0.0, 1.0), ((x > -0.1) | (x < -0.2))}] 
-            |- Term[SeqDec{__abs(x*x*x), (0.0, 1.0), ((x*x*x > -0.1) | (x*x*x < -0.2))}].
+checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term[Seq{__abs(x), (0.0, 1.0), ((x > -0.1) | (x < -0.2))}] 
+            |- Term[Seq{__abs(x*x*x), (0.0, 1.0), ((x*x*x > -0.1) | (x*x*x < -0.2))}].
 
 /*
   // -1 < x < 1
@@ -62,7 +62,7 @@ checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term
     loop(x*x*x)
 */
 // invalid termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x*x <= 0.5) & (x!=0.0) & Term[SeqDec{__abs(x), (-1.0, 1.0), x * x <= 0.5}] 
+checkentail (x > -1.0) & (x < 1.0) & (x*x <= 0.5) & (x!=0.0) & Term[Seq{__abs(x), (-1.0, 1.0), x * x <= 0.5}] 
             |- Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) <= 0.5}].
 
 /***************************************************************************************************
@@ -76,8 +76,8 @@ checkentail (x > -1.0) & (x < 1.0) & (x*x <= 0.5) & (x!=0.0) & Term[SeqDec{__abs
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqDec{__abs(x-2.0), (0.0, +infinity), ((x > 2.2) | (x < 1.9)) }] 
-            |- Term[SeqDec{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), ((1.0+2.0/x > 2.2) | (1.0+2.0/x < 1.9))}].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[Seq{__abs(x-2.0), (0.0, +infinity), ((x > 2.2) | (x < 1.9)) }] 
+            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), ((1.0+2.0/x > 2.2) | (1.0+2.0/x < 1.9))}].
 
 /*
   // x != 2
@@ -87,8 +87,8 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqDec{__abs(x-2.0), (0.0, +infi
     loop(1 + 2/x)
 */
 // termination constraint
-checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[SeqDec{__abs(x-2.0), (0.0, +infinity), (1.0/x >= 0.6) }] 
-            |- Term[SeqDec{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), (1.0/(1.0+2.0/x) >= 0.6)}].
+checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[Seq{__abs(x-2.0), (0.0, +infinity), (1.0/x >= 0.6) }] 
+            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), (1.0/(1.0+2.0/x) >= 0.6)}].
             
 /*
   // x != 2

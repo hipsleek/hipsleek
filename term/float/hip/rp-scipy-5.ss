@@ -40,7 +40,7 @@ void loop1 (float u, float y, float k, float n, float z, float t)
   case
   {
     (z >= 0.0 | k <= 0.0 | n <= 0.0 | t <= 0.0 | (y >= 0.0 & y <= 0.0))    ->  requires Term[] ensures true;
-    !(z >= 0.0 | k <= 0.0 | n <= 0.0 | t <= 0.0 | (y >= 0.0 & y <= 0.0))   ->  requires Term[SeqDec{t, 0.0, 0.1}] ensures true;    
+    !(z >= 0.0 | k <= 0.0 | n <= 0.0 | t <= 0.0 | (y >= 0.0 & y <= 0.0))   ->  requires Term[Seq{t, 0.0, 0.1}] ensures true;    
   }
 {
   if ((z >= 0.0) || (k <= 0.0) || (n <= 0.0) || (t <= 0.0) || ((y >= 0.0) && (y <= 0.0)))

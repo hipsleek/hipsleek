@@ -197,7 +197,7 @@ module Make (Token : SleekTokenS)
    ("Term", TERM);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
-   ("SeqDec", SEQDEC);
+   ("Seq", SEQ);
    ("__sqrt", SQRT);
    ("subset", SUBSET);
    ("static", STATIC);
