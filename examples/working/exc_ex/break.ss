@@ -8,12 +8,9 @@ ensures res = 3;
 	requires i>=3
 	ensures  i'=3;
 	{
-		if (i==3) break ;
+		if (i==3) break test;
 			else i--;
-	tr:{
-	int j;
-	j=1;break tr;
-	} }
+	}
 	return i;
 
 }
