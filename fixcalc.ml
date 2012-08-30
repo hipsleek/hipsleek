@@ -124,8 +124,9 @@ let rec fixcalc_of_h_formula f = match f with
   | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
-  | HTrue -> "True"
-  | HFalse -> "False"
+  | HTrue -> "HTrue"
+  | HFalse -> "HFalse"
+  | HEmp -> "Emp"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
 let fixcalc_of_mix_formula f = match f with
@@ -473,7 +474,7 @@ and compute_fixpoint_aux rel =
   List.map (fun x ->
 	  match x with
     | (post, (rel,_,_,_)) -> (rel, post)
-    | _ -> report_error no_pos "Expecting a post"
+    (*| _ -> report_error no_pos "Expecting a post"*)
 	) fixpoint_rel
 
 and compute_fixpoint_one (rel_fml, pf, no, ante_vars) =
@@ -497,7 +498,7 @@ and compute_bottomup_inp rel =
     let first_elm = 
       match (List.hd rel) with 
       | (f,_,_,_) -> (get_rel_name f) 
-      | _ -> report_error no_pos "Error in computing fixpoint" 
+     (* | _ -> report_error no_pos "Error in computing fixpoint" *)
     in "bottomupgen([" ^  (List.fold_left (fun x (y,_,_,_) -> (x ^ "," ^ (get_rel_name y))) first_elm (List.tl rel)) ^ "]);"
   else report_error no_pos "No relation provided"
 

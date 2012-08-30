@@ -1,0 +1,39 @@
+data cl {int val;}.
+macro L == (#,) .
+macro R == (,#) .
+macro LR == (,#) .
+
+ data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail x::node<_,q>*q::ll<n> |-  x::node(v)<_,q>*q::ll(v)<n>.
+ print residue.
+ //(1) valid v = full or v<full x(1-v) q (1-v) ll 
+ //-> missing?
+ 
+ 
+checkentail x::ll(@@R)<n> & n>0 |- x::node(v)<_,_>.
+ print residue.
+ //(2) valid v=R ll (n-1) or v<R x(R-v) ll (n-1)
+ 
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_>.
+print residue.
+//(3) valid 
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl<_>.
+//(4) valid
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> & v=@@L+@(,(#,)).
+print residue.
+//(5) valid v=L+(R,L) x[RR]
+
+checkentail x::cl(@@L)<_> * x::cl<_> |- x!=y.
+//(6) valid
+checkentail x::cl(@@L)<_> * y::cl(@@R)<_> |- x=y.
+//(7) fail
+checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x!=y.
+//(8) valid
+checkentail x::cl(@@L)<_> * y::cl(@@LR)<_> |- x=y.
+//(9) fail

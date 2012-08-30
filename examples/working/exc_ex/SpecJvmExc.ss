@@ -109,7 +109,7 @@ int testExc5()
     }
     
 int throwArithmeticException(int a) throws arith_exc
-	case {a=1 ->  requires true ensures res::arith_exc<> & flow arith_exc ;
+	case {a=1 ->  requires true ensures eres::arith_exc<> & flow arith_exc ;
 		  a!=1 -> requires true ensures res=0;}
 	{
         if (a == 1)
@@ -121,7 +121,7 @@ int throwArithmeticException(int a) throws arith_exc
     }
 		
 int dontDouble(int a) throws arith_exc
-	case {a=1 ->  requires true ensures res::arith_exc<>& flow arith_exc ;
+	case {a=1 ->  requires true ensures eres::arith_exc<>& flow arith_exc ;
 		  a!=1 -> requires true ensures res=a+a;}
 	{
         throwArithmeticException(a);
@@ -181,8 +181,7 @@ int loopExitContinueInExceptionHandler()
                 if (i == 9990)
                     break tr;
               
-            } catch (arith_exc e) {
-            };
+            } catch (arith_exc e) ;;
         };
         if (i != 9990)
             return -2;

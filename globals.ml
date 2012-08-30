@@ -95,9 +95,10 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
+  | Tree_sh
   (* | FuncT (\* function type *\) *)
 
-
+let barrierT = Named "barrier"
 (*
   Data types for code gen
 *)
@@ -105,6 +106,16 @@ type typ =
 type mode = 
   | ModeIn
   | ModeOut
+  
+  
+
+type perm_type =
+  | NoPerm (*no permission at all*)
+  | Frac (*fractional permissions*)
+  | Count (*counting permissions*)
+  | Dperm (*distinct fractional shares*)
+  
+let perm = ref NoPerm
 
 (* let rec string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -258,6 +269,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
+  | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
@@ -276,6 +288,7 @@ let rec string_of_typ_alpha = function
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tree_sh		  -> "Tsh"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -422,10 +435,17 @@ let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
 
+let use_split_match = ref false
+
+let consume_all = ref false
+
+let enable_split_lemma_gen = ref false
+
 let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let b_datan = "barrier"
 
 let verify_callees = ref false
 
@@ -562,6 +582,8 @@ let enable_incremental_proving = ref false
 
 let disable_multiple_specs =ref false
 
+let perm_prof = ref false
+
   (*for cav experiments*)
   let f_1_slice = ref false
   let f_2_slice = ref false
@@ -593,6 +615,9 @@ let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+
+(* Option for using classical reasoning in separation logic *)
+let do_classic_reasoning = ref false
 
 (* Options for abduction *)
 let do_abd_from_post = ref false
