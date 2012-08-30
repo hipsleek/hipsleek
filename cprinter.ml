@@ -952,8 +952,9 @@ let rec pr_h_formula h =
           (* pr_formula_label_opt pid; *)
 		  (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
-          pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) ;
-	      (* if not(!Globals.allow_field_ann) then *) pr_imm imm;
+          (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+           else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
+	      if (!Globals.allow_imm) then pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)

@@ -372,7 +372,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
-  | MetaEFormCF b ->       let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in b (* assume it has already been normalized *)
+  | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) b (* assume it has already been normalized *)
   in helper mf0 quant fv_idents stab 
 
 

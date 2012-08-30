@@ -660,12 +660,15 @@ and restore_tmp_ann_list_ctx (ctx : list_context) : list_context =
 	      SuccCtx(List.map restore_tmp_ann_ctx cl)
 
 and restore_tmp_ann_ctx (ctx : context) : context = 
-  match ctx with
-    | Ctx(es) -> Ctx(restore_tmp_ann_es es)
-    | OCtx(c1, c2) ->
-	      let nc1 = restore_tmp_ann_ctx c1 in
-	      let nc2 = restore_tmp_ann_ctx c2 in
-	      OCtx(nc1, nc2)
+  if not(!Globals.allow_field_ann) then ctx else
+    let rec helper ctx = 
+      match ctx with
+        | Ctx(es) -> Ctx(restore_tmp_ann_es es)
+        | OCtx(c1, c2) ->
+	        let nc1 = helper c1 in
+	        let nc2 = helper c2 in
+	        OCtx(nc1, nc2)
+    in helper ctx
 
 and restore_tmp_ann_h_formula (f: h_formula): h_formula =
     match f with

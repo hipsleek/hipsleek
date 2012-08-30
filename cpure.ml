@@ -7230,16 +7230,20 @@ let compute_instantiations pure_f v_of_int avail_v =
   let pr3 = pr_list (pr_pair !print_sv !print_formula) in
   Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
 
-let rec add_ann_constraints vrs f = 
-  match vrs with
-    | v :: r -> 
+let add_ann_constraints vrs f = 
+  if not(!Globals.allow_field_ann) then f 
+  else
+    let rec helper vrs f = 
+    match vrs with
+      | v :: r -> 
           let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in
           let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
           (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Lend)), no_pos), no_pos), None), None) in  *)
           let c12 = mkAnd c1 c2 no_pos in
-          let rf = add_ann_constraints r f in
+          let rf = helper r f in
           mkAnd c12  rf no_pos
-    | [] -> f
+      | [] -> f
+    in helper vrs f
 
 let add_ann_constraints vrs f =
   let p1 = !print_formula in

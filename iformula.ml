@@ -443,6 +443,11 @@ let extract_var_from_id (id,p) =
 		(var,p)
 ;;
 
+let rec ann_opt_to_ann (ann_opt_lst: ann option list) (default_ann: ann): ann list = 
+  match ann_opt_lst with
+    | [] -> []
+    | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann t default_ann)
+    | (None) :: t      ->  default_ann :: (ann_opt_to_ann t default_ann) 
 
 let fv_imm ann = match ann with
   | ConstAnn _ -> []
@@ -470,6 +475,8 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
               h_formula_heap_arguments = b} ->
      let perm_vars = fv_iperm perm in
      let imm_vars =  fv_imm imm in
+     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann ann_param imm)) in
+     let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
      Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
@@ -880,47 +887,47 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                       with Not_found ->
 						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
                     else
-                      let pf = 
-                        match rel0 with
-                          | None -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
-                          | Some r ->
-                              match r with
-                                | REq  -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
-                                | RNeq -> Ipure.Neq (nv,c,b.h_formula_heap_pos)
-                                | RGt  -> begin
-                                    match c with
-                                      | Ipure.Ann_Exp _
-                                      | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
-                                      | _ -> Ipure.Gt (nv,c,b.h_formula_heap_pos)
-                                end
-                                | RGte -> begin
-                                    match c with
-                                      | Ipure.Ann_Exp _
-                                      | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
-                                      | _ -> Ipure.Gte (nv,c,b.h_formula_heap_pos)
-                                end
-                                | RLt -> begin
-                                    match c with
-                                      | Ipure.Ann_Exp _
-                                      | Ipure.AConst _ ->  Ipure.SubAnn (nv,c,b.h_formula_heap_pos)
-                                      | _ -> Ipure.Lt (nv,c,b.h_formula_heap_pos)
-                                end
-                                | RLte -> begin
-                                    match c with
-                                      | Ipure.Ann_Exp _
-                                      | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
-                                      | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
-                                end
-                                | RSubAnn -> begin
-                                    match c with
-                                      | Ipure.Ann_Exp _
-                                      | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
-                                      | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
-                                end
+                      let pf = if not(!Globals.allow_field_ann) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else
+                            match rel0 with (* andreeac TODO what about heapnode2 ? *)
+                              | None -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
+                              | Some r ->
+                                  match r with
+                                    | REq  -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
+                                    | RNeq -> Ipure.Neq (nv,c,b.h_formula_heap_pos)
+                                    | RGt  -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Gt (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RGte -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Gte (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RLt -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv,c,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lt (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RLte -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RSubAnn -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
+                                    end
                       in
                       let nf = Ipure.BForm ((pf, None), None) in
                       nf
-                        (* Slicing: TODO IL for linking exp *)
+                  (* Slicing: TODO IL for linking exp *)
                   in
 				  (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	    (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))

@@ -314,12 +314,15 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
    Cprinter.string_of_mem_formula (fun f evars -> h_formula_2_mem_x f evars prog) f evars
 
 and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
+  if not(!Globals.allow_field_ann) then false else 
+  let rec helper ann1 ann2 = 
   match ann1, ann2 with
     | [], [] -> true
     | (CF.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible = compatible_ann t1 t2 in
+    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
 				                        true && compatible
     | _ -> false
+  in helper ann1 ann2
 
 and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
     let rec helper f =
@@ -1568,7 +1571,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	                let renamed_view_formula = rename_bound_vars forms in
 	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
 		            (* propagate the immutability annotation inside the definition *)
-	                let renamed_view_formula = propagate_imm_formula renamed_view_formula imm in
+	                let renamed_view_formula = propagate_imm_formula renamed_view_formula imm  in
 
 		            (*if any, propagate the fractional permission inside the definition *)
                     let renamed_view_formula = 
@@ -2678,9 +2681,9 @@ and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (ha
   let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in
   if f1 && f2 then
     begin
-      let _ = print_string ("\n (andreeac) coseq init:" ^ (Cprinter.string_of_struc_formula conseq)) in
+      (* let _ = print_string ("\n (andreeac) coseq init:" ^ (Cprinter.string_of_struc_formula conseq)) in *)
       let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
-      let _ = print_string ("\n (andreeac) coseq after:" ^ (Cprinter.string_of_struc_formula conseq)) in
+      (* let _ = print_string ("\n (andreeac) coseq after:" ^ (Cprinter.string_of_struc_formula conseq)) in *)
       let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
       (CF.invert_outcome ans,prf)
     end
@@ -3916,9 +3919,9 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	    match final_ctx with
 	      | SuccCtx(cl) ->
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-	            let cl1 = List.map subs_crt_holes_ctx cl in
-		    let cl1 = List.map restore_tmp_ann_ctx cl1 in
-		        (SuccCtx(cl1), final_prf)
+	          let cl1 = List.map subs_crt_holes_ctx cl in
+		      let cl1 = List.map restore_tmp_ann_ctx cl1 in
+		      (SuccCtx(cl1), final_prf)
 	      | FailCtx _ -> (final_ctx, final_prf)
       else
         if ((is_true h1) && (is_true h2)) then
@@ -5944,9 +5947,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-  print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate));
-  print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));
-  print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
+  (* print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
+  (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
+  (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
   Debug.devel_zprint (lazy ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node))) pos;
@@ -5989,7 +5992,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
-    let (r,ann_lhs,ann_rhs) = if not(!allow_field_ann) then subtype_ann_gen es_impl_vars l_ann r_ann else (true, None, None) in
+    let (r,ann_lhs,ann_rhs) = if (not(!allow_field_ann) && (!allow_imm)) then subtype_ann_gen es_impl_vars l_ann r_ann else (true, None, None)  (*ignore node ann is field ann enable*) in
     (* check subtyping between lhs and rhs node fields ann, and collect info between ann vars and const vars *)
     let (rl, param_ann_lhs, param_ann_rhs) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars l_param_ann r_param_ann else (true, [], []) in
     let join_ann_constr ann ann_lst =
@@ -6006,8 +6009,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in
-      let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in
-      let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in
+      (* let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in *)
+      (* let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in *)
 	  let rem_l_node,rem_r_node = match (l_node,r_node) with
 	    | (DataNode dnl, DataNode dnr) -> 
 			  let new_args = List.combine l_args r_args in
@@ -6087,7 +6090,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
-	      let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in
+	      (* let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
@@ -6130,8 +6133,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             in
 	    let imm_n = get_imm r_node in
         let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
-	    let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in
-	    let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in
+	    (* let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
+	    (* let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
             let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)
@@ -6765,10 +6768,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*REDUNDANT: because lhs_b is basically identical to estate.es_formula*)
               (* let _,_,_,_,_,es_f_a = split_components estate.es_formula in *)
               (* let new_es_formula = add_formula_and es_f_a new_es_formula in *)
-              let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in
-              let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in 
+              (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
+              (* let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in  *)
               let new_estate = {estate with es_formula = new_es_formula} in
-              let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in 
+              (* let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in  *)
 			  (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
 			    if it succeeds and the flag from to_be_proven is true then make current context false*)
               let rhs_p = match to_be_proven with

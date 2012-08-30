@@ -1083,7 +1083,8 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = (fv_ann (h.h_formula_data_imm)) @ (fv_ann_lst h.h_formula_data_param_imm)  in
+        let ann_vars = if (!Globals.allow_imm) then (fv_ann (h.h_formula_data_imm)) else [] in
+        let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
         perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
@@ -1854,7 +1855,8 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 and h_fv_node v perm ann param_ann vs =
   let pvars = fv_cperm perm in
-  let avars = (fv_ann ann) @ (fv_ann_lst param_ann) in
+  let avars = (fv_ann ann) in
+  let avars = if (!Globals.allow_field_ann) then avars @ (fv_ann_lst param_ann)  else avars in
   let pvars = 
     if pvars==[] then 
       pvars 
