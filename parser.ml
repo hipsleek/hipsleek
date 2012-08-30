@@ -668,9 +668,10 @@ barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
  
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_bag
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
+          view_mem = mpb;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -680,6 +681,11 @@ inv_lock:
   [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
+
+opt_mem_perm_bag: [[t=OPT mem_perm_bag -> t ]];
+
+mem_perm_bag: [[ `MEM; `IDENTIFIER m -> (m,false)
+		| `MEME; `IDENTIFIER m -> (m,true) ]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 
@@ -739,6 +745,7 @@ view_header:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
+          view_mem = None;
           try_case_inference = false;
 			}]];
       

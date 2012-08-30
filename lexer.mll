@@ -178,6 +178,8 @@ module Make (Token : SleekTokenS)
      ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);
+     ("mem", MEM);
+     ("memE", MEME);
 	 ("dprint", DPRINT);
    ("raise", RAISE);
 	 ("ref", REF);
