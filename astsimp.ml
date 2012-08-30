@@ -6649,7 +6649,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               (*let strad = 
                 let pr,pst = IF.struc_split_fv b.Iast.exp_while_specs false in
                 Gen.BList.intersect_eq (=) pr pst in*)
-              let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad None in
+              (* let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad None in *)
               (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;(*Iast.exp_while_specs = ns*)},h,p)
         | Iast.Try b-> 
               let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
@@ -6710,7 +6710,7 @@ and case_normalize_barrier_x prog bd =
    let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
    let u = [(self,Unprimed)] in
    let p = [(self,Primed)] in
-   let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
+   let fct f = fst (case_normalize_struc_formula prog u p f false false [] None) in
   {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
    
 and case_normalize_barrier prog bd =    
@@ -7508,6 +7508,7 @@ and check_barrier_wf prog bd =
                         CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
                         CF.h_formula_data_name = bd.C.barrier_name;
                         CF.h_formula_data_imm = CF.ConstAnn Mutable;
+                        CF.h_formula_data_param_imm = [];
                         CF.h_formula_data_perm = Some v;
                         CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
                         CF.h_formula_data_label = None; 

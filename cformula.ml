@@ -5374,7 +5374,7 @@ let join_conjunct_opt l = match l with
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
-  List.fold_left(fun a c-> mkStarH a c no_pos) HEmp hs
+  List.fold_left(fun a c-> mkStarH a c no_pos 110) HEmp hs
 
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with

@@ -6909,7 +6909,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 				let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 				if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
 				else
-					let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos in
+					let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos 12 in
 					let n_rhs_pure =
 						let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
 						let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
@@ -8179,7 +8179,7 @@ and normalize_base_perm_x prog (f:formula) =
 		| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
 	let comb_hlp pos (ih,ip,iqv) l= match l with
 	    | [] -> report_error no_pos ("normalize_frac_heap: must have at least one node in the aliased list")
-		| h::[] -> (mkStarH h ih pos,ip,iqv)
+		| h::[] -> (mkStarH h ih pos 14,ip,iqv)
 		| h::dups -> 
 			let get_l_perm h = match get_node_perm h with | None -> [] | Some v-> [v] in
 			if (List.exists (fun c->get_node_perm c = None)l) then (HFalse,ip,iqv)
@@ -8193,7 +8193,7 @@ and normalize_base_perm_x prog (f:formula) =
 					let lp = List.fold_left2  (fun a v1 v2-> CP.mkAnd a (CP.mkEqVar v1 v2 pos) pos) a1 args lv in
 				   (lp,(get_l_perm c)@a2)) (ip,get_l_perm h) dups in	
 				let npr,n_e = perm_folder (n_p_v,lpr) in
-				let n_h = mkStarH n_h ih pos in
+				let n_h = mkStarH n_h ih pos 13  in
 				let npr = CP.mkAnd p npr pos in
 				(n_h, npr, n_p_v::n_e@iqv) in 
 	let comb_hlp_l l f n_simpl_h :formula= 
