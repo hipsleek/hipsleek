@@ -1,0 +1,50 @@
+./run-fast-tests.pl imm -tp z3
+Total number of errors: 6 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+error at: kara.ss karatsuba_mult
+error at: kara-imm-star.ss karatsuba_mult
+error at: kara-imm-conj.ss karatsuba_mult
+error at: ll_imm.ss length
+
+#################################################
+
+ll<n,v1,v2> == self = null & n = 0 
+	or self::node<a@v1, q@v2> * q::ll<n-1,v1,v2> 
+  inv n >= 0;
+
+void update (node x)
+  requires x::ll<n,@M,@I>
+  ensures  x::ll<n,@M,@M>;
+{
+ 
+ if (x==null) return;
+ else {
+     x.val = x.val + 1;
+     node y = x.next;
+     update(y);
+     }
+     }
+
+ #### or ####
+
+ll2<n,v1> == self = null & n = 0 
+  or self::node<a, q@v1> * q::ll2<n-1,v1> 
+  inv n >= 0;
+
+//success - BUG!!
+void update22 (node x)
+  requires x::ll2<n,@I> //@I
+  ensures  x::ll2<n,@M>;//@I
+{
+  if (x==null) return;
+  else {
+    dprint;
+    update22(x.next);
+  }
+}
+
+#################################################
+
+normalization  x::node<a@A,b@M> * x::node<c@I,d@A> does not preserve info like a=c and b=d
+
