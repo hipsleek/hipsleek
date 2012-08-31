@@ -1,8 +1,3 @@
-
-Processing file "t3-i.ss"
-Parsing t3-i.ss ...
-Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
-Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
 
@@ -13,20 +8,20 @@ Checking procedure hd$node...
 !!! OLD SPECS: ((None,[]),EInfer [n]
               EBase exists (Expl)(Impl)[v; 
                     n](ex)x::llf<v,n>@M[Orig][LHSCase]&true&
-                    {FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 1::
-                                true&true&{FLOW,(20,21)=__norm})
+                    {FLOW,(20,21)=__norm}[]
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                              EAssume 62::
+                                true&true&{FLOW,(20,21)=__norm}[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[v; n](ex)x::llf<v,n>@M[Orig][LHSCase]&
-                  true&{FLOW,(20,21)=__norm}
+                  true&{FLOW,(20,21)=__norm}[]
                     EBase true&(1<=n | n<=(0-1)) & MayLoop&
-                          {FLOW,(1,23)=__flow}
-                            EAssume 1::
-                              EXISTS(v_536,q_537,Anon_538,
-                              flted_8_539: x::node<v_536,q_537>@M[Orig] * 
-                              q_537::llf<Anon_538,flted_8_539>@M[Orig]&
-                              flted_8_539=n-1 & res=v_536 & v=v_536 & 0<=n&
-                              {FLOW,(20,21)=__norm}))
+                          {FLOW,(1,23)=__flow}[]
+                            EAssume 62::
+                              EXISTS(x',v_544,q_546,Anon_547,
+                              flted_8_545: x'::node<v_544,q_546>@M[Orig] * 
+                              q_546::llf<Anon_547,flted_8_545>@M[Orig]&
+                              x'=x & res=v_544 & v=v_544 & n=flted_8_545+1 & 
+                              0<=(1+flted_8_545)&{FLOW,(20,21)=__norm})[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -34,9 +29,9 @@ Procedure hd$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 51 invocations 
+Stop Omega... 47 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.06 second(s)
-	Time spent in main process: 0.04 second(s)
+Total verification time: 0.19 second(s)
+	Time spent in main process: 0.17 second(s)
 	Time spent in child processes: 0.02 second(s)
