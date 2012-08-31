@@ -88,12 +88,12 @@ let string_of_var (c1,c2) = c1^(string_of_primed c2);;
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 
 
-let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")";;
+let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ ", " ^  id  ^ ")";;
 
 let rec string_of_typed_var_list l = match l with 
   | [] -> ""
   | h::[] -> (string_of_typed_var h) 
-  | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
+  | h::t -> (string_of_typed_var h) ^ "; " ^ (string_of_typed_var_list t)
 
 let string_of_id (id,p) = id ^ (string_of_primed p)
 ;;
@@ -139,9 +139,9 @@ let rec string_of_formula_exp = function
   | P.Sqrt (e1, _) ->
       "sqrt(" ^ (string_of_formula_exp e1) ^ ")"
   | P.Max (e1, e2, l) ->
-      "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+      "max(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l) ->
-      "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+      "min(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Seq seq -> "Seq{" ^ (string_of_formula_exp seq.P.seq_element)
                                   ^ "; " ^ (string_of_pure_formula seq.P.seq_domain)
                                   ^ "; " ^ (string_of_pure_formula seq.P.seq_loopcond) ^ "}"
@@ -162,7 +162,7 @@ let rec string_of_formula_exp = function
   | P.Bag (el, l) -> "Bag("^(string_of_formula_exp_list el) ^ ")"
   | P.BagUnion (el, l) -> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
   | P.BagIntersect (el, l) -> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
-  | P.BagDiff (e1, e2, l) -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.BagDiff (e1, e2, l) -> "BagDiff(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -216,21 +216,21 @@ and string_of_b_formula (pf,il) =
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") != (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") != " ^ (string_of_formula_exp e2)
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
-  | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-  | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
+  | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ ", " ^ (string_of_formula_exp e3) ^ ")"
+  | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ ", " ^ (string_of_formula_exp e3) ^ ")"
   | P.ListIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
   | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
   | P.ListAllN (e1, e2, l)		-> "alln(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
-          r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
+          r ^ "(" ^ (String.concat ", " (List.map string_of_formula_exp args)) ^ ")"
   | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
-  | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
-  | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
-  | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
-  | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
-  | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
+  | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^", "^(string_of_formula_exp e)^")"
+  | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^", "^(string_of_formula_exp e)^")"
+  | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^", "^(string_of_id i2)^")"
+  | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^", "^(string_of_id i2)^")"
+  | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^", "^(string_of_formula_exp e2)^")"
 
 and concat_string_list_string strings =
     ""
@@ -397,7 +397,7 @@ let rec string_of_struc_formula c = match c with
 				let b = string_of_formula fb in
 				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^", "^n2^":"^(string_of_formula b)
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
 			   F.formula_inf_continuation = continuation;} ->
@@ -441,7 +441,7 @@ let need_parenthesis2 = function
 let rec string_of_exp = function 
 	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
-				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
+				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ", ") ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
   | Label ((pid,_),e) -> 
@@ -458,7 +458,7 @@ let rec string_of_exp = function
     "{" ^(match lv with
         | [] -> ""
         | _ -> "local: "^
-          (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+          (String.concat ", " (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
         ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
@@ -490,17 +490,17 @@ let rec string_of_exp = function
 				exp_call_nrecv_path_id = pid;
 				exp_call_nrecv_arguments = el})-> 
           let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
-          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")")
+          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ", ") ^ ")")
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
 			   exp_call_recv_path_id = pid;
 			   exp_call_recv_arguments = el})-> 
-          string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+          string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ", ") ^ ")")
 	(* An Hoa *)
 	| ArrayAlloc ({exp_aalloc_etype_name = elm_type;
-		  exp_aalloc_dimensions = dims})  -> "new " ^ elm_type ^ "[" ^ (string_of_exp_list dims ",") ^ "]"
+		  exp_aalloc_dimensions = dims})  -> "new " ^ elm_type ^ "[" ^ (string_of_exp_list dims ", ") ^ "]"
   | New ({exp_new_class_name = id;
-		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
+		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ", ") ^ ")" 
   | Var ({exp_var_name = v}) -> v
   | Member ({exp_member_base = e;
 			 exp_member_fields = idl})-> (* An Hoa *) "member access " ^ (string_of_exp e) ^ "~~>" ^ (concatenate_string_list idl "~~>")
@@ -601,7 +601,7 @@ let string_of_decl (d, pos, il) = match d with (* An Hoa [22/08/2011] Add inline
 let rec string_of_decl_list l c = match l with 
   | []               -> ""
   | h::[]            -> "  " ^ string_of_decl h 
-  | h::t             -> "  " ^ (string_of_decl h) ^ ";" ^ c ^ (string_of_decl_list t c)
+  | h::t             -> "  " ^ (string_of_decl h) ^ "; " ^ c ^ (string_of_decl_list t c)
 ;;
 
 (* pretty printing for a data declaration *)
@@ -617,15 +617,15 @@ let string_of_barrier_decl b =
 	let pr_trans (s,d,l) = 
 		"("^(string_of_int s)^"->"^(string_of_int d)^
 		",[{ "^(String.concat "}\n{" (List.map string_of_struc_formula l)^"}")^")" in
-	"barrier: "^b.barrier_name^"<"^(string_of_int b.barrier_thc)^";"^(string_of_typed_var_list b.barrier_shared_vars) ^
+	"barrier: "^b.barrier_name^"<"^(string_of_int b.barrier_thc)^"; "^(string_of_typed_var_list b.barrier_shared_vars) ^
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ", ") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
 ;;
 
-let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
+let string_of_view_vars v_vars = (concatenate_string_list v_vars ", ")
 
 let string_of_coerc_type c = match c with 
   | Left -> "<="
@@ -716,7 +716,7 @@ let string_of_const_decl c = match c with
 let rec string_of_const_decl_list l = match l with 
  | []       -> ""
  | h::[]    -> string_of_const_decl h 
- | h::t     -> (string_of_const_decl h) ^ "," ^ (string_of_const_decl_list t)
+ | h::t     -> (string_of_const_decl h) ^ ", " ^ (string_of_const_decl_list t)
 ;;   
 
 (* pretty printing for constants declaration (enum) *)

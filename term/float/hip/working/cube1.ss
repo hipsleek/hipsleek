@@ -72,13 +72,13 @@ void foo1d(float x)
   }
 }
 
-// INVALID SPECS: inappropriate domain 
+// INVALID SPECS: inappropriate loop condition 
 void foo1e(float x)
     case
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -2), x < 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), x < 0.1}] ensures true;
     }
 {
   if (x < 1.1)
