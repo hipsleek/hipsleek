@@ -54,17 +54,6 @@ checkentail (x > -1.0) & (x < 1.0) & (x*x >= 0.5) & Term[Seq{__abs(x), (0.0, 1.0
 checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term[Seq{__abs(x), (0.0, 1.0), ((x > -0.1) | (x < -0.2))}] 
             |- Term[Seq{__abs(x*x*x), (0.0, 1.0), ((x*x*x > -0.1) | (x*x*x < -0.2))}].
 
-/*
-  // -1 < x < 1
-  if (x*x > 0.5)
-    return;
-  else
-    loop(x*x*x)
-*/
-// invalid termination constraint
-checkentail (x > -1.0) & (x < 1.0) & (x*x <= 0.5) & (x!=0.0) & Term[Seq{__abs(x), (-1.0, 1.0), x * x <= 0.5}] 
-            |- Term[SeqGen{x*x*x, (-1.0, 1.0), 0.0, (x*x*x) * (x*x*x) <= 0.5}].
-
 /***************************************************************************************************
   x' = 1 + 2/x
   limit = 2
@@ -90,37 +79,3 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[Seq{__abs(x-2.0), (0.0, +infinit
 checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[Seq{__abs(x-2.0), (0.0, +infinity), (1.0/x >= 0.6) }] 
             |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), (1.0/(1.0+2.0/x) >= 0.6)}].
             
-/*
-  // x != 2
-  if (x > 2.2) || (x < 1.9)
-    loop(1 + 2/x)
-*/
-// invalid limit
-//checkentail (x > 1) & (x < 3) & (x != 2) & Term[SeqGen{x, (1.0, +infinity), 2.1, 2.2, 1.9 }] 
-//            |- Term[SeqGen{1.0 + (2.0 / x), (1.0, +infinity), 2.1, 2.2, 1.9}].
-
-/***************************************************************************************************
-  x' = 1 + 1/x
-  limit = (1+sqrt(5)) / 2
-*/
-
-/*
-  // x != (1+sqrt(5))/2
-  if (x > 1.7) || (x < 1.5)
-    loop(1 + 2/x)
-*/
-// lowerbound & upper bound
-//checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}] 
-//            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), (1.0 + __sqrt(5.0)) / 2.0, 1.7, 1.5}].
-
-/*
-  // x != (1+sqrt(5))/2
-  if (x > 1.7) || (x < 1.5)
-    loop(1 + 2/x)
-*/
-// invalid limit
-//checkentail (x > 1.0) & (x < 2.0) & (x != (1.0 + __sqrt(5.0))/2.0) & Term[SeqGen{x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}]
-//            |- Term[SeqGen{1.0 + 1.0/x, ((__sqrt(5.0)-1.0)/2.0, +infinity), 1.6, 1.7, 1.5}].
-
-
-
