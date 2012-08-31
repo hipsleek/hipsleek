@@ -12,7 +12,7 @@ void foo(float x)
     case
     {
       x <= 1.1 -> requires Term ensures true;
-      x > 1.1  -> requires Term[Seq{x, (1.0, +infinity), 0.9}] ensures true;
+      x > 1.1  -> requires Term[Seq{x, (1.0, +infty), 0.9}] ensures true;
     }
 {
   if (x > 1.1)

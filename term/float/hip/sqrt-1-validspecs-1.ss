@@ -12,8 +12,8 @@ float sqrt(float x)
 void foo(float x)
     case
     {
-      x <= -1.0 -> requires Term ensures true;
-      x > -1.0  -> requires Term[Seq{x, (1.0, +infinity), 1.1}] ensures true;
+      x <= 1.0 -> requires Term ensures true;
+      x > 1.0  -> requires Term[Seq{x, (1.0, +infty), 1.1}] ensures true;
     }
 {
   if (x > 1.1)
@@ -26,18 +26,18 @@ void foo(float x)
 //---- sleek ----
 /*
 // 1
-checkentail (x <= -1.0) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= -1.0)
+checkentail (x <= 1.0) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= 1.0)
                       |- Term.
 
 // 2
-checkentail (x <= -1.0) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > -1.0)
+checkentail (x <= 1.0) & Term & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > 1.0)
                       |- Term[Seq{x1, 1.0, 1.1}].
                       
 // 3
-checkentail (x > -1.0) & Term[Seq{x, 1.0, 1.1}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= -1.0)
+checkentail (x > 1.0) & Term[Seq{x, 1.0, 1.1}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 <= 1.0)
                       |- Term.
 
 // 4
-checkentail (x > -1.0) & Term[Seq{x, 1.0, 1.1}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > -1.0)
+checkentail (x > 1.0) & Term[Seq{x, 1.0, 1.1}] & (x > 1.1) & (x1 = __sqrt(x)) & (x1 > 1.0)
                       |- Term[Seq{x1, 1.0, 1.1}].
 */

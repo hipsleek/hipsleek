@@ -1,19 +1,24 @@
 /*
-  cube examples 
+  cube example: x' = x * x * x
+      void foo1{
+        if (x < 1.1)
+        {
+          foo1(x*x*x);
+        }
+      }
 */
-
-//---- hip ----
 
 float cube(float x)
   requires Term
   ensures res = __pow(x,3);      // __pow(x) is the built-in function
 
+// correct specs -> proving OK!
 void foo1a(float x)
     case
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infinity, -1), -1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), -1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -22,12 +27,13 @@ void foo1a(float x)
   }
 }
 
+// correct specs -> proving OK!
 void foo1b(float x)
     case
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infinity, -1), x < 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), x < 1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -36,58 +42,48 @@ void foo1b(float x)
   }
 }
 
-void foo2a(float x)
+// INVALID SPECS: inappropriate domain 
+void foo1c(float x)
     case
     {
-      x >= 1      -> requires Term ensures true;
-      x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1}] ensures true;
+      x >= 1.1    -> requires Term ensures true;
+      x <= 1      -> requires Loop ensures false;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -2), x < 1.1}] ensures true;
     }
 {
-  if ((0.1 < x) && (x < 1))
+  if (x < 1.1)
   {
-    foo2a(cube(x));
+    foo1c(cube(x));
   }
 }
 
-void foo2b(float x)
+// INVALID SPECS: inappropriate domain 
+void foo1d(float x)
     case
     {
-      x >= 1      -> requires Term ensures true;
-      x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1 < x < 1}] ensures true;
+      x >= 1.1    -> requires Term ensures true;
+      x <= 1      -> requires Loop ensures false;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-100, -1), x < 1.1}] ensures true;
     }
 {
-  if ((0.1 < x) && (x < 1))
+  if (x < 1.1)
   {
-    foo2b(cube(x));
+    foo1d(cube(x));
   }
 }
 
-void foo3a(float x)
+// INVALID SPECS: inappropriate domain 
+void foo1e(float x)
     case
     {
-      x >= 1      -> requires Loop ensures false;
-      x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1}] ensures true;
+      x >= 1.1    -> requires Term ensures true;
+      x <= 1      -> requires Loop ensures false;
+      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -2), x < 1.1}] ensures true;
     }
 {
-  if (x > 0.1)
+  if (x < 1.1)
   {
-    foo3a(cube(x));
+    foo1e(cube(x));
   }
 }
 
-void foo3b(float x)
-    case
-    {
-      x >= 1      -> requires Loop ensures false;
-      x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1 < x < 1}] ensures true;
-    }
-{
-  if (x > 0.1)
-  {
-    foo3b(cube(x));
-  }
-}

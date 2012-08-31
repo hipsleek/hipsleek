@@ -17,7 +17,7 @@ Line 94:
 void loop1(float d)
   case
   {
-    d > 0   ->  requires Term[Seq{d, (0, +infinity), 32768}] ensures true;
+    d > 0   ->  requires Term[Seq{d, (0, +infty), 32768}] ensures true;
     d <= 0  ->  requires Term[] ensures true;
   }
 {
@@ -43,7 +43,7 @@ Line 99:
 void loop2(float d)
   case
   {
-    d > 0   -> requires Term[Seq{d, (0, +infinity), 1}] ensures true;
+    d > 0   -> requires Term[Seq{d, (0, +infty), 1}] ensures true;
     d <= 0  -> requires Term[] ensures true;
   }
 {
@@ -72,13 +72,13 @@ void loop3(float d)
   // this specs will causes bug
   case
   {
-    d > 0.0   -> requires Term[Seq{-d, -infinity, - 1.0 / 65536.0}] ensures true;
+    d > 0.0   -> requires Term[Seq{-d, -infty, - 1.0 / 65536.0}] ensures true;
     d <= 0.0  -> requires true ensures true;
   }
 */
   case
   {
-    d > 0.0   -> requires Term[Seq{-d, (-infinity, 0), d > 1.0 / 65536.0}] ensures true;
+    d > 0.0   -> requires Term[Seq{-d, (-infty, 0), d > 1.0 / 65536.0}] ensures true;
     d <= 0.0  -> requires true ensures true;
   }
 {
@@ -107,13 +107,13 @@ void loop4(float d)
   // this spec will causes bug
   case
   {
-    d > 0   -> requires Term[Seq{-d, -infinity, -0.5}] ensures true;
+    d > 0   -> requires Term[Seq{-d, -infty, -0.5}] ensures true;
     d <= 0  -> requires true ensures true;
   }
 */
   case
   {
-    d > 0   -> requires Term[Seq{-d, (-infinity, 0), d > 0.5}] ensures true;
+    d > 0   -> requires Term[Seq{-d, (-infty, 0), d > 0.5}] ensures true;
     d <= 0  -> requires true ensures true;
   }
 {

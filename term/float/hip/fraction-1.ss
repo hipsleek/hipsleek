@@ -8,10 +8,10 @@ float abs(float x)
 // no using abs
 void loop1(float x)
   case {
-    x > 2.01          -> requires Term[Seq{x-2.0, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    x > 2.01          -> requires Term[Seq{x-2.0, (0, +infty), (x>2.01 | x<1.99) & x>0.0}] ensures true;
     1.99 <= x <= 2.01 -> requires Term ensures true;
-    1.0 < x < 1.99    -> requires Term[Seq{2.0-x, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
-    0.0 < x <= 1.0    -> requires Term[Seq{(2.0-x)*2.0/x, (0, +infinity), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    1.0 < x < 1.99    -> requires Term[Seq{2.0-x, (0, +infty), (x>2.01 | x<1.99) & x>0.0}] ensures true;
+    0.0 < x <= 1.0    -> requires Term[Seq{(2.0-x)*2.0/x, (0, +infty), (x>2.01 | x<1.99) & x>0.0}] ensures true;
     x <= 0.0          -> requires Term ensures true;
   }
 {
@@ -22,7 +22,7 @@ void loop1(float x)
 /*
 void loop1f(float x)
   case {
-    x > 1.99     -> requires Term[Seq{x-2.0, (0, +infinity)}] ensures true;
+    x > 1.99     -> requires Term[Seq{x-2.0, (0, +infty)}] ensures true;
     x <= 1.99    -> requires Term ensures true;
   }
 {
@@ -36,7 +36,7 @@ void tmploop1(float x)
     x <= -0.1 -> requires Term ensures true;
     0 > x > -0.1 -> requires Term[Seq{-x, (0, 0.1)}] ensures true;
     x = 0 -> requires Loop ensures false;
-    x > 0 -> requires Term[Seq{x, (0, +infinity)}] ensures true;
+    x > 0 -> requires Term[Seq{x, (0, +infty)}] ensures true;
   }
 {
   if (x > -0.1)
@@ -48,10 +48,10 @@ void tmploop1(float x)
 // using abs
 void loop2(float x)
   case {
-    x > 2.01          -> requires Term[Seq{__abs(x-2.0), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    x > 2.01          -> requires Term[Seq{__abs(x-2.0), (0, +infty), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
     1.99 <= x <= 2.01 -> requires Term ensures true;
-    1.0 < x < 1.99    -> requires Term[Seq{__abs(x-2.0), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
-    0.0 < x <= 1.0    -> requires Term[Seq{__abs((x-2.0)*2.0/x), (0, +infinity), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    1.0 < x < 1.99    -> requires Term[Seq{__abs(x-2.0), (0, +infty), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
+    0.0 < x <= 1.0    -> requires Term[Seq{__abs((x-2.0)*2.0/x), (0, +infty), __abs(x-2.0)>0.01 & x>0.0}] ensures true;
     x <= 0.0          -> requires Term ensures true;
   }
 {

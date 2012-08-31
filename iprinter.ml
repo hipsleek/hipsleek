@@ -142,7 +142,7 @@ let rec string_of_formula_exp = function
       "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l) ->
       "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
-  | P.Sequence seq -> "Sequence{" ^ (string_of_formula_exp seq.P.seq_element)
+  | P.Seq seq -> "Seq{" ^ (string_of_formula_exp seq.P.seq_element)
                                   ^ "; " ^ (string_of_pure_formula seq.P.seq_domain)
                                   ^ "; " ^ (string_of_pure_formula seq.P.seq_loopcond) ^ "}"
   | P.List (elist, l) -> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
@@ -190,8 +190,8 @@ and string_of_b_formula (pf,il) =
       | Term -> 
           let opt = if ls2==[] then "" else
             "{"^(pr_list string_of_formula_exp ls2)^"}"
-          in ann ^ "["^"LexVar(" ^ (pr_list string_of_formula_exp ls1)^")"^opt^"]"
-      | _ -> ann ^ "LexVar()")
+          in ann ^ "["^ (pr_list string_of_formula_exp ls1)^")"^opt^"]"
+      | _ -> ann ^ "[]")
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)

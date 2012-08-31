@@ -116,7 +116,7 @@ let rec smt_of_exp a =
   | CP.Abs _ -> illegal_format ("z3.smt_of_exp: Abs is not supported.")
   | CP.Sqrt _ -> failwith ("z3.smt_of_exp: sqrt is not supported.")
   | CP.Pow _ -> failwith ("z3.smt_of_exp: pow is not supported.")
-  | CP.Sequence _ -> failwith ("z3.smt_of_exp: sequence is not supported.")
+  | CP.Seq _ -> failwith ("z3.smt_of_exp: sequence is not supported.")
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
@@ -320,7 +320,7 @@ and collect_exp_info e = match e with
       let ef2 = collect_exp_info e2 in
       let result = combine_formula_info ef1 ef2 in
       { result with is_linear = false; }
-  | CP.Sequence _
+  | CP.Seq _
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _

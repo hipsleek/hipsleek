@@ -245,7 +245,7 @@ exception LexVar_Not_found;;
 exception Invalid_Phase_Num;;
 exception Exn_TermVar of string;;
 exception Exn_LexVar of string;;
-exception Exn_LexVarSequence of string;;
+exception Exn_LexVarSeq of string;;
 
 (* collect the update function from a transition constraint *)
 (* by obtaining only the assignments (consider only Eq p_formula) *)
@@ -412,7 +412,7 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
-    | CP.Sequence seqsrc, CP.Sequence seqdst -> (
+    | CP.Seq seqsrc, CP.Seq seqdst -> (
         let update_function = collect_update_function lhs in
         let element_src = seqsrc.CP.seq_element in
         let domain_src = seqsrc.CP.seq_domain in
@@ -429,13 +429,13 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
           let decrease_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
           let decrease_rhs = (
             match limit_src, limit_dst with
-            | CP.SConst (Pos_infinity, _), _
-            | _, CP.SConst (Pos_infinity, _) -> CP.mkFalse pos
-            | CP.SConst (Neg_infinity, _), CP.SConst (Neg_infinity, _) ->
+            | CP.SConst (PositiveInfty, _), _
+            | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
+            | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
                 (* es > ed *)
                 CP.mkPure (CP.mkGt element_src element_dst pos)
-            | CP.SConst (Neg_infinity, _), _
-            | _, CP.SConst (Neg_infinity, _) -> CP.mkFalse pos
+            | CP.SConst (NegativeInfty, _), _
+            | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
             | _ ->
                 (* (es > ls) & (ed > ld) & (es > ed) *)
                 let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
@@ -447,14 +447,14 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
         ) in
         CP.mkAnd domain_constraint decrease_constraint pos
       )
-    | CP.Sequence _, _
-    | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
+    | CP.Seq _, _
+    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkGt src dst pos, None), None) in (* src > dst *)
         CP.mkImply lhs rhs pos
   ) else (
     match src, dst with
-    | CP.Sequence seqsrc, CP.Sequence seqdst -> (
+    | CP.Seq seqsrc, CP.Seq seqdst -> (
         let update_function = collect_update_function lhs in
         let element_src = seqsrc.CP.seq_element in
         let domain_src = seqsrc.CP.seq_domain in
@@ -472,8 +472,8 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
         ) in
         CP.mkAnd domain_constraint equal_constraint pos
       )
-    | CP.Sequence _, _
-    | _, CP.Sequence _ -> raise (Exn_LexVarSequence "Measure types isn't compatible")
+    | CP.Seq _, _
+    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
         CP.mkImply lhs rhs pos
@@ -572,8 +572,8 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
               let has_sequence_measures = (
                 List.exists (
                   fun (s, d) -> match s, d with
-                  | CP.Sequence _, _
-                  | _, CP.Sequence _ -> true
+                  | CP.Seq _, _
+                  | _, CP.Seq _ -> true
                   | _ -> false
                 ) bnd_measures
               ) in

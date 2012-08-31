@@ -21,7 +21,7 @@ void loop2(float x)
   {
     x = 0.0 -> requires Term ensures true;
     x = 1.0 -> requires Loop ensures false;
-    x > 1.0 -> requires Term[Seq{x, (1.0, +infinity), x > -1.0}] ensures true;
+    x > 1.0 -> requires Term[Seq{x, (1.0, +infty), x > -1.0}] ensures true;
     0 < x < 1.0 -> requires true ensures true;               // cannot write specs for Termination at this case
     -1 <= x < 0.0 -> requires Term ensures true;
     x <  -1 -> requires Term ensures true;
@@ -37,7 +37,7 @@ void div2(float x)
   case
   {
     x = 0.0 -> requires Term ensures true;
-    x > 2.0 -> requires Term[SeqGen{x, (0.0, +infinity), 0.0, x > 1.0}] ensures true;
+    x > 2.0 -> requires Term[SeqGen{x, (0.0, +infty), 0.0, x > 1.0}] ensures true;
     2.0 >= x > 0.0 -> requires true ensures true;            // cannot write specs for Termination at this case
     x < 0.0 -> requires Term ensures true;
   }
@@ -48,7 +48,7 @@ void div2(float x)
 
 
 void loop3(float x)
-  requires x != 0.0 & x!= 0.5 & Term[SeqGen{x, (-infinity, +infinity), 1.0, x < -1}] ensures true;
+  requires x != 0.0 & x!= 0.5 & Term[SeqGen{x, (-infty, +infty), 1.0, x < -1}] ensures true;
 {
   if (x < -1)
     return;
@@ -57,7 +57,7 @@ void loop3(float x)
 }
 /*
 void loop4(float x)
-  requires (x != 0.0) & Term[SeqGen{x, (-infinity, +infinity), 1.0, x < -1}] ensures true;
+  requires (x != 0.0) & Term[SeqGen{x, (-infty, +infty), 1.0, x < -1}] ensures true;
 {
   if (x  > 1)
     return;

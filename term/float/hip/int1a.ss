@@ -2,7 +2,7 @@
 float loop(float x)
   case {
     x >= 0.0 -> requires Loop ensures true;
-    x < 0.0  -> requires Term[Seq{x, -infinity, x < 0.0 -100.0}] ensures true;
+    x < 0.0  -> requires Term[Seq{x, -infty, x < 0.0 -100.0}] ensures true;
   }  
   
 {

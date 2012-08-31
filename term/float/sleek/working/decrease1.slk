@@ -9,7 +9,7 @@
     loop(x/2)
 */
 // lower bound  
-checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x/2.0, (0.0, +infinity), 0.1}].
+checkentail (x > 0.1) & Term[Seq{x, (0.0, +infty), 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x/2.0, (0.0, +infty), 0.1}].
 
 /*
   // x > 0
@@ -19,7 +19,7 @@ checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), 0.1}] |- (x/2.0 > 0.0) & T
     loop(x/2)  
 */
 // termination constraint
-checkentail (x >= 0.05) & Term[Seq{x, (0.0, +infinity), 2.0*x + 1.0 >= 1.1}] |- (x/2.0 > 0.0) & Term[Seq{x/2.0, (0.0, +infinity), 2.0 * (x/2.0) + 1.0 >= 1.1}].
+checkentail (x >= 0.05) & Term[Seq{x, (0.0, +infty), 2.0*x + 1.0 >= 1.1}] |- (x/2.0 > 0.0) & Term[Seq{x/2.0, (0.0, +infty), 2.0 * (x/2.0) + 1.0 >= 1.1}].
 
 /*
   // x > 0
@@ -29,7 +29,7 @@ checkentail (x >= 0.05) & Term[Seq{x, (0.0, +infinity), 2.0*x + 1.0 >= 1.1}] |- 
     loop(x/2)  
 */
 // termination constraint
-checkentail (x >= __sqrt(0.1)) & Term[Seq{x, (0.0, +infinity), x * x >= 0.01}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infinity), (x/2.0) * (x/2.0) >= 0.01}].
+checkentail (x >= __sqrt(0.1)) & Term[Seq{x, (0.0, +infty), x * x >= 0.01}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infty), (x/2.0) * (x/2.0) >= 0.01}].
 
 /*
   // x > 0
@@ -39,7 +39,7 @@ checkentail (x >= __sqrt(0.1)) & Term[Seq{x, (0.0, +infinity), x * x >= 0.01}] |
     loop(x/2)  
 */
 // termination constraint
-checkentail (x > 0.0) & (x < __sqrt(0.1)) & Term[Seq{x, (0.0, +infinity), x * x <= 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infinity), (x/2.0) * (x/2.0) <= 0.1}].
+checkentail (x > 0.0) & (x < __sqrt(0.1)) & Term[Seq{x, (0.0, +infty), x * x <= 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infty), (x/2.0) * (x/2.0) <= 0.1}].
 
 /*
   // x > 0
@@ -47,7 +47,7 @@ checkentail (x > 0.0) & (x < __sqrt(0.1)) & Term[Seq{x, (0.0, +infinity), x * x 
     loop(x/2)
 */
 // invalid limit
-checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), x > 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infinity), x/2.0 > 0.1}].
+checkentail (x > 0.1) & Term[Seq{x, (0.0, +infty), x > 0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infty), x/2.0 > 0.1}].
 
 /*
   // x > 0
@@ -55,7 +55,7 @@ checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), x > 0.1}] |- (x/2.0 > 0.0)
     loop(x/2)
 */
 // invalid lower bound
-checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), x > -0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infinity), x > -0.1}].
+checkentail (x > 0.1) & Term[Seq{x, (0.0, +infty), x > -0.1}] |- (x/2.0 > 0.0) & Term[Seq{x / 2.0, (0.0, +infty), x > -0.1}].
 
 /*********************************************************************************************************
   x' = x * 2
@@ -68,7 +68,7 @@ checkentail (x > 0.1) & Term[Seq{x, (0.0, +infinity), x > -0.1}] |- (x/2.0 > 0.0
     loop(x * 2)
 */
 // lower bound  
-checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x * 2.0, (-infinity, 0), x* 2.0 < 100.0}].
+checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infty, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x * 2.0, (-infty, 0), x* 2.0 < 100.0}].
 
 /*
   // x > 0
@@ -78,7 +78,7 @@ checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x < 100.0}] |
     loop(x*2)
 */
 // termination constraint
-checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x <= 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x * 2.0, (-infinity, 0), x * 2.0 <= 100.0}].
+checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infty, 0), x <= 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x * 2.0, (-infty, 0), x * 2.0 <= 100.0}].
 
 /*
   // x > 0
@@ -88,7 +88,7 @@ checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x <= 100.0}] 
     loop(x*2)
 */
 // termination constraint
-checkentail (x > 0.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infinity, 0), x * x < 1000.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infinity, 0), (2.0*x) * (2.0*x) < 1000.0}].
+checkentail (x > 0.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infty, 0), x * x < 1000.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infty, 0), (2.0*x) * (2.0*x) < 1000.0}].
 
 /*
   // x > 0
@@ -96,7 +96,7 @@ checkentail (x > 0.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infinity, 0), x * 
     loop(x*2)
 */
 // invalid limit
-checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infinity, 0), x < 100.0}].
+checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infty, 0), x < 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infty, 0), x < 100.0}].
 
 /*
   // x > 0
@@ -106,7 +106,7 @@ checkentail (x > 0.0) & (x < 100.0) & Term[Seq{-x, (-infinity, 0), x < 100.0}] |
     loop(x*2)
 */
 // invalid constraint
-checkentail (x >= 100.0) & Term[Seq{-x, (-infinity, 0), x >= 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infinity, 0), x * 2.0 >= 100.0}].
+checkentail (x >= 100.0) & Term[Seq{-x, (-infty, 0), x >= 100.0}] |- (x * 2.0 > 0.0) & Term[Seq{-x*2.0, (-infty, 0), x * 2.0 >= 100.0}].
 
 /*********************************************************************************************************
   x' = x * 3
@@ -142,7 +142,7 @@ checkentail (x > 0.0) & (x < 0.1) & Term[Seq{x, (0.0, 1.0), x < 0.1}] |- (x*x*x 
 
 /*********************************************************************************************************
   x' = x * 3
-  1 < x0 < +infinity
+  1 < x0 < +infty
 */
 
 /*
@@ -151,7 +151,7 @@ checkentail (x > 0.0) & (x < 0.1) & Term[Seq{x, (0.0, 1.0), x < 0.1}] |- (x*x*x 
     loop(x*x*x)
 */
 // lowerbound
-checkentail (x > 1.0) & (x < 1000.0) & Term[Seq{-x, (-infinity, -1), -1000}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infinity, -1), -1000}].
+checkentail (x > 1.0) & (x < 1000.0) & Term[Seq{-x, (-infty, -1), -1000}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infty, -1), -1000}].
 
 /*
   // x > 1
@@ -161,7 +161,7 @@ checkentail (x > 1.0) & (x < 1000.0) & Term[Seq{-x, (-infinity, -1), -1000}] |- 
     loop(x*x*x)
 */
 // termination constraint
-checkentail (x > 1.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infinity, -1), x * x <= 1000.0}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infinity, -1), (x*x*x) * (x*x*x) <= 1000}].
+checkentail (x > 1.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infty, -1), x * x <= 1000.0}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infty, -1), (x*x*x) * (x*x*x) <= 1000}].
 
 /*
   // x > 1
@@ -169,5 +169,5 @@ checkentail (x > 1.0) & (x < __sqrt(1000.0)) & Term[Seq{-x, (-infinity, -1), x *
     loop(x*x*x)
 */
 // invalid limit
-checkentail (x > 1.0) & (x<1000.0) & Term[Seq{-x, (-infinity, -1), x < 1000}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infinity, -1), x*x*x < 1000}].
+checkentail (x > 1.0) & (x<1000.0) & Term[Seq{-x, (-infty, -1), x < 1000}] |- (x*x*x > 1.0) & Term[Seq{-x*x*x, (-infty, -1), x*x*x < 1000}].
 

@@ -37,7 +37,7 @@ checkentail 0.0 < x < 1.0 & xx = __pow(x,3.0) |- 0.0 < xx < 1.0.
 
 //checkentail x=0.0 & xx=__pow(x,3.0) |- xx=0.0 .
 
-//checkentail x -infinity & xx=__pow(x,3.0) |- xx= -infinity .
+//checkentail x -infty & xx=__pow(x,3.0) |- xx= -infty .
 
 // biggest fixpoint less than the range?
 //not(exists(e: e>0.0 & forall(a:domain : a>e))

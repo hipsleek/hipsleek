@@ -9,7 +9,7 @@ void foo_term1(float x)
     case
     {
       x <= 1 -> requires Term ensures true;
-      x > 1  -> requires Term[Seq{x, (1.0, +infinity), 1.1}] ensures true;
+      x > 1  -> requires Term[Seq{x, (1.0, +infty), 1.1}] ensures true;
     }
 {
   if (x > 1.1)
@@ -23,7 +23,7 @@ void foo_term1a(float x)
     case
     {
       x <= 2.0 -> requires Term ensures true;
-      x > 2.0  -> requires Term[Seq{x, (1.0, +infinity), 1.1}] ensures true;
+      x > 2.0  -> requires Term[Seq{x, (1.0, +infty), 1.1}] ensures true;
     }
 {
   if (x > 1.1)

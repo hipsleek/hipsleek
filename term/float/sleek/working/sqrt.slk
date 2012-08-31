@@ -10,11 +10,11 @@
     loop(sqrt(x))
 */
 
-checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infinity], lowerbound}] & (y = __sqrt(x)) 
-            |- (y > 1.0) & Term[Seq{y, (1.0, +infinity), lowerbound}].
+checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infty], lowerbound}] & (y = __sqrt(x)) 
+            |- (y > 1.0) & Term[Seq{y, (1.0, +infty), lowerbound}].
 
-checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infinity), x < lowerbound}] & (y = __sqrt(x)) 
-            |- (y > 1.0) & Term[Seq{y, (1.0, +infinity), y < lowerbound}].
+checkentail (x > 1.0) & (lowerbound > 1.0) & Term[Seq{x, (1.0, +infty), x < lowerbound}] & (y = __sqrt(x)) 
+            |- (y > 1.0) & Term[Seq{y, (1.0, +infty), y < lowerbound}].
 
 
 /*------------

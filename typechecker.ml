@@ -262,17 +262,17 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* The resulting ctx may contain inferred constraint *)
 and create_bound_constraint measure pos =
   match measure with
-  | CP.Sequence seq ->
+  | CP.Seq seq ->
       let domain_constraint = seq.CP.seq_domain in
       let loopcond_constraint = seq.CP.seq_loopcond in
       let element = seq.CP.seq_element in
       let limit = seq.CP.seq_limit in
       let termination_constraint = (
         match limit with
-        | CP.SConst (Pos_infinity, _) ->
-            let _ = report_error pos "Limit can't be Pos_infinity" in
+        | CP.SConst (PositiveInfty, _) ->
+            let _ = report_error pos "Limit can't be PositiveInfty" in
             CP.mkFalse pos
-        | CP.SConst (Neg_infinity, _) ->
+        | CP.SConst (NegativeInfty, _) ->
             let vars = CP.afv element in
             let bound_var = CP.fresh_new_spec_var Float in
             let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in

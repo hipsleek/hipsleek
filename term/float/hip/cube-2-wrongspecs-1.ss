@@ -40,7 +40,7 @@ void foo3(float x)
     case
     {
       x >= 1.0      -> requires Loop ensures false;
-      0.1 < x < 1.0 -> requires Term[Seq{x, (0.0, +infinity), 0.1}] ensures true; // domain should be (0.0, 1.0)
+      0.1 < x < 1.0 -> requires Term[Seq{x, (0.0, +infty), 0.1}] ensures true; // domain should be (0.0, 1.0)
       x <= 0.1    -> requires Term ensures true;
     }
 {
@@ -96,7 +96,7 @@ void foo7(float x)
     case
     {
       x >= 1.0      -> requires Loop ensures false;
-      0.1 < x < 1.0 -> requires Term[Seq{x, (-infinity, 1.0), 0.1}] ensures true; // domain should be (0.0, 1.0)
+      0.1 < x < 1.0 -> requires Term[Seq{x, (-infty, 1.0), 0.1}] ensures true; // domain should be (0.0, 1.0)
       x <= 0.1    -> requires Term ensures true;
     }
 {

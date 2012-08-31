@@ -255,10 +255,10 @@ let mathematica_of_float (f: float) =
 
 let mathematica_of_symbol (sym: symbol) =
   match sym with
-  | Pos_infinity -> "+Infinity"
-  | Neg_infinity -> "-Infinity"
+  | PositiveInfty -> "+Infinity"
+  | NegativeInfty -> "-Infinity"
 
-let mathematica_of_spec_var (v: CP.spec_var) = 
+let mathematica_of_spec_var (v: CP.spec_var) =
   match v with
   | CP.SpecVar (_, sv, _) ->
       (* mathematica doesn't allow var name contains underscore '_'                        *)
@@ -318,7 +318,7 @@ let rec mathematica_of_exp e0 : string=
       "(" ^ se1 ^ " ^ " ^ se2 ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("mathematica.mathematica_of_exp: min/max can't appear here")
-  | CP.Sequence _ -> failwith ("mathematica.mathematica_of_exp: Sequence can't appear here")
+  | CP.Seq _ -> failwith ("mathematica.mathematica_of_exp: Seq can't appear here")
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _

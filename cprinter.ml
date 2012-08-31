@@ -635,8 +635,8 @@ let rec pr_formula_exp (e:P.exp) =
     | P.SConst (sym, l) -> 
         (* fmt_string "SYM "; *)
         let s = match sym with
-                | Pos_infinity -> "+Infinity"
-                | Neg_infinity -> "-Infinity" in
+                | PositiveInfty -> "+infty"
+                | NegativeInfty -> "-infty" in
         fmt_string s
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -664,8 +664,8 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Abs (e, _) -> fmt_string "Abs("; pr_formula_exp e; fmt_string ")";
     | P.Sqrt (e, _) -> fmt_string "sqrt("; pr_formula_exp e; fmt_string ")";
     | P.Pow (e1, e2, _) -> fmt_string "pow("; pr_formula_exp e1; fmt_string ","; pr_formula_exp e2; fmt_string ")";
-    | P.Sequence seq ->
-        fmt_string "Sequence{";
+    | P.Seq seq ->
+        fmt_string "Seq{";
         pr_formula_exp seq.CP.seq_element; fmt_string ";";
         pr_pure_formula seq.CP.seq_domain; fmt_string ";";
         pr_pure_formula seq.CP.seq_loopcond;
@@ -717,10 +717,10 @@ and pr_p_formula (pf: P.p_formula) =
       let ls1 = lex.CP.lex_exp in
       let ls2 = lex.CP.lex_tmp in
       let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-      fmt_string ((string_of_term_ann t_ann) ^ "[LexVar(");
+      fmt_string ((string_of_term_ann t_ann) ^ "[");
       pr_s "" pr_formula_exp ls1;
       if ls2!=[] then pr_set pr_formula_exp ls2 else ();
-      fmt_string ")]"
+      fmt_string "]"
   | P.BConst (b,l) -> fmt_bool b 
   | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
   | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -2417,8 +2417,8 @@ and html_of_formula_exp e =
   | P.FConst (f, l) -> string_of_float f
   | P.SConst (sym, l) ->
       let s = match sym with
-              | Pos_infinity -> "+Infinity"
-              | Neg_infinity -> "-Infinity" in
+              | PositiveInfty -> "+infty"
+              | NegativeInfty -> "-infty" in
       s
   | P.AConst (f, l) -> string_of_heap_ann f
   | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
@@ -2434,8 +2434,8 @@ and html_of_formula_exp e =
   | P.Min (e1, e2, l) -> 
       let args = bin_op_to_list op_min_short exp_assoc_op e in
       html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
-  | P.Sequence seq ->
-      "Sequence{" ^ (html_of_formula_exp seq.CP.seq_element) ^ ";" ^
+  | P.Seq seq ->
+      "Seq{" ^ (html_of_formula_exp seq.CP.seq_element) ^ ";" ^
                     (html_of_pure_formula seq.CP.seq_domain) ^ ";" ^
                     (html_of_pure_formula seq.CP.seq_loopcond) ^ "}"
   | P.Bag (elist, l) 	-> "{" ^ (String.concat "," (List.map html_of_formula_exp elist)) ^ "}"

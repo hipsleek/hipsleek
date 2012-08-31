@@ -23,10 +23,10 @@ void loop1(float z)
   case
   {
     z >= 4  -> requires Term ensures true;
-    (1 + __sqrt(5))/2 < z < 4 -> requires Term[Seq{-z, (-infinity, -(1+__sqrt(5))/2), __abs(z) >= 4 }] ensures true;
+    (1 + __sqrt(5))/2 < z < 4 -> requires Term[Seq{-z, (-infty, -(1+__sqrt(5))/2), __abs(z) >= 4 }] ensures true;
     z = (1 - __sqrt(5))/2 | z = (1+__sqrt(5))/2 -> requires Loop ensures false;
     (1-__sqrt(5))/2 < z < (1+__sqrt(5))/2 -> requires true ensures true; // TRUNG: do further analysis here
-    -4 < z < (1 - __sqrt(5))/2 -> requires Term[Seq{-__abs(z), (-infinity, -(1+__sqrt(5))/2), __abs(z) >= 4 }] ensures true;
+    -4 < z < (1 - __sqrt(5))/2 -> requires Term[Seq{-__abs(z), (-infty, -(1+__sqrt(5))/2), __abs(z) >= 4 }] ensures true;
     z <= -4 -> requires Term ensures true;
   }
 {

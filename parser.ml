@@ -1135,8 +1135,8 @@ cexp_w :
   | "plus"
     [ `PLUS; c=SELF -> (
         match c with
-        | Pure_c (P.SConst (Pos_infinity, l)) -> Pure_c (P.SConst (Pos_infinity, l))
-        | Pure_c (P.SConst (Neg_infinity, l)) -> Pure_c (P.SConst (Neg_infinity, l))
+        | Pure_c (P.SConst (PositiveInfty, l)) -> Pure_c (P.SConst (PositiveInfty, l))
+        | Pure_c (P.SConst (NegativeInfty, l)) -> Pure_c (P.SConst (NegativeInfty, l))
         | _ -> apply_cexp_form1 (fun c-> P.mkAdd (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
       )
     ]
@@ -1145,8 +1145,8 @@ cexp_w :
         match c with
         | Pure_c (P.IConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
         | Pure_c (P.FConst _) -> apply_cexp_form1 (fun c-> P.mkSubtract (P.FConst (0.0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
-        | Pure_c (P.SConst (Pos_infinity, l)) -> Pure_c (P.SConst (Neg_infinity, l))
-        | Pure_c (P.SConst (Neg_infinity, l)) -> Pure_c (P.SConst (Pos_infinity, l))
+        | Pure_c (P.SConst (PositiveInfty, l)) -> Pure_c (P.SConst (NegativeInfty, l))
+        | Pure_c (P.SConst (NegativeInfty, l)) -> Pure_c (P.SConst (PositiveInfty, l))
         | _ -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
       )
     ]
@@ -1185,15 +1185,15 @@ cexp_w :
     | `FLOAT_LIT (f,_) ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
-    | `INFINITY ->
+    | `INFTY ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
-        Pure_c (P.SConst (Pos_infinity, get_pos_camlp4 _loc 1))
+        Pure_c (P.SConst (PositiveInfty, get_pos_camlp4 _loc 1))
     | `SEQ; `OBRACE; param = measures_seqdec; `CBRACE ->
         let (element, domain, limit, loopcond) = param in
         let tc = match loopcond with
                  | Pure_f f -> f
                  | Pure_c c -> P.mkPure (P.mkGte element c no_pos) in
-        let seq = P.Sequence { P.seq_element = element;
+        let seq = P.Seq { P.seq_element = element;
                                P.seq_domain = domain;
                                P.seq_limit = limit;
                                P.seq_loopcond = tc;

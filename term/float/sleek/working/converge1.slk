@@ -65,8 +65,8 @@ checkentail (x > -1.0) & (x < 1.0) & ((x > -0.1) | (x < -0.2)) & (x!=0.0) & Term
     loop(1 + 2/x)
 */
 // lowerbound & upper bound
-checkentail (x > 1) & (x < 3) & (x != 2) & Term[Seq{__abs(x-2.0), (0.0, +infinity), ((x > 2.2) | (x < 1.9)) }] 
-            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), ((1.0+2.0/x > 2.2) | (1.0+2.0/x < 1.9))}].
+checkentail (x > 1) & (x < 3) & (x != 2) & Term[Seq{__abs(x-2.0), (0.0, +infty), ((x > 2.2) | (x < 1.9)) }] 
+            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infty), ((1.0+2.0/x > 2.2) | (1.0+2.0/x < 1.9))}].
 
 /*
   // x != 2
@@ -76,6 +76,6 @@ checkentail (x > 1) & (x < 3) & (x != 2) & Term[Seq{__abs(x-2.0), (0.0, +infinit
     loop(1 + 2/x)
 */
 // termination constraint
-checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[Seq{__abs(x-2.0), (0.0, +infinity), (1.0/x >= 0.6) }] 
-            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infinity), (1.0/(1.0+2.0/x) >= 0.6)}].
+checkentail (1.0/x >= 0.6) & (x != 2.0) & Term[Seq{__abs(x-2.0), (0.0, +infty), (1.0/x >= 0.6) }] 
+            |- Term[Seq{__abs(1.0 + (2.0 / x)-2.0), (0.0, +infty), (1.0/(1.0+2.0/x) >= 0.6)}].
             

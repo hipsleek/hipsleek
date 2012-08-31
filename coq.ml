@@ -84,7 +84,7 @@ and coq_of_exp e0 =
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
   | CP.Abs _ -> illegal_format "coq_of_exp : Abs cannot be handled"
   | CP.Sqrt _ | CP.Pow _ -> illegal_format "coq_of_exp : Sqrt, Pow cannot be handled"
-  | CP.Sequence _ -> illegal_format "coq_of_exp : Sequence cannot be handled"
+  | CP.Seq _ -> illegal_format "coq_of_exp : Seq cannot be handled"
   | CP.Max _
   | CP.Min _ -> 
 			illegal_format "coq_of_exp : min/max cannot be handled"

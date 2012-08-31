@@ -78,8 +78,8 @@ and term_fail =
 (*   | List *)
 
 type symbol =                (* symbolic value *)
-  | Neg_infinity
-  | Pos_infinity
+  | NegativeInfty
+  | PositiveInfty
 
 (* TODO : move typ here in future *)
 type typ =
@@ -186,8 +186,8 @@ let string_of_pos (p : Lexing.position) =
 
 let string_of_symbol (sym : symbol) : string =
   match sym with
-  | Pos_infinity -> "+infinity"
-  | Neg_infinity -> "-infinity"
+  | PositiveInfty -> "+infty"
+  | NegativeInfty -> "-infty"
 (* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
 (* ;; *)
 
