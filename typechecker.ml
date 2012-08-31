@@ -2207,7 +2207,12 @@ let check_prog (prog : prog_decl) =
   ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   Term.term_check_output ();
-	TInfer.main (fun f -> TP.is_sat f "" true) sorted_proc_main
+	begin (* Termination Inference *)
+		let imply = TP.imply_raw in
+		let is_sat f = TP.is_sat f "" true in
+		let simplify = Omega.simplify in
+		TInfer.main (is_sat, imply, simplify) sorted_proc_main
+	end
 	    
 let check_prog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 

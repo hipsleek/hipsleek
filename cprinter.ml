@@ -2712,6 +2712,7 @@ Redlog.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
 TInfer.print_path_trace := string_of_path_trace;;
 TInfer.print_pure_formula := string_of_pure_formula;;
+TInfer.print_pure_exp := string_of_formula_exp;;
 TInfer.print_term_case_spec := string_of_term_case_spec;;
 TInfer.print_term_ctx := string_of_term_ctx;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;

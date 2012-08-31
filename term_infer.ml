@@ -5,6 +5,7 @@ open Globals
 open Cast
 
 module CP = Cpure
+module DD = Debug
 
 type term_type =
 	| Base
@@ -37,6 +38,7 @@ type term_trans_constraint = {
 	trans_src_cond: CP.formula list;
 	trans_dst			: term_res;	
 	trans_dst_cond: CP.formula list;
+	trans_subst		: (spec_var list * spec_var list);
 	trans_ctx			: CP.formula;
 }
 
@@ -47,9 +49,14 @@ let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10
 (* Cprinter Utilities *)
 let print_path_trace = ref (fun (c: path_trace) -> "Printer has not been initialized.")
 let print_pure_formula = ref (fun (c: CP.formula) -> "Printer has not been initialized.")
+let print_pure_exp = ref (fun (c: CP.exp) -> "Printer has not been initialized.")
 let print_term_case_spec = ref (fun (c: term_case_spec) -> "Printer has not been initialized.")
 let print_term_ctx = ref (fun (c: term_ctx) -> "Printer has not been initialized.")
 let print_term_trans_constraint = ref (fun (c: term_trans_constraint) -> "Printer has not been initialized.")
+
+(* Debugging Utilities *)
+let info_hprint str pr f = DD.info_hprint (add_str str pr) f no_pos
+let info_pprint str = DD.info_pprint str no_pos
 
 let partition_term_ctx tctx = 
 	List.partition (fun ctx -> match ctx.t_type with
@@ -61,7 +68,8 @@ let collect_path_trace_term_ctx tctx =
 (* If the path trace of a base context is a SUPERSET of *)
 (* the path trace of a recursive context, then the      *)
 (* recursive call is met BEFORE the return statement    *)
-(* so that these labels are not allowed in base context *)
+(* so that these labels and their associated contexts   *)
+(* should be removed in base context                    *)
 let remove_incorrect_base_term_ctx tctx list_lbl =
 	(* let _ = print_string ("rc_lbl: " ^ (pr_list !print_path_trace list_lbl)) in *)
 	{ tctx with t_ctx = match tctx.t_type with
@@ -144,24 +152,26 @@ let rename_term_spec (fsv, tsv) tspec =
 
 (* Collect set of termination transition constraints *)
 (* based on the termination context of a function   *)
-let collect_term_trans_constraints_one_case is_sat (cond, unk) (mn, ctx) =
+let collect_term_trans_constraints_one_case tp_utils (cond, unk) (mn, ctx) =
+	let (is_sat, _, _) = tp_utils in
 	let mn_tspec = look_up_term_spec mn in
 	let callee_tspec = rename_term_spec ctx.t_params mn_tspec in
 	(* let _ = print_endline (!print_term_case_spec callee_tspec) in *)
 	List.fold_left (fun a (c_cond, c_tres) ->
 		(* if [cond] /\ ctx /\ [c_cond] is SAT then unk >> c_tres (REACHABLE) *)
-		let check_reachable ctx = 
-			let reach_ctx = join_conjunctions (cond @ [ctx] @ c_cond) in
+		let check_reachable single_ctx = 
+			let reach_ctx = join_conjunctions (cond @ [single_ctx] @ c_cond) in
 			(* let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula reach_ctx) ^ "\n") in *)
 			if (is_sat reach_ctx) then
 				[{trans_src = unk; trans_src_cond = cond;
   				trans_dst = c_tres; trans_dst_cond = c_cond;
-  				trans_ctx = ctx;}] 
+					trans_subst = ctx.t_params;
+  				trans_ctx = single_ctx;}] 
 			else []
 		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
 	) [] callee_tspec
 
-let collect_term_trans_constraints_one_method is_sat mn = 
+let collect_term_trans_constraints_one_method tp_utils mn = 
 	let mn_tctx = look_up_term_ctx mn in
 	let mn_tspec = look_up_term_spec mn in
 	let unk_cases = List.filter (fun (cond, r) ->
@@ -172,7 +182,7 @@ let collect_term_trans_constraints_one_method is_sat mn =
 		| Base -> a
 		| Rec c -> a @ [(c, ctx)]) [] mn_tctx in
 	List.concat (List.map (fun c -> 
-		List.concat (List.map (collect_term_trans_constraints_one_case is_sat c) rec_ctx)) unk_cases)
+		List.concat (List.map (collect_term_trans_constraints_one_case tp_utils c) rec_ctx)) unk_cases)
 		
 (* TODO: collect termination constraints for each scc group *)
 
@@ -200,57 +210,97 @@ let norm_dst_cond dc =
 		)
 	| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
 
-
+(*| ************************************************************ *)
 (*| Solve termination constraints                                *)
 (*| Step 1: Build a graph to present termination constraints     *)
 (*| Step 2: Do inference bottom-up - Infer termination condition *)
 (*| at transition A>>B where A!=B                                *)
+(*| ************************************************************ *)
+
+let simplify_inf_cond tp_utils ivars inf_cond ctx =
+	let (is_sat, _, simplify) = tp_utils in
+	let inf_cond = CP.mkOr (mkNot ctx None no_pos) inf_cond None no_pos in
+	let qvars = diff_svl (CP.fv inf_cond) ivars in
+	let simpl_cond = simplify (mkForall qvars inf_cond None no_pos) in
+	let simpl_cl = CP.list_of_disjs simpl_cond in
+	(* To remove the base case in the inferred condition *)
+	(* Empty list means FALSE                            *)
+	List.filter (fun c -> is_sat (CP.mkAnd c ctx no_pos)) simpl_cl
+	(* [simpl_cond] *)
+
+(* Check the condition for a monotone decreasing sequence start *)
+(* from the condition Phi(X)>=0 and the update function X'=f(X) *)
+let check_monotone_decreasing_sequence tp_utils ivars f_seq f_upd subst =
+	let (_, imply, _) = tp_utils in
+	let x = fst subst in
+	let xp = snd subst in
+	let xpp = List.map (fun x -> match x with
+	| SpecVar (typ, name, prim) -> SpecVar (typ, fresh_old_name name, prim)) xp in
+	let s_0 = f_seq in (* Phi(X) *)
+	let s_1 = e_apply_subs (List.combine x xp) s_0 in (* Phi(X') - subst: X -> X' *)
+	let s_2 = e_apply_subs (List.combine xp xpp) s_1 in (* Phi(X'') - subst: X' -> X'' *)
+	let f_upd_p = CP.subst_avoid_capture x xp (CP.subst_avoid_capture xp xpp f_upd) in
+	
+	(* If true |- s_0 > s_1 Then return True                      *)
+	(* Else If s_0 > s_1 |- s_1 > s_2 Then return (s_0 - s_1 > 0) *)
+	(* Else return (s_1 <= 0)                                     *)
+	let inf_cond, rank = 
+	begin
+  	if (imply f_upd (mkPure (mkGt s_0 s_1 no_pos))) 
+  	then ([CP.mkTrue no_pos], Some s_0)
+  	else 
+  		let mkExists vs f = CP.mkExists vs f None no_pos in
+  		let mkAnd f1 f2 = mkAnd f1 f2 no_pos in  
+  		let merged_ctx = mkAnd (mkAnd 
+  			(mkExists (diff_svl (CP.fv f_upd) (x @ xp)) f_upd) 
+  			(mkExists (diff_svl (CP.fv f_upd_p) (xp @ xpp)) f_upd_p))
+  			(mkPure (mkGt s_0 s_1 no_pos))
+  		in
+  		if (imply merged_ctx (mkPure (mkGt s_1 s_2 no_pos))) 
+  		then (simplify_inf_cond tp_utils ivars (mkPure (mkGt s_0 s_1 no_pos)) f_upd, Some s_0)
+  		else (simplify_inf_cond tp_utils ivars (mkPure (mkLte s_1 (mkIConst 0 no_pos) no_pos)) f_upd, None)
+	end in
+	(* Debug Information *)
+	begin
+		info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";
+		info_hprint "s0" !print_pure_exp s_0;
+		info_hprint "s1" !print_pure_exp s_1;
+		info_hprint "s2" !print_pure_exp s_2;
+		info_hprint "ctx s0->s1" !print_pure_formula f_upd;
+		info_hprint "ctx s1->s2" !print_pure_formula f_upd_p;
+		info_hprint "Infer Cond" (pr_list !print_pure_formula) inf_cond;
+		info_hprint "Infer Rank" (pr_option !print_pure_exp) rank;
+		info_pprint "\n";
+	end; 
+	rank
+	
 
 (* ivars is the set of variables that the inferred condition is based on them *)
-let infer_term_condition ivars src_cond dst_cond ctx =
-	let sc = List.nth src_cond ((List.length src_cond) - 1) in
-	let dc = List.nth dst_cond ((List.length dst_cond) - 1) in
+let infer_term_condition tp_utils ivars tc (* trans_constraint *) =
+	let sc = List.nth tc.trans_src_cond ((List.length tc.trans_src_cond) - 1) in
+	let dc = List.nth tc.trans_dst_cond ((List.length tc.trans_dst_cond) - 1) in
+	(* TODO: Support conjunctions in the condition *)
+	(* Disjunctions have already been split        *)
 	let sce = norm_src_cond sc in (* A in A>0  *)
 	let dce = norm_dst_cond dc in (* B in B<=0 *)
-	(* Termination Condition: A>B *)
-	let tcond = mkPure (mkGt sce dce no_pos) in
-	(* Find new generated constraints B, given A and A /\ B *)
-	(* (not A) /\ B = not(not(A /\ B) /\ A)                 *)
-	(* B = (A /\ B) \/ ((not A) /\ B)                       *)
-	(* B = (A /\ B) \/ (not(not(A /\ B) /\ A))              *)
-	(* A /\ B = inf_cond; A = ctx                           *)
-	(* B = inf_cond \/ (not((not inf_cond) /\ ctx))         *)
-	let mkNot f = mkNot f None no_pos in
-	let mkAnd f1 f2 = mkAnd f1 f2 no_pos in
-	let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos in
-	(* let inf_cond = mkAnd ctx tcond in                                                     *)
-	(* let qvars = diff_svl (CP.fv inf_cond) ivars in                                        *)
-	(* let simpl_inf_cond = mkExists_with_simpl Omega.simplify qvars inf_cond None no_pos in *)
-	(* let simpl_ctx = mkExists_with_simpl Omega.simplify qvars ctx None no_pos in           *)
-	(* Omega.simplify (mkOr simpl_inf_cond (mkNot (mkAnd (mkNot simpl_inf_cond) simpl_ctx))) *)
-	(* From CAV'08 paper: Proving Conditional Termination *)
-	let inf_cond = mkOr (mkNot ctx) tcond in
-	let qvars = diff_svl (CP.fv inf_cond) ivars in 
-	Omega.simplify (mkForall qvars inf_cond None no_pos)
+	check_monotone_decreasing_sequence tp_utils ivars sce tc.trans_ctx tc.trans_subst
 	
-let main is_sat procs =
+let main tp_utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
 		let t_ctx = look_up_term_ctx mn in
 		let t_case_spec = look_up_term_spec mn in 
-		let t_constraints = collect_term_trans_constraints_one_method is_sat mn in
-		(* let args = get_method_args proc in                                                 *)
-		(* let inf_conds = List.fold_left (fun a c ->                                         *)
-		(* 	if (c.trans_src != c.trans_dst) then                                              *)
-		(* 		a @ [(infer_term_condition args c.trans_src_cond c.trans_dst_cond c.trans_ctx)] *)
-		(* 	else a) [] t_constraints                                                          *)
-		(* in                                                                                 *)
-		print_endline (pr_list (fun c -> (!print_term_trans_constraint c) ^ "\n") t_constraints)
-		(* print_endline ("\nINFERRED COND:\n" ^ (pr_list !print_pure_formula inf_conds)) *)
-		(* print_endline (pr_list (fun ctx ->                                *)
-		(* 	"\n=============\n" ^ (!print_term_ctx ctx)) t_ctx); *)
-		(* print_endline (!print_term_case_spec t_case_spec)     *)
+		let t_constraints = collect_term_trans_constraints_one_method tp_utils mn in
+		let args = get_method_args proc in
+		let inf_conds = List.fold_left (fun a c ->
+			if (c.trans_src != c.trans_dst) then
+				a @ [(infer_term_condition tp_utils args c)]
+			else a) [] t_constraints
+		in
+		info_hprint "Termination Constraints" 
+			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
+		info_pprint "\n";
 	) procs
 
 
