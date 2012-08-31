@@ -654,7 +654,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
       (* (DD.devel_pprint "Cannot infer a precondition: RHS contradiction" pos; *)
       (* (None,None,[])) *)
       let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "rhs contradiction" in
-      (p,None,rel_ass)
+      (p,None,[])
     else
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in *)
       (* let rhs_vars = CP.fv rhs_xpure in *)
@@ -685,7 +685,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_formul
         (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
         (* let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
         let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq" in
-        (p,None,rel_ass))
+        (p,None,[]))
       else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
       (* if check_sat then *)

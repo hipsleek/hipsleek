@@ -34,6 +34,6 @@
 ../../hip bst-insert.ss > bst-insert.res
 ../../hip bst-insert-a.ss > bst-insert-a.res
 ../../hip bst-insert-b.ss > bst-insert-b.res
-../../hip bst-insert-c.ss > bst-insert-c.res
+#../../hip bst-insert-c.ss > bst-insert-c.res
 ../../hip bst-remove-min.ss > bst-remove-min.res
 

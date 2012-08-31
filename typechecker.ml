@@ -1853,7 +1853,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                         let new_spec =                           
                             let inf_post_flag = post_ctr # get > 0 in
                             Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                            let pres, posts, inf_vars = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
+                            let pres, posts, inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                                 (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars = CP.remove_dups_svl posts in
@@ -1863,6 +1863,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                               else Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top) in
                             let triples = List.map (fun (rel,post) ->
                                 let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
+(*                                let _ = Debug.info_hprint (add_str "EVARS : " !CP.print_svl) exist_vars no_pos in*)
                                 let pre_new = TP.simplify_exists_raw exist_vars post in
                                 (rel,post,pre_new)) triples in
                             let evars = stk_evars # get_stk in
@@ -1925,7 +1926,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;
-                            let _ = Inf.print_spec (" " ^ (Inf.get_proc_name proc.proc_name) ^ "\n" ^ (pr_spec2 (CF.struc_to_prepost new_spec))) (Inf.get_file_name Sys.argv.(1)) in
+(*                            let _ = Inf.print_spec (" " ^ (Inf.get_proc_name proc.proc_name) ^ "\n" ^ (pr_spec2 (CF.struc_to_prepost new_spec))) (Inf.get_file_name Sys.argv.(1)) in*)
                             let f = if f && !reverify_flag then 
                               let _,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 
