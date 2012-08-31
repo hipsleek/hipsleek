@@ -3057,7 +3057,6 @@ think it is used to instantiate when folding.
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
   es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
   (* output : pre pure assumed to infer relation *)
-  es_assumed_pure : CP.formula list; 
   (* es_infer_pures : CP.formula list; *)
   (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)
   (* input precondition inferred so far, for heap
@@ -3233,7 +3232,6 @@ let empty_es flowt grp_lbl pos =
   es_infer_rel = [] ;
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_var_zero_perm = [];
-  es_assumed_pure = [];
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
@@ -4071,6 +4069,11 @@ let add_infer_heap_to_list_context cp (l : list_context) : list_context  =
     | FailCtx _-> l
     | SuccCtx sc -> SuccCtx (List.map (add_infer_heap_to_ctx cp) sc)
 
+let add_infer_rel_to_list_context cp (l : list_context) : list_context  = 
+  match l with
+    | FailCtx _-> l
+    | SuccCtx sc -> SuccCtx (List.map (add_infer_rel_to_ctx cp) sc)
+
 (* f_ctx denotes false context *)
 let add_infer_pre f_ctx ctx =
   let ch = collect_pre_heap f_ctx in
@@ -4080,7 +4083,10 @@ let add_infer_pre f_ctx ctx =
   else
     let cp = collect_pre_pure f_ctx in
     if (cp!=[]) then add_infer_pure_to_ctx cp ctx
-    else ctx
+    else 
+      let cr = collect_rel f_ctx in
+      if (cr!=[]) then add_infer_rel_to_ctx cr ctx
+      else ctx
 
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
@@ -4209,7 +4215,6 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
-        es_assumed_pure = es.es_assumed_pure;
         es_var_measures = es.es_var_measures;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;

@@ -239,6 +239,8 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
+    es_infer_vars_rel = es.es_infer_vars_rel;
+    es_infer_rel = es.es_infer_rel;
     es_var_zero_perm = es.es_var_zero_perm;
   }
 
@@ -2016,7 +2018,6 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
-              es_assumed_pure = fold_es.es_assumed_pure;
               es_infer_rel = fold_es.es_infer_rel;
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               es_group_lbl = fold_es.es_group_lbl;
@@ -5065,9 +5066,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             begin
               match ip1 with
                 | Some(es,p) -> 
-                      stk_inf_pure # push p;
+                  begin
+                    match relass with
+                    | [] -> 
+                      (stk_inf_pure # push p;
                       stk_estate # push es;
-                      (true,[],None)
+                      (true,[],None))
+                    | h::_ ->
+                      (stk_rel_ass # push h;
+                      stk_estate # push es;
+                      (true,[],None))
+                  end
                 | None ->
                       begin
                         match ip2 with
@@ -5120,7 +5129,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     if not(stk_estate # is_empty) then
       let new_estate = stk_estate # top in
       let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
-      let ctx1 = add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1  in
+      let ctx1 = if stk_rel_ass # is_empty then add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 
+                 else add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1
+      in
       (SuccCtx[ctx1],UnsatAnte)
     else
       let inf_p = (stk_inf_pure # get_stk) in
@@ -5555,7 +5566,6 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
-        es_assumed_pure = estate.es_assumed_pure;
         es_infer_rel = estate.es_infer_rel;
         es_group_lbl = estate.es_group_lbl;
         es_term_err = estate.es_term_err;
@@ -5663,7 +5673,6 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;
-                 es_assumed_pure = estate.es_assumed_pure;
                  es_infer_rel = estate.es_infer_rel;
                  (* WN Check : do we need to restore infer_heap/pure
                     here *)
@@ -6782,28 +6791,36 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let lhs_aset = CP.EMapSV.build_eset lhs_alias in
             let rhs_als = CP.EMapSV.find_equiv_all rhs_node lhs_aset @ [rhs_node] in
             let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
-            let r = if CP.intersect rhs_als estate.es_infer_vars = []
-                && List.exists CP.is_node_typ estate.es_infer_vars then None 
-              else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
+            let r,relass = if CP.intersect rhs_als estate.es_infer_vars = []
+                && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
+              else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
+            in
+            begin
             match r with
               | Some (new_estate,pf) ->
-                    (* explicitly force unsat checking to be done here *)
-                    let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
-                    (* let ctx1 = set_unsat_flag ctx1 false in  *)
-                    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
+                begin
+                  (* explicitly force unsat checking to be done here *)
+                  let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+                  (* let ctx1 = set_unsat_flag ctx1 false in  *)
+                  let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
+                  match relass with
+                  | [] -> 
                     let r1 = add_infer_pure_to_list_context [pf] r1 in
                     (r1,prf)
-                | None ->
-                    begin
-                        let s = "15.5 no match for rhs data node: " ^
-                          (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
-                        let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                                !error_flow_int estate.CF.es_formula} in
-                        let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                                          CF.mk_failure_must s Globals.sl_error) in
-                        let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
-                        (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
-                    end
+                  | _ -> 
+                    let r1 = add_infer_rel_to_list_context relass r1 in
+                    (r1,prf)
+                end
+              | None ->
+                let s = "15.5 no match for rhs data node: " ^
+                  (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
+                let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                        !error_flow_int estate.CF.es_formula} in
+                let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                                  CF.mk_failure_must s Globals.sl_error) in
+                let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
+              end
           end
       | Context.Seq_action l ->
             report_warning no_pos "Sequential action - not handled";

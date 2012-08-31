@@ -1891,7 +1891,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                           (f,None)
                         else 
                           begin
-                            let vars = stk_vars # get_stk in
+(*                            let vars = stk_vars # get_stk in*)
                             (* let order_var v1 v2 vs = *)
                             (*   if List.exists (CP.eq_spec_var_nop v1) vs then *)
                             (*     if List.exists (CP.eq_spec_var_nop v2) vs then None *)

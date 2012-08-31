@@ -9,10 +9,11 @@ data node {
 }
 
 ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
+  or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
 
+relation A(int x, int y).
 relation B(int x, int y, int z).
 
 /*
@@ -31,19 +32,21 @@ n>=0 & n>a
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-  infer [n,a,B]
-	requires x::ll<n>  //& n > a & a > 0 
-	ensures x::ll<m> & B(n,a,m);
+  infer [A]
+  requires x::ll<n>  & x!=null & A(n,a)//& n > a & a > 0 
+  ensures x::ll<m> & n=m+1;
 {
-        if (a == 1)
-	{
-		//node tmp = x.next.next;
-		//x.next = tmp;
+  if (a == 1)
+  {
+    //node tmp = x.next.next;
+    //x.next = tmp;
     x.next = x.next.next;
-	}
-	else
-	{
-		delete(x.next, a-1);
-	}	
+    dprint;
+  }
+  else
+  {
+    delete(x.next, a-1);
+    //dprint;
+  }
 }
 
