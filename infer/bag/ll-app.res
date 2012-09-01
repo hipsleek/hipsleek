@@ -1,9 +1,3 @@
-/usr/local/bin/mona
-
-Processing file "ll-app.ss"
-Parsing ll-app.ss ...
-Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
-Starting Reduce... 
 Translating global variables to procedure parameters...
 
 Checking procedure append$node~node... Starting Omega...oc
@@ -16,26 +10,28 @@ Checking procedure append$node~node... Starting Omega...oc
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [x,A]
               EBase exists (Expl)(Impl)[S1; 
-                    S2](ex)x::ll<S1>@M[Orig][LHSCase] * 
-                    y::ll<S2>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 1::
-                                EXISTS(S: x::ll<S>@M[Orig][LHSCase]&
-                                A(S1,S2,S)&{FLOW,(20,21)=__norm}))
+                    S2](ex)x::ll<S1>@M[Orig][LHSCase]@ rem br[{191,190}] * 
+                    y::ll<S2>@M[Orig][LHSCase]@ rem br[{191,190}]&(())&
+                    {FLOW,(20,21)=__norm}[]
+                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                              EAssume 64::
+                                EXISTS(S: x::ll<S>@M[Orig][LHSCase]@ rem br[{191,190}]&
+                                (([A(S1,S2,S)]))&{FLOW,(20,21)=__norm})[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[S1; 
-                  S2](ex)x::ll<S1>@M[Orig][LHSCase] * 
-                  y::ll<S2>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}
-                    EBase true&x!=null & MayLoop&{FLOW,(1,23)=__flow}
-                            EAssume 1::
-                              EXISTS(S_640: x::ll<S_640>@M[Orig][LHSCase]&
-                              union(S1,S2)=S_640&{FLOW,(20,21)=__norm}))
-!!! NEW RELS:[ (exists(S1_613:exists(v_612:exists(S1_595:exists(v_550:exists(v_593:exists(S1_552:(S2= | 
-  S2=union(S1_613,{v_612})) & S=union(S1_595,{v_593}) & S1=union(S1_552,
-  {v_550}) & S2=S1_595 & v_550=v_593 & S1_552=))))))) --> A(S1,S2,S),
- (exists(S1_633:exists(v_632:exists(S1_552:exists(v_550:exists(S1_620:exists(v_618:S_617=union(S1_633,
-  {v_632}) & S_617=S1_620 & v_550=v_618 & S1_552=S1_566 & S2=S2_567 & 
-  A(S1_566,S2_567,S_617) & S1=union(S1_552,{v_550}) & S=union(S1_620,
-  {v_618})))))))) --> A(S1,S2,S)]
+                  S2](ex)x::ll<S1>@M[Orig][LHSCase]@ rem br[{191,190}] * 
+                  y::ll<S2>@M[Orig][LHSCase]@ rem br[{191,190}]&(())&
+                  {FLOW,(20,21)=__norm}[]
+                    EBase true&(([MayLoop][x!=null]))&{FLOW,(1,23)=__flow}[]
+                            EAssume 64::
+                              EXISTS(S: x::ll<S>@M[Orig][LHSCase]@ rem br[{191,190}]&
+                              (([union(S1,S2)=S]))&{FLOW,(20,21)=__norm})[])
+!!! NEW RELS:[ (exists(v_562:exists(S1_564:exists(v_585:exists(S1_587:S1_564= & 
+  v_562=v_585 & S2=S1_587 & S=union(S1_587,{v_585}) & S1=union(S1_564,
+  {v_562})))))) --> A(S1,S2,S),
+ (exists(v_562:exists(S1_564:exists(v_592:exists(S1_594:S_591!=() & 
+  S1_564!=() & S1_578=S1_564 & S1_594=S_591 & v_562=v_592 & 
+  A(S1_578,S2_579,S_591) & S2=S2_579 & S=union(S1_594,{v_592}) & 
+  S1=union(S1_564,{v_562})))))) --> A(S1,S2,S)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append$node~node SUCCESS
@@ -45,6 +41,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.29 second(s)
-	Time spent in main process: 0.05 second(s)
-	Time spent in child processes: 0.24 second(s)
+Total verification time: 0.47 second(s)
+	Time spent in main process: 0.25 second(s)
+	Time spent in child processes: 0.22 second(s)

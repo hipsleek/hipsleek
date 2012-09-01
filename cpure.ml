@@ -8026,6 +8026,44 @@ let rec no_of_cnts f = match f with
   | Exists (_,f,_,_) -> no_of_cnts f
   | Forall (_,f,_,_) -> no_of_cnts f
 	
+let rec remove_red_primed_vars f = match f with
+	| BForm _ -> f
+	| Or (f1,f2,l,p)-> Or (remove_red_primed_vars f1, remove_red_primed_vars f2, l, p)
+	| And (f1,f2,p) -> And (remove_red_primed_vars f1, remove_red_primed_vars f2, p)
+	| Not (f,l,p) -> Not (remove_red_primed_vars f, l, p)
+	| AndList fs -> AndList (List.map (fun (l,c) -> (l, remove_red_primed_vars c)) fs)
+	| Forall (v,f,l,p) -> 
+    let new_f = remove_red_primed_vars f in
+    let new_f = remove_red_primed_als new_f in
+    let vars = fv new_f in
+    if mem_svl v vars then Forall (v, new_f, l, p)
+    else new_f
+	| Exists (v,f,l,p) -> 
+    let new_f = remove_red_primed_vars f in
+    let new_f = remove_red_primed_als new_f in
+    let vars = fv new_f in
+    if mem_svl v vars then Exists (v, new_f, l, p)
+    else new_f
+
+and remove_red_primed_als f = match f with
+  | BForm ((Eq(Var(v1,_),Var(v2,_),p),_),_) -> 
+    if to_primed v1 = to_primed v2 then mkTrue p else f
+  | BForm ((RelForm(sv,es,p),o1),o2) ->
+    let es = List.map remove_red_primed_exp es in
+    BForm ((RelForm(sv,es,p),o1),o2)
+  | BForm _ -> f
+	| Or (f1,f2,l,p)-> mkOr (remove_red_primed_als f1) (remove_red_primed_als f2) l p
+	| And (f1,f2,p) -> mkAnd (remove_red_primed_als f1) (remove_red_primed_als f2) p
+	| Not (f,l,p) -> Not (remove_red_primed_als f, l, p)
+	| AndList fs -> AndList (List.map (fun (l,c) -> (l, remove_red_primed_als c)) fs)
+	| Forall (v,f,l,p) -> Forall (v, remove_red_primed_als f, l, p)
+	| Exists (v,f,l,p) -> Exists (v, remove_red_primed_als f, l, p)
+
+(* Just a temp patch *)
+and remove_red_primed_exp e = match e with
+  | Var (sv,p) -> Var (to_unprimed sv,p)
+  | _ -> e
+
 let rec andl_to_and f = match f with
 	| BForm _ -> f
 	| Or (f1,f2,l,p)-> Or (andl_to_and f1, andl_to_and f2, l, p)
@@ -8036,3 +8074,6 @@ let rec andl_to_and f = match f with
 	| AndList b ->
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
+
+
+

@@ -1217,7 +1217,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 (*          let new_lhs = pairwise_proc (new_lhs) in*)
 	  (*          (new_lhs,rhs) 
 		      in*)
-          let new_lhs = if is_bag_cnt then pairwise_proc (CP.arith_simplify_new new_lhs)
+          (* TODO: Avoid generating redundant primed vars *)
+          let new_lhs = if is_bag_cnt then pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs))
             else
               let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
