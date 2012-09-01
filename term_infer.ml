@@ -46,6 +46,13 @@ let term_spec_tbl : (ident, term_case_spec) Hashtbl.t = Hashtbl.create 10
 
 let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10
 
+type utils = {
+	is_sat				: CP.formula -> bool;
+	imply					: CP.formula -> CP.formula -> bool;
+	simplify			: CP.formula -> CP.formula;
+	fixcalc				: string -> spec_var list -> spec_var list -> CP.formula -> (CP.formula list);
+}
+
 (* Cprinter Utilities *)
 let print_path_trace = ref (fun (c: path_trace) -> "Printer has not been initialized.")
 let print_pure_formula = ref (fun (c: CP.formula) -> "Printer has not been initialized.")
@@ -140,11 +147,9 @@ let term_case_spec_of_list_term_ctx tctx =
 	List.concat (List.map case_spec_of_term_ctx tctx) 
 	
 (* Look up termination context and spec *)
-let look_up_term_ctx mn =
-	Hashtbl.find term_ctx_tbl mn
+let look_up_term_ctx mn = Hashtbl.find term_ctx_tbl mn
 	
-let look_up_term_spec mn =
-	Hashtbl.find term_spec_tbl mn
+let look_up_term_spec mn = Hashtbl.find term_spec_tbl mn
 	
 let rename_term_spec (fsv, tsv) tspec = 
 	List.map (fun (cond, tres) -> 
@@ -152,8 +157,7 @@ let rename_term_spec (fsv, tsv) tspec =
 
 (* Collect set of termination transition constraints *)
 (* based on the termination context of a function   *)
-let collect_term_trans_constraints_one_case tp_utils (cond, unk) (mn, ctx) =
-	let (is_sat, _, _) = tp_utils in
+let collect_term_trans_constraints_one_case utils (cond, unk) (mn, ctx) =
 	let mn_tspec = look_up_term_spec mn in
 	let callee_tspec = rename_term_spec ctx.t_params mn_tspec in
 	(* let _ = print_endline (!print_term_case_spec callee_tspec) in *)
@@ -162,7 +166,7 @@ let collect_term_trans_constraints_one_case tp_utils (cond, unk) (mn, ctx) =
 		let check_reachable single_ctx = 
 			let reach_ctx = join_conjunctions (cond @ [single_ctx] @ c_cond) in
 			(* let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula reach_ctx) ^ "\n") in *)
-			if (is_sat reach_ctx) then
+			if (utils.is_sat reach_ctx) then
 				[{trans_src = unk; trans_src_cond = cond;
   				trans_dst = c_tres; trans_dst_cond = c_cond;
 					trans_subst = ctx.t_params;
@@ -171,7 +175,7 @@ let collect_term_trans_constraints_one_case tp_utils (cond, unk) (mn, ctx) =
 		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
 	) [] callee_tspec
 
-let collect_term_trans_constraints_one_method tp_utils mn = 
+let collect_term_trans_constraints_one_method utils mn = 
 	let mn_tctx = look_up_term_ctx mn in
 	let mn_tspec = look_up_term_spec mn in
 	let unk_cases = List.filter (fun (cond, r) ->
@@ -182,7 +186,7 @@ let collect_term_trans_constraints_one_method tp_utils mn =
 		| Base -> a
 		| Rec c -> a @ [(c, ctx)]) [] mn_tctx in
 	List.concat (List.map (fun c -> 
-		List.concat (List.map (collect_term_trans_constraints_one_case tp_utils c) rec_ctx)) unk_cases)
+		List.concat (List.map (collect_term_trans_constraints_one_case utils c) rec_ctx)) unk_cases)
 		
 (* TODO: collect termination constraints for each scc group *)
 
@@ -217,21 +221,41 @@ let norm_dst_cond dc =
 (*| at transition A>>B where A!=B                                *)
 (*| ************************************************************ *)
 
-let simplify_inf_cond tp_utils ivars inf_cond ctx =
-	let (is_sat, _, simplify) = tp_utils in
+let simplify_inf_cond utils ivars inf_cond ctx =
 	let inf_cond = CP.mkOr (mkNot ctx None no_pos) inf_cond None no_pos in
 	let qvars = diff_svl (CP.fv inf_cond) ivars in
-	let simpl_cond = simplify (mkForall qvars inf_cond None no_pos) in
+	let simpl_cond = utils.simplify (mkForall qvars inf_cond None no_pos) in
 	let simpl_cl = CP.list_of_disjs simpl_cond in
 	(* To remove the base case in the inferred condition *)
 	(* Empty list means FALSE                            *)
-	List.filter (fun c -> is_sat (CP.mkAnd c ctx no_pos)) simpl_cl
+	List.filter (fun c -> utils.is_sat (CP.mkAnd c ctx no_pos)) simpl_cl
 	(* [simpl_cond] *)
-
-(* Check the condition for a monotone decreasing sequence start *)
-(* from the condition Phi(X)>=0 and the update function X'=f(X) *)
-let check_monotone_decreasing_sequence tp_utils ivars f_seq f_upd subst =
-	let (_, imply, _) = tp_utils in
+	
+(* Fixpoint Calculation for an exact termination *)
+(* condition with Equality in Base Case          *)
+let term_cond_by_fixcalc utils subst base ctx =
+	let args, params = subst in
+	let cnt = SpecVar (Int, "cnt", Unprimed) in
+	let fcnt = "fcnt" in
+	let base_cnt = mkAnd base (mkEqVarInt cnt 0 no_pos) no_pos in (* base && cnt=0 *)
+	let rec_cnt = 
+		let cnt1 = SpecVar (Int, "cnt1", Unprimed) in
+		let cnt_dec = mkPure (mkEq (mkVar cnt1 no_pos) 
+			(mkSubtract (mkVar cnt no_pos) (mkIConst 1 no_pos) no_pos) no_pos) in (* cnt1=cnt-1 *)
+		let qvars = (diff_svl (CP.fv ctx) args) @ [cnt1] in
+		let rel = mkPure (mkRelForm fcnt (List.map (fun v -> mkVar v no_pos) (params @ [cnt1])) no_pos) in
+		CP.mkExists qvars (mkAnd ctx (mkAnd cnt_dec rel no_pos) no_pos) None no_pos
+	in
+	let fml = CP.mkOr base_cnt rec_cnt None no_pos in
+	let res = utils.fixcalc fcnt (args @ [cnt]) [] fml in
+	let qres = List.map (fun f -> mkExists_with_simpl utils.simplify [cnt] f None no_pos) res in
+	qres
+	
+(* Check the condition for a monotone decreasing sequence start       *)
+(* from the condition Phi(X)>=0 and the update function X'=f(X)       *)
+(* If failed, find the condition for a monotone increasing sequence   *)
+(* base_cond: Condition for base case reachability (in one execution) *)
+let check_monotone_decreasing_sequence utils ivars subst f_seq base_cond f_upd =
 	let x = fst subst in
 	let xp = snd subst in
 	let xpp = List.map (fun x -> match x with
@@ -244,23 +268,66 @@ let check_monotone_decreasing_sequence tp_utils ivars f_seq f_upd subst =
 	(* If true |- s_0 > s_1 Then return True                      *)
 	(* Else If s_0 > s_1 |- s_1 > s_2 Then return (s_0 - s_1 > 0) *)
 	(* Else return (s_1 <= 0)                                     *)
-	let inf_cond, rank = 
+	let nonterm_cond, term_cond, rank = 
 	begin
-  	if (imply f_upd (mkPure (mkGt s_0 s_1 no_pos))) 
-  	then ([CP.mkTrue no_pos], Some s_0)
-  	else 
-  		let mkExists vs f = CP.mkExists vs f None no_pos in
-  		let mkAnd f1 f2 = mkAnd f1 f2 no_pos in  
-  		let merged_ctx = mkAnd (mkAnd 
-  			(mkExists (diff_svl (CP.fv f_upd) (x @ xp)) f_upd) 
-  			(mkExists (diff_svl (CP.fv f_upd_p) (xp @ xpp)) f_upd_p))
-  			(mkPure (mkGt s_0 s_1 no_pos))
-  		in
-  		if (imply merged_ctx (mkPure (mkGt s_1 s_2 no_pos))) 
-  		then (simplify_inf_cond tp_utils ivars (mkPure (mkGt s_0 s_1 no_pos)) f_upd, Some s_0)
-  		else (simplify_inf_cond tp_utils ivars (mkPure (mkLte s_1 (mkIConst 0 no_pos) no_pos)) f_upd, None)
+		if (utils.imply f_upd base_cond) then
+			(* CASE 0: 1-step execution *) 
+			([], [CP.mkTrue no_pos], None)
+  	else
+			(* Condition for decreasing sequence *)
+			let dec_cond = mkPure (mkGt s_0 s_1 no_pos) in 
+			if (utils.imply f_upd dec_cond) then
+				(* CASE 1: The sequence ALWAYS decreasing *)
+				(* Fixpoint calculator is used to calculate the  *)
+				(* exact condition if base condition is equality *)
+				let r = if (is_eq_exp base_cond) then 
+					term_cond_by_fixcalc utils subst (CP.subst_avoid_capture xp x base_cond) f_upd
+					else [CP.mkTrue no_pos]
+				in ([], r, Some s_0)
+			(* CASE 2: The sequence ALWAYS increasing *)
+			(* We do not need to check this case, because it has *)
+			(* already been done by the reachability check       *)
+  		else begin
+				(* CASE 3: Otherwise, the sequence MAY or MAY NOT decreasing, *)
+				(* based on some conditions that need to be inferred          *)
+  			let mkExists vs f = CP.mkExists vs f None no_pos in
+  			let mkAnd f1 f2 = mkAnd f1 f2 no_pos in  
+  			let compose_ctx = mkAnd 
+    			(mkExists (diff_svl (CP.fv f_upd) (x @ xp)) f_upd) 
+    			(mkExists (diff_svl (CP.fv f_upd_p) (xp @ xpp)) f_upd_p)
+    		in
+				(* CASE 3-1 *)
+				let is_dec, term_cond, rank =
+					let test = utils.imply (mkAnd compose_ctx dec_cond) (mkPure (mkGt s_1 s_2 no_pos)) in
+					if test then
+      			(* The sequence can be proved monotone strictly decreasing with dec_cond *)
+    				(* In this case, sometimes the condition for equality base case *)
+    				(* is NON-LINEAR, that cannot be handled by Fixcalc             *)
+  					let rl = simplify_inf_cond utils ivars dec_cond f_upd in
+  					let rl = List.filter (fun r -> utils.is_sat 
+  						(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
+  					(test, rl, Some s_0)
+					else (test, [], None)
+				in
+				let inc_cond = mkPure (mkLte s_0 s_1 no_pos) in
+				(* CASE 3-2 *)
+				let is_inc, nonterm_cond =
+					let test = utils.imply (mkAnd compose_ctx inc_cond) (mkPure (mkLte s_1 s_2 no_pos)) in
+					(* The sequence is monotone increasing --> Non-termination *)
+					if test then 
+						let rl = simplify_inf_cond utils ivars inc_cond f_upd in
+  					let rl = List.filter (fun r -> utils.is_sat 
+  						(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
+						(test, rl)
+					else (test, [])
+				in
+				if (is_dec || is_inc) then nonterm_cond, term_cond, rank
+				(* The sequence is neither monotone increasing nor monotone decreasing, *)
+  			(* so that the function returns the condition for one-step execution    *)
+				else ([], simplify_inf_cond utils ivars base_cond f_upd, None)
+			end
 	end in
-	(* Debug Information *)
+	(* Debugging Information *)
 	begin
 		info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";
 		info_hprint "s0" !print_pure_exp s_0;
@@ -268,34 +335,36 @@ let check_monotone_decreasing_sequence tp_utils ivars f_seq f_upd subst =
 		info_hprint "s2" !print_pure_exp s_2;
 		info_hprint "ctx s0->s1" !print_pure_formula f_upd;
 		info_hprint "ctx s1->s2" !print_pure_formula f_upd_p;
-		info_hprint "Infer Cond" (pr_list !print_pure_formula) inf_cond;
+		info_hprint "Infer NonTerm Cond" (pr_list !print_pure_formula) nonterm_cond;
+		info_hprint "Infer Term Cond" (pr_list !print_pure_formula) term_cond;
 		info_hprint "Infer Rank" (pr_option !print_pure_exp) rank;
 		info_pprint "\n";
 	end; 
-	rank
-	
+	(nonterm_cond, term_cond, rank)
 
 (* ivars is the set of variables that the inferred condition is based on them *)
-let infer_term_condition tp_utils ivars tc (* trans_constraint *) =
+let infer_term_condition utils ivars tc (* trans_constraint *) =
 	let sc = List.nth tc.trans_src_cond ((List.length tc.trans_src_cond) - 1) in
 	let dc = List.nth tc.trans_dst_cond ((List.length tc.trans_dst_cond) - 1) in
 	(* TODO: Support conjunctions in the condition *)
 	(* Disjunctions have already been split        *)
 	let sce = norm_src_cond sc in (* A in A>0  *)
 	let dce = norm_dst_cond dc in (* B in B<=0 *)
-	check_monotone_decreasing_sequence tp_utils ivars sce tc.trans_ctx tc.trans_subst
+	check_monotone_decreasing_sequence utils ivars tc.trans_subst sce dc tc.trans_ctx 
 	
-let main tp_utils procs =
+let main utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
 		let t_ctx = look_up_term_ctx mn in
 		let t_case_spec = look_up_term_spec mn in 
-		let t_constraints = collect_term_trans_constraints_one_method tp_utils mn in
+		let t_constraints = collect_term_trans_constraints_one_method utils mn in
 		let args = get_method_args proc in
 		let inf_conds = List.fold_left (fun a c ->
-			if (c.trans_src != c.trans_dst) then
-				a @ [(infer_term_condition tp_utils args c)]
+			(* if (c.trans_src != c.trans_dst) then *)
+			(* TODO *)
+			if (c.trans_dst == Term) then
+				a @ [(infer_term_condition utils args c)]
 			else a) [] t_constraints
 		in
 		info_hprint "Termination Constraints" 

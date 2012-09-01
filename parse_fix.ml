@@ -159,6 +159,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> Add(x, y, loc)
     | x = SELF; "-"; y = SELF -> Subtract(x, y, loc)
+		| x = INT; y = specvar -> Mult(IConst (int_of_string x, loc), Var (y, loc), loc)
     | x = specvar -> Var (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 
     | _ = NATIVEINT -> Var (SpecVar (Named "abc", "abc", Unprimed),loc)

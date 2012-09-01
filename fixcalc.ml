@@ -505,6 +505,23 @@ and compute_bottomup_inp rel =
 and get_rel_name rel = match rel with
  | CP.BForm ((CP.RelForm (name,args,_),_),_) -> CP.name_of_spec_var name
  | _ -> report_error no_pos ("Wrong format: " ^ (!CP.print_formula rel) ^ "\n")
- 
 
-
+and run input = 
+	let output_of_sleek = "fixcalc.inf" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc_old ^ " " ^ output_of_sleek) in
+  let res = remove_paren res (String.length res) in
+	Parse_fix.parse_fix res
+	
+and compute_fixpoint_simpl name ivars ovars fml =
+	let input_fixcalc =  name ^ ":={[" 
+			^ (string_of_elems ivars fixcalc_of_spec_var ",") ^ "] -> "
+      ^ "[" ^ (string_of_elems ovars fixcalc_of_spec_var ",") ^ "] -> []: " 
+			^ (fixcalc_of_pure_formula fml) ^ "\n};"
+			^ "\nFix:=bottomup(fcnt,1,SimHeur); Fix;" 
+	in
+	run input_fixcalc	
+;;

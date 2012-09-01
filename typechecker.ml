@@ -2208,10 +2208,13 @@ let check_prog (prog : prog_decl) =
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   Term.term_check_output ();
 	begin (* Termination Inference *)
-		let imply = TP.imply_raw in
-		let is_sat f = TP.is_sat f "" true in
-		let simplify = Omega.simplify in
-		TInfer.main (is_sat, imply, simplify) sorted_proc_main
+		let utils = {
+			TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
+			TInfer.simplify = Omega.simplify;
+			TInfer.imply = TP.imply_raw;
+			TInfer.is_sat = fun f -> TP.is_sat f "" true;
+		} in
+		TInfer.main utils sorted_proc_main
 	end
 	    
 let check_prog (prog : prog_decl) =
