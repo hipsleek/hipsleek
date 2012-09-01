@@ -99,6 +99,7 @@ let parse_file (parse) (source_file : string) =
 	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
+      | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | PrintCmd _ 
@@ -106,7 +107,7 @@ let parse_file (parse) (source_file : string) =
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
-	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
+	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _ | LetDef _ | EntailCheck _ | Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
@@ -121,7 +122,7 @@ let parse_file (parse) (source_file : string) =
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
-	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
@@ -152,6 +153,8 @@ let main () =
                 I.prog_func_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
+                I.prog_hp_decls = [];
+			    I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
@@ -194,6 +197,7 @@ let main () =
 							(process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
+                     | HpDef hpdef -> process_hp_def hpdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq

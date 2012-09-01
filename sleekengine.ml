@@ -44,6 +44,8 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_func_decls = [];
 			  I.prog_rel_decls = [];
 			  I.prog_rel_ids = [];
+              I.prog_hp_decls = [];
+			  I.prog_hp_ids = [];
 			  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
@@ -62,6 +64,7 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.prog_logical_vars = [];
 (*				C.prog_func_decls = [];*)
 				C.prog_rel_decls = []; (* An Hoa *)
+                C.prog_hp_decls = [];
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  (*C.old_proc_decls = [];*)
 			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
@@ -75,12 +78,14 @@ let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
+  iprog.I.prog_hp_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
   !cprog.C.prog_data_decls <- [];
   !cprog.C.prog_view_decls <- [];
   !cprog.C.prog_rel_decls <- [];
+  !cprog.C.prog_hp_decls <- [];
   !cprog.C.prog_left_coercions <- [];
   !cprog.C.prog_right_coercions <- []
 
@@ -111,15 +116,22 @@ let check_data_pred_name name : bool =
 						false
 					with
 			  		| Not_found -> 
-              begin
-					      try
-			        		let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
+                        begin
+					        try
+			        		    let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
 						      false
-					      with
-			        		| Not_found -> true
-		        	end
-		  	end
-	  end
+					        with
+			        		  | Not_found ->
+                                begin
+					                try
+			        		            let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in
+						                false
+					                with
+			        		          | Not_found -> true
+		        	            end
+		        	    end
+		  	    end
+	end
 
 let check_data_pred_name name :bool = 
   let pr1 x = x in
@@ -269,6 +281,19 @@ let process_rel_def rdef =
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
 
+let process_hp_def hpdef =
+  (* let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in *)
+  if check_data_pred_name hpdef.I.hp_name then
+	let tmp = iprog.I.prog_hp_decls in
+	  try
+          iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
+		  let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
+			(* Forward the relation to the smt solver. *)
+		  Smtsolver.add_hp_relation chpdef.C.hp_name chpdef.C.hp_vars chpdef.C.hp_formula;
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_hp_decls <- tmp
+  else
+	print_string (hpdef.I.hp_name ^ " is already defined.\n")
 
 (** An Hoa : process axiom
  *)

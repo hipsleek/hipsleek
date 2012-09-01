@@ -153,6 +153,7 @@ and h_formula = (* heap formula *)
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   | Hole of int
+  | HRel of (CP.spec_var * (CP.exp list) * loc)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -1903,6 +1904,9 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
       in
       let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
+  | HRel (r, args, _) ->
+      let vid = r in
+	  vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
   | HTrue | HFalse | HEmp | Hole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
@@ -5665,6 +5669,7 @@ and residue_labels_in_formula f =
     | Phase b -> (residue_labels_in_heap b.h_formula_phase_rd) @ (residue_labels_in_heap b.h_formula_phase_rw)
     | DataNode b -> (match b.h_formula_data_label with Some s-> [s] | _ -> [])
     | ViewNode b -> (match b.h_formula_view_label with Some s-> [s] | _ -> [])
+    | HRel _
     | HTrue 
     | HFalse 
     | HEmp
@@ -6086,6 +6091,7 @@ let rename_labels_formula_ante  e=
 	    | Star s -> None
 	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
+        | HRel _
 	    | Hole _
 	    | HTrue
 	    | HFalse 

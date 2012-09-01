@@ -21,15 +21,16 @@ type typed_ident = (typ * ident)
 and prog_decl = { 
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
-	mutable prog_view_decls : view_decl list;
-	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
+  mutable prog_view_decls : view_decl list;
+  mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+  mutable prog_hp_decls : hp_decl list;
+  mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
   (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
-    new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-	mutable prog_left_coercions : coercion_decl list;
-	mutable prog_right_coercions : coercion_decl list;
-	prog_barrier_decls : barrier_decl list
-	}
+  new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
+  mutable prog_left_coercions : coercion_decl list;
+  mutable prog_right_coercions : coercion_decl list;
+  prog_barrier_decls : barrier_decl list
+}
 	
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
@@ -97,11 +98,16 @@ and rel_decl = {
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
 
+and hp_decl = { 
+    hp_name : ident; 
+    hp_vars : P.spec_var list;
+    hp_formula : F.formula;}
+
 (** An Hoa : axiom *)
 and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
-    
+
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;

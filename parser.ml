@@ -30,6 +30,7 @@ open Perm
     | Type of type_decl
     | Func of func_decl
     | Rel of rel_decl (* An Hoa *)
+    | Hp of hp_decl
     | Axm of axiom_decl (* An Hoa *)
     | Global_var of exp_var_decl
     | Logical_var of exp_var_decl (* Globally logical vars *)
@@ -59,6 +60,7 @@ let hash_count = ref 0
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
+let hp_names = new Gen.stack (* list of names of heap preds declared *)
 
 let get_pos x = 
   {start_pos = Parsing.symbol_start_pos ();
@@ -199,7 +201,7 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
 let apply_cexp_form2 fct form1 form2 =
-  DD.no_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
+  DD.ho_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
 let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
@@ -400,6 +402,7 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
+             | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -567,6 +570,7 @@ non_empty_command:
 	  | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
+      | t = hp_decl          -> HpDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
@@ -948,6 +952,7 @@ simple_heap_constr:
        (match hal with
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> F.HRel(id, cl, (get_pos_camlp4 _loc 2))
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -1127,7 +1132,8 @@ cexp_w :
      (*| t =cexp_w LEVEL "mul"                                        -> t*)]
       
   | "mul"
-      [ t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
+      [ t1=SELF ; `STAR; t2=SELF         ->
+      apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
       | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
@@ -1152,10 +1158,11 @@ cexp_w :
 			 * s(x,1,x+1), s(x,y,x+y), ...
 			 * in our formula.
 			 *)
-        if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+      if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+        else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         else
           begin
-          if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation");
+              if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
           Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
           end
         (* (try ( *)
@@ -1436,6 +1443,15 @@ axiom_decl:[[
 		  axiom_conclusion = rhs; }
 ]];
 
+hp_decl:[[
+`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+ let _ = hp_names # push id in
+		  { hp_name = id;
+			hp_typed_vars = tl;
+            hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+		  }
+]];
+
  (*end of sleek part*)   
  (*start of hip part*)
 hprogn: 
@@ -1449,6 +1465,7 @@ hprogn:
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
+      let hp_defs = new Gen.stack in(* list of heap predicate relations *)
 	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
@@ -1464,6 +1481,7 @@ hprogn:
           end
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
+        | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
@@ -1481,6 +1499,7 @@ hprogn:
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
+    let hp_lst = hp_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_logical_var_decls = !logical_var_defs;
@@ -1490,6 +1509,8 @@ hprogn:
       prog_func_decls = func_defs # get_stk ;
       prog_rel_decls = rel_lst ; (* An Hoa *)
       prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
+      prog_hp_decls = hp_lst ;
+      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 

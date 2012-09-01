@@ -989,6 +989,11 @@ let rec pr_h_formula h =
          pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
+    | HRel (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
+        (match args with
+		  | [] -> ()
+		  | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string "emp"

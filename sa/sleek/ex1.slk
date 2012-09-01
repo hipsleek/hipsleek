@@ -1,15 +1,16 @@
 data node { int val ; node next }.
 
-relation H(node a).
-relation G(node a, node b).
+HeapPred H(node a).
+HeapPred G(node a, node b).
 relation T(int a).
  //1. for x.next
 // infer [H,G] H(x) |- x::node<a,b>@L.
 
- infer [H] H(x) |- x::node<a,b>@L.
+// infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
+ infer [H] H(x)  |- x::node<a,b>@L.
 // infer [T] T(x) |- x>3.
 // infer [x] true |- x>3.
-print residue.
+//print residue.
 
 /*
   --> [H,G,H1] x::node<a,b>*H1(x,b)

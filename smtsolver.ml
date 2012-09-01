@@ -420,7 +420,25 @@ let add_relation (rname1:string) rargs rform =
 			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
 			  add_axiom h IFF rform;
 	end
-	
+
+(* Interface function to add a new hp relation *)
+let add_hp_relation (rname1:string) rargs rform =
+  let rname = CP.SpecVar(HpT,rname1,Unprimed) in
+    (* Cache the declaration for this relation *)
+  let cache_smt_input = 
+	let signature = List.map CP.type_of_spec_var rargs in
+	let smt_signature = String.concat " " (List.map smt_of_typ signature) in
+	  (* Declare the relation in form of a function --> Bool *)
+	"(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n" in
+  let rdef = { rel_name = rname1; 
+	           rel_vars = rargs;
+	           related_rels = []; (* to be filled up by add_axiom *)
+	           related_axioms = []; (* to be filled up by add_axiom *)
+	           rel_cache_smt_declare_fun = cache_smt_input; } in
+  begin
+	  global_rel_defs := !global_rel_defs @ [rdef];
+	  (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
+  end
 
 (***************************************************************
                             INTERACTION

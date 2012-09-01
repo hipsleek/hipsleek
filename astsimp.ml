@@ -478,6 +478,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
             IF.h_formula_phase_rd = tmp1;
             IF.h_formula_phase_rw = tmp2; }
     | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
+    | IF.HRel _
     | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
@@ -874,6 +875,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
+          let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -891,6 +894,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 			  C.prog_barrier_decls = bdecls;
 			  C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
+              C.prog_hp_decls = chps;
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 			  (*C.old_proc_decls = cprocs;*)
 			  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1224,6 +1228,18 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+
+and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
+  let pos = IF.pos_of_formula hpdef.I.hp_formula in
+  let hp_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) hpdef.I.hp_typed_vars in
+  let stab = H.create 103 in
+  let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = (trans_type prog var_type pos);id = fresh_int () };) hpdef.I.hp_typed_vars in
+  (* Need to collect the type information before translating the formula *)
+  let _ = gather_type_info_formula prog hpdef.I.hp_formula stab false in
+  let crf = trans_formula  prog false [] false hpdef.I.hp_formula stab false in
+  {C.hp_name = hpdef.I.hp_name; 
+   C.hp_vars = hp_sv_vars;
+   C.hp_formula = crf; }
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in
@@ -3263,6 +3279,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: list can only be used for constraints"
     | RelT ->
           failwith "default_value: RelT can only be used for constraints"
+    | HpT ->
+          failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
 	| Tree_sh ->  failwith
               "default_value: tree_sh in variable declaration should have been rejected"
@@ -4099,6 +4117,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               let tmp_h = CF.mkConjH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
+        | IF.HRel (r, args, pos) ->    
+          let nv = trans_var_safe (r,Unprimed) HpT stab pos in
+    	  (* Match types of arguments with relation signature *)
+		  let cpargs = trans_pure_exp_list args stab in
+		   (CF.HRel (nv, cpargs, pos), CF.TypeTrue)
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
         | IF.HEmp -> (CF.HEmp, CF.TypeTrue) in 
@@ -5088,6 +5111,8 @@ and gather_type_info_b_formula_x prog b0 stab =
             | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
           )
 
+    
+
 (* An Hoa *)
 
 and guess_type_of_exp_arith a0 stab =
@@ -5575,6 +5600,18 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                          Err.error_loc = pos;
 			                          Err.error_text = c ^ " is neither 2 a data nor view name";
 			                      })) in ()
+    | IF.HRel (r, args, pos) ->
+        (try
+		    let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
+		    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+            let _ = gather_type_info_var r stab HpT in
+		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+		  with
+		    | Not_found ->    failwith ("gather_type_info_heap: relation "^r^" cannot be found")
+            | _ -> print_endline ("gather_type_info_heap: relation " ^ r)
+          )
+
     | IF.HTrue | IF.HFalse | IF.HEmp -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
@@ -5790,6 +5827,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let tmp_h = IF.mkPhase lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
+      | IF.HRel r -> (used_names, [], IF.HRel r ,  IP.mkTrue no_pos)
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
       | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) in 

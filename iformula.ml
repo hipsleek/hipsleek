@@ -95,6 +95,7 @@ and h_formula = (* heap formula *)
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
 	  (*  | ArrayNode of ((ident * primed) * ident * P.exp list * loc) *)
 	  (* pointer * base type * list of dimensions *)
+  | HRel of (ident * (P.exp list) * loc)
   | HTrue 
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -878,6 +879,29 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
+    | HRel (r, args, l) ->
+        	let nargs = List.map Ipure.float_out_exp_min_max args in
+			let nargse = List.map fst nargs in
+            let na,ls = List.split (List.map (fun c->
+			match c with
+			  | Ipure.Var _ -> (c,[])
+			  | _ ->
+				  let nn = (("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				  let nv = Ipure.Var (nn,l) in
+				  let npf = 
+					if !Globals.do_slicing then
+                      try
+                          let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+                                (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
+						  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None)
+                      with Not_found ->
+						  Ipure.BForm ((Ipure.Eq (nv,c,l), None), None)
+                    else
+                      Ipure.BForm ((Ipure.Eq (nv,c,l), None), None) 
+                        (* Slicing: TODO IL for linking exp *)
+                  in
+				  (nv,[(nn,npf)])) args) in
+            (HRel (r, na, l),List.concat ls)
     | HTrue -> (f,[])
     | HFalse -> (f,[]) 
     | HEmp -> (f,[]) in
@@ -1116,6 +1140,10 @@ match h with
 			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], new_p_perm) args 
         in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
+    | HRel (r, args, l) ->
+        	let nargs = List.map Ipure.float_out_exp_min_max args in
+			let nargse = List.map fst nargs in
+            (HRel (r, nargse, l),None)
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
     |  HEmp -> (h, None)

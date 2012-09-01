@@ -149,6 +149,7 @@ module Make (Token : SleekTokenS)
    ("global",GLOBAL);
    ("logical", LOGICAL);
 	 ("head",HEAD);
+     ("HeapPred", HP);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);

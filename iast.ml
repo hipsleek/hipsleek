@@ -25,7 +25,9 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
                    mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_hp_decls : hp_decl list; 
                    mutable prog_rel_ids : (typ * ident) list; 
+                   mutable prog_hp_ids : (typ * ident) list; 
                    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
@@ -76,6 +78,13 @@ and axiom_decl = {
 			axiom_hypothesis : P.formula ;
 			axiom_conclusion : P.formula ;
 		  }
+
+and hp_decl = { hp_name : ident; 
+		  (* rel_vars : ident list; *)
+		  (* rel_labels : branch_label list; *)
+		   hp_typed_vars : (typ * ident) list;
+		   hp_formula : Iformula.formula ;
+		  (* try_case_inference: bool *)}
 
 and hopred_decl = { hopred_name : ident;
           hopred_mode : ho_branch_label;
@@ -945,6 +954,10 @@ and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
+and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
+  | [] -> raise Not_found
+
 and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs with
   | d :: rest -> if d.enum_name = name then d else look_up_enum_def pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no enum declaration named " ^ name ^ " is found"}
@@ -1709,6 +1722,8 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
                 prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
+                prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
+                prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
@@ -1729,6 +1744,8 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_func_decls = [];
                 prog_rel_decls = [];
                 prog_rel_ids = [];
+                prog_hp_decls = [];
+                prog_hp_ids = [];
                 prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];

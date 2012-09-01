@@ -370,6 +370,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
             )
       | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | HRel _  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -739,7 +740,8 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           let tmp1 = merge_mems ph1 ph2 true in
-          (tmp1, addrs1 @ addrs2)	      
+          (tmp1, addrs1 @ addrs2)
+    | HRel _ -> (mkMTrue no_pos, [])
     | HTrue  -> (mkMTrue no_pos, [])
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (mkMFalse no_pos, [])
@@ -806,6 +808,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           (MCP.merge_mems ph1 ph2 true,  addrs1 @ addrs2)	      
+    | HRel _ -> (MCP.mkMTrue no_pos, [])
     | HTrue  -> (MCP.mkMTrue no_pos, [])
     | Hole _ -> (MCP.mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (MCP.mkMFalse no_pos, []) 
@@ -847,6 +850,7 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
         let ph1 = xpure_consumed_pre_heap prog h1 in
         let ph2 = xpure_consumed_pre_heap prog h2 in
         CP.mkAnd ph1 ph2 pos
+  | HRel _ -> P.mkTrue no_pos
   | HTrue  -> P.mkTrue no_pos
   | HFalse -> P.mkFalse no_pos
   | HEmp   -> P.mkTrue no_pos
@@ -990,6 +994,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
              h_formula_phase_rw = h2;
              h_formula_phase_pos = s.h_formula_phase_pos }, mem2, (changed1 or changed2) )
     | Hole _
+    | HRel _
     | HTrue
     | HFalse 
     | HEmp -> (hp, old_mem, false) 
@@ -6066,7 +6071,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	          let l_h = match rem_l_node with
-		        | HTrue | HFalse | HEmp-> l_h
+		        HRel _ | HTrue | HFalse | HEmp-> l_h
 		        | _ -> mkStarH rem_l_node l_h pos in
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
 	          (* An Hoa : fix new_ante *)
@@ -6082,7 +6087,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
             let consumed_h =  (match rem_l_node with
-		      | HTrue | HFalse | HEmp -> 
+		      HRel _ | HTrue | HFalse | HEmp -> 
                   l_node
               | _ -> 
                   (*TO DO: this may not be correct because we may also
@@ -6522,7 +6527,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
     | _ -> report_error no_pos ("process_unfold - expecting just unfold operation")
 
 and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
-  if Inf.no_infer estate then in
+  if Inf.no_infer estate then
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
     CF.mk_failure_must ("Disabled Infer heap and pure 2") sl_error)), NoAlias) 
   else

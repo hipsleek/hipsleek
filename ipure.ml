@@ -48,6 +48,7 @@ and p_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)
   | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
+  (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
@@ -1177,7 +1178,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			add_exists t np1 np2 l
 			    (* An Hoa : handle relation *)
 			    (* TODO Have to add the existential before the formula! Add a add_exists with a list instead *)
-	  | RelForm (r, args, l) ->
+      | RelForm (r, args, l) ->
 			let nargs = List.map float_out_exp_min_max args in
 			let nargse = List.map fst nargs in
 			let t = BForm ((RelForm (r, nargse, l), il), lbl) in
