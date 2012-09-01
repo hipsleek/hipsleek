@@ -105,6 +105,7 @@ let rec string_of_formula_exp = function
   | P.Var (x, l)        -> string_of_id x
   | P.IConst (i, l)           -> string_of_int i
   | P.AConst (i, l)           -> string_of_heap_ann i
+  | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 	  | P.Null _ 
@@ -253,8 +254,9 @@ let rec string_of_pure_formula = function
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
 
+(* TOCHECK : what is the purpose? *)
 let is_bool_f = function 
-  | F.HTrue | F.HFalse -> true 
+  | F.HTrue | F.HFalse | F.HEmp -> true 
   | _                  -> false 
 ;;
 
@@ -272,54 +274,54 @@ let string_of_iperm perm =
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
-	     F.h_formula_star_h2 = f2;
-	     F.h_formula_star_pos = l} ) -> 
+             F.h_formula_star_h2 = f2;
+             F.h_formula_star_pos = l} ) ->
       if is_bool_f f1 then 
-	if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")" 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")"
       else
-	"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
+        "(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"
   | F.Conj ({F.h_formula_conj_h1 = f1;
-	     F.h_formula_conj_h2 = f2;
-	     F.h_formula_conj_pos = l} ) -> 
+             F.h_formula_conj_h2 = f2;
+             F.h_formula_conj_pos = l} ) ->
       if is_bool_f f1 then 
-	if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")" 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
       else
-	"(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"    
+        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
   | F.Phase ({F.h_formula_phase_rd = f1;
-	     F.h_formula_phase_rw = f2;
-	     F.h_formula_phase_pos = l} ) -> 
+              F.h_formula_phase_rw = f2;
+              F.h_formula_phase_pos = l} ) ->
       if is_bool_f f1 then 
-	if is_bool_f f2 then (string_of_h_formula f1) ^ " ; " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " ; (" ^ (string_of_h_formula f2) ^ ")" 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " ; " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " ; (" ^ (string_of_h_formula f2) ^ ")"
       else
-	"(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"    
-
+        "(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"
   | F.HeapNode ({F.h_formula_heap_node = x;
-		 F.h_formula_heap_name = id;
-         F.h_formula_heap_perm = perm; (*LDK*)
-		 F.h_formula_heap_arguments = pl;
-		 F.h_formula_heap_imm = imm;
-		 F.h_formula_heap_label = pi;
-		 F.h_formula_heap_pos = l}) ->
+                 F.h_formula_heap_name = id;
+                 F.h_formula_heap_perm = perm; (*LDK*)
+                 F.h_formula_heap_arguments = pl;
+                 F.h_formula_heap_imm = imm;
+                 F.h_formula_heap_label = pi;
+                 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
-  | F.HeapNode2 ({F.h_formula_heap2_node = xid   ;
-		  F.h_formula_heap2_name = id;
-		  F.h_formula_heap2_label = pi;
-		  F.h_formula_heap2_imm = imm;
-          F.h_formula_heap2_perm = perm; (*LDK*)
-		  F.h_formula_heap2_arguments = args}) ->
+        ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
+  | F.HeapNode2 ({F.h_formula_heap2_node = xid;
+                  F.h_formula_heap2_name = id;
+                  F.h_formula_heap2_label = pi;
+                  F.h_formula_heap2_imm = imm;
+                  F.h_formula_heap2_perm = perm; (*LDK*)
+                  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
-          ((string_of_id xid)
-      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
-  | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
-  | F.HFalse                        -> "false"
+        ((string_of_id xid)
+         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
+  | F.HTrue -> "htrue"
+  | F.HFalse -> "hfalse"
+  | F.HEmp -> "emp"
 
 and string_of_imm imm = match imm with
   | Iformula.ConstAnn(Imm) -> "@I"
@@ -352,48 +354,33 @@ let rec string_of_one_formula_list (f:F.one_formula list) =
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
-				  F.formula_base_pure = pf;
-				  F.formula_base_flow = fl;
-				  F.formula_base_and = a;
-				  F.formula_base_pos = l}) ->
+                  F.formula_base_pure = pf;
+                  F.formula_base_flow = fl;
+                  F.formula_base_and = a;
+                  F.formula_base_pos = l}) ->
       let sa = if a == [] then "" else "\nAND " in
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
-	  if hf = F.HTrue then 
-		((string_of_pure_formula pf)^" FLOW "^fl)
-      else if hf = F.HFalse then 
-		let s = string_of_pure_formula pf in 
-          (if s = "" then  (string_of_h_formula hf)
-            else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
-	  else 
-		let s = string_of_pure_formula pf in 
-          (if s = "" then  (string_of_h_formula hf)
-            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+        let s = string_of_pure_formula pf in
+        (if s = "" then  (string_of_h_formula hf)
+         else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
       in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
-				F.formula_or_f2 = f2;
-				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
-
+                F.formula_or_f2 = f2;
+                F.formula_or_pos = l}) ->
+      (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
-					F.formula_exists_heap = hf;
-					F.formula_exists_flow = fl;
-					F.formula_exists_and = a;
-					F.formula_exists_pure = pf}) ->
+                    F.formula_exists_heap = hf;
+                    F.formula_exists_flow = fl;
+                    F.formula_exists_and = a;
+                    F.formula_exists_pure = pf}) ->
       let sa = if a==[] then "" else "\nAND " in
       let sa = sa ^ string_of_one_formula_list a in
-      let rs=
-	  "(EX " ^ (string_of_var_list qvars) ^ " . "
-	  ^ (if hf = F.HTrue then 
-		   ("true & ")^string_of_pure_formula pf
-		 else if hf = F.HFalse then 
-		   let s = string_of_pure_formula pf in 
-			 (if s = "" then  (string_of_h_formula hf)
-              else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
-		 else 
-		   let s = string_of_pure_formula pf in 
-			 (if s = "" then  (string_of_h_formula hf)
-              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
-	  ^ ")"
+      let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
+              ^ (let s = string_of_pure_formula pf in
+                 if s = "" then  (string_of_h_formula hf)
+                 else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+              ^ ")"
       in rs^sa
 ;;
 
@@ -479,6 +466,7 @@ let rec string_of_exp = function
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
         ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
+  | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
@@ -629,6 +617,14 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 ;;
 
+
+let string_of_barrier_decl b = 
+	let pr_trans (s,d,l) = 
+		"("^(string_of_int s)^"->"^(string_of_int d)^
+		",[{ "^(String.concat "}\n{" (List.map string_of_struc_formula l)^"}")^")" in
+	"barrier: "^b.barrier_name^"<"^(string_of_int b.barrier_thc)^";"^(string_of_typed_var_list b.barrier_shared_vars) ^
+	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
@@ -636,7 +632,12 @@ let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
-let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
+let string_of_coerc_type c = match c with 
+  | Left -> "<="
+  | Equiv -> "<=>"
+  | Right -> "=>"
+
+let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
 
 (* pretty printing for one parameter *) 
@@ -693,6 +694,13 @@ let rec string_of_view_decl_list l = match l with
  | []        -> ""
  | h::[]     -> (string_of_view_decl h) 
  | h::t      -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
+;;
+
+(* pretty printing for a list of barrier_decl *)
+let rec string_of_barrier_decl_list l = match l with 
+ | []        -> ""
+ | h::[]     -> (string_of_barrier_decl h) 
+ | h::t      -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
 ;;
 
 (* pretty printing for a list of coerc_decl *)
@@ -757,6 +765,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 

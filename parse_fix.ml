@@ -69,24 +69,24 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 
   pformula:
   [ "pformula" LEFTA
-    [ x = NATIVEINT; "="; y = exp -> mkTrue loc
-    | x = exp; "="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "<="; y = exp -> mkTrue loc
-    | x = exp; "<="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "<="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; ">="; y = exp -> mkTrue loc
-    | x = exp; ">="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; ">="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "<"; y = exp -> mkTrue loc
-    | x = exp; "<"; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "<"; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; ">"; y = exp -> mkTrue loc
-    | x = exp; ">"; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; ">"; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "!="; y = exp -> mkTrue loc
-    | x = exp; "!="; y = NATIVEINT -> mkTrue loc
-    | x = NATIVEINT; "!="; y = NATIVEINT -> mkTrue loc
+    [ _ = NATIVEINT; "="; _ = exp -> mkTrue loc
+    | _ = exp; "="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<="; _ = exp -> mkTrue loc
+    | _ = exp; "<="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">="; _ = exp -> mkTrue loc
+    | _ = exp; ">="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<"; _ = exp -> mkTrue loc
+    | _ = exp; "<"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "<"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">"; _ = exp -> mkTrue loc
+    | _ = exp; ">"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; ">"; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "!="; _ = exp -> mkTrue loc
+    | _ = exp; "!="; _ = NATIVEINT -> mkTrue loc
+    | _ = NATIVEINT; "!="; _ = NATIVEINT -> mkTrue loc
     | x = INT; "="; y = INT ->
       let tmp = if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc) in
       BForm ((tmp, None), None)
@@ -161,7 +161,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
     | x = SELF; "-"; y = SELF -> Subtract(x, y, loc)
     | x = specvar -> Var (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 
-    | x = NATIVEINT -> Var (SpecVar (Named "abc", "abc", Unprimed),loc)
+    | _ = NATIVEINT -> Var (SpecVar (Named "abc", "abc", Unprimed),loc)
     ]
   ]; 
 		

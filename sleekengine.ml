@@ -30,7 +30,7 @@ let sleek_proof_counter = new Gen.counter 0
   Global data structures. If we want to support push/pop commands,
   we'll need to make them into a stack of scopes.
 *)
-let iobj_def = { I.data_name = "Object";
+let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)
@@ -41,13 +41,14 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
-        I.prog_func_decls = [];
-        I.prog_rel_decls = [];
-        I.prog_rel_ids = [];
-        I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+			  I.prog_func_decls = [];
+			  I.prog_rel_decls = [];
+			  I.prog_rel_ids = [];
+			  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
+			  I. prog_barrier_decls = [];
 }
 
 let cobj_def = { C.data_name = "Object";
@@ -65,9 +66,10 @@ let cprog = ref { C.prog_data_decls = [];
 			  (*C.old_proc_decls = [];*)
 			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
 			  C.prog_left_coercions = [];
-			  C.prog_right_coercions = [] }
+			  C.prog_right_coercions = [];
+			  C. prog_barrier_decls = []}
 
-let residues =  ref (None : CF.list_context option)
+let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -124,25 +126,6 @@ let check_data_pred_name name :bool =
   let pr2 = string_of_bool in 
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
-(* let process_data_def ddef = *)
-(*   print_endline (Iprinter.string_of_data_decl ddef); *)
-(*   flush stdout; *)
-(*   if check_data_pred_name ddef.I.data_name then *)
-(*     let tmp = iprog.I.prog_data_decls in *)
-(*     try *)
-(*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
-(*       Iast.build_exc_hierarchy true iprog; *)
-(*       Exc.c_h (); *)
-(*       let cddef = AS.trans_data iprog ddef in *)
-(*       if !Globals.print_core then  *)
-(*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
-(*       !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls *)
-(*     with *)
-(*     | _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp *)
-(*   else begin *)
-(*     dummy_exception() ; *)
-(*     print_string (ddef.I.data_name ^ " is already defined.\n") *)
-(*   end *)
 
 let process_pred_def pdef = 
   (* TODO : how come this method not called? *)
@@ -297,6 +280,32 @@ let process_axiom_def adef = begin
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
 	
+
+let process_lemma ldef =
+  let ldef = AS.case_normalize_coerc iprog ldef in
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  (* TODO : WN print input_ast *)
+  let _ = if !Globals.print_input then print_string (Iprinter.string_of_coerc_decl ldef) in
+  let _ = if !Globals.print_core then 
+    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
+  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
+  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  let get_coercion c_lst = match c_lst with 
+    | [c] -> Some c
+    | _ -> None in
+  let l2r = get_coercion l2r in
+  let r2l = get_coercion r2l in
+  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  residues := (match res with
+               | None -> None;
+               | Some ls_ctx -> Some (ls_ctx, true))
+
+let process_lemma ldef =
+  Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
+
+	
 let process_data_def ddef =
   (*
     print_string (Iprinter.string_of_data_decl ddef);
@@ -311,7 +320,9 @@ let process_data_def ddef =
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
-	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
+	!cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
+	if !perm=NoPerm || not !enable_split_lemma_gen then () 
+	else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef))
       with
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
       else begin
@@ -319,6 +330,22 @@ let process_data_def ddef =
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
 
+let process_barrier_def bd = 
+    if !Globals.print_core then print_string (Iprinter.string_of_barrier_decl bd) else () ;
+	 try
+	    let bd = AS.case_normalize_barrier iprog bd in
+		let cbd = AS.trans_bdecl iprog bd in
+		(*let cbd = AS.normalize_barr_decl !cprog cbd in*)
+		AS.check_barrier_wf !cprog cbd;
+		print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
+	 with 
+		| Error.Malformed_barrier s -> print_string ("Barrrier "^bd.I.barrier_name^" Fail: "^s^"\n")
+    
+let process_barrier_def bd = 
+	Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def bd
+  
+
+	  
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 
@@ -419,6 +446,12 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
+let meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
+  let pr_meta = string_of_meta_formula in
+  let pr_f = Cprinter.string_of_formula in
+  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
+             (fun mf -> meta_to_formula mf quant fv_idents stab) mf0
+
 (* let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) = *)
 (* 		(\*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *\) *)
 (* 		(\* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *\) *)
@@ -493,6 +526,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
   let ante = meta_to_formula iante0 false [] stab in
+  (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.C.prog_left_coercions in*)
   let ante = Solver.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
@@ -559,11 +593,11 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
-  residues := Some rs;
   flush stdout;
   let res =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
-    else ((not (CF.isFailCtx rs))) in 
+    else ((not (CF.isFailCtx rs))) in
+  residues := Some (rs, res);
   (res, rs)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -626,9 +660,10 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (*     let _ =  Error.process_exct(e)in *)
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  DD.no_1 "print_entail_result" pr (fun _ -> "") 
-    (fun _ -> print_entail_result valid residue num_id) residue
+  DD.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
+    (fun _ _ -> print_entail_result valid residue num_id) valid residue
 
 
 let print_exc (check_id: string) =
@@ -665,31 +700,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
-      | Some s -> CF.list_formula_of_list_context s in
+      | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
-let process_lemma ldef =
-  let ldef = AS.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
-  (* TODO : WN print input_ast *)
-  let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
-  let _ = if !Globals.print_core then 
-    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
-  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
-  let get_coercion c_lst = match c_lst with 
-    | [c] -> Some c
-    | _ -> None in
-  let l2r = get_coercion l2r in
-  let r2l = get_coercion r2l in
-  residues := None;
-  residues := (LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type)
-
-let process_lemma ldef =
-  Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
-
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->
@@ -707,15 +719,17 @@ let process_print_command pcmd0 = match pcmd0 with
         (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
-        | Some s -> 
-               print_string (
-                  (Cprinter.string_of_numbered_list_formula_trace
-              (CF.list_formula_trace_of_list_context s))^"\n" )
+        | Some (ls_ctx, print) ->
+            if (print) then 
+              print_string ((Cprinter.string_of_numbered_list_formula_trace
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" );
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
+let get_residue () = !residues
+
 let get_residue () =
-  !residues
+  Debug.no_1 "get_residue" pr_no (pr_opt pr_no) get_residue ()
   (*match !residues with*)
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)

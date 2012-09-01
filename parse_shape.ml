@@ -35,7 +35,7 @@ let gen_conj x y = normalize 1 x y loc;;
 let parse_lbl x = match x with
   | None -> ("",-1)
   | Some (1,n) -> (!domain_name,int_of_string n)
-;;
+  | Some _ -> ("",-1) ;;
 
 
 EXTEND Gram
