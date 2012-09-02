@@ -59,6 +59,7 @@ let hash_count = ref 0
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
+let view_names = new Gen.stack (* list of names of views declared *)
 
 let get_pos x = 
   {start_pos = Parsing.symbol_start_pos ();
@@ -545,10 +546,10 @@ and get_heap_ann annl : F.ann =
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
-
+let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
@@ -671,9 +672,30 @@ opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
 infer_post : 
   [[
-    `PRE -> false
+   `PRE -> false
    | `POST  -> true
    ]];
+
+opt_infer_xpost: [[t=OPT infer_xpost -> un_option t None ]];
+ 
+infer_xpost : 
+  [[
+   `XPRE -> Some false
+   | `XPOST  -> Some true
+  ]];
+
+opt_transpec: [[t=OPT transpec -> un_option t None ]];
+
+transpec:
+  [[ `OBRACE; `IDENTIFIER old_view_name; `LEFTARROW; `IDENTIFIER new_view_name; `CBRACE ->
+(*    if not(view_names # mem old_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ old_view_name ^ " is not initialized.")*)
+(*    else if not(view_names # mem new_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ new_view_name ^ " is not initialized.")*)
+(*    else *)
+      Some (old_view_name, new_view_name)
+  ]];
+
 
 ann_heap: 
   [[
@@ -704,7 +726,8 @@ view_header:
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
       (* else *)
-        let modes = get_modes anns in
+      let modes = get_modes anns in
+      let _ = view_names # push vn in
         { view_name = vn;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
@@ -1449,7 +1472,7 @@ hprogn:
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
-	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
+      let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
@@ -1581,6 +1604,10 @@ enumerator:
  
 (****Specs *******)
 opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
+
+opt_spec_list_file: [[t = LIST0 spec_list_file -> t]];
+
+spec_list_file: [[`IDENTIFIER id; t = opt_spec_list -> (id, t)]];
  
 opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
@@ -1605,9 +1632,11 @@ spec_list_grp:
 
 spec: 
   [[
-    `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
      F.EInfer {
        F.formula_inf_post = postf; 
+       F.formula_inf_xpost = postxf; 
+       F.formula_inf_transpec = transpec;
        F.formula_inf_vars = ivl;
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
@@ -2215,5 +2244,5 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
-
+let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
  

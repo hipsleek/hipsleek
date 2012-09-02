@@ -815,6 +815,24 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = I.add_bar_inits prog4 in
+  let prog4 = if not (!do_infer_inc) then prog4 else
+    try
+      let id_spec_from_file = Infer.get_spec_from_file prog4 in
+      let ids, specs = List.split id_spec_from_file in
+      {prog4 with I.prog_proc_decls =
+          let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
+          let new_proc = 
+            List.map (fun proc ->
+              try 
+                let spec = List.assoc proc.I.proc_name id_spec_from_file in
+                {proc with I.proc_static_specs = spec}
+              with Not_found -> proc
+            ) new_proc
+          in
+          others @ new_proc
+      }
+    with _ -> prog4
+  in
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
   (*         { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls; *)
@@ -3814,6 +3832,8 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
              else
         CF.EInfer {
         CF.formula_inf_post = b.IF.formula_inf_post;
+        CF.formula_inf_xpost = b.IF.formula_inf_xpost;
+        CF.formula_inf_transpec = b.IF.formula_inf_transpec;
         CF.formula_inf_vars = new_ivs;
         CF.formula_inf_continuation = ct;
         CF.formula_inf_pos = pos}

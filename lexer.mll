@@ -279,7 +279,9 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@pre" { PRE }
+  | "@xpre" { XPRE }
   | "@post" { POST }
+  | "@xpost" { XPOST }
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
