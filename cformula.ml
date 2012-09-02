@@ -3006,8 +3006,62 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
   -> (h_node_list h1)@(h_node_list h2)
   | _ -> []
 
+and get_hp_rel_bformula bf=
+  get_hp_rel_h_formula bf.formula_base_heap
 
+and get_hp_rel_h_formula hf=
+  match hf with
+    | Star { h_formula_star_h1 = hf1;
+             h_formula_star_h2 = hf2} ->
+        let hd1, hv1,hr1 = get_hp_rel_h_formula hf1 in
+        let hd2,hv2,hr2 = (get_hp_rel_h_formula hf2) in
+        (hd1@hd2,hv1@hv2,hr1@hr2)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;} ->
+        let hd1,hv1,hr1 = (get_hp_rel_h_formula hf1)in
+        let hd2,hv2,hr2 = (get_hp_rel_h_formula hf2) in
+        (hd1@hd2,hv1@hv2,hr1@hr2)
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;} ->
+        let hd1,hv1,hr1 = (get_hp_rel_h_formula hf1) in
+        let hd2,hv2,hr2 = (get_hp_rel_h_formula hf2) in
+        (hd1@hd2,hv1@hv2,hr1@hr2)
+    | DataNode hd -> ([hd],[],[])
+    | ViewNode hv -> ([],[hv],[])
+    | HRel hr -> ([],[],[hr])
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> ([],[],[])
 
+and get_hp_rel_name_bformula bf=
+  get_hp_rel_name_h_formula bf.formula_base_heap
+
+and get_hp_rel_name_h_formula hf=
+  match hf with
+    | Star { h_formula_star_h1 = hf1;
+             h_formula_star_h2 = hf2} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | DataNode hd -> []
+    | ViewNode hv -> []
+    | HRel (rl,_,_) -> [rl]
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> []
+
+and mkAnd_hf fb hf pos=
+  let new_hf = Star { h_formula_star_h1 = fb.formula_base_heap ;
+                         h_formula_star_h2 = hf;
+                         h_formula_star_pos = pos
+  } in
+  {fb with formula_base_heap = new_hf}
 
  (* context functions *)
 	
@@ -3100,6 +3154,7 @@ think it is used to instantiate when folding.
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
+  es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
@@ -3122,6 +3177,7 @@ think it is used to instantiate when folding.
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
   es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
+  es_infer_hp_rel : (CP.rel_cat * formula * formula) list;
   (* output : pre pure assumed to infer relation *)
   es_assumed_pure : CP.formula list; 
   (* es_infer_pures : CP.formula list; *)
@@ -3133,6 +3189,8 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
+
+     
 
   (* allow residue in lhs formula *)
   es_allow_residue: bool;
@@ -3297,9 +3355,11 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars = [];
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
+  es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
+  es_infer_hp_rel = [] ;
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_var_zero_perm = [];
   es_assumed_pure = [];

@@ -6568,7 +6568,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               CF.mk_failure_must ("Cannot infer heap and pure 2") sl_error)), NoAlias) 
     end
 
-and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
  (* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in*)
 
  (* Thai: change back to Inf.infer_pure *)
@@ -6580,7 +6580,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
           (* let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in *)
     (* (r1,prf) *)
   (*  | None ->*)
-          begin
+      begin
             let (mix_rf,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
             (* let _ = print_flush "UNMATCHED RHS" in *)
             let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
@@ -6665,6 +6665,16 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                     CF.mk_failure_may s logical_error), NoAlias)
               end
           end
+
+and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list)
+ is_folding pos =
+  let pr1 =  Cprinter.string_of_entail_state in
+  let pr2 (x,_) = Cprinter.string_of_fail_type x in
+  (*let pr3 = Cprinter.string_of_spec_var_list in*)
+  Debug.ho_2 "do_unmatched_rhs" Cprinter.string_of_h_formula pr1 pr2
+      (fun _ _ ->
+          do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list)
+ is_folding pos) rhs estate
 
 and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in
@@ -6949,7 +6959,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     (r1,prf)
                 | None ->
                     begin
-                         let _ = print_endline ("locle2: ") in
+                        (* let _ = print_endline ("locle: collect hp_rel here: ") in *)
+                        let (mix_lf,lsvl, _) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in
+                        let (mix_rf,rsvl,_) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+                        let (res,new_estate) = Inf.infer_collect_hp_rel prog estate mix_lf lsvl mix_rf rsvl rhs_h_matched_set conseq lhs_b rhs_b pos in
+                        if (not res) then
                         let s = "15.5 no match for rhs data node: " ^
                           (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
                         let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
@@ -6958,6 +6972,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                                           CF.mk_failure_must s Globals.sl_error) in
                         let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                         (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
+                        else
+                           let res_ctx = Ctx new_estate  in
+                           (SuccCtx[res_ctx], NoAlias)
                     end
           end
       | Context.Seq_action l ->

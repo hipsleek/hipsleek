@@ -97,6 +97,11 @@ type typ =
   | Tree_sh
   (* | FuncT (\* function type *\) *)
 
+let is_pointer t=
+ match t with
+   | Named _ -> true
+   | _ -> false
+
 let barrierT = Named "barrier"
 (*
   Data types for code gen
