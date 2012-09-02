@@ -8,20 +8,20 @@ Checking procedure hd$node...
 !!! OLD SPECS: ((None,[]),EInfer [n]
               EBase exists (Expl)(Impl)[v; 
                     n](ex)x::llf<v,n>@M[Orig][LHSCase]&true&
-                    {FLOW,(20,21)=__norm}[]
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                    {FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
                               EAssume 62::
-                                true&true&{FLOW,(20,21)=__norm}[])
+                                emp&true&{FLOW,(22,23)=__norm}[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[v; n](ex)x::llf<v,n>@M[Orig][LHSCase]&
-                  true&{FLOW,(20,21)=__norm}[]
-                    EBase true&(1<=n | n<=(0-1)) & MayLoop&
-                          {FLOW,(1,23)=__flow}[]
+                  true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&(1<=n | n<=(0-1)) & MayLoop&
+                          {FLOW,(1,25)=__flow}[]
                             EAssume 62::
-                              EXISTS(x',v_544,q_546,Anon_547,
-                              flted_8_545: x'::node<v_544,q_546>@M[Orig] * 
-                              q_546::llf<Anon_547,flted_8_545>@M[Orig]&
-                              x'=x & res=v_544 & v=v_544 & n=flted_8_545+1 & 
-                              0<=(1+flted_8_545)&{FLOW,(20,21)=__norm})[])
+                              EXISTS(x',v_565,q_567,Anon_568,
+                              flted_8_566: x'::node<v_565,q_567>@M[Orig] * 
+                              q_567::llf<Anon_568,flted_8_566>@M[Orig]&
+                              x'=x & res=v_565 & v=v_565 & n=flted_8_566+1 & 
+                              0<=(1+flted_8_566)&{FLOW,(22,23)=__norm})[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -29,9 +29,9 @@ Procedure hd$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 47 invocations 
+Stop Omega... 45 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.19 second(s)
-	Time spent in main process: 0.17 second(s)
+Total verification time: 0.2 second(s)
+	Time spent in main process: 0.18 second(s)
 	Time spent in child processes: 0.02 second(s)

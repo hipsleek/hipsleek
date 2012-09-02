@@ -7,50 +7,49 @@ Checking procedure appif$node~node...
 !!! Inferred Pure :[ n1!=0]
 !!! OLD SPECS: ((None,[]),EInfer [n1]
               EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase]&
-                    true&{FLOW,(20,21)=__norm}[]
+                    true&{FLOW,(22,23)=__norm}[]
                       ECase case {
-                             n1=1 -> ((None,[]),EBase true&MayLoop&
-                                                      {FLOW,(1,23)=__flow}[]
+                             n1=1 -> ((None,[]),EBase emp&MayLoop&
+                                                      {FLOW,(1,25)=__flow}[]
                                                         EAssume 65::
-                                                          true&true&
-                                                          {FLOW,(20,21)=__norm}[])
+                                                          emp&true&
+                                                          {FLOW,(22,23)=__norm}[])
                              ;
-                             n1!=1 -> ((None,[]),EBase true&MayLoop&
-                                                       {FLOW,(1,23)=__flow}[]
+                             n1!=1 -> ((None,[]),EBase emp&MayLoop&
+                                                       {FLOW,(1,25)=__flow}[]
                                                          EAssume 66::
-                                                           true&true&
-                                                           {FLOW,(20,21)=__norm}[])
+                                                           emp&true&
+                                                           {FLOW,(22,23)=__norm}[])
                              
                              })
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase]&true&
-                  {FLOW,(20,21)=__norm}[]
+                  {FLOW,(22,23)=__norm}[]
                     ECase case {
-                           n1=1 -> ((None,[]),EBase true&MayLoop&
-                                                    {FLOW,(1,23)=__flow}[]
+                           n1=1 -> ((None,[]),EBase emp&MayLoop&
+                                                    {FLOW,(1,25)=__flow}[]
                                                       EAssume 65::
-                                                        EXISTS(x',f_551,
-                                                        Anon_543,
-                                                        y': x'::node<Anon_543,y'>@M[Orig]&
+                                                        EXISTS(x',Anon_563,
+                                                        y': x'::node<Anon_563,y'>@M[Orig]&
                                                         x'=x & y'=y & n1=1&
-                                                        {FLOW,(20,21)=__norm})[])
+                                                        {FLOW,(22,23)=__norm})[])
                            ;
-                           n1!=1 -> ((None,[]),EBase true&(1<=n1 | n1<=(0-
+                           n1!=1 -> ((None,[]),EBase emp&(1<=n1 | n1<=(0-
                                                      1)) & MayLoop&
-                                                     {FLOW,(1,23)=__flow}[]
+                                                     {FLOW,(1,25)=__flow}[]
                                                        EAssume 66::
-                                                         EXISTS(x',Anon_567,
-                                                         q_568,
-                                                         flted_14_566: 
-                                                         x'::node<Anon_567,q_568>@M[Orig] * 
-                                                         q_568::ll<flted_14_566>@M[Orig]&
+                                                         EXISTS(x',Anon_587,
+                                                         q_588,
+                                                         flted_14_586: 
+                                                         x'::node<Anon_587,q_588>@M[Orig] * 
+                                                         q_588::ll<flted_14_586>@M[Orig]&
                                                          x'=x & 
-                                                         n1=flted_14_566+1 & 
-                                                         1<=flted_14_566 & 
-                                                         q_568!=null | 
+                                                         n1=flted_14_586+1 & 
+                                                         1<=flted_14_586 & 
+                                                         q_588!=null | 
                                                          x'=x & 
-                                                         flted_14_566=0-1 & 
-                                                         n1=0 & q_568!=null&
-                                                         {FLOW,(20,21)=__norm})[])
+                                                         flted_14_586=0-1 & 
+                                                         n1=0 & q_588!=null&
+                                                         {FLOW,(22,23)=__norm})[])
                            
                            })
 !!! NEW RELS:[]
@@ -60,9 +59,9 @@ Procedure appif$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 68 invocations 
-2 false contexts at: ( (30,11)  (27,1) )
+Stop Omega... 65 invocations 
+3 false contexts at: ( (30,11)  (28,6)  (27,1) )
 
-Total verification time: 0.21 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.2 second(s)
+	Time spent in child processes: 0.03 second(s)

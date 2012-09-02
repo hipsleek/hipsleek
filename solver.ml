@@ -8544,17 +8544,17 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     mkPhaseH h1 h2 pos
   | ViewNode v ->
     let v_var = v.h_formula_view_node in
-    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then HTrue
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then HEmp
     else
       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
-      if List.exists CP.is_null_const alias then HTrue else
+      if List.exists CP.is_null_const alias then HEmp else
         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
           && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
           && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
         in if cond then HEmp else h
   | DataNode d ->
     let d_var = d.h_formula_data_node in
-    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then HTrue
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then HEmp
     else
       let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
       let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
