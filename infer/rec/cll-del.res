@@ -7,17 +7,17 @@ Checking procedure delete$node...
 !!! PRE :  1<=n
 !!! OLD SPECS: ((None,[]),EInfer [n,A]
               EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&0<n&
-                    {FLOW,(20,21)=__norm}[]
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                    {FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
                               EAssume 66::ref [x]
                                 EXISTS(m: x'::hd<m>@M[Orig][LHSCase]&A(m,n)&
-                                {FLOW,(20,21)=__norm})[])
+                                {FLOW,(22,23)=__norm})[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::hd<n>@M[Orig][LHSCase]&1<=n&
-                  {FLOW,(20,21)=__norm}[]
-                    EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}[]
+                  {FLOW,(22,23)=__norm}[]
+                    EBase emp&1<=n & MayLoop&{FLOW,(1,25)=__flow}[]
                             EAssume 66::ref [x]
                               EXISTS(m: x'::hd<m>@M[Orig][LHSCase]&n>=1 & 
-                              n=m+1&{FLOW,(20,21)=__norm})[])
+                              n=m+1&{FLOW,(22,23)=__norm})[])
 !!! NEW RELS:[ (n=1 & m=0) --> A(m,n),
  (m=n-1 & 2<=n) --> A(m,n)]
 !!! NEW ASSUME:[]
@@ -26,9 +26,9 @@ Procedure delete$node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 97 invocations 
+Stop Omega... 87 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.27 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.05 second(s)
+Total verification time: 0.3 second(s)
+	Time spent in main process: 0.24 second(s)
+	Time spent in child processes: 0.06 second(s)

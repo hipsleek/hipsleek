@@ -10,29 +10,29 @@ Checking procedure append$node~node...
 !!! PRE :  1<=n
 !!! OLD SPECS: ((None,[]),EInfer [n,A]
               EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
-                    y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}[]
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                    y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
                               EAssume 64::
                                 EXISTS(z: x::ll<z>@M[Orig][LHSCase]&A(z,m,n)&
-                                {FLOW,(20,21)=__norm})[])
+                                {FLOW,(22,23)=__norm})[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n; m](ex)x::ll<n>@M[Orig][LHSCase] * 
-                  y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(20,21)=__norm}[]
-                    EBase true&1<=n & MayLoop&{FLOW,(1,23)=__flow}[]
+                  y::ll<m>@M[Orig][LHSCase]&true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&1<=n & MayLoop&{FLOW,(1,25)=__flow}[]
                             EAssume 64::
                               EXISTS(z: x::ll<z>@M[Orig][LHSCase]&n>=1 & 
-                              z>=n & z=m+n&{FLOW,(20,21)=__norm})[])
+                              z>=n & z=m+n&{FLOW,(22,23)=__norm})[])
 !!! NEW RELS:[ (n=1 & z=m+1 & 0<=m) --> A(z,m,n),
- (m_572=m & z_588=z-1 & n=n_571+1 & 2<=z & 0<=m & 0<=n_571 & 
-  A(z_588,m_572,n_571)) --> A(z,m,n)]
+ (m_591=m & z_607=z-1 & n=n_590+1 & 2<=z & 0<=m & 0<=n_590 & 
+  A(z_607,m_591,n_590)) --> A(z,m,n)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure append$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 81 invocations 
+Stop Omega... 79 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.28 second(s)
-	Time spent in main process: 0.22 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.23 second(s)
 	Time spent in child processes: 0.06 second(s)
