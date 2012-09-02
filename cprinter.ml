@@ -2341,9 +2341,9 @@ let string_of_term_type = function
 	| TInfer.Rec mn -> "Rec{" ^ mn ^ "}"
 
 let string_of_term_res = function
-	| TInfer.Loop -> "Loop"
-	| TInfer.Term -> "Term"
-	| TInfer.Unknown s -> "UNK_" ^ s
+	| TInfer.Loop i -> "Loop_" ^ (string_of_int i)
+	| TInfer.Term i -> "Term_" ^ (string_of_int i)
+	| TInfer.Unknown i -> "UNK_" ^ (string_of_int i)
 
 let string_of_term_ctx tctx = 
 	"\nTERMINATION CTX:\n" ^ 
@@ -2715,4 +2715,5 @@ TInfer.print_pure_formula := string_of_pure_formula;;
 TInfer.print_pure_exp := string_of_formula_exp;;
 TInfer.print_term_case_spec := string_of_term_case_spec;;
 TInfer.print_term_ctx := string_of_term_ctx;;
+TInfer.print_term_res := string_of_term_res;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;

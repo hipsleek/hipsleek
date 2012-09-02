@@ -12,9 +12,9 @@ type term_type =
 	| Rec of ident (* Name of recursive callee *)
 
 type term_res =
-	| Loop
-	| Term
-	| Unknown of string
+	| Loop of int
+	| Term of int
+	| Unknown of int
 
 type term_ctx = {
 	t_type 				: term_type;
@@ -42,6 +42,8 @@ type term_trans_constraint = {
 	trans_ctx			: CP.formula;
 }
 
+let term_constr_tbl : ((term_res * term_res), term_trans_constraint) Hashtbl.t = Hashtbl.create 10
+
 let term_spec_tbl : (ident, term_case_spec) Hashtbl.t = Hashtbl.create 10
 
 let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10
@@ -59,6 +61,7 @@ let print_pure_formula = ref (fun (c: CP.formula) -> "Printer has not been initi
 let print_pure_exp = ref (fun (c: CP.exp) -> "Printer has not been initialized.")
 let print_term_case_spec = ref (fun (c: term_case_spec) -> "Printer has not been initialized.")
 let print_term_ctx = ref (fun (c: term_ctx) -> "Printer has not been initialized.")
+let print_term_res = ref (fun (c: term_res) -> "Printer has not been initialized.")
 let print_term_trans_constraint = ref (fun (c: term_trans_constraint) -> "Printer has not been initialized.")
 
 (* Debugging Utilities *)
@@ -111,8 +114,8 @@ let update_cond_pure_term_ctx	tctx =
 		t_pure_ctx = lpf;
 		t_cond_pure = List.map (fun f ->
 			match tctx.t_type with
-			| Base -> (f, Term)
-			| Rec _ -> (f, Unknown "")) lpf;}
+			| Base -> (f, Term 0)
+			| Rec _ -> (f, Unknown 0)) lpf;}
 	
 let update_cond_pure_list_term_ctx tctx = 
 	List.map update_cond_pure_term_ctx tctx
@@ -128,7 +131,8 @@ let simplify_t_cond_pure args (f, t_res) =
 	(* a!=b has already been transformed to a<b | a>b by Omega *)
 	let simpl_f = mkExists_with_simpl Omega.simplify qsv f None no_pos in
 	List.map (fun f -> (f, match t_res with
-	| Unknown "" -> Unknown (string_of_int (fresh_int ()))
+	| Unknown 0 -> Unknown (fresh_int ())
+	| Term 0 -> Term (fresh_int ())
 	| _ -> t_res)) (CP.list_of_disjs simpl_f)
 		
 let simplify_cond_pure_term_ctx args tctx =
@@ -167,15 +171,18 @@ let collect_term_trans_constraints_one_case utils (cond, unk) (mn, ctx) =
 			let reach_ctx = join_conjunctions (cond @ [single_ctx] @ c_cond) in
 			(* let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula reach_ctx) ^ "\n") in *)
 			if (utils.is_sat reach_ctx) then
-				[{trans_src = unk; trans_src_cond = cond;
+				let constr = {
+					trans_src = unk; trans_src_cond = cond;
   				trans_dst = c_tres; trans_dst_cond = c_cond;
 					trans_subst = ctx.t_params;
-  				trans_ctx = single_ctx;}] 
+  				trans_ctx = single_ctx;} in
+				Hashtbl.add term_constr_tbl (unk, c_tres) constr;
+				[constr] 
 			else []
 		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
 	) [] callee_tspec
 
-let collect_term_trans_constraints_one_method utils mn = 
+let collect_term_trans_constraints_one_proc utils mn = 
 	let mn_tctx = look_up_term_ctx mn in
 	let mn_tspec = look_up_term_spec mn in
 	let unk_cases = List.filter (fun (cond, r) ->
@@ -186,9 +193,11 @@ let collect_term_trans_constraints_one_method utils mn =
 		| Base -> a
 		| Rec c -> a @ [(c, ctx)]) [] mn_tctx in
 	List.concat (List.map (fun c -> 
-		List.concat (List.map (collect_term_trans_constraints_one_case utils c) rec_ctx)) unk_cases)
-		
-(* TODO: collect termination constraints for each scc group *)
+		List.concat (List.map 
+			(collect_term_trans_constraints_one_case utils c) rec_ctx)) unk_cases)
+
+let collect_term_trans_constraints_all_procs utils procs =
+	List.concat (List.map (collect_term_trans_constraints_one_proc utils) procs) 		
 
 let norm_src_cond sc =
 	match sc with
@@ -351,25 +360,47 @@ let infer_term_condition utils ivars tc (* trans_constraint *) =
 	let sce = norm_src_cond sc in (* A in A>0  *)
 	let dce = norm_dst_cond dc in (* B in B<=0 *)
 	check_monotone_decreasing_sequence utils ivars tc.trans_subst sce dc tc.trans_ctx 
-	
+
+(* Build the graph of reachability *)	
+module TNode = struct
+	type t = term_res
+	let compare = compare
+	let hash = Hashtbl.hash
+	let equal = (=)
+end
+
+module TG = Graph.Persistent.Digraph.Concrete(TNode)		
+module TGC = Graph.Components.Make(TG)	
+
+let graph_of_term_constrs t_constrs =
+	let tg = TG.empty in
+	let tg = List.fold_left (fun g constr ->
+		TG.add_vertex g constr.trans_src;
+		TG.add_vertex g constr.trans_dst;
+		TG.add_edge g constr.trans_src constr.trans_dst) tg t_constrs
+	in
+	let scc_list = List.rev (TGC.scc_list tg) in
+	print_endline (pr_list (pr_list !print_term_res) scc_list) 
+			
+(***************** MAIN *****************)									
 let main utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
 		let t_ctx = look_up_term_ctx mn in
 		let t_case_spec = look_up_term_spec mn in 
-		let t_constraints = collect_term_trans_constraints_one_method utils mn in
+		let t_constraints = collect_term_trans_constraints_one_proc utils mn in
 		let args = get_method_args proc in
 		let inf_conds = List.fold_left (fun a c ->
 			(* if (c.trans_src != c.trans_dst) then *)
-			(* TODO *)
-			if (c.trans_dst == Term) then
-				a @ [(infer_term_condition utils args c)]
-			else a) [] t_constraints
+			match c.trans_dst with
+			| Term _ -> a @ [(infer_term_condition utils args c)]
+			| _ -> a) [] t_constraints
 		in
 		info_hprint "Termination Constraints" 
 			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
 		info_pprint "\n";
+		graph_of_term_constrs t_constraints;
 	) procs
 
 
