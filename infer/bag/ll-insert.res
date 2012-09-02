@@ -8,25 +8,25 @@ Mona is running ...
 !!! POST:  S1=union(S,{a})
 !!! PRE :  true
 !!! OLD SPECS: ((None,[]),EInfer [A]
-              EBase exists (Expl)(Impl)[S](ex)x::ll<S>@M[Orig][LHSCase]@ rem br[{190}]&
-                    (([S!=()][null!=x]))&{FLOW,(20,21)=__norm}[]
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+              EBase exists (Expl)(Impl)[S](ex)x::ll<S>@M[Orig][LHSCase]@ rem br[{198}]&
+                    (([S!=()][null!=x]))&{FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
                               EAssume 64::
-                                EXISTS(S1: x::ll<S1>@M[Orig][LHSCase]@ rem br[{191,190}]&
-                                (([A(S,S1,a)]))&{FLOW,(20,21)=__norm})[])
-!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[S](ex)x::ll<S>@M[Orig][LHSCase]@ rem br[{190}]&
-                  (([S!=()][x!=null]))&{FLOW,(20,21)=__norm}[]
-                    EBase true&(([MayLoop]))&{FLOW,(1,23)=__flow}[]
+                                EXISTS(S1: x::ll<S1>@M[Orig][LHSCase]@ rem br[{199,198}]&
+                                (([A(S,S1,a)]))&{FLOW,(22,23)=__norm})[])
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[S](ex)x::ll<S>@M[Orig][LHSCase]@ rem br[{198}]&
+                  (([S!=()][x!=null]))&{FLOW,(22,23)=__norm}[]
+                    EBase emp&(([MayLoop]))&{FLOW,(1,25)=__flow}[]
                             EAssume 64::
-                              EXISTS(S1: x::ll<S1>@M[Orig][LHSCase]@ rem br[{191,190}]&
-                              (([S1=union(S,{a})]))&{FLOW,(20,21)=__norm})[])
-!!! NEW RELS:[ (exists(v_561:exists(S1_563:exists(v_586:exists(S1_588:exists(v_591:exists(a':exists(S1_593:S1_593= & 
-  S1_588=union(S1_593,{v_591}) & S1_563= & v_561=v_586 & a'=v_591 & 
-  a=v_591 & S1=union(S1_588,{v_586}) & S=union(S1_563,{v_561}) & 
+                              EXISTS(S1: x::ll<S1>@M[Orig][LHSCase]@ rem br[{199,198}]&
+                              (([S1=union(S,{a})]))&{FLOW,(22,23)=__norm})[])
+!!! NEW RELS:[ (exists(v_582:exists(S1_584:exists(v_607:exists(S1_609:exists(v_612:exists(a':exists(S1_614:S1_614= & 
+  S1_609=union(S1_614,{v_612}) & S1_584= & v_582=v_607 & a'=v_612 & 
+  a=v_612 & S1=union(S1_609,{v_607}) & S=union(S1_584,{v_582}) & 
   S!=())))))))) --> A(S,S1,a),
- (exists(v_561:exists(S1_563:exists(v_600:exists(S1_602:S1_599!=() & 
-  S1_563!=() & S1_563=S_578 & S1_602=S1_599 & v_561=v_600 & 
-  A(S_578,S1_599,a) & S1=union(S1_602,{v_600}) & S=union(S1_563,{v_561}) & 
+ (exists(v_582:exists(S1_584:exists(v_621:exists(S1_623:S1_620!=() & 
+  S1_584!=() & S1_584=S_599 & S1_623=S1_620 & v_582=v_621 & 
+  A(S_599,S1_620,a) & S1=union(S1_623,{v_621}) & S=union(S1_584,{v_582}) & 
   S!=()))))) --> A(S,S1,a)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
@@ -37,6 +37,6 @@ Termination checking result:
 
 0 false contexts at: ()
 
-Total verification time: 0.39 second(s)
-	Time spent in main process: 0.27 second(s)
-	Time spent in child processes: 0.12 second(s)
+Total verification time: 0.41 second(s)
+	Time spent in main process: 0.28 second(s)
+	Time spent in child processes: 0.13 second(s)
