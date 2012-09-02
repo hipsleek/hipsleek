@@ -1,2 +1,2 @@
 Starting Omega...oc
-Stop Omega... 12 invocations 
+Stop Omega... 11 invocations 

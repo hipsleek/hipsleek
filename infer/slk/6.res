@@ -1,6 +1,5 @@
 Starting Omega...oc
 
-Entail  (1): Fail.(may) cause: true |-  y!=null. LOCS:[0] (may-bug)
+Entail (1) : Fail.(may) cause: true |-  y!=null. LOCS:[0] (may-bug)
 
- 
-Stop Omega... 15 invocations 
+Stop Omega... 14 invocations 
