@@ -267,7 +267,8 @@ let common_arguments = [
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
-
+  (* incremental spec *)
+  ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
 

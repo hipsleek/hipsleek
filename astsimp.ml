@@ -79,9 +79,6 @@ let undef_data_types = ref([] : (string * loc) list)
  **)
 let inter = ref false
 
-
-(** An Hoa : Indicator for the parsing stage **)
-let secondpass = ref false
 (* let op_map = Hashtbl.create 19 *)
 
 (************************************************************
@@ -668,10 +665,10 @@ let rec while_labelling (e:I.exp):I.exp =
 			   | I.While _ -> Some c
 			   | I.Break b -> 
 				    let ty = I.Const_flow (match b.I.exp_break_jump_label with | I.NoJumpLabel -> "brk_"^lb | I.JumpLabel l-> "brk_"^l) in
-					Some (I.mkRaise ty None false b.I.exp_break_path_id b.I.exp_break_pos)
+					Some (I.mkRaise ty false None false b.I.exp_break_path_id b.I.exp_break_pos)
 			   | I.Continue b -> 
 					let ty = I.Const_flow (match b.I.exp_continue_jump_label with | I.NoJumpLabel -> "cnt_"^lb | I.JumpLabel l-> "cnt_"^l) in
-					Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos )
+					Some (I.mkRaise ty false None false b.I.exp_continue_path_id b.I.exp_continue_pos )
 			   | _ -> None) in
 		let need_break_continue_x lb ne non_generated_label :bool = 
 			if not (non_generated_label) then 
@@ -696,18 +693,17 @@ let rec while_labelling (e:I.exp):I.exp =
 		let  need_break_continue lb ne non_generated_label :bool = 
 			Debug.no_2 "need_break_continue" string_of_bool Iprinter.string_of_exp string_of_bool 
 			(fun _ _-> need_break_continue_x lb ne non_generated_label) non_generated_label ne in
-	
 	I.map_exp e (fun c-> match c with 
 		| I.Break b ->
 			let ty = I.Const_flow (match b.I.exp_break_jump_label with 
 					| I.NoJumpLabel -> Gen.report_error b.I.exp_break_pos "there is no loop/block to break out of"
 					| I.JumpLabel l-> l) in
-			Some (I.mkRaise ty None false b.I.exp_break_path_id b.I.exp_break_pos)
+			Some (I.mkRaise ty false None false b.I.exp_break_path_id b.I.exp_break_pos)
 		| I.Continue b ->  
 			let ty = I.Const_flow (match b.I.exp_continue_jump_label with 
 					| I.NoJumpLabel -> Gen.report_error b.I.exp_continue_pos "there is no loop to continue"
 					| I.JumpLabel l-> l) in
-			Some (I.mkRaise ty None false b.I.exp_continue_path_id b.I.exp_continue_pos)
+			Some (I.mkRaise ty false None false b.I.exp_continue_path_id b.I.exp_continue_pos)
 		| I.Block b-> None 
 			(*let pos = b.I.exp_block_pos in
 			let nl,b_rez = match b.I.exp_block_jump_label with
@@ -735,8 +731,8 @@ let rec while_labelling (e:I.exp):I.exp =
 						 let _  = exlist # add_edge nc cont_top in 
 						 let nl1 = fresh_branch_point_id "" in
 						 let nl2 = fresh_branch_point_id "" in
-						 let continue_try = I.mkTry ne [I.mkCatch None nc None (I.Label ((nl1,1),I.Empty pos)) pos] [] nl1 pos in	
-						 let break_try = I.mkTry (I.This {I.exp_this_pos = pos}) [ I.mkCatch None nb None (I.Label ((nl2,1),I.Empty pos)) pos] [] nl2 pos in
+						 let continue_try = I.mkTry ne [I.mkCatch None None nc None (I.Label ((nl1,1),I.Empty pos)) pos] [] nl1 pos in	
+						 let break_try = I.mkTry (I.This {I.exp_this_pos = pos}) [ I.mkCatch None None nb None (I.Label ((nl2,1),I.Empty pos)) pos] [] nl2 pos in
 						 Some (I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some (break_try,nb)})
 				else Some (I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None})
 			
@@ -750,13 +746,30 @@ let rec while_labelling (e:I.exp):I.exp =
 								let f_body = while_labelling c.I.exp_finally_body in
 								let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 								let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
-								let new_raise = I.mkRaise (I.Var_flow new_flow_var_name) (Some (I.mkVar new_name pos)) true  None pos in
+								let new_raise = I.mkRaise (I.Var_flow new_flow_var_name) false  (Some (I.mkVar new_name pos)) true  None pos in
 								let catch_body = I.mkBlock (I.mkSeq f_body new_raise pos) I.NoJumpLabel [] pos in
-								I.mkCatch (Some new_name) c_flow (Some new_flow_var_name) catch_body pos
+								I.mkCatch (Some new_name) None c_flow (Some new_flow_var_name) catch_body pos
 								) b.I.exp_finally_clause in
 						Some (I.mkTry ob l_catch [] None pos)
 		|_ -> None)
 	
+and needs_ret e = I.fold_exp e (fun c-> match c with | I.Return _ -> Some true | _ -> None) (List.exists (fun c-> c)) false 
+	
+and while_return e ret_type = I.map_exp e (fun c-> match c with 
+		| I.While b -> 
+			let needs_ret = needs_ret b.I.exp_while_body in 
+			if needs_ret then
+				let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
+					Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
+				let b = {b with I.exp_while_body = new_body} in
+				let pos = b.I.exp_while_pos in
+				let nl2 = fresh_branch_point_id "" in
+				let vn = fresh_name () in
+				let return  = I.Return { I.exp_return_val = Some (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos}); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
+				let catch = I.mkCatch (Some vn) (Some ret_type) loop_ret_flow None return pos in
+				Some (I.mkTry (I.While b) [catch] [] nl2 pos)
+			else Some c
+		|_ -> None)
    
 and prepare_labels_x (fct: I.proc_decl): I.proc_decl = 
   let rec syntax_err_breaks e in_loop l_lbl = 
@@ -778,7 +791,7 @@ and prepare_labels_x (fct: I.proc_decl): I.proc_decl =
 		  I.iter_exp_args e (in_loop,l_lbl) f f_args in
   match fct.I.proc_body with
 	| None -> fct
-	| Some e-> (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling e)})
+	| Some e-> (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling (while_return e fct.I.proc_return))})
 
 and prepare_labels (fct: I.proc_decl): I.proc_decl =
   let pr = Iprinter.string_of_proc_decl in
@@ -802,6 +815,24 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = I.add_bar_inits prog4 in
+  let prog4 = if not (!do_infer_inc) then prog4 else
+    try
+      let id_spec_from_file = Infer.get_spec_from_file prog4 in
+      let ids, specs = List.split id_spec_from_file in
+      {prog4 with I.prog_proc_decls =
+          let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
+          let new_proc = 
+            List.map (fun proc ->
+              try 
+                let spec = List.assoc proc.I.proc_name id_spec_from_file in
+                {proc with I.proc_static_specs = spec}
+              with Not_found -> proc
+            ) new_proc
+          in
+          others @ new_proc
+      }
+    with _ -> prog4
+  in
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
   (*         { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls; *)
@@ -990,11 +1021,6 @@ and sat_warnings cprog =
       
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* Update the list of undefined data types *)
-  (* let _ = if List.mem ddef.I.data_name !undef_data_types then
-	 print_endline ("The previously undefined type " ^  ddef.I.data_name ^ " is defined!\n")
-	 else () in *)
-  let _ = undef_data_types := List.filter (fun x -> not ((fst x) = ddef.I.data_name)) !undef_data_types in
-  (* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
   (** 
 	  * An Hoa [22/08/2011] : translate field with inline consideration.
   **)
@@ -1569,7 +1595,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         id = fresh_int () } in
     (ignore (List.map add_param all_args);
 	let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
-	let _ = H.add stab eres_name { sv_info_kind = Named raisable_class ;id = fresh_int () } in
+	let _ = H.add stab eres_name { sv_info_kind = UNK ;id = fresh_int () } in
   (* Termination: Add info of logical vars *)
   let add_logical (CP.SpecVar (t, i, _)) = H.add stab i { 
     sv_info_kind = t; 
@@ -2537,6 +2563,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	    I.exp_catch_flow_type = cvt;
 	    I.exp_catch_flow_var = cfv;
 	    I.exp_catch_body = cb;	
+		I.exp_catch_alt_var_type = alt_cvt ;
 	    I.exp_catch_pos = pos}->	
             if not (exlist # sub_type_obj cvt c_flow) then Err.report_error { Err.error_loc = pos; 
 		    Err.error_text = "can not catch a not raisable object" }
@@ -2553,9 +2580,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			            C.exp_catch_body = new_bd;																					   
 			            C.exp_catch_pos = pos;},ct2) end
 			          else begin
+						let cvt_rev = match alt_cvt with | None -> Named cvt | Some t -> t in
 			            E.push_scope();
 			            let alpha = E.alpha_name x in
-			            E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (Named cvt)});
+			            E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = cvt_rev});
 			            (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
 			            let new_bd, ct2 = helper cb in
 				        (*let _ = print_string ("\n rrr2 -> \n") in*)
@@ -2724,7 +2752,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   if CP.are_same_types cret_type C.void_type then
                     (C.Sharp ({ C.exp_sharp_type = C.void_type;
                     C.exp_sharp_flow_type = C.Sharp_ct 
-                            {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
+                            {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
                     C.exp_sharp_val = Cast.Sharp_no_val;
                     C.exp_sharp_unpack = false;
                     C.exp_sharp_path_id = pi;
@@ -2747,7 +2775,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_assign_pos = e_pos;} in
                     let shar = C.Sharp ({
                         C.exp_sharp_type = C.void_type;
-                        C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
+                        C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
                         C.exp_sharp_unpack = false;
                         C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                         C.exp_sharp_path_id = pi;
@@ -3056,6 +3084,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       | I.Raise ({ 
             I.exp_raise_type = ot;
             I.exp_raise_val = oe;
+			I.exp_raise_use_type = use_type;
             I.exp_raise_from_final = ff;
             I.exp_raise_path_id = pi;
             I.exp_raise_pos = pos })->
@@ -3091,9 +3120,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         let shar = C.Sharp ({	
                             C.exp_sharp_type = C.void_type;
                             C.exp_sharp_flow_type = C.Sharp_ct (
-                                match ct with 
-                                  | Named ot ->  {CF.formula_flow_interval = (exlist # get_hash ot); CF.formula_flow_link = None}
-                                  | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
+								if use_type then 
+									match ot with
+										| I.Const_flow fl -> {CF.formula_flow_interval = (exlist # get_hash fl); CF.formula_flow_link = None}
+										| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("expecting constant flow")}
+									else  match ct with 
+										| Named v_t ->  {CF.formula_flow_interval = (exlist # get_hash v_t); CF.formula_flow_link = None}
+										| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
                             C.exp_sharp_unpack = false;
                             C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                             C.exp_sharp_path_id = pi;
@@ -3293,15 +3326,15 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 		            in Int
 		          with
 		            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-						  if (!inter || !secondpass) then
+						 (* if !inter then*)
 							Err.report_error
 			                    {
 			                        Err.error_loc = pos;
 			                        Err.error_text = c ^ " is neither data nor enum type";
 			                    }
-						  else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+						  (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
 						  let _ = undef_data_types := (c, pos) :: !undef_data_types in
-						  Named c (* Store this temporarily *)
+						  Named c (* Store this temporarily *)*)
 				  ))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
@@ -3799,6 +3832,8 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
              else
         CF.EInfer {
         CF.formula_inf_post = b.IF.formula_inf_post;
+        CF.formula_inf_xpost = b.IF.formula_inf_xpost;
+        CF.formula_inf_transpec = b.IF.formula_inf_transpec;
         CF.formula_inf_vars = new_ivs;
         CF.formula_inf_continuation = ct;
         CF.formula_inf_pos = pos}
@@ -4385,7 +4420,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> report_error pos ("TYPE ERROR : 1.1 Found "
       ^(string_of_typ (get_type_entire stab k1))
       ^" but expecting "^(string_of_typ (get_type_entire  stab k2)))
 
@@ -4442,7 +4477,7 @@ and must_unify_expect_test k1 k2 pos =
   let k = unify_expect_modify false k1 k2 !type_table  in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> report_error pos ("TYPE ERROR : 1.2 Found "
       ^(string_of_typ (k1))
       ^" but expecting "^(string_of_typ (k2)))
 
@@ -6434,7 +6469,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let gl_proc_args = gl_v@ f.Iast.proc_args in
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
-  let p = (res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
+  let p = (eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
@@ -6451,7 +6486,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       None -> None 
     | Some f->
           let f,_ = case_rename_var_decls f in
-          let r,_,_ = (case_normalize_exp prog h2 [(res_name,Unprimed)] f) in
+          let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
           Some r in
   {f with Iast.proc_static_specs =nst;
       Iast.proc_dynamic_specs = ndn;			
@@ -6480,8 +6515,8 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
   (*let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
   let tmp_views = List.map (fun c-> 
-	  let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
-	  let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+	  let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+	  let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =

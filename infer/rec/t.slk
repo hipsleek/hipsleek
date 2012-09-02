@@ -1,0 +1,38 @@
+relation A(int x, int y).
+
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [A] A(n,a) & a=1 |- n>=2.
+// A(n,a) -> n>a
+// A(n,a) -> n>=2
+// A(n,a) -> a!=1
+print residue.
+
+infer [A] q::ll<n1> & n=n1+1 & a=1 & A(a,n) |- q::node<_,q2>.
+print residue.
+
+infer [A] q=null & n1=0 & n=n1+1 & a=1 & A(a,n) |- q::node<_,q2>.
+print residue.
+
+infer [a,n] q=null & n1=0 & n=n1+1 & a=1 & A(a,n) |- q::node<_,q2>.
+print residue.
+
+infer [] q=null & n1=0 & n=n1+1 & a=1 & n>a |- q::node<_,q2>.
+print residue.
+
+infer [n,a] q=null & n=1 & a=1  |- n!=1 | q!=null.
+
+print residue.
+
+// n=1 & a=1 & n=a
+// not(n=1 & a=1 & n=a)
+// n!=1 | a!=1 | n<a | n>a
+
+
