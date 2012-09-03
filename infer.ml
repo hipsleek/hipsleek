@@ -1334,6 +1334,11 @@ let filter_var_heap keep_vars fml =
 (*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
   (heap, pure)
 
+let close_def defs (v1,v2)=
+  if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
+  else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
+  else (defs)
+
 let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let hds, hvs, hrs = CF.get_hp_rel_bformula fb in
   let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in
@@ -1342,11 +1347,6 @@ let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let def_vs = (List.concat (List.map (fun (_, exps, _) -> List.concat (List.map CP.afv exps)) hrs)) @ (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) @ rhs_h_matched_set in
   (*find closed defined pointers set*)
-  let close_def defs (v1,v2)=
-    if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
-    else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
-    else (defs)
-  in
   let def_vs = List.fold_left close_def def_vs eqs in
   (*find extra variable from data node arguments*)
   let look_up_arguments_def hd=
@@ -1385,8 +1385,9 @@ let add_raw_hp_rel prog undef_args pos=
   else None
 
 let filter_var_x fb rvs=
+  let new_p = CP.remove_dup_constraints (CP.filter_var (MCP.pure_of_mix fb.CF.formula_base_pure) rvs) in
   {fb with CF.formula_base_heap = CF.filter_var_hf fb.CF.formula_base_heap rvs;
-      CF.formula_base_pure =  MCP.mix_of_pure (CP.filter_var (MCP.pure_of_mix fb.CF.formula_base_pure) rvs);}
+      CF.formula_base_pure =  MCP.mix_of_pure (new_p);}
 
 (* let filter_var_x fb keep_vars= *)
 (*   let h,p = filter_var_heap keep_vars (CF.Base fb) in *)
@@ -1399,7 +1400,7 @@ let filter_var fb keep_vars=
    Debug.ho_2 "filter_var" pr2 pr1 pr2
 ( fun _ _ -> filter_var_x fb keep_vars) fb keep_vars
 
-let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
   let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
     (*end for debugging*)
@@ -1435,6 +1436,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h
       let r_new_hp = add_raw_hp_rel prog rundef_args pos in
       (*filter non-selective sub-formulas*)
       let keep_vars = (CF.get_hp_rel_vars_bformula lhs_b) @ (CF.get_hp_rel_vars_bformula rhs_b) in
+      (*closed*)
+       let keep_vars = CP.remove_dups_svl (List.fold_left close_def keep_vars (leqs@reqs)) in
       (*end*)
       let update_fb fb new_hp =
         match new_hp with
@@ -1453,7 +1456,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h
       (true, new_es)
 
 
-let infer_collect_hp_rel prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in
@@ -1461,7 +1464,7 @@ let infer_collect_hp_rel prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_m
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
   Debug.ho_2 "infer_collect_hp_rel" pr1 pr1 pr5
-( fun _ _ -> infer_collect_hp_rel_x prog es mix_lf lsvl mix_rf rsvl rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
+( fun _ _ -> infer_collect_hp_rel_x prog es mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
 
 let rec string_of_elems elems string_of sep = match elems with 
   | [] -> ""
