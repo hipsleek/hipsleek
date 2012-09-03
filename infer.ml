@@ -204,7 +204,17 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
   let pr2 = pr_list print_lhs_rhs in
   Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
       collect_rel_list_partial_context ctx
- 
+
+let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_rel c) cl))  ctx in
+  List.concat r
+
+let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
+  let pr1 = !CF.print_list_partial_context in
+  let pr2 =  Cprinter.string_of_hp_rels in
+  Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2
+      collect_hp_rel_list_partial_context ctx
+
 let init_vars ctx infer_vars iv_rel v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
@@ -1348,6 +1358,9 @@ let add_raw_hp_rel prog undef_args pos=
   else None
 
 let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+  (*for debugging*)
+  let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
+    (*end for debugging*)
   if no_infer_hp_rel es then (false, es)
   else
     let ivs = es.es_infer_vars_hp_rel in

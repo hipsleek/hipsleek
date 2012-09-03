@@ -2301,6 +2301,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
 							h_formula_data_pos = pos})
+  | HRel (r, args, pos) -> HRel (r, CP.e_apply_subs_list sst args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -2493,7 +2494,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
 		h_formula_data_pos = pos})
-
+  | HRel (r, args, pos) -> HRel (r, List.map (CP.e_apply_one s) args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -4061,6 +4062,11 @@ let rec collect_rel ctx =
   | Ctx estate -> estate.es_infer_rel 
   | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2) 
 
+let rec collect_hp_rel ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_hp_rel 
+  | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2) 
+
 let rec collect_infer_vars ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_vars 
@@ -4351,10 +4357,12 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
     {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
+        es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
+        es_infer_hp_rel = es.es_infer_hp_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_var_measures = es.es_var_measures;
         es_group_lbl = es.es_group_lbl;
@@ -5860,6 +5868,7 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 			  h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}
 	      | DataNode _
 	      | ViewNode _
+          | HRel _
 	      | Hole _
 	      | HTrue
 	      | HFalse 
@@ -6368,9 +6377,11 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_var_stack = es.es_var_stack;
       es_infer_vars = es.es_infer_vars;
       es_infer_vars_rel = es.es_infer_vars_rel;
+      es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
       es_infer_heap = es.es_infer_heap;
       es_infer_pure = es.es_infer_pure;
       es_infer_rel = es.es_infer_rel;
+       es_infer_hp_rel = es.es_infer_hp_rel;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
         es_var_zero_perm = es.es_var_zero_perm;
@@ -8069,6 +8080,7 @@ let rec no_of_cnts_heap heap = match heap with
   | Phase h -> no_of_cnts_heap h.h_formula_phase_rd + no_of_cnts_heap h.h_formula_phase_rw
   | DataNode _ -> 1
   | ViewNode _ -> 1
+  | HRel _ -> 1
   | Hole _ -> 1
   | HTrue -> 1
   | HFalse -> 1

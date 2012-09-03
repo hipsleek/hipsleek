@@ -1300,7 +1300,7 @@ let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
 
-let pr_only_hp_rel (lhs,rhs) = 
+let pr_hprel_lhs_rhs (lhs,rhs) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
   fmt_string "(";
@@ -1309,6 +1309,8 @@ let pr_only_hp_rel (lhs,rhs) =
   fmt_string " --> ";
   pr_formula rhs;
   fmt_close()
+
+let string_of_hprel_lhs_rhs e = poly_string_of_pr pr_hprel_lhs_rhs e
 
 let pr_lhs_rhs ((cat,lhs,rhs) as rel) = 
   fmt_string (CP.print_lhs_rhs rel)

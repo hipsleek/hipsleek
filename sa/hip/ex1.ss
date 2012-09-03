@@ -1,67 +1,75 @@
+data node {
+  int val;
+  node next;
+}
+
+HeapPred H(node a).
+HeapPred G(node a, node b).
+
 void foo(ref node x)
  infer [H,G]
  requires H(x)
- ensures  G(x,x');//'
+ ensures  G(x,x'); //'
  {
-  x = x.next
-  if (x!=null)  foo(x)
+   bool b;
+   x = x.next;
+   b = x!=null;
+   if (b) {
+     foo(x);
+   }
  }
-            /*
-where H,G are separation predicates rather than
-pure predicates. Using our tool, we should then
-strive to infer the following:
 
- H(x)  <-> x::node<_,q>*H1(q)
- H1(x) <-> x=null \/ x::node<_,q>*H1(q)
- G(x,x') <-> H(x) & x'=null
-
- ================================
-
-Some intermediate steps are highlighted below:
+/*
+ prepost for x!=null
+ requires true
+ ensures res & x!=null \/ !res & x=null
 
  // for x.next
- infer [H,G] H(x) |- x::node<a,b>@L
-  --> [H,G,H1] x::node<a,b>*H1(x,b)
-   with H(x) -> x::node<a,b>*H1(x,b)
+ infer [H,G] H(x) |- x::node<a,q>@L
+  --> [H,G,H1] x::node<a,q>*H1(x,q)
+   with H(x) -> x::node<a,q>*H1(x,q)
 
- // for if then branch
- infer [H,G,H1] x::node<a,x'>*H1(x,x')
-  |- x'!=null
-  --> [H,G,H1,H2] x::node<a,x'>*H2(x,x') & x'!=null
-   with H1(x,x') -> x'!=null -> H2(x,x')
+ //function call on x!=null
+ [H,G,H1] x::node<a,q>*H1(x,q) |- true --* b & q!=null \/ !(b) & x=null
+  -->  x::node<a,x'>*H1(x,x') &  b & q!=null
+       or x::node<a,x'>*H1(x,x') &  !b & q!=null
 
- // for if else branch
- infer [H,G,H1] x::node<a,x'>*H1(x,x')
-  |- x'=null
-  --> [H,G,H1,H3] x::node<a,x'>*H3(x,x') & x'=null
-    with H1(x,x') -> x'=null -> H3(x,x')
+ //state after then branch
+ [H,G,H1] x::node<a,x'>*H1(x,x') &  b & x'!=null
 
- // for foo(x) call
-  [H,G,H1,H2] x::node<a,x'>*H2(x,x') & x'!=null
-  |- H(x') *-> G(x',x")
-  --> [H,G,H1,H2] x::node<a,x0> * G(x0,x') & x0!=null
-   with x'!=null & H2(x,x') -> H(x')
+ //recursive function call
+ [H,G,H1] x::node<a,x'>*H1(x,x') &  b & x'!=null
+    |- H(x') --* G(x',x")
+  --> [H,G,H1] x::node<a,x0> * G(x0,x') & x0!=null
+   with x'!=null & H1(x,x') -> H(x')
 
- // for postcond at then branch
-  [H,G,H1,H2] x::node<a,x0> * G(x0,x') & x0!=null
+ //Postcondition for then branch
+  [H,G,H1] x::node<a,x0> * G(x0,x') & b & x0!=null
+
      |- G(x,x')
   with x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
- // for postcond at else branch
-  [H,G,H1,H3] x::node<a,x'>*H3(x,x') & x'=null
-    with x::node<a,x'>*H3(x,x') & x'=null -> G(x,x')
 
-The collection of constraints are:
+ state after else branch
+ [H,G,H1] x::node<a,x'>*H1(x,x') &  !b & x'=null
 
-  H(x) -> x::node<a,b>*H1(x,b)
-  H1(x,x') -> x'!=null -> H2(x,x')
-  H1(x,x') -> x'=null -> H3(x,x')
-  x'!=null & H2(x,x') -> H(x')
-  x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
-  x::node<a,x'>*H3(x,x') & x'=null -> G(x,x')
+ //Postcondition for else branch
+  [H,G,H1] x::node<a,x'> * H1(x,x') & b & x'=null
+     |- G(x,x')
+  with x::node<a,x'> * H1(x,x') & x'=null -> G(x,x')
 
-They must now be systematically simplified to the following:
+inferred inductive predicates:
+==============================
+   H(x) -> x::node<a,q>*H1(x,q)
+   x'!=null & H1(x,x') -> H(x')
 
- H(x)  <-> x::node<_,q>*H1(q)
- H1(x) <-> x=null \/ x::node<_,q>*H1(q)
- G(x,x') <-> H(x) & x'=null
-            */
+   x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
+   x::node<a,x'> * H1(x,x') & x'=null -> G(x,x')
+
+Drop first parameter of H1:
+   H(x) -> x::node<a,q>*H1(q)
+   x'!=null & H1(x') -> H(x')
+
+   x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
+   x::node<a,x'> * H1(x') & x'=null -> G(x,x')
+
+*/

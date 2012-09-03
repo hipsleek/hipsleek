@@ -3834,7 +3834,11 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                             try
                               let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
                               CP.SpecVar(RelT,id,pr)
-                            with _ -> v
+                            with _ ->
+                                try
+                                    let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+                                    CP.SpecVar(HpT,id,pr)
+                                with _ -> v
                         else v
             ) ivs in
             (* TODO : any warning below should be fixed *)
