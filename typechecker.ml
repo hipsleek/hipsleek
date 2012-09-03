@@ -18,6 +18,7 @@ module LP = Lemproving
 module Inf = Infer
 module AS = Astsimp
 module TInfer = Term_infer
+module Pr = Cprinter
 
 let store_label = new store Lab2_List.unlabelled Lab2_List.string_of
 
@@ -507,19 +508,27 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 										let res_ctx, tctx = check_exp prog proc lfe [] e0 post_label in
 										let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
 										let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
+										let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
 										let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
 										let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
 										(* Termination Context (collected by Symbolic Execution) *)
 										let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
+										(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
 										(* Initial Termination Spec *)
-										let t_case_spec = TInfer.term_case_spec_of_list_term_ctx t_ctx in
+										let utils = {
+											TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
+											TInfer.simplify = Omega.simplify;
+											TInfer.imply = TP.imply_raw;
+											TInfer.is_sat = fun f -> TP.is_sat f "" true;
+										} in
+										let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
 										(***************************************)
 										(* let _ = print_endline (pr_list (fun ctx ->                               *)
 										(* 	"\n=============\n" ^ (Cprinter.string_of_term_ctx ctx)) t_ctx) in      *)
-										(* let _ = print_endline (Cprinter.string_of_term_case_spec t_case_spec) in *)
+										let _ = print_endline ("\n" ^ (Cprinter.string_of_term_spec t_spec)) in
 										(***************************************)
 										let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in
-										let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_case_spec in
+										(* let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_case_spec in *)
 										(* End of Termination Inference *)
 	    	        let res_ctx = CF.list_failesc_to_partial res_ctx in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)

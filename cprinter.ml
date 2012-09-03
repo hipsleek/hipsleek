@@ -2475,23 +2475,36 @@ let string_of_term_res = function
 	| TInfer.Term i -> "Term_" ^ (string_of_int i)
 	| TInfer.Unknown i -> "UNK_" ^ (string_of_int i)
 
+let string_of_term_cond_pure (pt, cond, tr) =
+	"\n" ^ (string_of_path_trace pt) ^ ": "
+	^ (string_of_pure_formula cond) ^ " "
+	^ (string_of_term_res tr)
+
 let string_of_term_ctx tctx = 
-	"\nTERMINATION CTX:\n" ^ 
-	"CTX: " ^ (string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "\n" ^
-	"PURE CTX: " ^ (pr_list string_of_pure_formula tctx.TInfer.t_pure_ctx) ^ "\n" ^
-	"PARAMS: " ^ (pr_pair string_of_spec_var_list string_of_spec_var_list tctx.TInfer.t_params) ^ "\n" ^
-	"COND: " ^ (pr_list (fun (f, r) -> (string_of_pure_formula f) ^ "[" ^ (string_of_term_res r) ^ "]") tctx.TInfer.t_cond_pure) ^
-	"@" ^ (string_of_term_type tctx.TInfer.t_type) 
+	"\nTERMINATION CTX:\n" 
+	^ "CTX: " ^ (string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "\n" 
+	(* ^	"PURE CTX: " ^ (pr_list (pr_pair string_of_path_trace string_of_pure_formula) tctx.TInfer.t_pure_ctx) ^ "\n"                 *)
+	(* ^ "PARAMS: " ^ (pr_pair string_of_spec_var_list string_of_spec_var_list tctx.TInfer.t_params) ^ "\n"                            *)
+	(* ^ "COND: " ^ (pr_list (fun (f, r) -> (string_of_pure_formula f) ^ "[" ^ (string_of_term_res r) ^ "]") tctx.TInfer.t_cond_pure)  *)
+	(* ^ "@" ^ (string_of_term_type tctx.TInfer.t_type)                                                                                *)
 	
-let string_of_term_case_spec spec =
-	let string_of_case (lpf, t_res) = 
-		(pr_list string_of_pure_formula lpf) ^ " -> " ^ (string_of_term_res t_res) ^ "\n" 
-	in "\nTERMINATION SPEC:\n" ^ (pr_list string_of_case spec) 
+let rec string_of_term_spec spec =
+	match spec with
+	| TInfer.TBase tspec -> 
+		(string_of_pure_formula tspec.TInfer.term_base_cond) ^ ": " ^ 
+		(string_of_term_res tspec.TInfer.term_base_res)
+	| TInfer.TSeq tspec -> 
+		(string_of_term_spec tspec.TInfer.term_seq_fst) 
+		^ "; " ^ (string_of_term_spec tspec.TInfer.term_seq_snd)
+	| TInfer.TCase tspec -> 
+		let print_case (c, tsp) = (string_of_pure_formula c) ^ " -> " ^ (string_of_term_spec tsp) ^ "\n" in
+		(print_case tspec.TInfer.term_case_then) ^ (print_case tspec.TInfer.term_case_else)		
 
 let string_of_term_trans_constraint trans_c =
 	let string_of_ele cond res = (string_of_term_res res) ^ (pr_list string_of_pure_formula cond) in
 	(string_of_ele trans_c.TInfer.trans_src_cond trans_c.TInfer.trans_src) ^ ">>" ^ 
-	(string_of_ele trans_c.TInfer.trans_dst_cond trans_c.TInfer.trans_dst)
+	(string_of_ele trans_c.TInfer.trans_dst_cond trans_c.TInfer.trans_dst) ^ "\n" ^ 
+	("trans_ctx: " ^ (string_of_pure_formula trans_c.TInfer.trans_ctx))
 
 (* An Hoa : formula to HTML output facility *)
 
@@ -2844,7 +2857,8 @@ Perm.print_sv := string_of_spec_var;;
 TInfer.print_path_trace := string_of_path_trace;;
 TInfer.print_pure_formula := string_of_pure_formula;;
 TInfer.print_pure_exp := string_of_formula_exp;;
-TInfer.print_term_case_spec := string_of_term_case_spec;;
+(* TInfer.print_term_spec := string_of_term_case_spec;; *)
 TInfer.print_term_ctx := string_of_term_ctx;;
 TInfer.print_term_res := string_of_term_res;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;
+TInfer.print_term_cond_pure := string_of_term_cond_pure;

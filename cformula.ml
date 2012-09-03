@@ -4094,12 +4094,13 @@ let rec collect_formula_context ctx =
 	| Ctx es -> [es.es_formula]
 	| OCtx (ctx1, ctx2) -> (collect_formula_context ctx1) @ (collect_formula_context ctx2)
 
-let collect_formula_failesc_context ctx =
+let collect_formula_with_path_failesc_context ctx =
 	let _, _, b_ctx = ctx in
-	List.concat (List.map (fun (_, c) -> collect_formula_context c) b_ctx)	
+	List.concat (List.map (fun (lbl, c) -> 
+		List.map (fun f -> (List.rev lbl, f)) (collect_formula_context c)) b_ctx)	
 	
-let collect_formula_list_failesc_context ctx =
-	List.concat (List.map collect_formula_failesc_context ctx)
+let collect_formula_with_path_list_failesc_context ctx =
+	List.concat (List.map collect_formula_with_path_failesc_context ctx)
 	
 let rec pure_of_formula f = 
 	match f with
