@@ -14,7 +14,14 @@ type term_type =
 type term_res =
 	| Loop of int
 	| Term of int
-	| Unknown of int
+	| Unknown of term_unk_info
+
+and term_unk_info = {
+	unk_id				: int;
+	unk_callee		: ident;
+	unk_params		: (spec_var list * spec_var list);
+	unk_trans_ctx	: CP.formula;
+}
 
 and term_ctx = {
 	t_type 				: term_type;
@@ -30,8 +37,6 @@ and term_ctx = {
 }
 
 and list_term_ctx = term_ctx list
-
-(* type term_case_spec = ((CP.formula list) * term_res) list *)
 
 (* The structure below supports path-sensitive analysis for termination *)
 and term_spec = 
@@ -56,19 +61,19 @@ and term_spec_seq = {
 
 and term_trans_constraint = {
 	trans_src			: term_res;
-	trans_src_cond: CP.formula list;
+	(* trans_src_cond: CP.formula list; *)
 	trans_dst			: term_res;	
-	trans_dst_cond: CP.formula list;
-	trans_subst		: (spec_var list * spec_var list);
-	trans_ctx			: CP.formula;
-	trans_path		: path_trace;
+	(* trans_dst_cond: CP.formula list; *)
+	(* trans_subst		: (spec_var list * spec_var list); *)
+	(* trans_ctx			: CP.formula; *)
+	(* trans_path		: path_trace; *)
 }
 
 let term_constr_tbl : ((term_res * term_res), term_trans_constraint) Hashtbl.t = Hashtbl.create 10
 
 let term_spec_tbl : (ident, term_spec) Hashtbl.t = Hashtbl.create 10
 
-let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10
+(* let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10 *)
 
 type utils = {
 	is_sat				: CP.formula -> bool;
@@ -83,6 +88,7 @@ let print_pure_formula = ref (fun (c: CP.formula) -> "Printer has not been initi
 let print_pure_exp = ref (fun (c: CP.exp) -> "Printer has not been initialized.")
 let print_term_spec = ref (fun (c: term_spec) -> "Printer has not been initialized.")
 let print_term_ctx = ref (fun (c: term_ctx) -> "Printer has not been initialized.")
+let print_term_spec = ref (fun (c: term_spec) -> "Printer has not been initialized.")
 let print_term_res = ref (fun (c: term_res) -> "Printer has not been initialized.")
 let print_term_trans_constraint = ref (fun (c: term_trans_constraint) -> "Printer has not been initialized.")
 let print_term_cond_pure = ref (fun (c: path_trace * CP.formula * term_res) -> "Printer has not been initialized.")
@@ -104,7 +110,6 @@ let collect_path_trace_term_ctx tctx =
 (* so that these labels and their associated contexts   *)
 (* should be removed in base context                    *)
 let remove_incorrect_base_term_ctx tctx list_lbl =
-	(* let _ = print_string ("rc_lbl: " ^ (pr_list !print_path_trace list_lbl)) in *)
 	{ tctx with t_ctx = match tctx.t_type with
 	| Base -> List.map (fun (fail_c, esc_c, succ_c) ->
 			let succ_c = List.filter (fun (lbl, _) -> 
@@ -142,13 +147,18 @@ let update_cond_pure_term_ctx	tctx =
 	let lpf = List.concat (List.map (fun (lbl, f) -> 
 		let lbl = remove_duplicate_path_trace lbl in
 		List.map (fun pf -> (lbl, pf)) (pure_of_formula f)) lf) in
-	(* let _ = print_endline (pr_list !print_pure_formula lpf) in *)
 	{tctx with 
 		t_pure_ctx = lpf;
 		t_cond_pure = List.map (fun (pt, f) ->
 			match tctx.t_type with
 			| Base -> (pt, f, Term 0)
-			| Rec _ -> (pt, f, Unknown 0)) lpf;}
+			| Rec c ->
+				let unk = Unknown {
+					unk_id = 0;
+					unk_callee = c;
+					unk_params = tctx.t_params;
+					unk_trans_ctx = f; } in 
+				(pt, f, unk)) lpf;}
 	
 let update_cond_pure_list_term_ctx tctx = 
 	List.map update_cond_pure_term_ctx tctx
@@ -164,7 +174,7 @@ let simplify_t_cond_pure args (pt, f, t_res) =
 	(* a!=b has already been transformed to a<b | a>b by Omega *)
 	let simpl_f = mkExists_with_simpl Omega.simplify qsv f None no_pos in
 	List.map (fun f -> (pt, f, match t_res with
-	| Unknown 0 -> Unknown (fresh_int ())
+	| Unknown unk -> (if unk.unk_id != 0 then t_res else Unknown { unk with unk_id = (fresh_int ()); })
 	| Term 0 -> Term (fresh_int ())
 	| _ -> t_res)) (CP.list_of_disjs simpl_f)
 		
@@ -188,8 +198,7 @@ let sort_path_trace_by_order cl =
 				else if (b1 < b2) then -1
 				else comp zt1 zt2
 			end
-	in
-	List.sort (fun (pt1, _, _) (pt2, _, _) -> comp pt1 pt2) cl
+	in List.sort (fun (pt1, _, _) (pt2, _, _) -> comp pt1 pt2) cl
 	
 let partition_path_trace cl =
 	let sml_pt, _, _ = List.hd cl in
@@ -254,17 +263,28 @@ let term_spec_of_list_term_ctx utils tctx =
 	construct_term_spec utils cases	
 	
 (* Look up termination context and spec *)
-let look_up_term_ctx mn = Hashtbl.find term_ctx_tbl mn
+(* let look_up_term_ctx mn = Hashtbl.find term_ctx_tbl mn *)
 	
 let look_up_term_spec mn = Hashtbl.find term_spec_tbl mn
-	
-let rename_term_spec (fsv, tsv) tspec = 
-	List.map (fun (cond, tres) -> 
-		(List.map (CP.subst_avoid_capture fsv tsv) cond, tres)) tspec
 
-(* Collect set of termination transition constraints *)
-(* based on the termination context of a function   *)
+let rec rename_term_spec (fsv, tsv) (tspec: term_spec) =
+	match tspec with
+	| TBase b -> TBase { b with term_base_cond = CP.subst_avoid_capture fsv tsv b.term_base_cond; }
+	| TSeq s -> TSeq { 
+		term_seq_fst = rename_term_spec (fsv, tsv) s.term_seq_fst;
+		term_seq_snd = rename_term_spec (fsv, tsv) s.term_seq_snd; }
+	| TCase c -> 
+		let ct, st = c.term_case_then in
+		let ce, se = c.term_case_else in
+		TCase {
+			term_case_then = (CP.subst_avoid_capture fsv tsv ct, rename_term_spec (fsv, tsv) st);
+			term_case_else = (CP.subst_avoid_capture fsv tsv ce, rename_term_spec (fsv, tsv) se); }
+
 (*
+(*****************************************************)
+(* Collect set of termination transition constraints *)
+(* based on the termination context of a function    *)
+(*****************************************************)
 let collect_term_trans_constraints_one_case utils (cond, unk) (mn, ctx) =
 	let mn_tspec = look_up_term_spec mn in
 	let callee_tspec = rename_term_spec ctx.t_params mn_tspec in
@@ -286,24 +306,52 @@ let collect_term_trans_constraints_one_case utils (cond, unk) (mn, ctx) =
 			else []
 		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
 	) [] callee_tspec
+*)
 
-let collect_term_trans_constraints_one_proc utils mn = 
-	let mn_tctx = look_up_term_ctx mn in
+let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
+	match tspec with
+	| TBase b -> 
+		let reach_ctx = join_conjunctions (ctx @ [unk.unk_trans_ctx] @ [b.term_base_cond]) in
+		if (utils.is_sat reach_ctx) then
+			let constr = {
+				trans_src = Unknown unk;
+				trans_dst = b.term_base_res; } in
+			[constr]
+		else []
+	| TCase c -> 
+		let ct, st = c.term_case_then in
+		let ce, se = c.term_case_else in
+		(collect_term_trans_constrs_callee_term_spec utils (ctx @ [ct]) unk st) @
+		(collect_term_trans_constrs_callee_term_spec utils (ctx @ [ce]) unk se)
+
+let collect_term_trans_constrs_base_spec utils ctx unk =
+	let callee_tspec = rename_term_spec unk.unk_params (look_up_term_spec unk.unk_callee) in
+	collect_term_trans_constrs_callee_term_spec utils ctx unk callee_tspec
+
+let rec collect_term_trans_constrs_term_spec utils ctx tspec =
+	match tspec with
+	| TBase b -> (match b.term_base_res with
+		| Term _ | Loop _ -> []
+		| Unknown unk -> collect_term_trans_constrs_base_spec utils (ctx @ [b.term_base_cond]) unk)
+	| TCase c -> 
+		let ct, st = c.term_case_then in
+		let ce, se = c.term_case_else in
+		(collect_term_trans_constrs_term_spec utils (ctx @ [ct]) st) @
+		(collect_term_trans_constrs_term_spec utils (ctx @ [ce]) se)
+	| TSeq s -> 
+		(* We need to solve the FIRST UNKNOWN in the sequence first, *)
+		(* by determine whether the BASE CASE is reachable or not    *)
+		collect_term_trans_constrs_term_spec utils ctx s.term_seq_fst
+
+let collect_term_trans_constrs_one_proc utils mn =
 	let mn_tspec = look_up_term_spec mn in
-	let unk_cases = List.filter (fun (cond, r) ->
-		match r with | Unknown _ -> true | _ -> false) mn_tspec in
-	(* (name_of_callee, term_ctx) list *)
-	let rec_ctx = List.fold_left (fun a ctx -> 
-		match ctx.t_type with
-		| Base -> a
-		| Rec c -> a @ [(c, ctx)]) [] mn_tctx in
-	List.concat (List.map (fun c -> 
-		List.concat (List.map 
-			(collect_term_trans_constraints_one_case utils c) rec_ctx)) unk_cases)
+	collect_term_trans_constrs_term_spec utils [] mn_tspec
 
-let collect_term_trans_constraints_all_procs utils procs =
-	List.concat (List.map (collect_term_trans_constraints_one_proc utils) procs) 		
-
+(* let collect_term_trans_constraints_all_procs utils procs =                     *)
+(* 	List.concat (List.map (collect_term_trans_constraints_one_proc utils) procs) *)
+	
+(*****************************************************)	 		
+(*
 let norm_src_cond sc =
 	match sc with
 	| BForm ((bf, _), _) -> (match bf with
@@ -492,10 +540,10 @@ let main utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
-		let t_ctx = look_up_term_ctx mn in
+		(* let t_ctx = look_up_term_ctx mn in *)
 		(* let _ = info_hprint "Termination Context" (pr_list !print_term_ctx) t_ctx in *)
-		let t_case_spec = look_up_term_spec mn in 
-		(* let t_constraints = collect_term_trans_constraints_one_proc utils mn in *)
+		let t_spec = look_up_term_spec mn in 
+		let t_constraints = collect_term_trans_constrs_one_proc utils mn in
 		(* let t_constraints = [] in                                                    *)
 		(* let args = get_method_args proc in                                           *)
 		(* let inf_conds = List.fold_left (fun a c ->                                   *)
@@ -504,11 +552,12 @@ let main utils procs =
 		(* 	| Term _ -> a @ [(infer_term_condition utils args c)]                       *)
 		(* 	| _ -> a) [] t_constraints                                                  *)
 		(* in                                                                           *)
-		(* info_hprint "Termination Constraints"                                        *)
-		(* 	(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints; *)
-		(* info_pprint "\n";                                                            *)
+		info_hprint "Termination Constraints"
+			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
+		info_pprint "\n";
 		(* graph_of_term_constrs t_constraints;                                         *)
-		()
+		info_hprint "Termination Spec" !print_term_spec t_spec;
+		info_pprint "\n"; 
 	) procs
 
 

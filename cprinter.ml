@@ -2473,7 +2473,10 @@ let string_of_term_type = function
 let string_of_term_res = function
 	| TInfer.Loop i -> "Loop_" ^ (string_of_int i)
 	| TInfer.Term i -> "Term_" ^ (string_of_int i)
-	| TInfer.Unknown i -> "UNK_" ^ (string_of_int i)
+	| TInfer.Unknown unk -> 
+		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
+		^ "#" ^ unk.TInfer.unk_callee 
+		^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx) 
 
 let string_of_term_cond_pure (pt, cond, tr) =
 	"\n" ^ (string_of_path_trace pt) ^ ": "
@@ -2497,14 +2500,15 @@ let rec string_of_term_spec spec =
 		(string_of_term_spec tspec.TInfer.term_seq_fst) 
 		^ "; " ^ (string_of_term_spec tspec.TInfer.term_seq_snd)
 	| TInfer.TCase tspec -> 
-		let print_case (c, tsp) = (string_of_pure_formula c) ^ " -> " ^ (string_of_term_spec tsp) ^ "\n" in
+		let print_case (c, tsp) = "\n" ^ (string_of_pure_formula c) ^ " -> {" ^ (string_of_term_spec tsp) ^ "}" in
 		(print_case tspec.TInfer.term_case_then) ^ (print_case tspec.TInfer.term_case_else)		
 
 let string_of_term_trans_constraint trans_c =
-	let string_of_ele cond res = (string_of_term_res res) ^ (pr_list string_of_pure_formula cond) in
-	(string_of_ele trans_c.TInfer.trans_src_cond trans_c.TInfer.trans_src) ^ ">>" ^ 
-	(string_of_ele trans_c.TInfer.trans_dst_cond trans_c.TInfer.trans_dst) ^ "\n" ^ 
-	("trans_ctx: " ^ (string_of_pure_formula trans_c.TInfer.trans_ctx))
+	let string_of_ele (* cond *) res = (string_of_term_res res) (* ^ (pr_list string_of_pure_formula cond) *) in
+	(string_of_ele (* trans_c.TInfer.trans_src_cond *) trans_c.TInfer.trans_src) 
+	^ ">>" ^ 
+	(string_of_ele (* trans_c.TInfer.trans_dst_cond *) trans_c.TInfer.trans_dst) 
+	(* ^ "\n" ^ ("trans_ctx: " ^ (string_of_pure_formula trans_c.TInfer.trans_ctx)) *)
 
 (* An Hoa : formula to HTML output facility *)
 
@@ -2859,6 +2863,7 @@ TInfer.print_pure_formula := string_of_pure_formula;;
 TInfer.print_pure_exp := string_of_formula_exp;;
 (* TInfer.print_term_spec := string_of_term_case_spec;; *)
 TInfer.print_term_ctx := string_of_term_ctx;;
+TInfer.print_term_spec := string_of_term_spec;;
 TInfer.print_term_res := string_of_term_res;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;
 TInfer.print_term_cond_pure := string_of_term_cond_pure;
