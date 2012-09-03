@@ -1307,33 +1307,6 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p pos) estate xpure_lhs_h1 lhs_p rhs_p
 
-let rec create_alias_tbl svl keep_vars aset = match svl with
-  | [] -> []
-  | [hd] -> 
-    [hd::(List.filter (fun x -> not(List.mem x keep_vars)) (CP.EMapSV.find_equiv_all hd aset))]
-  | hd::tl ->
-    let tmp = create_alias_tbl [hd] keep_vars aset in
-    let tl = List.filter (fun x -> not(List.mem x (List.hd tmp))) tl in
-    tmp@(create_alias_tbl tl keep_vars aset)
-
-(* Supposed fml to be Base _ *)
-let filter_var_heap keep_vars fml =
-  let _,pure,_,_,_ = CF.split_components fml in
-  let als = MCP.ptr_equations_without_null pure in
-(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
-  let aset = CP.EMapSV.build_eset als in
-  let alias_tbl = create_alias_tbl (keep_vars@CP.fv (MCP.pure_of_mix pure)) keep_vars aset in
-  let subst_lst = 
-    List.concat (List.map (fun vars -> if vars = [] then [] else 
-      let hd = List.hd vars in 
-      List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
-(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
-  let fml = CF.subst subst_lst fml in
-  let heap,pure,_,_,_ = CF.split_components fml in
-  let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
-(*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
-  (heap, pure)
-
 let close_def defs (v1,v2)=
   if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
@@ -1470,6 +1443,33 @@ let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
   | h::[] -> string_of h 
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
+
+let rec create_alias_tbl svl keep_vars aset = match svl with
+  | [] -> []
+  | [hd] -> 
+    [hd::(List.filter (fun x -> not(List.mem x keep_vars)) (CP.EMapSV.find_equiv_all hd aset))]
+  | hd::tl ->
+    let tmp = create_alias_tbl [hd] keep_vars aset in
+    let tl = List.filter (fun x -> not(List.mem x (List.hd tmp))) tl in
+    tmp@(create_alias_tbl tl keep_vars aset)
+
+(* Supposed fml to be Base _ *)
+let filter_var_heap keep_vars fml =
+  let _,pure,_,_,_ = CF.split_components fml in
+  let als = MCP.ptr_equations_without_null pure in
+(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
+  let aset = CP.EMapSV.build_eset als in
+  let alias_tbl = create_alias_tbl (keep_vars@CP.fv (MCP.pure_of_mix pure)) keep_vars aset in
+  let subst_lst = 
+    List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in 
+      List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
+(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
+  let fml = CF.subst subst_lst fml in
+  let heap,pure,_,_,_ = CF.split_components fml in
+  let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
+(*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
+  (heap, pure)
 
 let print_spec spec file_name =
   let output_spec = file_name ^ ".spec" in
