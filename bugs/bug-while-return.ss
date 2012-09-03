@@ -18,7 +18,7 @@ ensures x::node<a> & res=1;
     raise new rexc();
   }
  }
- } catch (Exc rexc) {
+ } catch (__Exc rexc) {
      return 1;
  };
  dprint;

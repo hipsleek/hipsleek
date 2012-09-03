@@ -282,6 +282,7 @@ and exp_call_recv = { exp_call_recv_receiver : exp;
 
 and exp_catch = { exp_catch_var : ident option ;
 		  exp_catch_flow_type : constant_flow;
+		  exp_catch_alt_var_type : typ option; 
 		  exp_catch_flow_var : ident option;
 		  exp_catch_body : exp;											   
 		  exp_catch_pos : loc }
@@ -331,6 +332,7 @@ and exp_new = { exp_new_class_name : ident;
 and exp_raise = { exp_raise_type : rise_type;
 		  exp_raise_val : exp option;
 		  exp_raise_from_final :bool; (*if so the result can have any type...*)
+		  exp_raise_use_type : bool; 
 		  exp_raise_path_id : control_path_id;
 		  exp_raise_pos : loc }
     
@@ -1284,13 +1286,15 @@ and mkUnary op oper pos = Unary { exp_unary_op = op;
 								  exp_unary_path_id = (fresh_branch_point_id "") ;
 								  exp_unary_pos = pos }
 
-and mkRaise ty rval final pid pos= Raise { exp_raise_type = ty ;
+and mkRaise ty usety rval final pid pos= Raise { exp_raise_type = ty ;
 										   exp_raise_val = rval;
 										   exp_raise_from_final = final;
+										   exp_raise_use_type = usety;
 										   exp_raise_path_id = pid;
 										   exp_raise_pos = pos;}
-and mkCatch var fl_type fl_var body pos = Catch{  exp_catch_var = var; 
+and mkCatch var var_type fl_type fl_var body pos = Catch{  exp_catch_var = var; 
 												  exp_catch_flow_type = fl_type;
+												  exp_catch_alt_var_type = var_type ; 
 												  exp_catch_flow_var = fl_var;
 												  exp_catch_body = body; 
 												  exp_catch_pos = pos}
@@ -1392,6 +1396,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge raisable_class abnormal_flow) in
   let _ = (exlist # add_edge "__others" abnormal_flow) in
   let _ = (exlist # add_edge ret_flow "__others") in
+  let _ = (exlist # add_edge loop_ret_flow "__others") in
   let _ = (exlist # add_edge cont_top "__others") in
   let _ = (exlist # add_edge brk_top "__others") in
   let _ = (exlist # add_edge spec_flow "__others") in

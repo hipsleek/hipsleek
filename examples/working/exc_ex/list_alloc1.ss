@@ -15,7 +15,7 @@ inv n >= 0;
 
 node new2(int val, node next) throws no_mem_exc
 requires true
-ensures res::node<val, next> & flow __norm or res::no_mem_exc<> & flow no_mem_exc;
+ensures res::node<val, next> & flow __norm or eres::no_mem_exc<> & flow no_mem_exc;
 //requires true
 //ensures res=null & flow no_mem_exc;
 
@@ -26,7 +26,7 @@ ensures x' = null;
 // strong guarantee
 void list_alloc_main(int n, ref node x) throws no_mem_exc
 requires x = null & n>=0
-ensures x'::ll<n> & flow __norm or res::no_mem_exc<> & x' = null & flow no_mem_exc;
+ensures x'::ll<n> & flow __norm or eres::no_mem_exc<> & x' = null & flow no_mem_exc;
 {
 	int cell_nos;
 	try{
@@ -42,7 +42,7 @@ ensures x'::ll<n> & flow __norm or res::no_mem_exc<> & x' = null & flow no_mem_e
 // relaxed strong guarantee
 void list_alloc1(int n, int i, ref node x, ref int cell_no) throws __Exc
 requires x::ll<i> & n>=i & i>=0 
-ensures x'::ll<n> & cell_no'=n & flow __norm or x'::ll<cell_no'> * res::__Exc<> & flow __Exc;
+ensures x'::ll<n> & cell_no'=n & flow __norm or x'::ll<cell_no'> * eres::__Exc<> & flow __Exc;
 {
 	if (n > i) {
 		try {

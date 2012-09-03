@@ -407,6 +407,7 @@ let rec string_of_struc_formula c = match c with
 	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
+         F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in

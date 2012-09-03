@@ -48,10 +48,8 @@ void insert(node x, int v)
 
 	tmp = new node(v, x.next);
     //dprint;
-	x.next = tmp;
-	//dprint;
-	//assert x'::hd<m>;
-	//assume false;
+	//assert x'::hd<_>;
+	x.next = tmp;	
 }
 
 

@@ -473,6 +473,7 @@ module type ETABLE =
     val c_flow : ident
     val raisable_class : ident
     val ret_flow : ident
+	val loop_ret_flow : ident
     val spec_flow : ident
     val false_flow : ident
     val abnormal_flow : ident
@@ -480,6 +481,7 @@ module type ETABLE =
     val error_flow : ident
     val norm_flow_int : nflow ref
     val ret_flow_int : nflow ref
+	val loop_ret_flow_int : nflow ref
     val spec_flow_int : nflow ref
     val top_flow_int : nflow ref 
     val abnormal_flow_int : nflow ref
@@ -533,7 +535,8 @@ struct
   let brk_top = "__Brk_top"
   let c_flow = "__c-flow"
   let raisable_class = "__Exc"
-  let ret_flow = "__Ret"
+  let ret_flow = "__Return"
+  let loop_ret_flow = "__RET"
   let spec_flow = "__Spec"
   let false_flow = "__false"
   let abnormal_flow = "__abnormal"
@@ -549,6 +552,7 @@ struct
   let empty_flow : nflow = (-1,0)
   let norm_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow 
+  let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
   let top_flow_int = ref empty_flow 
   let abnormal_flow_int = ref empty_flow
@@ -705,6 +709,7 @@ struct
       begin
         norm_flow_int := self # get_hash n_flow;
         ret_flow_int := self # get_hash ret_flow;
+		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
@@ -779,6 +784,7 @@ struct
   let empty_flow : dflow = ((-1,0),[(-1,0)])
   let norm_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow
+  let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
 
   let top_flow_int = ref empty_flow
@@ -1008,6 +1014,7 @@ struct
       begin
         norm_flow_int := self # get_hash n_flow;
         ret_flow_int := self # get_hash ret_flow;
+		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
