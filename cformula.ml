@@ -3014,6 +3014,7 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 and get_hp_rel_bformula bf=
   get_hp_rel_h_formula bf.formula_base_heap
 
+(*data nodes, view nodes, rel*)
 and get_hp_rel_h_formula hf=
   match hf with
     | Star { h_formula_star_h1 = hf1;
@@ -3060,6 +3061,70 @@ and get_hp_rel_name_h_formula hf=
     | HTrue
     | HFalse
     | HEmp -> []
+
+and get_hp_rel_vars_bformula bf=
+  get_hp_rel_vars_h_formula bf.formula_base_heap
+
+and get_hp_rel_vars_h_formula hf=
+  match hf with
+    | Star { h_formula_star_h1 = hf1;
+             h_formula_star_h2 = hf2} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;} ->
+        (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
+    | DataNode hd -> []
+    | ViewNode hv -> []
+    | HRel (rl,args,_) -> [rl]@(CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args)))
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> []
+
+
+and filter_var_hf hf rvs=
+  match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;
+            h_formula_star_pos = pos} ->
+        let n_hf1 =  filter_var_hf hf1 rvs in
+        let n_hf2 = filter_var_hf hf2 rvs in
+        (match n_hf1,n_hf2 with
+          | (HEmp,HEmp) -> HEmp
+          | (HEmp,_) -> n_hf2
+          | (_,HEmp) -> n_hf1
+          | _ -> Star {h_formula_star_h1 = n_hf1;
+                       h_formula_star_h2 = n_hf2;
+                       h_formula_star_pos = pos}
+        )
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 =  filter_var_hf hf1 rvs in
+        let n_hf2 = filter_var_hf hf2 rvs in
+        Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 =  filter_var_hf hf1 rvs in
+        let n_hf2 = filter_var_hf hf2 rvs in
+        Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos} 
+    | DataNode hd -> if CP.mem_svl hd.h_formula_data_node rvs then hf
+        else HEmp
+    | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node rvs then hf
+        else HEmp
+    | HRel _
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
 
 and mkAnd_hf fb hf pos=
   let new_hf = Star { h_formula_star_h1 = fb.formula_base_heap ;

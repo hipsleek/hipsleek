@@ -9,7 +9,7 @@ HeapPred G(node a, node b).
 //1a infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
 
 //1b.
- infer [H] H(x) & x'=x  |- x'::node<a,b>@L.
+ //infer [H] H(x) & x'=x  |- x'::node<a,b>@L.
 //print residue.
 
 /*

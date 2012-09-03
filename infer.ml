@@ -1307,6 +1307,33 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p pos) estate xpure_lhs_h1 lhs_p rhs_p
 
+let rec create_alias_tbl svl keep_vars aset = match svl with
+  | [] -> []
+  | [hd] -> 
+    [hd::(List.filter (fun x -> not(List.mem x keep_vars)) (CP.EMapSV.find_equiv_all hd aset))]
+  | hd::tl ->
+    let tmp = create_alias_tbl [hd] keep_vars aset in
+    let tl = List.filter (fun x -> not(List.mem x (List.hd tmp))) tl in
+    tmp@(create_alias_tbl tl keep_vars aset)
+
+(* Supposed fml to be Base _ *)
+let filter_var_heap keep_vars fml =
+  let _,pure,_,_,_ = CF.split_components fml in
+  let als = MCP.ptr_equations_without_null pure in
+(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
+  let aset = CP.EMapSV.build_eset als in
+  let alias_tbl = create_alias_tbl (keep_vars@CP.fv (MCP.pure_of_mix pure)) keep_vars aset in
+  let subst_lst = 
+    List.concat (List.map (fun vars -> if vars = [] then [] else 
+      let hd = List.hd vars in 
+      List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
+(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
+  let fml = CF.subst subst_lst fml in
+  let heap,pure,_,_,_ = CF.split_components fml in
+  let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
+(*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
+  (heap, pure)
+
 let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let hds, hvs, hrs = CF.get_hp_rel_bformula fb in
   let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in
@@ -1357,6 +1384,21 @@ let add_raw_hp_rel prog undef_args pos=
     Some (hf,[CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
   else None
 
+let filter_var_x fb rvs=
+  {fb with CF.formula_base_heap = CF.filter_var_hf fb.CF.formula_base_heap rvs;
+      CF.formula_base_pure =  MCP.mix_of_pure (CP.filter_var (MCP.pure_of_mix fb.CF.formula_base_pure) rvs);}
+
+(* let filter_var_x fb keep_vars= *)
+(*   let h,p = filter_var_heap keep_vars (CF.Base fb) in *)
+(*   {fb with CF.formula_base_heap = h; *)
+(*       CF.formula_base_pure = MCP.mix_of_pure p;} *)
+
+let filter_var fb keep_vars=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.string_of_formula_base in
+   Debug.ho_2 "filter_var" pr2 pr1 pr2
+( fun _ _ -> filter_var_x fb keep_vars) fb keep_vars
+
 let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
   let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
@@ -1391,6 +1433,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h
       let rundef_args = List.filter (undef_args defs) rargs in
       let l_new_hp = add_raw_hp_rel prog lundef_args pos in
       let r_new_hp = add_raw_hp_rel prog rundef_args pos in
+      (*filter non-selective sub-formulas*)
+      let keep_vars = (CF.get_hp_rel_vars_bformula lhs_b) @ (CF.get_hp_rel_vars_bformula rhs_b) in
+      (*end*)
       let update_fb fb new_hp =
         match new_hp with
           | None -> fb,[]
@@ -1398,6 +1443,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h
       in
       let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
       let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
+      let new_lhs_b = filter_var new_lhs_b keep_vars in
+      let new_rhs_b = filter_var new_rhs_b keep_vars in
     (*simply add constraints: *)
       let hp_rel = (CP.RelAssume (lhrs@rhrs@lvhp_rels@rvhp_rels), CF.Base new_lhs_b,
                           CF.Base new_rhs_b) in
@@ -1420,33 +1467,6 @@ let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
   | h::[] -> string_of h 
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
-
-let rec create_alias_tbl svl keep_vars aset = match svl with
-  | [] -> []
-  | [hd] -> 
-    [hd::(List.filter (fun x -> not(List.mem x keep_vars)) (CP.EMapSV.find_equiv_all hd aset))]
-  | hd::tl ->
-    let tmp = create_alias_tbl [hd] keep_vars aset in
-    let tl = List.filter (fun x -> not(List.mem x (List.hd tmp))) tl in
-    tmp@(create_alias_tbl tl keep_vars aset)
-
-(* Supposed fml to be Base _ *)
-let filter_var_heap keep_vars fml =
-  let _,pure,_,_,_ = CF.split_components fml in
-  let als = MCP.ptr_equations_without_null pure in
-(*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
-  let aset = CP.EMapSV.build_eset als in
-  let alias_tbl = create_alias_tbl (keep_vars@CP.fv (MCP.pure_of_mix pure)) keep_vars aset in
-  let subst_lst = 
-    List.concat (List.map (fun vars -> if vars = [] then [] else 
-      let hd = List.hd vars in 
-      List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
-(*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
-  let fml = CF.subst subst_lst fml in
-  let heap,pure,_,_,_ = CF.split_components fml in
-  let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
-(*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
-  (heap, pure)
 
 let print_spec spec file_name =
   let output_spec = file_name ^ ".spec" in
