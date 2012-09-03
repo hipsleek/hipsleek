@@ -1,0 +1,34 @@
+data node { int val ; node next }.
+data tnode { int val ; node left; node right }.
+
+HeapPred H(node a).
+HeapPred H1(node a, node b).
+HeapPred G(node a, node b).
+
+relation T(int a).
+
+/*for x.left
+[H,G] H(x) & x!=null |- x::node<v,l,r>
+--> H1(x,l,r)*x::node<v,l,r> & x!=null
+with H(x) -> H1(x,l,r)*x::node<v,l,r>// for x = y
+*/
+
+//infer[H] H(x) & x!= null |- x::tnode<v,l,r>.
+//print residue.
+
+
+// [(RELASS [H,HP_19], H(x)&x!=null&{FLOW,(19,20)=__norm}[], x::tnode<v,l,r>@M[Orig] * HP_19(l,r)&true&{FLOW,(19,20)=__norm}[])])
+
+ /*recursive function call
+ [H,G,H1] x::node<a,x'>*H1(x,x') &  b & x'!=null
+    |- H(x') --* G(x',x")
+  --> [H,G,H1] x::node<a,x0> * G(x0,x') & x0!=null
+   with x'!=null & H1(x,x') -> H(x')
+*/
+//Entailment Failure (1) Failure("should not have prime vars")
+infer[H,H1] x::node<a,x1>*H1(x,x1) &  b & x1!=null |- H(x1).
+print residue.
+
+//[(RELASS [H1,H], x::node<a,x1>@M[Orig] * H1(x,x1)&b & x1!=null&{FLOW,(19,20)=__norm}[], H(x1)&true&{FLOW,(19,20)=__norm}[])])
+//just need x1 information in the assumtion
+

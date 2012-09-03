@@ -35,7 +35,7 @@ HeapPred G(node a, node b).
    with x0!=null & H1(x0) -> H(x0)
 */
 //2.
-//infer [H,H1] x::node<a,x0>*H1(x0) &  b & x0!=null  |- H(x0).
+infer [H,H1] x::node<a,x0>*H1(x0) &  b & x0!=null  |- H(x0).
 
 /*
  //Postcondition for then branch
@@ -59,4 +59,4 @@ HeapPred G(node a, node b).
   with x::node<a,x'> * H1(x,x') & x'=null -> G(x,x')
 */
 //4.
-infer [G,H1] x::node<a,x0> * H1(x0) & b & x0=null  |- G(x,x0).
+//infer [G,H1] x::node<a,x0> * H1(x0) & b & x0=null  |- G(x,x0).
