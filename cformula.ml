@@ -21,6 +21,10 @@ type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | TempAnn of ann
 
 type typed_ident = (typ * ident)
 
+and mem_perm_formula = {mem_formula_name : CP.spec_var;
+			mem_formula_exact : bool;
+			mem_formula_field_layout : (ident * (ann list)) list}
+		
 and formula_type = 
   | Simple
   | Complex

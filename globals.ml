@@ -99,6 +99,7 @@ type typ =
   (* | FuncT (\* function type *\) *)
 
 let barrierT = Named "barrier"
+
 (*
   Data types for code gen
 *)

@@ -563,6 +563,11 @@ and get_heap_ann_opt annl : F.ann option =
     | a :: r -> a
     | [] ->  None
 
+and get_heap_ann_list annl : F.ann list  = 
+  match annl with
+    | (Some a) :: r -> a :: get_heap_ann_list r
+    |  None :: r ->  F.ConstAnn(Mutable) :: get_heap_ann_list r
+    | [] -> []
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
@@ -668,7 +673,7 @@ barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
  
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_bag
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
           view_mem = mpb;
@@ -682,10 +687,20 @@ inv_lock:
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
-opt_mem_perm_bag: [[t=OPT mem_perm_bag -> t ]];
+opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
-mem_perm_bag: [[ `MEM; `IDENTIFIER m -> (m,false)
-		| `MEME; `IDENTIFIER m -> (m,true) ]];
+mem_perm_set: [[ `MEM; `IDENTIFIER m; `AT; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+				->  {	F.mem_formula_name = m;
+					F.mem_formula_exact = false;
+					F.mem_formula_field_layout = mpl}				
+		| `MEME; `IDENTIFIER m; `AT; `OPAREN; mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+				->  {	F.mem_formula_name = m;
+					F.mem_formula_exact = true;
+					F.mem_formula_field_layout = mpl} ]];
+
+mem_perm_layout:[[ `IDENTIFIER dn; `LT; annl = ann_list; `GT -> let perml = get_heap_ann_list annl in (dn,perml) ]];
+
+ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 

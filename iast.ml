@@ -53,7 +53,8 @@ and view_decl = { view_name : ident;
 		  view_modes : mode list;
 		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : P.formula;
-		  view_mem : (ident * bool) option; (* Represents the Memory Permission Bag with true = exact & false = otherwise *)
+		  view_mem : F.mem_formula option; 
+		  (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
 		  view_formula : Iformula.struc_formula;
           view_inv_lock : F.formula option;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)

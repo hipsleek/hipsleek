@@ -8,6 +8,7 @@ open Perm
 open Mcpure_D
 open Mcpure
 open Label_only
+open Mem
   
 module C = Cast
 module E = Env
@@ -1266,6 +1267,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_baga = [];
           C.view_complex_inv = None;
           C.view_user_inv = memo_pf_N;
+          C.view_mem = Mem.trans_view_mem vdef.I.view_mem;
           C.view_inv_lock = inv_lock;
           C.view_un_struc_formula = n_un_str;
           C.view_base_case = None;

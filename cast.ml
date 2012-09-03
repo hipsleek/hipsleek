@@ -37,7 +37,7 @@ and prog_or_branches = (prog_decl *
 and data_decl = { 
   data_name : ident;
   data_fields : typed_ident list;
-	data_parent_name : ident;
+  data_parent_name : ident;
   data_invs : F.formula list;
   data_methods : proc_decl list; }
     
@@ -75,6 +75,7 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
