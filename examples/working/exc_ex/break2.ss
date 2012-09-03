@@ -1,6 +1,6 @@
 int v(int i)
 requires i=3
-ensures res=2;
+ensures res=-2;
 {
 	int j=5;
 	int k=3;
@@ -9,7 +9,7 @@ ensures res=2;
 	 if (k>1)
 		while(true)
 		requires true
-		ensures k'=k-1&flow __break_b1;
+		ensures k'=k-1&flow cnt_b1;
 		{
 			k--;
 			continue b1;

@@ -965,13 +965,15 @@ and memo_pure_push_exists_eq_x (qv: spec_var list) (f0: memo_pure) pos : (memo_p
         with _ -> 
           try
             let nc2 = List.find (fun c -> not (eq_spec_var c1 c)) c2 in
+			let nc2 = try snd (List.find (fun (c,_)-> eq_spec_var c nc2) r) with _ -> nc2 in
+			let r = List.map (fun (d1,d2)-> if eq_spec_var d2 c1 then (d1,nc2) else (d1,d2)) r in
             let new_t  = List.map (fun (q1, q2) -> (q1,List.filter (fun c -> not (eq_spec_var c1 c)) q2)) t in
             find_subst ((c1,nc2)::r) new_t
           with _ -> find_subst r t
     in
     find_subst [] aliases 
   in
-
+  let split_eqs eq_list qv = Debug.no_2 "MCP.split_eqs " EMapSV.string_of !print_svl (pr_list (pr_pair !print_sv !print_sv)) split_eqs eq_list qv in
   let all_aliases = List.fold_left (fun acc grp -> acc @ grp.memo_group_aset) [] f0 in
   let to_subst = split_eqs all_aliases qv in
   let subst_vars = fst (List.split to_subst) in
@@ -1054,7 +1056,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
    ands them and sends them to simplify
 *)
 and memo_pure_push_exists_all fs qv f0 pos =
-  Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
+  Debug.no_3_loop "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
 	!print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 													   
 and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
@@ -1171,6 +1173,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
+	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -1199,12 +1202,12 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	      if (disc<>(-1)) then ([e],[])
 	      else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	      (lp1@lp2,ln1@ln2) 
-    | Null _ | Var _ | IConst _ | AConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
+    | Null _ | Var _ | IConst _ | AConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
 	| ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
-    | Null _ | Var _ | IConst _ | FConst _ | AConst _ -> e
+    | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
     | Add (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Subtract (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Mult (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> (*print_string "called \n";*) Div d) (IConst (1,l))

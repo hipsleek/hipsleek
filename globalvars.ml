@@ -187,6 +187,10 @@ let rec find_read_write_global_var
 		(r,w)
 	  end
   | I.Block e -> find_read_write_global_var global_vars local_vars e.I.exp_block_body
+  | I.Barrier e -> 
+		if (IdentSet.mem e.I.exp_barrier_recv global_vars) then
+		  (IdentSet.diff (IdentSet.singleton e.I.exp_barrier_recv) local_vars, IdentSet.empty)
+		else (IdentSet.empty, IdentSet.empty)
   | I.CallRecv e ->
 	  begin
 		ignore (NG.add_edge g (NG.V.create !curr_proc) (NG.V.create e.I.exp_call_recv_method));
@@ -575,6 +579,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.This _
   | I.Time _ 
   | I.Unfold _
+  | I.Barrier _
   | I.Var _ -> 
 	  exp
   | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
@@ -752,6 +757,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Time _ 
   | I.Unfold _
   | I.Var _
+  | I.Barrier _
   | I.VarDecl _ -> 
 	  exp
   | I.Label (p,b) -> I.Label (p, check_and_change global_vars b)

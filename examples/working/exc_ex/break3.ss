@@ -1,5 +1,5 @@
 class r{}
-int t()
+r t()
 requires true
 ensures res::r<>;
 {
