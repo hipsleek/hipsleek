@@ -1279,6 +1279,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | HFalse -> [(HFalse, HFalse)]
     | HEmp -> [(HEmp,HEmp)]
     | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
+    | HRel _
     | DataNode _ 
     | ViewNode _ -> [(h,HEmp)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
@@ -5043,7 +5044,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.ho_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -6551,8 +6552,8 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     let check_sat = TP.is_sat_raw fml in
     (* check if there is a contraction with the RHS heap *)
     let r = 
-      if check_sat then let _ = print_endline "locle4" in Inf.infer_heap_nodes estate rhs rhs_rest conseq pos
-      else  let _ = print_endline "locle5" in None in 
+      if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq pos
+      else None in 
     begin
       match r with
         | Some (new_iv,new_rn,dead_iv) -> 
@@ -6933,9 +6934,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                and then restore M_unmatched_rhs to previous code without
                any inference *)
       | Context.M_infer_heap (rhs,rhs_rest) ->
-            do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos 
+          let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
                 (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
+          let (mix_lf,lsvl, _) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in
+          let (mix_rf,rsvl,_) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate mix_lf lsvl mix_rf rsvl rhs_h_matched_set conseq lhs_b rhs_b pos in
+          if (not res) then r else
+            let res_ctx = Ctx new_estate  in
+            (SuccCtx[res_ctx], NoAlias)
       | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
           (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
                 (*****************************************************************************)

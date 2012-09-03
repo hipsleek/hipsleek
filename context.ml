@@ -315,6 +315,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       )
       else []
     )
+  | HRel _ -> []
   | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =

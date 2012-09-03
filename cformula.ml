@@ -1231,6 +1231,7 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   | Phase { h_formula_phase_rd = h1;
             h_formula_phase_rw = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
   | HTrue -> true
+  | HRel _
   | DataNode _
   | ViewNode _
   | Hole _
@@ -4150,7 +4151,7 @@ let add_infer_rel_to_estate_x cp es =
 let add_infer_rel_to_estate cp es =
   let pr = pr_list CP.print_lhs_rhs in
   let pr2 es = pr es.es_infer_rel in
- Debug.ho_1 "add_infer_rel_to_estate" pr pr2 
+ Debug.no_1 "add_infer_rel_to_estate" pr pr2 
   (fun _ -> add_infer_rel_to_estate_x cp es) cp
 
 let add_infer_pure_to_estate cp es =
@@ -5816,6 +5817,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
                            h_formula_phase_rw = e2;},f_comb [r1;r2])
         | DataNode _
         | ViewNode _
+        | HRel _
         | Hole _	  
         | HTrue
         | HFalse 
@@ -6162,10 +6164,11 @@ let rename_labels transformer e =
 		| Phase s -> None	
   	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
+        | HRel _
 	    | Hole _
 	    | HTrue
 	    | HFalse 
-      | HEmp -> Some e in
+        | HEmp -> Some e in
   let f_m e = None in
   let f_a e = None in
 	let f_b e = Some e in

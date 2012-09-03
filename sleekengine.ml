@@ -282,7 +282,7 @@ let process_rel_def rdef =
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
 
 let process_hp_def hpdef =
-  (* let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in *)
+  let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
   if check_data_pred_name hpdef.I.hp_name then
 	let tmp = iprog.I.prog_hp_decls in
 	  try

@@ -1291,6 +1291,25 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
+let pr_hp_rel hp_rel = 
+  let pr2 = string_of_formula in
+  let pr3 = (pr_triple CP.print_rel_cat pr2 pr2) in
+  fmt_string (pr3 hp_rel)
+
+let string_of_hp_rels (e) : string =  
+  (* CP.print_only_lhs_rhs e *)
+  poly_string_of_pr pr_hp_rel e
+
+let pr_only_hp_rel (lhs,rhs) = 
+  (* fmt_string (CP.print_only_lhs_rhs rel) *)
+  fmt_open_box 1;
+  fmt_string "(";
+  pr_formula lhs;
+  fmt_string ")";
+  fmt_string " --> ";
+  pr_formula rhs;
+  fmt_close()
+
 let pr_lhs_rhs ((cat,lhs,rhs) as rel) = 
   fmt_string (CP.print_lhs_rhs rel)
   (* fmt_open_box 1; *)
@@ -1579,21 +1598,37 @@ let pr_estate (es : entail_state) =
   *)
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+  pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
-  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hp_rel) es.es_infer_hp_rel; 
+   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
   pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
 
+let pr_estate_infer_hp (es : entail_state) =
+  fmt_open_vbox 0;
+  pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
+  pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
+  pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+  pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
+(*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
+  pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
+  pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hp_rel) es.es_infer_hp_rel; 
+   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
+  fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
+let string_of_estate_infer_hp (es : entail_state) : string =  poly_string_of_pr  pr_estate_infer_hp es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es
 
 let string_of_entail_state  =  string_of_estate
+let string_of_entail_state_infer_hp  =  string_of_estate_infer_hp
 
 and string_of_failure_kind e_kind=
 match e_kind with

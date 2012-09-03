@@ -1293,7 +1293,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
   let pr0 x = !print_svl x.es_infer_vars_rel in
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r) = pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-      Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+      Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
       (fun _ _ _ _ -> infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) 
       rhs_p pos) estate xpure_lhs_h1 lhs_p rhs_p
 
@@ -1397,7 +1397,8 @@ let infer_collect_hp_rel prog (es:entail_state) mix_lf lsvl mix_rf rsvl (rhs_h_m
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in
-  let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in
+  (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
+   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
   Debug.ho_2 "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es mix_lf lsvl mix_rf rsvl rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
