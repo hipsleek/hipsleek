@@ -1,0 +1,8 @@
+data node { int val ; node next }.
+
+HeapPred H1(node a).
+HeapPred H2(node a).
+HeapPred G1(node a, node b).
+HeapPred G2(node a, node b).
+
+infer [H1,H2,G1,G2] H1(x) * H2(y) & x1=x & y1=y & x1=null |- G1(x,x1) * G2(y,y1).
