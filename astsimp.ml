@@ -1202,6 +1202,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in
+  let mem_form = (match vdef.I.view_mem with
+	  | Some a -> let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
+	  		let new_typ_mem = fresh_tvar stab in 
+			  let _ = gather_type_info_var a.IF.mem_formula_name stab new_typ_mem in 
+			  let inv = add_mem_invariant inv vdef.I.view_mem in
+				Mem.trans_view_mem vdef.I.view_mem 
+	  | None -> None)
+  in 
   let _ = gather_type_info_pure prog inv stab in
   let pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
@@ -1267,7 +1275,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_baga = [];
           C.view_complex_inv = None;
           C.view_user_inv = memo_pf_N;
-          C.view_mem = Mem.trans_view_mem vdef.I.view_mem;
+          C.view_mem = mem_form;
           C.view_inv_lock = inv_lock;
           C.view_un_struc_formula = n_un_str;
           C.view_base_case = None;
