@@ -70,7 +70,7 @@ and term_trans_constraint = {
 	(* trans_path		: path_trace; *)
 }
 
-let term_constr_tbl : ((term_res * term_res), term_trans_constraint) Hashtbl.t = Hashtbl.create 10
+let term_constr_tbl : ((int * int), term_trans_constraint) Hashtbl.t = Hashtbl.create 10
 
 let term_spec_tbl : (ident, term_spec) Hashtbl.t = Hashtbl.create 10
 
@@ -104,6 +104,11 @@ let partition_term_ctx tctx =
 	
 let collect_path_trace_term_ctx tctx =
 	collect_path_trace_list_failesc_context tctx.t_ctx 
+	
+let id_of_term_res = function
+	| Term i -> i
+	| Loop i -> i
+	| Unknown unk -> unk.unk_id
 
 (* If the path trace of a base context is a SUPERSET of *)
 (* the path trace of a recursive context, then the      *)
@@ -201,9 +206,10 @@ let sort_path_trace_by_order cl =
 			end
 	in List.sort (fun (pt1, _, _) (pt2, _, _) -> comp pt1 pt2) cl
 	
+(* BUGS [ps-1d.ss]: exists(x':x'=x & MayLoop) |- exists(x':x'=x & MayLoop) --> false *)	
 let rec partition_path_trace utils cl =
-	(* A; B is a sequence if pathA subseteq pathB and condB |- condA, *)
 	let sml_pt, sml_c, _ = List.hd cl in
+	(* A; B is a sequence if pathA subseteq pathB and condB |- condA, *)
 	let sml_seq, others = List.partition (fun (pt, c, _) -> 
 		(Gen.BList.subset_eq (=) sml_pt pt) && 
 		(utils.imply c sml_c)) cl in
@@ -277,10 +283,13 @@ let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
 			let constr = {
 				trans_src = Unknown unk;
 				trans_dst = b.term_base_res; } in
+			Hashtbl.add term_constr_tbl 
+				(id_of_term_res constr.trans_src, id_of_term_res constr.trans_dst) constr;
 			[constr]
 		else []
 	| TCase c -> List.concat (List.map (fun (cc, sc) ->
 		collect_term_trans_constrs_callee_term_spec utils (ctx @ [cc]) unk sc) c)
+	| TSeq _ -> []
 
 let collect_term_trans_constrs_base_spec utils ctx unk =
 	let callee_tspec = rename_term_spec unk.unk_params (look_up_term_spec unk.unk_callee) in
@@ -350,6 +359,7 @@ let simplify_inf_cond utils ivars inf_cond ctx =
 	
 (* Fixpoint Calculation for an exact termination *)
 (* condition with Equality in Base Case          *)
+(* Do NOT support mutually recursive calls       *)
 let term_cond_by_fixcalc utils subst base ctx =
 	let args, params = subst in
 	let cnt = SpecVar (Int, "cnt", Unprimed) in
@@ -390,7 +400,7 @@ let check_monotone_decreasing_sequence utils ivars subst f_seq base_cond f_upd =
 		if (utils.imply f_upd base_cond) then
 			(* CASE 0: 1-step execution *) 
 			([], [CP.mkTrue no_pos], None)
-  	else
+		else
 			(* Condition for decreasing sequence *)
 			let dec_cond = mkPure (mkGt s_0 s_1 no_pos) in 
 			if (utils.imply f_upd dec_cond) then
@@ -404,26 +414,26 @@ let check_monotone_decreasing_sequence utils ivars subst f_seq base_cond f_upd =
 			(* CASE 2: The sequence ALWAYS increasing *)
 			(* We do not need to check this case, because it has *)
 			(* already been done by the reachability check       *)
-  		else begin
+			else begin
 				(* CASE 3: Otherwise, the sequence MAY or MAY NOT decreasing, *)
 				(* based on some conditions that need to be inferred          *)
-  			let mkExists vs f = CP.mkExists vs f None no_pos in
-  			let mkAnd f1 f2 = mkAnd f1 f2 no_pos in  
-  			let compose_ctx = mkAnd 
-    			(mkExists (diff_svl (CP.fv f_upd) (x @ xp)) f_upd) 
-    			(mkExists (diff_svl (CP.fv f_upd_p) (xp @ xpp)) f_upd_p)
-    		in
+				let mkExists vs f = CP.mkExists vs f None no_pos in
+				let mkAnd f1 f2 = mkAnd f1 f2 no_pos in  
+				let compose_ctx = mkAnd 
+					(mkExists (diff_svl (CP.fv f_upd) (x @ xp)) f_upd)
+					(mkExists (diff_svl (CP.fv f_upd_p) (xp @ xpp)) f_upd_p)
+				in
 				(* CASE 3-1 *)
 				let is_dec, term_cond, rank =
 					let test = utils.imply (mkAnd compose_ctx dec_cond) (mkPure (mkGt s_1 s_2 no_pos)) in
 					if test then
-      			(* The sequence can be proved monotone strictly decreasing with dec_cond *)
-    				(* In this case, sometimes the condition for equality base case *)
-    				(* is NON-LINEAR, that cannot be handled by Fixcalc             *)
-  					let rl = simplify_inf_cond utils ivars dec_cond f_upd in
-  					let rl = List.filter (fun r -> utils.is_sat 
-  						(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
-  					(test, rl, Some s_0)
+						(* The sequence can be proved monotone strictly decreasing with dec_cond *)
+						(* In this case, sometimes the condition for equality base case *)
+						(* is NON-LINEAR, that cannot be handled by Fixcalc             *)
+						let rl = simplify_inf_cond utils ivars dec_cond f_upd in
+						let rl = List.filter (fun r -> utils.is_sat 
+							(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
+						(test, rl, Some s_0)
 					else (test, [], None)
 				in
 				let inc_cond = mkPure (mkLte s_0 s_1 no_pos) in
@@ -433,14 +443,14 @@ let check_monotone_decreasing_sequence utils ivars subst f_seq base_cond f_upd =
 					(* The sequence is monotone increasing --> Non-termination *)
 					if test then 
 						let rl = simplify_inf_cond utils ivars inc_cond f_upd in
-  					let rl = List.filter (fun r -> utils.is_sat 
-  						(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
+						let rl = List.filter (fun r -> utils.is_sat 
+							(mkAnd r (mkPure (mkGt f_seq (mkIConst 0 no_pos) no_pos)))) rl in
 						(test, rl)
 					else (test, [])
 				in
 				if (is_dec || is_inc) then nonterm_cond, term_cond, rank
 				(* The sequence is neither monotone increasing nor monotone decreasing, *)
-  			(* so that the function returns the condition for one-step execution    *)
+				(* so that the function returns the condition for one-step execution    *)
 				else ([], simplify_inf_cond utils ivars base_cond f_upd, None)
 			end
 	end in
@@ -468,7 +478,7 @@ let infer_term_condition utils ivars tc (* trans_constraint *) =
 	let sce = norm_src_cond sc in (* A in A>0  *)
 	let dce = norm_dst_cond dc in (* B in B<=0 *)
 	check_monotone_decreasing_sequence utils ivars tc.trans_subst sce dc tc.trans_ctx 
-
+*)
 (* Build the graph of reachability *)	
 module TNode = struct
 	type t = term_res
@@ -479,17 +489,77 @@ end
 
 module TG = Graph.Persistent.Digraph.Concrete(TNode)		
 module TGC = Graph.Components.Make(TG)	
+module TGN = Graph.Oper.Neighbourhood(TG)
 
-let graph_of_term_constrs t_constrs =
+(* Build a reachability graph from set of termination constraints *)
+let rec graph_of_term_constrs t_constrs =
 	let tg = TG.empty in
 	let tg = List.fold_left (fun g constr ->
 		TG.add_vertex g constr.trans_src;
 		TG.add_vertex g constr.trans_dst;
 		TG.add_edge g constr.trans_src constr.trans_dst) tg t_constrs
-	in
-	let scc_list = List.rev (TGC.scc_list tg) in
-	print_endline (pr_list (pr_list !print_term_res) scc_list) 
-*)			
+	in tg 
+
+and is_neighbors_of_scc (src: TG.V.t list) (dst: TG.V.t list) tg : bool =
+	let neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in
+	List.exists (fun v -> List.mem v neighbors) dst
+	
+(* Find a set of neighbor scc groups of a scc *)		
+and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t list list =
+	let neighbors = List.filter (fun m -> not (List.mem m scc)) (TGN.list_from_vertices tg scc) in
+	(* let scc_neighbors = List.find_all (fun s -> is_neighbors_of_scc scc s) scc_list in *) (* Less efficient *)
+	let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
+	scc_neighbors
+
+(* Find ALL sccs that can reach from src *)
+and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg = 
+	let v_neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in
+	let scc_neighbors, others = List.partition (fun s -> List.exists (fun v -> List.mem v v_neighbors) s) scc_list in
+	List.fold_left (fun (res, rem) s ->
+		let s_reachable_sccs, rem = reachable_sccs_top_down s rem tg in
+		(res @ s_reachable_sccs, rem)) (scc_neighbors, others) scc_neighbors
+
+and reachable_sccs_bottom_up (src: TG.V.t list) (scc_list: TG.V.t list list) tg = 
+	let preds = List.concat (List.map (TG.pred tg) src) in 
+	let scc_preds, others = List.partition (fun s -> List.exists (fun v -> List.mem v preds) s) scc_list in
+	List.fold_left (fun (res, rem) s ->
+		let s_pred_sccs, rem = reachable_sccs_bottom_up s rem tg in
+		(res @ s_pred_sccs, rem)) (scc_preds, others) scc_preds
+
+(* Partition a list of sccs into groups of reachable sccs *)
+and partition_scc_list reachable_sccs (scc_list: TG.V.t list list) tg = 
+	if scc_list = [] then []
+	else
+		let root = List.hd scc_list in
+		let rem = List.tl scc_list in
+		let root_reachable_sccs, rem = reachable_sccs root rem tg in
+		(root::root_reachable_sccs)::(partition_scc_list reachable_sccs rem tg)
+		
+and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =
+  let compare_scc scc1 scc2 =
+		if (List.mem scc2 (neighbors_of_scc scc1 scc_list tg)) then -1 (* scc1 -> scc2 => [scc2, scc1] *)
+		else if (List.mem scc1 (neighbors_of_scc scc2 scc_list tg)) then 1 (* scc2 -> scc1 *)
+		else 0
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list 
+	
+(* Check whether a scc group can reach Term or Loop or not *)	
+and is_may_term_reachable (scc_group: TG.V.t list list) =
+	List.exists (fun v -> match v with
+	| Term _ -> true | _ -> false) (List.concat scc_group)
+
+(****************************************)
+(** DRIVER FOR SOLVING CONSTRS PROCESS **)	
+(****************************************)
+let solve_constrs constrs =
+	let tg = graph_of_term_constrs constrs in
+	let scc_list = scc_sort (TGC.scc_list tg) tg in
+	let scc_groups = partition_scc_list reachable_sccs_bottom_up (List.rev scc_list) tg in
+	let may_term, must_loop = List.partition (fun sg -> is_may_term_reachable sg) scc_groups in
+	print_endline (pr_list (pr_list !print_term_res) scc_list);
+	print_endline (pr_list (pr_list (pr_list !print_term_res)) scc_groups);
+	print_endline (pr_list (pr_list (pr_list !print_term_res)) must_loop);
+	print_endline (pr_list (pr_list (pr_list !print_term_res)) may_term)
+
 (***************** MAIN *****************)									
 let main utils procs =
 	List.iter (fun proc ->
@@ -510,7 +580,7 @@ let main utils procs =
 		info_hprint "Termination Constraints"
 			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
 		info_pprint "\n";
-		(* graph_of_term_constrs t_constraints;                                         *)
+		solve_constrs t_constraints;
 		info_hprint "Termination Spec" !print_term_spec t_spec;
 		info_pprint "\n"; 
 	) procs
