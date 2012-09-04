@@ -58,6 +58,11 @@ Constrains:
 (3) GX(x1, x') * GY(y', y'') * HX1(x, b) * HY(y) * x0::node<a,y> & y' = x0  -> GX(x, x') * GY(y, y')
 (4) HX(x) * HY(y) & x = null & x' = null -> GX(x, x') * GY(y, y')
 
+ H1(x) * H2(y) & x!=null  --> x::node<val_18_528',next_18_529'> * HP_549(next_18_529')
+ H1(x) * H2(y) * x::node<val_18_562,y> & x!=null & y'=x & x'=tmp_19' --> H1(x') * H2(y')
+ H1(x) * H2(y) * x::node<val_18_562,y> * G1(tmp_566,x') * G2(x,y') & x!=null --> G1(x,x') * G2(y,y')
+ H1(x) * H2(y) & x'=x & y'=y & x'=null --> G1(x,x') * G2(y,y')
+
 Normalization:
 From (2) HX1(x, b) * HY(y) * x0::node<a,y> & y' = x0 & x' = b -> HX(x') * HY(y')
 (5) HX1(x, b) & x' = b -> HX(x')
