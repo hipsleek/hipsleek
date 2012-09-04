@@ -31,6 +31,7 @@ with H(x) -> H1(l,r)*x::node<v,l,r>// for x = y
 
 //[(RELASS [H1,H], x::node<a,x1>@M[Orig] * H1(x,x1)&b & x1!=null&{FLOW,(19,20)=__norm}[], H(x1)&true&{FLOW,(19,20)=__norm}[])])
 //just need x1 information in the assumtion
+//new [(RELASS [H1,H], H1(x,x1)&x1!=null&{FLOW,(19,20)=__norm}[], H(x1)&true&{FLOW,(19,20)=__norm}[])])
 
 
 /*Postcondition
@@ -51,8 +52,9 @@ for x = y
 */
 
 //should infer following predicate
-//infer[H] H(x) |- x = y.
-//print residue.
+infer[x,y] H(x) |- x = y.
+print residue.
+
 //fail.
 
 //infer[H] H(x0) & x = x0 |- x::node<3,x0>.
@@ -66,6 +68,6 @@ for x = y
 //print residue.
 //
 
-infer[H,G] H(x)& x=null & x0 = x  |- G(x,x0).
-print residue.
+//infer[H,G] H(x)& x=null & x0 = x  |- G(x,x0).
+//print residue.
 

@@ -1373,6 +1373,30 @@ let filter_var fb keep_vars=
    Debug.ho_2 "filter_var" pr2 pr1 pr2
 ( fun _ _ -> filter_var_x fb keep_vars) fb keep_vars
 
+let filter_irr_lhs_bf_hp lfb rfb=
+  let rvars = CF.fv (CF.Base rfb) in
+  CF.filter_irr_hp_lhs_bf lfb rvars
+
+let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
+  (*filter non-selective sub-formulas*)
+  let keep_vars = (CF.get_hp_rel_vars_bformula lhs_b) @ (CF.get_hp_rel_vars_bformula rhs_b) in
+       (*closed*)
+  let keep_vars = CP.remove_dups_svl (List.fold_left close_def keep_vars (leqs@reqs)) in
+ (*end*)
+  let lhs_b1 = filter_var lhs_b keep_vars in
+  let rhs_b1 = filter_var rhs_b keep_vars in
+   (*remove equals*)
+  let lhs_b2 = CF.subst_b leqs lhs_b1 in
+  let rhs_b2 = CF.subst_b (leqs@reqs) rhs_b1 in
+   (*remove redundant: x=x*)
+  let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure 
+      (CP.remove_redundant (MCP.pure_of_mix lhs_b2.CF.formula_base_pure))} in
+  let rhs_b3 = {rhs_b2 with CF.formula_base_pure = MCP.mix_of_pure 
+      (CP.remove_redundant (MCP.pure_of_mix rhs_b2.CF.formula_base_pure))} in
+  (*elim irr hp rel in lhs*)
+  let lhs_b4 = filter_irr_lhs_bf_hp lhs_b3 rhs_b3 in
+  (lhs_b4,rhs_b3)
+
 let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
   let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
@@ -1388,8 +1412,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_s
         (false,es))
     else
     (*which pointers are defined and which arguments of data nodes are pointer*)
-      let leqs = MCP.ptr_equations_without_null mix_lf in
-      let reqs = es.CF.es_rhs_eqset in
+      let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
+      let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
     (*for debugging*)
       (* let pr_elem = Cpure.SV.string_of in *)
       (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
@@ -1405,13 +1429,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_s
       let undef_args defs (t,v) = not(CP.mem_svl v defs) in
       let lundef_args = List.filter (undef_args defs) largs in
       let rundef_args = List.filter (undef_args defs) rargs in
+      (*generate new hp for undef pointers*)
       let l_new_hp = add_raw_hp_rel prog lundef_args pos in
       let r_new_hp = add_raw_hp_rel prog rundef_args pos in
-      (*filter non-selective sub-formulas*)
-      let keep_vars = (CF.get_hp_rel_vars_bformula lhs_b) @ (CF.get_hp_rel_vars_bformula rhs_b) in
-      (*closed*)
-       let keep_vars = CP.remove_dups_svl (List.fold_left close_def keep_vars (leqs@reqs)) in
-      (*end*)
       let update_fb fb new_hp =
         match new_hp with
           | None -> fb,[]
@@ -1419,11 +1439,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_s
       in
       let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
       let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
-      let new_lhs_b = filter_var new_lhs_b keep_vars in
-      let new_rhs_b = filter_var new_rhs_b keep_vars in
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in
     (*simply add constraints: *)
-      let hp_rel = (CP.RelAssume (lhrs@rhrs@lvhp_rels@rvhp_rels), CF.Base new_lhs_b,
-                          CF.Base new_rhs_b) in
+      let hp_rel = (CP.RelAssume (lhrs@rhrs@lvhp_rels@rvhp_rels), (CF.Base new_lhs_b),
+                           CF.Base new_rhs_b) in
       let new_es = {es with CF. es_infer_vars_hp_rel = es.CF. es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
           CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel]} in
       (true, new_es)
