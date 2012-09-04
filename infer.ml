@@ -1420,6 +1420,11 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       (* let _ = print_endline ("lsvl: " ^ (pr2 leqs)) in *)
       (* let _ = print_endline ("rsvl: " ^ (pr2 reqs)) in *)
     (*end for debugging*)
+      if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
+         (
+        Debug.info_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos; 
+        (false,es))
+      else
       let ldef,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
       let rdef,rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
       (*LHS (RHS) check all pointers have been defined, if not
@@ -1451,9 +1456,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       let new_es_formula =  update_es_f es.CF.es_formula l_new_hp in
       let new_es_formula =  update_es_f new_es_formula r_new_hp in
       (*drop hp rel in es_formula*)
+      let new_es_formula = CF.drop_lhs_hp_f new_es_formula lhrs in
       (*add mismatched heap in the entail states*)
       let new_es_formula = CF.mkAnd_f_hf new_es_formula rhs pos in
-      let new_es = {es with CF. es_infer_vars_hp_rel = es.CF. es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
+      let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
           CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
           CF.es_formula = new_es_formula} in
       (true, new_es)
@@ -1466,8 +1472,8 @@ let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_
   (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
-  Debug.ho_2 "infer_collect_hp_rel" pr1 pr1 pr5
-( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
+  Debug.ho_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
+( fun _ _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b rhs
 
 let rec string_of_elems elems string_of sep = match elems with 
   | [] -> ""

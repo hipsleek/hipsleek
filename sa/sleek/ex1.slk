@@ -4,7 +4,7 @@ HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
  //1. for x.next
-// infer [H,G] H(x) |- x::node<a,b>@L.
+ infer [H] H(x) |- x::node<a,b>@L.
 
 //1a infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
 
@@ -37,7 +37,7 @@ HeapPred G(node a, node b).
    with x0!=null & H1(x0) -> H(x0)
 */
 //2.
-infer [H,H1] x::node<a,x0>*H1(x0) &  b & x0!=null  |- H(x0).
+//infer [H,H1] x::node<a,x0>*H1(x0) &  b & x0!=null  |- H(x0).
 
 /*
  //Postcondition for then branch

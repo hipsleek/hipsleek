@@ -3181,6 +3181,53 @@ and filter_var_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
+and drop_lhs_hp_f f hp_names=
+  match f with
+    | Base fb -> Base {fb with formula_base_heap =  drop_lhs_hp_hf fb.formula_base_heap hp_names;}
+    | Or orf -> Or {orf with formula_or_f1 = drop_lhs_hp_f orf.formula_or_f1 hp_names;
+                formula_or_f2 = drop_lhs_hp_f orf.formula_or_f2 hp_names;}
+    | Exists fe -> Exists {fe with formula_exists_heap =  drop_lhs_hp_hf fe.formula_exists_heap hp_names;}
+
+and drop_lhs_hp_hf hf hp_names=
+  match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;
+            h_formula_star_pos = pos} ->
+        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
+        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
+        (match n_hf1,n_hf2 with
+          | (HEmp,HEmp) -> HEmp
+          | (HEmp,_) -> n_hf2
+          | (_,HEmp) -> n_hf1
+          | _ -> Star {h_formula_star_h1 = n_hf1;
+                       h_formula_star_h2 = n_hf2;
+                       h_formula_star_pos = pos}
+        )
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
+        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
+        Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
+        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
+        Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos} 
+    | DataNode hd -> hf
+    | ViewNode hv -> hf
+    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HEmp
+        else hf
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+
 
 and mkAnd_f_hf f hf pos=
   match f with
