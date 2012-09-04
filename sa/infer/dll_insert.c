@@ -13,7 +13,7 @@ dll<p,n> == self = null & n = 0
 
 void insert(node2 x, int a)
   requires H(x)
-  ensures G(x,x'); 
+  ensures G(x,x'); //'
 {
   bool l = x.next == null;
   if (l)
@@ -36,12 +36,11 @@ void insert(node2 x, int a)
 [H,G,H1] x::node<a,p,n>*H1(p,n) & n=null
 
 //x.next = new node2(a, x, null);
-[H,G,H1] x::node<a,p,n> * x'::node<a,p,n'> * H1(p,n) * n'::node<a,x,null> & n=null
+[H,G,H1] x'::node<a,p,n'> * H1(p,n') * n'::node<a,x,null> &x = x'
 
 //post cond then branch
-[H,G,H1] x::node<a,p,n> * x'::node<a,p,n'> * H1(p,n) * n'::node<a,x,null> & n=null |- G(x,x')
---> G(x,x') * x'::node<a,p,n'> * x::node<a,p,n'> * H1(p,n) * n'::node<a,x,null> & n=null
-with x::node<a,p,n> * H1(p,n) * x'::node<a,p,n'> * n'::node<a,x,null> & n=null -> G(x,x')
+[H,G,H1] x'::node<a,p,n'> * H1(p,n') * n'::node<a,x,null> & x = x' |- G(x,x')
+with H1(p,n') * x'::node<a,p,n'> * n'::node<a,x',null>  & x' = x-> G(x,x')
 
 //state after else branch
 [H,G,H1] x::node<a,p,n>*H1(p,n) & n!=null
@@ -61,6 +60,8 @@ Constrains
 
 (1) H(x) -> x::node<a,p,n>*H1(p,n)
 (2) x::node<a,p,n> * H1(p,n) * x'::node<a,p,n'> * n'::node<a,x,null> & n=null -> G(x,x')
+(2') H1(p,n') * x'::node<a,p,n'> * n'::node<a,x',null> & n=null & x' =x-> G(x,x')
+
 (3) x::node<a,p,n> * H1(p,n) & n!=null -> H(n)
 (4) x::node<a,p,n> * G(n0,n') * H1(p,n) & n!=null & x' = x & n' = n -> G(x,x')
 

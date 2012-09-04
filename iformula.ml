@@ -761,7 +761,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-	    
+  | HRel (r, args, l) -> HRel (r, args,l)
 
 and rename_bound_vars (f : formula) = 
   let add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
