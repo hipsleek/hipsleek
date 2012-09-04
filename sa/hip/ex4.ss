@@ -8,13 +8,43 @@ void dispose(ref node x)
   ensures x'=null;
 
 HeapPred D(node a).
+HeapPred E(node a, node b).
+
 void delete_list(ref node x)
-  infer[D]
+  infer[D,E]
   requires D(x)
-  ensures x'=null;
+  ensures E(x,x');
 {
   if (x!=null) {
     delete_list(x.next);
     dispose(x);
   }
 }
+
+/*
+D(x)&x!=null --> x::node<val_17_524',next_17_525'> * HP_548(next_17_525')
+x!=null --> D(v_node_17_526')
+D(x) & x!=null --> x::node<Anon_13,Anon_14> * HP_556(Anon_14)
+
+E(x,y) = K(x)*L(y)
+
+D(x) & x!=null --> x::node<val_19_525',next_19_526'> *  HP_549(next_19_526')
+D(x) & x!=null --> x::node<Anon_13,Anon_14> * HP_561(Anon_14)
+D(x) & x'=null & x!=null --> E(x,x')
+D(x) & x=null --> E(x,x)
+ */
+
+/*
+D(x) & x'=null & x!=null --> K(x) * L(x')
+D(x) & x=null --> K(x) * L(x)
+
+D(x) --> x = null --> emp
+x=null --> K(x)
+x=null <--> L(x)
+
+D(x) & x!=null --> K(x)
+D(x) & x=null --> K(x)
+==> D(x) <---> K(x)
+
+D(x) <---> x=null \/ x::node<val_19_525',next_19_526'> *  HP_549(next_19_526')
+ */

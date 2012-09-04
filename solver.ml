@@ -6945,7 +6945,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
           let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
           let ( _,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
+          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
           if (not res) then r else
             let res_ctx = Ctx new_estate  in
             (SuccCtx[res_ctx], NoAlias)
@@ -6993,7 +6993,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         (* let _ = print_endline ("locle: collect hp_rel here: ") in *)
                   let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
                   let ( _,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-                  let (res,new_estate) = Inf.infer_collect_hp_rel prog estate mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
+                  let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
                   if (not res) then
                     let s = "15.5 no match for rhs data node: " ^
                       (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in

@@ -71,5 +71,17 @@ Drop first parameter of H1:
 
    x::node<a,x0> * G(x0,x') & x0!=null -> G(x,x')
    x::node<a,x'> * H1(x') & x'=null -> G(x,x')
+*/
+   /*
+H(x) --> x::node<val_15_522',next_15_523'> * HP_534(next_15_523')
+HP_534(x') & x'!=null --> H(x')
+H(x) * G(x_546,x') & x_546!=null --> G(x,x')
+H(x) * HP_534(x') & x'=null --> G(x,x')
+
+HP_534(x') & x'!=null --> H(x')
+H(x) * G(x_546,x') & x_546!=null --> G(x,x')
+H(x) --> x::node<val_15_522',next_15_523'> * HP_534(next_15_523')
+H(x) * HP_534(x') &x'=null --> G(x,x')
+
 
 */

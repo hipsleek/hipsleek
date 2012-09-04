@@ -3181,7 +3181,21 @@ and filter_var_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
-and mkAnd_hf fb hf pos=
+
+and mkAnd_f_hf f hf pos=
+  match f with
+    | Base fb -> Base (mkAnd_fb_hf fb hf pos)
+    | Or orf -> Or {orf with formula_or_f1 = mkAnd_f_hf orf.formula_or_f1 hf pos;
+                formula_or_f2 = mkAnd_f_hf orf.formula_or_f2 hf pos;}
+    | Exists fe ->
+        let new_hf = Star { h_formula_star_h1 = fe.formula_exists_heap;
+                            h_formula_star_h2 = hf;
+                            h_formula_star_pos = pos
+                          }
+        in
+        Exists {fe with formula_exists_heap =  new_hf;}
+
+and mkAnd_fb_hf fb hf pos=
   let new_hf = Star { h_formula_star_h1 = fb.formula_base_heap ;
                          h_formula_star_h2 = hf;
                          h_formula_star_pos = pos

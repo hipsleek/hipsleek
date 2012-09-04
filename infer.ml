@@ -1337,7 +1337,7 @@ let find_defined_pointers prog fb mix_f rhs_h_matched_set eqs pos=
   let pr3 =  pr_pair string_of_typ !print_sv in
   let pr4 = pr_list pr3 in
   let pr5 = pr_pair pr2 pr4 in
-  Debug.ho_1 "find_defined_pointers" pr1 pr5
+  Debug.no_1 "find_defined_pointers" pr1 pr5
 ( fun _ -> find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos) fb
 
 let add_raw_hp_rel prog undef_args pos=
@@ -1370,7 +1370,7 @@ let filter_var_x fb rvs=
 let filter_var fb keep_vars=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_formula_base in
-   Debug.ho_2 "filter_var" pr2 pr1 pr2
+   Debug.no_2 "filter_var" pr2 pr1 pr2
 ( fun _ _ -> filter_var_x fb keep_vars) fb keep_vars
 
 let filter_irr_lhs_bf_hp lfb rfb=
@@ -1397,7 +1397,7 @@ let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
   let lhs_b4 = filter_irr_lhs_bf_hp lhs_b3 rhs_b3 in
   (lhs_b4,rhs_b3)
 
-let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
   let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
     (*end for debugging*)
@@ -1435,20 +1435,31 @@ let infer_collect_hp_rel_x prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_s
       let update_fb fb new_hp =
         match new_hp with
           | None -> fb,[]
-          | Some (hf,vhp_rels) -> (CF.mkAnd_hf fb hf pos), vhp_rels
+          | Some (hf,vhp_rels) -> (CF.mkAnd_fb_hf fb hf pos), vhp_rels
       in
       let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
       let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
       let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in
-    (*simply add constraints: *)
-      let hp_rel = (CP.RelAssume (lhrs@rhrs@lvhp_rels@rvhp_rels), (CF.Base new_lhs_b),
+      (*simply add constraints: *)
+      let hp_rel = (CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@lvhp_rels@rvhp_rels)), (CF.Base new_lhs_b),
                            CF.Base new_rhs_b) in
+      let update_es_f f new_hp=
+        match new_hp with
+          | None -> f
+          | Some (hf,vhp_rels) -> (CF.mkAnd_f_hf f hf pos)
+      in
+      let new_es_formula =  update_es_f es.CF.es_formula l_new_hp in
+      let new_es_formula =  update_es_f new_es_formula r_new_hp in
+      (*drop hp rel in es_formula*)
+      (*add mismatched heap in the entail states*)
+      let new_es_formula = CF.mkAnd_f_hf new_es_formula rhs pos in
       let new_es = {es with CF. es_infer_vars_hp_rel = es.CF. es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
-          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel]} in
+          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
+          CF.es_formula = new_es_formula} in
       (true, new_es)
 
 
-let infer_collect_hp_rel prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in
@@ -1456,7 +1467,7 @@ let infer_collect_hp_rel prog (es:entail_state) mix_lf mix_rf (rhs_h_matched_set
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
   Debug.ho_2 "infer_collect_hp_rel" pr1 pr1 pr5
-( fun _ _ -> infer_collect_hp_rel_x prog es mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
+( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b
 
 let rec string_of_elems elems string_of sep = match elems with 
   | [] -> ""
