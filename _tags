@@ -10,4 +10,5 @@
 <mona-1.4/comp/lib/*.*>: not_hygienic
 <sw/*>: not_hygienic
 <lp-ex/*>: not_hygienic
-<cil/cil-1.4.0/obj/x86_LINUX/*>: not_hygienic
+<cil/obj/x86_LINUX/*.*>: not_hygienic
+
