@@ -2476,7 +2476,7 @@ let string_of_term_res = function
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
 		^ "#" ^ unk.TInfer.unk_callee 
-		(* ^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx)  *)
+		^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx)
 
 let string_of_term_cond_pure (pt, cond, tr) =
 	"\n" ^ (string_of_path_trace pt) ^ ": "
@@ -2504,10 +2504,10 @@ let rec string_of_term_spec spec =
 		(pr_list print_case tspec)		
 
 let string_of_term_trans_constraint trans_c =
-	let string_of_ele (* cond *) res = (string_of_term_res res) (* ^ (pr_list string_of_pure_formula cond) *) in
-	(string_of_ele (* trans_c.TInfer.trans_src_cond *) trans_c.TInfer.trans_src) 
+	let string_of_ele cond res = "[" ^ (string_of_pure_formula cond) ^ "]" ^ (string_of_term_res res) in
+	(string_of_ele trans_c.TInfer.term_src_cond trans_c.TInfer.term_trans_src) 
 	^ ">>" ^ 
-	(string_of_ele (* trans_c.TInfer.trans_dst_cond *) trans_c.TInfer.trans_dst) 
+	(string_of_ele trans_c.TInfer.term_dst_cond trans_c.TInfer.term_trans_dst) 
 	(* ^ "\n" ^ ("trans_ctx: " ^ (string_of_pure_formula trans_c.TInfer.trans_ctx)) *)
 
 (* An Hoa : formula to HTML output facility *)
