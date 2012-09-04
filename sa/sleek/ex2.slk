@@ -16,7 +16,6 @@ with H(x) -> H1(l,r)*x::node<v,l,r>// for x = y
 //infer[H] H(x) & x!= null |- x::tnode<v,l,r>.
 //print residue.
 
-
 // [(RELASS [H,HP_19], H(x)&x!=null&{FLOW,(19,20)=__norm}[], x::tnode<v,l,r>@M[Orig] * HP_19(l,r)&true&{FLOW,(19,20)=__norm}[])])
 
  /*recursive function call
@@ -52,8 +51,8 @@ for x = y
 */
 
 //should infer following predicate
-infer[x,y] H(x) |- x = y.
-print residue.
+//infer[x,y] H(x) |- x = y.
+//print residue.
 
 //fail.
 

@@ -1420,11 +1420,11 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       (* let _ = print_endline ("lsvl: " ^ (pr2 leqs)) in *)
       (* let _ = print_endline ("rsvl: " ^ (pr2 reqs)) in *)
     (*end for debugging*)
-      if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
-         (
-        Debug.info_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos; 
-        (false,es))
-      else
+      (* if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then *)
+      (*    ( *)
+      (*   Debug.info_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;  *)
+      (*   (false,es)) *)
+      (* else *)
       let ldef,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
       let rdef,rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
       (*LHS (RHS) check all pointers have been defined, if not

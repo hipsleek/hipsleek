@@ -26,7 +26,7 @@ infer [H,G] H(x) |- x::node<a,p,n>@L
 //print residue.
 
 //BUG: post cond after then branch
-//infer[H1] x0::tnode<a,p,n0> * H1(p,n0) * n0::tnode<a,x0,null> & x = x0|- G(x,x0).
+infer[H1,G] x0::tnode<a,p,n0> * H1(p,n0) * n0::tnode<a,x0,null> & x = x0 |- G(x,x0).
 //print residue.
 //infer[G] [(RELASS [H1,G], x0::tnode<a,p,n0>@M[Orig] * H1(p,n0)&x=x0&{FLOW,(19,20)=__norm}[], G(x,x0)&true&{FLOW,(19,20)=__norm}[])])
 //n0::tnode<a,x0,null> is eleminated?
@@ -39,7 +39,7 @@ infer [H,G] H(x) |- x::node<a,p,n>@L
 // [(RELASS [H1,H], H1(p,n)&n!=null & n0=n&{FLOW,(19,20)=__norm}[], H(n0)&true&{FLOW,(19,20)=__norm}[])]
 
 //post-cond
-infer[G,H1]  G(n0,n1) * x::tnode<a,p,n> * H1(p,n) & n!=null & n1 =n &x0 = x|- G(x,x0).
+//infer[G,H1]  G(n0,n1) * x::tnode<a,p,n> * H1(p,n) & n!=null & n1 =n &x0 = x|- G(x,x0).
 print residue.
 // [(RELASS [G,H1,G], G(n0,n1) * x::tnode<a,p,n>@M[Orig] * H1(p,n)&x0=x&{FLOW,(19,20)=__norm}[], G(x,x0)&true&{FLOW,(19,20)=__norm}[])])
 //does (n = null & n1 = n) need to save in rel 
