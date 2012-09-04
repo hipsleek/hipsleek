@@ -77,4 +77,9 @@ H(x) --> x::node<val_15_522',next_15_523'> * HP_534(next_15_523')
 HP_534(x') & x'!=null --> H(x')
 x::node<val_15_542,x_551> * G(x_551,x') & x_551!=null --> G(x,x')
 HP_534(x') * x::node<val_15_540,x'> & x'=null --> G(x,x')
+
+HP_534(x') & x'!=null --> H(x')
+G(x_546,x') & x_546!=null --> G(x,x')
+H(x) --> x::node<val_15_522',next_15_523'> * HP_534(next_15_523')
+HP_534(x') & x'=null  --> G(x,x')
 */

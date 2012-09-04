@@ -1458,7 +1458,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       (*drop hp rel in es_formula*)
       let new_es_formula = CF.drop_lhs_hp_f new_es_formula lhrs in
       (*add mismatched heap in the entail states*)
-      let new_es_formula = CF.mkAnd_f_hf new_es_formula rhs pos in
+      (* let new_es_formula = CF.mkAnd_f_hf new_es_formula rhs pos in *)
       let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
           CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
           CF.es_formula = new_es_formula} in
