@@ -295,6 +295,10 @@ and create_bound_constraint measure pos =
             let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) in
             CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula pos) None pos
       ) in
+      let _ = Debug.dinfo_pprint  "++ In function create_bound_constraint:" no_pos in
+      let _ = Debug.dinfo_pprint ("   domain_constraint      = " ^ (Cprinter.string_of_pure_formula domain_constraint)) no_pos in
+      let _ = Debug.dinfo_pprint ("   loopcond_constraint    = " ^ (Cprinter.string_of_pure_formula loopcond_constraint)) no_pos in
+      let _ = Debug.dinfo_pprint ("   termination_constraint = " ^ (Cprinter.string_of_pure_formula termination_constraint)) no_pos in
       CP.mkAnd (CP.mkAnd domain_constraint loopcond_constraint pos) termination_constraint pos
   | _ -> CP.mkPure (CP.mkGte measure (CP.mkIConst 0 pos) pos)
 

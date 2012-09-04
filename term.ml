@@ -409,7 +409,7 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
     "lexvars = " ^ lexvars ^ "  ## " ^ "remained_rhs = " ^ remained_rhs in 
   Debug.no_1 "strip_lexvar_mix_formula" pr pr_out strip_lexvar_mix_formula_x mf
 
-let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
+let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
@@ -421,11 +421,16 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
         let domain_dst = seqdst.CP.seq_domain in
         let limit_dst = seqdst.CP.seq_limit in
         let domain_constraint = (
+          (* domain is covered in the recursive call *)
           let domain_lhs = CP.mkAnd update_function domain_src pos in
           let domain_rhs = domain_dst in
+          let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
+          let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
+          let _ = Debug.dinfo_pprint ("   domain_rhs        = " ^ (Cprinter.string_of_pure_formula domain_rhs)) no_pos in
           CP.mkImply domain_lhs domain_rhs pos
         ) in
         let decrease_constraint = (
+          (* measure decreases in the recursive call *)
           let decrease_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
           let decrease_rhs = (
             match limit_src, limit_dst with
@@ -443,6 +448,9 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
                 let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
                 CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
           ) in
+          let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
+          let _ = Debug.dinfo_pprint ("   decrease_lhs        = " ^ (Cprinter.string_of_pure_formula decrease_lhs)) no_pos in
+          let _ = Debug.dinfo_pprint ("   decrease_rhs        = " ^ (Cprinter.string_of_pure_formula decrease_rhs)) no_pos in
           CP.mkImply decrease_lhs decrease_rhs pos
         ) in
         CP.mkAnd domain_constraint decrease_constraint pos
@@ -478,6 +486,19 @@ let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst:
         let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
         CP.mkImply lhs rhs pos
   )
+
+let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
+  let pr_in1 = Cprinter.string_of_pure_formula in
+  let pr_in2 = string_of_bool in
+  let pr_in3 = Cprinter.string_of_formula_exp in
+  let pr_out = Cprinter.string_of_pure_formula in
+  Debug.no_4 "create_measure_constraint"
+             (add_str "lhs  = " pr_in1)
+             (add_str "flag = " pr_in2)
+             (add_str "src  = " pr_in3)
+             (add_str "dst  = " pr_in3)
+             pr_out
+             (fun x1 x2 x3 x4 -> create_measure_constraint_x x1 x2 x3 x4 pos) lhs flag src dst
 
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =

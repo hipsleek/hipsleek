@@ -1,3 +1,5 @@
+//
+
 float pow(float x, int n)
   requires Term[]
   ensures res = __pow(x,n);
@@ -5,14 +7,21 @@ float pow(float x, int n)
 void loop(float x, float y)
   case
   {
-    y <= 0 -> requires Term[] ensures true;
-    y > 0  -> requires Term[Seq{y-__pow(x,2); (}]
+    y - x*x <= 100 -> requires Term[] ensures true;
+    /* 
+     * when y-x*x > 100 -> programs enter a infinite loop, the specs Term[Seq{...}] cannot prove it
+     * The specs "requires Loop ensures false" can handle but I'm not sure about the propriety
+     * because of floating-point program
+     * => should we provide the specs Loop[Seq{...}] ?
+     */
+    // y - x*x >  100 -> requires Term[Seq{x*x-y, (-infty,-100), y-x*x > 100}] ensures true;
+    y - x*x >  100 -> requires Loop ensures false;
   }
 {
-  if ((y - pow(x,2)) > 100)
+  if ((y - x*x) > 100)
   {
-    y = pow(y,10) + 1000;
-    x--;
-    loop(x,y);
+    float y1 = y*y*y*y + 1000;
+    float x1 = x-1;
+    loop(x1,y1);
   }
 }
