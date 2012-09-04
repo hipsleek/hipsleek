@@ -1325,7 +1325,7 @@ let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let look_up_arguments_def hd=
     let data_def =  Cast.look_up_data_def pos prog.Cast.prog_data_decls hd.CF.h_formula_data_name in
     let args = List.map (fun (t,_) -> t) data_def.Cast.data_fields in
-    let targs = List.combine args hd.CF. h_formula_data_arguments in
+    let targs = List.combine args hd.CF.h_formula_data_arguments in
     (List.filter (fun (t, v) -> is_pointer t) targs)
   in
   let ex_p = List.concat (List.map look_up_arguments_def hds) in
@@ -1340,11 +1340,37 @@ let find_defined_pointers prog fb mix_f rhs_h_matched_set eqs pos=
   Debug.no_1 "find_defined_pointers" pr1 pr5
 ( fun _ -> find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos) fb
 
-let add_raw_hp_rel prog undef_args pos=
+
+let find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
+ let hds, hvs, hrs = CF.get_hp_rel_bformula fb in
+  let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in
+  let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in
+   (*defined vars= args of hp_rels + null + data + view + match nodes*)
+  let def_vs = (List.concat (List.map (fun (_, exps, _) -> List.concat (List.map CP.afv exps)) hrs)) @ (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
+   @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) @ rhs_h_matched_set in
+  (*find closed defined pointers set*)
+  let def_vs = List.fold_left close_def def_vs eqs in
+  (*find extra variable from data node arguments*)
+  let look_up_arguments_def hd=
+    let data_def =  Cast.look_up_data_def pos prog.Cast.prog_data_decls hd.CF.h_formula_data_name in
+    let args = List.map (fun (t,_) -> t) data_def.Cast.data_fields in
+    let targs = List.combine args hd.CF.h_formula_data_arguments in
+    snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs))
+  in
+  let ex_p = List.concat (List.map look_up_arguments_def hds) in
+  (ex_p@def_vs)
+
+let find_pointers prog fb mix_f rhs_h_matched_set eqs pos=
+  let pr1 = Cprinter.string_of_formula_base in
+  let pr2 = !print_svl in
+  Debug.ho_1 "find_pointers" pr1 pr2
+( fun _ -> find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos) fb
+
+let add_raw_hp_rel prog def_args undef_args pos=
   if (List.length undef_args > 0) then
     let hp_decl =
       { Cast.hp_name = "HP_" ^ (string_of_int (Globals.fresh_int()));
-        Cast.hp_vars = List.map (fun (_,v) -> v) undef_args;
+        Cast.hp_vars =  (List.map (fun (_,v) -> v) undef_args)@def_args;
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
@@ -1425,6 +1451,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       (*   Debug.info_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;  *)
       (*   (false,es)) *)
       (* else *)
+
+      (*generate new heap pred with undifined pointers only*)
       let ldef,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
       let rdef,rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
       (*LHS (RHS) check all pointers have been defined, if not
@@ -1435,8 +1463,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       let lundef_args = List.filter (undef_args defs) largs in
       let rundef_args = List.filter (undef_args defs) rargs in
       (*generate new hp for undef pointers*)
-      let l_new_hp = add_raw_hp_rel prog lundef_args pos in
-      let r_new_hp = add_raw_hp_rel prog rundef_args pos in
+      let l_new_hp = add_raw_hp_rel prog ldef (lundef_args) pos in
+      let r_new_hp = add_raw_hp_rel prog rdef (rundef_args) pos in
+
       let update_fb fb new_hp =
         match new_hp with
           | None -> fb,[]
@@ -1457,8 +1486,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       let new_es_formula =  update_es_f new_es_formula r_new_hp in
       (*drop hp rel in es_formula*)
       let new_es_formula = CF.drop_lhs_hp_f new_es_formula lhrs in
-      (*add mismatched heap in the entail states*)
-      (* let new_es_formula = CF.mkAnd_f_hf new_es_formula rhs pos in *)
+      (*add mismatched heap into the entail states if @L*)
+      let check_consumed_node h f= 
+        match h with
+          | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then f
+              else let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));} in
+                   CF.mkAnd_f_hf f new_h pos
+          | _ -> f
+      in
+      let new_es_formula = check_consumed_node rhs new_es_formula in
       let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
           CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
           CF.es_formula = new_es_formula} in
