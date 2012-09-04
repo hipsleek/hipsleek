@@ -49,10 +49,11 @@ and term_spec_base = {
 	term_base_cond: CP.formula;
 }
 
-and term_spec_case = { (* ((CP.formula list) * term_spec) list *)
-	term_case_then: (CP.formula * term_spec);
-	term_case_else: (CP.formula * term_spec);
-}
+and term_spec_case = (CP.formula * term_spec) list
+(* {                                          *)
+(* 	term_case_then: (CP.formula * term_spec); *)
+(* 	term_case_else: (CP.formula * term_spec); *)
+(* }                                          *)
 
 and term_spec_seq = {
 	term_seq_fst	: term_spec; 
@@ -200,9 +201,16 @@ let sort_path_trace_by_order cl =
 			end
 	in List.sort (fun (pt1, _, _) (pt2, _, _) -> comp pt1 pt2) cl
 	
-let partition_path_trace cl =
-	let sml_pt, _, _ = List.hd cl in
-	List.partition (fun (pt, _, _) -> Gen.BList.subset_eq (=) sml_pt pt) cl
+let rec partition_path_trace utils cl =
+	(* A; B is a sequence if pathA subseteq pathB and condB |- condA, *)
+	let sml_pt, sml_c, _ = List.hd cl in
+	let sml_seq, others = List.partition (fun (pt, c, _) -> 
+		(Gen.BList.subset_eq (=) sml_pt pt) && 
+		(utils.imply c sml_c)) cl in
+	if others = [] then [(sml_c, sml_seq)]
+	else
+		let par_others = partition_path_trace utils others in
+		[(sml_c, sml_seq)] @ par_others
 	
 let mkTBase cond tres =
 	TBase { term_base_res = tres; term_base_cond = cond; }
@@ -210,49 +218,30 @@ let mkTBase cond tres =
 let mkTSeq fst snd =
 	TSeq { term_seq_fst = fst; term_seq_snd = snd; }
 	
-let mkTCase th el =
-	TCase { term_case_then = th; term_case_else = el; }
+(* let mkTCase th el =                                  *)
+(* 	TCase { term_case_then = th; term_case_else = el; } *)
+
+let mkTCase cl = TCase cl
 	
 let rec construct_term_spec utils cases =
 	(* Note 1: If cases is empty then the program does not contain any *)
 	(* recursive call, it should terminate                             *)
 	(* Note 2: If there is ([], true, UNK) then the program contains   *)
 	(* a recursive call without base case, it should not terminates    *)
-	match cases with
-	| [] ->  mkTBase (CP.mkTrue no_pos) (Term (fresh_int()))
-	| _ -> begin
-		let cases_then, cases_else = partition_path_trace cases in
-		match cases_then, cases_else with
-		| [], [] -> mkTBase (CP.mkTrue no_pos) (Term (fresh_int()))
-		| [], cases_else -> construct_seq_term_spec utils cases_else
-		| cases_then, [] -> construct_seq_term_spec utils cases_then
-		| _ -> construct_case_term_spec utils cases_then cases_else
-	end
-	
+	if cases = [] then mkTBase (CP.mkTrue no_pos) (Term (fresh_int()))
+	else 
+		let par_cases = partition_path_trace utils cases in
+		if par_cases = [] then mkTBase (CP.mkTrue no_pos) (Term (fresh_int()))
+		else 
+			TCase (List.map (fun (cond, seq) -> 
+				(cond, construct_seq_term_spec utils seq)) par_cases)
+
 and construct_seq_term_spec utils cases =
 	let pfst, cfst, rfst = List.hd cases in
 	let cont = List.tl cases in
 	let bfst = mkTBase cfst rfst in 
 	if (cont = []) then bfst
-	else begin
-		(* Partition the rest of list based on cfst *)
-		let cont_then, cont_else = List.partition (fun (_, c, _) -> utils.imply c cfst) cont in
-		match cont_else with
-		| [] -> (* No branches, all elements are in the same sequence *)
-			mkTSeq bfst (construct_term_spec utils cont)
-		| _ -> 
-			let th = (cfst, match cont_then with
-			| [] -> bfst
-			| _ -> mkTSeq bfst (construct_term_spec utils cont_then)) in
-			let el = (mkNot cfst None no_pos, construct_term_spec utils cont_else) in
-			mkTCase th el
-	end
-		
-and construct_case_term_spec utils cases_then cases_else =
-	let _, cond, _ = List.hd cases_then in
-	TCase {
-		term_case_then = (cond, construct_term_spec utils cases_then);
-		term_case_else = (mkNot cond None no_pos, construct_term_spec utils cases_else); }
+	else mkTSeq bfst (construct_term_spec utils cont)
 	
 (* Construct case spec of termination from termination context *)
 (* TODO: Do we need to check case coverage? *)		
@@ -273,41 +262,13 @@ let rec rename_term_spec (fsv, tsv) (tspec: term_spec) =
 	| TSeq s -> TSeq { 
 		term_seq_fst = rename_term_spec (fsv, tsv) s.term_seq_fst;
 		term_seq_snd = rename_term_spec (fsv, tsv) s.term_seq_snd; }
-	| TCase c -> 
-		let ct, st = c.term_case_then in
-		let ce, se = c.term_case_else in
-		TCase {
-			term_case_then = (CP.subst_avoid_capture fsv tsv ct, rename_term_spec (fsv, tsv) st);
-			term_case_else = (CP.subst_avoid_capture fsv tsv ce, rename_term_spec (fsv, tsv) se); }
+	| TCase c -> TCase (List.map (fun (cc, sc) ->
+		(CP.subst_avoid_capture fsv tsv cc, rename_term_spec (fsv, tsv) sc)) c) 
 
-(*
 (*****************************************************)
 (* Collect set of termination transition constraints *)
 (* based on the termination context of a function    *)
 (*****************************************************)
-let collect_term_trans_constraints_one_case utils (cond, unk) (mn, ctx) =
-	let mn_tspec = look_up_term_spec mn in
-	let callee_tspec = rename_term_spec ctx.t_params mn_tspec in
-	(* let _ = print_endline (!print_term_case_spec callee_tspec) in *)
-	List.fold_left (fun a (c_cond, c_tres) ->
-		(* if [cond] /\ ctx /\ [c_cond] is SAT then unk >> c_tres (REACHABLE) *)
-		let check_reachable (path, single_ctx) = 
-			let reach_ctx = join_conjunctions (cond @ [single_ctx] @ c_cond) in
-			(* let _ = print_endline ("\nTRANS_CTX: " ^ (!print_pure_formula reach_ctx) ^ "\n") in *)
-			if (utils.is_sat reach_ctx) then
-				let constr = {
-					trans_src = unk; trans_src_cond = cond;
-  				trans_dst = c_tres; trans_dst_cond = c_cond;
-					trans_subst = ctx.t_params;
-  				trans_ctx = single_ctx;
-					trans_path = path; } in
-				Hashtbl.add term_constr_tbl (unk, c_tres) constr;
-				[constr] 
-			else []
-		in a @ (List.concat (List.map check_reachable ctx.t_pure_ctx))
-	) [] callee_tspec
-*)
-
 let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
 	match tspec with
 	| TBase b -> 
@@ -318,11 +279,8 @@ let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
 				trans_dst = b.term_base_res; } in
 			[constr]
 		else []
-	| TCase c -> 
-		let ct, st = c.term_case_then in
-		let ce, se = c.term_case_else in
-		(collect_term_trans_constrs_callee_term_spec utils (ctx @ [ct]) unk st) @
-		(collect_term_trans_constrs_callee_term_spec utils (ctx @ [ce]) unk se)
+	| TCase c -> List.concat (List.map (fun (cc, sc) ->
+		collect_term_trans_constrs_callee_term_spec utils (ctx @ [cc]) unk sc) c)
 
 let collect_term_trans_constrs_base_spec utils ctx unk =
 	let callee_tspec = rename_term_spec unk.unk_params (look_up_term_spec unk.unk_callee) in
@@ -333,11 +291,8 @@ let rec collect_term_trans_constrs_term_spec utils ctx tspec =
 	| TBase b -> (match b.term_base_res with
 		| Term _ | Loop _ -> []
 		| Unknown unk -> collect_term_trans_constrs_base_spec utils (ctx @ [b.term_base_cond]) unk)
-	| TCase c -> 
-		let ct, st = c.term_case_then in
-		let ce, se = c.term_case_else in
-		(collect_term_trans_constrs_term_spec utils (ctx @ [ct]) st) @
-		(collect_term_trans_constrs_term_spec utils (ctx @ [ce]) se)
+	| TCase c -> List.concat (List.map (fun (cc, sc) ->
+		collect_term_trans_constrs_term_spec utils (ctx @ [cc]) sc) c)
 	| TSeq s -> 
 		(* We need to solve the FIRST UNKNOWN in the sequence first, *)
 		(* by determine whether the BASE CASE is reachable or not    *)

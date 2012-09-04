@@ -2476,7 +2476,7 @@ let string_of_term_res = function
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
 		^ "#" ^ unk.TInfer.unk_callee 
-		^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx) 
+		(* ^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx)  *)
 
 let string_of_term_cond_pure (pt, cond, tr) =
 	"\n" ^ (string_of_path_trace pt) ^ ": "
@@ -2501,7 +2501,7 @@ let rec string_of_term_spec spec =
 		^ "; " ^ (string_of_term_spec tspec.TInfer.term_seq_snd)
 	| TInfer.TCase tspec -> 
 		let print_case (c, tsp) = "\n" ^ (string_of_pure_formula c) ^ " -> {" ^ (string_of_term_spec tsp) ^ "}" in
-		(print_case tspec.TInfer.term_case_then) ^ (print_case tspec.TInfer.term_case_else)		
+		(pr_list print_case tspec)		
 
 let string_of_term_trans_constraint trans_c =
 	let string_of_ele (* cond *) res = (string_of_term_res res) (* ^ (pr_list string_of_pure_formula cond) *) in
