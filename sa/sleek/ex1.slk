@@ -3,18 +3,69 @@ data node { int val ; node next }.
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
- //1. for x.next
- infer [H] H(x) |- x::node<a,b>@L.
+//1. for x.next
+infer [H] H(x) |- x::node<a,b>@L.
 
-//1a infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
+//2.
+infer [H] H(x) |- x::node<a,b>.
+print residue.
 
-//1b.
- //infer [H] H(x) & x'=x  |- x'::node<a,b>@L.
-//print residue.
+//3. for x.next
+infer [H] H(x) |- (exists a: x::node<a,b>@L) .
+print residue.
+
+//4. for x.next
+infer [H] H(x) |- x::node<_,_>@L .
+print residue.
+
+
+//5. 
+infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
+print residue.
+
+//6. 
+infer [H] H(x)* x::node<a,b>  |- x::node<c,d>@L.
+print residue.
+
+//7. 
+infer [H] H(x)* x::node<a,b> & d!=b  |- x::node<c,d>@L.
+print residue.
+
+//8.
+infer [H] H(x) & x1=x  |- x1::node<a,b>@L.
+print residue.
+
+//9.
+infer [H] H(x)  |- x1::node<a,b>@L.
+print residue.
+
+//10.
+infer [G] G(x,y)  |- x::node<a,b>@L.
+print residue.
+/*
+  What happen to y? should be HP_95(b,x,y)
+ <1>HP_95(b,x) * x::node<a,b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+*/
+
+//10.
+infer [G] G(y,x)  |- x::node<a,b>@L.
+print residue.
 
 /*
+  What happen to y? should be HP_101(b,x,y)
+ <1>HP_101(b,x) * x::node<a,b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+*/
+
+
+//infer [] x::node<u,v>  |- x::node<a,b>@L.
+//print residue.
+/*
+infer [] x::node<u,v>  |- x::node<a,b>.
+print residue.
+*/
+/*
   --> [H,G,H1] x::node<a,b>*H1(x,b)
-   with H(x) -> x::node<a,b>*H1(b)
+   with H(x) -> x::node<a,b>*H1(b,x)
 */
 
 /*
