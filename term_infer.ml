@@ -129,7 +129,6 @@ let mk_fresh_Term_with_rank rank =
 	
 let mk_fresh_Loop () = 
 	let id = fresh_int () in
-	let _ = print_endline ("fresh LOOP_" ^ (string_of_int id)) in
 	let r = Loop id in
 	Hashtbl.add term_res_tbl id r; r
 	
@@ -325,6 +324,86 @@ let rec rename_term_spec (fsv, tsv) (tspec: term_spec) =
 		term_seq_snd = rename_term_spec (fsv, tsv) s.term_seq_snd; }
 	| TCase c -> TCase (List.map (fun (cc, sc) ->
 		(CP.subst_avoid_capture fsv tsv cc, rename_term_spec (fsv, tsv) sc)) c) 
+		
+let rec subst_term_spec utils subst tspec =
+	if subst = [] then tspec 
+	else
+		match tspec with
+		| TBase b -> subst_term_spec_base utils subst b
+		| TCase cl -> TCase (List.map (fun (c, spec) -> (c, subst_term_spec utils subst spec)) cl)
+		| TSeq s -> TSeq {
+				term_seq_fst = subst_term_spec utils subst s.term_seq_fst;
+				term_seq_snd = subst_term_spec utils subst s.term_seq_snd; }
+			
+and subst_term_spec_base utils subst b =
+	let bres = b.term_base_res in
+	match bres with
+	| Unknown unk -> (try
+		let unk_id = id_of_term_res bres in
+		let _, cmd = List.find (fun (r, cmd) -> (id_of_term_res r) == unk_id) subst in
+		match cmd with
+		| TSubst res -> TBase { b with term_base_res = res; }
+		| TSplit lres ->
+			if lres = [] then TBase b
+			else if ((List.length lres) == 1) then
+			begin
+				(* Change TSplit to TSubst if the condition is true *)
+				let (cond, res) = List.hd lres in
+				if (utils.imply (CP.mkTrue no_pos) cond) then(* cond is VALID *)
+					TBase { b with term_base_res = res; }
+				else (* Split into two cases: cond and not(cond) *)
+					let bcond = b.term_base_cond in
+					let then_cond = split_disjunctions cond in (* LOOP -> LOOP; TERM -> UNKNOWN *)
+					let else_cond = split_disjunctions (utils.simplify (mkNot cond)) in (* UNKNOWN *)
+					let then_cases = List.map (fun c ->
+						let new_id = fresh_int () in
+						let new_res = match res with
+						| Loop _ -> Loop new_id
+						| _ -> Unknown { unk with
+							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+						Hashtbl.add term_res_tbl new_id new_res;
+						(c, mkTBase (mkAnd bcond c) new_res)) then_cond in
+					let else_cases = List.map (fun c ->
+						let new_id = fresh_int () in
+						let new_unk = Unknown { unk with
+							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+						Hashtbl.add term_res_tbl new_id new_unk;
+						(c, mkTBase (mkAnd bcond c) new_unk)) else_cond in
+					mkTCase (then_cases @ else_cases)
+			end
+			else
+			begin
+				let bcond = b.term_base_cond in
+				let then_cond = join_conjunctions (List.map (fun (c, _) -> c) lres) in
+				if not (utils.is_sat then_cond) then (* Coverage *)
+					mkTCase (List.map (fun (c, res) ->
+						(c, mkTBase (mkAnd bcond c) res)) lres)
+				else (* Not Coverage *)
+					let else_cond = split_disjunctions (utils.simplify (mkNot then_cond)) in
+					let then_cases = List.map (fun (c, res) ->
+						let new_id = fresh_int () in
+						let new_res = match res with
+						| Loop _ -> Loop new_id
+						| _ -> Unknown { unk with
+							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+						Hashtbl.add term_res_tbl new_id new_res;
+						(c, mkTBase (mkAnd bcond c) new_res)) lres in
+					let else_cases = List.map (fun c ->
+						let new_id = fresh_int () in
+						let new_unk = Unknown { unk with
+							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+						Hashtbl.add term_res_tbl new_id new_unk;
+						(c, mkTBase (mkAnd bcond c) new_unk)) else_cond in
+					mkTCase (then_cases @ else_cases)
+			end		
+		with _ -> TBase b)
+	| _ -> TBase b
+			
+let update_term_spec_one_method utils subst mn =
+	let old_spec = look_up_term_spec mn in
+	let new_spec = subst_term_spec utils subst old_spec in
+	Hashtbl.add term_spec_tbl mn new_spec;
+	new_spec
 
 (*****************************************************)
 (* Collect set of termination transition constraints *)
@@ -367,9 +446,6 @@ let collect_term_trans_constrs_one_proc utils mn =
 	let mn_tspec = look_up_term_spec mn in
 	collect_term_trans_constrs_term_spec utils [] mn_tspec
 
-(* let collect_term_trans_constraints_all_procs utils procs =                     *)
-(* 	List.concat (List.map (collect_term_trans_constraints_one_proc utils) procs) *)
-	
 (*****************************************************)
 
 (* let norm_src_cond sc =                                                                                 *)
@@ -587,9 +663,9 @@ let rec graph_of_term_constrs t_constrs =
 		TG.add_edge g src dst) tg t_constrs
 	in tg 
 
-and is_neighbors_of_scc (src: TG.V.t list) (dst: TG.V.t list) tg : bool =
-	let neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in
-	List.exists (fun v -> List.mem v neighbors) dst
+(* and is_neighbors_of_scc (src: TG.V.t list) (dst: TG.V.t list) tg : bool =                        *)
+(* 	let neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in *)
+(* 	List.exists (fun v -> List.mem v neighbors) dst                                                *)
 	
 (* Find a set of neighbor scc groups of a scc *)		
 and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t list list =
@@ -599,28 +675,37 @@ and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t
 	scc_neighbors
 
 (* Find ALL sccs that can reach from src *)
-and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg = 
-	let v_neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in
-	let scc_neighbors, others = List.partition (fun s -> List.exists (fun v -> List.mem v v_neighbors) s) scc_list in
-	List.fold_left (fun (res, rem) s ->
-		let s_reachable_sccs, rem = reachable_sccs_top_down s rem tg in
-		(res @ s_reachable_sccs, rem)) (scc_neighbors, others) scc_neighbors
+(* and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg =                                    *)
+(* 	let v_neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in                  *)
+(* 	let scc_neighbors, others = List.partition (fun s -> List.exists (fun v -> List.mem v v_neighbors) s) scc_list in *)
+(* 	List.fold_left (fun (res, rem) s ->                                                                               *)
+(* 		let s_reachable_sccs, rem = reachable_sccs_top_down s rem tg in                                                 *)
+(* 		(res @ s_reachable_sccs, rem)) (scc_neighbors, others) scc_neighbors                                            *)
 
-and reachable_sccs_bottom_up (src: TG.V.t list) (scc_list: TG.V.t list list) tg = 
-	let preds = List.concat (List.map (TG.pred tg) src) in 
-	let scc_preds, others = List.partition (fun s -> List.exists (fun v -> List.mem v preds) s) scc_list in
+and reachable_sccs_bottom_up (src: (TG.V.t * term_res) list) (scc_list: (TG.V.t * term_res) list list) tg = 
+	let id_preds = List.concat (List.map (fun (id, _) -> TG.pred tg id) src) in 
+	let scc_preds, others = List.partition (fun s -> List.exists (fun (id, _) -> List.mem id id_preds) s) scc_list in
 	List.fold_left (fun (res, rem) s ->
 		let s_pred_sccs, rem = reachable_sccs_bottom_up s rem tg in
 		(res @ s_pred_sccs, rem)) (scc_preds, others) scc_preds
 
 (* Partition a list of sccs into groups of reachable sccs *)
-and partition_scc_list reachable_sccs (scc_list: TG.V.t list list) tg = 
+and partition_scc_list reachable_sccs (scc_list: (TG.V.t * term_res) list list) tg = 
 	if scc_list = [] then []
 	else
-		let root = List.hd scc_list in
-		let rem = List.tl scc_list in
-		let root_reachable_sccs, rem = reachable_sccs root rem tg in
-		(root::root_reachable_sccs)::(partition_scc_list reachable_sccs rem tg)
+		let root, rem = List.fold_left (fun (rt, rm) scc ->
+			match rt with
+			| Some _ -> (rt, rm @ [scc])
+			| None -> 
+					if (List.exists (fun (_, res) -> 
+						match res with | Term _ -> true | _ -> false) scc) 
+					then (Some scc, rm)
+					else (rt, rm @ [scc])) (None, []) scc_list in
+		match root with
+		| None -> [rem]
+		| Some root ->
+			let root_reachable_sccs, rem = reachable_sccs root rem tg in
+			(root::root_reachable_sccs)::(partition_scc_list reachable_sccs rem tg)
 		
 and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =
   let compare_scc scc1 scc2 =
@@ -644,11 +729,13 @@ and is_may_term_reachable scc_group =
 (****************************************)
 let solve_constrs utils args constrs =
 	(* args: set of argument of the corresponding method *)
+	(* Construct an ACYCLIC graph from SCC to determine DEFINITE LOOP *)
 	let tg = graph_of_term_constrs constrs in
-	let scc_list = scc_sort (TGC.scc_list tg) tg in
-	let scc_id_groups = partition_scc_list reachable_sccs_bottom_up (List.rev scc_list) tg in
-	let scc_groups = List.map (List.map (
-		List.map (fun id -> Hashtbl.find term_res_tbl id))) scc_id_groups in
+	let scc_id_list = scc_sort (TGC.scc_list tg) tg in
+	let scc_list = List.map (List.map (fun id -> (id, Hashtbl.find term_res_tbl id))) (List.rev scc_id_list) in
+	let scc_groups = partition_scc_list reachable_sccs_bottom_up scc_list tg in
+	let scc_groups = List.map (List.map (List.map (fun (_, r) -> r))) scc_groups in
+	(***************************************)
 	let may_term, must_loop = List.partition (fun sg -> is_may_term_reachable sg) scc_groups in
 	let loop_subst = List.map (fun unk -> (unk, TSubst (mk_fresh_Loop ()))) (List.concat (List.concat must_loop)) in
 	let unk_to_term_constrs = List.find_all (fun c -> 
@@ -662,11 +749,11 @@ let solve_constrs utils args constrs =
 		let term_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank rank)) term_cond in
 		(unk, TSplit (loop_subst @ term_subst))) infer_cond in
 
-	(* print_endline ("scc list: " ^ (pr_list (pr_list string_of_int) scc_list));                 *)
-	(* print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups)); *)
-	(* print_endline ("MUST LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) must_loop));   *)
-	(* print_endline ("MAY TERM: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_term));     *)
-	print_endline ("SUBST: " ^ (pr_list (fun (unk, cmd) -> 
+	print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list));
+	print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));
+	print_endline ("MUST LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) must_loop));
+	print_endline ("MAY TERM: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_term));
+	print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) -> 
 		(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst)));
 	loop_subst @ infer_subst
 
@@ -675,25 +762,20 @@ let main utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
-		(* let t_ctx = look_up_term_ctx mn in *)
-		(* let _ = info_hprint "Termination Context" (pr_list !print_term_ctx) t_ctx in *)
-		let t_spec = look_up_term_spec mn in 
+		let old_spec = look_up_term_spec mn in 
 		let t_constraints = collect_term_trans_constrs_one_proc utils mn in
-		(* let t_constraints = [] in                                                    *)
 		let args = get_method_args proc in
-		(* let inf_conds = List.fold_left (fun a c ->                                   *)
-		(* 	(* if (c.trans_src != c.trans_dst) then *)                                  *)
-		(* 	match c.trans_dst with                                                      *)
-		(* 	| Term _ -> a @ [(infer_term_condition utils args c)]                       *)
-		(* 	| _ -> a) [] t_constraints                                                  *)
-		(* in                                                                           *)
+		let subst = solve_constrs utils args t_constraints in
+		let new_spec = update_term_spec_one_method utils subst mn in
+				
 		info_hprint "Termination Constraints"
 			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
 		info_pprint "\n";
-		solve_constrs utils args t_constraints;
-		info_hprint "Termination Spec" !print_term_spec t_spec;
+		
+		info_hprint "Termination Spec" !print_term_spec old_spec;
+		info_pprint "\n";
+		
+		info_hprint "Inferred Termination Spec" !print_term_spec new_spec;
 		info_pprint "\n"; 
 	) procs
-
-
 

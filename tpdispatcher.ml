@@ -2504,6 +2504,11 @@ let imply_raw ante conseq =
   let (res,_,_) = mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
   res
 
+let imply_raw ante conseq =
+	let pr = Cprinter.string_of_pure_formula in
+	Debug.ho_2 "imply_raw" pr pr string_of_bool 
+	imply_raw ante conseq
+
 let imply_raw_mix ante conseq =
   let (res,_,_) = mix_imply ante conseq "99" in
   res
