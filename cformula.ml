@@ -5835,6 +5835,7 @@ and filter_heap (f:formula):formula option = match f with
 	| Phase _    
 	| DataNode _ 
 	| ViewNode _ 
+	| HRel _ (*vp*)
 	| Hole _ -> None
 	| HTrue 
 	| HFalse
@@ -5848,6 +5849,7 @@ and filter_heap (f:formula):formula option = match f with
 	  | Phase _    
 	  | DataNode _ 
 	  | ViewNode _ 
+	  | HRel _ (*vp*)
 	  | Hole _ -> None
 	  | HTrue 
 	  | HFalse
@@ -5923,6 +5925,7 @@ let rec replace_heap_formula_label nl f = match f with
 		      h_formula_conj_h2 = replace_heap_formula_label nl b.h_formula_conj_h2; }
   | DataNode b -> DataNode {b with h_formula_data_label = (nl ())}
   | ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
+  | HRel (r, args, pos) -> HRel(r, args, pos) (*vp*)
   | HTrue 
   | HFalse 
   | HEmp 

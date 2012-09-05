@@ -575,6 +575,7 @@ non_empty_command:
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
+      | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
@@ -1267,6 +1268,10 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 (********** Procedures and Coercion **********)
 
+checkeq_cmd:
+  [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQEQ; b=meta_constr -> 
+    let il = un_option il [] in (il,t,b)
+  ]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];

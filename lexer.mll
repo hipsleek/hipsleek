@@ -121,6 +121,7 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("checkeq", CHECKEQ);
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);

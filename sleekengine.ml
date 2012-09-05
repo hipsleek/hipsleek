@@ -23,6 +23,7 @@ module AS = Astsimp
 module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
+module CEQ = Checkeq
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -710,6 +711,29 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
          in ()
   (* with e -> print_exc num_id *)
 
+let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
+  let _ = print_endline ("\n Compare Check") in
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
+  let _ = Debug.devel_pprint ("\nrun_cmp_check:"
+                              ^ "\n ### f1 = "^(string_of_meta_formula if1)
+                              ^ "\n ### f2 = "^(string_of_meta_formula if2)
+                              ^"\n\n") no_pos in
+  let f1 = meta_to_formula if1 false [] stab in
+  let f1 = Solver.prune_preds !cprog true f1 in
+  (*let f1 = (*important for permissions*)
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante;
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) f1
+    else f1
+  in*)
+  let f2 = meta_to_formula if2 false [] stab in
+  let f2 = Solver.prune_preds !cprog true f2 in
+  let _ = CEQ.cmp_formulas f1 f2 in
+  ()
+ 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
