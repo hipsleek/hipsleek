@@ -54,3 +54,24 @@ HP_549(v_node_19_527',x) * x::node<val_19_556,v_node_19_527'> & x!=null --> D(v_
 x'=null & x!=null --> E(x,x')
 D(x) & x=null --> E(x,x)
  */
+
+
+/*
+by hand
+D(x)
+then: D(x) & x != null
+e.next: D(x) & x != null |- x::node<_,b> * D1(x,b) &x!=null
+rec: x::node<_,b> * D1(x,b) &x!=null-> D(b)
+call: x::node<_,b> * E(b,b') & x' = null -> E(x,x')
+else: D(x) & x == null -> E(x,x)
+
+auto
+D(x) & x!=null --> x::node<_,b> *  HP_549(b,x)
+HP_549(b,x) * x::node<_,b>&x!=null --> D(b)
+ emp&x'=null & x!=null--> E(x,x')
+ D(x)&x=null --> E(x,x)
+
+//RELATION3:
+expect: x::node<_,b> * E(b,b') & x' = null -> E(x,x')
+result: emp&x'=null & x!=null--> E(x,x')
+*/

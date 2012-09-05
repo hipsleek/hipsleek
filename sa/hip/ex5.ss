@@ -37,3 +37,20 @@ void reverse(ref node x, ref node y)
  H1(x) * H2(y) & x=null --> G1(x,x) * G2(y,y)
 
  */
+
+/*
+by hand
+HX(x) & x!=null -> HX1(x, b) * x::node<_,b>
+HX1(x, b) * HY(y) * x0::node<a,y> & y' = x0 & x' = b -> HX(x') * HY(y')
+GX(x1, x') * GY(y0, y') * HX1(x, b) * HY(y) * x0::node<a,y> & y0 = x0  -> GX(x, x') * GY(y, y')
+HX(x) * HY(y) & x = null & x' = null -> GX(x, x') * GY(y, y')
+
+auto:
+ H1(x) * H2(y)& x!=null --> x::node<_,b> * HP_545(b,y,x)
+ HP_545(b,y,x) * x::node<_,y>&x!=null --> H1(b) * H2(x)
+ x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
+ H1(x) * H2(y)&x=null --> G1(x,x) * G2(y,y)
+
+//In the third relation: x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
+I think LHS lost information of Y
+*/

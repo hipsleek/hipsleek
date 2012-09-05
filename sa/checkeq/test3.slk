@@ -2,11 +2,11 @@
 data node { int val ; node next }.
 
 //1.
-checkeq[] x = null == x = null.
+checkeq[x] x::node<a,null> -|- x::node<_,null>.
 //VALID
 
 //2.
-checkeq[] x::node<a,null> == x = null.
+//checkeq[] x::node<a,null> -|- x = null.
 //FAIL
 
 
