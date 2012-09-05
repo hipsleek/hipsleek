@@ -24,12 +24,13 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pos : loc }*)
 
 let checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula): bool=
-  let _ = print_endline ("\n Compare formulas") in
+  (*let _ = print_endline ("\n Compare formulas") in
   match f1 with
     |CF.Base b1 ->(match f2 with 
 	|CF.Base b2 -> checkeq_formulas_base b1 b2 
 	|_ -> false)
-    |_ ->  false
+    |_ ->  false*)
+true
 
 let checkeq_formulas_base (hvars: ident list)(b1: CF.formula_base) (b2: CF.formula_base): bool=
 (*let _ = print_endline ("\n Compare base formulas") in
