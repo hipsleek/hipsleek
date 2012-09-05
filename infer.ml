@@ -1320,7 +1320,8 @@ let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let def_vs = (List.concat (List.map (fun (_, exps, _) -> List.concat (List.map CP.afv exps)) hrs)) @ (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) @ rhs_h_matched_set in
   (*find closed defined pointers set*)
-  let def_vs = List.fold_left close_def def_vs eqs in
+  (* let def_vs0 = CP.remove_dups_svl def_vs in *)
+  let def_vs = CP.remove_dups_svl (List.fold_left close_def def_vs eqs) in
   (*find extra variable from data node arguments*)
   let look_up_arguments_def hd=
     let data_def =  Cast.look_up_data_def pos prog.Cast.prog_data_decls hd.CF.h_formula_data_name in
@@ -1329,7 +1330,7 @@ let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
     (List.filter (fun (t, v) -> is_pointer t) targs)
   in
   let ex_p = List.concat (List.map look_up_arguments_def hds) in
-  (def_vs, ex_p)
+  (def_vs,(* def_vs0, *)  ex_p)
 
 let find_defined_pointers prog fb mix_f rhs_h_matched_set eqs pos=
   let pr1 = Cprinter.string_of_formula_base in
@@ -1363,14 +1364,14 @@ let find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
 let find_pointers prog fb mix_f rhs_h_matched_set eqs pos=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !print_svl in
-  Debug.ho_1 "find_pointers" pr1 pr2
+  Debug.no_1 "find_pointers" pr1 pr2
 ( fun _ -> find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos) fb
 
-let add_raw_hp_rel prog def_args undef_args pos=
+let add_raw_hp_rel_x prog def_args undef_args pos=
   if (List.length undef_args > 0) then
     let hp_decl =
       { Cast.hp_name = "HP_" ^ (string_of_int (Globals.fresh_int()));
-        Cast.hp_vars =  (List.map (fun (_,v) -> v) undef_args)@def_args;
+        Cast.hp_vars =  CP.remove_dups_svl ((List.map (fun (_,v) -> v) undef_args)@def_args);
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
@@ -1382,6 +1383,17 @@ let add_raw_hp_rel prog def_args undef_args pos=
     in
     Some (hf,[CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
   else None
+
+let add_raw_hp_rel prog def_args undef_args pos=
+  let pr1 = !CP.print_svl in
+  let pr5 ls = let ls = List.map (fun (_,v) -> v) ls in !CP.print_svl ls in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr4 a = match a with
+    | None -> "None"
+    | Some (hf,_) -> pr2 hf
+  in
+  Debug.ho_2 "add_raw_hp_rel" pr1 pr5 pr4
+      (fun _ _ -> add_raw_hp_rel_x prog def_args undef_args pos) def_args undef_args
 
 let filter_var_x fb rvs=
   let new_p = CP.remove_dup_constraints (CP.filter_var (MCP.pure_of_mix fb.CF.formula_base_pure) rvs) in
@@ -1453,8 +1465,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       else
 
       (*generate new heap pred with undifined pointers only*)
-      let ldef,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
-      let rdef,rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
+      let ldef ,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
+      let rdef, rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
       (*LHS (RHS) check all pointers have been defined, if not
         add new hp_rel*)
       (*which args are defined*)
@@ -1463,8 +1475,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       let lundef_args = List.filter (undef_args defs) largs in
       let rundef_args = List.filter (undef_args defs) rargs in
       (*generate new hp for undef pointers*)
-      let l_new_hp = add_raw_hp_rel prog ldef (lundef_args) pos in
-      let r_new_hp = add_raw_hp_rel prog rdef (rundef_args) pos in
+      let l_new_hp = add_raw_hp_rel prog (CP.remove_dups_svl ldef) (lundef_args) pos in
+      let rdef = if List.length lundef_args > 0 then rdef else (ldef@rdef) in
+      let rdef = CP.remove_dups_svl (CP.subst_var_list (leqs@reqs) rdef) in
+      let r_new_hp = add_raw_hp_rel prog  rdef (rundef_args) pos in
 
       let update_fb fb new_hp =
         match new_hp with

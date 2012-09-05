@@ -3,47 +3,53 @@ data node {
   node next;
 }
 
+/* HeapPred H(node a). */
+/* HeapPred H1(node a). */
+/* HeapPred G(node a, node b). */
+/* HeapPred G1(node a, node b). */
+
+/* ll<> == self=null  */
+/* 	or self::node<_, q> * q::ll<> */
+/* 	inv true; */
+
+/* void append(node x, node y) */
+/* /\* */
+/*   requires x::ll<> * y::ll<> & x!=null */
+/*   ensures x::ll<>; */
+/* *\/ */
+/*   infer [H,G,H1] */
+/*  requires H(x) * H1(y) */
+/*  ensures  G(x,y);  */
+/*  /\* */
+/*  requires G1(x,y) */
+/*  ensures  G(x,y);  */
+/*  requires G1(y,x) */
+/*  ensures  G(x,y);  */
+/*   *\/ */
+/*  { */
+/*    if (x.next == null) { */
+/*      x.next = y; */
+/*    } else { */
+/*      append(x.next,y); */
+/*    } */
+/*  } */
+/*
+HP_550(v_node_30_567,y,x) * x::node<val_30_556,y> & v_node_30_567=null --> G(x,y)
+H(x) * H1(y) --> x::node<val_30_531',next_30_532'> * HP_550(next_30_532',y,x)
+HP_550(v_node_30_573,y,x) * x::node<val_30_558,v_node_30_573> & v_node_30_573!=null --> H(v_node_30_573) * H1(y)
+x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> G(x,y)
+*/
+
+
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred G1(node a, node b).
 
-ll<> == self=null 
-	or self::node<_, q> * q::ll<>
-	inv true;
-
-void append(node x, node y)
-/*
-  requires x::ll<> * y::ll<> & x!=null
-  ensures x::ll<>;
-*/
-  infer [H,G,H1]
- requires H(x) * H1(y)
- ensures  G(x,y); 
- /*
- requires G1(x,y)
- ensures  G(x,y); 
- requires G1(y,x)
- ensures  G(x,y); 
-  */
- {
-   if (x.next == null) {
-     x.next = y;
-   } else {
-     append(x.next,y);
-   }
- }
-
-
-/*
-data node {
-  int val;
-  node next;
-}
 
 HeapPred H1(node a).
 HeapPred H2(node a).
-  HeapPred G1(node a, node b, node c).
+HeapPred G1(node a, node b, node c).
 
 void append(ref node x, node y)
   infer[H1,H2,G1]
@@ -55,15 +61,16 @@ void append(ref node x, node y)
   else
     append(x.next, y);
 }
-*/
-             /*
-H1(x) --> x::node<val_16_527',next_16_528'> * HP_552(next_16_528')
-H1(x) * H2(y) * x::node<val_16_569,y> --> G1(x,x,y)
-H1(x) --> x::node<val_15_524',next_15_525'> * HP_543(next_15_525')
-H1(x) --> x::node<val_18_529',next_18_530'> * HP_559(next_18_530')
-H2(y) --> H1(v_node_18_531') * H2(y)
-H1(x) * H2(y) * G1(v_node_18_572,v_node_18_573,y) --> G1(x,x,y)
 
+          /*
+H1(x) --> x::node<val_25_530',next_25_531'> * HP_549(next_25_531',x)
+HP_549(v_node_25_566,x) * x::node<val_25_555,y> & v_node_25_566=null --> G1(x,x,y)
+HP_549(v_node_25_572,x) * x::node<val_25_557,v_node_25_572> & v_node_25_572!=null --> H1(v_node_25_572) * H2(y)
+x::node<val_25_557,v_node_25_572> * G1(v_node_25_572,v_node_28_583,y) & v_node_25_572!=null --> G1(x,x,y)
 
+H1(x) * H2(y) --> x::node<val_59_530',next_59_531'> * HP_549(next_59_531',y,x)
+HP_549(v_node_59_566,y,x) * x::node<val_59_555,y> & v_node_59_566=null --> G1(x,x,y)
+HP_549(v_node_59_572,y,x) * x::node<val_59_557,v_node_59_572>& v_node_59_572!=null --> H1(v_node_59_572) * H2(y)
+x::node<val_59_557,v_node_59_572> * G1(v_node_59_572,v_node_62_583,y) & v_node_59_572!=null --> G1(x,x,y)
 
              */

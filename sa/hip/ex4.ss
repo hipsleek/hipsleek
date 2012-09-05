@@ -47,4 +47,10 @@ D(x) & x=null --> K(x)
 ==> D(x) <---> K(x)
 
 D(x) <---> x=null \/ x::node<val_19_525',next_19_526'> *  HP_549(next_19_526')
+
+
+D(x) & x!=null --> x::node<val_19_525',next_19_526'> * HP_549(next_19_526',x)
+HP_549(v_node_19_527',x) * x::node<val_19_556,v_node_19_527'> & x!=null --> D(v_node_19_527')
+x'=null & x!=null --> E(x,x')
+D(x) & x=null --> E(x,x)
  */
