@@ -2472,6 +2472,7 @@ let string_of_term_type = function
 
 let string_of_term_res = function
 	| TInfer.Loop i -> "Loop_" ^ (string_of_int i)
+	| TInfer.MayLoop i -> "MayLoop_" ^ (string_of_int i)
 	| TInfer.Term term -> "Term_" ^ (string_of_int term.TInfer.term_id)
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
@@ -2494,13 +2495,13 @@ let string_of_term_ctx tctx =
 let rec string_of_term_spec spec =
 	match spec with
 	| TInfer.TBase tspec -> 
-		(string_of_pure_formula tspec.TInfer.term_base_cond) ^ ": " ^ 
+		(* (string_of_pure_formula tspec.TInfer.term_base_cond) ^ ": " ^ *)
 		(string_of_term_res tspec.TInfer.term_base_res)
 	| TInfer.TSeq tspec -> 
 		(string_of_term_spec tspec.TInfer.term_seq_fst) 
 		^ "; " ^ (string_of_term_spec tspec.TInfer.term_seq_snd)
 	| TInfer.TCase tspec -> 
-		let print_case (c, tsp) = "\n" ^ (string_of_pure_formula c) ^ " -> {" ^ (string_of_term_spec tsp) ^ "}" in
+		let print_case (c, tsp) = "\n" ^ (string_of_pure_formula c) ^ " -> " ^ (string_of_term_spec tsp) in
 		(pr_list print_case tspec)		
 
 let string_of_term_trans_constraint trans_c =

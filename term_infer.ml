@@ -27,7 +27,7 @@ and term_unk_info = {
 	unk_callee		: ident;
 	unk_params		: (spec_var list * spec_var list);
 	unk_trans_ctx	: CP.formula;
-	unk_cond      : CP.formula;
+	unk_cond      : CP.formula; (* Condition to reach this unknown *)
 }
 
 and term_ctx = {
@@ -159,6 +159,9 @@ let id_of_term_res = function
 	| Loop i -> i
 	| MayLoop i -> i
 	| Unknown unk -> unk.unk_id
+
+let eq_term_res r1 r2 = 
+	(id_of_term_res r1) == (id_of_term_res r2)
 
 (* If the path trace of a base context is a SUPERSET of *)
 (* the path trace of a recursive context, then the      *)
@@ -325,17 +328,17 @@ let rec rename_term_spec (fsv, tsv) (tspec: term_spec) =
 	| TCase c -> TCase (List.map (fun (cc, sc) ->
 		(CP.subst_avoid_capture fsv tsv cc, rename_term_spec (fsv, tsv) sc)) c) 
 		
-let rec subst_term_spec utils subst tspec =
+let rec subst_term_spec utils subst mayloop tspec =
 	if subst = [] then tspec 
 	else
 		match tspec with
-		| TBase b -> subst_term_spec_base utils subst b
-		| TCase cl -> TCase (List.map (fun (c, spec) -> (c, subst_term_spec utils subst spec)) cl)
+		| TBase b -> subst_term_spec_base utils subst mayloop b
+		| TCase cl -> TCase (List.map (fun (c, spec) -> (c, subst_term_spec utils subst mayloop spec)) cl)
 		| TSeq s -> TSeq {
-				term_seq_fst = subst_term_spec utils subst s.term_seq_fst;
-				term_seq_snd = subst_term_spec utils subst s.term_seq_snd; }
+				term_seq_fst = subst_term_spec utils subst mayloop s.term_seq_fst;
+				term_seq_snd = subst_term_spec utils subst mayloop s.term_seq_snd; }
 			
-and subst_term_spec_base utils subst b =
+and subst_term_spec_base utils subst mayloop b =
 	let bres = b.term_base_res in
 	match bres with
 	| Unknown unk -> (try
@@ -349,16 +352,28 @@ and subst_term_spec_base utils subst b =
 			begin
 				(* Change TSplit to TSubst if the condition is true *)
 				let (cond, res) = List.hd lres in
-				if (utils.imply (CP.mkTrue no_pos) cond) then(* cond is VALID *)
-					TBase { b with term_base_res = res; }
+				if (utils.imply (CP.mkTrue no_pos) cond) then (* cond is VALID *)
+					match res with
+					| Term _ ->
+						if (List.exists (fun r -> (id_of_term_res r) == unk_id) mayloop) then
+							let new_id = fresh_int () in
+							let new_res = MayLoop new_id in
+							Hashtbl.add term_res_tbl new_id new_res; 
+							TBase { b with term_base_res = new_res; }
+						else TBase { b with term_base_res = res; }
+					| _ -> TBase { b with term_base_res = res; }
 				else (* Split into two cases: cond and not(cond) *)
 					let bcond = b.term_base_cond in
-					let then_cond = split_disjunctions cond in (* LOOP -> LOOP; TERM -> UNKNOWN *)
+					let then_cond = split_disjunctions cond in (* LOOP -> LOOP; TERM w/ rank -> UNKNOWN; TERM w/o rank -> TERM *)
 					let else_cond = split_disjunctions (utils.simplify (mkNot cond)) in (* UNKNOWN *)
 					let then_cases = List.map (fun c ->
 						let new_id = fresh_int () in
 						let new_res = match res with
 						| Loop _ -> Loop new_id
+						| Term term -> (match term.term_rank with
+							| None -> Term { term with term_id = new_id; } (* 1-step execution *)
+							| Some _ -> Unknown { unk with
+								unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; })
 						| _ -> Unknown { unk with
 							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
 						Hashtbl.add term_res_tbl new_id new_res;
@@ -399,9 +414,9 @@ and subst_term_spec_base utils subst b =
 		with _ -> TBase b)
 	| _ -> TBase b
 			
-let update_term_spec_one_method utils subst mn =
+let update_term_spec_one_method utils subst mayloop mn =
 	let old_spec = look_up_term_spec mn in
-	let new_spec = subst_term_spec utils subst old_spec in
+	let new_spec = subst_term_spec utils subst mayloop old_spec in
 	Hashtbl.add term_spec_tbl mn new_spec;
 	new_spec
 
@@ -430,10 +445,10 @@ let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
 let rec collect_term_trans_constrs_term_spec utils ctx tspec =
 	match tspec with
 	| TBase b -> (match b.term_base_res with
-		| Term _ | Loop _ -> []
+		| Term _ | Loop _ | MayLoop _ -> []
 		| Unknown unk ->
 			let callee_tspec = rename_term_spec unk.unk_params (look_up_term_spec unk.unk_callee) in 
-			let unk = {unk with unk_cond = b.term_base_cond; } in
+			let unk = { unk with unk_cond = b.term_base_cond; } in
 			collect_term_trans_constrs_callee_term_spec utils ctx unk callee_tspec)
 	| TCase c -> List.concat (List.map (fun (cc, sc) ->
 		collect_term_trans_constrs_term_spec utils (ctx @ [cc]) sc) c)
@@ -481,6 +496,10 @@ let norm_dst_cond dc =
 (*| Step 2: Do inference bottom-up - Infer termination condition *)
 (*| at transition A>>B where A!=B                                *)
 (*| ************************************************************ *)
+let filter_known_constrs utils kcond icond =
+	let icond_list = split_conjunctions_exists icond in
+	join_conjunctions (List.filter (fun c -> not (utils.imply kcond c)) icond_list) 
+
 let simplify_inf_cond utils args inf_cond ctx =
 	let inf_cond = mkOr (mkNot ctx) inf_cond in (* ctx |- inf_cond *)
 	let qvars = diff_svl (CP.fv inf_cond) args in
@@ -488,8 +507,9 @@ let simplify_inf_cond utils args inf_cond ctx =
 	let simpl_cl = CP.list_of_disjs simpl_cond in
 	(* To remove the base case in the inferred condition *)
 	(* Empty list means FALSE                            *)
-	List.filter (fun c -> utils.is_sat (mkAnd c ctx)) simpl_cl
-	(* [simpl_cond] *)
+	let sat_cl = List.filter (fun c -> utils.is_sat (mkAnd c ctx)) simpl_cl in
+	(* Filter known constraints in the inferred condition *)
+	List.map (fun c -> filter_known_constrs utils ctx c) sat_cl
 	
 (* Fixpoint Calculation for an exact termination *)
 (* condition with Equality in Base Case          *)
@@ -578,7 +598,7 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 							(* Filter new condition *)
 							let ic = List.filter (fun c -> not (utils.imply rec_cond c)) ic in
 							if ic = [] then [CP.mkTrue no_pos] 
-							else ic
+							else List.map (filter_known_constrs utils rec_cond) ic
 						else [CP.mkTrue no_pos]
 					in ([], r, Some prank)
 				
@@ -690,7 +710,7 @@ and reachable_sccs_bottom_up (src: (TG.V.t * term_res) list) (scc_list: (TG.V.t 
 		(res @ s_pred_sccs, rem)) (scc_preds, others) scc_preds
 
 (* Partition a list of sccs into groups of reachable sccs *)
-and partition_scc_list reachable_sccs (scc_list: (TG.V.t * term_res) list list) tg = 
+and partition_scc_list reachable_sccs divide_by_term (scc_list: (TG.V.t * term_res) list list) tg = 
 	if scc_list = [] then []
 	else
 		let root, rem = List.fold_left (fun (rt, rm) scc ->
@@ -698,14 +718,17 @@ and partition_scc_list reachable_sccs (scc_list: (TG.V.t * term_res) list list) 
 			| Some _ -> (rt, rm @ [scc])
 			| None -> 
 					if (List.exists (fun (_, res) -> 
-						match res with | Term _ -> true | _ -> false) scc) 
+						match res with 
+						| Unknown _ -> false
+						| Term _ -> divide_by_term 
+						| _ -> not divide_by_term) scc) 
 					then (Some scc, rm)
 					else (rt, rm @ [scc])) (None, []) scc_list in
 		match root with
 		| None -> [rem]
 		| Some root ->
 			let root_reachable_sccs, rem = reachable_sccs root rem tg in
-			(root::root_reachable_sccs)::(partition_scc_list reachable_sccs rem tg)
+			(root::root_reachable_sccs)::(partition_scc_list reachable_sccs divide_by_term rem tg)
 		
 and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =
   let compare_scc scc1 scc2 =
@@ -720,9 +743,11 @@ and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =
 (* 		let r = Hashtbl.find term_res_tbl id in                             *)
 (* 		match r with | Term _ -> true | _ -> false) (List.concat scc_group) *)
 
-and is_may_term_reachable scc_group =
+and may_be_reachable term scc_group =
 	List.exists (fun v -> match v with
-		| Term _ -> true | _ -> false) (List.concat scc_group)
+		| Unknown _ -> false 
+		| Term _ -> term 
+		| _ -> not term) (List.concat scc_group)
 
 (****************************************)
 (** DRIVER FOR SOLVING CONSTRS PROCESS **)	
@@ -733,11 +758,21 @@ let solve_constrs utils args constrs =
 	let tg = graph_of_term_constrs constrs in
 	let scc_id_list = scc_sort (TGC.scc_list tg) tg in
 	let scc_list = List.map (List.map (fun id -> (id, Hashtbl.find term_res_tbl id))) (List.rev scc_id_list) in
-	let scc_groups = partition_scc_list reachable_sccs_bottom_up scc_list tg in
-	let scc_groups = List.map (List.map (List.map (fun (_, r) -> r))) scc_groups in
 	(***************************************)
-	let may_term, must_loop = List.partition (fun sg -> is_may_term_reachable sg) scc_groups in
+	let reach_term = true in
+	let scc_groups = partition_scc_list reachable_sccs_bottom_up reach_term scc_list tg in (* Divide by TERM *)
+	let scc_groups = List.map (List.map (List.map (fun (_, r) -> r))) scc_groups in
+	let may_term, must_loop = List.partition (fun sg -> may_be_reachable reach_term sg) scc_groups in (* TERM reachable *)
+	(***************************************)
+	let reach_loop = false in
+	let scc_groups = partition_scc_list reachable_sccs_bottom_up reach_loop scc_list tg in (* Divide by LOOP *)
+	let scc_groups = List.map (List.map (List.map (fun (_, r) -> r))) scc_groups in
+	let may_loop, _ = List.partition (fun sg -> may_be_reachable reach_loop sg) scc_groups in (* LOOP reachable *)
+	(***************************************)	
 	let loop_subst = List.map (fun unk -> (unk, TSubst (mk_fresh_Loop ()))) (List.concat (List.concat must_loop)) in
+	let mayloop = Gen.BList.intersect_eq eq_term_res
+		(List.concat (List.concat may_term)) 
+		(List.concat (List.concat may_loop)) in
 	let unk_to_term_constrs = List.find_all (fun c -> 
 		match c.term_trans_src, c.term_trans_dst with
 		| Unknown _, Term _ -> true | _ -> false) constrs in
@@ -749,33 +784,46 @@ let solve_constrs utils args constrs =
 		let term_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank rank)) term_cond in
 		(unk, TSplit (loop_subst @ term_subst))) infer_cond in
 
-	print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list));
-	print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));
+	(* print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list)); *)
+	(* print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));     *)
 	print_endline ("MUST LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) must_loop));
 	print_endline ("MAY TERM: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_term));
+	print_endline ("MAY LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_loop));
+	print_endline ("MAYLOOP: " ^ (pr_list !print_term_res mayloop));
 	print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) -> 
 		(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst)));
-	loop_subst @ infer_subst
+	(loop_subst @ infer_subst, mayloop)
+
+let rec infer_term_spec_one_proc utils proc round =
+	if round > 5 then ()
+	else begin
+		let mn = proc.proc_name in
+		let args = get_method_args proc in
+  	let old_spec = look_up_term_spec mn in 
+  	let trans_constrs = collect_term_trans_constrs_one_proc utils mn in
+		if trans_constrs = [] then ()
+		else
+			let subst, mayloop = solve_constrs utils args trans_constrs in
+    	let new_spec = update_term_spec_one_method utils subst mayloop mn in
+    	
+    	info_pprint ("ROUND " ^ (string_of_int round));
+    	info_hprint "Termination Constraints"
+    		(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
+    	info_pprint "\n";
+    		
+    	info_hprint "Termination Spec" !print_term_spec old_spec;
+    	info_pprint "\n";
+    		
+    	info_hprint "Inferred Termination Spec" !print_term_spec new_spec;
+    	info_pprint "\n";
+    	infer_term_spec_one_proc utils proc (round+1) 
+	end
 
 (***************** MAIN *****************)									
 let main utils procs =
 	List.iter (fun proc ->
 		let mn = proc.proc_name in
 		let _ = print_endline ("Termination Inference for " ^ mn) in
-		let old_spec = look_up_term_spec mn in 
-		let t_constraints = collect_term_trans_constrs_one_proc utils mn in
-		let args = get_method_args proc in
-		let subst = solve_constrs utils args t_constraints in
-		let new_spec = update_term_spec_one_method utils subst mn in
-				
-		info_hprint "Termination Constraints"
-			(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) t_constraints;
-		info_pprint "\n";
-		
-		info_hprint "Termination Spec" !print_term_spec old_spec;
-		info_pprint "\n";
-		
-		info_hprint "Inferred Termination Spec" !print_term_spec new_spec;
-		info_pprint "\n"; 
+		infer_term_spec_one_proc utils proc 1
 	) procs
 

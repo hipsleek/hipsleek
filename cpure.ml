@@ -1645,6 +1645,14 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
 and split_conjunctions =  function
     | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
     | z -> [z]
+
+and split_conjunctions_exists f = 
+	match f with
+	| Exists (sv, ef, lbl, pos) ->
+		let fl = split_conjunctions ef in
+		let qf, uqf = List.partition (fun f -> List.mem sv (fv f)) fl in
+		uqf @ [Exists (sv, join_conjunctions qf, lbl, pos)]
+	| _ -> split_conjunctions f
   
 and join_conjunctions fl = conj_of_list fl no_pos
 
