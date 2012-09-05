@@ -1873,6 +1873,7 @@ and f_h_fv (f : formula) : CP.spec_var list =
 	  | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw)
 	  | DataNode b -> [b.h_formula_data_node]
 	  | ViewNode b -> [b.h_formula_view_node]
+	  | HRel (r, args, pos) -> [r] (*vp*)
 	  | HTrue | HFalse | HEmp | Hole _ -> [] in
 	match f with
 	  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
@@ -1950,6 +1951,7 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
+  | HRel (r, agrs,  pos) -> [r] (*vp*)
   | HTrue | HFalse | HEmp | Hole _ -> []
 
 and get_formula_pos (f : formula) = match f with

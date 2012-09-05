@@ -52,7 +52,7 @@ with x::node<a,p,n> * H1(p,n) & n!=null -> H(n)
 
 //post cond after else branch
 
-[H,G,H1]  G(n0,n') * x::node<a,p,n> * H1(p,n) & n!=null |- G(x,x')
+[H,G,H1]  G(n0,n') * x::node<a,p,n> * H1(p,n) & n!=null & n' = n |- G(x,x')
  	with x::node<a,p,n> * G(n0,n') * H1(p,n) & n!=null & x' = x & n' = n -> G(x,x')
 
 

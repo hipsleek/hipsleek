@@ -33,6 +33,7 @@ let rec mona_of_typ = function
   | Int           -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
+  | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
