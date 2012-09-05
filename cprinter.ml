@@ -2472,11 +2472,11 @@ let string_of_term_type = function
 
 let string_of_term_res = function
 	| TInfer.Loop i -> "Loop_" ^ (string_of_int i)
-	| TInfer.Term i -> "Term_" ^ (string_of_int i)
+	| TInfer.Term term -> "Term_" ^ (string_of_int term.TInfer.term_id)
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
 		^ "#" ^ unk.TInfer.unk_callee 
-		^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx)
+		(* ^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx) *)
 
 let string_of_term_cond_pure (pt, cond, tr) =
 	"\n" ^ (string_of_path_trace pt) ^ ": "
@@ -2508,7 +2508,11 @@ let string_of_term_trans_constraint trans_c =
 	(string_of_ele trans_c.TInfer.term_src_cond trans_c.TInfer.term_trans_src) 
 	^ ">>" ^ 
 	(string_of_ele trans_c.TInfer.term_dst_cond trans_c.TInfer.term_trans_dst) 
-	(* ^ "\n" ^ ("trans_ctx: " ^ (string_of_pure_formula trans_c.TInfer.trans_ctx)) *)
+	
+let string_of_term_subst_cmd cmd =
+	match cmd with
+	| TInfer.TSubst s -> string_of_term_res s
+	| TInfer.TSplit s -> pr_list (fun (c, r) -> (string_of_pure_formula c) ^ " -> " ^ (string_of_term_res r)) s 
 
 (* An Hoa : formula to HTML output facility *)
 
@@ -2867,3 +2871,4 @@ TInfer.print_term_spec := string_of_term_spec;;
 TInfer.print_term_res := string_of_term_res;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;
 TInfer.print_term_cond_pure := string_of_term_cond_pure;
+TInfer.print_term_subst_cmd := string_of_term_subst_cmd;;
