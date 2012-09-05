@@ -3,16 +3,41 @@ data node { int val ; node next }.
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
- //1. for x.next
- infer [H] H(x) |- x::node<a,b>@L.
-// infer [H] H(x) |- x::node<a,b>.
+//1. for x.next
+infer [H] H(x) |- x::node<a,b>@L.
+
+//2.
+infer [H] H(x) |- x::node<a,b>.
 print residue.
 
-//1a infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
+//3. for x.next
+infer [H] H(x) |- (exists a: x::node<a,b>@L) .
+print residue.
 
-//1b.
- //infer [H] H(x) & x'=x  |- x'::node<a,b>@L.
-//print residue.
+//4. for x.next
+infer [H] H(x) |- x::node<_,_>@L .
+print residue.
+
+
+//5. 
+infer [H] H(x)* x::node<a,b>  |- x::node<a,b>@L.
+print residue.
+
+//6. 
+infer [H] H(x)* x::node<a,b>  |- x::node<c,d>@L.
+print residue.
+
+//7. 
+infer [H] H(x)* x::node<a,b> & d!=b  |- x::node<c,d>@L.
+print residue.
+
+//8.
+infer [H] H(x) & x1=x  |- x1::node<a,b>@L.
+print residue.
+
+//9.
+infer [H] H(x)  |- x1::node<a,b>@L.
+print residue.
 
 
 //infer [] x::node<u,v>  |- x::node<a,b>@L.
