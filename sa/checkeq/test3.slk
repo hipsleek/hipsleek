@@ -1,0 +1,12 @@
+//heap formula
+data node { int val ; node next }.
+
+//1.
+checkeq[] x = null == x = null.
+//VALID
+
+//2.
+checkeq[] x::node<a,null> == x = null.
+//FAIL
+
+

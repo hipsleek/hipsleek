@@ -731,7 +731,8 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   in*)
   let f2 = meta_to_formula if2 false [] stab in
   let f2 = Solver.prune_preds !cprog true f2 in
-  let _ = CEQ.cmp_formulas f1 f2 in
+  let res = CEQ.cmp_formulas ivars f1 f2 in
+  let _ = if(res) then print_endline ("\n VALID") else print_endline ("\n FAIL") in
   ()
  
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =

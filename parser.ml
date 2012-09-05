@@ -23,7 +23,7 @@ open Perm
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-    | Hopred of hopred_decl
+	| Hopred of hopred_decl
 	| Barrier of barrier_decl
 		
   type decl = 
@@ -70,9 +70,9 @@ let get_pos x =
   }
 let get_pos_camlp4 l x = 
                           {
-                           start_pos = Camlp4.PreCast.Loc.start_pos l ;
-				           end_pos = Camlp4.PreCast.Loc.stop_pos l ;
-				           mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
+                            start_pos = Camlp4.PreCast.Loc.start_pos l ;
+			    end_pos = Camlp4.PreCast.Loc.stop_pos l ;
+			    mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
                           }
         
 let rec get_mode (anns : ann list) : mode = match anns with
@@ -573,7 +573,7 @@ non_empty_command:
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
-	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+      | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
