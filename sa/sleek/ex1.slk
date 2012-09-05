@@ -48,14 +48,12 @@ print residue.
 */
 
 //10.
-infer [G] G(y,x)  |- x::node<a,b>@L.
+infer [G] G(y,x)  |- x::node<a,b>@L * y::node<c,d>@L.
 print residue.
 
-/*
-  What happen to y? should be HP_101(b,x,y)
- <1>HP_101(b,x) * x::node<a,b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-*/
-
+//11.
+infer [G] G(y,x)* y::node<c,d>  |- x::node<a,b>@L * y::node<c,d>@L.
+print residue.
 
 //infer [] x::node<u,v>  |- x::node<a,b>@L.
 //print residue.

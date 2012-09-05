@@ -1392,7 +1392,7 @@ let add_raw_hp_rel prog def_args undef_args pos=
     | None -> "None"
     | Some (hf,_) -> pr2 hf
   in
-  Debug.ho_2 "add_raw_hp_rel" pr1 pr5 pr4
+  Debug.no_2 "add_raw_hp_rel" pr1 pr5 pr4
       (fun _ _ -> add_raw_hp_rel_x prog def_args undef_args pos) def_args undef_args
 
 let filter_var_x fb rvs=

@@ -283,6 +283,7 @@ let peek_try =
          | [GT,_;ORWORD,_] -> raise Stream.Failure
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
+         | [GT,_;EQV,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;RIGHTARROW,_] -> raise Stream.Failure
          | [GT,_;EQUIV,_] -> raise Stream.Failure
@@ -1269,7 +1270,7 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 (********** Procedures and Coercion **********)
 
 checkeq_cmd:
-  [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQEQ; b=meta_constr -> 
+  [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQV; b=meta_constr -> 
     let il = un_option il [] in (il,t,b)
   ]];
 
