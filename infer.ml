@@ -1395,9 +1395,9 @@ let add_raw_hp_rel prog def_args undef_args pos=
   Debug.no_2 "add_raw_hp_rel" pr1 pr5 pr4
       (fun _ _ -> add_raw_hp_rel_x prog def_args undef_args pos) def_args undef_args
 
-let filter_var_x fb rvs=
+let filter_var_holes_x fb rvs=
   let new_p = CP.remove_dup_constraints (CP.filter_var (MCP.pure_of_mix fb.CF.formula_base_pure) rvs) in
-  {fb with CF.formula_base_heap = CF.filter_var_hf fb.CF.formula_base_heap rvs;
+  {fb with CF.formula_base_heap = CF.filter_var_holes_hf fb.CF.formula_base_heap rvs;
       CF.formula_base_pure =  MCP.mix_of_pure (new_p);}
 
 (* let filter_var_x fb keep_vars= *)
@@ -1405,11 +1405,11 @@ let filter_var_x fb rvs=
 (*   {fb with CF.formula_base_heap = h; *)
 (*       CF.formula_base_pure = MCP.mix_of_pure p;} *)
 
-let filter_var fb keep_vars=
+let filter_var_holes fb keep_vars=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_formula_base in
    Debug.no_2 "filter_var" pr2 pr1 pr2
-( fun _ _ -> filter_var_x fb keep_vars) fb keep_vars
+( fun _ _ -> filter_var_holes_x fb keep_vars) fb keep_vars
 
 let filter_irr_lhs_bf_hp lfb rfb=
   let rvars = CF.fv (CF.Base rfb) in
@@ -1421,8 +1421,8 @@ let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
        (*closed*)
   let keep_vars = CP.remove_dups_svl (List.fold_left close_def keep_vars (leqs@reqs)) in
  (*end*)
-  let lhs_b1 = filter_var lhs_b keep_vars in
-  let rhs_b1 = filter_var rhs_b keep_vars in
+  let lhs_b1 = filter_var_holes lhs_b keep_vars in
+  let rhs_b1 = filter_var_holes rhs_b keep_vars in
    (*remove equals*)
   let lhs_b2 = CF.subst_b leqs lhs_b1 in
   let rhs_b2 = CF.subst_b (leqs@reqs) rhs_b1 in

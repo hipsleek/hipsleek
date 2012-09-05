@@ -3142,17 +3142,17 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
     | HFalse
     | HEmp -> hf
 
-and filter_var_hf hf rvs=
+and filter_var_holes_hf hf rvs=
   match hf with
     | Star {h_formula_star_h1 = hf1;
             h_formula_star_h2 = hf2;
             h_formula_star_pos = pos} ->
-        let n_hf1 =  filter_var_hf hf1 rvs in
-        let n_hf2 = filter_var_hf hf2 rvs in
+        let n_hf1 =  filter_var_holes_hf hf1 rvs in
+        let n_hf2 = filter_var_holes_hf hf2 rvs in
         (match n_hf1,n_hf2 with
-          | (HEmp,HEmp) -> HEmp
-          | (HEmp,_) -> n_hf2
-          | (_,HEmp) -> n_hf1
+          | (HTrue,HTrue) -> HTrue
+          | (HTrue,_) -> n_hf2
+          | (_,HTrue) -> n_hf1
           | _ -> Star {h_formula_star_h1 = n_hf1;
                        h_formula_star_h2 = n_hf2;
                        h_formula_star_pos = pos}
@@ -3160,25 +3160,25 @@ and filter_var_hf hf rvs=
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
              h_formula_conj_pos = pos} ->
-        let n_hf1 =  filter_var_hf hf1 rvs in
-        let n_hf2 = filter_var_hf hf2 rvs in
+        let n_hf1 = filter_var_holes_hf hf1 rvs in
+        let n_hf2 = filter_var_holes_hf hf2 rvs in
         Conj { h_formula_conj_h1 = n_hf1;
                h_formula_conj_h2 = n_hf2;
                h_formula_conj_pos = pos}
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
-        let n_hf1 =  filter_var_hf hf1 rvs in
-        let n_hf2 = filter_var_hf hf2 rvs in
+        let n_hf1 = filter_var_holes_hf hf1 rvs in
+        let n_hf2 = filter_var_holes_hf hf2 rvs in
         Phase { h_formula_phase_rd = n_hf1;
               h_formula_phase_rw = n_hf2;
               h_formula_phase_pos = pos} 
     | DataNode hd -> if CP.mem_svl hd.h_formula_data_node rvs then hf
-        else HEmp
+        else HTrue
     | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node rvs then hf
-        else HEmp
-    | HRel _
-    | Hole _
+        else HTrue
+    | HRel _ -> hf
+    | Hole _ -> HTrue
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -3198,9 +3198,9 @@ and drop_lhs_hp_hf hf hp_names=
         let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
         let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
         (match n_hf1,n_hf2 with
-          | (HEmp,HEmp) -> HEmp
-          | (HEmp,_) -> n_hf2
-          | (_,HEmp) -> n_hf1
+          | (HTrue,HTrue) -> HTrue
+          | (HTrue,_) -> n_hf2
+          | (_,HTrue) -> n_hf1
           | _ -> Star {h_formula_star_h1 = n_hf1;
                        h_formula_star_h2 = n_hf2;
                        h_formula_star_pos = pos}
@@ -3223,7 +3223,7 @@ and drop_lhs_hp_hf hf hp_names=
               h_formula_phase_pos = pos} 
     | DataNode hd -> hf
     | ViewNode hv -> hf
-    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HEmp
+    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HTrue
         else hf
     | Hole _
     | HTrue
