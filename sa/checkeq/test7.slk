@@ -1,0 +1,17 @@
+//heap formula
+data node { int val ; node next }.
+
+
+checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+
+checkeq [x] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+
+checkeq [x,y] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+
+checkeq[] x::node<a,y> * y::node<a,x> -|- x::node<a,x> * x::node<a,y>.
+
+checkeq[x] x::node<a,y> * y::node<a,x> -|- x::node<a,x> * x::node<a,y>.
+
+checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>*z::node<_,_>.
+
+checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x>.

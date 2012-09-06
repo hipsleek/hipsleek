@@ -4,6 +4,7 @@ data node {
 }
 
 HeapPred H(node a).
+HeapPred H1(node a).
 HeapPred G(node a, node b).
 
 void foo(ref node x)
@@ -73,9 +74,15 @@ Drop first parameter of H1:
    x::node<a,x'> * H1(x') & x'=null -> G(x,x')
 */
 /*
+assume foo is teminated
 H(x) --> x::node<val_15_522',next_15_523'> * HP_534(next_15_523',x)
 HP_534(x',x) * x::node<val_15_542,x'> & x'!=null  --> H(x')
 x::node<val_15_542,x_551> * G(x_551,x') & x_551!=null --> G(x,x')
 HP_534(x',x) * x::node<val_15_540,x'> & x'=null & --> G(x,x')
 
+assume x' can not reach to x
+ H(x) --> x::node<_,p> * H1(p,x)
+ H1(x',x) * x::node<_,x'> & x'!=null --> H(x')
+ x::node<_,x0> * G(x') * HP_554(x0,x',x) & x0!=null --> G(x')
+ H1(x',x) * x::node<_,x'> & x'=null --> G(x')
 */

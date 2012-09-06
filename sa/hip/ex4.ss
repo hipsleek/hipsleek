@@ -17,6 +17,7 @@ void delete_list(ref node x)
 {
   if (x!=null) {
     delete_list(x.next);
+    dprint;
     dispose(x);
   }
 }
