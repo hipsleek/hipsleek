@@ -332,7 +332,7 @@ and check_bounded_term prog ctx post_pos =
   
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
-  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
+  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool * TInfer.list_term_ctx =
     let pos_spec = CF.pos_of_struc_formula spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
@@ -340,16 +340,19 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let r =
 		      List.map (fun (c1, c2) -> 
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
-		          let (new_c2,pre,rel,f) = helper nctx c2 in
+		          let (new_c2,pre,rel,f, tctx) = helper nctx c2 in
                   (* Thai: Need to generate EBase from pre if necessary *)
                   let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre new_c2 pre) else new_c2 in
-		          ((c1,new_c2),(rel,f))) b.CF.formula_case_branches in
+		          (((c1,new_c2),(rel,f)), tctx)) b.CF.formula_case_branches in
+						let r, tctx = List.split r in
             let (cbl,fl) = List.split r in
             let (rel_ls,fl) = List.split fl in
             let rel = List.concat rel_ls in
             let br = List.for_all pr_id fl in
             let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
-            (new_spec,[],rel,br)
+						(* Termination Inference: Collect termination context from case spec *)
+						let tctx = List.concat tctx in
+            (new_spec,[],rel,br, tctx)
             (* (new_spec,[],true) *)
 	  | CF.EBase b ->
             let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
@@ -369,7 +372,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
-                let (c,pre,rels,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],true) | Some l -> let r1,r2,r3,r4 = helper nctx l in (Some r1,r2,r3,r4) in
+                let (c,pre,rels,r,tctx) = match b.CF.formula_struc_continuation with 
+								| None -> (None,[],[],true,[]) 
+								| Some l -> let r1,r2,r3,r4,tctx = helper nctx l in (Some r1,r2,r3,r4,tctx) in
             stk_vars # pop_list vs;
 	        let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
@@ -379,7 +384,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             Debug.trace_hprint (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
             Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
             let _ = if rels==[] then () else pre_ctr#inc  in
-	        (CF.EBase {b with CF.formula_struc_base = new_base; CF.formula_struc_continuation = c}, [], rels, r) 
+	        (CF.EBase {b with CF.formula_struc_base = new_base; CF.formula_struc_continuation = c}, [], rels, r, tctx) 
       | CF.EInfer b ->
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             let postf = b.CF.formula_inf_post in
@@ -445,7 +450,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                     CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
-            let (c,pre,rel,f) = helper nctx new_formula_inf_continuation in
+            let (c,pre,rel,f, tctx) = helper nctx new_formula_inf_continuation in
             let new_c = if pre=[] then c else
                 match c with
                   | CF.EAssume _ -> CF.EBase {
@@ -458,19 +463,19 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         CF.formula_struc_continuation = Some c;
                         CF.formula_struc_pos = pos_spec;}
                   | _ -> c in
-            (new_c,[],rel,f)
+            (new_c,[],rel,f, tctx)
 	  | CF.EList b -> 
-			let (sl,pl,rl,bl) = List.fold_left (fun (a1,a2,a3,a4) (l,c) -> 
-				let (b1,b2,b3,b4) = 
+			let (sl,pl,rl,bl, tctx) = List.fold_left (fun (a1,a2,a3,a4, atctx) (l,c) -> 
+				let (b1,b2,b3,b4, btctx) = 
                   store_label # set l;
                   helper (CF.update_ctx_label ctx l) c in
-				(a1@[(l,b1)],a2@b2,a3@b3,a4@[b4])) ([],[],[],[]) b in
+				(a1@[(l,b1)],a2@b2,a3@b3,a4@[b4], atctx @ btctx)) ([],[],[],[],[]) b in
 			Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
-			(CF.norm_specs (CF.EList sl), pl, rl, List.for_all pr_id bl) 
+			(CF.norm_specs (CF.EList sl), pl, rl, List.for_all pr_id bl, tctx) 
 	  | CF.EOr b -> 
-			let s1,p1,r1,b1 = helper ctx b.CF.formula_struc_or_f1 in
-			let s2,p2,r2,b2 = helper ctx b.CF.formula_struc_or_f2 in
-			(CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2, pr_id b1 && pr_id b2)
+			let s1,p1,r1,b1, tctx1 = helper ctx b.CF.formula_struc_or_f1 in
+			let s2,p2,r2,b2, tctx2 = helper ctx b.CF.formula_struc_or_f2 in
+			(CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2, pr_id b1 && pr_id b2, tctx1 @ tctx2)
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
@@ -489,11 +494,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	          if (CF.isAnyFalseCtx ctx1) then
 	            let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 	    		    (Cprinter.string_of_context_short ctx))) no_pos in
-	            (spec,[],[],true)
+	            (spec,[],[],true, [])
 	          else
 	            let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
 	            try
-	              let spec_and_inferred_post, inferred_pre, inferred_rel, r =
+	              let spec_and_inferred_post, inferred_pre, inferred_rel, r, tctx =
 	                flow_store := [];
 	                let ctx1 = CF.set_flow_in_context_override
 	    	          { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
@@ -504,34 +509,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
-										(* Termination Inference: Collect termination context here *)
+										(* Termination Inference: Collect termination context from check_exp *)
 										let res_ctx, tctx = check_exp prog proc lfe [] e0 post_label in
-										let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
-										let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
-										let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
-										let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
-										let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
-										(* Termination Context (collected by Symbolic Execution) *)
-										let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
-										(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
-										(* Initial Termination Spec *)
-										let utils = {
-											TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
-											TInfer.simplify = Omega.simplify;
-											TInfer.imply = TP.imply_raw;
-											TInfer.is_sat = fun f -> TP.is_sat f "" true;
-										} in
-										let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
-										(* let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in *)
-										let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec in
-										(* End of Termination Inference *)
 	    	        let res_ctx = CF.list_failesc_to_partial res_ctx in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
                     let pos = CF.pos_of_formula post_cond in
 	    	        if (CF.isFailListPartialCtx_new res_ctx)
-                    then (spec, [], [], false)
+                    then (spec, [], [], false, tctx)
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
@@ -674,20 +660,20 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               end in
                           (i_post, i_pre)
                         else (spec,[])
-                      in (new_spec_post, pre, rankbnds@rels, res)
+                      in (new_spec_post, pre, rankbnds@rels, res, tctx)
 	              in
 	              let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-	              (spec_and_inferred_post,inferred_pre,inferred_rel,r)
+	              (spec_and_inferred_post,inferred_pre,inferred_rel,r, tctx)
 	            with
                   | Err.Ppf (e, ifk) ->
                       (match ifk with
                         | 1 -> if CF.is_error_flow post_cond  then
-                              (spec, [],[], true) else
+                              (spec, [],[], true, []) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
                         | 3 ->
                             if CF.is_top_flow post_cond then
-                              (spec, [],[], true) else
+                              (spec, [],[], true, []) else
                               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                               (Err.report_error1 e "Proving precond failed")
                         | _ -> let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
@@ -696,7 +682,27 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   |_ as e ->
 	                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in 
-  helper ctx spec 
+  let spec, ip, ir, r, tctx = helper ctx spec in
+	(* Termination Inference: Preprocessing the collected termination context *)
+	let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
+	let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
+	let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
+	let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
+	let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
+	(* Termination Context (collected by Symbolic Execution) *)
+	let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
+	(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
+	(* Initial Termination Spec *)
+	let utils = {
+		TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
+		TInfer.simplify = Omega.simplify;
+		TInfer.imply = TP.imply_raw;
+		TInfer.is_sat = fun f -> TP.is_sat f "" true;
+	} in
+	let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
+	(* let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in *)
+	let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec in
+	(spec, ip, ir, r) 
 
 and check_exp prog proc ctx tctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in

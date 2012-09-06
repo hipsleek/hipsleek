@@ -58,7 +58,9 @@ and term_spec_base = {
 
 and term_spec_case = (CP.formula * term_spec) list
 
-and term_spec_seq = {
+(* Seq UNK1; UNK2; ... -> UNK *)
+and term_spec_seq = { 
+	term_seq_id		: int;
 	term_seq_fst  : term_spec; 
 	term_seq_snd  : term_spec;	
 }
@@ -282,7 +284,7 @@ let mkTBase cond tres =
 	TBase { term_base_res = tres; term_base_cond = cond; }
 	
 let mkTSeq fst snd =
-	TSeq { term_seq_fst = fst; term_seq_snd = snd; }
+	TSeq { term_seq_id = fresh_int (); term_seq_fst = fst; term_seq_snd = snd; }
 	
 let mkTCase cl = TCase cl
 
@@ -296,10 +298,11 @@ let rec construct_term_spec utils cases =
 		let par_cases = partition_path_trace utils cases in
 		if par_cases = [] then mkTBase (CP.mkTrue no_pos) (mk_fresh_Term ())
 		else 
+			(* TODO: Cover all cases for completeness *)
 			TCase (List.map (fun (cond, seq) -> 
-				(cond, construct_seq_term_spec utils seq)) par_cases)
+				(cond, construct_term_seq_spec utils seq)) par_cases)
 
-and construct_seq_term_spec utils cases =
+and construct_term_seq_spec utils cases =
 	let pfst, cfst, rfst = List.hd cases in
 	let cont = List.tl cases in
 	let bfst = mkTBase cfst rfst in 
@@ -311,7 +314,7 @@ and construct_seq_term_spec utils cases =
 let term_spec_of_list_term_ctx utils tctx =
 	let cases = List.concat (List.map (fun ctx -> ctx.t_cond_pure) tctx) in
 	let cases = sort_path_trace_by_order cases in
-	let _ = print_endline (pr_list !print_term_cond_pure cases) in
+	let _ = print_endline ("\nCollected cases:\n" ^ (pr_list !print_term_cond_pure cases)) in
 	construct_term_spec utils cases	
 	
 (* Look up termination context and spec *)
@@ -322,7 +325,7 @@ let look_up_term_spec mn = Hashtbl.find term_spec_tbl mn
 let rec rename_term_spec (fsv, tsv) (tspec: term_spec) =
 	match tspec with
 	| TBase b -> TBase { b with term_base_cond = CP.subst_avoid_capture fsv tsv b.term_base_cond; }
-	| TSeq s -> TSeq { 
+	| TSeq s -> TSeq { s with
 		term_seq_fst = rename_term_spec (fsv, tsv) s.term_seq_fst;
 		term_seq_snd = rename_term_spec (fsv, tsv) s.term_seq_snd; }
 	| TCase c -> TCase (List.map (fun (cc, sc) ->
@@ -332,13 +335,13 @@ let rec subst_term_spec utils subst mayloop tspec =
 	if subst = [] then tspec 
 	else
 		match tspec with
-		| TBase b -> subst_term_spec_base utils subst mayloop b
+		| TBase b -> subst_term_base_spec utils subst mayloop b
 		| TCase cl -> TCase (List.map (fun (c, spec) -> (c, subst_term_spec utils subst mayloop spec)) cl)
-		| TSeq s -> TSeq {
+		| TSeq s -> TSeq { s with
 				term_seq_fst = subst_term_spec utils subst mayloop s.term_seq_fst;
 				term_seq_snd = subst_term_spec utils subst mayloop s.term_seq_snd; }
 			
-and subst_term_spec_base utils subst mayloop b =
+and subst_term_base_spec utils subst mayloop b =
 	let bres = b.term_base_res in
 	match bres with
 	| Unknown unk -> (try
@@ -413,10 +416,30 @@ and subst_term_spec_base utils subst mayloop b =
 			end		
 		with _ -> TBase b)
 	| _ -> TBase b
+
+and simplify_term_spec tspec =
+	match tspec with
+	| TBase b -> tspec
+	| TCase cl -> mkTCase (List.map (fun (c, spec) -> (c, simplify_term_spec spec)) cl) 
+	| TSeq s -> 
+		let simpl_fst = simplify_term_spec s.term_seq_fst in
+		simplify_term_seq_spec simpl_fst s
+
+and simplify_term_seq_spec sfst seq =
+	match sfst with
+	| TBase b -> (match b.term_base_res with 
+		| MayLoop _ | Loop _ -> sfst
+		| Term _ -> simplify_term_spec seq.term_seq_snd
+		| _ -> TSeq seq)
+	| TCase cl -> 
+		let simpl_cl = List.map (fun (c, sc) -> 
+			(c, simplify_term_spec (mkTSeq sc seq.term_seq_snd))) cl in
+		mkTCase simpl_cl
+	| TSeq s -> TSeq { s with term_seq_snd = mkTSeq s.term_seq_snd seq.term_seq_snd }
 			
 let update_term_spec_one_method utils subst mayloop mn =
 	let old_spec = look_up_term_spec mn in
-	let new_spec = subst_term_spec utils subst mayloop old_spec in
+	let new_spec = simplify_term_spec (subst_term_spec utils subst mayloop old_spec) in
 	Hashtbl.add term_spec_tbl mn new_spec;
 	new_spec
 
@@ -424,7 +447,7 @@ let update_term_spec_one_method utils subst mayloop mn =
 (* Collect set of termination transition constraints *)
 (* based on the termination context of a function    *)
 (*****************************************************)
-let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
+let rec collect_term_trans_constrs_callee_term_spec utils cer_seq cee_seq ctx unk tspec =
 	match tspec with
 	| TBase b -> 
 		let reach_ctx = join_conjunctions (ctx @ [unk.unk_trans_ctx] @ [b.term_base_cond]) in
@@ -439,27 +462,28 @@ let rec collect_term_trans_constrs_callee_term_spec utils ctx unk tspec =
 			[constr]
 		else []
 	| TCase c -> List.concat (List.map (fun (cc, sc) ->
-		collect_term_trans_constrs_callee_term_spec utils (ctx @ [cc]) unk sc) c)
-	| TSeq _ -> []
+		collect_term_trans_constrs_callee_term_spec utils cer_seq cee_seq (ctx @ [cc]) unk sc) c)
+	| TSeq s -> 
+		collect_term_trans_constrs_callee_term_spec utils cer_seq (cee_seq @ [s.term_seq_id]) ctx unk s.term_seq_fst
 
-let rec collect_term_trans_constrs_term_spec utils ctx tspec =
+let rec collect_term_trans_constrs_term_spec utils seq ctx tspec =
 	match tspec with
 	| TBase b -> (match b.term_base_res with
 		| Term _ | Loop _ | MayLoop _ -> []
 		| Unknown unk ->
 			let callee_tspec = rename_term_spec unk.unk_params (look_up_term_spec unk.unk_callee) in 
 			let unk = { unk with unk_cond = b.term_base_cond; } in
-			collect_term_trans_constrs_callee_term_spec utils ctx unk callee_tspec)
+			collect_term_trans_constrs_callee_term_spec utils seq [] ctx unk callee_tspec)
 	| TCase c -> List.concat (List.map (fun (cc, sc) ->
-		collect_term_trans_constrs_term_spec utils (ctx @ [cc]) sc) c)
+		collect_term_trans_constrs_term_spec utils seq (ctx @ [cc]) sc) c)
 	| TSeq s -> 
 		(* We need to solve the FIRST UNKNOWN in the sequence first, *)
-		(* by determine whether the BASE CASE is reachable or not    *)
-		collect_term_trans_constrs_term_spec utils ctx s.term_seq_fst
+		(* by determine whether the BASE CASE is REACHABLE or NOT    *)
+		collect_term_trans_constrs_term_spec utils (seq @ [s.term_seq_id]) ctx s.term_seq_fst
 
 let collect_term_trans_constrs_one_proc utils mn =
 	let mn_tspec = look_up_term_spec mn in
-	collect_term_trans_constrs_term_spec utils [] mn_tspec
+	collect_term_trans_constrs_term_spec utils [] [] mn_tspec
 
 (*****************************************************)
 
@@ -786,12 +810,12 @@ let solve_constrs utils args constrs =
 
 	(* print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list)); *)
 	(* print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));     *)
-	print_endline ("MUST LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) must_loop));
-	print_endline ("MAY TERM: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_term));
-	print_endline ("MAY LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_loop));
-	print_endline ("MAYLOOP: " ^ (pr_list !print_term_res mayloop));
-	print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) -> 
-		(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst)));
+	(* print_endline ("MUST LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) must_loop));          *)
+	(* print_endline ("MAY TERM: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_term));            *)
+	(* print_endline ("MAY LOOP: " ^ (pr_list (pr_list (pr_list !print_term_res)) may_loop));            *)
+	(* print_endline ("MAYLOOP: " ^ (pr_list !print_term_res mayloop));                                  *)
+	(* print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) ->                                          *)
+	(* 	(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst))); *)
 	(loop_subst @ infer_subst, mayloop)
 
 let rec infer_term_spec_one_proc utils proc round =
@@ -816,6 +840,10 @@ let rec infer_term_spec_one_proc utils proc round =
     		
     	info_hprint "Inferred Termination Spec" !print_term_spec new_spec;
     	info_pprint "\n";
+			
+			(* info_hprint "Simplified Termination Spec" !print_term_spec (simplify_term_spec new_spec); *)
+    	(* info_pprint "\n";                                                                         *)
+			
     	infer_term_spec_one_proc utils proc (round+1) 
 	end
 
