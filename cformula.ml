@@ -360,6 +360,7 @@ let is_eq_view_name a b =
   Debug.no_2 "is_eq_view_name" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_name a b) 
       a.h_formula_view_name b.h_formula_view_name
 
+let is_eq_data_ann a b = (a = b)
 let is_eq_view_ann a b =
   match a,b with
     | {h_formula_view_imm = c1;}, {h_formula_view_imm = c2;}-> c1=c2

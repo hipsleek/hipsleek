@@ -1,24 +1,28 @@
+data node { int val ; node next }.
+data node2 { int val ; node next }.
 
-/*
-hpred ll(node x, int n)
-hpred rr(node x, int n)
+hpred ll(node x, int n).
+hpred rr(node x, int n).
 
-cmp [x] x::node<a,b> -|- x::node<c,d> .
+checkeq [x] x::node<a,b> -|- x::node<c,d> .
 // VALID --> [{a,c},{b,d}]
 
-cmp [x] x::node<a,b> -|- y::node<c,d> .
+checkeq [x] x::node<a,b> -|- y::node<c,d> .
 // FAIL
 
-cmp [] x::node<a,b> -|- y::node<c,d> .
+checkeq [] x::node<a,b> -|- y::node<c,d> .
 // VALID --> [{a,c},{b,d},{x,y}]
 
-cmp [] x::ll<a> -|- y::rr<b> .
-// VALID --> [{x,y},{a,b}]
 
-cmp [] x::ll<a> -|- (exists b: y::rr<b>).
+
+checkeq [] x::ll<a> -|- y::rr<b> .
+// VALID --> [{x,y},{a,b}]
+/*
+checkeq [] x::ll<a> -|- (exists b: y::rr<b>).
 // VALID --> [{x,y},{ll,rr}]
 
-cmp [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
+checkeq [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
 // FAIL
 
 */
+

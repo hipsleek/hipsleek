@@ -712,7 +712,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* with e -> print_exc num_id *)
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
-  let _ = print_endline ("\n Compare Check") in
+  (*let _ = print_endline ("\n Compare Check") in*)
   let _ = residues := None in
   let stab = H.create 103 in
   let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
@@ -731,7 +731,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   in*)
   let f2 = meta_to_formula if2 false [] stab in
   let f2 = Solver.prune_preds !cprog true f2 in
-  let res = CEQ.checkeq_formulas ivars f1 f2 in
+  let res = (CEQ.checkeq_formulas ivars f1 f2) && (CEQ.checkeq_formulas ivars f2 f1) in
   let _ = if(res) then print_endline ("\n VALID") else print_endline ("\n FAIL") in
   ()
  

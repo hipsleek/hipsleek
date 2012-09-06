@@ -1,0 +1,10 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+//check exists
+checkeq[] x::node<a,null> -|- (exists u: x::node<u,null>).
+//VALID
+
+checkeq[x] x::node<a,null> -|- (exists u: x::node<u,null>).
+//VALID
