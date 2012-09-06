@@ -1,6 +1,6 @@
 OCAMLBUILD = ocamlbuild
 
-# number of parallel jobs, 0 means unlimited.
+#  number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
 # dynlink should precede camlp4lib

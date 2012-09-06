@@ -34,6 +34,8 @@ and struc_or_formula =
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
+    formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
+    formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : (ident * primed) list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc
@@ -134,6 +136,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
+
+(* Interactive command line *)
+let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("", (false, None, None))
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
@@ -1325,6 +1330,20 @@ let float_out_thread_struc_formula (f:struc_formula):struc_formula =
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
       float_out_thread_struc_formula_x f
+
+let mkEInfer xpost transpec pos = EInfer { 
+    formula_inf_post = true;
+    formula_inf_xpost = xpost;
+    formula_inf_transpec = transpec;
+    formula_inf_vars = [];
+    formula_inf_continuation = EList [];
+    formula_inf_pos = pos}
+
+let merge_cmd einfer spec = match einfer with
+  | EInfer e -> EInfer {e with formula_inf_continuation = spec}
+  | EBase _ -> einfer
+  | _ -> Gen.report_error no_pos "Error in merge_cmd"
+
 
 type find_bar_node = 
 	| Bar_wrong_state 

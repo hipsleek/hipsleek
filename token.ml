@@ -45,7 +45,7 @@ type sleek_token =
   | SEMICOLON 
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
-  | INFER | PINFER | SUBANN | PRE | POST
+  | INFER | PINFER | SUBANN | XPRE | PRE | XPOST | POST
   | INVLOCK
   | LOGICAL
 
@@ -87,12 +87,8 @@ module Token = struct
     | RAISE -> "raise" | THROWS -> "throws" | FINALLY -> "finally" | COMBINE -> "combine" | WITH -> "with" | JOIN -> "joinpred" | REFINES -> "refines"
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
-    | INFER -> "infer"
+    | INFER -> "infer" | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:"
     | PINFER ->"pinfer"
-    | PRE -> "@pre"
-    | MUT -> "@M"
-    | POST -> "@post"
-    | SUBANN -> "<:"
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"

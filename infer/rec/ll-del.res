@@ -1,8 +1,3 @@
-
-Processing file "ll-del.ss"
-Parsing ll-del.ss ...
-Parsing /home/thaitm/hg-repository/final/sleekex/prelude.ss ...
-Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
 
@@ -15,32 +10,30 @@ Checking procedure delete$node~int...
 !!! PRE :  1<=a & a<n
 !!! OLD SPECS: ((None,[]),EInfer [n,a,B]
               EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase]&true&
-                    {FLOW,(20,21)=__norm}
-                      EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                              EAssume 1::
+                    {FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                              EAssume 65::
                                 EXISTS(m: x::ll<m>@M[Orig][LHSCase]&B(n,a,m)&
-                                {FLOW,(20,21)=__norm}))
+                                {FLOW,(22,23)=__norm})[])
 !!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase]&true&
-                  {FLOW,(20,21)=__norm}
-                    EBase true&1<=a & a<n & MayLoop&{FLOW,(1,23)=__flow}
-                            EAssume 1::
-                              EXISTS(m_636: x::ll<m_636>@M[Orig][LHSCase]&
-                              a>=1 & m_636>=a & m_636+1=n & 0<=n&
-                              {FLOW,(20,21)=__norm}))
+                  {FLOW,(22,23)=__norm}[]
+                    EBase emp&1<=a & a<n & MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 65::
+                              EXISTS(m: x::ll<m>@M[Orig][LHSCase]&a>=1 & 
+                              m>=a & m+1=n&{FLOW,(22,23)=__norm})[])
 !!! NEW RELS:[ (a=1 & m=n-1 & 2<=n) --> B(n,a,m),
- ((n_601=n-1 & m=m_622+1 & a=v_int_46_623+1 & 1<=n & 0<=m_622 & 
-  1<=v_int_46_623 | n_601=n-1 & m=m_622+1 & a=v_int_46_623+1 & 
-  v_int_46_623<=(0-1) & 1<=n & 0<=m_622) & 
-  B(n_601,v_int_46_623,m_622)) --> B(n,a,m)]
+ ((n_634=n-1 & v_int_46_652=a-1 & m=m_651+1 & 1<=n & 0<=m_651 & 2<=a | 
+  n_634=n-1 & v_int_46_652=a-1 & m=m_651+1 & a<=0 & 1<=n & 0<=m_651) & 
+  B(n_634,v_int_46_652,m_651)) --> B(n,a,m)]
 !!! NEW ASSUME:[]
 !!! NEW RANK:[]
 Procedure delete$node~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 112 invocations 
+Stop Omega... 94 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.13 second(s)
-	Time spent in main process: 0.05 second(s)
-	Time spent in child processes: 0.08 second(s)
+Total verification time: 0.34 second(s)
+	Time spent in main process: 0.24 second(s)
+	Time spent in child processes: 0.1 second(s)
