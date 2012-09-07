@@ -262,7 +262,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* The resulting ctx may contain inferred constraint *)
 and create_bound_constraint measure pos =
   match measure with
-  | CP.Seq seq ->
+  | CP.Sequence seq ->
       let domain_constraint = seq.CP.seq_domain in
       let loopcond_constraint = seq.CP.seq_loopcond in
       let element = seq.CP.seq_element in

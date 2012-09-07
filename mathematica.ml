@@ -318,7 +318,7 @@ let rec mathematica_of_exp e0 : string=
       "(" ^ se1 ^ " ^ " ^ se2 ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("mathematica.mathematica_of_exp: min/max can't appear here")
-  | CP.Seq _ -> failwith ("mathematica.mathematica_of_exp: Seq can't appear here")
+  | CP.Sequence _ -> failwith ("mathematica.mathematica_of_exp: Seq can't appear here")
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _

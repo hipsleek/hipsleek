@@ -50,12 +50,11 @@ and p_formula =
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 and sequence = {
-  seq_element: exp;
-  seq_domain: formula;
-  seq_limit: exp;
-  seq_loopcond: formula;
-  seq_loc : loc
-}
+    seq_element: exp;
+    seq_domain_lb: exp;
+    seq_domain_ub: exp;
+    seq_domain_ub_include: bool;
+  }
 
 
 (* Expression *)
@@ -81,7 +80,7 @@ and exp =
   | Sqrt of (exp * loc)
   | Pow of (exp * exp * loc)
   (* sequence expression *)
-  | Seq of sequence
+  | Sequence of (sequence list * formula * loc)
   (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
@@ -221,7 +220,8 @@ and afv (af : exp) : (ident * primed) list =
   | Sqrt (a, _) -> afv a
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
-  | Seq seq -> afv seq.seq_element
+  | Sequence (seqs, _, _) -> let elist = List.map (fun seq -> seq.seq_element) seqs in
+                             Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c-> a@(afv c)) [] elist)
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
@@ -465,6 +465,12 @@ and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
 		else
 		  ef
 
+and mkSequence (e: exp) (lb: exp) (ub: exp) (ub_incl: bool) : sequence =
+  { seq_element = e;
+    seq_domain_lb = lb;
+    seq_domain_ub = ub;
+    seq_domain_ub_include = ub_incl; }
+
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 pos = 
   let rec helper1 ae alist = 
@@ -526,7 +532,7 @@ and pos_of_exp (e : exp) = match e with
   | Sqrt (_, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
-  | Seq seq -> seq.seq_loc
+  | Sequence (_, _, l) -> l
   | Bag (_, p) -> p
   | BagUnion (_, p) -> p
   | BagIntersect (_, p) -> p
@@ -652,13 +658,17 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Max (a1, a2, pos) -> Max (e_apply_one p a1, e_apply_one p a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one p a1, e_apply_one p a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
-  | Seq seq ->
-      let newseq = { seq_element = e_apply_one p seq.seq_element;
-                     seq_domain = apply_one p seq.seq_domain;
-                     seq_limit = e_apply_one p seq.seq_limit;
-                     seq_loopcond = apply_one p seq.seq_loopcond;
-                     seq_loc = seq.seq_loc } in
-      Seq newseq
+  | Sequence (seqs, f, pos) ->
+      let newseqs = (
+        List.map (
+          fun seq -> { seq_element = e_apply_one p seq.seq_element;
+                       seq_domain_lb = e_apply_one p seq.seq_domain_lb;
+                       seq_domain_ub = e_apply_one p seq.seq_domain_ub;
+                       seq_domain_ub_include = seq.seq_domain_ub_include; }
+        ) seqs
+      ) in
+      let newf = apply_one p f in
+      Sequence (newseqs, newf, pos)
   | Bag (alist, pos) -> Bag ((e_apply_one_list p alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list p alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list p alist), pos)
@@ -829,7 +839,8 @@ and find_lexp_exp (e: exp) ls =
     | Sqrt (e1, _) -> find_lexp_exp e1 ls
     | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-    | Seq seq -> find_lexp_exp seq.seq_element ls
+    | Sequence (seqs, _, _) -> let elist = List.map (fun seq -> find_lexp_exp seq.seq_element ls) seqs in
+                               List.concat elist
     | Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
@@ -885,7 +896,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Sqrt (exp1, _) -> contain_vars_exp exp1
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
-  | Seq seq -> contain_vars_exp seq.seq_element
+  | Sequence (seqs, _, _) -> let elist = List.map (fun seq -> seq.seq_element) seqs in
+                             List.exists contain_vars_exp elist
   | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
@@ -986,7 +998,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) =
         | None, Some (p2, l2) -> Some ((And(p2, t, l)), (new_name:: l2))
         | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
       (nv, r)
-  | Seq seq -> Gen.Basic.report_error seq.seq_loc "Cannot apply float_out_exp_min_max to sequence"
+  | Sequence (_, _, l) -> Gen.Basic.report_error l "Cannot apply float_out_exp_min_max to sequence"
   (* bag expressions *)
   | Bag (le, l) ->
       let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
@@ -1303,7 +1315,7 @@ let rec typ_of_exp (e: exp) : typ =
                                  merge_types ty1 ty2
   | Abs (ex1, _)              -> typ_of_exp ex1
   | Sqrt (ex1, _)             -> typ_of_exp ex1
-  | Seq seq              -> typ_of_exp seq.seq_element
+  | Sequence _                -> Globals.Float
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)

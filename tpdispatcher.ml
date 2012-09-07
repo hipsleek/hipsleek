@@ -553,7 +553,7 @@ let rec is_array_exp e = match e with
         | _ -> is_array_exp e2
       )
     | CP.Abs (e,_) | CP.Sqrt (e,_) -> is_array_exp e
-    | CP.Seq _ -> Some false
+    | CP.Sequence _ -> Some false
     | CP.Bag (el,_)
     | CP.BagUnion (el,_)
     | CP.BagIntersect (el,_) -> (
@@ -597,7 +597,7 @@ let rec is_list_exp e = match e with
                           | Some true -> Some true
                           | _ -> is_list_exp exp)
                        (Some false) el)
-    | CP.Seq _ | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
+    | CP.Sequence _ | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _ | Tsconst _ | CP.SConst _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)

@@ -412,76 +412,86 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
-    | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let update_function = collect_update_function lhs in
-        let element_src = seqsrc.CP.seq_element in
-        let domain_src = seqsrc.CP.seq_domain in
-        let limit_src = seqsrc.CP.seq_limit in
-        let element_dst = seqdst.CP.seq_element in
-        let domain_dst = seqdst.CP.seq_domain in
-        let limit_dst = seqdst.CP.seq_limit in
-        let domain_constraint = (
-          (* domain is covered in the recursive call *)
-          let domain_lhs = CP.mkAnd update_function domain_src pos in
-          let domain_rhs = domain_dst in
-          let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
-          let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
-          let _ = Debug.dinfo_pprint ("   domain_rhs        = " ^ (Cprinter.string_of_pure_formula domain_rhs)) no_pos in
-          CP.mkImply domain_lhs domain_rhs pos
-        ) in
-        let decrease_constraint = (
-          (* measure decreases in the recursive call *)
-          let decrease_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
-          let decrease_rhs = (
-            match limit_src, limit_dst with
-            | CP.SConst (PositiveInfty, _), _
-            | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
-            | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
-                (* es > ed *)
-                CP.mkPure (CP.mkGt element_src element_dst pos)
-            | CP.SConst (NegativeInfty, _), _
-            | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
-            | _ ->
-                (* (es > ls) & (ed > ld) & (es > ed) *)
-                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
-                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) in
-                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
-                CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
+    | CP.Sequence (seqs_s, loopcond_s, _), CP.Sequence (seqs_d, loopcond_d, _) -> (
+        if (List.length seqs_s = List.length seqs_d) && (List.length seqs_s > 0) then (
+          let mseq_s, mseq_d = List.hd seqs_s, List.hd seqs_d in
+          let pseq_s, pseq_d = List.tl seqs_s, List.tl seqs_d in
+          (* domain coverage constraint *)
+          let pdm_cons = List.map2 (
+            fun s d -> let dm_s = CP.mkSequenceDomainConstraint s pos in
+                       let dm_d = CP.mkSequenceDomainConstraint d pos in
+                       CP.mkImply dm_s dm_d pos
+          ) pseq_s pseq_d in
+          let mdm_cons = (
+            let cons1 = (
+              let mdm_s = CP.mkSequenceDomainConstraint mseq_s pos in
+              let pdm_s = List.map (fun s -> CP.mkSequenceDomainConstraint s pos) pseq_s in
+              let clhs1 = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_s pdm_s in
+              let crhs1 = CP.mkSequenceDomainConstraint mseq_d pos in
+              CP.mkImply clhs1 crhs1 pos
+            ) in
+            let cons2 = (
+              match pseq_s with
+              | [] -> CP.mkTrue pos
+              | _ -> (
+                  let delta = CP.fresh_new_spec_var Float in
+                  let dv = CP.mkVar delta pos in 
+                  let dc1 = CP.mkPure (CP.mkGt dv mseq_s.CP.seq_domain_lb pos) in
+                  let dc2 = (if mseq_s.CP.seq_domain_ub_include then
+                               CP.mkPure (CP.mkLte dv mseq_s.CP.seq_domain_ub pos)
+                             else CP.mkPure (CP.mkLt dv mseq_s.CP.seq_domain_ub pos)
+                  ) in
+                  let delta_cons = CP.mkAnd dc1 dc2 pos in 
+                  let elist, dmclist = List.split (List.map (
+                    fun seq -> let e = seq.CP.seq_element in
+                               let dmc = CP.mkSequenceDomainConstraint seq pos in
+                               (e, dmc)
+                  ) pseq_s) in
+                  let svs = CP.afv_list elist in
+                  let pdmc = List.fold_left (fun x y -> CP.mkAnd x y pos) (CP.mkTrue pos) dmclist in
+                  let fExists = CP.mkImply pdmc (CP.mkPure (CP.mkEq mseq_s.CP.seq_element dv pos)) pos in
+                  let fForall = CP.mkImply delta_cons (CP.mkExists svs fExists None pos) pos in
+                  CP.mkForall [delta] fForall None pos 
+                )
+            ) in
+            CP.mkAnd cons1 cons2 pos
           ) in
-          let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
-          let _ = Debug.dinfo_pprint ("   decrease_lhs        = " ^ (Cprinter.string_of_pure_formula decrease_lhs)) no_pos in
-          let _ = Debug.dinfo_pprint ("   decrease_rhs        = " ^ (Cprinter.string_of_pure_formula decrease_rhs)) no_pos in
-          CP.mkImply decrease_lhs decrease_rhs pos
-        ) in
-        CP.mkAnd domain_constraint decrease_constraint pos
+          let domain_cons = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_cons pdm_cons in
+          (* decrease constraint *)
+          let partdc_cons_list = List.map2 (
+            fun s d -> let dmc_s = CP.mkSequenceDomainConstraint s pos in
+                       let dmc_d = CP.mkSequenceDomainConstraint d pos in
+                       let dc = CP.mkPure (CP.mkGt s.CP.seq_element d.CP.seq_element pos) in
+                       CP.mkImply (CP.mkAnd dmc_s dmc_d pos) dc pos
+          ) pseq_s pseq_d in
+          let maindc_cons = (
+            let mdm_s = CP.mkSequenceDomainConstraint mseq_s pos in
+            let mdm_d = CP.mkSequenceDomainConstraint mseq_s pos in
+            let pdm_s = List.map (fun seq -> CP.mkSequenceDomainConstraint seq pos) pseq_s in
+            let pdm_d = List.map (fun seq -> CP.mkSequenceDomainConstraint seq pos) pseq_d in
+            let ls = [mdm_d] @ pdm_s @ pdm_d in
+            let clhs = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_s ls in
+            let crhs = CP.mkPure (CP.mkGt mseq_s.CP.seq_element mseq_d.CP.seq_element pos) in
+            CP.mkImply clhs crhs pos
+          ) in
+          let decrease_cons = List.fold_left (fun x y -> CP.mkAnd x y pos) maindc_cons partdc_cons_list in
+          CP.mkAnd domain_cons decrease_cons pos
+        )
+        else
+          report_error no_pos "Invalid sequence parameters!"
       )
-    | CP.Seq _, _
-    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkGt src dst pos, None), None) in (* src > dst *)
         CP.mkImply lhs rhs pos
   ) else (
     match src, dst with
-    | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let update_function = collect_update_function lhs in
-        let element_src = seqsrc.CP.seq_element in
-        let domain_src = seqsrc.CP.seq_domain in
-        let element_dst = seqdst.CP.seq_element in
-        let domain_dst = seqdst.CP.seq_domain in
-        let domain_constraint = (
-          let domain_lhs = CP.mkAnd update_function domain_src pos in
-          let domain_rhs = domain_dst in
-          CP.mkImply domain_lhs domain_rhs pos
-        ) in
-        let equal_constraint = (
-          let equal_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
-          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
-          CP.mkImply equal_lhs equal_rhs pos
-        ) in
-        CP.mkAnd domain_constraint equal_constraint pos
-      )
-    | CP.Seq _, _
-    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
+    (*   (* TRUNG CODE: code later *)                *)
+    (* | CP.Sequence seqsrc, CP.Sequence seqdst -> ( *)
+    (*   )                                           *)
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
         CP.mkImply lhs rhs pos
@@ -593,8 +603,8 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
               let has_sequence_measures = (
                 List.exists (
                   fun (s, d) -> match s, d with
-                  | CP.Seq _, _
-                  | _, CP.Seq _ -> true
+                  | CP.Sequence _, _
+                  | _, CP.Sequence _ -> true
                   | _ -> false
                 ) bnd_measures
               ) in

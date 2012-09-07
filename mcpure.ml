@@ -1178,7 +1178,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | Abs (e,_) | Sqrt (e,_) | Pow (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
-    | Seq seq -> get_head seq.seq_element
+    | Sequence (seqs, _, _) -> if (List.length seqs) > 0 then let seq = List.hd seqs in get_head seq.seq_element else "[]"
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
 		  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
@@ -1214,7 +1214,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
         (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | AConst _ | Tsconst _ | FConst _ | SConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _
-    | Seq _ 
+    | Sequence _ 
     | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
@@ -1230,7 +1230,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Min (e1,e2,l) ->
 	      let e1,e2 = norm_expr e1, norm_expr e2 in
 	      if(e_cmp e1 e2)>0 then Min(e1,e2,l) else Min(e2,e1,l)
-    | Seq _ -> e
+    | Sequence _ -> e
     | Bag (e,l)-> Bag ( List.sort e_cmp (List.map norm_expr e), l)    
     | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map norm_expr e), l)    
     | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map norm_expr e), l)    

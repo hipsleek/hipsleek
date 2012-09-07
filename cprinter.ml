@@ -664,11 +664,19 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Abs (e, _) -> fmt_string "Abs("; pr_formula_exp e; fmt_string ")";
     | P.Sqrt (e, _) -> fmt_string "sqrt("; pr_formula_exp e; fmt_string ")";
     | P.Pow (e1, e2, _) -> fmt_string "pow("; pr_formula_exp e1; fmt_string ", "; pr_formula_exp e2; fmt_string ")";
-    | P.Seq seq ->
-        fmt_string "Seq{";
-        pr_formula_exp seq.CP.seq_element; fmt_string "; ";
-        pr_pure_formula seq.CP.seq_domain; fmt_string "; ";
-        pr_pure_formula seq.CP.seq_loopcond;
+    | P.Sequence (seqs, f, _) ->
+        let pr_sequence seq = (
+          pr_formula_exp seq.CP.seq_element;
+          fmt_string ":(";
+          pr_formula_exp seq.CP.seq_domain_lb;
+          fmt_string ", ";
+          pr_formula_exp seq.CP.seq_domain_ub;
+          if seq.CP.seq_domain_ub_include then fmt_string "]" else fmt_string ")";
+          fmt_string ", ";
+        ) in
+        fmt_string "Sequence{";
+        List.iter (fun seq -> pr_sequence seq) seqs;
+        pr_pure_formula f;
         fmt_string "}"
     | P.BagDiff (e1, e2, l) -> 
           pr_formula_exp e1; pr_cut_after op_diff ; pr_formula_exp e2
@@ -2434,10 +2442,16 @@ and html_of_formula_exp e =
   | P.Min (e1, e2, l) -> 
       let args = bin_op_to_list op_min_short exp_assoc_op e in
       html_op_min ^ "(" ^ (String.concat ", " (List.map html_of_formula_exp args)) ^ ")"
-  | P.Seq seq ->
-      "Seq{" ^ (html_of_formula_exp seq.CP.seq_element) ^ "; " ^
-                    (html_of_pure_formula seq.CP.seq_domain) ^ "; " ^
-                    (html_of_pure_formula seq.CP.seq_loopcond) ^ "}"
+  | P.Sequence (seqs, f, l) ->
+        let html_of_sequence seq = (
+          html_of_formula_exp seq.CP.seq_element ^ ":("
+          ^ html_of_formula_exp seq.CP.seq_domain_lb ^ ", "
+          ^ html_of_formula_exp seq.CP.seq_domain_ub
+          ^ (if seq.CP.seq_domain_ub_include then "]" else ")")
+          ^ ", "
+        ) in
+        let sl = List.map (fun seq -> html_of_sequence seq) seqs in
+        "Sequence{" ^ (String.concat "" sl) ^ (html_of_pure_formula f) ^ "}"
   | P.Bag (elist, l) 	-> "{" ^ (String.concat ", " (List.map html_of_formula_exp elist)) ^ "}"
   | P.BagUnion (args, l) -> 
       let args = bin_op_to_list op_union_short exp_assoc_op e in
