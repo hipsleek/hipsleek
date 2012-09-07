@@ -5946,13 +5946,24 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula):IF.formula
 	  
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
-  let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = convert_heap2 prog f in
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap f in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
+  f
+
+and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
+  (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = convert_heap2 prog f in
+  let f = IF.float_out_thread f in
+  let f = IF.float_out_exps_from_heap f in
+  let f = IF.float_out_min_max f in
+  let f = IF.rename_bound_vars f in
+  (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
   f
       
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes (lax_implicit:bool)

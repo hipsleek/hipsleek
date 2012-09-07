@@ -478,6 +478,36 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
              (fun mf -> meta_to_formula mf quant fv_idents stab) mf0
 
+let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
+  | MetaFormCF mf -> mf
+  | MetaFormLCF mf ->	(List.hd mf)
+  | MetaForm mf ->
+      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+      let wf = AS.case_normalize_formula_not_rename iprog h mf in
+      let _ = Astsimp.gather_type_info_formula iprog wf stab false in
+      let r = AS.trans_formula iprog quant fv_idents false wf stab false in
+      (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+      r
+  | MetaVar mvar -> begin
+      try 
+				let mf = get_var mvar in
+	  			meta_to_formula_not_rename mf quant fv_idents stab
+      with
+			| Not_found ->
+	    	dummy_exception() ;
+	    	print_string (mvar ^ " is undefined.\n");
+	    	raise SLEEK_Exception
+    	end
+  | MetaCompose (vs, mf1, mf2) -> begin
+      let cf1 = meta_to_formula_not_rename mf1 quant fv_idents stab in
+      let cf2 = meta_to_formula_not_rename mf2 quant fv_idents stab in
+      let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
+      let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
+	res
+    end
+  | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
+
 (* let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) = *)
 (* 		(\*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *\) *)
 (* 		(\* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *\) *)
@@ -729,8 +759,8 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   in 
 
 (*!!!!!!!!!!!!!!!!!!!!*)
-  let f1 = meta_to_formula if1 false [] stab  in
-  let f2 = meta_to_formula if2 false [] stab  in
+  let f1 = meta_to_formula_not_rename if1 false [] stab  in
+  let f2 = meta_to_formula_not_rename if2 false [] stab  in
 
 (*let f1 = meta2formula if1    in
   let f2 = meta2formula if2  in *)
