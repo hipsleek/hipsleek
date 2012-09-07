@@ -689,15 +689,15 @@ opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
-mem_perm_set: [[ `MEM; `IDENTIFIER m; `AT; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
-				->  {	F.mem_formula_name = m;
+mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+				->  {	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
 					F.mem_formula_field_layout = mpl}				
-		| `MEME; `IDENTIFIER m; `AT; `OPAREN; mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
-				->  {	F.mem_formula_name = m;
+		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+				->  {	F.mem_formula_exp = e;
 					F.mem_formula_exact = true;
 					F.mem_formula_field_layout = mpl} ]];
-
+					
 mem_perm_layout:[[ `IDENTIFIER dn; `LT; annl = ann_list; `GT -> let perml = get_heap_ann_list annl in (dn,perml) ]];
 
 ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];

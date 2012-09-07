@@ -3,6 +3,7 @@
 open Globals
 open Gen.Basic
 open Iformula
+open Iprinter
 
 module CF = Cformula
 module CP = Cpure
@@ -37,38 +38,36 @@ let check_mem_formula_data_names (ddf : I.data_decl list) (fl : (ident * (ann li
 		
 let check_mem_formula (vdf : I.view_decl) (ddcl : I.data_decl list) =
 	match vdf.I.view_mem with
-	| Some a -> if List.mem a.mem_formula_name vdf.I.view_vars 
+	| Some a -> (match a.mem_formula_exp with
+		        | IP.Var (_,_)
+  			| IP.BagDiff (_,_,_) 
+ 			| IP.Bag(_,_)
+			| IP.BagIntersect (_,_)
+  			| IP.BagUnion (_,_) ->
+  			let allvs = IP.afv a.mem_formula_exp in
+  			let fvs = (List.filter (fun c -> match c with 
+  					| (a,Primed) 
+  					| (a,Unprimed) -> if (List.mem a ("self"::vdf.I.view_vars)) then false else true) allvs) in
+  			if (List.length fvs) == 0
 			then 
 			if List.for_all (fun v -> check_mem_formula_data_names ddcl v)  a.mem_formula_field_layout
 			then ()
 			else Err.report_error {
 			Err.error_loc = no_pos;
-			Err.error_text = "Field Layout of "^ a.mem_formula_name ^" is not present in Data Decls";}
-		else Err.report_error {
-		Err.error_loc = no_pos;
-		Err.error_text = "Memory Region "^ a.mem_formula_name ^" is not a parameter of View " ^ vdf.I.view_name;}
+			Err.error_text = "Memory Field Layout of "^ vdf.I.view_name ^" is not present in Data Decls";}
+			else Err.report_error {
+			Err.error_loc = no_pos;
+			Err.error_text = "Memory Spec of "^ vdf.I.view_name ^" contains free variables " ^ (string_of_var_list fvs);}
+			| _ -> Err.report_error {
+				Err.error_loc = no_pos;
+				Err.error_text = "Memory Spec of "^ vdf.I.view_name ^" contains unrecognized expressions";})
 	| None -> ()
 
-let trans_field_layout (iann : IF.ann list) : CF.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
-
-let trans_mem_formula (imem : IF.mem_formula) : CF.mem_perm_formula = 
-	let mem_var = CP.SpecVar(UNK,imem.mem_formula_name,Unprimed) in 
-	let helpl1, helpl2 = List.split imem.mem_formula_field_layout in
-	let helpl2 = List.map trans_field_layout helpl2 in
-	let meml = List.combine helpl1 helpl2 in
-			{CF.mem_formula_name  = mem_var;
-			CF.mem_formula_exact = imem.mem_formula_exact;
-			CF.mem_formula_field_layout =  meml}
-			
-let trans_view_mem (vmem : IF.mem_formula option) : CF.mem_perm_formula option = 
-	match vmem with
-	| Some a -> Some(trans_mem_formula a)
-	| None -> None
 
 let add_mem_invariant (inv : IP.formula) (vmem : IF.mem_formula option) : IP.formula =
 	match vmem with
 	| Some a -> let new_var = ("Anon"^(fresh_trailer()),Unprimed) in 
-		let tmp_formula = IP.BForm((IP.BagNotIn(new_var, IP.Var((a.mem_formula_name,Unprimed),no_pos),no_pos),None),None) in
+		let tmp_formula = IP.BForm((IP.BagNotIn(new_var, a.mem_formula_exp,no_pos),None),None) in
 		let tmp_formula2 = IP.mkNeqExp (IP.Var(new_var, no_pos)) (IP.Null(no_pos)) no_pos in
 		let add_formula = IP.mkOr tmp_formula tmp_formula2 None no_pos in
 		let mem_inv = IP.mkForall [new_var] add_formula None no_pos

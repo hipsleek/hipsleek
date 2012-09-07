@@ -1205,11 +1205,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let mem_form = (match vdef.I.view_mem with
 	  | Some a -> let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
 	  		let new_typ_mem = fresh_tvar stab in 
-			  let _ = gather_type_info_var a.IF.mem_formula_name stab new_typ_mem in 
-			  let inv = add_mem_invariant inv vdef.I.view_mem in
-				Mem.trans_view_mem vdef.I.view_mem 
+			  let _ = gather_type_info_exp a.IF.mem_formula_exp stab new_typ_mem in 
+				trans_view_mem vdef.I.view_mem stab
 	  | None -> None)
   in 
+  let inv = add_mem_invariant inv vdef.I.view_mem in
   let _ = gather_type_info_pure prog inv stab in
   let pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
@@ -7685,6 +7685,22 @@ and trans_bdecl prog bd =
 	let pr_out c = Cprinter.string_of_barrier_decl c in
 	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
+and trans_field_layout (iann : IF.ann list) : CF.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
+
+and trans_mem_formula (imem : IF.mem_formula) stab : CF.mem_perm_formula = 
+	let mem_exp = trans_pure_exp imem.IF.mem_formula_exp stab in 
+	let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
+	let helpl2 = List.map trans_field_layout helpl2 in
+	let meml = List.combine helpl1 helpl2 in
+			{CF.mem_formula_exp  = mem_exp;
+			CF.mem_formula_exact = imem.IF.mem_formula_exact;
+			CF.mem_formula_field_layout =  meml}
+			
+and trans_view_mem (vmem : IF.mem_formula option) stab : CF.mem_perm_formula option = 
+	match vmem with
+	| Some a -> Some(trans_mem_formula a stab)
+	| None -> None
+	
 (*
 and normalize_barr_decl cprog p = 
 		let nfs = Solver.normalize_frac_struc cprog in

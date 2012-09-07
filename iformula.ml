@@ -15,7 +15,7 @@ let top_flow = top_flow
 
 type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
-and mem_formula = {	mem_formula_name : ident;
+and mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_layout : (ident * (ann list)) list;}
 
