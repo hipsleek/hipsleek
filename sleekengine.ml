@@ -715,31 +715,40 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   (*let _ = print_endline ("\n Compare Check") in*)
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nCheckeq "^nn in
-  let _ = residues := None in
   let stab = H.create 103 in
   let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
   let _ = Debug.devel_pprint ("\nrun_cmp_check:"
                               ^ "\n ### f1 = "^(string_of_meta_formula if1)
                               ^ "\n ### f2 = "^(string_of_meta_formula if2)
                               ^"\n\n") no_pos in
-  let f1 = meta_to_formula if1 false [] stab in
-  let f1 = Solver.prune_preds !cprog true f1 in
-  (*let f1 = (*important for permissions*)
-    if (Perm.allow_perm ()) then
-      (*add default full permission to ante;
-        need to add type of full perm to stab *)
-      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) f1
-    else f1
-  in*)
-  let f2 = meta_to_formula if2 false [] stab in
-  let f2 = Solver.prune_preds !cprog true f2 in
-  let res = (CEQ.checkeq_formulas ivars f1 f2) && (CEQ.checkeq_formulas ivars f2 f1) in
-  let _ = if(res) then
-        print_string (num_id^": Valid.\n")
+  let meta2formula (mf: meta_formula): CF.formula = match mf with
+  | MetaForm mf ->
+      let r = AS.trans_formula iprog false [] false mf stab false in
+      r
+  | _ -> report_error no_pos "not capture yet"
+  in 
+
+(*!!!!!!!!!!!!!!!!!!!!*)
+  let f1 = meta_to_formula if1 false [] stab  in
+  let f2 = meta_to_formula if2 false [] stab  in
+
+(*let f1 = meta2formula if1    in
+  let f2 = meta2formula if2  in *)
+let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
+
+  (*let f2 = Solver.prune_preds !cprog true f2 in *)
+  let mtl = [[]] in
+  let (res1, mtl1) = (CEQ.checkeq_formulas ivars f1 f2 mtl) in
+  let (res2, mtl2) =  (CEQ.checkeq_formulas ivars f2 f1 mtl) in
+  let (res, mt_list) = (res1&&res2, mtl1) in
+  let _ = if(res) then(
+        print_string (num_id^": Valid.")
+  )
       else
         print_string (num_id^": Fail.\n")
         (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
   in
+  let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
   ()
  
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =

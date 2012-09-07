@@ -8,28 +8,70 @@ module MCP = Mcpure
 
 (*for testing-compare two formulas*)
 
-let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula): bool=
- (* let _ = Debug.info_pprint ("Compare formulas ") no_pos in*)
+type map_table = ((ident * ident) list)
+
+let string_of_pair(x: (ident * ident)): string =
+  (
+    let (a,b) = x in 
+    let res = "(" ^ a ^ ", " ^ b ^ ")" in
+    res 
+  )
+
+
+let string_of_map_table (mt: map_table): string = 
+  let rec helper(mt: map_table): string = match mt with 
+    |[] ->""
+    |[x] -> string_of_pair x
+    |x::y -> (string_of_pair x) ^ ", " ^ (helper y)
+  in
+ "[" ^ (helper mt) ^ "]"
+
+
+let string_of_map_table_list (mtl: map_table list): string = 
+  let rec helper (mtl: map_table list): string = match mtl with
+  | [] -> ""
+  | [x] -> string_of_map_table x
+  | x::y -> (string_of_map_table x) ^ ", " ^ (helper y)
+  in 
+  "[" ^ (helper mtl) ^ "]"
+
+(*let rec rm_double_mapping (mt: map_table): map_table = 
+if((List.length mt) == 0) then mt else (
+  let hd = List.hd mt in
+  let tl = List.tl mt in
+  if(List.exists (fun c -> c == hd) tl) then (rm_double_mapping tl) else (rm_double_mapping tl)@[hd] 
+)*)
+
+let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
+  let _ = Debug.ninfo_pprint ("Compare formulas ") no_pos in 
   match f1 with
     |CF.Base({CF.formula_base_heap = h1;
 	      CF.formula_base_pure = p1}) ->(match f2 with 
 	|CF.Base ({CF.formula_base_heap = h2;
-	      CF.formula_base_pure = p2}) -> checkeq_h_formulas hvars h1 h2 
-	|_ -> false)
+	      CF.formula_base_pure = p2}) -> (
+	  let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in
+	  let _ = if(res) then Debug.ninfo_pprint (string_of_map_table_list mtl1) no_pos in
+	  (res,mtl1) (*h formula only*)
+	)
+	|_ -> (false,mtl))
     |CF.Exists({CF.formula_exists_heap = h1;
 		CF.formula_exists_pure = p1})->(match f2 with 
 	|CF.Exists ({CF.formula_exists_heap = h2;
-	      CF.formula_exists_pure = p2}) -> checkeq_h_formulas hvars h1 h2 
-	|_ -> false)
+	      CF.formula_exists_pure = p2}) -> (
+	  let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in 
+	  let _ = if(res) then Debug.ninfo_pprint (string_of_map_table_list mtl1) no_pos in
+	  (res,mtl1)
+	)
+	|_ -> (false,mtl))
     |CF.Or b1 ->  report_error no_pos "not handle Or f1 yet"
   
-and checkeq_h_formulas (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula): bool=
+and checkeq_h_formulas (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
  (* let _ = Debug.info_pprint ("Compare heap formulas ") no_pos in*)
 (*create list*)
   let check_false_hf1 = check_false_formula hf1 in
   let check_false_hf2 = check_false_formula hf2 in
-  if(check_false_hf1 && check_false_hf2) then true
-  else if(check_false_hf1 || check_false_hf2) then false
+  if(check_false_hf1 && check_false_hf2) then (true, [])
+  else if(check_false_hf1 || check_false_hf2) then (false,[])
   else(
     match hf1 with  
       | CF.Star ({CF.h_formula_star_h1 = h1;
@@ -38,18 +80,19 @@ and checkeq_h_formulas (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula
 		    CF.h_formula_phase_rw = h2}) 
       | CF.Conj  ({CF.h_formula_conj_h1 = h1;
 		   CF.h_formula_conj_h2 = h2})  ->
-	let ph1 = checkeq_h_formulas hvars h1 hf2 in
-	if(ph1) then checkeq_h_formulas hvars h2 hf2 else false
-      | CF.DataNode n -> match_equiv_node hvars n hf2 
-      | CF.ViewNode n -> match_equiv_view_node hvars n hf2
+	let (ph1, mtl1) = checkeq_h_formulas hvars h1 hf2 mtl in
+	let _ = Debug.ninfo_pprint (string_of_map_table_list mtl1) no_pos in
+	if(ph1) then checkeq_h_formulas hvars h2 hf2 mtl1 else (false, mtl1)
+      | CF.DataNode n -> match_equiv_node hvars n hf2 mtl
+      | CF.ViewNode n -> match_equiv_view_node hvars n hf2 mtl
       | CF.Hole h1 -> ( match hf2 with
-	  |CF.Hole h2 -> h1 = h2
-	  |_ -> false
+	  |CF.Hole h2 -> (h1 = h2, mtl)
+	  |_ -> (false,mtl)
       )
-      | CF.HRel r  ->  match_equiv_rel hvars r hf2
-      | CF.HTrue  ->  true
+      | CF.HRel r  -> match_equiv_rel hvars r hf2 mtl
+      | CF.HTrue  ->  (true, mtl)
       | CF.HFalse ->  report_error no_pos "not a case"
-      | CF.HEmp   ->  match_equiv_emp hf2
+      | CF.HEmp   ->  (match_equiv_emp hf2, mtl)
   )
 
 and check_false_formula(hf: CF.h_formula): bool =
@@ -71,27 +114,38 @@ and check_false_formula(hf: CF.h_formula): bool =
       | CF.HEmp   ->  false
  
 
-and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula): bool=
+and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
  (* let _ = if(is_hard) then Debug.info_pprint ("check hard node ") no_pos else  Debug.info_pprint ("check soft node ") no_pos in*)
- match hf2 with 
-   | CF.Star ({CF.h_formula_star_h1 = h1;
-	    CF.h_formula_star_h2 = h2}) 
-   | CF.Phase  ({CF.h_formula_phase_rd = h1;
-	    CF.h_formula_phase_rw = h2}) 
-   | CF.Conj  ({CF.h_formula_conj_h1 = h1;
-	    CF.h_formula_conj_h2 = h2})  ->
-      let ph1 =  match_equiv_node hvars n h1  in
-      let ph2 =  match_equiv_node hvars n h2  in
-      ph1 || ph2 
-   | CF.DataNode n2 -> check_node_equiv hvars n n2 
-   | CF.ViewNode _
-   | CF.Hole _
-   | CF.HRel _ 
-   | CF.HTrue -> false
-   | CF.HFalse -> report_error no_pos "not a case"
-   | CF.HEmp   -> false
-
-and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formula_data): bool=
+  let rec match_equiv_node_helper (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with 
+    | CF.Star ({CF.h_formula_star_h1 = h1;
+		CF.h_formula_star_h2 = h2}) 
+    | CF.Phase  ({CF.h_formula_phase_rd = h1;
+		  CF.h_formula_phase_rw = h2}) 
+    | CF.Conj  ({CF.h_formula_conj_h1 = h1;
+		 CF.h_formula_conj_h2 = h2})  ->
+      let (ph1, mtl1) =  match_equiv_node_helper hvars n h1 mt in
+      let (ph2, mtl2) =  match_equiv_node_helper hvars n h2 mt in
+      let _ = Debug.ninfo_pprint (string_of_map_table_list mtl1) no_pos in
+      let _ = Debug.ninfo_pprint (string_of_map_table_list mtl2) no_pos in
+      if(ph1 && ph2) then (true, mtl1 @ mtl2)   (*merge tables*)
+      else if(ph1) then (true, mtl1) 
+      else if(ph2) then (true, mtl2)
+      else (false, mtl)
+    | CF.DataNode n2 -> let (res, mt2) = check_node_equiv hvars n n2 mt in (res, [mt2])
+    | CF.ViewNode _
+    | CF.Hole _
+    | CF.HRel _ 
+    | CF.HTrue -> (false,mtl)
+    | CF.HFalse -> report_error no_pos "not a case"
+    | CF.HEmp   -> (false,mtl)
+  in
+  let res_list = (List.map (fun c -> match_equiv_node_helper hvars n hf2 c) mtl) in
+  let (bs, mtls) = List.split res_list in
+  let b = if( List.exists (fun c -> c==true) bs) then true else false in
+  let mtl2 = List.concat mtls in
+  (b, mtl2) 
+    
+and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formula_data)(mt: map_table): (bool * map_table)=
   let var1 = n1.CF.h_formula_data_node in
   let name1 = n1.CF.h_formula_data_name in
   let ann1 = n1.CF.h_formula_data_imm in
@@ -106,50 +160,67 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2))) 
   then( 
     (*let _ = Debug.info_pprint ("diff node diff name diff ann ") no_pos in *)
-    false 
+    (false, mt) 
   )
-  else check_spec_var_list_equiv hvars args1 args2
+  else (
+    let _ = Debug.ninfo_pprint ("match node: " ^ string_of_map_table mt) no_pos in
+    let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
+      else add_map_rel mt (CP.name_of_spec_var var1) (CP.name_of_spec_var var2) in
+    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    else (false, mt1)
+  )
 (*translation has ensured well-typedness. *)
 
-and check_spec_var_list_equiv  (hvars: ident list)(args1: CP.spec_var list)(args2: CP.spec_var list):bool =
-(*do not check type*) 
-  if((List.length args1) == 0 && (List.length args2) == 0) then true
+and check_spec_var_list_equiv  (hvars: ident list)(args1: CP.spec_var list)(args2: CP.spec_var list)(mt: map_table): (bool * map_table)=
+  (*do not check type*) 
+  if((List.length args1) == 0 && (List.length args2) == 0) then (true, mt)
   else (
-    let check_head = check_spec_var_equiv hvars (List.hd args1) (List.hd args2) in
-    if(check_head) then check_spec_var_list_equiv hvars (List.tl args1) (List.tl args2) else check_head
+    let (check_head,mt1) = check_spec_var_equiv hvars (List.hd args1) (List.hd args2) mt in
+    if(check_head) then check_spec_var_list_equiv hvars (List.tl args1) (List.tl args2) mt1 else (check_head,mt1)
   )
 
-and check_spec_var_equiv (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var):bool=
-(*do not check type*) 
+and check_spec_var_equiv (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var)(mt: map_table): (bool * map_table )=
+  (*do not check type*) 
   let is_hard_v1 = (List.mem (CP.name_of_spec_var v1) hvars) in
   if((CP.is_null_const v1) || (CP.is_int_const v1) || is_hard_v1) 
   then( 
-    (*let _ = Debug.info_pprint ("maybe diff spec ") no_pos in *)
-    CP.eq_spec_var v1 v2
+    let _ = Debug.ninfo_pprint ("null const hard") no_pos in 
+    let res = CP.eq_spec_var v1 v2 in
+    (res, mt)
   )
-  else true  
+  else add_map_rel mt (CP.name_of_spec_var v1) (CP.name_of_spec_var v2)  
 
-and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_formula): bool=
+
+and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
  (* let _ = if(is_hard) then Debug.info_pprint ("check hard node ") no_pos else  Debug.info_pprint ("check soft node ") no_pos in*)
- match hf2 with 
-   | CF.Star ({CF.h_formula_star_h1 = h1;
-	    CF.h_formula_star_h2 = h2}) 
-   | CF.Phase  ({CF.h_formula_phase_rd = h1;
-	    CF.h_formula_phase_rw = h2}) 
-   | CF.Conj  ({CF.h_formula_conj_h1 = h1;
-	    CF.h_formula_conj_h2 = h2})  ->
-      let ph1 =  match_equiv_view_node hvars n h1  in
-      let ph2 =  match_equiv_view_node hvars n h2  in
-      ph1 || ph2 
-   | CF.DataNode n2 -> false 
-   | CF.ViewNode n2 -> check_view_node_equiv hvars n n2 
-   | CF.Hole _
-   | CF.HRel _ 
-   | CF.HTrue -> false
-   | CF.HFalse -> report_error no_pos "not a case"
-   | CF.HEmp   -> false
+  let rec match_equiv_view_node_helper (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with  
+    | CF.Star ({CF.h_formula_star_h1 = h1;
+		CF.h_formula_star_h2 = h2}) 
+    | CF.Phase  ({CF.h_formula_phase_rd = h1;
+		  CF.h_formula_phase_rw = h2}) 
+    | CF.Conj  ({CF.h_formula_conj_h1 = h1;
+		 CF.h_formula_conj_h2 = h2})  ->
+      let (ph1,mtl1) =  match_equiv_view_node_helper hvars n h1 mt in
+      let (ph2, mtl2) =  match_equiv_view_node_helper hvars n h2 mt in
+      if(ph1 && ph2) then (true, mtl1 @ mtl2)   (*merge tables*)
+      else if(ph1) then (true, mtl1) 
+      else if(ph2) then (true, mtl2)
+      else (false, mtl) 
+    | CF.DataNode n2 -> (false,mtl) 
+    | CF.ViewNode n2 -> let (res, mt2) = check_view_node_equiv hvars n n2 mt in (res, [mt2])
+    | CF.Hole _
+    | CF.HRel _ 
+    | CF.HTrue -> (false,mtl)
+    | CF.HFalse -> report_error no_pos "not a case"
+    | CF.HEmp   -> (false,mtl)
+  in
+  let res_list = (List.map (fun c -> match_equiv_view_node_helper hvars n hf2 c) mtl) in
+  let (bs, mtls) = List.split res_list in
+  let b = if( List.exists (fun c -> c==true) bs) then true else false in
+  let mtl2 = List.concat mtls in
+  (b, mtl2) 
 
-and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_formula_view): bool=
+and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_formula_view)(mt: map_table): (bool * map_table)=
   let var1 = n1.CF.h_formula_view_node in
   let name1 = n1.CF.h_formula_view_name in
   let ann1 = n1.CF.h_formula_view_imm in
@@ -164,74 +235,118 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2))) 
   then( 
     (*let _ = Debug.info_pprint ("diff node diff name diff ann ") no_pos in *)
-    false 
+    (false, mt) 
   )
-  else check_spec_var_list_equiv hvars args1 args2
-(*translation has ensured well-typedness. *)
-
-and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc)) (hf2: CF.h_formula): bool=
+  else  (
+    let _ = Debug.ninfo_pprint ("match node: " ^ string_of_map_table mt) no_pos in
+    let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
+      else add_map_rel mt (CP.name_of_spec_var var1) (CP.name_of_spec_var var2) in
+    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    else (false, mt1)
+  )
+and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc)) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
  (* let _ = if(is_hard) then Debug.info_pprint ("check hard node ") no_pos else  Debug.info_pprint ("check soft node ") no_pos in*)
- match hf2 with 
-   | CF.Star ({CF.h_formula_star_h1 = h1;
-	    CF.h_formula_star_h2 = h2}) 
+  let rec match_equiv_rel_helper (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc)) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with 
+    | CF.Star ({CF.h_formula_star_h1 = h1;
+		CF.h_formula_star_h2 = h2}) 
+    | CF.Phase  ({CF.h_formula_phase_rd = h1;
+		  CF.h_formula_phase_rw = h2}) 
+    | CF.Conj  ({CF.h_formula_conj_h1 = h1;
+		 CF.h_formula_conj_h2 = h2})  ->
+      let (ph1, mtl1) =  match_equiv_rel_helper hvars r h1 mt in
+      let (ph2,mtl2) =  match_equiv_rel_helper hvars r h2 mt in
+      if(ph1 && ph2) then (true, mtl1 @ mtl2)   (*merge tables*)
+      else if(ph1) then (true, mtl1) 
+      else if(ph2) then (true, mtl2)
+      else (false, mtl) 
+    | CF.DataNode _ 
+    | CF.ViewNode _  
+    | CF.Hole _ -> (false,mtl) 
+    | CF.HRel r2  ->  let (res, mt2) = check_rel_equiv hvars r r2 mt in (res, [mt2])
+    | CF.HTrue  -> (false,mtl) 
+    | CF.HFalse ->  report_error no_pos "not a case"
+    | CF.HEmp   ->  (false,mtl) 
+  in
+  let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
+  let (bs, mtls) = List.split res_list in
+  let b = if( List.exists (fun c -> c==true) bs) then true else false in
+  let mtl2 = List.concat mtls in
+  (b, mtl2) 
 
-   | CF.Phase  ({CF.h_formula_phase_rd = h1;
-	    CF.h_formula_phase_rw = h2}) 
-   | CF.Conj  ({CF.h_formula_conj_h1 = h1;
-	    CF.h_formula_conj_h2 = h2})  ->
-      let ph1 =  match_equiv_rel hvars r h1  in
-      let ph2 =  match_equiv_rel hvars r h2  in
-      ph1 || ph2 
-   | CF.DataNode n2 -> false
-   | CF.ViewNode n2  -> false
-   | CF.Hole _ -> false
-   | CF.HRel r2  ->  check_rel_equiv hvars r r2
-   | CF.HTrue  -> false
-   | CF.HFalse ->  report_error no_pos "not a case"
-   | CF.HEmp   ->  false
-
-and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc)) (r2:  (CP.spec_var * (CP.exp list) * loc)): bool=
+and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc)) (r2:  (CP.spec_var * (CP.exp list) * loc))(mt: map_table): (bool * map_table)=
   let (n1,el1,l1) = r1 in
   let (n2,el2,l2) = r2 in
   (*let is_hard_r1 = (List.mem (CP.name_of_spec_var n1) hvars) in *)
-  let spec_var_equiv = CP.eq_spec_var n1 n2 in (*eq_spec_var means same relation*)
-  if(spec_var_equiv) then check_exp_list_equiv hvars el1 el2 (*check hard var in relation*)
-  else false
+  let res = CP.eq_spec_var n1 n2 in (*eq_spec_var means same relation*)
+  if(res) then check_exp_list_equiv hvars el1 el2 mt (*check hard var in relation*)
+  else (false, mt)
 
-and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp list) : bool=
-  if((List.length el1) == 0 && (List.length el2) == 0) then true
+and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp list) (mt: map_table): (bool * map_table)=
+  if((List.length el1) == 0 && (List.length el2) == 0) then (true, mt)
   else(
     let head1 = List.hd el1 in 
     let head2 = List.hd el2 in
-    let check_head = match head1 with
+    let (check_head, mt1) = match head1 with
       |CP.Var(sv1,_)-> (
 	let is_hard = (List.mem (CP.name_of_spec_var sv1) hvars) in
-	if(not is_hard) then true
+	if(not is_hard) then (
+	  match head2 with
+	    |CP.Var(sv2,_) -> (add_map_rel mt (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2))
+	    |_ -> (false, mt)
+	)
 	else match head2 with
-	  |CP.Var(sv2,_) -> CP.eq_spec_var sv1 sv2
-	  |_ -> false
+	  |CP.Var(sv2,_) -> (CP.eq_spec_var sv1 sv2, mt)
+	  |_ -> (false, mt)
       ) 
-      |_ -> true (*scale down: process only spec var as relation arguments*)
-     in
-     if(check_head) then check_exp_list_equiv hvars (List.tl el1) (List.tl el2) 
-     else false
+      |_ -> (true, mt) (*scale down: process only spec var as relation arguments*)
+    in
+    if(check_head) then check_exp_list_equiv hvars (List.tl el1) (List.tl el2) mt
+    else (false, mt)
   )
-  
+    
 
 and match_equiv_emp (hf2: CF.h_formula): bool=
- match hf2 with 
-   | CF.Star ({CF.h_formula_star_h1 = h1;
-	    CF.h_formula_star_h2 = h2}) 
-   | CF.Phase  ({CF.h_formula_phase_rd = h1;
-	    CF.h_formula_phase_rw = h2}) 
-   | CF.Conj  ({CF.h_formula_conj_h1 = h1;
-	    CF.h_formula_conj_h2 = h2})  ->
+  match hf2 with 
+    | CF.Star ({CF.h_formula_star_h1 = h1;
+		CF.h_formula_star_h2 = h2}) 
+    | CF.Phase  ({CF.h_formula_phase_rd = h1;
+		  CF.h_formula_phase_rw = h2}) 
+    | CF.Conj  ({CF.h_formula_conj_h1 = h1;
+		 CF.h_formula_conj_h2 = h2})  ->
       let ph1 =  match_equiv_emp h1  in
       if(not ph1) then  match_equiv_emp h2 else true
-   | CF.DataNode _ 
-   | CF.ViewNode _
-   | CF.Hole _
-   | CF.HRel _ 
-   | CF.HTrue 
-   | CF.HFalse -> false
-   | CF.HEmp   -> true
+    | CF.DataNode _ 
+    | CF.ViewNode _
+    | CF.Hole _
+    | CF.HRel _ 
+    | CF.HTrue 
+    | CF.HFalse -> false
+    | CF.HEmp   -> true
+
+and add_map_rel (mt: map_table) (v1: ident) (v2: ident): (bool * map_table) = 
+  let _ = Debug.ninfo_pprint ("node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^  string_of_map_table mt) no_pos in
+
+  let rec check_exist (v: ident) (mt: map_table): bool = 
+    match mt with 
+      | []-> false 
+      | [(i1,i2)] -> (String.compare v i1) == 0 || (String.compare v i2) == 0 
+      | (i1, i2)::y -> (String.compare v i1) == 0 || (String.compare v i2) == 0  || (check_exist v y)
+  in
+  if(List.exists (fun (i1, i2) -> (((String.compare v1 i1) == 0 && (String.compare v2 i2) == 0)  || ((String.compare v1 i2) == 0 && (String.compare v2 i1) == 0))) mt) then (
+    let _ = Debug.ninfo_pprint ("Exists node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in
+    (true, mt)
+  ) else 
+    (
+      let _ = Debug.ninfo_pprint ("not yet node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in
+      let check_v1 = check_exist v1 mt in
+      let check_v2 = check_exist v2 mt in
+      if(check_v1 || check_v2) then (
+	let _ = Debug.ninfo_pprint ("ADD FAIL node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^  string_of_map_table mt) no_pos in
+	(false, mt)
+      )
+      else (let _ = Debug.ninfo_pprint ("ADD: node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in 
+	    (true, (v1,v2)::mt)
+      )
+    )
+
+

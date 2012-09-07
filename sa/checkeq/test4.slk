@@ -7,10 +7,13 @@ data node2 { int val ; node next }.
 //1.
 checkeq[] x::node<u,null> -|- x::node<u,null>.
 //VALID
+//!!! [[(flted_8_12, flted_8_18), (u, u), (x, x)]]
+
 
 //2.
 checkeq[] x::node<v,null> -|- y::node<c,null>.
 //VALID
+//!!! [[(flted_12_22, flted_12_28), (v, c), (x, y)]]
 
 //3.
 checkeq[x] x::node<b,null> -|- x::node<c,null>.
@@ -22,7 +25,7 @@ checkeq[x] x::node<a,null> -|- x::node<a,null>.
 
 //5.
 checkeq[] x::node<v,null> * z::node<u,null> -|- y::node<u,null>.
-//VALID  (not check match again case yet)
+//FAIL  (not check match again case yet)
 
 //6.
 checkeq[] x::node<v,null> * z::node<c,null> -|- y::node<c,null> * t::node<v,null>.
@@ -33,21 +36,27 @@ checkeq[x] x::node<t,null> * z::node<u,null> -|- y::node<t,null> * x::node<u,nul
 //VALID
 
 //8.
-checkeq[] x::node<u,c> * z::node<u,d> -|- y::node<u,a> * t::node<u,b>.
+checkeq[u] x::node<u,c> * z::node<h,d> -|- y::node<u,a> * t::node<u,b>.
 //VALID
+//!! [[(d, b), (u_114, u_122), (z, t), (c, a), (u, u), (x, y)], 
+//[(d, a), (u_114, u), (z, y), (c, b), (u, u_122), (x, t)]]
+//[[(d, b), (u_114, u_122), (z, t), (c, a), (x, y)]]
 
-//8.
+
+//9.
 checkeq[] x::node<a,null> * z::node<c,null> -|- y::node<c,null> * t::node<a,null>.
 //VALID
 
-//8.
+//10.
 checkeq[] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<d,null>.
 //VALID
 
-//8.
+//11.
 checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<d,null>.
 //FAIL !!!!!!!!!!!!!!!!!!!***********************
 
-//8.
+//12.
 checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<a,null>.
 //VALID
+
+

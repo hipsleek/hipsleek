@@ -21,7 +21,7 @@ checkeq[x] x::node<t,null> -|- y::node<t,null>.
 
 //5.
 checkeq[] x::node<t,null> * z::node<t,null> -|- y::node<t,null>.
-//VALID (not update table yet)
+//FAIL 
 
 //6.
 checkeq[] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * p::node<t,null>.
