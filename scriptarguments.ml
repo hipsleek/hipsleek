@@ -1,3 +1,5 @@
+module TInfer = Term_infer
+
 let parse_only = ref false
 
 let typecheck_only = ref false
@@ -255,6 +257,10 @@ let common_arguments = [
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
+	
+	(* Termination Inference *)
+	("--infer-term", Arg.Set Globals.enable_term_infer, "Enable termination and non-termination inference");
+	("--tinf-bound", Arg.Set_int Globals.term_run_bound, "Set bound for termination inference");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");

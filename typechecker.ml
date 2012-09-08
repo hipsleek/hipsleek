@@ -683,26 +683,27 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in 
   let spec, ip, ir, r, tctx = helper ctx spec in
-	(* Termination Inference: Preprocessing the collected termination context *)
-	let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
-	let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
-	let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
-	let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
-	let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
-	(* Termination Context (collected by Symbolic Execution) *)
-	let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
-	(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
-	(* Initial Termination Spec *)
-	let utils = {
-		TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
-		TInfer.simplify = Omega.simplify;
-		TInfer.imply = TP.imply_raw;
-		TInfer.is_sat = fun f -> TP.is_sat f "" true;
-	} in
-	let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
-	(* let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in *)
-	let _ = Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec in
-	(spec, ip, ir, r) 
+	let _ = if not (!Globals.enable_term_infer) then () else
+  	(* Termination Inference: Preprocessing the collected termination context *)
+  	let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
+  	let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
+  	let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
+  	let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
+  	let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
+  	(* Termination Context (collected by Symbolic Execution) *)
+  	let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
+  	(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
+  	(* Initial Termination Spec *)
+  	let utils = {
+  		TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
+  		TInfer.simplify = Omega.simplify;
+  		TInfer.imply = TP.imply_raw;
+  		TInfer.is_sat = fun f -> TP.is_sat f "" true;
+  	} in
+  	let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
+  	(* let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in *)
+  	Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec 
+	in (spec, ip, ir, r) 
 
 and check_exp prog proc ctx tctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in
@@ -1624,19 +1625,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               end in
 							(* Termination Inference: Add call context of *)
 							(* recursive call into termination context    *)
-							let proc = look_up_proc_def pos prog.new_proc_decls mn in
-	            let farg_types, farg_names = List.split proc.proc_args in
-							let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
-	            let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Primed)) vs farg_types in
-							let n_tctx =
-								if not ir then tctx else
-								tctx @ [{
-									TInfer.t_type = TInfer.Rec mn; 
-									TInfer.t_ctx = ctx;
-									TInfer.t_params = (farg_spec_vars, actual_spec_vars);
-									TInfer.t_pure_ctx = [];
-									TInfer.t_cond_pure = [];}] in
-							(res_ctx, n_tctx)
+							let n_tctx = if not (!Globals.enable_term_infer) then tctx else
+								if not ir then tctx 
+								else
+  								let proc = look_up_proc_def pos prog.new_proc_decls mn in
+  	            	let farg_types, farg_names = List.split proc.proc_args in
+  								let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+  	            	let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Primed)) vs farg_types in
+									tctx @ [{
+  									TInfer.t_type = TInfer.Rec mn; 
+  									TInfer.t_ctx = ctx;
+  									TInfer.t_params = (farg_spec_vars, actual_spec_vars);
+  									TInfer.t_pure_ctx = [];
+  									TInfer.t_cond_pure = [];}] 
+							in (res_ctx, n_tctx)
         | Seq ({exp_seq_type = te2;
           exp_seq_exp1 = e1;
           exp_seq_exp2 = e2;
@@ -1722,7 +1724,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
                           nctx in
 						(* Termination Inference: Filter ctx associated with recursive calls later *)
-						let n_tctx = tctx @ [{
+						let n_tctx = if not (!Globals.enable_term_infer) then tctx else 
+							tctx @ [{
 							TInfer.t_type = TInfer.Base; 
 							TInfer.t_ctx = ctx;
 							TInfer.t_params = ([], []);
@@ -2279,6 +2282,7 @@ let check_prog (prog : prog_decl) =
   ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   Term.term_check_output ();
+	if (!enable_term_infer) then
 	begin (* Termination Inference *)
 		let utils = {
 			TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
@@ -2288,6 +2292,7 @@ let check_prog (prog : prog_decl) =
 		} in
 		TInfer.main utils sorted_proc_main
 	end
+	else ()
 	    
 let check_prog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 

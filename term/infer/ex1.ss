@@ -1,7 +1,16 @@
 int loop (int x)
+
 requires true
 ensures true;
 
+/*
+requires x>=0
+case {
+	x=0 -> ensures true;
+	x>0 -> ensures true;
+	x<0 -> ensures false; //Unreachable from pre-condition
+}
+*/
 {
 	int r;
 	if (x==0) {

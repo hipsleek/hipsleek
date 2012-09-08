@@ -7689,10 +7689,16 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
-      let lexvar = 
-        if is_primitive then  CP.mkLexVar Term [] [] no_pos
-        else CP.mkLexVar MayLoop [] [] no_pos in 
+			(* Do not add MAYLOOP when doing Termination Inference *)
+      let lexvar =
+        if is_primitive then CP.mkLexVar Term [] [] no_pos
+        else CP.mkLexVar MayLoop [] [] no_pos in
       mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
+			(* if is_primitive then                                                                    *)
+			(* 	mkEBase_with_cont (CP.mkPure (CP.mkLexVar Term [] [] no_pos)) (Some struc_f) no_pos    *)
+			(* else if not (!Globals.enable_term_infer) then                                           *)
+			(* 	mkEBase_with_cont (CP.mkPure (CP.mkLexVar MayLoop [] [] no_pos)) (Some struc_f) no_pos *)
+			(* else struc_f                                                                            *)
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList (map_l_snd (norm_struc_with_lexvar is_primitive) b)
   | EOr b -> mkEOr (norm_struc_with_lexvar is_primitive b.formula_struc_or_f1) (norm_struc_with_lexvar is_primitive b.formula_struc_or_f2) b.formula_struc_or_pos

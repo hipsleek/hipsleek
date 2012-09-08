@@ -597,6 +597,10 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
+
+(* Termination Inference *)
+let term_run_bound = ref 5
+let enable_term_infer = ref false
   
 (* Options for slicing *)
 let do_slicing = ref false
