@@ -751,20 +751,10 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
                               ^ "\n ### f1 = "^(string_of_meta_formula if1)
                               ^ "\n ### f2 = "^(string_of_meta_formula if2)
                               ^"\n\n") no_pos in
-  let meta2formula (mf: meta_formula): CF.formula = match mf with
-  | MetaForm mf ->
-      let r = AS.trans_formula iprog false [] false mf stab false in
-      r
-  | _ -> report_error no_pos "not capture yet"
-  in 
-
-(*!!!!!!!!!!!!!!!!!!!!*)
   let f1 = meta_to_formula_not_rename if1 false [] stab  in
   let f2 = meta_to_formula_not_rename if2 false [] stab  in
 
-(*let f1 = meta2formula if1    in
-  let f2 = meta2formula if2  in *)
-let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
+  let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
   let mtl = [[]] in

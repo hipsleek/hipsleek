@@ -59,4 +59,7 @@ checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<d,nul
 checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<a,null>.
 //VALID
 
+//13. FAIL
+checkeq[x] x::node<a,null> -|- x::node<a,null>@L.
+
 

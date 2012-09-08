@@ -8,7 +8,7 @@ checkeq[] x::node<a,_> * y::node<a,_> -|- y::node<a,_> * x::node<a,_>.
 checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
 
 //3.Valid
-checkeq [x] x::node<a,y> * y::node<b,x> -|- y::node<b,x> * x::node<a,y>.
+checkeq [x] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
 
 //4. Fail
 checkeq [x,y] x::node<a,_> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
