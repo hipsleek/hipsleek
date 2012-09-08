@@ -4,7 +4,7 @@
 void foo3a(float x)
   case {
     x <= 0.1 -> requires Term ensures true;
-    x > 0.1  -> requires Term[Seq{2.0 * x,(0.0,+infty),x>0.1}] ensures true;
+    x > 0.1  -> requires Term[Seq{2.0 * x@(0.0,+infty),x>0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -14,7 +14,7 @@ void foo3a(float x)
 void bar3a(float x)
   case {
     x <= 0.1 -> requires Term ensures true;
-    x > 0.1  -> requires Term[Seq{x,(0.0,+infty),x>0.1}] ensures true;
+    x > 0.1  -> requires Term[Seq{x@(0.0,+infty),x>0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -25,7 +25,7 @@ void bar3a(float x)
 void foo3b(float x)
   case {
     x <= 0.1 -> requires Term ensures true;
-    x > 0.1  -> requires Term[Seq{2.0 * x,(0.0,+infty),x>0.1}] ensures true;
+    x > 0.1  -> requires Term[Seq{2.0 * x@(0.0,+infty),x>0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -35,7 +35,7 @@ void foo3b(float x)
 void bar3b(float x)
   case {
     x <= 0.1 -> requires Term ensures true;
-    x > 0.1  -> requires Term[Seq{x,(0.0,+infty),x>0.1}] ensures true;
+    x > 0.1  -> requires Term[Seq{x@(0.0,+infty),x>0.1}] ensures true;
   }
 {
   if (x > 0.1)

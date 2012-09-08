@@ -480,8 +480,6 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
             CP.mkImply clhs crhs pos
           ) in
           let decrease_constraint = List.fold_left (fun x y -> CP.mkAnd x y pos) maindc_cons partdc_cons in
-          let _ = print_endline ("== domain constraint   = " ^ (Cprinter.string_of_pure_formula domain_constraint)) in 
-          let _ = print_endline ("== decrease constraint = " ^ (Cprinter.string_of_pure_formula decrease_constraint)) in
           let seqrhs = CP.mkAnd domain_constraint decrease_constraint pos in
           let seqlhs = collect_update_function lhs in
           CP.mkImply seqlhs seqrhs pos

@@ -18,7 +18,7 @@ void foo2a(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, 1), 0.1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -33,7 +33,7 @@ void foo2b(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), 0.1 < x < 1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, 1), 0.1 < x < 1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -48,7 +48,7 @@ void foo2c(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (-1.0, 1), 0.1 < x < 1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(-1.0, 1), 0.1 < x < 1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -63,7 +63,7 @@ void foo2d(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, +infty), 0.1 < x < 1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, +infty), 0.1 < x < 1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -78,7 +78,7 @@ void foo2e(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), x > 1.1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, 1), x > 1.1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -93,7 +93,7 @@ void foo2f(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), x < -0.1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, 1), x < -0.1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))
@@ -108,7 +108,7 @@ void foo2g(float x)
     {
       x >= 1      -> requires Term ensures true;
       x <= 0.1    -> requires Term ensures true;
-      0.1 < x < 1 -> requires Term[Seq{x, (0, 1), -0.1 < x < 1}] ensures true;
+      0.1 < x < 1 -> requires Term[Seq{x@(0, 1), -0.1 < x < 1}] ensures true;
     }
 {
   if ((0.1 < x) && (x < 1))

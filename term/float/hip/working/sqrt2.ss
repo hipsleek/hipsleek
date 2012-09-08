@@ -9,7 +9,7 @@ void foo2a (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-1.0, 0), -0.9}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-1.0, 0), -0.9}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }
@@ -26,7 +26,7 @@ void foo2b (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-1.0, 0), 0 <= x <= 0.9}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-1.0, 0), 0 <= x <= 0.9}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }
@@ -43,7 +43,7 @@ void foo2c (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-infty, 0), 0 <= x <= 0.9}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-infty, 0), 0 <= x <= 0.9}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }
@@ -60,7 +60,7 @@ void foo2d (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-1.0, 1), 0 <= x <= 0.9}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-1.0, 1), 0 <= x <= 0.9}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }
@@ -77,7 +77,7 @@ void foo2e (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-1.0, 1), 0 <= x <= 1.0}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-1.0, 1), 0 <= x <= 1.0}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }
@@ -94,7 +94,7 @@ void foo2f (float x)
   case
   {
     x > 0.9       ->  requires Term[] ensures true;
-    0 < x <= 0.9  ->  requires Term[Seq{-x, (-1.0, 1), x > 0.9}] ensures true;
+    0 < x <= 0.9  ->  requires Term[Seq{-x@(-1.0, 1), x > 0.9}] ensures true;
     x = 0         ->  requires Loop ensures false;
     x < 0         ->  requires Term[] ensures true;    
   }

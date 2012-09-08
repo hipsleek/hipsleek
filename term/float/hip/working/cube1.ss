@@ -18,7 +18,7 @@ void foo1a(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), -1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x@(-infty, -1), -1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -33,7 +33,7 @@ void foo1b(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), x < 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x@(-infty, -1), x < 1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -48,7 +48,7 @@ void foo1c(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -2), x < 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x@(-infty, -2), x < 1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -63,7 +63,7 @@ void foo1d(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-100, -1), x < 1.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x@(-100, -1), x < 1.1}] ensures true;
     }
 {
   if (x < 1.1)
@@ -78,7 +78,7 @@ void foo1e(float x)
     {
       x >= 1.1    -> requires Term ensures true;
       x <= 1      -> requires Loop ensures false;
-      1 < x < 1.1 -> requires Term[Seq{-x, (-infty, -1), x < 0.1}] ensures true;
+      1 < x < 1.1 -> requires Term[Seq{-x@(-infty, -1), x < 0.1}] ensures true;
     }
 {
   if (x < 1.1)

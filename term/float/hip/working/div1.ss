@@ -11,7 +11,7 @@ void foo1a (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,+infty), 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,+infty), 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -26,7 +26,7 @@ void foo1b (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,+infty), x > 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,+infty), x > 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -41,7 +41,7 @@ void foo1c (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0.01,+infty), x > 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0.01,+infty), x > 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -56,7 +56,7 @@ void foo1d (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (-infty,+infty), x > 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(-infty,+infty), x > 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -71,7 +71,7 @@ void foo1e (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,100), x > 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,100), x > 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -86,7 +86,7 @@ void foo1f (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,+infty), x < 0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,+infty), x < 0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -101,7 +101,7 @@ void foo1g (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,+infty), x > -0.1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,+infty), x > -0.1}] ensures true;
   }
 {
   if (x > 0.1)
@@ -116,7 +116,7 @@ void foo1h (float x)
   case
   {
     x <= 0.1  -> requires Term[] ensures true;
-    x > 0.1   -> requires Term[Seq{x, (0,+infty), x < 1}] ensures true;
+    x > 0.1   -> requires Term[Seq{x@(0,+infty), x < 1}] ensures true;
   }
 {
   if (x > 0.1)
