@@ -412,22 +412,22 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
-    | CP.Sequence (seqs_s, loopcond_s, _), CP.Sequence (seqs_d, loopcond_d, _) -> (
+    | CP.Sequence (seqs_s, loopcond_s, pos), CP.Sequence (seqs_d, loopcond_d, _) -> (
         if (List.length seqs_s = List.length seqs_d) && (List.length seqs_s > 0) then (
           let mseq_s, mseq_d = List.hd seqs_s, List.hd seqs_d in
           let pseq_s, pseq_d = List.tl seqs_s, List.tl seqs_d in
           (* domain coverage constraint *)
           let pdm_cons = List.map2 (
-            fun s d -> let dm_s = CP.mkSequenceDomainConstraint s pos in
-                       let dm_d = CP.mkSequenceDomainConstraint d pos in
+            fun s d -> let dm_s = CP.mkSequenceDmCons s pos in
+                       let dm_d = CP.mkSequenceDmCons d pos in
                        CP.mkImply dm_s dm_d pos
           ) pseq_s pseq_d in
           let mdm_cons = (
             let cons1 = (
-              let mdm_s = CP.mkSequenceDomainConstraint mseq_s pos in
-              let pdm_s = List.map (fun s -> CP.mkSequenceDomainConstraint s pos) pseq_s in
+              let mdm_s = CP.mkSequenceDmCons mseq_s pos in
+              let pdm_s = List.map (fun s -> CP.mkSequenceDmCons s pos) pseq_s in
               let clhs1 = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_s pdm_s in
-              let crhs1 = CP.mkSequenceDomainConstraint mseq_d pos in
+              let crhs1 = CP.mkSequenceDmCons mseq_d pos in
               CP.mkImply clhs1 crhs1 pos
             ) in
             let cons2 = (
@@ -444,41 +444,50 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
                   let delta_cons = CP.mkAnd dc1 dc2 pos in 
                   let elist, dmclist = List.split (List.map (
                     fun seq -> let e = seq.CP.seq_element in
-                               let dmc = CP.mkSequenceDomainConstraint seq pos in
+                               let dmc = CP.mkSequenceDmCons seq pos in
                                (e, dmc)
                   ) pseq_s) in
                   let svs = CP.afv_list elist in
-                  let pdmc = List.fold_left (fun x y -> CP.mkAnd x y pos) (CP.mkTrue pos) dmclist in
-                  let fExists = CP.mkImply pdmc (CP.mkPure (CP.mkEq mseq_s.CP.seq_element dv pos)) pos in
+                  let pdmc = (
+                    match dmclist with
+                    | []     -> report_error pos "Invalid measures. Expect at least 1 sequence!"
+                    | [hd]   -> hd
+                    | hd::tl -> List.fold_left (fun x y -> CP.mkAnd x y pos) hd tl
+                  ) in
+                  let fExists = CP.mkAnd pdmc (CP.mkPure (CP.mkEq mseq_s.CP.seq_element dv pos)) pos in
                   let fForall = CP.mkImply delta_cons (CP.mkExists svs fExists None pos) pos in
                   CP.mkForall [delta] fForall None pos 
                 )
             ) in
             CP.mkAnd cons1 cons2 pos
           ) in
-          let domain_cons = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_cons pdm_cons in
+          let domain_constraint = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_cons pdm_cons in
           (* decrease constraint *)
-          let partdc_cons_list = List.map2 (
-            fun s d -> let dmc_s = CP.mkSequenceDomainConstraint s pos in
-                       let dmc_d = CP.mkSequenceDomainConstraint d pos in
+          let partdc_cons = List.map2 (
+            fun s d -> let dmc_s = CP.mkSequenceDmCons s pos in
+                       let dmc_d = CP.mkSequenceDmCons d pos in
                        let dc = CP.mkPure (CP.mkGt s.CP.seq_element d.CP.seq_element pos) in
                        CP.mkImply (CP.mkAnd dmc_s dmc_d pos) dc pos
           ) pseq_s pseq_d in
           let maindc_cons = (
-            let mdm_s = CP.mkSequenceDomainConstraint mseq_s pos in
-            let mdm_d = CP.mkSequenceDomainConstraint mseq_s pos in
-            let pdm_s = List.map (fun seq -> CP.mkSequenceDomainConstraint seq pos) pseq_s in
-            let pdm_d = List.map (fun seq -> CP.mkSequenceDomainConstraint seq pos) pseq_d in
+            let mdm_s = CP.mkSequenceDmCons mseq_s pos in
+            let mdm_d = CP.mkSequenceDmCons mseq_d pos in
+            let pdm_s = List.map (fun seq -> CP.mkSequenceDmCons seq pos) pseq_s in
+            let pdm_d = List.map (fun seq -> CP.mkSequenceDmCons seq pos) pseq_d in
             let ls = [mdm_d] @ pdm_s @ pdm_d in
             let clhs = List.fold_left (fun x y -> CP.mkAnd x y pos) mdm_s ls in
             let crhs = CP.mkPure (CP.mkGt mseq_s.CP.seq_element mseq_d.CP.seq_element pos) in
             CP.mkImply clhs crhs pos
           ) in
-          let decrease_cons = List.fold_left (fun x y -> CP.mkAnd x y pos) maindc_cons partdc_cons_list in
-          CP.mkAnd domain_cons decrease_cons pos
+          let decrease_constraint = List.fold_left (fun x y -> CP.mkAnd x y pos) maindc_cons partdc_cons in
+          let _ = print_endline ("== domain constraint   = " ^ (Cprinter.string_of_pure_formula domain_constraint)) in 
+          let _ = print_endline ("== decrease constraint = " ^ (Cprinter.string_of_pure_formula decrease_constraint)) in
+          let seqrhs = CP.mkAnd domain_constraint decrease_constraint pos in
+          let seqlhs = collect_update_function lhs in
+          CP.mkImply seqlhs seqrhs pos
         )
         else
-          report_error no_pos "Invalid sequence parameters!"
+          report_error pos "Invalid sequence parameters!"
       )
     | CP.Sequence _, _
     | _, CP.Sequence _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")

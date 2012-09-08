@@ -144,14 +144,14 @@ let rec string_of_formula_exp = function
       "min(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Sequence (seqs, f, l) ->
       let string_of_sequence seq = (
-        (string_of_formula_exp seq.P.seq_element) ^ ":("
-        ^ (string_of_formula_exp seq.P.seq_domain_lb) ^ ", "
+        (string_of_formula_exp seq.P.seq_element) ^ "@("
+        ^ (string_of_formula_exp seq.P.seq_domain_lb) ^ ","
         ^ (string_of_formula_exp seq.P.seq_domain_ub)
         ^ (if seq.P.seq_domain_ub_include then "]" else ")")
-        ^ ", "
+        ^ " & "
       ) in
       let sl = List.map string_of_sequence seqs in
-      "Sequence{" ^ (String.concat "" sl) ^ (string_of_pure_formula f) ^ "}"
+      "Sequence{" ^ (String.concat "" sl) ^ ", " ^ (string_of_pure_formula f) ^ "}"
   | P.List (elist, l) -> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (e1, e2, l) -> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)

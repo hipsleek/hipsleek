@@ -35,7 +35,6 @@ let add_error e = all_errors := e :: !all_errors
 (*   flush stdout; *)
 (*   failwith e.error_text *)
 
-  
 let report_error e =
  (if post_pos#is_avail then
        Printf.printf "\nContext of Verification Failure: %s"

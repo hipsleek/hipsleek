@@ -667,15 +667,16 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Sequence (seqs, f, _) ->
         let pr_sequence seq = (
           pr_formula_exp seq.CP.seq_element;
-          fmt_string ":(";
+          fmt_string "@(";
           pr_formula_exp seq.CP.seq_domain_lb;
-          fmt_string ", ";
+          fmt_string ",";
           pr_formula_exp seq.CP.seq_domain_ub;
           if seq.CP.seq_domain_ub_include then fmt_string "]" else fmt_string ")";
-          fmt_string ", ";
+          fmt_string " & ";
         ) in
         fmt_string "Sequence{";
         List.iter (fun seq -> pr_sequence seq) seqs;
+        fmt_string ", ";
         pr_pure_formula f;
         fmt_string "}"
     | P.BagDiff (e1, e2, l) -> 
@@ -2444,11 +2445,11 @@ and html_of_formula_exp e =
       html_op_min ^ "(" ^ (String.concat ", " (List.map html_of_formula_exp args)) ^ ")"
   | P.Sequence (seqs, f, l) ->
         let html_of_sequence seq = (
-          html_of_formula_exp seq.CP.seq_element ^ ":("
-          ^ html_of_formula_exp seq.CP.seq_domain_lb ^ ", "
+          html_of_formula_exp seq.CP.seq_element ^ "@("
+          ^ html_of_formula_exp seq.CP.seq_domain_lb ^ ","
           ^ html_of_formula_exp seq.CP.seq_domain_ub
           ^ (if seq.CP.seq_domain_ub_include then "]" else ")")
-          ^ ", "
+          ^ " & "
         ) in
         let sl = List.map (fun seq -> html_of_sequence seq) seqs in
         "Sequence{" ^ (String.concat "" sl) ^ (html_of_pure_formula f) ^ "}"

@@ -1,6 +1,7 @@
 module DD = Debug
 open Globals
 open Global_var
+
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Solver
@@ -262,37 +263,50 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
 (* The resulting ctx may contain inferred constraint *)
 and create_bound_constraint measure pos =
   match measure with
-  | CP.Sequence seq ->
-      let domain_constraint = seq.CP.seq_domain in
-      let loopcond_constraint = seq.CP.seq_loopcond in
-      let element = seq.CP.seq_element in
-      let limit = seq.CP.seq_limit in
+  | CP.Sequence (seqs, loopcond, _) ->
+      (* domain constraint for all sequences *)
+      let domain_constraint = (
+        let dmc_list = List.map (fun seq -> CP.mkSequenceDmCons seq pos) seqs in
+        match dmc_list with
+        | [] -> report_error pos "Invalid measures. Expecting at least 1 sequence!"
+        | [hd] -> hd
+        | hd::tl -> List.fold_left (fun x y -> CP.mkAnd x y pos) hd tl
+      ) in
+      (* constraint for program to enter the loop*)
+      let loopcond_constraint = loopcond in
+      (* contraint make sure program will eventually terminate *)
+      let mainseq = (
+        match seqs with
+        | [] -> report_error pos "Invalid measures. Expecting at least 1 sequence!"
+        | hd::tl -> hd
+      ) in
+      let element = mainseq.CP.seq_element in
+      let limit = mainseq.CP.seq_domain_lb in
       let termination_constraint = (
         match limit with
-        | CP.SConst (PositiveInfty, _) ->
-            let _ = report_error pos "Limit can't be PositiveInfty" in
-            CP.mkFalse pos
+        | CP.SConst (PositiveInfty, _) -> report_error pos "Limit of decreasing sequence couldn't be +Infty"
         | CP.SConst (NegativeInfty, _) ->
-            let vars = CP.afv element in
-            let bound_var = CP.fresh_new_spec_var Float in
-            let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in
+            let delta = CP.fresh_new_spec_var Float in
+            let deltaexp = CP.mkPure (CP.mkLt element (CP.mkVar delta pos) pos) in
             let termcond = CP.mkNot_s loopcond_constraint in
-            let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None pos in
+            let f = CP.mkOr (CP.mkNot_s deltaexp) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
             let fForAll = CP.mkImply fdomain f pos in
-            let term_formula = CP.mkForall vars fForAll None pos in
-            CP.mkExists [bound_var] term_formula None pos
+            let svs = CP.afv element in
+            let term_formula = CP.mkForall svs fForAll None pos in
+            CP.mkExists [delta] term_formula None pos
         | _ ->
-            let vars = CP.afv element in
             let epsilon = CP.fresh_new_spec_var Float in
+            let epsvar = CP.mkVar epsilon pos in
             let constraint1 = CP.mkPure (CP.mkGt element limit pos) in
-            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
+            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit epsvar pos) pos) in
             let termcond = CP.mkNot_s loopcond_constraint in
             let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 pos)) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
             let fForAll = CP.mkImply fdomain f pos in
-            let term_formula = CP.mkForall vars fForAll None pos in
-            let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) in
+            let svs = CP.afv element in
+            let term_formula = CP.mkForall svs fForAll None pos in
+            let eps_formula = CP.mkPure (CP.mkGt epsvar (CP.mkFConst 0.0 pos) pos) in
             CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula pos) None pos
       ) in
       let _ = Debug.dinfo_pprint  "++ In function create_bound_constraint:" no_pos in

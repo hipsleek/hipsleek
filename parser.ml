@@ -1188,7 +1188,7 @@ cexp_w :
     | `INFTY ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.SConst (PositiveInfty, get_pos_camlp4 _loc 1))
-    | `SEQ; `OBRACE; sequences = LIST1 measure_sequence SEP `COMMA; loopcond = cexp_w; `CBRACE ->
+    | `SEQ; `OBRACE; sequences = LIST1 measure_sequence SEP `AND; `COMMA; loopcond = cexp_w; `CBRACE ->
         let seqs = (
           List.map (
             fun seqparam ->
@@ -1269,10 +1269,10 @@ measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 measure_sequence:
   [[
-    element = cexp; `COLON; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CPAREN ->
+    element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CPAREN ->
       let domain_ub_include = false in
       (element, domain_lb, domain_ub, domain_ub_include)
-  | element = cexp; `COLON; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CSQUARE ->
+  | element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CSQUARE ->
       let domain_ub_include = true in
       (element, domain_lb, domain_ub, domain_ub_include)
   ]];

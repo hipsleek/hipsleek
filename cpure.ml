@@ -1440,7 +1440,8 @@ and mkSequence (e: exp) (lb: exp) (ub: exp) (ub_incl: bool) : sequence =
     seq_domain_ub = ub;
     seq_domain_ub_include = ub_incl; }
 
-and mkSequenceDomainConstraint (seq : sequence) pos : formula =
+(* make sequence domain constraint *)
+and mkSequenceDmCons (seq : sequence) pos : formula =
   let c1 = mkPure (mkGt seq.seq_element seq.seq_domain_lb pos) in
   let c2 = (
     if seq.seq_domain_ub_include then
