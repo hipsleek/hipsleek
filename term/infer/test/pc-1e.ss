@@ -3,5 +3,5 @@ requires true
 ensures true;
 {
 	if (x<=0) return;
-	else loop(x+y, 1-y);
+	else loop(x+y, 4-y);
 }

@@ -549,18 +549,17 @@ let collect_term_trans_constrs_one_proc utils mn =
 	collect_term_trans_constrs_term_spec utils [] [] mn_tspec
 
 (*****************************************************)
-
-(* let norm_src_cond sc =                                                                                 *)
-(* 	match sc with                                                                                         *)
-(* 	| BForm ((bf, _), _) -> (match bf with                                                                *)
-(* 		| Lt (e1, e2, pos)	-> mkSubtract e2 e1 pos                              (* e1<e2  --> e2-e1>0   *) *)
-(* 		| Lte (e1, e2, pos)	-> mkAdd (mkSubtract e2 e1 pos) (mkIConst 1 pos) pos (* e1<=e2 --> e2-e1+1>0 *) *)
-(* 		| Gt (e1, e2, pos)	-> mkSubtract e1 e2 pos                              (* e1>e2  --> e1-e2>0   *) *)
-(* 		| Gte (e1, e2, pos)	-> mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos (* e1>=e2 --> e1-e2+1>0 *) *)
-(* 		| Eq (e1, e2, pos)	-> mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos (* e1=e2  --> e1-e2+1>0 *) *)
-(* 		| _ -> report_error no_pos "Termination Inference: Unexpected case condition"                       *)
-(* 		)                                                                                                   *)
-(* 	| _ -> report_error no_pos "Termination Inference: Unexpected case condition"                         *)
+let norm_src_cond sc =
+	match sc with
+	| BForm ((bf, _), _) -> (match bf with
+		| Lt (e1, e2, pos)	-> mkSub e2 e1                      (* e1<e2  --> e2-e1>0   *)
+		| Lte (e1, e2, pos)	-> mkAdd (mkSub e2 e1) (mkIConst 1) (* e1<=e2 --> e2-e1+1>0 *)
+		| Gt (e1, e2, pos)	-> mkSub e1 e2                      (* e1>e2  --> e1-e2>0   *)
+		| Gte (e1, e2, pos)	-> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1>=e2 --> e1-e2+1>0 *)
+		| Eq (e1, e2, pos)	-> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1=e2  --> e1-e2+1>0 or e2-e1+1>0*)
+		| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
+		)
+	| _ -> report_error no_pos "Termination Inference: Unexpected case condition"
 
 (* Normalize the condition of termination cases *)
 (* to find a potential ranking function         *)
@@ -627,13 +626,46 @@ let find_potential_rank utils subst rec_cond base_cond =
 			let prank = e_apply_subs subst (norm_dst_cond cond) in (* cond |- prank <= 0 *)
 			let pcond = mkGt prank (mkIConst 0) in
 			if (utils.imply rec_cond pcond) then Some (prank, cond) (* rec_cond |- prank > 0 *)
-			else if (is_eq_exp cond) then
+			else if (is_eq_exp cond) then (* e1-e2=0 <=> e1-e2<=0 or e2-e1<=0 *)
 				let prank = mkSub (mkIConst 0) prank in
 				let pcond = mkGt prank (mkIConst 0) in
 				if (utils.imply rec_cond pcond) then Some (prank, cond)
 				else find (List.tl ls)
 			else find (List.tl ls)  
 	in find cl
+
+(* Check and Infer the condition for invariant *)
+(* inv: f(X) where f(X) > 0 *)
+let rec check_inv utils args (x1, x2) ctx inv =
+	let invp = CP.subst_avoid_capture x1 x2 inv in
+	let einv = norm_src_cond inv in (* inv => einv > 0 *)
+	let einvp = e_apply_subs (List.combine x1 x2) einv in
+	
+	(* CASE 1: The inv always holds without any condition *)
+	if (utils.imply (mkAnd ctx inv) invp) then [CP.mkTrue no_pos]
+	(* CASE 2: The inv cannot hold (MUST) *)
+	else if not (utils.is_sat (mkAnd (mkAnd ctx inv) invp)) then [CP.mkFalse no_pos]
+	(* CASE 3: We can find some other conditions to make inv hold *) 
+	else 
+		(* Abduction: Find conditions for inv f(X)>0   *)
+		(* ctx /\ f(X)>0 /\ A |- f(X')>0               *)
+		(* ctx /\ f(X)>0 /\ f(X')<=0 |- not A          *)
+		(* CASE 3-1: If ctx /\ f(X')<=0 |- f(X)>0 then *)
+		(*   not A = f(X')<=0                          *)
+		(* CASE 3-2: Else                              *)
+		(*   not A = f(X)>f(X')                        *)
+		let inf = 
+			if (utils.imply (mkAnd ctx (mkNot invp)) inv) then
+				simplify_inf_cond utils args invp ctx
+			else
+				simplify_inf_cond utils args (mkLte einv einvp) ctx 
+		in
+		let inf = List.filter (fun f -> utils.is_sat (mkAnd ctx f)) inf in
+		if inf = [] then [CP.mkFalse no_pos] 
+		else List.concat (List.map (fun f ->
+			let inf_f = check_inv utils args (x1, x2) (mkAnd ctx inv) f in
+			let inf_f = List.filter (fun inv_f -> not (utils.imply f inv_f)) inf_f in
+			if inf_f = [] then [f] else List.map (mkAnd f) inf_f) inf) 
 
 (* Check the condition for a monotone decreasing sequence start     *)
 (* from the condition Phi(X)>=0 and the update function X'=f(X)     *)
@@ -746,18 +778,23 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 							(* <=> ctx /\ (p1 > p2) /\ (p2 <= p3) |- not C                  *)
 							(*     ctx /\ (p1 > p2) /\ (p2 <= p3) |- (p1-p2) > (p2-p3)      *)
 							(* not C = (p1-p2) > (p2-p3) <=> C = (p1-p2) <= (p2-p3)         *)
+									
+							let inv = check_inv utils args (x1, x2) ctx (List.hd (simplify_inf_cond utils args dec_cond ctx)) in
+							let _ = print_endline ("\nDEC INV: " ^ (pr_list !print_pure_formula inv)) in
+							
+							let inv = check_inv utils args (x1, x2) ctx (List.hd (simplify_inf_cond utils args inc_cond ctx)) in
+							let _ = print_endline ("\nINC INV: " ^ (pr_list !print_pure_formula inv)) in
 
-							let abd_dec_cond = mkLte (mkSub p1 p2) (mkSub p2 p3) in
-							let abd_dec_cond = simplify_inf_cond utils args abd_dec_cond compose_ctx in
 							let dec_cond = simplify_inf_cond utils args dec_cond ctx in
-							let inf_dec_cond = List.concat (List.map (fun d -> 
-								List.map (fun a -> mkAnd d a) abd_dec_cond) dec_cond) in
+							let inf_dec_cond = List.concat (List.map (fun dec ->
+								let inv = check_inv utils args (x1, x2) ctx dec in
+								List.map (fun i -> mkAnd dec i) inv) dec_cond) in
 								
-							let abd_inc_cond = mkGte (mkSub p1 p2) (mkSub p2 p3) in
-							let abd_inc_cond = simplify_inf_cond utils args abd_inc_cond compose_ctx in
 							let inc_cond = simplify_inf_cond utils args inc_cond ctx in
-							let inf_inc_cond = List.concat (List.map (fun d -> 
-								List.map (fun a -> mkAnd d a) abd_inc_cond) inc_cond) in
+							let inf_inc_cond = List.concat (List.map (fun inc ->
+								let inv = check_inv utils args (x1, x2) ctx inc in
+								List.map (fun i -> mkAnd inc i) inv) inc_cond) in								
+
 							(([], inf_inc_cond), (inf_dec_cond, Some prank))
 				end
 			end 
