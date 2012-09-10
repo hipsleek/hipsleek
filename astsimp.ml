@@ -1089,7 +1089,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 		   compute_view_x_formula_x prog vdef (n - 1))
 		  else report_error pos "view formula does not entail supplied invariant\n" in ()
     )
-  else ();
+  else (Mem.validate_mem_spec prog vdef);
   if !Globals.print_x_inv && (n = 0)
   then
     (print_string ("\ncomputed invariant for view: " ^ vdef.C.view_name ^"\n" ^(Cprinter.string_of_mix_formula vdef.C.view_x_formula) ^"\n");
@@ -2745,7 +2745,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_member_fields = fs;
             I.exp_member_path_id = pid;
             I.exp_member_pos = pos } -> 
-	let id_string f = List.fold_left (fun x y -> x ^ ";" ^ y) "" f in
+	(*let id_string f = List.fold_left (fun x y -> x ^ ";" ^ y) "" f in*)
 	(* let _ = print_string("[Cris]: Member field: " ^ (id_string fs) ^ "\n") in *)
 	(* let _ = print_string("[Cris]: Member base: " ^ (Iprinter.string_of_exp e) ^ "\n") in *)
            	(* An Hoa : compact the field access sequence *)
@@ -3497,7 +3497,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 else (tmp, (fresh_fn :: new_rest))) in
         let all_fields = I.look_up_all_fields prog ddef in
         let ann_list = compute_ann_list all_fields rev_fs imm in
-        let id_string lst = List.fold_left (fun x (a,b,c) -> x ^ "," ^ (snd a)) "" lst in
+        (*let id_string lst = List.fold_left (fun x (a,b,c) -> x ^ "," ^ (snd a)) "" lst in*)
           (* let _ = print_string ("\n(andreeac) rev_fs: " ^ (List.fold_left (fun x str -> x ^ "," ^ str) "" rev_fs) ) in *)
           (* let _ = print_string ("\n(andreeac) all_fields: " ^ (id_string all_fields) ) in *)
         let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in

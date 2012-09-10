@@ -11,7 +11,7 @@ pred nll<n> == self::node<_,null> & n = 1
 pred ll<M> == self = null & M = {} 
 	or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self})
 	inv true
-	memE M->(node<@L,@M> | node<@L,@A> | node<@A,@A>).
+	mem M->(node<@M,@A> | node<@A,@M>).
 
 checkentail x::ll<M> & M != {} |- x::node<_,_@L>.
 print residue.
