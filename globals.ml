@@ -44,11 +44,11 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc = {
-			start_pos : Lexing.position (* might be expanded to contain more information *);
-			mid_pos : Lexing.position;
-			end_pos : Lexing.position;
-			}
+and loc =  {
+    start_pos : Lexing.position (* might be expanded to contain more information *);
+    mid_pos : Lexing.position;
+    end_pos : Lexing.position;
+  }
 
 and primed =
   | Primed

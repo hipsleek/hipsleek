@@ -62,16 +62,18 @@ let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 
 let get_pos x = 
-  {start_pos = Parsing.symbol_start_pos ();
-  end_pos = Parsing. symbol_end_pos ();
-  mid_pos = Parsing.rhs_start_pos x;
+  {
+    start_pos = Parsing.symbol_start_pos ();
+    end_pos = Parsing. symbol_end_pos ();
+    mid_pos = Parsing.rhs_start_pos x;
   }
+
 let get_pos_camlp4 l x = 
-                          {
-                           start_pos = Camlp4.PreCast.Loc.start_pos l ;
-				           end_pos = Camlp4.PreCast.Loc.stop_pos l ;
-				           mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
-                          }
+  {
+    start_pos = Camlp4.PreCast.Loc.start_pos l ;
+    end_pos = Camlp4.PreCast.Loc.stop_pos l ;
+    mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
+  }
         
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
@@ -1468,7 +1470,7 @@ hprogn:
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
-	  let barrier_defs = ref ([] : barrier_decl list) in
+      let barrier_defs = ref ([] : barrier_decl list) in
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
@@ -1478,12 +1480,12 @@ hprogn:
       let hopred_defs = ref ([] : hopred_decl list) in
       let choose d = match d with
         | Type tdef -> begin
-          match tdef with
-          | Data ddef -> data_defs := ddef :: !data_defs
-          | Enum edef -> enum_defs := edef :: !enum_defs
-          | View vdef -> view_defs := vdef :: !view_defs
-          | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
-		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
+            match tdef with
+            | Data ddef -> data_defs := ddef :: !data_defs
+            | Enum edef -> enum_defs := edef :: !enum_defs
+            | View vdef -> view_defs := vdef :: !view_defs
+            | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+            | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
@@ -1494,15 +1496,15 @@ hprogn:
       | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
-					data_fields = [];
-					data_parent_name = "";
-					data_invs = []; (* F.mkTrue no_pos; *)
-					data_methods = [] } in
+                    data_fields = [];
+                    data_parent_name = "";
+                    data_invs = []; (* F.mkTrue no_pos; *)
+                    data_methods = [] } in
     let string_def = { data_name = "String";
-					   data_fields = [];
-					   data_parent_name = "Object";
-					   data_invs = []; (* F.mkTrue no_pos; *)
-					   data_methods = [] } in
+                       data_fields = [];
+                       data_parent_name = "Object";
+                       data_invs = []; (* F.mkTrue no_pos; *)
+                       data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
@@ -1517,7 +1519,7 @@ hprogn:
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;
-	  prog_barrier_decls = !barrier_defs; } ]];
+      prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   

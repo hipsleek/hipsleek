@@ -30,14 +30,14 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
-				   prog_barrier_decls : barrier_decl list;
+                   prog_barrier_decls : barrier_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
-		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
-		  data_parent_name : ident;
-		  data_invs : F.formula list;
-		  data_methods : proc_decl list }
+                  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+                  data_parent_name : ident;
+                  data_invs : F.formula list;
+                  data_methods : proc_decl list }
 
 (*
   and global_var_decl = { global_var_decl_type : typ;
@@ -46,30 +46,30 @@ and data_decl = { data_name : ident;
 *)
 
 and view_decl = { view_name : ident; 
-		  mutable view_data_name : ident;
-          (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-		  view_vars : ident list;
-		  view_labels : Label_only.spec_label list;
-		  view_modes : mode list;
-		  mutable view_typed_vars : (typ * ident) list;
-		  view_invariant : P.formula;
-		  view_formula : Iformula.struc_formula;
-          view_inv_lock : F.formula option;
-		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
-		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
-		  try_case_inference: bool}
+                  mutable view_data_name : ident;
+                  (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+                  view_vars : ident list;
+                  view_labels : Label_only.spec_label list;
+                  view_modes : mode list;
+                  mutable view_typed_vars : (typ * ident) list;
+                  view_invariant : P.formula;
+                  view_formula : Iformula.struc_formula;
+                  view_inv_lock : F.formula option;
+                  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
+                  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
+                  try_case_inference: bool }
 
 and func_decl = { func_name : ident; 
-			func_typed_vars : (typ * ident) list;}
+                  func_typed_vars : (typ * ident) list;}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
-		  (* rel_vars : ident list; *)
-		  (* rel_labels : branch_label list; *)
-			rel_typed_vars : (typ * ident) list;
-		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
-		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
-		  (* try_case_inference: bool *)}
+                 (* rel_vars : ident list; *)
+                 (* rel_labels : branch_label list; *)
+                 rel_typed_vars : (typ * ident) list;
+                 (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
+                 rel_formula : P.formula (* Iformula.struc_formula *) ; 
+                 (* try_case_inference: bool *) }
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
@@ -78,26 +78,25 @@ and axiom_decl = {
 		  }
 
 and hopred_decl = { hopred_name : ident;
-          hopred_mode : ho_branch_label;
-          hopred_mode_headers : ident list;
-          hopred_typed_vars: (typ * ident) list;
-          mutable hopred_typed_args : (typ * ident) list;
-          hopred_fct_args : ident list;
-          hopred_shape    : Iformula.struc_formula list;
-          hopred_invariant :P.formula
-}
+                    hopred_mode : ho_branch_label;
+                    hopred_mode_headers : ident list;
+                    hopred_typed_vars: (typ * ident) list;
+                    mutable hopred_typed_args : (typ * ident) list;
+                    hopred_fct_args : ident list;
+                    hopred_shape    : Iformula.struc_formula list;
+                    hopred_invariant :P.formula }
 
 and barrier_decl = {
-	barrier_thc : int;
-	barrier_name : ident;
-	barrier_shared_vars : (typ*ident) list;
-	barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
+  barrier_thc : int;
+  barrier_name : ident;
+  barrier_shared_vars : (typ*ident) list;
+  barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
 }
 
 
 and enum_decl = { enum_name : ident;
-		  enum_fields : (ident * int option) list } 
-    (* a field of an enum may optionally be initialized by an integer *)
+                  enum_fields : (ident * int option) list } 
+                  (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
   | NoMod
@@ -113,9 +112,9 @@ and rise_type =
   | Var_flow of ident
 
 and param = { param_type : typ;
-	      param_name : ident;
-	      param_mod : param_modifier;
-	      param_loc : loc }
+              param_name : ident;
+              param_mod : param_modifier;
+              param_loc : loc }
 
 (*
   and multi_spec = spec list
@@ -148,25 +147,25 @@ and param = { param_type : typ;
 *)
 
 and proc_decl = { proc_name : ident;
-				  mutable proc_mingled_name : ident;
-				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
-				  proc_constructor : bool;
-				  proc_args : param list;
-				  proc_return : typ;
-               (*   mutable proc_important_vars : CP.spec_var list;*)
-				  proc_static_specs : Iformula.struc_formula;
-				  proc_dynamic_specs : Iformula.struc_formula;
-				  proc_exceptions : ident list;
-				  proc_body : exp option;
-				  proc_is_main : bool;
-				  proc_file : string;
-				  proc_loc : loc }
+                  mutable proc_mingled_name : ident;
+                  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+                  proc_constructor : bool;
+                  proc_args : param list;
+                  proc_return : typ;
+                  (*   mutable proc_important_vars : CP.spec_var list;*)
+                  proc_static_specs : Iformula.struc_formula;
+                  proc_dynamic_specs : Iformula.struc_formula;
+                  proc_exceptions : ident list;
+                  proc_body : exp option;
+                  proc_is_main : bool;
+                  proc_file : string;
+                  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
-		      coercion_name : ident;
-		      coercion_head : F.formula;
-		      coercion_body : F.formula;
-		      coercion_proof : exp }
+                      coercion_name : ident;
+                      coercion_head : F.formula;
+                      coercion_body : F.formula;
+                      coercion_proof : exp }
 and coercion_type = 
   | Left
   | Equiv
@@ -657,19 +656,19 @@ and mkHoPred  n m mh tv ta fa s i=
 	
 let mkProc id n dd c ot ags r ss ds pos bd=
     { proc_name = id;
-		  proc_mingled_name = n; 
-		  proc_data_decl = dd;
-		  proc_constructor = c;
-		  proc_exceptions = ot;
-		  proc_args = ags;
-		  proc_return = r;
+      proc_mingled_name = n; 
+      proc_data_decl = dd;
+      proc_constructor = c;
+      proc_exceptions = ot;
+      proc_args = ags;
+      proc_return = r;
         (*  proc_important_vars = [];*)
-		  proc_static_specs = ss;
-		  proc_dynamic_specs = ds;
-		  proc_loc = pos;
-    proc_is_main = true;
+      proc_static_specs = ss;
+      proc_dynamic_specs = ds;
+      proc_loc = pos;
+      proc_is_main = true;
       proc_file = !input_file_name;
-		  proc_body = bd }	
+      proc_body = bd }	
 
 let mkAssert asrtf assmf pid pos =
       Assert { exp_assert_asserted_formula = asrtf;
