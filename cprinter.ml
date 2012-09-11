@@ -188,7 +188,8 @@ let pr_list_open_sep (f_open:unit -> unit)
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
  "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
 let pr_op_sep_gen sep op =
-  if sep="A" then (fmt_string op; fmt_cut())
+
+    if sep="A" then (fmt_string op; fmt_cut())
   else if sep="B" then (fmt_cut();fmt_string op)
   else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
   else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
@@ -767,15 +768,22 @@ and pr_b_formula (e:P.b_formula) =
   pr_p_formula pf;
 
 
-and string_of_int_label (i,s) s2:string = (string_of_int i)^s2
+and string_of_int_label (i,s,fo) s2:string = (string_of_int i)^s2
 and string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
 and string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
-and string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
-and string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+and string_of_formula_label (i,s,fo) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
+and string_of_formula_label_pr_br (i,s,fo) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
 and string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
-and string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
+and string_of_control_path_id (i,s,fo) s2:string = string_of_formula_label (i,s,fo) s2
 and string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 and string_of_formula_label_only x :string = string_of_formula_label x ""
+and string_of_formula_origin fo =
+  match fo with
+  | F_o_specs -> "f_o_specs"
+  | F_o_code -> "f_o_code"
+  | F_o_generated -> "f_o_generated"
+  | F_o_unknown -> "f_o_unknown"
+  | F_o_tmp1 -> "f_o_tmp1"
 
 and string_of_iast_label_table table =
   let string_of_row row =
@@ -793,7 +801,7 @@ and string_of_iast_label_table table =
 
 and pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 and pr_formula_label l  = fmt_string (string_of_formula_label l "")
-and pr_formula_label_list l  = fmt_string ("{"^(String.concat ", " (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
+and pr_formula_label_list l  = fmt_string ("{"^(String.concat ", " (List.map (fun (i,_,_)-> (string_of_int i)) l))^"}")
 and pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
 and string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
 and pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
@@ -1132,7 +1140,9 @@ let rec pr_formula_base e =
 	  formula_base_and = a;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with 
+           | None -> fmt_string "" (* "<NoLabel>" *) 
+           | Some l -> let (i,_,_) = l in fmt_string ("{"^(string_of_int i)^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p;
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
@@ -1158,7 +1168,9 @@ let rec pr_formula e =
 	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
-          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with
+           | None -> ()
+           | Some l -> let (i,_,_) = l in fmt_string ("{"^(string_of_int i)^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula p; pr_cut_after  "&" ; 
@@ -1356,11 +1368,11 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 	          wrap_box ("B",0) pr_struc_formula l;
             end);
           fmt_close();
-    | EAssume (x,b,(y1,y2))->
+    | EAssume (x,b,(y1,y2,fo))->
           wrap_box ("V",2)
               (fun b ->
 	              fmt_string "EAssume ";
-	              pr_formula_label (y1,y2);
+	              pr_formula_label (y1,y2,fo);
 	              if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
 	              fmt_cut();
 	              wrap_box ("B",0) pr_formula b) b	 
@@ -1396,7 +1408,7 @@ let string_of_prior_steps pt =
   (String.concat "\n " (List.rev pt))
 
 
-let pr_path_trace  (pt:((int * 'a) * int) list) =
+let pr_path_trace  (pt:((int * 'a * formula_origin) * int) list) =
   pr_seq "" (fun (c1,c3)-> fmt_string "("; (pr_op_adhoc (fun () -> pr_formula_label c1)  ", " (fun () -> fmt_int c3)); fmt_string ")") pt  
 let string_of_path_trace  (pt : path_trace) = poly_string_of_pr  pr_path_trace pt
 let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =  poly_printer_of_pr fmt pr_path_trace pt
@@ -1683,7 +1695,7 @@ let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
-let pr_esc_stack_lvl ((i,s),e) = 
+let pr_esc_stack_lvl ((i,s,fo),e) = 
   if (e==[]) 
   then
     begin
@@ -1869,7 +1881,7 @@ let pr_barrier_decl v =
 	pr_vwrap  "prune conditions: " pr_case_guard v.barrier_prune_conditions;
 	pr_vwrap  "prune perm conditions: " (fun c-> fmt_string "{"; pr_seq "\n" (fun (c1,c2)-> fmt_string (Tree_shares.Ts.string_of c1) ;fmt_string "->"; pr_seq_nocut ", " pr_formula_label c2) c; fmt_string "}") v.barrier_prune_conditions_perm;
 	pr_vwrap  "prune state conditions: " (fun c-> fmt_string "{"; pr_seq "\n" (fun (c1,c2)-> fmt_string (string_of_int c1) ;fmt_string "->"; pr_seq_nocut ", " pr_formula_label c2) c; fmt_string "}") v.barrier_prune_conditions_state;
-	pr_vwrap  "prune baga conditions: " (fun c-> fmt_string (String.concat ", " (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.barrier_prune_conditions_baga;
+	pr_vwrap  "prune baga conditions: " (fun c-> fmt_string (String.concat ", " (List.map (fun (bl,(lbl,_,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.barrier_prune_conditions_baga;
 	pr_vwrap  ("prune invs:"^( string_of_int(List.length v.barrier_prune_invariants) )^":") pr_prune_invariants v.barrier_prune_invariants;
 	fmt_close_box ()
 	  
@@ -1904,7 +1916,7 @@ let pr_view_decl v =
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
   pr_vwrap  "prune baga conditions: " 
     (fun c-> fmt_string 
-        (String.concat ", " (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
+        (String.concat ", " (List.map (fun (bl,(lbl,_,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
   let i = string_of_int(List.length v.view_prune_invariants) in
   pr_vwrap  ("prune invs:"^i^":") (* (fun c-> pr_seq ", " (fun (c1,(ba,c2))->  *)
       (* let s = String.concat ", " (List.map (fun d-> string_of_int_label d "") c1) in *)
@@ -2609,7 +2621,7 @@ and html_of_struc_formula f = match f with
 					formula_struc_continuation = cont;} ->
 		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ 
 		(html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (match cont with | None -> "" | Some l -> html_of_struc_formula l)
-	| EAssume (x,b,(y1,y2)) ->
+	| EAssume (x,b,(y1,y2,_)) ->
 		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
 	| EInfer _ -> ""
 	| EList b -> if b==[] then "[]" else String.concat "|| " (List.map (fun c-> html_of_struc_formula (snd c))b)

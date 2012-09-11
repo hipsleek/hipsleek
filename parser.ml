@@ -868,9 +868,9 @@ label : [[  `STRING (_,id); `COLON -> id]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
-pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id]];
+pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id F_o_code]];
 
-formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
+formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id F_o_code)]];
 
 opt_heap_constr: [[ t = heap_constr -> t]];
 
@@ -1718,7 +1718,7 @@ spec:
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
   *)
   | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol F_o_specs))
   | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
       F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
@@ -1864,11 +1864,11 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
-       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
+       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)]];
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)]];
 
 debug_statement:
   [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }

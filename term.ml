@@ -322,7 +322,7 @@ let rec label_of_formula (f: CP.formula) =
   let string_of_lb (lb: formula_label option) = (
     match lb with
     | None -> ""
-    | Some (i, s) -> (string_of_int i) ^ ":" ^ s
+    | Some (i, s,fo) -> (string_of_int i) ^ ":" ^ s ^ ":" ^ (string_of_formula_origin fo)
   ) in
   let sf = Cprinter.string_of_pure_formula in
   let lbl = (
@@ -339,8 +339,8 @@ let rec label_of_formula (f: CP.formula) =
 
 (* drop the constraint from source_constrait that restrict the target_constraint *)
 let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
-  (* let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in  *)
-  (* let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in                              *)
+  let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in
+  let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in
   let is_restricted_constraint (constr: CP.formula) (target_constraint: CP.formula) : bool = (
     (* constr don't restrict domain if (domain -> (constr) && domain) is valid *)
     (* let _ = print_endline ("== constr = " ^ (Cprinter.string_of_pure_formula constr)) in  *)
@@ -718,8 +718,8 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in
-      let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in 
+      (* let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in   *)
+      (* let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in  *)
       (* let _ = print_endline ("== estate.es_formula lbl = " ^ (label_of_formula estate.Cformula.es_formula)) in  *)
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in

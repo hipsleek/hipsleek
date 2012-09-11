@@ -22,7 +22,14 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-type formula_label = (int*string)
+type formula_origin =
+  | F_o_specs
+  | F_o_code
+  | F_o_generated
+  | F_o_unknown
+  | F_o_tmp1
+
+type formula_label = (int * string * formula_origin)
 
 and control_path_id_strict = formula_label
 
@@ -667,7 +674,7 @@ let locs_of_path_trace (pt: path_trace): loc list =
     | Some _, None -> false
     | None, Some _ -> false
     | None, None -> true
-    | Some (i1, s1), Some (i2, s2) -> i1 = i2
+    | Some (i1, _, _), Some (i2, _, _) -> i1 = i2
   in
   let path_label_list_of_id pid =
     let _, _, label_list, _ = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
@@ -691,14 +698,17 @@ let locs_of_partial_context ctx =
   List.flatten loc_list_list
 
 
-let fresh_formula_label (s:string) :formula_label = 
+let fresh_formula_label (s:string) (fo: formula_origin) :formula_label = 
 	branch_point_id := !branch_point_id + 1;
-	(!branch_point_id,s)
+	(!branch_point_id,s,fo)
   
-let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
-let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
+let fresh_branch_point_id (s:string) (fo: formula_origin) : control_path_id = Some (fresh_formula_label s fo)
+let fresh_strict_branch_point_id (s:string) (fo: formula_origin) : control_path_id_strict = (fresh_formula_label s fo)
 
-let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
+let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = 
+  let (i1, _, _) = l1 in
+  let (i2, _, _) = l2 in
+  i1 = i2
 
 let tmp_files_path = ref ""
 
@@ -819,7 +829,7 @@ let path_trace_eq p1 p2 =
     | [],[] -> true
     | [],xs -> false
     |  xs,[] -> false
-    |  ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> a1=a2 && b1=b2 && (eq zt1 zt2)
+    |  ((a1,_,_),b1)::zt1,((a2,_,_),b2)::zt2 -> a1=a2 && b1=b2 && (eq zt1 zt2)
   in eq (List.rev p1) (List.rev p2)
 
 let path_trace_lt p1 p2 =
@@ -827,7 +837,7 @@ let path_trace_lt p1 p2 =
     | [],[] -> false
     | [],xs -> true
     | xs,[] -> false
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+    | ((a1,_,_),b1)::zt1,((a2,_,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
   in lt (List.rev p1) (List.rev p2)
 
 let path_trace_gt p1 p2 =
@@ -835,7 +845,7 @@ let path_trace_gt p1 p2 =
     | [],[] -> false
     | [],xs -> false
     |  xs,[] -> true
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+    | ((a1,_,_),b1)::zt1,((a2,_,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
  

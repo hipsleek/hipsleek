@@ -1259,18 +1259,18 @@ and mkSeq e1 e2 l = match e1 with
 and mkAssign op lhs rhs pos = Assign { exp_assign_op = op;
                                        exp_assign_lhs = lhs;
                                        exp_assign_rhs = rhs;
-                                       exp_assign_path_id = (fresh_branch_point_id "") ;
+                                       exp_assign_path_id = (fresh_branch_point_id "" F_o_code) ;
                                        exp_assign_pos = pos }
 
 and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
                                            exp_binary_oper1 = oper1;
                                            exp_binary_oper2 = oper2;
-                                           exp_binary_path_id = (fresh_branch_point_id "") ;
+                                           exp_binary_path_id = (fresh_branch_point_id "" F_o_code) ;
                                            exp_binary_pos = pos }
 
 and mkUnary op oper pos = Unary { exp_unary_op = op;
                                   exp_unary_exp = oper;
-                                  exp_unary_path_id = (fresh_branch_point_id "") ;
+                                  exp_unary_path_id = (fresh_branch_point_id "" F_o_code) ;
                                   exp_unary_pos = pos }
 
 and mkRaise ty usety rval final pid pos= Raise { exp_raise_type = ty ;
@@ -1431,113 +1431,156 @@ let rec label_e e =
     | Label _ -> None
     | _ -> Some (helper2 e)
   and helper2 e = match e with
-    | Assert e -> 
-		  let nl = fresh_formula_label (snd e.exp_assert_path_id) in
-		  iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
-		  Assert {e with exp_assert_path_id = nl }
+    | Assert e ->
+        let (_, s, fo) = e.exp_assert_path_id in
+        let nl = fresh_formula_label s fo in
+        iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
+        Assert {e with exp_assert_path_id = nl }
     | Assign e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;
-		  Assign {e with 
-			  exp_assign_lhs = label_e e.exp_assign_lhs;
-			  exp_assign_rhs = label_e e.exp_assign_rhs;
-			  exp_assign_path_id = nl;}
+        let (_, s, fo) = match e.exp_assign_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;
+        Assign {e with 
+          exp_assign_lhs = label_e e.exp_assign_lhs;
+          exp_assign_rhs = label_e e.exp_assign_rhs;
+          exp_assign_path_id = nl;}
     | Binary e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;
-		  Binary{e with
-			  exp_binary_oper1 = label_e e.exp_binary_oper1;
-			  exp_binary_oper2 = label_e e.exp_binary_oper2;
-			  exp_binary_path_id = nl;}
+        let (_, s, fo) = match e.exp_binary_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;
+        Binary{e with
+          exp_binary_oper1 = label_e e.exp_binary_oper1;
+          exp_binary_oper2 = label_e e.exp_binary_oper2;
+          exp_binary_path_id = nl;}
     | Bind e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"bind",[],e.exp_bind_pos) ::!iast_label_table;
-		  Bind {e with
- 			  exp_bind_body = label_e e.exp_bind_body;
-			  exp_bind_path_id  = nl;}
+        let (_, s, fo) = match e.exp_bind_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"bind",[],e.exp_bind_pos) ::!iast_label_table;
+        Bind {e with
+          exp_bind_body = label_e e.exp_bind_body;
+          exp_bind_path_id  = nl;}
     | Break e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"break",[],e.exp_break_pos) ::!iast_label_table;
-		  Break{ e with exp_break_path_id = nl;}  
+        let (_, s, fo) = match e.exp_break_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"break",[],e.exp_break_pos) ::!iast_label_table;
+        Break{ e with exp_break_path_id = nl;}  
     | CallRecv e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"callRecv",[],e.exp_call_recv_pos) ::!iast_label_table;
-		  CallRecv {e with
-			  exp_call_recv_receiver = label_e e.exp_call_recv_receiver;
-			  exp_call_recv_arguments  = List.map label_e e.exp_call_recv_arguments;
-			  exp_call_recv_path_id = nl;}
+        let (_, s, fo) = match e.exp_call_recv_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"callRecv",[],e.exp_call_recv_pos) ::!iast_label_table;
+        CallRecv {e with
+          exp_call_recv_receiver = label_e e.exp_call_recv_receiver;
+          exp_call_recv_arguments  = List.map label_e e.exp_call_recv_arguments;
+          exp_call_recv_path_id = nl;}
     | CallNRecv e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"callNRecv",[],e.exp_call_nrecv_pos) ::!iast_label_table;
-		  CallNRecv { e with 
-			  exp_call_nrecv_arguments =  List.map label_e e.exp_call_nrecv_arguments;
-			  exp_call_nrecv_path_id = nl;}
+        let (_, s, fo) = match e.exp_call_nrecv_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"callNRecv",[],e.exp_call_nrecv_pos) ::!iast_label_table;
+        CallNRecv { e with 
+          exp_call_nrecv_arguments =  List.map label_e e.exp_call_nrecv_arguments;
+          exp_call_nrecv_path_id = nl;}
     | Cond e -> 
-		  let nl = fresh_branch_point_id "" in
-      let then_pos = get_exp_pos e.exp_cond_then_arm in
-      let else_pos = get_exp_pos e.exp_cond_else_arm in
-		  iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
-		  Cond {e with 
-			  exp_cond_condition = label_e e.exp_cond_condition;
-			  exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
-			  exp_cond_else_arm  = Label ((nl,1),(label_e e.exp_cond_else_arm));
-			  exp_cond_path_id =nl;}
+        let (_, s, fo) = match e.exp_cond_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        let then_pos = get_exp_pos e.exp_cond_then_arm in
+        let else_pos = get_exp_pos e.exp_cond_else_arm in
+        iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
+        Cond {e with 
+          exp_cond_condition = label_e e.exp_cond_condition;
+          exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
+          exp_cond_else_arm  = Label ((nl,1),(label_e e.exp_cond_else_arm));
+          exp_cond_path_id =nl;}
     | Continue e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"continue",[],e.exp_continue_pos) ::!iast_label_table;
-		  Continue {e with  exp_continue_path_id = nl;}
+        let (_, s, fo) = match e.exp_continue_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"continue",[],e.exp_continue_pos) ::!iast_label_table;
+        Continue {e with  exp_continue_path_id = nl;}
     | Member e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"member",[],e.exp_member_pos) ::!iast_label_table;
-		  Member {e with
-			  exp_member_base = label_e e.exp_member_base;
-			  exp_member_path_id = nl;}  
+        let (_, s, fo) = match e.exp_member_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"member",[],e.exp_member_pos) ::!iast_label_table;
+        Member {e with
+          exp_member_base = label_e e.exp_member_base;
+          exp_member_path_id = nl;}  
     | Raise e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"raise",[],e.exp_raise_pos) ::!iast_label_table;
-		  Raise {e with
-		      exp_raise_val = 
-			      (match e.exp_raise_val with 
-				    | None -> None 
-				    | Some s-> Some (label_e s));
-		      exp_raise_path_id = nl;}  
+        let (_, s, fo) = match e.exp_raise_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"raise",[],e.exp_raise_pos) ::!iast_label_table;
+        Raise {e with
+            exp_raise_val = 
+              (match e.exp_raise_val with 
+              | None -> None 
+              | Some s-> Some (label_e s));
+            exp_raise_path_id = nl;}  
     | Return e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
-		  Return{ e with
-			  exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
-			  exp_return_path_id = nl;}  
+        let (_, s, fo) = match e.exp_return_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
+        Return{ e with
+          exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
+          exp_return_path_id = nl;}  
     | Try e -> 
-		  let nl = fresh_branch_point_id "" in
-      let rec lbl_list_constr id cclauses = match cclauses with
-        | [] -> []
-        | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
-      in
-		  iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
-		  let lbl_c n d = 
-			let d = get_catch_of_exp d in
-			Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in
-		  Try {e with
-			  exp_try_block = label_e e.exp_try_block;
-			  exp_try_path_id = nl;
-			  exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
-			  exp_finally_clause = List.map label_e e.exp_finally_clause;}
+        let (_, s, fo) = match e.exp_try_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        let rec lbl_list_constr id cclauses = match cclauses with
+          | [] -> []
+          | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
+        in
+        iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
+        let lbl_c n d = 
+        let d = get_catch_of_exp d in
+        Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in
+        Try {e with
+          exp_try_block = label_e e.exp_try_block;
+          exp_try_path_id = nl;
+          exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
+          exp_finally_clause = List.map label_e e.exp_finally_clause;}
     | Unary e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
-		  Unary{ e with
-			  exp_unary_exp = label_e e.exp_unary_exp;
-			  exp_unary_path_id = fresh_branch_point_id "";}  		
+        let (_, s, fo) = match e.exp_unary_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
+        Unary{ e with
+          exp_unary_exp = label_e e.exp_unary_exp;
+          exp_unary_path_id = nl;}  		
     | While e -> 
-		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"while",[],e.exp_while_pos) ::!iast_label_table;
-		  While {e with
-			  exp_while_condition = label_e e.exp_while_condition;
-			  exp_while_body = label_e e.exp_while_body;
-			  exp_while_path_id = nl;
-			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
+        let (_, s, fo) = match e.exp_while_path_id with 
+                         | Some lbl -> lbl 
+                         | None -> (0, "", F_o_code) in
+        let nl = fresh_branch_point_id s fo in
+        iast_label_table:= (nl,"while",[],e.exp_while_pos) ::!iast_label_table;
+        While {e with
+          exp_while_condition = label_e e.exp_while_condition;
+          exp_while_body = label_e e.exp_while_body;
+          exp_while_path_id = nl;
+          exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
     | _ -> Error.report_error   
-      {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
+        {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
   in map_exp e helper
 
 (* This method adds (label,name,branches,loc) to iast_lable_table.
@@ -1904,7 +1947,7 @@ let add_bar_inits prog =
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "") in
+			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "" F_o_specs) in
 			{ proc_name = "init_"^b.barrier_name;
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;

@@ -5409,8 +5409,8 @@ let rename_labels  e=
   let f_e e = Some e in
   let f_f e = 
 	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "")
-				| Some (_,s) -> (fresh_branch_point_id s) in	
+				| None -> (fresh_branch_point_id "" F_o_unknown)
+				| Some (_,s,fo) -> (fresh_branch_point_id s fo) in	
 		match e with
 		| BForm (b,f_l) -> Some (BForm (b,(n_l_f f_l)))
 		| And _
