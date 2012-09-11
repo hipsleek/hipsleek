@@ -12,8 +12,15 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 HeapPred H(node a).
-HeapPred G(node a, node b).
 HeapPred H1(node a).
+HeapPred H2(node a).
+HeapPred G(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred G2(node a, node b).
+HeapPred G3(node a, node b, node c).
+HeapPred G4(node a, node b, node c, node d).
+
+
 void dispose(ref node x)
   requires x::node<_,_>
   ensures x'=null;
@@ -97,69 +104,61 @@ DEBUG:
 
 
 */
+HeapPred T1(node a).
+HeapPred T2(node a). 
 
 relation SIZE(int a, int b).
 int size(node x)
-  infer[SIZE]
-  requires x::ll<n> //0<=n
-  ensures SIZE(res,n);//n>=0 & n=res
+  infer[SIZE, T1, T2]
+  requires T1(x) //0<=n
+  ensures T2(x) & SIZE(res,n);//n>=0 & n=res
 {
   int m = 0;
   return size_helper(x, m);
 }
 
-//A reference to the first element in the list container.
-relation FRONT(int a, int b).
-int front(node x)
-  infer[FRONT]
-  requires x::node<v,p>*p::ll<m>
-  ensures FRONT(res,v);//res=v
-{
-  return x.val;
-}
-
-// A reference to the first element in the list container.
-/*int back(node x)*/
-/*  requires x::ll<_>*/
-/*  ensures true;*/
+/*
+T1(x) --> H(x)
+H1(x) --> T2(x)
+*/
 
 void swap(ref node x, ref node y)
-  infer @post []
-  requires x::ll<n>*y::ll<m> 
-  ensures x'::ll<m1>*y'::ll<n1>; // m=m1 & n=n1
+  infer [H1, H2, G1, G2]
+  requires H1(x)*H2(y)
+  ensures G1(x,x')*G2(y,y'); // m=m1 & n=n1
 {
   node tmp = x;
   x = y;
   y = tmp;
 }
 
-//drop current content, and add n element with v value
-
-relation ASSIGN(int a, int b, int c).
-void assign(ref node x, int n, int v)
-  infer[ASSIGN]
-  requires x::ll<m>//0<=m & 0<=n
-  ensures x'::ll<n1> & ASSIGN(n,n1,m); //' m>=0 & n1>=0 & n1=n
-{
-  x = create_list(n, v);
-}
+/*
+H1(x) * H2(y) --> G1(x,y) * G2(y,x)
+*/
 
 relation PUF(int a, int b).
+
 void push_front(ref node x, int v)
-  infer[PUF]
-  requires x::ll<n>
-  ensures x'::ll<m> & PUF(m,n); //'m=n+1
+  infer[H, G]
+  requires H(x)
+  ensures G(x,x'); //'m=n+1
 {
   node tmp = new node(v,x);
   x = tmp;
 }
 
+/*
+H(x) * x'::node<v,x> --> G(x,x')
+*/
+
+
+
 //pop and return first element
-relation PF(int a, int b).
+
 node pop_front(ref node x)
-  infer[PF]
-  requires x::ll<m> & x!=null //& m>=1
-  ensures x'::ll<n> & PF(n,m); //' m>=1 & m=n+1
+  infer[H,G]
+  requires H(x) //& m>=1
+  ensures  G(x,x'); //' m>=1 & m=n+1
 {
   node tmp = x;
   x = x.next;
@@ -167,40 +166,85 @@ node pop_front(ref node x)
   return tmp;
 }
 
-/* append two singly linked lists */
-relation A(int m, int n1, int n2).
-void append(node x, node y)
-  infer[A]
-  requires x::ll<n1> * y::ll<n2> & x!=null
-  ensures x::ll<m> & A(m,n1,n2);//n1>=1 & m>=n1 & m=n2+n1
-{
-  if (x.next == null)
-    x.next = y;
-  else
-    append(x.next, y);
-}
 
-/* return the first element of a singly linked list */
-relation RF(int m, int n).
-node ret_first(node x)
-  infer[RF]
-  requires x::ll<n> //& 0<=n
-  ensures x::ll<m> & RF(m,n);//m>=0 & m=n
-{
-  return x;
-}
+/*
+
+(H(x) & x'=x--> x::node<val_164_959',b> * HP_1911(b,x,x)
+HP_1911(x',x,x) * x::node<val_164_1920,next_165_963'>&v_node_166_964'=x --> G(x,x')
+
+Normalize
+H(x) & x'=x--> x::node<_,b> * HP_1911(b)
+HP_1911(x') * x::node<val_164_1920,next_165_963'> --> G(x,x')
+
+by hand
+
+H1(tmp, x) & tmp = x
+
+ H2(tmp, x, b) * x::node<_,b> & tmp = x
+
+H2(tmp, x, b) * x::node<_,b> & tmp = x & x'= b
+
+H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
+
+relations:
+H(x) -> H1(tmp,x) & tmp = x
+H1(tmp,x) -> H2(tmp, x, b) * x::node<_,b>
+H2(tmp, x, b) * tmp::node<_,null> -> H3(tmp, x, b, c)
+H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
+
+normalization
+H(x) -> H1(tmp,x) & tmp = x
+H1(tmp,x) -> H2(tmp, x, b) * x::node<_,b>
+H2(tmp, x, b) --> tmp::node<_,null> * H3(tmp, x, b, c)
+H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
+
+expect:
+H(x) -> H3(b) * x::node<_,b>
+H3(b) * x::node<_,b> & x'= b -> G(x,x')
+
+*/
+
 
 /* return the tail of a singly linked list */
-relation GN(int m, int n).
 node get_next(node x)
-  infer[GN]
-  requires x::ll<n> & x!=null
-  ensures x::node<_,null> * res::ll<m> & GN(m,n);//n>=1 & n=m+1
+  infer[H,G]
+  requires H(x)
+  ensures G(x,res);//n>=1 & n=m+1
 {
   node tmp = x.next;
   x.next = null;
   return tmp;
 }
+
+/*
+H(x) --> x::node<_,b> * HP_1285(b,x)
+HP_1285(b,x) * x::node<val_214_1294,next_215_914'> --> G(x,b)
+
+normalize
+H(x) --> x::node<_,b> * HP_1285(b)
+HP_1285(b) * x::node<val_214_1294,next_215_914'> --> G(x,b)
+//lost infomation
+
+expect:
+H(x) -> x::node<_,b> * H(x,b)
+x::node<_,b> * H(x,b) & tem = b
+
+x::node<_,b'> * H(x,b) & tem = b * b' = null
+ 
+x::node<_,b'> * H(x,b) & tem = b * b' = null -> G(x,b)
+normalize:
+
+H(x) -> x::node<_,b> * H(b)
+x::node<_,b'> * H(b) * b' = null -> G(x,b)
+
+
+
+
+
+*/
+
+
+
 
 /* function to set the tail of a list */
 relation SN(int m, int n).

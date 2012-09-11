@@ -4,7 +4,7 @@ data node2 { int val ; node next }.
 
 //PART 1: check node var + node type
 //1.
-checkeq[] x::node<t,null> -|- x::node<t,null>.
+checkeq[] x::node<t,n> -|- x::node<t,m>.
 //VALID
 
 //2.

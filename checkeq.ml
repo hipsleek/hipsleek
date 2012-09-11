@@ -1,5 +1,7 @@
 open Globals
 open Gen
+open Cpure
+open Cformula 
 
 module Err = Error
 module CP = Cpure
@@ -8,15 +10,14 @@ module MCP = Mcpure
 
 (*for testing-compare two formulas*)
 
-type map_table = ((ident * ident) list)
+type map_table = ((CP.spec_var * CP.spec_var) list)
 
-let string_of_pair(x: (ident * ident)): string =
+let string_of_pair(x: (CP.spec_var * CP.spec_var)): string =
   (
     let (a,b) = x in 
-    let res = "(" ^ a ^ ", " ^ b ^ ")" in
+    let res = "(" ^ (CP.name_of_spec_var a) ^ ", " ^ (CP.name_of_spec_var b) ^ ")" in
     res 
   )
-
 
 let string_of_map_table (mt: map_table): string = 
   let rec helper(mt: map_table): string = match mt with 
@@ -165,7 +166,7 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   else (
     let _ = Debug.ninfo_pprint ("match node: " ^ string_of_map_table mt) no_pos in
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
-      else add_map_rel mt (CP.name_of_spec_var var1) (CP.name_of_spec_var var2) in
+      else add_map_rel mt (var1) (var2) in
     if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
     else (false, mt1)
   )
@@ -181,14 +182,24 @@ and check_spec_var_list_equiv  (hvars: ident list)(args1: CP.spec_var list)(args
 
 and check_spec_var_equiv (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var)(mt: map_table): (bool * map_table )=
   (*do not check type*) 
+ let _ = Debug.ninfo_pprint ("name of node:  " ^ (CP.name_of_spec_var v1)) no_pos in 
   let is_hard_v1 = (List.mem (CP.name_of_spec_var v1) hvars) in
+  let is_null_var (v: CP.spec_var):bool= 
+    let name = CP.name_of_spec_var v in
+    let re = Str.regexp_string "flted" in
+        try ignore (Str.search_forward re name 0); true
+        with Not_found -> false
+  in 
+  if((is_null_var v1) && (is_null_var v2)) then (true, mt) 
+  else
   if((CP.is_null_const v1) || (CP.is_int_const v1) || is_hard_v1) 
   then( 
-    let _ = Debug.ninfo_pprint ("null const hard") no_pos in 
+
+    let _ = Debug.ninfo_pprint ("null const hard:  " ^ (CP.name_of_spec_var v1)) no_pos in 
     let res = CP.eq_spec_var v1 v2 in
     (res, mt)
   )
-  else add_map_rel mt (CP.name_of_spec_var v1) (CP.name_of_spec_var v2)  
+  else add_map_rel mt v1 v2
 
 
 and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
@@ -240,7 +251,7 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   else  (
     let _ = Debug.ninfo_pprint ("match node: " ^ string_of_map_table mt) no_pos in
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
-      else add_map_rel mt (CP.name_of_spec_var var1) (CP.name_of_spec_var var2) in
+      else add_map_rel mt (var1) (var2) in
     if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
     else (false, mt1)
   )
@@ -291,7 +302,7 @@ and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp lis
 	let is_hard = (List.mem (CP.name_of_spec_var sv1) hvars) in
 	if(not is_hard) then (
 	  match head2 with
-	    |CP.Var(sv2,_) -> (add_map_rel mt (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2))
+	    |CP.Var(sv2,_) -> (add_map_rel mt sv1 sv2)
 	    |_ -> (false, mt)
 	)
 	else match head2 with
@@ -323,30 +334,33 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.HFalse -> false
     | CF.HEmp   -> true
 
-and add_map_rel (mt: map_table) (v1: ident) (v2: ident): (bool * map_table) = 
-  let _ = Debug.ninfo_pprint ("node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^  string_of_map_table mt) no_pos in
-
-  let rec check_exist (v: ident) (mt: map_table): bool = 
+and add_map_rel (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
+ (* let _ = Debug.ninfo_pprint ("node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^  string_of_map_table mt) no_pos in*)
+  let vn1 = CP.name_of_spec_var v1 in
+  let vn2 = CP.name_of_spec_var v2 in
+  let rec check_exist (vn :ident) (mt: map_table): bool = 
     match mt with 
       | []-> false 
-      | [(i1,i2)] -> (String.compare v i1) == 0 || (String.compare v i2) == 0 
-      | (i1, i2)::y -> (String.compare v i1) == 0 || (String.compare v i2) == 0  || (check_exist v y)
+      | [(i1,i2)] -> (String.compare vn (CP.name_of_spec_var i1)) == 0 || (String.compare  vn (CP.name_of_spec_var i2)) == 0 
+      | (i1, i2)::y -> (String.compare vn (CP.name_of_spec_var i1)) == 0 || (String.compare vn (CP.name_of_spec_var i2)) == 0  || (check_exist vn y)
   in
-  if(List.exists (fun (i1, i2) -> (((String.compare v1 i1) == 0 && (String.compare v2 i2) == 0)  || ((String.compare v1 i2) == 0 && (String.compare v2 i1) == 0))) mt) then (
-    let _ = Debug.ninfo_pprint ("Exists node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in
+  if(List.exists (fun (i1, i2) -> (((String.compare vn1 (CP.name_of_spec_var i1)) == 0 && (String.compare vn2 (CP.name_of_spec_var i2)) == 0)  || ((String.compare vn1 (CP.name_of_spec_var i2)) == 0 && (String.compare vn2 (CP.name_of_spec_var i1)) == 0))) mt) then (
+    let _ = Debug.ninfo_pprint ("Exists node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table mt) no_pos in
     (true, mt)
   ) else 
     (
-      let _ = Debug.ninfo_pprint ("not yet node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in
-      let check_v1 = check_exist v1 mt in
-      let check_v2 = check_exist v2 mt in
+      let _ = Debug.ninfo_pprint ("not yet node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table mt) no_pos in
+      let check_v1 = check_exist vn1 mt in
+      let check_v2 = check_exist vn2 mt in
       if(check_v1 || check_v2) then (
-	let _ = Debug.ninfo_pprint ("ADD FAIL node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^  string_of_map_table mt) no_pos in
+	let _ = Debug.ninfo_pprint ("ADD FAIL node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^  string_of_map_table mt) no_pos in
 	(false, mt)
       )
-      else (let _ = Debug.ninfo_pprint ("ADD: node 1: "  ^ v1 ^ " node2 " ^ v2 ^ "   " ^ string_of_map_table mt) no_pos in 
+      else (let _ = Debug.ninfo_pprint ("ADD: node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table mt) no_pos in 
 	    (true, (v1,v2)::mt)
       )
     )
 
+let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula = 
+  CF.subst mt f
 

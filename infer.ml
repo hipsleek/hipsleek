@@ -1487,7 +1487,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       in
       let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
       let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in 
       (*simply add constraints: *)
       let hp_rel = (CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@lvhp_rels@rvhp_rels)), (CF.Base new_lhs_b),
                            CF.Base new_rhs_b) in
@@ -1522,7 +1522,7 @@ let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_
   (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
-  Debug.no_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
+  Debug.ho_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
 ( fun _ _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b rhs
 
 let rec string_of_elems elems string_of sep = match elems with 

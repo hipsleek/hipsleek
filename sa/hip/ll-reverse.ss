@@ -53,4 +53,72 @@ auto:
 
 //In the third relation: x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
 I think LHS lost information of Y
+
+
+uto:
+ H1(x) * H2(y)& x!=null --> x::node<_,b> * HP_545(b,y,x)
+ HP_545(b,y,x) * x::node<_,y>&x!=null --> H1(b) * H2(x)
+ x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
+ H1(x) * H2(y)&x=null --> G1(x,x) * G2(y,y)
+
+drop:
+ H1(x) * H2(y)& x!=null --> x::node<_,b> * HP_545(b,y)
+ HP_545(b,y) * x::node<_,y>&x!=null --> H1(b) * H2(x)
+ x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
+ H1(x) * H2(y)&x=null --> G1(x,x) * G2(y,y)
+
+Split
+ H1(x) * x!=null --> x::node<_,b> * HP_545_1(b)
+ H2(y)--> HP_545_2(y)
+ HP_545(b,y) --> H1(b)
+ HP_545(b,y) * x::node<_,y> --> H2(x)
+ x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x')
+ G2(x,y') --> G2(y,y')
+ H2(y) --> G2(y,y)
+ H1(x) * &x=null --> G1(x,x)
+ 
+Split2
+ H1(x) * x!=null --> x::node<_,b> * HP_545_1(b)
+ H2(y)--> HP_545(y)
+ HP_545_1(b) --> H1(b)
+ HP_545(y) * x::node<_,y> --> H2(x)
+ x::node<_,y> * G21(x) & x!=null--> G11(x)
+ G1(temp,x') --> G12(x')
+ true --> G21(y)
+ G22(y') --> G22(y')
+ H2(y) --> G21(y)
+ H2(y) --> G22(y)
+ H1(x) &x=null --> G11(x)
+ H1(x) &x=null --> G12(x)
+
+
+Split2
+ H1(x) * x!=null --> x::node<_,b> * HP_545_1(b)
+ H2(y)--> HP_545(y)
+ HP_545_1(b) --> H1(b)
+ HP_545(y) * x::node<_,y> --> H2(x)
+ x::node<_,y> & x!=null--> G11(x)
+ G1(temp,x') --> G12(x')
+ true --> G21(y)
+ G22(y') --> G22(y')
+ H2(y) --> G21(y)
+ H2(y) --> G22(y)
+ H1(x) &x=null --> G11(x)
+ H1(x) &x=null --> G12(x)
+
+
+Synthsis defs
+
+H1(x) -> x!= null -> x::node<_,b> * H1(b)
+ HP_545_1(b) --> H1(b)
+H2(y) * x::node<_,y> --> H2(x)
+H1(x)-> x = null
+
+
+
+
+
+
+
+
 */

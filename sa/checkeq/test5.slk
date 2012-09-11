@@ -3,18 +3,18 @@ data node { int val ; node next }.
 data node2 { int val ; node next }.
 
 //check exists
-//checkeq[] x::node<a,null> -|- (exists u: x::node<u,null>).
+checkeq[] x::node<a,null> -|- (exists u: x::node<u,null>).
 //VALID
 
-//checkeq[x] x::node<a,null> -|- (exists u: x::node<u,null>).
+checkeq[x] x::node<a,null> -|- (exists u: x::node<u,null>).
 //VALID
 
 
-//checkeq[] x::node<t,null> -|- y::node<t,null>.
+checkeq[] x::node<t,null> -|- y::node<t,null>.
 //VALID
 
 //3.
-//checkeq[x] x::node<t,null> -|- x::node<t,null>.
+checkeq[x] x::node<t,null> -|- x::node<t,null>.
 //VALID
 
 

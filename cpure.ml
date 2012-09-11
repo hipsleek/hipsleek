@@ -866,8 +866,7 @@ and is_null (e : exp) : bool =
     | Null _ -> true
     | _ -> false
 
-and is_zero_int (e : exp) : bool = match e with
-  | IConst (0, _) -> true
+and is_zero_int (e : exp) : bool = match e with  | IConst (0, _) -> true
   | _ -> false
 
 and is_zero_float (e : exp) : bool = match e with
