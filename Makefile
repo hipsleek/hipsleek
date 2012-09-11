@@ -1,5 +1,6 @@
 OCAMLBUILD = ocamlbuild
-
+MINISATDIR=../src/src
+MINISATDIR2=../src
 # number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
@@ -7,7 +8,7 @@ JOBS = 0
 LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
+INCLUDES = -I,+ocamlgraph,-I,$(MINISATDIR2),-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
 
 FLAGS = $(INCLUDES),-g,-annot
 
@@ -18,7 +19,11 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: byte decidez.vo
+all: byte decidez.vo 
+
+#--------------
+
+#--------------
 #gui
 byte: sleek.byte hip.byte
 native: hip.native sleek.native
