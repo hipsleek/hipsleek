@@ -15,6 +15,7 @@ module IF = Iformula
 module I = Iast
 module C = Cast
 module Imm = Immutable
+module TP = Tpdispatcher
 
 let mk_mem_perm_formula (mem_exp: CP.exp) (isexact: bool) (fl: (ident * (CF.ann list)) list) : CF.mem_perm_formula = 
 	{ CF.mem_formula_exp = mem_exp;
@@ -96,6 +97,28 @@ let rec fl_diff (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list
 				then (fst c),Imm.replace_list_ann (snd c) (snd x) 
 				else c) fl1 in fl_diff fl1 xs
 
+let get_field_name (fl : (ident * (CF.ann list)) list) : ident = 
+	try fst (List.hd fl)
+	with | _ -> Err.report_error {
+			Err.error_loc = no_pos;
+			Err.error_text = "[mem.ml] : Empty Field Layout";}
+
+				
+let mem_disj_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula * CP.formula = 
+	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
+	let mfp = {CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
+		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
+		CF.mem_formula_field_layout = remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;}
+		in
+	(*let tmp_var = CP.SpecVar((Named (get_field_name mfp.CF.mem_formula_field_layout)),"Anon"^(fresh_trailer()),Unprimed) in
+	let df1 = CP.BForm((CP.BagNotIn(tmp_var,f1.CF.mem_formula_exp,pos),None),None) in
+	let df2 = CP.BForm((CP.BagNotIn(tmp_var,f2.CF.mem_formula_exp,pos),None),None) in
+	let disj_formula = (CP.mkOr  df1 df2 None pos) in
+	let cf = CP.mkForall [tmp_var] disj_formula None pos in*)
+	let cf = CP.mkNeq (CP.BagIntersect(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos)) (CP.Bag([],no_pos)) pos in
+	let cf = CP.BForm((cf,None),None) in
+	mfp,cf
+
 let mem_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula = 
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
 		{CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
@@ -116,34 +139,57 @@ let mem_diff (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_for
 		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
 		CF.mem_formula_field_layout = (fl_diff f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout);}
 
-let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula = 
+let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula * CP.formula list = 
 	match f with
 	| CF.Star ({ CF.h_formula_star_h1 = f1;
 		     CF.h_formula_star_h2 = f2;
-		     CF.h_formula_star_pos = pos;}) -> mem_union (xmem_heap f1 vl) (xmem_heap f2 vl)
+		     CF.h_formula_star_pos = pos;}) -> 
+		     let mpf1,disjf1 = xmem_heap f1 vl in
+		     let mpf2,disjf2 = xmem_heap f2 vl in
+		     let mpf,disj = mem_disj_union mpf1 mpf2 in
+		     mpf, disj::disjf1 @ disjf2  
 	| CF.Conj ({ CF.h_formula_conj_h1 = f1;
 		     CF.h_formula_conj_h2 = f2;
-		     CF.h_formula_conj_pos = pos;}) -> mem_intersect (xmem_heap f1 vl) (xmem_heap f2 vl)
+		     CF.h_formula_conj_pos = pos;}) ->
+		     let mpf1,disjf1 = xmem_heap f1 vl in
+		     let mpf2,disjf2 = xmem_heap f2 vl in
+		     let mpf = mem_intersect mpf1 mpf2 in
+		     mpf, disjf1@disjf2  
 	| CF.Phase ({ CF.h_formula_phase_rd = f1;
 		      CF.h_formula_phase_rw = f2;
-		      CF.h_formula_phase_pos = pos;}) -> mem_union (xmem_heap f1 vl) (xmem_heap f2 vl)
+		      CF.h_formula_phase_pos = pos;}) -> 
+		      let mpf1,disjf1 = xmem_heap f1 vl in
+		      let mpf2,disjf2 = xmem_heap f2 vl in
+		      let mpf = mem_union mpf1 mpf2 in
+		      mpf, disjf1@disjf2
 	| CF.DataNode ({ CF.h_formula_data_node = dn;
 			 CF.h_formula_data_name = name;
 			 CF.h_formula_data_param_imm = fl;
-			 CF.h_formula_data_pos = pos;}) -> mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name, fl)]
+			 CF.h_formula_data_pos = pos;}) -> 
+			 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name, fl)]), []
 	| CF.ViewNode ({ CF.h_formula_view_node = vn;
 			 CF.h_formula_view_name = name;
 			 CF.h_formula_view_arguments = argl;
-			 CF.h_formula_view_pos = pos;}) -> let vdef = C.look_up_view_def_raw vl name in
+			 CF.h_formula_view_pos = pos;}) -> 
+			 	(*let new_var = CP.Var(CP.SpecVar((BagT (Named name)),"Anon"^(fresh_trailer()),Unprimed),pos) in 
+			 	mk_mem_perm_formula (CP.Bag([new_var],pos)) false []*)
+			 	let vdef = C.look_up_view_def_raw vl name in
 			 	let mpf = vdef.C.view_mem in
 			 	(match mpf with
 				| Some mpf -> 
 				 	let mexp = mpf.CF.mem_formula_exp in
-				 	let new_mem_exp = CP.e_apply_subs (List.combine argl (CP.afv mexp)) mexp in
+				 	(*let _ = print_string("Free Var in Mem Spec :" ^ 
+				 	(String.concat "," (List.map string_of_spec_var (CP.afv mexp))) ^"\n") in
+				 	let _ = print_string("Arg List :" ^ 
+				 	(String.concat "," (List.map string_of_spec_var argl)) ^"\n") in*)
+				 	let sbst_self = (*mexp in*)
+		 	CP.e_apply_subs (List.combine [Cpure.SpecVar ((Named vdef.C.view_data_name), self, Unprimed)] [vn]) mexp in
+				 	let new_mem_exp = CP.e_apply_subs (List.combine vdef.C.view_vars argl) sbst_self in
+				 	(*let _ = print_string("Bag Exp :" ^ (string_of_formula_exp new_mem_exp) ^"\n") in*)
 			 	        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)
-			 	        mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact []
-			 	| None -> mk_mem_perm_formula (CP.Bag([],no_pos)) false [] )
-  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue -> mk_mem_perm_formula (CP.Bag([],no_pos)) false [] 
+			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact []), []
+			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false []),[] )
+  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false []),[]
 
 let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MCP.mix_formula =
 	match f with
@@ -151,31 +197,47 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		CF.formula_or_f2 = f2;
 		CF.formula_or_pos = pos;}) -> MCP.mkOr_mems (xmem f1 vl me) (xmem f2 vl me) 
 	| CF.Base ({ CF.formula_base_heap = f;
-		  CF.formula_base_pos = pos;}) 
-	| CF.Exists ({ CF.formula_exists_heap = f;
-		    CF.formula_exists_pos = pos;}) -> let mpform = (xmem_heap f vl) in
-		    				let mfe1 = me.CF.mem_formula_exp in
-		    				let mfe2 = mpform.CF.mem_formula_exp in
-		    				let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
-		    				let _ = 
-		    				fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout in
-		    				let f = if me.CF.mem_formula_exact 
-		    					then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
-		    					in let _ = 
-		    					fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
-							in MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
-		    					else MCP.mix_of_pure f1 
-		    				in f
+		  CF.formula_base_pos = pos;}) -> 
+		  let mpform,disjform = (xmem_heap f vl) in
+         	  let mfe1 = me.CF.mem_formula_exp in
+		  let mfe2 = mpform.CF.mem_formula_exp in
+		  let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
+		  let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout in
+		  let f = if me.CF.mem_formula_exact 
+		  	  then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
+		  		in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
+		  		in MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
+		  	  else MCP.mix_of_pure f1 
+		  in (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
+	| CF.Exists ({ CF.formula_exists_qvars = qvars;
+		    CF.formula_exists_heap = f;
+		    CF.formula_exists_pos = pos;}) -> 
+		    let mpform,disjform = (xmem_heap f vl) in
+		    let mfe1 = me.CF.mem_formula_exp in
+		    let mfe2 = mpform.CF.mem_formula_exp in
+		    let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
+		    let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout in
+		    let f = if me.CF.mem_formula_exact 
+		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
+		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
+				 in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
+				 in MCP.memo_pure_push_exists qvars fe
+				 (*in fe*)
+		    		 else (*(MCP.mix_of_pure f1)*)
+		    		      MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)
+          	    in (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
 
 let validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
 	match vdef.C.view_mem with
 	| Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
 	            let calcmem = (xmem (C.formula_of_unstruc_view_f vdef) prog.C.prog_view_decls a) in
-		    (*let mform = 
-		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in *)
+		    let calcmem = 
+		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
 		    let formula1 = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
+		    let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in
 		    let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
 		    let formula = CF.formula_of_mix_formula calcmem pos in
+		    let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in
   	 	    let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
 		    if not(CF.isFailCtx rs) then ()
 		    else Err.report_error {Err.error_loc = pos;
