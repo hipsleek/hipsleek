@@ -318,6 +318,72 @@ let collect_update_function (transition_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
 
+let rec label_of_formula (f: CP.formula) =
+  let string_of_lb (lb: formula_label option) = (
+    match lb with
+    | None -> ""
+    | Some (i, s) -> (string_of_int i) ^ ":" ^ s
+  ) in
+  let sf = Cprinter.string_of_pure_formula in
+  let lbl = (
+    match f with
+    | CP.BForm (_, flb) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.And (f1, f2,_) -> "And(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ ")"
+    | CP.AndList _ -> "AndList(_)"
+    | CP.Or (f1, f2, flb, _) -> "Or(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Not (f1, flb, _) -> "Not(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Forall (_, f1, flb, _) -> "Forall(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Exists (_, f1, flb, _) -> "Exists(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+  ) in
+  lbl
+
+(* drop the constraint from source_constrait that restrict the target_constraint *)
+let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
+  (* let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in  *)
+  (* let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in                              *)
+  let is_restricted_constraint (constr: CP.formula) (target_constraint: CP.formula) : bool = (
+    (* constr don't restrict domain if (domain -> (constr) && domain) is valid *)
+    (* let _ = print_endline ("== constr = " ^ (Cprinter.string_of_pure_formula constr)) in  *)
+    match constr with
+    | CP.And _ -> report_error no_pos "Invalid argument! Need a atomic constraint!"
+    | _ ->
+        let f = CP.mkAnd constr target_constraint no_pos in
+        let res, _, _ = TP.imply target_constraint f "" false None in
+        (* let _ = print_endline ("== f = " ^ (Cprinter.string_of_pure_formula f)) in  *)
+        (* let _ = print_endline ("== res = " ^ (string_of_bool res)) in               *)
+        (not res)
+  ) in
+  let rec drop_constraint (constr: CP.formula) (target_constraint: CP.formula) : CP.formula = (
+    match constr with
+    | CP.BForm ((pf, _), _) -> (
+        match pf with
+        | CP.BVar _ -> CP.mkTrue no_pos
+        | _ -> if is_restricted_constraint constr target_constraint then CP.mkTrue no_pos
+               else constr
+      )
+    | CP.And (f1, f2, l) -> (
+        let new_f1 = drop_constraint f1 target_constraint in
+        let new_f2 = drop_constraint f2 target_constraint in
+        match new_f1 with
+        | CP.BForm ((CP.BConst (true, _), None),None) -> new_f2
+        | _ -> (
+            match new_f2 with
+            | CP.BForm ((CP.BConst (true, _), None),None) -> new_f1
+            | _ -> CP.mkAnd new_f1 new_f2 no_pos
+          )
+      )
+    | CP.AndList _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+    | CP.Or _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+    | CP.Not _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+    | CP.Forall _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+    | CP.Exists _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+  ) in
+  drop_constraint source_contraint target_constraint
+
+let drop_restricted_domain_constraint (source_constraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.ho_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
+
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
   
@@ -413,16 +479,17 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
   if flag then (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let update_function = collect_update_function lhs in
         let element_src = seqsrc.CP.seq_element in
         let domain_src = seqsrc.CP.seq_domain in
         let limit_src = seqsrc.CP.seq_limit in
         let element_dst = seqdst.CP.seq_element in
         let domain_dst = seqdst.CP.seq_domain in
         let limit_dst = seqdst.CP.seq_limit in
+        let domain = CP.mkAnd domain_src domain_dst pos in
+        let recursive_constraint = drop_restricted_domain_constraint lhs domain in
         let domain_constraint = (
           (* domain is covered in the recursive call *)
-          let domain_lhs = CP.mkAnd update_function domain_src pos in
+          let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
           let domain_rhs = domain_dst in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
@@ -431,7 +498,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
-          let decrease_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
+          let decrease_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
           let decrease_rhs = (
             match limit_src, limit_dst with
             | CP.SConst (PositiveInfty, _), _
@@ -463,18 +530,19 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
   ) else (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let update_function = collect_update_function lhs in
         let element_src = seqsrc.CP.seq_element in
         let domain_src = seqsrc.CP.seq_domain in
         let element_dst = seqdst.CP.seq_element in
         let domain_dst = seqdst.CP.seq_domain in
+        let domain = CP.mkAnd domain_src domain_dst pos in
+        let recursive_constraint = drop_restricted_domain_constraint lhs domain in
         let domain_constraint = (
-          let domain_lhs = CP.mkAnd update_function domain_src pos in
+          let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
           let domain_rhs = domain_dst in
           CP.mkImply domain_lhs domain_rhs pos
         ) in
         let equal_constraint = (
-          let equal_lhs = CP.mkAnd update_function (CP.mkAnd domain_src domain_dst pos) pos in
+          let equal_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
           let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
           CP.mkImply equal_lhs equal_rhs pos
         ) in
@@ -650,6 +718,9 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
+      let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in
+      let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in 
+      (* let _ = print_endline ("== estate.es_formula lbl = " ^ (label_of_formula estate.Cformula.es_formula)) in  *)
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let lexvar_dst, lex_dst = match find_lexvar_formula conseq with

@@ -22,22 +22,12 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
-
-
-let empty_label = (0,"")
-let app_e_l c = (empty_label, c)
-let combine_lbl (i1,s1)(i2,s2) = match s1 with 
-  | "" -> (match s2 with 
-            | "" -> (i1,s1)
-            | _ -> (i2,s2))
-  | _ -> (i1,s1)
 
 
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
