@@ -103,10 +103,17 @@ let get_field_name (fl : (ident * (CF.ann list)) list) : ident =
 			Err.error_loc = no_pos;
 			Err.error_text = "[mem.ml] : Empty Field Layout";}
 
+let rec make_disj_constraints (exps: CP.exp list) (mpf : CF.mem_perm_formula) : CP.formula =
+	match exps with
+	| [] -> CP.mkTrue no_pos
+	| x::xs -> match x with
+		   | CP.Var(sv,pos) -> let svisin = CP.BForm((CP.BagNotIn(sv,mpf.CF.mem_formula_exp,pos),None),None)
+		   			in (CP.mkAnd svisin (make_disj_constraints xs mpf)  pos)
+		   | _ -> CP.mkTrue no_pos
 				
 let mem_disj_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula * CP.formula = 
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
-	let mfp = {CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
+	let mpf = {CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
 		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
 		CF.mem_formula_field_layout = remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;}
 		in
@@ -115,9 +122,15 @@ let mem_disj_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_pe
 	let df2 = CP.BForm((CP.BagNotIn(tmp_var,f2.CF.mem_formula_exp,pos),None),None) in
 	let disj_formula = (CP.mkOr  df1 df2 None pos) in
 	let cf = CP.mkForall [tmp_var] disj_formula None pos in*)
-	let cf = CP.mkNeq (CP.BagIntersect(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos)) (CP.Bag([],no_pos)) pos in
-	let cf = CP.BForm((cf,None),None) in
-	mfp,cf
+	match f1.CF.mem_formula_exp, f2.CF.mem_formula_exp with
+	| CP.Bag(exp1,pos1) , CP.Bag(exp2,pos2) -> let cf1 = make_disj_constraints exp1 f2 in
+						let cf2 = make_disj_constraints exp2 f1 in
+						let cf = CP.mkAnd cf1 cf2 pos1 in
+						mpf,cf
+	| CP.Bag(exp1,pos1) , _ -> let cf1 = make_disj_constraints exp1 f2 in mpf,cf1
+	| _ , CP.Bag(exp2,pos2) -> let cf2 = make_disj_constraints exp2 f1 in mpf,cf2	       
+	| _ , _ -> let cf = CP.mkNeq (CP.BagIntersect(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos)) (CP.Bag([],no_pos)) pos in
+	       let cf = CP.BForm((cf,None),None) in mpf,cf
 
 let mem_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula = 
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
@@ -195,7 +208,8 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 	match f with
 	| CF.Or ({CF.formula_or_f1 = f1;
 		CF.formula_or_f2 = f2;
-		CF.formula_or_pos = pos;}) -> MCP.mkOr_mems (xmem f1 vl me) (xmem f2 vl me) 
+		CF.formula_or_pos = pos;}) -> (*MCP.mkOr_mems (xmem f1 vl me) (xmem f2 vl me) *)
+						MCP.merge_mems (xmem f1 vl me) (xmem f2 vl me) true
 	| CF.Base ({ CF.formula_base_heap = f;
 		  CF.formula_base_pos = pos;}) -> 
 		  let mpform,disjform = (xmem_heap f vl) in
@@ -221,28 +235,36 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
 		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
 				 in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
-				 in MCP.memo_pure_push_exists qvars fe
-				 (*in fe*)
-		    		 else (*(MCP.mix_of_pure f1)*)
-		    		      MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)
-          	    in (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
+				 (*in MCP.memo_pure_push_exists qvars fe*)
+				 in fe
+		    		 else (MCP.mix_of_pure f1)
+		    		      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
+       	    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
+
+
+let compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) = 
+	let formula1 = lhs in
+	(*let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in*)
+	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+	let formula = rhs in
+	(*let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in*)
+  	let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+	if not(CF.isFailCtx rs) then ()
+	else Err.report_error {Err.error_loc = pos;
+	Err.error_text = "[mem.ml] : view formula does not entail supplied Memory Spec";}
 
 let validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
 	match vdef.C.view_mem with
 	| Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
-	            let calcmem = (xmem (C.formula_of_unstruc_view_f vdef) prog.C.prog_view_decls a) in
-		    let calcmem = 
+		    let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
+	            let list_of_calcmem = 
+	            List.map (fun c -> CF.formula_of_mix_formula (xmem c prog.C.prog_view_decls a) pos) list_of_disjuncts in
+	            let combined_list = List.combine list_of_disjuncts list_of_calcmem in
+	            let _ = List.map (fun c-> compute_mem_spec prog (fst c) (snd c) pos) combined_list in ()
+		    (*let calcmem = 
 		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
-		    let formula1 = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
-		    let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in
-		    let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
-		    let formula = CF.formula_of_mix_formula calcmem pos in
-		    let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in
-  	 	    let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-		    if not(CF.isFailCtx rs) then ()
-		    else Err.report_error {Err.error_loc = pos;
-			 Err.error_text = "[mem.ml] : view formula does not entail supplied Memory Spec";}
-				 
+		    let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
+		    let rhs = CF.formula_of_mix_formula calcmem pos in*)	 
 	| None -> ()
 	
 let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  (name : ident) : ((I.typed_ident * loc * bool) list) = 

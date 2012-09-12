@@ -6,15 +6,17 @@ data node {
 pred nll<n> == self::node<_,null> & n = 1 
 	or self::node<_,p> * p::nll<n-1> 
 	inv n > 0
-	memE {self}->(node<@M,@M>).
+	mem {self}->(node<@M,@M>).
 
 pred ll<M> == self = null & M = {} 
-	or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self})
+	or self::node<_,p> * p::ll<Mp> & M subset union(Mp,{self})
 	inv true
 	mem M->(node<@M,@M>).
 	
 checkentail x::ll<M> & M != {} |- x::node<_,_@L>.
 print residue.
 
-checkentail self != null |- exists p: forall(x: x notin {self} | x notin {p}) & {self} subset {self,p} & {self,p} subset {self} .
+/*
+checkentail self != null |- exists p: {self} subset {self,p} & {self,p} subset {self} & p notin {self} & self notin {p}.
 print residue.
+*/
