@@ -8265,22 +8265,25 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
 
 and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
-    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
-    | EBase b -> 
-		let cont = match b.formula_struc_continuation with
-			| None -> Some f1
-			| Some l -> Some (combine_struc f1 l) in
-		EBase {b with formula_struc_continuation = cont }																											  
-    | EAssume (x1,b, (y1',y2',y3') )-> 
-		(match f1 with
-			| EAssume (x2,d,(y1,y2,y3)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2'),y3))
-			| _-> combine_struc f2 f1)
-    | EInfer e -> (match f1 with 
-		| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
-									  formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
-		| _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation})
-	| EOr b -> EOr {b with formula_struc_or_f1 = combine_struc f1 b.formula_struc_or_f1; formula_struc_or_f2 = combine_struc f1 b.formula_struc_or_f2;}
-	| EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
+  | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
+  | EBase b -> 
+      let cont = match b.formula_struc_continuation with
+                 | None -> Some f1
+                 | Some l -> Some (combine_struc f1 l) in
+      EBase {b with formula_struc_continuation = cont }
+  | EAssume (x1,b, (y1',y2',y3') )-> (
+      match f1 with
+      | EAssume (x2,d,(y1,y2,y3)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2'),y3))
+      | _-> combine_struc f2 f1
+    )
+  | EInfer e -> (
+      match f1 with 
+      | EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
+                                    formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
+      | _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation}
+    )
+  | EOr b -> EOr {b with formula_struc_or_f1 = combine_struc f1 b.formula_struc_or_f1; formula_struc_or_f2 = combine_struc f1 b.formula_struc_or_f2;}
+  | EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
 
 
 and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.spec_var list) (pos : loc) =

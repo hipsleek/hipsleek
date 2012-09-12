@@ -75,7 +75,15 @@ let string_of_label = function
   | JumpLabel l  -> l^" : "
 ;;
 
-let string_of_formula_label (i,s,fo) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_formula_origin fo =
+  match fo with
+  | F_o_specs -> "f_o_specs"
+  | F_o_code -> "f_o_code"
+  | F_o_generated -> "f_o_generated"
+  | F_o_unknown -> "f_o_unknown"
+  | F_o_tmp1 -> "f_o_tmp1"
+
+let string_of_formula_label (i,s,fo) s2:string = ("("^(string_of_int i)^","^s^","^(string_of_formula_origin fo)^"):"^s2)
 let string_of_spec_label = Lab_List.string_of
 let string_of_spec_label_def = Lab2_List.string_of
 
@@ -237,16 +245,16 @@ and concat_string_list_string strings =
 
 (* pretty printing for a pure formula *)
 and string_of_pure_formula = function 
-  | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
+  | P.BForm (bf,lbl)                    -> (string_of_formula_label_opt lbl "") ^ string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 
 		let l_s = (string_of_spec_label l) ^": " in
 		a ^ "\n" ^ (if a = "" then "" else " && ") ^ "\n" ^ l_s^(string_of_pure_formula c)) "" b
-  | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
-  | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
-  | P.Forall (x, f,lbl, l)            -> "all " ^ (string_of_id x)
+  | P.Or (f1, f2,lbl, l)              -> (string_of_formula_label_opt lbl "") ^ "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
+  | P.Not (f,lbl, l)                  -> (string_of_formula_label_opt lbl "") ^ "!(" ^ (string_of_pure_formula f) ^ ")"
+  | P.Forall (x, f,lbl, l)            -> (string_of_formula_label_opt lbl "") ^ "forall " ^ (string_of_id x)
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
-  | P.Exists (x, f,lbl, l)            -> "ex " ^ (string_of_id x)
+  | P.Exists (x, f,lbl, l)            -> (string_of_formula_label_opt lbl "") ^ "exists " ^ (string_of_id x)
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
 

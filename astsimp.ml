@@ -4224,14 +4224,20 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
 			  | _,_ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1)))
 	| _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
   else ()
-  
+
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
+  Debug.no_1 "trans_pure_formula" 
+             (Iprinter.string_of_pure_formula)
+             (Cprinter.string_of_pure_formula)
+             (fun f -> trans_pure_formula_x f stab) f0
+
+and trans_pure_formula_x (f0 : IP.formula) stab : CP.formula =
   match f0 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
-	| IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
+    | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
     | IP.Or (f1, f2,lbl, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl pos
