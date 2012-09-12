@@ -1,4 +1,5 @@
-(* asankhs:  Created on 03-Sep-2012 for Memory Specifications*)
+(* asankhs:  Created on 03-Sep-2012 for Memory Specifications *)
+(* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --field-ann -tp om *)
 
 open Globals
 open Gen.Basic
@@ -166,7 +167,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 		     CF.h_formula_conj_pos = pos;}) ->
 		     let mpf1,disjf1 = xmem_heap f1 vl in
 		     let mpf2,disjf2 = xmem_heap f2 vl in
-		     let mpf = mem_intersect mpf1 mpf2 in
+		     let mpf = mem_union mpf1 mpf2 in
 		     mpf, disjf1@disjf2  
 	| CF.Phase ({ CF.h_formula_phase_rd = f1;
 		      CF.h_formula_phase_rw = f2;
