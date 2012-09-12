@@ -1598,13 +1598,13 @@ and mkOr_x f1 f2 lbl pos=
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 
-and mkImply f1 f2 pos =
+and mkImply f1 f2 lbl pos =
   Debug.no_2 "pure_mkImply" !print_formula !print_formula !print_formula 
-             (fun _ _ -> mkImply_x f1 f2 pos) f1 f2
+             (fun _ _ -> mkImply_x f1 f2 lbl pos) f1 f2
 
-and mkImply_x f1 f2 pos= 
-  let not_f1 = mkNot_s f1 in
-  mkOr not_f1 f2 None pos
+and mkImply_x f1 f2 lbl pos= 
+  let not_f1 = mkNot f1 lbl pos in
+  mkOr not_f1 f2 lbl pos
 
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
@@ -1640,8 +1640,6 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
         else
           BForm ((Neq (ae1, ae2, pos), None),None)
   | _ ->  BForm ((Neq (ae1, ae2, pos), None),None)
-
-and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula =  match f with
   | BForm (bf,lbl) -> begin

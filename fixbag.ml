@@ -628,7 +628,7 @@ let rec remove_subtract pure = match pure with
   | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
   | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
   | Or (f1,f2,_,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None no_pos
-  | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
+  | Not (f,_,_) -> CP.mkNot (remove_subtract f) None no_pos
   | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
   | AndList l -> AndList (map_l_snd remove_subtract l)

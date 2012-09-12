@@ -276,10 +276,10 @@ and create_bound_constraint measure pos =
             let vars = CP.afv element in
             let bound_var = CP.fresh_new_spec_var Float in
             let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in
-            let termcond = CP.mkNot_s loopcond_constraint in
-            let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None pos in
+            let termcond = CP.mkNot loopcond_constraint None no_pos in
+            let f = CP.mkOr (CP.mkNot bound_exp None no_pos) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
-            let fForAll = CP.mkImply fdomain f pos in
+            let fForAll = CP.mkImply fdomain f None pos in
             let term_formula = CP.mkForall vars fForAll None pos in
             CP.mkExists [bound_var] term_formula None pos
         | _ ->
@@ -287,10 +287,10 @@ and create_bound_constraint measure pos =
             let epsilon = CP.fresh_new_spec_var Float in
             let constraint1 = CP.mkPure (CP.mkGt element limit pos) in
             let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
-            let termcond = CP.mkNot_s loopcond_constraint in
-            let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 pos)) termcond None pos in
+            let termcond = CP.mkNot loopcond_constraint None no_pos in
+            let f = CP.mkOr (CP.mkNot (CP.mkAnd constraint1 constraint2 pos) None no_pos) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
-            let fForAll = CP.mkImply fdomain f pos in
+            let fForAll = CP.mkImply fdomain f None pos in
             let term_formula = CP.mkForall vars fForAll None pos in
             let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) in
             CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula pos) None pos

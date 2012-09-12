@@ -494,7 +494,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
           let _ = Debug.dinfo_pprint ("   domain_rhs        = " ^ (Cprinter.string_of_pure_formula domain_rhs)) no_pos in
-          CP.mkImply domain_lhs domain_rhs pos
+          CP.mkImply domain_lhs domain_rhs None pos
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
@@ -518,7 +518,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   decrease_lhs        = " ^ (Cprinter.string_of_pure_formula decrease_lhs)) no_pos in
           let _ = Debug.dinfo_pprint ("   decrease_rhs        = " ^ (Cprinter.string_of_pure_formula decrease_rhs)) no_pos in
-          CP.mkImply decrease_lhs decrease_rhs pos
+          CP.mkImply decrease_lhs decrease_rhs None pos
         ) in
         CP.mkAnd domain_constraint decrease_constraint pos
       )
@@ -526,7 +526,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkGt src dst pos, None), None) in (* src > dst *)
-        CP.mkImply lhs rhs pos
+        CP.mkImply lhs rhs None pos
   ) else (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
@@ -539,12 +539,12 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let domain_constraint = (
           let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
           let domain_rhs = domain_dst in
-          CP.mkImply domain_lhs domain_rhs pos
+          CP.mkImply domain_lhs domain_rhs None pos
         ) in
         let equal_constraint = (
           let equal_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
           let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
-          CP.mkImply equal_lhs equal_rhs pos
+          CP.mkImply equal_lhs equal_rhs None pos
         ) in
         CP.mkAnd domain_constraint equal_constraint pos
       )
@@ -552,7 +552,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
-        CP.mkImply lhs rhs pos
+        CP.mkImply lhs rhs None pos
   )
 
 let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
