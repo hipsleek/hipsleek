@@ -1182,8 +1182,8 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
   else 
     let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
     let _ = send_cmd "rlset pasf" in
-    let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
-    let _ = send_cmd "rlset ofsf" in
+		let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in
+		let _ = send_cmd "rlset ofsf" in
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
     simpler_f

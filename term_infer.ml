@@ -6,6 +6,8 @@ open Cast
 
 module CP = Cpure
 module DD = Debug
+module RL = Redlog
+module MATH = Mathematica
 
 module TNode = struct
 	type t = int (* id of term_res *)
@@ -125,16 +127,19 @@ let info_pprint str = DD.info_pprint str no_pos
 
 (* Cpure Utilities *)
 let mkIConst i = mkIConst i no_pos
+let mkVar v = mkVar v no_pos
 let mkGt e1 e2 = mkPure (mkGt e1 e2 no_pos)
 let mkGte e1 e2 = mkPure (mkGte e1 e2 no_pos)
 let mkLte e1 e2 = mkPure (mkLte e1 e2 no_pos)
 let mkEq e1 e2 = mkPure (mkEq e1 e2 no_pos)
 let mkAdd e1 e2 = mkAdd e1 e2 no_pos
 let mkSub e1 e2 = mkSubtract e1 e2 no_pos
+let mkMult e1 e2 = mkMult e1 e2 no_pos
 let mkNot e = mkNot e None no_pos
 let mkOr e1 e2 = CP.mkOr e1 e2 None no_pos
 let mkAnd e1 e2 = CP.mkAnd e1 e2 no_pos
 let mkExists vs f = CP.mkExists vs f None no_pos
+let mkForall vs f = CP.mkForall vs f None no_pos
 
 let mk_fresh_Term () = 
 	let id = fresh_int () in
@@ -588,7 +593,7 @@ let filter_known_constrs utils kcond icond =
 let simplify_inf_cond utils args inf_cond ctx =
 	let inf_cond = mkOr (mkNot ctx) inf_cond in (* ctx |- inf_cond *)
 	let qvars = diff_svl (CP.fv inf_cond) args in
-	let simpl_cond = utils.simplify (mkForall qvars inf_cond None no_pos) in
+	let simpl_cond = utils.simplify (mkForall qvars inf_cond) in
 	let simpl_cl = CP.list_of_disjs simpl_cond in
 	(* To remove the base case in the inferred condition *)
 	(* Empty list means FALSE                            *)
@@ -606,9 +611,9 @@ let term_cond_by_fixcalc utils subst base ctx =
 	let base_cnt = mkAnd base (mkEqVarInt cnt 0 no_pos) in (* base && cnt=0 *)
 	let rec_cnt = 
 		let cnt1 = SpecVar (Int, "cnt1", Unprimed) in
-		let cnt_dec = mkEq (mkVar cnt1 no_pos) (mkSub (mkVar cnt no_pos) (mkIConst 1)) in (* cnt1=cnt-1 *)
+		let cnt_dec = mkEq (mkVar cnt1) (mkSub (mkVar cnt) (mkIConst 1)) in (* cnt1=cnt-1 *)
 		let qvars = (diff_svl (CP.fv ctx) args) @ [cnt1] in
-		let rel = mkPure (mkRelForm fcnt (List.map (fun v -> mkVar v no_pos) (params @ [cnt1])) no_pos) in
+		let rel = mkPure (mkRelForm fcnt (List.map (fun v -> mkVar v) (params @ [cnt1])) no_pos) in
 		CP.mkExists qvars (mkAnd ctx (mkAnd cnt_dec rel)) None no_pos
 	in
 	let fml = mkOr base_cnt rec_cnt in
@@ -633,6 +638,60 @@ let find_potential_rank utils subst rec_cond base_cond =
 				else find (List.tl ls)
 			else find (List.tl ls)  
 	in find cl
+	
+let linear_rank_synthesis utils (x1, x2, x3) ctx =
+	let _, unk_coe = List.fold_left (fun (i, ls) _ ->
+		(i-1, ls @ [SpecVar (Int, "unkcoen" ^ (string_of_int i), Unprimed)])) (List.length x1, []) x1 in
+	let free_coe = MATH.norm_spec_var (SpecVar (Int, "unkcoen0", Unprimed)) in
+	let unk_rank_1 = List.fold_right (fun op res -> mkAdd res op) 
+		(List.map2 (fun coe x -> mkMult (mkVar coe) (mkVar x)) unk_coe x1)
+		(mkVar free_coe) 
+	in
+	let unk_rank_2 = e_apply_subs (List.combine x1 x2) unk_rank_1 in
+	let unk_rank_3 = e_apply_subs (List.combine x1 x3) unk_rank_1 in
+	
+	let bound_constr = mkGte unk_rank_1 (mkIConst 0) in
+	let dec_constr = mkAnd (mkGt unk_rank_1 unk_rank_2) (mkGt unk_rank_2 unk_rank_3) in
+	let simpl_ctx = utils.simplify ctx in
+	let constr = mkOr (mkNot simpl_ctx) (mkAnd bound_constr dec_constr) in
+	let qconstr = mkForall (diff_svl (CP.fv constr) (unk_coe @ [free_coe])) constr in
+	
+	(* Redlog: Quantifier Elimination RLQE *)
+	let _ = RL.start () in
+	let pr_n x = None in
+	let rl_f = RL.rl_of_formula pr_n pr_n qconstr in
+	let _ = RL.send_cmd "rlset R" in
+	let rl_res = RL.send_and_receive ("rlqe " ^ rl_f) in
+	let _ = RL.send_cmd "rlset ofsf" in
+	let lexbuf = Lexing.from_string rl_res in
+	let rl_res = Rlparser.input Rllexer.tokenizer lexbuf in
+	let _ = RL.stop () in
+
+	(* Mathematica: FindInstance *)
+	let _ = MATH.start () in
+	let rec string_of_math_var_list mvl = match mvl with
+	| [] -> ""
+	| [v] -> name_of_spec_var v
+	| v::rest -> (name_of_spec_var v) ^ ", " ^ (string_of_math_var_list rest) in
+	let math_vars = string_of_math_var_list (unk_coe @ [free_coe]) in
+	let math_input = 
+		"FindInstance[" ^ 
+		(MATH.mathematica_of_formula pr_n pr_n rl_res) ^ ", " ^
+		"{" ^ math_vars ^ "}" ^ ", Integers]\n" in
+	let math_res = MATH.send_and_receive math_input in
+	let lexbuf = Lexing.from_string math_res in
+	let math_res = Mathparser.input Mathlexer.tokenizer lexbuf in
+	let _ = MATH.stop() in
+	
+	if math_res = [] then None
+	else try
+		let rank = List.fold_right (fun (coe, x) res -> 
+			if coe = 0 then res else mkAdd res (mkMult (mkIConst coe) (mkVar x))) 
+			(List.map2 (fun unk x -> (List.assoc (name_of_spec_var unk) math_res, x)) unk_coe x1) 
+			(mkIConst (List.assoc (name_of_spec_var free_coe) math_res)) in
+		let _ = print_endline ("\nRANK: " ^ (!print_pure_exp rank)) in
+		Some rank
+		with _ -> None
 
 (* Check and Infer the condition for invariant *)
 (* inv: f(X) where f(X) > 0 *)
@@ -768,6 +827,14 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 					else
 						if not (utils.is_sat (mkAnd (mkAnd compose_ctx dec_cond) (mkGt p2 p3))) then 
 							(* It is impossible for r(X)>r(X') and r(X')>r(X'') *)
+							(* So that, r(X)>r(X') MAY imply r(X)>r(X'')        *)
+							(* If r(X)>r(X') |- r(X)>r(X'') Then Term[Rank] *)
+							(* Else Term(Base)                              *)
+							let _ = 							
+								if (utils.imply compose_ctx (mkGt p1 p3)) then
+									let rank = linear_rank_synthesis utils (x1, x2, x3) compose_ctx in
+									print_endline ("\nR1>R3: " ^ (!print_pure_formula (utils.simplify compose_ctx)))
+								else () in
 							(([], []), (simplify_inf_cond utils args base_cond ctx, None))
 						else
 							(* We can find some addition conditions for termination         *)
@@ -778,21 +845,19 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 							(* <=> ctx /\ (p1 > p2) /\ (p2 <= p3) |- not C                  *)
 							(*     ctx /\ (p1 > p2) /\ (p2 <= p3) |- (p1-p2) > (p2-p3)      *)
 							(* not C = (p1-p2) > (p2-p3) <=> C = (p1-p2) <= (p2-p3)         *)
-									
-							let inv = check_inv utils args (x1, x2) ctx (List.hd (simplify_inf_cond utils args dec_cond ctx)) in
-							let _ = print_endline ("\nDEC INV: " ^ (pr_list !print_pure_formula inv)) in
-							
-							let inv = check_inv utils args (x1, x2) ctx (List.hd (simplify_inf_cond utils args inc_cond ctx)) in
-							let _ = print_endline ("\nINC INV: " ^ (pr_list !print_pure_formula inv)) in
 
 							let dec_cond = simplify_inf_cond utils args dec_cond ctx in
 							let inf_dec_cond = List.concat (List.map (fun dec ->
 								let inv = check_inv utils args (x1, x2) ctx dec in
+								(* let _ = print_endline ("\n DEC INV: " ^ (pr_list !print_pure_formula inv)) in *)
+								let inv = List.filter (fun i -> not (isConstFalse i)) inv in
 								List.map (fun i -> mkAnd dec i) inv) dec_cond) in
 								
 							let inc_cond = simplify_inf_cond utils args inc_cond ctx in
 							let inf_inc_cond = List.concat (List.map (fun inc ->
 								let inv = check_inv utils args (x1, x2) ctx inc in
+								(* let _ = print_endline ("\n INC INV: " ^ (pr_list !print_pure_formula inv)) in *)
+								let inv = List.filter (fun i -> not (isConstFalse i)) inv in
 								List.map (fun i -> mkAnd inc i) inv) inc_cond) in								
 
 							(([], inf_inc_cond), (inf_dec_cond, Some prank))
@@ -937,7 +1002,9 @@ let solve_constrs utils args constrs =
 			let id = fresh_int () in
 			let r = Unknown { unk_info with unk_id = id; unk_cond = mkAnd unk_info.unk_cond c } in
 			Hashtbl.add term_res_tbl id r; (c, r)) unk_loop_cond in
-		(unk, TSplit (loop_subst @ unk_subst @ term_subst))) infer_cond in
+		let subst = loop_subst @ unk_subst @ term_subst in
+		if subst = [] then (unk, TSubst (mk_fresh_MayLoop ()))
+		else (unk, TSplit subst)) infer_cond in
 
 	print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list));
 	print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));

@@ -4,7 +4,7 @@ requires true
 ensures true;
 {
 	if (x<=0) return;
-	else loop(x+y, y+z, 4-z);
+	else loop(x+y, y+z, 3-z);
 }
 
 /*

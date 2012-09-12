@@ -131,6 +131,7 @@ and exp =
   | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
+	| Pow of (exp * exp * loc)
 	  (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
@@ -1287,6 +1288,8 @@ and mkFConst a pos = FConst (a, pos)
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
+
+and mkPow a1 a2 pos = Pow (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 

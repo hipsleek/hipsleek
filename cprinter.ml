@@ -117,6 +117,7 @@ let op_add_short = "+"
 let op_sub_short = "-" 
 let op_mult_short = "*" 
 let op_div_short = "/" 
+let op_pow_short = "^"
 let op_max_short = "mx" 
 let op_min_short = "mi" 
 let op_union_short = "U" 
@@ -137,6 +138,7 @@ let op_add = "+"
 let op_sub = "-" 
 let op_mult = "*" 
 let op_div = "/" 
+let op_pow = "^"
 let op_max = "max" 
 let op_min = "min" 
 let op_union = "union" 
@@ -629,14 +631,16 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
-	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
+    | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           pr_list_op op_add f_b args; (*fmt_string (string_of_pos l.start_pos);*)
     | P.Mult (e1, e2, l) -> 
           let args = bin_op_to_list op_mult_short exp_assoc_op e in
-          pr_list_op op_mult f_b  args
+          pr_list_op op_mult f_b args
+    | P.Pow (e1, e2, l) -> 
+          fmt_string "pow("; pr_formula_exp e1; fmt_string ", "; pr_formula_exp e2; fmt_string ")";
     | P.Max (e1, e2, l) -> 
           let args = bin_op_to_list op_max_short exp_assoc_op e in
           pr_fn_args op_max pr_formula_exp args
@@ -2473,7 +2477,10 @@ let string_of_term_type = function
 let string_of_term_res = function
 	| TInfer.Loop i -> "Loop_" ^ (string_of_int i)
 	| TInfer.MayLoop i -> "MayLoop_" ^ (string_of_int i)
-	| TInfer.Term term -> "Term_" ^ (string_of_int term.TInfer.term_id)
+	| TInfer.Term term -> "Term_" ^ (string_of_int term.TInfer.term_id) ^
+		(match term.TInfer.term_rank with
+		| None -> ""
+		| Some rank -> "[" ^ (string_of_formula_exp rank) ^ "]")
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
 		^ "#" ^ unk.TInfer.unk_callee 

@@ -28,6 +28,7 @@ rule tokenizer = parse
   | '+' { PLUS }
   | '-' { MINUS }
   | '*' { STAR }
+	| "**" { POW }
   | '$' { ENDF }
   | intnum as numstr { INT_LIT (int_of_string numstr) }
   | id as idstr { ID idstr }
