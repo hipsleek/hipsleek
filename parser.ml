@@ -213,54 +213,62 @@ let cexp_to_pure_slicing fct f sl = match f with
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
-  | Pure_c f1 , Pure_c f2 -> (match f1 with
-                             | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,"",F_o_specs))) explist
-                               in let len =  List.length tmp
-                               in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                             else  P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs))
-                               in Pure_f(res) 
-                             | _ -> (match f2 with
-                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,"",F_o_specs))) explist
-                                      in let len = List.length tmp
-                                      in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                                   else P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs))
-                                      in Pure_f(res) 
-                                    | _ -> (
-                                        let typ1 = P.typ_of_exp f1 in 
-                                        let typ2 = P.typ_of_exp f2 in
-                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
-                                        (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
-                                         let arr_typ_check typ1 typ2 =
-                                         ( match typ1 with
-                                            | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
-                                                  ( match typ2 with
-                                                    | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
-                                                    | _ -> false
-                                                  )
-                                            | _ -> ( match typ2 with
-                                                  | Array (t,_) -> if t== UNK then true else false
-                                                  | _ -> false
-                                            )
-                                         )
-                                        in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                                          Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_specs)))
-                                        else
-                                          report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
-                                      )
-                                    )
-                             )
-  | Pure_f f1 , Pure_c f2 ->(match f1  with 
-						    | P.BForm((pf,il),oe) -> (match pf with 
-                                               | P.Lt (a1, a2, _) 
-                                               | P.Lte (a1, a2, _) 
-                                               | P.Gt (a1, a2, _) 
-                                               | P.Gte (a1, a2, _)
-                                               | P.Eq (a1, a2, _) 
-                                               | P.Neq (a1, a2, _) -> let tmp = P.BForm(((fct a2 f2), None),oe) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
-                            | _ -> report_error (get_pos 1) "error should be a binary exp" )
+  | Pure_c f1 , Pure_c f2 -> (
+      match f1 with
+      | P.List(explist,pos) -> 
+          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,"",F_o_specs))) explist in
+          let len =  List.length tmp in
+          let res = 
+            if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+            else  P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs)) in
+          Pure_f(res) 
+      | _ -> (
+          match f2 with
+          | P.List(explist,pos) ->
+              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,"",F_o_specs))) explist in
+              let len = List.length tmp in
+              let res =
+                if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                else P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs)) in
+              Pure_f(res) 
+          | _ -> (
+              let typ1 = P.typ_of_exp f1 in 
+              let typ2 = P.typ_of_exp f2 in
+              (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+              (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+              let arr_typ_check typ1 typ2 = (
+                match typ1 with
+                | Array (t1,_) ->
+                    if t1== UNK || t1 == typ2 then true
+                    else (match typ2 with
+                          | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
+                          | _ -> false)
+                | _ -> (match typ2 with
+                        | Array (t,_) -> if t== UNK then true else false
+                        | _ -> false)
+              ) in
+              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
+                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_unknown))) (* TRUNG: maybe because of this *)
+              else
+                report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
+            )
+        )
+    )
+  | Pure_f f1 , Pure_c f2 -> (
+      match f1  with 
+      | P.BForm((pf,il),oe) -> (
+          match pf with 
+          | P.Lt (a1, a2, _) 
+          | P.Lte (a1, a2, _) 
+          | P.Gt (a1, a2, _) 
+          | P.Gte (a1, a2, _)
+          | P.Eq (a1, a2, _) 
+          | P.Neq (a1, a2, _) -> let tmp = P.BForm(((fct a2 f2), None),oe) in 
+            Pure_f (P.mkAnd f1 tmp (get_pos 2))
+          | _ -> report_error (get_pos 1) "error should be an equality exp" 
+        )
+      | _ -> report_error (get_pos 1) "error should be a binary exp" 
+    )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
 

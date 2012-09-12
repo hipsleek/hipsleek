@@ -6455,7 +6455,7 @@ let rec add_post post f = match f with
       let fec = match b.formula_struc_continuation with 
 				| Some b-> add_post post b
 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in
-               EAssume (svs,pf,(fresh_formula_label s_lbl F_o_specs)) in 
+               EAssume (svs,pf,(fresh_formula_label s_lbl F_o_unknown)) in 
     EBase{b with formula_struc_continuation = Some fec}
   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}
   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}

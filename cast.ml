@@ -713,8 +713,8 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s fo = (-1,s,fo)
-let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id "" F_o_specs))
-let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id "" F_o_specs))
+let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id "" F_o_unknown))
+let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id "" F_o_unknown))
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2

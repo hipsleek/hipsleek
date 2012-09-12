@@ -2538,7 +2538,6 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
       reset_formula_point_id();
       let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
       let conseq = rename_f conseq in
-      let newid,_,_ = fresh_formula_label "" F_o_unknown in
       let rec prepare_ctx es = {es with 
         es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
         es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)

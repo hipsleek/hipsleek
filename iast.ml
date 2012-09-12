@@ -1947,7 +1947,7 @@ let add_bar_inits prog =
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "" F_o_specs) in
+			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "" F_o_unknown) in
 			{ proc_name = "init_"^b.barrier_name;
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;

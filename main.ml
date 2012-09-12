@@ -131,7 +131,6 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-
 	(* Forward axioms and relations declarations to SMT solver module *)
 	let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in

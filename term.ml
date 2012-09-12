@@ -382,7 +382,7 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
 
 let drop_restricted_domain_constraint (source_constraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
-  Debug.ho_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
+  Debug.no_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
 
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
