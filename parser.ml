@@ -868,9 +868,9 @@ label : [[  `STRING (_,id); `COLON -> id]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
-pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id F_o_code]];
+pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id F_o_specs]];
 
-formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id F_o_code)]];
+formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id F_o_specs)]];
 
 opt_heap_constr: [[ t = heap_constr -> t]];
 
