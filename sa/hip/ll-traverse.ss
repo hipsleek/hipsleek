@@ -26,40 +26,8 @@ void foo(ref node x)
 
 /*
 
-simlify
-!!! Check assume: : (HP_535(x') * x::node<val_17_543,x'>@M[Orig]&x'!=null&
-  {FLOW,(22,23)=__norm}[]) --> H(x')&true&{FLOW,(22,23)=__norm}[]
-!!! Check Relation:  HP_535
-!!! Check Para: x
-!!! No: this relation is not well define: HP_535
-!!! Check Relation:  H
-!!! Check Para: x
-!!! No: this relation is not well define: H
-!!! Check assume: : (x::node<val_17_543,x_552>@M[Orig] * G(x_552,x')&x_552!=null&
-  {FLOW,(22,23)=__norm}[]) --> G(x,x')&true&{FLOW,(22,23)=__norm}[]
-!!! Check Relation:  G
-!!! Check Para: x_552
-!!! Check Para: x
-!!! No: this relation is not well define: G
-!!! Check Relation:  G
-!!! Check Para: x
-!!! Check Para: val_17_543
-!!! Check Para: x_552
-!!! Check Para: x
-!!! No: this relation is not well define: G
-!!! Check assume: : (H(x)&true&
-  {FLOW,(22,23)=__norm}[]) --> x::node<val_17_523',next_17_524'>@L[Orig] * 
-  HP_535(next_17_524')&true&{FLOW,(1,25)=__flow}[]
-!!! Check Relation:  H
-!!! Check Para: x
-!!! Check Para: val_17_523
-!!! Check Para: next_17_524
-!!! No: this relation is not well define: H
-!!! Check Relation:  HP_535
-!!! Check Para: next_17_524
-!!! No: this relation is not well define: HP_535
-!!! Check assume: : (HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&
-  {FLOW,(22,23)=__norm}[]) --> G(x,x')&true&{FLOW,(22,23)=__norm}[]
+
+!!! Check assume: : HP_535(x') * x::node<val_17_541,x'>&x'=null --> G(x,x')
 !!! Check Relation:  HP_535
 !!! Check Para: x
 !!! YESSSS: this relation is well define:  HP_535
