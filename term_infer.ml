@@ -409,8 +409,13 @@ and subst_term_base_spec utils subst tg b =
 						| Loop _ -> Loop new_id
 						| Term term -> (match term.term_rank with
 							| None -> Term { term with term_id = new_id; } (* 1-step execution *)
-							| Some _ -> Unknown { unk with
-								unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; })
+							| Some rank -> 
+								let unk_succs = List.map (fun id -> Hashtbl.find term_res_tbl id) (TG.succ tg unk_id) in
+								let is_term = not (List.exists (fun succ -> 
+									match succ with | Term _ -> false | _ -> true) unk_succs) in
+								if is_term then Term { term with term_id = new_id; }
+								else Unknown { unk with 
+									unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; })
 						| _ -> Unknown { unk with
 							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
 						Hashtbl.add term_res_tbl new_id new_res;
@@ -652,6 +657,7 @@ let linear_rank_synthesis utils (x1, x2, x3) ctx =
 	
 	let bound_constr = mkGte unk_rank_1 (mkIConst 0) in
 	let dec_constr = mkAnd (mkGt unk_rank_1 unk_rank_2) (mkGt unk_rank_2 unk_rank_3) in
+	(* let dec_constr = mkGt unk_rank_1 unk_rank_2 in *)
 	let simpl_ctx = utils.simplify ctx in
 	let constr = mkOr (mkNot simpl_ctx) (mkAnd bound_constr dec_constr) in
 	let qconstr = mkForall (diff_svl (CP.fv constr) (unk_coe @ [free_coe])) constr in
@@ -830,12 +836,13 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 							(* So that, r(X)>r(X') MAY imply r(X)>r(X'')        *)
 							(* If r(X)>r(X') |- r(X)>r(X'') Then Term[Rank] *)
 							(* Else Term(Base)                              *)
-							let _ = 							
-								if (utils.imply compose_ctx (mkGt p1 p3)) then
-									let rank = linear_rank_synthesis utils (x1, x2, x3) compose_ctx in
-									print_endline ("\nR1>R3: " ^ (!print_pure_formula (utils.simplify compose_ctx)))
-								else () in
-							(([], []), (simplify_inf_cond utils args base_cond ctx, None))
+							(* (([], []), (simplify_inf_cond utils args base_cond ctx, None)) *)
+							begin
+							if (utils.imply compose_ctx (mkGt p1 p3)) then
+								let rank = linear_rank_synthesis utils (x1, x2, x3) compose_ctx in
+								(([], []), (simplify_inf_cond utils args (mkNot base_cond) ctx, rank))
+							else (([], []), (simplify_inf_cond utils args base_cond ctx, None))
+							end
 						else
 							(* We can find some addition conditions for termination         *)
 							(* If A /\ (not B) is SAT (not (A |- B)) and A /\ B is SAT then *)
