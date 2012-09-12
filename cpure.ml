@@ -1435,14 +1435,14 @@ and mkLexVarAnn (lexvar: p_formula) new_ann =
                   LexVar newlex
   | _ -> report_error no_pos "Invalid input! Expect LexVar here!"
 
-and mkPure (pf: p_formula) : formula = BForm ((pf,None), None)
+and mkPure (pf: p_formula) lbl : formula = BForm ((pf,None), lbl)
 
 and mkLexVar_pure a l1 l2 = 
   let pf = mkLexVar a l1 l2 no_pos in
-  let p = mkPure pf in
+  let p = mkPure pf None in
   p
 
-and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
+and mkBVar_pure v p pos = mkPure (mkBVar v p pos) None
 
 and mkVarNull v pos = 
   if is_null_const v then Null pos

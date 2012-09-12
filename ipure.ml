@@ -405,7 +405,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 
 and mkNot f lbl pos = Not (f, lbl, pos)
 
-and mkPure bf = BForm ((bf,None), None)
+and mkPure bf lbl = BForm ((bf,None), lbl)
 
 (*
 and mkEqualVar (sv1 : spec_var) (sv2 : spec_var) =

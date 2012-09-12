@@ -505,14 +505,14 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
             | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
             | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
                 (* es > ed *)
-                CP.mkPure (CP.mkGt element_src element_dst pos)
+                CP.mkPure (CP.mkGt element_src element_dst pos) None
             | CP.SConst (NegativeInfty, _), _
             | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
             | _ ->
                 (* (es > ls) & (ed > ld) & (es > ed) *)
-                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
-                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) in
-                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
+                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) None in
+                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) None in
+                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) None in
                 CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
           ) in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
@@ -543,7 +543,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         let equal_constraint = (
           let equal_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
-          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
+          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) None in
           CP.mkImply equal_lhs equal_rhs None pos
         ) in
         CP.mkAnd domain_constraint equal_constraint pos

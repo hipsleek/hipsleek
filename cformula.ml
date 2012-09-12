@@ -5127,7 +5127,7 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
             let ta = lex.CP.lex_ann in
             let l1 = lex.CP.lex_exp in
             let l2 = lex.CP.lex_tmp in
-            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
+            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) None in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true
         | _ -> report_error no_pos "Invalid value for esvm" in
@@ -7637,7 +7637,7 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       let lexvar = 
         if is_primitive then  CP.mkLexVar Term [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in 
-      mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
+      mkEBase_with_cont (CP.mkPure lexvar None) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList (map_l_snd (norm_struc_with_lexvar is_primitive) b)
   | EOr b -> mkEOr (norm_struc_with_lexvar is_primitive b.formula_struc_or_f1) (norm_struc_with_lexvar is_primitive b.formula_struc_or_f2) b.formula_struc_or_pos

@@ -275,7 +275,7 @@ and create_bound_constraint measure pos =
         | CP.SConst (NegativeInfty, _) ->
             let vars = CP.afv element in
             let bound_var = CP.fresh_new_spec_var Float in
-            let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in
+            let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) None in
             let termcond = CP.mkNot loopcond_constraint None no_pos in
             let f = CP.mkOr (CP.mkNot bound_exp None no_pos) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
@@ -285,14 +285,14 @@ and create_bound_constraint measure pos =
         | _ ->
             let vars = CP.afv element in
             let epsilon = CP.fresh_new_spec_var Float in
-            let constraint1 = CP.mkPure (CP.mkGt element limit pos) in
-            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
+            let constraint1 = CP.mkPure (CP.mkGt element limit pos) None in
+            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) None in
             let termcond = CP.mkNot loopcond_constraint None no_pos in
             let f = CP.mkOr (CP.mkNot (CP.mkAnd constraint1 constraint2 pos) None no_pos) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
             let fForAll = CP.mkImply fdomain f None pos in
             let term_formula = CP.mkForall vars fForAll None pos in
-            let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) in
+            let eps_formula = CP.mkPure (CP.mkGt (CP.mkVar epsilon pos) (CP.mkFConst 0.0 pos) pos) None in
             CP.mkExists [epsilon] (CP.mkAnd eps_formula term_formula pos) None pos
       ) in
       let _ = Debug.dinfo_pprint  "++ In function create_bound_constraint:" no_pos in
@@ -300,7 +300,7 @@ and create_bound_constraint measure pos =
       let _ = Debug.dinfo_pprint ("   loopcond_constraint    = " ^ (Cprinter.string_of_pure_formula loopcond_constraint)) no_pos in
       let _ = Debug.dinfo_pprint ("   termination_constraint = " ^ (Cprinter.string_of_pure_formula termination_constraint)) no_pos in
       CP.mkAnd (CP.mkAnd domain_constraint loopcond_constraint pos) termination_constraint pos
-  | _ -> CP.mkPure (CP.mkGte measure (CP.mkIConst 0 pos) pos)
+  | _ -> CP.mkPure (CP.mkGte measure (CP.mkIConst 0 pos) pos) None
 
 and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =

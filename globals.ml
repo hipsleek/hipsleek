@@ -701,9 +701,12 @@ let locs_of_partial_context ctx =
 let fresh_formula_label (s:string) (fo: formula_origin) :formula_label = 
 	branch_point_id := !branch_point_id + 1;
 	(!branch_point_id,s,fo)
-  
+
 let fresh_branch_point_id (s:string) (fo: formula_origin) : control_path_id = Some (fresh_formula_label s fo)
 let fresh_strict_branch_point_id (s:string) (fo: formula_origin) : control_path_id_strict = (fresh_formula_label s fo)
+
+let fresh_unindex_formula_label (fo: formula_origin) : formula_label =
+  (-1,"",fo)
 
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = 
   let (i1, _, _) = l1 in
