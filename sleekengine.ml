@@ -94,6 +94,35 @@ let clear_all () =
   clear_cprog ();
   residues := None
 
+(*for gui*)
+let main_init ()=
+  let iprog = { I.prog_data_decls = [iobj_def];
+                I.prog_global_var_decls = [];
+                I.prog_logical_var_decls = [];
+                I.prog_enum_decls = [];
+                I.prog_view_decls = [];
+                I.prog_func_decls = [];
+                I.prog_rel_decls = [];
+                I.prog_rel_ids = [];
+                I.prog_axiom_decls = [];
+                I.prog_proc_decls = [];
+                I.prog_barrier_decls = [];
+                I.prog_coercion_decls = [];
+                I.prog_hopred_decls = [];
+              } in
+  (* let _ = I.inbuilt_build_exc_hierarchy () in (\* for inbuilt control flows *\) *)
+  (* let _ = Iast.build_exc_hierarchy true iprog in *)
+  (* let _ = Gen.ExcNumbering.compute_hierarchy 3 () in *)
+  iprog
+
+let is_decl_cmd cmd =
+  match cmd with
+	| DataDef _
+	| PredDef _ -> true
+(*    | LemmaDef _ -> true *)
+    | _ -> false
+
+
 let check_data_pred_name name : bool =
   try 
 	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in

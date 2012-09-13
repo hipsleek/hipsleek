@@ -68,7 +68,7 @@ end (* FileUtil *)
  *)
 module SourceUtil = struct
 
-  type seg_pos = {
+   type seg_pos = {
     start_char: int;
     start_line: int;
     stop_char: int;
@@ -77,6 +77,7 @@ module SourceUtil = struct
 
   type procedure = {
     name: string;
+    mname: string;
     pos: seg_pos;
   }
 
@@ -85,9 +86,6 @@ module SourceUtil = struct
   exception Syntax_error of string * seg_pos
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
-
-  let string_of_entailment (e: entailment) =
-    Printf.sprintf "(%d,%d): %s" e.pos.start_line e.pos.stop_line e.name
 
   let string_of_seg_pos pos =
     Printf.sprintf "(%d-%d, line %d-%d)" 
@@ -103,7 +101,35 @@ module SourceUtil = struct
         pos::(new_line_pos (pos+1))
       with Not_found | Invalid_argument _ -> []
     in
-    new_line_pos 0
+    new_line_pos 1
+
+  (** return a map of all line in src *)
+  let get_lines_positions (src: string) : (int*int) list =
+    let new_line_re = Str.regexp "^" in
+    let rec new_line_pos (start: int): (int*int) list =
+      try
+        let pos = Str.search_forward new_line_re src start in
+        (start, pos)::(new_line_pos (pos+1))
+      with Not_found | Invalid_argument _ -> []
+    in
+    (new_line_pos 0)
+
+  let get_line_pos lnum m=
+   List.nth m lnum
+
+  let get_line_num (p:loc):int= p.start_pos.Lexing.pos_lnum
+
+  let string_of_line_pos lnum m=
+    let(s,e) = List.nth m lnum in
+    ("line " ^ (string_of_int lnum)^ ":" ^ (string_of_int s)^"->" ^ (string_of_int e))
+
+  let string_of_lines m=
+    let rec helper l all_lines=
+      match all_lines with
+        | [] -> ""
+        | (s,e)::xs -> ("line " ^ (string_of_int l)^ ":" ^ (string_of_int s)^"->" ^ (string_of_int e)
+          ^ "\n") ^ (helper (l+1) xs)
+    in helper 0 m
 
   (** map a position to it's line number,
      based on a list of positions of new line chars
@@ -135,7 +161,7 @@ module SourceUtil = struct
   let parse_entailment_list (src: string) : entailment list =
     let new_lines = get_new_line_positions src in
     let to_line_num pos = char_pos_to_line_num pos new_lines in
-    let rec parse (start: int) : entailment list =
+    let rec parse_e (start: int) : entailment list =
       try
         let start_char = Str.search_forward checkentail_re src start in
         let stop_char = Str.match_end () in
@@ -150,12 +176,13 @@ module SourceUtil = struct
         } in
         let first = {
           pos = pos;
+          mname = f;
           name = f;
         } in
-        first::(parse (stop_char+1))
+        first::(parse_e (stop_char+1))
       with Not_found -> []
     in
-    parse 0
+    parse_e 0
 
   let parse_procedure_list (src: string) : procedure list =
     let parse (proc: Iast.proc_decl) : procedure =
@@ -168,12 +195,14 @@ module SourceUtil = struct
       } in
       {
         name = proc.Iast.proc_name;
+        mname = Cast.mingle_name proc.Iast.proc_name (List.map (fun p -> p.Iast.param_type) proc.Iast.proc_args);
         pos = pos;
       }
     in
     let lexbuf = Lexing.from_string src in
     try
-      let prog = Iparser.program (Ilexer.tokenizer "editor_buffer") lexbuf in
+      (*let prog = Iparser.program (Ilexer.tokenizer "editor_buffer") lexbuf in*)
+      let prog = Parser.parse_hip "editor_buffer" (Stream.of_string src) in
       let procs = prog.Iast.prog_proc_decls in
       List.rev_map parse procs
     with Parsing.Parse_error ->
@@ -187,6 +216,23 @@ module SourceUtil = struct
       } in
       log (Printf.sprintf "Syntax error at line %d" start_p.Lexing.pos_lnum);
       raise (Syntax_error ("Syntax error!", pos))
+
+let get_procedure_list (procs: Iast.proc_decl list) : procedure list =
+    let parse (proc: Iast.proc_decl) : procedure =
+      let proc_pos = proc.Iast.proc_loc in
+      let pos = {
+        start_char = proc_pos.start_pos.Lexing.pos_cnum;
+        start_line = proc_pos.start_pos.Lexing.pos_lnum;
+        stop_char = proc_pos.end_pos.Lexing.pos_cnum;
+        stop_line = proc_pos.end_pos.Lexing.pos_lnum;
+      } in
+      {
+        name = proc.Iast.proc_name;
+        mname = Cast.mingle_name proc.Iast.proc_name (List.map (fun p -> p.Iast.param_type) proc.Iast.proc_args);
+        pos = pos;
+      }
+    in
+    List.rev_map parse procs
 
   (** search for all substring in a string *)
   let search (doc: string) (sub: string) : seg_pos list =
@@ -211,6 +257,7 @@ let initialize () =
   ignore (GtkMain.Main.init ());
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
+(*
   Globals.reporter := (fun loc msg ->
     let pos = {
       SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
@@ -220,308 +267,9 @@ let initialize () =
     } in
     raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
+*)
   (*TP.enable_log_for_all_provers ();*)
-  TP.start_prover ()
+  (*TP.start_prover*) ()
 
-let finalize () =
-  TP.stop_prover ()
-
-
-(**
-   Helper for interacting with Sleek script
-   Command calling, process management, parsing of result,...
- *)
-module SleekHelper = struct
-
-  open SourceUtil
-
-  type sleek_args = {
-    tp: TP.tp_type;
-    eps: bool;
-    eap: bool;
-    esn: bool;
-    esi: bool;
-    efp: bool;
-    cache: bool;
-    increm: bool;
-  }
-
-  let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
-  let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
-
-  let default_args = {
-    tp = TP.OmegaCalc;
-    eps = false;
-    eap = false;
-    esn = false;
-    esi = false;
-    efp = false;
-    cache = true;
-    increm = false;
-  }
-
-  let build_args_string (args: sleek_args) =
-    let tp = " -tp " ^ (TP.string_of_tp args.tp) in
-    let eps = if args.eps then " --eps" else "" in
-    let eap = if args.eap then " --eap" else "" in
-    let esn = if args.esn then " --esn" else "" in
-    let esi = if args.esi then " --esi" else "" in
-    let efp = if args.efp then " --efp" else "" in
-    let cache = if not args.cache then " --no-cache" else "" in
-    let increm = if args.increm then " --increm" else "" in
-    let res = tp ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
-    res
-
-  let sleek_command (args: sleek_args) = 
-    let args_string = build_args_string args in
-    Printf.sprintf "./sleek -dd %s %s > %s" args_string infile outfile
-
-  (** run sleek with source text and return result string *)
-  let run_sleek ?(args = default_args) (src: string) =
-    FileUtil.write_to_file infile src;
-    let cmd = sleek_command args in
-    ignore (Sys.command cmd);
-    let res = FileUtil.read_from_file outfile in
-    Sys.remove infile;
-    Sys.remove outfile;
-    res
-
-  let parse_checkentail_result (res: string) =
-    let regexp = Str.regexp "Valid\\." in
-    try
-      ignore (Str.search_forward regexp res 0);
-      true
-    with Not_found -> false
-
-  let checkentail_external ?args (src: string) (e: entailment) =
-    let header = clean (String.sub src 0 e.pos.start_char) in
-    let src = Printf.sprintf "%s checkentail %s. print residue." header e.name in
-    let res = run_sleek ?args src in
-    parse_checkentail_result res, res
-
-  let parse_command_list (src: string) : SC.command list =
-    let lexbuf = Lexing.from_string src in
-    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf
-
-  let process_cmd cmd = match cmd with
-    | SC.DataDef ddef -> 
-        log "processing data def";
-        SE.process_data_def ddef; None
-    | SC.PredDef pdef -> 
-        log "processing pred def";
-        SE.process_pred_def pdef; None
-    | SC.EntailCheck (iante, iconseq) -> 
-        log "processing entail check"; 
-        Some (SE.run_entail_check iante iconseq)
-    | SC.CaptureResidue lvar -> 
-        log "processing capture residue";
-        SE.process_capture_residue lvar; None
-    | SC.LemmaDef ldef -> 
-        log "processing lemmad def";
-        SE.process_lemma ldef; None
-    | SC.PrintCmd pcmd -> 
-        log "processing print cmd";
-        SE.process_print_command pcmd; None
-    | SC.LetDef (lvar, lbody) -> 
-        log "processing let def";
-        SC.put_var lvar lbody; None
-    | SC.Time (b,s,_) -> None
-    | SC.EmptyCmd -> None
-
-  let checkentail src e =
-    try
-      log ("Checking entailment: " ^ (string_of_entailment e));
-      let header = clean (String.sub src 0 e.pos.start_char) in
-      let src = Printf.sprintf "%s checkentail %s." header e.name in
-      let cmds = parse_command_list src in
-      let _ = SE.clear_all () in
-      let rec exec cmds = match cmds with
-        | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
-        | [cmd] -> process_cmd cmd
-        | cmd::rest -> ignore (process_cmd cmd); exec rest
-      in
-      let res, contexts = match exec cmds with
-        | None -> failwith "[gUtil.ml/checkentail]: last command is not checkentail command"
-        | Some v -> v
-      in
-      let residue = match SE.get_residue () with
-        | Some residue ->
-            let formulas = Cformula.list_formula_of_list_context residue in
-            let fstring = Cprinter.string_of_list_formula formulas in
-            "Residue:\n" ^ fstring ^ "\n"
-        | None -> ""
-      in
-      let context = Cprinter.string_of_list_context contexts in
-      let info = residue ^ context in
-      let valid = if res then "valid" else "fail" in
-      log valid;
-      res, info
-    with exn as e ->
-      false, (Printexc.to_string e) ^ "\n" ^ (Printexc.get_backtrace ())
-
-end (* SleekHelper *)
-
-
-(**
-   Helper for interacting with Hip script
-   Command calling, process management, parsing of result,...
- *)
-module HipHelper = struct
-
-  open SourceUtil
-
-  type hip_args = {
-    tp: TP.tp_type;
-    eps: bool;
-    eap: bool;
-    esn: bool;
-    esi: bool;
-    efp: bool;
-    cache: bool;
-    increm: bool;
-  }
-
-  let infile = "hip.in." ^ (string_of_int (Unix.getpid ()))
-  let outfile = "hip.out." ^ (string_of_int (Unix.getpid ()))
-  let errfile = "hip.err." ^ (string_of_int (Unix.getpid ()))
-
-  let debug_log_buffer = Buffer.create 1024
-  let prover_log_buffer = Buffer.create 1024
-  let console_log_buffer = Buffer.create 1024
-  let error_positions = ref ([]: seg_pos list)
-
-  let default_args = {
-    tp = TP.OmegaCalc;
-    eps = false;
-    eap = false;
-    esn = false;
-    esi = false;
-    efp = false;
-    cache = true;
-    increm = false;
-  }
-
-  let build_args_string (args: hip_args) =
-    let tp_name = TP.string_of_tp args.tp in
-    let tp = "-tp " ^ tp_name in
-    let log = " --log-" ^ tp_name in
-    let eps = if args.eps then " --eps" else "" in
-    let eap = if args.eap then " --eap" else "" in
-    let esn = if args.esn then " --esn" else "" in
-    let esi = if args.esi then " --esi" else "" in
-    let efp = if args.efp then " --efp" else "" in
-    let cache = if not args.cache then " --no-cache" else "" in
-    let increm = if args.increm then " --increm" else "" in
-    let res = tp ^ log ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
-    res
-
-  let hip_command (args: hip_args) (proc_name: string) =
-    let args = build_args_string args in
-    Printf.sprintf "./hip -dd %s -p %s %s>%s 2>%s" args proc_name infile outfile errfile
-
-  (** run hip with source text and return result string *)
-  let run_hip ?(args = default_args) (src: string) (proc_name: string) =
-    FileUtil.write_to_file infile src;
-    let cmd = hip_command args proc_name in
-    log ("Executing: " ^ cmd);
-    ignore (Sys.command cmd);
-    let res = FileUtil.read_from_file outfile in
-    (* save log messages for later use *)
-    Buffer.clear debug_log_buffer;
-    Buffer.add_string debug_log_buffer (FileUtil.read_from_file errfile);
-    Buffer.clear prover_log_buffer;
-    let tp_log_file = TP.log_file_of_tp args.tp in
-    Buffer.add_string prover_log_buffer (FileUtil.read_from_file tp_log_file);
-    Buffer.clear console_log_buffer;
-    Buffer.add_string console_log_buffer (FileUtil.read_from_file outfile);
-    (* remove temp files *)
-    Sys.remove infile;
-    Sys.remove outfile;
-    Sys.remove errfile;
-    (* return output *)
-    res
-
-  let parse_locs_line (line: string) : seg_pos list =
-    let parse loc =
-      let regexp = Str.regexp "(\\([0-9]+\\)-\\([0-9]+\\))" in
-      let _ = Str.string_match regexp loc 0 in
-      { start_char = int_of_string (Str.matched_group 1 loc);
-        stop_char = int_of_string (Str.matched_group 2 loc);
-        start_line = 0; (* ignore for now *)
-        stop_line = 0; (* ignore for now *)
-      }
-    in
-    let locs = Str.split (Str.regexp ",") line in
-    List.map parse locs
-
-  let parse_result (hip_output: string) =
-    let err_pos = 
-      try
-        let regexp = Str.regexp "Possible locations of failures: \\([^\\.]+\\)\\." in
-        let _ = Str.search_forward regexp hip_output 0 in
-        let locs_line = Str.matched_group 1 hip_output in
-        log ("Failed branches location: " ^ locs_line);
-        parse_locs_line locs_line;
-      with Not_found -> []
-    in
-    error_positions := err_pos;
-    let regexp = Str.regexp_string "SUCCESS" in
-    let res = 
-      try
-        ignore (Str.search_forward regexp hip_output 0);
-        log "Success.";
-        true
-      with Not_found -> (log "FAIL!"; false)
-    in
-    res
-
-  let check_proc_external ?args (src: string) (p: procedure) =
-    let res = run_hip ?args src p.name in
-    parse_result res
-
-  let get_debug_log () = Buffer.contents debug_log_buffer
-
-  let get_prover_log () = Buffer.contents prover_log_buffer
-
-  let get_console_log () = Buffer.contents console_log_buffer
-
-  let get_error_positions () = !error_positions
-
-end (* HipHelper *)
-
-
-(** List of recent documents opened by gHip *)
-module RecentDocuments = struct
-
-  let home_dir = Sys.getenv "HOME"
-  let history_file = home_dir ^ "/.hip_recent"
-
-  let get_recent_documents ?(limit=0) () =
-    let rec nhd n lst =
-      (* return first n items of a list, n must be less than length of the list *)
-      if n = 0 then []
-      else (List.hd lst)::(nhd (n-1) (List.tl lst))
-    in
-    if Sys.file_exists history_file then
-      let file_content = FileUtil.read_from_file history_file in
-      let lines = Str.split (Str.regexp "\n") file_content in
-      let res = 
-        if List.length lines < limit || limit = 0 then lines 
-        else nhd limit lines in
-      res
-    else []
-
-  let rec string_join (delim: string) (eles: string list) =
-    match eles with
-    | [] -> ""
-    | [e] -> e
-    | e::rest -> e ^ delim ^ (string_join delim eles)
-
-  let add_to_recent_documents (fname: string) =
-    let current = get_recent_documents () in
-    let filtered = List.filter (fun x -> x <> fname) current in
-    let new_list = fname::filtered in
-    let text = string_join "\n" new_list in
-    FileUtil.write_to_file history_file text
-
-end (* RecentDocuments *)
+(* let finalize () = *)
+(*   TP.stop_prover() *)

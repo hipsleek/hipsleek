@@ -27,6 +27,16 @@ int goo (ref int x, ref int y)
    y = y - 2;
    return x;
 }
+//succ
+int goo1 (ref int x, ref int y)
+  requires x > 0 & y > 0
+  ensures  x' > 0 & y'> -2;
+{
+   x = x + 1;
+   y = y - 2;
+   return x;
+}
+
 //[39;35;31;36;32;33]
 int test1(ref int x, ref int y)
   requires x = 1 & y = 6

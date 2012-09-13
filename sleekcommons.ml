@@ -96,6 +96,8 @@ let string_of_command c = match c with
   | Time _ -> "Time"
   | EmptyCmd -> "EmptyCmd"
 
+let pos_of_command c = no_pos
+
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 
 let get_var (v : ident) : meta_formula = H.find var_tab v

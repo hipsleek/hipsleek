@@ -26,7 +26,7 @@ int foo(node x)
 {
   int a;
   //dprint;
-  a = x.next.val;
+  a = x.next;
   //dprint;
   return a;
 }

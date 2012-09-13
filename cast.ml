@@ -101,7 +101,15 @@ and rel_decl = {
 and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
-    
+
+(*for debugging*)
+and dexp = {
+    pre : F.formula;
+    post : F.formula;
+    framing: F.formula;
+    is_failed: bool;
+}
+
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
@@ -115,13 +123,14 @@ and proc_decl = {
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     proc_by_name_params : P.spec_var list;
-    proc_body : exp option;
+    proc_body : (exp(* , dexp option *)) option;
     (* Termination: Set of logical variables of the proc's scc group *)
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
     proc_is_recursive : bool;
     proc_file : string;
+    mutable proc_verified: ((string * Cformula.fail_type option) list); (*capture verification result: succ or fail, residue, msg*)
     proc_loc : loc; }
 
 (*TODO: should we change lemma need struc formulas?

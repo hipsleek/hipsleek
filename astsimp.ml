@@ -1705,6 +1705,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
+          C.proc_verified = [];
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
 

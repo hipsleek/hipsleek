@@ -1599,8 +1599,8 @@ let string_of_entail_state  =  string_of_estate
 
 and string_of_failure_kind e_kind=
 match e_kind with
-  | Failure_May _ -> "MAY"
-  | Failure_Must _ -> "MUST"
+  | Failure_May _ -> "may-bug"
+  | Failure_Must _ -> "must-bug"
   | Failure_Bot _ -> "Bot"
   | Failure_Valid -> "Valid"
 

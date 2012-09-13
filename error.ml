@@ -13,6 +13,7 @@ type error = {
 
 (*exception Theorem_prover of (string * string) *)
 exception Ppf of (error * int) (*Proving_pre_fails*)
+
 (*
 let all_errors : error list ref = ref []
 
@@ -48,6 +49,20 @@ let report_error e =
     e.error_text);
   flush stdout;
   failwith e.error_text
+
+let report_error_wo_exc e =
+  begin
+      (if post_pos#is_avail then
+            Printf.printf "\nContext of Verification Failure: %s"
+                post_pos#string_of);
+      (if proving_loc#is_avail then
+            Printf.printf "\nLast Proving Location: %s\n"
+                proving_loc#string_of);
+      (Printf.printf "\nERROR: at %s \nMessage: %s\n " 
+           (string_of_loc e.error_loc)
+           e.error_text);
+      flush stdout;
+  end
 
 let report_error1 e s=
   (Printf.printf "%s\n" e.error_text);

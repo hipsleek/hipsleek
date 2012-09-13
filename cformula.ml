@@ -3508,14 +3508,14 @@ let gen_land (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
       (*report_error no_pos "Failure_None not expected in gen_and"*)
   | _, Failure_Bot _ -> m2, n2, e2
       (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("LAndR["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("Meet ["^m1^","^m2^"]"),n1,None)
   | Failure_May m1, _ -> m2, n2, e2
   | _ , Failure_May m2 -> m1,n1, e1
   | Failure_Must m1, Failure_Must m2 ->
        if (n1==sl_error) then (Failure_Must m2, n2, e2)
         else if (n2==sl_error) then (Failure_Must m1, n1, e1)
-        else Failure_Must ("LAndR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
-  | Failure_Must m1, Failure_Valid -> Failure_May ("LAndR["^m1^",Valid]"), n1, None (*combine state here?*)
+        else Failure_Must ("Meet ["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+  | Failure_Must m1, Failure_Valid -> Failure_May ("Meet ["^m1^",Valid]"), n1, None (*combine state here?*)
   | Failure_Valid, x  -> (m2, n2, e2)
 
 (*gen_rand*)
@@ -3527,10 +3527,10 @@ let gen_rand_x (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
       if (n1=sl_error) then (Failure_Must m2, n2, e2)
       else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-      else Failure_Must ("AndR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+      else Failure_Must ("Compose ["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m, n1, e1
   | _, Failure_Must m -> Failure_Must m, n2, e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("Compose ["^m1^","^m2^"]"),n1,None)
   | Failure_May m, _ -> Failure_May m,n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -3548,21 +3548,21 @@ let gen_rand (m1,n1,e1) (m2,n2,e2)=
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
 let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("Join["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
 (* report_error no_pos "Failure_None not expected in gen_or" *)
   | Failure_Bot _, _ ->  m2, n2,e2
       (* report_error no_pos "Failure_None not expected in gen_or" *)
   | _, Failure_Bot _ -> m1,n1,e1
       (*report_error no_pos "Failure_None not expected in gen_or"*)
-  | Failure_May m1, Failure_May m2 -> Failure_May ("OrR["^m1^","^m2^"]"),n1, None
+  | Failure_May m1, Failure_May m2 -> Failure_May ("Search ["^m1^","^m2^"]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
       if (n1=sl_error) then (Failure_Must m2, n2, e2)
       else if (n2= sl_error) then (Failure_Must m1, n1, e1)
       else (Failure_Must ("lor["^m1^","^m2^"]"), n1, e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("OrR["^m^",valid]"),n1,None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("OrR["^m^",valid]"),n2,None)
+  | Failure_Must m, Failure_Valid -> (Failure_May ("Search ["^m^",valid]"),n1,None)
+  | Failure_Valid, Failure_Must m -> (Failure_May ("Search ["^m^",valid]"),n2,None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -3578,7 +3578,7 @@ let gen_lor (m1,n1,e1) (m2,n2,e2)=
   Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
 
 let cmb_lor m1 m2: failure_kind = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]")
+  | Failure_Bot m1, Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]")
   | Failure_Bot _, _ ->  m2
   | _, Failure_Bot _ -> m1
   | Failure_May m1, Failure_May m2 -> Failure_May ("lor["^m1^","^m2^"]")
@@ -3589,6 +3589,25 @@ let cmb_lor m1 m2: failure_kind = match m1,m2 with
   | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"))
   | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"))
   | Failure_Valid, x  -> m2
+
+let cmb_rand m1 m2: failure_kind = match m1,m2 with
+  | Failure_Bot m1, _ ->  Failure_Bot m1
+  | _ , Failure_Bot m2 ->  Failure_Bot m2
+  | Failure_Must m1, _ -> Failure_Must m1
+  | _ ,Failure_Must m2 -> Failure_Must m2
+  | Failure_May m, _ -> Failure_May m
+  | _, Failure_May m -> Failure_May m
+  | Failure_Valid, Failure_Valid -> Failure_Valid
+
+let cmb_ror m1 m2: failure_kind = match m1,m2 with
+  | Failure_Bot m1, _ ->  Failure_Bot m1
+  | _ , Failure_Bot m2 ->  Failure_Bot m2
+  | Failure_Valid , _ -> Failure_Valid
+  | _ ,Failure_Valid -> Failure_Valid
+  | Failure_May m, _ -> Failure_May m
+  | _, Failure_May m -> Failure_May m
+  | Failure_Must m1, Failure_Must m2 ->
+      Failure_Must ("ror["^m1^","^m2^"]")
 
 (*gen_ror*)
 (*
@@ -3774,7 +3793,7 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
     match bfl with
       | [] -> None
       | fl -> let los= List.map helper fl in
-              ( match (combine_helper "OrR\n" los "") with
+              ( match (combine_helper "Join\n" los "") with
                 | "" -> None
                 | s -> Some s
               )
@@ -3800,7 +3819,7 @@ and get_failure_branch bfl=
     match bfl with
       | [] -> (None, Failure_Valid)
       | fl -> let los, fks= List.split (List.map helper fl) in
-              ( match (combine_helper "OrR\n" los "") with
+              ( match (combine_helper "Join\n" los "") with
                 | "" -> None, Failure_Valid
                 | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks)
               )
@@ -3808,13 +3827,40 @@ and get_failure_branch bfl=
 and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind)=
    get_failure_branch bfl
 
-let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
+let rec get_ft_list_partial_context (ls:list_partial_context): (fail_type)=
+    (*may use lor to combine the list first*)
+  (*return failure of 1 lemma is enough*)
+    let fts= List.map get_ft_partial_context ls in
+    (*los contains path traces*)
+    let cmb_ror_helper ft1 ft2=
+      Union_Reason (ft1,ft2)
+    in
+      List.fold_left cmb_ror_helper (List.hd fts) (List.tl fts)
+
+and get_ft_partial_context ((bfl:branch_fail list), _): (fail_type)=
+   get_ft_branch bfl
+
+and get_ft_branch bfl=
+   let helper (pt, ft)=
+     (* let spt = !print_path_trace pt in *)
+     ft
+   in
+   let cmb_lor_helper ft1 ft2=
+     Or_Reason (ft1,ft2)
+   in
+   let fts= (List.map helper bfl) in
+   ( match fts with
+     | [] -> report_error no_pos "cformula:get_ft_branch: sth wrong"
+     | _ -> List.fold_left cmb_lor_helper (List.hd fts) (List.tl fts)
+   )
+
+let rec get_failure_list_failesc_context (ls:list_failesc_context): (string*failure_kind)=
     (*may use rand to combine the list first*)
-    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
+    let (los, fk)=   List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
     (*los contains path traces*)
     (*combine_helper "UNION\n" los ""*)
      (*return failure of 1 lemma is enough*)
-   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks)
+   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fk)
 
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
   get_failure_branch bfl

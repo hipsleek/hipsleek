@@ -7,7 +7,7 @@ JOBS = 0
 LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
 LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
 #,z3
-LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
 
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
@@ -39,8 +39,7 @@ xml: xml/xml-light.cma
 
 xml/xml-light.cma:
 	$(XML)
-	
-	
+
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte
 	cp -u _build/main.byte hip

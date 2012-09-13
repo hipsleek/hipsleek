@@ -4962,9 +4962,45 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
               in
               Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
     in
-    let contra_fail_type = build_and_one_kind_failures "RHS: contradiction" (Failure_Must "") contra_list in
-    let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in
-    let may_fail_type = build_and_one_kind_failures "may-bug" (Failure_May "") may_list in
+     let build_and_one_kind_failures_new (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
+      (*build must/may msg*)
+      let build_failure_msg (ante, cons) =
+        let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
+        (*let _ = print_endline (Cprinter.string_of_list_loc ll) in*)
+        let lli = CF.get_lines ll in
+        (*possible to eliminate unnecessary intermediate that are defined by equality.*)
+        (*not sure it is better*)
+        let ante = CP.elim_equi_ante ante cons in
+        ((Cprinter.string_of_pure_formula ante) ^ " |- "^
+        (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in
+      let build_basic_failure (ante, cons)=
+        let str,locs = build_failure_msg (ante, cons) in
+        let msg = str ^ " ("  ^ failure_string ^ ")" in
+        (*get line number only*)
+            let rec get_line_number ll rs=
+              match ll with
+                | [] -> rs
+                | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum])
+            in
+            (*shoudl use ll in future*)
+           let ll = Gen.Basic.remove_dups (get_line_number locs []) in
+        let fe = match fk with
+                |  Failure_May _ -> mk_failure_may msg failure_name
+                | Failure_Must _ -> (mk_failure_must msg failure_name)
+                | _ -> {fe_kind = fk; fe_name = failure_name ;fe_locs=[]}
+              in
+        (Basic_Reason ({fail_ctx_template with fc_message = msg }, {fe with fe_locs = ll}))
+      in
+      match failure_list with
+        | [] -> None
+        | _ -> let fts = List.map build_basic_failure failure_list in
+               match fts with
+                 | [] -> None
+                 | x::xs -> Some (List.fold_left (fun ft1 ft2 ->  CF.And_Reason (ft1,ft2)) x xs)
+    in
+    let contra_fail_type = build_and_one_kind_failures_new "RHS: contradiction" (Failure_Must "") contra_list in
+    let must_fail_type = build_and_one_kind_failures_new "must-bug" (Failure_Must "") must_list in
+    let may_fail_type = build_and_one_kind_failures_new "may-bug" (Failure_May "") may_list in
     (*
       let pr oft =
       match oft with
