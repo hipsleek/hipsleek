@@ -55,6 +55,8 @@ let macros = ref (Hashtbl.create 19)
 (* An Hoa : Counting of holes "#" *)
 let hash_count = ref 0
 
+let is_primitives = ref true
+
 (* An Hoa : Generic data type for the abbreviated syntax x.f::<a> *)
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
@@ -247,8 +249,11 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                         | Array (t,_) -> if t== UNK then true else false
                         | _ -> false)
               ) in
-              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_tmp1))) (* TRUNG: maybe because of this *)
+              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then
+                if !is_primitives then 
+                  Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_code))) (* TRUNG: maybe because of this *)
+                else
+                  Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_specs))) (* TRUNG: maybe because of this *)
               else
                 report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
             )
@@ -553,7 +558,6 @@ and get_heap_ann annl : F.ann =
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
-
 
 EXTEND SHGram
   GLOBAL: sprog hprog sprog_int;
@@ -2290,9 +2294,11 @@ END;;
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
-let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
-let parse_hip n s =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+let parse_hip n s b =
+  is_primitives := b;
+  SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s is_primitives =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s is_primitives) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 

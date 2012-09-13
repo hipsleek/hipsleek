@@ -1456,12 +1456,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
                   let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
                   let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
-
+                  let _ = print_endline ("== renamed_spec 1 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                  (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
                     (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in*)
                   let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
+                  let _ = print_endline ("== renamed_spec 2 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                   let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
+                  let _ = print_endline ("== renamed_spec 3 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
