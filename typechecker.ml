@@ -407,24 +407,18 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         (*************************************************************)
         (*****<<<< Check permissions variables in pre-condition ******)
         (*************************************************************)
-        (* let _ = print_endline ("== ctx = " ^ (Cprinter.string_of_context ctx)) in *)
         let nctx = ( 
           if !Globals.max_renaming then
-            let _ = print_endline ("== 1 CF.normalize_es") in 
             (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
           else 
-            let _ = print_endline ("== 1 CF.normalize_clash_es") in 
             (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) 
         ) in
         let (c,pre,rels,r) = ( 
           match b.CF.formula_struc_continuation with 
           | None -> (None,[],[],true) 
           | Some l -> 
-              (* let _ = print_endline ("== nctx = " ^ (Cprinter.string_of_context nctx)) in    *)
-              (* let _ = print_endline ("== llll = " ^ (Cprinter.string_of_struc_formula l)) in *)
               let r1,r2,r3,r4 = helper nctx l in (Some r1,r2,r3,r4) 
         ) in
-        (* let _ = print_endline ("== pree = " ^ (Cprinter.string_of_formula_list pre)) in  *)
         stk_vars # pop_list vs;
         let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
           let new_base = match pre with
@@ -1165,6 +1159,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                     let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
+                    let _ = print_endline ("== new_spec = " ^  new_spec) in 
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
                     (* TODO: call the entailment checking function in solver.ml *)
                     let to_print = "\nProving precondition in forked method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
@@ -1430,6 +1425,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* Termination: Stripping the "variance" feature from
                    * org_spec if the call is not a recursive call *)
                   (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
+                  let _ = print_endline ("== org_spec 2 = " ^ (Cprinter.string_of_struc_formula org_spec)) in 
                   let lbl_ctx = store_label # get in
                   let org_spec2 = 
                     if ir && !auto_number then match org_spec with
@@ -1469,7 +1465,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-
+                  let _ = print_endline ("== new_spec 2 = " ^ new_spec) in 
                   (* Termination: Store unreachable state *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)
