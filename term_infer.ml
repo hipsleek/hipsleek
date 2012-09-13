@@ -336,7 +336,7 @@ and construct_term_seq_spec utils cases =
 let term_spec_of_list_term_ctx utils tctx =
 	let cases = List.concat (List.map (fun ctx -> ctx.t_cond_pure) tctx) in
 	let cases = sort_path_trace_by_order cases in
-	let _ = print_endline ("\nCollected cases:\n" ^ (pr_list !print_term_cond_pure cases)) in
+	(* let _ = print_endline ("\nCollected cases:\n" ^ (pr_list !print_term_cond_pure cases)) in *)
 	construct_term_spec utils cases	
 	
 (* Look up termination context and spec *)
@@ -366,112 +366,96 @@ let rec subst_term_spec utils subst tg tspec =
 and subst_term_base_spec utils subst tg b =
 	let bres = b.term_base_res in
 	match bres with
-	| Unknown unk -> (try
-		let unk_id = id_of_term_res bres in
-		let _, cmd = List.find (fun (r, cmd) -> (id_of_term_res r) == unk_id) subst in
-		match cmd with
-		| TSubst res -> TBase { b with term_base_res = res; }
-		| TSplit lres ->
-			if lres = [] then TBase b
-			else if ((List.length lres) == 1) then
-			begin
-				(* Change TSplit to TSubst if the condition is true *)
-				let (cond, res) = List.hd lres in
-				if (utils.imply (CP.mkTrue no_pos) cond) then (* cond is VALID *)
-					match res with
-					| Term _ ->
-						let unk_succs = List.map (fun id -> Hashtbl.find term_res_tbl id) (TG.succ tg unk_id) in
-						let is_loop_or_mayloop = List.exists (fun succ -> 
-							match succ with | Loop _ | MayLoop _ -> true | _ -> false) unk_succs in
-						if is_loop_or_mayloop then
-							let new_id = fresh_int () in
-							let new_res = MayLoop new_id in
-							Hashtbl.add term_res_tbl new_id new_res;
-							TBase { b with term_base_res = new_res; }
+	| Unknown unk ->
+		(try
+			let unk_id = id_of_term_res bres in
+			let _, cmd = List.find (fun (r, cmd) -> (id_of_term_res r) == unk_id) subst in
+			match cmd with
+			| TSubst res -> TBase { b with term_base_res = res; }
+			| TSplit lres -> 
+				if lres = [] then TBase b
+				else begin
+					let then_conds = join_disjunctions (List.map (fun (c, _) -> c) lres) in
+					(* Case Coverage *)
+					if (utils.imply (CP.mkTrue no_pos) then_conds) then 
+						subst_term_base_spec_case_coverage b lres unk tg
+					else (* Not Case Coverage *)
+						let bcond = b.term_base_cond in
+						let else_conds = split_disjunctions (utils.simplify (mkNot then_conds)) in
+						let else_conds = List.filter (fun c -> utils.is_sat (mkAnd c bcond)) else_conds in
+						if (else_conds = []) then 
+							(* Subst like coverage *)
+							subst_term_base_spec_case_coverage b lres unk tg
 						else
-							let is_new_unk = List.exists (fun succ -> match succ with
-								| Unknown _ -> (id_of_term_res succ) != unk_id
-								| _ -> false) unk_succs in 
-							if is_new_unk then TBase b
-							else TBase { b with term_base_res = res; }
-					| _ -> TBase { b with term_base_res = res; }
-				else (* Split into two cases: cond and not(cond) *)
-					let bcond = b.term_base_cond in
-					(* LOOP -> LOOP;                                  *)
-					(* TERM w/ rank -> UNKNOWN; TERM w/o rank -> TERM *)
-					(* UNKNOWN -> UNKNOWN                             *)
-					(* TERM w/o rank means 1-step execution           *)
-					let then_cond = split_disjunctions cond in 
-					let else_cond = split_disjunctions (utils.simplify (mkNot cond)) in (* UNKNOWN *)
-					let then_cases = List.map (fun c ->
-						let new_id = fresh_int () in
-						let new_res = match res with
-						| Loop _ -> Loop new_id
-						| Term term -> (match term.term_rank with
-							| None -> Term { term with term_id = new_id; } (* 1-step execution *)
-							| Some rank -> 
-								let unk_succs = List.map (fun id -> Hashtbl.find term_res_tbl id) (TG.succ tg unk_id) in
-								let is_term = not (List.exists (fun succ -> 
-									match succ with | Term _ -> false | _ -> true) unk_succs) in
-								if is_term then Term { term with term_id = new_id; }
-								else Unknown { unk with 
-									unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; })
-						| _ -> Unknown { unk with
-							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
-						Hashtbl.add term_res_tbl new_id new_res;
-						(c, mkTBase (mkAnd bcond c) new_res)) then_cond in
-					let else_cases = List.map (fun c ->
-						let new_id = fresh_int () in
-						let new_unk = Unknown { unk with
-							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
-						Hashtbl.add term_res_tbl new_id new_unk;
-						(c, mkTBase (mkAnd bcond c) new_unk)) else_cond in
-					mkTCase (then_cases @ else_cases)
-			end
-			else
-			begin
-				let bcond = b.term_base_cond in
-				let then_cond = join_disjunctions (List.map (fun (c, _) -> c) lres) in
-				if (utils.imply (CP.mkTrue no_pos) then_cond) then (* Coverage *)
-					mkTCase (List.map (fun (c, res) ->
-						(* (c, mkTBase (mkAnd bcond c) res)) lres) *)
-						let new_id = fresh_int () in
-						let new_res = match res with
-						| Loop _ -> Loop new_id
-						| Term term -> (match term.term_rank with
-							| None -> Term { term with term_id = new_id; } (* 1-step execution *)
-							| Some rank -> 
-								let unk_succs = List.map (fun id -> Hashtbl.find term_res_tbl id) (TG.succ tg unk_id) in
-								let is_term = not (List.exists (fun succ -> 
-									match succ with | Term _ -> false | _ -> true) unk_succs) in
-								if is_term then Term { term with term_id = new_id; }
-								else Unknown { unk with 
-									unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; })
-						| _ -> Unknown { unk with
-							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
-						Hashtbl.add term_res_tbl new_id new_res;
-						(c, mkTBase (mkAnd bcond c) new_res)) lres)
-				else (* Not Coverage *)
-					let else_cond = split_disjunctions (utils.simplify (mkNot then_cond)) in
-					let else_cond = List.filter (fun c -> utils.is_sat (mkAnd c b.term_base_cond)) else_cond in
-					let then_cases = List.map (fun (c, res) ->
-						let new_id = fresh_int () in
-						let new_res = match res with
-						| Loop _ -> Loop new_id
-						| _ -> Unknown { unk with
-							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
-						Hashtbl.add term_res_tbl new_id new_res;
-						(c, mkTBase (mkAnd bcond c) new_res)) lres in
-					let else_cases = List.map (fun c ->
-						let new_id = fresh_int () in
-						let new_unk = Unknown { unk with
-							unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
-						Hashtbl.add term_res_tbl new_id new_unk;
-						(c, mkTBase (mkAnd bcond c) new_unk)) else_cond in
-					mkTCase (then_cases @ else_cases)
-			end		
-		with _ -> TBase b)
+							let else_cases = List.map (fun c ->
+								let new_id = fresh_int () in
+								let new_unk = Unknown { unk with
+									unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+								Hashtbl.add term_res_tbl new_id new_unk;
+								(c, mkTBase (mkAnd bcond c) new_unk)) else_conds in
+							let then_cases = List.map (fun (c, res) ->
+								let new_res = match res with
+								| Loop _ | MayLoop _ | Unknown _  -> res
+								| Term term -> (match term.term_rank with
+									| None -> res
+									| Some _ -> 
+										let new_id = fresh_int () in
+										let new_unk = Unknown { unk with
+											unk_id = new_id; unk_cond = mkAnd unk.unk_cond c; } in
+										Hashtbl.add term_res_tbl new_id new_unk; new_unk)
+								in (c, mkTBase (mkAnd bcond c) new_res)) lres in
+							mkTCase (then_cases @ else_cases)
+				end
+			with _ -> TBase b)
 	| _ -> TBase b
+
+and subst_term_base_spec_case_coverage b lres unk tg =
+	(* Determine when a TERM substitution should become UNKNOWN *)
+	let bcond = b.term_base_cond in
+	let unk_id = unk.unk_id in
+	let unk_succs = List.map (fun id -> Hashtbl.find term_res_tbl id) (TG.succ tg unk_id) in
+	let is_only_term_reachable = not (List.exists (fun succ ->
+		match succ with
+		| Loop _ | MayLoop _ -> true
+		| Unknown _ -> (id_of_term_res succ) != unk_id
+		| Term _ -> false) unk_succs) in
+	let is_all_term_subst = not (List.exists (fun (_, res) ->
+		match res with | Term _ -> false | _ -> true) lres) in
+	let is_term = is_only_term_reachable && is_all_term_subst in
+	if ((List.length lres) == 1) then
+		let is_loop = List.exists (fun succ ->
+			match succ with | Loop _ | MayLoop _ -> true | _ -> false) unk_succs in
+		let (c, res) = List.hd lres in
+		let new_res = subst_term_base_spec_one_case c res unk is_term is_loop in
+		TBase { b with term_base_res = new_res; }
+	else
+		let new_lres = List.map (fun (c, res) ->
+		let new_res = subst_term_base_spec_one_case c res unk is_term false in
+		(c, mkTBase (mkAnd bcond c) new_res)) lres in
+		TCase new_lres
+
+and subst_term_base_spec_one_case cond res unk is_term is_loop =
+	match res with
+	| Loop _ 
+	| MayLoop _ 
+	| Unknown _ -> res
+	| Term term ->
+		match term.term_rank with
+		| None -> res (* 1-step termination *)
+		| Some rank ->
+			if is_term then res
+			(* Special case when we cannot infer anything new *)
+			else if (isConstTrue cond) && is_loop then 
+				let new_id = fresh_int () in
+				let new_res = MayLoop new_id in
+				Hashtbl.add term_res_tbl new_id new_res;
+				new_res
+			else
+				let new_id = fresh_int () in
+				let new_res = Unknown { unk with 
+					unk_id = new_id; unk_cond = mkAnd unk.unk_cond cond; } in
+				Hashtbl.add term_res_tbl new_id new_res;
+				new_res
 
 (* Simplify the inferred termination specification with TSeq *)
 and simplify_term_spec utils subst tspec =
@@ -704,7 +688,6 @@ let linear_rank_synthesis utils (x1, x2, x3) ctx =
 			if coe = 0 then res else mkAdd res (mkMult (mkIConst coe) (mkVar x))) 
 			(List.map2 (fun unk x -> (List.assoc (name_of_spec_var unk) math_res, x)) unk_coe x1) 
 			(mkIConst (List.assoc (name_of_spec_var free_coe) math_res)) in
-		let _ = print_endline ("\nRANK: " ^ (!print_pure_exp rank)) in
 		Some rank
 		with _ -> None
 
@@ -789,6 +772,7 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 						(* We could not trust the condition returned by FixCalc *)
 						if (is_eq_exp simpl_base_cond) then 
 							let ic = term_cond_by_fixcalc utils subst (CP.subst_avoid_capture x2 x1 base_cond) ctx in
+							(* let _ = print_endline ("\nFIXCALC: " ^ (pr_list !print_pure_formula ic)) in *)
 							(* Filter new condition *)
 							let ic = List.filter (fun c -> not (utils.imply rec_cond c)) ic in
 							if ic = [] then [CP.mkTrue no_pos] 
@@ -885,12 +869,12 @@ let check_monotone_decreasing_sequence utils args trans_constr =
 	end
 	in
 	(* Debugging Information *)
-	begin
-		info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";
-		info_hprint "Infer NonTerm Cond" (pr_list !print_pure_formula) def_loop_cond;
-		info_hprint "Infer Term Cond" (pr_list (fun (c, _) -> !print_pure_formula c)) term_cond_with_rank;
-		info_pprint "\n";
-	end; 
+	(* begin                                                                                               *)
+	(* 	info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";                                  *)
+	(* 	info_hprint "Infer NonTerm Cond" (pr_list !print_pure_formula) def_loop_cond;                      *)
+	(* 	info_hprint "Infer Term Cond" (pr_list (fun (c, _) -> !print_pure_formula c)) term_cond_with_rank; *)
+	(* 	info_pprint "\n";                                                                                  *)
+	(* end;                                                                                                *)
 	(def_loop_cond, unk_loop_cond, term_cond_with_rank)
 
 (***********************************)
@@ -1023,31 +1007,33 @@ let solve_constrs utils args constrs =
 		if subst = [] then (unk, TSubst (mk_fresh_MayLoop ()))
 		else (unk, TSplit subst)) infer_cond in
 
-	print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list));
-	print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));
-	print_endline ("LOOP: " ^ (pr_list !print_term_res mustloop));
-	(* print_endline ("MAYLOOP: " ^ (pr_list !print_term_res mayloop)); *)
-	print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) ->
-		(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst)));
+	(* print_endline ("scc list: " ^ (pr_list (pr_list (fun (_, r) -> !print_term_res r)) scc_list));    *)
+	(* print_endline ("scc groups: " ^ (pr_list (pr_list (pr_list !print_term_res)) scc_groups));        *)
+	(* print_endline ("LOOP: " ^ (pr_list !print_term_res mustloop));                                    *)
+	(* print_endline ("SUBST: \n" ^ (pr_list (fun (unk, cmd) ->                                          *)
+	(* 	(!print_term_res unk) ^ ": " ^ (!print_term_subst_cmd cmd) ^ "\n") (loop_subst @ infer_subst))); *)
 	(loop_subst @ mayloop_subst @ infer_subst, tg)
 
 let rec infer_term_spec_one_proc utils proc round =
 	if round > !term_run_bound then ()
 	else begin
-		let _ = info_pprint ("ROUND " ^ (string_of_int round)) in
 		let mn = proc.proc_name in
 		let args = get_method_args proc in
   	let old_spec = look_up_term_spec mn in 
   	let trans_constrs = collect_term_trans_constrs_one_proc utils mn in
 		if trans_constrs = [] then ()
 		else
+			let _ = info_pprint ("ROUND " ^ (string_of_int round)) in
 			let subst, tg = solve_constrs utils args trans_constrs in
     	let new_spec = update_term_spec_one_method utils subst tg mn in
     	
-    	info_hprint "Termination Constraints"
-    		(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
-    	info_pprint "\n";
-    		
+    	(* info_hprint "Termination Constraints"                                        *)
+    	(* 	(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs; *)
+    	(* info_pprint "\n";                                                            *)
+    	
+			info_hprint "SUBST" (pr_list (fun (unk, cmd) ->
+				"\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst;
+					
     	info_hprint "Termination Spec" !print_term_spec old_spec;
     	info_pprint "\n";
     		

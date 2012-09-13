@@ -10,8 +10,8 @@ ensures true;
 			loop(x-1);
 
 		if (x<5)
-			loop(x+2);
-		else
 			loop(x-2);
+		else
+			loop(x+2);
 	}
 }
