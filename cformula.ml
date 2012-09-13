@@ -3865,6 +3865,19 @@ let rec get_failure_list_failesc_context (ls:list_failesc_context): (string*fail
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
   get_failure_branch bfl
 
+let rec get_ft_list_failesc_context (ls:list_failesc_context): (fail_type)=
+  (*may use lor to combine the list first*)
+  (*return failure of 1 lemma is enough*)
+    let fts= List.map get_ft_failesc_context ls in
+    (*los contains path traces*)
+    let cmb_ror_helper ft1 ft2=
+      Union_Reason (ft1,ft2)
+    in
+      List.fold_left cmb_ror_helper (List.hd fts) (List.tl fts)
+
+and get_ft_failesc_context ((bfl:branch_fail list), _, _): (fail_type)=
+  get_ft_branch bfl
+
 let get_bot_status (ft:list_context) =
   match ft with
     | FailCtx f -> get_bot_status_ft f

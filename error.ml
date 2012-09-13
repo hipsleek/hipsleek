@@ -12,7 +12,7 @@ type error = {
 }
 
 (*exception Theorem_prover of (string * string) *)
-exception Ppf of (error * int) (*Proving_pre_fails*)
+(* exception Ppf of (error * int) (\*Proving_pre_fails*\) *)
 
 (*
 let all_errors : error list ref = ref []

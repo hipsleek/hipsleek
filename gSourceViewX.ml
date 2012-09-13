@@ -94,7 +94,7 @@ class source_view ?(text = "") () =
     method hl_ee ?(mark = true) (bpos: int) (epos: int) =
       if mark then self#create_mark error bpos;
       self#apply_tag error bpos epos;
-      self#scroll_to_pos bpos;
+      (* self#scroll_to_pos bpos; *)
 
     method clear_ee_highlight () =
       let start = self#source_buffer#get_iter `START in

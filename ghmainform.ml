@@ -7,7 +7,7 @@ open Gen
 open GProcList
 open GSourceViewX
 open GUtil
-open Ghipcontroller
+open Ghcontroller
 open SourceUtil
 
 module RE = Resource
