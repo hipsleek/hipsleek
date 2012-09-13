@@ -808,7 +808,7 @@ let trans_logical_vars lvars =
 let rec trans_prog (prog : I.prog_decl) : C.prog_decl =
   let pr  = Iprinter.string_of_program in
   let pr2 = Cprinter.string_of_program in
-  Debug.ho_1 "trans_prog" pr pr2 trans_prog_x prog
+  Debug.no_1 "trans_prog" pr pr2 trans_prog_x prog
 
 and trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)

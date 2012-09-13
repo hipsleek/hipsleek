@@ -248,7 +248,7 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                         | _ -> false)
               ) in
               if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_unknown))) (* TRUNG: maybe because of this *)
+                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_tmp1))) (* TRUNG: maybe because of this *)
               else
                 report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
             )

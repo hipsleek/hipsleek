@@ -407,10 +407,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         (*************************************************************)
         (*****<<<< Check permissions variables in pre-condition ******)
         (*************************************************************)
+        (* let _ = print_endline ("== ctx = " ^ (Cprinter.string_of_context ctx)) in *)
         let nctx = ( 
           if !Globals.max_renaming then
+            let _ = print_endline ("== 1 CF.normalize_es") in 
             (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
           else 
+            let _ = print_endline ("== 1 CF.normalize_clash_es") in 
             (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) 
         ) in
         let (c,pre,rels,r) = ( 
@@ -2213,5 +2216,5 @@ let check_prog (prog : prog_decl) =
   Term.term_check_output ()
 	    
 let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
-  (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)
+  let pr = Cprinter.string_of_program in
+  Debug.no_1 "check_prog" pr (fun _ -> "?") check_prog prog 
