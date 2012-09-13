@@ -803,9 +803,14 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
-  
+
 (*HIP*)
-let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
+let rec trans_prog (prog : I.prog_decl) : C.prog_decl =
+  let pr  = Iprinter.string_of_program in
+  let pr2 = Cprinter.string_of_program in
+  Debug.ho_1 "trans_prog" pr pr2 trans_prog_x prog
+
+and trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   (* print_string "trans_prog\n"; *)
   let _ = (exlist # add_edge "Object" "") in
