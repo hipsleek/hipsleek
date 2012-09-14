@@ -21,7 +21,7 @@ int foo (int x)
 
 int goo (ref int x, ref int y)
   requires x > 0 & y > 0
-  ensures  x' < 0 & y'< -2;
+  ensures  x' < 5 & y'< -2;
 {
    x = x + 1;
    y = y - 2;
