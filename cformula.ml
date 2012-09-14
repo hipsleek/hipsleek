@@ -3413,7 +3413,11 @@ let mk_failure_may_raw msg = Failure_May msg
 
 let mk_failure_may msg name = {fe_kind = Failure_May msg;fe_name = name ;fe_locs=[]}
 
+let mk_failure_may_wl msg name locs = {fe_kind = Failure_May msg;fe_name = name ;fe_locs=locs}
+
 let mk_failure_must msg name = {fe_kind = mk_failure_must_raw msg;fe_name = name ;fe_locs=[]}
+
+let mk_failure_must_wl msg name locs = {fe_kind = mk_failure_must_raw msg;fe_name = name ;fe_locs=locs}
 
 let mk_failure_bot msg name= {fe_kind = mk_failure_bot_raw msg;fe_name = name ;fe_locs=[]}
 

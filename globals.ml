@@ -896,3 +896,9 @@ let open_log_out s =
 	Unix.mkdir "logs" 0o750
  with _ -> ());
  open_out ("logs/"^s)
+
+let rec get_b_line_number ll rs=
+  match ll with
+    | [] -> rs
+    | l::ls -> get_b_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum])
+
