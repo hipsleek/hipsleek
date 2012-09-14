@@ -12,10 +12,10 @@ module MU = Mainutil
 (**********************
  * MAIN FUNCTION
  **********************)
-let usage_msg = Sys.argv.(0) ^ " [options] <source file>"
-let arguments = [
-  ("-v", Arg.Set verbose_flag, "Verbose")
-  ]
+(* let usage_msg = Sys.argv.(0) ^ " [options] <source file>" *)
+(* let arguments = [ *)
+(*   ("-v", Arg.Set verbose_flag, "Verbose") *)
+(*   ] *)
 
 let _ =
   (* GUtil.initialize (); *)
