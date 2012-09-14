@@ -268,16 +268,21 @@ class hip_source_view ?(text = "") () =
     method set_lines_pos src=
       m_lines_pos <- (SourceUtil.get_lines_positions src);
 
+      (*elocs: old is list of lines
+        new is list of (b,e) - do not need map
+      *)
     method highlight_ee_x ?(clear_previous_highlight = false) elocs=
       let hl_one_loc eloc=
-        let rel_eloc_b,rel_eloc_e  = SourceUtil.get_line_pos eloc m_lines_pos in
+        let rel_eloc_b,rel_eloc_e  = eloc
+          (* SourceUtil.get_line_pos eloc m_lines_pos *)
+        in
         let _ = super#hl_ee rel_eloc_b rel_eloc_e in ()
       in
       if clear_previous_highlight then super#clear_ee_highlight ();
       List.iter hl_one_loc elocs
 
     method highlight_ee ?(clear_previous_highlight = true) elocs=
-      let pr1 = pr_list string_of_int in
+      let pr1 = pr_list (pr_pair string_of_int string_of_int) in
       let pr2 = fun _ -> "out" in
       Debug.ho_1 "highlight_ee" pr1 pr2 (fun _ -> self#highlight_ee_x ~clear_previous_highlight elocs) elocs
 

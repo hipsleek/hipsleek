@@ -4979,12 +4979,13 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
            (*get line number only*)
            (*shoudl use ll in future*)
            let ll = Gen.Basic.remove_dups (Globals.get_b_line_number locs []) in
+           let ll,ds = List.split ll in
         let fe = match fk with
                 |  Failure_May _ -> mk_failure_may msg failure_name
                 | Failure_Must _ -> (mk_failure_must msg failure_name)
                 | _ -> {fe_kind = fk; fe_name = failure_name ;fe_locs=[]}
               in
-        (Basic_Reason ({fail_ctx_template with fc_message = msg }, {fe with fe_locs = ll}))
+        (Basic_Reason ({fail_ctx_template with fc_message = msg },{fe with fe_locs=ds}))
       in
       match failure_list with
         | [] -> None
@@ -6695,14 +6696,15 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
               (*change to must flow*)
               let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                       !error_flow_int estate.CF.es_formula} in
-              let pr1 = pr_list string_of_loc in
-              let pr2 = pr_list string_of_int in
+              let pr1 = pr_list string_of_loc_b_e in
+               let pr2 = pr_list (pr_pair string_of_int string_of_int) in
               let ll =  (CF.list_pos_of_formula estate.es_formula) in
               let _ = print_endline ("get_b_line_number: inp1" ^ (pr1 ll)) in
               let locs = (get_b_line_number ll []) in
-              let _ = print_endline ("get_b_line_number: out" ^ (pr2 locs)) in
+               let locs,ds = List.split locs in
+              let _ = print_endline ("get_b_line_number: out" ^ (pr2 ds)) in
               (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-              CF.mk_failure_must_wl s Globals.logical_error locs), NoAlias)
+              CF.mk_failure_must_wl s Globals.logical_error ds), NoAlias)
             else
               begin
                 (*check disj memset*)

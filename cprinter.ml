@@ -1615,11 +1615,14 @@ let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
 
 let string_of_list_int ls = String.concat ";" (List.map string_of_int ls)
 
+let string_of_list_pair_int ls = String.concat ";" (List.map 
+                                (Gen.Basic.pr_pair string_of_int string_of_int) ls)
+
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
   pr_vwrap "fe_name: " fmt_string (fe.fe_name);
-  pr_vwrap "fe_locs: " fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
+  pr_vwrap "fe_locs: " fmt_string (string_of_list_pair_int fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 

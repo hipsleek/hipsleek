@@ -794,6 +794,11 @@ let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
 	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
 
+let string_of_loc_b_e (p : loc) = (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "->" ^
+    (string_of_int p.end_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
+
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;
 
@@ -900,5 +905,13 @@ let open_log_out s =
 let rec get_b_line_number ll rs=
   match ll with
     | [] -> rs
-    | l::ls -> get_b_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum])
+    | l::ls ->
+        let line = l.start_pos.Lexing.pos_lnum in
+        let d1 =  l.start_pos.Lexing.pos_cnum in
+        let d2 = l.end_pos.Lexing.pos_cnum in
+        let d =
+        if (line<=0 || d1<=0 || d2 <= 0) then []
+        else [(line, (d1,d2))]
+        in
+        get_b_line_number ls (rs @ d)
 
