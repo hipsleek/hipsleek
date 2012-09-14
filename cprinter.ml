@@ -2485,6 +2485,7 @@ let string_of_term_res = function
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
 		^ "#" ^ unk.TInfer.unk_callee 
 		(* ^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx) *)
+		(* ^ ":::: " ^ (string_of_pure_formula unk.TInfer.unk_cond)   *)
 
 let string_of_term_cond_pure (pt, cond, tr) =
 	"\n" ^ (string_of_path_trace pt) ^ ": "
