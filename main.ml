@@ -26,7 +26,7 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
-let parse_file_full file_name (is_primitives: bool) = 
+let parse_file_full file_name (is_prelude_file: bool) = 
   let org_in_chnl = open_in file_name in
     try
     (*let ptime1 = Unix.times () in
@@ -35,7 +35,7 @@ let parse_file_full file_name (is_primitives: bool) =
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) is_primitives in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) is_prelude_file in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in

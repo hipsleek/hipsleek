@@ -55,7 +55,7 @@ let macros = ref (Hashtbl.create 19)
 (* An Hoa : Counting of holes "#" *)
 let hash_count = ref 0
 
-let is_primitives = ref true
+let is_prelude_file = ref true
 
 (* An Hoa : Generic data type for the abbreviated syntax x.f::<a> *)
 let generic_pointer_type_name = "_GENERIC_POINTER_"
@@ -174,24 +174,26 @@ let apply_cexp_form1 fct form = match form with
   | _ -> report_error (get_pos 1) "with 1 expected cexp, found pure_form"
   
   
-let apply_pure_form2 fct form1 form2 = match (form1,form2) with
+let apply_pure_form2 fct form1 form2 =
+  let fo = if !is_prelude_file then F_o_code else F_o_specs in
+  match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
-                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))))
+                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))))
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
   | Pure_c f1, Pure_f f2 -> (match f1 with 
-                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))) f2)
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | Pure_c f1, Pure_c f2 -> (
       let bool_var1 = (
         match f1 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
       let bool_var2 = (
         match f2 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",F_o_specs))
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
@@ -204,34 +206,42 @@ let apply_cexp_form2 fct form1 form2 =
   DD.no_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
-let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), Some (-1,"",F_o_specs)))
+let cexp_list_to_pure fct ls1 =
+  let fo = if !is_prelude_file then F_o_code else F_o_specs in
+  Pure_f (P.BForm (((fct ls1), None), Some (-1,"",fo)))
 
-let cexp_to_pure1 fct f = match f with
-  | Pure_c f -> Pure_f (P.BForm (((fct f), None), Some (-1,"",F_o_specs)))
+let cexp_to_pure1 fct f =
+  let fo = if !is_prelude_file then F_o_code else F_o_specs in
+  match f with
+  | Pure_c f -> Pure_f (P.BForm (((fct f), None), Some (-1,"",fo)))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
-let cexp_to_pure_slicing fct f sl = match f with
-  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), Some (-1,"",F_o_specs)))
+let cexp_to_pure_slicing fct f sl =
+  let fo = if !is_prelude_file then F_o_code else F_o_specs in
+  match f with
+  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), Some (-1,"",fo)))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
+let cexp_to_pure2 fct f01 f02 =
+  let fo = if !is_prelude_file then F_o_code else F_o_specs in
+  match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (
       match f1 with
       | P.List(explist,pos) -> 
-          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,"",F_o_specs))) explist in
+          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,"",fo))) explist in
           let len =  List.length tmp in
           let res = 
             if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-            else  P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs)) in
+            else  P.BForm (((fct f1 f2), None), Some (-1,"",fo)) in
           Pure_f(res) 
       | _ -> (
           match f2 with
           | P.List(explist,pos) ->
-              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,"",F_o_specs))) explist in
+              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,"",fo))) explist in
               let len = List.length tmp in
               let res =
                 if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                else P.BForm (((fct f1 f2), None), Some (-1,"",F_o_specs)) in
+                else P.BForm (((fct f1 f2), None), Some (-1,"",fo)) in
               Pure_f(res) 
           | _ -> (
               let typ1 = P.typ_of_exp f1 in 
@@ -250,10 +260,7 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                         | _ -> false)
               ) in
               if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then
-                if !is_primitives then 
-                  Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_code))) (* TRUNG: maybe because of this *)
-                else
-                  Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",F_o_specs))) (* TRUNG: maybe because of this *)
+                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",fo))) (* TRUNG: maybe because of this *)
               else
                 report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
             )
@@ -1023,7 +1030,7 @@ cexp_w :
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
   | "pure_or" RIGHTA
-    [ pc1=SELF; `OR; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 (Some (-1,"",F_o_specs)) (get_pos_camlp4 _loc 2)) pc1 pc2]
+    [ pc1=SELF; `OR; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 (Some (-1,"",F_o_unknown)) (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
     [ pc1=SELF; peek_and; `AND; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
   |"bconstrp" RIGHTA
@@ -2295,10 +2302,10 @@ let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 let parse_hip n s b =
-  is_primitives := b;
+  is_prelude_file := b;
   SHGram.parse hprog (PreCast.Loc.mk n) s
-let parse_hip n s is_primitives =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s is_primitives) n
+let parse_hip n s b =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s b) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 

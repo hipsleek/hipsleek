@@ -481,7 +481,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             (*let _ = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 	          let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-            (* let _ = print_endline ("== ctx1 = " ^ (Cprinter.string_of_context ctx1)) in  *)
 	          if (CF.isAnyFalseCtx ctx1) then
 	            let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 	    		    (Cprinter.string_of_context_short ctx))) no_pos in
@@ -1159,14 +1158,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                     let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
-                    let _ = print_endline ("== new_spec = " ^  new_spec) in 
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
                     (* TODO: call the entailment checking function in solver.ml *)
                     let to_print = "\nProving precondition in forked method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                     let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                     Debug.devel_pprint (to_print^"\n") pos;
-				    (* An Hoa : output the context and new spec before checking pre-condition *)
-				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
+                    (* An Hoa : output the context and new spec before checking pre-condition *)
+                    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
 
                     (*Call heap_entail... to prove the precondition and add the post condition into thread id*)
                     let tid = CP.fresh_thread_var () in
@@ -1425,7 +1423,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* Termination: Stripping the "variance" feature from
                    * org_spec if the call is not a recursive call *)
                   (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
-                  let _ = print_endline ("== org_spec 2 = " ^ (Cprinter.string_of_struc_formula org_spec)) in 
                   let lbl_ctx = store_label # get in
                   let org_spec2 = 
                     if ir && !auto_number then match org_spec with
@@ -1456,18 +1453,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
                   let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
                   let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
-                  let _ = print_endline ("== renamed_spec 1 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                  (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
                     (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in*)
                   let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
-                  let _ = print_endline ("== renamed_spec 2 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                   let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
-                  let _ = print_endline ("== renamed_spec 3 = " ^ (Cprinter.string_of_struc_formula renamed_spec)) in 
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
                   let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
                   let new_spec = (Cprinter.string_of_struc_formula pre2) in
-                  let _ = print_endline ("== new_spec 2 = " ^ new_spec) in 
                   (* Termination: Store unreachable state *)
                   let _ = 
                     if ir then (* Only check termination of a recursive call *)
