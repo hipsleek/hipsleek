@@ -1579,7 +1579,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         if (String.length s) >  0 then
                           let vs = to_print ^s^"\n" in
                           let proc_ver = [(vs, Some (CF.get_ft_list_failesc_context res))] in
-                          let _ = proc.Cast.proc_verified <- proc.Cast.proc_verified@proc_ver in
+                          let _ = proc000.Cast.proc_verified <- proc000.Cast.proc_verified@proc_ver in
                           (* let _ = print_string (to_print ^s^"\n") in *)
                           (* Err.report_error_wo_exc { *)
                           (*       Err.error_loc = pos; *)
@@ -1593,7 +1593,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             | CF.Failure_Bot _ -> 0
                             | CF.Failure_Must _ -> 1
                             | CF.Failure_Valid -> 2
-                            | CF.Failure_May _ -> 3), proc))
+                            | CF.Failure_May _ -> 3), proc000))
                         else ()
                       else
                         begin
