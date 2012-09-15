@@ -244,12 +244,13 @@ class mainwindow () =
           let _ = m_iprog <- iprog in
           let _ = m_src_view#set_lines_pos (self#get_text()) in
         (* m_proc_list#update_source (self#get_text ()) *)
-          match iprog with
-            | Some iprog ->
+          match iprog,cprog with
+            | Some iprog, Some cprog ->
                 m_proc_list#update_procedures iprog.Iast.prog_proc_decls
+                    (Cast.list_of_procs cprog)
               (* (Hashtbl.fold (fun id pd lst -> pd::lst) iprog.Cast.new_proc_decls []) *)
               (self#get_text ())
-            | None ->  m_proc_list#misc#set_sensitive false;
+            | _ ->  m_proc_list#misc#set_sensitive false;
       with Syntax_error (msg, pos) ->
           m_proc_list#misc#set_sensitive false;
           m_src_view#hl_error ~msg pos
@@ -305,7 +306,8 @@ class mainwindow () =
        (*ee*)
       let s,ft =
         if List.length new_proc.Cast.proc_verified > 0 then
-          List.hd new_proc.Cast.proc_verified
+          HH.cmb_join_branches (List.tl new_proc.Cast.proc_verified)
+              (List.hd new_proc.Cast.proc_verified)
         else ("The procedure does not have body", None)
       in
       (*todo: build ee_model*)
@@ -503,7 +505,7 @@ class mainwindow () =
             let proc =  m_proc_list#get_proc_info_by_path path in
             let res,onp = check_proc proc in
             m_proc_list#set_procedure_validity path res;
-            let r =
+            let _ =
               match onp with
                 | Some np ->(
                     match m_cprog with

@@ -93,6 +93,9 @@ let run_hip_from_file_x ocprog (proc_name: string) =
   match ocprog with
   | None -> true, None
   | Some cprog ->
+      (* let procs = CA.list_of_procs cprog in *)
+      (* let pr = Gen.Basic.pr_list (fun x -> x.CA.proc_name) in *)
+      (* let _= print_endline ("procs: " ^ (pr procs) ) in *)
       let proc = CA.find_proc cprog proc_name in
   (* let procs = Gen.split_by "," proc_name in *)
   (*   Globals.procs_verified := procs; *)
@@ -176,6 +179,19 @@ let check_proc_from_txt (txt: string) (p: procedure) =
   let get_console_log () = Buffer.contents console_log_buffer
 
   let get_error_positions () = !error_positions
+
+  let rec cmb_join_branches ll (m1, oft1)=
+    match ll with
+      | [] -> (m1, oft1)
+      | (m2, oft2)::xs ->
+          let n_msg, oft=
+            match oft1, oft2 with
+              | Some ft1, Some ft2 -> m1 ^ "\nJoin\n" ^ m2,
+                  Some (Cformula.Or_Reason (ft1,ft2))
+              | Some _, None -> m1, oft1
+              | None, Some _ -> m2, oft2
+              | None, None -> m1, None
+          in (cmb_join_branches xs (n_msg,  oft))
 
 end (* HipHelper *)
 

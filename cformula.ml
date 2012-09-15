@@ -3551,22 +3551,23 @@ let gen_rand (m1,n1,e1) (m2,n2,e2)=
 
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
-let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = match m1,m2 with
+let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = let str = "Join" in
+  match m1,m2 with
   | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("Join["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
 (* report_error no_pos "Failure_None not expected in gen_or" *)
   | Failure_Bot _, _ ->  m2, n2,e2
       (* report_error no_pos "Failure_None not expected in gen_or" *)
   | _, Failure_Bot _ -> m1,n1,e1
       (*report_error no_pos "Failure_None not expected in gen_or"*)
-  | Failure_May m1, Failure_May m2 -> Failure_May ("Search ["^m1^","^m2^"]"),n1, None
+  | Failure_May m1, Failure_May m2 -> Failure_May (str ^" ["^m1^","^m2^"]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
       if (n1=sl_error) then (Failure_Must m2, n2, e2)
       else if (n2= sl_error) then (Failure_Must m1, n1, e1)
       else (Failure_Must ("lor["^m1^","^m2^"]"), n1, e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("Search ["^m^",valid]"),n1,None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("Search ["^m^",valid]"),n2,None)
+  | Failure_Must m, Failure_Valid -> (Failure_May (str ^" ["^m^",valid]"),n1,None)
+  | Failure_Valid, Failure_Must m -> (Failure_May (str ^ " ["^m^",valid]"),n2,None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
   | Failure_Valid, x  -> (m2,n2,e2)

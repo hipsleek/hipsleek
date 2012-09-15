@@ -138,7 +138,7 @@ class ee_view ?(model = new ee_model ()) () =
         | CF.Failure_May _ ->
             renderer#set_properties [
                 `TEXT name;
-                `FOREGROUND (to_string 0 196 64);
+                `FOREGROUND (to_string 0 64 196);
                 `FOREGROUND_SET true;
             ]
         | _ ->

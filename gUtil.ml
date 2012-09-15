@@ -217,9 +217,9 @@ module SourceUtil = struct
       log (Printf.sprintf "Syntax error at line %d" start_p.Lexing.pos_lnum);
       raise (Syntax_error ("Syntax error!", pos))
 
-let get_procedure_list (procs: Iast.proc_decl list) : procedure list =
-    let parse (proc: Iast.proc_decl) : procedure =
-      let proc_pos = proc.Iast.proc_loc in
+let get_procedure_list iproc_names (procs: Cast.proc_decl list) : procedure list =
+    let parse (proc: Cast.proc_decl) : procedure =
+      let proc_pos = proc.Cast.proc_loc in
       let pos = {
         start_char = proc_pos.start_pos.Lexing.pos_cnum;
         start_line = proc_pos.start_pos.Lexing.pos_lnum;
@@ -227,12 +227,18 @@ let get_procedure_list (procs: Iast.proc_decl list) : procedure list =
         stop_line = proc_pos.end_pos.Lexing.pos_lnum;
       } in
       {
-        name = proc.Iast.proc_name;
-        mname = Cast.mingle_name proc.Iast.proc_name (List.map (fun p -> p.Iast.param_type) proc.Iast.proc_args);
+        name = Cast.unmingle_name proc.Cast.proc_name;
+        mname = proc.Cast.proc_name;
+(* Cast.mingle_name proc.Iast.proc_name (List.map (fun p -> p.Iast.param_type) proc.Iast.proc_args); *)
         pos = pos;
       }
     in
-    List.rev_map parse procs
+    let helper proc=
+      let unm = Cast.unmingle_name proc.Cast.proc_name in
+       List.mem unm iproc_names
+    in
+    let procs_decl = List.filter helper procs in
+    List.rev_map parse procs_decl
 
   (** search for all substring in a string *)
   let search (doc: string) (sub: string) : seg_pos list =

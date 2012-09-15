@@ -58,8 +58,9 @@ class  procedure_list_model ?(src = "") () =
       m_count <- m_count + 1
 
 
-    method update_procedures procs (src: string) =
-      let lprocs = get_procedure_list procs in
+    method update_procedures iprocs cprocs (src: string) =
+      let iproc_names = List.map (fun proc -> proc.Iast.proc_name) iprocs in
+      let lprocs = get_procedure_list iproc_names cprocs in
       source_digest <- Digest.string src;
       error_postions <- [];
       delegate#clear ();
@@ -239,8 +240,8 @@ class procedure_list ?(model = new procedure_list_model ()) () =
     (* method verify_all (func: procedure -> bool) : unit = *)
     (*   model#verify_all func *)
 
-    method update_procedures procs (src: string) : unit =
-      model#update_procedures procs src
+    method update_procedures iprocs cprocs (src: string) : unit =
+      model#update_procedures iprocs cprocs src
 
     method update_procedures_from_txt (src: string) : unit =
       model#update_source src
