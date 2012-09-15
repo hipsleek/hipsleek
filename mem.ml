@@ -130,8 +130,10 @@ let mem_disj_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_pe
 						mpf,cf
 	| CP.Bag(exp1,pos1) , _ -> let cf1 = make_disj_constraints exp1 f2 in mpf,cf1
 	| _ , CP.Bag(exp2,pos2) -> let cf2 = make_disj_constraints exp2 f1 in mpf,cf2	       
-	| _ , _ -> let cf = CP.mkNeq (CP.BagIntersect(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos)) (CP.Bag([],no_pos)) pos in
-	       let cf = CP.BForm((cf,None),None) in mpf,cf
+	| _ , _ -> (*let cf = CP.mkNeq (CP.BagIntersect(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos)) (CP.Bag([],no_pos)) pos in
+	       let cf = CP.BForm((cf,None),None) in *)
+	       let cf = CP.mkTrue no_pos in 
+	       mpf,cf
 
 let mem_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula = 
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
@@ -241,7 +243,6 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    		 else (MCP.mix_of_pure f1)
 		    		      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
        	    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
-
 
 let compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) = 
 	let formula1 = lhs in

@@ -1,0 +1,21 @@
+data node {
+	int val; 
+	node next;
+	node left;
+	node right;	
+}.
+
+pred ll<M> == self = null & M = {} 
+	or self::node<_@L,p,_@A,_@A> * p::ll<Mp> & M = union(Mp,{self})
+	inv true
+	memE M->(node<@L,@M,@A,@A>).
+	
+pred tree<M> == self = null & M = {}
+	or self::node<_@L,_@A,l,r> * l::tree<Ml> * r::tree<Mr> & M = union({self},Ml,Mr)
+	inv true
+	memE M->(node<@L,@A,@M,@M>).
+	
+checkentail x::ll<M> * t::tree<M> & M != {} |- t::node<_@L,p@A,l@M,r@M>.
+print residue.
+
+

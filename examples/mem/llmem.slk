@@ -13,8 +13,10 @@ pred ll<M> == self = null & M = {}
 	inv true
 	mem M->(node<@M,@M>).
 	
-checkentail x::ll<Mx>@I ; y::ll<My> & Mx != {} |- x::node<_,_@L>.
+checkentail x::ll<Mx> & Mx != {} |- x::node<_,_@L>.
 print residue.
+
+checkentail true |- exists M1,M2: M2 = union(Ml,Mr) & M2 subset union(M1,Ml) & M1 = Ml.
 
 /*
 checkentail self != null |- exists p: {self} subset {self,p} & {self,p} subset {self} & p notin {self} & self notin {p}.
