@@ -1,24 +1,25 @@
 OCAMLBUILD = ocamlbuild
-MINISATDIR=../src/src
-MINISATDIR2=../src
+MINISATDIR2=/home/bachle/fixed_ocamlminisat14
+EXDIROFSLK=/home/bachle/slicing_minisat/sleekex
+
 # number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
-LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS = unix,str,graph,xml-light,dynlink,camlp4lib,$(MINISATDIR2)/MiniSAT
+LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib,$(MINISATDIR2)/MiniSAT
 
-INCLUDES = -I,+ocamlgraph,-I,$(MINISATDIR2),-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
+INCLUDES = -I,+ocamlgraph,-I,$(MINISATDIR2),-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,-cclib
 
 FLAGS = $(INCLUDES),-g,-annot
 
 # -no-hygiene flag to disable "hygiene" rules
-OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OB_FLAGS = -no-links -no-hygiene -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
-OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OBG_FLAGS = -no-links -no-hygiene -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
-
+MNS = cd $(MINISATDIR2); make all; cp $(MINISATDIR2)/Solver.o $(EXDIROFSLK); cp $(MINISATDIR2)/MiniSATWrap.o $(EXDIROFSLK); cd $(EXDIROFSLK) ; pwd
 all: byte decidez.vo 
 
 #--------------
@@ -40,22 +41,27 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
-hip.byte: xml
+mns: $(MINISATDIR2)/MiniSAT.cma
+
+$(MINISATDIR2)/MiniSAT.cma:
+	$(MNS)
+
+hip.byte: xml mns
 	@ocamlbuild $(OB_FLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte b-hip
 
-hip.native: xml
+hip.native: xml mns
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
 	cp -u _build/main.native n-hip
 
-sleek.byte: xml
+sleek.byte: xml mns
 	@ocamlbuild $(OB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte b-sleek
 
-sleek.native: xml
+sleek.native: xml mns
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek

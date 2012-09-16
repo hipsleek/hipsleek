@@ -2,6 +2,22 @@ open Globals
 open Gen.Basic
 open Cpure
 open Rtc_algorithm
+open MiniSAT
+open Printf
+
+(*=============================MiniSAT Ocaml Binding================*)
+let minisat_parse_batch (input:string) :bool =
+	let _= MiniSAT.parse_dimacs input in
+	let res=
+	 match MiniSAT.solve () with
+  | MiniSAT.UNSAT -> false
+  | MiniSAT.SAT   -> true
+	| _->              false
+	in res
+let minisat_addclause (input:string) =	
+(*	let _= MiniSAT.reset () in*)
+	let _= MiniSAT.parse_dimacs input in ()
+(*===================================================================*)	
 
 module StringSet = Set.Make(String)
 
@@ -23,8 +39,8 @@ let minisat_path = "/usr/local/bin/minisat"
 let minisat_name = "minisat"
 let minisat_arg = "-pre"(*"-pre"*)
 
-let minisat_path2 = "minisat"
-let minisat_name2 = "minisat"
+let minisat_path2 = "minisat22"
+let minisat_name2 = "minisat22"
 let minisat_arg2 = "-pre"(*"-pre"*)
 
 let eq_path = "equality_logic"
@@ -466,7 +482,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
     if (minisat_input_format = "cnf") then ( 
 (*			let ch = Unix.execvp "/home/bachle/slicing_minisat/sleekex/minisat_static" [|"minisat_static";"bach_eq_minisat.cnf"|]  in *)
       Procutils.PrvComms.start false stdout (minisat_name2, minisat_path2, [|minisat_arg2;infile;minisat_result|]) set_process (fun () -> ());
-      minisat_call_count := !minisat_call_count + 1;
+			minisat_call_count := !minisat_call_count + 1;
       let (prover_output, running_state) = get_answer !minisat_process.inchannel in
       is_minisat_running := running_state;
       prover_output;
@@ -487,7 +503,32 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
   remove_file infile;
   res
 	
-
+let check_problem_by_Ocamlbinding (input: string) (timeout: float) : bool=
+	(* debug *)
+(* let _ = print_endline "** In function minisat.check_problem_ocamlbinding" in*)
+(* let _ = print_endline ("input="^input) in *)
+  let set_process proc = minisat_process := proc in
+  let fnc () =
+    if (minisat_input_format = "cnf") then ( 
+(*			let ch = Unix.execvp "/home/bachle/slicing_minisat/sleekex/minisat_static" [|"minisat_static";"bach_eq_minisat.cnf"|]  in *)
+    if(input="")then true 
+		else let solver_res=minisat_parse_batch input in solver_res 
+    )
+    else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
+  let res =
+    try
+      let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
+      res
+    with _ -> ((* exception : return the safe result to ensure soundness *)
+      Printexc.print_backtrace stdout;
+      print_endline ("WARNING: Restarting prover due to timeout");
+      Unix.kill !minisat_process.pid 9;
+      ignore (Unix.waitpid [] !minisat_process.pid);
+      false
+    ) in
+  let _ = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
+  res
+ 
 (***************************************************************
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
@@ -524,11 +565,12 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 			let (ante_str,ge,gd,gr_e)=rtc_generate_B ante_cnf in
 				let res= ref "" in
 			 (*start generating cnf for the given CNF formula*)
-				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
-				  	let bv= if(temp ="p cnf 0 0") then true else false in
+				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "" in
+				  	let bv= if(temp ="") then true else false in
 				  		let result = if(bv=false) then
-				     	 "p cnf "^(string_of_int !number_vars)^" "^ (string_of_int !number_clauses)
-				     	 ^"\n"^temp
+(*				     	 "p cnf "^(string_of_int !number_vars)^" "^ (string_of_int !number_clauses)*)
+(*				     	 ^"\n"^temp*)
+							temp
 				    	else temp
 				  	in
 							let index= ref 0 in 
@@ -576,21 +618,25 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 	    let validity =
 	      if ((List.length !bcl)>0 ) then
 					let _=Gen.Profiling.push_time("stat_check_sat_1") in
-	       let res=check_problem_through_file minisat_input timeout in 
+	       let res=check_problem_by_Ocamlbinding minisat_input timeout in 
 					let _=Gen.Profiling.pop_time("stat_check_sat_1") in res
 				else true
 			in
 			if(validity=false) then
 	(*    		let _= print_endline "check sat1" in *)
+				begin
+					MiniSAT.reset ();
 					validity
+				end
 			else
 	(*			let _= print_endline "check sat2" in*)
 				let _=Gen.Profiling.push_time("stat_generation_of_T") in
 				let cnf_T = get_cnf_from_cache ge gd gr_e in
 				let _=Gen.Profiling.pop_time("stat_generation_of_T") in
 				let _=Gen.Profiling.push_time("stat_check_sat_2") in
-				let res=check_problem_through_file (minisat_input^cnf_T) timeout in 
-				let _=Gen.Profiling.pop_time("stat_check_sat_2") in res
+				let res=check_problem_by_Ocamlbinding cnf_T timeout in 
+				let _=Gen.Profiling.pop_time("stat_check_sat_2") in 
+				let _=MiniSAT.reset () in res
 		else false		
 
 (* minisat *)
