@@ -34,6 +34,10 @@ checkentail x::qll<Mx> & x!=null  |- x::node<_,_@L>.
 print residue.
 // should fail!
 
+checkentail x::node<a@A,b>  |- x::node<c,d>.
+print residue.
+// should fail but did not
+
 /*
 checkentail true |- exists M1,M2: M2 = union(Ml,Mr) & M2 subset union(M1,Ml) & M1 = Ml.
 checkentail self != null |- exists p: {self} subset {self,p} & {self,p} subset {self} & p notin {self} & self notin {p}.
