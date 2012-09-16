@@ -16,7 +16,6 @@ module IF = Iformula
 module I = Iast
 module C = Cast
 module Imm = Immutable
-module TP = Tpdispatcher
 
 let mk_mem_perm_formula (mem_exp: CP.exp) (isexact: bool) (fl: (ident * (CF.ann list)) list) : CF.mem_perm_formula = 
 	{ CF.mem_formula_exp = mem_exp;
@@ -244,31 +243,6 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    		      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
        	    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
 
-let compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) = 
-	let formula1 = lhs in
-	(*let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in*)
-	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
-	let formula = rhs in
-	(*let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in*)
-  	let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-	if not(CF.isFailCtx rs) then ()
-	else Err.report_error {Err.error_loc = pos;
-	Err.error_text = "[mem.ml] : view formula does not entail supplied Memory Spec";}
-
-let validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
-	match vdef.C.view_mem with
-	| Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
-		    let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
-	            let list_of_calcmem = 
-	            List.map (fun c -> CF.formula_of_mix_formula (xmem c prog.C.prog_view_decls a) pos) list_of_disjuncts in
-	            let combined_list = List.combine list_of_disjuncts list_of_calcmem in
-	            let _ = List.map (fun c-> compute_mem_spec prog (fst c) (snd c) pos) combined_list in ()
-		    (*let calcmem = 
-		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
-		    let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
-		    let rhs = CF.formula_of_mix_formula calcmem pos in*)	 
-	| None -> ()
-	
 let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  (name : ident) : ((I.typed_ident * loc * bool) list) = 
 	try (snd (List.find (fun c -> (*let _ = print_string(" DD: "^(fst c)^ "N: "^name) in  *)
 	if (String.compare (fst c) name) == 0 then true else false) ddn))

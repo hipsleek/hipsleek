@@ -8,7 +8,6 @@ open Perm
 open Mcpure_D
 open Mcpure
 open Label_only
-open Mem
   
 module C = Cast
 module E = Env
@@ -1089,7 +1088,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 		   compute_view_x_formula_x prog vdef (n - 1))
 		  else report_error pos "view formula does not entail supplied invariant\n" in ()
     )
-  else (Mem.validate_mem_spec prog vdef);
+  else (validate_mem_spec prog vdef);
   if !Globals.print_x_inv && (n = 0)
   then
     (print_string ("\ncomputed invariant for view: " ^ vdef.C.view_name ^"\n" ^(Cprinter.string_of_mix_formula vdef.C.view_x_formula) ^"\n");
@@ -1209,7 +1208,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 				trans_view_mem vdef.I.view_mem stab
 	  | None -> None)
   in 
-  let inv = add_mem_invariant inv vdef.I.view_mem in
+  let inv = Mem.add_mem_invariant inv vdef.I.view_mem in
   let _ = gather_type_info_pure prog inv stab in
   let pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
@@ -7700,6 +7699,31 @@ and trans_view_mem (vmem : IF.mem_formula option) stab : CF.mem_perm_formula opt
 	match vmem with
 	| Some a -> Some(trans_mem_formula a stab)
 	| None -> None
+	
+and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) = 
+	let formula1 = lhs in
+	(*let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in*)
+	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+	let formula = rhs in
+	(*let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in*)
+  	let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+	if not(CF.isFailCtx rs) then ()
+	else Err.report_error {Err.error_loc = pos;
+	Err.error_text = "[astsimp.ml] : view formula does not entail supplied Memory Spec";}
+
+and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
+	match vdef.C.view_mem with
+	| Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
+		    let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
+	            let list_of_calcmem = 
+	            List.map (fun c -> CF.formula_of_mix_formula (Mem.xmem c prog.C.prog_view_decls a) pos) list_of_disjuncts in
+	            let combined_list = List.combine list_of_disjuncts list_of_calcmem in
+	            let _ = List.map (fun c-> compute_mem_spec prog (fst c) (snd c) pos) combined_list in ()
+		    (*let calcmem = 
+		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
+		    let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
+		    let rhs = CF.formula_of_mix_formula calcmem pos in*)	 
+	| None -> ()
 	
 (*
 and normalize_barr_decl cprog p = 

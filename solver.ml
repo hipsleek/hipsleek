@@ -25,6 +25,7 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
+
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
@@ -4546,6 +4547,16 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
         (res_p, (res_ctx,Unknown),rest_a1)
   in res
 
+and heap_entail_conjunct_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
+ match ctx0 with
+  | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
+  | Ctx estate -> (
+      let ante = estate.es_formula in       	           
+	if true (*heap_entail_mem_perm ante conseq pos *)
+	then heap_entail_conjunct_helper 3 prog is_folding ctx0 conseq rhs_matched_set pos
+	else let msg = "Memory Spec Error: Cannot entail the memory spec" in 
+	(mkFailCtx_simple msg estate conseq pos , Failure))
+
 (* check the entailment of two conjuncts  *)
 (* return value: if fst res = true, then  *)
 (* snd res is the residual. Otherwise     *)
@@ -4561,7 +4572,8 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
   Debug.devel_zprint (lazy ("heap_entail_conjunct:\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-	
+  if !Globals.allow_field_ann then heap_entail_conjunct_with_mem prog is_folding ctx0 conseq rhs_matched_set pos
+  else	
     heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
         (*in print_string "stop\n";flush(stdout);r*)
         (* check the entailment of two conjuncts  *)
@@ -4586,7 +4598,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
   | Ctx estate -> (
       let ante = estate.es_formula in
-      (*let _ = print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante)) in*)
+      (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
       match ante with
       | Exists ({formula_exists_qvars = qvars;
                  formula_exists_heap = qh;
@@ -8871,7 +8883,6 @@ let rec simplify_relation (sp:struc_formula) subst_fml pre_vars post_vars prog i
 		let f1,l1 = simplify_relation b.formula_struc_or_f1 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
 		let f2,l2 = simplify_relation b.formula_struc_or_f2 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
 		(EOr {b with formula_struc_or_f1 = f1; formula_struc_or_f2 = f2;}, l1@l2)
-
 
 (*
 module frac_normaliz = struct
