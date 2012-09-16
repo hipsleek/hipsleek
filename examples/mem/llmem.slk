@@ -8,14 +8,31 @@ pred nll<n> == self::node<_,null> & n = 1
 	inv n > 0
 	mem {self}->(node<@M,@M>).
 
+pred rll<n> == self::node<_@A,null> & n = 1 
+	or self::node<_@A,p> * p::nll<n-1> 
+	inv n > 0
+	mem {self}->(node<@A,@M>).
+
 pred ll<M> == self = null & M = {} 
 	or self::node<_,p> * p::ll<Mp> & M subset union(Mp,{self})
 	inv true
 	mem M->(node<@M,@M>).
 	
+pred qll<M> == self = null & M = {} 
+	or self::node<_@A,p> * p::qll<Mp> & M subset union(Mp,{self})
+	inv true
+	mem M->(node<@A,@M>).
+
 checkentail x::ll<Mx> & Mx != {} |- x::node<_,_@L>.
 print residue.
 
+checkentail x::rll<n> & n>0 |- x::node<_,_@L>.
+print residue.
+// should fail!
+
+checkentail x::qll<Mx> & x!=null  |- x::node<_,_@L>.
+print residue.
+// should fail!
 
 /*
 checkentail true |- exists M1,M2: M2 = union(Ml,Mr) & M2 subset union(M1,Ml) & M1 = Ml.
