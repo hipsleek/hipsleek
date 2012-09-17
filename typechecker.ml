@@ -1634,6 +1634,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   	            	let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Primed)) vs farg_types in
 									tctx @ [{
   									TInfer.t_type = TInfer.Rec mn; 
+										TInfer.t_caller = proc.proc_name;
   									TInfer.t_ctx = ctx;
   									TInfer.t_params = (farg_spec_vars, actual_spec_vars);
   									TInfer.t_pure_ctx = [];
@@ -1727,6 +1728,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						let n_tctx = if not (!Globals.enable_term_infer) then tctx else 
 							tctx @ [{
 							TInfer.t_type = TInfer.Base; 
+							TInfer.t_caller = proc.proc_name;
 							TInfer.t_ctx = ctx;
 							TInfer.t_params = ([], []);
 							TInfer.t_pure_ctx = [];
@@ -2290,7 +2292,7 @@ let check_prog (prog : prog_decl) =
 			TInfer.imply = TP.imply_raw;
 			TInfer.is_sat = fun f -> TP.is_sat f "" true;
 		} in
-		TInfer.main utils sorted_proc_main
+		TInfer.main utils sorted_proc_main proc_scc
 	end
 	else ()
 	    

@@ -18,5 +18,8 @@ case {
 
 {
 	if (x<=0) return;
-	else loop(x+y, -2-y);
+	//else loop(x+y, -2-y);
+	//else loop(x+y, 4-2*y); //TODO
+	//else loop(x+y, -6-2*y);
+	else loop(x+y, -4-2*y);
 }
