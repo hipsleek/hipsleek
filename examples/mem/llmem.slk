@@ -38,6 +38,26 @@ checkentail x::node<a@A,b>  |- x::node<c,d>.
 print residue.
 // should fail but did not
 
+checkentail x::rll<n> & n>0 |- x::node<_@A,_@L>.
+print residue.
+
+checkentail x::qll<Mx> & x!=null  |- x::node<_@A,_@L>.
+print residue.
+
+checkentail x::rll<n> & n>0 |- x::node<_@A,_@M>.
+print residue.
+// x::node<Anon_27@A,Anon_28@A>@M
+
+checkentail x::node<a@A,b>  |- x::node<c@A,d>.
+print residue.
+// <1>x::node<a@A,b@A>@M[Orig]&0<=0 & 0<=3 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a@A,b>  |- x::node<c@A,d@L>.
+print residue.
+// <1>x::node<a@A,b@M>@M[Orig]&0<=0 & 0<=3 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+
+
 /*
 checkentail true |- exists M1,M2: M2 = union(Ml,Mr) & M2 subset union(M1,Ml) & M1 = Ml.
 checkentail self != null |- exists p: {self} subset {self,p} & {self,p} subset {self} & p notin {self} & self notin {p}.
