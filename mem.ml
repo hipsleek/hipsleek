@@ -64,7 +64,7 @@ let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF
 			Err.error_loc = no_pos;
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
-let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) =
+let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) pos =
 	match fl2 with
 	| [] -> ()
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
@@ -72,9 +72,9 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 				(*let _ = print_string ("Ann lists: " ^ (String.concat "," (List.map string_of_imm (snd c)))^" "^
 					(String.concat "," (List.map string_of_imm (snd x)))^ "\n") in *)
 				if tmp then c else 
-				 	Err.report_error { Err.error_loc = no_pos;
+				 	Err.report_error { Err.error_loc = pos;
 					Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
-				else c) fl1 in fl_subtyping fl1 xs
+				else c) fl1 in fl_subtyping fl1 xs pos
 			
 let rec fl_intersect_no_inter (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
 	match fl2 with
@@ -218,10 +218,10 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
          	  let mfe1 = me.CF.mem_formula_exp in
 		  let mfe2 = mpform.CF.mem_formula_exp in
 		  let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
-		  let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout in
+		  let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
 		  let f = if me.CF.mem_formula_exact 
 		  	  then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
-		  		in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
+		  		in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos
 		  		in MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
 		  	  else MCP.mix_of_pure f1 
 		  in (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
@@ -232,10 +232,10 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    let mfe1 = me.CF.mem_formula_exp in
 		    let mfe2 = mpform.CF.mem_formula_exp in
 		    let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
-		    let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout in
+		    let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
 		    let f = if me.CF.mem_formula_exact 
 		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
-		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout
+		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos
 				 in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
 				 (*in MCP.memo_pure_push_exists qvars fe*)
 				 in fe
@@ -243,6 +243,33 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    		      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
        	    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
 
+let xmem_perm (f: CF.formula) (vl:C.view_decl list) : CF.mem_perm_formula * MCP.mix_formula * CP.spec_var list =
+	let mix_true = MCP.mix_of_pure (CP.mkTrue no_pos) in 
+	match f with
+	| CF.Or ({CF.formula_or_f1 = f1;
+		CF.formula_or_f2 = f2;
+		CF.formula_or_pos = pos;}) -> (* Do not call with disjunctive formula*)
+					      (mk_mem_perm_formula (CP.Bag([],no_pos)) false []),mix_true,[]
+	| CF.Base ({ CF.formula_base_heap = f;
+		  CF.formula_base_pos = pos;}) -> 
+		  let mpform,disjform = (xmem_heap f vl) 
+		  in mpform,(List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) mix_true disjform),[]
+	| CF.Exists ({ CF.formula_exists_qvars = qvars;
+		    CF.formula_exists_heap = f;
+		    CF.formula_exists_pos = pos;}) -> 
+		    let mpform,disjform = (xmem_heap f vl) in
+		    let pureform = (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) mix_true disjform) 			    in mpform, pureform, qvars
+
+let entail_mem_perm_formula (ante: CF.formula) (conseq: CF.formula) (vl: C.view_decl list) pos : MCP.mix_formula = 
+	let ante_mem,ante_mem_pure,ante_qvars = xmem_perm ante vl in
+	let conseq_mem,conseq_mem_pure,conseq_qvars = xmem_perm conseq vl in
+	let mfe_ante = ante_mem.CF.mem_formula_exp in
+	let mfe_conseq = conseq_mem.CF.mem_formula_exp in
+	let subset_formula = CP.BForm((CP.BagSub(mfe_conseq,mfe_ante,pos),None),None) in
+	let _ = fl_subtyping ante_mem.CF.mem_formula_field_layout conseq_mem.CF.mem_formula_field_layout pos in
+	let pure_formulas = MCP.merge_mems ante_mem_pure conseq_mem_pure true in
+	MCP.memo_pure_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
+	       	    
 let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  (name : ident) : ((I.typed_ident * loc * bool) list) = 
 	try (snd (List.find (fun c -> (*let _ = print_string(" DD: "^(fst c)^ "N: "^name) in  *)
 	if (String.compare (fst c) name) == 0 then true else false) ddn))

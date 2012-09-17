@@ -7702,11 +7702,11 @@ and trans_view_mem (vmem : IF.mem_formula option) stab : CF.mem_perm_formula opt
 	
 and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) = 
 	let formula1 = lhs in
-	(*let _ = print_string("LHS :"^(string_of_formula formula1) ^"\n") in*)
+	(*let _ = print_string("LHS :"^(Cprinter.string_of_formula formula1) ^"\n") in*)
 	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
 	let formula = rhs in
-	(*let _ = print_string("RHS :" ^(string_of_formula formula)^"\n") in*)
-  	let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+	(*let _ = print_string("RHS :" ^(Cprinter.string_of_formula formula)^"\n") in*)
+  	let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ctx]) formula pos in
 	if not(CF.isFailCtx rs) then ()
 	else Err.report_error {Err.error_loc = pos;
 	Err.error_text = "[astsimp.ml] : view formula does not entail supplied Memory Spec";}

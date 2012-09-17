@@ -3172,7 +3172,24 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			          ((fold_context_left [l11;l21]), (mkCaseStep ctx conseq [l12;l22]))
 	end	in
   helper_inner 8 ctx_00 conseq 
-
+  
+and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos 
+: (list_context * proof) =
+ match ctx0 with
+  | OCtx (ctx1,ctx2) -> heap_entail_after_sat prog is_folding ctx0 conseq pos ([])
+  | Ctx estate -> (
+      let ante = estate.es_formula in
+      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
+      let _ = print_string("A :"^(Cprinter.string_of_formula ante) ^"\n") in
+      let formula = Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos in
+      (*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
+      let new_conseq = CF.formula_of_mix_formula formula pos in
+      let _ = print_string("C :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
+      let (rs,p) = heap_entail_after_sat prog is_folding ctx new_conseq pos ([]) in
+      if not(CF.isFailCtx rs) then heap_entail_after_sat prog is_folding ctx0 conseq pos ([])
+      else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
+	(mkFailCtx_simple msg estate conseq pos , Failure))
+	
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Debug.no_2 "heap_entail_init"
 	  Cprinter.string_of_list_context
@@ -3232,7 +3249,8 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
-        heap_entail_after_sat prog is_folding ctx conseq pos ([])
+        if !Globals.allow_field_ann then heap_entail_with_mem prog is_folding ctx conseq pos
+  	else heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -4547,16 +4565,6 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
         (res_p, (res_ctx,Unknown),rest_a1)
   in res
 
-and heap_entail_conjunct_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
- match ctx0 with
-  | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
-  | Ctx estate -> (
-      let ante = estate.es_formula in       	           
-	if true (*heap_entail_mem_perm ante conseq pos *)
-	then heap_entail_conjunct_helper 3 prog is_folding ctx0 conseq rhs_matched_set pos
-	else let msg = "Memory Spec Error: Cannot entail the memory spec" in 
-	(mkFailCtx_simple msg estate conseq pos , Failure))
-
 (* check the entailment of two conjuncts  *)
 (* return value: if fst res = true, then  *)
 (* snd res is the residual. Otherwise     *)
@@ -4572,8 +4580,6 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
   Debug.devel_zprint (lazy ("heap_entail_conjunct:\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-  if !Globals.allow_field_ann then heap_entail_conjunct_with_mem prog is_folding ctx0 conseq rhs_matched_set pos
-  else	
     heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
         (*in print_string "stop\n";flush(stdout);r*)
         (* check the entailment of two conjuncts  *)

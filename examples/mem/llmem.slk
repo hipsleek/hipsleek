@@ -14,12 +14,12 @@ pred rll<n> == self::node<_@A,null> & n = 1
 	mem {self}->(node<@A,@M>).
 
 pred ll<M> == self = null & M = {} 
-	or self::node<_,p> * p::ll<Mp> & M subset union(Mp,{self})
+	or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self})
 	inv true
 	mem M->(node<@M,@M>).
 	
 pred qll<M> == self = null & M = {} 
-	or self::node<_@A,p> * p::qll<Mp> & M subset union(Mp,{self})
+	or self::node<_@A,p> * p::qll<Mp> & M = union(Mp,{self})
 	inv true
 	mem M->(node<@A,@M>).
 
