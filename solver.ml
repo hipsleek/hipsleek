@@ -3176,7 +3176,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos 
 : (list_context * proof) =
  match ctx0 with
-  | OCtx (ctx1,ctx2) -> heap_entail_after_sat prog is_folding ctx0 conseq pos ([])
+  | OCtx (ctx1,ctx2) -> heap_entail_conjunct prog is_folding ctx0 conseq [] pos
   | Ctx estate -> (
       let ante = estate.es_formula in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
@@ -3185,8 +3185,12 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
       (*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
       let new_conseq = CF.formula_of_mix_formula formula pos in
       let _ = print_string("C :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
-      let (rs,p) = heap_entail_after_sat prog is_folding ctx new_conseq pos ([]) in
-      if not(CF.isFailCtx rs) then heap_entail_after_sat prog is_folding ctx0 conseq pos ([])
+      let (rs,p) = heap_entail_conjunct prog is_folding ctx new_conseq [] pos in
+      if not(CF.isFailCtx rs) then 
+      let ante_without_conj = Mem.conv_formula_conj_to_star ante in
+      let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
+      let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
+      heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
       else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
 	(mkFailCtx_simple msg estate conseq pos , Failure))
 	
@@ -3196,7 +3200,6 @@ and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context)
 	  Cprinter.string_of_formula
 	  (fun (rs, _) -> Cprinter.string_of_list_context rs)
 	  (fun cl conseq -> heap_entail_init_x prog is_folding cl conseq pos) cl conseq
-	  
 	  
 and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with
@@ -3249,8 +3252,8 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
-        if !Globals.allow_field_ann then heap_entail_with_mem prog is_folding ctx conseq pos
-  	else heap_entail_after_sat prog is_folding ctx conseq pos ([])
+        (*if !Globals.allow_field_ann then heap_entail_with_mem prog is_folding ctx conseq pos
+  	else*) heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -3432,14 +3435,20 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          (filter_set rs1, prf1)
     | _ -> begin
         let r1,p1 =
-	      if !Globals.allow_imm then
+              if !Globals.allow_mem && !Globals.allow_field_ann then
             begin
-              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
-              (* TO CHECK: ignore this --imm at the moment*)
-	          heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
+              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_with_mem")) pos;
+	          heap_entail_with_mem prog is_folding ctx conseq pos     
             end
-	      else
-	        heap_entail_conjunct prog is_folding  ctx conseq [] pos     
+              else
+	      	if !Globals.allow_imm then
+            	begin
+              	Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
+             	 (* TO CHECK: ignore this --imm at the moment*)
+	          	heap_entail_split_rhs_phases prog is_folding ctx conseq false pos     
+           	 end
+	      	else
+	        	heap_entail_conjunct prog is_folding ctx conseq [] pos     
         in
 	    (r1,p1)
       end

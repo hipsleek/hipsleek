@@ -6063,7 +6063,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f  in
 	
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
-    let heap = Immutable.normalize_h_formula heap false in 
+    let heap = if !Globals.allow_mem then heap else Immutable.normalize_h_formula heap false in 
     let nu, h_evars, new_h, link_f = linearize_heap [] heap in
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)

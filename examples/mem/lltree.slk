@@ -15,7 +15,18 @@ pred tree<M> == self = null & M = {}
 	inv true
 	memE M->(node<@L,@A,@M,@M>).
 	
-checkentail x::ll<M> & t::tree<M> & M != {} |- t::node<_@L,p@A,l@M,r@M>.
+checkentail (x::ll<M> & t::tree<M>) & M != {} |- t::node<_@L,p@A,l@M,r@M>.
+print residue.
+
+checkentail x::node<_@L,p@M,_@A,_@A> |- (x::ll<M> & t::tree<M>).
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mx = Mt |- x::ll<Mx>.
 print residue.
 
 
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} |- (x::ll<Mx> & t::node<_@L,p@A,l@M,r@M>).
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} |- t::node<_@L,p@A,l@M,r@M>.
+print residue.

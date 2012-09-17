@@ -478,6 +478,13 @@ let peek_star =
            match Stream.npeek 2 strm with
              |[STAR,_;OPAREN,_] -> raise Stream.Failure
              | _ -> ())
+             
+let peek_heap_and = 
+   SHGram.Entry.of_parser "peek_heap_and"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[AND,_;OPAREN,_] -> raise Stream.Failure
+             | _ -> ())
 
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
@@ -952,6 +959,7 @@ heap_rw:
 heap_wr:
   [[   
      shc=SELF; peek_star; `STAR;  hw= simple_heap_constr     -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
+   | shi=SELF; peek_heap_and; `AND; hw=simple_heap_constr  -> F.mkConj shi hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)

@@ -138,7 +138,10 @@ let mem_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_fo
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
 		{CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
 		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
-		CF.mem_formula_field_layout = remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;}
+		CF.mem_formula_field_layout = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact 
+					then (fl_intersect_no_inter f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout)
+					else (fl_intersect f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout);}
+		(*remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;}*)
 
 let mem_intersect (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula =
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
@@ -332,3 +335,41 @@ let add_mem_invariant (inv : IP.formula) (vmem : IF.mem_formula option) : IP.for
 		in IP.mkAnd inv mem_inv (IP.pos_of_formula inv)
 	| None -> inv
 
+
+let rec conv_h_formula_conj_to_star (h : CF.h_formula) : CF.h_formula = 
+match h with
+| CF.Conj ({ CF.h_formula_conj_h1 = f1;
+	     CF.h_formula_conj_h2 = f2;
+	     CF.h_formula_conj_pos = pos;}) -> 
+	     CF.Star{CF.h_formula_star_h1 = (conv_h_formula_conj_to_star f1);
+	     	     CF.h_formula_star_h2 = (conv_h_formula_conj_to_star f2);
+	     	     CF.h_formula_star_pos = pos}
+| CF.Phase ({ CF.h_formula_phase_rd = f1;
+	      CF.h_formula_phase_rw = f2;
+	      CF.h_formula_phase_pos = pos;})-> 
+	     CF.Star{CF.h_formula_star_h1 = (conv_h_formula_conj_to_star f1);
+	     	     CF.h_formula_star_h2 = (conv_h_formula_conj_to_star f2);
+	     	     CF.h_formula_star_pos = pos}
+	      (* Treat Phase as Conj for now*)
+| _ -> h
+
+let rec conv_formula_conj_to_star (f : CF.formula) : CF.formula = 
+match f with
+| CF.Or ({CF.formula_or_f1 = f1;
+	  CF.formula_or_f2 = f2;
+	  CF.formula_or_pos = pos})-> CF.mkOr (conv_formula_conj_to_star f1) (conv_formula_conj_to_star f2) pos
+| CF.Base ({CF.formula_base_heap = h;
+            CF.formula_base_pure = p;
+            CF.formula_base_type = t; 
+            CF.formula_base_and = ol; 
+            CF.formula_base_flow = fl;
+            CF.formula_base_label = lbl;
+            CF.formula_base_pos = pos}) -> CF.mkBase_w_lbl (conv_h_formula_conj_to_star h) p t fl ol pos lbl
+| CF.Exists ({CF.formula_exists_qvars = qvars;
+	      CF.formula_exists_heap = h;
+              CF.formula_exists_pure = p;
+              CF.formula_exists_type = t; 
+              CF.formula_exists_and = ol; 
+              CF.formula_exists_flow = fl;
+              CF.formula_exists_label = lbl;
+              CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p t fl ol pos lbl
