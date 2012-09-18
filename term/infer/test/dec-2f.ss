@@ -8,14 +8,14 @@ case {
 	x<=0 -> requires Term ensures true;
 	x>0 -> case {
 		y=-1 -> requires Term[x] ensures true;
-		y!=-1 -> case {
+		y<(-1) -> case {
 			x+y<=0 -> requires Term ensures true;
 			x+y>0 -> requires Term[2*x+y] ensures true;
 		}
+		y>-1 -> requires Term[2*x+y] ensures true;
 	}
 }
 */
-
 {
 	if (x<=0) return;
 	else loop(x+y, -2-y);
