@@ -13,13 +13,6 @@ data node {
 }.
 
 
-// (1) valid
-checkentail x::node<p,q>@I |- true.
-print residue.
-
-// (1) valid
-checkentail x::node<p,q>@M |- x::node<p,r>@I.
-print residue.
 
 // (1) valid
 checkentail x::node<p@L,q@A>@M |- true.
@@ -63,4 +56,20 @@ print residue.
 
 // (11) valid
 checkentail x::node<p@I,q@I> * y::node<c,d> |- x::node<a@I,b@I>@I.
+print residue.
+
+// (12) valid
+checkentail x::node<a@A,b>  |- x::node<c@A,d>.
+print residue. 
+
+// (13) valid
+checkentail x::node<a@A,b>  |- x::node<c@A,d@L>.
+print residue. 
+
+// (14) valid
+checkentail x::node<p,q>@I |- true.
+print residue.
+
+// (15) valid
+checkentail x::node<p,q>@M |- x::node<p,r>@I.
 print residue.

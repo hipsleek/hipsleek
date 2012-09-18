@@ -6085,7 +6085,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
-
+    let get_abs_args args anns = 
+      try 
+          List.fold_left (fun lst (arg, ann) -> if (CF.isAccs ann) then  [arg]@lst else lst ) []  (List.combine args anns) 
+      with Invalid_argument _ ->  []     (* reaches here if the node is ViewNode (args length and anns legth differ)*)
+    in
+    let abs_args = (get_abs_args l_args l_param_ann) @ (get_abs_args r_args r_param_ann) in
 	(* An Hoa : found out that the current design of do_match 
 	   will eventually remove both nodes. Here, I detected that 
 	   l_h & r_h captures the heap part. In order to capture 
@@ -6168,7 +6173,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 else   (List.combine r_args l_args, label_list)
               in*)
               let rho = List.combine rho_0 label_list in (* with branch label *)
-              let evars,ivars,impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in
+              let evars, ivars, impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in
               (*impl_tvars are impl_vars that are replaced by ivars in rho. 
                 A pair (impl_var,ivar) belong to rho => 
                 impl_var belongs to impl_tvars
@@ -6189,14 +6194,18 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Note: other_subs will never contain any impl_tvars because 
                 of the pre-processed subs_to_inst_vars*)
 	          (* An Hoa : strip all the pair of equality involving # *)
-	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
+              let filter_abs x =       (* filter for absent args *)
+                try let _ = List.find (fun arg -> CP.eq_spec_var arg x) abs_args in true 
+                with Not_found _ -> false
+              in
+	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y || filter_abs  x || filter_abs y) ) other_subs in
               let to_lhs,to_rhs,ext_subst = get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos in
 
               (* adding annotation constraints matched *)
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
-	      (* let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
+	          (* let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
@@ -6419,7 +6428,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos) 
       fold_ctx (* estate *) (conseq, rhs_node, vd ,rhs_rest,rhs_b) is_folding
 
-(* Debug.loop_3(\* _no *\)  "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr *)
+(* Debug.loop_3(* _no *)  "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr *)
 (*     (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos)  *)
 (*     fold_ctx rhs_node vd *)
 (*
@@ -7029,7 +7038,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*                      [r] @ args @ alias @ alias_all @ arg_other                                                   *)
               (*              in                                                                                                   *)
               (* moved into do_base_fold *)
-              (* let (estate,iv) = Inf.remove_infer_vars_all estate (\* rt *\)in *)
+              (* let (estate,iv) = Inf.remove_infer_vars_all estate (* rt *)in *)
               let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
               in (cl,prf)
                      (* (Inf.restore_infer_vars iv cl,prf) *)
@@ -7060,7 +7069,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         },ln) ->
             (* let _ = match ln with *)
             (*   | None -> ()  *)
-            (*   | Some c -> ()(\* print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") *\) in *)
+            (*   | Some c -> ()(* print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") *) in *)
             let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)
@@ -7234,7 +7243,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	    h_formula_view_name = c2;
 	    h_formula_view_remaining_branches = br2;
 	    h_formula_view_perm = perm2; (*LDK*)
-	    h_formula_view_arguments = ps2} (* as h2 *)) (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2 (\*c1=c2 && (br_match br1 br2) *\) *)
+	    h_formula_view_arguments = ps2} (* as h2 *)) (* when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2 (*c1=c2 && (br_match br1 br2) *) *)
             (*lemmas can also be applied to data node*)
 	  | DataNode ({ h_formula_data_node = p1;
 	    h_formula_data_name = c1;
@@ -7267,8 +7276,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                   , CF.mk_failure_must "failed coercion" Globals.sl_error)), Failure))
 	        else	(* we can apply coercion *)
 		      begin
-		        (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
-		        (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
+		        (* if (not(!lemma_heuristic) (* && get_estate_must_match estate *)) then *)
+		        (*   ((*print_string("disable distribution\n");*) enable_distribution := false); *)
 		        (* the \rho substitution \rho (B) and  \rho(G) is performed *)
                 (*subst perm variable when applicable*)
                 let perms1,perms2 =
@@ -7307,7 +7316,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		        (*************************************************************************************************************************************************************************)
 		        (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
 		        (* let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
-		        (* let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
+		        (* let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (* guard_to_check *)) ^ "\n") in *)
 		        let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
 		        (* add the guard to the consequent  - however, the guard check is delayed *)
                 (* ?? *)
@@ -7473,8 +7482,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                 (*   add origins to the first node and leave the rest untouched. *)
                 (*   This is to make sure that after a coercion, there will be *)
                 (*   a MATCH for the first node. *)
-		        (* let coer_rhs_new = add_origins_to_coer coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
-		        (* let coer_rhs_new = add_origins coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
+		        (* let coer_rhs_new = add_origins_to_coer coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in *)
+		        (* let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in *)
 		        let _ = reset_int2 () in
 		        let xpure_lhs, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
@@ -7489,8 +7498,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
                   (*mark __Error case, return 2 or 1*)
 		          let new_f = normalize_replace coer_rhs_new f pos in
-			      (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
-			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+			      (* if (not(!lemma_heuristic) (* && get_estate_must_match estate *)) then *)
+			      (*   ((*print_string("disable distribution\n"); *)enable_distribution := false); *)
                   let f1 = CF.formula_is_eq_flow coer_rhs_new !error_flow_int in
                   let fst_res =
                     if f1 then 2 else 1
@@ -7516,8 +7525,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		                  let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			              (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		                  let new_f = mkOr f1 f2 pos in
-			              (* if (not(!lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
-			              (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+			              (* if (not(!lemma_heuristic) (* && (get_estate_must_match estate) *)) then *)
+			              (*   ((*print_string("disable distribution\n"); *)enable_distribution := false); *)
 			              (1, new_f)
                     | _ -> 
                           let _ = print_string ("[Solver.ml] Warning: This case not yet handled properly \n") in
@@ -7711,7 +7720,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b 
     CF.mk_failure_must "12" Globals.sl_error)), [])
   else
     (*COMPLEX or NORMALIZING lemmas with multiple nodes in the lhs*)
-    (* (\*LDK: ok*\) *)
+    (* (*LDK: ok*) *)
     let _ = Debug.devel_zprint (lazy ("heap_entail_non_empty_rhs_heap: "
     ^ "left_coercion: c1 = "
     ^ c1 ^ "\n")) pos in
@@ -7774,11 +7783,11 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 	  h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
           (*temporarily skip this step. What is it for???*)
-	      (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
+	      (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (* rhs_b *)) (CF.formula_of_base lhs_b)) in *)
 
           if (is_cycle_coer coer origs)
 	      then
-            (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
+            (* let s = (pr_list string_of_bool [f1;(* f2; *)f3;f4;f5;f6]) in *)
 		    let _ = Debug.devel_zprint (lazy("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *))) pos in
             (CF.mkFailCtx_in( Basic_Reason ( { 
 	            fc_message ="failed left coercion application: in a cycle";
