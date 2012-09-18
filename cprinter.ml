@@ -2483,7 +2483,8 @@ let string_of_term_res = function
 		| Some rank -> "[" ^ (string_of_formula_exp rank) ^ "]")
 	| TInfer.Unknown unk -> 
 		"UNK_" ^ (string_of_int unk.TInfer.unk_id) 
-		^ "#" ^ unk.TInfer.unk_callee 
+		^ "(" ^ unk.TInfer.unk_caller ^ " -> " ^ unk.TInfer.unk_callee 
+		(* ^ "#" ^ unk.TInfer.unk_callee  *)
 		(* ^ ": " ^ (string_of_pure_formula unk.TInfer.unk_trans_ctx) *)
 		(* ^ ":::: " ^ (string_of_pure_formula unk.TInfer.unk_cond)   *)
 

@@ -103,7 +103,7 @@ let term_spec_tbl : (ident, term_spec) Hashtbl.t = Hashtbl.create 10
 
 let term_res_tbl : (int, term_res) Hashtbl.t = Hashtbl.create 10
 
-(* let term_ctx_tbl : (ident, list_term_ctx) Hashtbl.t = Hashtbl.create 10 *)
+let term_rec_ctx_tbl : (ident, CP.formula) Hashtbl.t = Hashtbl.create 10
 
 type utils = {
 	is_sat        : CP.formula -> bool;
@@ -193,12 +193,14 @@ let eq_term_res r1 r2 =
 let compare_trans_constr a b =
 	let asrc_id, adst_id = (id_of_term_res a.term_trans_src), (id_of_term_res a.term_trans_dst) in
 	let bsrc_id, bdst_id = (id_of_term_res b.term_trans_src), (id_of_term_res b.term_trans_dst) in
-	if asrc_id > bsrc_id then 1
-	else if asrc_id == bsrc_id then
-		if adst_id > bdst_id then 1
-		else if adst_id == bdst_id then 0
-		else -1
-	else -1
+	(* if asrc_id > bsrc_id then 1        *)
+	(* else if asrc_id == bsrc_id then    *)
+	(* 	if adst_id > bdst_id then 1       *)
+	(* 	else if adst_id == bdst_id then 0 *)
+	(* 	else -1                           *)
+	(* else -1                            *)
+	if asrc_id == bsrc_id then adst_id - bdst_id
+	else asrc_id - bsrc_id
 	
 let eq_trans_constr a b = 
 	let asrc_id, adst_id = (id_of_term_res a.term_trans_src), (id_of_term_res a.term_trans_dst) in
@@ -278,12 +280,19 @@ let get_method_args proc =
 	let farg_types, farg_names = List.split proc.proc_args in	
 	List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types
 
+(* Store the context of recursive call *)
+let update_term_rec_ctx_tbl mn f = 
+	Hashtbl.add term_rec_ctx_tbl mn f
+
 (* Simplify the termination context to get *)
 (* the conditions on method's arguments    *)
-let simplify_t_cond_pure args (pt, f, t_res) =
+let simplify_t_cond_pure mn args (pt, f, t_res) =
 	let qsv = diff_svl (CP.fv f) args in
 	(* a!=b has already been transformed to a<b | a>b by Omega *)
 	let simpl_f = mkExists_with_simpl Omega.simplify qsv f None no_pos in
+	let _ = match t_res with
+	| Unknown _ -> update_term_rec_ctx_tbl mn simpl_f
+	| _ -> () in
 	List.map (fun f -> (pt, f, match t_res with
 	| Unknown unk -> 
 			if unk.unk_id != 0 then t_res 
@@ -293,12 +302,13 @@ let simplify_t_cond_pure args (pt, f, t_res) =
 			else update_term_id term
 	| _ -> t_res)) (CP.list_of_disjs simpl_f)
 		
-let simplify_cond_pure_term_ctx args tctx =
-	{tctx with t_cond_pure = List.concat (List.map (simplify_t_cond_pure args) tctx.t_cond_pure);}
+let simplify_cond_pure_term_ctx mn args tctx =
+	{tctx with t_cond_pure = List.concat (List.map (simplify_t_cond_pure mn args) tctx.t_cond_pure);}
 	
 let simplify_cond_pure_list_term_ctx proc tctx =
 	let farg_spec_vars = get_method_args proc in
-	List.map (simplify_cond_pure_term_ctx farg_spec_vars) tctx
+	let mn = proc.proc_name in
+	List.map (simplify_cond_pure_term_ctx mn farg_spec_vars) tctx
 	
 let sort_path_trace_by_order cl =
 	let rec comp pt1 pt2 = match pt1, pt2 with
@@ -702,38 +712,49 @@ let rec linear_rank_synthesis utils (x1, x2, x3) ctx =
 		Some rank
 	with _ -> None
 		
-and linear_rank_synthesis_scc utils (caller, x1) (callee, x2) ctx scc_trans =
-	let _ = print_endline ("SCC TRANS: " ^ (pr_list !print_term_trans_constraint scc_trans)) in
+and construct_unk_rank mn args =
+	let fname = String.sub mn 0 (String.index mn '$') in
+	let _, unk_coe = List.fold_left (fun (i, ls) _ ->
+		(i-1, ls @ [SpecVar (Int, fname ^ "unkcoen" ^ (string_of_int i), Unprimed)])) (List.length args, []) args in
+	let free_coe = MATH.norm_spec_var (SpecVar (Int, fname ^ "unkcoen0", Unprimed)) in
+	let unk_rank = List.fold_right (fun op res -> mkAdd res op)
+		(List.map2 (fun coe x -> mkMult (mkVar coe) (mkVar x)) unk_coe args)
+  	(mkVar free_coe) in
+	(unk_rank, unk_coe @ [free_coe])	
 	
-	let construct_unk_rank call args =
-		let fname = String.sub call 0 (String.index call '$') in
-		let _, unk_coe = List.fold_left (fun (i, ls) _ ->
-  	(i-1, ls @ [SpecVar (Int, fname ^ "unkcoen" ^ (string_of_int i), Unprimed)])) (List.length args, []) args in
-		let free_coe = MATH.norm_spec_var (SpecVar (Int, fname ^ "unkcoen0", Unprimed)) in
-		let unk_rank = List.fold_right (fun op res -> mkAdd res op)
-			(List.map2 (fun coe x -> mkMult (mkVar coe) (mkVar x)) unk_coe x1)
-  		(mkVar free_coe) in
-		(unk_rank, unk_coe @ [free_coe]) 
-  in
-	
-	let unk_rank_1, unk_coe_1 = construct_unk_rank caller x1 in
-  let unk_rank_2, unk_coe_2 = construct_unk_rank callee x2 in
-	let pr_n x = None in
-		
-	let collect_constr trans = 
-  	let bound_constr = mkGte unk_rank_1 (mkIConst 0) in
-  	let dec_constr = mkGt unk_rank_1 unk_rank_2 in
-  	let constr = mkOr (mkNot ctx) (mkAnd bound_constr dec_constr) in
-  	let qconstr = mkForall (diff_svl (CP.fv constr) (unk_coe_1 @ unk_coe_2)) constr in
-  	(* Redlog: Quantifier Elimination RLQE *)
-  	generate_coefficient_constrs qconstr
+and collect_coefficient_constrs utils prog trans_constr =
+	let unk_info = match trans_constr.term_trans_src with
+	| Unknown info -> info
+	| _ -> report_error no_pos "Termination Inference: Unexpected transition constraint."
 	in
 	
+	let caller_mn = unk_info.unk_caller in
+	let caller_decl = Hashtbl.find prog.new_proc_decls caller_mn in
+	let caller_args = get_method_args caller_decl in
+	let caller_unk_rank, caller_unk_coe = construct_unk_rank caller_mn caller_args in
+		
+	let params_subst = unk_info.unk_params in	
+	let callee_unk_rank, callee_unk_coe = construct_unk_rank unk_info.unk_callee (snd params_subst) in
+	
+	let trans_ctx = unk_info.unk_trans_ctx in
+	let callee_rec_ctx = join_disjunctions (Hashtbl.find_all term_rec_ctx_tbl unk_info.unk_callee) in
+	let compose_ctx = mkAnd trans_ctx (CP.subst_avoid_capture (fst params_subst) (snd params_subst) callee_rec_ctx) in
+	let ctx = mkExists (diff_svl (CP.fv compose_ctx) (caller_args @ (snd params_subst))) compose_ctx in
+
+	let bound_constr = mkGte caller_unk_rank (mkIConst 0) in
+	let dec_constr = mkGt caller_unk_rank callee_unk_rank in
+	let constr = mkOr (mkNot (utils.simplify ctx)) (mkAnd bound_constr dec_constr) in	
+	let qconstr = mkForall (diff_svl (CP.fv constr) (caller_unk_coe @ callee_unk_coe)) constr in
+	(* Redlog: Quantifier Elimination RLQE *)
+	(generate_coefficient_constrs qconstr, caller_unk_coe @ callee_unk_coe)
+		
+and linear_rank_synthesis_scc utils prog scc_trans =
 	try
-	let constrs = List.fold_left (fun res trans ->
-		mkAnd res (collect_constr trans)) (CP.mkTrue no_pos) scc_trans in		
+	let constrs, coes = List.fold_left (fun (res, coes) trans ->
+		let constr, coe = collect_coefficient_constrs utils prog trans in
+		(mkAnd res constr, coes @ coe)) ((CP.mkTrue no_pos), []) scc_trans in		
 	(* Mathematica: FindInstance *)
-	let math_res = solve_coefficient_constrs (unk_coe_1 @ unk_coe_2) constrs in
+	let math_res = solve_coefficient_constrs coes constrs in
 	if math_res = [] then None
 	else
 		(* let rank = List.fold_right (fun (coe, x) res ->                                         *)
@@ -749,8 +770,10 @@ and generate_coefficient_constrs qconstr =
 	let _ = RL.start () in
 	let pr_n x = None in
 	let rl_f = RL.rl_of_formula pr_n pr_n qconstr in
+	let _ = print_endline ("\nRL INP: " ^ rl_f) in
 	let _ = RL.send_cmd "rlset R" in
 	let rl_res = RL.send_and_receive ("rlqe " ^ rl_f) in
+	let _ = print_endline ("\nRL RES: " ^ rl_res) in
 	let _ = RL.send_cmd "rlset ofsf" in
 	let lexbuf = Lexing.from_string rl_res in
 	let rl_res = Rlparser.input Rllexer.tokenizer lexbuf in
@@ -827,10 +850,9 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
 	let args = get_method_args (List.find (fun proc -> proc.proc_name == caller_mn) proc_scc) in
 	
 	let subst = unk_info.unk_params in 
-	let x1 = fst subst in
+	(* let x1 = fst subst in *)
+	let x1 = args in
 	let x2 = snd subst in (* x2 = f(x1) *)
-	let x3 = List.map (fun x -> match x with
-	  | SpecVar (typ, name, prim) -> SpecVar (typ, fresh_old_name name, prim)) x2 in
 	
 	let base_cond = trans_constr.term_dst_cond in
 	let rec_cond = unk_info.unk_cond in
@@ -850,7 +872,6 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
 			| Some (prank, simpl_base_cond) -> begin
 				let p1 = prank in
 				let p2 = e_apply_subs (List.combine x1 x2) p1 in
-				let p3 = e_apply_subs (List.combine x2 x3) p2 in
 				(* Condition for decreasing sequence *)
 				let dec_cond = mkGt p1 p2 in 
 	
@@ -858,18 +879,21 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
 				(* Fixpoint calculator is used to calculate the   *)
 				(* exact condition if base condition is equality  *)
 				if (utils.imply ctx dec_cond) then
-					let r =
-						(* We could not trust the condition returned by FixCalc *)
-						if (is_eq_exp simpl_base_cond) then 
-							let ic = term_cond_by_fixcalc utils subst (CP.subst_avoid_capture x2 x1 base_cond) ctx in
-							(* let _ = print_endline ("\nFIXCALC: " ^ (pr_list !print_pure_formula ic)) in *)
-							(* Filter new condition *)
-							let ic = List.filter (fun c -> not (utils.imply rec_cond c)) ic in
-							if ic = [] then [CP.mkTrue no_pos] 
-							else List.map (filter_known_constrs utils rec_cond) ic
-						else [CP.mkTrue no_pos] (* TRUST *)
-					in
-					([], [], List.map (fun c -> (c, Some prank)) r)
+					(* if (List.length proc_scc < 2) then *)
+  					let r =
+  						(* We could not trust the condition returned by FixCalc *)
+  						if (is_eq_exp simpl_base_cond) then 
+  							let ic = term_cond_by_fixcalc utils subst (CP.subst_avoid_capture x2 x1 base_cond) ctx in
+  							(* let _ = print_endline ("\nFIXCALC: " ^ (pr_list !print_pure_formula ic)) in *)
+  							(* Filter new condition *)
+  							let ic = List.filter (fun c -> not (utils.imply rec_cond c)) ic in
+  							if ic = [] then [CP.mkTrue no_pos] 
+  							else List.map (filter_known_constrs utils rec_cond) ic
+  						else [CP.mkTrue no_pos] (* TRUST *)
+  					in ([], [], List.map (fun c -> (c, Some prank)) r)
+					(* else (* Look ahead *)                                                                       *)
+					(* 	(* ([], [], List.map (fun c -> (c, None)) (simplify_inf_cond utils args base_cond ctx)) *) *)
+					(* 	([], [], [(CP.mkTrue no_pos, Some prank)])                                                 *)
 							
 				(* CASE 2: The sequence ALWAYS increasing          *)
 				(* We do not need to check this case, because it   *)
@@ -878,6 +902,9 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
 				(* CASE 3: Otherwise, the sequence MAY or MAY NOT decreasing, *)
 				(* based on some conditions that need to be inferred          *)
 				else begin
+					let x3 = List.map (fun x -> match x with
+						| SpecVar (typ, name, prim) -> SpecVar (typ, fresh_old_name name, prim)) x2 in
+					let p3 = e_apply_subs (List.combine x2 x3) p2 in
 					let fx1 = CP.subst_avoid_capture x1 x2 (CP.subst_avoid_capture x2 x3 fx) in
 					let compose_ctx = mkAnd 
 						(mkExists (diff_svl (CP.fv fx) (x1 @ x2)) fx)
@@ -1108,40 +1135,22 @@ let solve_constrs utils constrs proc_scc =
 	(loop_subst @ mayloop_subst @ infer_subst, tg)
 
 (* Simplified version of the above solve_constrs *)		
-let subst_for_scc_with_rank_synthesis utils trans_constr scc scc_trans proc_scc =
+let subst_for_scc_with_rank_synthesis utils prog trans_constr scc_trans =
+	let _ = print_endline ("\nSCC TRANS:\n" ^ (pr_list !print_term_trans_constraint scc_trans)) in
 	let unk_info = match trans_constr.term_trans_src with
 	| Unknown info -> info
 	| _ -> report_error no_pos "Termination Inference: Unexpected transition constraint."
 	in
-	
-	let caller_mn = unk_info.unk_caller in
-	let args = get_method_args (List.find (fun proc -> proc.proc_name == caller_mn) proc_scc) in
-	
-	let params_subst = unk_info.unk_params in
-	let x1 = fst params_subst in
-	let x2 = snd params_subst in
-	let x3 = List.map (fun x -> match x with
-	  | SpecVar (typ, name, prim) -> SpecVar (typ, fresh_old_name name, prim)) x2 in
+	let rank = linear_rank_synthesis_scc utils prog scc_trans in ()
+	(* let subst = match rank with                                                                                                          *)
+	(* | None -> List.map (fun (_, res) -> (res, TSubst (mk_fresh_MayLoop ()))) scc                                                         *)
+	(* | Some _ -> List.map (fun (_, res) ->                                                                                                *)
+	(* 	let base_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank None true)) (simplify_inf_cond utils args base_cond ctx) in        *)
+	(* 	let rec_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank rank true)) (simplify_inf_cond utils args (mkNot base_cond) ctx) in *)
+	(* 	(res, TSplit (base_subst @ rec_subst))) scc                                                                                        *)
+	(* in subst                                                                                                                             *)
 
-	let trans_ctx = unk_info.unk_trans_ctx in
-	let next_trans_ctx = CP.subst_avoid_capture x1 x2 (CP.subst_avoid_capture x2 x3 trans_ctx) in
-	(* Condition for 1-step execution *)
-	let ctx = mkAnd unk_info.unk_cond trans_ctx in
-	let base_cond = trans_constr.term_dst_cond in
-	let compose_ctx = mkAnd
-		(mkExists (diff_svl (CP.fv trans_ctx) (x1 @ x2)) trans_ctx)
-		(mkExists (diff_svl (CP.fv next_trans_ctx) (x2 @ x3)) next_trans_ctx)
-	in
-	let rank = linear_rank_synthesis_scc utils (unk_info.unk_caller, x1) (unk_info.unk_callee, x2) (utils.simplify compose_ctx) scc_trans in
-	let subst = match rank with
-	| None -> List.map (fun (_, res) -> (res, TSubst (mk_fresh_MayLoop ()))) scc 
-	| Some _ -> List.map (fun (_, res) ->  
-		let base_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank None true)) (simplify_inf_cond utils args base_cond ctx) in
-		let rec_subst = List.map (fun c -> (c, mk_fresh_Term_with_rank rank true)) (simplify_inf_cond utils args (mkNot base_cond) ctx) in
-		(res, TSplit (base_subst @ rec_subst))) scc
-	in subst
-
-let solve_constrs_with_rank_synthesis utils constrs proc_scc =
+let solve_constrs_with_rank_synthesis utils prog constrs proc_scc =
 	let tg = graph_of_term_constrs constrs in
 	let scc_id_list = scc_sort (TGC.scc_list tg) tg in
 	let scc_list = List.map (List.map (fun id -> (id, Hashtbl.find term_res_tbl id))) (List.rev scc_id_list) in
@@ -1151,15 +1160,16 @@ let solve_constrs_with_rank_synthesis utils constrs proc_scc =
 		| Unknown _, Term _ -> true | _ -> false) constrs in (* Term Reachable *)
 	
 	(* Ranking function for each scc *)
-	let subst = List.concat (List.map (fun trans_constr -> 
+	(* let subst = List.concat (List.map (fun trans_constr ->  *)
+	let subst = List.iter (fun trans_constr -> 
 		let src = trans_constr.term_trans_src in
 		let src_id = id_of_term_res src in 
 		let scc_src = List.find (fun scc -> List.exists (fun (id, _) -> id == src_id) scc) scc_list in
 		let scc_trans = List.find_all (fun c ->
 			(List.exists (fun (id, _) -> id == (id_of_term_res c.term_trans_src)) scc_src) &&
 			(List.exists (fun (id, _) -> id == (id_of_term_res c.term_trans_dst)) scc_src)) constrs in
-		subst_for_scc_with_rank_synthesis utils trans_constr scc_src scc_trans proc_scc) unk_to_term_constrs) in
-	(subst, tg)
+		subst_for_scc_with_rank_synthesis utils prog trans_constr scc_trans) unk_to_term_constrs in
+	(* (subst, tg) *) ([], tg)
 
 (* let rec infer_term_spec_one_proc utils proc round pre_trans_constrs =                                *)
 (* 	if round > !term_run_bound then ()                                                                  *)
@@ -1197,12 +1207,9 @@ let solve_constrs_with_rank_synthesis utils constrs proc_scc =
 (*     	infer_term_spec_one_proc utils proc (round+1) trans_constrs                                     *)
 (* 	end                                                                                                 *)
 
-let rec infer_term_spec_one_scc utils proc_scc round pre_trans_constrs =
+let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
 	if round > !term_run_bound then ()
 	else begin
-		(* let mn = proc.proc_name in              *)
-		(* let args = get_method_args proc in      *)
-  	(* let old_spec = look_up_term_spec mn in  *)
 		let name_procs = List.map (fun proc -> proc.proc_name) proc_scc in
 		let args = List.concat (List.map get_method_args proc_scc) in
 		let old_specs = List.map (fun mn -> (mn, look_up_term_spec mn)) name_procs in
@@ -1212,7 +1219,7 @@ let rec infer_term_spec_one_scc utils proc_scc round pre_trans_constrs =
 			let _ = info_pprint ("ROUND " ^ (string_of_int round)) in
 			let subst, tg =
 				if (eq_trans_constr_list trans_constrs pre_trans_constrs) then
-					solve_constrs_with_rank_synthesis utils trans_constrs proc_scc
+					solve_constrs_with_rank_synthesis utils prog trans_constrs proc_scc
 				else solve_constrs utils trans_constrs proc_scc
 			in
     	let new_specs = update_term_spec_one_scc utils subst tg name_procs in
@@ -1234,11 +1241,11 @@ let rec infer_term_spec_one_scc utils proc_scc round pre_trans_constrs =
 		(* 	(* info_hprint "Simplified Termination Spec" !print_term_spec (simplify_term_spec new_spec); *) *)
     (* 	(* info_pprint "\n";                                                                         *) *)
 			
-    	infer_term_spec_one_scc utils proc_scc (round+1) trans_constrs
+    	infer_term_spec_one_scc utils prog proc_scc (round+1) trans_constrs
 	end
 
 (***************** MAIN *****************)									
-let main utils procs proc_sccs =
+let main utils prog proc_sccs =
 	(* List.iter (fun proc ->                                        *)
 	(* 	let mn = proc.proc_name in                                   *)
 	(* 	let _ = print_endline ("Termination Inference for " ^ mn) in *)
@@ -1246,6 +1253,6 @@ let main utils procs proc_sccs =
 	(* ) procs                                                       *)
 	List.iter (fun proc_scc ->
 		let _ = print_endline ("Termination Inference for SCC group: " ^ (pr_list (fun proc -> proc.proc_name) proc_scc)) in
-		infer_term_spec_one_scc utils proc_scc 1 []
+		infer_term_spec_one_scc utils prog proc_scc 1 []
 	) proc_sccs
 
