@@ -3179,20 +3179,26 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
   | OCtx (ctx1,ctx2) -> heap_entail_conjunct prog is_folding ctx0 conseq [] pos
   | Ctx estate -> (
       let ante = estate.es_formula in
-      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
-      let _ = print_string("A :"^(Cprinter.string_of_formula ante) ^"\n") in
-      let formula = Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos in
-      (*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
-      let new_conseq = CF.formula_of_mix_formula formula pos in
-      let _ = print_string("C :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
-      let (rs,p) = heap_entail_conjunct prog is_folding ctx new_conseq [] pos in
-      if not(CF.isFailCtx rs) then 
-      let ante_without_conj = Mem.conv_formula_conj_to_star ante in
-      let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
-      let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
-      heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
-      else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
-	(mkFailCtx_simple msg estate conseq pos , Failure))
+      if CF.is_simple_formula conseq then 
+	      let ante_without_conj = Mem.conv_formula_conj_to_star ante in
+	      let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
+	      let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
+	      heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
+      else   
+      	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
+      	let _ = print_string("\nA :"^(Cprinter.string_of_formula ante) ^"\n") in
+     	let formula = Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos in
+      	(*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
+      	let new_conseq = CF.formula_of_mix_formula formula pos in
+      	let _ = print_string("\nC :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
+      	let (rs,p) = heap_entail_conjunct prog is_folding ctx new_conseq [] pos in
+      	if not(CF.isFailCtx rs) then 
+      	let ante_without_conj = Mem.conv_formula_conj_to_star ante in
+      	let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
+      	let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
+      	heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
+      	else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
+		(mkFailCtx_simple msg estate conseq pos , Failure))
 	
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Debug.no_2 "heap_entail_init"
