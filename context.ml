@@ -458,6 +458,8 @@ and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula 
 
 and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
+  (* asankhs: If node has all field annotations as @A make it HEmp *)
+  if (isAccsList new_field_ann_lnode) then HEmp else
   let updated_f = match f with 
     | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")

@@ -6133,8 +6133,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       List.fold_left Immutable.mkAndOpt None f_lst in
     (* construct two formulae for lhs and, respectively rhs, combining the constraints collected from both node ann and field ann *)
     let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr ann_lhs param_ann_lhs, join_ann_constr ann_rhs param_ann_rhs) in
-    (* let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in *)
-    (* let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
+     (*let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in *)
+     (*let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
     if r == false 
     then 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -6144,7 +6144,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in
       (* let _ = print_string ("\n(andreeac) solver.ml r_h: " ^ (Cprinter.string_of_h_formula r_h)) in *)
       (* let _ = print_string ("\n(andreeac) solver.ml l_h:"  ^ (Cprinter.string_of_h_formula l_h)) in *)
-	  let rem_l_node,rem_r_node = match (l_node,r_node) with
+	  let rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann = match (l_node,r_node) with
 	    | (DataNode dnl, DataNode dnr) -> 
 			  let new_args = List.combine l_args r_args in
 			  let hole = CP.SpecVar (UNK,"#",Unprimed) in
@@ -6165,8 +6165,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 				  h_formula_data_holes = new_r_holes;	} in
 			  (* let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
 			  (* let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in *)
-			  (rem_l_node,rem_r_node)
-	    | _ -> (HEmp,HEmp)
+			  (* Filter out variables with @A on both lhs and rhs so that they do not form unnecessary equalities*)
+              		  let lst1 = List.combine l_args l_param_ann in
+		          let lst2 = List.combine r_args r_param_ann in
+		          let lst = List.combine lst1 lst2 in
+		          let new_lst = List.filter (fun (l,r) -> if isAccs(snd l) && isAccs(snd r) then false else true) lst in
+		          let lst1,lst2 = List.split new_lst in
+		          let new_l_args, new_l_param_ann = List.split lst1 in
+		          let new_r_args, new_r_param_ann = List.split lst2 in 
+			  (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann )
+	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
 	  in
 	  match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
 	    | DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -6176,7 +6184,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let label_list = try 
                 let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
                 vdef.Cast.view_labels
-              with Not_found -> List.map (fun _ -> Label_only.empty_spec_label) l_args in
+              with Not_found -> List.map (fun _ -> Label_only.empty_spec_label) l_args in     
               (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
               (*renamed and instantiate perm var*)
               let evars = estate.es_evars in
@@ -6223,10 +6231,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
-	      (* let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
+	       (*let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
+               (*let _ = print_string("cris: to_lhs = " ^ (Cprinter.string_of_pure_formula to_lhs) ^ "\n") in *)
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
               (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -6266,8 +6275,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             in
 	    let imm_n = get_imm r_node in
         let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
-	    (* let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
-	    (* let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
+	     (*let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
+	     (*let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
             let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)

@@ -781,4 +781,7 @@ and ann_opt_to_ann (ann_opt_lst: IF.ann option list) (default_ann: IF.ann) =
     | [] -> []
     | (Some ann0) :: t -> (iformula_ann_to_cformula_ann ann0) :: (ann_opt_to_ann t default_ann)
     | (None) :: t      -> (iformula_ann_to_cformula_ann default_ann) :: (ann_opt_to_ann t default_ann) 
+    
+and isAccsList (al : ann list) : bool = List.for_all isAccs al
+
 

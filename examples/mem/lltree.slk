@@ -24,7 +24,6 @@ print residue.
 checkentail (x::ll<Mx> & t::tree<Mt>) & Mx = Mt |- x::ll<Mx>.
 print residue.
 
-
 checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} |- (x::ll<Mx> & t::node<_@L,p@A,l@M,r@M>).
 print residue.
 
