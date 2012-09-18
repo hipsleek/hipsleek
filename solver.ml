@@ -6699,12 +6699,12 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
               let pr1 = pr_list string_of_loc_b_e in
                let pr2 = pr_list (pr_pair string_of_int string_of_int) in
               let ll =  (CF.list_pos_of_formula estate.es_formula) in
-              let _ = print_endline ("get_b_line_number: inp1" ^ (pr1 ll)) in
+              (* let _ = print_endline ("get_b_line_number: inp1" ^ (pr1 ll)) in *)
               let locs = (get_b_line_number ll []) in
                let locs,ds = List.split locs in
-              let _ = print_endline ("get_b_line_number: out" ^ (pr2 ds)) in
-              (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-              CF.mk_failure_must_wl s Globals.logical_error ds), NoAlias)
+              (* let _ = print_endline ("get_b_line_number: out" ^ (pr2 ds)) in *)
+              (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+              CF.mk_failure_must_wl s Globals.logical_error ds)), NoAlias)
             else
               begin
                 (*check disj memset*)
@@ -6733,8 +6733,8 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                   let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                           !error_flow_int estate.CF.es_formula} in
-                  (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                  mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") logical_error), NoAlias)
+                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
+                  mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") logical_error)), NoAlias)
                 else
                   let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
                   (*
@@ -6743,31 +6743,46 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
                   if not(simple_imply lhs_p rhs_p) then
                     (*should check may-must here*)
                     let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
-                    let new_estate = {
-                        estate with es_formula =
-                            match fc with
-                              | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                              | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                    (* let new_estate = { *)
+                    (*     estate with es_formula = *)
+                    match fc with
+                      | CF.Failure_Must _ ->
+                          let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula } in
+                          let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
+                          let olc = build_and_failures 3 "15.3 no match for rhs data node: "
+                            Globals.logical_error (contra_list, must_list, may_list) fc_template in
+                          let lc =
+                            ( match olc with
+                              | FailCtx ft -> ft
+                              | SuccCtx _ -> report_error no_pos "solver.ml:M_unmatched_rhs_data_node"
+                            ) in
+                          (CF.mkFailCtx_in lc,Failure)
+                      | (* CF.Failure_May *) _ ->
+                          let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f !top_flow_int estate.es_formula} in
+                          let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+                      ^ " (may-bug)." in
+                         ( CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                         CF.mk_failure_may s logical_error)), NoAlias)
                                     (* this denotes a maybe error *)
-                              | CF.Failure_Bot _
-                              | CF.Failure_Valid -> estate.es_formula
-                    } in
-                    let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-                     let olc = build_and_failures 3 "15.3 no match for rhs data node: "
-                       Globals.logical_error (contra_list, must_list, may_list) fc_template in
-                     let lc =
-                       ( match olc with
-                         | FailCtx ft -> ft
-                         | SuccCtx _ -> report_error no_pos "solver.ml:M_unmatched_rhs_data_node"
-                       )
-                     in (lc,Failure)
+                              (* | CF.Failure_Bot _ *)
+                              (* | CF.Failure_Valid -> estate.es_formula *)
+                    (* } in *)
+                    (* let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in *)
+                    (*  let olc = build_and_failures 3 "15.3 no match for rhs data node: " *)
+                    (*    Globals.logical_error (contra_list, must_list, may_list) fc_template in *)
+                    (*  let lc = *)
+                    (*    ( match olc with *)
+                    (*      | FailCtx ft -> ft *)
+                    (*      | SuccCtx _ -> report_error no_pos "solver.ml:M_unmatched_rhs_data_node" *)
+                    (*    ) *)
+                    (*  in (lc,Failure) *)
                   else
-                    let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+                    let s = "15.5 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
                       ^ " (may-bug)."in
                     let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                             !top_flow_int estate.CF.es_formula} in
-                    (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                    CF.mk_failure_may s logical_error), NoAlias)
+                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                    CF.mk_failure_may s logical_error)), NoAlias)
               end
           end
 
@@ -7061,14 +7076,16 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     (r1,prf)
                 end
               | None ->
-                let s = "15.5 no match for rhs data node: " ^
-                  (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
-                let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                        !error_flow_int estate.CF.es_formula} in
-                let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_must s Globals.sl_error) in
-                let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
-                (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
+                (* let s = "15.5 no match for rhs data node: " ^ *)
+                (*   (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in *)
+                (* let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f *)
+                (*         !error_flow_int estate.CF.es_formula} in *)
+                (* let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos, *)
+                (*                                   CF.mk_failure_must s Globals.sl_error) in *)
+                (* let (res_lc, prf) = *)
+                  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
+                     (* in*)
+                (* (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf) *)
               end
           end
       | Context.Seq_action l ->
