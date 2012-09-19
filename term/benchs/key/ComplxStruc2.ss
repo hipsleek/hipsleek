@@ -7,6 +7,7 @@ ensures true;
 }
 
 void loop (ref int i, ref int j)
+/*
 case {
 	i<=0 -> requires Term ensures true;
 	i>0 -> case {
@@ -14,6 +15,9 @@ case {
 		i<j -> requires Term[j-i] ensures true;
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i > 0) {
 		if (i >= j) {

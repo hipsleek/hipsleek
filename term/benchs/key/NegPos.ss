@@ -1,4 +1,5 @@
 void loop (int i, int j)
+/*
 case {
 	i>0 -> case {
 		j>0 -> requires Term[i] ensures true;
@@ -10,6 +11,9 @@ case {
 		j<0 -> requires Term[-j] ensures true;
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i*j > 0) {
 		i--;

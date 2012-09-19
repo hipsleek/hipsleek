@@ -784,10 +784,8 @@ and generate_coefficient_constrs qconstr =
 	let _ = RL.start () in
 	let pr_n x = None in
 	let rl_f = RL.rl_of_formula pr_n pr_n qconstr in
-	let _ = print_endline ("\nRL INP: " ^ rl_f) in
 	let _ = RL.send_cmd "rlset R" in
 	let rl_res = RL.send_and_receive ("rlqe " ^ rl_f) in
-	let _ = print_endline ("\nRL RES: " ^ rl_res) in
 	let _ = RL.send_cmd "rlset ofsf" in
 	let lexbuf = Lexing.from_string rl_res in
 	let rl_res = Rlparser.input Rllexer.tokenizer lexbuf in
@@ -808,7 +806,6 @@ and solve_coefficient_constrs coes sconstr =
 		(MATH.mathematica_of_formula pr_n pr_n sconstr) ^ ", " ^
 		"{" ^ math_vars ^ "}" ^ ", Integers]\n" in
 	let math_res = MATH.send_and_receive math_input in
-	let _ = print_endline ("\nMATH RES: " ^ math_res) in
 	let lexbuf = Lexing.from_string math_res in
 	let math_res = Mathparser.input Mathlexer.tokenizer lexbuf in
 	let _ = MATH.stop() in
@@ -1001,12 +998,12 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
 	end
 	in
 	(* Debugging Information *)
-	begin
-		info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";
-		info_hprint "Infer NonTerm Cond" (pr_list !print_pure_formula) def_loop_cond;
-		info_hprint "Infer Term Cond" (pr_list (fun (c, _) -> !print_pure_formula c)) term_cond_with_rank;
-		info_pprint "\n";
-	end;
+	(* begin                                                                                               *)
+	(* 	info_pprint ">>>>>>> check_monotone_decreasing_sequence <<<<<<<";                                  *)
+	(* 	info_hprint "Infer NonTerm Cond" (pr_list !print_pure_formula) def_loop_cond;                      *)
+	(* 	info_hprint "Infer Term Cond" (pr_list (fun (c, _) -> !print_pure_formula c)) term_cond_with_rank; *)
+	(* 	info_pprint "\n";                                                                                  *)
+	(* end;                                                                                                *)
 	(def_loop_cond, unk_loop_cond, term_cond_with_rank)
 
 (***********************************)
@@ -1035,7 +1032,7 @@ and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t
 	scc_neighbors
 
 (* Find ALL sccs that can reach from src *)
-(* and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg =                                    *)
+(* and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg =                                   *)
 (* 	let v_neighbors = List.filter (fun m -> not (List.mem m src)) (TGN.list_from_vertices tg src) in                  *)
 (* 	let scc_neighbors, others = List.partition (fun s -> List.exists (fun v -> List.mem v v_neighbors) s) scc_list in *)
 (* 	List.fold_left (fun (res, rem) s ->                                                                               *)
@@ -1219,17 +1216,17 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
 				else solve_constrs utils trans_constrs proc_scc
 			in
     	let new_specs = update_term_spec_one_scc utils subst tg name_procs in
-    
-			info_hprint "Termination Spec" (pr_list
-				((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs;
-    	info_pprint "\n";
 				
-    	info_hprint "Termination Constraints"
-    		(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
-    	info_pprint "\n";
+    	(* info_hprint "Termination Constraints"                                        *)
+    	(* 	(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs; *)
+    	(* info_pprint "\n";                                                            *)
     	
 			info_hprint "SUBST" (pr_list (fun (unk, cmd) ->
 				"\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst;
+				
+			info_hprint "Termination Spec" (pr_list
+				((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs;
+    	info_pprint "\n";
 					
     	info_hprint "Inferred Termination Spec" (pr_list !print_term_spec) new_specs;
     	info_pprint "\n";

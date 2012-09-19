@@ -458,7 +458,8 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
       (*if not safe then true else*)
         begin
 	        omega_subst_lst := [];
-            let fstr = omega_of_formula 2 pr_strong pr_weak pe in
+            (* let fstr = omega_of_formula 2 pr_strong pr_weak pe in *)
+						let fstr = omega_of_formula 2 pr_weak pr_strong pe in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
             let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)

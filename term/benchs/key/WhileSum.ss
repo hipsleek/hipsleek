@@ -1,4 +1,5 @@
 void increase (int i, int j)
+/*
 case {
 	i+j<=0 -> requires Term ensures true;
 	i+j>0 -> case {
@@ -6,6 +7,9 @@ case {
 		exists (n: j=2*n+1) -> requires Loop ensures false;
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i+j > 0) {
 		i++;
@@ -13,5 +17,5 @@ case {
 			j = j - 2;
 		}
 		increase(i, j);
-	}
+	} else return;
 }

@@ -1,4 +1,5 @@
 void loop (int i)
+/*
 case {
 	i=0 -> requires Term ensures true;
 	i!=0 -> case {
@@ -9,6 +10,9 @@ case {
 		!(-5<i & i<5) -> requires Loop ensures false;
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i != 0) {
 		if (i > -5 && i < 5) {
@@ -16,5 +20,5 @@ case {
 			if (i > 0) i--;
 		}
 		loop(i);
-	}
+	} else return;
 }

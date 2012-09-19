@@ -1,3 +1,4 @@
+/*
 void loop (int i)
 case {
 	i=0 -> requires Term ensures true;
@@ -10,8 +11,10 @@ case {
 	int w = 5;
 	loop_aux (i, w);
 }
+*/
 
 void loop_aux (int i, int w)
+/*
 case {
 	i=0 -> requires Term ensures true;
 	i!=0 -> case {
@@ -31,6 +34,22 @@ case {
 		}
 	}
 }
+*/
+//requires true
+//ensures true;
+
+case {
+	i=0 -> requires Term ensures true;
+	i>0 & i+w<0 -> case {
+		i<=1 -> requires Term ensures true;
+		i>=2 -> requires Loop ensures false;
+	}
+	i<0 & i+w<0 -> requires Loop ensures false;
+	i+w>=0 & i>w -> requires Loop ensures false;
+	i>0 & i<=w -> requires Term ensures true;
+	i+w>=0 & i<0 -> requires Term ensures true;
+}
+
 {
 	if (i != 0) {
 		if (i < -w) {
@@ -46,5 +65,5 @@ case {
 		}
 		w++;
 		loop_aux(i, w);
-	}
+	} else return;
 }

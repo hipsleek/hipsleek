@@ -13,5 +13,5 @@ case {
 			i = -i;
 		}
 		loop(i);
-	}
+	} else return;
 }

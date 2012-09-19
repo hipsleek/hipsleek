@@ -1,14 +1,16 @@
 //This is a good example for case inference
 
 void complxStruc (int i)
-
+requires true
+ensures true;
 {
 	int j = i;
 	loop(i, j);
 }
 
 void loop (ref int i, ref int j)
-
+requires true
+ensures true;
 {
 	if (i > 0) {
 		if (i >= j) {

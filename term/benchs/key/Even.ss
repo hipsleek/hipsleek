@@ -1,3 +1,4 @@
+/*
 bool even (int i)
 case {
 	i<0 -> requires Loop ensures false;
@@ -11,8 +12,10 @@ case {
 	loop(i);
 	return (i == 0);
 }
+*/
 
 void loop (ref int i)
+/*
 case {
 	i<0 -> requires Loop ensures false;
 	i>=0 -> case {
@@ -26,9 +29,12 @@ case {
 		}
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i != 1 && i != 0) {
 		i = i - 2;
 		loop(i);
-	}
+	} else return;
 }

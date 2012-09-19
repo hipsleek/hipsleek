@@ -1,3 +1,4 @@
+/*
 void narrowing (int i)
 case {
 	!(0<=i & i<=20) -> requires Term ensures true;
@@ -8,8 +9,10 @@ case {
 	bool up = false;
 	loop(i, r, up);
 }
+*/
 
 void loop (ref int i, ref int r, ref bool up)
+/*
 case {
 	r<0 -> requires Term ensures true;
 	r>=0 -> case {
@@ -20,6 +23,9 @@ case {
 		}
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (0 <= i && i <= r) {
 		if (i == 0) {
@@ -38,5 +44,5 @@ case {
 			r--;
 		}
 		loop(i, r, up);
-	}
+	} else return;
 }

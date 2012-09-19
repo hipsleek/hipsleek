@@ -1,4 +1,5 @@
 void loop (int i, int j)
+/*
 case {
 	i>0 -> case {
 		j>0 -> case {
@@ -13,10 +14,14 @@ case {
 		j<0 -> requires Loop ensures false;
 	}
 }
+*/
+requires true
+ensures true;
 {
-	if (i*j > 0) {
+	//if (i*j > 0) {
+	if ((i>0 && j>0) || (i<0 && j<0)) {
 		i--;
 		j--;
 		loop(i, j);
-	}
+	} else return;
 }

@@ -1,4 +1,5 @@
 void loop (int i)
+/*
 case {
 	i<=10 -> requires Term ensures true;
 	i>10 -> case {
@@ -9,6 +10,9 @@ case {
 		}
 	}
 }
+*/
+requires true
+ensures true;
 {
 	if (i > 10) {
 		if (i == 25) {
@@ -20,5 +24,5 @@ case {
 			i = 20;
 		}
 		loop(i);
-	}
+	} else return;
 }

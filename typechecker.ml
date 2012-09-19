@@ -701,7 +701,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   		TInfer.is_sat = fun f -> TP.is_sat f "" true;
   	} in
   	let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
-  	(* let _ = Hashtbl.add TInfer.term_ctx_tbl proc.proc_name t_ctx in *)
   	Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec 
 	in (spec, ip, ir, r) 
 

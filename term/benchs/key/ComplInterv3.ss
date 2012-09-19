@@ -17,5 +17,5 @@ case {
 				i = 0;
 		}
 		loop(i);
-	}
+	} else return;
 }
