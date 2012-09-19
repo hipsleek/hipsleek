@@ -1310,7 +1310,20 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
   pr_formula rhs;
   fmt_close()
 
+let pr_par_def (f1,f2,f3) = 
+  (* fmt_string (CP.print_only_lhs_rhs rel) *)
+  fmt_open_box 1;
+  fmt_string "(";
+  pr_formula f1;
+  fmt_string ")";
+  fmt_string " --> ";
+  pr_formula f2;
+  fmt_string " --> ";
+  pr_formula f3;
+  fmt_close()
+
 let string_of_hprel_lhs_rhs e = poly_string_of_pr pr_hprel_lhs_rhs e
+let string_of_par_def e = poly_string_of_pr pr_par_def e
 
 let pr_lhs_rhs ((cat,lhs,rhs) as rel) = 
   fmt_string (CP.print_lhs_rhs rel)

@@ -43,7 +43,13 @@ if((List.length mt) == 0) then mt else (
   if(List.exists (fun c -> c == hd) tl) then (rm_double_mapping tl) else (rm_double_mapping tl)@[hd] 
 )*)
 
-let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
+let rec checkeq_formulas ivars f1 f2 = 
+  let mtl = [[]] in
+  let (res1, mtl1) = (checkeq_formulas_x ivars f1 f2 mtl) in
+  let (res2, mtl2) =  (checkeq_formulas_x ivars f2 f1 mtl) in
+  (res1&&res2, mtl1)
+
+and checkeq_formulas_x (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
   let _ = Debug.ninfo_pprint ("Compare formulas ") no_pos in 
   match f1 with
     |CF.Base({CF.formula_base_heap = h1;
@@ -51,7 +57,7 @@ let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	|CF.Base ({CF.formula_base_heap = h2;
 	      CF.formula_base_pure = p2}) -> (
 	  let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in
-	  let _ = if(res) then Debug.info_pprint ("Res: " ^ (string_of_map_table_list mtl1)) no_pos in
+	  let _ = if(res) then Debug.ninfo_pprint ("EQ. MT: " ^ (string_of_map_table_list mtl1)) no_pos in
 	  (res,mtl1) (*h formula only*)
 	)
 	|_ -> report_error no_pos "not handle Or f1 yet") (*(false,mtl))*)
@@ -60,7 +66,7 @@ let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	|CF.Exists ({CF.formula_exists_heap = h2;
 	      CF.formula_exists_pure = p2}) -> (
 	  let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in 
-	  let _ = if(res) then Debug.info_pprint ("Res: " ^(string_of_map_table_list mtl1)) no_pos in
+	  let _ = if(res) then Debug.ninfo_pprint ("EQ. MT: " ^(string_of_map_table_list mtl1)) no_pos in
 	  (res,mtl1)
 	)
 	|_ -> report_error no_pos "not handle Or f1 yet" )(*(false,mtl))*)
@@ -68,14 +74,14 @@ let rec checkeq_formulas (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
   
 and checkeq_h_formulas (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
   let _ = Debug.ninfo_pprint ("Compare heap formulas ") no_pos in
-(*create list*)
+  (*create list*)
   let check_false_hf1 = check_false_formula hf1 in
   let check_false_hf2 = check_false_formula hf2 in
   if(check_false_hf1 && check_false_hf2) then (true, [])
   else if(check_false_hf1 || check_false_hf2) then (false,[])
   else(
-let _ = Debug.ninfo_pprint ("Compare h_formula1: " ^ (Cprinter.string_of_h_formula hf1)) no_pos in
-let _ = Debug.ninfo_pprint ("Compare h_formula2: " ^ (Cprinter.string_of_h_formula hf2)) no_pos in
+    let _ = Debug.ninfo_pprint ("Compare h_formula1: " ^ (Cprinter.string_of_h_formula hf1)) no_pos in
+    let _ = Debug.ninfo_pprint ("Compare h_formula2: " ^ (Cprinter.string_of_h_formula hf2)) no_pos in
     match hf1 with  
       | CF.Star ({CF.h_formula_star_h1 = h1;
 		  CF.h_formula_star_h2 = h2}) 

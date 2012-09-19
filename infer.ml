@@ -1437,7 +1437,7 @@ let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
 
 let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
-  let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
+  let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
     (*end for debugging*)
   if no_infer_hp_rel es then (false, es)
   else
@@ -1460,7 +1460,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
     (*end for debugging*)
       if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
          (
-        Debug.info_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
+        Debug.ninfo_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
         (false,es))
       else
 
@@ -1522,7 +1522,7 @@ let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_
   (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
-  Debug.ho_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
+  Debug.no_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
 ( fun _ _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b rhs
 
 let rec string_of_elems elems string_of sep = match elems with 
