@@ -3187,7 +3187,7 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
       else   
       	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
       	let _ = print_string("\nA :"^(Cprinter.string_of_formula ante) ^"\n") in
-     	let formula = Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos in
+     	let formula = (Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos) in  
       	(*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
       	let new_conseq = CF.formula_of_mix_formula formula pos in
       	let _ = print_string("\nC :"^(Cprinter.string_of_formula new_conseq) ^"\n") in

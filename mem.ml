@@ -69,8 +69,8 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 	| [] -> ()
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
 				then let (tmp ,_,_) = (Imm.subtype_ann_list [] (snd c) (snd x)) in
-				(*let _ = print_string ("Ann lists: " ^ (String.concat "," (List.map string_of_imm (snd c)))^" "^
-					(String.concat "," (List.map string_of_imm (snd x)))^ "\n") in *)
+				let _ = print_string ("Ann lists: " ^ (String.concat "," (List.map string_of_imm (snd c)))^" :> "^
+					(String.concat "," (List.map string_of_imm (snd x)))^ "\n") in 
 				if tmp then c else 
 				 	Err.report_error { Err.error_loc = pos;
 					Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
