@@ -40,6 +40,7 @@ class mainwindow () =
     val m_proc_ee = new EV.ee_view ()
     val m_proc_emsg = create_word_view ()
     (* data *)
+    val mutable m_ipreludes = [] (*always backup before use*)
     val mutable m_current_file = None
     val mutable m_iprog = None
     val mutable m_cprog = None
@@ -120,6 +121,9 @@ class mainwindow () =
       m_proc_list#set_checkall_handler self#verify_all_handler;
 
 
+    method set_preludes prims=
+      m_ipreludes <- prims;
+
     (** Setup UIManager for creating Menubar and Toolbar *)
     method setup_ui_manager () =
       let a = GAction.add_action in
@@ -178,6 +182,21 @@ class mainwindow () =
     (** open file chooser dialog with parent window
        return choosen file name 
      *)
+
+    method reset ()=
+      m_src_view#reset ();
+      m_proc_list#reset();
+      m_proc_ee#reset();
+      (*m_proc_emsg*)
+      self#set_ee_msg "";
+      m_current_file <- None;
+      m_iprog <- None;
+      m_cprog <- None;
+      original_digest <- (Digest.string "");
+
+    method set_ee_msg msg=
+       m_proc_emsg#buffer#set_text msg;
+
     method show_file_chooser ?(title="Select file") action : string option =
       let all_files () =
         GFile.filter ~name:"All files" ~patterns:["*"] ()
@@ -239,7 +258,9 @@ class mainwindow () =
       self#update_original_digest ();
       try
         (*get cast and procedure list*)
-          let iprog,cprog = HH.get_cprog fname in
+          let iprims = m_ipreludes in
+          let iprog,cprog = HH.get_cprog fname m_ipreludes in
+          let _ = m_ipreludes <- iprims in
           let _ = m_cprog <- cprog in
           let _ = m_iprog <- iprog in
           let _ = m_src_view#set_lines_pos (self#get_text()) in
@@ -268,6 +289,8 @@ class mainwindow () =
 
     method open_file (fname: string): unit =
       log ("Opening " ^ fname);
+      (*currently, we dont save current PorcList model*)
+      self#reset();
       m_current_file <- (Some fname);
       self#replace_source (FU.read_from_file fname) fname;
       self#update_win_title ()
@@ -339,7 +362,10 @@ class mainwindow () =
             log ("Checking procedure " ^ p.name);
               let valid = match m_current_file with
                 | None -> let src = self#get_text () in
-                          let res, _ = HH.check_proc_from_txt src p in res
+                           let iprims = m_ipreludes in
+                          let res, _ = HH.check_proc_from_txt src m_ipreludes p in
+                          let _ =  m_ipreludes <- iprims in
+                          res
                 | Some _ ->
                     let res,onp= HH.check_proc_from_file m_cprog (* src *) p in
                     let _ =
@@ -461,7 +487,9 @@ class mainwindow () =
         let fname = self#show_file_chooser ~title:"Open File" `OPEN in
         match fname with
         | None -> false
-        | Some fname -> (self#open_file fname; true)
+        | Some fname ->
+            Globals.source_files := [fname];
+            (self#open_file fname; true)
       else
         true
 
@@ -493,7 +521,10 @@ class mainwindow () =
       let check_proc =
         match m_current_file with
           | None -> let src = self#get_text () in
-                    HH.check_proc_from_txt src
+                    let iprims = m_ipreludes in
+                    let res = HH.check_proc_from_txt src m_ipreludes in
+                    let _ = m_ipreludes <- iprims in
+                    res
           | Some fn ->
               HH.check_proc_from_file m_cprog
       in

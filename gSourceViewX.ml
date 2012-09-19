@@ -50,6 +50,12 @@ class source_view ?(text = "") () =
     method event = delegate#event
     method source_buffer = delegate#source_buffer
 
+    method reset()=
+      self#clear_status ();
+      self#source_buffer#set_text "";
+      self#source_buffer#set_modified false;
+      self#clear_highlight ();
+
     method private set_status (msg: string) =
       status_lbl#misc#show ();
       status_lbl#set_label msg
@@ -271,6 +277,11 @@ class hip_source_view ?(text = "") () =
       (*elocs: old is list of lines
         new is list of (b,e) - do not need map
       *)
+
+    method reset()=
+      m_lines_pos <- [];
+      super#reset();
+
     method highlight_ee_x ?(clear_previous_highlight = false) elocs=
       let hl_one_loc eloc=
         let rel_eloc_b,rel_eloc_e  = eloc

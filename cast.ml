@@ -1189,6 +1189,8 @@ module PathCH = Graph.Path.Dijkstra(CH)(W)
 
 let class_hierarchy = CH.create ()
 
+let reset_class_hierarchy () = CH.clear class_hierarchy
+
 let build_hierarchy (prog : prog_decl) =
   (* build the class hierarchy *)
   let add_edge (cdef : data_decl) = 

@@ -2251,7 +2251,7 @@ let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 let parse_hip n s =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+  DD.ho_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 

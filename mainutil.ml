@@ -32,11 +32,12 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
+      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
 		  close_in org_in_chnl;
+print_string ("Parsing 1 ...\n"); flush stdout;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
@@ -55,13 +56,15 @@ let parse_file_full file_name =
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
+  let pr = pr_list (fun x -> x) in
+  let _ = print_endline ("header files: " ^ (pr new_names) ) in
   if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
   else List.map parse_file_full new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
+  Debug.ho_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -81,11 +84,13 @@ let rec process_header_with_pragma hlist plist =
             process_header_with_pragma new_hlist tl
 
 (***************end process preclude*********************)
-let pre_process_source_full source =
-(* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
-  flush stdout;
-  let _ = Gen.Profiling.push_time "Preprocessing" in
-  let iprog = parse_file_full source in
+
+(**********for gui***********)
+let process_preludes_full_parse source =
+  (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  (* flush stdout; *)
+  (* let _ = Gen.Profiling.push_time "Preprocessing" in *)
+ 
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -93,17 +98,36 @@ let pre_process_source_full source =
 
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
-    let tmp = Filename.chop_extension (Filename.basename source) in
-    let main_class = Gen.replace_minus_with_uscore tmp in
-    let java_str = Java.convert_to_java iprog main_class in
-    let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
-    let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
-    output_string jfile java_str;
-    close_out jfile;
+      let iprog = parse_file_full source in
+      let tmp = Filename.chop_extension (Filename.basename source) in
+      let main_class = Gen.replace_minus_with_uscore tmp in
+      let java_str = Java.convert_to_java iprog main_class in
+      let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
+      let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
+      output_string jfile java_str;
+      close_out jfile;
     (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
-  if (!Scriptarguments.parse_only) then
+  (* let _ = Gen.Profiling.pop_time "Preprocessing" in *)
+  ( prims_list)
+(*======*)
+(**********end for gui***********)
+
+let pre_process_source_full_x source primlist =
+(* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  (*reset*)
+  Iast.reset_class_hierarchy ();
+  Cast.reset_class_hierarchy ();
+  flush stdout;
+  let _ = Gen.Profiling.push_time "Preprocessing" in
+  let prims_list =
+    match List.length primlist with
+      | 0 -> process_preludes_full_parse source
+      | _ -> primlist
+  in
+   let iprog = parse_file_full source in
+   if (!Scriptarguments.parse_only) then
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     let _ = print_string (Iprinter.string_of_program iprog) in
     (None, None)
@@ -172,14 +196,25 @@ let pre_process_source_full source =
 	    exit 0
       end
     in
+    let _ = Tpdispatcher.stop_prover () in
    (Some iprog, Some cprog)
 
+let pre_process_source_full source primlist =
+  let pr = fun x -> x in
+  (* let pr1 = pr_list Iprinter.string_of_program in *)
+  let pr1 = fun _ -> "in2" in
+  let pr2 = fun _ -> "out" in
+Debug.ho_2 " pre_process_source_full" pr pr1 pr2
+    (fun _ _ -> pre_process_source_full_x source primlist) source primlist
+
 let process_source_full source =
-  let _, ocprog = pre_process_source_full source in
+  let prims =  process_preludes_full_parse source in
+  let _, ocprog = pre_process_source_full source prims in
   match ocprog with
   | None -> ()
   | Some cprog ->
    let _ = Gen.Profiling.pop_time "Preprocessing" in
+   let _ = Tpdispatcher.start_prover () in
     (* An Hoa : initialize html *)
    let _ = Prooftracer.initialize_html source in
     if (!Scriptarguments.typecheck_only) 

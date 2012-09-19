@@ -134,11 +134,12 @@ let res_replace stab rl clean_res fl =
       pr pr_no
       (fun _ _ -> res_replace stab rl clean_res fl) stab fl
 
-let prim_buffer = Buffer.create 1024
+(* let prim_buffer = Buffer.create 1024 *)
 
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)
 let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list) = (* AN HOA : modify return types *)
+  let prim_buffer = Buffer.create 1024 in
   let rec helper (ddecls : I.data_decl list) =
     match ddecls with
     | ddef :: rest ->

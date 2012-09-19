@@ -119,6 +119,10 @@ class ee_view ?(model = new ee_model ()) () =
     method selection = m_view#selection
     method misc = m_view#misc
 
+    method reset()=
+      let m = new ee_model () in
+      self# set_model m;
+
     method set_model new_model =
       m_model <- new_model;
       m_view#set_model (Some m_model#coerce)

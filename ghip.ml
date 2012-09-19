@@ -34,9 +34,17 @@ let _ =
   Scriptarguments.check_option_consistency ();
   let _ = Printexc.record_backtrace !Globals.trace_failure in
   if List.length (!Globals.source_files) = 0 then
-    print_string "Source file(s) not specified\n";
- 
-  (* Arg.parse arguments  win#open_file usage_msg *) win#open_file (List.hd !Globals.source_files);
+    begin
+        print_string "Source file(s) not specified\n";
+    end
+  else
+    begin
+        let source = List.hd !Globals.source_files in
+        let prims =  MU.process_preludes_full_parse source in
+        win#set_preludes prims;
+    (* Arg.parse arguments  win#open_file usage_msg *)
+        win#open_file source;
+    end;
   win#show ();
   GMain.Main.main ();
   Mainutil.finalize ();

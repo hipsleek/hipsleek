@@ -85,7 +85,7 @@ module HipHelper = struct
   (*   (\* return output *\) *)
   (*   res *)
 
-let get_cprog fname= MU.pre_process_source_full fname
+let get_cprog fname prim_list = MU.pre_process_source_full fname  prim_list
 
 let run_hip_from_file_x ocprog (proc_name: string) =
   (* let _ = Scriptarguments.set_proc_verified proc_name in *)
@@ -113,20 +113,20 @@ let run_hip_from_file cprog (proc_name: string) =
   Debug.ho_1 "run_hip_from_file" pr1 pr2
       (fun _ -> run_hip_from_file_x cprog proc_name) proc_name
 
-let run_hip_from_txt_x (txt: string) (proc_name: string) =
+let run_hip_from_txt_x (txt: string) (proc_name: string) prims_list =
   FileUtil.write_to_file infile txt;
-  let _,ocprog = MU.pre_process_source_full infile in
+  let _,ocprog = MU.pre_process_source_full infile prims_list in
   let res = run_hip_from_file ocprog txt in
   Sys.remove infile;
   Sys.remove outfile;
   Sys.remove errfile;
   res
 
-let run_hip_from_txt cprog (proc_name: string) =
+let run_hip_from_txt cprog (proc_name: string) prims=
   let pr1 x = x in
   let pr2 = fun (x,_) -> string_of_bool x in
   Debug.ho_1 "run_hip_from_txt" pr1 pr2
-      (fun _ -> run_hip_from_txt_x cprog proc_name) proc_name
+      (fun _ -> run_hip_from_txt_x cprog proc_name prims) proc_name
 
   (* let parse_locs_line (line: string) : seg_pos list = *)
   (*   let parse loc = *)
@@ -167,8 +167,8 @@ let run_hip_from_txt cprog (proc_name: string) =
     res
     (* parse_result res *)
 
-let check_proc_from_txt (txt: string) (p: procedure) =
-    let res = run_hip_from_txt txt p.mname in
+let check_proc_from_txt (txt: string) prims (p: procedure) =
+    let res = run_hip_from_txt txt p.mname prims in
     res
     (* parse_result res *)
 

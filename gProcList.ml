@@ -43,6 +43,13 @@ class  procedure_list_model ?(src = "") () =
 
     method get_delegate()=delegate
 
+    method reset()=
+       let _ = Hashtbl.clear m_procs in
+      delegate#clear ();
+      m_count <- 0;
+      error_postions <- [];
+      source_digest <- "";
+
     method append_one_procedure (e: procedure) =
       let iter = delegate#append () in
       delegate#set ~row:iter ~column:col_id m_count;
@@ -70,9 +77,7 @@ class  procedure_list_model ?(src = "") () =
       ()
 
     method update_source ?(parse_func = parse_procedure_list) (src: string) =
-      let _ = Hashtbl.clear m_procs in
-      m_count <- 0;
-      delegate#clear ();
+      self#reset();
       try begin
           let lprocs =  parse_func src in
         source_digest <- Digest.string src;
@@ -191,6 +196,10 @@ class procedure_list ?(model = new procedure_list_model ()) () =
     method selection = view#selection
     method misc = view#misc
     method source_digest = model#source_digest
+
+    method reset ()=
+      let m = new procedure_list_model ()in
+      self#set_model m;
 
     method set_model new_model =
       model <- new_model;
