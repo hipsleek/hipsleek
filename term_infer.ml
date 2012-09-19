@@ -1217,9 +1217,9 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
 			in
     	let new_specs = update_term_spec_one_scc utils subst tg name_procs in
 				
-    	(* info_hprint "Termination Constraints"                                        *)
-    	(* 	(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs; *)
-    	(* info_pprint "\n";                                                            *)
+    	info_hprint "Termination Constraints"
+    		(pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
+    	info_pprint "\n";
     	
 			info_hprint "SUBST" (pr_list (fun (unk, cmd) ->
 				"\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst;
