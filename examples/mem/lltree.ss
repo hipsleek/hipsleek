@@ -12,9 +12,19 @@ ll<S> == self = null & S = {}
 		mem S->(node<@L,@M,@A,@A,@A>);
 
 tree<p,S> == self = null & S = {}
-		or self::node<_@L,_@A,p,l,r> * l::tree<self,Sl> * r::tree<self,Sr> & S = union(Sl,Sr,{self}) 
+		or self::node<_@L,_@A,p,l,r> * l::tree<self,Sl> * r::tree<self,Sr> & S = union(Sl,Sr,{self})
 		inv true
 		mem S->(node<@L,@A,@M,@M,@M>);
+		
+treeseg<p,q,h,S> == self = h & q = p & S = {} & h != null
+		or self::node<_@L,_@A,p,l,r> * l::treeseg<self,q,h,Sl> * r::tree<self,Sr> & h != self & h notin Sr  
+			& S subset union(Sr,{self})
+		or self::node<_@L,_@A,p,l,r> * l::tree<self,Sl> * r::treeseg<self,q,h,Sr> & h != self & h notin Sl
+			& S subset union(Sl,{self})
+		inv h != null & h notin S
+		mem S->(node<@L,@A,@M,@M,@M>);	
+	
+lemma self::tree<p,S> -> self::treeseg<p,q,h,Ss> * h::node<_@L,_@A,q,l,r> * l::tree<h,Sl> * r::tree<h,Sr> & S = union({h},Ss,Sl,Sr);
 
 global node q1s;
 global node q1t;
