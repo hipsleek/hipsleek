@@ -27,25 +27,15 @@ void foo(ref node x)
 /*
 
 
-!!! Check assume: : HP_535(x') * x::node<val_17_541,x'>&x'=null --> G(x,x')
-!!! Check Relation:  HP_535
-!!! Check Para: x
-!!! YESSSS: this relation is well define:  HP_535
-!!! Check Relation:  G
-!!! Check Para: x
-!!! Check Para: val_17_541
-!!! Check Para: x
-!!! Check Para: x
-!!! YESSSS: this relation is well define:  G
-!!! AFTER COLLECT DEF: :[ (HP_535(x') * x::node<val_17_543,x'>@M[Orig]&x'!=null&
-  {FLOW,(22,23)=__norm}[]) --> H(x')&true&{FLOW,(22,23)=__norm}[],
- (x::node<val_17_543,x_552>@M[Orig] * G(x_552,x')&x_552!=null&
-  {FLOW,(22,23)=__norm}[]) --> G(x,x')&true&{FLOW,(22,23)=__norm}[],
- (H(x)&true&
-  {FLOW,(22,23)=__norm}[]) --> x::node<val_17_523',next_17_524'>@L[Orig] * 
-  HP_535(next_17_524')&true&{FLOW,(1,25)=__flow}[],
- (HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&
-  {FLOW,(22,23)=__norm}[]) --> G(x,x')&true&{FLOW,(22,23)=__norm}[]]
+[RELDEFN G: (G) -->  x::node<val_17_543,x_552>@M[Orig] * G(x_552,x')&x_552!=null&
+{FLOW,(22,23)=__norm}[],
+RELDEFN HP_535: (HP_535) -->  HP_535(x')&x'=null&{FLOW,(22,23)=__norm}[],
+RELDEFN G: (G) -->  HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&{FLOW,(22,23)=__norm}[],
+RELDEFN HP_535: (HP_535) -->  x'::node<val_17_523',next_17_524'>@L[Orig] * HP_535(next_17_524')&true&
+{FLOW,(1,25)=__flow}[],
+RELDEFN HP_535: (HP_535) -->  HP_535(x')&x'=null&{FLOW,(22,23)=__norm}[],
+RELDEFN G: (G) -->  HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&{FLOW,(22,23)=__norm}[]]
+
 
 
 */
@@ -69,7 +59,7 @@ void foo(ref node x)
 
  //recursive function call
  [H,G,H1] x::node<a,x'>*H1(x,x') &  b & x'!=null
-    |- H(x') --* G(x',x")
+    |- H(x') --* G(x',x'')
   --> [H,G,H1] x::node<a,x0> * G(x0,x') & x0!=null
    with x'!=null & H1(x,x') -> H(x')
 

@@ -79,9 +79,9 @@ x::node<val_59_557,v_node_59_572> * G1(v_node_59_572,v_node_62_583,y) & v_node_5
 5-sep
 by-hand:
 H(x,y) -> H1(x,y,b) * x::node<_,b>
-H1(x,y,b) * x::node<_,y> & b = null & x' = x & y' = y -> G(x,x',y,y')
-H1(x,y,b) * x::node<_,b> & b != null & y' = y |- H(b,y')
-G(b, b', y0, y') * x::node<_,b> & b != null & x' = x & y0 = y -> G(x,x',y,y')
+H1(x,y,b) * x::node<_,y> & b = null-> G(x,x,y)
+H1(x,y,b) * x::node<_,b> & b != null |- H(b,y)
+G(b, b', y) * x::node<_,b> & b != null  -> G(x,x,y)
 auto:
 H1(x) * H2(y)--> x::node<_,b> * HP_549(b,y,x)
 HP_549(b,y,x) * x::node<_,y>&  b=null --> G1(x,x,y)
@@ -89,4 +89,29 @@ HP_549(b,y,x) * x::node<_,b>& b!=null--> H1(b) * H2(y)
 x::node<_,b> *  G1(b,b',y)&b!=null --> G1(x,x,y)
 
 //Matched
+
+H(x,y) -> H1(x,y,b) * x::node<_,b>
+H1(x,y,b) * x::node<_,y> & b = null-> G(x,x,y)
+H1(x,y,b) * x::node<_,b> & b != null -> H(b,y)
+G(b, b', y) * x::node<_,b> & b != null  -> G(x,x,y)
+
+Drop para
+H(x,y) -> H1(y,b) * x::node<_,b>
+H1(y,b) * x::node<_,y> & b = null-> G(x,x,y)
+H1(y,b) * x::node<_,b> & b != null -> H(b,y)
+G(b, b', y) * x::node<_,b> & b != null  -> G(x,x,y)
+
+substitute
+H(x,y) -> H1(y,b) * x::node<_,b>
+H1(y,b) * x::node<_,b> & b != null -> H(b,y)
+==> H1(y,b) * x::node<_,b> & b != null -> H1(y,b') * b::node<_,b'>
+
+Find def
+
+
+==> H1(y,b) & b != null -> H1(y,b') * b::node<_,b'>
+==> H1(y,b) -> b != null -> H1(y,b') * b::node<_,b'>
+new assume: H1(y,b') * b::node<_,b'> & b != null -> H(b,y)
+
+
 */

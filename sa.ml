@@ -52,7 +52,9 @@ let get_hp_rel_name_formula (f:CF.formula) =
 let string_of_def (def: rel_def): string = 
   let (cat, rel, f) = def in
   let  (r, args, l) = rel in
-  let str_of_rel =  Cprinter.string_of_spec_var r in
+  (*let str_of_args = (CP.string_of_exp (List.hd args))  ^ (List.fold_left (fun a b -> ", " ^ (CP.string_of_exp b)  ^ a) "" (List.tl args)) in*)
+let str_of_args = "" in
+  let str_of_rel =  (Cprinter.string_of_spec_var r)^ "(" ^ str_of_args ^ ")" in
   (CP.print_rel_cat cat)^": ("^ str_of_rel ^") --> "^(Cprinter.string_of_formula f)
 
 let rec simplify_hp_lst_assume (hp_assumes: (CF.formula * CF.formula) list): ((CF.formula * CF.formula) list) = 
@@ -61,7 +63,7 @@ let rec simplify_hp_lst_assume (hp_assumes: (CF.formula * CF.formula) list): ((C
   let droped_as = drop_para_hp_lst_assume hp_assumes in 
   Debug.info_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) droped_as no_pos;
   let new_hp_assume, defs = collect_def_hp_lst_assume droped_as in 
-  Debug.info_hprint (add_str "DEFS: " (pr_list_ln string_of_def    )) defs no_pos;
+  Debug.info_hprint (add_str "DEFS: " (pr_list_ln string_of_def)) defs no_pos;
   Debug.info_hprint (add_str "AFTER COLLECT DEF: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) new_hp_assume no_pos;
    droped_as
 
@@ -258,6 +260,7 @@ and collect_def_hp_lst_assume (hp_assumes: (CF.formula * CF.formula) list): ((CF
   *)
   let ass, defs = List.split (List.map collect_def_hp_assume hp_assumes) in
   (*check eq => new assume only to have new def*)
+  Debug.info_hprint (add_str "DEFS COLLECTED ROUND 1: " (pr_list_ln string_of_def)) (List.concat defs) no_pos;
   let defs1 = get_def_by_substitute_lst_as hp_assumes in 
   (ass, (List.concat defs)@defs1)
 
@@ -308,10 +311,34 @@ and collect_def_hp_assume(hp_assume: CF.formula * CF.formula): (CF.formula * CF.
   let hds1, hvs1, hrs1 = get_hp_rel_formula f1 in
   let hds2, hvs2, hrs2 = get_hp_rel_formula f2 in
   let rels = hrs1@hrs2 in
-  let defs = List.concat (List.map (fun c-> check_well_defined_rel c hp_assume) rels) in
-  let new_hp_assume = equal_simplify_assume hp_assume defs in 
-  (hp_assume,defs)
+  let defs1 = List.concat (List.map (fun c-> check_well_defined_rel c f1) rels) in
+  let defs2 = List.concat (List.map (fun c-> check_well_defined_rel c f2) rels) in
+ (* let filter_def def rels= (
+    let (cat, rel, f) = def in
+    (List.exists (fun c -> CP.eq_spec_var (CP.name_of_rel_form rel) (CP.name_of_rel_form c)) rels)
+  )
+  in 
+  let fdef1= List.map (fun c -> (filter_def c hrs1)) defs1 in
+  let new_f1 = equal_simplify_assume hp_assume fdef1 in
+  let fdef2= List.map (fun c -> (filter_def c hrs2)) defs1 in
+  let new_f2 = equal_simplify_assume hp_assume fdef2 in*)
+  (hp_assume,defs1@defs2)
 
+and check_well_defined_rel(rel: (CP.spec_var * (CP.exp list) * loc))(f: CF.formula): (rel_def list)=
+  let sv, el, l = rel in
+  let _ = Debug.info_pprint ("Check Relation:  " ^ (CP.name_of_spec_var sv)) no_pos in
+  let bs = List.map (fun c -> check_well_defined_rel_para rel  c f) el in
+  let b = if(List.exists (fun c -> c) bs) then true else false in
+  if(b) then (
+    let _ = Debug.info_pprint ("This relation is well define:  " ^ (CP.name_of_spec_var sv)) no_pos in
+    [(find_hp_rel_define rel f false)] 
+  )
+  else (
+    let _ = Debug.info_pprint ("This relation is not well define: " ^ (CP.name_of_spec_var sv)) no_pos in
+    []
+  )
+
+(*
 and check_well_defined_rel(rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.formula * CF.formula): (rel_def list)=
   let sv, el, l = rel in
   let _ = Debug.info_pprint ("Check Relation:  " ^ (CP.name_of_spec_var sv)) no_pos in
@@ -325,11 +352,20 @@ and check_well_defined_rel(rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: 
     let _ = Debug.info_pprint ("This relation is not well define: " ^ (CP.name_of_spec_var sv)) no_pos in
     []
   )
+*)
 
+and check_well_defined_rel_para(rel: (CP.spec_var * (CP.exp list) * loc))(ex: CP.exp)(f: CF.formula): bool = 
+  match ex with
+    | CP.Var (sv,l) -> check_well_defined_spec_var rel sv f
+    | _ -> report_error no_pos "not handle yet"
+
+(*
 and check_well_defined_rel_para(rel: (CP.spec_var * (CP.exp list) * loc))(ex: CP.exp)(hp_assume: CF.formula * CF.formula): bool = 
   match ex with
     | CP.Var (sv,l) -> check_well_defined_spec_var rel sv hp_assume
     | _ -> report_error no_pos "not handle yet"
+
+*)
 
 and find_all_null (f: CF.formula) : (CP.spec_var list)=
   match f with
@@ -340,6 +376,39 @@ and find_all_null (f: CF.formula) : (CP.spec_var list)=
     )
     |CF.Or f  -> report_error no_pos "not handle yet"
 
+and check_well_defined_spec_var (rel: (CP.spec_var * (CP.exp list) * loc)) (sv: CP.spec_var)(f:  CF.formula): bool = 
+ let _ = Debug.info_pprint ("Check Para: " ^ (CP.name_of_spec_var sv)) no_pos in
+  let nulls = find_all_null f in
+  if(List.exists (fun c -> CP.eq_spec_var sv c) nulls) then true
+  else (
+    let hds, hvs, hrs = get_hp_rel_formula f in
+    let nodes = (List.map (fun hd ->  hd.CF.h_formula_data_node) hds) @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs)in
+    if(List.exists (fun c -> CP.eq_spec_var sv c) nodes) then (
+      let res1 = try( 
+ 	let hd = List.find (fun hd -> CP.eq_spec_var hd.CF.h_formula_data_node sv) hds in
+	let args = hd.CF.h_formula_data_arguments in
+	let args = List.filter (fun c -> CP.is_node_typ c) args in
+	let bs = List.map (fun c -> check_well_defined_node_args rel c f) args in
+	(not (List.exists (fun c-> not c) bs))
+      )
+	with e -> false
+      in 
+      if(not (res1)) then (
+	try( 
+	  let hd = List.find (fun hd -> CP.eq_spec_var hd.CF.h_formula_view_node sv) hvs in
+	  let args = hd.CF.h_formula_view_arguments in
+	  let args = List.filter (fun c -> CP.is_node_typ c) args in
+	  let bs = List.map (fun c -> check_well_defined_node_args rel c f) args in
+	  (not (List.exists (fun c-> not c) bs))
+	)
+	with e -> false
+      )
+      else true
+    )
+    else false
+  )
+
+(*
 and check_well_defined_spec_var (rel: (CP.spec_var * (CP.exp list) * loc)) (sv: CP.spec_var)(hp_assume: CF.formula * CF.formula): bool = 
  let _ = Debug.info_pprint ("Check Para: " ^ (CP.name_of_spec_var sv)) no_pos in
   let f1, f2 = hp_assume in
@@ -375,7 +444,28 @@ and check_well_defined_spec_var (rel: (CP.spec_var * (CP.exp list) * loc)) (sv: 
     )
     else false
   )
+*)
 
+and check_well_defined_node_args (rel: (CP.spec_var * (CP.exp list) * loc))(arg: CP.spec_var)(f: CF.formula): bool = 
+let _ = Debug.info_pprint ("Check arg: " ^ (CP.name_of_spec_var arg)) no_pos in
+(*not handle case ocurr in hprel yet*)
+  let hds, hvs, hrs = get_hp_rel_formula f in
+  let helper arg hr rel = (
+    let rel_name,_,_ = rel in
+    let rel_name_in_f,el,l = hr in
+    if(CP.eq_spec_var rel_name rel_name_in_f) then(
+      let svs = List.map (fun e -> CP.exp_to_spec_var e) el in
+      List.exists (fun c -> CP.eq_spec_var arg c) svs 
+    )
+    else false
+  )
+  in
+  let bs = List.map (fun c -> helper arg c rel) hrs in 
+  let occur_in_rel = List.exists (fun c-> c) bs in
+  if(occur_in_rel) then true 
+  else check_well_defined_spec_var rel arg f
+
+(*
 and check_well_defined_node_args (rel: (CP.spec_var * (CP.exp list) * loc))(arg: CP.spec_var)(hp_assume: CF.formula * CF.formula): bool = 
 let _ = Debug.info_pprint ("Check arg: " ^ (CP.name_of_spec_var arg)) no_pos in
   let f1, f2 = hp_assume in
@@ -397,20 +487,69 @@ let _ = Debug.info_pprint ("Check arg: " ^ (CP.name_of_spec_var arg)) no_pos in
   let occur_in_rel = List.exists (fun c-> c) bs in
   if(occur_in_rel) then true 
   else check_well_defined_spec_var rel arg hp_assume
+*)
 
-and equal_simplify_assume (hp_assume: CF.formula * CF.formula) (defs: rel_def list):  (CF.formula * CF.formula) = 
-  hp_assume
+and equal_simplify_assume (f: CF.formula) (defs: rel_def list): CF.formula = 
+  let rels = List.map (fun (a,b,c) -> b) defs in
+  let helper f rels= 
+   match f with
+    | CF.Base fb -> CF.Base {fb with CF.formula_base_heap =  filter_hp_rel_hf fb.CF.formula_base_heap rels;}
+    | CF.Or orf -> CF.Or {orf with CF.formula_or_f1 = filter_spec_var orf.CF.formula_or_f1  rels;
+      CF.formula_or_f2 = filter_spec_var orf.CF.formula_or_f2  rels;}
+    | CF.Exists fe -> CF.Exists {fe with CF.formula_exists_heap =  filter_hp_rel_hf fe.CF.formula_exists_heap rels;}
+  in
+  f
 
-and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.formula * CF.formula)(rel_remanining: bool): rel_def=
+and  filter_hp_rel_hf (hf: CF.h_formula) (rels: CP.spec_var list): CF.h_formula =
+  let helper arg hr = (
+    let rel_name_in_f,el,l = hr in
+    let svs = List.map (fun e -> CP.exp_to_spec_var e) el in
+    List.exists (fun c -> CP.eq_spec_var arg c) svs 
+  )
+  in
+  match hf with
+    | CF.Star {CF.h_formula_star_h1 = hf1;
+               CF.h_formula_star_h2 = hf2;
+               CF.h_formula_star_pos = pos} ->
+      let n_hf1 = filter_spec_var_a hf1 rels in
+      let n_hf2 = filter_spec_var_a hf2 rels in
+      (match n_hf1,n_hf2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> n_hf2
+        | (_,CF.HEmp) -> n_hf1
+        | _ -> CF.Star {CF.h_formula_star_h1 = n_hf1;
+			CF.h_formula_star_h2 = n_hf2;
+			CF.h_formula_star_pos = pos}
+      )
+    | CF.Conj { CF.h_formula_conj_h1 = hf1;
+		CF.h_formula_conj_h2 = hf2;
+		CF.h_formula_conj_pos = pos} ->
+      let n_hf1 = filter_spec_var_a hf1 rels in
+      let n_hf2 = filter_spec_var_a hf2 rels in
+      CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+		CF.h_formula_conj_h2 = n_hf2;
+		CF.h_formula_conj_pos = pos}
+    | CF.Phase { CF.h_formula_phase_rd = hf1;
+		 CF.h_formula_phase_rw = hf2;
+		 CF.h_formula_phase_pos = pos} ->
+      let n_hf1 = filter_spec_var_a hf1 rels in
+      let n_hf2 = filter_spec_var_a hf2 rels in
+      CF.Phase { CF.h_formula_phase_rd = n_hf1;
+		 CF.h_formula_phase_rw = n_hf2;
+		 CF.h_formula_phase_pos = pos} 
+    | CF.DataNode _ 
+    | CF.ViewNode _ -> hf
+    | CF.HRel hr -> if(List.exists (fun c-> c) (List.map (fun d -> helper d hr) rels)) then CF.HEmp else hf
+    | CF.Hole _
+    | CF.HTrue
+    | CF.HFalse
+    | CF.HEmp -> hf
+
+and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(f: CF.formula)(rel_remanining: bool): rel_def=
   let sv, el, l = rel in
-  let f1, f2 = hp_assume in
   let vars = List.map CP.exp_to_spec_var el in
-  let nulls = (find_all_null f1) @ (find_all_null f2) in
-  let hds1, hvs1, hrs1 = get_hp_rel_formula f1 in
-  let hds2, hvs2, hrs2 = get_hp_rel_formula f2 in
-  let hds = hds1@hds2 in
-  let hvs = hvs1@hvs2 in
-  let hrs = hrs1@hrs2 in
+  let nulls = find_all_null f in
+  let hds, hvs, hrs = get_hp_rel_formula f in
   let helper arg hr= (
     let rel_name_in_f,el,l = hr in
     let svs = List.map (fun e -> CP.exp_to_spec_var e) el in
@@ -419,7 +558,6 @@ and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.
     else []
   )
   in
-  
   let nodes = (List.map (fun hd ->  hd.CF.h_formula_data_node) hds) @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
   (*check if in rel?*)
   let rec add_args vs sv = 
@@ -461,7 +599,72 @@ and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.
 	)
     )
   in
- (* let svs =  List.concat(List.map add_args vars) in*)
+  let svs = List.fold_left (fun a b -> (add_args a b)@a) [] vars in
+  let str = List.fold_left (fun a b ->  (CP.name_of_spec_var b ^ "," ^ a )) "" svs in
+  let _ = Debug.info_pprint ("Relevent vars, good luck to me " ^ str) no_pos in
+  let f2 = filter_spec_var f svs in
+  (CP.RelDefn sv, rel,f2) 
+
+(*
+and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.formula * CF.formula)(rel_remanining: bool): rel_def=
+  let sv, el, l = rel in
+  let f1, f2 = hp_assume in
+  let vars = List.map CP.exp_to_spec_var el in
+  let nulls = (find_all_null f1) @ (find_all_null f2) in
+  let hds1, hvs1, hrs1 = get_hp_rel_formula f1 in
+  let hds2, hvs2, hrs2 = get_hp_rel_formula f2 in
+  let hds = hds1@hds2 in
+  let hvs = hvs1@hvs2 in
+  let hrs = hrs1@hrs2 in
+  let helper arg hr= (
+    let rel_name_in_f,el,l = hr in
+    let svs = List.map (fun e -> CP.exp_to_spec_var e) el in
+    if(List.exists (fun c -> CP.eq_spec_var arg c) svs) then
+      List.filter (fun c -> not(CP.eq_spec_var arg c)) svs
+    else []
+  )
+  in
+  let nodes = (List.map (fun hd ->  hd.CF.h_formula_data_node) hds) @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
+  (*check if in rel?*)
+  let rec add_args vs sv = 
+    if(List.exists (fun c -> CP.eq_spec_var c sv) vs) then vs else(
+      if(List.exists (fun c -> CP.eq_spec_var sv c) nodes) then (
+	try( 
+	  let hd = List.find (fun hd -> CP.eq_spec_var hd.CF.h_formula_data_node sv) hds in
+	  let args = hd.CF.h_formula_data_arguments in
+	  let args = List.filter (fun c -> CP.is_node_typ c) args in
+	  let args = List.filter (fun c -> not(List.exists (fun d-> (CP.eq_spec_var d c)) vs))  args in
+	  let new_sv =  List.fold_left (fun a b -> (add_args a b)@a) [] args in (*List.concat(List.map add_args args) in*)
+	  let str = List.fold_left (fun a b ->  (CP.name_of_spec_var b ^ "," ^ a )) "" args in
+	  let _ = Debug.info_pprint ("check arg of node: " ^ str) no_pos in
+	  sv::new_sv
+	)
+	with e -> (
+	  try( 
+	    let hd = List.find (fun hd -> CP.eq_spec_var hd.CF.h_formula_view_node sv) hvs in
+	    let args = hd.CF.h_formula_view_arguments in
+	    let args = List.filter (fun c -> CP.is_node_typ c) args in
+	    let args = List.filter (fun c -> (List.exists (fun d-> not(CP.eq_spec_var d c))vs)) args in
+	    let new_sv =  List.fold_left (fun a b -> (add_args a b)@a) [] args in (*List.concat(List.map add_args args) in*)
+	    sv::new_sv
+	  )
+	  with e -> [sv]
+	)
+      )
+      else
+	(
+	  if(CP.is_node_typ sv) then(
+	    (*check if in rel args => add all node *)
+	    let args = List.concat( List.map (fun c -> (helper sv c)) hrs) in
+	    let args =  List.filter (fun c -> CP.is_node_typ c) args in
+	    let args = List.filter (fun c -> (List.exists (fun d-> (CP.eq_spec_var d c))vs)) args in
+	    let new_sv =  List.fold_left (fun a b -> (add_args a b)@a) [] args in
+	    sv::new_sv
+	  )
+	  else []
+	)
+    )
+  in
   let svs = List.fold_left (fun a b -> (add_args a b)@a) [] vars in
   let str = List.fold_left (fun a b ->  (CP.name_of_spec_var b ^ "," ^ a )) "" svs in
   let _ = Debug.info_pprint ("Relevent vars, good luck to me " ^ str) no_pos in
@@ -469,6 +672,7 @@ and find_hp_rel_define (rel: (CP.spec_var * (CP.exp list) * loc))(hp_assume: CF.
   let f22 = filter_spec_var f2 svs in
   Debug.info_hprint (add_str ("Defination candidates of  " ^ (CP.name_of_spec_var sv)^ " : " ) ( Cprinter.string_of_hprel_lhs_rhs)) (f12,f22) no_pos;
   (CP.RelDefn sv, rel,f2) 
+*)
 
 and filter_spec_var (f: CF.formula) (relevent_vars: CP.spec_var list): CF.formula =
   match f with

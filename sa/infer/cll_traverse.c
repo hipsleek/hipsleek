@@ -50,11 +50,12 @@ void foo(ref node x, ref node y)
 inferred inductive predicates:
 ==============================
    H(x,y) -> x::node<a,q>*H1(x,y,q)
+
    x'!=null & H1(x,y,x')& y'=y -> H(x',y')
 
-   x::node<a,x0> * G(x0,x') & x0!=y & y' = y -> G(x,x',y,y')
+   x::node<a,x0> * G(x0,x',y,y) & x0!=y -> G(x,x',y,y)
 
-   x::node<a,x'> * H1(x,x') & x'=y &y' = y -> G(x,x',y,y')
+   x::node<a,x'> * H1(x,x')  -> G(x,x',x',x')
 
 
 
