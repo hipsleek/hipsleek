@@ -37,7 +37,7 @@ let string_of_map_table_list (mtl: map_table list): string =
   "[" ^ (helper mtl) ^ "]"
 
 (*let rec rm_double_mapping (mt: map_table): map_table = 
-if((List.length mt) == 0) then mt else (
+ if((List.length mt) == 0) then mt else (
   let hd = List.hd mt in
   let tl = List.tl mt in
   if(List.exists (fun c -> c == hd) tl) then (rm_double_mapping tl) else (rm_double_mapping tl)@[hd] 
@@ -381,5 +381,6 @@ let _ = Debug.ninfo_pprint ("node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^  strin
     )
 
 let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula = 
-  CF.subst mt f
+  let frs,ts = List.split mt in
+  CF.subst_avoid_capture frs ts f
 

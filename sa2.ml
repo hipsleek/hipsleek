@@ -57,8 +57,13 @@ let rec simplify_lst_constrs(constrs: (CF.formula * CF.formula) list): (hp_def l
   let constrs = elim_redundant_paras_lst_constr constrs in 
   Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
   let constrs, par_defs = collect_partial_definitions constrs in
-  Debug.info_hprint (add_str "AFTER COLLECT PARTIAL DEFINITIONS: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
   Debug.info_hprint (add_str "PARTIAL DEFINITIONS: " (pr_list_ln Cprinter.string_of_par_def)) par_defs no_pos;
+  Debug.ninfo_hprint (add_str "\nAFTER COLLECT PARTIAL DEFINITIONS: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
+  (*VP: TO DO: before split: gather fully definitions + filter constraints*)
+  let sub_constrs, split_tb = collect_sub_constrs_by_split constrs in
+  let sub_constrs, par_defs2 = collect_partial_definitions sub_constrs in
+  Debug.info_hprint (add_str "SUBCONSTRS FROM SPLIT: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) sub_constrs no_pos;
+  Debug.info_hprint (add_str "PARTIAL DEFINITIONS OF SUBCONSTRS: " (pr_list_ln Cprinter.string_of_par_def)) par_defs2 no_pos;
   []
 
 and elim_redundant_paras_lst_constr constrs =
@@ -170,6 +175,7 @@ and is_well_defined_pointer hr sv f defined_hps =
 
 and check_well_defined_pointers self_hr sv f defined_hps =
   let nulls = find_all_null f in
+  let _ = Debug.ninfo_pprint ("Check well defined: " ^ (CP.name_of_spec_var sv)) no_pos in
   if(List.exists (fun c -> CP.eq_spec_var sv c) nulls) then true
   else( (*VP: TO DO: is in defined hps*)
     let hds, hvs, hrs = get_hp_rel_formula f in
@@ -375,7 +381,7 @@ and collect_par_defs_one_constr constr =
 	  let def = find_hp_def hr rhs true in
 	  let sv,el,loc = hr in
 	  let f1 = CF.formula_of_heap (CF.HRel(sv, el, loc)) no_pos in
-	  let f2 = CF.formula_of_heap CF.HEmp no_pos in (*remaining*)
+	  let f2 = find_hp_def hr lhs false in (*remaining*)
 	  ([(f1,f2,def)],[])
 	)
       else (
@@ -535,17 +541,17 @@ and get_def_by_substitute_two_constr  (constr1: CF.formula * CF.formula)  (const
   let b2, mt2 = CEQ.checkeq_formulas [] f12 f21 in
   let defs1 = if(b1) then (
     let f_1 = CEQ.subst_with_mt (List.hd mt1) f12 in 
+(*change vars*)
     (*let f_2 = CEQ.subst_with_mt (List.hd mt1) f21 in *) (*not sound, should check if both var occur*)
-    Debug.info_hprint (add_str "NEW ASSUME AFTER CHANGE VARS: " ( Cprinter.string_of_hprel_lhs_rhs)) (f_1,f21) no_pos;
-    let (a, b) =  collect_par_defs_one_constr(f_1,f21) in 
+    Debug.ninfo_hprint (add_str "NEW ASSUME AFTER CHANGE VARS: " ( Cprinter.string_of_hprel_lhs_rhs)) (f21,f_1) no_pos;
+    let (a, b) =  collect_par_defs_one_constr (f21,f_1) in 
     b
   )
     else []
   in
   let defs2 = if(b2) then  (
     let f_1 = CEQ.subst_with_mt (List.hd mt1) f11 in 
-   (* let f_2 = CEQ.subst_with_mt (List.hd mt1) f22 in *)
-    Debug.info_hprint (add_str "NEW ASSUME AFTER CHANGE VAR: " ( Cprinter.string_of_hprel_lhs_rhs)) (f_1,f22) no_pos;
+    Debug.ninfo_hprint (add_str "NEW ASSUME AFTER CHANGE VAR: " ( Cprinter.string_of_hprel_lhs_rhs)) (f_1,f22) no_pos;
     let (a,b) = collect_par_defs_one_constr (f_1,f22) in
     b
   )
@@ -553,58 +559,149 @@ and get_def_by_substitute_two_constr  (constr1: CF.formula * CF.formula)  (const
   in
   defs1@defs2
 
+and collect_sub_constrs_by_split constrs = 
+  (*split only hp that stands alone in RHS and have more than one parameter *)
+  let split_tb = [] in
+  let splits = List.concat (List.map (fun constr -> get_split_candi constr) constrs) in (*hr list*)
+  let get_split_map split tb = (
+    let svs, mtbs = List.split tb in
+    let sv,el,l = split in
+    if(List.exists (fun c -> CP.eq_spec_var sv c) svs) then []
+    else(
+      let rec helper sv el n =
+	match el with
+	  | [] -> []
+	  |x::y -> (CP.fresh_spec_var sv, [n])::(helper sv y (n+1))
+      in
+      [(sv,helper sv el 0)]
+    )
+  ) 
+  in
+  let split_tb = List.fold_left (fun tb split -> (get_split_map split tb)@tb ) [] splits in
+  let svs, mtbs = List.split split_tb in
+  Debug.info_hprint (add_str "SPLIT: " (pr_list_ln CP.name_of_spec_var)) svs no_pos;
+  let new_constrs, sub_constrs = List.split (List.map (fun constr -> process_split constr split_tb) constrs) in
+  Debug.ninfo_hprint (add_str "NEW CONSTRAINTS: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) new_constrs no_pos;
+  Debug.ninfo_hprint (add_str "SUB CONSTRAINTS: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) (List.concat sub_constrs) no_pos;
+  ((List.concat sub_constrs),split_tb)
 
+and process_split constr split_tb = 
+  Debug.ninfo_hprint (add_str "Process split: " ( Cprinter.string_of_hprel_lhs_rhs)) constr no_pos;
+  let svs, mtbs = List.split split_tb in
+  let lhs, rhs = constr in
+  let new_lhs = process_split_LHS lhs split_tb in
+  Debug.ninfo_hprint (add_str "Process split LHS: " ( Cprinter.string_of_hprel_lhs_rhs)) (lhs, new_lhs) no_pos;
+  (*if RHS:stand alone hp => split and create new sub constrs else just split like lhs*)
+  let collect_subconstr lhs subhp =
+    let hrel = match subhp with
+      |CF.HRel hr -> hr 
+      |_ -> report_error no_pos "no case"
+    in
+    let def_of_subhp = find_hp_def hrel lhs true in
+    let hp_to_f = CF.formula_of_heap subhp no_pos in
+    (def_of_subhp, hp_to_f)
+  in 
+  try(
+    let this_hp = get_split_candi constr in
+    try(
+      let sub_hps = split_hp (List.hd this_hp) split_tb in (*List.hd for the only 1 hp here*)
+      let subconstrs = List.map (fun subhp -> collect_subconstr new_lhs subhp) sub_hps in (*VP: TO DO: separate to 2 sub constr*)
+      ((new_lhs,rhs), subconstrs)
+    )
+    with _ ->  ((new_lhs,rhs),[])
+  )
+  with _ -> (
+    let new_rhs = process_split_LHS rhs split_tb in
+    ((new_lhs,new_rhs),[])
+  )
 
+and process_split_LHS f split_tb = 
+  match f with
+    | CF.Base fb -> CF.Base {fb with CF.formula_base_heap = process_split_lhs_hf fb.CF.formula_base_heap split_tb;}
+    | CF.Or orf -> CF.Or {orf with CF.formula_or_f1 = process_split_LHS orf.CF.formula_or_f1 split_tb;
+                CF.formula_or_f2 = process_split_LHS orf.CF.formula_or_f2 split_tb;}
+    | CF.Exists fe -> CF.Exists {fe with CF.formula_exists_heap =  process_split_lhs_hf fe.CF.formula_exists_heap split_tb;}
+    
+and process_split_lhs_hf hf split_tb = 
+  match hf with
+    | CF.Star {CF.h_formula_star_h1 = hf1;
+               CF.h_formula_star_h2 = hf2;
+               CF.h_formula_star_pos = pos} ->
+      let n_hf1 = process_split_lhs_hf hf1 split_tb in
+      let n_hf2 = process_split_lhs_hf hf2 split_tb in
+      CF.Star {CF.h_formula_star_h1 = n_hf1;
+	       CF.h_formula_star_h2 = n_hf2;
+	       CF.h_formula_star_pos = pos}
+    | CF.Conj { CF.h_formula_conj_h1 = hf1;
+		CF.h_formula_conj_h2 = hf2;
+		CF.h_formula_conj_pos = pos} ->
+      let n_hf1 = process_split_lhs_hf hf1 split_tb in
+      let n_hf2 = process_split_lhs_hf hf2 split_tb in
+      CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+		CF.h_formula_conj_h2 = n_hf2;
+		CF.h_formula_conj_pos = pos}
+    | CF.Phase { CF.h_formula_phase_rd = hf1;
+		 CF.h_formula_phase_rw = hf2;
+		 CF.h_formula_phase_pos = pos} ->
+      let n_hf1 = process_split_lhs_hf hf1 split_tb in
+      let n_hf2 = process_split_lhs_hf hf2 split_tb in
+      CF.Phase { CF.h_formula_phase_rd = n_hf1;
+		 CF.h_formula_phase_rw = n_hf2;
+		 CF.h_formula_phase_pos = pos} 
+    | CF.DataNode _
+    | CF.ViewNode _ -> hf
+    | CF.HRel hr ->(
+      try
+	(
+	  let sub_hrs = split_hp hr split_tb in
+	  (List.fold_left (fun piv subhr -> CF.mkStarH piv subhr no_pos) (List.hd sub_hrs) (List.tl sub_hrs))
+	)
+      with _ -> hf
+    ) 
+    | CF.Hole _
+    | CF.HTrue
+    | CF.HFalse
+    | CF.HEmp -> hf
 
+and split_hp (hp: (CP.spec_var * CP.exp list * loc)) split_tb=
+(*VP: TO DO: from hp -> subhps or not split*)
+  let svs, mtbs = List.split split_tb in
+  let sv,el,l = hp in
+  let collect_params mapping el = 
+    let subhp, locs = mapping in
+    let rec helper el locs n = match el with
+      |[] -> []
+      |x::y -> if(List.exists (fun c -> c == n) locs) then x::(helper y locs (n+1)) else (helper y locs (n+1))
+    in
+    let params = helper el locs 0 in
+    CF.HRel (subhp, params, no_pos)
+  in
+  if(List.exists (fun c -> CP.eq_spec_var sv c) svs) then
+    try(
+      let split_hp,mappings = (List.find (fun (c,mtb) -> CP.eq_spec_var sv c) split_tb) in 
+      List.map (fun mapping -> collect_params mapping el) mappings
+    )
+    with _ -> report_error no_pos "no case"
+  else (raise Not_found)
 
+and get_only_hrel f = match f with 
+  |CF.Base {CF.formula_base_heap = hf} -> (match hf with
+      | CF.HRel hr -> hr
+      | _ -> raise Not_found
+  )
+  |CF.Exists {CF.formula_exists_heap = hf} -> (match hf with
+      | CF.HRel hr -> hr
+      | _ -> raise Not_found
+  )
+  | CF.Or f  -> report_error no_pos "not handle yet"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(*
-and find_well_defined_pointers f defined_hps =
-  let nulls = find_all_null f in
-  let hds, hvs, hrs = get_hp_rel_formula f in
-  let data_nodes = (List.map (fun hd ->  hd.CF.h_formula_data_node) hds) in
-  let data_nodes = List.filter (fun node -> check_well_defined_data_node_args node f defined_hps) data_nodes in
-  let view_nodes = (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in 
-  let view_nodes = List.filter (fun node -> check_well_defined_view_node_args node f defined_hps) view_nodes in
-  let nodes = data_nodes@view_nodes in
-    (*VP: TO DO: find pointer that is para of defined hp*) 
-  nulls@nodes
-
-and check_well_defined_data_node_args node f defined_hps = 
-  let args = node.CF.h_formula_data_arguments in
-  let bs = List.map (fun arg -> check_well_defined_node_arg arg f defined_hps) args in
-  (not (List.exists (fun c-> not c) bs))
-
-and check_well_defined_view_node_args node f defined_hps = 
-  let args = node.CF.h_formula_view_arguments in
-  let bs = List.map (fun c -> check_well_defined_node_arg arg f defined_hps) args in
-  (not (List.exists (fun c-> not c) bs))
-*)
+and get_split_candi constr = 
+    (*rhs is only hp with more than 1 param*)
+  let lhs,rhs = constr in
+  try(
+      let hp = get_only_hrel rhs in
+      let sv,el,l  = hp in
+      if(List.length el >= 2) then [hp]
+      else []
+    )
+  with _ -> []
