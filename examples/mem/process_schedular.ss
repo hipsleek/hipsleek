@@ -24,9 +24,10 @@ sll<R> == self = null & R = {}
     
 void insert_process(int pid, int stat, ref node plist, ref node rlist, ref node slist)
 case {
-stat = 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = union(R1,R2)
+stat = 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = union(R1,R2) 
 	    ensures (plist'::ll<Rp> & rlist'::rll<Rr> * slist::sll<R2>) & plist' = rlist' & Rp = union(Rr,R2);
-stat != 1 -> ensures (plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<Rs>) & plist' = slist' & Rp = union(Rs,R1);}
+stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = union(R1,R2) 
+	    ensures (plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<Rs>) & plist' = slist' & Rp = union(Rs,R1);}
 {
 	node tmp = new node(pid,stat,null,null,null);
 	tmp.next = plist;
@@ -39,7 +40,7 @@ stat != 1 -> ensures (plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<Rs>) & plist
 
 node insert_rll(node x, node n)
 requires x::rll<R> * n::node<_@L,_@L,_@A,_@M,_@A>
-ensures n::rll<Rr> & Rr = union(R,{n});
+ensures res::node<_@L,_@L,_@A,x@A,_@A> * x::rll<R> & Rr = union(R,{n});
 {
 	n.rnext = x;
 	return n;
@@ -47,7 +48,7 @@ ensures n::rll<Rr> & Rr = union(R,{n});
 
 node insert_sll(node x, node n)
 requires x::sll<R> * n::node<_@L,_@L,_@A,_@A,_@M>
-ensures n::sll<Rr> & Rr = union(R,{n});
+ensures res::node<_@L,_@L,_@A,_@A,x@A> * x::sll<R> & Rr = union(R,{n});
 {
 	n.snext = x;
 	return n;

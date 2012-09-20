@@ -382,7 +382,7 @@ match f with
               CF.formula_exists_label = lbl;
               CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p t fl ol pos lbl
               
-let split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
+let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
 	let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in 
 	match h with
 	| CF.Conj({CF.h_formula_conj_h1 = h1;
@@ -393,6 +393,12 @@ let split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 		    CF.h_formula_phase_pos = pos}) -> 
 		    let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n")
 		    in (h1,h2)
+	| CF.Star({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) ->
+		   (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n") in*)
+		   let left_h_split = split_heap h1
+		   in (fst left_h_split),(CF.mkStarH (snd left_h_split) h2 pos 27)
 	| _ -> (h, CF.HEmp)
 
 let rec remove_phases (h: IF.h_formula): IF.h_formula = 
@@ -414,9 +420,9 @@ let rec remove_phases (h: IF.h_formula): IF.h_formula =
 	| _ -> h
 		   
 let normalize_h_formula (h : IF.h_formula): IF.h_formula =
-	(*let _ = print_string ("Before Phase Removal H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
-	let res = remove_phases h in res	
-	(* let _ = print_string ("After Phase Removal H = "^ (Iprinter.string_of_h_formula res) ^ "\n") in *)
+	(*let _ = print_string ("Before Phase Removal H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in*) 
+	let res = remove_phases h in	
+	(*let _ = print_string ("After Phase Removal H = "^ (Iprinter.string_of_h_formula res) ^ "\n") in*) res 
 	(* Push star inside A * (B /\ C) == (A * B) /\ (A * C) *) 
 	(*let helper h = match h with 
 	| IF.Conj({IF.h_formula_conj_h1 = h1;
