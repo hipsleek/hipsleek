@@ -3187,19 +3187,280 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
       else   
       	let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos) ante pos in
       	let _ = print_string("\nA :"^(Cprinter.string_of_formula ante) ^"\n") in
-     	let formula = (Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos) in  
+     	try 
+     		let formula = (Mem.entail_mem_perm_formula ante conseq prog.prog_view_decls pos) in  
       	(*let new_conseq = CF.mkAnd_pure conseq formula pos in*)
-      	let new_conseq = CF.formula_of_mix_formula formula pos in
-      	let _ = print_string("\nC :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
-      	let (rs,p) = heap_entail_conjunct prog is_folding ctx new_conseq [] pos in
-      	if not(CF.isFailCtx rs) then 
-      	let ante_without_conj = Mem.conv_formula_conj_to_star ante in
-      	let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
-      	let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
-      	heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
-      	else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
-		(mkFailCtx_simple msg estate conseq pos , Failure))
-	
+	      	let new_conseq = CF.formula_of_mix_formula formula pos in
+      		let _ = print_string("\nC :"^(Cprinter.string_of_formula new_conseq) ^"\n") in
+      		let (rs,p) = heap_entail_conjunct prog is_folding ctx new_conseq [] pos in
+      		if not(CF.isFailCtx rs) then 
+      		let ante_without_conj = Mem.conv_formula_conj_to_star ante in
+      		let conseq_without_conj = Mem.conv_formula_conj_to_star conseq in
+      		let ctx_new = CF.set_context_formula ctx0 ante_without_conj in
+      		heap_entail_conjunct prog is_folding ctx_new conseq_without_conj [] pos
+	      	else let msg = "Memory Spec Error - Cannot entail the memory spec" in 
+		(mkFailCtx_simple msg estate conseq pos , Failure)
+	with _ as e -> let msg = (Printexc.to_string e) in 
+			(mkFailCtx_simple msg estate conseq pos , Failure))
+
+and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) pos : (list_context * proof) =
+  let ctx_with_rhs =  
+	let h, p, fl, t, a  = CF.split_components conseq in
+	let eqns = (MCP.ptr_equations_without_null p) in
+    	CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
+  let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
+    let h1, h2 = Mem.split_heap h in
+    if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
+      let new_conseq = func h1 p in
+      heap_entail_split_lhs prog is_folding ctx_00 new_conseq pos
+    else (* D |- h1 = D1 /\ h2 = D2 *)
+      let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 (func h1 (MCP.mkMTrue pos)) pos in  
+      match after_h1_ctx with
+      | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
+      | SuccCtx (cl) -> let (ctx,prf) = 
+			(match h2 with
+			 | HTrue -> (after_h1_ctx,after_h1_prfs)
+			 | _ -> let res = (* h2 may contain nested conj/phases *)
+			 	List.map (fun c -> heap_entail_split_rhs prog is_folding c (func h2 (MCP.mkMTrue pos)) pos) cl
+			 	in
+			 	let res_ctx,res_prf = List.split res in
+			 	let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
+			 	let res_ctx = fold_context_left res_ctx in
+			 	(res_ctx,res_prf))
+			in ctx,prf
+  in
+  
+  Debug.devel_zprint (lazy ("heap_entail_split_rhs: 
+                            \nante:\n"
+  ^ (Cprinter.string_of_context ctx_0)
+  ^ "\nconseq:\n"
+  ^ (Cprinter.string_of_formula conseq))) pos;
+  
+  match ctx_0 with
+    | Ctx estate -> begin
+        let ante = estate.es_formula in
+        match ante with
+	      | Exists ({formula_exists_qvars = qvars;
+		    formula_exists_heap = qh;
+		    formula_exists_pure = qp;
+		    formula_exists_type = qt;
+		    formula_exists_flow = qfl;
+		    formula_exists_pos = pos}) ->
+	            (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+	            let ws = CP.fresh_spec_vars qvars in
+	            (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
+	            let new_ctx = eliminate_exist_from_LHS qvars qh qp qt qfl pos estate in
+	            (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
+	            let rs, prf1 =  heap_entail_split_rhs prog is_folding  new_ctx conseq pos in
+	            let new_rs =
+	              if !Globals.wrap_exist then
+	                (* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
+	                (add_exist_vars_to_ctx_list rs ws)
+	              else
+	                rs
+	            in
+	            (* log the transformation for the proof tracere *)
+	            let prf = mkExLeft ctx_0 conseq qvars ws prf1 in
+	            (new_rs, prf)
+	      | _ -> begin
+	          match conseq with  
+	            | Base(bf) -> 
+	                  let h, p, fl, t, a = CF.split_components conseq in
+	                  helper ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
+	            | Exists ({formula_exists_qvars = qvars;
+		          formula_exists_heap = qh;
+		          formula_exists_pure = qp;
+		          formula_exists_type = qt;
+		          formula_exists_flow = qfl;
+		          formula_exists_and = qa;
+		          formula_exists_pos = pos}) ->
+	                  (* quantifiers on the RHS. Keep them for later processing *)
+	                  let ws = CP.fresh_spec_vars qvars in
+	                  let st = List.combine qvars ws in
+	                  let baref = mkBase qh qp qt qfl qa pos in
+	                  let new_baref = subst st baref in
+	                  let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
+	                  let tmp_rs, tmp_prf = heap_entail_split_rhs prog is_folding  new_ctx new_baref pos
+	                  in
+	                  (match tmp_rs with
+		                | FailCtx _ -> (tmp_rs, tmp_prf)
+		                | SuccCtx sl ->
+		                      let prf = mkExRight ctx_0 conseq qvars ws tmp_prf in
+		                      let _ = List.map (redundant_existential_check ws) sl in
+		                      let res_ctx =
+		                        if !Globals.elim_exists then List.map elim_exists_ctx sl
+		                        else sl in
+		                      (SuccCtx res_ctx, prf))
+	            | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
+	        end
+      end
+    | _ -> report_error no_pos ("[solver.ml]: No disjunctive context should reach this level\n")
+
+(* entailment method for splitting the antecedent *)
+and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
+
+  Debug.devel_zprint (lazy ("heap_entail_split_lhs: \nante:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n"
+  ^ (Cprinter.string_of_formula conseq))) pos;
+
+    (***** main helper method ******)
+    (* called for both formula base and formula exists *)
+    let rec helper_lhs h func : (list_context * proof) = 
+      (* split h such that:
+         h1 = D1 /\ h2 = D2 |- D 
+      *)
+      let h1, h2 = Mem.split_heap h in
+      if (is_empty_heap h2) 
+      then
+        (* lhs contains only one heap (no need to split)*)
+        let new_ctx = CF.set_context_formula ctx0 (func h1) in
+	    (* in this case we directly call heap_entail_conjunct *)
+        let final_ctx, final_prf = heap_entail_conjunct prog is_folding new_ctx conseq [] pos in
+	    match final_ctx with
+	      | SuccCtx(cl) ->
+	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+	          let cl1 = List.map subs_crt_holes_ctx cl in
+		      let cl1 = List.map restore_tmp_ann_ctx cl1 in
+		      (SuccCtx(cl1), final_prf)
+	      | FailCtx _ -> (final_ctx, final_prf)
+      else
+	      (* lhs contains multiple hconjs *)
+	      (******************************************************)
+	      (****** the first entailment uses h1 as lhs heap ******)
+	      (******************************************************)
+	      let lhs_h1 = func h1 in
+	      let h1_ctx = CF.set_context_formula ctx0 lhs_h1 in
+	      Debug.devel_zprint (lazy ("heap_entail_split_lhs: \ncall heap_entail_conjunct with lhs = h1\n")) pos;
+	      let (with_h1_ctx, with_h1_prf) = heap_entail_conjunct prog is_folding h1_ctx conseq [] pos in
+	      (*******************************************************)
+	      (****** the second entailment uses h2 as lhs heap ******)
+	      (*******************************************************)
+	      (* push h2 as a continuation in the current ctx *)
+	      let new_ctx = push_cont_ctx h2 ctx0 in	      
+	      (* todo: check whether the conseq != null (?)*)
+	      (* check if there is need for another entailment that uses the continuation h2 *)
+	      let (final_ctx, final_prf) = 
+	        match with_h1_ctx with
+		      | SuccCtx(cl) -> 
+		            (* h1 was enough, no need to use h2 *)
+		            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+		            (* let _ = print_string("Substitute the holes \n") in *)
+		            let cl = List.map subs_crt_holes_ctx cl in
+			    let cl =  List.map restore_tmp_ann_ctx cl in
+		            (* put back the frame consisting of h2 *)
+			    let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkStarH f h2 pos 25)) cl  
+		            in
+ 		            (SuccCtx(cl), with_h1_prf)
+		      | FailCtx(ft) -> 
+		            (* failed when using lhs = h1; need to try the continuation *)
+		            match h2 with
+		              | HTrue -> (* h2 = true and hence it wont help *)
+			                (with_h1_ctx, with_h1_prf)
+		              | _ -> heap_entail_with_cont_lhs prog is_folding ctx0 conseq ft h1 h2 with_h1_ctx with_h1_prf func pos
+
+	      in
+	      (* union of states *)
+	      (*	let _ = print_string("compute final answer\n") in*)
+	      ((fold_context_left [with_h1_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_h1_prf; final_prf]))		
+		      (*  end of helper method *)
+
+    and heap_entail_with_cont_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula)
+          (ft : fail_type) (h1 : h_formula) (h2 : h_formula) (with_h1_ctx : list_context)
+          (with_h1_prf : proof) func pos : (list_context * proof) =
+		  
+      Debug.no_2 "heap_entail_with_cont_lhs" (Cprinter.string_of_context) (fun _ -> "RHS") (fun _ -> "OUT")
+          (fun ctx0 conseq -> heap_entail_with_cont_lhs_x prog is_folding  ctx0 conseq ft h1 h2 with_h1_ctx with_h1_prf
+              func pos) ctx0 conseq
+
+    (* handles the possible ent continuations *)
+    and heap_entail_with_cont_lhs_x (prog : prog_decl)  (is_folding : bool) (ctx0 : context)  (conseq : formula)  (ft : fail_type)
+      (h1 : h_formula)  (h2 : h_formula) (with_h1_ctx : list_context)  (with_h1_prf : proof) func pos : (list_context * proof) =
+      match ft with
+        | ContinuationErr(fc) ->
+	          begin
+	            (* check if there is any continuation in the continuation list es_cont *)
+	            let lhs = fc.fc_current_lhs in
+	            if (lhs.es_cont = []) then
+	              (* no continuation *)
+	              (* ---TODO:  need to enable folding --- *)
+	              (with_h1_ctx, with_h1_prf)
+	            else 
+	              (* pop the continuation record *)
+	              (* the cont record contains (actual continuation to be used on the lhs, the failing lhs) *)
+	              (* actually, we already know the continuation is h2 *)
+	              let _, lhs = pop_cont_es lhs in
+		          (* retrieve the current conseq from the failed context *)				    
+		          let conseq = fc.fc_current_conseq in
+		          (* swap the current lhs heap (keep it as frame) and the continuation h2 *)
+	              let new_f, h2_rest = swap_heap lhs.es_formula h2 pos in
+		          (* create the current context containing the current estate *)
+	              let cont_ctx = Ctx({lhs with es_formula = new_f;}) in
+	              let after_cont_ctx, after_cont_prf =
+		              heap_entail_conjunct prog is_folding cont_ctx conseq [] pos
+	              in
+		          (match after_cont_ctx with
+		            | FailCtx _ -> (after_cont_ctx, after_cont_prf)
+		            | SuccCtx (cl) -> 
+		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+		                  (* let _ = print_string("Substitute the holes\n") in *)
+		                  let cl = List.map subs_crt_holes_ctx cl in
+				  let cl =  List.map restore_tmp_ann_ctx cl in
+			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
+			              (* first add the frame h2_rest*[] *) 
+		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos 23)) cl in
+			              (* next add the frame h1/\[]*)
+		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl 
+		                  in
+			              (SuccCtx(cl), after_cont_prf)
+		          )
+	          end
+        | Or_Continuation(ft1, ft2) ->
+	          let ctx1, prf1 = heap_entail_with_cont_lhs prog is_folding ctx0 conseq ft1 h1 h2 with_h1_ctx with_h1_prf func pos in
+	          let ctx2, prf2 = heap_entail_with_cont_lhs prog is_folding ctx0 conseq ft2 h1 h2 with_h1_ctx with_h1_prf func pos in
+	          (* union of states *)
+	          ((fold_context_left [ctx1; ctx2]),( mkOrRight ctx0 conseq [prf1; prf2]))		
+        | _ -> 
+	          (* no continuation -> try to discharge the conseq by using h2 as lhs and h1*[] as frame *)
+	          (* create the new ctx *)
+	          let lhs_h2 = func h2 in
+	          let h2_ctx = CF.set_context_formula ctx0 lhs_h2 in
+	          let (with_h2_ctx, with_h2_prf) = heap_entail_split_lhs prog is_folding h2_ctx conseq pos in
+	          let (with_h2_ctx, with_h2_prf) = 
+	            (match with_h2_ctx with
+	              | FailCtx _ -> (with_h2_ctx, with_h2_prf)
+	              | SuccCtx (cl) -> 
+		                (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+		                (* let _ = print_string("Substitute the holes \n") in *)
+		                let cl = List.map subs_crt_holes_ctx cl in   
+				let cl =  List.map restore_tmp_ann_ctx cl in
+		                (* in case of success, put back the frame consisting of h1/\h2*[] *)
+		                (* first add the frame h2*[] *) 
+		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos 24)) cl in
+	                        (* next add the frame h1/\[]*)
+		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
+		                in (SuccCtx(cl), with_h2_prf)
+	            )
+	          in (with_h2_ctx, with_h2_prf)
+    in
+
+    (* main method *)
+    let lhs = CF.formula_of_context ctx0
+    in
+    match lhs with 
+      | Base(bf) -> 
+	        let h, p, fl, t, a = CF.split_components lhs in
+	        helper_lhs h (fun xh -> CF.mkBase xh p t fl a pos)
+
+      | Exists({formula_exists_qvars = qvars;
+	    formula_exists_heap = h;
+        formula_exists_pure = p;
+        formula_exists_type = t;
+        formula_exists_flow = fl;
+        formula_exists_and = a;
+        formula_exists_label = l;
+        formula_exists_pos = pos }) -> 
+	        helper_lhs h (fun xh -> CF.mkExists qvars xh p t fl a pos)
+      | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n")	
+      
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Debug.no_2 "heap_entail_init"
 	  Cprinter.string_of_list_context
@@ -3443,8 +3704,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
         let r1,p1 =
               if !Globals.allow_mem && !Globals.allow_field_ann then
             begin
-              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_with_mem")) pos;
-	          heap_entail_with_mem prog is_folding ctx conseq pos     
+              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs")) pos;
+	          heap_entail_split_rhs prog is_folding ctx conseq pos     
             end
               else
 	      	if !Globals.allow_imm then

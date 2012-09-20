@@ -65,17 +65,25 @@ let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
 let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) pos =
-	match fl2 with
+	match fl1 with
 	| [] -> ()
-	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
-				then let (tmp ,_,_) = (Imm.subtype_ann_list [] (snd c) (snd x)) in
-				let _ = print_string ("Ann lists: " ^ (String.concat "," (List.map string_of_imm (snd c)))^" :> "^
-					(String.concat "," (List.map string_of_imm (snd x)))^ "\n") in 
-				if tmp then c else 
-				 	Err.report_error { Err.error_loc = pos;
-					Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
-				else c) fl1 in fl_subtyping fl1 xs pos
-			
+	| x::xs -> let matched_fields = List.filter (fun c -> if (String.compare (fst c) (fst x)) == 0 then true else false) fl2
+		    (*in let _ = List.map
+		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2*)
+		    in (*let _ = List.map
+		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2
+		    in*) let tmp = (List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd c) (snd x)) in 
+		    (*let _ = 
+		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
+		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
+		    in*)
+		    b) matched_fields)
+		    in (*let _ = print_string ((string_of_bool tmp)^"\n") 
+		    in*)  let _ = if (tmp || List.length matched_fields == 0) then () else 
+			Err.report_error { Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
+		    in fl_subtyping fl2 xs pos
+
 let rec fl_intersect_no_inter (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
 	match fl2 with
 	| [] -> fl1
@@ -373,3 +381,49 @@ match f with
               CF.formula_exists_flow = fl;
               CF.formula_exists_label = lbl;
               CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p t fl ol pos lbl
+              
+let split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
+	let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in 
+	match h with
+	| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos})
+  	| CF.Phase({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos}) -> 
+		    let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n")
+		    in (h1,h2)
+	| _ -> (h, CF.HEmp)
+
+let rec remove_phases (h: IF.h_formula): IF.h_formula = 
+	(*let _ = print_string ("Removing Phase from H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
+	match h with
+  	| IF.Phase({IF.h_formula_phase_rd = h1;
+		    IF.h_formula_phase_rw = h2;
+		    IF.h_formula_phase_pos = pos}) -> let h1_rp = (remove_phases h1) in
+		    				let h2_rp = (remove_phases h2) in 
+		    				if h1_rp = IF.HEmp then h2_rp else
+		    				if h2_rp = IF.HEmp then h1_rp else
+		    				IF.mkConj h1_rp h2_rp pos
+	| IF.Conj({IF.h_formula_conj_h1 = h1;
+		   IF.h_formula_conj_h2 = h2;
+		   IF.h_formula_conj_pos = pos}) -> IF.mkConj (remove_phases h1) (remove_phases h2) pos
+	| IF.Star({IF.h_formula_star_h1 = h1;
+		   IF.h_formula_star_h2 = h2;
+		   IF.h_formula_star_pos = pos}) -> IF.mkStar (remove_phases h1) (remove_phases h2) pos
+	| _ -> h
+		   
+let normalize_h_formula (h : IF.h_formula): IF.h_formula =
+	(*let _ = print_string ("Before Phase Removal H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
+	let res = remove_phases h in res	
+	(* let _ = print_string ("After Phase Removal H = "^ (Iprinter.string_of_h_formula res) ^ "\n") in *)
+	(* Push star inside A * (B /\ C) == (A * B) /\ (A * C) *) 
+	(*let helper h = match h with 
+	| IF.Conj({IF.h_formula_conj_h1 = h1;
+		   IF.h_formula_conj_h2 = h2;
+		   IF.h_formula_conj_pos = pos}) ->
+	| IF.Star{IF.h_formula_star_h1 = h1;
+		   IF.h_formula_star_h2 = h2;
+		   IF.h_formula_star_pos = pos}) ->
+	| _ -> h*)
+  

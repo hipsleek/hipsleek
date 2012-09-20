@@ -4090,7 +4090,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 					
             let _ = List.map helper_one_formula a in
-            let ch = linearize_formula prog f0 stab in					
+            (*let _ = print_string ("Iform: "^(Iprinter.string_of_formula f0) ^"\n" ) in*)
+            let ch = linearize_formula prog f0 stab in
+            (*let _ = print_string ("Iform: "^(Cprinter.string_of_formula ch) ^"\n" ) in*)					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
               if sep_collect then (
@@ -6065,6 +6067,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     let heap = if !Globals.allow_mem then heap else Immutable.normalize_h_formula heap false in 
     let nu, h_evars, new_h, link_f = linearize_heap [] heap in
+    let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)
 	let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap  f.IF.formula_pure top_flow [] evars f.IF.formula_pos in
