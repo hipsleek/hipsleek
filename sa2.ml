@@ -563,7 +563,8 @@ and collect_sub_constrs_by_split constrs =
   (*split only hp that stands alone in RHS and have more than one parameter *)
   let split_tb = [] in
   let splits = List.concat (List.map (fun constr -> get_split_candi constr) constrs) in (*hr list*)
-  let get_split_map split tb = (
+  let get_split_map split piv = (
+    let tb, defs = List.split piv in
     let svs, mtbs = List.split tb in
     let sv,el,l = split in
     if(List.exists (fun c -> CP.eq_spec_var sv c) svs) then []
@@ -571,13 +572,22 @@ and collect_sub_constrs_by_split constrs =
       let rec helper sv el n =
 	match el with
 	  | [] -> []
-	  |x::y -> (CP.fresh_spec_var sv, [n])::(helper sv y (n+1))
+	  |x::y -> (
+	    let newhp = CP.fresh_spec_var sv in
+	    ((newhp, [n]),CF.HRel(newhp,[x],no_pos))::(helper sv y (n+1))
+	  )
       in
-      [(sv,helper sv el 0)]
+      let new_tb, defs = List.split(helper sv el 0)in
+      let split_def = CF.formula_of_heap ( (List.fold_left (fun piv def -> CF.mkStarH piv def no_pos) (List.hd defs) (List.tl defs))) no_pos in
+      let new_def = (CP.RelDefn sv,CF.formula_of_heap (CF.HRel(sv,el,l)) no_pos,split_def)in
+      [((sv,new_tb),new_def)]
+    (*add defs here*)
     )
   ) 
   in
-  let split_tb = List.fold_left (fun tb split -> (get_split_map split tb)@tb ) [] splits in
+  let split_tb, defs = List.split( List.fold_left (fun piv split -> (get_split_map split piv)@piv ) [] splits) in
+  let defs = List.map (fun (_,a2,a3)-> (a2,a3)) defs in
+  Debug.info_hprint (add_str "DEF OF SPLITS: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) defs no_pos;
   let svs, mtbs = List.split split_tb in
   Debug.info_hprint (add_str "SPLIT: " (pr_list_ln CP.name_of_spec_var)) svs no_pos;
   let new_constrs, sub_constrs = List.split (List.map (fun constr -> process_split constr split_tb) constrs) in
