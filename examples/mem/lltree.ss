@@ -32,15 +32,15 @@ global node q2;
 
 node list_remove_first(ref node q1s)
 requires q1s::ll<S>
-ensures res::node<_@L,_@M,_@A,_@A,_@A> * q::ll<S1> & S = union(S1,{res}) & q1s' = q & q1s = res;
+ensures res::node<_@L,_@M,_@M,_@M,_@M> * q::ll<S1> & S = union(S1,{res}) & q1s' = q & q1s = res;
 
 void tree_remove(node x, ref node q1t)
-requires x::node<_@L,_@A,_@M,_@M,_@M> * q1t::tree<_,S>
-ensures q1t::tree<_,S1> & S = union(S1,{x});
+requires q1t::treeseg<_,q,x,Ss> * x::node<_@L,_@A,q@M,l@M,r@M> * l::tree<x,Sl> * r::tree<x,Sr>
+ensures q1t::tree<p,S> & S = union(Ss,Sl,Sr);
 
 void list_add_first(ref node q2, node y)
-requires q2::ll<S> * y::node<v,_,_@A,_@A,_@A>
-ensures  y::node<v,q2,_@A,_@A,_@A> * q2::ll<S> & q2' = y;
+requires q2::ll<S> * y::node<v@L,_@M,_@A,_@A,_@A>
+ensures  y::node<v@L,q2@A,_@A,_@A,_@A> * q2::ll<S> & q2' = y;
 
 void tree_add(ref node q1t, node y)
 requires q1t::tree<p,S> * y::node<v,_@A,_,_,_>
@@ -52,7 +52,7 @@ ensures q1t::tree<_,S>;
 
 void move_request(ref node q1s, ref node q2, ref node q1t)
 requires (q1s::ll<S1> & q1t::tree<_,S1> * q2::ll<S2>)
-ensures (q1s::ll<S1a> & q1t::tree<_,S1a> * q2::ll<S2a>) & S1 = union(S1a,{q1s}) & S2a = union(S2,{q1s});
+ensures (q1s'::ll<S1a> & q1t::tree<_,S1a> * q2'::ll<S2a>) & S1 = union(S1a,{q1s}) & S2a = union(S2,{q1s});
 {
 node c;
 c = list_remove_first(q1s);
